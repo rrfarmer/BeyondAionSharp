@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rift_schedule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="rift_schedule.xsd">
+	<!-- Eltnen -->
+	<rift id="210020000">
+		<open schedule="0 0 * ? * *"/>
+	</rift>
+	<!-- Heiron -->
+	<rift id="210040000">
+		<open schedule="0 0 * ? * *"/>
+	</rift>
+	<!-- Inggison -->
+	<rift id="210050000">
+		<open schedule="0 0 * ? * *"/>
+		<open schedule="0 0 18 ? * FRI,MON" spawn="true"/>
+		<open schedule="0 0 23 ? * WED,SAT" spawn="true"/>
+	</rift>
+	<!-- Cygnea -->
+	<rift id="210070000">
+		<open schedule="0 0 * ? * *"/>
+		<open schedule="0 0 20 ? * WED,FRI" spawn="true"/>
+		<open schedule="0 0 17 ? * SUN" spawn="true"/>
+	</rift>
+
+	<!-- Morheim -->
+	<rift id="220020000">
+		<open schedule="0 0 * ? * *"/>
+	</rift>
+	<!-- Beluslan -->
+	<rift id="220040000">
+		<open schedule="0 0 * ? * *"/>
+	</rift>
+	<!-- Gelkmaros -->
+	<rift id="220070000">
+		<open schedule="0 0 * ? * *"/>
+		<open schedule="0 0 18 ? * SUN,THU" spawn="true"/>
+		<open schedule="0 0 23 ? * TUE,FRI" spawn="true"/>
+	</rift>
+	<!-- Enshar -->
+	<rift id="220080000">
+		<open schedule="0 0 * ? * *"/>
+		<open schedule="0 0 20 ? * TUE,THU" spawn="true"/>
+		<open schedule="0 0 17 ? * SAT" spawn="true"/>
+	</rift>
+</rift_schedule>

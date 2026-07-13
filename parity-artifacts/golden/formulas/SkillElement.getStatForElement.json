@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "formula": "SkillElement.getStatForElement",
+  "signature": "StatEnum getStatForElement()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"element": "NONE"}, "result": "null" },
+    { "inputs": {"element": "FIRE"}, "result": "FIRE_RESISTANCE" },
+    { "inputs": {"element": "WATER"}, "result": "WATER_RESISTANCE" },
+    { "inputs": {"element": "WIND"}, "result": "WIND_RESISTANCE" },
+    { "inputs": {"element": "EARTH"}, "result": "EARTH_RESISTANCE" },
+    { "inputs": {"element": "LIGHT"}, "result": "LIGHT_RESISTANCE" },
+    { "inputs": {"element": "DARK"}, "result": "DARK_RESISTANCE" }
+  ]
+}

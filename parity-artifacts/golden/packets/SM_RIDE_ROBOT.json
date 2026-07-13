@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RIDE_ROBOT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "rideRobotMount",
+      "inputs": {"objectId":100777,"robotId":700123},
+      "payloadHex": "A9890100DBAE0A00"
+    },
+    {
+      "name": "rideRobotDismount",
+      "inputs": {"objectId":100777,"robotId":0},
+      "payloadHex": "A989010000000000"
+    }
+  ]
+}

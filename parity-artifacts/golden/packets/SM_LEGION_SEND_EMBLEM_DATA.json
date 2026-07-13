@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEGION_SEND_EMBLEM_DATA",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "dataChunk",
+      "inputs": {"size":4,"data":[16,32,48,255]},
+      "payloadHex": "04000000102030FF"
+    },
+    {
+      "name": "emptyData",
+      "inputs": {"size":0,"data":[]},
+      "payloadHex": "00000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_FORCED_MOVE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "moveBack",
+      "inputs": {"creatureObjectId":700001,"objectId":800002,"x":1234.5,"y":6789.0,"z":250.25},
+      "payloadHex": "61AE0A0002350C001000509A440028D44500407A43"
+    }
+  ]
+}

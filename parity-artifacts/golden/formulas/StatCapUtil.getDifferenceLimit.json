@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatCapUtil.getDifferenceLimit",
+  "signature": "int getDifferenceLimit(StatEnum stat)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"statEnum": "BLOCK"}, "result": 500 },
+    { "inputs": {"statEnum": "PHYSICAL_CRITICAL"}, "result": 500 },
+    { "inputs": {"statEnum": "MAGICAL_CRITICAL"}, "result": 500 },
+    { "inputs": {"statEnum": "MAGICAL_RESIST"}, "result": 900 },
+    { "inputs": {"statEnum": "EVASION"}, "result": 300 },
+    { "inputs": {"statEnum": "PARRY"}, "result": 400 },
+    { "inputs": {"statEnum": "BOOST_MAGICAL_SKILL"}, "result": 2900 },
+    { "inputs": {"statEnum": "MAXHP"}, "result": 2147483647 },
+    { "inputs": {"statEnum": "SPEED"}, "result": 2147483647 },
+    { "inputs": {"statEnum": "PHYSICAL_ATTACK"}, "result": 2147483647 }
+  ]
+}

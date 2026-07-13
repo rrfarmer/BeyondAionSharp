@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<conqueror_protector_ranks xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="conqueror_protector_ranks.xsd">
+	<rank type="CONQUEROR" rank_num="1">
+		<modifiers>
+			<add name="PVP_ATTACK_RATIO" value="10" bonus="true"/>
+		</modifiers>
+	</rank>
+	<rank type="CONQUEROR" rank_num="2">
+		<modifiers>
+			<add name="PVP_ATTACK_RATIO" value="20" bonus="true"/>
+		</modifiers>
+	</rank>
+	<rank type="CONQUEROR" rank_num="3">
+		<modifiers>
+			<add name="PVP_ATTACK_RATIO" value="30" bonus="true"/>
+		</modifiers>
+	</rank>
+	<rank type="PROTECTOR" rank_num="1" visible_intruder_min_rank="3">
+		<modifiers>
+			<add name="PVP_DEFEND_RATIO" value="20" bonus="true"/>
+		</modifiers>
+	</rank>
+	<rank type="PROTECTOR" rank_num="2" visible_intruder_min_rank="2">
+		<modifiers>
+			<add name="PVP_DEFEND_RATIO" value="40" bonus="true"/>
+		</modifiers>
+	</rank>
+	<rank type="PROTECTOR" rank_num="3" visible_intruder_min_rank="1">
+		<modifiers>
+			<add name="PVP_DEFEND_RATIO" value="60" bonus="true"/>
+		</modifiers>
+	</rank>
+</conqueror_protector_ranks>

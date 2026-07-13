@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GROUP_DATA_EXCHANGE",
+  "opcode": 178,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "nearbyBroadcast",
+      "inputs": {"ctor":"byteData","byteData":[1,2,255]},
+      "payloadHex": "01030000000102FF"
+    },
+    {
+      "name": "groupBroadcast",
+      "inputs": {"ctor":"byteData_action_unk2","byteData":[10,11,12,13],"action":2,"unk2":7},
+      "payloadHex": "0207040000000A0B0C0D"
+    }
+  ]
+}

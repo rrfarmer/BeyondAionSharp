@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PLASTIC_SURGERY",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "plasticSurgeryAppearance",
+      "inputs": {"objectId":100777,"isGenderSwitch":false},
+      "payloadHex": "A98901000200"
+    },
+    {
+      "name": "plasticSurgeryGenderSwitch",
+      "inputs": {"objectId":100777,"isGenderSwitch":true},
+      "payloadHex": "A98901000201"
+    }
+  ]
+}

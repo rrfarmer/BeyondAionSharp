@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GM_BOOKMARK_ADD",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "bookmark",
+      "inputs": {"name":"Teleport Platz","worldId":120010000,"x":230.0,"y":250.0,"z":290.0},
+      "payloadHex": "540065006C00650070006F0072007400200050006C00610074007A000000103527070000664300007A4300009143"
+    },
+    {
+      "name": "origin",
+      "inputs": {"name":"","worldId":0,"x":0.0,"y":0.0,"z":0.0},
+      "payloadHex": "000000000000000000000000000000000000"
+    }
+  ]
+}

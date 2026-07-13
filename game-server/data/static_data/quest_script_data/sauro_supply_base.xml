@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!-- 
+		[BEGIN] SUMMARY
+			18910 [SCRIPT] The Sauro Supply Base
+			18911 [XML] [Group] Killing Spree
+			18912 [XML] [Group] Slay Sheba, Blind Beritra
+			18913 [XML] [Group] What Sheba Hath Wrought
+			18914 [XML] [Group] Hunks of Junk
+			18915 [XML] [Group] Sauro: The Final Assault
+			18916 [XML] [Group] For the Folks Back Home
+			28910 [SCRIPT] [Group] A Stabbing in Sauro
+			28911 [XML] [Group] Doomed Commanders
+			28912 [XML] [Group] Unlock the Mystery Box
+			28913 [XML] [Group] Alas, Poor Shugo, Nyerk
+			28914 [XML] [Group] Prototype of Destruction
+			28915 [XML] [Group] Demolition Mania
+			28916 [XML] [Group] Precious Seal
+		[END] SUMMARY
+	-->
+	
+	<!-- COLLECTING QUESTS -->
+	<item_collecting id="18913" start_npc_ids="801945"/>
+	<item_collecting id="18914" start_npc_ids="801945"/>
+	<item_collecting id="18916" start_npc_ids="801945"/>
+	<item_collecting id="28913" start_npc_ids="801947"/>
+	<item_collecting id="28914" start_npc_ids="801947"/>
+	<item_collecting id="28916" start_npc_ids="801947"/>
+	
+	<!-- HUNTING QUESTS -->
+	<monster_hunt id="18911" start_npc_ids="801945"/>
+	<monster_hunt id="18912" start_npc_ids="801945"/>
+	<monster_hunt id="18915" start_npc_ids="801945"/>
+	<monster_hunt id="28911" start_npc_ids="801947"/>
+	<monster_hunt id="28912" start_npc_ids="801947"/>
+	<monster_hunt id="28915" start_npc_ids="801947"/>
+</quest_scripts>

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LOOT_STATUS",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "disable",
+      "inputs": {"targetObjectId":900300,"status":1},
+      "payloadHex": "CCBC0D000100000000"
+    },
+    {
+      "name": "openDropList",
+      "inputs": {"targetObjectId":900301,"status":2},
+      "payloadHex": "CDBC0D000200000000"
+    },
+    {
+      "name": "closeDropList",
+      "inputs": {"targetObjectId":900302,"status":3},
+      "payloadHex": "CEBC0D000300000000"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# Shell scripts and entrypoints run inside Linux containers — they MUST keep LF
+# line endings or bash fails with "\r: command not found". Force LF regardless of
+# the host's core.autocrlf setting.
+*.sh    text eol=lf
+*.env   text eol=lf
+.env.example text eol=lf
+Dockerfile text eol=lf
+*.yml   text eol=lf

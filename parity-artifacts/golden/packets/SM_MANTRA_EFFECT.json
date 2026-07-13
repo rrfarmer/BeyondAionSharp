@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MANTRA_EFFECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "basic",
+      "inputs": {"objectId":910001,"subEffectId":1234},
+      "payloadHex": "00000000B1E20D00D204"
+    },
+    {
+      "name": "zeroSub",
+      "inputs": {"objectId":910002,"subEffectId":0},
+      "payloadHex": "00000000B2E20D000000"
+    },
+    {
+      "name": "maxShort",
+      "inputs": {"objectId":910003,"subEffectId":65535},
+      "payloadHex": "00000000B3E20D00FFFF"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CHAT_INIT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "token",
+      "inputs": {"token":[1,2,3,4,255]},
+      "payloadHex": "0500000001020304FF"
+    },
+    {
+      "name": "empty",
+      "inputs": {"token":[]},
+      "payloadHex": "00000000"
+    }
+  ]
+}

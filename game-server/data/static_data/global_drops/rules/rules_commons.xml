@@ -1,0 +1,1146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../global_rules.xsd">
+	<!-- Kinah -->
+	<gd_rule rule_name="Kinah" chance="50" dynamic_chance="true">
+		<gd_races>
+			<gd_race race="ELYOS" />
+			<gd_race race="ASMODIANS" />
+			<gd_race race="BROWNIE" />
+			<gd_race race="CONSTRUCT" />
+			<gd_race race="DEMIHUMANOID" />
+			<gd_race race="DRAGON" />
+			<gd_race race="DRAKAN" />
+			<gd_race race="ELEMENTAL" />
+			<gd_race race="KRALL" />
+			<gd_race race="LIZARDMAN" />
+			<gd_race race="LYCAN" />
+			<gd_race race="MAGICALMONSTER" />
+			<gd_race race="NAGA" />
+			<gd_race race="RATMAN" />
+			<gd_race race="NAGA" />
+			<gd_race race="SHULACK" />
+			<gd_race race="UNDEAD" />
+		</gd_races>
+		<gd_items>
+			<!-- Level 1 -->
+			<gd_item id="182400001" min_count="5" max_count="25" /><!-- Kinah -->
+		</gd_items>
+	</gd_rule>
+	<!-- Buff Food -->
+	<gd_rule rule_name="Buff Food" chance="3.5" dynamic_chance="true" min_diff="-9" max_diff="0">
+		<gd_items>
+			<!-- Level 10 -->
+			<gd_item id="160003551" /><!-- Minor Rally Serum -->
+			<gd_item id="160003557" /><!-- Minor Focus Agent -->
+			<!-- Level 20 -->
+			<gd_item id="160003552" /><!-- Lesser Rally Serum -->
+			<gd_item id="160003558" /><!-- Lesser Focus Agent -->
+			<!-- Level 30 -->
+			<gd_item id="160003553" /><!-- Rally Serum -->
+			<gd_item id="160003559" /><!-- Focus Agent -->
+			<!-- Level 40 -->
+			<gd_item id="160003554" /><!-- Greater Rally Serum -->
+			<gd_item id="160003560" /><!-- Greater Focus Agent -->
+			<!-- Level 50 -->
+			<gd_item id="160003555" /><!-- Major Rally Serum -->
+			<gd_item id="160003561" /><!-- Major Focus Agent -->
+			<!-- Level 60 -->
+			<gd_item id="160003556" /><!-- Fine Rally Serum -->
+			<gd_item id="160003562" /><!-- Fine Focus Agent -->
+		</gd_items>
+	</gd_rule>
+	<!-- Potions (white, 1-60) -->
+	<gd_rule rule_name="Potions (Common)" chance="3.5" dynamic_chance="true" min_diff="-9" max_diff="0">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 10 -->
+			<gd_item id="162000002" /><!-- Minor Life Potion -->
+			<gd_item id="162000007" /><!-- Minor Mana Potion -->
+			<gd_item id="162000052" /><!-- Minor Life Elixir -->
+			<gd_item id="162000057" /><!-- Minor Mana Elixir -->
+			<!-- Level 20 -->
+			<gd_item id="162000003" /><!-- Lesser Life Potion -->
+			<gd_item id="162000008" /><!-- Lesser Mana Potion -->
+			<gd_item id="162000053" /><!-- Lesser Life Elixir -->
+			<gd_item id="162000058" /><!-- Lesser Mana Elixir -->
+			<!-- Level 30 -->
+			<gd_item id="162000004" /><!-- Life Potion -->
+			<gd_item id="162000009" /><!-- Mana Potion -->
+			<gd_item id="162000054" /><!-- Regular Life Elixir -->
+			<gd_item id="162000059" /><!-- Regular Mana Elixir -->
+			<!-- Level 40 -->
+			<gd_item id="162000005" /><!-- Greater Life Potion -->
+			<gd_item id="162000010" /><!-- Greater Mana Potion -->
+			<gd_item id="162000055" /><!-- Greater Life Elixir -->
+			<gd_item id="162000060" /><!-- Greater Mana Elixir -->
+			<!-- Level 50 -->
+			<gd_item id="162000006" /><!-- Major Life Potion -->
+			<gd_item id="162000011" /><!-- Major Mana Potion -->
+			<gd_item id="162000056" /><!-- Major Life Elixir -->
+			<gd_item id="162000061" /><!-- Major Mana Elixir -->
+			<!-- Level 60 -->
+			<gd_item id="162000075" /><!-- Fine Life Potion -->
+			<gd_item id="162000076" /><!-- Fine Mana Potion -->
+			<gd_item id="162000085" /><!-- Fine Life Elixir -->
+			<gd_item id="162000086" /><!-- Fine Mana Elixir -->
+			<!-- Level 70 // deactivated for now (remove 61-65 rule when changing)
+				<gd_item id="162000119"/><!- Superior Life Potion ->
+				<gd_item id="162000120"/><!- Superior Mana Potion ->
+				<gd_item id="162000128"/><!- Superior Life Elixir ->
+				<gd_item id="162000129"/><!- Superior Mana Elixir ->
+			-->
+		</gd_items>
+	</gd_rule>
+	<!-- Potions (white, 61-65) -->
+	<gd_rule rule_name="Potions (Common)" chance="3.5" dynamic_chance="true" min_diff="1" max_diff="5">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 60 -->
+			<gd_item id="162000075" /><!-- Fine Life Potion -->
+			<gd_item id="162000076" /><!-- Fine Mana Potion -->
+		</gd_items>
+	</gd_rule>
+	<!-- Potions (green, 1-60) -->
+	<gd_rule rule_name="Potions (Rare)" chance="2.5" dynamic_chance="true" min_diff="-9" max_diff="0">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 10 -->
+			<gd_item id="162000012" /><!-- Minor Life Serum -->
+			<gd_item id="162000017" /><!-- Minor Mana Serum -->
+			<gd_item id="162000087" /><!-- Minor Panacea of Life -->
+			<gd_item id="162000093" /><!-- Minor Panacea of Mana -->
+			<!-- Level 20 -->
+			<gd_item id="162000013" /><!-- Lesser Life Serum -->
+			<gd_item id="162000018" /><!-- Lesser Mana Serum -->
+			<gd_item id="162000088" /><!-- Lesser Panacea of Life -->
+			<gd_item id="162000094" /><!-- Lesser Panacea of Mana -->
+			<!-- Level 30 -->
+			<gd_item id="162000014" /><!-- Life Serum -->
+			<gd_item id="162000019" /><!-- Mana Serum -->
+			<gd_item id="162000089" /><!-- Panacea of Life -->
+			<gd_item id="162000095" /><!-- Panacea of Mana -->
+			<!-- Level 40 -->
+			<gd_item id="162000015" /><!-- Greater Life Serum -->
+			<gd_item id="162000020" /><!-- Greater Mana Serum -->
+			<gd_item id="162000090" /><!-- Greater Panacea of Life -->
+			<gd_item id="162000096" /><!-- Greater Panacea of Mana -->
+			<!-- Level 50 -->
+			<gd_item id="162000016" /><!-- Major Life Serum -->
+			<gd_item id="162000021" /><!-- Major Mana Serum -->
+			<gd_item id="162000091" /><!-- Major Panacea of Life -->
+			<gd_item id="162000097" /><!-- Major Panacea of Mana -->
+			<!-- Level 60 -->
+			<gd_item id="162000077" /><!-- Fine Life Serum -->
+			<gd_item id="162000078" /><!-- Fine Mana Serum -->
+			<gd_item id="162000092" /><!-- Fine Panacea of Life -->
+			<gd_item id="162000098" /><!-- Fine Panacea of Mana -->
+			<!-- Level 70 // deactivated for now (remove 61-65 rule when changing)
+				<gd_item id="162000122"/><!- Superior Life Serum ->
+				<gd_item id="162000123"/><!- Superior Mana Serum ->
+			-->
+		</gd_items>
+	</gd_rule>
+	<!-- Potions (green, 61-65) -->
+	<gd_rule rule_name="Potions (Rare)" chance="2.5" dynamic_chance="true" min_diff="1" max_diff="5">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 60 -->
+			<gd_item id="162000077" /><!-- Fine Life Serum -->
+			<gd_item id="162000078" /><!-- Fine Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<!-- Power Shards -->
+	<gd_rule rule_name="Power Shards" chance="6" dynamic_chance="true" min_diff="0" max_diff="9">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 1 -->
+			<gd_item id="169000003" min_count="2" max_count="15" /><!-- Minor Power Shard -->
+			<!-- Level 10 -->
+			<gd_item id="169000004" min_count="2" max_count="15" /><!-- Lesser Power Shard -->
+			<!-- Level 20 -->
+			<gd_item id="169000005" min_count="2" max_count="15" /><!-- Power Shard -->
+			<!-- Level 30 -->
+			<gd_item id="169000007" min_count="2" max_count="15" /><!-- Greater Power Shard -->
+			<!-- Level 40 -->
+			<gd_item id="169000008" min_count="2" max_count="15" /><!-- Fine Power Shard -->
+			<!-- Level 50 -->
+			<gd_item id="169000009" min_count="2" max_count="15" /><!-- Premium Power Shard -->
+			<!-- Level 60 -->
+			<gd_item id="169000010" min_count="2" max_count="15" /><!-- Superior Power Shard -->
+		</gd_items>
+	</gd_rule>
+	<!-- Stigmas -->
+	<gd_rule rule_name="Stigmas (Rare)" chance="1.75" dynamic_chance="true" min_diff="0" level_based_chance_reduction="true">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 20 -->
+			<gd_item id="188053783" /><!-- Stigma Sack -->
+		</gd_items>
+	</gd_rule>
+	<!-- Godstones -->
+	<gd_rule rule_name="Illusion Godstones (Legend)" chance="0.02" level_based_chance_reduction="true">
+		<gd_items>
+			<gd_item id="168000212" /><!-- Illusion Godstone: Aion's Sorrow -->
+			<gd_item id="168000213" /><!-- Illusion Godstone: Fasimedes' Authority -->
+			<gd_item id="168000214" /><!-- Illusion Godstone: Thrasymedes' Foresight -->
+			<gd_item id="168000215" /><!-- Illusion Godstone: Freyr's Esprit -->
+			<gd_item id="168000216" /><!-- Illusion Godstone: Vidar's Nobility -->
+			<gd_item id="168000217" /><!-- Illusion Godstone: Charna's Cleverness -->
+			<gd_item id="168000218" /><!-- Illusion Godstone: Sif's Extensive Knowledge -->
+			<gd_item id="168000219" /><!-- Illusion Godstone: Jumentis' Agility -->
+			<gd_item id="168000220" /><!-- Illusion Godstone: Sigyn's Brightness -->
+			<gd_item id="168000221" /><!-- Illusion Godstone: Boreas' Encouragement -->
+			<gd_item id="168000222" /><!-- Illusion Godstone: Traufnir's Spirit -->
+			<gd_item id="168000223" /><!-- Illusion Godstone: Bollvig's Grief -->
+			<gd_item id="168000224" /><!-- Illusion Godstone: Helkes' Vengeance -->
+			<gd_item id="168000225" /><!-- Illusion Godstone: Deltras' Loyalty -->
+			<gd_item id="168000226" /><!-- Illusion Godstone: Orissan's Blood -->
+			<gd_item id="168000227" /><!-- Illusion Godstone: Mahisha's Wrath -->
+			<gd_item id="168000228" /><!-- Illusion Godstone: Khrudgelmir's Silence -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Illusion Godstones (Unique)" chance="0.01" level_based_chance_reduction="true">
+		<gd_items>
+			<gd_item id="168000229" /><!-- Illusion Godstone: Lumiel's Interference -->
+			<gd_item id="168000230" /><!-- Illusion Godstone: Meslamtaeda's Ambition -->
+			<gd_item id="168000231" /><!-- Illusion Godstone: Yustiel's Consolation -->
+			<gd_item id="168000232" /><!-- Illusion Godstone: Vaizel's Vow -->
+			<gd_item id="168000233" /><!-- Illusion Godstone: Ereshkigal's Reputation -->
+			<gd_item id="168000234" /><!-- Illusion Godstone: Marchutan's Justice -->
+			<gd_item id="168000235" /><!-- Illusion Godstone: Triniel's Intellect -->
+			<gd_item id="168000236" /><!-- Illusion Godstone: Beritra's Conceit -->
+			<gd_item id="168000237" /><!-- Illusion Godstone: Meslamtaeda's Remorse -->
+			<gd_item id="168000238" /><!-- Illusion Godstone: Tiamat's Retaliation -->
+			<gd_item id="168000239" /><!-- Illusion Godstone: Tiamat's Rage -->
+			<gd_item id="168000240" /><!-- Illusion Godstone: Fregion's Stratagem -->
+			<gd_item id="168000241" /><!-- Illusion Godstone: Nezekan's Charge -->
+			<gd_item id="168000242" /><!-- Illusion Godstone: Kaisinel's Mirage -->
+			<gd_item id="168000243" /><!-- Illusion Godstone: Zikel's Arrogance -->
+			<gd_item id="168000244" /><!-- Illusion Godstone: Fregion's Scheme -->
+			<gd_item id="168000245" /><!-- Illusion Godstone: Beritra's Plot -->
+		</gd_items>
+	</gd_rule>
+	<!-- Manastones (white) -->
+	<gd_rule rule_name="Manastones (Common)" chance="15" dynamic_chance="true" min_diff="-9" max_diff="0">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 10 -->
+			<gd_item id="167000226" /><!-- Manastone: HP +20 -->
+			<gd_item id="167000227" /><!-- Manastone: MP +20 -->
+			<gd_item id="167000228" /><!-- Manastone: Accuracy +12 -->
+			<gd_item id="167000229" /><!-- Manastone: Evasion +4 -->
+			<gd_item id="167000230" /><!-- Manastone: Attack +1 -->
+			<gd_item id="167000231" /><!-- Manastone: Magic Boost +12 -->
+			<gd_item id="167000232" /><!-- Manastone: Parry +12 -->
+			<gd_item id="167000233" /><!-- Manastone: Block +12 -->
+			<gd_item id="167000235" /><!-- Manastone: Crit Strike +4 -->
+			<gd_item id="167000525" /><!-- Manastone: Manastone: Magical Accuracy +3 -->
+			<!-- Level 20 -->
+			<gd_item id="167000258" /><!-- Manastone: HP +30 -->
+			<gd_item id="167000259" /><!-- Manastone: MP +30 -->
+			<gd_item id="167000260" /><!-- Manastone: Accuracy +14 -->
+			<gd_item id="167000261" /><!-- Manastone: Evasion +6 -->
+			<gd_item id="167000263" /><!-- Manastone: Magic Boost +14 -->
+			<gd_item id="167000264" /><!-- Manastone: Parry +14 -->
+			<gd_item id="167000265" /><!-- Manastone: Block +14 -->
+			<gd_item id="167000267" /><!-- Manastone: Crit Strike +6 -->
+			<gd_item id="167000527" /><!-- Manastone: Manastone: Magical Accuracy +4 -->
+			<!-- Level 30 -->
+			<gd_item id="167000290" /><!-- Manastone: HP +40 -->
+			<gd_item id="167000291" /><!-- Manastone: MP +40 -->
+			<gd_item id="167000292" /><!-- Manastone: Accuracy +16 -->
+			<gd_item id="167000293" /><!-- Manastone: Evasion +8 -->
+			<gd_item id="167000294" /><!-- Manastone: Attack +2 -->
+			<gd_item id="167000295" /><!-- Manastone: Magic Boost +16 -->
+			<gd_item id="167000296" /><!-- Manastone: Parry +16 -->
+			<gd_item id="167000297" /><!-- Manastone: Block +16 -->
+			<gd_item id="167000299" /><!-- Manastone: Crit Strike +8 -->
+			<gd_item id="167000529" /><!-- Manastone: Manastone: Magical Accuracy +5 -->
+			<!-- Level 40 -->
+			<gd_item id="167000322" /><!-- Manastone: HP +50 -->
+			<gd_item id="167000323" /><!-- Manastone: MP +50 -->
+			<gd_item id="167000324" /><!-- Manastone: Accuracy +18 -->
+			<gd_item id="167000325" /><!-- Manastone: Evasion +10 -->
+			<gd_item id="167000327" /><!-- Manastone: Magic Boost +18 -->
+			<gd_item id="167000328" /><!-- Manastone: Parry +18 -->
+			<gd_item id="167000329" /><!-- Manastone: Block +18 -->
+			<gd_item id="167000331" /><!-- Manastone: Crit Strike +10 -->
+			<gd_item id="167000531" /><!-- Manastone: Manastone: Magical Accuracy +7 -->
+			<!-- Level 50 -->
+			<gd_item id="167000354" /><!-- Manastone: HP +60 -->
+			<gd_item id="167000355" /><!-- Manastone: MP +60 -->
+			<gd_item id="167000356" /><!-- Manastone: Accuracy +20 -->
+			<gd_item id="167000357" /><!-- Manastone: Evasion +12 -->
+			<gd_item id="167000358" /><!-- Manastone: Attack +3 -->
+			<gd_item id="167000359" /><!-- Manastone: Magic Boost +20 -->
+			<gd_item id="167000360" /><!-- Manastone: Parry +20 -->
+			<gd_item id="167000361" /><!-- Manastone: Block +20 -->
+			<gd_item id="167000363" /><!-- Manastone: Crit Strike +12 -->
+			<gd_item id="167000533" /><!-- Manastone: Manastone: Magical Accuracy +9 -->
+			<!-- Level 60 -->
+			<gd_item id="167000543" /><!-- Manastone: HP +70 -->
+			<gd_item id="167000544" /><!-- Manastone: MP +70 -->
+			<gd_item id="167000545" /><!-- Manastone: Accuracy +22 -->
+			<gd_item id="167000546" /><!-- Manastone: Evasion +14 -->
+			<gd_item id="167000547" /><!-- Manastone: Magic Boost +22 -->
+			<gd_item id="167000548" /><!-- Manastone: Parry +22 -->
+			<gd_item id="167000549" /><!-- Manastone: Block +22 -->
+			<gd_item id="167000550" /><!-- Manastone: Crit Strike +14 -->
+			<!-- Level 70 -->
+			<gd_item id="167000758" /><!-- Manastone: HP +80 -->
+			<gd_item id="167000759" /><!-- Manastone: MP +80 -->
+			<gd_item id="167000760" /><!-- Manastone: Accuracy +24 -->
+			<gd_item id="167000761" /><!-- Manastone: Evasion +16 -->
+			<gd_item id="167000762" /><!-- Manastone: Magic Boost +24 -->
+			<gd_item id="167000763" /><!-- Manastone: Parry +24 -->
+			<gd_item id="167000764" /><!-- Manastone: Block +24 -->
+			<gd_item id="167000765" /><!-- Manastone: Crit Strike +16 -->
+		</gd_items>
+	</gd_rule>
+	<!-- Manastones (white, with odd lvl diffs) -->
+	<gd_rule rule_name="Manastones (Common)" chance="1.5" dynamic_chance="true" min_diff="1" max_diff="10">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 10 -->
+			<gd_item id="167000230" /><!-- Manastone: Attack +1 -->
+			<!-- Level 30 -->
+			<gd_item id="167000294" /><!-- Manastone: Attack +2 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Manastones (Common)" chance="1.5" dynamic_chance="true" min_diff="1" max_diff="15">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 50 -->
+			<gd_item id="167000358" /><!-- Manastone: Attack +3 -->
+			<gd_item id="167000533" /><!-- Manastone: Manastone: Magical Accuracy +9 -->
+		</gd_items>
+	</gd_rule>
+	<!-- Manastones (green) -->
+	<gd_rule rule_name="Manastones (Rare)" chance="7.5" dynamic_chance="true" min_diff="-9" max_diff="0">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 20 -->
+			<gd_item id="167000418" /><!-- Manastone: HP +55 -->
+			<gd_item id="167000420" /><!-- Manastone: Accuracy +19 -->
+			<gd_item id="167000421" /><!-- Manastone: Evasion +9 -->
+			<gd_item id="167000423" /><!-- Manastone: Magic Boost +19 -->
+			<gd_item id="167000424" /><!-- Manastone: Parry +19 -->
+			<gd_item id="167000425" /><!-- Manastone: Block +19 -->
+			<gd_item id="167000427" /><!-- Manastone: Crit Strike +9 -->
+			<gd_item id="167000535" /><!-- Manastone: Magical Accuracy +6 -->
+			<!-- Level 30 -->
+			<gd_item id="167000450" /><!-- Manastone: HP +65 -->
+			<gd_item id="167000454" /><!-- Manastone: Attack +4 -->
+			<gd_item id="167000452" /><!-- Manastone: Accuracy +21 -->
+			<gd_item id="167000453" /><!-- Manastone: Evasion +11 -->
+			<gd_item id="167000455" /><!-- Manastone: Magic Boost +21 -->
+			<gd_item id="167000456" /><!-- Manastone: Parry +21 -->
+			<gd_item id="167000457" /><!-- Manastone: Block +21 -->
+			<gd_item id="167000459" /><!-- Manastone: Crit Strike +11 -->
+			<gd_item id="167000537" /><!-- Manastone: Magical Accuracy +8 -->
+			<!-- Level 40 -->
+			<gd_item id="167000482" /><!-- Manastone: HP +75 -->
+			<gd_item id="167000484" /><!-- Manastone: Accuracy +23 -->
+			<gd_item id="167000485" /><!-- Manastone: Evasion +13 -->
+			<gd_item id="167000487" /><!-- Manastone: Magic Boost +23 -->
+			<gd_item id="167000488" /><!-- Manastone: Parry +23 -->
+			<gd_item id="167000489" /><!-- Manastone: Block +23 -->
+			<gd_item id="167000491" /><!-- Manastone: Crit Strike +13 -->
+			<gd_item id="167000539" /><!-- Manastone: Magical Accuracy +10 -->
+			<!-- Level 50 -->
+			<gd_item id="167000514" /><!-- Manastone: HP +85 -->
+			<gd_item id="167000518" /><!-- Manastone: Attack +5 -->
+			<gd_item id="167000516" /><!-- Manastone: Accuracy +25 -->
+			<gd_item id="167000517" /><!-- Manastone: Evasion +15 -->
+			<gd_item id="167000519" /><!-- Manastone: Magic Boost +25 -->
+			<gd_item id="167000520" /><!-- Manastone: Parry +25 -->
+			<gd_item id="167000521" /><!-- Manastone: Block +25 -->
+			<gd_item id="167000522" /><!-- Manastone: Crit Strike +15 -->
+			<gd_item id="167000541" /><!-- Manastone: Magical Accuracy +12 -->
+			<gd_item id="167000542" /><!-- Manastone: Resist Magic +12 -->
+			<!-- Level 60 -->
+			<gd_item id="167000551" /><!-- Manastone: HP +95 -->
+			<gd_item id="167000553" /><!-- Manastone: Accuracy +27 -->
+			<gd_item id="167000554" /><!-- Manastone: Evasion +17 -->
+			<gd_item id="167000555" /><!-- Manastone: Magic Boost +27 -->
+			<gd_item id="167000556" /><!-- Manastone: Parry +27 -->
+			<gd_item id="167000557" /><!-- Manastone: Block +27 -->
+			<gd_item id="167000558" /><!-- Manastone: Crit Strike +17 -->
+			<gd_item id="167000559" /><!-- Manastone: Maximum Flight Time +7 -->
+			<gd_item id="167000560" /><!-- Manastone: Magical Accuracy +14 -->
+			<gd_item id="167000561" /><!-- Manastone: Resist Magic +14 -->
+			<gd_item id="167000563" /><!-- Manastone: Healing Boost +3 -->
+			<!-- Level 70 -->
+			<gd_item id="167000766" /><!-- Manastone: HP +100 -->
+			<gd_item id="167000768" /><!-- Manastone: Accuracy +29 -->
+			<gd_item id="167000769" /><!-- Manastone: Evasion +19 -->
+			<gd_item id="167000770" /><!-- Manastone: Magic Boost +28 -->
+			<gd_item id="167000771" /><!-- Manastone: Parry +29 -->
+			<gd_item id="167000772" /><!-- Manastone: Block +29 -->
+			<gd_item id="167000773" /><!-- Manastone: Crit Strike +19 -->
+			<gd_item id="167000775" /><!-- Manastone: Magical Accuracy +16 -->
+			<gd_item id="167000776" /><!-- Manastone: Resist Magic +16 -->
+			<gd_item id="167000777" /><!-- Manastone: Crit Spell +5 -->
+		</gd_items>
+	</gd_rule>
+	<!-- Manastones (green, with odd level diffs) -->
+	<gd_rule rule_name="Manastones (Rare)" chance="0.75" dynamic_chance="true" min_diff="1" max_diff="10">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 30 -->
+			<gd_item id="167000454" /><!-- Manastone: Attack +4 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Manastones (Rare)" chance="0.75" dynamic_chance="true" min_diff="1" max_diff="15">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 50 -->
+			<gd_item id="167000518" /><!-- Manastone: Attack +5 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Manastones (Rare)" chance="0.75" dynamic_chance="true" min_diff="1" max_diff="5">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<!-- Level 60 -->
+			<gd_item id="167000559" /><!-- Manastone: Maximum Flight Time +7 -->
+			<gd_item id="167000563" /><!-- Manastone: Healing Boost +3 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Amplification Stone (Single)" chance="6" dynamic_chance="true" level_based_chance_reduction="true">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+			<gd_map map_id="320130000" /><!-- Adma_Stronghold -->
+			<gd_map map_id="300040000" /><!-- Dark_Poeta -->
+			<gd_map map_id="300150000" /><!-- Udas_Temple -->
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+			<gd_map map_id="300170000" /><!-- Beshmundir_Temple -->
+			<gd_map map_id="300280000" /><!-- Rentus_Base -->
+			<gd_map map_id="300620000" /><!-- Occupied Rentus Base -->
+			<gd_map map_id="300510000" /><!-- Tiamat_Stronghold -->
+			<gd_map map_id="300520000" /><!-- Dragon_Lords_Refuge -->
+			<gd_map map_id="300630000" /><!-- Anguished_Dragon_Lords_Refuge -->
+			<gd_map map_id="300590000" /><!-- Ophidan_Bridge -->
+			<gd_map map_id="301130000" /><!-- Sauro_Supply_Base -->
+		</gd_maps>
+		<gd_npcs>
+			<!-- Theobomos Lab -->
+			<gd_npc npc_id="214663" /><!-- Torch Spirit Iprita -->
+			<gd_npc npc_id="214664" /><!-- Wistful Syripne -->
+			<gd_npc npc_id="214665" /><!-- Soul Spirit Nomura -->
+			<gd_npc npc_id="214666" /><!-- Water Spirit Undine -->
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+			<!-- Adma Stronghold -->
+			<gd_npc npc_id="214691" /><!-- Captain Mundirve -->
+			<gd_npc npc_id="214692" /><!-- Butler Luitart -->
+			<gd_npc npc_id="214693" /><!-- Chief Maid Miladi -->
+			<gd_npc npc_id="214694" /><!-- Bloodthirster -->
+			<gd_npc npc_id="214695" /><!-- Princess Karemiwen -->
+			<!-- Dark Poeta -->
+			<gd_npc npc_id="214843" /><!-- Spiritmaster Atmach -->
+			<gd_npc npc_id="214864" /><!-- Noah's Furious Shade -->
+			<gd_npc npc_id="215386" /><!-- Professor Hewahewa -->
+			<gd_npc npc_id="215387" /><!-- Spectral Elim Elder -->
+			<gd_npc npc_id="215388" /><!-- Spaller Rakanatra -->
+			<gd_npc npc_id="215389" /><!-- Spaller Dhatra -->
+			<gd_npc npc_id="214880" /><!-- Spaller Echtra -->
+			<gd_npc npc_id="214895" /><!-- Main Power Generator -->
+			<gd_npc npc_id="214896" /><!-- Auxiliary Power Generator -->
+			<gd_npc npc_id="214897" /><!-- Emergency Generator -->
+			<gd_npc npc_id="214904" /><!-- Brigade General Anuhart -->
+			<!-- Udas Temple -->
+			<gd_npc npc_id="215782" /><!-- Vallakhan -->
+			<gd_npc npc_id="215783" /><!-- Nexus -->
+			<!-- Lower Udas Temple -->
+			<gd_npc npc_id="215784" /><!-- Chura Twinblade -->
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+			<!-- Beshmundir Temple -->
+			<gd_npc npc_id="216238" /><!-- Captain Lakhara -->
+			<gd_npc npc_id="216157" /><!-- Captain Lakhara -->
+			<gd_npc npc_id="216241" /><!-- Manadar -->
+			<gd_npc npc_id="216160" /><!-- Manadar -->
+			<gd_npc npc_id="216733" /><!-- Macunbello -->
+			<gd_npc npc_id="216734" /><!-- Macunbello -->
+			<gd_npc npc_id="216735" /><!-- Macunbello -->
+			<gd_npc npc_id="216736" /><!-- Macunbello -->
+			<gd_npc npc_id="216737" /><!-- Macunbello -->
+			<gd_npc npc_id="216738" /><!-- Macunbello -->
+			<gd_npc npc_id="216245" /><!-- Macunbello -->
+			<gd_npc npc_id="216244" /><!-- The Plaguebearer -->
+			<gd_npc npc_id="216163" /><!-- The Plaguebearer -->
+			<gd_npc npc_id="216242" /><!-- Vehala the Cursed -->
+			<gd_npc npc_id="216161" /><!-- Vehala the Cursed -->
+			<gd_npc npc_id="216158" /><!-- Ahbana the Wicked -->
+			<gd_npc npc_id="216239" /><!-- Ahbana the Wicked -->
+			<gd_npc npc_id="216246" /><!-- The Great Virhana -->
+			<gd_npc npc_id="216165" /><!-- The Great Virhana -->
+			<gd_npc npc_id="216250" /><!-- Dorakiki the Bold -->
+			<gd_npc npc_id="216169" /><!-- Dorakiki the Bold -->
+			<gd_npc npc_id="216248" /><!-- Taros Lifebane -->
+			<gd_npc npc_id="216167" /><!-- Taros Lifebane -->
+			<gd_npc npc_id="216263" /><!-- Isbariya the Resolute -->
+			<gd_npc npc_id="216182" /><!-- Isbariya the Resolute -->
+			<gd_npc npc_id="216249" /><!-- Flarestorm -->
+			<gd_npc npc_id="216168" /><!-- Flarestorm -->
+			<!-- Rentus Base -->
+			<gd_npc npc_id="217308" /><!-- Tarotran -->
+			<gd_npc npc_id="217316" /><!-- Ambusher Kiriana -->
+			<gd_npc npc_id="217309" /><!-- Captain Xasta -->
+			<gd_npc npc_id="217311" /><!-- Kuhara the Volatile -->
+			<gd_npc npc_id="217317" /><!-- Archmagus Upadi -->
+			<!-- Occupied Rentus Base -->
+			<gd_npc npc_id="236301" /><!-- Ambusher Kiriana -->
+			<gd_npc npc_id="236302" /><!-- Archmagus Upadi -->
+			<gd_npc npc_id="236297" /><!-- Captain Xasta -->
+			<!-- Tiamat Stronghold -->
+			<gd_npc npc_id="219352" /><!-- Invincible Shabokan -->
+			<gd_npc npc_id="219353" /><!-- Brigade General Chantra -->
+			<gd_npc npc_id="219354" /><!-- Brigade General Terath -->
+			<gd_npc npc_id="219355" /><!-- Traitor Kumbanda -->
+			<gd_npc npc_id="219356" /><!-- Brigade General Laksyaka -->
+			<gd_npc npc_id="219357" /><!-- Adjutant Anuhart -->
+			<!-- Dragon Lords Refuge -->
+			<gd_npc npc_id="219359" /><!-- Calindi Flamelord -->
+			<!-- Anguished Dragon Lord's Refuge -->
+			<gd_npc npc_id="236274" /><!-- Calindi Flamelord -->
+			<!-- Ophidan Bridge -->
+			<gd_npc npc_id="235768" /><!-- Spirited Velkur -->
+			<gd_npc npc_id="235771" /><!-- Velkur Aetherknife -->
+			<!-- Sauro Supply Base -->
+			<gd_npc npc_id="230849" /><!-- Guard Captain Rohuka -->
+			<gd_npc npc_id="230850" /><!-- Researcher Teselik -->
+			<gd_npc npc_id="230851" /><!-- Chief Gunner Kurmata -->
+			<gd_npc npc_id="230852" /><!-- Commander Ranodim -->
+			<gd_npc npc_id="230853" /><!-- Chief of Staff Moriata -->
+			<gd_npc npc_id="233255" /><!-- Gatekeeper Stranir -->
+			<gd_npc npc_id="233256" /><!-- Darkblade Ovanuka -->
+			<gd_npc npc_id="233257" /><!-- Archmagus Sayahum -->
+			<gd_npc npc_id="233258" /><!-- Derakanak the Reaver -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166500002" /><!-- Amplification Stone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Amplification Stone (Multi)" chance="8" dynamic_chance="true" member_limit="192" level_based_chance_reduction="true">
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark_Poeta -->
+			<gd_map map_id="300250000" /><!-- Esoterrace -->
+			<gd_map map_id="300150000" /><!-- Udas_Temple -->
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+			<gd_map map_id="300170000" /><!-- Beshmundir_Temple -->
+			<gd_map map_id="320150000" /><!-- Padmarashkas_Cave -->
+			<gd_map map_id="300280000" /><!-- Rentus_Base -->
+			<gd_map map_id="300620000" /><!-- Occupied Rentus Base -->
+			<gd_map map_id="300590000" /><!-- Ophidan_Bridge -->
+			<gd_map map_id="301230000" /><!-- Illuminary_Obelisk -->
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+			<gd_map map_id="301360000" /><!-- Infernal_Danuar_Reliquary -->
+			<gd_map map_id="301140000" /><!-- Danuar_Sanctuary -->
+			<gd_map map_id="301140000" /><!-- Seized_Danuar_Sanctuary -->
+			<gd_map map_id="301130000" /><!-- Sauro_Supply_Base -->
+			<gd_map map_id="300800000" /><!-- Infinity_Shard -->
+			<gd_map map_id="300700000" /><!-- The_Hexway -->
+			<gd_map map_id="301260000" /><!-- Legions_Krotan_Barracks -->
+			<gd_map map_id="301280000" /><!-- Kysis_Barracks -->
+			<gd_map map_id="301240000" /><!-- Legions_Kysis_Barracks -->
+			<gd_map map_id="301290000" /><!-- Miren_Barracks -->
+			<gd_map map_id="301250000" /><!-- Legions_Miren_Barracks -->
+		</gd_maps>
+		<gd_npcs>
+			<!-- Dark Poeta -->
+			<gd_npc npc_id="215281" /><!-- Calindi Flamelord -->
+			<gd_npc npc_id="217166" /><!-- Tahabata Pyrelord -->
+			<!-- Esoterrace -->
+			<gd_npc npc_id="217204" /><!-- Kexkra -->
+			<gd_npc npc_id="217206" /><!-- Warden Surama -->
+			<!-- Udas Temple -->
+			<gd_npc npc_id="215793" /><!-- Devoted Anurati -->
+			<!-- Lower Udas Temple -->
+			<gd_npc npc_id="215795" /><!-- Debilkarim the maker -->
+			<!-- Beshmundirs Temple -->
+			<gd_npc npc_id="216183" /><!-- Stormwing -->
+			<gd_npc npc_id="216264" /><!-- Stormwing -->
+			<!-- Padmarashkas Cave -->
+			<gd_npc npc_id="218756" /><!-- Padmarashka -->
+			<!-- Rentus Base -->
+			<gd_npc npc_id="218614" /><!-- Brigade General Vasharti -->
+			<!-- Occupied Rentus Base -->
+			<gd_npc npc_id="236300" /><!-- Brigade General Vasharti -->
+			<!-- Ophidan Bridge -->
+			<gd_npc npc_id="235768" /><!-- Spirited Velkur -->
+			<gd_npc npc_id="235769" /><!-- Velkur Aethercaster -->
+			<gd_npc npc_id="235770" /><!-- Velkur Aetherpriest -->
+			<gd_npc npc_id="235771" /><!-- Velkur Aetherknife -->
+			<!-- Illuminary Obelisk -->
+			<gd_npc npc_id="233740" /><!-- Test Weapon Dynatoum -->
+			<!-- Infernal Illuminary Obelisk -->
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+			<!-- Infernal Danuar Reliquary -->
+			<gd_npc npc_id="234691" /><!-- Enraged Queen Modor -->
+			<!-- Danuar Sanctuary -->
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+			<!-- Seized Danuar Sanctuary -->
+			<gd_npc npc_id="235619" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235620" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235621" /><!-- Virulent Ukahim -->
+			<!-- Sauro Supply Base -->
+			<gd_npc npc_id="230857" /><!-- Guard Captain Ahuradim -->
+			<gd_npc npc_id="230858" /><!-- Brigade General Sheba -->
+			<!-- Infinity Shard -->
+			<gd_npc npc_id="231073" /><!-- Hyperion -->
+			<!-- The Hexway -->
+			<gd_npc npc_id="219609" /><!-- Captain Jarka -->
+			<!-- Krotan Barracks -->
+			<gd_npc npc_id="233632" /><!-- Weakened Krotan Lord -->
+			<gd_npc npc_id="233633" /><!-- Enraged Krotan Lord -->
+			<!-- Kysis Barracks -->
+			<gd_npc npc_id="233675" /><!-- Weakened Kysis Duke -->
+			<gd_npc npc_id="233676" /><!-- Enraged Kysis Duke -->
+			<!-- Miren Barracks -->
+			<gd_npc npc_id="233718" /><!-- Weakened Miren Prince -->
+			<gd_npc npc_id="233719" /><!-- Enraged Miren Prince -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166500002" /><!-- Amplification Stone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Tempering Solution (World Drop)" chance="0.05" level_based_chance_reduction="true">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+			<gd_rating rating="LEGENDARY" />
+		</gd_ratings>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA" />
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+			<gd_world wd_type="BALAUREA_INSTANCE" />
+		</gd_worlds>
+		<gd_items>
+			<gd_item id="166030005" /><!-- Tempering Solution -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Omega Enchantment Stone" chance="1" level_based_chance_reduction="true">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+			<gd_rating rating="LEGENDARY" />
+		</gd_ratings>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA" />
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+			<gd_world wd_type="BALAUREA_INSTANCE" />
+		</gd_worlds>
+		<gd_items>
+			<gd_item id="166020000" /><!-- Omega Enchantment Stone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Tempering Solution Chest (Single)" chance="6" dynamic_chance="true" level_based_chance_reduction="true">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+			<gd_map map_id="320130000" /><!-- Adma_Stronghold -->
+			<gd_map map_id="300040000" /><!-- Dark_Poeta -->
+			<gd_map map_id="300150000" /><!-- Udas_Temple -->
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+			<gd_map map_id="300170000" /><!-- Beshmundir_Temple -->
+			<gd_map map_id="300280000" /><!-- Rentus_Base -->
+			<gd_map map_id="300620000" /><!-- Occupied Rentus Base -->
+			<gd_map map_id="300510000" /><!-- Tiamat_Stronghold -->
+			<gd_map map_id="300520000" /><!-- Dragon_Lords_Refuge -->
+			<gd_map map_id="300630000" /><!-- Anguished_Dragon_Lords_Refuge -->
+			<gd_map map_id="300590000" /><!-- Ophidan_Bridge -->
+			<gd_map map_id="301130000" /><!-- Sauro_Supply_Base -->
+		</gd_maps>
+		<gd_npcs>
+			<!-- Theobomos Lab -->
+			<gd_npc npc_id="214663" /><!-- Torch Spirit Iprita -->
+			<gd_npc npc_id="214664" /><!-- Wistful Syripne -->
+			<gd_npc npc_id="214665" /><!-- Soul Spirit Nomura -->
+			<gd_npc npc_id="214666" /><!-- Water Spirit Undine -->
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+			<!-- Adma Stronghold -->
+			<gd_npc npc_id="214691" /><!-- Captain Mundirve -->
+			<gd_npc npc_id="214692" /><!-- Butler Luitart -->
+			<gd_npc npc_id="214693" /><!-- Chief Maid Miladi -->
+			<gd_npc npc_id="214694" /><!-- Bloodthirster -->
+			<gd_npc npc_id="214695" /><!-- Princess Karemiwen -->
+			<!-- Dark Poeta -->
+			<gd_npc npc_id="214843" /><!-- Spiritmaster Atmach -->
+			<gd_npc npc_id="214864" /><!-- Noah's Furious Shade -->
+			<gd_npc npc_id="215386" /><!-- Professor Hewahewa -->
+			<gd_npc npc_id="215387" /><!-- Spectral Elim Elder -->
+			<gd_npc npc_id="215388" /><!-- Spaller Rakanatra -->
+			<gd_npc npc_id="215389" /><!-- Spaller Dhatra -->
+			<gd_npc npc_id="214880" /><!-- Spaller Echtra -->
+			<gd_npc npc_id="214895" /><!-- Main Power Generator -->
+			<gd_npc npc_id="214896" /><!-- Auxiliary Power Generator -->
+			<gd_npc npc_id="214897" /><!-- Emergency Generator -->
+			<gd_npc npc_id="214904" /><!-- Brigade General Anuhart -->
+			<!-- Udas Temple -->
+			<gd_npc npc_id="215782" /><!-- Vallakhan -->
+			<gd_npc npc_id="215783" /><!-- Nexus -->
+			<!-- Lower Udas Temple -->
+			<gd_npc npc_id="215784" /><!-- Chura Twinblade -->
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+			<!-- Beshmundir Temple -->
+			<gd_npc npc_id="216238" /><!-- Captain Lakhara -->
+			<gd_npc npc_id="216157" /><!-- Captain Lakhara -->
+			<gd_npc npc_id="216241" /><!-- Manadar -->
+			<gd_npc npc_id="216160" /><!-- Manadar -->
+			<gd_npc npc_id="216733" /><!-- Macunbello -->
+			<gd_npc npc_id="216734" /><!-- Macunbello -->
+			<gd_npc npc_id="216735" /><!-- Macunbello -->
+			<gd_npc npc_id="216736" /><!-- Macunbello -->
+			<gd_npc npc_id="216737" /><!-- Macunbello -->
+			<gd_npc npc_id="216738" /><!-- Macunbello -->
+			<gd_npc npc_id="216245" /><!-- Macunbello -->
+			<gd_npc npc_id="216244" /><!-- The Plaguebearer -->
+			<gd_npc npc_id="216163" /><!-- The Plaguebearer -->
+			<gd_npc npc_id="216242" /><!-- Vehala the Cursed -->
+			<gd_npc npc_id="216161" /><!-- Vehala the Cursed -->
+			<gd_npc npc_id="216158" /><!-- Ahbana the Wicked -->
+			<gd_npc npc_id="216239" /><!-- Ahbana the Wicked -->
+			<gd_npc npc_id="216246" /><!-- The Great Virhana -->
+			<gd_npc npc_id="216165" /><!-- The Great Virhana -->
+			<gd_npc npc_id="216250" /><!-- Dorakiki the Bold -->
+			<gd_npc npc_id="216169" /><!-- Dorakiki the Bold -->
+			<gd_npc npc_id="216248" /><!-- Taros Lifebane -->
+			<gd_npc npc_id="216167" /><!-- Taros Lifebane -->
+			<gd_npc npc_id="216263" /><!-- Isbariya the Resolute -->
+			<gd_npc npc_id="216182" /><!-- Isbariya the Resolute -->
+			<gd_npc npc_id="216249" /><!-- Flarestorm -->
+			<gd_npc npc_id="216168" /><!-- Flarestorm -->
+			<!-- Rentus Base -->
+			<gd_npc npc_id="217308" /><!-- Tarotran -->
+			<gd_npc npc_id="217316" /><!-- Ambusher Kiriana -->
+			<gd_npc npc_id="217309" /><!-- Captain Xasta -->
+			<gd_npc npc_id="217311" /><!-- Kuhara the Volatile -->
+			<gd_npc npc_id="217317" /><!-- Archmagus Upadi -->
+			<!-- Occupied Rentus Base -->
+			<gd_npc npc_id="236301" /><!-- Ambusher Kiriana -->
+			<gd_npc npc_id="236302" /><!-- Archmagus Upadi -->
+			<gd_npc npc_id="236297" /><!-- Captain Xasta -->
+			<!-- Tiamat Stronghold -->
+			<gd_npc npc_id="219352" /><!-- Invincible Shabokan -->
+			<gd_npc npc_id="219353" /><!-- Brigade General Chantra -->
+			<gd_npc npc_id="219354" /><!-- Brigade General Terath -->
+			<gd_npc npc_id="219355" /><!-- Traitor Kumbanda -->
+			<gd_npc npc_id="219356" /><!-- Brigade General Laksyaka -->
+			<gd_npc npc_id="219357" /><!-- Adjutant Anuhart -->
+			<!-- Dragon Lords Refuge -->
+			<gd_npc npc_id="219359" /><!-- Calindi Flamelord -->
+			<!-- Anguished Dragon Lord's Refuge -->
+			<gd_npc npc_id="236274" /><!-- Calindi Flamelord -->
+			<!-- Ophidan Bridge -->
+			<gd_npc npc_id="235768" /><!-- Spirited Velkur -->
+			<gd_npc npc_id="235771" /><!-- Velkur Aetherknife -->
+			<!-- Sauro Supply Base -->
+			<gd_npc npc_id="230849" /><!-- Guard Captain Rohuka -->
+			<gd_npc npc_id="230850" /><!-- Researcher Teselik -->
+			<gd_npc npc_id="230851" /><!-- Chief Gunner Kurmata -->
+			<gd_npc npc_id="230852" /><!-- Commander Ranodim -->
+			<gd_npc npc_id="230853" /><!-- Chief of Staff Moriata -->
+			<gd_npc npc_id="233255" /><!-- Gatekeeper Stranir -->
+			<gd_npc npc_id="233256" /><!-- Darkblade Ovanuka -->
+			<gd_npc npc_id="233257" /><!-- Archmagus Sayahum -->
+			<gd_npc npc_id="233258" /><!-- Derakanak the Reaver -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053083" /><!-- Tempering Solution Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Tempering Solution Chest (Shared)" chance="6" dynamic_chance="true" member_limit="192" level_based_chance_reduction="true">
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark_Poeta -->
+			<gd_map map_id="300250000" /><!-- Esoterrace -->
+			<gd_map map_id="300150000" /><!-- Udas_Temple -->
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+			<gd_map map_id="300170000" /><!-- Beshmundir_Temple -->
+			<gd_map map_id="320150000" /><!-- Padmarashkas_Cave -->
+			<gd_map map_id="300280000" /><!-- Rentus_Base -->
+			<gd_map map_id="300620000" /><!-- Occupied Rentus Base -->
+			<gd_map map_id="300590000" /><!-- Ophidan_Bridge -->
+			<gd_map map_id="301230000" /><!-- Illuminary_Obelisk -->
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+			<gd_map map_id="301360000" /><!-- Infernal_Danuar_Reliquary -->
+			<gd_map map_id="301140000" /><!-- Danuar_Sanctuary -->
+			<gd_map map_id="301140000" /><!-- Seized_Danuar_Sanctuary -->
+			<gd_map map_id="301130000" /><!-- Sauro_Supply_Base -->
+			<gd_map map_id="300800000" /><!-- Infinity_Shard -->
+			<gd_map map_id="300700000" /><!-- The_Hexway -->
+			<gd_map map_id="301260000" /><!-- Legions_Krotan_Barracks -->
+			<gd_map map_id="301280000" /><!-- Kysis_Barracks -->
+			<gd_map map_id="301240000" /><!-- Legions_Kysis_Barracks -->
+			<gd_map map_id="301290000" /><!-- Miren_Barracks -->
+			<gd_map map_id="301250000" /><!-- Legions_Miren_Barracks -->
+		</gd_maps>
+		<gd_npcs>
+			<!-- Dark Poeta -->
+			<gd_npc npc_id="215281" /><!-- Calindi Flamelord -->
+			<gd_npc npc_id="217166" /><!-- Tahabata Pyrelord -->
+			<!-- Esoterrace -->
+			<gd_npc npc_id="217204" /><!-- Kexkra -->
+			<gd_npc npc_id="217206" /><!-- Warden Surama -->
+			<!-- Udas Temple -->
+			<gd_npc npc_id="215793" /><!-- Devoted Anurati -->
+			<!-- Lower Udas Temple -->
+			<gd_npc npc_id="215795" /><!-- Debilkarim the maker -->
+			<!-- Beshmundirs Temple -->
+			<gd_npc npc_id="216183" /><!-- Stormwing -->
+			<gd_npc npc_id="216264" /><!-- Stormwing -->
+			<!-- Padmarashkas Cave -->
+			<gd_npc npc_id="218756" /><!-- Padmarashka -->
+			<!-- Rentus Base -->
+			<gd_npc npc_id="218614" /><!-- Brigade General Vasharti -->
+			<!-- Occupied Rentus Base -->
+			<gd_npc npc_id="236300" /><!-- Brigade General Vasharti -->
+			<!-- Ophidan Bridge -->
+			<gd_npc npc_id="235768" /><!-- Spirited Velkur -->
+			<gd_npc npc_id="235769" /><!-- Velkur Aethercaster -->
+			<gd_npc npc_id="235770" /><!-- Velkur Aetherpriest -->
+			<gd_npc npc_id="235771" /><!-- Velkur Aetherknife -->
+			<!-- Illuminary Obelisk -->
+			<gd_npc npc_id="233740" /><!-- Test Weapon Dynatoum -->
+			<!-- Infernal Illuminary Obelisk -->
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+			<!-- Infernal Danuar Reliquary -->
+			<gd_npc npc_id="234691" /><!-- Enraged Queen Modor -->
+			<!-- Danuar Sanctuary -->
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+			<!-- Seized Danuar Sanctuary -->
+			<gd_npc npc_id="235619" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235620" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235621" /><!-- Virulent Ukahim -->
+			<!-- Sauro Supply Base -->
+			<gd_npc npc_id="230857" /><!-- Guard Captain Ahuradim -->
+			<gd_npc npc_id="230858" /><!-- Brigade General Sheba -->
+			<!-- Infinity Shard -->
+			<gd_npc npc_id="231073" /><!-- Hyperion -->
+			<!-- The Hexway -->
+			<gd_npc npc_id="219609" /><!-- Captain Jarka -->
+			<!-- Krotan Barracks -->
+			<gd_npc npc_id="233632" /><!-- Weakened Krotan Lord -->
+			<gd_npc npc_id="233633" /><!-- Enraged Krotan Lord -->
+			<!-- Kysis Barracks -->
+			<gd_npc npc_id="233675" /><!-- Weakened Kysis Duke -->
+			<gd_npc npc_id="233676" /><!-- Enraged Kysis Duke -->
+			<!-- Miren Barracks -->
+			<gd_npc npc_id="233718" /><!-- Weakened Miren Prince -->
+			<gd_npc npc_id="233719" /><!-- Enraged Miren Prince -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053083" /><!-- Tempering Solution Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Empyrean Plume Chest (Single)" chance="1">
+		<gd_maps>
+			<gd_map map_id="301270000" /><!-- Linkgate_Foundry -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234990" /><!-- Wounded Belsagos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053295" /><!-- Empyrean Plume Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Empyrean Plume Chest (Single)" chance="3">
+		<gd_maps>
+			<gd_map map_id="301270000" /><!-- Linkgate_Foundry -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="233898" /><!-- Volatile Belsagos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053295" /><!-- Empyrean Plume Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Empyrean Plume Chest (Single)" chance="5" level_based_chance_reduction="true">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+			<gd_map map_id="310090000" /><!-- Indratu_Fortress -->
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+			<gd_map map_id="320130000" /><!-- Adma_Stronghold -->
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+			<gd_map map_id="301270000" /><!-- Linkgate_Foundry -->
+		</gd_maps>
+		<gd_npcs>
+			<!-- Fire Temple -->
+			<gd_npc npc_id="212846" /><!-- Kromede the Corrupt -->
+			<gd_npc npc_id="214621" /><!-- Vile Judge Kromede -->
+			<!-- Draupnir Cave -->
+			<gd_npc npc_id="213780" /><!-- Commander Bakarma -->
+			<!-- Indratu Fortress -->
+			<gd_npc npc_id="214159" /><!-- Brigadier Indratu -->
+			<!-- Theobomos Lab -->
+			<gd_npc npc_id="214669" /><!-- Unstable Triroan -->
+			<!-- Adma Stronghold -->
+			<gd_npc npc_id="214696" /><!-- Lord Lannok -->
+			<!-- Talloc's Hollow -->
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+			<!-- Linkgate Foundry -->
+			<gd_npc npc_id="234991" /><!-- Furious Belsagos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053295" /><!-- Empyrean Plume Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Empyrean Plume Chest (Shared)" chance="5" member_limit="192" level_based_chance_reduction="true">
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark_Poeta -->
+			<gd_map map_id="300250000" /><!-- Esoterrace -->
+			<gd_map map_id="300150000" /><!-- Udas_Temple -->
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+			<gd_map map_id="300170000" /><!-- Beshmundir_Temple -->
+			<gd_map map_id="320150000" /><!-- Padmarashkas_Cave -->
+			<gd_map map_id="300280000" /><!-- Rentus_Base -->
+			<gd_map map_id="300620000" /><!-- Occupied Rentus Base -->
+			<gd_map map_id="300590000" /><!-- Ophidan_Bridge -->
+			<gd_map map_id="301230000" /><!-- Illuminary_Obelisk -->
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+			<gd_map map_id="301360000" /><!-- Infernal_Danuar_Reliquary -->
+			<gd_map map_id="301140000" /><!-- Danuar_Sanctuary -->
+			<gd_map map_id="301140000" /><!-- Seized_Danuar_Sanctuary -->
+			<gd_map map_id="301130000" /><!-- Sauro_Supply_Base -->
+			<gd_map map_id="300800000" /><!-- Infinity_Shard -->
+			<gd_map map_id="300700000" /><!-- The_Hexway -->
+			<gd_map map_id="301260000" /><!-- Legions_Krotan_Barracks -->
+			<gd_map map_id="301280000" /><!-- Kysis_Barracks -->
+			<gd_map map_id="301240000" /><!-- Legions_Kysis_Barracks -->
+			<gd_map map_id="301290000" /><!-- Miren_Barracks -->
+			<gd_map map_id="301250000" /><!-- Legions_Miren_Barracks -->
+		</gd_maps>
+		<gd_npcs>
+			<!-- Dark Poeta -->
+			<gd_npc npc_id="215281" /><!-- Calindi Flamelord -->
+			<gd_npc npc_id="217166" /><!-- Tahabata Pyrelord -->
+			<!-- Esoterrace -->
+			<gd_npc npc_id="217204" /><!-- Kexkra -->
+			<gd_npc npc_id="217206" /><!-- Warden Surama -->
+			<!-- Udas Temple -->
+			<gd_npc npc_id="215793" /><!-- Devoted Anurati -->
+			<!-- Lower Udas Temple -->
+			<gd_npc npc_id="215795" /><!-- Debilkarim the maker -->
+			<!-- Beshmundirs Temple -->
+			<gd_npc npc_id="216183" /><!-- Stormwing -->
+			<gd_npc npc_id="216264" /><!-- Stormwing -->
+			<!-- Padmarashkas Cave -->
+			<gd_npc npc_id="218756" /><!-- Padmarashka -->
+			<!-- Rentus Base -->
+			<gd_npc npc_id="218614" /><!-- Brigade General Vasharti -->
+			<!-- Occupied Rentus Base -->
+			<gd_npc npc_id="236300" /><!-- Brigade General Vasharti -->
+			<!-- Ophidan Bridge -->
+			<gd_npc npc_id="235768" /><!-- Spirited Velkur -->
+			<gd_npc npc_id="235769" /><!-- Velkur Aethercaster -->
+			<gd_npc npc_id="235770" /><!-- Velkur Aetherpriest -->
+			<gd_npc npc_id="235771" /><!-- Velkur Aetherknife -->
+			<!-- Illuminary Obelisk -->
+			<gd_npc npc_id="233740" /><!-- Test Weapon Dynatoum -->
+			<!-- Infernal Illuminary Obelisk -->
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+			<!-- Infernal Danuar Reliquary -->
+			<gd_npc npc_id="234691" /><!-- Enraged Queen Modor -->
+			<!-- Danuar Sanctuary -->
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+			<!-- Seized Danuar Sanctuary -->
+			<gd_npc npc_id="235619" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235620" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235621" /><!-- Virulent Ukahim -->
+			<!-- Sauro Supply Base -->
+			<gd_npc npc_id="230857" /><!-- Guard Captain Ahuradim -->
+			<gd_npc npc_id="230858" /><!-- Brigade General Sheba -->
+			<!-- Infinity Shard -->
+			<gd_npc npc_id="231073" /><!-- Hyperion -->
+			<!-- The Hexway -->
+			<gd_npc npc_id="219609" /><!-- Captain Jarka -->
+			<!-- Krotan Barracks -->
+			<gd_npc npc_id="233632" /><!-- Weakened Krotan Lord -->
+			<gd_npc npc_id="233633" /><!-- Enraged Krotan Lord -->
+			<!-- Kysis Barracks -->
+			<gd_npc npc_id="233675" /><!-- Weakened Kysis Duke -->
+			<gd_npc npc_id="233676" /><!-- Enraged Kysis Duke -->
+			<!-- Miren Barracks -->
+			<gd_npc npc_id="233718" /><!-- Weakened Miren Prince -->
+			<gd_npc npc_id="233719" /><!-- Enraged Miren Prince -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053295" /><!-- Empyrean Plume Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Courier Pass Lv.50" chance="5">
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark_Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="217166" /><!-- Tahabata Pyrelord -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188950002" /><!-- Special Courier Pass (Fabled/Lv.50 and lower) -->
+			<gd_item id="188950005" /><!-- Special Courier Pass (Eternal/Lv.50 and lower) -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Fabled Courier Pass Lv.51-55" chance="5">
+		<gd_maps>
+			<gd_map map_id="300250000" /><!-- Esoterrace -->
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+			<gd_map map_id="300150000" /><!-- Udas_Temple -->
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="217204" /><!-- Kexkra -->
+			<gd_npc npc_id="217206" /><!-- Warden Surama -->
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+			<gd_npc npc_id="215793" /><!-- Devoted Anurati -->
+			<gd_npc npc_id="215795" /><!-- Debilkarim The Maker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188950003" /><!-- Special Courier Pass (Fabled/Lv.51-55) -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Eternal Courier Pass Lv.51-55" chance="5">
+		<gd_maps>
+			<gd_map map_id="300170000" /><!-- Beshmundir_Temple -->
+			<gd_map map_id="320150000" /><!-- Padmarashkas_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="216183" /><!-- Stormwing -->
+			<gd_npc npc_id="218756" /><!-- Padmarashka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188950006" /><!-- Special Courier Pass (Eternal/Lv.51-55) -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Eternal Courier Pass Lv.56-60" chance="5">
+		<gd_maps>
+			<gd_map map_id="300280000" /><!-- Rentus_Base -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="217313" /><!-- Brigade General Vasharti -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188950007" /><!-- Special Courier Pass (Eternal/Lv.56-60) -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Eternal Courier Pass Lv.61-65" chance="5">
+		<gd_maps>
+			<gd_map map_id="300610000" /><!-- Raksang_Ruins -->
+			<gd_map map_id="301300000" /><!-- Krotan_Barracks -->
+			<gd_map map_id="301260000" /><!-- Legions_Krotan_Barracks -->
+			<gd_map map_id="301280000" /><!-- Kysis_Barracks -->
+			<gd_map map_id="301240000" /><!-- Legions_Kysis_Barracks -->
+			<gd_map map_id="301290000" /><!-- Miren_Barracks -->
+			<gd_map map_id="301250000" /><!-- Legions_Miren_Barracks -->
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+			<gd_map map_id="300590000" /><!-- Ophidan_Bridge -->
+			<gd_map map_id="301340000" /><!-- Linkgate_Foundry -->
+			<gd_map map_id="301230000" /><!-- Illuminary_Obelisk -->
+			<gd_map map_id="300620000" /><!-- Occupied_Rentus_Base -->
+			<gd_map map_id="301140000" /><!-- Seized_Danuar_Sanctuary -->
+			<gd_map map_id="301130000" /><!-- Sauro_Supply_Base -->
+			<gd_map map_id="300700000" /><!-- The_Hexway -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="236306" /><!-- Reviver Nasto -->
+			<gd_npc npc_id="233632" /><!-- Weakened Krotan Lord -->
+			<gd_npc npc_id="233633" /><!-- Enraged Krotan Lord -->
+			<gd_npc npc_id="233675" /><!-- Weakened Kysis Duke -->
+			<gd_npc npc_id="233676" /><!-- Enraged Kysis Duke -->
+			<gd_npc npc_id="233718" /><!-- Weakened Miren Prince -->
+			<gd_npc npc_id="233719" /><!-- Enraged Miren Prince -->
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+			<gd_npc npc_id="235768" /><!-- Spirited Velkur -->
+			<gd_npc npc_id="235769" /><!-- Velkur Aethercaster -->
+			<gd_npc npc_id="235770" /><!-- Velkur Aetherpriest -->
+			<gd_npc npc_id="235771" /><!-- Velkur Aetherknife -->
+			<gd_npc npc_id="234991" /><!-- Furious Belsagos -->
+			<gd_npc npc_id="233740" /><!-- Test Weapon Dynatoum -->
+			<gd_npc npc_id="236300" /><!-- Brigade General Vasharti -->
+			<gd_npc npc_id="235619" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235620" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235621" /><!-- Virulent Ukahim -->
+			<gd_npc npc_id="230857" /><!-- Guard Captain Ahuradim -->
+			<gd_npc npc_id="230858" /><!-- Brigade General Sheba -->
+			<gd_npc npc_id="219609" /><!-- Captain Jarka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188950015" /><!-- Special Courier Pass (Eternal/Lv.61-65) -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Mythic Courier Pass Lv.61-65" chance="5">
+		<gd_maps>
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+			<gd_map map_id="301360000" /><!-- Infernal_Danuar_Reliquary -->
+			<gd_map map_id="300800000" /><!-- Infinity_Shard -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+			<gd_npc npc_id="234691" /><!-- Enraged Queen Modor -->
+			<gd_npc npc_id="231073" /><!-- Hyperion -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188950019" /><!-- Special Courier Pass (Mythic/Lv.61-65) -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

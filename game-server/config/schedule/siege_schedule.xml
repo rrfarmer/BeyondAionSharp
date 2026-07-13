@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<siege_schedule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="siege_schedule.xsd">
+	<!-- Divine Fortress -->
+	<fortress id="1011">
+		<siegeTime>0 0 21 ? * FRI</siegeTime>
+	</fortress>
+	<!-- Siel's Western Fortress -->
+	<fortress id="1131">
+		<siegeTime>0 0 17 ? * TUE,THU,SAT</siegeTime>
+	</fortress>
+	<!-- Siel's Eastern Fortress -->
+	<fortress id="1132">
+		<siegeTime>0 0 17 ? * TUE,THU,SAT</siegeTime>
+	</fortress>
+	<!-- Sulfur Fortress -->
+	<fortress id="1141">
+		<siegeTime>0 0 17 ? * TUE,THU,SAT</siegeTime>
+	</fortress>
+	<!-- Roah Fortress -->
+	<fortress id="1211">
+		<siegeTime>0 0 17 ? * TUE,THU,SAT</siegeTime>
+	</fortress>
+	<!-- Krotan Refuge -->
+	<fortress id="1221">
+		<siegeTime>0 0 19 ? * MON</siegeTime>
+		<siegeTime>0 0 21 ? * SAT</siegeTime>
+	</fortress>
+	<!-- Kysis Fortress -->
+	<fortress id="1231">
+		<siegeTime>0 0 19 ? * MON</siegeTime>
+		<siegeTime>0 0 21 ? * SAT</siegeTime>
+	</fortress>
+	<!-- Miren Fortress -->
+	<fortress id="1241">
+		<siegeTime>0 0 19 ? * MON</siegeTime>
+		<siegeTime>0 0 21 ? * SAT</siegeTime>
+	</fortress>
+	<!-- Asteria Fortress -->
+	<fortress id="1251">
+		<siegeTime>0 0 17 ? * TUE,THU,SAT</siegeTime>
+	</fortress>
+	<!-- Temple of Scales -->
+	<fortress id="2011">
+		<siegeTime>0 0 19 ? * SAT</siegeTime>
+		<siegeTime>0 0 21 ? * MON,WED</siegeTime>
+	</fortress>
+	<!-- Altar of Avarice -->
+	<fortress id="2021">
+		<siegeTime>0 0 19 ? * SAT</siegeTime>
+		<siegeTime>0 0 21 ? * MON,WED</siegeTime>
+	</fortress>
+	<!-- Vorgaltem Citadel -->
+	<fortress id="3011">
+		<siegeTime>0 0 19 ? * THU,SAT</siegeTime>
+		<siegeTime>0 0 21 ? * WED</siegeTime>
+	</fortress>
+	<!-- Crimson Temple -->
+	<fortress id="3021">
+		<siegeTime>0 0 19 ? * THU,SAT</siegeTime>
+		<siegeTime>0 0 21 ? * WED</siegeTime>
+	</fortress>
+	<!-- Wealhtheow Keep -->
+	<fortress id="7011">
+		<siegeTime>0 0 21 ? * SUN</siegeTime>
+	</fortress>
+	<agent_fight id="8011">
+		<siegeTime>0 50 20 ? * TUE</siegeTime>
+	</agent_fight>
+	<!--
+	<fortress id="10111">
+		<siegeTime>0 0 19 ? * SUN</siegeTime>
+	</fortress>
+	<fortress id="10211">
+		<siegeTime>0 0 19 ? * SUN</siegeTime>
+	</fortress>
+	<fortress id="10311">
+		<siegeTime>0 0 19 ? * SUN</siegeTime>
+	</fortress>
+	<fortress id="10411">
+		<siegeTime>0 0 19 ? * SUN</siegeTime>
+	</fortress>
+	-->
+</siege_schedule>

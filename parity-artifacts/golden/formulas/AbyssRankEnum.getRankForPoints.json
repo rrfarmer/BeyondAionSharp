@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "formula": "AbyssRankEnum.getRankForPoints",
+  "signature": "AbyssRankEnum getRankForPoints(int ap, int gp)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"ap": 0, "gp": 0}, "result": "GRADE9_SOLDIER" },
+    { "inputs": {"ap": 1200, "gp": 0}, "result": "GRADE8_SOLDIER" },
+    { "inputs": {"ap": 150800, "gp": 0}, "result": "GRADE1_SOLDIER" },
+    { "inputs": {"ap": 1000000, "gp": 1244}, "result": "STAR1_OFFICER" },
+    { "inputs": {"ap": 1000000, "gp": 12437}, "result": "SUPREME_COMMANDER" },
+    { "inputs": {"ap": 50000, "gp": 0}, "result": "GRADE4_SOLDIER" }
+  ]
+}

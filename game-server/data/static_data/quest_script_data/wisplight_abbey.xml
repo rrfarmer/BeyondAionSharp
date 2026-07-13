@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+		[BEGIN] SUMMARY
+			19600 [SCRIPT] Welcome to Wisplight Abbey
+			19601 [XML] Meet Your Instructors
+			19602 [XML] Academies and Abbeys
+			19603 [XML] [Daily] Clipping the Commotion
+			19604 [XML] Drauped into Theobomos
+			19605 [XML] Through Dust and Rifts
+			19606 [XML] Adma's Riches
+			19607 [XML] The Darkness Beyond
+			19608 [XML] Be Prepared
+			19609 [XML] [Daily] Dealing with Dionaes
+			19610 [XML] Brimming Hollow
+			19611 [XML] Undermined in Undirborg
+			19612 [XML] Balaur in Beshmundir
+			19613 [XML] Sarpan for Starters
+			19614 [XML] [Daily] Kamaring them Softly
+			19615 [XML] Hasten to Hariken
+			19616 [XML] Ties in Tiamaranta
+			19617 [XML] Refuge no More
+			19618 [XML] Reinforcing Rentus
+			19619 [XML] Steal the Siel
+			19620 [XML] Raging Katalam
+			19621 [XML] Demades in Danaria
+			19622 [XML] Kurius and Curiouser
+			19623 [XML] Still More in Levinshor
+			19624 [XML] Kaldor is Burning
+			19625 [XML] [Daily] Lofty Loftus
+			19626 [XML] Fight on Ophidan
+			19627 [XML] Sanctuary Sanctioning
+			19628 [XML] Finding Linkgate Foundry
+			19629 [XML] Sorry, Sauro
+			19630 [XML] Threat at Illuminary Obelisk
+		[END] SUMMARY
+	-->
+	
+	<!-- REPORTING QUESTS -->
+	<report_to_many id="19601" start_npc_ids="804651">
+		<npc_infos npc_ids="804652"/>
+		<npc_infos npc_ids="804653"/>
+		<npc_infos npc_ids="804654"/>
+		<npc_infos npc_ids="804655"/>
+	</report_to_many>
+	<report_to_many id="19602" start_npc_ids="804652">
+		<npc_infos npc_ids="205985"/>
+		<npc_infos npc_ids="798155"/>
+	</report_to_many>
+	<report_to id="19604" start_npc_ids="804652" end_npc_ids="204601"/>
+	<report_to id="19605" start_npc_ids="804652" end_npc_ids="798225"/>
+	<report_to id="19606" start_npc_ids="804652" end_npc_ids="800420"/>
+	<report_to id="19607" start_npc_ids="804652" end_npc_ids="204656"/>
+	<report_to_many id="19608" start_npc_ids="804653">
+		<npc_infos npc_ids="205985"/>
+		<npc_infos npc_ids="798926"/>
+	</report_to_many>
+	<report_to id="19610" start_npc_ids="804653" end_npc_ids="798909"/>
+	<report_to id="19611" start_npc_ids="804653" end_npc_ids="799029"/>
+	<report_to id="19612" start_npc_ids="804653" end_npc_ids="798926"/>
+	<report_to id="19613" start_npc_ids="804654" end_npc_ids="205579"/>
+	<report_to id="19615" start_npc_ids="804654" end_npc_ids="799531"/>
+	<report_to id="19616" start_npc_ids="804654" end_npc_ids="205842"/>
+	<report_to id="19617" start_npc_ids="804654" end_npc_ids="205886"/>
+	<report_to id="19618" start_npc_ids="804654" end_npc_ids="205842"/>
+	<report_to id="19619" start_npc_ids="804654" end_npc_ids="800066"/>
+	<report_to id="19620" start_npc_ids="804655" end_npc_ids="800527"/>
+	<report_to id="19621" start_npc_ids="804655" end_npc_ids="801281"/>
+	<report_to id="19622" start_npc_ids="804655" end_npc_ids="801541"/>
+	<report_to id="19623" start_npc_ids="804655" end_npc_ids="802350"/>
+	<report_to id="19624" start_npc_ids="804655" end_npc_ids="802431"/>
+	<report_to id="19626" start_npc_ids="804655" end_npc_ids="804613"/>
+	<report_to id="19627" start_npc_ids="804655" end_npc_ids="804613"/>
+	<report_to id="19628" start_npc_ids="804655" end_npc_ids="802350"/>
+	<report_to id="19629" start_npc_ids="804655" end_npc_ids="801945"/>
+	<report_to id="19630" start_npc_ids="804655" end_npc_ids="804598"/>
+	
+	<!-- MONSTER HUNT QUESTS -->
+	<monster_hunt id="19603" start_npc_ids="804651" end_npc_ids="798155" end_reward_next_step="true"/>
+	<monster_hunt id="19609" start_npc_ids="804651" end_npc_ids="798926" end_reward_next_step="true"/>
+	<monster_hunt id="19614" start_npc_ids="804651" end_npc_ids="205579" end_reward_next_step="true"/>
+	<monster_hunt id="19625" start_npc_ids="804651" end_npc_ids="800527" end_reward_next_step="true"/>
+</quest_scripts>

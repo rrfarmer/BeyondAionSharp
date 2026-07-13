@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PONG",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "pong",
+      "inputs": {},
+      "payloadHex": "0000"
+    }
+  ]
+}

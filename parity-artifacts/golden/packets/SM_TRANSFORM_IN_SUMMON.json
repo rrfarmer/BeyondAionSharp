@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TRANSFORM_IN_SUMMON",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "transformInSummon",
+      "inputs": {"objectId":100777,"summonObject":900111,"name":"Scalarharness"},
+      "payloadHex": "0FBC0D005300630061006C00610072006800610072006E006500730073000000A9890100"
+    }
+  ]
+}

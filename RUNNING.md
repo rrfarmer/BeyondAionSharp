@@ -10,9 +10,9 @@ Three executable projects in `AionServer.slnx`: **Aion.LoginServer**, **Aion.Gam
 
 ## 2. Database
 
-Default credentials/port the checked-in config expects: **`localhost:3307`**, user **`root`**, password **`aion`**
-(`login-server/config/myls.properties`, `game-server/config/mygs.properties`, `chat-server/config/mycs.properties`).
-If your DB differs, edit the `database.url` / `database.user` / `database.password` lines in those three files.
+Base configuration uses **`localhost:3306`**, user **`root`**, and a blank password. For local overrides, create
+`login-server/config/myls.properties`, `game-server/config/mygs.properties`, and `chat-server/config/mycs.properties`.
+Those files are ignored by Git. Set `database.url`, `database.user`, and `database.password` there.
 **Run the servers on the host (via VS), so use `localhost:<published-port>` — not `host.docker.internal`.**
 
 Load schema + the required gameservers seed (example uses the local Docker container `aion-gameserver-integration-mysql` published on 3307):
@@ -37,13 +37,13 @@ The GS registers as **id=1 / password=`1234`** (`gameserver.network.id` / `games
 
 ## 3. Config
 
-No setup needed. At startup each server walks **up** from its `bin/` output (`AppContext.BaseDirectory`) via `FindRepoRoot`
+At startup each server walks **up** from its `bin/` output (`AppContext.BaseDirectory`) via `FindRepoRoot`
 until it finds `game-server/config`, then reads the real `*/config` directories + the per-instance `my*.properties` overrides.
 Static data (665 XMLs under `game-server/data/static_data`) is loaded the same way — the first GS boot is a little slow while it parses.
 
 ## 4. Run in Visual Studio
 
-1. Open `dotnetConversion/AionServer.slnx`.
+1. Open `AionServer.slnx`.
 2. Right-click the **solution** → **Configure Startup Projects…** → **Multiple startup projects**.
 3. Action = **Start** for `Aion.LoginServer`, `Aion.ChatServer`, `Aion.GameServer`; **None** for everything else.
 4. Order: **LoginServer → ChatServer → GameServer** (drag up). Order is forgiving — GS/CS retry the bridge every ~2s — but LS-first keeps logs clean.
@@ -52,7 +52,6 @@ Static data (665 XMLs under `game-server/data/static_data`) is loaded the same w
 Or from the CLI (one terminal each, in order):
 
 ```bash
-cd dotnetConversion
 dotnet run --project src/Aion.LoginServer
 dotnet run --project src/Aion.ChatServer
 dotnet run --project src/Aion.GameServer

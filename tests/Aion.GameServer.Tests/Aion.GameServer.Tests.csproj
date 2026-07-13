@@ -26,7 +26,7 @@
        ./config/schedule/*.xml, faithful to Java. Deploy the schedule configs into the test output so the
        full-boot integration tests find them (mirrors a real GS deployment with config/ alongside the binary). -->
   <ItemGroup>
-    <Content Include="..\..\..\game-server\config\schedule\*.xml" Link="config\schedule\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\game-server\config\schedule\*.xml" Link="config\schedule\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

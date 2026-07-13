@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TRADE_IN_LIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "tradeInListNormal",
+      "inputs": {"objectId":700123,"npcId":798001,"npcType":"NORMAL","buyPriceModifier":80,"tabIds":[1,2,3]},
+      "payloadHex": "DBAE0A000150000000640000000300010000000200000003000000"
+    },
+    {
+      "name": "tradeInListAbyssSingleTab",
+      "inputs": {"objectId":700123,"npcId":798001,"npcType":"ABYSS","buyPriceModifier":100,"tabIds":[42]},
+      "payloadHex": "DBAE0A0002640000006400000001002A000000"
+    },
+    {
+      "name": "tradeInListEmptyCount",
+      "inputs": {"objectId":700123,"npcId":798001,"npcType":"NORMAL","buyPriceModifier":80,"tabIds":[]},
+      "payloadHex": ""
+    },
+    {
+      "name": "tradeInListZeroNpcId",
+      "inputs": {"objectId":700123,"npcId":0,"npcType":"NORMAL","buyPriceModifier":80,"tabIds":[1]},
+      "payloadHex": ""
+    }
+  ]
+}

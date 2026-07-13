@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEGION_UPDATE_SELF_INTRO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "selfIntro",
+      "inputs": {"playerObjId":770301,"selfintro":"For the glory of Atreia"},
+      "payloadHex": "FDC00B0046006F0072002000740068006500200067006C006F007200790020006F00660020004100740072006500690061000000"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "traceName": "cm-find-group-direct-mutation-post-boundary",
+  "traces": [
+    {
+      "schemaVersion": 1,
+      "traceName": "cm-find-group-direct-mutation-post-boundary",
+      "traceSource": "Java",
+      "action": 6,
+      "boundaryAccepted": true,
+      "activePlayerObjectId": 4004,
+      "activePlayerRace": "ASMODIANS",
+      "serverEpochSeconds": 1780390330,
+      "mutationKind": "Application",
+      "mutatedEntryObjectId": 4004,
+      "stateMutationRecordedBeforeDirectPackets": true,
+      "postedSystemMessageRecipientObjectId": 4004,
+      "postedSystemMessageType": "SmSystemMessage",
+      "postedSystemMessageId": 1400393,
+      "refreshedListRecipientObjectId": 4004,
+      "refreshedListPacketType": "SmFindGroup",
+      "refreshedListAction": 4,
+      "visibleEntryObjectIdsAfterMutation": [4004],
+      "executorInvokedFromBoundary": false,
+      "registrySendsObservedInOrder": false,
+      "worldBroadcastCount": 0,
+      "inviteDispatchCount": 0
+    }
+  ]
+}

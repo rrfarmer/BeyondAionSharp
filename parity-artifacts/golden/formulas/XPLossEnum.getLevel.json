@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "formula": "XPLossEnum.getLevel",
+  "signature": "int getLevel()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"entry": "LEVEL_6"}, "result": 6 },
+    { "inputs": {"entry": "LEVEL_30"}, "result": 30 },
+    { "inputs": {"entry": "LEVEL_40"}, "result": 40 },
+    { "inputs": {"entry": "LEVEL_50"}, "result": 50 },
+    { "inputs": {"entry": "LEVEL_55"}, "result": 55 },
+    { "inputs": {"entry": "LEVEL_60"}, "result": 60 },
+    { "inputs": {"entry": "LEVEL_65"}, "result": 65 }
+  ]
+}

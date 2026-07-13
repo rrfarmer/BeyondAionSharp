@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_INSTANCE_COUNT_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "default",
+      "inputs": {"mapId":300100000,"instanceId":7},
+      "payloadHex": "A029E3110700000001000000"
+    }
+  ]
+}

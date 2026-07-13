@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "formula": "AbyssRankEnum.getRankById",
+  "signature": "AbyssRankEnum getRankById(int id)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"id": 1}, "result": "GRADE9_SOLDIER" },
+    { "inputs": {"id": 9}, "result": "GRADE1_SOLDIER" },
+    { "inputs": {"id": 10}, "result": "STAR1_OFFICER" },
+    { "inputs": {"id": 14}, "result": "STAR5_OFFICER" },
+    { "inputs": {"id": 18}, "result": "SUPREME_COMMANDER" }
+  ]
+}

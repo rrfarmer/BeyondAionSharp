@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+		[BEGIN] SUMMARY
+			20000 [REMOVED] Vidar's Call
+			20001 [REMOVED] Traveling to Gelkmaros
+			29500 [REMOVED] Gaining the Templar's Stigma
+			29501 [REMOVED] Gaining the Gladiator's Stigma
+			29502 [REMOVED] Gaining the Cleric's Stigma
+			29503 [REMOVED] Gaining the Chanter's Stigma
+			29504 [REMOVED] Gaining the Assassin's Stigma
+			29505 [REMOVED] Gaining the Ranger's Stigma
+			29506 [REMOVED] Gaining the Sorcerer's Stigma
+			29507 [REMOVED] Gaining the Spiritmaster's Stigma
+		[END] SUMMARY
+	-->
+</quest_scripts>

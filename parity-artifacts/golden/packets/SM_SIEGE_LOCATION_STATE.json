@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SIEGE_LOCATION_STATE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "vulnerable",
+      "inputs": {"locationId":2011,"state":1},
+      "payloadHex": "DB07000001"
+    },
+    {
+      "name": "invulnerable",
+      "inputs": {"locationId":2021,"state":0},
+      "payloadHex": "E507000000"
+    }
+  ]
+}

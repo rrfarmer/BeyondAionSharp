@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_BIND_POINT_TELEPORT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "action0",
+      "inputs": {"action":0,"playerId":100,"locId":0,"cooldown":0},
+      "payloadHex": "0064000000"
+    },
+    {
+      "name": "action1",
+      "inputs": {"action":1,"playerId":101,"locId":555,"cooldown":0},
+      "payloadHex": "01650000002B020000"
+    },
+    {
+      "name": "action3",
+      "inputs": {"action":3,"playerId":102,"locId":556,"cooldown":60},
+      "payloadHex": "03660000002C0200003C000000"
+    }
+  ]
+}

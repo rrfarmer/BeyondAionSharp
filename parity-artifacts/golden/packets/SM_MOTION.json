@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MOTION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "emptyList",
+      "inputs": {"action":1},
+      "payloadHex": "010000"
+    }
+  ]
+}

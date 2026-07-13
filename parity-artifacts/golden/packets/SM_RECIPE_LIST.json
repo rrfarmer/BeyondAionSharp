@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RECIPE_LIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "single",
+      "inputs": {"recipeIds":[15001]},
+      "payloadHex": "0100993A000000"
+    },
+    {
+      "name": "empty",
+      "inputs": {"recipeIds":[]},
+      "payloadHex": "0000"
+    }
+  ]
+}

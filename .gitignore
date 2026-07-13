@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/.vs/
+**/TestResults/
+**/*.user
+**/__pycache__/
+*.pyc
+*.log
+
+game-server/cache/
+game-server/log/
+login-server/log/
+chat-server/log/
+game-server/config/mygs.properties
+login-server/config/myls.properties
+chat-server/config/mycs.properties
+docker/.env

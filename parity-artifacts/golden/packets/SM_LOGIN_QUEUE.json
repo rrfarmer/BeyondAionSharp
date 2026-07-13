@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LOGIN_QUEUE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "fixedSample",
+      "inputs": {"ctor":"private"},
+      "payloadHex": "050000003C00000032000000"
+    }
+  ]
+}

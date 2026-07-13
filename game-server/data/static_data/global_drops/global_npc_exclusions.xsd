@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="../global_types.xsd" />
+	<xs:include schemaLocation="../npcs/npcs.xsd" />
+	<xs:element name="global_npc_exclusions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" name="npc_ids" type="IntListType" />
+				<xs:element minOccurs="0" name="npc_names" type="StringListType" />
+				<xs:element minOccurs="0" name="npc_types" type="ListNpcTemplateType" />
+				<xs:element minOccurs="0" name="npc_tribes" type="ListTribeClass" />
+				<xs:element minOccurs="0" name="npc_abyss_types" type="ListAbyssType" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="ListNpcTemplateType">
+		<xs:list itemType="NpcTemplateType" />
+	</xs:simpleType>
+	<xs:simpleType name="ListTribeClass">
+		<xs:list itemType="TribeClass" />
+	</xs:simpleType>
+	<xs:simpleType name="ListAbyssType">
+		<xs:list itemType="AbyssType" />
+	</xs:simpleType>
+</xs:schema>

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "formula": "XPLossEnum.getExpLoss",
+  "signature": "long getExpLoss(int level, long expNeed)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"level": 5, "expNeed": 1000000}, "result": 0 },
+    { "inputs": {"level": 6, "expNeed": 1000000}, "result": 10000 },
+    { "inputs": {"level": 30, "expNeed": 1000000}, "result": 10000 },
+    { "inputs": {"level": 31, "expNeed": 1000000}, "result": 3500 },
+    { "inputs": {"level": 40, "expNeed": 1234567}, "result": 4321 },
+    { "inputs": {"level": 45, "expNeed": 999999}, "result": 2500 },
+    { "inputs": {"level": 50, "expNeed": 1000000}, "result": 2500 },
+    { "inputs": {"level": 65, "expNeed": 7777777}, "result": 19444 },
+    { "inputs": {"level": 66, "expNeed": 1000000}, "result": 0 }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_INVENTORY_UPDATE_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "invUpdateGeneralWithCreator",
+      "inputs": {"objectId":268500001,"itemId":161000001,"mask":6699,"desc":350123,"itemCount":7,"itemCreator":"Daeva","updateType":"DEC_ITEM_USE"},
+      "payloadHex": "21FC0010240057AF0A0000002C00002B1A07000000000000004400610065007600610000000000000000000000000000000000000000000012001600"
+    },
+    {
+      "name": "invUpdateGeneralNullCreator",
+      "inputs": {"objectId":268500001,"itemId":161000001,"mask":6699,"desc":350123,"itemCount":7,"itemCreator":null,"updateType":"DEC_ITEM_USE"},
+      "payloadHex": "21FC0010240057AF0A0000002200002B1A070000000000000000000000000000000000000000000000000000000012001600"
+    }
+  ]
+}

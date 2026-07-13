@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:jxb="http://java.sun.com/xml/ns/jaxb" jxb:version="2.1">
+	<xs:include schemaLocation="../modifiers.xsd"/>
+	<xs:element name="conqueror_protector_ranks">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="rank" type="CPRank" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="CPRank">
+		<xs:sequence>
+			<xs:element name="modifiers" type="Modifiers" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="type" type="CPType" use="required"/>
+		<xs:attribute name="rank_num" type="xs:int" use="required"/>
+		<xs:attribute name="visible_intruder_min_rank" type="xs:int"/>
+	</xs:complexType>
+	<xs:simpleType name="CPType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="CONQUEROR"/>
+			<xs:enumeration value="PROTECTOR"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

@@ -1,0 +1,596 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<gd_rule rule_name="Aetheric Field Fragment" chance="1">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="185000223" /><!-- Aetheric Field Fragment -->
+		</gd_items>
+	</gd_rule>
+	<!-- Sunayaka -->
+	<gd_rule rule_name="Named Hairpin" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235970" /><!-- Deadly Sunayaka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125003135" /><!-- Sunayaka's Hairpin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon Chest" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235970" /><!-- Deadly Sunayaka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188051824"/><!-- Sunayaka's Sword Box -->
+			<gd_item id="188051825" /><!-- Sunayaka's Warhammer Box -->
+			<gd_item id="188051826" /><!-- Sunayaka's Dagger Box -->
+			<gd_item id="188051827" /><!-- Sunayaka's Jewel Box -->
+			<gd_item id="188051828" /><!-- Sunayaka's Tome Box -->
+			<gd_item id="188051829" /><!-- Sunayaka's Greatsword Box -->
+			<gd_item id="188051830" /><!-- Sunayaka's Spear Box -->
+			<gd_item id="188051831" /><!-- Sunayaka's Staff Box -->
+			<gd_item id="188051832" /><!-- Sunayaka's Longbow Box -->
+			<gd_item id="101800856" /><!-- Sunayaka's Pistol -->
+			<gd_item id="101900854" /><!-- Sunayaka's Cannon -->
+			<gd_item id="102000888" /><!-- Sunayaka's Harp -->
+			<gd_item id="102100748" /><!-- Sunayaka's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<!-- Tatar -->
+	<gd_rule rule_name="Named Helm" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235966" /><!-- Aurelian Dadar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125003130" /><!-- Tatar's Headband -->
+			<gd_item id="125003131" /><!-- Tatar's Hat -->
+			<gd_item id="125003132" /><!-- Tatar's Chain Helm -->
+			<gd_item id="125003133" /><!-- Tatar's Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Souvenir" chance="40">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235966" /><!-- Aurelian Dadar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="170490017" /><!-- [Souvenir] Golden Tatar Statue -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235966" /><!-- Aurelian Dadar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100001297" /><!-- Tatar's Sword -->
+			<gd_item id="100100988" /><!-- Tatar's Warhammer -->
+			<gd_item id="100201146" /><!-- Tatar's Dagger -->
+			<gd_item id="100501004" /><!-- Tatar's Jewel -->
+			<gd_item id="100601058" /><!-- Tatar's Tome -->
+			<gd_item id="100900991" /><!-- Tatar's Greatsword -->
+			<gd_item id="101300949" /><!-- Tatar's Spear -->
+			<gd_item id="101501016" /><!-- Tatar's Staff -->
+			<gd_item id="101701030" /><!-- Tatar's Longbow -->
+			<gd_item id="101800792" /><!-- Tatar's Pistol -->
+			<gd_item id="101900796" /><!-- Tatar's Aethercannon -->
+			<gd_item id="102000830" /><!-- Tatar's Harp -->
+			<gd_item id="188051833" /><!-- Tatar's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Weapon" chance="50">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235966" /><!-- Aurelian Dadar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188051815" /><!-- Tatar's Sword Box -->
+			<gd_item id="188051816" /><!-- Tatar's Warhammer Box -->
+			<gd_item id="188051817" /><!-- Tatar's Dagger Box -->
+			<gd_item id="188051818" /><!-- Tatar's Jewel Box -->
+			<gd_item id="188051819" /><!-- Tatar's Tome Box -->
+			<gd_item id="188051820" /><!-- Tatar's Greatsword Box -->
+			<gd_item id="188051821" /><!-- Tatar's Spear Box -->
+			<gd_item id="188051822" /><!-- Tatar's Staff Box -->
+			<gd_item id="188051823" /><!-- Tatar's Longbow Box -->
+			<gd_item id="188052657" /><!-- Tatar's Pistol Box -->
+			<gd_item id="188052658" /><!-- Tatar's Aethercannon Box -->
+			<gd_item id="188052659" /><!-- Tatar's Harp Box -->
+			<gd_item id="188051833" /><!-- Tatar's Cipher-Blade Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Shield" chance="40">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235966" /><!-- Aurelian Dadar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115001406" /><!-- Tatar's Flawless Shield -->
+			<gd_item id="115001407" /><!-- Tatar's Flawless Scale Shield -->
+		</gd_items>
+	</gd_rule>
+	<!-- Machine Spirit Tottal -->
+	<gd_rule rule_name="Named Mythic Hairpin" chance="70">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235971" /><!-- Machine Spirit Tottal -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125004300" /><!-- Deep Sea Feast Hairpin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235971" /><!-- Machine Spirit Tottal -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100001808" /><!-- Vivifying Sword -->
+			<gd_item id="100101397" /><!-- Vivifying Mace -->
+			<gd_item id="100201569" /><!-- Vivifying Dagger -->
+			<gd_item id="100501361" /><!-- Vivifying Orb -->
+			<gd_item id="100601478" /><!-- Vivifying Spellbook -->
+			<gd_item id="100901430" /><!-- Vivifying Greatsword -->
+			<gd_item id="101301321" /><!-- Vivifying Polearm -->
+			<gd_item id="101501413" /><!-- Vivifying Staff -->
+			<gd_item id="101701414" /><!-- Vivifying Bow -->
+			<gd_item id="101801271" /><!-- Vivifying Pistol -->
+			<gd_item id="101901177" /><!-- Vivifying Aethercannon -->
+			<gd_item id="102001298" /><!-- Vivifying Harp -->
+			<gd_item id="102101115" /><!-- Vivifying Cipher-Blade -->
+			<gd_item id="115001860" /><!-- Shield of Reviving Earth -->
+			<gd_item id="115001861" /><!-- Scale Shield of Reviving Earth -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Enchantment Stone" chance="100" max_drop_rule="5">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235971" /><!-- Machine Spirit Tottal -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+		</gd_items>
+	</gd_rule>
+	<!-- Gatekeeper Flox -->
+	<gd_rule rule_name="Named Mythic Weapon" chance="60">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235975" /><!-- Gatekeeper Flox -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100001791" /><!-- Wave Song Sword -->
+			<gd_item id="100101381" /><!-- Wave Song Mace -->
+			<gd_item id="100201556" /><!-- Wave Song Dagger -->
+			<gd_item id="100501349" /><!-- Wave Song Orb -->
+			<gd_item id="100601466" /><!-- Wave Song Spellbook -->
+			<gd_item id="100901418" /><!-- Wave Song Greatsword -->
+			<gd_item id="101301307" /><!-- Wave Song Polearm -->
+			<gd_item id="101501396" /><!-- Wave Song Staff -->
+			<gd_item id="101701402" /><!-- Wave Song Bow -->
+			<gd_item id="101801260" /><!-- Wave Song Pistol -->
+			<gd_item id="101901167" /><!-- Wave Song Aethercannon -->
+			<gd_item id="102001286" /><!-- Wave Song Harp -->
+			<gd_item id="102101103" /><!-- Wave Song Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mythic Shield" chance="60">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235975" /><!-- Gatekeeper Flox -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115001862" /><!-- Flox's Shield -->
+			<gd_item id="115001863" /><!-- Flox's Scale Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Armor" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235975" /><!-- Gatekeeper Flox -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101870" /><!-- Wave Song Jacket -->
+			<gd_item id="110301862" /><!-- Wave Song Jerkin -->
+			<gd_item id="110551189" /><!-- Wave Song Hauberk -->
+			<gd_item id="110601657" /><!-- Wave Song Breastplate -->
+			<gd_item id="111101685" /><!-- Wave Song Gloves -->
+			<gd_item id="111301800" /><!-- Wave Song Vambraces -->
+			<gd_item id="111501748" /><!-- Wave Song Handguards -->
+			<gd_item id="111601620" /><!-- Wave Song Gauntlets -->
+			<gd_item id="112101634" /><!-- Wave Song Pauldrons -->
+			<gd_item id="112301739" /><!-- Wave Song Shoulderguards -->
+			<gd_item id="112501687" /><!-- Wave Song Spaulders -->
+			<gd_item id="112601602" /><!-- Wave Song Shoulderplates -->
+			<gd_item id="113101696" /><!-- Wave Song Leggings -->
+			<gd_item id="113301831" /><!-- Wave Song Legguards -->
+			<gd_item id="113501766" /><!-- Wave Song Chausses -->
+			<gd_item id="113601603" /><!-- Wave Song Greaves -->
+			<gd_item id="114101730" /><!-- Wave Song Shoes -->
+			<gd_item id="114301868" /><!-- Wave Song Boots -->
+			<gd_item id="114501776" /><!-- Wave Song Brogans -->
+			<gd_item id="114601610" /><!-- Wave Song Plate Boots -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Enchantment Stone" chance="100" max_drop_rule="10">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235966" /><!-- Aurelian Dadar -->
+			<gd_npc npc_id="235970" /><!-- Deadly Sunayaka -->
+			<gd_npc npc_id="235975" /><!-- Gatekeeper Flox -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000194" /><!-- Delta Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+			<gd_item id="166000195" /><!-- Epsilon Enchantment Stone -->
+		</gd_items>
+	</gd_rule>
+	<!-- Chromaleaf Flowershot -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235963" /><!-- Chromeleaf Flowershot -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100001790" /><!-- Sealed Earth Sword -->
+			<gd_item id="100501348" /><!-- Sealed Earth Orb -->
+		</gd_items>
+	</gd_rule>
+	<!-- Shatterroar Kirrin -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235965" /><!-- Shatterroar Kirrin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100101380" /><!-- Sealed Earth Mace -->
+			<gd_item id="100601465" /><!-- Sealed Earch Spellbook -->
+		</gd_items>
+	</gd_rule>
+	<!-- Betrayer Squallo -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235967" /><!-- Betrayer Squallo -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100201555" /><!-- Sealed Earth Dagger -->
+			<gd_item id="101701401" /><!-- Sealed Earth Bow -->
+		</gd_items>
+	</gd_rule>
+	<!-- Garden Protector Nenupar -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235968" /><!-- Garden Protector Nenupar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101301306" /><!-- Sealed Earth Polearm -->
+			<gd_item id="101801259" /><!-- Sealed Earth Pistol -->
+		</gd_items>
+	</gd_rule>
+	<!-- Tenacious Sashirr -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235969" /><!-- Tenacious Sashirr -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100901417" /><!-- Sealed Earth Greatsword -->
+			<gd_item id="101901166" /><!-- Sealed Earch Aethercannon -->
+		</gd_items>
+	</gd_rule>
+	<!-- Commander Ratash -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235972" /><!-- Commander Ratash -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101501395" /><!-- Sealed Earth Staff -->
+			<gd_item id="102001285" /><!-- Sealed Earth Harp -->
+		</gd_items>
+	</gd_rule>
+	<!-- Fierce Sandmane Tigric -->
+	<gd_rule rule_name="Named Fabled Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235973" /><!-- Fierce Sandmane Tigric -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="102101102" /><!-- Sealed Earth Cipher-Blade -->
+			<gd_item id="115001859" /><!-- Shield of Sealed Earth -->
+		</gd_items>
+	</gd_rule>
+	<!-- Others -->
+	<gd_rule rule_name="Named Eternal Armor" chance="50">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235967" /><!-- Betrayer Squallo -->
+			<gd_npc npc_id="235968" /><!-- Garden Protector Nenupar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101870" /><!-- Wave Song Jacket -->
+			<gd_item id="110301862" /><!-- Wave Song Jerkin -->
+			<gd_item id="110551189" /><!-- Wave Song Hauberk -->
+			<gd_item id="110601657" /><!-- Wave Song Breastplate -->
+		</gd_items>
+	</gd_rule> 
+	<gd_rule rule_name="Named Eternal Gloves" chance="50">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235963" /><!-- Chromeleaf Flowershot -->
+			<gd_npc npc_id="235968" /><!-- Garden Protector Nenupar -->
+			<gd_npc npc_id="235973" /><!-- Fierce Sandmane Tigric -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111101685" /><!-- Wave Song Gloves -->
+			<gd_item id="111301800" /><!-- Wave Song Vambraces -->
+			<gd_item id="111501748" /><!-- Wave Song Handguards -->
+			<gd_item id="111601620" /><!-- Wave Song Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Shoulders" chance="50">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235965" /><!-- Shatterroar Kirrin -->
+			<gd_npc npc_id="235967" /><!-- Betrayer Squallo -->
+			<gd_npc npc_id="235973" /><!-- Fierce Sandmane Tigric -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112101634" /><!-- Wave Song Pauldrons -->
+			<gd_item id="112301739" /><!-- Wave Song Shoulderguards -->
+			<gd_item id="112501687" /><!-- Wave Song Spaulders -->
+			<gd_item id="112601602" /><!-- Wave Song Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Pants" chance="50">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235965" /><!-- Shatterroar Kirrin -->
+			<gd_npc npc_id="235969" /><!-- Tenacious Sashirr -->
+			<gd_npc npc_id="235972" /><!-- Commander Ratash -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113101696" /><!-- Wave Song Leggings -->
+			<gd_item id="113301831" /><!-- Wave Song Legguards -->
+			<gd_item id="113501766" /><!-- Wave Song Chausses -->
+			<gd_item id="113601603" /><!-- Wave Song Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Eternal Boots" chance="50">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235963" /><!-- Chromeleaf Flowershot -->
+			<gd_npc npc_id="235969" /><!-- Tenacious Sashirr -->
+			<gd_npc npc_id="235972" /><!-- Commander Ratash -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114101730" /><!-- Wave Song Shoes -->
+			<gd_item id="114301868" /><!-- Wave Song Boots -->
+			<gd_item id="114501776" /><!-- Wave Song Brogans -->
+			<gd_item id="114601610" /><!-- Wave Song Plate Boots -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Power Shards" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235963" /><!-- Chromeleaf Flowershot -->
+			<gd_npc npc_id="235965" /><!-- Shatterroar Kirrin -->
+			<gd_npc npc_id="235967" /><!-- Betrayer Squallo -->
+			<gd_npc npc_id="235968" /><!-- Garden Protector Nenupar -->
+			<gd_npc npc_id="235969" /><!-- Tenacious Sashirr -->
+			<gd_npc npc_id="235971" /><!-- Machine Spirit Tottal -->
+			<gd_npc npc_id="235972" /><!-- Commander Ratash -->
+			<gd_npc npc_id="235973" /><!-- Fierce Sandmane Tigric -->
+			<gd_npc npc_id="235950" /><!-- Coralhorn Trico -->
+			<gd_npc npc_id="235951" /><!-- Azurethresh Bortile -->
+			<gd_npc npc_id="235952" /><!-- Twistspine Overlord -->
+			<gd_npc npc_id="235953" /><!-- Bladewind Fury -->
+			<gd_npc npc_id="235954" /><!-- Garden Sentry Captain Brohum -->
+			<gd_npc npc_id="235955" /><!-- Shining Stone -->
+			<gd_npc npc_id="235956" /><!-- The Sunlight Claw -->
+			<gd_npc npc_id="235957" /><!-- Silent Drakan -->
+			<gd_npc npc_id="235958" /><!-- Grotesque Twilight Gnarl -->
+			<gd_npc npc_id="235960" /><!-- Enraged Primeval Ettin -->
+			<gd_npc npc_id="235961" /><!-- Duneshriek Sandshark Ripper -->
+			<gd_npc npc_id="235962" /><!-- Serrated Sandthorn Arachna -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="169000009" min_count="500" /><!-- Premium Power Shard -->
+			<gd_item id="169000010" min_count="500" /><!-- Superior Power Shard -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Idian Pouch" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235950" /><!-- Coralhorn Trico -->
+			<gd_npc npc_id="235951" /><!-- Azurethresh Bortile -->
+			<gd_npc npc_id="235952" /><!-- Twistspine Overlord -->
+			<gd_npc npc_id="235953" /><!-- Bladewind Fury -->
+			<gd_npc npc_id="235954" /><!-- Garden Sentry Captain Brohum -->
+			<gd_npc npc_id="235955" /><!-- Shining Stone -->
+			<gd_npc npc_id="235956" /><!-- The Sunlight Claw -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053746" /><!-- Faded Middle Grade Idian Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Idian Pouch" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235957" /><!-- Silent Drakan -->
+			<gd_npc npc_id="235958" /><!-- Grotesque Twilight Gnarl -->
+			<gd_npc npc_id="235960" /><!-- Enraged Primeval Ettin -->
+			<gd_npc npc_id="235961" /><!-- Duneshriek Sandshark Ripper -->
+			<gd_npc npc_id="235962" /><!-- Serrated Sandthorn Arachna -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053747" /><!-- Faded High Grade Idian Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Idian Pouch" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235971" /><!-- Machine Spirit Tottal -->
+			<gd_npc npc_id="235975" /><!-- Gatekeeper Flox -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053748" /><!-- Elegant High Grade Idian Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Manastone Bundle" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235950" /><!-- Coralhorn Trico -->
+			<gd_npc npc_id="235951" /><!-- Azurethresh Bortile -->
+			<gd_npc npc_id="235952" /><!-- Twistspine Overlord -->
+			<gd_npc npc_id="235953" /><!-- Bladewind Fury -->
+			<gd_npc npc_id="235954" /><!-- Garden Sentry Captain Brohum -->
+			<gd_npc npc_id="235955" /><!-- Shining Stone -->
+			<gd_npc npc_id="235956" /><!-- The Sunlight Claw -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053742" chance="80" /><!-- Faded Middle Grade Manastone Bundle -->
+			<gd_item id="188053904" chance="20" /><!-- Faded Middle Grade Composite Manastone Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Manastone Bundle" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235957" /><!-- Silent Drakan -->
+			<gd_npc npc_id="235958" /><!-- Grotesque Twilight Gnarl -->
+			<gd_npc npc_id="235960" /><!-- Enraged Primeval Ettin -->
+			<gd_npc npc_id="235961" /><!-- Duneshriek Sandshark Ripper -->
+			<gd_npc npc_id="235962" /><!-- Serrated Sandthorn Arachna -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053743" chance="80" /><!-- Faded High Grade Manastone Bundle -->
+			<gd_item id="188053905" chance="20" /><!-- Faded High Grade Composite Manastone Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Composite Manastone Bundle" chance="100">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235963" /><!-- Chromeleaf Flowershot -->
+			<gd_npc npc_id="235965" /><!-- Shatterroar Kirrin -->
+			<gd_npc npc_id="235967" /><!-- Betrayer Squallo -->
+			<gd_npc npc_id="235968" /><!-- Garden Protector Nenupar -->
+			<gd_npc npc_id="235969" /><!-- Tenacious Sashirr -->
+			<gd_npc npc_id="235971" /><!-- Machine Spirit Tottal -->
+			<gd_npc npc_id="235972" /><!-- Commander Ratash -->
+			<gd_npc npc_id="235973" /><!-- Fierce Sandmane Tigric -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053744" /><!-- Elegant Middle Grade Composite Manastone Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Manastone Pouch" chance="100" max_drop_rule="3">
+		<gd_maps>
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235975" /><!-- Gatekeeper Flox -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053745" /><!-- Elegant High Grade Composite Manastone Bundle -->
+			<gd_item id="188053745" /><!-- Elegant High Grade Composite Manastone Bundle -->
+			<gd_item id="188053745" /><!-- Elegant High Grade Composite Manastone Bundle -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

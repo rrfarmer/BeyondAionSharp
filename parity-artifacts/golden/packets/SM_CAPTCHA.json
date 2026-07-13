@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CAPTCHA",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "challenge",
+      "inputs": {"ctor":"count_data","count":2,"data":[10,20,255,0]},
+      "payloadHex": "0102040000000A14FF00"
+    },
+    {
+      "name": "resultCorrect",
+      "inputs": {"ctor":"isCorrect_banTime","isCorrect":true,"banTime":3000},
+      "payloadHex": "030100B80B0000"
+    },
+    {
+      "name": "resultWrong",
+      "inputs": {"ctor":"isCorrect_banTime","isCorrect":false,"banTime":0},
+      "payloadHex": "03000000000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_WAREHOUSE_ADD_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "warehouseAddItemAllSlot",
+      "inputs": {"warehouseType":1,"objectId":268520002,"addType":"ALL_SLOT"},
+      "payloadHex": "0113000100424A011041AA980900240057AF0A0000002C00002B1A0700000000000000440061006500760061000000000000000000000000000000000000000000001200FFFF"
+    }
+  ]
+}

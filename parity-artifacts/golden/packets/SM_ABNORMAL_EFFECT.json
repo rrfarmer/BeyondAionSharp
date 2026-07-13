@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ABNORMAL_EFFECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "emptyFullslots",
+      "inputs": {"objectId":880001,"effectType":1,"abnormals":0,"slots":127,"effectCount":0},
+      "payloadHex": "816D0D00010000000000000000000000007F0000"
+    },
+    {
+      "name": "emptySlot1",
+      "inputs": {"objectId":880002,"effectType":1,"abnormals":65536,"slots":1,"effectCount":0},
+      "payloadHex": "826D0D0001000000000000010000000000010000"
+    }
+  ]
+}

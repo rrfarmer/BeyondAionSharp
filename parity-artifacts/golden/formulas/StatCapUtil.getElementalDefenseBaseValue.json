@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatCapUtil.getElementalDefenseBaseValue",
+  "signature": "int getElementalDefenseBaseValue()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {}, "result": 1300 }
+  ]
+}

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Multiple Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212840" /><!-- Lava Gatneri -->
+			<gd_npc npc_id="212842" /><!-- Black Smoke Asparn -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101300501" /><!-- White Flame Spear -->
+			<gd_item id="100100527" /><!-- White Flame Warhammer -->
+			<gd_item id="100000678" /><!-- White Flame Sword -->
+			<gd_item id="100200633" /><!-- White Flame Dagger -->
+			<gd_item id="100600565" /><!-- White Flame Tome -->
+			<gd_item id="100500527" /><!-- White Flame Jewel -->
+			<gd_item id="100900509" /><!-- White Flame Greatsword -->
+			<gd_item id="101700547" /><!-- White Flame Longbow -->
+			<gd_item id="101500525" /><!-- White Flame Staff -->
+			<gd_item id="101900522" /><!-- White Flame Aethercannon -->
+			<gd_item id="101800911" /><!-- Pistol of Salt -->
+			<gd_item id="102000555" /><!-- White Flame Harp -->
+			<gd_item id="102100766" /><!-- White Flame Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212846" /><!-- Kromede the Corrupt -->
+			<gd_npc npc_id="214621" /><!-- Vile Judge Kromede -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001107" /><!-- Flame Headband -->
+			<gd_item id="125001108" /><!-- Flame Hat -->
+			<gd_item id="125001109" /><!-- Flame Chain Helm -->
+			<gd_item id="125001110" /><!-- Flame Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="60">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212846" /><!-- Kromede the Corrupt -->
+			<gd_npc npc_id="214621" /><!-- Vile Judge Kromede -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000458" /><!-- Kromede's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212839" /><!-- Blue Crystal Molgat -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114300435" /><!-- Flame Boots -->
+			<gd_item id="111300408" /><!-- Flame Vambrace -->
+			<gd_item id="114600420" /><!-- Flame Sabatons -->
+			<gd_item id="111600433" /><!-- Flame Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212839" /><!-- Blue Crystal Molgat -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114101148" /><!-- Fire Temple Shoes -->
+			<gd_item id="114301156" /><!-- Fire Temple Boots -->
+			<gd_item id="114501106" /><!-- Fire Temple Brogans -->
+			<gd_item id="114601060" /><!-- Fire Temple Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212840" /><!-- Lava Gatneri -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100422" /><!-- Flame Shoes -->
+			<gd_item id="111100406" /><!-- Flame Gloves -->
+			<gd_item id="114500451" /><!-- Flame Brogans -->
+			<gd_item id="111500445" /><!-- Flame Handguards -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212840" /><!-- Lava Gatneri -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111101107" /><!-- Fire Temple Gloves -->
+			<gd_item id="111301104" /><!-- Fire Temple Vambrace -->
+			<gd_item id="111501090" /><!-- Fire Temple Handguards -->
+			<gd_item id="111601080" /><!-- Fire Temple Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212841" /><!-- Flame Branch Flavi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100405" /><!-- Flame Leggings -->
+			<gd_item id="112100371" /><!-- Flame Pauldrons -->
+			<gd_item id="113500444" /><!-- Flame Chausses -->
+			<gd_item id="112500409" /><!-- Flame Spaulders -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212841" /><!-- Flame Branch Flavi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101217" /><!-- Fire Temple Tunic -->
+			<gd_item id="110301150" /><!-- Fire Temple Jerkin -->
+			<gd_item id="110501122" /><!-- Fire Temple Hauberk -->
+			<gd_item id="110601104" /><!-- Fire Temple Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212842" /><!-- Black Smoke Asparn -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113300421" /><!-- Flame Breeches -->
+			<gd_item id="112300371" /><!-- Flame Shoulderguards -->
+			<gd_item id="113600429" /><!-- Flame Greaves -->
+			<gd_item id="112600414" /><!-- Flame Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212842" /><!-- Black Smoke Asparn -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112101065" /><!-- Fire Temple Pauldrons -->
+			<gd_item id="112301051" /><!-- Fire Temple Shoulderguards -->
+			<gd_item id="112501041" /><!-- Fire Temple Spaulders -->
+			<gd_item id="112601055" /><!-- Fire Temple Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212843" /><!-- Tough Sipus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000440" /><!-- Sipus' Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212843" /><!-- Tough Sipus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000579" /><!-- Sipus' Belt -->
+			<gd_item id="123000949" /><!-- Sipus' Sash -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212844" /><!-- Silver Blade Rotan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000559" /><!-- Rotan's Ring -->
+			<gd_item id="122001061" /><!-- Rotan's Link -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212844" /><!-- Silver Blade Rotan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100475" /><!-- Flame Tunic -->
+			<gd_item id="110500464" /><!-- Flame Hauberk -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212844" /><!-- Silver Blade Rotan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122001541" /><!-- Rotan's Circlet -->
+			<gd_item id="122001540" /><!-- Rotan's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212845" /><!-- Broken Wing Kutisen -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000518" /><!-- Kutisen's Earrings -->
+			<gd_item id="120000928" /><!-- Kutisen's Tears -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212845" /><!-- Broken Wing Kutisen -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100475" /><!-- Flame Tunic -->
+			<gd_item id="110300436" /><!-- Flame Jerkin -->
+			<gd_item id="110500464" /><!-- Flame Hauberk -->
+			<gd_item id="110600460" /><!-- Flame Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212845" /><!-- Broken Wing Kutisen -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113101119" /><!-- Fire Temple Leggings -->
+			<gd_item id="113301122" /><!-- Fire Temple Breeches -->
+			<gd_item id="113501099" /><!-- Fire Temple Chausses -->
+			<gd_item id="113601064" /><!-- Fire Temple Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212846" /><!-- Kromede the Corrupt -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101700810" /><!-- Longbow of the Judge -->
+			<gd_item id="100500788" /><!-- Jewel of the Judge -->
+			<gd_item id="100900765" /><!-- Greatsword of the Judge -->
+			<gd_item id="100200903" /><!-- Dagger of the Judge -->
+			<gd_item id="100001021" /><!-- Sword of the Judge -->
+			<gd_item id="101500793" /><!-- Staff of the Judge -->
+			<gd_item id="101300737" /><!-- Spear of the Judge -->
+			<gd_item id="100600843" /><!-- Tome of the Judge -->
+			<gd_item id="100100768" /><!-- Warhammer of the Judge -->
+			<gd_item id="101800915" /><!-- Pistol of the Judge -->
+			<gd_item id="101900670" /><!-- Aethercannon of the Judge -->
+			<gd_item id="102000704" /><!-- Harp of the Judge -->
+			<gd_item id="102100770" /><!-- Reaper's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="52">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214621" /><!-- Vile Judge Kromede -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101700810" /><!-- Longbow of the Judge -->
+			<gd_item id="100500788" /><!-- Jewel of the Judge -->
+			<gd_item id="100900765" /><!-- Greatsword of the Judge -->
+			<gd_item id="100200903" /><!-- Dagger of the Judge -->
+			<gd_item id="100001021" /><!-- Sword of the Judge -->
+			<gd_item id="101500793" /><!-- Staff of the Judge -->
+			<gd_item id="101300737" /><!-- Spear of the Judge -->
+			<gd_item id="100600843" /><!-- Tome of the Judge -->
+			<gd_item id="100100768" /><!-- Warhammer of the Judge -->
+			<gd_item id="101800915" /><!-- Pistol of the Judge -->
+			<gd_item id="101900670" /><!-- Aethercannon of the Judge -->
+			<gd_item id="102000704" /><!-- Harp of the Judge -->
+			<gd_item id="102100770" /><!-- Reaper's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="37">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212846" /><!-- Kromede the Corrupt -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188051396" /><!-- Judge's Fabled Weapon Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="52">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214621" /><!-- Vile Judge Kromede -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188051396" /><!-- Judge's Fabled Weapon Chest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Stone of Silence" chance="50">
+		<gd_maps>
+			<gd_map map_id="320100000" /><!-- Fire_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212846" /><!-- Kromede the Corrupt -->
+			<gd_npc npc_id="214621" /><!-- Vile Judge Kromede -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012530" /><!-- Stone of Silence -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

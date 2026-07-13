@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ATTACK",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "normalHit",
+      "inputs": {"attackerObjId":700001,"attackerMaxHp":12000,"attackerCurrentHp":9000,"targetObjId":700002,"targetMaxHp":10000,"targetCurrentHp":5000,"attackno":1,"time":300,"attackType":"MELEE","attackHand":"MAIN_HAND","hits":[{"damage":1500,"status":"NORMALHIT","shieldType":0}]},
+      "payloadHex": "61AE0A00012C01000062AE0A00324B0000000001DC0500000A0000"
+    },
+    {
+      "name": "block",
+      "inputs": {"attackerObjId":700003,"attackerMaxHp":8000,"attackerCurrentHp":8000,"targetObjId":700004,"targetMaxHp":6000,"targetCurrentHp":1500,"attackno":2,"time":250,"attackType":"RANGED","attackHand":"OFF_HAND","hits":[{"damage":800,"status":"BLOCK","shieldType":2}]},
+      "payloadHex": "63AE0A0002FA00010164AE0A001964200000000120030000040200"
+    },
+    {
+      "name": "shieldProtect",
+      "inputs": {"attackerObjId":700005,"attackerMaxHp":15000,"attackerCurrentHp":12000,"targetObjId":700006,"targetMaxHp":20000,"targetCurrentHp":4000,"attackno":3,"time":275,"attackType":"MELEE","attackHand":"RANDOM","hits":[{"damage":1200,"status":"NORMALHIT","shieldType":0},{"damage":300,"status":"NORMALHIT","shieldType":8,"protectorId":900001,"protectedDamage":250,"protectedSkillId":417}]},
+      "payloadHex": "65AE0A00031301000266AE0A0014500000000002B00400000A002C0100000A08A1BB0D00FA000000A101000000"
+    }
+  ]
+}

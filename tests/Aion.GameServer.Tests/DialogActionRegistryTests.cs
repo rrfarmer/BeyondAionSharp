@@ -1,5 +1,5 @@
 using Aion.GameServer.Services;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace Aion.GameServer.Tests;
 
@@ -107,15 +107,23 @@ public sealed class DialogActionRegistryTests
 
 	private static IEnumerable<(string Name, int Id)> ReadJavaDialogActionConstants()
 	{
-		var sourceFile = FindRepositoryRoot()
-			.Select(root => Path.Combine(root, "game-server", "src", "com", "aionemu", "gameserver", "model", "DialogAction.java"))
+		var fixtureFile = FindRepositoryRoot()
+			.Select(root => Path.Combine(root, "parity-artifacts", "golden", "model", "DialogAction.public-constants.json"))
 			.FirstOrDefault(File.Exists);
-		Assert.False(string.IsNullOrEmpty(sourceFile), "Java DialogAction.java must be available for generated-name parity coverage.");
+		Assert.False(string.IsNullOrEmpty(fixtureFile), "The generated DialogAction Java parity fixture must be available.");
 
-		var pattern = new Regex(@"public static final int\s+(?<name>[A-Z0-9_]+)\s*=\s*(?<id>-?\d+);", RegexOptions.Compiled);
-		foreach (Match match in pattern.Matches(File.ReadAllText(sourceFile)))
-			yield return (match.Groups["name"].Value, int.Parse(match.Groups["id"].Value));
+		var fixture = JsonSerializer.Deserialize<DialogActionFixture>(
+			File.ReadAllText(fixtureFile),
+			new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+		Assert.NotNull(fixture);
+		Assert.Equal("f2f77fefef00aacbef4c10614c18b339bbdaa05a", fixture.SourceCommit);
+
+		foreach (var constant in fixture.Constants)
+			yield return (constant.Name, constant.Id);
 	}
+
+	private sealed record DialogActionFixture(string Source, string SourceCommit, DialogActionConstant[] Constants);
+	private sealed record DialogActionConstant(string Name, int Id);
 
 	private static IEnumerable<string> FindRepositoryRoot()
 	{

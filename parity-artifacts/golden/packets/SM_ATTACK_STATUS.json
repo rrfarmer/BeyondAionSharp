@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ATTACK_STATUS",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "damage",
+      "inputs": {"objectId":870001,"type":"DAMAGE","typeId":7,"skillId":1346,"value":1500,"writtenValue":-1500,"maxHp":12000,"maxMp":6000,"currentHp":9000,"currentMp":3000,"hpOrMp":75,"log":"SPELLATK","logId":1},
+      "payloadHex": "71460D0024FAFFFF074B42050100"
+    },
+    {
+      "name": "mpHeal",
+      "inputs": {"objectId":870002,"type":"MP","typeId":21,"skillId":2391,"value":500,"writtenValue":500,"maxHp":12000,"maxMp":6000,"currentHp":9000,"currentMp":3000,"hpOrMp":50,"log":"MPHEAL","logId":4},
+      "payloadHex": "72460D00F4010000153257090400"
+    },
+    {
+      "name": "usedMp",
+      "inputs": {"objectId":870003,"type":"USED_MP","typeId":23,"skillId":1234,"value":300,"writtenValue":-300,"maxHp":10000,"maxMp":8000,"currentHp":5000,"currentMp":2000,"hpOrMp":25,"log":"REGULAR","logId":191},
+      "payloadHex": "73460D00D4FEFFFF1719D204BF00"
+    },
+    {
+      "name": "regular",
+      "inputs": {"objectId":870004,"type":"REGULAR","typeId":5,"skillId":0,"value":250,"writtenValue":250,"maxHp":4000,"maxMp":2000,"currentHp":4000,"currentMp":2000,"hpOrMp":100,"log":"REGULAR","logId":191},
+      "payloadHex": "74460D00FA00000005640000BF00"
+    }
+  ]
+}

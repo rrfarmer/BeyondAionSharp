@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_NICKNAME_CHECK_RESPONSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "ok",
+      "inputs": {"value":0},
+      "payloadHex": "00"
+    },
+    {
+      "name": "notOk",
+      "inputs": {"value":10},
+      "payloadHex": "0A"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_STATS_STATUS_UNK",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "level50",
+      "inputs": {"lvl":50,"points":12},
+      "payloadHex": "0C000000010132000000320000000100000000"
+    },
+    {
+      "name": "other",
+      "inputs": {"lvl":65,"points":3},
+      "payloadHex": "03000000010241000000410000000000000000"
+    }
+  ]
+}

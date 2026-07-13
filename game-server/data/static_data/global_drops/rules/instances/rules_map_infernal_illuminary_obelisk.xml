@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Mark" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000238" min_count="60" max_count="90" /><!-- Conqueror's Mark -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Supply Chest" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053094" /><!-- Illuminary Obelisk Supplies Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Curiosity Box" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053093" /><!-- Dynatoum's Curiosity Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Enhancement Chest" chance="42">
+		<gd_maps>
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188052824" /><!-- Illuminary Obelisk Enhancement Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Wings" chance="21">
+		<gd_maps>
+			<gd_map map_id="301370000" /><!-- Infernal_Illuminary_Obelisk -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234686" /><!-- Remodeled Dynatoum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="187000130" chance="50" /><!-- Bulwark Burster -->
+			<gd_item id="187000129" chance="30" /><!-- Brazen Bulwark Burster -->
+			<gd_item id="187000143" chance="20" /><!-- Pure Dynatoum's Radiant Wing Feather -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

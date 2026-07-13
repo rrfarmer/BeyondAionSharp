@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TELEPORT_MAP",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "teleporter",
+      "inputs": {"targetObjId":800200,"teleportId":4012},
+      "payloadHex": "C8350C00AC0F"
+    }
+  ]
+}

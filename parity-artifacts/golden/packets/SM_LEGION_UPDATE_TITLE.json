@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEGION_UPDATE_TITLE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "centurion",
+      "inputs": {"playerObjectId":770302,"legionId":4001,"legionName":"Daevas","rank":"CENTURION"},
+      "payloadHex": "FEC00B00A10F0000440061006500760061007300000002"
+    },
+    {
+      "name": "brigadeGeneral",
+      "inputs": {"playerObjectId":770303,"legionId":4002,"legionName":"Seraphim","rank":"BRIGADE_GENERAL"},
+      "payloadHex": "FFC00B00A20F000053006500720061007000680069006D00000000"
+    }
+  ]
+}

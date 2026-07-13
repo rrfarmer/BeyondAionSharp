@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_REPURCHASE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "repurchaseSingleItem",
+      "inputs": {"targetObjectId":700100200,"objectId":268510004,"repurchasePrice":123456789,"itemCount":1},
+      "payloadHex": "68AEBA290100000001003423011041AA9809240057AF0A0000002C00002B1A070000000000000044006100650076006100000000000000000000000000000000000000000000120015CD5B0700000000"
+    }
+  ]
+}

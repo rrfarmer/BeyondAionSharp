@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_QUESTIONNAIRE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "survey",
+      "inputs": {"messageId":1300000,"chunk":0,"count":1,"html":"<html>Q</html>"},
+      "payloadHex": "20D6130000011C003C00680074006D006C003E0051003C002F00680074006D006C003E000000"
+    },
+    {
+      "name": "empty",
+      "inputs": {"messageId":0,"chunk":0,"count":0,"html":""},
+      "payloadHex": "00000000000000000000"
+    }
+  ]
+}

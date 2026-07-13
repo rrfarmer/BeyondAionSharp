@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RESTORE_CHARACTER",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "success",
+      "inputs": {"chaOid":11223,"success":true},
+      "payloadHex": "00000000D72B0000"
+    },
+    {
+      "name": "failure",
+      "inputs": {"chaOid":44556,"success":false},
+      "payloadHex": "100000000CAE0000"
+    }
+  ]
+}

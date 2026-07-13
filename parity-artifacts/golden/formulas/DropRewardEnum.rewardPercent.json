@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "formula": "DropRewardEnum.rewardPercent",
+  "signature": "int rewardPercent()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"entry": "MINUS_10"}, "result": 0 },
+    { "inputs": {"entry": "MINUS_9"}, "result": 40 },
+    { "inputs": {"entry": "MINUS_8"}, "result": 60 },
+    { "inputs": {"entry": "MINUS_7"}, "result": 70 },
+    { "inputs": {"entry": "MINUS_6"}, "result": 80 },
+    { "inputs": {"entry": "MINUS_5"}, "result": 100 }
+  ]
+}

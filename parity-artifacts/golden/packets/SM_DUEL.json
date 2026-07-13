@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DUEL",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "started",
+      "inputs": {"type":0,"requesterObjId":700123},
+      "payloadHex": "00DBAE0A00"
+    },
+    {
+      "name": "resultWon",
+      "inputs": {"type":1,"result":"DUEL_WON","playerName":"Vaizel"},
+      "payloadHex": "010282D613005600610069007A0065006C000000"
+    }
+  ]
+}

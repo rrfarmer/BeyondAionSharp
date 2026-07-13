@@ -7,8 +7,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$composeFile = Join-Path $repoRoot "compose.mixed-csharp-login-chat.yml"
+$javaRepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\aion-server")
+$composeFile = Join-Path $javaRepoRoot "compose.mixed-csharp-login-chat.yml"
 
 if (-not $SkipDatabase) {
 	$dbArgs = @()
@@ -18,7 +18,7 @@ if (-not $SkipDatabase) {
 	& (Join-Path $PSScriptRoot "start-mixed-mode-db.ps1") @dbArgs
 }
 
-Push-Location $repoRoot
+Push-Location $javaRepoRoot
 try {
 	if ($Build) {
 		docker compose -f $composeFile build game

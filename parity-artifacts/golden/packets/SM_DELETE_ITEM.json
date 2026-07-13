@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DELETE_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "default",
+      "inputs": {"itemObjectId":123456,"deleteType":0},
+      "payloadHex": "40E2010000"
+    },
+    {
+      "name": "discard",
+      "inputs": {"itemObjectId":999,"deleteType":21},
+      "payloadHex": "E703000015"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CRAFT_ANIMATION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "animation",
+      "inputs": {"playerObjectId":1001,"targetObjectId":2002,"skillId":40009,"action":3},
+      "payloadHex": "E9030000D2070000499C03"
+    }
+  ]
+}

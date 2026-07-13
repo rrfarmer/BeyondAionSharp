@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_QUEST_REPEAT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "multiple",
+      "inputs": {"repeatableQuests":[15001,15002,15003]},
+      "payloadHex": "0300993A00009A3A00009B3A0000"
+    },
+    {
+      "name": "empty",
+      "inputs": {"repeatableQuests":[]},
+      "payloadHex": "0000"
+    }
+  ]
+}

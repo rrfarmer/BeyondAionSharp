@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<gd_rule rule_name="Named Mark" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000238" min_count="60" max_count="90" /><!-- Conqueror's Mark -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Weapon (Unique)" chance="1.33">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_races>
+			<gd_race race="SHULACK" />
+		</gd_races>
+		<gd_items>
+			<gd_item id="100001548" /><!-- Corsair's Sword -->
+			<gd_item id="100101181" /><!-- Corsair's Mace -->
+			<gd_item id="100201351" /><!-- Corsair's Dagger -->
+			<gd_item id="100501185" /><!-- Corsair's Jewel -->
+			<gd_item id="100601273" /><!-- Corsair's Spellbook -->
+			<gd_item id="100901202" /><!-- Corsair's Greatsword -->
+			<gd_item id="101301133" /><!-- Corsair's Polearm -->
+			<gd_item id="101501214" /><!-- Corsair's Staff -->
+			<gd_item id="101701232" /><!-- Corsair's Bow -->
+			<gd_item id="101800951" /><!-- Steel Rose Sailor's Pistol -->
+			<gd_item id="101900938" /><!-- Steel Rose Sailor's Aethercannon -->
+			<gd_item id="102000994" /><!-- Steel Rose Sailor's String Instrument -->
+			<gd_item id="102100818" /><!-- Corsair's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Armor (Unique)" chance="2.5">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_races>
+			<gd_race race="SHULACK" />
+		</gd_races>
+		<gd_items>
+			<gd_item id="110101550" /><!-- Steel Rose Sailor's Cloth Jacket -->
+			<gd_item id="110301446" /><!-- Steel Rose Sailor's Leather Vest -->
+			<gd_item id="110501407" /><!-- Steel Rose Sailor's Chain Armor -->
+			<gd_item id="110601382" /><!-- Steel Rose Sailor's Plate Breastplate -->
+			<gd_item id="111101394" /><!-- Steel Rose Sailor's Cloth Gloves -->
+			<gd_item id="111301386" /><!-- Steel Rose Sailor's Leather Gloves -->
+			<gd_item id="111501364" /><!-- Steel Rose Sailor's Chain Gloves -->
+			<gd_item id="111601344" /><!-- Steel Rose Sailor's Plate Gloves -->
+			<gd_item id="112101348" /><!-- Steel Rose Sailor's Cloth Pauldrons -->
+			<gd_item id="112301330" /><!-- Steel Rose Sailor's Leather Pauldrons -->
+			<gd_item id="112501306" /><!-- Steel Rose Sailor's Chain Pauldrons -->
+			<gd_item id="112601326" /><!-- Steel Rose Sailor's Plate Pauldrons -->
+			<gd_item id="113101412" /><!-- Steel Rose Sailor's Cloth Pants -->
+			<gd_item id="113301411" /><!-- Steel Rose Sailor's Leather Leg Protectors -->
+			<gd_item id="113501381" /><!-- Steel Rose Sailor's Chain Armor -->
+			<gd_item id="113601334" /><!-- Steel Rose Sailor's Plate Gaiters -->
+			<gd_item id="114101441" /><!-- Steel Rose Sailor's Cloth Shoes -->
+			<gd_item id="114301447" /><!-- Steel Rose Sailor's Leather Shoes -->
+			<gd_item id="114501389" /><!-- Steel Rose Sailor's Chain Boots -->
+			<gd_item id="114601332" /><!-- Steel Rose Sailor's Plate Boots -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Accessory (Unique)" chance="2">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_races>
+			<gd_race race="SHULACK" />
+		</gd_races>
+		<gd_items>
+			<gd_item id="125300046" /><!-- Steel Rose Sailor's Plate Helmet -->
+			<gd_item id="125300047" /><!-- Steel Rose Sailor's Chain Helm -->
+			<gd_item id="125300048" /><!-- Steel Rose Sailor's Leather Hat -->
+			<gd_item id="125300049" /><!-- Steel Rose Sailor's Cloth Headband -->
+		</gd_items>
+	</gd_rule>
+	<!-- Keys -->
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235608" /><!-- Research Team Veteran Scalemage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000172" /><!-- Red Key -->
+			<gd_item id="185000173" /><!-- Blue Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235658" /><!-- Bodyguard Yatakin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000174" /><!-- Sentry Post of Eternity Key -->
+		</gd_items>
+	</gd_rule>
+	<!-- named drop -->
+	<gd_rule rule_name="Named Shield (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115001636" /><!-- Danann Divine Scale Shield -->
+			<gd_item id="115001635" /><!-- Danann Divine Battle Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235659" /><!-- Bodyguard Girakin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113101413" /><!-- Steel Rose Pirates' Cloth Pants -->
+			<gd_item id="113301412" /><!-- Steel Rose Pirates' Leather Leg Protectors -->
+			<gd_item id="113501382" /><!-- Steel Rose Pirates' Chain Leg Armor -->
+			<gd_item id="113601335" /><!-- Steel Rose Pirates' Plate Gaiters -->
+			<gd_item id="110101551" /><!-- Steel Rose Pirates' Cloth Jacket -->
+			<gd_item id="110301447" /><!-- Steel Rose Pirates' Leather Vest -->
+			<gd_item id="110501408" /><!-- Steel Rose Pirates' Chain Armor -->
+			<gd_item id="110601383" /><!-- Steel Rose Pirates' Plate Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235657" /><!-- Unscrupulous Sachirunerk -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114101442" /><!-- Steel Rose Pirates' Cloth Shoes -->
+			<gd_item id="114301448" /><!-- Steel Rose Pirates' Leather Shoes -->
+			<gd_item id="114501390" /><!-- Steel Rose Pirates' Chain Boots -->
+			<gd_item id="114601333" /><!-- Steel Rose Pirates' Plate Boots -->
+			<gd_item id="112101349" /><!-- Steel Rose Pirates' Cloth Pauldrons -->
+			<gd_item id="112301331" /><!-- Steel Rose Pirates' Leather Pauldrons -->
+			<gd_item id="112501307" /><!-- Steel Rose Pirates' Chain Pauldrons -->
+			<gd_item id="112601327" /><!-- Steel Rose Pirates' Plate Pauldrons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235658" /><!-- Bodyguard Yatakin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111101395" /><!-- Steel Rose Pirates' Cloth Gloves -->
+			<gd_item id="111301387" /><!-- Steel Rose Pirates' Leather Gloves -->
+			<gd_item id="111501365" /><!-- Steel Rose Pirates' Chain Gloves -->
+			<gd_item id="111601345" /><!-- Steel Rose Pirates' Plate Gloves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Ancient Manastone (Unique)" chance="35">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235658" /><!-- Bodyguard Yatakin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="167020056" /><!-- Ancient Manastone: Accuracy +33 -->
+			<gd_item id="167020057" /><!-- Ancient Manastone: Evasion +23 -->
+			<gd_item id="167020058" /><!-- Ancient Manastone: Parry +33 -->
+			<gd_item id="167020059" /><!-- Ancient Manastone: Block +33 -->
+			<gd_item id="167020060" /><!-- Ancient Manastone: Physical Critical Resistance +22 -->
+			<gd_item id="167020061" /><!-- Ancient Manastone: Magical Critical Resistance +9 -->
+			<gd_item id="167020062" /><!-- Ancient Manastone: Physical Defense +80 -->
+			<gd_item id="167020063" /><!-- Ancient Manastone: Attack +7 -->
+			<gd_item id="167020064" /><!-- Ancient Manastone: Magical Accuracy +20 -->
+			<gd_item id="167020065" /><!-- Ancient Manastone: Magic Boost +32 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100001588" /><!-- Danann Brand -->
+			<gd_item id="100101225" /><!-- Danann Cudgel -->
+			<gd_item id="100201395" /><!-- Danann Poniard -->
+			<gd_item id="100501215" /><!-- Danann Sphere -->
+			<gd_item id="100601307" /><!-- Danann Grimoire -->
+			<gd_item id="100901237" /><!-- Danann Claymore -->
+			<gd_item id="101301163" /><!-- Danann Glaive -->
+			<gd_item id="101501251" /><!-- Danann Shakujo -->
+			<gd_item id="101701266" /><!-- Danann Recurve -->
+			<gd_item id="101801074" /><!-- Danann Peacemaker -->
+			<gd_item id="101901023" /><!-- Danann Aetherpulse -->
+			<gd_item id="102001099" /><!-- Danann Lyra -->
+			<gd_item id="102100848" /><!-- Danann Divine Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114101563" /><!-- Danann Divine Shoes -->
+			<gd_item id="114301696" /><!-- Danann Divine Boots -->
+			<gd_item id="114501501" /><!-- Danann Divine Brogans -->
+			<gd_item id="114601446" /><!-- Danann Divine Sabatons -->
+			<gd_item id="110101682" /><!-- Danann Divine Tunic -->
+			<gd_item id="110301690" /><!-- Danann Divine Jerkin -->
+			<gd_item id="110501519" /><!-- Danann Divine Hauberk -->
+			<gd_item id="110601493" /><!-- Danann Divine Breastplate -->
+			<gd_item id="113101529" /><!-- Danann Divine Leggings -->
+			<gd_item id="113301659" /><!-- Danann Divine Breeches -->
+			<gd_item id="113501492" /><!-- Danann Divine Chausses -->
+			<gd_item id="113601439" /><!-- Danann Divine Greaves -->
+			<gd_item id="111101514" /><!-- Danann Divine Gloves -->
+			<gd_item id="111301628" /><!-- Danann Divine Vambrace -->
+			<gd_item id="111501474" /><!-- Danann Divine Handguards -->
+			<gd_item id="111601456" /><!-- Danann Divine Gauntlets -->
+			<gd_item id="112101467" /><!-- Danann Divine Pauldrons -->
+			<gd_item id="112301567" /><!-- Danann Divine Shoulderguards -->
+			<gd_item id="112501416" /><!-- Danann Divine Spaulders -->
+			<gd_item id="112601437" /><!-- Danann Divine Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Helmet (Unique)" chance="16">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125003729" /><!-- Danann Divine Headband -->
+			<gd_item id="125003733" /><!-- Danann Divine Hat -->
+			<gd_item id="125003737" /><!-- Danann Divine Chain Hood -->
+			<gd_item id="125003741" /><!-- Danann Divine Helm -->
+		</gd_items>
+	</gd_rule>
+	<!-- Bundles -->
+	<gd_rule rule_name="Sanctuary Idian Bundle" chance="20">
+		<gd_maps>
+			<gd_map map_id="301380000"/><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624"/><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625"/><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626"/><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188052588"/><!-- Sanctuary Idian Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Sanctuary Conquerer Mark Bundle" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188052583" /><!-- Sanctuary Conquerer Mark Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Sanctuary Treasure Crate" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="301380000"/><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624"/><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625"/><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626"/><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188052613"/><!-- Sanctuary Treasure Crate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Weapon Shard" chance="10">
+		<gd_maps>
+			<gd_map map_id="301380000" /><!-- Danuar_Sanctuary -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235624" /><!-- Warmage Suyaroka -->
+			<gd_npc npc_id="235625" /><!-- Chief Medic Tagnu -->
+			<gd_npc npc_id="235626" /><!-- Virulent Ukahim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="169405253" /><!-- Weapon Shard -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PLAYER_STANCE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "stanceOff",
+      "inputs": {"objectId":100777,"state":0},
+      "payloadHex": "A989010000"
+    },
+    {
+      "name": "stanceFlight",
+      "inputs": {"objectId":100777,"state":1},
+      "payloadHex": "A989010001"
+    },
+    {
+      "name": "stanceStationary",
+      "inputs": {"objectId":100777,"state":2},
+      "payloadHex": "A989010002"
+    }
+  ]
+}

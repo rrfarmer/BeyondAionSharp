@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TOLL_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "zero",
+      "inputs": {"tollCount":0},
+      "payloadHex": "0000000000000000"
+    },
+    {
+      "name": "typical",
+      "inputs": {"tollCount":123456789},
+      "payloadHex": "15CD5B0700000000"
+    },
+    {
+      "name": "large",
+      "inputs": {"tollCount":9223372036854775807},
+      "payloadHex": "FFFFFFFFFFFFFF7F"
+    }
+  ]
+}

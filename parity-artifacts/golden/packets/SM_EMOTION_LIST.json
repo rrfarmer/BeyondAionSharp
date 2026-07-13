@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_EMOTION_LIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "emptyAction0",
+      "inputs": {"action":0},
+      "payloadHex": "000000"
+    },
+    {
+      "name": "emptyAction1",
+      "inputs": {"action":1},
+      "payloadHex": "010000"
+    }
+  ]
+}

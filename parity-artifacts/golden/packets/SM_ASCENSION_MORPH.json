@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ASCENSION_MORPH",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "morph",
+      "inputs": {"inascension":1},
+      "payloadHex": "0100"
+    },
+    {
+      "name": "none",
+      "inputs": {"inascension":0},
+      "payloadHex": "0000"
+    }
+  ]
+}

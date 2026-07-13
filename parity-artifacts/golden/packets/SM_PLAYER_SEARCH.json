@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PLAYER_SEARCH",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "playerSearchSingle",
+      "inputs": {"objectId":100777},
+      "payloadHex": "0100203D1D0D0000C942004048430060964300000A005300630061006C00610072006800610072006E00650073007300000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

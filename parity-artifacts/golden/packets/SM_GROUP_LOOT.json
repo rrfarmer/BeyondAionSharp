@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GROUP_LOOT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "roll",
+      "inputs": {"groupId":1001,"playerId":2002,"itemId":188000001,"itemCount":3,"lootCorpseId":3003,"distributionId":1,"luck":777,"index":5},
+      "payloadHex": "E9030000050000000300000001A7340B000000BB0B000001D207000009030000"
+    }
+  ]
+}

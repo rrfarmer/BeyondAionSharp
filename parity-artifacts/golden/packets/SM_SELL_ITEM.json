@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SELL_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "sellItemPurchaseTemplate",
+      "inputs": {"objectId":740555,"npcId":215220,"npcType":"NORMAL","buyPriceRate":115,"tabIds":[7,8],"showBuyTab":false,"showSellTab":false},
+      "payloadHex": "CB4C0B000173000000000002000700000008000000"
+    }
+  ]
+}

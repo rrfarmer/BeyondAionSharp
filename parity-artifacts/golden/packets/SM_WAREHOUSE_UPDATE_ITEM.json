@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_WAREHOUSE_UPDATE_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "warehouseUpdateItemDecUse",
+      "inputs": {"warehouseType":1,"objectId":268510003,"updateType":"DEC_ITEM_USE"},
+      "payloadHex": "3323011001240057AF0A0000002C00002B1A07000000000000004400610065007600610000000000000000000000000000000000000000000012001600"
+    }
+  ]
+}

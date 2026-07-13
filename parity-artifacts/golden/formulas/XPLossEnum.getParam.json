@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "formula": "XPLossEnum.getParam",
+  "signature": "double getParam()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"entry": "LEVEL_6"}, "result": { "doubleBits": 4607182418800017408 } },
+    { "inputs": {"entry": "LEVEL_30"}, "result": { "doubleBits": 4607182418800017408 } },
+    { "inputs": {"entry": "LEVEL_40"}, "result": { "doubleBits": 4599976659396224614 } },
+    { "inputs": {"entry": "LEVEL_50"}, "result": { "doubleBits": 4598175219545276416 } },
+    { "inputs": {"entry": "LEVEL_55"}, "result": { "doubleBits": 4598175219545276416 } },
+    { "inputs": {"entry": "LEVEL_60"}, "result": { "doubleBits": 4598175219545276416 } },
+    { "inputs": {"entry": "LEVEL_65"}, "result": { "doubleBits": 4598175219545276416 } }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SKILL_CANCEL",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "cancel",
+      "inputs": {"objectId":810001,"skillId":1346},
+      "payloadHex": "115C0C004205"
+    },
+    {
+      "name": "cancelZero",
+      "inputs": {"objectId":810002,"skillId":0},
+      "payloadHex": "125C0C000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_WINDSTREAM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "windstream",
+      "inputs": {"unk1":12,"unk2":3},
+      "payloadHex": "0C00000003"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "formula": "XPRewardEnum.rewardPercent",
+  "signature": "int rewardPercent()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"entry": "MINUS_11"}, "result": 0 },
+    { "inputs": {"entry": "MINUS_10"}, "result": 1 },
+    { "inputs": {"entry": "MINUS_9"}, "result": 10 },
+    { "inputs": {"entry": "MINUS_8"}, "result": 20 },
+    { "inputs": {"entry": "MINUS_7"}, "result": 30 },
+    { "inputs": {"entry": "MINUS_6"}, "result": 40 },
+    { "inputs": {"entry": "MINUS_5"}, "result": 50 },
+    { "inputs": {"entry": "MINUS_4"}, "result": 60 },
+    { "inputs": {"entry": "MINUS_3"}, "result": 90 },
+    { "inputs": {"entry": "MINUS_2"}, "result": 100 },
+    { "inputs": {"entry": "MINUS_1"}, "result": 100 },
+    { "inputs": {"entry": "ZERO"}, "result": 100 },
+    { "inputs": {"entry": "PLUS_1"}, "result": 105 },
+    { "inputs": {"entry": "PLUS_2"}, "result": 110 },
+    { "inputs": {"entry": "PLUS_3"}, "result": 115 },
+    { "inputs": {"entry": "PLUS_4"}, "result": 120 }
+  ]
+}

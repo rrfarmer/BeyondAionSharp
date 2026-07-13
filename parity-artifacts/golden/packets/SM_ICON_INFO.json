@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ICON_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "display",
+      "inputs": {"buffId":12345,"display":true},
+      "payloadHex": "000000003930000001"
+    },
+    {
+      "name": "hide",
+      "inputs": {"buffId":0,"display":false},
+      "payloadHex": "000000000000000000"
+    }
+  ]
+}

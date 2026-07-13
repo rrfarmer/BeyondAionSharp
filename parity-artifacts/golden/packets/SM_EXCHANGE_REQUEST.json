@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_EXCHANGE_REQUEST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "receiver",
+      "inputs": {"receiver":"Israphel"},
+      "payloadHex": "49007300720061007000680065006C000000"
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<statusListener class="com.aionemu.commons.logging.OnConsoleWarningStatusListener" />
+	<property file="config/main/gameserver.properties" />
+	<property file="config/main/logging.properties" />
+	<property file="config/mygs.properties" />
+	<property name="logFolder" value="log" />
+	<property name="consoleTime" value="%date{HH:mm:ss,${gameserver.timezone}}" />
+	<property name="date" value="%date{&quot;yyyy-MM-dd'T'HH:mm:ss,SSSXXX&quot;,${gameserver.timezone}}" />
+	<appender name="out_console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<charset>${consoleEncoding:-UTF-8}</charset>
+			<Pattern>${consoleTime} %highlight(%-5level) %gray([%thread]) - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_console" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/server_console.log</file>
+		<encoder>
+			<Pattern>${date} %-5level [%thread] %logger - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_warn" class="ch.qos.logback.core.FileAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>WARN</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<file>${logFolder}/server_warnings.log</file>
+		<encoder>
+			<Pattern>${date} %logger - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_error" class="ch.qos.logback.core.FileAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<file>${logFolder}/server_errors.log</file>
+		<encoder>
+			<Pattern>${date} %logger - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_status_discord" class="com.aionemu.commons.logging.DiscordChannelAppender">
+		<encoder>
+			<pattern>%logger{0} [%thread]|${gameserver.log.status.discord.avatar_url}|%msg%replace(%n```qml%n%ex```){\r?\n```qml\r?\n```, ''}%nopex</pattern>
+		</encoder>
+		<webhookUrl>${gameserver.log.status.discord.webhook_url}</webhookUrl>
+		<userName_avatarUrl_msg_separator>\|</userName_avatarUrl_msg_separator>
+	</appender>
+	<appender name="app_status_discord_async" class="ch.qos.logback.classic.AsyncAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+		<neverBlock>true</neverBlock>
+		<appender-ref ref="app_status_discord" />
+	</appender>
+	<appender name="app_admincmd" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/adminaudit.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_audit" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/audit.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_chat" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/chat.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_craft" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/craft.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_exchange" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/exchange.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_gconnection" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/gameconnections.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_gmitemrestriction" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/gm_item_restriction.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_event" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/event.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_ingameshop" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/ingameshop.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_instance" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/instance.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_tampering" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/tampering.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_item" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/item.log</file>
+		<immediateFlush>false</immediateFlush>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_item2" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/item_htmls.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_kill" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/kill.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_mail" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/mail.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_playertransfer" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/playertransfer.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_siege" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/siege.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_sysmail" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/sysmail.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_webrewards" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/webrewards.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_auction" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/auction.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<logger name="ADMINAUDIT_LOG" additivity="false">
+		<appender-ref ref="app_admincmd" />
+	</logger>
+	<logger name="AUDIT_LOG">
+		<appender-ref ref="app_audit" />
+	</logger>
+	<logger name="CHAT_LOG" additivity="false">
+		<appender-ref ref="app_chat" />
+	</logger>
+	<logger name="CRAFT_LOG" additivity="false">
+		<appender-ref ref="app_craft" />
+	</logger>
+	<logger name="EXCHANGE_LOG">
+		<appender-ref ref="app_exchange" />
+	</logger>
+	<logger name="GAMECONNECTION_LOG">
+		<appender-ref ref="app_gconnection" />
+	</logger>
+	<logger name="EVENT_LOG">
+		<appender-ref ref="app_event" />
+	</logger>
+	<logger name="INGAMESHOP_LOG">
+		<appender-ref ref="app_ingameshop" />
+	</logger>
+	<logger name="INSTANCE_LOG">
+		<appender-ref ref="app_instance" />
+	</logger>
+	<logger name="TAMPERING_LOG">
+		<appender-ref ref="app_tampering" />
+	</logger>
+	<logger name="ITEM_LOG" additivity="false">
+		<appender-ref ref="app_item" />
+	</logger>
+	<logger name="ITEM_HTML_LOG" additivity="false">
+		<appender-ref ref="app_item2" />
+	</logger>
+	<logger name="KILL_LOG">
+		<appender-ref ref="app_kill" />
+	</logger>
+	<logger name="MAIL_LOG">
+		<appender-ref ref="app_mail" />
+	</logger>
+	<logger name="SIEGE_LOG">
+		<appender-ref ref="app_siege" />
+	</logger>
+	<logger name="SYSMAIL_LOG">
+		<appender-ref ref="app_sysmail" />
+	</logger>
+	<logger name="WEB_REWARDS_LOG" additivity="false">
+		<appender-ref ref="app_webrewards" />
+	</logger>
+	<logger name="HOUSE_AUCTION_LOG">
+		<appender-ref ref="app_auction" />
+	</logger>
+	<logger name="GMITEMRESTRICTION">
+		<appender-ref ref="app_gmitemrestriction" />
+	</logger>
+	<logger name="PLAYERTRANSFER">
+		<appender-ref ref="app_playertransfer" />
+	</logger>
+	<logger name="org.quartz" level="WARN" /> <!-- disable info messages from quartz lib (cron service) -->
+	<root level="INFO">
+		<appender-ref ref="out_console" />
+		<appender-ref ref="app_console" />
+		<appender-ref ref="app_error" />
+		<appender-ref ref="app_warn" />
+		<appender-ref ref="app_status_discord_async" />
+	</root>
+</configuration>

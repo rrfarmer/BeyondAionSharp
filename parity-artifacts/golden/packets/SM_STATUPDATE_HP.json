@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_STATUPDATE_HP",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "hp",
+      "inputs": {"currentHp":1234,"maxHp":5678},
+      "payloadHex": "D20400002E160000"
+    }
+  ]
+}

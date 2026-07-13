@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DELETE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "defaultFadeOut",
+      "inputs": {"objectId":920001,"animationId":1},
+      "payloadHex": "C1090E0001"
+    },
+    {
+      "name": "outOfRangeNone",
+      "inputs": {"objectId":920002,"animationId":0},
+      "payloadHex": "C2090E0000"
+    },
+    {
+      "name": "jumpIn",
+      "inputs": {"objectId":920003,"animationId":11},
+      "payloadHex": "C3090E000B"
+    },
+    {
+      "name": "delayed",
+      "inputs": {"objectId":920004,"animationId":19},
+      "payloadHex": "C4090E0013"
+    }
+  ]
+}

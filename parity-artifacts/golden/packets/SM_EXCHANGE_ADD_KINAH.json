@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_EXCHANGE_ADD_KINAH",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "self",
+      "inputs": {"action":0,"kinahCount":123456789},
+      "payloadHex": "0015CD5B0700000000"
+    },
+    {
+      "name": "other",
+      "inputs": {"action":1,"kinahCount":9999999999},
+      "payloadHex": "01FFE30B5402000000"
+    }
+  ]
+}

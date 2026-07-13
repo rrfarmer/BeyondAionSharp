@@ -1,0 +1,1783 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Map Drops -->
+	<gd_rule rule_name="Kishar Armor (Rare)" chance="3" dynamic_chance="true">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npc_groups>
+			<gd_npc_group group="KRALLWARRIOR"/>
+			<gd_npc_group group="KRALLSCOUT"/>
+			<gd_npc_group group="KRALLSHAMAN"/>
+		</gd_npc_groups>
+		<gd_items>
+			<gd_item id="115000721"/><!-- Kishar Elite's Shield -->
+			<gd_item id="114100743"/><!-- Kishar Shoes -->
+			<gd_item id="112100674"/><!-- Kishar Pauldrons -->
+			<gd_item id="111100713"/><!-- Kishar Gloves -->
+			<gd_item id="114300756"/><!-- Kishar Boots -->
+			<gd_item id="112300674"/><!-- Kishar Shoulderguards -->
+			<gd_item id="111300715"/><!-- Kishar Vambrace -->
+			<gd_item id="114500722"/><!-- Kishar Brogans -->
+			<gd_item id="112500662"/><!-- Kishar Spaulders -->
+			<gd_item id="111500702"/><!-- Kishar Handguards -->
+			<gd_item id="114600682"/><!-- Kishar Sabatons -->
+			<gd_item id="112600670"/><!-- Kishar Shoulderplates -->
+			<gd_item id="111600694"/><!-- Kishar Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Crazed Armor (Rare)" chance="3" dynamic_chance="true">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npc_groups>
+			<gd_npc_group group="KRALLWARRIOR"/>
+			<gd_npc_group group="KRALLSCOUT"/>
+			<gd_npc_group group="KRALLSHAMAN"/>
+		</gd_npc_groups>
+		<gd_items>
+			<gd_item id="114100744"/><!-- Crazed Shoes -->
+			<gd_item id="112100675"/><!-- Crazed Pauldrons -->
+			<gd_item id="111100715"/><!-- Crazed Gloves -->
+			<gd_item id="114300757"/><!-- Crazed Boots -->
+			<gd_item id="112300675"/><!-- Crazed Shoulderguards -->
+			<gd_item id="111300717"/><!-- Crazed Vambrace -->
+			<gd_item id="114500723"/><!-- Crazed Brogans -->
+			<gd_item id="112500663"/><!-- Crazed Spaulders -->
+			<gd_item id="111500704"/><!-- Crazed Handguards -->
+			<gd_item id="114600683"/><!-- Crazed Sabatons -->
+			<gd_item id="112600671"/><!-- Crazed Shoulderplates -->
+			<gd_item id="111600696"/><!-- Crazed Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211074"/><!-- Firescar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100442"/><!-- Firescar's Warhammer -->
+			<gd_item id="100500441"/><!-- Firescar's Jewel -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211897"/><!-- Gojira -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100449"/><!-- Gojira's Warhammer -->
+			<gd_item id="100600479"/><!-- Gojira's Tome -->
+			<gd_item id="102000508"/><!-- Gojira's Harp -->
+			<gd_item id="100000584"/><!-- Gojira's Sword -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211900"/><!-- Takun the Terrible -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100500446"/><!-- Takun's Jewel -->
+			<gd_item id="100900442"/><!-- Takun's Greatsword -->
+			<gd_item id="101500448"/><!-- Takun's Staff -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212117"/><!-- Greybeard -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100600473"/><!-- Greybeard's Tome -->
+			<gd_item id="100100441"/><!-- Greybeard's Warhammer -->
+			<gd_item id="100200550"/><!-- Greybeard's Dagger -->
+			<gd_item id="101800486"/><!-- Greybeard's Pistol -->
+			<gd_item id="102000502"/><!-- Greybeard's Harp -->
+			<gd_item id="102100469"/><!-- Greybeard's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212122"/><!-- Melita Poisonthorn -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100600474"/><!-- Melita's Tome -->
+			<gd_item id="101800487"/><!-- Melita's Pistol -->
+			<gd_item id="102000503"/><!-- Melita's Harp -->
+			<gd_item id="100200551"/><!-- Melita's Giant Poison Stinger -->
+			<gd_item id="100000577"/><!-- Melita's Sword -->
+			<gd_item id="100100443"/><!-- Melita's Warhammer -->
+			<gd_item id="102100470"/><!-- Melita's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212124"/><!-- Rinokero -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000576"/><!-- Rinokero's Sword -->
+			<gd_item id="100900436"/><!-- Rinokero's Greatsword -->
+			<gd_item id="101300426"/><!-- Rinokero's Spear -->
+			<gd_item id="101500442"/><!-- Rinokero's Staff -->
+			<gd_item id="101900473"/><!-- Rinokero's Aethercannon -->
+			<gd_item id="101700456"/><!-- Rinokero's Longbow -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212130"/><!-- Butler Duterran -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100200553"/><!-- Duterran's Dagger -->
+			<gd_item id="100100446"/><!-- Duterran's Warhammer -->
+			<gd_item id="101800489"/><!-- Duterran's Pistol -->
+			<gd_item id="102100472"/><!-- Duterran's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212145"/><!-- Ragenon Souleater -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000581"/><!-- Ragenon's Sword -->
+			<gd_item id="100900438"/><!-- Ragenon's Greatsword -->
+			<gd_item id="101300428"/><!-- Ragenon's Spear -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212231"/><!-- Head Chef Paparu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100444"/><!-- Paparu's Scoop -->
+			<gd_item id="100000578"/><!-- Paparu's Kitchen Knife -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211088"/><!-- Dedrun the Sentinel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101700459"/><!-- Dedrun's Longbow -->
+			<gd_item id="101900476"/><!-- Dedrun's Aethercannon -->
+			<gd_item id="101500445"/><!-- Dedrun's Staff -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211132"/><!-- Fortune -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101500443"/><!-- Fortune's Branch -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="102000507" /><!-- Medeus' Harp -->
+			<gd_item id="100600478" /><!-- Medeus' Tome -->
+			<gd_item id="102100475" /><!-- Akairun's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211908"/><!-- Spirit King Agro -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100500443"/><!-- Spirit King's Jewel -->
+			<gd_item id="100600476"/><!-- Spirit King's Tome -->
+			<gd_item id="102000505"/><!-- Spirit King's Harp -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212227"/><!-- Chieftain Chantar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101800488"/><!-- Chantar's Pistol -->
+			<gd_item id="101900474"/><!-- Chantar's Aethercannon -->
+			<gd_item id="102100471"/><!-- Chantar's Cipher-Blade -->
+			<gd_item id="100200552"/><!-- Chantar's Dagger -->
+			<gd_item id="101700457"/><!-- Chantar's Longbow -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212247"/><!-- Chieftain Kunpapa -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000579"/><!-- Kunpapa's Sword -->
+			<gd_item id="100900437"/><!-- Kunpapa's Greatsword -->
+			<gd_item id="101300427"/><!-- Kunpapa's Spear -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212266"/><!-- Commander Ashutang -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101700460"/><!-- Ashutang's Longbow -->
+			<gd_item id="101800491"/><!-- Ashutang's Pistol -->
+			<gd_item id="101900477"/><!-- Ashutang's Aethercannon -->
+			<gd_item id="100200555"/><!-- Ashutang's Dagger -->
+			<gd_item id="102100474"/><!-- Ashutang's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212267"/><!-- Medic Mahashi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100447"/><!-- Mahashi's Warhammer -->
+			<gd_item id="101500446"/><!-- Mahashi's Staff -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212278"/><!-- Greatmage Shivhaz -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="102000506"/><!-- Shivhaz's Harp -->
+			<gd_item id="100500444"/><!-- Shivhaz's Jewel -->
+			<gd_item id="100600477"/><!-- Shivhaz's Tome -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212315"/><!-- Ulan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100500450"/><!-- Ulan's Jewel -->
+			<gd_item id="101800496"/><!-- Ulan's Pistol -->
+			<gd_item id="102000512"/><!-- Ulan's Harp -->
+			<gd_item id="100200560"/><!-- Ulan's Dagger -->
+			<gd_item id="100600483"/><!-- Ulan's Tome -->
+			<gd_item id="102100479"/><!-- Ulan's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212316"/><!-- Hallion -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900446"/><!-- Hallion's Greatsword -->
+			<gd_item id="100000588"/><!-- Hallion's Sword -->
+			<gd_item id="101300435"/><!-- Hallion's Spear -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212317"/><!-- Exedil -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100453"/><!-- Exedil's Warhammer -->
+			<gd_item id="101700465"/><!-- Exedil's Longbow -->
+			<gd_item id="101900482"/><!-- Exedil's Aethercannon -->
+			<gd_item id="101500452"/><!-- Exedil's Staff -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214157"/><!-- Commander Inshar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900506"/><!-- Inshar's Greatsword -->
+			<gd_item id="101300498"/><!-- Inshar's Spear -->
+			<gd_item id="100000675"/><!-- Inshar's Sword -->
+			<gd_item id="102100504"/><!-- Inshar's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214163"/><!-- Adjutant Ursanafi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101500522"/><!-- Ursanafi's Staff -->
+			<gd_item id="100100524"/><!-- Ursanafi's Warhammer -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212008"/><!-- Akairun of Medeus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000583"/><!-- Akairun's Sword -->
+			<gd_item id="100100448"/><!-- Akairun's Warhammer -->
+			<gd_item id="100200556"/><!-- Akairun's Dagger -->
+			<gd_item id="101800492"/><!-- Akairun's Pistol -->
+			<gd_item id="102100475"/><!-- Akairun's Cipher-Blade -->
+			<gd_item id="115000727"/><!-- Akairun's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212306"/><!-- Deputy Hanuman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000586"/><!-- Indratu's Sword -->
+			<gd_item id="100200558"/><!-- Indratu's Dagger -->
+			<gd_item id="100900444"/><!-- Indratu's Greatsword -->
+			<gd_item id="101300433"/><!-- Indratu's Spear -->
+			<gd_item id="101700463"/><!-- Indratu's Longbow -->
+			<gd_item id="101800494"/><!-- Indratu's Pistol -->
+			<gd_item id="101900480"/><!-- Indratu's Aethercannon -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100500445"/><!-- Medeus' Heart -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212008"/><!-- Akairun of Medeus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900441"/><!-- Fatal Sword -->
+			<gd_item id="101300431"/><!-- Fatal Spear -->
+			<gd_item id="101500447"/><!-- Fatal Stave -->
+			<gd_item id="101700461"/><!-- Fatal Bow -->
+			<gd_item id="101900478"/><!-- Fatal Aethercannon -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212283"/><!-- Watcher Zapiel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100500449"/><!-- Zapiel's Jewel -->
+			<gd_item id="100900445"/><!-- Zapiel's Greatsword -->
+			<gd_item id="101300434"/><!-- Zapiel's Spear -->
+			<gd_item id="101500451"/><!-- Zapiel's Staff -->
+			<gd_item id="101700464"/><!-- Zapiel's Longbow -->
+			<gd_item id="101900481"/><!-- Zapiel's Aethercannon -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="30">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212314"/><!-- Bollvig Blackheart -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100200561" /><!-- Black Heart's Dagger -->
+			<gd_item id="102000513" /><!-- Black Heart's Harp -->
+			<gd_item id="101900483" /><!-- Black Heart's Aethercannon -->
+			<gd_item id="101800910" /><!-- Black Heart's Pistol -->
+			<gd_item id="100000589" /><!-- Black Heart's Sword -->
+			<gd_item id="100100454" /><!-- Black Heart's Warhammer -->
+			<gd_item id="100500451" /><!-- Black Heart's Jewel -->
+			<gd_item id="100600484" /><!-- Black Heart's Tome -->
+			<gd_item id="100900447" /><!-- Black Heart's Greatsword -->
+			<gd_item id="101300436" /><!-- Black Heart's Spear -->
+			<gd_item id="101500453" /><!-- Black Heart's Staff -->
+			<gd_item id="101700466" /><!-- Black Heart's Longbow -->
+			<gd_item id="102100765" /><!-- Anuhart Elite's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000720"/><!-- Medeus' Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212233"/><!-- Tantuka the Blacksmith -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000722"/><!-- Tantuka's Shield -->
+			<gd_item id="115000721"/><!-- Kishar Elite's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212269"/><!-- Skinripper -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000726"/><!-- Skinripper's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212346"/><!-- Pitiless Graveknight -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000725"/><!-- Geschphalt's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214157"/><!-- Commander Inshar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000788"/><!-- Inshar's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211908"/><!-- Spirit King Agro -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000724"/><!-- Spirit King's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212247"/><!-- Chieftain Kunpapa -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000723"/><!-- Kunpapa's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Unique)" chance="16.5">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212283"/><!-- Watcher Zapiel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000730"/><!-- Zapiel's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Unique)" chance="16.5">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212314"/><!-- Bollvig Blackheart -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000731"/><!-- Black Heart's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212117"/><!-- Greybeard -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100741"/><!-- Greybeard's Shoes -->
+			<gd_item id="114300754"/><!-- Greybeard's Boots -->
+			<gd_item id="114500720"/><!-- Greybeard's Brogans -->
+			<gd_item id="114600680"/><!-- Greybeard's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212119"/><!-- Little Floel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100673"/><!-- Floel's Pauldrons -->
+			<gd_item id="112300673"/><!-- Floel's Shoulderguards -->
+			<gd_item id="112500661"/><!-- Floel's Spaulders -->
+			<gd_item id="112600669"/><!-- Floel's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212121"/><!-- Stench -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100714"/><!-- Stench's Gloves -->
+			<gd_item id="111300716"/><!-- Stench's Vambrace -->
+			<gd_item id="111500703"/><!-- Stench's Handguards -->
+			<gd_item id="111600695"/><!-- Stench's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212126"/><!-- Miserly Iscraw -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100722"/><!-- Iscraw's Leggings -->
+			<gd_item id="113300738"/><!-- Iscraw's Breeches -->
+			<gd_item id="113500712"/><!-- Iscraw's Chausses -->
+			<gd_item id="113600686"/><!-- Iscraw's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212127"/><!-- Furol the Gray -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100742"/><!-- Furol's Shoes -->
+			<gd_item id="114300755"/><!-- Furol's Boots -->
+			<gd_item id="114500721"/><!-- Furol's Brogans -->
+			<gd_item id="114600681"/><!-- Furol's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212127"/><!-- Furol the Gray -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000670" /><!-- Furol's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212128"/><!-- Midas -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100798"/><!-- Midas' Tunic -->
+			<gd_item id="110300755"/><!-- Midas' Jerkin -->
+			<gd_item id="110500732"/><!-- Midas' Hauberk -->
+			<gd_item id="110600720"/><!-- Midas' Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212130"/><!-- Butler Duterran -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100677"/><!-- Butler's Pauldrons -->
+			<gd_item id="112300677"/><!-- Butler's Shoulderguards -->
+			<gd_item id="112500665"/><!-- Butler's Spaulders -->
+			<gd_item id="112600673"/><!-- Butler's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212145"/><!-- Ragenon Souleater -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100717"/><!-- Ragenon's Gloves -->
+			<gd_item id="111300719"/><!-- Ragenon's Vambrace -->
+			<gd_item id="111500706"/><!-- Ragenon's Handguards -->
+			<gd_item id="111600698"/><!-- Ragenon's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212267"/><!-- Medic Mahashi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100727"/><!-- Indratu Legionary's Leggings -->
+			<gd_item id="110100804"/><!-- Indratu Legionary's Tunic -->
+			<gd_item id="112100678"/><!-- Indratu Legionary's Pauldrons -->
+			<gd_item id="111100718"/><!-- Indratu Legionary's Gloves -->
+			<gd_item id="114100747"/><!-- Indratu Legionary's Shoes -->
+			<gd_item id="110300760"/><!-- Indratu Legionary's Jerkin -->
+			<gd_item id="113300743"/><!-- Indratu Legionary's Breeches -->
+			<gd_item id="112300678"/><!-- Indratu Legionary's Shoulderguards -->
+			<gd_item id="111300720"/><!-- Indratu Legionary's Vambrace -->
+			<gd_item id="114300760"/><!-- Indratu Legionary's Boots -->
+			<gd_item id="113500717"/><!-- Indratu Legionary's Chausses -->
+			<gd_item id="110500737"/><!-- Indratu Legionary's Hauberk -->
+			<gd_item id="112500666"/><!-- Indratu Legionary's Spaulders -->
+			<gd_item id="111500707"/><!-- Indratu Legionary's Handguards -->
+			<gd_item id="114500726"/><!-- Indratu Legionary's Brogans -->
+			<gd_item id="114600686"/><!-- Indratu Legionary's Sabatons -->
+			<gd_item id="113600691"/><!-- Indratu Legionary's Greaves -->
+			<gd_item id="111600699"/><!-- Indratu Legionary's Gauntlets -->
+			<gd_item id="112600674"/><!-- Indratu Legionary's Shoulderplates -->
+			<gd_item id="110600725"/><!-- Indratu Legionary's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212346"/><!-- Pitiless Graveknight -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100746"/><!-- Geschphalt's Shoes -->
+			<gd_item id="114500725"/><!-- Geschphalt's Brogans -->
+			<gd_item id="114300759"/><!-- Geschphalt's Boots -->
+			<gd_item id="114600685"/><!-- Geschphalt's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211088"/><!-- Dedrun the Sentinel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100803"/><!-- Dedrun's Tunic -->
+			<gd_item id="110300759"/><!-- Dedrun's Jerkin -->
+			<gd_item id="110500736"/><!-- Dedrun's Hauberk -->
+			<gd_item id="110600724"/><!-- Dedrun's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100805"/><!-- Medeus' Cloth -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211897"/><!-- Gojira -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110300761"/><!-- Jungle King's Jerkin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211900"/><!-- Takun the Terrible -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113300744"/><!-- Jungle King's Breeches -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212125"/><!-- Depie the Loner -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100800"/><!-- Depie's Tunic -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212146"/><!-- Miserable Prote -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100726"/><!-- Prote's Leggings -->
+			<gd_item id="113300742"/><!-- Prote's Breeches -->
+			<gd_item id="113500716"/><!-- Prote's Chausses -->
+			<gd_item id="113600690"/><!-- Prote's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212227"/><!-- Chieftain Chantar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100799"/><!-- Kishar Tunic -->
+			<gd_item id="110300756"/><!-- Kishar Jerkin -->
+			<gd_item id="113100723"/><!-- Kishar Leggings -->
+			<gd_item id="113300739"/><!-- Kishar Breeches -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212233"/><!-- Tantuka the Blacksmith -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100723"/><!-- Kishar Leggings -->
+			<gd_item id="113300739"/><!-- Kishar Breeches -->
+			<gd_item id="113500713"/><!-- Kishar Chausses -->
+			<gd_item id="113600687"/><!-- Kishar Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212247"/><!-- Chieftain Kunpapa -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110500734"/><!-- Crazed Hauberk -->
+			<gd_item id="110600722"/><!-- Crazed Breastplate -->
+			<gd_item id="113100724"/><!-- Crazed Leggings -->
+			<gd_item id="113600688"/><!-- Crazed Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212308"/><!-- High Priest Yatri -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111500708"/><!-- Indratu Elite's Handguards -->
+			<gd_item id="112500668"/><!-- Indratu Elite's Spaulders -->
+			<gd_item id="114500727"/><!-- Indratu Elite's Brogans -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212310"/><!-- High Mage Brashuna -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100680"/><!-- Indratu Elite's Pauldrons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212315"/><!-- Ulan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100750"/><!-- Ulan's Shoes -->
+			<gd_item id="114300763"/><!-- Ulan's Boots -->
+			<gd_item id="114500729"/><!-- Ulan's Brogans -->
+			<gd_item id="114600689"/><!-- Ulan's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212316"/><!-- Hallion -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100721"/><!-- Hallion's Gloves -->
+			<gd_item id="111300723"/><!-- Hallion's Vambrace -->
+			<gd_item id="111500710"/><!-- Hallion's Handguards -->
+			<gd_item id="111600702"/><!-- Hallion's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212317"/><!-- Exedil -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100682"/><!-- Exedil's Pauldrons -->
+			<gd_item id="112300682"/><!-- Exedil's Shoulderguards -->
+			<gd_item id="112500670"/><!-- Exedil's Spaulders -->
+			<gd_item id="112600678"/><!-- Exedil's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212306"/><!-- Deputy Hanuman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100806"/><!-- Indratu Elite's Tunic -->
+			<gd_item id="110300762"/><!-- Indratu Elite's Jerkin -->
+			<gd_item id="110500738"/><!-- Indratu Elite's Hauberk -->
+			<gd_item id="110600726"/><!-- Indratu Elite's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212283"/><!-- Watcher Zapiel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100808"/><!-- Zapiel's Tunic -->
+			<gd_item id="110300764"/><!-- Zapiel's Jerkin -->
+			<gd_item id="110500740"/><!-- Zapiel's Hauberk -->
+			<gd_item id="110600728"/><!-- Zapiel's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212306"/><!-- Deputy Hanuman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100807"/><!-- Phoenix Tunic -->
+			<gd_item id="110300763"/><!-- White Tiger's Jerkin -->
+			<gd_item id="110500739"/><!-- Soaring Hauberk -->
+			<gd_item id="110600727"/><!-- Ebon Shell Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212314"/><!-- Bollvig Blackheart -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100809" /><!-- Bollvig's Tunic -->
+			<gd_item id="113100731" /><!-- Bollvig's Leggings -->
+			<gd_item id="110300765" /><!-- Bollvig's Jerkin -->
+			<gd_item id="113300748" /><!-- Bollvig's Breeches -->
+			<gd_item id="110500741" /><!-- Bollvig's Hauberk -->
+			<gd_item id="113500721" /><!-- Bollvig's Chausses -->
+			<gd_item id="110600729" /><!-- Bollvig's Breastplate -->
+			<gd_item id="113600695" /><!-- Bollvig's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211074"/><!-- Firescar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000734"/><!-- Firescar's Garnet Earrings -->
+			<gd_item id="120000735"/><!-- Firescar's Lazuli Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211897"/><!-- Gojira -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000796"/><!-- Gojira's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211900"/><!-- Takun the Terrible -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000747"/><!-- Takun's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211908"/><!-- Spirit King Agro -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000790"/><!-- Agro's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211990"/><!-- Gossamos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000675"/><!-- Viper's Diamond Necklace -->
+			<gd_item id="121000676"/><!-- Viper's Sapphire Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212123"/><!-- Shadekirrin Lutis -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000739"/><!-- Lutis' Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212124"/><!-- Rinokero -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000784"/><!-- Rinokero's Garnet Ring -->
+			<gd_item id="122000785"/><!-- Rinokero's Moonstone Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212126"/><!-- Miserly Iscraw -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000736"/><!-- Iscraw's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212128"/><!-- Midas -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000786"/><!-- Midas' Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212132"/><!-- Lambos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000741"/><!-- Lambos' Ruby Earrings -->
+			<gd_item id="120000742"/><!-- Lambos' Sapphire Earrings -->
+			<gd_item id="122000792"/><!-- Lambos' Sapphire Ring -->
+			<gd_item id="122000793"/><!-- Lambos' Diamond Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headgear (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212132"/><!-- Lambos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001566" /><!-- Boatswain's Headband -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212133"/><!-- Dishella -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000738"/><!-- Dishella's Sapphire Earrings -->
+			<gd_item id="120000737"/><!-- Dishella's Ruby Earrings -->
+			<gd_item id="122000788"/><!-- Dishella's Sapphire Ring -->
+			<gd_item id="122000787"/><!-- Dishella's Ruby Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212227"/><!-- Chieftain Chantar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000672"/><!-- Chantar's Lazuli Necklace -->
+			<gd_item id="121000671"/><!-- Chantar's Moonstone Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212268"/><!-- Raky Redmagma -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000789"/><!-- Raky's Ring -->
+			<gd_item id="121000674"/><!-- Raky's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214157"/><!-- Commander Inshar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000888"/><!-- Inshar's Belt -->
+			<gd_item id="123000887"/><!-- Inshar's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214158"/><!-- Staff Captain Lahumu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000783"/><!-- Lahumu's Ruby Necklace -->
+			<gd_item id="121000784"/><!-- Lahumu's Sapphire Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214163"/><!-- Adjutant Ursanafi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000858"/><!-- Ursanafi's Earrings -->
+			<gd_item id="122000900"/><!-- Ursanafi's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211088"/><!-- Dedrun the Sentinel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000740"/><!-- Dedrun's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000795"/><!-- Medeus' Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212008"/><!-- Akairun of Medeus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000745"/><!-- Akairun's Sapphire Earrings -->
+			<gd_item id="120000746"/><!-- Akairun's Diamond Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="66">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212118"/><!-- Flinch -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000673"/><!-- Flinch's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212146"/><!-- Miserable Prote -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000794"/><!-- Prote's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212266"/><!-- Commander Ashutang -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000743"/><!-- Ashutang's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212267"/><!-- Medic Mahashi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000744"/><!-- Mahashi's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212268"/><!-- Raky Redmagma -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000791"/><!-- Raky's Tears -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212308"/><!-- High Priest Yatri -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000748"/><!-- Yatri's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212314"/><!-- Bollvig Blackheart -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000679"/><!-- Bollvig's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212316"/><!-- Hallion -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000799"/><!-- Hallion's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212317"/><!-- Exedil -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000750"/><!-- Exedil's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212283"/><!-- Watcher Zapiel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000749"/><!-- Zapiel's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212282"/><!-- Bulwark Jeshuchi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000798"/><!-- Jeshuchi's Ring -->
+			<gd_item id="121000678"/><!-- Jeshuchi's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="25">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212315"/><!-- Ulan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000800"/><!-- Ulan's Golem -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="25">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212316"/><!-- Hallion -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000751"/><!-- Hallion's Golem -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Rare)" chance="20">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212121"/><!-- Stench -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001562"/><!-- Raffles Hat -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212122"/><!-- Melita Poisonthorn -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001558"/><!-- Melita's Headband -->
+			<gd_item id="125001559"/><!-- Melita's Hat -->
+			<gd_item id="125001560"/><!-- Melita's Chain Helm -->
+			<gd_item id="125001561"/><!-- Melita's Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214101"/><!-- Lab Chief Eirin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001863"/><!-- Eirin's Glasses -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211928"/><!-- Aged Ginseng -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001563"/><!-- Saam's Laurel -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211990"/><!-- Gossamos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001565"/><!-- Viper's Mask -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Legend)" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212008"/><!-- Akairun of Medeus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001575"/><!-- Akairun's Headband -->
+			<gd_item id="125001576"/><!-- Akairun's Hat -->
+			<gd_item id="125001577"/><!-- Akairun's Chain Helm -->
+			<gd_item id="125001578"/><!-- Akairun's Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214158"/><!-- Staff Captain Lahumu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001885"/><!-- Lahumu's Silver Diadem -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212306"/><!-- Deputy Hanuman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001580"/><!-- Indratu Elite's Headband -->
+			<gd_item id="125001581"/><!-- Indratu Elite's Hat -->
+			<gd_item id="125001582"/><!-- Indratu Elite's Chain Helm -->
+			<gd_item id="125001583"/><!-- Indratu Elite's Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headband (Unique)" chance="16.5">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212314"/><!-- Bollvig Blackheart -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001586" /><!-- Punishment Hat -->
+			<gd_item id="125001587" /><!-- Punishment Chain Helm -->
+			<gd_item id="125001585" /><!-- Punishment Headband -->
+			<gd_item id="125001588" /><!-- Punishment Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211990"/><!-- Gossamos -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000787"/><!-- Viper's Leather Belt -->
+			<gd_item id="123000788"/><!-- Viper's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212119"/><!-- Little Floel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000783"/><!-- Floel's Leather Belt -->
+			<gd_item id="123000784"/><!-- Floel's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212123"/><!-- Shadekirrin Lutis -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000786"/><!-- Lutis' Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212269"/><!-- Skinripper -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000789"/><!-- Skinripper's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214101"/><!-- Lab Chief Eirin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000886"/><!-- Eirin's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Legend)" chance="40">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000790"/><!-- Medeus' Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212315"/><!-- Ulan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000793"/><!-- Ulan's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212133"/><!-- Dishella -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000785"/><!-- Dishella's Vine -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Quest-Start-Item" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211074"/><!-- Firescar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000017"/><!-- Yellowish Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Quest-Start-Item" chance="10">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212318"/><!-- Graveknight Crusader -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="182201770"/><!-- doc_quest_1670a -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211088"/><!-- Dedrun the Sentinel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012031"/><!-- Sentinel's Branch -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212008"/><!-- Akairun of Medeus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012033"/><!-- Akairun's Horn -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Design" chance="0.5">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="LF3_LIMITAREA_E1_2_210040000"/>
+			<gd_zone zone="THE_STORM_CIRCLE_210040000"/>
+		</gd_zones>
+		<gd_items>
+			<gd_item id="152200194"/><!-- Design: Akairun's Spear -->
+			<gd_item id="152200508"/><!-- Design: Akairun's Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211265"/><!-- Medeus the Vile -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012032"/><!-- Rancorous Energy -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211897"/><!-- Gojira -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012034"/><!-- Devourer's Fang -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211900"/><!-- Takun the Terrible -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012035"/><!-- Boiling Blood of Takun -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000"/><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="212146"/><!-- Miserable Prote -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012030"/><!-- Stone Misery Fragment -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="3">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="HEIRONOPOLIS_210040000" />
+			<gd_zone zone="VAIZELS_PEAK_210040000" />
+		</gd_zones>
+		<gd_npc_groups>
+			<gd_npc_group group="ETTIN" />
+		</gd_npc_groups>
+		<gd_items>
+			<gd_item id="182201710" /><!-- Leather Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="50">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="ORTON_FARM_210040000" />
+		</gd_zones>
+		<gd_npcs>
+			<gd_npc npc_id="212126" /><!-- Miserly Iscraw -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="182201728" /><!-- Parchment Map -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="3">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="LEPHARIST_RESEARCH_CENTER_210040000" />
+		</gd_zones>
+		<gd_npc_groups>
+			<gd_npc_group group="LEPHAR" />
+		</gd_npc_groups>
+		<gd_items>
+			<gd_item id="182201744" /><!-- Mapping the Revolutionaries -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="3">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="STENON_BAY_210040000" />
+		</gd_zones>
+		<gd_npc_groups>
+			<gd_npc_group group="UNDEADLIGHT_WI" />
+			<gd_npc_group group="UNDEADLIGHT_FI" />
+		</gd_npc_groups>
+		<gd_items>
+			<gd_item id="182201765" /><!-- Old Letter -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="3">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="NOLANTIS_RUINS_210040000" />
+			<gd_zone zone="STENON_BAY_210040000" />
+		</gd_zones>
+		<gd_npc_groups>
+			<gd_npc_group group="SKELETON" />
+			<gd_npc_group group="UNDEADLIGHT_FI" />
+			<gd_npc_group group="GRAVEKNIGHT" />
+		</gd_npc_groups>
+		<gd_items>
+			<gd_item id="182201789" /><!-- Broken Flute -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Golden Lepharist Insignia (Elite)" chance="75">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="LEPHARIST_BASTION_210020000" />
+		</gd_zones>
+		<gd_npc_groups>
+			<gd_npc_group group="LEPHAR" />
+		</gd_npc_groups>
+		<gd_ratings>
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="186000046" /><!-- Golden Lepharist Insignia -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Golden Lepharist Insignia" chance="15">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="LEPHARIST_BASTION_210020000" />
+		</gd_zones>
+		<gd_npc_groups>
+			<gd_npc_group group="LEPHAR" />
+		</gd_npc_groups>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="186000046" /><!-- Golden Lepharist Insignia -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Soul Weapon (Rare)" chance="5">
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="211979" /><!-- Gladiator Spirit -->
+			<gd_npc npc_id="211980" /><!-- Gladiator Spirit -->
+			<gd_npc npc_id="211981" /><!-- Spellslinger Spirit -->
+			<gd_npc npc_id="211982" /><!-- Spellslinger Spirit -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000673" /><!-- Soul Sword -->
+			<gd_item id="100100522" /><!-- Soul Warhammer -->
+			<gd_item id="101500520" /><!-- Soul Staff -->
+			<gd_item id="101700540" /><!-- Soul Longbow -->
+			<gd_item id="100600560" /><!-- Soul Tome -->
+			<gd_item id="101900517" /><!-- Noble Spirit's Aethercannon -->
+			<gd_item id="102000550" /><!-- Noble Spirit's Harp -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

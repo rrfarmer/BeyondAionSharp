@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GATHERABLE_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "gatherable",
+      "inputs": {"objectId":305419896,"staticId":7700,"templateId":700001,"l10nId":350123,"x":1234.5,"y":678.25,"z":91.5,"heading":42},
+      "payloadHex": "00509A44009029440000B74278563412141E000061AE0A0001002AAB57050000000000000064"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_WINDSTREAM_ANNOUNCE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "open",
+      "inputs": {"bidirectional":1,"mapId":210050000,"streamId":3,"state":1},
+      "payloadHex": "01000000D01B850C0300000001"
+    },
+    {
+      "name": "close",
+      "inputs": {"bidirectional":0,"mapId":220070000,"streamId":0,"state":0},
+      "payloadHex": "0000000070001E0D0000000000"
+    }
+  ]
+}

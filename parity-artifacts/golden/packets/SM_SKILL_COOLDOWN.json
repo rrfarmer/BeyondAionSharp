@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SKILL_COOLDOWN",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "skillCooldownZeroExpiration",
+      "inputs": {"skillId":1968,"expirationTimeMillis":0},
+      "payloadHex": "010001B00700000000A8610000"
+    }
+  ]
+}

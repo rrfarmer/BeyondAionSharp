@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEGION_UPDATE_NICKNAME",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "nickname",
+      "inputs": {"playerObjId":770300,"newNickname":"Champion"},
+      "payloadHex": "FCC00B004300680061006D00700069006F006E000000"
+    }
+  ]
+}

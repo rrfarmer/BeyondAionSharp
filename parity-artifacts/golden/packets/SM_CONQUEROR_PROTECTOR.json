@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CONQUEROR_PROTECTOR",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "conqueror",
+      "inputs": {"type":1,"buffLvl":3,"cooldown":60},
+      "payloadHex": "0100000001000000010000000100030000003C000000"
+    },
+    {
+      "name": "protector",
+      "inputs": {"type":8,"buffLvl":5,"cooldown":120},
+      "payloadHex": "08000000010000000100000001000500000078000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_UNK_3_5_1",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "default",
+      "inputs": {"objectId":780002,"gameserverId":1},
+      "payloadHex": "0100000000000000E2E60B00010000000000000000000000"
+    }
+  ]
+}

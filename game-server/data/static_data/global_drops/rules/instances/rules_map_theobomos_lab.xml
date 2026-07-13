@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Unique)" chance="60">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214669" /><!-- Unstable Triroan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000727" /><!-- Triroan's Sword -->
+			<gd_item id="100200677" /><!-- Triroan's Dagger -->
+			<gd_item id="100100572" /><!-- Triroan's Warhammer -->
+			<gd_item id="100900570" /><!-- Triroan's Greatsword -->
+			<gd_item id="101300542" /><!-- Triroan's Spear -->
+			<gd_item id="101500570" /><!-- Triroan's Staff -->
+			<gd_item id="101700598" /><!-- Triroan's Longbow -->
+			<gd_item id="100500632" /><!-- Triroan's Orb -->
+			<gd_item id="100600689" /><!-- Triroan's Spellbook -->
+			<gd_item id="100500576" /><!-- Triroan's Jewel -->
+			<gd_item id="100600613" /><!-- Triroan's Tome -->
+			<gd_item id="101800913" /><!-- Triroan's Pistol -->
+			<gd_item id="101900564" /><!-- Triroan's Aethercannon -->
+			<gd_item id="102000594" /><!-- Triroan's Harp -->
+			<gd_item id="102100768" /><!-- Triroan's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214663" /><!-- Torch Spirit Iprita -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000832" /><!-- Iprita's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214663" /><!-- Torch Spirit Iprita -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113500829" /><!-- Clandestine Chausses -->
+			<gd_item id="113100846" /><!-- Clandestine Leggings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214664" /><!-- Wistful Syripne -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100793" /><!-- Clandestine Pauldrons -->
+			<gd_item id="112300787" /><!-- Clandestine Shoulderguards -->
+			<gd_item id="114500839" /><!-- Clandestine Brogans -->
+			<gd_item id="114600798" /><!-- Clandestine Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214665" /><!-- Soul Spirit Nomura -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100871" /><!-- Clandestine Shoes -->
+			<gd_item id="114300896" /><!-- Clandestine Boots -->
+			<gd_item id="111500827" /><!-- Clandestine Handguards -->
+			<gd_item id="111600815" /><!-- Clandestine Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214666" /><!-- Water Spirit Undine -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100836" /><!-- Clandestine Gloves -->
+			<gd_item id="111300837" /><!-- Clandestine Vambrace -->
+			<gd_item id="112500778" /><!-- Clandestine Spaulders -->
+			<gd_item id="112600789" /><!-- Clandestine Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113300863" /><!-- Clandestine Breeches -->
+			<gd_item id="113600804" /><!-- Clandestine Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214669" /><!-- Unstable Triroan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100938" /><!-- Clandestine Tunic -->
+			<gd_item id="110300886" /><!-- Clandestine Jerkin -->
+			<gd_item id="110500853" /><!-- Clandestine Hauberk -->
+			<gd_item id="110600838" /><!-- Clandestine Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214664" /><!-- Wistful Syripne -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100879" /><!-- Berserk Spirit's Shoes -->
+			<gd_item id="114300904" /><!-- Berserk Spirit's Boots -->
+			<gd_item id="114500847" /><!-- Berserk Spirit's Brogans -->
+			<gd_item id="114600806" /><!-- Berserk Spirit's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214665" /><!-- Soul Spirit Nomura -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100844" /><!-- Berserk Spirit's Gloves -->
+			<gd_item id="111300845" /><!-- Berserk Spirit's Vambrace -->
+			<gd_item id="111500835" /><!-- Berserk Spirit's Handguards -->
+			<gd_item id="111600823" /><!-- Berserk Spirit's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214666" /><!-- Water Spirit Undine -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100801" /><!-- Berserk Spirit's Pauldrons -->
+			<gd_item id="112300795" /><!-- Berserk Spirit's Shoulderguards -->
+			<gd_item id="112500786" /><!-- Berserk Spirit's Spaulders -->
+			<gd_item id="112600797" /><!-- Berserk Spirit's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100854" /><!-- Berserk Spirit's Leggings -->
+			<gd_item id="113300871" /><!-- Berserk Spirit's Breeches -->
+			<gd_item id="113500837" /><!-- Berserk Spirit's Chausses -->
+			<gd_item id="113600812" /><!-- Berserk Spirit's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214669" /><!-- Unstable Triroan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100946" /><!-- Berserk Spirit's Tunic -->
+			<gd_item id="110300894" /><!-- Berserk Spirit's Jerkin -->
+			<gd_item id="110500861" /><!-- Berserk Spirit's Hauberk -->
+			<gd_item id="110600846" /><!-- Berserk Spirit's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214664" /><!-- Wistful Syripne -->
+			<gd_npc npc_id="214666" /><!-- Water Spirit Undine -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000898" /><!-- Ancient Spirit's Diamond Earrings -->
+			<gd_item id="120000896" /><!-- Ancient Spirit's Ruby Earrings -->
+			<gd_item id="122001034" /><!-- Ancient Spirit's Sapphire Ring -->
+			<gd_item id="122001035" /><!-- Ancient Spirit's Diamond Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214665" /><!-- Soul Spirit Nomura -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000897" /><!-- Ancient Spirit's Sapphire Earrings -->
+			<gd_item id="122001033" /><!-- Ancient Spirit's Ruby Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214669" /><!-- Unstable Triroan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000810" /><!-- Ancient Spirit's Ruby Necklace -->
+			<gd_item id="121000811" /><!-- Ancient Spirit's Sapphire Necklace -->
+			<gd_item id="121000812" /><!-- Ancient Spirit's Diamond Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000926" /><!-- Silikor's Band -->
+			<gd_item id="123000925" /><!-- Silikor's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Souvenir" chance="15">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="170490008" /><!-- [Souvenir] Secret Laboratory Elemental Core -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Souvenir" chance="25">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214669" /><!-- Unstable Triroan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="170490006" /><!-- [Souvenir] Dorhan Statue -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214659" /><!-- Queen Arachne -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000015" /><!-- Laboratory Chest Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214660" /><!-- Frozen Harint -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000016" /><!-- Fire Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214661" /><!-- Cracked Nuhas -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000018" /><!-- Water Key -->
+			<gd_item id="185000019" /><!-- Earth Key -->
+			<gd_item id="185000020" /><!-- Wind Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214662" /><!-- Naughty Pocaching -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000025" /><!-- Laboratory Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214664" /><!-- Wistful Syripne -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000023" /><!-- Syripne's Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214665" /><!-- Soul Spirit Nomura -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000022" /><!-- Nomura's Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214666" /><!-- Water Spirit Undine -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000021" /><!-- Undine's Key -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="310110000" /><!-- Theobomos_Lab -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214668" /><!-- Silikor of Memory -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000024" /><!-- Silikor's Key -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

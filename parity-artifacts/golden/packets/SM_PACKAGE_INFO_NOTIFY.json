@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PACKAGE_INFO_NOTIFY",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "constant",
+      "inputs": {},
+      "payloadHex": "01000300000000"
+    }
+  ]
+}

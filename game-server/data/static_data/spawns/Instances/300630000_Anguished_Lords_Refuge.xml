@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<spawns xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../spawns.xsd">
+	<spawn_map map_id="300630000">
+		<!-- Tiamat Aetheric Field -->
+		<spawn npc_id="730694">
+			<spot x="436.7526" y="513.8103" z="420.6662" static_id="14"/>
+		</spawn>
+		<!-- Tiamat -->
+		<spawn npc_id="219360">
+			<spot x="466.747" y="514.550" z="417.4044" />
+		</spawn>
+		<!-- Wavering Surkana -->
+		<spawn npc_id="730699">
+			<spot x="504.1100" y="514.9100" z="418" static_id="9"/>
+		</spawn>
+		<!-- Fallen Surkana -->
+		<spawn npc_id="730700">
+			<spot x="504.1100" y="514.9100" z="418.8708" static_id="47"/>
+		</spawn>
+		<!-- Siel's relics -->
+		<spawn npc_id="701502">
+			<spot x="456.121735" y="514.561768" z="437.353424" static_id="96"/>
+		</spawn>
+		<!-- Fissure's Realm Exit -->
+		<spawn npc_id="730633">
+			<spot x="217.144" y="195.616" z="246.071" h="75"/>
+		</spawn>
+		<!-- Gravity's Realm Exit -->
+		<spawn npc_id="730634">
+			<spot x="785.866" y="197.713" z="246.071" h="103"/>
+		</spawn>
+		<!-- Wrath's Realm Exit -->
+		<spawn npc_id="730635">
+			<spot x="217.947" y="832.552" z="246.071" h="47"/>
+		</spawn>
+		<!-- Petrification's Realm Exit -->
+		<spawn npc_id="730636">
+			<spot x="779.178" y="833.055" z="246.071" h="16"/>
+		</spawn>
+		<!-- Kahrun -->
+		<spawn npc_id="800429">
+			<spot x="496.42648" y="516.493" z="240.26653"/>
+		</spawn>
+		<!-- Kahrun -->
+		<spawn npc_id="800341">
+			<spot x="483.463" y="514.519" z="417.404" h="60" />
+		</spawn>
+		<!-- Fissurefang -->
+		<spawn npc_id="236278">
+			<spot x="193.11104" y="173.50334" z="246.07117" h="15"/>
+		</spawn>
+		<!-- Graviwing -->
+		<spawn npc_id="236279">
+			<spot x="805.052" y="170.7381" z="246.07117" h="40"/>
+		</spawn>
+		<!-- Wrathclaw -->
+		<spawn npc_id="236280">
+			<spot x="196.53738" y="854.4979" z="246.07117" h="105"/>
+		</spawn>
+		<!-- Petriscale -->
+		<spawn npc_id="236281">
+			<spot x="801.7295" y="851.3593" z="246.07117" h="75"/>
+		</spawn>
+	</spawn_map>
+</spawns>

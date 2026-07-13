@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_UPDATE_NOTE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "updateNote",
+      "inputs": {"objectId":100777,"note":"Harness friend note"},
+      "payloadHex": "A98901004800610072006E00650073007300200066007200690065006E00640020006E006F00740065000000"
+    },
+    {
+      "name": "updateNoteEmpty",
+      "inputs": {"objectId":100777,"note":""},
+      "payloadHex": "A98901000000"
+    }
+  ]
+}

@@ -1,0 +1,1032 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Multiple Monster Drops -->
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213715"/><!-- Captain Walkris -->
+			<gd_npc npc_id="213716"/><!-- Archmage Megran -->
+			<gd_npc npc_id="213717"/><!-- Captain Kirikren -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100672"/><!-- Digging Team's Shoes -->
+			<gd_item id="114300685"/><!-- Digging Team's Boots -->
+			<gd_item id="114500651"/><!-- Digging Team's Brogans -->
+			<gd_item id="114600609"/><!-- Digging Team's Sabatons -->
+			<gd_item id="111100644"/><!-- Digging Team's Gloves -->
+			<gd_item id="111300646"/><!-- Digging Team's Vambrace -->
+			<gd_item id="111500633"/><!-- Digging Team's Handguards -->
+			<gd_item id="111600623"/><!-- Digging Team's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213758"/><!-- Lieutenant Dynah -->
+			<gd_npc npc_id="213759"/><!-- Captain Vener -->
+			<gd_npc npc_id="213760"/><!-- Archmage Vichkor -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100649"/><!-- Alquimia Lepharist Gloves -->
+			<gd_item id="111300651"/><!-- Alquimia Lepharist Vambrace -->
+			<gd_item id="111500638"/><!-- Alquimia Lepharist Handguards -->
+			<gd_item id="111600628"/><!-- Alquimia Lepharist Gauntlets -->
+			<gd_item id="114100676"/><!-- Alquimia Lepharist Shoes -->
+			<gd_item id="114300689"/><!-- Alquimia Lepharist Boots -->
+			<gd_item id="114500655"/><!-- Alquimia Lepharist Brogans -->
+			<gd_item id="114600613"/><!-- Alquimia Lepharist Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213710"/><!-- The Soulswallower -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000507"/><!-- Gyrinne's Sword -->
+			<gd_item id="100100389"/><!-- Gyrinne's Warhammer -->
+			<gd_item id="100600416"/><!-- Gyrinne's Tome -->
+			<gd_item id="102000460"/><!-- Gyrinne's Harp -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213726"/><!-- Ice Claw Baza -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100500387"/><!-- Baza's Jewel -->
+			<gd_item id="101500390"/><!-- Baza's Staff -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213731"/><!-- Eto the Living Glacier -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900387"/><!-- Eto's Greatsword -->
+			<gd_item id="101300378"/><!-- Eto's Spear -->
+			<gd_item id="102100494" /><!-- Mutant's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213735"/><!-- Clever Alfi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100390"/><!-- Alfi's Warhammer -->
+			<gd_item id="101700402"/><!-- Alfi's Longbow -->
+			<gd_item id="101900432"/><!-- Alfi's Aethercannon -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213736"/><!-- Steadfast Dalloki -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000508"/><!-- Dalloki's Sword -->
+			<gd_item id="100900383"/><!-- Dalloki's Greatsword -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213749"/><!-- Chieftain Tufu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900384"/><!-- Tufu's Greatsword -->
+			<gd_item id="101700403"/><!-- Tufu's Longbow -->
+			<gd_item id="101300375"/><!-- Tufu's Spear -->
+			<gd_item id="101500391"/><!-- Tufu's Staff -->
+			<gd_item id="101900433"/><!-- Tufu's Aethercannon -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213750"/><!-- Chieftain Chantara -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="102100432"/><!-- Chantara's Cipher-Blade -->
+			<gd_item id="100200500"/><!-- Chantara's Dagger -->
+			<gd_item id="100000511"/><!-- Chantara's Sword -->
+			<gd_item id="100600419"/><!-- Chantara's Tome -->
+			<gd_item id="100100394"/><!-- Chantara's Warhammer -->
+			<gd_item id="101800449"/><!-- Chantara's Pistol -->
+			<gd_item id="102000463"/><!-- Chantara's Harp -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213718"/><!-- Huntzner the Brawny -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100100391"/><!-- Huntzner's Pick -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213765"/><!-- Commander Brhekman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="102100434"/><!-- Brhekman's Cipher-Blade -->
+			<gd_item id="100200503"/><!-- Brhekman's Dagger -->
+			<gd_item id="100000514"/><!-- Brhekman's Sword -->
+			<gd_item id="100100397"/><!-- Brhekman's Warhammer -->
+			<gd_item id="100900389"/><!-- Brhekman's Greatsword -->
+			<gd_item id="100500392"/><!-- Brhekman's Jewel -->
+			<gd_item id="101700407"/><!-- Brhekman's Longbow -->
+			<gd_item id="101300380"/><!-- Brhekman's Spear -->
+			<gd_item id="101500395"/><!-- Brhekman's Staff -->
+			<gd_item id="100600422"/><!-- Brhekman's Tome -->
+			<gd_item id="101800451"/><!-- Brhekman's Pistol -->
+			<gd_item id="101900437"/><!-- Brhekman's Aethercannon -->
+			<gd_item id="102000466"/><!-- Brhekman's Harp -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="30">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213747"/><!-- Queen Alukina -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101500394"/><!-- Alukina's Coral Staff -->
+			<gd_item id="100900388"/><!-- Alukina's Scimitar -->
+			<gd_item id="101700406"/><!-- Alukina's Meteor Bow -->
+			<gd_item id="100000513"/><!-- Alukina's Sword -->
+			<gd_item id="101300379"/><!-- Alukina's Spear -->
+			<gd_item id="100500390"/><!-- Alukina's Tears -->
+			<gd_item id="100100396"/><!-- Alukina's Scepter -->
+			<gd_item id="100600421"/><!-- Alukina's Holy Book -->
+			<gd_item id="100200502"/><!-- Alukina's Silver-edged Knife -->
+			<gd_item id="101800912"/><!-- Alukina's Pistol -->
+			<gd_item id="101900436"/><!-- Alukina's Aethercannon -->
+			<gd_item id="102000465"/><!-- Alukina's Harp -->
+			<gd_item id="102100767"/><!-- Alukina's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213712"/><!-- Clever Mahiki -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000666"/><!-- Mahiki's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213719"/><!-- Demolitionist Horst -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000668"/><!-- Horst's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213738"/><!-- Aarien the Seacaller -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000670"/><!-- Aarien's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213746"/><!-- Old Wise Skiron -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000671"/><!-- Skiron's Shell -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213765"/><!-- Commander Brhekman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000673"/><!-- Brhekman's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213706"/><!-- Snowfur -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100605"/><!-- Snowfur's Pauldrons -->
+			<gd_item id="112300605"/><!-- Snowfur's Shoulderguards -->
+			<gd_item id="112500593"/><!-- Snowfur's Spaulders -->
+			<gd_item id="112600601"/><!-- Snowfur's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213710"/><!-- The Soulswallower -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100673"/><!-- Gyrinne's Shoes -->
+			<gd_item id="114300686"/><!-- Gyrinne's Boots -->
+			<gd_item id="114500652"/><!-- Gyrinne's Brogans -->
+			<gd_item id="114600610"/><!-- Gyrinne's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213724"/><!-- Shadow Priest Jungan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100646"/><!-- Jungan's Gloves -->
+			<gd_item id="111300648"/><!-- Jungan's Vambrace -->
+			<gd_item id="111500635"/><!-- Jungan's Handguards -->
+			<gd_item id="111600625"/><!-- Jungan's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213733"/><!-- Cynix the Banished -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100608"/><!-- Cynix's Pauldrons -->
+			<gd_item id="112300608"/><!-- Cynix's Shoulderguards -->
+			<gd_item id="112500596"/><!-- Cynix's Spaulders -->
+			<gd_item id="112600604"/><!-- Cynix's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213735"/><!-- Clever Alfi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100655"/><!-- Alfi's Leggings -->
+			<gd_item id="113300671"/><!-- Alfi's Breeches -->
+			<gd_item id="113500644"/><!-- Alfi's Chausses -->
+			<gd_item id="113600619"/><!-- Alfi's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213737"/><!-- Endangered Crasaur -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100607"/><!-- Endangered Crasaur's Pauldrons -->
+			<gd_item id="112300607"/><!-- Endangered Crasaur's Shoulderguards -->
+			<gd_item id="112500595"/><!-- Endangered Crasaur's Spaulders -->
+			<gd_item id="112600603"/><!-- Endangered Crasaur's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213740"/><!-- Veribe the Fallen -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100647"/><!-- Veribe's Gloves -->
+			<gd_item id="111300649"/><!-- Veribe's Vambrace -->
+			<gd_item id="111500636"/><!-- Veribe's Handguards -->
+			<gd_item id="111600626"/><!-- Veribe's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213743"/><!-- Swimmersbane -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100650"/><!-- Deep Sea Gloves -->
+			<gd_item id="111300652"/><!-- Deep Sea Vambrace -->
+			<gd_item id="111500639"/><!-- Deep Sea Handguards -->
+			<gd_item id="111600629"/><!-- Deep Sea Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headgear (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213743" /><!-- Swimmersbane -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001496" /><!-- Deep Sea Hat -->
+			<gd_item id="125001498" /><!-- Deep Sea Helm -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213744"/><!-- Quiet Elime -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100611"/><!-- Deep Sea Pauldrons -->
+			<gd_item id="112300611"/><!-- Deep Sea Shoulderguards -->
+			<gd_item id="112500599"/><!-- Deep Sea Spaulders -->
+			<gd_item id="112600607"/><!-- Deep Sea Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213748"/><!-- Fearless Doni -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100674"/><!-- Doni's Shoes -->
+			<gd_item id="114300687"/><!-- Doni's Boots -->
+			<gd_item id="114500653"/><!-- Doni's Brogans -->
+			<gd_item id="114600611"/><!-- Doni's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213761"/><!-- Lindasie the Prim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100610"/><!-- Alquimia Lepharist Pauldrons -->
+			<gd_item id="112300610"/><!-- Alquimia Lepharist Shoulderguards -->
+			<gd_item id="112500598"/><!-- Alquimia Lepharist Spaulders -->
+			<gd_item id="112600606"/><!-- Alquimia Lepharist Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213766"/><!-- Lieutenant Aamaah -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114300691"/><!-- Bakarma Legionary's Boots -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213769"/><!-- Stormwings Dugolle -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100612"/><!-- Bakarma Legionary's Pauldrons -->
+			<gd_item id="112300612"/><!-- Bakarma Legionary's Shoulderguards -->
+			<gd_item id="112500600"/><!-- Bakarma Legionary's Spaulders -->
+			<gd_item id="112600608"/><!-- Bakarma Legionary's Shoulderplates -->
+			<gd_item id="113100660"/><!-- Bakarma Legionary's Leggings -->
+			<gd_item id="113300676"/><!-- Bakarma Legionary's Breeches -->
+			<gd_item id="113500649"/><!-- Bakarma Legionary's Chausses -->
+			<gd_item id="113600624"/><!-- Bakarma Legionary's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213738"/><!-- Aarien the Seacaller -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100658"/><!-- Aarien's Leggings -->
+			<gd_item id="113300674"/><!-- Aarien's Breeches -->
+			<gd_item id="113500647"/><!-- Aarien's Chausses -->
+			<gd_item id="113600622"/><!-- Aarien's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213747"/><!-- Queen Alukina -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100731"/><!-- Deep Sea Tunic -->
+			<gd_item id="110300693"/><!-- Deep Sea Jerkin -->
+			<gd_item id="110500670"/><!-- Deep Sea Hauberk -->
+			<gd_item id="110600656"/><!-- Deep Sea Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213745"/><!-- Sepra Surftalker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100659"/><!-- Deep Sea Leggings -->
+			<gd_item id="113300675"/><!-- Deep Sea Breeches -->
+			<gd_item id="113500648"/><!-- Deep Sea Chausses -->
+			<gd_item id="113600623"/><!-- Deep Sea Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213706"/><!-- Snowfur -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000753"/><!-- Snowfur's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213712"/><!-- Clever Mahiki -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000749"/><!-- Mahiki's Garnet Ring -->
+			<gd_item id="122000750"/><!-- Mahiki's Lazuli Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213724"/><!-- Shadow Priest Jungan -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000638"/><!-- Jungan's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213726"/><!-- Ice Claw Baza -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000755"/><!-- Baza's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213731"/><!-- Eto the Living Glacier -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000759"/><!-- Eto's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213732"/><!-- Icehorn -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000762"/><!-- Icehorn's Ring -->
+			<gd_item id="100500391"/><!-- Icehorn's Jewel -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213736"/><!-- Steadfast Dalloki -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000701"/><!-- Dalloki's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213737"/><!-- Endangered Crasaur -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000754"/><!-- Endangered Crasaur's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213740"/><!-- Veribe the Fallen -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000639"/><!-- Veribe's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213748"/><!-- Fearless Doni -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000702"/><!-- Doni's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213749"/><!-- Chieftain Tufu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000756"/><!-- Tufu's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213750"/><!-- Chieftain Chantara -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000705"/><!-- Chantara's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213765"/><!-- Commander Brhekman -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000709"/><!-- Brhekman's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213744"/><!-- Quiet Elime -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000643"/><!-- Elime's Ruby Necklace -->
+			<gd_item id="121000644"/><!-- Elime's Sapphire Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213746"/><!-- Old Wise Skiron -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000760"/><!-- Skiron's Ruby Ring -->
+			<gd_item id="122000761"/><!-- Skiron's Sapphire Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213747"/><!-- Queen Alukina -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000706"/><!-- Alukina's Ruby Earrings -->
+			<gd_item id="120000707"/><!-- Alukina's Diamond Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="25">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213738"/><!-- Aarien the Seacaller -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000757"/><!-- Aarien's Sapphire Ring -->
+			<gd_item id="122000758"/><!-- Aarien's Diamond Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213719"/><!-- Demolitionist Horst -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000754"/><!-- Horst's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213733"/><!-- Cynix the Banished -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000758"/><!-- Cynix's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213745"/><!-- Sepra Surftalker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000762"/><!-- Sepra's Belt -->
+			<gd_item id="123000761"/><!-- Sepra's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213761"/><!-- Lindasie the Prim -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000760"/><!-- Alquimia Lepharist Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Belt (Legend)" chance="33">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213725"/><!-- Legas Painwing -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000756"/><!-- Royd's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213731"/><!-- Eto the Living Glacier -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012527"/><!-- Ice Petrahulk Fragment -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213738"/><!-- Aarien the Seacaller -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012535"/><!-- Core of the Seacaller -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213746"/><!-- Old Wise Skiron -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012536"/><!-- Ntuamu's Blood -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213749"/><!-- Chieftain Tufu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012524"/><!-- Fang Troll Blood -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213750"/><!-- Chieftain Chantara -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012525"/><!-- Mau Soul Crystal -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000"/><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213769"/><!-- Stormwings Dugolle -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012538"/><!-- Dugolle's Bone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="65">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213721" /><!-- Ruby Jannsen -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000753" /><!-- Jannsen's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213729" /><!-- Masto The Ancient -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000770" /><!-- Masto the Ancient's Shield -->
+			<gd_item id="123000862" /><!-- Masto the Ancient's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Acessory (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213729" /><!-- Masto The Ancient -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000704" /><!-- Masto's Diamond Earrings -->
+			<gd_item id="120000703" /><!-- Masto's Sapphire Earrings -->
+			<gd_item id="121000640" /><!-- Masto's Ruby Necklace -->
+			<gd_item id="121000641" /><!-- Masto's Sapphire Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="70">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213729" /><!-- Masto The Ancient -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000510" /><!-- Masto's Sword -->
+			<gd_item id="100900385" /><!-- Masto's Greatsword -->
+			<gd_item id="100200499" /><!-- Masto's Dagger -->
+			<gd_item id="100100393" /><!-- Masto's Warhammer -->
+			<gd_item id="100500388" /><!-- Masto's Jewel -->
+			<gd_item id="100600418" /><!-- Masto's Tome -->
+			<gd_item id="101300376" /><!-- Masto's Spear -->
+			<gd_item id="101500392" /><!-- Masto's Staff -->
+			<gd_item id="101700404" /><!-- Masto's Longbow -->
+			<gd_item id="102000462" /><!-- Masto's Harp -->
+			<gd_item id="101800448" /><!-- Masto's Pistol -->
+			<gd_item id="101900434" /><!-- Masto's Aethercannon -->
+			<gd_item id="102100431" /><!-- Masto's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213729" /><!-- Masto The Ancient -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012534" /><!-- Masto the Ancient's Crystal -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213729" /><!-- Masto The Ancient -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000785" /><!-- Masto's Tears -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="80">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213742" /><!-- Drowned Nahas -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100677" /><!-- Deep Sea Shoes -->
+			<gd_item id="114300690" /><!-- Deep Sea Boots -->
+			<gd_item id="114500656" /><!-- Deep Sea Brogans -->
+			<gd_item id="114600614" /><!-- Deep Sea Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headgear (Legend)" chance="65">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213742" /><!-- Drowned Nahas -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001497" /><!-- Deep Sea Chain Helm -->
+			<gd_item id="125001495" /><!-- Deep Sea Headband -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="100">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213742" /><!-- Drowned Nahas -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012537" /><!-- Nahas' Dark Energy -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="55">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213727" /><!-- Motherless Ramu -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110300690" /><!-- Ramu's Jerkin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="60">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213713" /><!-- Divine Shard -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000667" /><!-- Araxia's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="60">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213713" /><!-- Divine Shard -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000755" /><!-- Araxia's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="75">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213753" /><!-- Archmage Ysika -->
+			<gd_npc npc_id="213752" /><!-- Captain Amichel -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100648" /><!-- Watch's Gloves -->
+			<gd_item id="114100675" /><!-- Watch's Shoes -->
+			<gd_item id="111300650" /><!-- Watch's Vambrace -->
+			<gd_item id="114300688" /><!-- Watch's Boots -->
+			<gd_item id="111500637" /><!-- Watch's Handguards -->
+			<gd_item id="114500654" /><!-- Watch's Brogans -->
+			<gd_item id="111600627" /><!-- Watch's Gauntlets -->
+			<gd_item id="114600612" /><!-- Watch's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213757" /><!-- Instructor Mara -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100729" /><!-- Watch's Tunic -->
+			<gd_item id="110300691" /><!-- Watch's Jerkin -->
+			<gd_item id="110500668" /><!-- Watch's Hauberk -->
+			<gd_item id="110600654" /><!-- Watch's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Headgear (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213757" /><!-- Instructor Mara -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001489" /><!-- Watch's Golden Diadem -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213720" /><!-- Officer Poretti -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000637" /><!-- Poretti's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Ghost Weapon (Rare)" chance="5">
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213205" /><!-- Anair Spiritarcher -->
+			<gd_npc npc_id="213206" /><!-- Anair Spiritarcher -->
+			<gd_npc npc_id="213240" /><!-- Anair High Spiritmage -->
+			<gd_npc npc_id="213204" /><!-- Anair Spiritsoldier -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000674" /><!-- Ghost Sword -->
+			<gd_item id="100100523" /><!-- Ghost Warhammer -->
+			<gd_item id="101500521" /><!-- Ghost Staff -->
+			<gd_item id="101700541" /><!-- Ghost Longbow -->
+			<gd_item id="100600561" /><!-- Ghost Tome -->
+			<gd_item id="101900518" /><!-- Ghost Aethercannon -->
+			<gd_item id="102000551" /><!-- Ghost Harp -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

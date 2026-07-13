@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RECEIVE_BIDS",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "notify",
+      "inputs": {"unk":1},
+      "payloadHex": "01000000"
+    },
+    {
+      "name": "zero",
+      "inputs": {"unk":0},
+      "payloadHex": "00000000"
+    }
+  ]
+}

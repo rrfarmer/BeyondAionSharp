@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MEGAPHONE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "elyos",
+      "inputs": {"faction":"ELYOS","senderName":"Nezekan","message":"Hello Atreia","itemId":188052612},
+      "payloadHex": "4E0065007A0065006B0061006E000000480065006C006C006F00200041007400720065006900610000008474350B00"
+    },
+    {
+      "name": "asmodians",
+      "inputs": {"faction":"ASMODIANS","senderName":"Siel","message":"For Asmodae","itemId":0},
+      "payloadHex": "5300690065006C00000046006F0072002000410073006D006F0064006100650000000000000001"
+    },
+    {
+      "name": "none",
+      "inputs": {"faction":"NONE","senderName":"System","message":"Notice","itemId":1},
+      "payloadHex": "530079007300740065006D0000004E006F007400690063006500000001000000FF"
+    }
+  ]
+}

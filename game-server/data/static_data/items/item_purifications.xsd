@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="item_purifications">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="item_purification" type="ItemPurification" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:complexType name="ItemPurification">
+		<xs:sequence>
+			<xs:element name="purification_result" type="PurificationResult" minOccurs="1" maxOccurs="2" />
+		</xs:sequence>
+		<xs:attribute name="base_item_id" type="xs:int" use="required" />
+	</xs:complexType>
+
+	<xs:complexType name="PurificationResult">
+		<xs:sequence>
+			<xs:element name="req_material" type="RequiredMaterial" minOccurs="0" maxOccurs="5" />
+		</xs:sequence>
+		<xs:attribute name="result_item_id" type="xs:int" />
+		<xs:attribute name="min_enchant_count" type="xs:int" />
+		<xs:attribute name="necessary_abyss_points" type="xs:int" />
+		<xs:attribute name="necessary_kinah" type="xs:long" />
+	</xs:complexType>
+
+	<xs:complexType name="RequiredMaterial">
+		<xs:attribute name="item_id" type="xs:int" />
+		<xs:attribute name="item_count" type="xs:int" />
+	</xs:complexType>
+</xs:schema>

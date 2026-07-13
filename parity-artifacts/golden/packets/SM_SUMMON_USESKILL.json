@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SUMMON_USESKILL",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "useSkill",
+      "inputs": {"summonId":700001,"skillId":1601,"skillLvl":5,"targetId":800002},
+      "payloadHex": "61AE0A0041060502350C00"
+    }
+  ]
+}

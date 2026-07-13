@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Map Drops -->
+	<gd_rule rule_name="Dragon Lord Guard Crest" chance="20">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="182005549" /><!-- Dragon Lord Guard Crest -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Contaminated Draconute Armor" chance="60">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="182005551" /><!-- Contaminated Draconute Armor -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Accessory (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="216889" /><!-- Rajaya the Inquisitor -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120001117" /><!-- Rajaya's Earrings -->
+			<gd_item id="123001097" /><!-- Rajaya's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="216889" /><!-- Rajaya the Inquisitor -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121001031" /><!-- Rajaya's Corundum Necklace -->
+			<gd_item id="121001032" /><!-- Rajaya's Turquoise Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="216890" /><!-- Windfinder Kumar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120001118" /><!-- Kumar's Earrings -->
+			<gd_item id="123001096" /><!-- Kumar's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="216890" /><!-- Windfinder Kumar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122001266" /><!-- Kumar's Corundum Ring -->
+			<gd_item id="122001267" /><!-- Kumar's Turquoise Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="300210000" /><!-- Chantra_Dredgion -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="217037" /><!-- Gatekeeper Sarta -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000105" /><!-- Captain's Cabin Passage Key -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

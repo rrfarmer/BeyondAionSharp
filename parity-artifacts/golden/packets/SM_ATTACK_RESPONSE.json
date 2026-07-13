@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ATTACK_RESPONSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "differentArea",
+      "inputs": {"factory":"TARGET_IN_DIFFERENT_AREA","message":1,"attackCount":3},
+      "payloadHex": "0103"
+    },
+    {
+      "name": "invalidTarget",
+      "inputs": {"factory":"STOP_INVALID_TARGET","message":2,"attackCount":0},
+      "payloadHex": "0200"
+    },
+    {
+      "name": "tooFar",
+      "inputs": {"factory":"TARGET_TOO_FAR_AWAY","message":4,"attackCount":7},
+      "payloadHex": "0407"
+    },
+    {
+      "name": "obstacle",
+      "inputs": {"factory":"STOP_OBSTACLE_IN_THE_WAY","message":5,"attackCount":2},
+      "payloadHex": "0502"
+    },
+    {
+      "name": "tooClose",
+      "inputs": {"factory":"STOP_TOO_CLOSE_TO_ATTACK","message":6,"attackCount":1},
+      "payloadHex": "0601"
+    },
+    {
+      "name": "noMessage",
+      "inputs": {"factory":"STOP_WITHOUT_MESSAGE","message":7,"attackCount":255},
+      "payloadHex": "07FF"
+    }
+  ]
+}

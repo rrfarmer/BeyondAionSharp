@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PET",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "rename",
+      "inputs": {"action":"RENAME","petObjectId":424242,"petName":"Fluffy"},
+      "payloadHex": "0A003279060046006C0075006600660079000000"
+    },
+    {
+      "name": "dismiss",
+      "inputs": {"action":"DISMISS","petObjectId":555111,"animation":"FADE_OUT"},
+      "payloadHex": "04006778080001"
+    },
+    {
+      "name": "dopingAdd",
+      "inputs": {"action":"SPECIAL_FUNCTION","subType":2,"dopeAction":0,"itemId":700,"slot":3},
+      "payloadHex": "0D000200BC02000003000000"
+    },
+    {
+      "name": "dopingRemove",
+      "inputs": {"action":"SPECIAL_FUNCTION","subType":2,"dopeAction":1,"itemId":700,"slot":3},
+      "payloadHex": "0D00020103000000"
+    },
+    {
+      "name": "dopingMove",
+      "inputs": {"action":"SPECIAL_FUNCTION","subType":2,"dopeAction":2,"itemId":700,"slot":3},
+      "payloadHex": "0D00020203000000BC020000"
+    },
+    {
+      "name": "dopingUse",
+      "inputs": {"action":"SPECIAL_FUNCTION","subType":2,"dopeAction":3,"itemId":700,"slot":3},
+      "payloadHex": "0D000203BC020000"
+    },
+    {
+      "name": "autolootNpc",
+      "inputs": {"action":"SPECIAL_FUNCTION","specialFunction":"AUTOLOOT","active":true,"npcObjId":987654},
+      "payloadHex": "0D00030106120F00"
+    },
+    {
+      "name": "autolootActivate",
+      "inputs": {"action":"SPECIAL_FUNCTION","specialFunction":"AUTOLOOT","active":true,"npcObjId":0},
+      "payloadHex": "0D00030001"
+    },
+    {
+      "name": "autolootDeactivate",
+      "inputs": {"action":"SPECIAL_FUNCTION","specialFunction":"AUTOLOOT","active":false,"npcObjId":0},
+      "payloadHex": "0D00030000"
+    },
+    {
+      "name": "autosellActive",
+      "inputs": {"action":"SPECIAL_FUNCTION","specialFunction":"AUTOSELL","active":true,"npcObjId":0},
+      "payloadHex": "0D00040001"
+    },
+    {
+      "name": "autosellInactive",
+      "inputs": {"action":"SPECIAL_FUNCTION","specialFunction":"AUTOSELL","active":false,"npcObjId":0},
+      "payloadHex": "0D00040000"
+    }
+  ]
+}

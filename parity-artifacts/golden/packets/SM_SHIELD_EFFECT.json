@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SHIELD_EFFECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "empty",
+      "inputs": {"locations":[]},
+      "payloadHex": "0000"
+    }
+  ]
+}

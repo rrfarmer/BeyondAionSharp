@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RENAME",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "renamePlayer",
+      "inputs": {"playerOrLegionId":100777,"oldName":"OldHarnessName","newName":"Scalarharness"},
+      "payloadHex": "0000000000000000A98901004F006C0064004800610072006E006500730073004E0061006D00650000005300630061006C00610072006800610072006E006500730073000000"
+    }
+  ]
+}

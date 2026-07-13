@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Map Drops -->
+	<gd_rule rule_name="Junk Taloc's Leaf Fragment" chance="40">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Taloc's Hollow -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="KINQUIDS_DEN_300190000" />
+			<gd_zone zone="TALOCS_ROOTS_300190000" />
+			<gd_zone zone="THE_SWARMSPRING_300190000" />
+			<gd_zone zone="MUCULENT_GROTTO_300190000" />
+			<gd_zone zone="THE_HIVE_300190000" />
+			<gd_zone zone="GARDEN_OF_LIFE_300190000" />
+			<gd_zone zone="COCCOONING_CHAMBER_300190000" />
+		</gd_zones>
+		<gd_items>
+			<gd_item id="182005957" /><!-- Taloc's Leaf Fragment -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Junk Taloc's Stem Fragment" chance="40">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Taloc's Hollow -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="MOSQUAS_NEST_300190000" />
+			<gd_zone zone="KLAWTIRA_BROODLAIR_300190000" />
+			<gd_zone zone="FUNGALSODDEN_GROVE_300190000" />
+			<gd_zone zone="TALOCS_BOUGHS_300190000" />
+			<gd_zone zone="DORKINS_NOOK_300190000" />
+			<gd_zone zone="TALOCS_TEARS_300190000" />
+		</gd_zones>
+		<gd_items>
+			<gd_item id="182005958" /><!-- Taloc's Stem Fragment -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Junk Taloc's Root Fragment" chance="40">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Taloc's Hollow -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="TALOCS_HEART_300190000" />
+			<gd_zone zone="BLIGHTROOT_300190000" />
+		</gd_zones>
+		<gd_items>
+			<gd_item id="182005959" /><!-- Taloc's Root Fragment -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Common Aether Permeated Taloc Leaf" chance="35">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Taloc's Hollow -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="KINQUIDS_DEN_300190000" />
+			<gd_zone zone="TALOCS_ROOTS_300190000" />
+			<gd_zone zone="THE_SWARMSPRING_300190000" />
+			<gd_zone zone="MUCULENT_GROTTO_300190000" />
+			<gd_zone zone="THE_HIVE_300190000" />
+			<gd_zone zone="GARDEN_OF_LIFE_300190000" />
+			<gd_zone zone="COCCOONING_CHAMBER_300190000" />
+		</gd_zones>
+		<gd_items>
+			<gd_item id="152012051" /><!-- Aether Permeated Taloc Leaf -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Common Poisoned Taloc Leaf" chance="35">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Taloc's Hollow -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="MOSQUAS_NEST_300190000" />
+			<gd_zone zone="KLAWTIRA_BROODLAIR_300190000" />
+			<gd_zone zone="FUNGALSODDEN_GROVE_300190000" />
+			<gd_zone zone="TALOCS_BOUGHS_300190000" />
+			<gd_zone zone="DORKINS_NOOK_300190000" />
+			<gd_zone zone="TALOCS_TEARS_300190000" />
+		</gd_zones>
+		<gd_items>
+			<gd_item id="152012052" /><!-- Poisoned Taloc Leaf -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Rare)" chance="20">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215480" /><!-- Queen Mosqua -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000897" /><!-- Siel's Supreme Sword -->
+			<gd_item id="100100679" /><!-- Siel's Supreme Mace -->
+			<gd_item id="100200810" /><!-- Siel's Supreme Dagger -->
+			<gd_item id="100500701" /><!-- Siel's Supreme Orb -->
+			<gd_item id="100600758" /><!-- Siel's Supreme Spellbook -->
+			<gd_item id="100900687" /><!-- Siel's Supreme Greatsword -->
+			<gd_item id="101300658" /><!-- Siel's Supreme Polearm -->
+			<gd_item id="101500701" /><!-- Siel's Supreme Staff -->
+			<gd_item id="101700725" /><!-- Siel's Supreme Bow -->
+			<gd_item id="101800630" /><!-- Siel's Supreme Pistol -->
+			<gd_item id="101900629" /><!-- Siel's Supreme Aethercannon -->
+			<gd_item id="102000664" /><!-- Siel's Supreme Harp -->
+			<gd_item id="102100561" /><!-- Siel's Supreme Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000896" /><!-- Celestius' Sword -->
+			<gd_item id="100100678" /><!-- Celestius' Warhammer -->
+			<gd_item id="100200809" /><!-- Celestius' Dagger -->
+			<gd_item id="100500700" /><!-- Celestius' Jewel -->
+			<gd_item id="100600757" /><!-- Celestius' Tome -->
+			<gd_item id="100900686" /><!-- Celestius' Greatsword -->
+			<gd_item id="101300657" /><!-- Celestius' Spear -->
+			<gd_item id="101500700" /><!-- Celestius' Staff -->
+			<gd_item id="101700724" /><!-- Celestius' Longbow -->
+			<gd_item id="101800629" /><!-- Celestius' Pistol -->
+			<gd_item id="101900628" /><!-- Celestius' Aethercannon -->
+			<gd_item id="102000663" /><!-- Celestius' Harp -->
+			<gd_item id="102100560" /><!-- Celestius' Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113101026" /><!-- Celestius' Leggings -->
+			<gd_item id="113301039" /><!-- Celestius' Breeches -->
+			<gd_item id="113501013" /><!-- Celestius' Chausses -->
+			<gd_item id="113600980" /><!-- Celestius' Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="40">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215482" /><!-- Gellmar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112101022" /><!-- Gellmar's Pauldrons -->
+			<gd_item id="112301009" /><!-- Gellmar's Shoulderguards -->
+			<gd_item id="112500997" /><!-- Gellmar's Spaulders -->
+			<gd_item id="112601012" /><!-- Gellmar's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215480" /><!-- Queen Mosqua -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125002276" /><!-- Mosqua's Hairpin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="45">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215482" /><!-- Gellmar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123001093" /><!-- Gellmar's Belt -->
+			<gd_item id="123001092" /><!-- Gellmar's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="30">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120001027" /><!-- Celestius' Corundum Earrings -->
+			<gd_item id="120001028" /><!-- Celestius' Turquoise Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material (Legend)" chance="100">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012045" /><!-- Celestius' Sap -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Souvenir" chance="20">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215488" /><!-- Celestius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="170170044" /><!-- [Souvenir] Taloc's Komad Statue -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215456" /><!-- Shishir -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000088" /><!-- Shishir's Corrosive Fluid -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215478" /><!-- Neith -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000108" /><!-- Dorkin's Pocket Knife -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Instance Tool" chance="100">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215456" /><!-- Shishir -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="164000137" /><!-- Shishir's Powerstone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Instance Tool" chance="100">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215478" /><!-- Neith -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="164000139" /><!-- Neith's Sleepstone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Instance Tool" chance="100">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215482" /><!-- Gellmar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="164000138" /><!-- Gellmar's Wardstone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="2">
+		<gd_maps>
+			<gd_map map_id="300190000" /><!-- Talocs_Hollow -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="182209524" /><!-- Hard Seed -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Multiple Monster Drops -->
+	<gd_rule rule_name="Named Key" chance="5">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215794" /><!-- Anvilface -->
+			<gd_npc npc_id="215795" /><!-- Debilkarim the Maker -->
+			<gd_npc npc_id="215797" /><!-- Bergrisar -->
+			<gd_npc npc_id="215838" /><!-- Jotun Artisan -->
+			<gd_npc npc_id="215839" /><!-- Jotun Creator -->
+			<gd_npc npc_id="215840" /><!-- Jotun Artisan -->
+			<gd_npc npc_id="216320" /><!-- Gradarim the Collector -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000087" /><!-- Jotun Vault Key -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Unique)" chance="35">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215795" /><!-- Debilkarim the Maker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100000890" /><!-- Master Blacksmith's Sword -->
+			<gd_item id="101700720" /><!-- Debilkarim's Longbow -->
+			<gd_item id="101700855" /><!-- Debilkarim's Longbow -->
+			<gd_item id="100500696" /><!-- Debilkarim's Jewel -->
+			<gd_item id="100500833" /><!-- Debilkarim's Jewel -->
+			<gd_item id="101500696" /><!-- Debilkarim's Staff -->
+			<gd_item id="101500839" /><!-- Debilkarim's Staff -->
+			<gd_item id="101300653" /><!-- Debilkarim's Spear -->
+			<gd_item id="101300782" /><!-- Debilkarim's Spear -->
+			<gd_item id="100900682" /><!-- Debilkarim's Greatsword -->
+			<gd_item id="100900813" /><!-- Debilkarim's Greatsword -->
+			<gd_item id="100600753" /><!-- Debilkarim's Tome -->
+			<gd_item id="100600888" /><!-- Debilkarim's Tome -->
+			<gd_item id="100200805" /><!-- Debilkarim's Dagger -->
+			<gd_item id="100100674" /><!-- Debilkarim's Hammer -->
+			<gd_item id="100000891" /><!-- Debilkarim's Sword -->
+			<gd_item id="101800865" /><!-- Debilkarim's Pistol -->
+			<gd_item id="101900625" /><!-- Debilkarim's Aethercannon -->
+			<gd_item id="101900712" /><!-- Debilkarim's Magical Cannon -->
+			<gd_item id="102000660" /><!-- Debilkarim's Harp -->
+			<gd_item id="102000746" /><!-- Debilkarim's Musical Instrument -->
+			<gd_item id="102100753" /><!-- Debilkarim's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215794" /><!-- Anvilface -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000960" /><!-- Anvilface's Drenium Shield -->
+			<gd_item id="115000961" /><!-- Anvilface's Malevite Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Unique)" chance="35">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000962" /><!-- Kingspin's Drenium Shield -->
+			<gd_item id="115000963" /><!-- Kingspin's Malevite Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215784" /><!-- Chura Twinblade -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111500949" /><!-- Deserter's Handguards -->
+			<gd_item id="111300963" /><!-- Deserter's Vambrace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111100958" /><!-- Deserter's Gloves -->
+			<gd_item id="111600941" /><!-- Deserter's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215794" /><!-- Anvilface -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100997" /><!-- Deserter's Shoes -->
+			<gd_item id="114600920" /><!-- Deserter's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215795" /><!-- Debilkarim the Maker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100971" /><!-- Deserter's Leggings -->
+			<gd_item id="113300984" /><!-- Deserter's Breeches -->
+			<gd_item id="113500954" /><!-- Deserter's Chausses -->
+			<gd_item id="113600925" /><!-- Deserter's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="100">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215797" /><!-- Bergrisar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114301018" /><!-- Deserter's Boots -->
+			<gd_item id="114500961" /><!-- Deserter's Brogans -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215784" /><!-- Chura Twinblade -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100998" /><!-- Forsaken Temple Shoes -->
+			<gd_item id="114600921" /><!-- Forsaken Temple Sabatons -->
+			<gd_item id="114101149" /><!-- Shoes of the Destroyed Temple -->
+			<gd_item id="114601061" /><!-- Sabatons of the Destroyed Temple -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114301019" /><!-- Forsaken Temple Boots -->
+			<gd_item id="114500962" /><!-- Forsaken Temple Brogans -->
+			<gd_item id="114301157" /><!-- Boots of the Destroyed Temple -->
+			<gd_item id="114501107" /><!-- Brogans of the Destroyed Temple -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215794" /><!-- Anvilface -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112300915" /><!-- Forsaken Temple Shoulderguards -->
+			<gd_item id="112500902" /><!-- Forsaken Temple Spaulders -->
+			<gd_item id="112301052" /><!-- Shoulderguards of the Destroyed Temple -->
+			<gd_item id="112501042" /><!-- Spaulders of the Destroyed Temple -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215795" /><!-- Debilkarim the Maker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101066" /><!-- Forsaken Temple Tunic -->
+			<gd_item id="110301015" /><!-- Forsaken Temple Jerkin -->
+			<gd_item id="110500983" /><!-- Forsaken Temple Hauberk -->
+			<gd_item id="110600963" /><!-- Forsaken Temple Breastplate -->
+			<gd_item id="110101218" /><!-- Tunic of the Destroyed Temple -->
+			<gd_item id="110301151" /><!-- Jerkin of the Destroyed Temple -->
+			<gd_item id="110501123" /><!-- Hauberk of the Destroyed Temple -->
+			<gd_item id="110601105" /><!-- Breastplate of the Destroyed Temple -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="80">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215797" /><!-- Bergrisar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100917" /><!-- Forsaken Temple Pauldrons -->
+			<gd_item id="112600917" /><!-- Forsaken Temple Shoulderplates -->
+			<gd_item id="112101066" /><!-- Pauldrons of the Destroyed Temple -->
+			<gd_item id="112601056" /><!-- Shoulderplates of the Destroyed Temple -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215784" /><!-- Chura Twinblade -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100999" /><!-- Malika's Shoes -->
+			<gd_item id="114301020" /><!-- Malika's Boots -->
+			<gd_item id="114500963" /><!-- Malika's Brogans -->
+			<gd_item id="114600922" /><!-- Malika's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215794" /><!-- Anvilface -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101067" /><!-- Jotun's Tunic -->
+			<gd_item id="110301016" /><!-- Jotun's Jerkin -->
+			<gd_item id="110500984" /><!-- Jotun's Hauberk -->
+			<gd_item id="110600964" /><!-- Jotun's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215797" /><!-- Bergrisar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100973" /><!-- Jotun's Leggings -->
+			<gd_item id="113300986" /><!-- Jotun's Breeches -->
+			<gd_item id="113500956" /><!-- Jotun's Chausses -->
+			<gd_item id="113600927" /><!-- Jotun's Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215784" /><!-- Chura Twinblade -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122001161" /><!-- Chura Twinblade's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215795" /><!-- Debilkarim the Maker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000940" /><!-- Debilkarim's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215797" /><!-- Bergrisar -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120001022" /><!-- Bergrisar's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122001280" /><!-- Kingspin's Corundum Ring -->
+			<gd_item id="122001281" /><!-- Kingspin's Turquoise Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Epic)" chance="20">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215795" /><!-- Debilkarim the Maker -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120001031" /><!-- Debilkarim's Corundum Earrings -->
+			<gd_item id="120001032" /><!-- Debilkarim's Turquoise Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Head (Legend)" chance="60">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215792" /><!-- Kingspin -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125002262" /><!-- Kingspin's Hairpin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Key" chance="100">
+		<gd_maps>
+			<gd_map map_id="300160000" /><!-- Lower_Udas_Temple -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="215786" /><!-- Garha the Punisher -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000086" /><!-- Shadowy Prison Key -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

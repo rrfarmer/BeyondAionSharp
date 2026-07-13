@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.adjustStatByMovementModifier",
+  "signature": "float adjustStatByMovementModifier(Creature creature, StatEnum stat, float value) [non-Player pass-through]",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {} }, "stat": "PHYSICAL_ATTACK", "value": 1000.0}, "resultFloat": "1000.0" },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {} }, "stat": "MAGICAL_DEFEND", "value": 500.0}, "resultFloat": "500.0" },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {} }, "stat": "EVASION", "value": 0.0}, "resultFloat": "0.0" },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {} }, "stat": "SPEED", "value": 6000.0}, "resultFloat": "6000.0" }
+  ]
+}

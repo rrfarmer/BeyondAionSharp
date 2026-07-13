@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEGION_LEAVE_MEMBER",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "leftSingleName",
+      "inputs": {"msgId":1300253,"playerObjId":770100,"name":"Nezekan","name1":null},
+      "payloadHex": "34C00B0000000000001DD713004E0065007A0065006B0061006E0000000000"
+    },
+    {
+      "name": "kickedTwoNames",
+      "inputs": {"msgId":1300254,"playerObjId":770101,"name":"Siel","name1":"Israphel"},
+      "payloadHex": "35C00B0000000000001ED713005300690065006C00000049007300720061007000680065006C000000"
+    }
+  ]
+}

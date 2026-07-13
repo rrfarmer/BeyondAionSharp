@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MAY_LOGIN_INTO_GAME",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "ok",
+      "inputs": {},
+      "payloadHex": "00000000"
+    }
+  ]
+}

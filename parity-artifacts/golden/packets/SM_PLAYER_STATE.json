@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PLAYER_STATE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "visible",
+      "inputs": {"objectId":700001,"visualState":0,"seeState":0},
+      "payloadHex": "61AE0A00000000"
+    },
+    {
+      "name": "blinking",
+      "inputs": {"objectId":700002,"visualState":64,"seeState":0},
+      "payloadHex": "62AE0A00400001"
+    },
+    {
+      "name": "hidden",
+      "inputs": {"objectId":700003,"visualState":2,"seeState":1},
+      "payloadHex": "63AE0A00020100"
+    }
+  ]
+}

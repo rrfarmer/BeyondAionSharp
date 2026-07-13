@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ENTER_WORLD_CHECK",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "ok",
+      "inputs": {"msg":"OK"},
+      "payloadHex": "000000"
+    },
+    {
+      "name": "reentryTime",
+      "inputs": {"msg":"REENTRY_TIME"},
+      "payloadHex": "060000"
+    },
+    {
+      "name": "connectionError",
+      "inputs": {"msg":"CONNECTION_ERROR"},
+      "payloadHex": "020000"
+    }
+  ]
+}

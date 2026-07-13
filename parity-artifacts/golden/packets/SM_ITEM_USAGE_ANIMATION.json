@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ITEM_USAGE_ANIMATION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "simple",
+      "inputs": {"ctor":"player_itemObj_itemId","playerObjId":820001,"itemObjId":830001,"itemId":162000001},
+      "payloadHex": "21830C0021830C0031AA0C0081ECA709000000000100000101000000"
+    },
+    {
+      "name": "withUnk3",
+      "inputs": {"ctor":"player_itemObj_itemId_time_end_unk","playerObjId":820002,"itemObjId":830002,"itemId":162000002,"time":0,"end":1,"unk3":7},
+      "payloadHex": "22830C0022830C0032AA0C0082ECA709000000000100000107000000"
+    },
+    {
+      "name": "withTarget",
+      "inputs": {"ctor":"player_target_itemObj_itemId_time_end_unk","playerObjId":820003,"targetObjId":840003,"itemObjId":830003,"itemId":162000003,"time":0,"end":2,"unk3":1},
+      "payloadHex": "23830C0043D10C0033AA0C0083ECA709000000000200000101000000"
+    },
+    {
+      "name": "full",
+      "inputs": {"ctor":"full","playerObjId":820004,"targetObjId":840004,"itemObjId":830004,"itemId":162000004,"time":0,"end":1,"unk":2,"unk1":3,"unk2":4,"unk3":5},
+      "payloadHex": "24830C0044D10C0034AA0C0084ECA709000000000102030405000000"
+    }
+  ]
+}

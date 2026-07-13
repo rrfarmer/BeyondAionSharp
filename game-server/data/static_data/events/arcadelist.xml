@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<arcadelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="arcadelist.xsd">
+	<levels min_resumable_level="6">
+		<level level="1" icon="success_weapon01" upgrade_chance="90" /> <!-- possible *.dds icons can be found in the client under textures/gatha -->
+		<level level="2" icon="success_weapon01" upgrade_chance="90" />
+		<level level="3" icon="success_weapon01" upgrade_chance="80" />
+		<level level="4" icon="success_weapon02" upgrade_chance="70" />
+		<level level="5" icon="success_weapon02" upgrade_chance="60" />
+		<level level="6" icon="success_weapon03" upgrade_chance="50" />
+		<level level="7" icon="success_weapon03" upgrade_chance="50" />
+		<level level="8" icon="success_weapon04" />
+	</levels>
+	<rewards min_level="1">
+		<item item_id="162002030" normal_count="10" frenzy_count="10" />
+		<item item_id="186000236" normal_count="5" frenzy_count="10" />
+		<item item_id="166000195" normal_count="5" frenzy_count="5" />
+		<item item_id="186000238" normal_count="10" frenzy_count="10" />
+		<item item_id="162000107" normal_count="0" frenzy_count="5" />
+		<item item_id="186000237" normal_count="0" frenzy_count="100" />
+		<item item_id="186000399" normal_count="0" frenzy_count="10" />
+	</rewards>
+	<rewards min_level="4">
+		<item item_id="188053845" normal_count="1" frenzy_count="1" />
+		<item item_id="188052719" normal_count="2" frenzy_count="1" />
+		<item item_id="169405253" normal_count="1" frenzy_count="1" />
+		<item item_id="186000199" normal_count="5" frenzy_count="10" />
+		<item item_id="166020000" normal_count="0" frenzy_count="5" />
+		<item item_id="186000051" normal_count="0" frenzy_count="5" />
+		<item item_id="188053628" normal_count="0" frenzy_count="3" />
+	</rewards>
+	<rewards min_level="6">
+		<item item_id="188053614" normal_count="1" frenzy_count="1" />
+		<item item_id="166100011" normal_count="100" frenzy_count="100" />
+		<item item_id="188053609" normal_count="3" frenzy_count="3" />
+		<item item_id="166030005" normal_count="2" frenzy_count="5" />
+		<item item_id="166500002" normal_count="0" frenzy_count="5" />
+		<item item_id="188053618" normal_count="0" frenzy_count="1" />
+		<item item_id="188053295" normal_count="0" frenzy_count="1" />
+	</rewards>
+	<rewards min_level="8">
+		<item item_id="164002167" normal_count="5" frenzy_count="10" />
+		<item item_id="188051709" normal_count="1" frenzy_count="1" />
+		<item item_id="166200009" normal_count="1" frenzy_count="2" /><!-- Scroll of Weapon Re-identification (mythical) -->
+		<item item_id="188053120" normal_count="1" frenzy_count="1" /><!-- Danuar Reliquary Loot [Weapon]-->
+		<item item_id="188051710" normal_count="0" frenzy_count="1" />
+		<item item_id="188053610" normal_count="0" frenzy_count="5" />
+		<item item_id="188053099" normal_count="0" frenzy_count="1" /><!-- Grendal's Enhanced Designs Chest -->
+	</rewards>
+</arcadelist>

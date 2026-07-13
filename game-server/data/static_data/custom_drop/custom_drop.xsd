@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="custom_drop">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="npc_drop" type="NpcDrop" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="NpcDrop">
+		<xs:sequence>
+			<xs:element name="drop_group" type="DropGroup" minOccurs="1" maxOccurs="unbounded" />
+		</xs:sequence>
+		<xs:attribute name="npc_id" type="xs:int" />
+	</xs:complexType>
+	<xs:complexType name="DropGroup">
+		<xs:sequence>
+			<xs:element name="drop" type="Drop" minOccurs="1" maxOccurs="unbounded" />
+		</xs:sequence>
+		<xs:attribute name="race" type="xs:string" />
+		<xs:attribute name="name" type="xs:string" />
+		<xs:attribute name="level_based_chance_reduction" type="xs:boolean" default="false" />
+		<xs:attribute name="max_items" type="xs:int" default="1" />
+	</xs:complexType>
+	<xs:complexType name="Drop">
+		<xs:attribute name="item_id" type="xs:int" use="required" />
+		<xs:attribute name="min_amount" type="xs:int" default="1" />
+		<xs:attribute name="max_amount" type="xs:int" default="0" />
+		<xs:attribute name="chance" type="xs:float" default="100" />
+		<xs:attribute name="each_member" type="xs:boolean" default="false" />
+	</xs:complexType>
+</xs:schema>

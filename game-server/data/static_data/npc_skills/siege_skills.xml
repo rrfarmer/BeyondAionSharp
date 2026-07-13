@@ -1,0 +1,1040 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<npc_skill_templates xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="npc_skills.xsd">
+	<!-- Enraged Veille -->
+	<npc_skills npc_ids="258200 258201 258202 258203 258204">
+		<npc_skill id="18704" lv="1" prob="100" max_hp="50" prio="1" cd="240000"/>
+		<npc_skill id="18707" lv="1" prob="20" max_hp="25" cd="600000" /><!-- Veille's Will 3 min -->
+		<npc_skill id="18709" lv="60" prob="100" cd="25000" /><!-- Agent's Call -->
+		<npc_skill id="18710" lv="60" prob="100" cd="25000" /><!-- Withering Stare -->
+		<npc_skill id="18711" lv="60" prob="100" cd="25000" /><!-- Agent's Wrath -->
+		<npc_skill id="18712" lv="51" prob="100" cd="25000" /><!-- Trap Strike -->
+		<npc_skill id="18713" lv="60" prob="100" cd="25000" /><!-- Demoralize -->
+		<npc_skill id="18986" lv="60" prob="100" cd="25000" /><!-- Sinful Retribution -->
+		<npc_skill id="18987" lv="60" prob="100" cd="25000" /><!-- Fool's Bane -->
+		<npc_skill id="20362" lv="1" prob="100" min_time="1800000" cd="1800000" /><!-- Veille's Will 30 min -->
+	</npc_skills>
+	<!-- Veille's Fire Spirit -->
+	<npc_skills npc_ids="281434">
+		<npc_skill id="18714" lv="60" prob="100" /><!-- Fire Power -->
+		<npc_skill id="18718" lv="60" prob="100" /><!-- Punishing Flame -->
+	</npc_skills>
+	<!-- Veille's Hurrikane -->
+	<npc_skills npc_ids="281435">
+		<npc_skill id="18715" lv="60" prob="100" /><!-- Power of Wind -->
+		<npc_skill id="18719" lv="60" prob="100" /><!-- Wind's Bane -->
+	</npc_skills>
+	<!-- Veille's Earth Spirit -->
+	<npc_skills npc_ids="281436">
+		<npc_skill id="18716" lv="60" prob="100" /><!-- Earth Power -->
+		<npc_skill id="18720" lv="60" prob="100" /><!-- Punishing Earth -->
+	</npc_skills>
+	<!-- Veille's Undertow -->
+	<npc_skills npc_ids="281437">
+		<npc_skill id="18717" lv="60" prob="100" /><!-- Water Power -->
+		<npc_skill id="18721" lv="60" prob="100" /><!-- Punishing Wave -->
+	</npc_skills>
+	<!-- Enraged Mastarius -->
+	<npc_skills npc_ids="258205 258206 258207 258208 258209">
+		<npc_skill id="18704" lv="1" prob="100" max_hp="50" prio="1" cd="240000"/>
+		<npc_skill id="18706" lv="1" prob="20" max_hp="30" cd="600000" /><!-- Blessing of Mastarius 3 min -->
+		<npc_skill id="18709" lv="60" prob="100" cd="25000" /><!-- Agent's Call -->
+		<npc_skill id="18710" lv="60" prob="100" cd="25000" /><!-- Withering Stare -->
+		<npc_skill id="18711" lv="60" prob="100" cd="25000" /><!-- Agent's Wrath -->
+		<npc_skill id="18712" lv="51" prob="100" cd="25000" /><!-- Trap Strike -->
+		<npc_skill id="18713" lv="60" prob="100" cd="25000" /><!-- Demoralize -->
+		<npc_skill id="18986" lv="60" prob="100" cd="25000" /><!-- Sinful Retribution -->
+		<npc_skill id="18987" lv="60" prob="100" cd="25000" /><!-- Fool's Bane -->
+		<npc_skill id="20361" lv="1" prob="100" min_time="1800000" cd="1800000" /><!-- Blessing of Mastarius 30 min -->
+	</npc_skills>
+	<!-- Mastarius Holy Servant I -->
+	<npc_skills npc_ids="281441">
+		<npc_skill id="18735" lv="60" prob="100" /><!-- Divine Power -->
+		<npc_skill id="18736" lv="60" prob="100" /><!-- Divine Wave -->
+	</npc_skills>
+	<!-- Mastarius Holy Servant II -->
+	<npc_skills npc_ids="281442">
+		<npc_skill id="18735" lv="60" prob="100" /><!-- Divine Power -->
+		<npc_skill id="18737" lv="60" prob="100" /><!-- Divine Pain -->
+	</npc_skills>
+	<!-- Mastarius Divine Crusader I -->
+	<npc_skills npc_ids="281443">
+		<npc_skill id="18735" lv="60" prob="100" /><!-- Divine Power -->
+		<npc_skill id="18738" lv="60" prob="100" /><!-- Divine Strike -->
+	</npc_skills>
+	<!-- Mastarius Consecration -->
+	<npc_skills npc_ids="281444">
+		<npc_skill id="18735" lv="60" prob="100" /><!-- Divine Power -->
+		<npc_skill id="18739" lv="60" prob="100" /><!-- Divine Silence -->
+	</npc_skills>
+	<!-- Aether Tower Sentry -->
+	<npc_skills npc_ids="281492 281493">
+		<npc_skill id="17789" lv="65" prob="100" />
+		<npc_skill id="17791" lv="65" prob="100" />
+	</npc_skills>
+	<!-- Dredgion Commander Lv40 -->
+	<npc_skills npc_ids="276647 276648 276649 276650 276651">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17572" lv="65" prob="100" prio="1" cd="45000" /><!-- Dragon Lord Blade I -->
+		<npc_skill id="17299" lv="65" prob="100" cd="25000" /><!-- Wide Area Ferocious Strike III -->
+		<npc_skill id="17301" lv="65" prob="100" cd="25000" /><!-- Wide Area Cleave Armor -->
+		<npc_skill id="17303" lv="65" prob="100" cd="25000" next_skill_time="0" next_chain_id="2" /><!-- Wide Area Pull -->
+		<npc_skill id="17305" lv="65" prob="100" cd="25000" next_skill_time="0" next_chain_id="1" /><!-- Wide Area Wrathful Strike -->
+		<npc_skill id="17307" lv="65" prob="100" cd="25000" chain_id="1"/><!-- Wide Area Crippling Cut -->
+		<npc_skill id="17310" lv="200" prob="100" cd="60000" /><!-- Rage 25s -->
+		<npc_skill id="17325" lv="65" prob="100" chain_id="2" next_skill_time="0" next_chain_id="3" /><!-- Wide Area Aerial Thrust -->
+		<npc_skill id="17327" lv="65" prob="100" chain_id="3" /><!-- Wide Area Crashing Wind Strike -->
+		<npc_skill id="17579" lv="1" prob="100" cd="90000" /><!-- Fear Shriek -->
+	</npc_skills>
+	<!-- Dredgion Commander Lv50 -->
+	<npc_skills npc_ids="276869 276870 276871 276872 276873">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="18411" lv="65" prob="100" prio="1" cd="45000" /><!-- Dragon Lord Blade III -->
+		<npc_skill id="17299" lv="65" prob="100" cd="25000" /><!-- Wide Area Ferocious Strike III -->
+		<npc_skill id="17301" lv="65" prob="100" cd="25000" /><!-- Wide Area Cleave Armor -->
+		<npc_skill id="17303" lv="65" prob="100" cd="25000" next_skill_time="0" next_chain_id="2" /><!-- Wide Area Pull -->
+		<npc_skill id="17305" lv="65" prob="100" cd="25000" next_skill_time="0" next_chain_id="1" /><!-- Wide Area Wrathful Strike -->
+		<npc_skill id="17307" lv="65" prob="100" cd="25000" chain_id="1"/><!-- Wide Area Crippling Cut -->
+		<npc_skill id="17310" lv="200" prob="100" cd="60000" /><!-- Rage 25s -->
+		<npc_skill id="17325" lv="65" prob="100" chain_id="2" next_skill_time="0" next_chain_id="3" /><!-- Wide Area Aerial Thrust -->
+		<npc_skill id="17327" lv="65" prob="100" chain_id="3" /><!-- Wide Area Crashing Wind Strike -->
+		<npc_skill id="17579" lv="1" prob="100" cd="90000" /><!-- Fear Shriek -->
+	</npc_skills>
+	<!-- Dredgion Commander Lv65 -->
+	<npc_skills npc_ids="251383 251384 251385 251386 251387 882272 882273 882274 882275 882276 252133 252134 252135 252136 252137">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="18428" lv="65" prob="100" prio="1" cd="45000" /><!-- Dragon Lord Blade IV -->
+		<npc_skill id="17299" lv="65" prob="100" cd="25000" /><!-- Wide Area Ferocious Strike III -->
+		<npc_skill id="17301" lv="65" prob="100" cd="25000" /><!-- Wide Area Cleave Armor -->
+		<npc_skill id="17303" lv="65" prob="100" cd="25000" next_skill_time="0" next_chain_id="2" /><!-- Wide Area Pull -->
+		<npc_skill id="17305" lv="65" prob="100" cd="25000" next_skill_time="0" next_chain_id="1" /><!-- Wide Area Wrathful Strike -->
+		<npc_skill id="17307" lv="65" prob="100" cd="25000" chain_id="1"/><!-- Wide Area Crippling Cut -->
+		<npc_skill id="17310" lv="200" prob="100" cd="60000" /><!-- Rage 25s -->
+		<npc_skill id="17325" lv="65" prob="100" chain_id="2" next_skill_time="0" next_chain_id="3" /><!-- Wide Area Aerial Thrust -->
+		<npc_skill id="17327" lv="65" prob="100" chain_id="3" /><!-- Wide Area Crashing Wind Strike -->
+		<npc_skill id="17579" lv="1" prob="100" cd="90000" /><!-- Fear Shriek -->
+	</npc_skills>
+	<!-- Dredgion Priest Lv40 -->
+	<npc_skills npc_ids="276784 276785 276786 276787 276788">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17354" lv="40" prob="70" cd="15000" /><!-- Divine Touch -->
+		<npc_skill id="17355" lv="40" prob="70" cd="15000" /><!-- Wide Area Divine Touch -->
+		<npc_skill id="17356" lv="1" prob="70" cd="15000" /><!-- Blindness -->
+		<npc_skill id="17357" lv="1" prob="70" cd="15000" /><!-- Wide Area Blindness -->
+		<npc_skill id="17358" lv="1" prob="70" min_time="15000" cd="15000" target="NONE"><!-- Circle of Steel -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="30" />
+		</npc_skill>
+		<npc_skill id="17359" lv="40" prob="70" cd="15000" /><!-- Hallowed Strike -->
+		<npc_skill id="17360" lv="40" prob="70" cd="15000" /><!-- Wide Area Hallowed Strike -->
+		<npc_skill id="17361" lv="1" prob="70" min_time="30000" cd="15000" prio="2" target="NONE"><!-- Healing Light -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="25" />
+		</npc_skill>
+		<npc_skill id="17364" lv="1" prob="100" min_time="30000" cd="15000" prio="1" target="NONE"><!-- Healing Wind I -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="25" />
+		</npc_skill>
+		<npc_skill id="17367" lv="40" prob="70" cd="15000" /><!-- Wide Area Stun -->
+		<npc_skill id="17382" lv="1" prob="30" min_time="30000" cd="15000" target="NONE"><!-- Treatment -->
+			<cond cond_type="HELP_FRIEND" hp_below="40" range="25" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Dredgion Priest Lv50 -->
+	<npc_skills npc_ids="277004 277005 277006 277007 277008">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17354" lv="50" prob="70" cd="15000" /><!-- Divine Touch -->
+		<npc_skill id="17355" lv="50" prob="70" cd="15000" /><!-- Wide Area Divine Touch -->
+		<npc_skill id="17356" lv="1" prob="70" cd="15000" /><!-- Blindness -->
+		<npc_skill id="17357" lv="1" prob="70" cd="15000" /><!-- Wide Area Blindness -->
+		<npc_skill id="17358" lv="1" prob="70" min_time="15000" cd="30000" target="NONE"><!-- Circle of Steel -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="30" />
+		</npc_skill>
+		<npc_skill id="17359" lv="50" prob="70" cd="15000" /><!-- Hallowed Strike -->
+		<npc_skill id="17360" lv="50" prob="70" cd="15000" /><!-- Wide Area Hallowed Strike -->
+		<npc_skill id="17362" lv="1" prob="70" min_time="30000" cd="15000" prio="2" target="NONE"><!-- Radiant Cure I -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="25" />
+		</npc_skill>
+		<npc_skill id="17365" lv="1" prob="100" min_time="30000" cd="15000" prio="1" target="NONE"><!-- Healing Wind II -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="25" />
+		</npc_skill>
+		<npc_skill id="17367" lv="50" prob="70" cd="15000" /><!-- Wide Area Stun -->
+		<npc_skill id="17382" lv="1" prob="30" min_time="30000" cd="15000" target="NONE"><!-- Treatment -->
+			<cond cond_type="HELP_FRIEND" hp_below="40" range="25" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Dredgion Priest Lv65 -->
+	<npc_skills npc_ids="251410 251413 251415 251418 251409 251412 251414 251417 252123 252124 252126 252127">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17354" lv="65" prob="70" cd="15000" /><!-- Divine Touch -->
+		<npc_skill id="17355" lv="65" prob="70" cd="15000" /><!-- Wide Area Divine Touch -->
+		<npc_skill id="17356" lv="1" prob="70" cd="15000" /><!-- Blindness -->
+		<npc_skill id="17357" lv="1" prob="70" cd="15000" /><!-- Wide Area Blindness -->
+		<npc_skill id="17358" lv="1" prob="70" min_time="15000" cd="30000" target="NONE"><!-- Circle of Steel -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="30" />
+		</npc_skill>
+		<npc_skill id="17359" lv="65" prob="70" cd="15000" /><!-- Hallowed Strike -->
+		<npc_skill id="17360" lv="65" prob="70" cd="15000" /><!-- Wide Area Hallowed Strike -->
+		<npc_skill id="17363" lv="1" prob="70" min_time="30000" cd="15000" prio="2" target="NONE"><!-- Light of Recovery -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="25" />
+		</npc_skill>
+		<npc_skill id="17366" lv="1" prob="100" min_time="30000" cd="15000" prio="1" target="NONE"><!-- Healing Wind III -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="25" />
+		</npc_skill>
+		<npc_skill id="17367" lv="65" prob="70" cd="15000" /><!-- Wide Area Stun -->
+		<npc_skill id="17382" lv="1" prob="30" min_time="20000" cd="30000" target="NONE"><!-- Treatment -->
+			<cond cond_type="HELP_FRIEND" hp_below="40" range="25" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Dredgion Witch Lv40 -->
+	<npc_skills npc_ids="276779 276780 276781 276782 276783">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17334" lv="40" prob="70" /><!-- Erosion -->
+		<npc_skill id="17335" lv="40" prob="70" /><!-- Flame Bolt -->
+		<npc_skill id="17336" lv="40" prob="70" /><!-- Fire Burst -->
+		<npc_skill id="17337" lv="40" prob="70" cd="20000" prio="1" target="RANDOM" /><!-- Shooting Star Storm -->
+		<npc_skill id="17338" lv="40" prob="70" /><!-- Hydro Eruption -->
+		<npc_skill id="17349" lv="40" prob="70" /><!-- Ice Wave -->
+		<npc_skill id="17340" lv="40" prob="70" /><!-- Winter Binding -->
+		<npc_skill id="17341" lv="1" prob="70" cd="30000" /><!-- Fear Shriek -->
+		<npc_skill id="17342" lv="1" prob="70" cd="30000" target="RANDOM" /><!-- Curse of Roots -->
+		<npc_skill id="17343" lv="1" prob="70" cd="30000" /><!-- Wide Area Curse of Roots -->
+		<npc_skill id="17346" lv="1" prob="70" cd="30000" target="RANDOM" /><!-- Disenchant -->
+		<npc_skill id="17348" lv="40" prob="70" /><!-- Afterblast -->
+		<npc_skill id="17353" lv="40" prob="70" cd="18000" /><!-- Wide Area Soul Freeze -->
+	</npc_skills>
+	<!-- Dredgion Witch Lv50 -->
+	<npc_skills npc_ids="276999 277000 277001 277002 277003">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17334" lv="50" prob="70" /><!-- Erosion -->
+		<npc_skill id="17335" lv="50" prob="70" /><!-- Flame Bolt -->
+		<npc_skill id="17336" lv="50" prob="70" /><!-- Fire Burst -->
+		<npc_skill id="17337" lv="50" prob="70" cd="20000" prio="1" target="RANDOM" /><!-- Shooting Star Storm -->
+		<npc_skill id="17338" lv="50" prob="70" /><!-- Hydro Eruption -->
+		<npc_skill id="17349" lv="50" prob="70" /><!-- Ice Wave -->
+		<npc_skill id="17340" lv="50" prob="70" /><!-- Winter Binding -->
+		<npc_skill id="17341" lv="1" prob="70" cd="30000" /><!-- Fear Shriek -->
+		<npc_skill id="17342" lv="1" prob="70" cd="30000" target="RANDOM" /><!-- Curse of Roots -->
+		<npc_skill id="17343" lv="1" prob="70" cd="30000" /><!-- Wide Area Curse of Roots -->
+		<npc_skill id="17345" lv="1" prob="70" cd="30000" target="RANDOM" /><!-- Disenchant -->
+		<npc_skill id="17348" lv="50" prob="70" /><!-- Afterblast -->
+		<npc_skill id="17353" lv="50" prob="70" cd="18000" /><!-- Wide Area Soul Freeze -->
+	</npc_skills>
+	<!-- Dredgion Witch Lv65 -->
+	<npc_skills npc_ids="251420 251423 251425 251428 251419 251422 251424 251427 252128 252129 252131 252132">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17334" lv="65" prob="70" /><!-- Erosion -->
+		<npc_skill id="17335" lv="65" prob="70" /><!-- Flame Bolt -->
+		<npc_skill id="17336" lv="65" prob="70" /><!-- Fire Burst -->
+		<npc_skill id="17337" lv="65" prob="70" cd="20000" prio="1" target="RANDOM" /><!-- Shooting Star Storm -->
+		<npc_skill id="17338" lv="65" prob="70" /><!-- Hydro Eruption -->
+		<npc_skill id="17349" lv="65" prob="70" /><!-- Ice Wave -->
+		<npc_skill id="17340" lv="65" prob="70" /><!-- Winter Binding -->
+		<npc_skill id="17341" lv="1" prob="70" cd="30000" /><!-- Fear Shriek -->
+		<npc_skill id="17342" lv="1" prob="70" cd="30000" target="RANDOM" /><!-- Curse of Roots -->
+		<npc_skill id="17343" lv="1" prob="70" cd="30000" /><!-- Wide Area Curse of Roots -->
+		<npc_skill id="17344" lv="1" prob="70" cd="30000" target="RANDOM" /><!-- Disenchant -->
+		<npc_skill id="17348" lv="65" prob="70" /><!-- Afterblast -->
+		<npc_skill id="17353" lv="65" prob="70" cd="18000" /><!-- Wide Area Soul Freeze -->
+	</npc_skills>
+	<!-- Dredgion Ranger Lv40 -->
+	<npc_skills npc_ids="276766 276767 276768 276769 276770">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17314" lv="40" prob="70" cd="15000" /><!-- Arrow Deluge -->
+		<npc_skill id="17315" lv="40" prob="70" cd="15000" /><!-- Arrow Storm -->
+		<npc_skill id="17316" lv="40" prob="70" /><!-- Wedge Wave -->
+		<npc_skill id="17317" lv="40" prob="70" /><!-- Arrow Strike -->
+		<npc_skill id="17318" lv="40" prob="70" /><!-- Entangling Shot -->
+		<npc_skill id="17319" lv="40" prob="70" cd="15000" next_skill_time="0" next_chain_id="1" /><!-- Stunning Shot -->
+		<npc_skill id="17320" lv="40" prob="0" chain_id="1" /><!-- Frontal Strike -->
+	</npc_skills>
+	<!-- Dredgion Ranger Lv50 -->
+	<npc_skills npc_ids="276994 276995 276996 276997 276998">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17314" lv="50" prob="70" cd="15000" /><!-- Arrow Deluge -->
+		<npc_skill id="17315" lv="50" prob="70" cd="15000" /><!-- Arrow Storm -->
+		<npc_skill id="17316" lv="50" prob="70" /><!-- Wedge Wave -->
+		<npc_skill id="17317" lv="50" prob="70" /><!-- Arrow Strike -->
+		<npc_skill id="17318" lv="50" prob="70" /><!-- Entangling Shot -->
+		<npc_skill id="17319" lv="50" prob="70" cd="15000" next_skill_time="0" next_chain_id="1" /><!-- Stunning Shot -->
+		<npc_skill id="17320" lv="50" prob="0" chain_id="1" /><!-- Frontal Strike -->
+	</npc_skills>
+	<!-- Dredgion Ranger Lv65 -->
+	<npc_skills npc_ids="251430 251433 251435 251438 251429 251432 251434 251437">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17314" lv="65" prob="70" cd="15000" /><!-- Arrow Deluge -->
+		<npc_skill id="17315" lv="65" prob="70" cd="15000" /><!-- Arrow Storm -->
+		<npc_skill id="17316" lv="65" prob="70" /><!-- Wedge Wave -->
+		<npc_skill id="17317" lv="65" prob="70" /><!-- Arrow Strike -->
+		<npc_skill id="17318" lv="65" prob="70" /><!-- Entangling Shot -->
+		<npc_skill id="17319" lv="65" prob="70" cd="15000" next_skill_time="0" next_chain_id="1" /><!-- Stunning Shot -->
+		<npc_skill id="17320" lv="65" prob="0" chain_id="1" /><!-- Frontal Strike -->
+	</npc_skills>
+	<!-- Dredgion Assassin Lv40 -->
+	<npc_skills npc_ids="276789 276790 276791 276792 276793">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17320" lv="40" prob="70" cd="15000" next_skill_time="0" next_chain_id="1" /><!-- Frontal Strike -->
+		<npc_skill id="17321" lv="40" prob="100" chain_id="1" /><!-- Surprise Attack -->
+		<npc_skill id="17322" lv="40" prob="70" /><!-- Poison Slash -->
+		<npc_skill id="17323" lv="40" prob="70" cd="20000" /><!-- Wide Area Poison Slash -->
+		<npc_skill id="17324" lv="40" prob="70" cd="20000" next_skill_time="0" next_chain_id="2" /><!-- Aerial Thrust -->
+		<npc_skill id="17325" lv="40" prob="70" cd="30000" next_skill_time="0" next_chain_id="3" /><!-- Wide Area Aerial Thrust -->
+		<npc_skill id="17326" lv="40" prob="100" chain_id="2" /><!-- Fall -->
+		<npc_skill id="17327" lv="40" prob="100" chain_id="3" /><!-- Wide Area Crashing Wind Strike -->
+		<npc_skill id="17328" lv="40" prob="70" cd="15000" next_skill_time="0" next_chain_id="4" /><!-- Wide Area Dragon Rune Carve I -->
+		<npc_skill id="17329" lv="40" prob="100" chain_id="4" next_skill_time="0" next_chain_id="5" /><!-- Wide Area Dragon Rune Carve II -->
+		<npc_skill id="17330" lv="40" prob="100" chain_id="5" next_skill_time="0" next_chain_id="6" /><!-- Wide Area Dragon Rune Carve III -->
+		<npc_skill id="17331" lv="40" prob="100" chain_id="6" /><!-- Pain Rune -->
+		<npc_skill id="17332" lv="40" prob="70" /><!-- Swift Edge -->
+		<npc_skill id="17333" lv="40" prob="70" cd="20000" /><!-- Wide Area Swift Edge -->
+	</npc_skills>
+	<!-- Dredgion Assassin Lv50 -->
+	<npc_skills npc_ids="276949 276950 276951 276952 276953">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17320" lv="50" prob="70" cd="15000" next_skill_time="0" next_chain_id="1" /><!-- Frontal Strike -->
+		<npc_skill id="17321" lv="50" prob="100" chain_id="1" /><!-- Surprise Attack -->
+		<npc_skill id="17322" lv="50" prob="70" /><!-- Poison Slash -->
+		<npc_skill id="17323" lv="50" prob="70" cd="20000" /><!-- Wide Area Poison Slash -->
+		<npc_skill id="17324" lv="50" prob="70" cd="20000" next_skill_time="0" next_chain_id="2" /><!-- Aerial Thrust -->
+		<npc_skill id="17325" lv="50" prob="70" cd="30000" next_skill_time="0" next_chain_id="3" /><!-- Wide Area Aerial Thrust -->
+		<npc_skill id="17326" lv="50" prob="100" chain_id="2" /><!-- Fall -->
+		<npc_skill id="17327" lv="50" prob="100" chain_id="3" /><!-- Wide Area Crashing Wind Strike -->
+		<npc_skill id="17328" lv="50" prob="70" cd="15000" next_skill_time="0" next_chain_id="4" /><!-- Wide Area Dragon Rune Carve I -->
+		<npc_skill id="17329" lv="50" prob="100" chain_id="4" next_skill_time="0" next_chain_id="5" /><!-- Wide Area Dragon Rune Carve II -->
+		<npc_skill id="17330" lv="50" prob="100" chain_id="5" next_skill_time="0" next_chain_id="6" /><!-- Wide Area Dragon Rune Carve III -->
+		<npc_skill id="17331" lv="50" prob="100" chain_id="6" /><!-- Pain Rune -->
+		<npc_skill id="17332" lv="50" prob="70" /><!-- Swift Edge -->
+		<npc_skill id="17333" lv="50" prob="70" cd="20000" /><!-- Wide Area Swift Edge -->
+	</npc_skills>
+	<!-- Dredgion Assassin Lv65 -->
+	<npc_skills npc_ids="251406 251400 251403 251405 251408 251399 251402 251404 251407">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17320" lv="65" prob="70" cd="15000" next_skill_time="0" next_chain_id="1" /><!-- Frontal Strike -->
+		<npc_skill id="17321" lv="65" prob="100" chain_id="1" /><!-- Surprise Attack -->
+		<npc_skill id="17322" lv="65" prob="70" /><!-- Poison Slash -->
+		<npc_skill id="17323" lv="65" prob="70" cd="20000" /><!-- Wide Area Poison Slash -->
+		<npc_skill id="17324" lv="65" prob="70" cd="20000" next_skill_time="0" next_chain_id="2" /><!-- Aerial Thrust -->
+		<npc_skill id="17325" lv="65" prob="70" cd="30000" next_skill_time="0" next_chain_id="3" /><!-- Wide Area Aerial Thrust -->
+		<npc_skill id="17326" lv="65" prob="100" chain_id="2" /><!-- Fall -->
+		<npc_skill id="17327" lv="65" prob="100" chain_id="3" /><!-- Wide Area Crashing Wind Strike -->
+		<npc_skill id="17328" lv="65" prob="70" cd="15000" next_skill_time="0" next_chain_id="4" /><!-- Wide Area Dragon Rune Carve I -->
+		<npc_skill id="17329" lv="65" prob="100" chain_id="4" next_skill_time="0" next_chain_id="5" /><!-- Wide Area Dragon Rune Carve II -->
+		<npc_skill id="17330" lv="65" prob="100" chain_id="5" next_skill_time="0" next_chain_id="6" /><!-- Wide Area Dragon Rune Carve III -->
+		<npc_skill id="17331" lv="65" prob="100" chain_id="6" /><!-- Pain Rune -->
+		<npc_skill id="17332" lv="65" prob="70" /><!-- Swift Edge -->
+		<npc_skill id="17333" lv="65" prob="70" cd="20000" /><!-- Wide Area Swift Edge -->
+	</npc_skills>
+	<!-- Dredgion Fighter Lv40 -->
+	<npc_skills npc_ids="276717 276718 276719 276720 276721">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17289" lv="1" prob="70" cd="30000" max_hp="50" /><!-- Rage -->
+		<npc_skill id="17290" lv="1" prob="70"><!-- Wide Area Rage -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="4" />
+		</npc_skill>
+		<npc_skill id="17291" lv="40" prob="70" /><!-- Cleave -->
+		<npc_skill id="17292" lv="40" prob="70" cd="18000" prio="1" /><!-- Force Cleave -->
+		<npc_skill id="17293" lv="40" prob="70" target="RANDOM" /><!-- Wide Area Force Cleave -->
+		<npc_skill id="17294" lv="40" prob="70" /><!-- Ferocious Strike I -->
+		<npc_skill id="17297" lv="40" prob="70" cd="18000" /><!-- Wide Area Ferocious Strike I -->
+		<npc_skill id="17300" lv="40" prob="70" /><!-- Cleave Armor -->
+		<npc_skill id="17301" lv="40" prob="70" cd="18000" /><!-- Wide Area Cleave Armor -->
+		<npc_skill id="17302" lv="40" prob="70" cd="18000" target="RANDOM" /><!-- Pull -->
+		<npc_skill id="17303" lv="40" prob="70" cd="30000" target="RANDOM" /><!-- Wide Area Pull -->
+		<npc_skill id="17304" lv="40" prob="70" cd="15000" /><!-- Wrathful Strike -->
+		<npc_skill id="17305" lv="40" prob="70" cd="25000" /><!-- Wide Area Wrathful Strike -->
+		<npc_skill id="17306" lv="40" prob="70" /><!-- Crippling Cut -->
+		<npc_skill id="17307" lv="40" prob="70" cd="18000" /><!-- Wide Area Crippling Cut -->
+		<npc_skill id="17308" lv="1" prob="70"><!-- Rage -->
+			<cond cond_type="HELP_FRIEND" hp_below="30" range="4" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Dredgion Fighter Lv50 -->
+	<npc_skills npc_ids="276989 276990 276991 276992 276993">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17289" lv="1" prob="70" cd="30000" max_hp="50" /><!-- Rage -->
+		<npc_skill id="17290" lv="1" prob="70"><!-- Wide Area Rage -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="4" />
+		</npc_skill>
+		<npc_skill id="17291" lv="50" prob="70" /><!-- Cleave -->
+		<npc_skill id="17292" lv="50" prob="70" cd="18000" prio="1" /><!-- Force Cleave -->
+		<npc_skill id="17293" lv="50" prob="70" target="RANDOM" /><!-- Wide Area Force Cleave -->
+		<npc_skill id="17295" lv="50" prob="70" /><!-- Ferocious Strike II -->
+		<npc_skill id="17398" lv="50" prob="70" cd="18000" /><!-- Wide Area Ferocious Strike II -->
+		<npc_skill id="17300" lv="50" prob="70" /><!-- Cleave Armor -->
+		<npc_skill id="17301" lv="50" prob="70" cd="18000" /><!-- Wide Area Cleave Armor -->
+		<npc_skill id="17302" lv="50" prob="70" cd="18000" target="RANDOM" /><!-- Pull -->
+		<npc_skill id="17303" lv="50" prob="70" cd="30000" target="RANDOM" /><!-- Wide Area Pull -->
+		<npc_skill id="17304" lv="50" prob="70" cd="15000" /><!-- Wrathful Strike -->
+		<npc_skill id="17305" lv="50" prob="70" cd="25000" /><!-- Wide Area Wrathful Strike -->
+		<npc_skill id="17306" lv="50" prob="70" /><!-- Crippling Cut -->
+		<npc_skill id="17307" lv="50" prob="70" cd="18000" /><!-- Wide Area Crippling Cut -->
+		<npc_skill id="17309" lv="1" prob="70"><!-- Rage -->
+			<cond cond_type="HELP_FRIEND" hp_below="30" range="4" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Dredgion Fighter Lv65 -->
+	<npc_skills npc_ids="251390 251393 251395 251398 251389 251392 251394 251397 252118 252119 252121 252122">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="17289" lv="1" prob="70" cd="30000" max_hp="50" /><!-- Rage -->
+		<npc_skill id="17290" lv="1" prob="70"><!-- Wide Area Rage -->
+			<cond cond_type="HELP_FRIEND" hp_below="60" range="4" />
+		</npc_skill>
+		<npc_skill id="17291" lv="65" prob="70" /><!-- Cleave -->
+		<npc_skill id="17292" lv="65" prob="70" cd="18000" prio="1" /><!-- Force Cleave -->
+		<npc_skill id="17293" lv="65" prob="70" target="RANDOM" /><!-- Wide Area Force Cleave -->
+		<npc_skill id="17296" lv="65" prob="70" /><!-- Ferocious Strike III -->
+		<npc_skill id="17399" lv="65" prob="70" cd="18000" /><!-- Wide Area Ferocious Strike III -->
+		<npc_skill id="17300" lv="65" prob="70" /><!-- Cleave Armor -->
+		<npc_skill id="17301" lv="65" prob="70" cd="18000" /><!-- Wide Area Cleave Armor -->
+		<npc_skill id="17302" lv="65" prob="70" cd="18000" target="RANDOM" /><!-- Pull -->
+		<npc_skill id="17303" lv="65" prob="70" cd="30000" target="RANDOM" /><!-- Wide Area Pull -->
+		<npc_skill id="17304" lv="65" prob="70" cd="15000" /><!-- Wrathful Strike -->
+		<npc_skill id="17305" lv="65" prob="70" cd="25000" /><!-- Wide Area Wrathful Strike -->
+		<npc_skill id="17306" lv="65" prob="70" /><!-- Crippling Cut -->
+		<npc_skill id="17307" lv="65" prob="70" cd="18000" /><!-- Wide Area Crippling Cut -->
+		<npc_skill id="17310" lv="1" prob="70"><!-- Rage -->
+			<cond cond_type="HELP_FRIEND" hp_below="30" range="4" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Dredgion Gunner Lv65 -->
+	<npc_skills npc_ids="251440 251443 251445 251448 251439 251442 251444 251447">
+		<npc_skill id="19125" lv="1" prob="0" is_post_spawn="true" /><!-- Dragon's Blessing -->
+		<npc_skill id="20713" lv="65" prob="50" cd="15000" /><!-- Thunder Crash Fallout -->
+		<npc_skill id="20857" lv="65" prob="70" cd="15000" /><!-- Thunder Crash Fallout -->
+		<npc_skill id="20858" lv="65" prob="70" cd="15000" /><!-- Area Thunder Crash Fallout -->
+		<npc_skill id="21219" lv="65" prob="70" cd="15000" /><!-- Straight Shot -->
+		<npc_skill id="21226" lv="65" prob="70" cd="18000" next_skill_time="0" next_chain_id="1" /><!-- Mid-Range Binding -->
+		<npc_skill id="21227" lv="65" prob="100" chain_id="1" /><!-- Mid-Range Binding Explosion -->
+		<npc_skill id="21265" lv="65" prob="70" cd="21000" /><!-- Mid-Range Eruptive Shot -->
+		<npc_skill id="21292" lv="65" prob="70" cd="15000" /><!-- Powerful Shot -->
+		<npc_skill id="21293" lv="65" prob="70" cd="15000" /><!-- Deadeye -->
+		<npc_skill id="21299" lv="65" prob="70" cd="15000" /><!-- Area Shot -->
+	</npc_skills>
+	<!-- Divine Fortress -->
+	<!-- Dux -->
+	<npc_skills npc_ids="260000 260001 260002 260003 260004">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="260005 260006 260007 260008 260009">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ereshkigal's Claw -->
+	<npc_skills npc_ids="260010 260011 260012 260013 260014">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+		<!-- Old Skills Pre-4.8 18435 - 18449 -->
+	</npc_skills>
+	<!-- Krotan Fortress -->
+	<!-- Dux -->
+	<npc_skills npc_ids="267801 267802 267803 267804 267805">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="267806 267807 267808 267809 267810">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="267811 267812 267813 267814 267815">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Kysis Fortress -->
+	<!-- Dux -->
+	<npc_skills npc_ids="269001 269002 269003 269004 269005">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="269006 269007 269008 269009 269010">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="269011 269012 269013 269014 269015">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Miren Fortress -->
+	<!-- Dux -->
+	<npc_skills npc_ids="269901 269902 269903 269904 269905">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="269906 269907 269908 269909 269910">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="269911 269912 269913 269914 269915">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Temple of Scales -->
+	<!-- Dux -->
+	<npc_skills npc_ids="257000 257001 257002 257003 257004">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="257005 257006 257007 257008 257009">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="257010 257011 257012 257013 257014">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Altar of Avarice -->
+	<!-- Dux -->
+	<npc_skills npc_ids="257300 257301 257302 257303 257304">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="257305 257306 257307 257308 257309">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="257310 257311 257312 257313 257314">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Vorgaltem Citadel -->
+	<!-- Dux -->
+	<npc_skills npc_ids="257600 257601 257602 257603 257604">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="257605 257606 257607 257608 257609">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="257610 257611 257612 257613 257614">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Crimson Temple -->
+	<!-- Dux -->
+	<npc_skills npc_ids="257900 257901 257902 257903 257904">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="257905 257906 257907 257908 257909">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="257910 257911 257912 257913 257914">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="56" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="56" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="56" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="56" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="56" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="56" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="56" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="56" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="56" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="56" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="56" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="56" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="56" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="56" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="56" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- (Wealhtheow) Anoha Fortress -->
+	<!-- Dux -->
+	<npc_skills npc_ids="251825 251826 251827 251828 251829">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="65" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="65" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="65" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="65" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="65" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="65" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="65" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="65" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="65" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="65" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="65" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="65" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="65" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="65" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="65" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="65" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="65" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Stallari -->
+	<npc_skills npc_ids="251830 251831 251832 251833 251834">
+		<!-- 10m range -->
+		<npc_skill id="19100" lv="65" prob="25" next_chain_id="1" next_skill_time="0" cd="80000" min_hp="55" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="19101" lv="65" prob="100" chain_id="1" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<!-- 20m range-->
+		<npc_skill id="17992" lv="65" prob="25" next_chain_id="2" next_skill_time="0" cd="80000" max_hp="50" /><!-- Wide Area Aerial Thrust III -->
+		<npc_skill id="17995" lv="65" prob="100" chain_id="2" next_skill_time="8000" cd="20000" target="NONE" /><!-- Wide Area Crashing Wind Strike III -->
+		<npc_skill id="19107" lv="65" prob="25" next_chain_id="3" next_skill_time="6000" cd="60000" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="65" prob="100" chain_id="3" next_chain_id="4" next_skill_time="6000" max_hp="75" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="19107" lv="65" prob="100" chain_id="4" next_skill_time="12000" max_hp="50" /><!-- Wide Area Wrathful Strike III -->
+		<npc_skill id="18000" lv="65" prob="25" max_hp="30" cd="35000" /><!-- Wide Area Soul Freeze II -->
+		<npc_skill id="19104" lv="65" prob="25" max_hp="30" cd="35000" /><!-- Restrain Movement I -->
+		<npc_skill id="18002" lv="65" prob="25" max_hp="50" cd="40000" /><!-- Wide Area Rage II -->
+		<npc_skill id="19105" lv="65" prob="100" max_hp="50" cd="60000" /><!-- Encouragement of Deity General III -->
+		<npc_skill id="19102" lv="65" prob="25" max_hp="70" cd="35000" /><!-- Curse of Deity General -->
+		<npc_skill id="19099" lv="65" prob="25" cd="50000" /><!-- Wide Area Pull III -->
+		<npc_skill id="19103" lv="65" prob="25" max_hp="40" cd="60000" /><!-- Wide Area Swoon III -->
+		<npc_skill id="19113" lv="65" prob="25" max_hp="70" cd="60000" /><!-- Wide Area Cleave Armor II -->
+		<npc_skill id="18009" lv="65" prob="20" max_hp="50" cd="150000" target="RANDOM" /><!-- Wrath of Deity General -->
+		<npc_skill id="18010" lv="65" prob="20" max_hp="30" cd="180000" /><!-- Fury of Deity General -->
+		<!-- <npc_skill id="18003" lv="1" prob="25" /> Summon Illusion Gate -->
+	</npc_skills>
+	<!-- Ulsaruk -->
+	<npc_skills npc_ids="251835 251836 251837 251838 251839">
+		<npc_skill id="21750" lv="65" prob="70" cd="30000" /><!-- Slash -->
+		<npc_skill id="21751" lv="65" prob="70" cd="30000" target="RANDOM" /><!-- Cut -->
+		<npc_skill id="21752" lv="65" prob="70" cd="60000" /><!-- Searing Scream -->
+		<npc_skill id="21753" lv="65" prob="70" next_chain_id="2" next_skill_time="9000" cd="40000" /><!-- Flying Blade -->
+		<npc_skill id="21754" lv="65" prob="100" chain_id="2" next_chain_id="3" next_skill_time="9000" cd="20000" /><!-- Demolish -->
+		<npc_skill id="21753" lv="65" prob="100" chain_id="3" next_chain_id="4" next_skill_time="9000" cd="20000" max_hp="75" /><!-- Flying Blade -->
+		<npc_skill id="21754" lv="65" prob="100" chain_id="4" next_skill_time="9000" cd="20000" max_hp="50" /><!-- Demolish -->
+		<npc_skill id="21758" lv="65" prob="70" cd="70000" /><!-- Fetters -->
+		<npc_skill id="21756" lv="65" prob="70" next_chain_id="1" next_skill_time="0" max_hp="50" cd="50000" target="RANDOM_EXCEPT_CURRENT_TARGET" /><!-- Prime Target -->
+		<npc_skill id="21757" lv="65" prob="100" chain_id="1" next_skill_time="8000" target="NONE" /><!-- Punishing Blow -->
+		<npc_skill id="21759" lv="65" prob="70" cd="20000" max_hp="35" /><!-- Annihilation -->
+		<npc_skill id="21755" lv="65" prob="100" cd="40000" max_hp="70"><!-- Explosive Suicide -->
+			<spawn_npc npc_id="855262" min_distance="5" max_distance="20" max_count="4" />
+		</npc_skill>
+	</npc_skills>
+	<!-- Explosive Sacrifice -->
+	<npc_skills npc_ids="855262">
+		<npc_skill id="21760" lv="16" prob="100"><!-- Explosion -->
+			<cond delay="5000" despawn_time="5000" />
+		</npc_skill>
+	</npc_skills>
+</npc_skill_templates>

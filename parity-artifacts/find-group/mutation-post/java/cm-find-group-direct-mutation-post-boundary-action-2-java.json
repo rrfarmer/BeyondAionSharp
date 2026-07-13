@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "traceName": "cm-find-group-direct-mutation-post-boundary",
+  "traces": [
+    {
+      "schemaVersion": 1,
+      "traceName": "cm-find-group-direct-mutation-post-boundary",
+      "traceSource": "Java",
+      "action": 2,
+      "boundaryAccepted": true,
+      "activePlayerObjectId": 2002,
+      "activePlayerRace": "ELYOS",
+      "serverEpochSeconds": 1780390330,
+      "mutationKind": "Recruitment",
+      "mutatedEntryObjectId": 2002,
+      "stateMutationRecordedBeforeDirectPackets": true,
+      "postedSystemMessageRecipientObjectId": 2002,
+      "postedSystemMessageType": "SmSystemMessage",
+      "postedSystemMessageId": 1400392,
+      "refreshedListRecipientObjectId": 2002,
+      "refreshedListPacketType": "SmFindGroup",
+      "refreshedListAction": 0,
+      "visibleEntryObjectIdsAfterMutation": [2002, 3003],
+      "executorInvokedFromBoundary": false,
+      "registrySendsObservedInOrder": false,
+      "worldBroadcastCount": 0,
+      "inviteDispatchCount": 0
+    }
+  ]
+}

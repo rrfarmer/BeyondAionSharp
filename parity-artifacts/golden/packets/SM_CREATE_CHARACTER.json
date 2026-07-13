@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CREATE_CHARACTER",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "nameAlreadyUsed",
+      "inputs": {"ctor":"nonOk","responseCode":10},
+      "payloadHex": "0A000000"
+    },
+    {
+      "name": "invalidName",
+      "inputs": {"ctor":"nonOk","responseCode":5},
+      "payloadHex": "05000000"
+    },
+    {
+      "name": "serverLimitExceeded",
+      "inputs": {"ctor":"nonOk","responseCode":4},
+      "payloadHex": "04000000"
+    }
+  ]
+}

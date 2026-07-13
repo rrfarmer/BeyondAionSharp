@@ -1,0 +1,619 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chest_templates xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="chest_templates.xsd">
+	<chest npc_id="217100">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217101">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217102">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217103">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217104">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217105">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Oriel -->
+	<chest npc_id="218874">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218876">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218878">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218880">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701519">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701520">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701521">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Pernon -->
+	<chest npc_id="218882">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218884">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218886">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218888">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- INSTANCES -->
+	<!-- Lower Abyss -->
+	<chest npc_id="700462">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700463">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700464">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700465">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700466">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700467">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700468">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700469">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700470">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700471">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701480">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701481">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701482">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701483">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701484">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701485">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701486">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701487">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701488">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701489">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Upper Abyss -->
+	<!-- Roah -->
+	<chest npc_id="700472">
+		<key_item item_ids="185000036" count="1" />
+	</chest>
+	<chest npc_id="700473">
+		<key_item item_ids="185000037" count="1" />
+	</chest>
+	<chest npc_id="700474">
+		<key_item item_ids="185000038" count="1" />
+	</chest>
+	<!-- Asteria -->
+	<chest npc_id="700475">
+		<key_item item_ids="185000033" count="1" />
+	</chest>
+	<chest npc_id="700476">
+		<key_item item_ids="185000034" count="1" />
+	</chest>
+	<chest npc_id="700477">
+		<key_item item_ids="185000035" count="1" />
+	</chest>
+	<!-- Kysis -->
+	<chest npc_id="700542">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700560">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700541">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Krotan -->
+	<chest npc_id="700540">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700559">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700539">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Miren -->
+	<chest npc_id="700544">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700561">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700543">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Taloc's Hollow -->
+	<chest npc_id="700742">
+		<key_item item_ids="185000082" count="1" />
+	</chest>
+	<!-- Haramel -->
+	<chest npc_id="700829">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700830">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700831">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700832">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700853">
+		<key_item item_ids="185000103" count="1" />
+		<key_item item_ids="185000107" count="3" />
+	</chest>
+	<!-- Theobomos Lab -->
+	<chest npc_id="700826">
+		<key_item item_ids="185000015" count="1" />
+	</chest>
+	<!-- Abyssal Splinter -->
+	<chest npc_id="700934">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700860">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700935">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700936">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700937">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700938">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Esoterrace -->
+	<chest npc_id="701023">
+		<key_item item_ids="185000110" count="1" />
+	</chest>
+	<chest npc_id="701022">
+		<key_item item_ids="185000111" count="1" />
+	</chest>
+	<chest npc_id="701027">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701016">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701025">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Aturam Sky Fortress -->
+	<chest npc_id="701033">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701034">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Crucible Challenge -->
+	<chest npc_id="217758">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217827">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217828">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="217829">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="218571">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Tiamaranta Eye -->
+	<chest npc_id="701388">
+		<key_item item_ids="185000114" count="1" />
+	</chest>
+	<chest npc_id="701389">
+		<key_item item_ids="185000115" count="1" />
+	</chest>
+	<chest npc_id="701390">
+		<key_item item_ids="185000116" count="1" />
+	</chest>
+	<!-- Raksang -->
+	<chest npc_id="701369">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701370">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701371">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701372">
+		<key_item item_ids="185000113" count="1" />
+	</chest>
+	<!-- Raksang Ruins -->
+	<chest npc_id="702694">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Steel Rake Cabin -->
+	<chest npc_id="700553">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700554">
+		<key_item item_ids="185000076" count="1" />
+	</chest>
+	<chest npc_id="700562">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Tiamat StrongHold -->
+	<chest npc_id="701501">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701527">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- The Hexway -->
+	<chest npc_id="701662">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701663">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701664">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Unstable Abyssal Splinter -->
+	<chest npc_id="701574">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701575">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701576">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701577">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701578">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701579">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701580">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="700861">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Sarpan -->
+	<chest npc_id="701474">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701341">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701342">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701428">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Tiamaranta -->
+	<chest npc_id="701473">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Dark Poeta -->
+	<chest npc_id="700510">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Alchemist Event -->
+	<chest npc_id="831785">
+		<key_item item_ids="185000185" count="1" />
+	</chest>
+	<chest npc_id="831786">
+		<key_item item_ids="185000186" count="1" />
+	</chest>
+	<!-- Danuar Mysticarium -->
+	<chest npc_id="230076">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="233252">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Eternal Bastion -->
+	<chest npc_id="701913">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701914">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701915">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701916">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701917">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="801268">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="801269">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="831328">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="831329">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Void Cube -->
+	<chest npc_id="701936">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701584">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701585">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701586">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701661">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Idgel Research Center -->
+	<chest npc_id="701935">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701570">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="230100">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="230101">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="230102">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Steel Rose -->
+	<chest npc_id="701815">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701816">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701817">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701828">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701829">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701830">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701831">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Stolen Solorius Box -->
+	<chest npc_id="701457">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Danuar Reliquary -->
+	<chest npc_id="701795">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Danuar Sanctuary -->
+	<chest npc_id="233190">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="233191">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="233192">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Kamar Battlefield -->
+	<chest npc_id="801777">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="801772">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Krotan Barracks -->
+	<chest npc_id="702288">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702289">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702290">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702291">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Kysis Barracks -->
+	<chest npc_id="702292">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702293">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702294">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702295">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Miren Barracks -->
+	<chest npc_id="702296">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702297">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702298">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702299">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Upper Abyss inner instances + Cygnea & Levinshor -->
+	<chest npc_id="832865">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Illuminary Obelisk -->
+	<chest npc_id="730884">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="730885">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Engulfed Ophidan Bridge -->
+	<chest npc_id="701976">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702043">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702044">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702018">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701974">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- LinkGate Foundry -->
+	<chest npc_id="234992">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Idgel Dome -->
+	<chest npc_id="702581">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702582">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702583">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Occupied Rentus Base -->
+	<chest npc_id="833047">
+		<key_item item_ids="185000228" count="1" />
+	</chest>
+	<chest npc_id="833048">
+		<key_item item_ids="185000229" count="1" />
+	</chest>
+	<!-- Sealed Danuar Mysticarium -->
+	<chest npc_id="702700">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="702701">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Shugo Imperial Tomb -->
+	<chest npc_id="831122">
+		<key_item item_ids="185000129 185000128" count="1" />
+	</chest>
+	<chest npc_id="831123">
+		<key_item item_ids="185000129 185000128" count="1" />
+	</chest>
+	<chest npc_id="831124">
+		<key_item item_ids="185000129 185000128" count="1" />
+	</chest>
+	<chest npc_id="831373">
+		<key_item item_ids="185000129 185000128" count="3" />
+	</chest>
+	<!-- Shugo Emperor's Vault -->
+	<chest npc_id="832929">
+		<key_item item_ids="185000222 185000221" count="1" />
+	</chest>
+	<chest npc_id="832930">
+		<key_item item_ids="185000222 185000221" count="3" />
+	</chest>
+	<chest npc_id="832931">
+		<key_item item_ids="185000222 185000221" count="5" />
+	</chest>
+	<chest npc_id="235644">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Event -->
+	<!-- Birthday Cake -->
+	<chest npc_id="701952">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="701983">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Joker's Wild Event -->
+	<chest npc_id="832260">
+		<key_item item_ids="185000199" count="1" />
+	</chest>
+	<!-- Drakenspire Depths -->
+	<chest npc_id="833012">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="833013">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<chest npc_id="833015">
+		<key_item item_ids="0" count="1" />
+	</chest>
+	<!-- Ice Festival -->
+	<chest npc_id="833521">
+		<key_item item_ids="185000236" count="1" />
+	</chest>
+</chest_templates>

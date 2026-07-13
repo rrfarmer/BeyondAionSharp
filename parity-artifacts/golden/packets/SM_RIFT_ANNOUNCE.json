@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RIFT_ANNOUNCE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "silentera",
+      "inputs": {"actionId":1,"gelkmaros":true,"inggison":false},
+      "payloadHex": "0900010100000000000000"
+    },
+    {
+      "name": "despawn",
+      "inputs": {"actionId":4,"objectId":750400},
+      "payloadHex": "05000440730B00"
+    }
+  ]
+}

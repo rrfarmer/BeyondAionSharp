@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MACRO_LIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "withClear",
+      "inputs": {"playerObjectId":700300,"clearList":true,"macros":[[1,"<macro><name>Atk</name></macro>"],[4,"<macro><name>Heal</name></macro>"]]},
+      "payloadHex": "8CAF0A0001FEFF013C006D006100630072006F003E003C006E0061006D0065003E00410074006B003C002F006E0061006D0065003E003C002F006D006100630072006F003E000000043C006D006100630072006F003E003C006E0061006D0065003E004800650061006C003C002F006E0061006D0065003E003C002F006D006100630072006F003E000000"
+    },
+    {
+      "name": "emptyNoClear",
+      "inputs": {"playerObjectId":700301,"clearList":false,"macros":[]},
+      "payloadHex": "8DAF0A00000000"
+    }
+  ]
+}

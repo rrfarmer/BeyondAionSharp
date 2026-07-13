@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MOTION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "add",
+      "inputs": {"ctor":"motionId_remainingTime","motionId":1001,"remainingTime":3600},
+      "payloadHex": "02E903100E0000"
+    },
+    {
+      "name": "set",
+      "inputs": {"ctor":"motionId_type","motionId":1002,"type":3},
+      "payloadHex": "05EA0303"
+    },
+    {
+      "name": "remove",
+      "inputs": {"ctor":"motionId","motionId":1003},
+      "payloadHex": "06EB03"
+    }
+  ]
+}

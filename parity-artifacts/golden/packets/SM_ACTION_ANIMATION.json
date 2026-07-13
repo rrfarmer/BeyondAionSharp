@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ACTION_ANIMATION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "levelUp",
+      "inputs": {"targetObjectId":700001,"actionAnimation":"LEVEL_UP","levelOrObjectId":50},
+      "payloadHex": "61AE0A00000032000000"
+    },
+    {
+      "name": "bindKisk",
+      "inputs": {"targetObjectId":800002,"actionAnimation":"BIND_KISK","levelOrObjectId":0},
+      "payloadHex": "02350C00020000000000"
+    },
+    {
+      "name": "craftLevelUp",
+      "inputs": {"targetObjectId":900003,"actionAnimation":"CRAFT_LEVEL_UP","levelOrObjectId":12345},
+      "payloadHex": "A3BB0D00040039300000"
+    }
+  ]
+}

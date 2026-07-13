@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "formula": "XPRewardEnum.xpRewardFrom",
+  "signature": "int xpRewardFrom(int levelDifference)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"levelDifference": -50}, "result": 0 },
+    { "inputs": {"levelDifference": -12}, "result": 0 },
+    { "inputs": {"levelDifference": -11}, "result": 0 },
+    { "inputs": {"levelDifference": -10}, "result": 1 },
+    { "inputs": {"levelDifference": -5}, "result": 50 },
+    { "inputs": {"levelDifference": -1}, "result": 100 },
+    { "inputs": {"levelDifference": 0}, "result": 100 },
+    { "inputs": {"levelDifference": 1}, "result": 105 },
+    { "inputs": {"levelDifference": 2}, "result": 110 },
+    { "inputs": {"levelDifference": 3}, "result": 115 },
+    { "inputs": {"levelDifference": 4}, "result": 120 },
+    { "inputs": {"levelDifference": 5}, "result": 120 },
+    { "inputs": {"levelDifference": 100}, "result": 120 }
+  ]
+}

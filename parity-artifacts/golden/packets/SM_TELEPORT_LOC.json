@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TELEPORT_LOC",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "teleportRegularMap",
+      "inputs": {"mapId":220020000,"instanceId":5,"x":1500.5,"y":2500.25,"z":412.125,"heading":30,"portAnimation":2},
+      "payloadHex": "02203D1D0D203D1D0D0090BB4400441C450010CE431E"
+    },
+    {
+      "name": "teleportInstanceMap",
+      "inputs": {"mapId":320080000,"instanceId":7,"x":100.5,"y":200.25,"z":300.75,"heading":90,"portAnimation":8},
+      "payloadHex": "0880081413070000000000C94200404843006096435A"
+    },
+    {
+      "name": "teleportRegularNoneAnim",
+      "inputs": {"mapId":220020000,"instanceId":0,"x":0.0,"y":0.0,"z":0.0,"heading":0,"portAnimation":0},
+      "payloadHex": "00203D1D0D203D1D0D00000000000000000000000000"
+    }
+  ]
+}

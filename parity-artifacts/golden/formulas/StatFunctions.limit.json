@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.limit",
+  "signature": "float limit(StatEnum statEnum, float value)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"statEnum": "BLOCK", "value": 1128792064}, "result": { "floatBits": 1128792064 } },
+    { "inputs": {"statEnum": "BLOCK", "value": 1147207680}, "result": { "floatBits": 1140457472 } },
+    { "inputs": {"statEnum": "BLOCK", "value": 1140457472}, "result": { "floatBits": 1140457472 } },
+    { "inputs": {"statEnum": "PHYSICAL_CRITICAL", "value": 1176256512}, "result": { "floatBits": 1140457472 } },
+    { "inputs": {"statEnum": "MAGICAL_CRITICAL", "value": -1024000000}, "result": { "floatBits": -1024000000 } },
+    { "inputs": {"statEnum": "MAGICAL_RESIST", "value": 1148846080}, "result": { "floatBits": 1147207680 } },
+    { "inputs": {"statEnum": "MAGICAL_RESIST", "value": 1146392576}, "result": { "floatBits": 1146392576 } },
+    { "inputs": {"statEnum": "EVASION", "value": 1140457472}, "result": { "floatBits": 1133903872 } },
+    { "inputs": {"statEnum": "EVASION", "value": 1133903544}, "result": { "floatBits": 1133903544 } },
+    { "inputs": {"statEnum": "PARRY", "value": 1148846080}, "result": { "floatBits": 1137180672 } },
+    { "inputs": {"statEnum": "BOOST_MAGICAL_SKILL", "value": 1167867904}, "result": { "floatBits": 1161117696 } },
+    { "inputs": {"statEnum": "BOOST_MAGICAL_SKILL", "value": 1150963712}, "result": { "floatBits": 1150963712 } },
+    { "inputs": {"statEnum": "MAXHP", "value": 1206984800}, "result": { "floatBits": 1206984800 } },
+    { "inputs": {"statEnum": "MAXHP", "value": 1328730206}, "result": { "floatBits": 1325400064 } }
+  ]
+}

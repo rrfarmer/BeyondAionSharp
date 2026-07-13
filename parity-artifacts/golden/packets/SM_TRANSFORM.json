@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TRANSFORM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "avatar",
+      "inputs": {"objectId":700100,"modelId":12345,"unk7":1,"type":"AVATAR","unk1":1,"unk2":0,"unk3":1,"unk4":0,"unk5":1,"unk6":0,"panelId":4012},
+      "payloadHex": "C4AE0A003930000001000000803E000000400102000000010001000100AC0F0000"
+    },
+    {
+      "name": "form1",
+      "inputs": {"objectId":700101,"modelId":0,"unk7":0,"type":"FORM1","unk1":0,"unk2":0,"unk3":0,"unk4":0,"unk5":0,"unk6":0,"panelId":0},
+      "payloadHex": "C5AE0A000000000001000000803E00000040000300000000000000000000000000"
+    }
+  ]
+}

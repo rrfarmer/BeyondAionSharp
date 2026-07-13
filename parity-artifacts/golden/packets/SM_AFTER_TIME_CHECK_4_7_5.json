@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_AFTER_TIME_CHECK_4_7_5",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "constant",
+      "inputs": {},
+      "payloadHex": "010000000000"
+    }
+  ]
+}

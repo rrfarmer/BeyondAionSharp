@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DELETE_WAREHOUSE_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "move",
+      "inputs": {"warehouseType":1,"itemObjectId":777,"deleteType":20},
+      "payloadHex": "010903000014"
+    }
+  ]
+}

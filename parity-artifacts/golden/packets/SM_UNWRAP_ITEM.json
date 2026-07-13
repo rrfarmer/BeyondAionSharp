@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_UNWRAP_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "unwrap",
+      "inputs": {"objectId":900111,"count":5},
+      "payloadHex": "0FBC0D0005"
+    }
+  ]
+}

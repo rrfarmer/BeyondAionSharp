@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_NPC_ASSEMBLER",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "twoPartsRoute7",
+      "inputs": {"routeId":7,"timeOnMap":5000,"parts":[[900001,219501,41],[900002,219502,42]]},
+      "payloadHex": "0200000007000000A1BB0D006D59030029000000881300000000000007000000A2BB0D006E5903002A0000008813000000000000"
+    },
+    {
+      "name": "despawnNull",
+      "inputs": {"assembledNpc":null},
+      "payloadHex": "00000000"
+    }
+  ]
+}

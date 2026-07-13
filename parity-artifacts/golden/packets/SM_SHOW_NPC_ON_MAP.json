@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SHOW_NPC_ON_MAP",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "showNpcSameMap",
+      "inputs": {"npcid":215220,"worldid":220020000,"x":123.5,"y":456.25,"z":78.125},
+      "payloadHex": "B4480300203D1D0D203D1D0D0000F7420020E44300409C42"
+    },
+    {
+      "name": "showNpcOtherMap",
+      "inputs": {"npcid":700100,"worldid":210020000,"x":10.0,"y":20.0,"z":30.0},
+      "payloadHex": "C4AE0A00A0A6840CA0A6840C000020410000A0410000F041"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "condition-preview-golden-fixture-contract",
+  "evidenceLevel": "contract-only",
+  "javaRuntimeEvidenceCaptured": false,
+  "javaCaptureStatus": "blocked-local-toolchain",
+  "harnessDesignDocument": "docs/Phase-6-ConditionPreviewJavaGoldenHarnessDesign.md",
+  "harnessDraftDocument": "docs/Phase-6-ConditionPreviewJavaGoldenCaptureDraft.md",
+  "javaCaptureBlockers": [
+    "Local java -version reports 1.8.0_491 while the repository Maven compiler release is 25",
+    "Local mvn command is unavailable"
+  ],
+  "javaExecutionPlan": "Run the Java source-of-truth condition classes against Conditions.validate(Stat2, IStatFunction) for each fixture, then replace contract-only evidence with captured runtime outputs.",
+  "requiredJavaArtifacts": [
+    "com.aionemu.gameserver.skillengine.condition.Conditions",
+    "com.aionemu.gameserver.skillengine.condition.Condition",
+    "com.aionemu.gameserver.skillengine.condition.WeaponCondition",
+    "com.aionemu.gameserver.skillengine.condition.ItemChargeCondition",
+    "com.aionemu.gameserver.skillengine.condition.OnFlyCondition",
+    "com.aionemu.gameserver.model.gameobjects.Item"
+  ],
+  "fixtures": [
+    {
+      "fixtureName": "weapon-player-mainhand-match",
+      "conditionSequence": "weapon",
+      "expectedConditionStatuses": [ "weapon:Satisfied" ],
+      "expectedPurePreviewStatus": "Evaluated"
+    },
+    {
+      "fixtureName": "weapon-player-mainhand-mismatch",
+      "conditionSequence": "weapon",
+      "expectedConditionStatuses": [ "weapon:NotSatisfied" ],
+      "expectedPurePreviewStatus": "ConditionNotSatisfied"
+    },
+    {
+      "fixtureName": "weapon-non-player-pass-through",
+      "conditionSequence": "weapon",
+      "expectedConditionStatuses": [ "weapon:Satisfied" ],
+      "expectedPurePreviewStatus": "Evaluated"
+    },
+    {
+      "fixtureName": "front-stat-pass-through",
+      "conditionSequence": "front",
+      "expectedConditionStatuses": [ "front:Satisfied" ],
+      "expectedPurePreviewStatus": "Evaluated"
+    },
+    {
+      "fixtureName": "charge-item-owner-level-satisfies",
+      "conditionSequence": "charge",
+      "expectedConditionStatuses": [ "charge:Satisfied" ],
+      "expectedPurePreviewStatus": "Evaluated"
+    },
+    {
+      "fixtureName": "charge-item-owner-level-too-low",
+      "conditionSequence": "charge",
+      "expectedConditionStatuses": [ "charge:NotSatisfied" ],
+      "expectedPurePreviewStatus": "ConditionNotSatisfied"
+    },
+    {
+      "fixtureName": "charge-non-item-owner-false",
+      "conditionSequence": "charge",
+      "expectedConditionStatuses": [ "charge:NotSatisfied" ],
+      "expectedPurePreviewStatus": "ConditionNotSatisfied"
+    },
+    {
+      "fixtureName": "onfly-owner-flying",
+      "conditionSequence": "onfly",
+      "expectedConditionStatuses": [ "onfly:Satisfied" ],
+      "expectedPurePreviewStatus": "Evaluated"
+    },
+    {
+      "fixtureName": "onfly-owner-not-flying",
+      "conditionSequence": "onfly",
+      "expectedConditionStatuses": [ "onfly:NotSatisfied" ],
+      "expectedPurePreviewStatus": "ConditionNotSatisfied"
+    },
+    {
+      "fixtureName": "mixed-short-circuit-weapon-before-charge",
+      "conditionSequence": "weapon -> charge",
+      "expectedConditionStatuses": [ "weapon:NotSatisfied", "charge:NotEvaluated" ],
+      "expectedPurePreviewStatus": "ConditionNotSatisfied"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_UPGRADE_ARCADE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "showIcon",
+      "inputs": {"action":0,"showIcon":true},
+      "payloadHex": "0001000000"
+    },
+    {
+      "name": "open",
+      "inputs": {"action":2},
+      "payloadHex": "0201"
+    },
+    {
+      "name": "rewardItem",
+      "inputs": {"action":6,"rewardItemId":188052612,"rewardItemCount":99},
+      "payloadHex": "068474350B6300000000000000"
+    },
+    {
+      "name": "frenzyTime",
+      "inputs": {"action":7,"frenzyDurationSeconds":3600},
+      "payloadHex": "07100E0000"
+    }
+  ]
+}

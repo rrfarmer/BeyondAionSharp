@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LOOKATOBJECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "noTarget",
+      "inputs": {"objectId":700103,"targetObjectId":0,"heading":0},
+      "payloadHex": "C7AE0A000000000000"
+    }
+  ]
+}

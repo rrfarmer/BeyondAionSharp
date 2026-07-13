@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RECONNECT_KEY",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "key",
+      "inputs": {"key":1234567},
+      "payloadHex": "0087D61200"
+    },
+    {
+      "name": "zero",
+      "inputs": {"key":0},
+      "payloadHex": "0000000000"
+    }
+  ]
+}

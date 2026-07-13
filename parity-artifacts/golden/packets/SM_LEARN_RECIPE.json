@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEARN_RECIPE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "recipe",
+      "inputs": {"recipeId":15042},
+      "payloadHex": "C23A000000"
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<spawns xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../spawns.xsd">
+	<spawn_map map_id="300590000">
+		<!-- Steel Wall -->
+		<spawn npc_id="235786">
+			<spot x="752.92" y="520.94" z="578.1396" h="85" static_id="33"/>
+		</spawn>
+		<!-- Hakara -->
+		<spawn npc_id="235772">
+			<spot x="526.04334" y="435.3773" z="620.1277" h="27"/>
+		</spawn>
+		<!-- Zubala -->
+		<spawn npc_id="235773">
+			<spot x="592.2308" y="558.2928" z="590.6106" h="120"/>
+		</spawn>
+		<!-- Visha -->
+		<spawn npc_id="235774">
+			<spot x="463.4754" y="513.0922" z="597.5" h="15"/>
+		</spawn>
+		<!-- Bahapa -->
+		<spawn npc_id="235775">
+			<spot x="663.99" y="475.79" z="599.13" h="22" walker_id="idldf5_under_01_NPCPathBase_Path04"/>
+		</spawn>
+		<!-- Escapee Asachin -->
+		<spawn npc_id="235764">
+			<spot x="667.124" y="475.3454" z="599.0" h="0"/>
+		</spawn>
+		<!-- Access Route Corridor -->
+		<spawn npc_id="731545">
+			<spot x="372.53" y="492.05" z="605.5736" h="60" static_id="34"/>
+		</spawn>
+		<!-- North Defense Drakenclaw -->
+		<spawn npc_id="235728">
+			<spot x="532.87" y="423.5" z="620.25" h="22" walker_id="idldf5_under_01_NPCPathBase_Path01"/>
+			<spot x="536.77" y="448.68" z="620.25" h="22" walker_id="idldf5_under_01_NPCPathBase_Path01"/>
+		</spawn>
+		<!-- South Defense Drakenclaw -->
+		<spawn npc_id="235735">
+			<spot x="599.28" y="557.28" z="590.5004" h="22" walker_id="idldf5_under_01_NPCPathBase_Path06"/>
+			<spot x="614.85016" y="547.5495" z="590.625" h="0"/>
+		</spawn>
+		<!-- Post Defense Drakenclaw -->
+		<spawn npc_id="235721">
+			<spot x="697.6492" y="466.7562" z="599.6469" h="116"/>
+			<spot x="677.2876" y="485.6714" z="599.68494" h="119"/>
+			<spot x="673.1202" y="456.38376" z="599.75" h="3"/>
+		</spawn>
+		<!-- Post Defense Drakenclaw -->
+		<spawn npc_id="235742">
+			<spot x="498.93738" y="531.02" z="597.5" h="14"/>
+			<spot x="463.90833" y="508.90717" z="597.5" h="15"/>
+		</spawn>
+		<!-- Defense Swiftrunner -->
+		<spawn npc_id="235727">
+			<spot x="694.2652" y="470.83203" z="599.8584" h="115"/>
+			<spot x="674.375" y="489.16" z="599.75" h="119"/>
+			<spot x="669.79846" y="460.13623" z="599.75" h="0"/>
+		</spawn>
+		<!-- Post Defense Swiftrunner -->
+		<spawn npc_id="235748">
+			<spot x="472.5856" y="533.4686" z="597.4668" h="112"/>
+			<spot x="482.94568" y="509.0036" z="597.5" h="31"/>
+		</spawn>
+		<!-- Defense Spelltongue -->
+		<spawn npc_id="235726">
+			<spot x="692.59265" y="464.715" z="599.875" h="115"/>
+			<spot x="674.2557" y="482.38824" z="599.625" h="118"/>
+			<spot x="669.84644" y="451.97327" z="599.75" h="2"/>
+		</spawn>
+		<!-- Post Defense Spelltongue-->
+		<spawn npc_id="235747">
+			<spot x="492.2119" y="532.1449" z="597.5" h="9"/>
+			<spot x="460.7275" y="517.06934" z="597.5" h="13"/>
+		</spawn>
+		<!-- South Defense Spelltongue -->
+		<spawn npc_id="235740">
+			<spot x="616.6773" y="560.7405" z="590.7136" h="98"/>
+		</spawn>
+		<!-- North Defense Ironscale -->
+		<spawn npc_id="235730">
+			<spot x="510.84442" y="438.76163" z="620.125" h="115"/>
+			<spot x="542.598" y="447.90665" z="620.125" h="80"/>
+		</spawn>
+		<!-- South Defense Ironscale -->
+		<spawn npc_id="235737">
+			<spot x="591.88214" y="552.89154" z="590.625" h="0"/>
+		</spawn>
+		<!-- North Defense Hidestitcher -->
+		<spawn npc_id="235731">
+			<spot x="519.58203" y="424.28403" z="620.11664" h="15"/>
+			<spot x="524.8725" y="450.0887" z="620.2341" h="92"/>
+		</spawn>
+		<!-- Post Defense Hidestitcher -->
+		<spawn npc_id="235745">
+			<spot x="458.34116" y="510.64114" z="597.8136" h="15"/>
+		</spawn>
+		<!-- South Defense Hidestitcher -->
+		<spawn npc_id="235738">
+			<spot x="610.4841" y="565.5065" z="590.5611" h="103"/>
+			<spot x="592.01105" y="562.8587" z="590.6243" h="119"/>
+		</spawn>
+		<!-- Post Defense Gunner -->
+		<spawn npc_id="235746">
+			<spot x="493.51663" y="537.7646" z="597.5" h="7"/>
+			<spot x="469.95267" y="542.5921" z="597.5222" h="111"/>
+			<spot x="475.1126" y="539.25885" z="597.5" h="108"/>
+			<spot x="488.26816" y="501.51367" z="597.92163" h="31"/>
+			<spot x="489.14468" y="508.55383" z="597.92163" h="29"/>
+		</spawn>
+		<!-- South Defense Bard -->
+		<spawn npc_id="235736">
+			<spot x="608.1426" y="546.4261" z="590.5089" h="0"/>
+		</spawn>
+		<!-- Post Defense Bard -->
+		<spawn npc_id="235743">
+			<spot x="468.00873" y="535.9388" z="597.59076" h="111"/>
+			<spot x="482.2172" y="502.3205" z="597.5" h="29"/>
+		</spawn>
+		<!-- Barricade Sentinel -->
+		<spawn npc_id="235755">
+			<spot x="535.7601" y="535.8427" z="605.3352" h="115"/>
+			<spot x="536.0009" y="543.1144" z="605.5001" h="118"/>
+			<spot x="573.63855" y="566.802" z="595.7881" h="115"/>
+			<spot x="572.60266" y="558.90466" z="596.84753" h="5"/>
+			<spot x="662.19025" y="523.0715" z="594.3183" h="106"/>
+			<spot x="751.1587" y="477.66632" z="586.1152" h="22"/>
+			<spot x="642.6409" y="439.80566" z="605.7475" h="10"/>
+			<spot x="648.314" y="432.52197" z="604.39465" h="12"/>
+			<spot x="747.20575" y="481.64154" z="586.0687" h="25"/>
+			<spot x="655.92206" y="520.36365" z="593.73834" h="108"/>
+			<spot x="599.32" y="532.97" z="601.81" h="22"/>
+			<spot x="603.9401" y="415.60092" z="608.38" h="116"/>
+			<spot x="604.0465" y="422.07465" z="608.1192" h="118"/>
+		</spawn>
+		<!-- Barricade Sentinel -->
+		<spawn npc_id="235749">
+			<spot x="531.0629" y="546.10596" z="605.14075" h="119"/>
+			<spot x="529.79254" y="534.0613" z="604.8452" h="118"/>
+			<spot x="530.5641" y="540.0059" z="604.9455" h="118"/>
+			<spot x="567.87946" y="555.56464" z="598.9173" h="8"/>
+			<spot x="567.94794" y="565.52905" z="597.67395" h="9"/>
+			<spot x="563.8162" y="562.56396" z="599.18243" h="10"/>
+			<spot x="748.4345" y="474.0628" z="586.7421" h="24"/>
+			<spot x="754.0864" y="472.32935" z="587.0524" h="29"/>
+			<spot x="644.2106" y="428.0615" z="605.47144" h="13"/>
+			<spot x="744.98944" y="477.21793" z="587.0386" h="21"/>
+			<spot x="643.4122" y="432.74728" z="604.9852" h="10"/>
+			<spot x="650.81506" y="522.97754" z="593.3697" h="108"/>
+			<spot x="659.8063" y="526.7542" z="593.6014" h="107"/>
+			<spot x="654.21234" y="528.76385" z="593.17926" h="107"/>
+			<spot x="594.53" y="536.14" z="601.8" h="22"/>
+			<spot x="640.6756" y="436.53384" z="605.8641" h="10"/>
+			<spot x="600.2615" y="424.81784" z="609.06604" h="119"/>
+			<spot x="599.00916" y="412.65414" z="610.18" h="5"/>
+			<spot x="599.69183" y="418.16626" z="609.9432" h="0"/>
+		</spawn>
+		<!-- TODO: Find out how they work -->
+		<!-- idf5_u01_t_n_runaway_as_65_ah_s_p1 -->
+		<!-- <spawn npc_id="235785">
+			<spot x="580.58" y="562.43" z="595.36" h="22" walker_id="idldf5_under_01_PathRunway_Path05"/>
+			<spot x="674.68" y="508.6" z="599.49" h="22" walker_id="idldf5_under_01_PathRunway_Path04"/>
+			<spot x="750.86" y="511.67" z="582.11" h="22" walker_id="idldf5_under_01_PathRunway_Path01"/>
+			<spot x="662.34" y="446.09" z="603.5" h="22" walker_id="idldf5_under_01_PathRunway_Path02"/>
+			<spot x="535.88" y="462.84" z="621.12" h="22" walker_id="idldf5_under_01_PathRunway_Path03"/>
+		</spawn>-->
+		<!-- idf5_u01_t_n_runaway_pr_65_ah_s_p1 -->
+		<!-- <spawn npc_id="235784">
+			<spot x="580.58" y="562.43" z="595.36" h="22" walker_id="idldf5_under_01_PathRunway_Path05"/>
+			<spot x="674.68" y="508.6" z="599.49" h="22" walker_id="idldf5_under_01_PathRunway_Path04"/>
+			<spot x="750.86" y="511.67" z="582.11" h="22" walker_id="idldf5_under_01_PathRunway_Path01"/>
+			<spot x="662.34" y="446.09" z="603.5" h="22" walker_id="idldf5_under_01_PathRunway_Path02"/>
+			<spot x="535.88" y="462.84" z="621.12" h="22" walker_id="idldf5_under_01_PathRunway_Path03"/>
+		</spawn>-->
+		<!-- idf5_u01_t_n_runaway_wi_65_ah_s_p1 -->
+		<!-- <spawn npc_id="235783">
+			<spot x="580.58" y="562.43" z="595.36" h="22" walker_id="idldf5_under_01_PathRunway_Path05"/>
+			<spot x="674.68" y="508.6" z="599.49" h="22" walker_id="idldf5_under_01_PathRunway_Path04"/>
+			<spot x="750.86" y="511.67" z="582.11" h="22" walker_id="idldf5_under_01_PathRunway_Path01"/>
+			<spot x="662.34" y="446.09" z="603.5" h="22" walker_id="idldf5_under_01_PathRunway_Path02"/>
+			<spot x="535.88" y="462.84" z="621.12" h="22" walker_id="idldf5_under_01_PathRunway_Path03"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p1_runaway_as_65_ah -->
+		<!-- <spawn npc_id="235764">
+			<spot x="675.59" y="472.95" z="601.14" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p1_runaway_pr_65_ah -->
+		<!-- <spawn npc_id="235760">
+			<spot x="675.59" y="472.95" z="601.14" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p1_runaway_wi_65_ah -->
+		<!-- <spawn npc_id="235756">
+			<spot x="675.59" y="472.95" z="601.14" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p2_1_runaway_as_65_ah -->
+		<!-- <spawn npc_id="235765">
+			<spot x="530.26" y="439.66" z="622.4" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p2_1_runaway_pr_65_ah -->
+		<!-- <spawn npc_id="235761">
+			<spot x="530.26" y="439.66" z="622.4" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p2_1_runaway_wi_65_ah -->
+		<!-- <spawn npc_id="235757">
+			<spot x="530.26" y="439.66" z="622.4" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p2_2_runaway_as_65_ah -->
+		<!-- <spawn npc_id="235789">
+			<spot x="607.41" y="558.42" z="592.25" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p2_2_runaway_pr_65_ah -->
+		<!-- <spawn npc_id="235788">
+			<spot x="607.41" y="558.42" z="592.25" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p2_2_runaway_wi_65_ah -->
+		<!-- <spawn npc_id="235787">
+			<spot x="607.41" y="558.42" z="592.25" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p3_runaway_as_65_ah -->
+		<!-- <spawn npc_id="235766">
+			<spot x="479.21" y="524.01" z="599.79" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p3_runaway_pr_65_ah -->
+		<!-- <spawn npc_id="235762">
+			<spot x="479.21" y="524.01" z="599.79" h="22"/>
+		</spawn>-->
+		<!-- idf5_u01_n_p3_runaway_wi_65_ah -->
+		<!-- <spawn npc_id="235758">
+			<spot x="479.21" y="524.01" z="599.79" h="22"/>
+		</spawn>-->
+		<!-- bidf5_u01_t_random_runaway_npc -->
+		<!-- <spawn npc_id="856054">
+			<spot x="752.91" y="529.42" z="578.55" h="22"/>
+		</spawn>-->
+	</spawn_map>
+</spawns>

@@ -5,10 +5,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$composeFile = Join-Path $repoRoot "compose.mixed-csharp-login-chat.yml"
+$javaRepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..\aion-server")
+$composeFile = Join-Path $javaRepoRoot "compose.mixed-csharp-login-chat.yml"
 
-Push-Location $repoRoot
+Push-Location $javaRepoRoot
 try {
 	docker compose -f $composeFile down
 } finally {

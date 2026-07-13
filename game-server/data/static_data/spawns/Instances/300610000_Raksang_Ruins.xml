@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spawns xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../spawns.xsd">
+    <spawn_map map_id="300610000">
+		<!-- Ancient Drakan's Treasure Box -->
+        <spawn npc_id="701372">
+            <spot x="372.788" y="815.622" z="160.854" static_id="102"/>
+        </spawn>
+		<!-- Arza's Corridor -->
+        <spawn npc_id="730450">
+            <spot x="860.723" y="946.104" z="1206.705" h="60"/>
+        </spawn>
+		<!-- Boss Chamber Teleport Door -->
+        <spawn npc_id="832988">
+            <spot x="766.685" y="327.520" z="910.577" static_id="277"/>
+        </spawn>
+		<!-- Boss Chamber Teleport Door -->
+        <spawn npc_id="832989">
+            <spot x="448.866" y="842.577" z="163.840" static_id="106"/>
+        </spawn>
+         <!-- Boss Chamber Teleport Door-->
+        <spawn npc_id="832990">
+            <spot x="752.795" y="931.010" z="786.244" static_id="1"/>
+        </spawn>
+		<!-- Classified Drill Camp Instructor -->
+		<spawn npc_id="236084">
+			<spot x="550.325" y="259.041" z="928.948" h="43"/>
+		</spawn>
+		<!-- Draconute Combatant -->
+		<spawn npc_id="236006">
+			<spot x="515.1201" y="319.3618" z="928.09033" h="46"/>
+		</spawn>
+        <!-- Drill Camp Assasin -->
+        <spawn npc_id="236007">
+			<spot x="622.493" y="189.423" z="924.685" h="43"/>
+			<spot x="490.916" y="321.978" z="928.948" h="43"/>
+			<spot x="517.491" y="292.664" z="928.948" h="43"/>
+			<spot x="496.05" y="317.59" z="929.1009" h="13"/> <!--walker_id="374D219E14A3B73F4B8071FECE82C91C0E0173E1"/> -->
+			<spot x="882.869" y="912.246" z="778.083" h="90"/>
+            <spot x="941.38" y="903.66" z="765.2845" h="61"/> <!--walker_id="9FEBDA098710FEE689E654A533B05F3FD451CFC7"/> -->
+        </spawn>
+		<!-- Draconute Scout -->
+        <spawn npc_id="236005">
+			<spot x="508.1076" y="334.66324" z="927.9906" h="74"/>
+			<spot x="525.508" y="316.753" z="927.991"/>
+            <spot x="884.560" y="842.253" z="729.728" h="21"/>
+            <spot x="918.248" y="835.458" z="727.289" h="14"/>
+            <spot x="965.551" y="908.533" z="763.235" h="39"/>
+			<spot x="863.553" y="866.747" z="731.545" h="99"/>
+			<spot x="874.323" y="871.808" z="731.553" h="96"/>
+			<spot x="1005.541" y="785.194" z="743.5843"/>
+			<spot x="1006.685" y="790.150" z="744.2923"/>
+			<spot x="1009.6345" y="770.4454" z="741.05225" h="6"/> <!--walker_id="773B2C7611493C2E00E9CC85FF954E0177C8653F"/> -->
+			<spot x="1016.22" y="823.06" z="748.989" h="23"/> <!--walker_id="9804768C91575465C6644125F57E041504FA1ABC"/> -->
+			<spot x="1023.977" y="834.627" z="752.6318" h="70"/>
+			<spot x="1024.867" y="842.917" z="754.7268" h="70"/>
+        </spawn>
+		<!-- Drill Camp Guard -->
+		<spawn npc_id="236008">
+			<spot x="627.854" y="193.670" z="924.613" h="43"/>
+			<spot x="518.129" y="264.249" z="927.991" h="44"/> <!-- walker_id="B4B58BFD1CD6850957702D9B2760AE8956F232C0"/> -->
+			<spot x="494.494" y="395.714" z="927.975" h="13"/>
+			<spot x="850.987" y="838.102" z="733.678" h="63"/>
+			<spot x="934.889" y="808.04" z="734.074" h="37"/><!-- walker_id="ADD98D2D1D549730AE834870CD625DD5EA0A0990"/> -->
+			<spot x="1008.264" y="801.727" z="745.416"/>
+			<spot x="990.963" y="884.157" z="762.558" h="100"/><!-- walker_id="ADD98D2D1D549730AE834870CD625DD5EA0A0991"/> -->
+			<spot x="963.905" y="892.576" z="762.916" h="10"/>
+			<spot x="920.353" y="897.538" z="769.492" h="30"/>
+			<spot x="837.073" y="893.177" z="783.885" h="116"/><!-- walker_id="ADD98D2D1D549730AE834870CD625DD5EA0A0992"/> -->
+			<spot x="830.994" y="902.133" z="784.567" h="100"/>
+			<spot x="467.299" y="357.509" z="927.975" h="44"/> <!--walker_id="F4A054E21314050E33421363A3D55C25568A326D"/> -->
+			<spot x="408.262" y="816.544" z="163.289" h="70"/>
+		</spawn>
+		<!-- Drill Instructor Diplito -->
+        <spawn npc_id="236303">
+            <spot x="738.065" y="311.606" z="910.678" h="53"/>
+        </spawn>
+		<!-- Drill Instructor Pratica-->
+        <spawn npc_id="236304">
+            <spot x="805.367" y="959.980" z="792.070" h="96"/>
+        </spawn>
+		<!-- Execution Ground Entrance -->
+        <spawn npc_id="730441">
+            <spot x="829.653" y="904.918" z="784.287" static_id="146"/>
+        </spawn>
+		<!-- Interrogation Room Entrance -->
+        <spawn npc_id="730438">
+            <spot x="628.132" y="187.505" z="924.860" static_id="280"/>
+        </spawn>
+        <!-- Mandali Flower -->
+        <spawn npc_id="701115">
+            <spot x="985.747" y="903.929" z="762.558" h="110"/>
+        </spawn>
+		<!-- Reviver Nasto -->
+		<spawn npc_id="236306">
+            <spot x="624.63715" y="685.9858" z="522.0487" h="86"/>
+        </spawn>
+		<!-- Sealed Key Box -->
+        <spawn npc_id="701369">
+            <spot x="602.514" y="664.853" z="1183.356" static_id="108"/>
+        </spawn>
+		<!-- Sealed Key Box -->
+        <spawn npc_id="701370">
+            <spot x="572.063" y="218.895" z="927.991" static_id="92"/>
+        </spawn>
+		<!-- Sensory NPC near collapsing pathway -->
+		<spawn npc_id="206197">
+			<spot x="321.7" y="554.9" z="129.8195"/>
+		</spawn>
+		<!-- Sensory NPC Hellway First -->
+		<spawn npc_id="206198">
+			<spot x="334.497" y="618.230" z="146.514"/>
+		</spawn>
+		<!-- Sensory NPC Hellway Second -->
+		<spawn npc_id="206199">
+			<spot x="306.314" y="793.824" z="147.507"/>
+		</spawn>
+		<!-- Supplies Box -->
+		<spawn npc_id="702694">
+			<spot x="816.0431" y="933.92883" z="1207.4312" h="2"/>
+		</spawn>
+        <!-- Tombstone of Liberation -->
+		<spawn npc_id="702673">
+			<spot x="963.2832" y="790.428" z="734.046" h="30" static_id="154" />
+		</spawn>
+		<!-- Tombstone of Liberation -->
+		<spawn npc_id="702674">
+			<spot x="962.0091" y="775.2953" z="734.0549" h="30" static_id="152" />
+		</spawn>
+		<!-- Tombstone of Liberation -->
+		<spawn npc_id="702675">
+			<spot x="942.1294" y="774.3695" z="734.0187" h="30" static_id="153" />
+		</spawn>
+		<!-- Tombstone of Liberation -->
+		<spawn npc_id="702690">
+			<spot x="989.4364" y="877.4996" z="762.5577" h="76" static_id="156" />
+		</spawn>
+		<!-- Tombstone of Liberation -->
+		<spawn npc_id="702691">
+			<spot x="1007.087" y="894.9708" z="762.5577" h="76" static_id="155" />
+		</spawn>
+		<!-- Tombstone of Liberation -->
+		<spawn npc_id="702692">
+			<spot x="993.6567" y="899.7623" z="762.5577" h="76" static_id="309" />
+		</spawn>
+		<!-- Trained Clodworm -->
+		<spawn npc_id="236098">
+			<spot x="319.540" y="498.754" z="120.603"/>
+			<spot x="320.983" y="500.619" z="120.795"/>
+			<spot x="321.130" y="496.748" z="120.677"/>
+			<spot x="338.114" y="505.147" z="121.107"/>
+			<spot x="338.149" y="501.932" z="121.281"/>
+			<spot x="334.886" y="505.256" z="120.776"/>
+			<spot x="318.654" y="550.852" z="129.264"/>
+			<spot x="319.770" y="553.666" z="129.590"/>
+			<spot x="316.794" y="553.555" z="129.383"/>
+			<spot x="258.449" y="678.790" z="148.206"/>
+			<spot x="255.731" y="680.626" z="148.071"/>
+			<spot x="259.918" y="681.629" z="148.553"/>
+			<spot x="263.204" y="699.528" z="148.440"/>
+			<spot x="261.418" y="697.450" z="148.314"/>
+			<spot x="260.896" y="701.177" z="148.119"/>
+			<spot x="266.954" y="762.882" z="146.942"/>
+			<spot x="267.272" y="764.893" z="147.133"/>
+			<spot x="269.658" y="765.155" z="147.209"/>
+			<spot x="288.093" y="791.520" z="147.666"/>
+			<spot x="288.086" y="789.652" z="147.619"/>
+			<spot x="285.797" y="789.853" z="147.701"/>
+		</spawn>
+		<!-- Trained Fierce Lapilima -->
+		<spawn npc_id="236018">
+			<spot x="326.29" y="500.03" z="120.95"/>
+			<spot x="273.58" y="773.69" z="147.51"/>
+			<spot x="269.15" y="663.09" z="148.8"/>
+			<spot x="267.51" y="662.08" z="148.7"/>
+			<spot x="324.19" y="492.51" z="121.02"/>
+			<spot x="272.12" y="775.30" z="147.51"/>
+		</spawn>
+		<!-- Trained Lava Petrahulk -->
+		<spawn npc_id="236019">
+			<spot x="257.8432" y="726.0732" z="144.3568" h="90"/>
+			<spot x="350.89" y="595.53" z="138.35"/>
+		</spawn>
+		<!-- Trained Vespine -->
+        <spawn npc_id="236009">
+			<spot x="477.37967" y="385.73495" z="928.49066" random_walk="2"/>
+        </spawn>
+    </spawn_map>
+</spawns>

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CHARACTER_SELECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "newPasskeyWindow",
+      "inputs": {"ctor":"type","type":0},
+      "payloadHex": "00"
+    },
+    {
+      "name": "passkeyWindow",
+      "inputs": {"ctor":"type","type":1},
+      "payloadHex": "01"
+    },
+    {
+      "name": "messageRightPasskey",
+      "inputs": {"ctor":"type_messageType_wrongCount","type":2,"messageType":0,"wrongCount":0},
+      "payloadHex": "020000000000000005000000"
+    },
+    {
+      "name": "messageWrongPasskey",
+      "inputs": {"ctor":"type_messageType_wrongCount","type":2,"messageType":3,"wrongCount":2},
+      "payloadHex": "020300010200000005000000"
+    }
+  ]
+}

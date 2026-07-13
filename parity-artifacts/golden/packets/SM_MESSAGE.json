@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MESSAGE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "normal",
+      "inputs": {"chatType":"NORMAL","senderObjectId":790050,"senderName":"Sender","message":"Hello Atreia"},
+      "payloadHex": "0000220E0C00530065006E006400650072000000480065006C006C006F0020004100740072006500690061000000"
+    },
+    {
+      "name": "systemAnnounce",
+      "inputs": {"chatType":"GROUP","senderObjectId":0,"senderName":"","message":"Server restart in 5 minutes"},
+      "payloadHex": "050000000000000053006500720076006500720020007200650073007400610072007400200069006E002000350020006D0069006E0075007400650073000000"
+    },
+    {
+      "name": "shoutNullCoords",
+      "inputs": {"chatType":"SHOUT","senderObjectId":790060,"senderName":"Loud","message":"Hey!"},
+      "payloadHex": "03002C0E0C004C006F0075006400000048006500790021000000000000000000000000000000"
+    }
+  ]
+}

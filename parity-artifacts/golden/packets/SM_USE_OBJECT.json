@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_USE_OBJECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "use",
+      "inputs": {"playerObjId":1001,"targetObjId":2002,"time":3000,"actionType":1},
+      "payloadHex": "E9030000D2070000B80B000001"
+    },
+    {
+      "name": "stop",
+      "inputs": {"playerObjId":4004,"targetObjId":0,"time":0,"actionType":0},
+      "payloadHex": "A40F0000000000000000000000"
+    }
+  ]
+}

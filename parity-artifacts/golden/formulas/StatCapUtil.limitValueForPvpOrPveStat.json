@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatCapUtil.limitValueForPvpOrPveStat",
+  "signature": "int limitValueForPvpOrPveStat(CombatMode mode, RatioType type, int value)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"mode": "PVP", "type": "ATTACK", "value": -2000}, "result": -900 },
+    { "inputs": {"mode": "PVP", "type": "ATTACK", "value": -900}, "result": -900 },
+    { "inputs": {"mode": "PVP", "type": "ATTACK", "value": 0}, "result": 0 },
+    { "inputs": {"mode": "PVP", "type": "ATTACK", "value": 1000}, "result": 1000 },
+    { "inputs": {"mode": "PVP", "type": "ATTACK", "value": 3000}, "result": 1000 },
+    { "inputs": {"mode": "PVP", "type": "DEFENSE", "value": -2000}, "result": -1000 },
+    { "inputs": {"mode": "PVP", "type": "DEFENSE", "value": 500}, "result": 500 },
+    { "inputs": {"mode": "PVP", "type": "DEFENSE", "value": 900}, "result": 900 },
+    { "inputs": {"mode": "PVP", "type": "DEFENSE", "value": 2000}, "result": 900 },
+    { "inputs": {"mode": "PVE", "type": "ATTACK", "value": -1000}, "result": -900 },
+    { "inputs": {"mode": "PVE", "type": "ATTACK", "value": 2500}, "result": 2500 },
+    { "inputs": {"mode": "PVE", "type": "ATTACK", "value": 5000}, "result": 5000 },
+    { "inputs": {"mode": "PVE", "type": "ATTACK", "value": 9999}, "result": 5000 },
+    { "inputs": {"mode": "PVE", "type": "DEFENSE", "value": -6000}, "result": -5000 },
+    { "inputs": {"mode": "PVE", "type": "DEFENSE", "value": -5000}, "result": -5000 },
+    { "inputs": {"mode": "PVE", "type": "DEFENSE", "value": 0}, "result": 0 },
+    { "inputs": {"mode": "PVE", "type": "DEFENSE", "value": 900}, "result": 900 },
+    { "inputs": {"mode": "PVE", "type": "DEFENSE", "value": 12000}, "result": 900 }
+  ]
+}

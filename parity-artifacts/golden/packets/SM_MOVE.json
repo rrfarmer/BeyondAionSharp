@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MOVE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "moveMaskZero",
+      "inputs": {"objectId":740555,"movementMask":0},
+      "payloadHex": "CB4C0B000000000000000000000000000000"
+    },
+    {
+      "name": "movePositionManualAbsolute",
+      "inputs": {"objectId":740555,"movementMask":224},
+      "payloadHex": "CB4C0B0000000000000000000000000000E0000000000000000000000000"
+    }
+  ]
+}

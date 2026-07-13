@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.calculateHate",
+  "signature": "int calculateHate(Creature creature, int value)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {"BOOST_HATE": 0} }, "value": 1000}, "result": 1000 },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {"BOOST_HATE": 100} }, "value": 1000}, "result": 1100 },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {"BOOST_HATE": 250} }, "value": 12345}, "result": 15431 },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {"BOOST_HATE": -500} }, "value": 1000}, "result": 500 },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {"BOOST_HATE": 1000} }, "value": 7}, "result": 14 },
+    { "inputs": {"creature": { "level": 50, "race": "NPC", "pvpTarget": false, "stats": {"BOOST_HATE": 333} }, "value": 999999}, "result": 1332998 }
+  ]
+}

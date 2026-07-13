@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="../import.xsd"/>
+	<xs:element name="npc_walker" type="Wlk" />
+	<xs:complexType name="Wlk">
+		<xs:sequence>
+			<xs:element ref="import" minOccurs="0" maxOccurs="unbounded" />
+			<xs:element minOccurs="0" maxOccurs="unbounded" name="walker_template" type="WlkTemplate" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="WlkTemplate">
+		<xs:sequence>
+			<xs:element minOccurs="0" maxOccurs="unbounded" name="routestep" type="RouteStep" />
+		</xs:sequence>
+		<xs:attribute name="route_id" type="xs:string" use="required" />
+		<xs:attribute name="pool" type="xs:int" default="1" />
+		<xs:attribute name="formation" type="formationType" use="optional" default="POINT" />
+		<xs:attribute name="rows" type="xs:string" use="optional" />
+		<xs:attribute name="loop_type" type="LoopType" use="optional" default="NORMAL"/>
+	</xs:complexType>
+	<xs:complexType name="RouteStep">
+		<xs:attribute name="x" type="xs:float" use="required" />
+		<xs:attribute name="y" type="xs:float" use="required" />
+		<xs:attribute name="z" type="xs:float" use="required" />
+		<xs:attribute name="rest_time" type="xs:int" use="optional" default="0" />
+	</xs:complexType>
+	<xs:simpleType name="formationType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="POINT" />
+			<xs:enumeration value="SQUARE" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="LoopType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="NONE"/>
+			<xs:enumeration value="NORMAL"/>
+			<xs:enumeration value="WALK_BACK"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

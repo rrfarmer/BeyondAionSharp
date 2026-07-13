@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_EMOTION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "fly",
+      "inputs": {"objectId":900020,"type":"FLY","state":1,"speed":6.0},
+      "payloadHex": "B4BB0D000D01000000C040"
+    },
+    {
+      "name": "resurrect",
+      "inputs": {"objectId":900021,"type":"RESURRECT","state":1,"speed":6.0},
+      "payloadHex": "B5BB0D001301000000C04000000000"
+    },
+    {
+      "name": "changeSpeed",
+      "inputs": {"objectId":900022,"type":"CHANGE_SPEED","state":1,"speed":6.0,"baseAtkSpeed":1000,"currentAtkSpeed":1000},
+      "payloadHex": "B6BB0D002301000000C040E803E80300"
+    },
+    {
+      "name": "emoteWithTarget",
+      "inputs": {"objectId":900023,"type":"EMOTE","state":1,"speed":6.0,"emotion":42,"targetObjectId":555},
+      "payloadHex": "B7BB0D001501000000C0402B0200002A0001"
+    }
+  ]
+}

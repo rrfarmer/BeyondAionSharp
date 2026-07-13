@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_INSTANCE_STAGE_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "event",
+      "inputs": {"type":2,"event":17,"unk":1},
+      "payloadHex": "020000000011000100"
+    },
+    {
+      "name": "zero",
+      "inputs": {"type":0,"event":0,"unk":0},
+      "payloadHex": "000000000000000000"
+    }
+  ]
+}

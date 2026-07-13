@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_QUEST_ACTION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "questActionUnk",
+      "inputs": {"ctor":"unk","questId":1006},
+      "payloadHex": "06EE03000001000000"
+    },
+    {
+      "name": "questActionTimer",
+      "inputs": {"ctor":"timer","questId":1006,"timer":900},
+      "payloadHex": "04EE0300008403000001"
+    },
+    {
+      "name": "questActionShareAlliance",
+      "inputs": {"ctor":"share","questId":1006,"sharerId":1234,"shareInAlliance":true},
+      "payloadHex": "05EE030000D204000001000000"
+    },
+    {
+      "name": "questActionShareGroup",
+      "inputs": {"ctor":"share","questId":1006,"sharerId":1234,"shareInAlliance":false},
+      "payloadHex": "05EE030000D204000000000000"
+    },
+    {
+      "name": "questActionExtraCategoryEmpty",
+      "inputs": {"ctor":"unk","questId":1007},
+      "payloadHex": ""
+    }
+  ]
+}

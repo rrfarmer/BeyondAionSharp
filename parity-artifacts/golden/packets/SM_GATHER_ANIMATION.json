@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GATHER_ANIMATION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "gather",
+      "inputs": {"playerObjId":5001,"gatherableObjId":6002,"skillId":30001,"action":1},
+      "payloadHex": "8913000072170000317501"
+    }
+  ]
+}

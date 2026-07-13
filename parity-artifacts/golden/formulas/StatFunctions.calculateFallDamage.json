@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.calculateFallDamage",
+  "signature": "int calculateFallDamage(Player player, float distance)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 7500, "stats": {"MAXHP": 10000} }, "distance": 5.0}, "result": 0 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 7500, "stats": {"MAXHP": 10000} }, "distance": 10.0}, "result": 1000 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 7500, "stats": {"MAXHP": 10000} }, "distance": 25.5}, "result": 2550 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 6000, "stats": {"MAXHP": 12345} }, "distance": 30.0}, "result": 3703 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 7500, "stats": {"MAXHP": 10000} }, "distance": 50.0}, "result": 7500 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 3000, "stats": {"MAXHP": 10000} }, "distance": 80.0}, "result": 3000 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 4321, "stats": {"MAXHP": 9999} }, "distance": 33.3}, "result": 3329 },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 7500, "stats": {"MAXHP": 10000} }, "distance": 9.9999}, "result": 0 }
+  ]
+}

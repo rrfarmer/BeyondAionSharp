@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CLOSE_QUESTION_WINDOW",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "close",
+      "inputs": {"messageId":0,"params":[]},
+      "payloadHex": "0000000000000000000000000000"
+    },
+    {
+      "name": "duelWithdraw",
+      "inputs": {"messageId":1300134,"params":["Vaizel"]},
+      "payloadHex": "00000000A6D613005600610069007A0065006C00000000000000"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_POSITION_SELF",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "position",
+      "inputs": {"x":1234.5,"y":6789.0,"z":250.25,"heading":60},
+      "payloadHex": "00509A440028D44500407A433C"
+    },
+    {
+      "name": "origin",
+      "inputs": {"x":0.0,"y":0.0,"z":0.0,"heading":0},
+      "payloadHex": "00000000000000000000000000"
+    }
+  ]
+}

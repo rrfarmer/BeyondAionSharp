@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_HOUSE_TELEPORT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "teleport",
+      "inputs": {"houseAddress":31050,"playerId":770210},
+      "payloadHex": "4A790000A2C00B00"
+    }
+  ]
+}

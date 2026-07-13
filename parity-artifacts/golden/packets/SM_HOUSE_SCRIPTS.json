@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_HOUSE_SCRIPTS",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "oneWithData",
+      "inputs": {"houseAddress":31001,"scripts":[{"id":0,"compressedBytes":[1,2,3,4,5],"uncompressedSize":20}]},
+      "payloadHex": "1979000001000015000D000000140000000102030405CDCDCDCDCDCDCDCD"
+    },
+    {
+      "name": "oneNoData",
+      "inputs": {"houseAddress":31002,"scripts":[{"id":2,"compressedBytes":[],"uncompressedSize":0}]},
+      "payloadHex": "1A7900000100020000"
+    },
+    {
+      "name": "mixed",
+      "inputs": {"houseAddress":31003,"scripts":[{"id":1,"compressedBytes":[10,20,30],"uncompressedSize":7},{"id":3,"compressedBytes":[],"uncompressedSize":0}]},
+      "payloadHex": "1B79000002000113000B000000070000000A141ECDCDCDCDCDCDCDCD030000"
+    },
+    {
+      "name": "emptyNullCtor",
+      "inputs": {"houseAddress":31004,"scripts":[]},
+      "payloadHex": "1C7900000000"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GATHER_UPDATE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "actionInit",
+      "inputs": {"skillId":30001,"action":0,"itemId":152000001,"nameId":350001,"success":3,"failure":1,"executionSpeed":1500,"delay":2000},
+      "payloadHex": "31750001560F090300000001000000DC050000D00700009D4B1400240063AE0A000000"
+    },
+    {
+      "name": "actionUpdate",
+      "inputs": {"skillId":30001,"action":1,"itemId":152000001,"nameId":350001,"success":3,"failure":1,"executionSpeed":1500,"delay":2000},
+      "payloadHex": "31750101560F090300000001000000DC050000D0070000000000000000"
+    },
+    {
+      "name": "actionSuccess",
+      "inputs": {"skillId":30001,"action":6,"itemId":152000001,"nameId":350001,"success":3,"failure":1,"executionSpeed":1500,"delay":2000},
+      "payloadHex": "31750601560F090300000001000000DC050000D00700009E4B1400240063AE0A000000"
+    },
+    {
+      "name": "actionFail",
+      "inputs": {"skillId":30001,"action":7,"itemId":152000001,"nameId":350001,"success":3,"failure":1,"executionSpeed":1500,"delay":2000},
+      "payloadHex": "31750701560F090300000001000000DC050000D00700009F4B1400240063AE0A000000"
+    },
+    {
+      "name": "actionOccupied",
+      "inputs": {"skillId":30001,"action":8,"itemId":152000001,"nameId":350001,"success":3,"failure":1,"executionSpeed":1500,"delay":2000},
+      "payloadHex": "31750801560F090300000001000000DC050000D00700009A4B1400240063AE0A000000"
+    }
+  ]
+}

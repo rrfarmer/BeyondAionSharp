@@ -1,0 +1,4 @@
+# Stop the Aion server stack (keeps the database volume).
+Set-Location -Path $PSScriptRoot
+docker compose --env-file .env down
+Write-Host "Stopped. (Database data is preserved. To wipe it too: docker compose down -v)"

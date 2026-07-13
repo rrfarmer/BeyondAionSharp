@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+  		[BEGIN] SUMMARY
+			45007 [XML] Monitoring Beluslan
+			45008 [XML] Scanning Beluslan
+			45009 [XML] Oh the Entropy!
+			45010 [XML] Darkness Runs Across Water
+			45011 [XML] Hidden Missive
+			45014 [XML] Monitoring Brusthonin
+			45015 [XML] Scanning Brusthonin
+			45016 [XML] Control the Chaos
+			45017 [XML] A Flower Grows in Shade
+			45018 [XML] Secret Tidings
+			45021 [XML] Monitoring Gelkmaros
+			45022 [XML] Scanning Gelkmaros
+			45023 [XML] Dispel the Discord
+			45024 [XML] Those Who Grasp Fate
+			45025 [XML] Covert Intelligence
+			45026 [XML] Message from a Steward
+			45027 [XML] Message from a Legionary
+			45028 [XML] Message from an Outrider
+			45029 [XML] Message from a Centurion
+			45030 [XML] Message from a Warrior
+			45031 [XML] Sky Sweeper
+			45032 [XML] Warden Needs Food Badly
+			45033 [XML] This Ain't a Scene...
+			45034 [XML] Heavily Medicated
+			45035 [XML] Blue Jaw Breaker
+			45036 [XML] A Little Spriggle Room
+			45037 [XML] Gone Gone Gorgons!
+			45038 [XML] Gluttonous Ettins
+			45039 [XML] Om-Nom Aether
+			45040 [XML] Food Shortage
+			45041 [XML] Weapon Shortage
+			45042 [XML] Medicine Shortage
+			45043 [XML] Anubites on My Heels
+			45044 [XML] Yuck...I Smell Kurin
+			45045 [XML] Gathering Aether
+			45046 [XML] Gathering Foodstuff
+			45047 [XML] Gathering Weapon Materials
+			45048 [XML] Gathering Herbs
+			45049 [XML] Hunt the Starved Barghest
+			45050 [XML] Eradicate the Plains Baku
+			45051 [XML] Eradicate the Smiling Dragrint
+			45052 [XML] [Daily] Field Orders
+			45053 [XML] [Daily] Supply Pearls
+			45054 [XML] [Daily] Supply Ancient Drana
+			45055 [XML] [Daily] Survey Pentachroma Coast
+			45056 [XML] [Daily] Aurelian Timbers Assessment
+			45057 [XML] [Daily] Sanguisands Survey
+			45058 [XML] [Daily] Starmaw Dionae Must Die
+			45059 [XML] [Daily] Petalsprite Fight
+			45060 [XML] [Daily] Skulk the Petrahulks
+			45061 [XML] [Daily] Bad Luck Sheluk
+			45062 [XML] [Daily] Bad to the Brawlers
+			45063 [XML] [Daily] Corask Task
+			45064 [XML] [Daily] Petrahulk Bulk
+			45065 [XML] [Daily] Frillnecks on the Fray
+			48000 [SCRIPT] Summons from the Wardens
+			48003 [XML] Message from the Field Wardens
+		[END] SUMMARY
+	-->
+	
+	<!-- REPORTING QUESTS -->
+	<report_to_many id="45010">
+		<npc_infos npc_ids="204715"/>
+		<npc_infos npc_ids="799848"/>
+	</report_to_many>
+	<report_to_many id="45011">
+		<npc_infos npc_ids="204772"/>
+		<npc_infos npc_ids="799848"/>
+	</report_to_many>
+	<report_to_many id="45017">
+		<npc_infos npc_ids="205143"/>
+		<npc_infos npc_ids="799849"/>
+	</report_to_many>
+	<report_to_many id="45018">
+		<npc_infos npc_ids="205130"/>
+		<npc_infos npc_ids="799849"/>
+	</report_to_many>
+	<report_to_many id="45024">
+		<npc_infos npc_ids="799244"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to_many id="45025">
+		<npc_infos npc_ids="799271"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to_many id="45026">
+		<npc_infos npc_ids="799285"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to_many id="45027">
+		<npc_infos npc_ids="799305"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to_many id="45028">
+		<npc_infos npc_ids="799314"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to_many id="45029">
+		<npc_infos npc_ids="799354"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to_many id="45030">
+		<npc_infos npc_ids="799360"/>
+		<npc_infos npc_ids="799842 799843"/>
+	</report_to_many>
+	<report_to id="48003" start_npc_ids="204191" end_npc_ids="799845"/>
+	<report_to_many id="45055">
+		<npc_infos npc_ids="804902"/>
+		<npc_infos npc_ids="804931"/>
+	</report_to_many>
+	<report_to_many id="45056">
+		<npc_infos npc_ids="804729 805221"/>
+		<npc_infos npc_ids="804932"/>
+	</report_to_many>
+	<report_to_many id="45057">
+		<npc_infos npc_ids="804924"/>
+		<npc_infos npc_ids="804933"/>
+	</report_to_many>
+	
+	<!-- COLLECTING QUESTS -->
+	<item_collecting id="45007" end_npc_ids="799848"/>
+	<item_collecting id="45008" end_npc_ids="799848"/>
+	<item_collecting id="45014" end_npc_ids="799849"/>
+	<item_collecting id="45015" end_npc_ids="799849"/>
+	<item_collecting id="45021" end_npc_ids="799842 799843"/>
+	<item_collecting id="45022" end_npc_ids="799842 799843"/>
+	<item_collecting id="45031" end_npc_ids="799848"/>
+	<item_collecting id="45032" end_npc_ids="799848"/>
+	<item_collecting id="45033" end_npc_ids="799848"/>
+	<item_collecting id="45034" end_npc_ids="799848"/>
+	<item_collecting id="45039" end_npc_ids="799849"/>
+	<item_collecting id="45040" end_npc_ids="799849"/>
+	<item_collecting id="45041" end_npc_ids="799849"/>
+	<item_collecting id="45042" end_npc_ids="799849"/>
+	<item_collecting id="45045" end_npc_ids="799842 799843"/>
+	<item_collecting id="45046" end_npc_ids="799842 799843"/>
+	<item_collecting id="45047" end_npc_ids="799842 799843"/>
+	<item_collecting id="45048" end_npc_ids="799842 799843"/>
+	<item_collecting id="45053" end_npc_ids="804930"/>
+	<item_collecting id="45054" end_npc_ids="804930"/>
+	
+	<!-- HUNTING QUESTS -->
+	<monster_hunt id="45009" end_npc_ids="799848"/>
+	<monster_hunt id="45016" end_npc_ids="799849"/>
+	<monster_hunt id="45023" end_npc_ids="799842 799843"/>
+	<monster_hunt id="45035" end_npc_ids="799848"/>
+	<monster_hunt id="45036" end_npc_ids="799848"/>
+	<monster_hunt id="45037" end_npc_ids="799848"/>
+	<monster_hunt id="45038" end_npc_ids="799848"/>
+	<monster_hunt id="45043" end_npc_ids="799849"/>
+	<monster_hunt id="45044" end_npc_ids="799849"/>
+	<monster_hunt id="45049" end_npc_ids="799842 799843"/>
+	<monster_hunt id="45050" end_npc_ids="799842 799843"/>
+	<monster_hunt id="45051" end_npc_ids="799842 799843"/>
+	<monster_hunt id="45052" end_npc_ids="804930"/>
+	<monster_hunt id="45058" end_npc_ids="804931"/>
+	<monster_hunt id="45059" end_npc_ids="804931"/>
+	<monster_hunt id="45060" end_npc_ids="804934"/>
+	<monster_hunt id="45061" end_npc_ids="804932"/>
+	<monster_hunt id="45062" end_npc_ids="804933"/>
+	<monster_hunt id="45063" end_npc_ids="804935"/>
+	<monster_hunt id="45064" end_npc_ids="804936"/>
+	<monster_hunt id="45065" end_npc_ids="804937"/>
+</quest_scripts>

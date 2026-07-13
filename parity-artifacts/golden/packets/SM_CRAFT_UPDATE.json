@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CRAFT_UPDATE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "init",
+      "inputs": {"skillId":40001,"itemId":0,"success":100,"failure":50,"action":0,"executionSpeed":1500,"delay":3000},
+      "payloadHex": "419C00000000006400000032000000DC050000B80B0000804B14000000"
+    },
+    {
+      "name": "normalUpdate",
+      "inputs": {"skillId":40002,"itemId":0,"success":80,"failure":40,"action":1,"executionSpeed":1200,"delay":2000},
+      "payloadHex": "429C01000000005000000028000000B0040000D0070000000000000000"
+    },
+    {
+      "name": "morphForcesDelay1000",
+      "inputs": {"skillId":40009,"itemId":0,"success":100,"failure":0,"action":5,"executionSpeed":900,"delay":1000},
+      "payloadHex": "499C0500000000640000000000000084030000E8030000814B14000000"
+    }
+  ]
+}

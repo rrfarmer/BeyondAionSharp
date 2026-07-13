@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CHANNEL_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "nullPosition",
+      "inputs": {"position":null},
+      "payloadHex": "0100000001000000"
+    }
+  ]
+}

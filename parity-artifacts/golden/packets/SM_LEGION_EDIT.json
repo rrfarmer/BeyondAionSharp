@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEGION_EDIT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "recover",
+      "inputs": {"type":7},
+      "payloadHex": "07"
+    },
+    {
+      "name": "disband",
+      "inputs": {"type":6,"unixTime":1700000000},
+      "payloadHex": "0600F15365"
+    }
+  ]
+}

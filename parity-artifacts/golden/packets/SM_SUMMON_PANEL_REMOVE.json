@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SUMMON_PANEL_REMOVE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "withSkill",
+      "inputs": {"skillId":1601},
+      "payloadHex": "410601"
+    },
+    {
+      "name": "zeroSkill",
+      "inputs": {"skillId":0},
+      "payloadHex": "000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_FLY_TIME",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "flyTime",
+      "inputs": {"currentFp":3500,"maxFp":7000},
+      "payloadHex": "AC0D0000581B0000"
+    }
+  ]
+}

@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Map Drops -->
+	<gd_rule rule_name="Balaur Scales" chance="35">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="186000036" /><!-- Balaur Rainbow Scale -->
+			<gd_item id="186000048" /><!-- Blue Balaur Scale -->
+		</gd_items>
+	</gd_rule>
+	<!-- Multiple Monster Drops -->
+	<gd_rule rule_name="Named Armor (Legend)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213771" /><!-- Protector Rakkan -->
+			<gd_npc npc_id="213772" /><!-- Shadowmaster Takrin -->
+			<gd_npc npc_id="213773" /><!-- Dragonpriest Tairgus -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114100679" /><!-- Bakarma Elite's Shoes -->
+			<gd_item id="114300692" /><!-- Bakarma Elite's Boots -->
+			<gd_item id="114500658" /><!-- Bakarma Elite's Brogans -->
+			<gd_item id="114600616" /><!-- Bakarma Elite's Sabatons -->
+			<gd_item id="111100652" /><!-- Bakarma Elite's Gloves -->
+			<gd_item id="111300654" /><!-- Bakarma Elite's Vambrace -->
+			<gd_item id="111500641" /><!-- Bakarma Elite's Handguards -->
+			<gd_item id="111600631" /><!-- Bakarma Elite's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Material" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213778" /><!-- Beautiful Lakshmi -->
+			<gd_npc npc_id="213779" /><!-- Commander Nimbarka -->
+			<gd_npc npc_id="213780" /><!-- Commander Bakarma -->
+			<gd_npc npc_id="213802" /><!-- Kind Saraswati -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000034" /><!-- Balaur Black Magic Crystal -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Headband (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213587" /><!-- Hungry Ooze -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125001503" /><!-- Bakarma Elite's Helm -->
+			<gd_item id="125001502" /><!-- Bakarma Elite's Chain Helm -->
+			<gd_item id="125001501" /><!-- Bakarma Elite's Hat -->
+			<gd_item id="125001500" /><!-- Bakarma Elite's Headband -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213587" /><!-- Hungry Ooze -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000767" /><!-- Ooze's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213587" /><!-- Hungry Ooze -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000766" /><!-- Bakarma's Sapphire Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213588" /><!-- Lucky Golden Saam -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="115000674" /><!-- Golden Saam's Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="60">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213588" /><!-- Lucky Golden Saam -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123000768" /><!-- Golden Saam's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="35">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213588" /><!-- Lucky Golden Saam -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113100662" /><!-- Sunrise Leggings -->
+			<gd_item id="113300678" /><!-- Breeches of Dark Dusk -->
+			<gd_item id="113301555" /><!-- Magic Breeches of Dark Dusk -->
+			<gd_item id="113500651" /><!-- Deep Abyss Chausses -->
+			<gd_item id="113501587" /><!-- Deep Abyss Magic Chausses -->
+			<gd_item id="113600626" /><!-- Ice Black Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Souvenir" chance="15">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213588" /><!-- Lucky Golden Saam -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="170170031" /><!-- [Souvenir] Centennial Golden Saam Statue -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213774" /><!-- Lazy Dragashum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112100613" /><!-- Bakarma Elite's Pauldrons -->
+			<gd_item id="112300613" /><!-- Bakarma Elite's Shoulderguards -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213774" /><!-- Lazy Dragashum -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000763" /><!-- Dragashum's Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Chest (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213775" /><!-- Greatscholar Jaadis -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053266" /><!-- Jaadis' Pants Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Chest (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213775" /><!-- Greatscholar Jaadis -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053260" /><!-- Jaadis' Fabled Pants Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213775" /><!-- Greatscholar Jaadis -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000764" /><!-- Jaadis' Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213776" /><!-- Instructor Afrane -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000710" /><!-- Afrane's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Chest (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213776" /><!-- Instructor Afrane -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053267" /><!-- Afrane's Shoe Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Chest (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213776" /><!-- Instructor Afrane -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053261" /><!-- Afrane's Fabled Shoe Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213778" /><!-- Beautiful Lakshmi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000648" /><!-- Lakshmi's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213778" /><!-- Beautiful Lakshmi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053268" /><!-- Lakshmi's Gloves Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213778" /><!-- Beautiful Lakshmi -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053262" /><!-- Lakshmi's Fabled Gloves Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213779" /><!-- Commander Nimbarka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000647" /><!-- Nimbarka's Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213779" /><!-- Commander Nimbarka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053269" /><!-- Nimbarka's Armor Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213779" /><!-- Commander Nimbarka -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053263" /><!-- Nimbarka's Fabled Armor Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Legend)" chance="75">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213780" /><!-- Commander Bakarma -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="122000765" /><!-- Bakarma's Ruby Ring -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213780" /><!-- Commander Bakarma -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900620" /><!-- Commander Bakarma's Greatsword -->
+			<gd_item id="100500634" /><!-- Commander Bakarma's Jewel -->
+			<gd_item id="101700656" /><!-- Commander Bakarma's Longbow -->
+			<gd_item id="100200742" /><!-- Commander Bakarma's Dagger -->
+			<gd_item id="100600691" /><!-- Commander Bakarma's Tome -->
+			<gd_item id="100000818" /><!-- Commander Bakarma's Sword -->
+			<gd_item id="100100608" /><!-- Commander Bakarma's Warhammer -->
+			<gd_item id="101500634" /><!-- Commander Bakarma's Staff -->
+			<gd_item id="101300591" /><!-- Commander Bakarma's Spear -->
+			<gd_item id="101800597" /><!-- Commander Bakarma's Pistol -->
+			<gd_item id="102000628" /><!-- Commander Bakarma's Harp -->
+			<gd_item id="101900593" /><!-- Bakarma Brigade General's Aethercannon -->
+			<gd_item id="102100538" /><!-- Commander Bakarma's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213780" /><!-- Commander Bakarma -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110100734" /><!-- Sunrise Tunic -->
+			<gd_item id="110300696" /><!-- Jerkin of Dark Dusk -->
+			<gd_item id="110301589" /><!-- Magic Jerkin of Dark Dusk -->
+			<gd_item id="110500673" /><!-- Deep Abyss Hauberk -->
+			<gd_item id="110551011" /><!-- Deep Abyss Magic Hauberk -->
+			<gd_item id="110600659" /><!-- Ice Black Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Weapon (Legend)" chance="50">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213780" /><!-- Commander Bakarma -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100900390" /><!-- Commander Bakarma's Greatsword -->
+			<gd_item id="100500393" /><!-- Commander Bakarma's Jewel -->
+			<gd_item id="101700408" /><!-- Commander Bakarma's Longbow -->
+			<gd_item id="101300381" /><!-- Commander Bakarma's Spear -->
+			<gd_item id="100100398" /><!-- Commander Bakarma's Warhammer -->
+			<gd_item id="100000515" /><!-- Commander Bakarma's Sword -->
+			<gd_item id="100600423" /><!-- Commander Bakarma's Tome -->
+			<gd_item id="101500396" /><!-- Commander Bakarma's Staff -->
+			<gd_item id="100200504" /><!-- Commander Bakarma's Dagger -->
+			<gd_item id="101800452" /><!-- Commander Bakarma's Pistol -->
+			<gd_item id="101900438" /><!-- Commander Bakarma's Aethercannon -->
+			<gd_item id="102000467" /><!-- Commander Bakarma's Harp -->
+			<gd_item id="102100435" /><!-- Commander Bakarma's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213802" /><!-- Kind Saraswati -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120000711" /><!-- Saraswati's Earrings -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="45">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213802" /><!-- Kind Saraswati -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053270" /><!-- Saraswati's Shoulder Gear Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="40">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="213802" /><!-- Kind Saraswati -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053264" /><!-- Saraswati's Fabled Shoulder Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Unique)" chance="50">
+		<gd_maps>
+			<gd_map map_id="320080000" /><!-- Draupnir_Cave -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="214026" /><!-- Deputy Brigade General Yavant -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="121000651" /><!-- Defensive Heart -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

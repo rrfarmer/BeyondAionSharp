@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ABYSS_RANK_UPDATE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "abyssRankUpdateRank",
+      "inputs": {"objectId":100777,"action":0},
+      "payloadHex": "00A989010001000000"
+    },
+    {
+      "name": "abyssRankUpdateTeam",
+      "inputs": {"objectId":100777,"action":1},
+      "payloadHex": "01A989010000000000"
+    },
+    {
+      "name": "abyssRankUpdateMentor",
+      "inputs": {"objectId":100777,"action":2},
+      "payloadHex": "02A989010000000000"
+    }
+  ]
+}

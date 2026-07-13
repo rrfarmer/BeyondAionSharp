@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_STATUPDATE_MP",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "mp",
+      "inputs": {"currentMp":345,"maxMp":900},
+      "payloadHex": "5901000084030000"
+    }
+  ]
+}

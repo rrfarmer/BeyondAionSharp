@@ -54,8 +54,8 @@ public sealed class WorkOrderRecipeTableTests
 		var directory = new DirectoryInfo(AppContext.BaseDirectory);
 		while (directory != null)
 		{
-			if (Directory.Exists(Path.Combine(directory.FullName, "game-server"))
-				&& Directory.Exists(Path.Combine(directory.FullName, "dotnetConversion")))
+			if (File.Exists(Path.Combine(directory.FullName, "AionServer.slnx"))
+				&& File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "quest_script_data", "work_order.xml")))
 				return directory.FullName;
 
 			directory = directory.Parent;

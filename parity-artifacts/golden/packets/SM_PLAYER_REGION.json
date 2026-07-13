@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PLAYER_REGION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "playerRegionNone",
+      "inputs": {"objectId":100777,"subZone":"NONE"},
+      "payloadHex": "A989010000000038A72400"
+    },
+    {
+      "name": "playerRegionNamed",
+      "inputs": {"objectId":100777,"subZone":"ELYSEA_NORTH"},
+      "payloadHex": "A989010000000083CC315B"
+    }
+  ]
+}

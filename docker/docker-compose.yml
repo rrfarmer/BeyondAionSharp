@@ -1,0 +1,124 @@
+name: aion
+
+# Startup order is strictly chained so each tier comes up after the previous one has settled:
+#
+#   mysql  ──(init fully done)──▶  loginserver  ──(+15s)──▶  chatserver  ──(+15s)──▶  gameserver
+#
+# - mysql gates loginserver via a real readiness check (its healthcheck only passes once first-boot
+#   DB init is complete — see below). That wait is normally well over 15s on first boot.
+# - loginserver and chatserver each expose a *timer* healthcheck that reports "healthy" ~15s after
+#   the container starts, and the next service depends on that. So there is a 15s pause after Login
+#   (before Chat) and after Chat (before Game). These two healthchecks are pacing timers, NOT
+#   readiness probes — they always succeed; their only job is to delay the next service.
+#   To change the gap, edit the `interval:` value on those healthchecks.
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: aion-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-aion}
+      MYSQL_ROOT_HOST: "%"            # allow the server containers to connect as root
+    volumes:
+      - aion-mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro   # runs 00-init.sh on first boot
+      - ../login-server/sql:/sql/login:ro
+      - ../game-server/sql:/sql/game:ro
+      - ../chat-server/sql:/sql/chat:ro
+    healthcheck:
+      # "healthy" must mean first-boot init is DONE: query over TCP (-h127.0.0.1, which the
+      # socket-only init phase rejects) for a row in the seeded gameservers table (loaded last).
+      # Otherwise the servers connect mid-init, fail, and crash-restart until init finishes.
+      test: ["CMD", "mysql", "-h127.0.0.1", "-uroot", "-p${DB_PASSWORD:-aion}", "-e", "SELECT 1 FROM aion_ls.gameservers LIMIT 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 60s
+    restart: unless-stopped
+
+  loginserver:
+    build:
+      context: ..
+      dockerfile: docker/loginserver/Dockerfile
+    container_name: aion-loginserver
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-aion}
+    ports:
+      - "${LOGIN_CLIENT_PORT:-2106}:2106"
+    # Pacing timer: flips to "healthy" ~15s after start so chatserver waits 15s before launching.
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  chatserver:
+    build:
+      context: ..
+      dockerfile: docker/chatserver/Dockerfile
+    container_name: aion-chatserver
+    depends_on:
+      mysql:
+        condition: service_healthy
+      loginserver:
+        condition: service_healthy      # start ~15s after loginserver is up
+    environment:
+      DB_HOST: mysql
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-aion}
+      SERVER_HOST: ${SERVER_HOST:-127.0.0.1}
+      CHAT_CLIENT_PORT: ${CHAT_CLIENT_PORT:-10241}
+    ports:
+      - "${CHAT_CLIENT_PORT:-10241}:10241"
+    # Pacing timer: flips to "healthy" ~15s after start so gameserver waits 15s before launching.
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  gameserver:
+    build:
+      context: ..
+      dockerfile: docker/gameserver/Dockerfile
+    container_name: aion-gameserver
+    depends_on:
+      mysql:
+        condition: service_healthy
+      chatserver:
+        condition: service_healthy      # start ~15s after chatserver is up (login is already up by then)
+    environment:
+      DB_HOST: mysql
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-aion}
+      SERVER_HOST: ${SERVER_HOST:-127.0.0.1}
+      GAME_CLIENT_PORT: ${GAME_CLIENT_PORT:-7777}
+      LOGIN_ADDRESS: loginserver:9014
+      CHAT_ADDRESS: chatserver:9021
+      RESPAWN_TIME_MULTIPLIER: ${RESPAWN_TIME_MULTIPLIER:-1.0}
+      # Admin HTTP endpoint used by the web portal to send mail through the LIVE server (so online recipients
+      # get an instant bell + icon). Reachable only on the internal docker network as gameserver:7780 — NOT
+      # published to the host. The portal must present the same ADMIN_API_TOKEN.
+      GAMESERVER_ADMIN_API_ENABLED: "true"
+      GAMESERVER_ADMIN_API_PORT: "7780"
+      GAMESERVER_ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-change-me-admin-token}
+    ports:
+      - "${GAME_CLIENT_PORT:-7777}:7777"
+    restart: unless-stopped
+    # On `docker stop` / `compose down`, Docker sends SIGTERM and SIGKILLs after this grace period.
+    # The GameServer turns SIGTERM into a graceful host shutdown that persists gameplay data: player save
+    # (NioServer.Shutdown) -> PeriodicSaveService.onShutdown (legion warehouses + serverLastRun) ->
+    # GameTimeService.saveGameTime. That can exceed Docker's 10s default under load (the player-disconnect
+    # wait alone is up to 5s), so allow at least the 60s host ShutdownTimeout (Program.cs ConfigureHostOptions)
+    # before SIGKILL. It is a ceiling, not a fixed wait: a clean shutdown still exits in ~1-2s.
+    stop_grace_period: 90s
+
+volumes:
+  aion-mysql-data:

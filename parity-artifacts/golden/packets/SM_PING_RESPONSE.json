@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_PING_RESPONSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "ping",
+      "inputs": {},
+      "payloadHex": "04"
+    }
+  ]
+}

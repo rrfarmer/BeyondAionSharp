@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_BIND_POINT_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "obelisk",
+      "inputs": {"mapId":210010000,"x":1234.5,"y":6789.0,"z":250.25},
+      "payloadHex": "0001907F840C00509A440028D44500407A4300000000"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "formula": "AbyssRankEnum.getPointsLost",
+  "signature": "int getPointsLost()",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"rank": "GRADE9_SOLDIER"}, "result": 90 },
+    { "inputs": {"rank": "GRADE8_SOLDIER"}, "result": 103 },
+    { "inputs": {"rank": "GRADE7_SOLDIER"}, "result": 118 },
+    { "inputs": {"rank": "GRADE6_SOLDIER"}, "result": 136 },
+    { "inputs": {"rank": "GRADE5_SOLDIER"}, "result": 156 },
+    { "inputs": {"rank": "GRADE4_SOLDIER"}, "result": 180 },
+    { "inputs": {"rank": "GRADE3_SOLDIER"}, "result": 216 },
+    { "inputs": {"rank": "GRADE2_SOLDIER"}, "result": 259 },
+    { "inputs": {"rank": "GRADE1_SOLDIER"}, "result": 311 },
+    { "inputs": {"rank": "STAR1_OFFICER"}, "result": 467 },
+    { "inputs": {"rank": "STAR2_OFFICER"}, "result": 560 },
+    { "inputs": {"rank": "STAR3_OFFICER"}, "result": 644 },
+    { "inputs": {"rank": "STAR4_OFFICER"}, "result": 741 },
+    { "inputs": {"rank": "STAR5_OFFICER"}, "result": 1482 },
+    { "inputs": {"rank": "GENERAL"}, "result": 1630 },
+    { "inputs": {"rank": "GREAT_GENERAL"}, "result": 1792 },
+    { "inputs": {"rank": "COMMANDER"}, "result": 1972 },
+    { "inputs": {"rank": "SUPREME_COMMANDER"}, "result": 2366 }
+  ]
+}

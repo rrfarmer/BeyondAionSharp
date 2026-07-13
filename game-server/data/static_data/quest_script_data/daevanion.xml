@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+		[BEGIN] SUMMARY
+			1923 [UNUSED] A Sage's Precious Weapon
+			1924 [UNUSED] A Sage's Precious Weapon
+			1925 [UNUSED] A Sage's Precious Weapon
+			1988 [SCRIPT] A Meeting with a Sage
+			1989 [SCRIPT] A Sage's Teachings
+			1990 [SCRIPT] A Sage's Gift
+			1991 [XML] A Sage's Encouragement
+			1992 [UNUSED] A Sage's Precious Weapon
+			1993 [SCRIPT] Another Beginning
+			1994 [SCRIPT] A New Choice
+			1995 [UNUSED] Another Beginning
+			1996 [UNUSED] A New Choice
+			1997 [XML] A Sage's Gift
+			1998 [XML] A Sage's Gift
+			1999 [XML] A Sage's Gift
+			2986 [UNUSED] Daevanion Weapon
+			2987 [UNUSED] Daevanion Weapon
+			2988 [SCRIPT] The Wise in Disguise
+			2989 [SCRIPT] Ceremony of the Wise
+			2990 [SCRIPT] Making the Daevanion Weapon
+			2991 [UNUSED] Obtaining Daevanion Armor
+			2992 [UNUSED] Daevanion Weapon
+			2993 [SCRIPT] Another Beginning
+			2994 [SCRIPT] A New Choice
+			2995 [UNUSED] Another Beginning (level 99)
+			2996 [UNUSED] A New Choice (level 99)
+			2997 [UNUSED] Daevanion Ceremony (level 99)
+			2998 [UNUSED] Daevanion Ceremony (level 99)
+			2999 [UNUSED] Daevanion Ceremony (level 99)
+			19631 [SCRIPT] Coastal Crush
+			19632 [SCRIPT] Cascade Critters
+			19633 [SCRIPT] Alisary Assistance
+			19634 [SCRIPT] Further Aid for Alisary
+			19635 [SCRIPT] Southern Quell
+			19636 [SCRIPT] Final Stabilization
+			19637 [SCRIPT] Onboard for One
+			19638 [SCRIPT] Trouble with Twos
+			19639 [SCRIPT] Trees and Threes
+			19640 [SCRIPT] Flying through Four
+			19641 [SCRIPT] Fidgety Fives
+			19642 [SCRIPT] Success for Six
+			29631 [SCRIPT] Glug, Glug, Glug
+			29632 [SCRIPT] Sweeping Nahor Lake
+			29633 [SCRIPT] Stabilize the Saplands
+			29634 [SCRIPT] Scared Skurvs
+			29635 [SCRIPT] Beach Day
+			29636 [SCRIPT] Back to Surt
+			29637 [SCRIPT] Trouble, Not Trivial
+			29638 [SCRIPT] Not So Sweet
+			29639 [SCRIPT] Monsters Unholy
+			29640 [SCRIPT] Final Krug Clearing
+			29641 [SCRIPT] Move Along Now
+			29642 [SCRIPT] Good On Gelkmaros
+			80290 [XML] Durable Daevanion Armor
+			80291 [SCRIPT] Durable Daevanion Weapon
+			80292 [TODO] Out With the Old Armor
+			80293 [TODO] I'd Like This One, Instead!
+			80294 [XML] Durable Daevanion Armor
+			80295 [SCRIPT] Durable Daevanion Weapon
+			80296 [TODO] Out With the Old Armor
+			80297 [TODO] I'd Like This One, Instead!
+			80310 [XML] Thank You Gift
+			80311 [XML] Thank You Gift
+		[END] SUMMARY
+	-->
+	
+	<!-- REPORTING QUESTS -->
+	<report_to id="80310" start_npc_ids="831384"/>
+	<report_to id="80311" start_npc_ids="831387"/>
+	
+	<!-- COLLECTING QUESTS -->
+	<item_collecting id="1991" start_npc_ids="203771"/>
+	<item_collecting id="1997" start_npc_ids="203771"/>
+	<item_collecting id="1998" start_npc_ids="203771"/>
+	<item_collecting id="1999" start_npc_ids="203771"/>
+	<item_collecting id="80290" start_npc_ids="831384"/>
+	<item_collecting id="80294" start_npc_ids="831387"/>
+</quest_scripts>

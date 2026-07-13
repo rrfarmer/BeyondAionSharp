@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_QUEST_COMPLETED_LIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "rewriteAll",
+      "inputs": {"updateMode":0,"quests":[[2001,3,0],[2002,2,1]]},
+      "payloadHex": "0100FEFFD10700000300D20700000201"
+    },
+    {
+      "name": "insert",
+      "inputs": {"updateMode":1,"quests":[[2001,3,0],[2002,2,1]]},
+      "payloadHex": "0101FEFFD10700000300D20700000201"
+    }
+  ]
+}

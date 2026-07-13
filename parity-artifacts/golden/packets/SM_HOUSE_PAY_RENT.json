@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_HOUSE_PAY_RENT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "oneWeek",
+      "inputs": {"weeksPaid":1},
+      "payloadHex": "0001"
+    },
+    {
+      "name": "fourWeeks",
+      "inputs": {"weeksPaid":4},
+      "payloadHex": "0004"
+    }
+  ]
+}

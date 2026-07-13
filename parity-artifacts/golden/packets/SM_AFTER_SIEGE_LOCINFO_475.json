@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_AFTER_SIEGE_LOCINFO_475",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "constant",
+      "inputs": {},
+      "payloadHex": "000000"
+    }
+  ]
+}

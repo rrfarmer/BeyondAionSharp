@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_ATREIAN_PASSPORT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "emptyPassports",
+      "inputs": {"year":2024,"month":3,"day":15,"stamps":7,"passports":[]},
+      "payloadHex": "E80703000F000000"
+    }
+  ]
+}

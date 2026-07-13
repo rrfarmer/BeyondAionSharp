@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.calculateMagicalResistRate",
+  "signature": "int calculateMagicalResistRate(Creature attacker, Creature attacked, int accMod, SkillElement element) [Player-vs-Player min(500,..) branch]",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 0} }, "attacked": { "level": 50, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 0} }, "accMod": 0, "element": "NONE"}, "result": 0 },
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 100} }, "attacked": { "level": 50, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 300} }, "accMod": 0, "element": "NONE"}, "result": 200 },
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 100} }, "attacked": { "level": 50, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 1000} }, "accMod": 0, "element": "NONE"}, "result": 500 },
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 50} }, "attacked": { "level": 56, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 200} }, "accMod": 0, "element": "NONE"}, "result": 350 },
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 0} }, "attacked": { "level": 60, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 500} }, "accMod": 0, "element": "NONE"}, "result": 500 },
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 300} }, "attacked": { "level": 50, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 100} }, "accMod": 0, "element": "NONE"}, "result": -200 },
+    { "inputs": {"attacker": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_ACCURACY": 50} }, "attacked": { "level": 56, "race": "ASMODIANS", "direction": "NONE", "currentHp": 1000, "stats": {"MAGICAL_RESIST": 0} }, "accMod": 0, "element": "NONE"}, "result": -50 }
+  ]
+}

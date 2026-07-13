@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+  		[BEGIN] SUMMARY
+		    4115 [XML] Unidentifiable Fissure
+		    4116 [XML] [Group] Into the Theobomos Lab
+	        4117 [XML] [Coin/Group] Preemptive Strike
+	        4118 [XML] [Group] Essence of Ancients
+	        4119 [XML] [Group] Parqusha's Tormentor
+        [END] SUMMARY
+	-->
+	
+	<!-- REPORTING QUESTS -->
+	<report_to_many id="4115" start_npc_ids="205143">
+		<npc_infos npc_ids="205150"/>
+		<npc_infos npc_ids="800421"/>
+	</report_to_many>
+	
+	<!-- COLLECTING QUESTS -->
+	<item_collecting id="4116" start_npc_ids="800421"/>
+	<item_collecting id="4118" start_npc_ids="800421"/>
+	
+	<!-- HUNTING QUESTS -->
+	<monster_hunt id="4117" start_npc_ids="800421"/>
+	<monster_hunt id="4119" start_npc_ids="800421"/>
+</quest_scripts>

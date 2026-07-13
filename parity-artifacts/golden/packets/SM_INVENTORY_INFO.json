@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_INVENTORY_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "inventoryInfoFirstOneItem",
+      "inputs": {"firstPacket":true,"npcExpands":3,"questExpands":2,"itemExpands":4,"objectId":268520003,"itemCount":1},
+      "payloadHex": "010302040100434A011041AA9809240057AF0A0000002C00002B1A0700000000000000440061006500760061000000000000000000000000000000000000000000001200FFFF00"
+    },
+    {
+      "name": "inventoryInfoNotFirstEmpty",
+      "inputs": {"firstPacket":false,"npcExpands":3,"questExpands":2,"itemExpands":4,"itemCount":0},
+      "payloadHex": "000302040000"
+    }
+  ]
+}

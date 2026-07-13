@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_HOUSE_ACQUIRE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "acquired",
+      "inputs": {"playerId":770200,"address":31001,"acquire":true},
+      "payloadHex": "98C00B001979000001000000"
+    },
+    {
+      "name": "released",
+      "inputs": {"playerId":770201,"address":31002,"acquire":false},
+      "payloadHex": "99C00B001A79000000000000"
+    }
+  ]
+}

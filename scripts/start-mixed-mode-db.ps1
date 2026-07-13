@@ -1,6 +1,6 @@
 param(
 	[string]$ContainerName = "aion-mixed-mysql",
-	[string]$RootPassword = "Farmer598!",
+	[string]$RootPassword = "aion",
 	[int]$HostPort = 3306,
 	[switch]$ResetSchema
 )
@@ -12,7 +12,7 @@ if ($LASTEXITCODE -ne 0) {
 	throw "Docker is installed, but the Docker engine is not running. Start Docker Desktop, then run this script again."
 }
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $schemas = @(
 	@{ Database = "aion_ls"; File = Join-Path $repoRoot "login-server\sql\aion_ls.sql"; ProbeTable = "account_data" },
 	@{ Database = "aion_gs"; File = Join-Path $repoRoot "game-server\sql\aion_gs.sql"; ProbeTable = "abyss_rank" },

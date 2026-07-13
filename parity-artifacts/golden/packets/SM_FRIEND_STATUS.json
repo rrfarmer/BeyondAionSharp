@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_FRIEND_STATUS",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "offline",
+      "inputs": {"status":0},
+      "payloadHex": "00"
+    },
+    {
+      "name": "online",
+      "inputs": {"status":1},
+      "payloadHex": "01"
+    }
+  ]
+}

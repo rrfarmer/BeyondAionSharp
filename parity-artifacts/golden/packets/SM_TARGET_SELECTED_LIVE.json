@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TARGET_SELECTED_LIVE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "creature",
+      "inputs": {"objectId":800010,"level":55,"maxHp":12345,"currentHp":9000,"maxMp":6789,"currentMp":4000},
+      "payloadHex": "0A350C0037003930000028230000851A0000A00F0000"
+    }
+  ]
+}

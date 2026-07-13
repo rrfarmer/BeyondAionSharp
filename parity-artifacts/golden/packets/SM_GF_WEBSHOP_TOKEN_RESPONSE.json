@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GF_WEBSHOP_TOKEN_RESPONSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "token",
+      "inputs": {"ctor":"token","token":"ABC123"},
+      "payloadHex": "410042004300310032003300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DP_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "dp",
+      "inputs": {"playerObjectId":800042,"currentDp":4000},
+      "payloadHex": "2A350C00A00F"
+    }
+  ]
+}

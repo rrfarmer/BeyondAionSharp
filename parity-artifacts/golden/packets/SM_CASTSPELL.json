@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_CASTSPELL",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "targetObject",
+      "inputs": {"objectId":850001,"spellId":1346,"level":5,"targetType":0,"targetObjectId":860001,"castDuration":1500,"castSpeed":1.0,"boost":true},
+      "payloadHex": "51F80C0042050500611F0D00DC05000000803F01"
+    },
+    {
+      "name": "targetType3",
+      "inputs": {"objectId":850002,"spellId":1347,"level":1,"targetType":3,"targetObjectId":860002,"castDuration":0,"castSpeed":0.75,"boost":false},
+      "payloadHex": "52F80C0043050103621F0D000000000000403F00"
+    },
+    {
+      "name": "groundPoint",
+      "inputs": {"objectId":850003,"spellId":1348,"level":10,"targetType":1,"x":1234.5,"y":678.25,"z":-12.0,"castDuration":2000,"castSpeed":1.0,"boost":true},
+      "payloadHex": "53F80C0044050A0100509A4400902944000040C1D007000000803F01"
+    },
+    {
+      "name": "groundPointExtended",
+      "inputs": {"objectId":850004,"spellId":1349,"level":3,"targetType":2,"x":10.0,"y":20.0,"z":30.0,"castDuration":500,"castSpeed":0.5,"boost":false},
+      "payloadHex": "54F80C0045050302000020410000A0410000F0410000000000000000000000000000000000000000000000000000000000000000F401000000003F00"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SKILL_ACTIVATION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "toggleOn",
+      "inputs": {"ctor":"toggle","skillId":1601,"isActive":true},
+      "payloadHex": "41060000000001"
+    },
+    {
+      "name": "toggleOff",
+      "inputs": {"ctor":"toggle","skillId":1601,"isActive":false},
+      "payloadHex": "41060000000000"
+    },
+    {
+      "name": "stigmaRemove",
+      "inputs": {"ctor":"stigma","skillId":3232},
+      "payloadHex": "A00C0100000001"
+    }
+  ]
+}

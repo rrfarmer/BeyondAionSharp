@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TITLE_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "listEmpty",
+      "inputs": {"action":0},
+      "payloadHex": "00000000"
+    },
+    {
+      "name": "selfSet",
+      "inputs": {"action":1,"titleId":42},
+      "payloadHex": "012A00"
+    },
+    {
+      "name": "broadcastSet",
+      "inputs": {"action":3,"playerObjId":770001,"titleId":7},
+      "payloadHex": "03D1BF0B000700"
+    },
+    {
+      "name": "bonusTitle",
+      "inputs": {"action":6,"bonusTitleId":13},
+      "payloadHex": "060D00"
+    }
+  ]
+}

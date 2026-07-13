@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_EXCHANGE_ADD_ITEM",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "exchangeAddItemSelf",
+      "inputs": {"action":0,"objectId":268510001,"itemId":161000001},
+      "payloadHex": "0041AA980931230110240057AF0A0000002C00002B1A0700000000000000440061006500760061000000000000000000000000000000000000000000001200"
+    },
+    {
+      "name": "exchangeAddItemOther",
+      "inputs": {"action":1,"objectId":268510001,"itemId":161000001},
+      "payloadHex": "0141AA980931230110240057AF0A0000002C00002B1A0700000000000000440061006500760061000000000000000000000000000000000000000000001200"
+    }
+  ]
+}

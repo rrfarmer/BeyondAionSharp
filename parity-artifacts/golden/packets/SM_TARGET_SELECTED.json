@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_TARGET_SELECTED",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "noTarget",
+      "inputs": {"target":null},
+      "payloadHex": "00000000000000000000000000000000000000000000"
+    }
+  ]
+}

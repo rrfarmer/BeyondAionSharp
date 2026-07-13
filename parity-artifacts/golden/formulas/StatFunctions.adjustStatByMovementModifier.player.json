@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.adjustStatByMovementModifier",
+  "signature": "float adjustStatByMovementModifier(Creature creature, StatEnum stat, float value) [Player movement-direction branches]",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "PHYSICAL_ATTACK", "value": 1000.0}, "resultFloat": "1100.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "MAGICAL_ATTACK", "value": 999.0}, "resultFloat": "1098.9" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "FIRE_RESISTANCE", "value": 200.0}, "resultFloat": "150.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "DARK_RESISTANCE", "value": 30.0}, "resultFloat": "-20.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "MAGICAL_DEFEND", "value": 500.0}, "resultFloat": "400.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "PHYSICAL_DEFENSE", "value": 1234.0}, "resultFloat": "987.2" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "FORWARD", "currentHp": 1000, "stats": {} }, "direction": "FORWARD", "stat": "EVASION", "value": 777.0}, "resultFloat": "777.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "SIDEWAYS", "currentHp": 1000, "stats": {} }, "direction": "SIDEWAYS", "stat": "PHYSICAL_ATTACK", "value": 1000.0}, "resultFloat": "800.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "SIDEWAYS", "currentHp": 1000, "stats": {} }, "direction": "SIDEWAYS", "stat": "SPEED", "value": 6000.0}, "resultFloat": "4800.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "SIDEWAYS", "currentHp": 1000, "stats": {} }, "direction": "SIDEWAYS", "stat": "EVASION", "value": 100.0}, "resultFloat": "400.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "SIDEWAYS", "currentHp": 1000, "stats": {} }, "direction": "SIDEWAYS", "stat": "PARRY", "value": 100.0}, "resultFloat": "100.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "BACKWARD", "currentHp": 1000, "stats": {} }, "direction": "BACKWARD", "stat": "MAGICAL_ATTACK", "value": 1000.0}, "resultFloat": "800.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "BACKWARD", "currentHp": 1000, "stats": {} }, "direction": "BACKWARD", "stat": "SPEED", "value": 6000.0}, "resultFloat": "3600.0002" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "BACKWARD", "currentHp": 1000, "stats": {} }, "direction": "BACKWARD", "stat": "PARRY", "value": 250.0}, "resultFloat": "750.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "BACKWARD", "currentHp": 1000, "stats": {} }, "direction": "BACKWARD", "stat": "BLOCK", "value": 0.0}, "resultFloat": "500.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "BACKWARD", "currentHp": 1000, "stats": {} }, "direction": "BACKWARD", "stat": "EVASION", "value": 333.0}, "resultFloat": "333.0" },
+    { "inputs": {"player": { "level": 50, "race": "ELYOS", "direction": "NONE", "currentHp": 1000, "stats": {} }, "direction": "NONE", "stat": "PHYSICAL_ATTACK", "value": 1000.0}, "resultFloat": "1000.0" }
+  ]
+}

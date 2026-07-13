@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_FRIEND_RESPONSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "targetAdded",
+      "inputs": {"code":0,"playerName":"Israphel"},
+      "payloadHex": "49007300720061007000680065006C00000000"
+    },
+    {
+      "name": "targetOffline",
+      "inputs": {"code":1,"playerName":""},
+      "payloadHex": "000001"
+    }
+  ]
+}

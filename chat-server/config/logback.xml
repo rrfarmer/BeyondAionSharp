@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<configuration>
+	<statusListener class="com.aionemu.commons.logging.OnConsoleWarningStatusListener" />
+	<property file="config/main/logging.properties" />
+	<property file="config/mycs.properties" />
+	<property name="logFolder" value="log" />
+	<property name="consoleTime" value="%date{HH:mm:ss}" />
+	<property name="date" value="%date{&quot;yyyy-MM-dd'T'HH:mm:ss,SSSXXX&quot;}" />
+	<appender name="out_console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<charset>${consoleEncoding:-UTF-8}</charset>
+			<Pattern>${consoleTime} %highlight(%-5level) %gray([%thread]) - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_console" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/server_console.log</file>
+		<encoder>
+			<Pattern>${date} %-5level [%thread] %logger - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_warn" class="ch.qos.logback.core.FileAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>WARN</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<file>${logFolder}/server_warnings.log</file>
+		<encoder>
+			<Pattern>${date} %logger - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_error" class="ch.qos.logback.core.FileAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<file>${logFolder}/server_errors.log</file>
+		<encoder>
+			<Pattern>${date} %logger - %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_status_discord" class="com.aionemu.commons.logging.DiscordChannelAppender">
+		<encoder>
+			<pattern>%logger{0} [%thread]|${chatserver.log.status.discord.avatar_url}|%msg%replace(%n```qml%n%ex```){\r?\n```qml\r?\n```, ''}%nopex</pattern>
+		</encoder>
+		<webhookUrl>${chatserver.log.status.discord.webhook_url}</webhookUrl>
+		<userName_avatarUrl_msg_separator>\|</userName_avatarUrl_msg_separator>
+	</appender>
+	<appender name="app_status_discord_async" class="ch.qos.logback.classic.AsyncAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+		<neverBlock>true</neverBlock>
+		<appender-ref ref="app_status_discord" />
+	</appender>
+	<appender name="app_chat" class="ch.qos.logback.core.FileAppender">
+		<file>${logFolder}/chat.log</file>
+		<encoder>
+			<Pattern>${date} %message%n</Pattern>
+		</encoder>
+	</appender>
+	<appender name="app_chat_discord" class="com.aionemu.commons.logging.DiscordChannelAppender">
+		<encoder>
+			<pattern>%replace(%msg){'\[(.*?) \((.)\)\] (.*?): (.*)', '[$1] $3|${chatserver.log.chat.discord.avatar_url}|$4'}</pattern>
+		</encoder>
+		<webhookUrl>${chatserver.log.chat.discord.webhook_url}</webhookUrl>
+		<userName_avatarUrl_msg_separator>\|</userName_avatarUrl_msg_separator>
+	</appender>
+	<appender name="app_chat_discord_async" class="ch.qos.logback.classic.AsyncAppender">
+		<neverBlock>true</neverBlock>
+		<appender-ref ref="app_chat_discord" />
+	</appender>
+	<logger name="CHAT_LOG" additivity="false">
+		<appender-ref ref="app_chat" />
+		<appender-ref ref="app_chat_discord_async" />
+	</logger>
+	<root level="INFO">
+		<appender-ref ref="out_console" />
+		<appender-ref ref="app_console" />
+		<appender-ref ref="app_error" />
+		<appender-ref ref="app_warn" />
+		<appender-ref ref="app_status_discord_async" />
+	</root>
+</configuration>

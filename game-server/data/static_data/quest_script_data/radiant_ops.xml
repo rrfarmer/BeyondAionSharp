@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+		[BEGIN] SUMMARY
+			35502 [REMOVED] Asmodians on the Loose
+			35503 [REMOVED] Everything is Radiant
+			35504 [REMOVED] Asmodian Extermination
+			35505 [XML] Operation: Gelkmaros
+			35506 [REMOVED] Asmodians Abated
+			35507 [REMOVED] [Spy/Weekly] Operation: Asmodae
+			35508 [XML] Zero Tolerance Policy
+			35509 [XML] Zero Tolerance or Less
+			35510 [XML] [Daily] Going Guerrilla on the Asmodians
+			35511 [XML] [Spy/Daily] Enshar Infiltration Operation
+			35512 [XML] [Daily] Rage Against the Asmodians
+			35513 [XML] [Spy/Daily] Enshar Invasion Operation
+			38001 [SCRIPT] Radiant Ops Recruitment
+			38004 [XML] Radiant Ops Recruitment
+		[END] SUMMARY
+	-->
+	
+	<!-- REPORTING QUESTS -->
+	<report_to id="38004" start_npc_ids="203726" end_npc_ids="799828"/>
+	
+	<!-- KILL IN WORLD -->
+	<kill_in_world id="35505" end_npc_ids="799825 799826" worlds="220070000" amount="5"/>
+	<kill_in_world id="35508" end_npc_ids="799831" amount="5"/>
+	<kill_in_world id="35509" end_npc_ids="799825 799826" amount="5"/>
+	<kill_in_world id="35510" end_npc_ids="804940" amount="5"/>
+	<kill_in_world id="35511" end_npc_ids="804940" worlds="220080000" amount="5"/>
+	<kill_in_world id="35512" end_npc_ids="804940" amount="5"/>
+	<kill_in_world id="35513" end_npc_ids="804940" worlds="220080000" amount="5"/>
+</quest_scripts>

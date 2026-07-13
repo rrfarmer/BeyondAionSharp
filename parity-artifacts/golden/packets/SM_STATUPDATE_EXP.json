@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_STATUPDATE_EXP",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "exp",
+      "inputs": {"currentExp":123456789,"recoverableExp":1000,"maxExp":500000000,"rep1":250,"rep2":2000},
+      "payloadHex": "15CD5B0700000000E8030000000000000065CD1D00000000FA00000000000000D007000000000000"
+    }
+  ]
+}

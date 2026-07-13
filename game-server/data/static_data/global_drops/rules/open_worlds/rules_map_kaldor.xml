@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Weapon (Unique)" chance="20">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="101901087"/><!-- Darok's Aethercannon -->
+			<gd_item id="101801176"/><!-- Darok's Pistol -->
+			<gd_item id="102101010"/><!-- Darok's Cipher-Blade -->
+			<gd_item id="101701326"/><!-- Darok's Bow -->
+			<gd_item id="100201461"/><!-- Darok's Dagger -->
+			<gd_item id="100901316"/><!-- Darok's Greatsword -->
+			<gd_item id="100501275"/><!-- Darok's Orb -->
+			<gd_item id="102001204"/><!-- Darok's Harp -->
+			<gd_item id="100001690"/><!-- Darok's Sword -->
+			<gd_item id="101501312"/><!-- Darok's Staff -->
+			<gd_item id="101301221"/><!-- Darok's Polearm -->
+			<gd_item id="100101289"/><!-- Darok's Mace -->
+			<gd_item id="100601385"/><!-- Darok's Spellbook -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234306"/><!-- Moaning Throil -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="112101556"/><!-- Throil's Pauldrons -->
+			<gd_item id="112301648"/><!-- Throil's Shoulderguards -->
+			<gd_item id="112501603"/><!-- Throil's Spaulders -->
+			<gd_item id="112601519"/><!-- Throil's Shoulderplates -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234307"/><!-- Grieving Minorda -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="111101606"/><!-- Minorda's Gloves -->
+			<gd_item id="111301709"/><!-- Minorda's Vambrace -->
+			<gd_item id="111501664"/><!-- Minorda's Handguards -->
+			<gd_item id="111601537"/><!-- Minorda's Gauntlets -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Legend)" chance="30">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234310"/><!-- Magma Belcher Buldon -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101786"/><!-- Buldon's Tunic -->
+			<gd_item id="110301771"/><!-- Buldon's Jerkin -->
+			<gd_item id="110551105"/><!-- Buldon's Hauberk -->
+			<gd_item id="110601574"/><!-- Buldon's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="5">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234306"/><!-- Moaning Throil -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101785"/><!-- Throil's Tunic -->
+			<gd_item id="110301770"/><!-- Throil's Jerkin -->
+			<gd_item id="110551104"/><!-- Throil's Hauberk -->
+			<gd_item id="110601573"/><!-- Throil's Breastplate -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="5">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234307"/><!-- Grieving Minorda -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="113101617"/><!-- Minorda's Leggings -->
+			<gd_item id="113301739"/><!-- Minorda's Breeches -->
+			<gd_item id="113501681"/><!-- Minorda's Chausses -->
+			<gd_item id="113601519"/><!-- Minorda’s Greaves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234310"/><!-- Magma Belcher Buldon -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="114101651"/><!-- Buldon's Shoes -->
+			<gd_item id="114301776"/><!-- Buldon's Boots -->
+			<gd_item id="114501691"/><!-- Buldon's Brogans -->
+			<gd_item id="114601526"/><!-- Buldon's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Epic)" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="125004021"/><!-- Darok's Mask -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Manastone Level 70 (Unique)" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="167020064" /><!-- Ancient Manastone: Magical Accuracy +20 -->
+			<gd_item id="167020065" /><!-- Ancient Manastone: Magic Boost +32 -->
+			<gd_item id="167020060" /><!-- Ancient Manastone: Physical Critical Resistance +22 -->
+			<gd_item id="167020061" /><!-- Ancient Manastone: Magical Critical Resistance +9 -->
+			<gd_item id="167020062" /><!-- Ancient Manastone: Physical Defense +80 -->
+			<gd_item id="167020063" /><!-- Ancient Manastone: Attack +7 -->
+			<gd_item id="167020056" /><!-- Ancient Manastone: Accuracy +33 -->
+			<gd_item id="167020057" /><!-- Ancient Manastone: Evasion +23 -->
+			<gd_item id="167020058" /><!-- Ancient Manastone: Parry +33 -->
+			<gd_item id="167020059" /><!-- Ancient Manastone: Block +33 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Manastone Level 70 (Epic)" chance="5">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="167020080" /><!-- Ancient Manastone: Magical Accuracy +22 -->
+			<gd_item id="167020081" /><!-- Ancient Manastone: Magic Boost +35 -->
+			<gd_item id="167020082" /><!-- Ancient Manastone: Magic Suppression +50 -->
+			<gd_item id="167020083" /><!-- Ancient Manastone: Healing Boost +6 -->
+			<gd_item id="167020076" /><!-- Ancient Manastone: Spell Resist +11 -->
+			<gd_item id="167020077" /><!-- Ancient Manastone: Physical Defense +100 -->
+			<gd_item id="167020078" /><!-- Ancient Manastone: Resist Magic +20 -->
+			<gd_item id="167020079" /><!-- Ancient Manastone: Attack +8 -->
+			<gd_item id="167020072" /><!-- Ancient Manastone: Accuracy +35 -->
+			<gd_item id="167020073" /><!-- Ancient Manastone: Evasion +24 -->
+			<gd_item id="167020074" /><!-- Ancient Manastone: Crit Strike +24 -->
+			<gd_item id="167020075" /><!-- Ancient Manastone: Crit Spell +9 -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Power Shards" chance="100">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="169000010" min_count="250" /><!-- Superior Power Shard -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Coins" chance="100">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000237" min_count="5" max_count="25" /><!-- Ancient Coin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Material Burning Vitality" chance="3">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234282"/><!-- Cinder Drakie -->
+			<gd_npc npc_id="234283"/><!-- Volcanic Spirit -->
+			<gd_npc npc_id="234284"/><!-- Blaze Drake -->
+			<gd_npc npc_id="234285"/><!-- Cinder Ampha -->
+			<gd_npc npc_id="234286"/><!-- Ashen Karnif -->
+			<gd_npc npc_id="234287"/><!-- Blaze Drakie -->
+			<gd_npc npc_id="234288"/><!-- Flamescreech Spirit -->
+			<gd_npc npc_id="234290"/><!-- Flame Ampha -->
+			<gd_npc npc_id="234294"/><!-- Blazing Obscura -->
+			<gd_npc npc_id="234295"/><!-- Cinder Sparkle -->
+			<gd_npc npc_id="234296"/><!-- Stokesnuff Ametgolem -->
+			<gd_npc npc_id="234298"/><!-- Anoha Mugolem -->
+			<gd_npc npc_id="234303"/><!-- Emberkeeper Zefirun -->
+			<gd_npc npc_id="234310"/><!-- Magma Belcher Buldon -->
+			<gd_npc npc_id="234515"/><!-- Flamebeak Zefirun -->
+			<gd_npc npc_id="234525"/><!-- Red Striped Snuffler -->
+			<gd_npc npc_id="234526"/><!-- Crag Snuffler -->
+			<gd_npc npc_id="234528"/><!-- Ember Snuffler -->
+			<gd_npc npc_id="234530"/><!-- Flaming Obscura -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012613"/><!-- Burning Vitality -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Material Burning Sulfur" chance="3">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="233997"/><!-- Sandshell Starturtle -->
+			<gd_npc npc_id="234260"/><!-- Defiant Zefirun -->
+			<gd_npc npc_id="234261"/><!-- Mirrorwing Sylphen -->
+			<gd_npc npc_id="234262"/><!-- Thornstick Crynac -->
+			<gd_npc npc_id="234263"/><!-- Toxic Crynac -->
+			<gd_npc npc_id="234264"/><!-- Misshapen Oculis -->
+			<gd_npc npc_id="234265"/><!-- Fearless Zefirun -->
+			<gd_npc npc_id="234266"/><!-- Pygmy Sylphen -->
+			<gd_npc npc_id="234267"/><!-- Rockhusk Agrint -->
+			<gd_npc npc_id="234268"/><!-- Choking Oculis -->
+			<gd_npc npc_id="234273"/><!-- Bloody Zefirun -->
+			<gd_npc npc_id="234274"/><!-- Ancient Sylphen -->
+			<gd_npc npc_id="234275"/><!-- Deathsting Arachna -->
+			<gd_npc npc_id="234276"/><!-- Vindictive Oculis -->
+			<gd_npc npc_id="234277"/><!-- Crazed Karnif -->
+			<gd_npc npc_id="234278"/><!-- Flamedust Sparkle -->
+			<gd_npc npc_id="234279"/><!-- Manduri Lavafist -->
+			<gd_npc npc_id="234280"/><!-- Ash Ampha -->
+			<gd_npc npc_id="234299"/><!-- Earsplit Arachna -->
+			<gd_npc npc_id="234300"/><!-- Nightlord Karnif -->
+			<gd_npc npc_id="234512"/><!-- Ravening Arachna -->
+			<gd_npc npc_id="234513"/><!-- Bladefang Crynac -->
+			<gd_npc npc_id="234514"/><!-- Sly Bladefang Crynac -->
+			<gd_npc npc_id="234520"/><!-- Stem Snuffler -->
+			<gd_npc npc_id="234521"/><!-- Plated Snuffler -->
+			<gd_npc npc_id="234523"/><!-- Golden Snuffler -->
+			<gd_npc npc_id="234524"/><!-- Speckled Snuffler -->
+			<gd_npc npc_id="234531"/><!-- Smoldering Agrint -->
+			<gd_npc npc_id="234532"/><!-- Diabolic Spirit -->
+			<gd_npc npc_id="234647"/><!-- Commander Gartacia -->
+			<gd_npc npc_id="234648"/><!-- Commander Virca -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012614"/><!-- Burning Sulfur -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Material Burning Mind" chance="3">
+		<gd_maps>
+			<gd_map map_id="600090000"/><!-- Kaldor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="234252"/><!-- Hurricane Worg -->
+			<gd_npc npc_id="234253"/><!-- Gluespit Sylphen -->
+			<gd_npc npc_id="234254"/><!-- Raging Ettin -->
+			<gd_npc npc_id="234255"/><!-- Bloodmoon Archna -->
+			<gd_npc npc_id="234256"/><!-- Wandering Oculis -->
+			<gd_npc npc_id="234257"/><!-- Vasharti Grunt -->
+			<gd_npc npc_id="234258"/><!-- Vasharti Spellslinger -->
+			<gd_npc npc_id="234259"/><!-- Vasharti Lacerator -->
+			<gd_npc npc_id="234269"/><!-- Vicious Karnif -->
+			<gd_npc npc_id="234270"/><!-- Relic Sparkle -->
+			<gd_npc npc_id="234271"/><!-- Listless Nagolem -->
+			<gd_npc npc_id="234272"/><!-- Vengeful Nagolem -->
+			<gd_npc npc_id="234305"/><!-- Arrogant Darok -->
+			<gd_npc npc_id="234306"/><!-- Moaning Throil -->
+			<gd_npc npc_id="234307"/><!-- Grieving Minorda -->
+			<gd_npc npc_id="234509"/><!-- Blackthorn Crynac -->
+			<gd_npc npc_id="234510"/><!-- Slinking Blackthorn Crynac -->
+			<gd_npc npc_id="234511"/><!-- Ridgeback Starturtle -->
+			<gd_npc npc_id="234519"/><!-- Grove Snuffler -->
+			<gd_npc npc_id="234522"/><!-- Spotted Snuffler -->
+			<gd_npc npc_id="234659"/><!-- Vasharti Warrior -->
+			<gd_npc npc_id="234660"/><!-- Vasharti Sorcerer -->
+			<gd_npc npc_id="234661"/><!-- Vasharti Sentinel -->
+			<gd_npc npc_id="234665"/><!-- Vasharti Grunt -->
+			<gd_npc npc_id="234666"/><!-- Vasharti Scout -->
+			<gd_npc npc_id="234667"/><!-- Wounded Vasharti Infantry -->
+			<gd_npc npc_id="234668"/><!-- Wounded Vasharti Strongbow -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012615"/><!-- Burning Mind -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

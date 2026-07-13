@@ -1,0 +1,1245 @@
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../global_rules.xsd">
+	<!-- Scrolls -->
+	<!-- Running Scrolls -->
+	<gd_rule rule_name="Design Lesser Running Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201233" /><!-- Design: Lesser Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Lesser Running Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206239" /><!-- Design: Lesser Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Running Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201234" /><!-- Design: Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Running Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206240" /><!-- Design: Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Running Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201235" /><!-- Design: Greater Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Running Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206241" /><!-- Design: Greater Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Type B Greater Running Scroll Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Inggison -->
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152203533" /><!-- Design: [Type B] Greater Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Type B Greater Running Scroll Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+			<gd_map map_id="220080000" /><!-- Enshar -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152208535" /><!-- Design: [Type B] Greater Running Scroll -->
+		</gd_items>
+	</gd_rule>
+	<!-- Courage Scrolls -->
+	<gd_rule rule_name="Design Lesser Courage Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201230" /><!-- Design: Lesser Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Lesser Courage Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206236" /><!-- Design: Lesser Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Courage Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201231" /><!-- Design: Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Courage Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206237" /><!-- Design: Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Courage Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201232" /><!-- Design: Greater Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Courage Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206238" /><!-- Design: Greater Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Type B Greater Courage Scroll Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Inggison -->
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152203531" /><!-- Design: [Type B] Greater Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Type B Greater Courage Scroll Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+			<gd_map map_id="220080000" /><!-- Enshar -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152208533" /><!-- Design: [Type B] Greater Courage Scroll -->
+		</gd_items>
+	</gd_rule>
+	<!-- Awakening Scrolls -->
+	<gd_rule rule_name="Design Lesser Awakening Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202125" /><!-- Design: Lesser Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Lesser Awakening Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207127" /><!-- Design: Lesser Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Awakening Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202126" /><!-- Design: Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Awakening Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207128" /><!-- Design: Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Awakening Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202127" /><!-- Design: Greater Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Awakening Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207129" /><!-- Design: Greater Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Type B Greater Awakening Scroll Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Inggison -->
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152203532" /><!-- Design: [Type B] Greater Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	 <gd_rule rule_name="Design Type B Greater Awakening Scroll Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true"
+		restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+			<gd_map map_id="220080000" /><!-- Enshar -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152208534" /><!-- Design: [Type B] Greater Awakening Scroll -->
+		</gd_items>
+	</gd_rule>
+	<!-- Raging Wind Scrolls -->
+	<gd_rule rule_name="Design Lesser Raging Wind Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201236" /><!-- Design: Lesser Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Lesser Raging Wind Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206242" /><!-- Design: Lesser Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Raging Wind Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201237" /><!-- Design: Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Raging Wind Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206243" /><!-- Design: Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Raging Wind Scroll Elyos" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201238" /><!-- Design: Greater Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Raging Wind Scroll Asmodian" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206244" /><!-- Design: Greater Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Type B Greater Raging Wind Scroll Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Inggison -->
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152203534" /><!-- Design: [Type B] Greater Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	 <gd_rule rule_name="Design Type B Greater Raging Wind Scroll Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true"
+		restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+			<gd_map map_id="220080000" /><!-- Enshar -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152208536" /><!-- Design: [Type B] Greater Raging Wind Scroll -->
+		</gd_items>
+	</gd_rule>
+	<!-- END Scrolls -->
+	<!-- Potions -->
+	<!-- Life Serum -->
+	<gd_rule rule_name="Design Lesser Life Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210030000" /><!-- Verteron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201247" /><!-- Design: Lesser Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Lesser Life Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220030000" /><!-- Altgard -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206253" /><!-- Design: Lesser Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Life Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201248" /><!-- Design: Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Life Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206254" /><!-- Design: Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Life Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201249" /><!-- Design: Greater Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Life Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206255" /><!-- Design: Greater Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Life Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201250" /><!-- Design: Major Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Life Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206256" /><!-- Design: Major Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Life Serum Elyos" min_diff="-5" max_diff="0" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210050000" /><!-- Inggison -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202130" /><!-- Design: Fine Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Life Serum Asmodian" min_diff="-5" max_diff="0" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207132" /><!-- Design: Fine Life Serum -->
+		</gd_items>
+	</gd_rule>
+	<!-- Mana Serum -->
+	<gd_rule rule_name="Design Lesser Mana Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210030000" /><!-- Verteron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201251" /><!-- Design: Lesser Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Lesser Mana Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220030000" /><!-- Altgard -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206257" /><!-- Design: Lesser Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Mana Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201252" /><!-- Design: Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Mana Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206258" /><!-- Design: Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Mana Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201253" /><!-- Design: Greater Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Mana Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206259" /><!-- Design: Greater Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Mana Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201254" /><!-- Design: Major Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Mana Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206260" /><!-- Design: Major Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Mana Serum Elyos" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210050000" /><!-- Inggison -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202131" /><!-- Design: Fine Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Mana Serum Asmodian" min_diff="-5" max_diff="5" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207133" /><!-- Design: Fine Mana Serum -->
+		</gd_items>
+	</gd_rule>
+	<!-- Recovery Serum -->
+	<gd_rule rule_name="Design Greater Recovery Serum Elyos" min_diff="-5" max_diff="5" chance="0.1" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201329" /><!-- Design: Greater Recovery Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Recovery Serum Asmodian" min_diff="-5" max_diff="5" chance="0.1" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206334" /><!-- Design: Greater Recovery Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Recovery Serum Elyos" min_diff="-5" max_diff="5" chance="0.1" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201330" /><!-- Design: Major Recovery Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Recovery Serum Asmodian" min_diff="-5" max_diff="5" chance="0.1" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206335" /><!-- Design: Major Recovery Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Recovery Serum Elyos" min_diff="-5" max_diff="5" chance="0.1" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210050000" /><!-- Inggison -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202151" /><!-- Design: Fine Recovery Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Recovery Serum Asmodian" min_diff="-5" max_diff="5" chance="0.1" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207153" /><!-- Design: Fine Recovery Serum -->
+		</gd_items>
+	</gd_rule>
+	<!-- Recovery Potion -->
+	<gd_rule rule_name="Design Recovery Potion Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201326" /><!-- Design: Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Recovery Potion Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206331" /><!-- Design: Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Recovery Potion Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201327" /><!-- Design: Greater Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Greater Recovery Potion Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206332" /><!-- Design: Greater Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Recovery Potion Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201328" /><!-- Design: Recovery Potion Serum -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Major Recovery Potion Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206333" /><!-- Design: Major Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Recovery Potion Elyos" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210050000" /><!-- Inggison -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202234" /><!-- Design: Fine Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Design Fine Recovery Potion Asmodian" min_diff="-5" max_diff="5" chance="0.25" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207236" /><!-- Design: Fine Recovery Potion -->
+		</gd_items>
+	</gd_rule>
+	<!-- END Potions -->
+	<!-- Cooking Recipes --> <!-- TODO: Unique Recipes (such as 152207200) -->
+	<!-- Eltnen -->
+	<gd_rule rule_name="Rare Eltnen Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210020000" /><!-- Eltnen -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201401" /><!-- Recipe: Omblic Cocktail -->
+			<gd_item id="152201402" /><!-- Recipe: Crestlich Pasta -->
+			<gd_item id="152201403" /><!-- Recipe: Kurin Sausage -->
+			<gd_item id="152201404" /><!-- Recipe: Bacora Sushi -->
+			<gd_item id="152201405" /><!-- Recipe: Ruta Sandwich -->
+			<gd_item id="152201406" /><!-- Recipe: Pluma Steak -->
+			<gd_item id="152201408" /><!-- Recipe: Kurin Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<!-- Morheim -->
+	<gd_rule rule_name="Rare Morheim Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220020000" /><!-- Morheim -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206406" /><!-- Recipe: Kirka Cocktail -->
+			<gd_item id="152206407" /><!-- Recipe: Fungen Pasta -->
+			<gd_item id="152206408" /><!-- Recipe: Hot Ksellid Sausage -->
+			<gd_item id="152206409" /><!-- Recipe: Dorado Sushi -->
+			<gd_item id="152206410" /><!-- Recipe: Chikra Sandwich -->
+			<gd_item id="152206411" /><!-- Recipe: Brax Steak -->
+			<gd_item id="152206413" /><!-- Recipe: Brax Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<!-- Heiron -->
+	<gd_rule rule_name="Rare Heiron Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201565" /><!-- Recipe: Kobold Candy -->
+			<gd_item id="152201566" /><!-- Recipe: Krall Candy -->
+			<gd_item id="152201419" /><!-- Recipe: Ormea Cocktail -->
+			<gd_item id="152201420" /><!-- Recipe: Griffon Pasta -->
+			<gd_item id="152201421" /><!-- Recipe: Klaw Sausage -->
+			<gd_item id="152201422" /><!-- Recipe: Esosa Sushi -->
+			<gd_item id="152201423" /><!-- Recipe: Triora Sandwich -->
+			<gd_item id="152201424" /><!-- Recipe: Rynoce Steak -->
+			<gd_item id="152201425" /><!-- Recipe: Aether Dumpling -->
+			<gd_item id="152201426" /><!-- Recipe: Rynoce Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Legend Heiron Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210040000" /><!-- Heiron -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201427" /><!-- Recipe: Griffon Aether Pasta -->
+			<gd_item id="152201428" /><!-- Recipe: Klaw Aether Sausage -->
+			<gd_item id="152201429" /><!-- Recipe: Esosa Aether Sushi -->
+			<gd_item id="152201430" /><!-- Recipe: Triora Aether Sandwich -->
+			<gd_item id="152201431" /><!-- Recipe: Rynoce Aether Steak -->
+			<gd_item id="152201432" /><!-- Recipe: Pleuro Aether Dumpling -->
+			<gd_item id="152201433" /><!-- Recipe: Rynoce Aether Bulgogi -->
+			<gd_item id="152201501" /><!-- Recipe: Triora Aether Jelly -->
+		</gd_items>
+	</gd_rule>
+	<!-- Beluslan -->
+	<gd_rule rule_name="Rare Beluslan Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206424" /><!-- Recipe: Pressa Cocktail -->
+			<gd_item id="152206425" /><!-- Recipe: Granker Pasta -->
+			<gd_item id="152206426" /><!-- Recipe: Tipolid Sausage -->
+			<gd_item id="152206427" /><!-- Recipe: Almeha Egg-rolled Sushi -->
+			<gd_item id="152206428" /><!-- Recipe: Crestlich Sandwich -->
+			<gd_item id="152206429" /><!-- Recipe: Grilled Monitor Steak -->
+			<gd_item id="152206430" /><!-- Recipe: Monitor Dumpling -->
+			<gd_item id="152206431" /><!-- Recipe: Tipolid Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Legend Beluslan Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220040000" /><!-- Beluslan -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206432" /><!-- Recipe: Granker Aether Pasta -->
+			<gd_item id="152206433" /><!-- Recipe: Tipolid Aether Sausage -->
+			<gd_item id="152206434" /><!-- Recipe: Almeha Aether Egg-rolled Sushi -->
+			<gd_item id="152206435" /><!-- Recipe: Crestlich Aether Sandwich -->
+			<gd_item id="152206436" /><!-- Recipe: Grilled Monitor Aether Steak -->
+			<gd_item id="152206437" /><!-- Recipe: Monitor Aether Dumpling -->
+			<gd_item id="152206438" /><!-- Recipe: Tipolid Aether Bulgogi -->
+			<gd_item id="152206506" /><!-- Recipe: Zeller Aether Jelly -->
+		</gd_items>
+	</gd_rule>
+	<!-- Theobomos -->
+	<gd_rule rule_name="Rare Theobomos Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201444" /><!-- Recipe: Lunime Cocktail -->
+			<gd_item id="152201445" /><!-- Recipe: Litrea Cream Pasta -->
+			<gd_item id="152201446" /><!-- Recipe: Frillneck Sausage -->
+			<gd_item id="152201447" /><!-- Recipe: Moonflower Sushi Roll -->
+			<gd_item id="152201448" /><!-- Recipe: Basilisk Sandwich -->
+			<gd_item id="152201449" /><!-- Recipe: Starturtle Steak -->
+			<gd_item id="152201450" /><!-- Recipe: Perer Dumpling -->
+			<gd_item id="152201451" /><!-- Recipe: Frillneck Bulgogi -->
+			<gd_item id="152201563" /><!-- Recipe: Calydon Meat Dumpling -->
+			<gd_item id="152201564" /><!-- Recipe: Cellatu Porridge -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Legend Theobomos Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210060000" /><!-- Theobomos -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201452" /><!-- Recipe: Litrea Aether Cream Pasta -->
+			<gd_item id="152201453" /><!-- Recipe: Frillneck Aether Sausage -->
+			<gd_item id="152201454" /><!-- Recipe: Moonflower Aether Sushi Roll -->
+			<gd_item id="152201455" /><!-- Recipe: Basilisk Aether Sandwich -->
+			<gd_item id="152201456" /><!-- Recipe: Starturtle Aether Steak -->
+			<gd_item id="152201457" /><!-- Recipe: Perer Aether Dumpling -->
+			<gd_item id="152201458" /><!-- Recipe: Frillneck Aether Bulgogi -->
+			<gd_item id="152201502" /><!-- Recipe: Perer Aether Jelly -->
+		</gd_items>
+	</gd_rule>
+	<!-- Brusthonin -->
+	<gd_rule rule_name="Rare Brusthonin Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206449" /><!-- Recipe: Leopis Cocktail -->
+			<gd_item id="152206450" /><!-- Recipe: Lobnite Cream Pasta -->
+			<gd_item id="152206451" /><!-- Recipe: Snuffler Sausage -->
+			<gd_item id="152206452" /><!-- Recipe: Carpen Sushi -->
+			<gd_item id="152206453" /><!-- Recipe: Cippo Sandwich -->
+			<gd_item id="152206454" /><!-- Recipe: Tayga Wine Steak -->
+			<gd_item id="152206455" /><!-- Recipe: Snuffler Dumpling -->
+			<gd_item id="152206456" /><!-- Recipe: Tayga Bulgogi -->
+			<gd_item id="152206567" /><!-- Recipe: Wild Ginseng Pickle -->
+			<gd_item id="152206568" /><!-- Recipe: Cellatu Soup -->
+			<gd_item id="152206569" /><!-- Recipe: Anubite Candy -->
+			<gd_item id="152206570" /><!-- Recipe: Graveknight Candy -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Legend Brusthonin Cooking Designs" min_diff="-2" max_diff="2" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220050000" /><!-- Brusthonin -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206457" /><!-- Recipe: Lobnite Aether Cream Pasta -->
+			<gd_item id="152206458" /><!-- Recipe: Snuffler Aether Sausage -->
+			<gd_item id="152206459" /><!-- Recipe: Carpen Aether Sushi -->
+			<gd_item id="152206460" /><!-- Recipe: Cippo Aether Sandwich -->
+			<gd_item id="152206461" /><!-- Recipe: Tayga Aether Wine Steak -->
+			<gd_item id="152206462" /><!-- Recipe: Snuffler Aether Dumpling -->
+			<gd_item id="152206463" /><!-- Recipe: Tayga Aether Bulgogi -->
+			<gd_item id="152206507" /><!-- Recipe: Cippo Aether Jelly -->
+		</gd_items>
+	</gd_rule>
+	<!-- Inggison -->
+	<gd_rule rule_name="Rare Inggison Cooking Designs" min_diff="-5" max_diff="0" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210050000" /><!-- Inggison -->
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202179" /><!-- Recipe: Beshu Cocktail -->
+			<gd_item id="152202180" /><!-- Recipe: Anevra Cream Pasta -->
+			<gd_item id="152202181" /><!-- Recipe: Crestlich Sausage -->
+			<gd_item id="152202182" /><!-- Recipe: Feena Sushi Roll -->
+			<gd_item id="152202183" /><!-- Recipe: Crestlich Sandwich -->
+			<gd_item id="152202184" /><!-- Recipe: Innesi Steak -->
+			<gd_item id="152202185" /><!-- Recipe: Entrin Dumpling -->
+			<gd_item id="152202186" /><!-- Recipe: Plindit Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Legend Inggison Cooking Designs" min_diff="-5" max_diff="0" chance="0.5" dynamic_chance="true" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="210050000" /><!-- Inggison -->
+			<gd_map map_id="210070000" /><!-- Cygnea -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152202187" /><!-- Recipe: Anevra Aether Cream Pasta -->
+			<gd_item id="152202188" /><!-- Recipe: Crestlich Aether Sausage -->
+			<gd_item id="152202189" /><!-- Recipe: Feena Aether Sushi Roll -->
+			<gd_item id="152202190" /><!-- Recipe: Crestlich Aether Sandwich -->
+			<gd_item id="152202191" /><!-- Recipe: Innesi Aether Steak -->
+			<gd_item id="152202192" /><!-- Recipe: Entrin Aether Dumpling -->
+			<gd_item id="152202193" /><!-- Recipe: Plindit Aether Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<!-- Gelkmaros -->
+	<gd_rule rule_name="Rare Gelkmaros Cooking Designs" min_diff="-5" max_diff="0" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+			<gd_map map_id="220080000" /><!-- Enshar -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207181" /><!-- Recipe: Drupa Cocktail -->
+			<gd_item id="152207182" /><!-- Recipe: Gorocle Cream Pasta -->
+			<gd_item id="152207183" /><!-- Recipe: Crestlich Sausage -->
+			<gd_item id="152207184" /><!-- Recipe: Nokara Sushi -->
+			<gd_item id="152207185" /><!-- Recipe: Chersnip Sandwich -->
+			<gd_item id="152207186" /><!-- Recipe: Poma Wine Steak -->
+			<gd_item id="152207187" /><!-- Recipe: Crestlich Dumpling -->
+			<gd_item id="152207188" /><!-- Recipe: Poma Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Legend Gelkmaros Cooking Designs" min_diff="-5" max_diff="0" chance="0.5" dynamic_chance="true" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="220070000" /><!-- Gelkmaros -->
+			<gd_map map_id="220080000" /><!-- Enshar -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152207189" /><!-- Recipe: Gorocle Aether Cream Pasta -->
+			<gd_item id="152207190" /><!-- Recipe: Crestlich Aether Sausage -->
+			<gd_item id="152207191" /><!-- Recipe: Carpen Aether Sushi -->
+			<gd_item id="152207192" /><!-- Recipe: Chersnip Aether Sandwich -->
+			<gd_item id="152207193" /><!-- Recipe: Poma Aether Wine Steak -->
+			<gd_item id="152207194" /><!-- Recipe: Crestlich Aether Dumpling -->
+			<gd_item id="152207195" /><!-- Recipe: Poma Aether Bulgogi -->
+		</gd_items>
+	</gd_rule>
+	<!-- END Cooking Recipes -->
+	<!-- Dark Poeta design drops -->
+	<gd_rule rule_name="Dragon Lord Recipes (Asmodians)" chance="0.075" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206597" /><!-- Design: Dragon Lord Blade -->
+			<gd_item id="152206628" /><!-- Design: Dragon Lord's Cowl -->
+			<gd_item id="152206606" /><!-- Design: Dragon Lord's Shield -->
+			<gd_item id="152206620" /><!-- Design: Dragon Lord's Vambrace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Drazma Recipes (Asmodians)" chance="0.075" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206639" /><!-- Design: Drazma Bow -->
+			<gd_item id="152206596" /><!-- Design: Drazma Greatsword -->
+			<gd_item id="152206604" /><!-- Design: Drazma Hauberk -->
+			<gd_item id="152206627" /><!-- Design: Drazma Leggings -->
+			<gd_item id="152206626" /><!-- Design: Drazma Shoes -->
+			<gd_item id="152230502" /><!-- Design: Drazma's Aethercannon -->
+			<gd_item id="152230504" /><!-- Design: Drazma's Harp -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Necsium Recipes (Asmodians)" chance="0.075" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206601" /><!-- Design: Necsium Chain Headdress -->
+			<gd_item id="152231507" /><!-- Design: Necsium Cipher-Blade -->
+			<gd_item id="152206594" /><!-- Design: Necsium Dagger -->
+			<gd_item id="152206602" /><!-- Design: Necsium Gauntlets -->
+			<gd_item id="152206603" /><!-- Design: Necsium Helm -->
+			<gd_item id="152206644" /><!-- Design: Necsium Orb -->
+			<gd_item id="152230501" /><!-- Design: Necsium Pistol -->
+			<gd_item id="152206595" /><!-- Design: Necsium Polearm -->
+			<gd_item id="152206636" /><!-- Design: Necsium Ring -->
+			<gd_item id="152206640" /><!-- Design: Necsium Staff -->
+			<gd_item id="152206600" /><!-- Design: Nexium Chausses -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Surkana Recipes (Asmodians)" chance="0.075" restriction_race="ASMODIANS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152206637" /><!-- Design: Surkana Earrings -->
+			<gd_item id="152206619" /><!-- Design: Surkana Jerkin -->
+			<gd_item id="152206618" /><!-- Design: Surkana Shoulderguards -->
+			<gd_item id="152206605" /><!-- Design: Surkana Shoulderplates -->
+			<gd_item id="152206643" /><!-- Design: Surkana Spellbook -->
+			<gd_item id="152206647" /><!-- Design: Surkana Warhammer -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Dragon Lord Recipes (Elyos)" chance="0.075" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201595" /><!-- Design: Dragon Lord Blade -->
+			<gd_item id="152201626" /><!-- Design: Dragon Lord's Cowl -->
+			<gd_item id="152201604" /><!-- Design: Dragon Lord's Shield -->
+			<gd_item id="152201618" /><!-- Design: Dragon Lord's Vambrace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Drazma Recipes (Elyos)" chance="0.075" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201637" /><!-- Design: Drazma Bow -->
+			<gd_item id="152201594" /><!-- Design: Drazma Greatsword -->
+			<gd_item id="152201602" /><!-- Design: Drazma Hauberk -->
+			<gd_item id="152201625" /><!-- Design: Drazma Leggings -->
+			<gd_item id="152201624" /><!-- Design: Drazma Shoes -->
+			<gd_item id="152220513" /><!-- Design: Drazma's Aethercannon -->
+			<gd_item id="152220515" /><!-- Design: Drazma's Harp -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Necsium Recipes (Elyos)" chance="0.075" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201599" /><!-- Design: Necsium Chain Headdress -->
+			<gd_item id="152221519" /><!-- Design: Necsium Cipher-Blade -->
+			<gd_item id="152201592" /><!-- Design: Necsium Dagger -->
+			<gd_item id="152201600" /><!-- Design: Necsium Gauntlets -->
+			<gd_item id="152201601" /><!-- Design: Necsium Helm -->
+			<gd_item id="152201642" /><!-- Design: Necsium Orb -->
+			<gd_item id="152220512" /><!-- Design: Necsium Pistol -->
+			<gd_item id="152201593" /><!-- Design: Necsium Polearm -->
+			<gd_item id="152201634" /><!-- Design: Necsium Ring -->
+			<gd_item id="152201638" /><!-- Design: Necsium Staff -->
+			<gd_item id="152201598" /><!-- Design: Nexium Chausses -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Surkana Recipes (Elyos)" chance="0.075" restriction_race="ELYOS">
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+		</gd_ratings>
+		<gd_maps>
+			<gd_map map_id="300040000" /><!-- Dark Poeta -->
+		</gd_maps>
+		<gd_items>
+			<gd_item id="152201635" /><!-- Design: Surkana Earrings -->
+			<gd_item id="152201617" /><!-- Design: Surkana Jerkin -->
+			<gd_item id="152201616" /><!-- Design: Surkana Shoulderguards -->
+			<gd_item id="152201603" /><!-- Design: Surkana Shoulderplates -->
+			<gd_item id="152201641" /><!-- Design: Surkana Spellbook -->
+			<gd_item id="152201645" /><!-- Design: Surkana Warhammer -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

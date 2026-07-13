@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DELETE_HOUSE_OBJECT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "objectId",
+      "inputs": {"itemObjectId":424242},
+      "payloadHex": "32790600"
+    }
+  ]
+}

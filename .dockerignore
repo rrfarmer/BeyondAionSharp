@@ -1,0 +1,15 @@
+# Keep the Docker build context lean. The .NET image builds need src/,
+# the <module> config+data+sql trees, and docker/. Exclude build output and VCS bloat.
+.git
+.github
+**/.settings
+**/target
+**/bin/
+**/obj/
+**/node_modules/
+**/.vs/
+**/.idea/
+**/*.user
+**/TestResults/
+**/logs/
+*.log

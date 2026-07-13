@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "formula": "StatFunctions.calculateRatingMultiplier",
+  "signature": "int calculateRatingMultiplier(NpcRating npcRating)",
+  "source": "Java",
+  "cases": [
+    { "inputs": {"npcRating": "JUNK"}, "result": 2 },
+    { "inputs": {"npcRating": "NORMAL"}, "result": 2 },
+    { "inputs": {"npcRating": "ELITE"}, "result": 3 },
+    { "inputs": {"npcRating": "HERO"}, "result": 4 },
+    { "inputs": {"npcRating": "LEGENDARY"}, "result": 5 }
+  ]
+}

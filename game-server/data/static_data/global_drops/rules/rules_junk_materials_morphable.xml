@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../global_rules.xsd">
+	<!-- Idian Depths, Levinshor, Kaldor, Enshar, Cygnea drops -->
+	<gd_rule rule_name="Morphable Insect Parts" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007000" /><!-- Pitted Carapace -->
+			<gd_item id="182007018" /><!-- Bumpy Carapace -->
+			<gd_item id="182007036" /><!-- Intact Rare Carapace -->
+			<!-- <gd_item id="186000261"/> --><!-- Ruined Rare Carapace -->
+			<gd_item id="186000279" /><!-- Worn Rare Carapace -->
+			<gd_item id="186000297" /><!-- Flawless Rare Carapace -->
+			<gd_item id="182007009" /><!-- Pitted Feeler -->
+			<gd_item id="182007027" /><!-- Jagged Feeler -->
+			<gd_item id="182007045" /><!-- Intact Rare Feeler -->
+			<!-- <gd_item id="186000270"/> --><!-- Ruined Rare Insect Leg -->
+			<gd_item id="186000288" /><!-- Worn Rare Insect Leg -->
+			<gd_item id="186000306" /><!-- Flawless Rare Insect Leg -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="CRITON" />
+			<gd_npc_group group="CLODWORM" />
+			<gd_npc_group group="FOAM_GHOST" />
+			<gd_npc_group group="NEUTL1" />
+			<gd_npc_group group="NEUTH2" />
+			<gd_npc_group group="OCTASIDE" />
+			<gd_npc_group group="SPAKLE" />
+			<gd_npc_group group="MERDION" />
+			<gd_npc_group group="SPAKY" />
+			<gd_npc_group group="SCORPION" />
+			<gd_npc_group group="NEUTL2" />
+			<gd_npc_group group="POTCRAB" />
+			<gd_npc_group group="DRAKAN_WORKER" />
+			<gd_npc_group group="FLYINGWORM" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Beast Parts" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007001" /><!-- Splintered Talon -->
+			<gd_item id="182007019" /><!-- Fractured Talon -->
+			<gd_item id="182007037" /><!-- Intact Talon -->
+			<!-- <gd_item id="186000262"/> --><!-- Ruined Beast Claw -->
+			<gd_item id="186000280" /><!-- Worn Beast Claw -->
+			<gd_item id="186000298" /><!-- Flawless Beast Claw -->
+			<gd_item id="182007010" /><!-- Splintered Marrowbone -->
+			<gd_item id="182007028" /><!-- Fractured Marrowbone -->
+			<gd_item id="182007046" /><!-- Intact Marrowbone -->
+			<!-- <gd_item id="186000271" /> --><!-- Ruined Beast Bone -->
+			<gd_item id="186000289" /><!-- Worn Beast Bone -->
+			<gd_item id="186000307" /><!-- Flawless Beast Bone -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="BIGHORNDEER" />
+			<gd_npc_group group="BRAX" />
+			<gd_npc_group group="BROHUM_F" />
+			<gd_npc_group group="BROHUM_M" />
+			<gd_npc_group group="DARU" />
+			<gd_npc_group group="DIREBEAST" />
+			<gd_npc_group group="DRAKE" />
+			<gd_npc_group group="FETHLOT" />
+			<gd_npc_group group="GORGON" />
+			<gd_npc_group group="GRIFFONHIGH" />
+			<gd_npc_group group="KALNIF" />
+			<gd_npc_group group="LUPYLLINI" />
+			<gd_npc_group group="MOSBEAR" />
+			<gd_npc_group group="RHINOCE" />
+			<gd_npc_group group="SALIVADO" />
+			<gd_npc_group group="VARANUS_ALLIGATOR" />
+			<gd_npc_group group="ZAIF" />
+			<gd_npc_group group="ETTIN" />
+			<gd_npc_group group="FLOWERWORM" />
+			<gd_npc_group group="WATERWORM" />
+			<gd_npc_group group="POPOKUWIZARD" />
+			<gd_npc_group group="POPOKUASSASSIN" />
+			<gd_npc_group group="POPOKUFIGHTER" />
+			<gd_npc_group group="POPOKUPRIEST" />
+			<gd_npc_group group="BAKU" />
+			<gd_npc_group group="HIIV" />
+			<gd_npc_group group="MANDURIT" />
+			<gd_npc_group group="BAT" />
+			<gd_npc_group group="CRESTLICH" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Minerals" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007002" /><!-- Pitted Ore -->
+			<gd_item id="182007020" /><!-- Jagged Ore -->
+			<gd_item id="182007038" /><!-- Intact Rare Ore -->
+			<!-- <gd_item id="186000263"/> --><!-- Ruined Rare Ore -->
+			<gd_item id="186000281" /><!-- Worn Rare Ore -->
+			<gd_item id="186000299" /><!-- Flawless Rare Ore -->
+			<gd_item id="182007011" /><!-- Inactive Metal Powder -->
+			<gd_item id="182007029" /><!-- Barren Metal Powder -->
+			<gd_item id="182007047" /><!-- Intact Metal Powder -->
+			<!-- <gd_item id="186000272"/> --><!-- Ruined Metal Powder -->
+			<gd_item id="186000290" /><!-- Worn Metal Powder -->
+			<gd_item id="186000308" /><!-- Flawless Metal Powder -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="ANCIENTARM" />
+			<gd_npc_group group="MAIDENGOLEM" />
+			<gd_npc_group group="SKELETON" />
+			<gd_npc_group group="SOULEDSTONE" />
+			<gd_npc_group group="SOULEDSTONE_CRYSTAL" />
+			<gd_npc_group group="STATUE_M" />
+			<gd_npc_group group="STONEGOLEM" />
+			<gd_npc_group group="ZOMBIE" />
+			<gd_npc_group group="MIMIC" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Crystals" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007003" /><!-- Pitted Idium Crystal -->
+			<gd_item id="182007021" /><!-- Jagged Idium Crystal -->
+			<gd_item id="182007039" /><!-- Intact Idium Crystal -->
+			<!-- <gd_item id="186000264"/> --><!-- Ruined Idium Crystal -->
+			<gd_item id="186000282" /><!-- Worn Idium Crystal -->
+			<gd_item id="186000300" /><!-- Flawless Idium Crystal -->
+			<gd_item id="182007012" /><!-- Clouded Crystal -->
+			<gd_item id="182007030" /><!-- Hazy Crystal -->
+			<gd_item id="182007048" /><!-- Intact Opaque Crystal -->
+			<!-- <gd_item id="186000273"/> --><!-- Ruined Hazy Crystal -->
+			<gd_item id="186000291" /><!-- Worn Hazy Crystal -->
+			<gd_item id="186000309" /><!-- Flawless Hazy Crystal -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="COMAD" />
+			<gd_npc_group group="MIMIC_CALTROPS" />
+			<gd_npc_group group="PHAINI" />
+			<gd_npc_group group="SHULACKASSASSIN" />
+			<gd_npc_group group="SHULACKBARD" />
+			<gd_npc_group group="SHULACKFIGHTER" />
+			<gd_npc_group group="SHULACKGUNNER" />
+			<gd_npc_group group="SHULACKPRIEST" />
+			<gd_npc_group group="SHULACKRANGER" />
+			<gd_npc_group group="SHULACKRIDER" />
+			<gd_npc_group group="SHULACKWIZARD" />
+			<gd_npc_group group="TESINON" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Elim Essences" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007004" /><!-- Chunky Elim Sap -->
+			<gd_item id="182007022" /><!-- Lumpy Elim Sap -->
+			<gd_item id="182007040" /><!-- Intact Elim Sap -->
+			<!-- <gd_item id="186000265" /> --><!-- Ruined Ancient Elim Sap -->
+			<gd_item id="186000283" /><!-- Worn Ancient Elim Sap -->
+			<gd_item id="186000301" /><!-- Flawless Ancient Elim Sap -->
+			<gd_item id="182007013" /><!-- Molding Elim Essence -->
+			<gd_item id="182007031" /><!-- Decayed Elim Essence -->
+			<gd_item id="182007049" /><!-- Intact Elim Essence -->
+			<!-- <gd_item id="186000274" /> --><!-- Ruined Ancient Elim Essence -->
+			<gd_item id="186000292" /><!-- Worn Ancient Elim Essence -->
+			<gd_item id="186000310" /><!-- Flawless Ancient Elim Essence -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="CORN" />
+			<gd_npc_group group="DIONAEA" />
+			<gd_npc_group group="FAKETREE" />
+			<gd_npc_group group="FELLIAL" />
+			<gd_npc_group group="FLOWERWORM" />
+			<gd_npc_group group="FUNGUS" />
+			<gd_npc_group group="MUDTHORN" />
+			<gd_npc_group group="ROTTENTREE" />
+			<gd_npc_group group="SLIME" />
+			<gd_npc_group group="XIPETO" />
+			<gd_npc_group group="RAFFLESIA" />
+			<gd_npc_group group="MIMIC_PLANTS" />
+			<gd_npc_group group="FUNGY" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Danuar Pieces" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007005" /><!-- Pitted Accessory Bits -->
+			<gd_item id="182007023" /><!-- Jagged Accessory Bits -->
+			<gd_item id="182007041" /><!-- Intact  Accessory Bits -->
+			<!-- <gd_item id="186000266" /> --><!-- Ruined Danuar Accessory Piece -->
+			<gd_item id="186000284" /><!-- Worn Danuar Accessory Piece -->
+			<gd_item id="186000302" /><!-- Flawless Danuar Accessory Piece -->
+			<gd_item id="182007014" /><!-- Pitted Relic Bits -->
+			<gd_item id="182007032" /><!-- Jagged Relic Bits -->
+			<gd_item id="182007050" /><!-- Intact Relic Bits -->
+			<!-- <gd_item id="186000275" /> --><!-- Ruined Danuar Relic Piece -->
+			<gd_item id="186000293" /><!-- Worn Danuar Relic Piece -->
+			<gd_item id="186000311" /><!-- Flawless Danuar Relic Piece -->
+		</gd_items>
+		<gd_races>
+			<gd_race race="DEMIHUMANOID" />
+			<gd_race race="DRAKAN" />
+			<gd_race race="LIZARDMAN" />
+		</gd_races>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Spirit Essences" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007006" /><!-- Damaged Spirit Fragment -->
+			<gd_item id="182007024" /><!-- Rough Spirit Fragment -->
+			<gd_item id="182007042" /><!-- Intact Spirit Fragment -->
+			<!-- <gd_item id="186000267" /> --><!-- Ruined Spirit Fragment -->
+			<gd_item id="186000285" /><!-- Worn Spirit Fragment -->
+			<gd_item id="186000303" /><!-- Flawless Spirit Fragment -->
+			<gd_item id="182007015" /><!-- Damaged Spirit Essence -->
+			<gd_item id="182007033" /><!-- Rough Spirit Essence -->
+			<gd_item id="182007051" /><!-- Intact Spirit Essence -->
+			<!-- <gd_item id="186000276" /> --><!-- Spirited Ruined Essence -->
+			<gd_item id="186000294" /><!-- Worn Spirited Essence -->
+			<gd_item id="186000312" /><!-- Flawless Spirited Essence -->
+		</gd_items>
+		<gd_npc_names>
+			<gd_npc_name function="CONTAINS" value="spirit" />
+			<gd_npc_name function="CONTAINS" value="seiren" />
+		</gd_npc_names>
+		<gd_races>
+			<gd_race race="ELEMENTAL" />
+		</gd_races>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Old Manastones" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007007" /><!-- Old Used Manastone -->
+			<gd_item id="182007025" /><!-- Jagged Old Manastone -->
+			<gd_item id="182007043" /><!-- Intact Ancient Manastone -->
+			<!-- <gd_item id="186000268" /> --><!-- Ruined Ancient Manastone Piece -->
+			<gd_item id="186000286" /><!-- Worn Ancient Manastone Piece -->
+			<gd_item id="186000304" /><!-- Flawless Ancient Manastone Piece -->
+			<gd_item id="182007016" /><!-- Ancient Used Manastone -->
+			<gd_item id="182007034" /><!-- Anient Old Manastone -->
+			<gd_item id="182007052" /><!-- Intact Ancient Manastone -->
+			<!-- <gd_item id="186000277" /> --><!-- Ruined Ancient Manastone Fragment -->
+			<gd_item id="186000295" /><!-- Worn Ancient Manastone Fragment -->
+			<gd_item id="186000313" /><!-- Flawless Ancient Manastone Fragment -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="CHERUBIM4" />
+			<gd_npc_group group="DRAKANFIGHTER" />
+			<gd_npc_group group="DRAKANFIGHTERF" />
+			<gd_npc_group group="DRAKANMAGE" />
+			<gd_npc_group group="DRAKANMUTANT" />
+			<gd_npc_group group="EVILEYE" />
+			<gd_npc_group group="FLYINGWORM" />
+			<gd_npc_group group="GHOST" />
+			<gd_npc_group group="LIZARDMANFIGHTER" />
+			<gd_npc_group group="LIZARDMANWIZARD" />
+			<gd_npc_group group="MIMIC_CALTROPS" />
+			<gd_npc_group group="NAGAMAGE" />
+			<gd_npc_group group="PORGUSS" />
+			<gd_npc_group group="RATMANWARRIORM" />
+			<gd_npc_group group="ROTTENTREE" />
+			<gd_npc_group group="SAAM" />
+			<gd_npc_group group="SKELETON" />
+			<gd_npc_group group="SOULEDSTONE" />
+			<gd_npc_group group="STONEGOLEM" />
+			<gd_npc_group group="TESINON" />
+			<gd_npc_group group="UNDEADLIGHT_FI" />
+			<gd_npc_group group="UNDEADLIGHT_WI" />
+			<gd_npc_group group="VAMPIRE" />
+			<gd_npc_group group="MILLIPEDE" />
+			<gd_npc_group group="MILLIPEDE" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+	<gd_rule rule_name="Morphable Skin" chance="25" min_diff="-4" max_diff="5">
+		<gd_items>
+			<gd_item id="182007008" /><!-- Pitted Scale -->
+			<gd_item id="182007026" /><!-- Jagged Scale -->
+			<gd_item id="182007044" /><!-- Intact Rare Scale -->
+			<!-- <gd_item id="186000269" /> --><!-- Ruined Rare Serpent Scale -->
+			<gd_item id="186000287" /><!-- Worn Rare Serpent Scale -->
+			<gd_item id="186000305" /><!-- Flawless Rare Serpent Scale -->
+			<gd_item id="182007017" /><!-- Ruptured Membrane -->
+			<gd_item id="182007035" /><!-- Holey Membrane -->
+			<gd_item id="182007053" /><!-- Intact Rare Membrane -->
+			<!-- <gd_item id="186000278" /> --><!-- Ruined Rare Serpent Membrane -->
+			<gd_item id="186000296" /><!-- Worn Rare Serpent Membrane -->
+			<gd_item id="186000314" /><!-- Flawless Rare Serpent Membrane -->
+		</gd_items>
+		<gd_npc_groups>
+			<gd_npc_group group="CELLATU" />
+			<gd_npc_group group="CHAPIREASSASSIN" />
+			<gd_npc_group group="CHAPIREFIGHTER" />
+			<gd_npc_group group="CHAPIREPRIEST" />
+			<gd_npc_group group="CHAPIREWIZARD" />
+			<gd_npc_group group="CRITON" />
+			<gd_npc_group group="FRILLFAIMAM" />
+			<gd_npc_group group="SPALLER" />
+			<gd_npc_group group="MILLIPEDE" />
+			<gd_npc_group group="STARTURTLE" />
+		</gd_npc_groups>
+		<gd_worlds>
+			<gd_world wd_type="BALAUREA_HIGH" />
+			<gd_world wd_type="BALAUREA_HIGH_INSTANCE" />
+		</gd_worlds>
+	</gd_rule>
+</global_rules>

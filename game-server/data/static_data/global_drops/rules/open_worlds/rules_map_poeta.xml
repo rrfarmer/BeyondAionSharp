@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<gd_rule rule_name="Quest-Start Item" chance="3">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210065" /><!-- Rakelaw Slink -->
+			<gd_npc npc_id="210066" /><!-- Rakelaw Slink -->
+			<gd_npc npc_id="210205" /><!-- Pinkbeak Airon -->
+			<gd_npc npc_id="210259" /><!-- Brownbristle Brax -->
+			<gd_npc npc_id="210260" /><!-- Brownbristle Brax -->
+			<gd_npc npc_id="210668" /><!-- Pinkbeak Airon -->
+			<gd_npc npc_id="210672" /><!-- Brownbristle Braxie -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="182200501" /><!-- quest_1107 Broken Axe Handle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Quest-Start Item" chance="3">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210119" /><!-- Adult Sparkie -->
+			<gd_npc npc_id="210120" /><!-- Elder Sparkie -->
+			<gd_npc npc_id="210195" /><!-- Grove Abex -->
+			<gd_npc npc_id="210196" /><!-- Grove Abex -->
+			<gd_npc npc_id="210261" /><!-- Everglade Sylphen -->
+			<gd_npc npc_id="210262" /><!-- Shortbristle Bellepig -->
+			<gd_npc npc_id="210674" /><!-- Everglade Sylphen -->
+			<gd_npc npc_id="210675" /><!-- Shortbristle Bellepig -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="182200214" /><!-- quest_1114 Namus's Diary -->
+		</gd_items>
+	</gd_rule>
+	<!-- Single Monster Drops -->
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210302" /><!-- Tirratirra -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 4 -->
+			<gd_item id="114500478" /><!-- Tirratirra's Brogans -->
+			<gd_item id="114300462" /><!-- Tirratirra's Boots -->
+			<gd_item id="114100449" /><!-- Tirratirra's Shoes -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Common)" chance="90">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210302" /><!-- Tirratirra -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 4 -->
+			<gd_item id="111300353" /><!-- Tirratirra's Vambrace -->
+			<gd_item id="111500396" /><!-- Tirratirra's Handguards -->
+			<gd_item id="111100354" /><!-- Tirratirra's Gloves -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210305" /><!-- Fauron -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 6 -->
+			<gd_item id="113500471" /><!-- Fauron's Chausses -->
+			<gd_item id="113100432" /><!-- Fauron's Leggings -->
+			<gd_item id="113300448" /><!-- Fauron's Breeches -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Common)" chance="90">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210305" /><!-- Fauron -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 6 -->
+			<gd_item id="123000506" /><!-- Fauron's Belt -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Shield (Rare)" chance="50">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210307" /><!-- Gatekeeper Kirrin -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 8 -->
+			<gd_item id="115000393" /><!-- Sparkie Carapace Shield -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor (Common)" chance="90">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210307" /><!-- Gatekeeper Kirrin -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 8 -->
+			<gd_item id="110500492" /><!-- Agaric Hauberk -->
+			<gd_item id="110300464" /><!-- Agaric Jerkin -->
+			<gd_item id="110100503" /><!-- Agaric Tunic -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Potion" chance="50">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210673" /><!-- Paruru Slowlegs -->
+		</gd_npcs>
+		<gd_items>
+			<!-- Level 8 -->
+			<gd_item id="162000001" /><!-- Carrot Juice of Paruru -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Common)" chance="80">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210162" /><!-- Supervisor Duaguru -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="120001302" /><!-- Duaguru's Earrings -->
+			<gd_item id="120001303" /><!-- Duaguru's Aether Earrings -->
+			<gd_item id="122001456" /><!-- Duaguru's Aether Ring -->
+			<gd_item id="122001455" /><!-- Duaguru's Ring -->
+			<gd_item id="121001205" /><!-- Duaguru's Necklace -->
+			<gd_item id="121001206" /><!-- Duaguru's Aether Necklace -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Accessory (Rare)" chance="70">
+		<gd_maps>
+			<gd_map map_id="210010000" /><!-- Poeta -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="210162" /><!-- Supervisor Duaguru -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="123001266" /><!-- Duaguru's Belt -->
+			<gd_item id="123001265" /><!-- Duaguru's Leather Belt -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

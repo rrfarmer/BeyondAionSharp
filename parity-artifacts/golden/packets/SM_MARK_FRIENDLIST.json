@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MARK_FRIENDLIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "mark",
+      "inputs": {"objectId":790100},
+      "payloadHex": "540E0C00010000"
+    }
+  ]
+}

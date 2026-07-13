@@ -1,0 +1,8 @@
+{
+  "_comment": "Fidelity ratchet baseline. Only ever shrink this (via --update-baseline after deleting slop / splitting god-classes). Never hand-add entries to silence new debt.",
+  "godclass_line_threshold": 3000,
+  "banned_vocab_files": [],
+  "oversized_files": {
+    "src/Aion.GameServer/Services/Admin/AdminHttpService.cs": 3410
+  }
+}

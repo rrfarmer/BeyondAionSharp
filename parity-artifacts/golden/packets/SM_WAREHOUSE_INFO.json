@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_WAREHOUSE_INFO",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "warehouseInfoRegularOneItem",
+      "inputs": {"warehouseType":1,"expandLvl":3,"firstPacket":true,"itemCount":1},
+      "payloadHex": "010103010001003223011041AA980900240057AF0A0000002C00002B1A0700000000000000440061006500760061000000000000000000000000000000000000000000001200FFFF"
+    },
+    {
+      "name": "warehouseInfoOtherEmpty",
+      "inputs": {"warehouseType":2,"expandLvl":0,"firstPacket":false,"itemCount":0},
+      "payloadHex": "02000000000000"
+    }
+  ]
+}

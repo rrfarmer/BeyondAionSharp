@@ -1,0 +1,828 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../global_rules.xsd">
+	<gd_rule rule_name="Named Ancient Coin" chance="50">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000237" min_count="5" max_count="10"/><!-- Ancient Coin -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Blood Mark" chance="10">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000236" min_count="3" max_count="5"/><!-- Blood Mark -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Conqueror's Mark" chance="25">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="186000238" min_count="20" max_count="30"/><!-- Conqueror's Mark -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Amplification Stone" chance="1.5">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166500002"/><!-- Amplification Stone -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Revival Stone" chance="3">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="161000004"/><!-- Tombstone of Revival -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Manastone Box" chance="15">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053322"/><!-- Levinshor Alliance Manastone Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Ancient Manastone Box" chance="8">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053323"/><!-- Levinshor Alliance Ancient Manastone Box -->
+			<gd_item id="188053324"/><!-- Levinshor Alliance Noble Ancient Manastone Box -->
+			<gd_item id="188053325"/><!-- Heavy Ancient Manastone Box of Levinshor Alliance -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Composit Manastone Box" chance="3">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053326"/><!-- Levinshor Alliance Composite Manastone Box -->
+			<gd_item id="188053327"/><!-- Levinshor Alliance Noble Composite Manastone Box -->
+			<gd_item id="188053328"/><!-- Levinshor Alliance Heavy Composite Manastone Box -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Rare Idian" chance="3">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166050055"/><!-- Audacious Idian: Physical Attack -->
+			<gd_item id="166050056"/><!-- Audacious Idian: Magical Attack -->
+			<gd_item id="166050057"/><!-- Audacious Idian: Physical Defense -->
+			<gd_item id="166050058"/><!-- Audacious Idian: Magical Defense -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Legend Idian" chance="2">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="166050059"/><!-- Sparkling Idian: Physical Attack -->
+			<gd_item id="166050060"/><!-- Sparkling Idian: Magical Attack -->
+			<gd_item id="166050061"/><!-- Sparkling Idian: Physical Defense -->
+			<gd_item id="166050062"/><!-- Sparkling Idian: Magical Defense -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mythic Armor" chance="100">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235064"/><!-- Empowered Veille -->
+			<gd_npc npc_id="235065"/><!-- Empowered Mastarius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101834"/><!-- Delegate's Tunic -->
+			<gd_item id="111101648"/><!-- Delegate's Gloves -->
+			<gd_item id="112101598"/><!-- Delegate's Pauldrons -->
+			<gd_item id="113101660"/><!-- Delegate's Leggings -->
+			<gd_item id="114101694"/><!-- Delegate's Shoes -->
+			
+			<gd_item id="110301807"/><!-- Delegate's Jerkin -->
+			<gd_item id="111301745"/><!-- Delegate's Vambrace -->
+			<gd_item id="112301684"/><!-- Delegate's Shoulderguards -->
+			<gd_item id="113301776"/><!-- Delegate's Breeches -->
+			<gd_item id="114301813"/><!-- Delegate's Boots -->
+			
+			<gd_item id="110551137"/><!-- Delegate's Hauberk -->
+			<gd_item id="111501696"/><!-- Delegate's Handguards -->
+			<gd_item id="112501635"/><!-- Delegate's Spaulders -->
+			<gd_item id="113501714"/><!-- Delegate's Chausses -->
+			<gd_item id="114501724"/><!-- Delegate's Brogans -->
+			
+			<gd_item id="110601620"/><!-- Delegate's Breastplate -->
+			<gd_item id="111601583"/><!-- Delegate's Gauntlets -->
+			<gd_item id="112601565"/><!-- Delegate's Shoulderplates -->
+			<gd_item id="113601566"/><!-- Delegate's Greeves -->
+			<gd_item id="114601573"/><!-- Delegate's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mythic Armor Additional" chance="50">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235064"/><!-- Empowered Veille -->
+			<gd_npc npc_id="235065"/><!-- Empowered Mastarius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101834"/><!-- Delegate's Tunic -->
+			<gd_item id="111101648"/><!-- Delegate's Gloves -->
+			<gd_item id="112101598"/><!-- Delegate's Pauldrons -->
+			<gd_item id="113101660"/><!-- Delegate's Leggings -->
+			<gd_item id="114101694"/><!-- Delegate's Shoes -->
+			
+			<gd_item id="110301807"/><!-- Delegate's Jerkin -->
+			<gd_item id="111301745"/><!-- Delegate's Vambrace -->
+			<gd_item id="112301684"/><!-- Delegate's Shoulderguards -->
+			<gd_item id="113301776"/><!-- Delegate's Breeches -->
+			<gd_item id="114301813"/><!-- Delegate's Boots -->
+			
+			<gd_item id="110551137"/><!-- Delegate's Hauberk -->
+			<gd_item id="111501696"/><!-- Delegate's Handguards -->
+			<gd_item id="112501635"/><!-- Delegate's Spaulders -->
+			<gd_item id="113501714"/><!-- Delegate's Chausses -->
+			<gd_item id="114501724"/><!-- Delegate's Brogans -->
+			
+			<gd_item id="110601620"/><!-- Delegate's Breastplate -->
+			<gd_item id="111601583"/><!-- Delegate's Gauntlets -->
+			<gd_item id="112601565"/><!-- Delegate's Shoulderplates -->
+			<gd_item id="113601566"/><!-- Delegate's Greeves -->
+			<gd_item id="114601573"/><!-- Delegate's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mythic Armor Additional" chance="30">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235064"/><!-- Empowered Veille -->
+			<gd_npc npc_id="235065"/><!-- Empowered Mastarius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="110101834"/><!-- Delegate's Tunic -->
+			<gd_item id="111101648"/><!-- Delegate's Gloves -->
+			<gd_item id="112101598"/><!-- Delegate's Pauldrons -->
+			<gd_item id="113101660"/><!-- Delegate's Leggings -->
+			<gd_item id="114101694"/><!-- Delegate's Shoes -->
+
+			<gd_item id="110301807"/><!-- Delegate's Jerkin -->
+			<gd_item id="111301745"/><!-- Delegate's Vambrace -->
+			<gd_item id="112301684"/><!-- Delegate's Shoulderguards -->
+			<gd_item id="113301776"/><!-- Delegate's Breeches -->
+			<gd_item id="114301813"/><!-- Delegate's Boots -->
+
+			<gd_item id="110551137"/><!-- Delegate's Hauberk -->
+			<gd_item id="111501696"/><!-- Delegate's Handguards -->
+			<gd_item id="112501635"/><!-- Delegate's Spaulders -->
+			<gd_item id="113501714"/><!-- Delegate's Chausses -->
+			<gd_item id="114501724"/><!-- Delegate's Brogans -->
+
+			<gd_item id="110601620"/><!-- Delegate's Breastplate -->
+			<gd_item id="111601583"/><!-- Delegate's Gauntlets -->
+			<gd_item id="112601565"/><!-- Delegate's Shoulderplates -->
+			<gd_item id="113601566"/><!-- Delegate's Greeves -->
+			<gd_item id="114601573"/><!-- Delegate's Sabatons -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Unique Weapon" chance="100">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235064"/><!-- Empowered Veille -->
+			<gd_npc npc_id="235065"/><!-- Empowered Mastarius -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="100001703"/><!-- Levinshor Conqueror's Sword -->
+			<gd_item id="100101302"/><!-- Levinshor Conqueror's Mace -->
+			<gd_item id="100201474"/><!-- Levinshor Conqueror's Dagger -->
+			<gd_item id="100501288"/><!-- Levinshor Conqueror's Orb -->
+			<gd_item id="100601398"/><!-- Levinshor Conqueror's Spellbook -->
+			<gd_item id="100901329"/><!-- Levinshor Conqueror's Greatsword -->
+			<gd_item id="101301234"/><!-- Levinshor Conqueror's Polearm -->
+			<gd_item id="101501325"/><!-- Levinshor Conqueror's Staff -->
+			<gd_item id="101701339"/><!-- Levinshor Conqueror's Bow -->
+			<gd_item id="101801189"/><!-- Levinshor Conqueror's Pistol -->
+			<gd_item id="101901100"/><!-- Levinshor Conqueror's Aethercannon -->
+			<gd_item id="102001217"/><!-- Levinshor Conqueror's Harp -->
+			<gd_item id="102101023"/><!-- Levinshor Conqueror's Cipher-Blade -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Vocolith Activation" chance="1">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="185000216"/><!-- Ancestor's Relic -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Bundle" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235217"/><!-- Lava Arm Cruego -->
+			<gd_npc npc_id="235218"/><!-- Cruel Lamia -->
+			<gd_npc npc_id="235219"/><!-- Destroyer Feld -->
+			<gd_npc npc_id="235220"/><!-- Ruthless Tyrannica -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="188053339"/><!-- Ancestor's Reward Bundle -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor Material" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235217"/><!-- Lava Arm Cruego -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012633"/><!-- Forest Denku's Chest Crux -->
+			<gd_item id="152012635"/><!-- Forest Denku's Foot Crux -->
+			<gd_item id="152012636"/><!-- Forest Denku's Hand Crux -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor Material" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235218"/><!-- Cruel Lamia -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012634"/><!-- Forest Denku's Leg Crux -->
+			<gd_item id="152012637"/><!-- Forest Denku's Shoulder Crux -->
+			<gd_item id="152012638"/><!-- Forest Denku's Head Crux -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor Material" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235219"/><!-- Destroyer Feld -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012639"/><!-- Sandwash Tomul's Chest Crux -->
+			<gd_item id="152012641"/><!-- Sandwash Tomul's Foot Crux -->
+			<gd_item id="152012642"/><!-- Sandwash Tomul's Hand Crux -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Armor Material" chance="100" member_limit="6">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235220"/><!-- Ruthless Tyrannica -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012640"/><!-- Sandwash Tomul's Leg Crux -->
+			<gd_item id="152012643"/><!-- Sandwash Tomul's Shoulder Crux -->
+			<gd_item id="152012644"/><!-- Sandwash Tomul's Head Crux -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mote" chance="7.5">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235346"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235347"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235348"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235349"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235350"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235351"/><!-- Denku Fang -->
+			<gd_npc npc_id="235352"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235353"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012608"/><!-- Protection Mote -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mote" chance="7.5">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235354"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235355"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235356"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235357"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235358"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235359"/><!-- Denku Fang -->
+			<gd_npc npc_id="235360"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235361"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012597"/><!-- Unity Mote -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mote" chance="7.5">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235362"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235363"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235364"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235365"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235366"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235367"/><!-- Denku Fang -->
+			<gd_npc npc_id="235368"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235369"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012596"/><!-- Harmony Mote -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mote" chance="7.5">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235370"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235371"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235372"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235373"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235374"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235375"/><!-- Denku Fang -->
+			<gd_npc npc_id="235376"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235377"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012609"/><!-- Vigor Mote -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Named Mote" chance="7.5">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_npcs>
+			<gd_npc npc_id="235378"/><!-- Tomul Brawler -->
+			<gd_npc npc_id="235379"/><!-- Tomul Cutthroat -->
+			<gd_npc npc_id="235380"/><!-- Tomul Shaman -->
+			<gd_npc npc_id="235381"/><!-- Tomul Aquamancer -->
+			<gd_npc npc_id="235382"/><!-- Denku Feralclaw -->
+			<gd_npc npc_id="235383"/><!-- Denku Fang -->
+			<gd_npc npc_id="235384"/><!-- Denku Restorer -->
+			<gd_npc npc_id="235385"/><!-- Denku Feralmage -->
+		</gd_npcs>
+		<gd_items>
+			<gd_item id="152012607"/><!-- Valiance Mote -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Idium Shard" chance="3">
+		<gd_maps>
+			<gd_map map_id="600100000"/><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="LOBNERU_LAGOON_600100000"/><!-- Chapir Settlement -->
+			<gd_zone zone="MOON_THICKET_600100000"/><!-- Popoku settlement -->
+			<gd_zone zone="FLAMEBERTH_DOWNS_600100000"/><!-- Tiamat Basin -->
+		</gd_zones>
+		<gd_items>
+			<gd_item id="152012622"/><!-- Idium Shard -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_BLOCK_RESPONSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "blockSuccessful",
+      "inputs": {"code":0,"playerName":"Nezekan"},
+      "payloadHex": "4E0065007A0065006B0061006E00000000"
+    },
+    {
+      "name": "listFull",
+      "inputs": {"code":3,"playerName":"Siel"},
+      "payloadHex": "5300690065006C00000003"
+    }
+  ]
+}

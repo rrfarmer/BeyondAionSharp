@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_QUESTION_WINDOW",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "withParam",
+      "inputs": {"code":50028,"senderId":700500,"rangeOrCooldownSeconds":30,"params":["Vaizel"]},
+      "payloadHex": "6CC300005600610069007A0065006C00000000000000000000000154B00A001E000000"
+    },
+    {
+      "name": "noParam",
+      "inputs": {"code":60000,"senderId":0,"rangeOrCooldownSeconds":0,"params":[]},
+      "payloadHex": "60EA000000000000000000000000000000000000000000"
+    }
+  ]
+}

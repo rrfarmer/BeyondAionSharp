@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DELETE_CHARACTER",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "present",
+      "inputs": {"playerObjId":654321,"deletionTime":86400},
+      "payloadHex": "00000000F1FB090080510100"
+    },
+    {
+      "name": "zero",
+      "inputs": {"playerObjId":0,"deletionTime":0},
+      "payloadHex": "100000000000000000000000"
+    }
+  ]
+}

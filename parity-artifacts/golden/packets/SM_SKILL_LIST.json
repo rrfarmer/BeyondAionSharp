@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SKILL_LIST",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "skillListSilentStigma",
+      "inputs": {"skills":[{"skillId":1001,"skillLvl":5,"skillType":1},{"skillId":1002,"skillLvl":12,"skillType":3}]},
+      "payloadHex": "020001E903050000000000000001EA030C000000000000000300000000"
+    }
+  ]
+}

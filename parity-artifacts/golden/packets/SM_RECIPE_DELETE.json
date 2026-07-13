@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_RECIPE_DELETE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "recipeId",
+      "inputs": {"recipeId":15001},
+      "payloadHex": "993A0000"
+    }
+  ]
+}

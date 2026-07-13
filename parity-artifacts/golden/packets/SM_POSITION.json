@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_POSITION",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "position",
+      "inputs": {"objectId":700102,"x":100.0,"y":200.0,"z":300.0,"heading":0},
+      "payloadHex": "C6AE0A000000C842000048430000964300"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_FRIEND_NOTIFY",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "login",
+      "inputs": {"code":0,"name":"Nezekan"},
+      "payloadHex": "4E0065007A0065006B0061006E00000000"
+    },
+    {
+      "name": "logout",
+      "inputs": {"code":1,"name":"Siel"},
+      "payloadHex": "5300690065006C00000001"
+    }
+  ]
+}

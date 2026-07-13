@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<global_rules xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../global_rules.xsd">
+	<!-- Animas -->
+	<!-- Kaldor -->
+	<gd_rule rule_name="Grassy Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="EMBERPINE_PASS_600090000" />
+			<gd_zone zone="STILLNESS_HOLLOW_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012559" /><!-- Grassy Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Tainted Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="PATH_OF_REVERANCE_600090000" />
+			<gd_zone zone="FELSPIRE_TIMBERLAND_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012560" /><!-- Tainted Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Frozen Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="PATH_OF_REVERANCE_600090000" />
+			<gd_zone zone="FELSPIRE_TIMBERLAND_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012561" /><!-- Frozen Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Windy Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="HEROS_FALL_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012562" /><!-- Windy Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Sylvan Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="VALIANTS_WATCH_600090000" />
+			<gd_zone zone="STONEGRAVE_RUINS_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012563" /><!-- Sylvan Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Mysterious Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="VALIANTS_WATCH_600090000" />
+			<gd_zone zone="STONEGRAVE_RUINS_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012564" /><!-- Mysterious Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Snowy Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="SMOLDERING_CRAG_600090000" />
+			<gd_zone zone="MOLTEN_CLIFFS_600090000" />
+			<gd_zone zone="ASHEN_GLADE_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012565" /><!-- Snowy Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Devasted Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="SMOLDERING_CRAG_600090000" />
+			<gd_zone zone="MOLTEN_CLIFFS_600090000" />
+			<gd_zone zone="ASHEN_GLADE_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012566" /><!-- Devasted Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Mossy Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="EMBERPINE_PASS_600090000" />
+			<gd_zone zone="STILLNESS_HOLLOW_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012567" /><!-- Mossy Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Waterlogged Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="600090000" /><!-- Kaldor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="HEROS_FALL_600090000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012568" /><!-- Waterlogged Anima -->
+		</gd_items>
+	</gd_rule>
+	<!-- Levinshor & Idian Depths -->
+	<gd_rule rule_name="Vengeful Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="IDE_MINE_ALPHA_220100000" />
+			<gd_zone zone="IDE_MINE_ALPHA_1_220100000" />
+			<gd_zone zone="IDE_MINE_ALPHA_2_210090000" />
+			<gd_zone zone="IDE_MINE_ALPHA_3_210090000" />
+			<gd_zone zone="THE_OLD_ROAD_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012569" /><!-- Vengeful Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Hopeless Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="IDE_MINE_BETA_220100000" />
+			<gd_zone zone="IDE_MINE_BETA_1_220100000" />
+			<gd_zone zone="IDE_MINE_BETA_2_220100000" />
+			<gd_zone zone="IDE_MINE_BETA_3_220100000" />
+			<gd_zone zone="IDE_MINE_BETA_4_210090000" />
+			<gd_zone zone="IDE_MINE_BETA_5_210090000" />
+			<gd_zone zone="IDE_MINE_BETA_6_210090000" />
+			<gd_zone zone="IDE_MINE_BETA_7_210090000" />
+			<gd_zone zone="TIDEWASH_COVE_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012570" /><!-- Hopeless Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Zealous Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="IDE_MINE_GAMMA_220100000" />
+			<gd_zone zone="IDE_MINE_GAMMA_1_220100000" />
+			<gd_zone zone="IDE_MINE_GAMMA_2_210090000" />
+			<gd_zone zone="IDE_MINE_GAMMA_3_210090000" />
+			<gd_zone zone="LOBNERU_LAGOON_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012571" /><!-- Zealous Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Ambitious Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="IDIUM_REACTOR_COMPLEX_220100000" />
+			<gd_zone zone="IDIUM_REACTOR_COMPLEX_1_210090000" />
+			<gd_zone zone="LAWBRINGERS_CUT_600100000" />
+			<gd_zone zone="WHISPERLEAF_FOREST_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012572" /><!-- Ambitious Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Remorseful Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="TOWER_APPROACH_220100000" />
+			<gd_zone zone="TOWER_APPROACH_1_210090000" />
+			<gd_zone zone="DANUAR_PROCESSIONAL_220100000" />
+			<gd_zone zone="DANUAR_PROCESSIONAL_1_210090000" />
+			<gd_zone zone="THE_OLD_ROAD_600100000" />
+			<gd_zone zone="TWILIGHT_UNDERWOOD_600100000" />
+			<gd_zone zone="FLAMEBERTH_DOWNS_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012573" /><!-- Remorseful Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Avaricious Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="GRAND_PASSAGE_220100000" />
+			<gd_zone zone="GRAND_PASSAGE_1_210090000" />
+			<gd_zone zone="MOON_THICKET_600100000" />
+			<gd_zone zone="ASCENSION_TEMPLE_RUINS_600100000" />
+			<gd_zone zone="TIDEWASH_COVE_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012574" /><!-- Avaricious Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Desperate Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="BERITRAS_FIST_GARRISON_220100000" />
+			<gd_zone zone="BERITRAS_FIST_GARRISON_1_210090000" />
+			<gd_zone zone="CLAWED_FIST_GARRISON_220100000" />
+			<gd_zone zone="CLAWED_FIST_GARRISON_1_210090000" />
+			<gd_zone zone="LOBNERU_LAGOON_600100000" />
+			<gd_zone zone="MOON_THICKET_600100000" />
+			<gd_zone zone="ASCENSION_TEMPLE_RUINS_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012575" /><!-- Desperate Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Deluded Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="FIRST_CANAL_220100000" />
+			<gd_zone zone="FIRST_CANAL_1_210090000" />
+			<gd_zone zone="SECOND_CANAL_220100000" />
+			<gd_zone zone="SECOND_CANAL_1_210090000" />
+			<gd_zone zone="LAWBRINGERS_CUT_600100000" />
+			<gd_zone zone="WHISPERLEAF_FOREST_600100000" />
+			<gd_zone zone="VALPURA_HEIGHTS_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012576" /><!-- Deluded Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Wrathful Anima" chance="10">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+			<gd_map map_id="600100000" /><!-- Levinshor -->
+		</gd_maps>
+		<gd_zones>
+			<gd_zone zone="TOWER_ENTRYWAY_220100000" />
+			<gd_zone zone="TOWER_ENTRYWAY_1_210090000" />
+			<gd_zone zone="TOWER_MAUSOLEUM_220100000" />
+			<gd_zone zone="TOWER_MAUSOLEUM_1_210090000" />
+			<gd_zone zone="DANUAR_MAUSOLEUM_220100000" />
+			<gd_zone zone="DANUAR_MAUSOLEUM_1_210090000" />
+			<gd_zone zone="TWILIGHT_UNDERWOOD_600100000" />
+			<gd_zone zone="FLAMEBERTH_DOWNS_600100000" />
+		</gd_zones>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012577" /><!-- Wrathful Anima -->
+		</gd_items>
+	</gd_rule>
+	<gd_rule rule_name="Random Anima" chance="25">
+		<gd_maps>
+			<gd_map map_id="210090000" /><!-- Idian Depths Light -->
+			<gd_map map_id="220100000" /><!-- Idian Depths Dark -->
+		</gd_maps>
+		<gd_ratings>
+			<gd_rating rating="NORMAL" />
+			<gd_rating rating="ELITE" />
+			<gd_rating rating="HERO" />
+		</gd_ratings>
+		<gd_items>
+			<gd_item id="152012559" /><!-- Grassy Anima -->
+			<gd_item id="152012560" /><!-- Tainted Anima -->
+			<gd_item id="152012561" /><!-- Frozen Anima -->
+			<gd_item id="152012562" /><!-- Windy Anima -->
+			<gd_item id="152012563" /><!-- Sylvan Anima -->
+			<gd_item id="152012564" /><!-- Mysterious Anima -->
+			<gd_item id="152012565" /><!-- Snowy Anima -->
+			<gd_item id="152012566" /><!-- Devasted Anima -->
+			<gd_item id="152012567" /><!-- Mossy Anima -->
+			<gd_item id="152012568" /><!-- Waterlogged Anima -->
+			<gd_item id="152012569" /><!-- Vengeful Anima -->
+			<gd_item id="152012570" /><!-- Hopeless Anima -->
+			<gd_item id="152012571" /><!-- Zealous Anima -->
+			<gd_item id="152012572" /><!-- Ambitious Anima -->
+			<gd_item id="152012573" /><!-- Remorseful Anima -->
+			<gd_item id="152012574" /><!-- Avaricious Anima -->
+			<gd_item id="152012575" /><!-- Desperate Anima -->
+			<gd_item id="152012576" /><!-- Deluded Anima -->
+			<gd_item id="152012577" /><!-- Wrathful Anima -->
+		</gd_items>
+	</gd_rule>
+</global_rules>

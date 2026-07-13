@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SUMMON_OWNER_REMOVE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "summon",
+      "inputs": {"summonObjId":700001},
+      "payloadHex": "61AE0A00"
+    }
+  ]
+}

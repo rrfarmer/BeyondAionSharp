@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_MACRO_RESULT",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "created",
+      "inputs": {"code":0},
+      "payloadHex": "00"
+    },
+    {
+      "name": "deleted",
+      "inputs": {"code":1},
+      "payloadHex": "01"
+    }
+  ]
+}

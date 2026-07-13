@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SKILL_REMOVE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "normalSkill",
+      "inputs": {"skillId":1001,"skillLvl":5,"skillType":0},
+      "payloadHex": "E9030500"
+    },
+    {
+      "name": "normalStigma",
+      "inputs": {"skillId":31001,"skillLvl":12,"skillType":1},
+      "payloadHex": "19790001"
+    },
+    {
+      "name": "linkedStigma",
+      "inputs": {"skillId":31002,"skillLvl":9,"skillType":3},
+      "payloadHex": "1A790003"
+    },
+    {
+      "name": "tappingProfession",
+      "inputs": {"skillId":30001,"skillLvl":250,"skillType":0},
+      "payloadHex": "31750100"
+    },
+    {
+      "name": "morphSkill",
+      "inputs": {"skillId":40009,"skillLvl":100,"skillType":0},
+      "payloadHex": "499C0100"
+    },
+    {
+      "name": "craftingSkill",
+      "inputs": {"skillId":40001,"skillLvl":300,"skillType":0},
+      "payloadHex": "419C0000"
+    }
+  ]
+}

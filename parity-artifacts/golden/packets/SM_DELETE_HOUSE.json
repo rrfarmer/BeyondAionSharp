@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_DELETE_HOUSE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "address",
+      "inputs": {"addressId":31001},
+      "payloadHex": "19790000"
+    }
+  ]
+}

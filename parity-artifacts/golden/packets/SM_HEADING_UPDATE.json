@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_HEADING_UPDATE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "heading",
+      "inputs": {"objectId":700101,"heading":0},
+      "payloadHex": "C5AE0A0000"
+    }
+  ]
+}

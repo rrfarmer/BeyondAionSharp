@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SECONDARY_SHOW_DECOMPOSABLE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "oneItem",
+      "inputs": {"objectId":700402,"items":[[188052612,5]]},
+      "payloadHex": "F2AF0A000000000001008474350B0500000000000001"
+    }
+  ]
+}

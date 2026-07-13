@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_SYSTEM_MESSAGE",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "noParams",
+      "inputs": {"ctor":"msgId","msgId":901354,"params":[]},
+      "payloadHex": "190000000000EAC00D000000"
+    },
+    {
+      "name": "intAndString",
+      "inputs": {"ctor":"msgId","msgId":1200000,"params":[{"i":1234},{"s":"Tiamat"}]},
+      "payloadHex": "190000000000804F120002310032003300340000005400690061006D0061007400000000"
+    },
+    {
+      "name": "twoStringsOneInt",
+      "inputs": {"ctor":"msgId","msgId":1200002,"params":[{"s":"Pet"},{"i":777},{"s":"Mob"}]},
+      "payloadHex": "190000000000824F120003500065007400000037003700370000004D006F006200000000"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_LEAVE_GROUP_MEMBER",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "leave",
+      "inputs": {},
+      "payloadHex": "00000000003F000000000000000000"
+    }
+  ]
+}

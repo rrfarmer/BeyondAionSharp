@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<quest_scripts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="quest_script_data.xsd">
+	<!--
+		[BEGIN] SUMMARY
+			13500 [REMOVED] [Achievement] Examine the Katalam Base
+			13509 [REMOVED] [Hero] Achievements in Katalam
+			13510 [REMOVED] [Hero] Conquering Katalam
+			13511 [REMOVED] [Hero/Daily/Group] First Accomplishment
+			13512 [REMOVED] [Hero/Daily/Group] Second Accomplishment
+			13513 [REMOVED] [Hero/Daily/Group] Third Accomplishment
+			13514 [REMOVED] [Hero/Daily/Group] Fourth Accomplishment
+			13515 [REMOVED] [Hero/Alliance] Pashid's Claw
+			13516 [REMOVED] [Hero/Group] Genral Disarray
+			13517 [REMOVED] [Hero/Group] An Officer and Asmodian
+			13518 [REMOVED] [Hero/Alliance] Assasination Attempts
+			13519 [REMOVED] [High] The Darker Means of War
+			13520 [REMOVED] [Highest] Tarbosch Must Die, Part I
+			13521 [REMOVED] [Highest] Tarbosch Must Die, Part II
+			13522 [REMOVED] [Highest] Tarbosch Must Die, Part III
+			13523 [REMOVED] [Hero] Complete the Danuar Mysticarium
+			13524 [REMOVED] [Hero/Group] Complete the Idgel Research Center
+			13525 [REMOVED] [Hero/Group] Complete the Void Cube
+			13526 [REMOVED] [Hero] Ruler of Katalam
+			13527 [REMOVED] [Hero/Group] Reliving Old Habits
+			13528 [REMOVED] [Hero/Group] Trust Among Friends
+			13529 [REMOVED] [Hero/Alliance] In Every Instance
+			13530 [REMOVED] [Hero] A Hero's Reward
+			13531 [REMOVED] [Hero/Daily/Group] Old Habits Die Hard
+			13900 [REMOVED] [Hero] When Kaisinel Calls	// NPC-Dialogs are missing
+			13901 [REMOVED] [Hero/Group] A Test of Courage
+			13902 [REMOVED] [Hero] Bracing for Balaurea
+			13903 [REMOVED] [Hero] Beyond the Basics
+			13904 [REMOVED] [Hero/Daily] Ace of Bases
+			13905 [REMOVED] [Hero/Daily] Sweeping the North
+			13906 [REMOVED] [Hero/Daily] Bringing Peace to the East
+			13907 [REMOVED] [Hero/Daily] Striking the Southern Hold
+			13908 [REMOVED] [Hero/Daily] Not so Quiet on the Western Front
+			13909 [REMOVED] [Hero/Group] Kill Their Idols
+			13910 [REMOVED] [Hero/Alliance] Conquering Kaldor
+			13911 [REMOVED] [Hero/Weekly] Four by Four
+			13912 [REMOVED] [Hero/Alliance] O, Captain by Captain
+			13913 [REMOVED] [Hero/Alliance] Dragon's in the Annex
+			13914 [REMOVED] [Hero/Alliance] Full Throttle
+			13915 [REMOVED] [Hero/Weekly/Alliance] Take 2
+			13916 [REMOVED] [Hero/Alliance] A Shadow over Levinshor
+			13917 [REMOVED] [Hero/Group] Snuffing out a Flame
+			13918 [REMOVED] [Hero/Group] Live by the Sword...
+			23500 [REMOVED] [Achievement] Inspect the Katalam Base
+			23509 [REMOVED] [Hero] Building Achievements in Katalam
+			23510 [REMOVED] [Hero] For Honor!
+			23511 [REMOVED] [Hero/Daily/Group] For the Cause!
+			23512 [REMOVED] [Hero/Daily/Group] For our People!
+			23513 [REMOVED] [Hero/Daily/Group] Again, our Victory!
+			23514 [REMOVED] [Hero/Daily/Group] Again, our Honor!
+			23515 [REMOVED] [Hero/Alliance] War Trophies
+			23516 [REMOVED] [Hero/Group] Elyos Heads
+			23517 [REMOVED] [Hero/Group] Chain of Command
+			23518 [REMOVED] [Hero/Alliance] Save the Fortresses!
+			23519 [REMOVED] [Hero] To Take a Fortress
+			23520 [REMOVED] [Hero] Tarbosch's Death 1
+			23521 [REMOVED] [Hero/Group] Tarbosch's Death 2
+			23522 [REMOVED] [Hero/Alliance] Tarbosch's Death 3
+			23523 [REMOVED] [Hero] Conquer the Danuar Mysticarium
+			23524 [REMOVED] [Hero/Group] Conquer the Idgel Research Center
+			23525 [REMOVED] [Hero/Group] Conquer the Void Cube
+			23526 [REMOVED] [Hero] Conqueror of Katalam
+			23527 [REMOVED] [Hero/Group] Old Spirits, Old Grudges
+			23528 [REMOVED] [Hero/Group] Scales and Secrets
+			23529 [REMOVED] [Hero/Force] Repurposing the Past
+			23530 [REMOVED] [Hero] Just Rewards
+			23531 [REMOVED] [Hero/Daily/Group] More Spirits, More Grudges
+			23900 [REMOVED] [Hero] Fate of the Fierce		// NPC-Dialogs are missing
+			23901 [REMOVED] [Hero/Group] A Test of Valiance
+			23902 [REMOVED] [Hero] Prepare to Prevail
+			23903 [REMOVED] [Hero] Prove Your Supremacy
+			23904 [REMOVED] [Hero/Daily] Cover Your Bases
+			23905 [REMOVED] [Hero/Daily] Northern Occupation
+			23906 [REMOVED] [Hero/Daily] Defeat the East
+			23907 [REMOVED] [Hero/Daily] Southern Knockout
+			23908 [REMOVED] [Hero/Daily] Go West, Young Daeva
+			23909 [REMOVED] [Hero/Group] Something Wicked
+			23910 [REMOVED] [Hero/Alliance] Seizing the Moment
+			23911 [REMOVED] [Hero/Weekly] Castles Fall
+			23912 [REMOVED] [Hero/Alliance] Marching Orders
+			23913 [REMOVED] [Hero/Alliance] Sword over Scales
+			23914 [REMOVED] [Hero/Alliance] Stemming the Tide
+			23915 [REMOVED] [Hero/Weekly/Alliance] I'm not Quite Stemmed Yet
+			23916 [REMOVED] [Hero/Alliance] Un-Veille the Agents
+			23917 [REMOVED] [Hero/Group] Knockout, Watchout
+			23918 [REMOVED] [Hero/Group] Can't Stop, Won't Stop
+			80539 [REMOVED] [Hero] Only Because You're the Best
+			80540 [REMOVED] [Hero] Only for the Chosen
+		[END] SUMMARY
+	-->
+</quest_scripts>

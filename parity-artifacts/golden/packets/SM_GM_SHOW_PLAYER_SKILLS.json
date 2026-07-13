@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packet": "SM_GM_SHOW_PLAYER_SKILLS",
+  "opcode": null,
+  "source": "Java",
+  "cases": [
+    {
+      "name": "stigmaLinkedCrafting",
+      "inputs": {"skills":[[11078,5,1],[12345,10,3],[40001,150,0]]},
+      "payloadHex": "0300462B05000000000000000139300A0000000000000003419C960000010000000000"
+    },
+    {
+      "name": "empty",
+      "inputs": {"skills":[]},
+      "payloadHex": "0000"
+    }
+  ]
+}
