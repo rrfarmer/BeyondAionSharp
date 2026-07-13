@@ -53,7 +53,6 @@ public sealed class LoginServerHostedServiceTests
 			bannedIpService,
 			dependencies,
 			dependencies,
-			dependencies,
 			bannedMacService,
 			bannedHddService,
 			dependencies);
@@ -292,7 +291,6 @@ public sealed class LoginServerHostedServiceTests
 	private sealed class ThrowingGameServerDependencies :
 		IAccountRepository,
 		IAccountTimeRepository,
-		IPremiumRepository,
 		IAccountsLogRepository,
 		ILoginAuthService,
 		IPlayerTransferService
@@ -330,10 +328,6 @@ public sealed class LoginServerHostedServiceTests
 		public Task<bool> InsertAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default) => throw NotUsed();
 
 		public Task<bool> RemoveAsync(string mask, CancellationToken cancellationToken = default) => throw NotUsed();
-
-		public Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
-
-		public Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default) => throw NotUsed();
 
 		public Task AddRecordAsync(int accountId, byte gameServerId, DateTime time, string ip, string mac, string hddSerial, CancellationToken cancellationToken = default)
 		{

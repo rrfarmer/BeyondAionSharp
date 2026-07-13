@@ -138,7 +138,6 @@ public sealed class LoginAuthService : ILoginAuthService
 			Activated = 1,
 			LastServer = 0,
 			LastMac = "xx-xx-xx-xx-xx-xx",
-			Toll = 0,
 		};
 		return await _accountRepository.InsertAccountAsync(account, useExternalAuth, cancellationToken) ? account : null;
 	}

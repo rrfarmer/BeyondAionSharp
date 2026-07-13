@@ -113,10 +113,10 @@ public sealed class LoginServer : IAsyncDisposable
 		}
 	}
 
-	// Java parity: network/loginserver/LoginServer.accountAuthenticationResponse(...). Called by CM_ACOUNT_AUTH_RESPONSE
+	// Java parity: network/loginserver/LoginServer.accountAuthenticationResponse(...). Called by CM_ACCOUNT_AUTH_RESPONSE
 	// to notify the GameServer of the result of client authentication; completes the client (loginRequests) path.
 	public void AccountAuthenticationResponse(int accountId, string accountName, bool result, long creationDate,
-		global::Aion.GameServer.Model.Account.AccountTime accountTime, sbyte accessLevel, sbyte membership, long toll, string allowedHddSerial)
+		global::Aion.GameServer.Model.Account.AccountTime accountTime, sbyte accessLevel, sbyte membership, string allowedHddSerial)
 	{
 		if (!_loginRequests.TryRemove(accountId, out var loginRequest))
 		{
@@ -137,7 +137,7 @@ public sealed class LoginServer : IAsyncDisposable
 			return;
 		}
 
-		var account = global::Aion.GameServer.Services.AccountService.GetAccount(accountId, accountName, creationDate, accountTime, accessLevel, membership, toll, allowedHddSerial);
+		var account = global::Aion.GameServer.Services.AccountService.GetAccount(accountId, accountName, creationDate, accountTime, accessLevel, membership, allowedHddSerial);
 		if (SecurityConfig.HDD_SERIAL_LOCK_UNLOCKED_ACCOUNTS && account.GetAllowedHddSerial().Length == 0 && client.GetHddSerial().Length != 0)
 		{
 			account.SetAllowedHddSerial(client.GetHddSerial());
@@ -405,13 +405,12 @@ public sealed class LoginServer : IAsyncDisposable
 				AccumulatedRestTime: packet.ReadQ(),
 				AccessLevel: packet.ReadC(),
 				Membership: packet.ReadC(),
-				Toll: packet.ReadQ(),
 				AllowedHddSerial: packet.ReadS())
 			: new AccountAuthResult(accountId, Ok: false);
 
-		// Java parity: CM_ACOUNT_AUTH_RESPONSE.runImpl -> LoginServer.getInstance().accountAuthenticationResponse(...).
+		// Java parity: CM_ACCOUNT_AUTH_RESPONSE.runImpl -> LoginServer.getInstance().accountAuthenticationResponse(...).
 		// This completes the client (loginRequests) path so the authenticating client receives SM_L2AUTH_LOGIN_CHECK(true)
-		// and is set AUTHED. Build AccountTime from the parsed accumulated online/rest times (matching CM_ACOUNT_AUTH_RESPONSE.readImpl).
+		// and is set AUTHED. Build AccountTime from the parsed accumulated online/rest times (matching CM_ACCOUNT_AUTH_RESPONSE.readImpl).
 		var accountTime = new global::Aion.GameServer.Model.Account.AccountTime();
 		if (result.Ok)
 		{
@@ -419,7 +418,7 @@ public sealed class LoginServer : IAsyncDisposable
 			accountTime.SetAccumulatedRestTime(result.AccumulatedRestTime);
 		}
 		AccountAuthenticationResponse(accountId, result.AccountName ?? string.Empty, result.Ok, result.CreationDate, accountTime,
-			(sbyte)result.AccessLevel, (sbyte)result.Membership, result.Toll, result.AllowedHddSerial ?? string.Empty);
+			(sbyte)result.AccessLevel, (sbyte)result.Membership, result.AllowedHddSerial ?? string.Empty);
 
 		// Dead path (RequestAccountAuthAsync has no callers) — left intact for safety.
 		if (_pendingAccountAuthRequests.TryRemove(accountId, out var pending))

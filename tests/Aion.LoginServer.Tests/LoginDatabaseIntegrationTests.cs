@@ -66,13 +66,11 @@ public class LoginDatabaseIntegrationTests
 			PasswordHash = AccountUtils.EncodePassword("secret"),
 			Activated = 1,
 			LastServer = -1,
-			Toll = 999,
 		};
 
 		Assert.True(await accountRepo.InsertAccountAsync(inserted, useExternalAuth: false));
 
 		Assert.Equal(0, timeRepo.UpdateCalls);
-		Assert.Equal(0, await ExecuteScalarLongAsync($"SELECT toll FROM account_data WHERE id={inserted.Id}"));
 		Assert.Equal(0, await ExecuteScalarLongAsync($"SELECT COUNT(*) FROM account_time WHERE account_id={inserted.Id}"));
 		Assert.NotEqual(default, inserted.AccountTime.LastLoginTime);
 	}
@@ -115,13 +113,7 @@ public class LoginDatabaseIntegrationTests
 		Assert.True(await bannedHddRepository.RemoveAsync("hdd-integration"));
 		Assert.False((await bannedHddRepository.LoadAsync()).ContainsKey("hdd-integration"));
 
-		await ExecuteNonQueryAsync("INSERT INTO account_data(id, name, password, toll) VALUES (100, 'premium', 'hash', 50)");
-		await ExecuteNonQueryAsync("INSERT INTO account_rewards(accountId, points, rewarded) VALUES (100, 25, 0)");
-		var premiumRepository = new PremiumRepository();
-		Assert.Equal(75, await premiumRepository.GetPointsAsync(100));
-		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT rewarded FROM account_rewards WHERE accountId=100"));
-		Assert.True(await premiumRepository.UpdatePointsAsync(100, 75, 20));
-		Assert.Equal(55, await ExecuteScalarLongAsync("SELECT toll FROM account_data WHERE id=100"));
+		await ExecuteNonQueryAsync("INSERT INTO account_data(id, name, password) VALUES (100, 'integration-aux', 'hash')");
 
 		var accountsLogRepository = new AccountsLogRepository();
 		await accountsLogRepository.AddRecordAsync(100, 1, DateTime.UtcNow, "127.0.0.1", "aa-bb", "hdd");

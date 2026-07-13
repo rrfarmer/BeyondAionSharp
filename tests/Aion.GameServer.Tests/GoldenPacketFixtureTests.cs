@@ -80,7 +80,6 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_FORTRESS_INFO.json")]
 	[InlineData("SM_LEAVE_GROUP_MEMBER.json")]
 	[InlineData("SM_SHIELD_EFFECT.json")]
-	[InlineData("SM_TOLL_INFO.json")]
 	[InlineData("SM_INSTANCE_COUNT_INFO.json")]
 	[InlineData("SM_STATS_STATUS_UNK.json")]
 	[InlineData("SM_PACKAGE_INFO_NOTIFY.json")]
@@ -223,7 +222,6 @@ public sealed class GoldenPacketFixtureTests
 		"SM_FORTRESS_INFO" => new SM_FORTRESS_INFO(inputs.GetProperty("locationId").GetInt32(), inputs.GetProperty("teleportStatus").GetBoolean()),
 		"SM_LEAVE_GROUP_MEMBER" => new SM_LEAVE_GROUP_MEMBER(),
 		"SM_SHIELD_EFFECT" => new SM_SHIELD_EFFECT(new List<Aion.GameServer.Model.Siege.SiegeLocation>()),
-		"SM_TOLL_INFO" => new SM_TOLL_INFO(inputs.GetProperty("tollCount").GetInt64()),
 		"SM_INSTANCE_COUNT_INFO" => new SM_INSTANCE_COUNT_INFO(inputs.GetProperty("mapId").GetInt32(), inputs.GetProperty("instanceId").GetInt32()),
 		"SM_STATS_STATUS_UNK" => new SM_STATS_STATUS_UNK(inputs.GetProperty("lvl").GetInt32(), inputs.GetProperty("points").GetInt32()),
 		"SM_PACKAGE_INFO_NOTIFY" => new SM_PACKAGE_INFO_NOTIFY(),

@@ -231,18 +231,6 @@ public class Account : IEnumerable<PlayerAccountData>
         }
     }
 
-    private long tollCount;
-
-    public void SetToll(long toll)
-    {
-        tollCount = toll;
-    }
-
-    public long GetToll()
-    {
-        return tollCount;
-    }
-
     public string GetAllowedHddSerial()
     {
         return allowedHddSerial;

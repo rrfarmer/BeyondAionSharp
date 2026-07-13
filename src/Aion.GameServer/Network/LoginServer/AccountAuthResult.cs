@@ -9,5 +9,4 @@ public sealed record AccountAuthResult(
 	long AccumulatedRestTime = 0,
 	byte AccessLevel = 0,
 	byte Membership = 0,
-	long Toll = 0,
 	string AllowedHddSerial = "");

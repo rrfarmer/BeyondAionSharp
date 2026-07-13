@@ -25,7 +25,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 	private readonly IAccountRepository _accountRepository;
 	private readonly IAccountTimeRepository _accountTimeRepository;
 	private readonly IBannedIpService _bannedIpService;
-	private readonly IPremiumRepository _premiumRepository;
 	private readonly IAccountsLogRepository _accountsLogRepository;
 	private readonly ILoginAuthService _authService;
 	private readonly IBannedMacService _bannedMacService;
@@ -50,7 +49,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		IAccountRepository accountRepository,
 		IAccountTimeRepository accountTimeRepository,
 		IBannedIpService bannedIpService,
-		IPremiumRepository premiumRepository,
 		IAccountsLogRepository accountsLogRepository,
 		ILoginAuthService authService,
 		IBannedMacService bannedMacService,
@@ -65,7 +63,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		_accountRepository = accountRepository;
 		_accountTimeRepository = accountTimeRepository;
 		_bannedIpService = bannedIpService;
-		_premiumRepository = premiumRepository;
 		_accountsLogRepository = accountsLogRepository;
 		_authService = authService;
 		_bannedMacService = bannedMacService;
@@ -143,14 +140,8 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 			case CmGameServerCharacter character:
 				await HandleGameServerCharacterAsync(character);
 				break;
-			case CmAccountTollInfo tollInfo:
-				await _premiumRepository.UpdatePointsAsync(tollInfo.AccountId, tollInfo.Toll, required: 0);
-				break;
 			case CmMacBanControl macBanControl:
 				await HandleMacBanControlAsync(macBanControl);
-				break;
-			case CmPremiumControl premiumControl:
-				await HandlePremiumControlAsync(premiumControl);
 				break;
 			case CmGameServerPong:
 				_pingTracker.OnReceivePong();
@@ -211,7 +202,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 		account.LastServer = (sbyte)_gameServerInfo.Id;
 		await _accountRepository.UpdateLastServerAsync(account.Id, account.LastServer);
 
-		var toll = await _premiumRepository.GetPointsAsync(account.Id);
 		await SendPacketAsync(
 			new SmAccountAuthResponse(
 				account.Id,
@@ -222,7 +212,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 				account.AccountTime.AccumulatedRestTime,
 				account.AccessLevel,
 				account.Membership,
-				toll,
 				account.AllowedHddSerial ?? string.Empty));
 	}
 
@@ -386,41 +375,6 @@ public sealed class GameServerConnection : BaseClientConnection, IGameServerSess
 			case 1:
 				await _bannedHddService.BanAsync(packet.Address, DateTimeOffset.FromUnixTimeMilliseconds(packet.Time).UtcDateTime);
 				break;
-		}
-	}
-
-	private async Task HandlePremiumControlAsync(CmPremiumControl packet)
-	{
-		var points = await _premiumRepository.GetPointsAsync(packet.AccountId);
-		var server = _registry.GetGameServer(packet.ServerId);
-		if (server == null || !server.IsOnline || !server.IsAccountOnGameServer(packet.AccountId))
-		{
-			_logger.LogError("Account {AccountId} requested {RequestId} from gs #{ServerId} and server is down.", packet.AccountId, packet.RequestId, packet.ServerId);
-			return;
-		}
-
-		if (packet.RequiredCost < 0)
-		{
-			var newCount = points + (packet.RequiredCost * -1);
-			await _premiumRepository.UpdatePointsAsync(packet.AccountId, newCount, required: 0);
-			await _registry.SendPacketToGameServerAsync(packet.ServerId, new SmPremiumResponse(packet.RequestId, result: 4, newCount));
-			return;
-		}
-
-		if (points < packet.RequiredCost)
-		{
-			await _registry.SendPacketToGameServerAsync(packet.ServerId, new SmPremiumResponse(packet.RequestId, result: 2, points));
-			return;
-		}
-
-		if (await _premiumRepository.UpdatePointsAsync(packet.AccountId, points, packet.RequiredCost))
-		{
-			points -= packet.RequiredCost;
-			await _registry.SendPacketToGameServerAsync(packet.ServerId, new SmPremiumResponse(packet.RequestId, result: 3, points));
-		}
-		else
-		{
-			await _registry.SendPacketToGameServerAsync(packet.ServerId, new SmPremiumResponse(packet.RequestId, result: 1, points));
 		}
 	}
 

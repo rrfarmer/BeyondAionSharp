@@ -50,7 +50,6 @@ public partial class Player : Creature
 
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
     public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
-    public Aion.GameServer.Model.Ingameshop.InGameShop inGameShop;
     private readonly Aion.GameServer.Model.Account.PlayerAccountData playerAccountData;
     private readonly Aion.GameServer.Model.Account.Account playerAccount;
     private Aion.GameServer.Model.Team.Legion.LegionMember legionMember;
@@ -178,7 +177,6 @@ public partial class Player : Creature
 
         SetGameStats(new PlayerGameStats(this));
         SetLifeStats(new Aion.GameServer.Model.Stats.Container.PlayerLifeStats(this));
-        inGameShop = new Aion.GameServer.Model.Ingameshop.InGameShop();
         absStatsHolder = new Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner(this, 0);
     }
 

@@ -95,29 +95,6 @@ public sealed class GameServerBridgeParityTests
 	}
 
 	[Fact]
-	public async Task GameServerBridge_PremiumControlSendsJavaResultCodesThroughRegisteredSession()
-	{
-		var account = TestAccount(99);
-		var premiumRepository = new FakePremiumRepository((account.Id, 1_000L));
-		await using var context = await StartGameServerBridgeAsync(premiumRepository: premiumRepository);
-		context.GameServer.AddAccount(account);
-
-		await context.Stream.WriteAsync(CreatePremiumControlFrame(account.Id, requestId: 200, requiredCost: 250, serverId: 1));
-		var purchaseResponse = await ReadFrameAsync(context.Stream);
-
-		await context.Stream.WriteAsync(CreatePremiumControlFrame(account.Id, requestId: 201, requiredCost: 800, serverId: 1));
-		var lowPointsResponse = await ReadFrameAsync(context.Stream);
-
-		await context.Stream.WriteAsync(CreatePremiumControlFrame(account.Id, requestId: 202, requiredCost: -100, serverId: 1));
-		var addResponse = await ReadFrameAsync(context.Stream);
-
-		Assert.Equal(PacketFrameCodec.CreateFrame(new SmPremiumResponse(200, 3, 750).SerializePayload()), purchaseResponse);
-		Assert.Equal(PacketFrameCodec.CreateFrame(new SmPremiumResponse(201, 2, 750).SerializePayload()), lowPointsResponse);
-		Assert.Equal(PacketFrameCodec.CreateFrame(new SmPremiumResponse(202, 4, 850).SerializePayload()), addResponse);
-		Assert.Equal(new[] { (account.Id, 1_000L, 250L), (account.Id, 850L, 0L) }, premiumRepository.UpdateCalls);
-	}
-
-	[Fact]
 	public async Task GameServerBridge_AccountListLoadsNewAccountsAndRequestsDuplicateKick()
 	{
 		var localAccount = TestAccount(99);
@@ -184,19 +161,16 @@ public sealed class GameServerBridgeParityTests
 	}
 
 	[Fact]
-	public async Task GameServerBridge_TollAndAllowedHddUpdatesMatchJavaDaoSideEffects()
+	public async Task GameServerBridge_AllowedHddUpdateMatchesJavaDaoSideEffect()
 	{
 		var account = TestAccount(99);
 		var accountRepository = new FakeAccountRepository(account);
-		var premiumRepository = new FakePremiumRepository();
-		await using var context = await StartGameServerBridgeAsync(accountRepository: accountRepository, premiumRepository: premiumRepository);
+		await using var context = await StartGameServerBridgeAsync(accountRepository: accountRepository);
 
-		await context.Stream.WriteAsync(CreateAccountTollInfoFrame(account.Id, 2_500));
 		await context.Stream.WriteAsync(CreateChangeAllowedHddSerialFrame(account.Id, "disk-allowed"));
 		await context.Stream.WriteAsync(CreateLoginServerControlFrame(type: 1, param: 4, account.Id, adminId: 12345));
 		var response = await ReadFrameAsync(context.Stream);
 
-		Assert.Equal(new[] { (account.Id, 2_500L, 0L) }, premiumRepository.UpdateCalls);
 		Assert.Equal((account.Id, "disk-allowed"), accountRepository.LastAllowedHddSerialUpdate);
 		Assert.Equal(PacketFrameCodec.CreateFrame(new SmLoginServerControlResponse(1, 4, account.Id, 12345, true).SerializePayload()), response);
 	}
@@ -277,7 +251,6 @@ public sealed class GameServerBridgeParityTests
 		FakeAccountRepository? accountRepository = null,
 		FakeAccountTimeRepository? accountTimeRepository = null,
 		FakeBannedIpService? bannedIpService = null,
-		FakePremiumRepository? premiumRepository = null,
 		FakeAccountsLogRepository? accountsLogRepository = null,
 		ILoginAuthService? authService = null,
 		IBannedMacService? bannedMacService = null,
@@ -300,7 +273,6 @@ public sealed class GameServerBridgeParityTests
 		accountRepository ??= new FakeAccountRepository();
 		accountTimeRepository ??= new FakeAccountTimeRepository();
 		bannedIpService ??= new FakeBannedIpService();
-		premiumRepository ??= new FakePremiumRepository();
 		accountsLogRepository ??= new FakeAccountsLogRepository();
 
 		var server = new GameServerSocketServer(
@@ -311,7 +283,6 @@ public sealed class GameServerBridgeParityTests
 			accountRepository,
 			accountTimeRepository,
 			bannedIpService,
-			premiumRepository,
 			accountsLogRepository,
 			authService ?? new ThrowingLoginAuthService(),
 			bannedMacService ?? new EmptyBannedMacService(),
@@ -400,19 +371,10 @@ public sealed class GameServerBridgeParityTests
 		return PacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
-	private static byte[] CreateAccountTollInfoFrame(int accountId, long toll)
-	{
-		using var payload = new PacketBuffer();
-		payload.WriteC(9);
-		payload.WriteD(accountId);
-		payload.WriteQ(toll);
-		return PacketFrameCodec.CreateFrame(payload.ToArray());
-	}
-
 	private static byte[] CreateChangeAllowedHddSerialFrame(int accountId, string hddSerial)
 	{
 		using var payload = new PacketBuffer();
-		payload.WriteC(15);
+		payload.WriteC(11);
 		payload.WriteD(accountId);
 		payload.WriteS(hddSerial);
 		return PacketFrameCodec.CreateFrame(payload.ToArray());
@@ -421,7 +383,7 @@ public sealed class GameServerBridgeParityTests
 	private static byte[] CreateMacBanControlFrame(byte type, string address, string details, long time)
 	{
 		using var payload = new PacketBuffer();
-		payload.WriteC(10);
+		payload.WriteC(9);
 		payload.WriteC(type);
 		payload.WriteS(address);
 		payload.WriteS(details);
@@ -432,7 +394,7 @@ public sealed class GameServerBridgeParityTests
 	private static byte[] CreateHddBanControlFrame(byte type, string serial, long time)
 	{
 		using var payload = new PacketBuffer();
-		payload.WriteC(14);
+		payload.WriteC(10);
 		payload.WriteC(type);
 		payload.WriteS(serial);
 		payload.WriteQ(time);
@@ -488,17 +450,6 @@ public sealed class GameServerBridgeParityTests
 		payload.WriteS(ip);
 		payload.WriteD(time);
 		payload.WriteD(adminObjectId);
-		return PacketFrameCodec.CreateFrame(payload.ToArray());
-	}
-
-	private static byte[] CreatePremiumControlFrame(int accountId, int requestId, long requiredCost, byte serverId)
-	{
-		using var payload = new PacketBuffer();
-		payload.WriteC(11);
-		payload.WriteD(accountId);
-		payload.WriteD(requestId);
-		payload.WriteQ(requiredCost);
-		payload.WriteC(serverId);
 		return PacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
@@ -701,32 +652,6 @@ public sealed class GameServerBridgeParityTests
 		{
 			_unbannedMasks.Add(mask);
 			return Task.FromResult(_bannedMasks.Remove(mask));
-		}
-	}
-
-	private sealed class FakePremiumRepository : IPremiumRepository
-	{
-		private readonly Dictionary<int, long> _points = new();
-		private readonly List<(int AccountId, long Points, long Required)> _updateCalls = new();
-
-		public FakePremiumRepository(params (int AccountId, long Points)[] entries)
-		{
-			foreach (var (accountId, points) in entries)
-				_points[accountId] = points;
-		}
-
-		public IReadOnlyList<(int AccountId, long Points, long Required)> UpdateCalls => _updateCalls;
-
-		public Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default)
-		{
-			return Task.FromResult(_points.GetValueOrDefault(accountId));
-		}
-
-		public Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default)
-		{
-			_updateCalls.Add((accountId, points, required));
-			_points[accountId] = points - required;
-			return Task.FromResult(true);
 		}
 	}
 

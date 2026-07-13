@@ -26,7 +26,5 @@ public sealed class Account
 
 	public string? AllowedHddSerial { get; set; }
 
-	public long Toll { get; set; }
-
 	public AccountTime AccountTime { get; set; } = new();
 }

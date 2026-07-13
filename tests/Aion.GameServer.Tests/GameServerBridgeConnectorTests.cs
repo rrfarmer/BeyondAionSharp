@@ -80,7 +80,6 @@ public sealed class GameServerBridgeConnectorTests
 		Assert.Equal(2000L, result.AccumulatedRestTime);
 		Assert.Equal(3, result.AccessLevel);
 		Assert.Equal(2, result.Membership);
-		Assert.Equal(5000L, result.Toll);
 		Assert.Equal("disk-1", result.AllowedHddSerial);
 	}
 
@@ -208,7 +207,6 @@ public sealed class GameServerBridgeConnectorTests
 		payload.WriteQ(2000L);
 		payload.WriteC(3);
 		payload.WriteC(2);
-		payload.WriteQ(5000L);
 		payload.WriteS("disk-1");
 		return ServerPacketFrameCodec.CreateFrame(payload.ToArray());
 	}

@@ -3,7 +3,6 @@ using Aion.GameServer.Ai;
 using Aion.GameServer.Configs;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Ingameshop;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.Services.Event;
 using Aion.GameServer.Utils.ChatHandlers;
@@ -30,7 +29,7 @@ public class Reload : AdminCommand
             "<events> - Reloads event templates and (re)starts events.",
             "<arcade> - Reloads the Upgrade Arcade reward item list.",
             "<decomposables> - Reloads content of item bundles",
-            "<items|customdrops|gameshop> - Reloads the specified data.");
+            "<items|customdrops> - Reloads the specified data.");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -81,11 +80,6 @@ public class Reload : AdminCommand
         {
             DataManager.ReloadCustomDrop();
             SendInfo(admin, DataManager.CUSTOM_NPC_DROP.Size() + " custom drops loaded.");
-        }
-        else if (paramsArr[0].Equals("gameshop", StringComparison.OrdinalIgnoreCase))
-        {
-            InGameShopEn.GetInstance().Reload();
-            SendInfo(admin, "Gameshop successfully reloaded!");
         }
         else if (paramsArr[0].Equals("events", StringComparison.OrdinalIgnoreCase))
         {

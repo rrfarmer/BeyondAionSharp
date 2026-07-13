@@ -25,14 +25,6 @@ public static class LoggingConfig
     [Property(key: "gameserver.log.chats.private", defaultValue: "false")]
     public static bool LOG_PRIVATE_CHATS = false;
 
-    /// <summary>Key: gameserver.log.ingameshop</summary>
-    [Property(key: "gameserver.log.ingameshop", defaultValue: "false")]
-    public static bool LOG_INGAMESHOP = false;
-
-    /// <summary>Key: gameserver.log.ingameshop.sql</summary>
-    [Property(key: "gameserver.log.ingameshop.sql", defaultValue: "false")]
-    public static bool LOG_INGAMESHOP_SQL = false;
-
     /// <summary>Key: gameserver.log.item</summary>
     [Property(key: "gameserver.log.item", defaultValue: "true")]
     public static bool LOG_ITEM = true;

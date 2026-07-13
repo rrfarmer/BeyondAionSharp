@@ -12,7 +12,6 @@ public sealed class SmAccountAuthResponse : GsServerPacket
 	private readonly long _accumulatedRestTime;
 	private readonly byte _accessLevel;
 	private readonly byte _membership;
-	private readonly long _toll;
 	private readonly string _allowedHddSerial;
 
 	public SmAccountAuthResponse(
@@ -24,7 +23,6 @@ public sealed class SmAccountAuthResponse : GsServerPacket
 		long accumulatedRestTime = 0,
 		byte accessLevel = 0,
 		byte membership = 0,
-		long toll = 0,
 		string allowedHddSerial = "")
 	{
 		_accountId = accountId;
@@ -35,7 +33,6 @@ public sealed class SmAccountAuthResponse : GsServerPacket
 		_accumulatedRestTime = accumulatedRestTime;
 		_accessLevel = accessLevel;
 		_membership = membership;
-		_toll = toll;
 		_allowedHddSerial = allowedHddSerial;
 	}
 
@@ -53,7 +50,6 @@ public sealed class SmAccountAuthResponse : GsServerPacket
 		buffer.WriteQ(_accumulatedRestTime);
 		buffer.WriteC(_accessLevel);
 		buffer.WriteC(_membership);
-		buffer.WriteQ(_toll);
 		buffer.WriteS(_allowedHddSerial);
 	}
 }

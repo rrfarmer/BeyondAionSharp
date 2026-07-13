@@ -229,7 +229,6 @@ public class LoginProtocolPacketTests
 			2_222,
 			accessLevel: 3,
 			membership: 2,
-			toll: 1_500,
 			allowedHddSerial: "disk-1").SerializePayload();
 		var failedPayload = new SmAccountAuthResponse(1001, ok: false).SerializePayload();
 		var reconnectPayload = new SmAccountReconnectKey(1001, 0x11223344).SerializePayload();
@@ -237,7 +236,7 @@ public class LoginProtocolPacketTests
 		Assert.Equal(
 			Convert.FromHexString(
 				"01E90300000170006C00610079006500720000000068E5CF8B010000" +
-				"5704000000000000AE080000000000000302DC050000000000006400690073006B002D0031000000"),
+				"5704000000000000AE0800000000000003026400690073006B002D0031000000"),
 			okPayload);
 		Assert.Equal(Convert.FromHexString("01E903000000"), failedPayload);
 		Assert.Equal(Convert.FromHexString("03E903000044332211"), reconnectPayload);
@@ -301,13 +300,6 @@ public class LoginProtocolPacketTests
 		var disconnected = Assert.IsType<CmAccountDisconnected>(GsClientPacketFactory.Create(new PacketBuffer(disconnectedPayload.ToArray()), GameServerConnectionState.Authed));
 		Assert.Equal(1001, disconnected.AccountId);
 
-		using var tollPayload = new PacketBuffer();
-		tollPayload.WriteC(9);
-		tollPayload.WriteD(1001);
-		tollPayload.WriteQ(1500);
-		var toll = Assert.IsType<CmAccountTollInfo>(GsClientPacketFactory.Create(new PacketBuffer(tollPayload.ToArray()), GameServerConnectionState.Authed));
-		Assert.Equal(1001, toll.AccountId);
-		Assert.Equal(1500, toll.Toll);
 	}
 
 	[Fact]
@@ -371,23 +363,10 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void GsFactory_AuthedStateReadsPremiumAndBanControls()
+	public void GsFactory_AuthedStateReadsCompactedBanAndHddControls()
 	{
-		using var premiumPayload = new PacketBuffer();
-		premiumPayload.WriteC(11);
-		premiumPayload.WriteD(1);
-		premiumPayload.WriteD(200);
-		premiumPayload.WriteQ(500);
-		premiumPayload.WriteC(3);
-
-		var premium = Assert.IsType<CmPremiumControl>(GsClientPacketFactory.Create(new PacketBuffer(premiumPayload.ToArray()), GameServerConnectionState.Authed));
-		Assert.Equal(1, premium.AccountId);
-		Assert.Equal(200, premium.RequestId);
-		Assert.Equal(500, premium.RequiredCost);
-		Assert.Equal(3, premium.ServerId);
-
 		using var macPayload = new PacketBuffer();
-		macPayload.WriteC(10);
+		macPayload.WriteC(9);
 		macPayload.WriteC(1);
 		macPayload.WriteS("aa-bb");
 		macPayload.WriteS("reason");
@@ -400,7 +379,7 @@ public class LoginProtocolPacketTests
 		Assert.Equal(1_700_000_000_000, mac.Time);
 
 		using var hddPayload = new PacketBuffer();
-		hddPayload.WriteC(14);
+		hddPayload.WriteC(10);
 		hddPayload.WriteC(1);
 		hddPayload.WriteS("disk");
 		hddPayload.WriteQ(1_700_000_000_000);
@@ -411,7 +390,7 @@ public class LoginProtocolPacketTests
 		Assert.Equal(1_700_000_000_000, hdd.Time);
 
 		using var allowedHddPayload = new PacketBuffer();
-		allowedHddPayload.WriteC(15);
+		allowedHddPayload.WriteC(11);
 		allowedHddPayload.WriteD(1001);
 		allowedHddPayload.WriteS("allowed-disk");
 
@@ -439,14 +418,6 @@ public class LoginProtocolPacketTests
 	}
 
 	[Fact]
-	public void SmPremiumResponse_MatchesJavaGeneratedPayloadVector()
-	{
-		var payload = new SmPremiumResponse(200, 3, 1500).SerializePayload();
-
-		Assert.Equal(Convert.FromHexString("0AC800000003000000DC05000000000000"), payload);
-	}
-
-	[Fact]
 	public void BanListPackets_MatchJavaGeneratedPayloadVectors()
 	{
 		var banTime = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000).UtcDateTime;
@@ -455,7 +426,7 @@ public class LoginProtocolPacketTests
 		var hddPayload = new SmHddBanList(new Dictionary<string, DateTime> { ["disk"] = banTime }).SerializePayload();
 
 		Assert.Equal(Convert.FromHexString("0901000000610061002D006200620000000068E5CF8B01000072006500610073006F006E000000"), macPayload);
-		Assert.Equal(Convert.FromHexString("0D010000006400690073006B0000000068E5CF8B010000"), hddPayload);
+		Assert.Equal(Convert.FromHexString("0A010000006400690073006B0000000068E5CF8B010000"), hddPayload);
 	}
 
 	[Fact]

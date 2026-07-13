@@ -56,8 +56,8 @@ public sealed class AccountRepository : IAccountRepository
 		await connection.OpenAsync(cancellationToken);
 		await using var command = connection.CreateCommand();
 		command.CommandText = $"""
-			INSERT INTO account_data(`{nameColumn}`, `password`, access_level, membership, activated, last_server, last_ip, last_mac, ip_force, toll)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO account_data(`{nameColumn}`, `password`, access_level, membership, activated, last_server, last_ip, last_mac, ip_force)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 			""";
 		command.Parameters.AddRange(
 			new[]
@@ -71,7 +71,6 @@ public sealed class AccountRepository : IAccountRepository
 				new MySqlParameter { Value = (object?)account.LastIp ?? DBNull.Value },
 				new MySqlParameter { Value = account.LastMac },
 				new MySqlParameter { Value = (object?)account.IpForce ?? DBNull.Value },
-				new MySqlParameter { Value = 0 },
 			});
 
 		var rows = await command.ExecuteNonQueryAsync(cancellationToken);
@@ -176,7 +175,6 @@ public sealed class AccountRepository : IAccountRepository
 			LastMac = reader.GetString("last_mac"),
 			IpForce = reader.IsDBNull(reader.GetOrdinal("ip_force")) ? null : reader.GetString("ip_force"),
 			AllowedHddSerial = reader.IsDBNull(reader.GetOrdinal("allowed_hdd_serial")) ? null : reader.GetString("allowed_hdd_serial"),
-			Toll = reader.GetInt64("toll"),
 		};
 		account.AccountTime = await _accountTimeRepository.GetAccountTimeAsync(account.Id, cancellationToken)
 			?? throw new InvalidOperationException($"Account time for account {account.Id} is null.");

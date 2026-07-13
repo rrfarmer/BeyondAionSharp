@@ -149,7 +149,7 @@ public class ServerPacketsOpcodes
         AddPacketOpcode(156, typeof(SM_TRANSFORM_IN_SUMMON));
         AddPacketOpcode(157, typeof(SM_LEGION_MEMBERLIST));
         AddPacketOpcode(158, typeof(SM_LEGION_EDIT));
-        AddPacketOpcode(159, typeof(SM_TOLL_INFO));
+        // Opcode 159 [S_SHOP_POINT_INFO] is unsupported.
         AddPacketOpcode(161, typeof(SM_MAIL_SERVICE));
         AddPacketOpcode(162, typeof(SM_SUMMON_USESKILL));
         AddPacketOpcode(163, typeof(SM_WINDSTREAM));
@@ -161,9 +161,7 @@ public class ServerPacketsOpcodes
         AddPacketOpcode(169, typeof(SM_WAREHOUSE_ADD_ITEM));
         AddPacketOpcode(170, typeof(SM_DELETE_WAREHOUSE_ITEM));
         AddPacketOpcode(171, typeof(SM_WAREHOUSE_UPDATE_ITEM));
-        AddPacketOpcode(172, typeof(SM_IN_GAME_SHOP_CATEGORY_LIST));
-        AddPacketOpcode(173, typeof(SM_IN_GAME_SHOP_LIST));
-        AddPacketOpcode(174, typeof(SM_IN_GAME_SHOP_ITEM));
+        // Opcodes 172-174 [S_SHOP_*] are unsupported.
         AddPacketOpcode(175, typeof(SM_ICON_INFO));
         AddPacketOpcode(176, typeof(SM_TITLE_INFO));
         AddPacketOpcode(177, typeof(SM_CHARACTER_SELECT));

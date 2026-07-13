@@ -13,7 +13,7 @@ public sealed class SmHddBanList : GsServerPacket
 
 	protected override void WritePayload(PacketBuffer buffer)
 	{
-		buffer.WriteC(13);
+		buffer.WriteC(10);
 		buffer.WriteD(_bannedList.Count);
 		foreach (var entry in _bannedList)
 		{

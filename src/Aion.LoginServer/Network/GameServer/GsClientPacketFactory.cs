@@ -21,13 +21,11 @@ public static class GsClientPacketFactory
 				6 => new CmBan(opCode),
 				7 => new CmAccountConnectionInfo(opCode),
 				8 => new CmGameServerCharacter(opCode),
-				9 => new CmAccountTollInfo(opCode),
-				10 => new CmMacBanControl(opCode),
-				11 => new CmPremiumControl(opCode),
+				9 => new CmMacBanControl(opCode),
+				10 => new CmHddBanControl(opCode),
+				11 => new CmChangeAllowedHddSerial(opCode),
 				12 => new CmGameServerPong(opCode),
 				13 => new CmPlayerTransferControl(opCode),
-				14 => new CmHddBanControl(opCode),
-				15 => new CmChangeAllowedHddSerial(opCode),
 				_ => null
 			},
 			_ => null

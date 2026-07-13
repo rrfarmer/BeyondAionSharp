@@ -240,8 +240,6 @@ public sealed class GameServerConfigPropertyOverrideTests
             RestoreBatchC2Defaults();
             Assert.False(HTMLConfig.ENABLE_HTML_WELCOME);          // default false
             Assert.Equal("UTF-8", HTMLConfig.HTML_ENCODING);       // default UTF-8
-            Assert.False(InGameShopConfig.ENABLE_IN_GAME_SHOP);    // default false
-            Assert.True(InGameShopConfig.ALLOW_GIFTS);             // default true
             Assert.Equal(1, InstanceConfig.INSTANCE_COOLDOWN_RATE); // default 1
             Assert.Empty(InstanceConfig.INSTANCE_COOLDOWN_RATE_EXCLUDED_MAPS); // default empty set
             Assert.Equal(86400, LegionConfig.LEGION_DISBAND_TIME); // default 86400
@@ -259,8 +257,6 @@ public sealed class GameServerConfigPropertyOverrideTests
             var props = new JavaProperties();
             props.SetProperty("gameserver.html.welcome.enable", "true");
             props.SetProperty("gameserver.html.encoding", "ISO-8859-1");
-            props.SetProperty("gameserver.ingameshop.enable", "true");
-            props.SetProperty("gameserver.ingameshop.allow.gift", "false");
             props.SetProperty("gameserver.instance.cooldown_rate", "3");
             props.SetProperty("gameserver.instance.cooldown_rate.excluded_maps", "300080000, 300090000, 300060000");
             props.SetProperty("gameserver.legion.disbandtime", "172800");
@@ -274,14 +270,12 @@ public sealed class GameServerConfigPropertyOverrideTests
             props.SetProperty("gameserver.punishment.enable", "true");
             props.SetProperty("gameserver.punishment.time", "60");
 
-            ConfigurableProcessor.Process(props, typeof(HTMLConfig), typeof(InGameShopConfig),
+            ConfigurableProcessor.Process(props, typeof(HTMLConfig),
                 typeof(InstanceConfig), typeof(LegionConfig), typeof(LoggingConfig),
                 typeof(PlayerTransferConfig), typeof(PricesConfig), typeof(PunishmentConfig));
 
             Assert.True(HTMLConfig.ENABLE_HTML_WELCOME);
             Assert.Equal("ISO-8859-1", HTMLConfig.HTML_ENCODING);
-            Assert.True(InGameShopConfig.ENABLE_IN_GAME_SHOP);
-            Assert.False(InGameShopConfig.ALLOW_GIFTS);
             Assert.Equal(3, InstanceConfig.INSTANCE_COOLDOWN_RATE);
             Assert.Equal(new HashSet<int> { 300080000, 300090000, 300060000 },
                 InstanceConfig.INSTANCE_COOLDOWN_RATE_EXCLUDED_MAPS);
@@ -317,7 +311,7 @@ public sealed class GameServerConfigPropertyOverrideTests
             var props = new JavaProperties();
             props.LoadFromDirectory(configMain, false);
 
-            ConfigurableProcessor.Process(props, typeof(HTMLConfig), typeof(InGameShopConfig),
+            ConfigurableProcessor.Process(props, typeof(HTMLConfig),
                 typeof(InstanceConfig), typeof(LegionConfig), typeof(PricesConfig), typeof(PunishmentConfig));
 
             // Pattern transformer parity: the shipped legion name pattern compiles into a Regex.
@@ -342,7 +336,7 @@ public sealed class GameServerConfigPropertyOverrideTests
     /// <summary>Restore the batch-C2 holders to their annotated [Property] defaults (empty properties).</summary>
     private static void RestoreBatchC2Defaults()
     {
-        ConfigurableProcessor.Process(new JavaProperties(), typeof(HTMLConfig), typeof(InGameShopConfig),
+        ConfigurableProcessor.Process(new JavaProperties(), typeof(HTMLConfig),
             typeof(InstanceConfig), typeof(LegionConfig), typeof(LoggingConfig), typeof(PlayerTransferConfig),
             typeof(PricesConfig), typeof(PunishmentConfig));
     }

@@ -569,7 +569,6 @@ public sealed class SocketServerSmokeTests
 		var sessionRegistry = new LoginSessionRegistry();
 		var gameServerRegistry = new GameServerRegistry();
 		var accountRepository = new TrackingAccountRepository();
-		var premiumRepository = new FixedPremiumRepository(1_500);
 		var gameServer = new GameServerInfo(1, "127.0.0.1", "secret");
 		gameServerRegistry.RegisterKnownServer(gameServer);
 		var loginServer = new LoginClientSocketServer(
@@ -595,7 +594,6 @@ public sealed class SocketServerSmokeTests
 			accountRepository,
 			new ThrowingAccountTimeRepository(),
 			new EmptyBannedIpService(),
-			premiumRepository,
 			new ThrowingAccountsLogRepository(),
 			new ThrowingLoginAuthService(),
 			new EmptyBannedMacService(),
@@ -650,7 +648,6 @@ public sealed class SocketServerSmokeTests
 			Assert.Equal(authService.Account.AccountTime.AccumulatedRestTime, accountAuthPayload.ReadQ());
 			Assert.Equal(authService.Account.AccessLevel, accountAuthPayload.ReadC());
 			Assert.Equal(authService.Account.Membership, accountAuthPayload.ReadC());
-			Assert.Equal(1_500, accountAuthPayload.ReadQ());
 			Assert.Equal("disk-1", accountAuthPayload.ReadS());
 		}
 		Assert.True(gameServer.IsAccountOnGameServer(login.AccountId));
@@ -687,7 +684,6 @@ public sealed class SocketServerSmokeTests
 			new ThrowingAccountRepository(),
 			new ThrowingAccountTimeRepository(),
 			new EmptyBannedIpService(),
-			new ThrowingPremiumRepository(),
 			new ThrowingAccountsLogRepository(),
 			new ThrowingLoginAuthService(),
 			new EmptyBannedMacService(),
@@ -803,7 +799,6 @@ public sealed class SocketServerSmokeTests
 			new ThrowingAccountRepository(),
 			new ThrowingAccountTimeRepository(),
 			new EmptyBannedIpService(),
-			new ThrowingPremiumRepository(),
 			new ThrowingAccountsLogRepository(),
 			new ThrowingLoginAuthService(),
 			new EmptyBannedMacService(),
@@ -1304,30 +1299,6 @@ public sealed class SocketServerSmokeTests
 		public Task<bool> BanAsync(string mask, DateTime? expireTime, CancellationToken cancellationToken = default) => throw NotUsed();
 
 		public Task<bool> UnbanAsync(string mask, CancellationToken cancellationToken = default) => throw NotUsed();
-	}
-
-	private sealed class ThrowingPremiumRepository : IPremiumRepository
-	{
-		public Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default) => throw NotUsed();
-
-		public Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default) => throw NotUsed();
-	}
-
-	private sealed class FixedPremiumRepository : IPremiumRepository
-	{
-		private readonly long _points;
-
-		public FixedPremiumRepository(long points)
-		{
-			_points = points;
-		}
-
-		public Task<long> GetPointsAsync(int accountId, CancellationToken cancellationToken = default)
-		{
-			return Task.FromResult(_points);
-		}
-
-		public Task<bool> UpdatePointsAsync(int accountId, long points, long required, CancellationToken cancellationToken = default) => throw NotUsed();
 	}
 
 	private sealed class ThrowingAccountsLogRepository : IAccountsLogRepository
