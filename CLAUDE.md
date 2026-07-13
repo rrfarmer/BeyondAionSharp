@@ -37,7 +37,7 @@ when it lives elsewhere.
 
 | What | Path |
 |---|---|
-| **Java reference (the spec)** | sibling `../aion-server` checkout; upstream remote `java-upstream/4.8` |
+| **Java reference (the spec)** | separate sibling `../aion-server` checkout, branch `4.8` |
 | **C# port** | repository root (solution `AionServer.slnx`, target `net10.0`) |
 | Authoritative parity backlog | `docs/Full-Parity-Backlog.md` — read before doing parity work |
 | Upstream update queue | `docs/upstream-port-log.md` and `docs/upstream-porting.md` |

@@ -3,7 +3,7 @@
 Use n8n as the queue and orchestration layer, not as the authority that merges code.
 
 1. A daily schedule or GitHub webhook starts the workflow.
-2. A command node fetches `java-upstream/4.8` and lists commits after `lastCompletedJavaCommit`.
+2. A command node updates the separate Java checkout at `../aion-server` and lists commits after `lastCompletedJavaCommit`.
 3. Split commits into items but set workflow concurrency to one and process oldest first.
 4. Store the 40-character Java SHA as the idempotency key. Exit when a ledger/PR already exists for it.
 5. Fetch commit metadata, full patch, changed-file list, and parent SHA.
@@ -17,4 +17,3 @@ Use n8n as the queue and orchestration layer, not as the authority that merges c
 Recommended persisted fields: `upstream_sha`, `parent_sha`, `subject`, `status`, `branch`, `pr_url`, `csharp_sha`, `attempt_count`, `started_at`, `completed_at`, `model`, `prompt_version`, and `test_summary`.
 
 Guardrails: one active port at a time; clean worktree required; branch must start from current `main`; no force-push to `main`; cap retries; redact environment secrets; and require a human merge. Data-only commits still receive a PR because loader compatibility must be reviewed.
-
