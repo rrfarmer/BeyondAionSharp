@@ -1330,7 +1330,7 @@ public sealed class JaxbHolderLoaderTests
         // Known skill (Transformation: White Tiger), skill_id="1":
         // <skill_template skill_id="1" name="Transformation: White Tiger" nameId="2285933" cooldownId="792"
         //   group="RA_WHITETIGER" stack="RA_LIGHT_WHITETIGER" lvl="1" skilltype="MAGICAL" skillsubtype="BUFF"
-        //   tslot="BUFF" dispel_category="BUFF" req_dispel_level="2" activation="ACTIVE" cooldown="100"
+        //   tslot="BUFF" dispel_category="BUFF" req_dispel_level="2" req_dispel_count="50" activation="ACTIVE" cooldown="100"
         //   duration="0" cancel_rate="20" hostile_type="INDIRECT">
         //   <properties first_target="ME" first_target_range="1" target_relation="FRIEND" target_type="ONLYONE" />
         //   <startconditions><dp value="2000" /></startconditions>
@@ -1356,6 +1356,14 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(SkillEngine.Model.ActivationAttribute.ACTIVE, skill.GetActivationAttribute());
         Assert.Equal(100, skill.GetCooldown());
         Assert.Equal(20, skill.GetCancelRate());
+        Assert.Equal(2, skill.GetReqDispelLevel());
+        Assert.Equal(50, skill.GetReqDispelCount());
+
+        // Upstream cf11ba99a filled previously missing dispel metadata for Tremor.
+        var tremor = skills.GetSkillTemplate(1826);
+        Assert.NotNull(tremor);
+        Assert.Equal(2, tremor!.GetReqDispelLevel());
+        Assert.Equal(50, tremor.GetReqDispelCount());
 
         // Group/stack indexes built by AfterUnmarshal.
         Assert.Contains(skill, skills.GetSkillTemplatesByGroup("RA_WHITETIGER"));

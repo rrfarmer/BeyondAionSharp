@@ -84,6 +84,9 @@ public class SkillTemplate : L10n
     [XmlAttribute("req_dispel_level")]
     public int reqDispelLevel;
 
+    [XmlAttribute("req_dispel_count")]
+    public int reqDispelCount;
+
     [XmlAttribute("activation")]
     public ActivationAttribute activationAttribute;
 
@@ -207,6 +210,8 @@ public class SkillTemplate : L10n
     public DispelCategoryType GetDispelCategory() => dispelCategory;
 
     public int GetReqDispelLevel() => reqDispelLevel;
+
+    public int GetReqDispelCount() => reqDispelCount;
 
     public int GetDuration() => duration;
 

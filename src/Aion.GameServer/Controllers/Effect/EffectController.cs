@@ -610,9 +610,8 @@ public class EffectController
                     continue;
                 DispelCategoryType dispelCat = ef.GetDispelCategory();
                 SkillTargetSlot targetSlot = ef.GetSkillTemplate().GetTargetSlot();
-                // check for targetslot, effects with target slot higher or equal to 2 cant be removed (ex. skillId: 11885)
-                if (targetSlot != SkillTargetSlot.BUFF && (targetSlot != SkillTargetSlot.DEBUFF && dispelCat != DispelCategoryType.ALL)
-                    || ef.GetTargetSlotLevel() >= 2)
+
+                if (targetSlot != SkillTargetSlot.BUFF && targetSlot != SkillTargetSlot.DEBUFF && dispelCat != DispelCategoryType.ALL)
                     continue;
 
                 // remove only debuffs of the effector
@@ -657,8 +656,7 @@ public class EffectController
                     break;
                 if (!IsDispellable(effect))
                     continue;
-                // check for targetslot, effects with target slot level higher or equal to 2 cant be removed (ex. skillId: 11885)
-                if (effect.GetTargetSlot() != targetSlot || effect.GetTargetSlotLevel() >= 2)
+                if (effect.GetTargetSlot() != targetSlot)
                     continue;
 
                 bool remove = false;

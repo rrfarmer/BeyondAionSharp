@@ -5,7 +5,7 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | Upstream SHA | Date | Subject | Status | C# commit / PR | Notes |
 |---|---|---|---|---|---|
 | `1420a7057` | 2026-05-26 | Refactor stat caps and add dynamic limits (#138) | Ported | `codex/upstream-1420a7057-stat-caps` | Dynamic cap rules and focused player/staff/non-player tests. |
-| `cf11ba99a` | 2026-05-26 | Add required dispel count and missing levels to skill_templates.xml (#139) | Pending | | |
+| `cf11ba99a` | 2026-05-26 | Add required dispel count and missing levels to skill_templates.xml (#139) | Ported | `main` | Exact XML/XSD carryover; C# metadata-driven dispel power and target-slot-level fix with focused tests. |
 | `c84218bff` | 2026-05-29 | Legendary Symphony event | Pending | | |
 | `f51eb98a5` | 2026-05-29 | Fixed #BA3735 | Pending | | |
 | `635777e99` | 2026-06-01 | Normalize retail no-resist behavior for selected effect types (#140) | Pending | | |
