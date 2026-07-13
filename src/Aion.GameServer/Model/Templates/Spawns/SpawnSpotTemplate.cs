@@ -59,6 +59,9 @@ public class SpawnSpotTemplate
     [XmlAttribute("state")]
     public int State { get; set; } = 0;
 
+    [XmlAttribute("aerial_spawn")]
+    public bool AerialSpawn { get; set; }
+
     // Java parity: String ai — interned after unmarshal for memory efficiency
     private string? _ai;
     [XmlAttribute("ai")]
@@ -118,6 +121,8 @@ public class SpawnSpotTemplate
     // Java parity: getState() — returns 0 if null (field is never null here, but guard preserved)
     public int GetState() => State;
 
+    public bool IsAerialSpawn() => AerialSpawn;
+
     // Java parity: getTemporarySpawn()
     public TemporarySpawn? GetTemporarySpawn() => TemporarySpawn;
 
@@ -126,5 +131,6 @@ public class SpawnSpotTemplate
     public bool ShouldSerializeStaticId() => StaticId != 0;
     public bool ShouldSerializeRandomWalk() => RandomWalk != 0;
     public bool ShouldSerializeState() => State != 0;
+    public bool ShouldSerializeAerialSpawn() => AerialSpawn;
     public bool ShouldSerializeWalkerIdxRaw() => WalkerIdx.HasValue && WalkerIdx.Value != 0;
 }

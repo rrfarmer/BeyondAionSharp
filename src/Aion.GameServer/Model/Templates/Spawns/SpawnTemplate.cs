@@ -21,6 +21,7 @@ public class SpawnTemplate
     private readonly SpawnGroup _spawnGroup;
     private string?            _aiName;
     private int                _state;
+    private bool               _aerialSpawn;
     private int                _creatorId;
     private TemporarySpawn?    _temporarySpawn;
 
@@ -40,6 +41,7 @@ public class SpawnTemplate
         _walkerIdx     = spot.WalkerIdx;
         _aiName        = spot.Ai;
         _state         = spot.State;
+        _aerialSpawn   = spot.AerialSpawn;
         _temporarySpawn = spot.TemporarySpawn;
     }
 
@@ -85,6 +87,7 @@ public class SpawnTemplate
     public string? GetAnchor()   => _anchor;
     public string? GetAiName()   => _aiName;
     public int     GetState()    => _state;
+    public bool    IsAerialSpawn() => _aerialSpawn;
     public int     GetCreatorId() => _creatorId;
     public SpawnGroup GetGroup() => _spawnGroup;
 

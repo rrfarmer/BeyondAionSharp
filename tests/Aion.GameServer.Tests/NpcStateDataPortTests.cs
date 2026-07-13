@@ -37,13 +37,17 @@ public sealed class NpcStateDataPortTests
     [InlineData("220040000_Beluslan.xml", 213569)]
     [InlineData("400010000_Reshanta.xml", 700304)]
     [InlineData("400010000_Reshanta.xml", 253043)]
-    public void AerialStateIsAssignedToEachApplicableSpawnSpot(string fileName, int npcId)
+    public void AerialSpawnFlagReplacesLegacyState(string fileName, int npcId)
     {
         XElement spawn = FindSpawn(fileName, npcId);
         XElement[] spots = spawn.Elements("spot").ToArray();
 
         Assert.NotEmpty(spots);
-        Assert.All(spots, spot => Assert.Equal("2", (string?)spot.Attribute("state")));
+        Assert.All(spots, spot =>
+        {
+            Assert.Null(spot.Attribute("state"));
+            Assert.Equal("true", (string?)spot.Attribute("aerial_spawn"));
+        });
     }
 
     [Fact]
@@ -65,7 +69,7 @@ public sealed class NpcStateDataPortTests
     private static XElement FindSpawn(string fileName, int npcId)
     {
         XDocument document = XDocument.Load(RepoFile("game-server", "data", "static_data", "spawns", "Npcs", fileName));
-        return Assert.Single(document.Descendants("spawn").Where(spawn => (int?)spawn.Attribute("npc_id") == npcId));
+        return Assert.Single(document.Descendants("spawn"), spawn => (int?)spawn.Attribute("npc_id") == npcId);
     }
 
     private static string RepoFile(params string[] parts)

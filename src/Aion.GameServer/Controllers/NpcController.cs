@@ -73,17 +73,19 @@ public class NpcController : CreatureController<Npc>
         base.OnBeforeSpawn();
         Npc owner = GetOwner();
 
-        // set state from npc templates
-        if (owner.GetObjectTemplate().GetState() > 0)
+        if (owner.GetSpawn().GetState() > 0)
+            owner.SetState(owner.GetSpawn().GetState());
+        else if (owner.GetObjectTemplate().GetState() > 0)
             owner.SetState(owner.GetObjectTemplate().GetState());
         else
+        {
             owner.SetState(CreatureState.WALK_MODE);
+            if (owner.GetSpawn().IsAerialSpawn())
+                owner.SetState(CreatureState.FLYING);
+        }
 
         owner.GetLifeStats().SetCurrentHpPercent(100);
         owner.GetAi().OnGeneralEvent(AiEventType.BeforeSpawned);
-
-        if (owner.GetSpawn().GetState() > 0)
-            owner.SetState(owner.GetSpawn().GetState());
     }
 
     public override void OnAfterSpawn()
