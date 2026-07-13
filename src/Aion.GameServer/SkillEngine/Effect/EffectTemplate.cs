@@ -156,7 +156,9 @@ public abstract class EffectTemplate
 
     private int[]? GetPreEffects() => PreEffects;
 
-    public bool IsNoResist() => NoResist;
+    public virtual bool IsNoResist() => NoResist;
+
+    internal void SetNoResist(bool noResist) => NoResist = noResist;
 
     public virtual int GetCritProbMod2() => CritProbMod2;
 
@@ -266,16 +268,7 @@ public abstract class EffectTemplate
 
     private bool IsDodgedOrResisted(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum)
     {
-        return CanDodgeOrResist(effect) && (!CheckEffectResistRate(effect, statEnum) || !CheckDodgeOrResistRate(effect));
-    }
-
-    protected virtual bool CanDodgeOrResist(Aion.GameServer.SkillEngine.Model.Effect effect)
-    {
-        if (NoResist)
-            return false;
-        if (effect.GetSkillTemplate().GetActivationAttribute() == ActivationAttribute.TOGGLE) // Sprinting must not be dodged by Focused Evasion
-            return false;
-        return true;
+        return !IsNoResist() && (!CheckEffectResistRate(effect, statEnum) || !CheckDodgeOrResistRate(effect));
     }
 
     /// <returns>true = no dodge/resist, false = dodged/resisted</returns>

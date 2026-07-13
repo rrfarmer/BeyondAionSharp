@@ -191,26 +191,129 @@ public class Effects
     {
         EffectType.SHIELD,
         EffectType.PROTECT,
-        EffectType.REFLECTOR
+        EffectType.REFLECTOR,
+        EffectType.MPSHIELD
+    };
+
+    private static readonly HashSet<EffectType> ALWAYS_NO_RESIST = new HashSet<EffectType>
+    {
+        EffectType.ABSOLUTESTATTOPCBUFF,
+        EffectType.ALWAYSBLOCK,
+        EffectType.ALWAYSDODGE,
+        EffectType.ALWAYSPARRY,
+        EffectType.ALWAYSRESIST,
+        EffectType.ARMORMASTERY,
+        EffectType.APBOOST,
+        EffectType.AURA,
+        EffectType.BOOSTHATE,
+        EffectType.BOOSTHEAL,
+        EffectType.BOOSTSKILLCASTINGTIME,
+        EffectType.BOOSTSKILLCOST,
+        EffectType.BOOSTSPELLATTACK,
+        EffectType.CASEHEAL,
+        EffectType.CHANGEHATEONATTACKED,
+        EffectType.CONDSKILLLAUNCHER,
+        EffectType.CONVERTHEAL,
+        EffectType.DISPELDEBUFF,
+        EffectType.DISPELDEBUFFMENTAL,
+        EffectType.DISPELDEBUFFPHYSICAL,
+        EffectType.DISPELNPCDEBUFF,
+        EffectType.DPHEAL,
+        EffectType.DPHEALINSTANT,
+        EffectType.DPTRANSFER,
+        EffectType.DRBOOST,
+        EffectType.ESCAPE,
+        EffectType.EXTENDAURARANGE,
+        EffectType.FPHEAL,
+        EffectType.FPHEALINSTANT,
+        EffectType.HEAL,
+        EffectType.HEALINSTANT,
+        EffectType.HIDE,
+        EffectType.HIPASS,
+        EffectType.HOSTILEUP,
+        EffectType.INVULNERABLEWING,
+        EffectType.SKILLXPBOOST,
+        EffectType.MPHEAL,
+        EffectType.MPHEALINSTANT,
+        EffectType.MPSHIELD,
+        EffectType.NODEATHPENALTY,
+        EffectType.NORESURRECTPENALTY,
+        EffectType.ONETIMEBOOSTHEAL,
+        EffectType.ONETIMEBOOSTSKILLATTACK,
+        EffectType.ONETIMEBOOSTSKILLCRITICAL,
+        EffectType.PETORDERUSEULTRASKILL,
+        EffectType.POLYMORPH,
+        EffectType.PROCDPHEALINSTANT,
+        EffectType.PROCFPHEALINSTANT,
+        EffectType.PROCHEALINSTANT,
+        EffectType.PROCMPHEALINSTANT,
+        EffectType.PROCVPHEALINSTANT,
+        EffectType.PROTECT,
+        EffectType.RANDOMMOVELOC,
+        EffectType.REBIRTH,
+        EffectType.RECALLINSTANT,
+        EffectType.REFLECTOR,
+        EffectType.RESURRECT,
+        EffectType.RESURRECTBASE,
+        EffectType.RESURRECTPOSITIONAL,
+        EffectType.RETURN,
+        EffectType.RETURNPOINT,
+        EffectType.RIDEROBOT,
+        EffectType.SANCTUARY,
+        EffectType.SEARCH,
+        EffectType.SHAPECHANGE,
+        EffectType.SHIELD,
+        EffectType.SHIELDMASTERY,
+        EffectType.SIGNET,
+        EffectType.SKILLLAUNCHER,
+        EffectType.STATBOOST,
+        EffectType.STATUP,
+        EffectType.SUBTYPEBOOSTRESIST,
+        EffectType.SUBTYPEEXTENDDURATION,
+        EffectType.SUMMON,
+        EffectType.SUMMONBINDINGGROUPGATE,
+        EffectType.SUMMONFUNCTIONALNPC,
+        EffectType.SUMMONGROUPGATE,
+        EffectType.SUMMONHOMING,
+        EffectType.SUMMONHOUSEGATE,
+        EffectType.SUMMONSERVANT,
+        EffectType.SUMMONSKILLAREA,
+        EffectType.SUMMONTOTEM,
+        EffectType.SUMMONTRAP,
+        EffectType.SUPPORTEVENT,
+        EffectType.SWITCHHOSTILE,
+        EffectType.SWITCHHPMP,
+        EffectType.WEAPONSTATBOOST,
+        EffectType.WEAPONSTATUP,
+        EffectType.WEAPONDUAL,
+        EffectType.WEAPONMASTERY,
+        EffectType.XPBOOST
     };
 
     public void AfterUnmarshal(object parent)
     {
         effectTypes = new HashSet<EffectType>();
-        foreach (EffectTemplate et in effects)
+        foreach (EffectTemplate effect in effects)
         {
-            string effectName = et.GetType().Name.Replace("Effect", "").ToUpper();
-            try
-            {
-                EffectType effectType = Enum.Parse<EffectType>(effectName);
-                effectTypes.Add(effectType);
-                if (CONFLICT_TYPES.Contains(effectType))
-                    possibleConflictEffectTypes.Add(effectType);
-            }
-            catch (Exception)
-            {
-                throw new ArgumentException("Missing EffectType " + effectName + " for: " + et.GetType());
-            }
+            EffectType effectType = ResolveEffectType(effect);
+            effectTypes.Add(effectType);
+            if (CONFLICT_TYPES.Contains(effectType))
+                possibleConflictEffectTypes.Add(effectType);
+            if (ALWAYS_NO_RESIST.Contains(effectType))
+                effect.SetNoResist(true);
+        }
+    }
+
+    private static EffectType ResolveEffectType(EffectTemplate effect)
+    {
+        string effectName = effect.GetType().Name.Replace("Effect", "").ToUpper();
+        try
+        {
+            return Enum.Parse<EffectType>(effectName);
+        }
+        catch (Exception)
+        {
+            throw new ArgumentException("Missing EffectType " + effectName + " for: " + effect.GetType());
         }
     }
 

@@ -39,7 +39,8 @@ public sealed class EffectConflictTypeTests
     {
         { new ShieldEffect(), new ShieldEffect() },
         { new ProtectEffect(), new ProtectEffect() },
-        { new ReflectorEffect(), new ReflectorEffect() }
+        { new ReflectorEffect(), new ReflectorEffect() },
+        { new MPShieldEffect(), new MPShieldEffect() }
     };
 
     private static Effect CreateEffect(SkillTargetSlot targetSlot, EffectTemplate effectTemplate)

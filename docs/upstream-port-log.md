@@ -8,7 +8,7 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | `cf11ba99a` | 2026-05-26 | Add required dispel count and missing levels to skill_templates.xml (#139) | Ported | `main` | Exact XML/XSD carryover; C# metadata-driven dispel power and target-slot-level fix with focused tests. |
 | `c84218bff` | 2026-05-29 | Legendary Symphony event | Ported | `main` | Exact event schedule and SQL carryover; C# reward table, generated syntax, and focused regression tests. |
 | `f51eb98a5` | 2026-05-29 | Fixed #BA3735 | Ported | `main` | Cross-slot conflicts limited to matching shield, protect, or reflector effect types; focused conflict tests. |
-| `635777e99` | 2026-06-01 | Normalize retail no-resist behavior for selected effect types (#140) | Pending | | |
+| `635777e99` | 2026-06-01 | Normalize retail no-resist behavior for selected effect types (#140) | Ported | `main` | Exact 91-type no-resist normalization, cannot-miss integration, MPSHIELD conflicts, and focused tests. |
 | `56d461d56` | 2026-06-01 | Fixed selling to certain NPCs | Pending | | |
 | `7bd02e9d2` | 2026-06-06 | Always resist nofly/fall effects with INVULNERABLE_WING (#141) | Pending | | |
 | `3b3a6b07d` | 2026-06-06 | Fixed GM bookmarks | Pending | | |
