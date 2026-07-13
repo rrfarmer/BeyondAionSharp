@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers;
+using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
@@ -42,7 +43,16 @@ public sealed class AerialSpawnPortTests
     {
         Npc npc = BuildNpc(spawnState, templateState, aerialSpawn);
 
-        npc.GetController().OnBeforeSpawn();
+        bool originalScalingEnabled = InstanceConfig.INSTANCE_SCALING_ENABLE;
+        try
+        {
+            InstanceConfig.INSTANCE_SCALING_ENABLE = false;
+            npc.GetController().OnBeforeSpawn();
+        }
+        finally
+        {
+            InstanceConfig.INSTANCE_SCALING_ENABLE = originalScalingEnabled;
+        }
 
         if (expectedExactState > 0)
             Assert.Equal(expectedExactState, npc.GetState());

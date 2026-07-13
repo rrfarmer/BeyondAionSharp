@@ -432,7 +432,7 @@ public abstract class CreatureGameStats
     {
         lock (this)
         {
-            int oldMaxHp = cachedMaxHp != 0 ? cachedMaxHp : GetMaxHp().GetBase();
+            int oldMaxHp = cachedMaxHp != 0 ? cachedMaxHp : GetStatsTemplate().GetMaxHp();
             int currentMaxHp = cachedMaxHp = GetMaxHp().GetCurrent();
             if (oldMaxHp != currentMaxHp)
             {
@@ -448,7 +448,7 @@ public abstract class CreatureGameStats
     {
         lock (this)
         {
-            int oldMaxMp = cachedMaxMp != 0 ? cachedMaxMp : GetMaxMp().GetBase();
+            int oldMaxMp = cachedMaxMp != 0 ? cachedMaxMp : GetStatsTemplate().GetMaxMp();
             int currentMaxMp = cachedMaxMp = GetMaxMp().GetCurrent();
             if (oldMaxMp != currentMaxMp)
             {

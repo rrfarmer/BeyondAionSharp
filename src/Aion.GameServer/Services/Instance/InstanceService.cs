@@ -224,6 +224,7 @@ public class InstanceService
     {
         player.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnEnterInstance(player);
         AutoGroupService.GetInstance().OnEnterInstance(player);
+        InstanceScaler.OnEnterInstance(player);
     }
 
     public static void OnLeaveInstance(Player player)

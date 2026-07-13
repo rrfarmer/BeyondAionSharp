@@ -8,6 +8,7 @@ using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -84,6 +85,7 @@ public class NpcController : CreatureController<Npc>
                 owner.SetState(CreatureState.FLYING);
         }
 
+        InstanceScaler.OnBeforeSpawn(owner);
         owner.GetLifeStats().SetCurrentHpPercent(100);
         owner.GetAi().OnGeneralEvent(AiEventType.BeforeSpawned);
     }
