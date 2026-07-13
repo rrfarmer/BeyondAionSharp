@@ -22,19 +22,11 @@ public class AggroEventHandler
 {
     private const int SUPPORT_RANGE_OFFSET = 2; // might be <pushed_range> in client data
 
-    public static void OnAggro(NpcAI npcAI, Creature myTarget)
+    public static void OnAggro(NpcAI npcAI, Creature target)
     {
         Npc owner = npcAI.GetOwner();
-        // TODO move out?
-        if (myTarget is Player player)
-        {
-            if (player.IsInCustomState(CustomPlayerState.NEUTRAL_TO_ALL_NPCS))
-                return;
-        }
-        else if (TribeRelationService.IsFriend(owner, myTarget) || myTarget.IsFlag())
-            return;
-        ThreadPoolManager.GetInstance().Schedule(ct => { new AggroNotifier(owner, myTarget, true).Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(500));
-        owner.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnAggro(owner);
+        ThreadPoolManager.GetInstance().Schedule(ct => { new AggroNotifier(owner, target, true).Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(500));
+        owner.GetWorldMapInstance().GetInstanceHandler().OnAggro(owner);
     }
 
     public static bool OnCreatureNeedsSupport(NpcAI npcAI, Creature creatureAskingForSupport)

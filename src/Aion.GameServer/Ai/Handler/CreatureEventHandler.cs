@@ -62,6 +62,9 @@ public class CreatureEventHandler
         if (creature.IsInVisualState(CreatureVisualState.BLINKING))
             return;
 
+        if (creature.IsFlag())
+            return;
+
         Npc owner = ai.GetOwner();
         if (!owner.IsSpawned())
             return;
@@ -78,9 +81,7 @@ public class CreatureEventHandler
         if (IsInSeeRange(creature, owner))
         {
             ai.HandleCreatureDetected(creature); // TODO: Move to AiEventType, prevent calling multiple times
-            bool isPlayer = creature is Player;
-            if (isPlayer && ((Player)creature).IsInCustomState(CustomPlayerState.ENEMY_OF_ALL_NPCS)
-                || TribeRelationService.IsAggressive(owner, creature) && (isPlayer || creature.IsEnemyFrom(owner)))
+            if (TribeRelationService.IsAggressive(owner, creature) && !TribeRelationService.IsFriend(owner, creature) && creature.IsEnemyFrom(owner))
             { // aggressive mob
                 if (ValidateAggro(owner, creature) && GeoService.GetInstance().CanSee(owner, creature))
                 {

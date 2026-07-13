@@ -21,8 +21,8 @@ public class Npc : Creature
     private Aion.GameServer.SpawnEngine.WalkerGroup walkerGroup;
     private string masterName;
     private int creatorId = 0;
-    private CreatureType? type = null;
-    private Aion.GameServer.Model.Items.NpcEquippedGear overridenEquipment;
+    private CreatureType? overriddenType = null;
+    private Aion.GameServer.Model.Items.NpcEquippedGear overriddenEquipment;
     private SummonOwner? summonOwner = null;
 
     public Npc(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate)
@@ -249,8 +249,21 @@ public class Npc : Creature
 
     public virtual CreatureType GetTypeValue(Creature creature)
     {
-        if (type != null)
-            return type.Value;
+        CreatureType type = overriddenType ?? GetRelationBasedType(creature);
+        if (creature is Aion.GameServer.Model.GameObjects.Players.Player player)
+        {
+            if (player.IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.ENEMY_OF_ALL_NPCS)
+                && type != CreatureType.ATTACKABLE && type != CreatureType.AGGRESSIVE)
+                return CreatureType.ATTACKABLE;
+            if (player.IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.NEUTRAL_TO_ALL_NPCS)
+                && (type == CreatureType.ATTACKABLE || type == CreatureType.AGGRESSIVE))
+                return CreatureType.PEACE;
+        }
+        return type;
+    }
+
+    private CreatureType GetRelationBasedType(Creature creature)
+    {
         if (Aion.GameServer.Services.TribeRelationService.IsNone(this, creature))
             return CreatureType.PEACE;
         else if (Aion.GameServer.Services.TribeRelationService.IsAggressive(this, creature))
@@ -267,11 +280,11 @@ public class Npc : Creature
     /// <summary>Sets a constant type and broadcasts it, if the npc is spawned. Set to null to disable it.</summary>
     public void OverrideNpcType(CreatureType? newType)
     {
-        type = newType;
+        overriddenType = newType;
         if (IsSpawned())
         {
-            if (type != null)
-                PacketSendUtility.BroadcastPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SM_CUSTOM_SETTINGS(GetObjectId(), 0, type.Value.GetId(), 0));
+            if (overriddenType != null)
+                PacketSendUtility.BroadcastPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SM_CUSTOM_SETTINGS(GetObjectId(), 0, overriddenType.Value.GetId(), 0));
             else
                 GetKnownList().ForEachPlayer(p => PacketSendUtility.SendPacket(p, new Aion.GameServer.Network.Aion.ServerPackets.SM_CUSTOM_SETTINGS(GetObjectId(), 0, GetTypeValue(p).GetId(), 0)));
         }
@@ -381,13 +394,13 @@ public class Npc : Creature
 
     public void OverrideEquipmentList(Aion.GameServer.Dataholders.LoadingUtils.Adapters.NpcEquipmentList v)
     {
-        overridenEquipment = new Aion.GameServer.Model.Items.NpcEquippedGear(v);
+        overriddenEquipment = new Aion.GameServer.Model.Items.NpcEquippedGear(v);
     }
 
     public override Aion.GameServer.Model.Items.NpcEquippedGear GetOverrideEquipment()
     {
-        if (overridenEquipment != null)
-            return overridenEquipment;
+        if (overriddenEquipment != null)
+            return overriddenEquipment;
         return GetObjectTemplate().GetEquipment();
     }
 

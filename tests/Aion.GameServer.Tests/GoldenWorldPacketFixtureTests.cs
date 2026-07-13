@@ -1332,9 +1332,9 @@ public sealed class GoldenWorldPacketFixtureTests
             ?? throw new MissingFieldException(typeof(AionObject).FullName, "_objectId");
         idField.SetValue(npc, objectId);
 
-        // Pin the npc.type field so GetType_(player) short-circuits (player can be null).
-        var typeField = typeof(Npc).GetField("type", BindingFlags.Instance | BindingFlags.NonPublic)
-            ?? throw new MissingFieldException(typeof(Npc).FullName, "type");
+        // Pin the overridden NPC type so GetType_(player) short-circuits (player can be null).
+        var typeField = typeof(Npc).GetField("overriddenType", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(Npc).FullName, "overriddenType");
         typeField.SetValue(npc, type);
         return npc;
     }

@@ -11,9 +11,9 @@ public class Enemy : AdminCommand
         : base("enemy", "Modifies your enmity towards others.")
     {
         SetSyntaxInfo(
-            "<all> [players|npcs] - Sets your enmity (default: you're enemy of everyone, optional: you're enemy of all players, or all npcs).",
-            "<none> [players|npcs] - Disables your enmity (default: you're enemy of nobody, optional: you're enemy of no player, or no npc).",
-            "<cancel> - Resets your enmity to the default."
+            "all [players|npcs] - Sets your enmity (default: you're everyone's enemy, optional: you're an enemy to any player, or any NPC).",
+            "none [players|npcs] - Disables your enmity (default: you're nobody's enemy, optional: you're not an enemy to any player, or any NPC).",
+            "cancel - Resets your enmity to the default."
         );
     }
 
@@ -31,21 +31,21 @@ public class Enemy : AdminCommand
             {
                 player.UnsetCustomState(CustomPlayerState.NEUTRAL_TO_EVERYONE);
                 player.SetCustomState(CustomPlayerState.ENEMY_OF_EVERYONE);
-                SendInfo(player, "You are now enemy of everyone.");
+                SendInfo(player, "You are now an enemy to all.");
             }
             else if (paramsArr[1].Equals("npcs", StringComparison.OrdinalIgnoreCase))
             {
                 player.UnsetCustomState(CustomPlayerState.ENEMY_OF_EVERYONE);
                 player.UnsetCustomState(CustomPlayerState.NEUTRAL_TO_ALL_NPCS);
                 player.SetCustomState(CustomPlayerState.ENEMY_OF_ALL_NPCS);
-                SendInfo(player, "You are now enemy of all npcs.");
+                SendInfo(player, "You are now an enemy to all NPCs.");
             }
             else if (paramsArr[1].Equals("players", StringComparison.OrdinalIgnoreCase))
             {
                 player.UnsetCustomState(CustomPlayerState.ENEMY_OF_EVERYONE);
                 player.UnsetCustomState(CustomPlayerState.NEUTRAL_TO_ALL_PLAYERS);
                 player.SetCustomState(CustomPlayerState.ENEMY_OF_ALL_PLAYERS);
-                SendInfo(player, "You are now enemy of all players.");
+                SendInfo(player, "You are now an enemy to all players.");
             }
             else
             {
@@ -66,7 +66,7 @@ public class Enemy : AdminCommand
                 player.UnsetCustomState(CustomPlayerState.NEUTRAL_TO_EVERYONE);
                 player.UnsetCustomState(CustomPlayerState.ENEMY_OF_ALL_NPCS);
                 player.SetCustomState(CustomPlayerState.NEUTRAL_TO_ALL_NPCS);
-                SendInfo(player, "You are now neutral to all npcs.");
+                SendInfo(player, "You are now neutral to all NPCs.");
             }
             else if (paramsArr[1].Equals("players", StringComparison.OrdinalIgnoreCase))
             {
