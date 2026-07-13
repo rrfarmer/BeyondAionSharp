@@ -11,13 +11,65 @@ namespace Aion.GameServer.Model.Stats.Calc;
 /// </summary>
 public class StatCapUtil
 {
-    private static readonly Dictionary<StatEnum, StatLimits> limits = new Dictionary<StatEnum, StatLimits>();
+    private static readonly Dictionary<StatEnum, StatCapRule> limits = new();
 
     static StatCapUtil()
     {
-        foreach (StatEnum stat in Enum.GetValues<StatEnum>())
+        RegisterDefaults();
+    }
+
+    private static void RegisterDefaults()
+    {
+        Register(StatEnum.MAXHP, creature => creature is Player ? 100 : 1, UnlimitedUpper);
+        Register(StatEnum.MAXMP, creature => creature is Player ? 1 : 0, UnlimitedUpper);
+        Register(StatEnum.SPEED, 0, creature => creature is Player player && !player.IsStaff() ? 12000 : int.MaxValue);
+        Register(StatEnum.FLY_SPEED, 0, creature => creature is Player player && !player.IsStaff() ? 16000 : int.MaxValue);
+        Register(StatEnum.HEAL_BOOST, -1000, 1000);
+        Register(StatEnum.EVASION, 0, UnlimitedUpper, 300);
+        Register(StatEnum.PARRY, 0, UnlimitedUpper, 400);
+        Register(StatEnum.BLOCK, 0, UnlimitedUpper, 500);
+        Register(StatEnum.PHYSICAL_CRITICAL, 0, UnlimitedUpper, 500);
+        Register(StatEnum.MAGICAL_CRITICAL, 0, UnlimitedUpper, 500);
+        Register(StatEnum.MAGICAL_RESIST, 0, UnlimitedUpper, 900);
+        Register(StatEnum.BOOST_MAGICAL_SKILL, 0, UnlimitedUpper, 2900);
+
+        foreach (StatEnum stat in new[]
+                 {
+                     StatEnum.PHYSICAL_CRITICAL_RESIST,
+                     StatEnum.MAGICAL_CRITICAL_RESIST,
+                     StatEnum.PHYSICAL_CRITICAL_DAMAGE_REDUCE,
+                     StatEnum.MAGICAL_CRITICAL_DAMAGE_REDUCE
+                 })
         {
-            limits[stat] = new StatLimits(stat);
+            Register(stat, 0, 700);
+        }
+
+        foreach (StatEnum stat in new[]
+                 {
+                     StatEnum.POWER, StatEnum.AGILITY, StatEnum.ACCURACY,
+                     StatEnum.HEALTH, StatEnum.KNOWLEDGE, StatEnum.WILL
+                 })
+        {
+            Register(stat, 80, 999);
+        }
+
+        foreach (StatEnum stat in new[]
+                 {
+                     StatEnum.MAIN_HAND_POWER, StatEnum.MAIN_HAND_ACCURACY, StatEnum.MAIN_HAND_CRITICAL,
+                     StatEnum.OFF_HAND_POWER, StatEnum.OFF_HAND_ACCURACY, StatEnum.OFF_HAND_CRITICAL,
+                     StatEnum.PHYSICAL_DEFENSE, StatEnum.PHYSICAL_ACCURACY, StatEnum.MAGICAL_ACCURACY
+                 })
+        {
+            Register(stat, 0, UnlimitedUpper);
+        }
+
+        foreach (StatEnum stat in new[]
+                 {
+                     StatEnum.WATER_RESISTANCE, StatEnum.FIRE_RESISTANCE, StatEnum.EARTH_RESISTANCE,
+                     StatEnum.WIND_RESISTANCE, StatEnum.DARK_RESISTANCE, StatEnum.LIGHT_RESISTANCE
+                 })
+        {
+            Register(stat, creature => -GetElementalDefenseCapForCreature(creature), GetElementalDefenseCapForCreature);
         }
     }
 
@@ -45,23 +97,12 @@ public class StatCapUtil
 
     public static int GetLowerCap(StatEnum stat, Creature creature)
     {
-        if (IsElementalDefenseStat(stat))
-        {
-            return -GetElementalDefenseCapForCreature(creature);
-        }
-        return limits[stat].LowerCap;
+        return GetRule(stat).LowerCap(creature);
     }
 
     public static int GetUpperCap(StatEnum stat, Creature creature)
     {
-        bool isSpeedUnrestricted = !(creature is Player player) || player.IsStaff();
-        if ((stat == StatEnum.SPEED || stat == StatEnum.FLY_SPEED) && isSpeedUnrestricted)
-            return int.MaxValue;
-        if (IsElementalDefenseStat(stat))
-        {
-            return GetElementalDefenseCapForCreature(creature);
-        }
-        return limits[stat].UpperCap;
+        return GetRule(stat).UpperCap(creature);
     }
 
     public static int GetElementalDefenseCapForCreature(Creature creature)
@@ -73,19 +114,9 @@ public class StatCapUtil
         return GetElementalDefenseBaseValue();
     }
 
-    private static bool IsElementalDefenseStat(StatEnum stat)
-    {
-        return stat switch
-        {
-            StatEnum.WATER_RESISTANCE or StatEnum.FIRE_RESISTANCE or StatEnum.EARTH_RESISTANCE
-                or StatEnum.WIND_RESISTANCE or StatEnum.DARK_RESISTANCE or StatEnum.LIGHT_RESISTANCE => true,
-            _ => false
-        };
-    }
-
     public static int GetDifferenceLimit(StatEnum stat)
     {
-        return limits[stat].DiffLimit;
+        return GetRule(stat).DiffLimit;
     }
 
     private static void Calculate(Stat2 stat2, int lowerCap, int upperCap)
@@ -132,84 +163,47 @@ public class StatCapUtil
         return Math.Clamp(value, cap.Min, cap.Max);
     }
 
+    private static void Register(StatEnum stat, int lowerCap, int upperCap)
+    {
+        Register(stat, _ => lowerCap, _ => upperCap, int.MaxValue);
+    }
+
+    private static void Register(StatEnum stat, CapFunction lowerCap, CapFunction upperCap)
+    {
+        Register(stat, lowerCap, upperCap, int.MaxValue);
+    }
+
+    private static void Register(StatEnum stat, int lowerCap, CapFunction upperCap)
+    {
+        Register(stat, _ => lowerCap, upperCap, int.MaxValue);
+    }
+
+    private static void Register(StatEnum stat, int lowerCap, CapFunction upperCap, int diffLimit)
+    {
+        Register(stat, _ => lowerCap, upperCap, diffLimit);
+    }
+
+    private static void Register(StatEnum stat, CapFunction lowerCap, CapFunction upperCap, int diffLimit)
+    {
+        if (!limits.TryAdd(stat, new StatCapRule(lowerCap, upperCap, diffLimit)))
+            throw new ArgumentException($"A limit for {stat} is already registered", nameof(stat));
+    }
+
+    private static StatCapRule GetRule(StatEnum stat)
+    {
+        return limits.GetValueOrDefault(stat, StatCapRule.Unlimited);
+    }
+
+    private static int UnlimitedLower(Creature creature) => int.MinValue;
+
+    private static int UnlimitedUpper(Creature creature) => int.MaxValue;
+
     private sealed record Cap(int Min, int Max);
 
-    private sealed class StatLimits
+    private delegate int CapFunction(Creature creature);
+
+    private sealed record StatCapRule(CapFunction LowerCap, CapFunction UpperCap, int DiffLimit)
     {
-        public readonly int LowerCap;
-        public readonly int UpperCap;
-        public readonly int DiffLimit;
-
-        public StatLimits(StatEnum stat)
-        {
-            this.LowerCap = LowerCapFor(stat);
-            this.UpperCap = UpperCapFor(stat);
-            this.DiffLimit = DifferenceLimitFor(stat);
-        }
-
-        private static int LowerCapFor(StatEnum stat)
-        {
-            int value = int.MinValue;
-            switch (stat)
-            {
-                case StatEnum.MAIN_HAND_POWER:
-                case StatEnum.MAIN_HAND_ACCURACY:
-                case StatEnum.MAIN_HAND_CRITICAL:
-                case StatEnum.OFF_HAND_POWER:
-                case StatEnum.OFF_HAND_ACCURACY:
-                case StatEnum.OFF_HAND_CRITICAL:
-                case StatEnum.MAGICAL_RESIST:
-                case StatEnum.PHYSICAL_CRITICAL_RESIST:
-                case StatEnum.EVASION:
-                case StatEnum.PHYSICAL_DEFENSE:
-                case StatEnum.PHYSICAL_ACCURACY:
-                case StatEnum.MAGICAL_ACCURACY:
-                case StatEnum.SPEED:
-                case StatEnum.FLY_SPEED:
-                case StatEnum.MAXHP:
-                case StatEnum.MAXMP:
-                    value = 0;
-                    break;
-            }
-            return value;
-        }
-
-        private static int UpperCapFor(StatEnum stat)
-        {
-            int value = int.MaxValue;
-            switch (stat)
-            {
-                case StatEnum.SPEED:
-                    value = 12000;
-                    break;
-                case StatEnum.FLY_SPEED:
-                    value = 16000;
-                    break;
-                case StatEnum.HEAL_BOOST:
-                    value = 1000;
-                    break;
-            }
-            return value;
-        }
-
-        private static int DifferenceLimitFor(StatEnum stat)
-        {
-            switch (stat)
-            {
-                case StatEnum.BLOCK:
-                case StatEnum.PHYSICAL_CRITICAL:
-                case StatEnum.MAGICAL_CRITICAL:
-                    return 500;
-                case StatEnum.MAGICAL_RESIST:
-                    return 900; // in PvP: 500 (see StatFunctions#calculateMagicalResistRate)
-                case StatEnum.EVASION:
-                    return 300;
-                case StatEnum.PARRY:
-                    return 400;
-                case StatEnum.BOOST_MAGICAL_SKILL:
-                    return 2900;
-            }
-            return int.MaxValue;
-        }
+        public static readonly StatCapRule Unlimited = new(UnlimitedLower, UnlimitedUpper, int.MaxValue);
     }
 }
