@@ -1359,11 +1359,21 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(2, skill.GetReqDispelLevel());
         Assert.Equal(50, skill.GetReqDispelCount());
 
-        // Upstream cf11ba99a filled previously missing dispel metadata for Tremor.
+        // Upstream 302cd8ac7 corrected metadata that had been assigned by row rather than skill id.
         var tremor = skills.GetSkillTemplate(1826);
         Assert.NotNull(tremor);
-        Assert.Equal(2, tremor!.GetReqDispelLevel());
-        Assert.Equal(50, tremor.GetReqDispelCount());
+        Assert.Equal(0, tremor!.GetReqDispelLevel());
+        Assert.Equal(0, tremor.GetReqDispelCount());
+
+        var soulBlock = skills.GetSkillTemplate(16868);
+        Assert.NotNull(soulBlock);
+        Assert.Equal(1, soulBlock!.GetReqDispelLevel());
+        Assert.Equal(20, soulBlock.GetReqDispelCount());
+
+        var blazeEngraving = skills.GetSkillTemplate(21888);
+        Assert.NotNull(blazeEngraving);
+        Assert.Equal(5, blazeEngraving!.GetReqDispelLevel());
+        Assert.Equal(10, blazeEngraving.GetReqDispelCount());
 
         // Group/stack indexes built by AfterUnmarshal.
         Assert.Contains(skill, skills.GetSkillTemplatesByGroup("RA_WHITETIGER"));
