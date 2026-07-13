@@ -1280,6 +1280,13 @@ public class Effect : IStatOwner
         this.mpShieldSkillId = mpShieldSkillId;
     }
 
+    public HashSet<EffectType> GetPossibleConflictEffectTypes()
+    {
+        return skillTemplate.GetEffects() == null
+            ? new HashSet<EffectType>()
+            : skillTemplate.GetEffects().GetPossibleConflictEffectTypes();
+    }
+
     public sealed class ForceType
     {
         private static readonly ConcurrentDictionary<string, ForceType> forceTypes = new ConcurrentDictionary<string, ForceType>();

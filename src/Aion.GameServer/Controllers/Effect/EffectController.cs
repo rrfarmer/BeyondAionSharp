@@ -234,8 +234,8 @@ public class EffectController
     {
         if (e1.GetTargetSlot() == e2.GetTargetSlot())
             return true;
-        if (e1.GetSkillSubType() == e2.GetSkillSubType())
-            return e1.GetTargetSlot() != SkillTargetSlot.BOOST && e2.GetTargetSlot() != SkillTargetSlot.BOOST; // retail allows Lucky Vinna II + candy
+        if (e1.GetPossibleConflictEffectTypes().Overlaps(e2.GetPossibleConflictEffectTypes()))
+            return true; // Some effect types conflict even when their target slots differ.
         return false;
     }
 

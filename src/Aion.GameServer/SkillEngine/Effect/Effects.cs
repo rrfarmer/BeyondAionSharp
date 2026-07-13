@@ -184,6 +184,16 @@ public class Effects
     [XmlIgnore]
     private HashSet<EffectType> effectTypes;
 
+    [XmlIgnore]
+    private readonly HashSet<EffectType> possibleConflictEffectTypes = new HashSet<EffectType>();
+
+    private static readonly HashSet<EffectType> CONFLICT_TYPES = new HashSet<EffectType>
+    {
+        EffectType.SHIELD,
+        EffectType.PROTECT,
+        EffectType.REFLECTOR
+    };
+
     public void AfterUnmarshal(object parent)
     {
         effectTypes = new HashSet<EffectType>();
@@ -192,7 +202,10 @@ public class Effects
             string effectName = et.GetType().Name.Replace("Effect", "").ToUpper();
             try
             {
-                effectTypes.Add(Enum.Parse<EffectType>(effectName));
+                EffectType effectType = Enum.Parse<EffectType>(effectName);
+                effectTypes.Add(effectType);
+                if (CONFLICT_TYPES.Contains(effectType))
+                    possibleConflictEffectTypes.Add(effectType);
             }
             catch (Exception)
             {
@@ -204,6 +217,11 @@ public class Effects
     public List<EffectTemplate> GetEffects()
     {
         return effects;
+    }
+
+    public HashSet<EffectType> GetPossibleConflictEffectTypes()
+    {
+        return possibleConflictEffectTypes;
     }
 
     public bool HasAnyEffectType(params EffectType[] types)
