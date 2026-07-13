@@ -52,7 +52,7 @@ public class StatFunctions
     /// </summary>
     private static int CalculateBaseExp(Npc npc)
     {
-        int maxHp = npc.GetObjectTemplate().GetStatsTemplate().GetMaxHp();
+        int maxHp = npc.GetGameStats().GetMaxHp().GetCurrent();
         if (maxHp <= 0)
             return 0;
         float multiplier;

@@ -19,7 +19,7 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | `edeb1a997` | 2026-06-14 | Implemented aerial_spawn attribute | Ported | `main` | Exact spawn/XSD data, runtime aerial flag propagation, retail state precedence, and focused model/controller tests; 786 tests pass. |
 | `031a7eec6` | 2026-06-14 | Fixed issues with `//enemy` command | Ported | `main` | Centralized NPC disposition/aggro semantics, corrected command text, and covered all custom-state attackability cases; 794 tests pass. |
 | `12851ab5a` | 2026-06-14 | `//moveto` improvements | Ported | `main` | Preserved active instance coordinates, added obstacle-ignoring forward movement, switched teleport correction to absolute position packets, and added focused math/encoding tests; 801 tests pass. |
-| `37c93df63` | 2026-06-14 | Fixed XP for NPCs with custom HP via `modifyOwnerStat()` | Pending | | |
+| `37c93df63` | 2026-06-14 | Fixed XP for NPCs with custom HP via `modifyOwnerStat()` | Ported | `main` | XP now uses runtime MAXHP, with an isolated real-NPC/test-AI regression proving modified HP affects reward; 802 tests pass. |
 | `9d32f6172` | 2026-06-16 | feat: instance scaling (#143) | Pending | | |
 | `ee8cb3e40` | 2026-06-16 | Decrease the dispel counter only upon successful removal of a buff/debuff (#147) | Pending | | |
 | `302cd8ac7` | 2026-06-21 | Fix incorrect skill mapping logic for req_dispel attributes (#148) | Pending | | |
