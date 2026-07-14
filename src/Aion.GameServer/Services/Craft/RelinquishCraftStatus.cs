@@ -22,31 +22,32 @@ public class RelinquishCraftStatus
     private const int masterPrice = 3497448;
     private const int skillMessageId = 1401127;
 
-    public static bool RelinquishExpertStatus(Player player, Profession profession)
+    public static bool RelinquishExpertStatus(Player player, Profession? profession)
     {
         return RelinquishExpertStatus(player, profession, expertPrice);
     }
 
-    public static bool RelinquishExpertStatus(Player player, Profession profession, int price)
+    public static bool RelinquishExpertStatus(Player player, Profession? profession, int price)
     {
         return RelinquishCraftStatusInternal(player, profession, expertMinValue, expertMaxValue, price);
     }
 
-    public static bool RelinquishMasterStatus(Player player, Profession profession)
+    public static bool RelinquishMasterStatus(Player player, Profession? profession)
     {
         return RelinquishMasterStatus(player, profession, masterPrice);
     }
 
-    public static bool RelinquishMasterStatus(Player player, Profession profession, int price)
+    public static bool RelinquishMasterStatus(Player player, Profession? profession, int price)
     {
         return RelinquishCraftStatusInternal(player, profession, masterMinValue, masterMaxValue, price);
     }
 
-    private static bool RelinquishCraftStatusInternal(Player player, Profession profession, int minSkillLevel, int maxSkillLevel, int price)
+    private static bool RelinquishCraftStatusInternal(Player player, Profession? profession, int minSkillLevel, int maxSkillLevel, int price)
     {
-        if (profession == null || !profession.IsCrafting())
+        if (!profession.HasValue || !profession.Value.IsCrafting())
             return false;
-        PlayerSkillEntry skill = player.GetSkillList().GetSkillEntry(profession.GetSkillId());
+        Profession resolvedProfession = profession.Value;
+        PlayerSkillEntry skill = player.GetSkillList().GetSkillEntry(resolvedProfession.GetSkillId());
         if (skill == null || skill.GetSkillLevel() < minSkillLevel || skill.GetSkillLevel() > maxSkillLevel)
             return false;
         if (!DecreaseKinah(player, price))

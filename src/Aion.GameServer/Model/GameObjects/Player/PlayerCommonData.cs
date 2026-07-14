@@ -1,4 +1,5 @@
 using System;
+using Aion.Commons.Database;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates;
 
@@ -453,12 +454,12 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
     /// </summary>
     public int GetLastOnlineEpochSeconds()
     {
-        return lastOnline == null ? 0 : (int)(new DateTimeOffset(DateTime.SpecifyKind(lastOnline.Value, DateTimeKind.Utc)).ToUnixTimeSeconds());
+        return DatabaseTimestamp.ToInt32UnixTimeSeconds(lastOnline);
     }
 
     public void SetLastOnline(DateTime? timestamp)
     {
-        lastOnline = timestamp;
+        lastOnline = timestamp.HasValue ? DatabaseTimestamp.RequireUtc(timestamp.Value) : null;
     }
 
     public int GetLevel()

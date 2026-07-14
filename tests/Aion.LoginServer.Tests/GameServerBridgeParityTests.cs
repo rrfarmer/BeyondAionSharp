@@ -232,6 +232,22 @@ public sealed class GameServerBridgeParityTests
 	}
 
 	[Fact]
+	public async Task GameServerBridge_HandlerFailureDoesNotCloseSocket()
+	{
+		var account = TestAccount(99);
+		await using var context = await StartGameServerBridgeAsync(accountRepository: new FakeAccountRepository(account));
+
+		// The default transfer service deliberately throws. Java GsClientPacket.run() logs this
+		// handler failure and leaves the dispatcher/socket available for the next packet.
+		await context.Stream.WriteAsync(CreatePlayerTransferOkFrame(12));
+		await context.Stream.WriteAsync(CreateLoginServerControlFrame(type: 1, param: 4, account.Id, adminId: 12345));
+
+		var response = await ReadFrameAsync(context.Stream);
+		Assert.Equal(PacketFrameCodec.CreateFrame(new SmLoginServerControlResponse(1, 4, account.Id, 12345, true).SerializePayload()), response);
+		Assert.True(context.GameServer.IsOnline);
+	}
+
+	[Fact]
 	public async Task GameServerBridge_PingPongLoopMatchesJavaMissedPongLifecycle()
 	{
 		await using var context = await StartGameServerBridgeAsync(gameServerPingInterval: TimeSpan.FromMilliseconds(100));

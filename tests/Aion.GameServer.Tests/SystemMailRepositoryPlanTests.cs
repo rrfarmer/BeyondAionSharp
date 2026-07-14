@@ -19,7 +19,7 @@ public sealed class SystemMailRepositoryPlanTests
 			186000242,
 			0,
 			1,
-			new DateTime(2026, 5, 26, 9, 0, 0));
+			new DateTime(2026, 5, 26, 9, 0, 0, DateTimeKind.Utc));
 
 		var plan = SystemMailRepositoryPlan.StoreLetter(mail);
 
@@ -36,10 +36,12 @@ public sealed class SystemMailRepositoryPlanTests
 				"attached_item_id",
 				"attached_kinah_count",
 				"express",
-				"recieved_time",
+				"recieved_time_epoch_millis",
 			],
 			plan.Parameters.Select(parameter => parameter.Name).ToArray());
 		Assert.Equal([9001, 4701, "Beyond Aion", "Bonus Pack"], plan.Parameters.Take(4).Select(parameter => parameter.Value).ToArray());
+		Assert.Equal(1_779_786_000_000L, plan.Parameters[^1].Value);
+		Assert.Contains("FROM_UNIXTIME(? / 1000.0)", plan.Sql, StringComparison.Ordinal);
 	}
 
 	[Fact]

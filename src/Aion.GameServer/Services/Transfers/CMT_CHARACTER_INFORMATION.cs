@@ -22,13 +22,14 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Transfers;
 
-/// <summary>Java parity: services/transfers/CMT_CHARACTER_INFORMATION (KID) extends BaseClientPacket&lt;AionConnection&gt;. Deserializes a transferred character blob (common/appearance/position, items, emotes/motions/macros/npc-factions/pets/titles, settings/abyss, skills, recipes, quests) into a new Player honoring PlayerTransferConfig allow-flags. ByteBuffer read*/BaseClientPacket red-tolerated; currentTimeMillis->UtcNow.ToUnixTimeMilliseconds; Integer itemColor==-1->null (int?); new Timestamp(ms)->DateTimeOffset.FromUnixTimeMilliseconds; enum.valueOf(s)->Enum.Parse; Java byte->sbyte; String.format->string.Format; protected ctor->public (cross-class instantiation). Many model/DAO types red-tolerated.</summary>
+/// <summary>Java parity: services/transfers/CMT_CHARACTER_INFORMATION (KID) extends BaseClientPacket&lt;AionConnection&gt;. Deserializes a transferred character blob (common/appearance/position, items, emotes/motions/macros/npc-factions/pets/titles, settings/abyss, skills, recipes, quests) into a new Player honoring PlayerTransferConfig allow-flags. ByteBuffer read*/BaseClientPacket red-tolerated; currentTimeMillis->UtcNow.ToUnixTimeMilliseconds; Integer itemColor==-1->null (int?); new Timestamp(ms)->DateTimeOffset.FromUnixTimeMilliseconds; enum.valueOf(s)->JavaEnum.ValueOf; Java byte->sbyte; String.format->string.Format; protected ctor->public (cross-class instantiation). Many model/DAO types red-tolerated.</summary>
 public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
 {
     public CMT_CHARACTER_INFORMATION(byte[] byteBuffer)
@@ -277,7 +278,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
             int questId = ReadD();
 
             if (PlayerTransferConfig.ALLOW_NPCFACTIONS)
-                player.GetNpcFactions().AddNpcFaction(new NpcFaction(id, time, active, Enum.Parse<ENpcFactionQuestState>(state), questId));
+                player.GetNpcFactions().AddNpcFaction(new NpcFaction(id, time, active, JavaEnum.ValueOf<ENpcFactionQuestState>(state), questId));
         }
         if (cnt > 0 && PlayerTransferConfig.ALLOW_NPCFACTIONS)
             PlayerNpcFactionsDAO.StoreNpcFactions(player);
@@ -394,7 +395,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
 
             if (PlayerTransferConfig.ALLOW_QUESTS)
             {
-                player.GetQuestStateList().AddQuest(questId, new QuestState(questId, Enum.Parse<QuestStatus>(status), qvars, flags, completeCount, nextRepeatTime,
+                player.GetQuestStateList().AddQuest(questId, new QuestState(questId, JavaEnum.ValueOf<QuestStatus>(status), qvars, flags, completeCount, nextRepeatTime,
                     reward == -1 ? (int?)null : reward, completeTime));
             }
         }

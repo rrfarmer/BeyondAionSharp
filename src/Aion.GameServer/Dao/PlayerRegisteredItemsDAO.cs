@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -115,14 +116,20 @@ public class PlayerRegisteredItemsDAO
         obj.SetX(rset.GetFloat(rset.GetOrdinal("x")));
         obj.SetY(rset.GetFloat(rset.GetOrdinal("y")));
         obj.SetZ(rset.GetFloat(rset.GetOrdinal("z")));
-        obj.SetHeading((sbyte)rset.GetInt32(rset.GetOrdinal("h")));
+        obj.SetHeading((sbyte)GetJavaInt32(rset, "h"));
         int colorOrd = rset.GetOrdinal("color");
         obj.SetColor(rset.IsDBNull(colorOrd) ? (int?)null : rset.GetInt32(colorOrd));
         obj.SetColorExpireEnd(rset.GetInt32(rset.GetOrdinal("color_expires")));
         if (obj.GetObjectTemplate().GetUseDays() > 0)
-            obj.SetExpireTime(rset.GetInt32(rset.GetOrdinal("expire_time")));
+            obj.SetExpireTime(GetJavaInt32(rset, "expire_time"));
         obj.SetPersistentState(IPersistable.PersistentState.UPDATED);
         return obj;
+    }
+
+    internal static int GetJavaInt32(DbDataReader rset, string columnName)
+    {
+        int ordinal = rset.GetOrdinal(columnName);
+        return rset.IsDBNull(ordinal) ? 0 : rset.GetInt32(ordinal);
     }
 
     private static HouseDecoration CreateDecoration(HouseRegistry registry, MySqlDataReader rset)

@@ -77,7 +77,9 @@ public class AttackShieldObserver : AttackCalcObserver
                         continue;
                     break;
                 default:
-                    if (attackResult.GetHitType() != null && hitType != attackResult.GetHitType())
+                    // AttackResult initializes hitType to EVERYHIT in Java and the C# port models that
+                    // invariant with a non-nullable enum. The Java null guard is therefore unreachable here.
+                    if (hitType != attackResult.GetHitType())
                         continue;
                     break;
             }

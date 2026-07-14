@@ -45,7 +45,7 @@ public class Changeclass : ConsoleCommand
             newClass = "SPIRIT_MASTER";
 
         // Java parity: PlayerClass.valueOf(newClass.toUpperCase()) throws IllegalArgumentException on invalid.
-        if (!Enum.TryParse(newClass.ToUpper(), out PlayerClass playerClass) || !Enum.IsDefined(typeof(PlayerClass), playerClass))
+        if (!TryParseEnumName(newClass.ToUpper(), out PlayerClass playerClass))
         {
             SendInfo(admin, "Invalid player class.");
             return;

@@ -104,7 +104,7 @@ public class Quest : AdminCommand
 
             try
             {
-                status = Enum.Parse<QuestStatus>(paramsArr[++index].ToUpper());
+                status = ParseEnumName<QuestStatus>(paramsArr[++index].ToUpper());
             }
             catch (ArgumentException)
             {
@@ -119,7 +119,7 @@ public class Quest : AdminCommand
 
             try
             {
-                var = int.Parse(paramsArr[++index]);
+                var = ParseInt(paramsArr[++index]);
             }
             catch (FormatException)
             {
@@ -136,7 +136,7 @@ public class Quest : AdminCommand
             { // optional
                 try
                 {
-                    varNum = int.Parse(paramsArr[index]);
+                    varNum = ParseInt(paramsArr[index]);
                     if (varNum < 0 || varNum > 5)
                         throw new ArgumentException();
                 }
@@ -155,7 +155,7 @@ public class Quest : AdminCommand
 
             try
             {
-                flags = int.Parse(paramsArr[++index]);
+                flags = ParseInt(paramsArr[++index]);
             }
             catch (Exception e) when (e is IndexOutOfRangeException || e is FormatException)
             {
@@ -171,7 +171,7 @@ public class Quest : AdminCommand
 
             try
             {
-                dialogPageId = int.Parse(paramsArr[++index]);
+                dialogPageId = ParseInt(paramsArr[++index]);
             }
             catch (Exception e) when (e is IndexOutOfRangeException || e is FormatException)
             {

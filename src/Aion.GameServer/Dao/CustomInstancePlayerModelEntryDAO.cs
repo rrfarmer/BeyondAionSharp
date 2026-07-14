@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MySqlConnector;
@@ -12,8 +13,8 @@ namespace Aion.GameServer.Dao;
 /// <summary>
 /// Java parity: dao/CustomInstancePlayerModelEntryDAO (@author Jo, Estrayl). JDBC DAO over custom_instance_records (neural-network
 /// training rows for the custom ranked instance). DatabaseFactory-style; positional '?' -> ordered MySqlParameter; executeQuery ->
-/// ExecuteReader; rset.getInt/getFloat/getBoolean("col") -> reader.GetX(reader.GetOrdinal("col")); getTimestamp -> new DateTimeOffset
-/// (GetDateTime) (PlayerModelEntry ctor/GetTimestamp use DateTimeOffset); SQL preserved verbatim. insertNewRecords: setAutoCommit(false)
+/// ExecuteReader; rset.getInt/getFloat/getBoolean("col") -> reader.GetX(reader.GetOrdinal("col")); Timestamp reads/writes use SQL epoch
+/// milliseconds/FROM_UNIXTIME (PlayerModelEntry uses DateTimeOffset). insertNewRecords: setAutoCommit(false)
 /// + addBatch/executeBatch + commit -> MySqlTransaction + MySqlBatch(BatchCommands) + Commit; Persistable.PersistentState ->
 /// IPersistable.PersistentState.UPDATED set per row.
 /// </summary>
@@ -21,12 +22,12 @@ public class CustomInstancePlayerModelEntryDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(CustomInstancePlayerModelEntryDAO));
 
-    private const string SELECT_QUERY = "SELECT * FROM `custom_instance_records` WHERE ? = player_id";
+    private const string SELECT_QUERY = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`timestamp`) * 1000) AS SIGNED) AS `timestamp_epoch_millis` FROM `custom_instance_records` WHERE ? = player_id";
     private const string INSERT_QUERY = "INSERT INTO `custom_instance_records` ( `player_id`, `timestamp`, `skill_id`, `player_class_id`, `player_hp_percentage`,"
         + "`player_mp_percentage`, `player_is_rooted`, `player_is_silenced`, `player_is_bound`, `player_is_stunned`, `player_is_aetherhold`,"
         + "`player_buff_count`, `player_debuff_count`, `player_is_shielded`, `target_hp_percentage`, `target_mp_percentage`,"
         + "`target_focuses_player`, `distance`, `target_is_rooted`, `target_is_silenced`, `target_is_bound`, `target_is_stunned`,"
-        + "`target_is_aetherhold`, `target_buff_count`, `target_debuff_count`, `target_is_shielded`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+        + "`target_is_aetherhold`, `target_buff_count`, `target_debuff_count`, `target_is_shielded`) VALUES (?, FROM_UNIXTIME(? / 1000.0), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
         + "?, ?, ?, ?, ?, ?, ?, ?)";
 
     public static List<PlayerModelEntry> LoadPlayerModelEntries(int playerId)
@@ -40,29 +41,51 @@ public class CustomInstancePlayerModelEntryDAO
             stmt.CommandText = SELECT_QUERY;
             stmt.Parameters.Add(new MySqlParameter { Value = playerId });
             using MySqlDataReader rset = stmt.ExecuteReader();
-            while (rset.Read())
-            {
-                PlayerModelEntry pme = new PlayerModelEntry(playerId, new DateTimeOffset(rset.GetDateTime(rset.GetOrdinal("timestamp"))),
-                    rset.GetInt32(rset.GetOrdinal("skill_id")), rset.GetInt32(rset.GetOrdinal("player_class_id")),
-                    rset.GetFloat(rset.GetOrdinal("player_hp_percentage")), rset.GetFloat(rset.GetOrdinal("player_mp_percentage")),
-                    rset.GetBoolean(rset.GetOrdinal("player_is_rooted")), rset.GetBoolean(rset.GetOrdinal("player_is_silenced")),
-                    rset.GetBoolean(rset.GetOrdinal("player_is_bound")), rset.GetBoolean(rset.GetOrdinal("player_is_stunned")),
-                    rset.GetBoolean(rset.GetOrdinal("player_is_aetherhold")), rset.GetInt32(rset.GetOrdinal("player_buff_count")),
-                    rset.GetInt32(rset.GetOrdinal("player_debuff_count")), rset.GetBoolean(rset.GetOrdinal("player_is_shielded")),
-                    rset.GetFloat(rset.GetOrdinal("target_hp_percentage")), rset.GetFloat(rset.GetOrdinal("target_mp_percentage")),
-                    rset.GetBoolean(rset.GetOrdinal("target_focuses_player")), rset.GetFloat(rset.GetOrdinal("distance")),
-                    rset.GetBoolean(rset.GetOrdinal("target_is_rooted")), rset.GetBoolean(rset.GetOrdinal("target_is_silenced")),
-                    rset.GetBoolean(rset.GetOrdinal("target_is_bound")), rset.GetBoolean(rset.GetOrdinal("target_is_stunned")),
-                    rset.GetBoolean(rset.GetOrdinal("target_is_aetherhold")), rset.GetInt32(rset.GetOrdinal("target_buff_count")),
-                    rset.GetInt32(rset.GetOrdinal("target_debuff_count")), rset.GetBoolean(rset.GetOrdinal("target_is_shielded")));
-                entries.Add(pme);
-            }
+            ReadPlayerModelEntries(playerId, rset, entries);
         }
         catch (Exception e)
         {
             log.LogError(e, "[CUSTOM_INSTANCE] Error loading player model entries on player id " + playerId);
         }
         return entries;
+    }
+
+    internal static void ReadPlayerModelEntries(int playerId, DbDataReader rset, ICollection<PlayerModelEntry> entries)
+    {
+        while (rset.Read())
+        {
+            entries.Add(new PlayerModelEntry(playerId, DatabaseTimestamp.ReadDateTimeOffset(rset, "timestamp_epoch_millis"),
+                GetInt32(rset, "skill_id"), GetInt32(rset, "player_class_id"),
+                GetFloat(rset, "player_hp_percentage"), GetFloat(rset, "player_mp_percentage"),
+                GetBoolean(rset, "player_is_rooted"), GetBoolean(rset, "player_is_silenced"),
+                GetBoolean(rset, "player_is_bound"), GetBoolean(rset, "player_is_stunned"),
+                GetBoolean(rset, "player_is_aetherhold"), GetInt32(rset, "player_buff_count"),
+                GetInt32(rset, "player_debuff_count"), GetBoolean(rset, "player_is_shielded"),
+                GetFloat(rset, "target_hp_percentage"), GetFloat(rset, "target_mp_percentage"),
+                GetBoolean(rset, "target_focuses_player"), GetFloat(rset, "distance"),
+                GetBoolean(rset, "target_is_rooted"), GetBoolean(rset, "target_is_silenced"),
+                GetBoolean(rset, "target_is_bound"), GetBoolean(rset, "target_is_stunned"),
+                GetBoolean(rset, "target_is_aetherhold"), GetInt32(rset, "target_buff_count"),
+                GetInt32(rset, "target_debuff_count"), GetBoolean(rset, "target_is_shielded")));
+        }
+    }
+
+    private static int GetInt32(DbDataReader rset, string columnName)
+    {
+        int ordinal = rset.GetOrdinal(columnName);
+        return rset.IsDBNull(ordinal) ? 0 : rset.GetInt32(ordinal);
+    }
+
+    private static float GetFloat(DbDataReader rset, string columnName)
+    {
+        int ordinal = rset.GetOrdinal(columnName);
+        return rset.IsDBNull(ordinal) ? 0f : rset.GetFloat(ordinal);
+    }
+
+    private static bool GetBoolean(DbDataReader rset, string columnName)
+    {
+        int ordinal = rset.GetOrdinal(columnName);
+        return !rset.IsDBNull(ordinal) && rset.GetBoolean(ordinal);
     }
 
     public static void InsertNewRecords(ICollection<PlayerModelEntry> filteredEntries)
@@ -77,7 +100,7 @@ public class CustomInstancePlayerModelEntryDAO
             {
                 MySqlBatchCommand cmd = new MySqlBatchCommand(INSERT_QUERY);
                 cmd.Parameters.Add(new MySqlParameter { Value = pme.GetPlayerID() });
-                cmd.Parameters.Add(new MySqlParameter { Value = pme.GetTimestamp() });
+                cmd.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(pme.GetTimestamp()) });
                 cmd.Parameters.Add(new MySqlParameter { Value = pme.GetSkillID() });
                 cmd.Parameters.Add(new MySqlParameter { Value = pme.GetPlayerClassID() });
                 cmd.Parameters.Add(new MySqlParameter { Value = pme.GetPlayerHPpercentage() });

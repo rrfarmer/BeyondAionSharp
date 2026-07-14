@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Utils.ChatHandlers;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -9,7 +9,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// Java parity: network/aion/serverpackets/SM_CUSTOM_PACKET (Luno). Admin //fsc fake-packet builder.
 /// PacketElementType is a Java enum with per-constant abstract write() bodies -> abstract nested class
 /// with static-readonly nested subclass instances (nested so they can reach the packet's protected WriteX).
-/// Integer.decode/Long.decode -> Decode/LongDecode (0x/#/0-prefix aware); Float/Double.valueOf -> Parse(InvariantCulture).
+/// Numeric element values use the same lexical, radix, and overflow rules as their Java wrapper methods.
 /// </summary>
 public class SM_CUSTOM_PACKET : AionServerPacket
 {
@@ -52,43 +52,43 @@ public class SM_CUSTOM_PACKET : AionServerPacket
         private sealed class DElement : PacketElementType
         {
             public DElement() : base('d') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteD(Decode(value));
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteD(JavaNumberParser.DecodeInt(value));
         }
 
         private sealed class BElement : PacketElementType
         {
             public BElement() : base('b') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteB(new byte[int.Parse(value)]);
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteB(new byte[JavaNumberParser.ParseInt(value)]);
         }
 
         private sealed class HElement : PacketElementType
         {
             public HElement() : base('h') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteH(Decode(value));
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteH(JavaNumberParser.DecodeInt(value));
         }
 
         private sealed class CElement : PacketElementType
         {
             public CElement() : base('c') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteC(Decode(value));
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteC(JavaNumberParser.DecodeInt(value));
         }
 
         private sealed class FElement : PacketElementType
         {
             public FElement() : base('f') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteF(float.Parse(value, CultureInfo.InvariantCulture));
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteF(JavaNumberParser.ParseFloat(value));
         }
 
         private sealed class DFElement : PacketElementType
         {
             public DFElement() : base('e') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteDF(double.Parse(value, CultureInfo.InvariantCulture));
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteDF(JavaNumberParser.ParseDouble(value));
         }
 
         private sealed class QElement : PacketElementType
         {
             public QElement() : base('q') { }
-            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteQ(LongDecode(value));
+            public override void Write(SM_CUSTOM_PACKET packet, string value) => packet.WriteQ(JavaNumberParser.DecodeLong(value));
         }
 
         private sealed class SElement : PacketElementType
@@ -143,38 +143,4 @@ public class SM_CUSTOM_PACKET : AionServerPacket
         }
     }
 
-    // Java parity: Integer.decode(String) — 0x/0X/# hex, leading 0 octal, else decimal (sign-aware).
-    private static int Decode(string value)
-    {
-        value = value.Trim();
-        bool neg = value.StartsWith("-");
-        string body = neg ? value.Substring(1) : value;
-        int result;
-        if (body.StartsWith("0x") || body.StartsWith("0X"))
-            result = Convert.ToInt32(body.Substring(2), 16);
-        else if (body.StartsWith("#"))
-            result = Convert.ToInt32(body.Substring(1), 16);
-        else if (body.Length > 1 && body.StartsWith("0"))
-            result = Convert.ToInt32(body, 8);
-        else
-            result = int.Parse(body);
-        return neg ? -result : result;
-    }
-
-    private static long LongDecode(string value)
-    {
-        value = value.Trim();
-        bool neg = value.StartsWith("-");
-        string body = neg ? value.Substring(1) : value;
-        long result;
-        if (body.StartsWith("0x") || body.StartsWith("0X"))
-            result = Convert.ToInt64(body.Substring(2), 16);
-        else if (body.StartsWith("#"))
-            result = Convert.ToInt64(body.Substring(1), 16);
-        else if (body.Length > 1 && body.StartsWith("0"))
-            result = Convert.ToInt64(body, 8);
-        else
-            result = long.Parse(body);
-        return neg ? -result : result;
-    }
 }

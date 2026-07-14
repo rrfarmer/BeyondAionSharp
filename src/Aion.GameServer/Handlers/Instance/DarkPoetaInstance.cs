@@ -145,11 +145,7 @@ public class DarkPoetaInstance : GeneralInstanceHandler
                 }
                 break;
             default:
-                if (npc.GetObjectTemplate().GetRace() == null)
-                {
-                    break;
-                }
-
+                // NpcTemplate initializes race to Race.NONE in Java and C# mirrors that default.
                 switch (npc.GetObjectTemplate().GetRace().GetRaceId())
                 {
                     case 22: // UNDEAD
@@ -252,7 +248,7 @@ public class DarkPoetaInstance : GeneralInstanceHandler
         if (team != null)
         {
             if (team.GetLeaderObject().GetAbyssRank().GetRank().GetId() >= AbyssRankEnum.STAR1_OFFICER.GetId())
-                pointsReward = (int)Math.Round(pointsReward * 1.1f);
+                pointsReward = JavaMath.Round(pointsReward * 1.1f);
         }
         return pointsReward;
     }

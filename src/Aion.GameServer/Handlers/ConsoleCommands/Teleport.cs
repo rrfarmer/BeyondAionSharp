@@ -28,9 +28,9 @@ public class Teleport : ConsoleCommand
         int worldId = paramsArr.Length == 3 ? player.GetWorldId() : DataManager.WORLD_MAPS_DATA.GetWorldIdByCName(paramsArr[i++]);
         if (worldId != 0)
         {
-            int x = int.Parse(paramsArr[i++]);
-            int y = int.Parse(paramsArr[i++]);
-            int inputZ = int.Parse(paramsArr[i++]);
+            int x = ParseInt(paramsArr[i++]);
+            int y = ParseInt(paramsArr[i++]);
+            int inputZ = ParseInt(paramsArr[i++]);
             float z = inputZ;
             WorldMapInstance instance = GetOrCreateWorldMapInstance(player, worldId);
             if (inputZ == 10_000) // default value in client when selecting a point on the world map

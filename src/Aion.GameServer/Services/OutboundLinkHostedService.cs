@@ -12,6 +12,7 @@ public sealed class OutboundLinkHostedService : IHostedService
 	private readonly ILogger<OutboundLinkHostedService> _logger;
 	private Task? _loginConnectTask;
 	private Task? _chatConnectTask;
+	private CancellationTokenSource? _lifetimeTokenSource;
 
 	public OutboundLinkHostedService(
 		Aion.GameServer.Network.LoginServer.LoginServer loginServer,
@@ -27,22 +28,26 @@ public sealed class OutboundLinkHostedService : IHostedService
 
 	public Task StartAsync(CancellationToken cancellationToken)
 	{
-		// Java parity: GameServer startup connects outbound login/chat bridges after core init.
-		_loginConnectTask = ConnectLoginServerAsync(cancellationToken);
+		// The connectors contain the Java-style retry supervisors. Give them a dedicated hosted-service
+		// lifetime token so a failed startup connection remains live until StopAsync, not just one attempt.
+		_lifetimeTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		_loginConnectTask = ConnectLoginServerAsync(_lifetimeTokenSource.Token);
 		if (_options.Core.EnableChatServer)
-			_chatConnectTask = ConnectChatServerAsync(cancellationToken);
+			_chatConnectTask = ConnectChatServerAsync(_lifetimeTokenSource.Token);
 		return Task.CompletedTask;
 	}
 
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
 		// Java parity: bridge shutdown during game-server stop.
-		await _loginServer.StopAsync();
-		await _chatServer.StopAsync();
+		_lifetimeTokenSource?.Cancel();
+		await Task.WhenAll(_loginServer.StopAsync(), _chatServer.StopAsync());
 
 		var tasks = new[] { _loginConnectTask, _chatConnectTask }.Where(task => task != null).Cast<Task>().ToArray();
 		if (tasks.Length > 0)
 			await Task.WhenAny(Task.WhenAll(tasks), Task.Delay(TimeSpan.FromSeconds(2), cancellationToken));
+		_lifetimeTokenSource?.Dispose();
+		_lifetimeTokenSource = null;
 	}
 
 	private async Task ConnectLoginServerAsync(CancellationToken cancellationToken)

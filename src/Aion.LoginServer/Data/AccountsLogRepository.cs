@@ -15,13 +15,13 @@ public sealed class AccountsLogRepository : IAccountsLogRepository
 		await using var connection = DatabaseFactory.GetConnection();
 		await connection.OpenAsync(cancellationToken);
 		await using var command = connection.CreateCommand();
-		command.CommandText = "INSERT INTO account_login_history(account_id, gameserver_id, date, ip, mac, hdd_serial) VALUES (?, ?, ?, ?, ?, ?)";
+		command.CommandText = "INSERT INTO account_login_history(account_id, gameserver_id, date, ip, mac, hdd_serial) VALUES (?, ?, FROM_UNIXTIME(? / 1000.0), ?, ?, ?)";
 		command.Parameters.AddRange(
 			new[]
 			{
 				new MySqlParameter { Value = accountId },
 				new MySqlParameter { Value = gameServerId },
-				new MySqlParameter { Value = time },
+				new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(time) },
 				new MySqlParameter { Value = ip },
 				new MySqlParameter { Value = mac },
 				new MySqlParameter { Value = hddSerial },

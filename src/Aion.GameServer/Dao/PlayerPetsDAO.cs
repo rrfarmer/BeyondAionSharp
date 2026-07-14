@@ -12,8 +12,8 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/PlayerPetsDAO (@author Xitanium, Kamui, Rolandas, M@xx, xTz). JDBC DAO over player_pets. DatabaseFactory-style;
 /// positional '?' -> ordered MySqlParameter; executeQuery -> ExecuteReader; getInt/getLong/getString->GetX(GetOrdinal); execute->ExecuteNonQuery;
 /// SQL verbatim. getUsedIDs scrollable ResultSet -> forward-only List&lt;int&gt;+ToArray (scroll flags dropped). PetCommonData despawn/birthday
-/// use DateTime?: getTimestamp->IsDBNull?null:GetDateTime; setTimestamp(null)->DBNull.Value; the null despawn fallback new Timestamp(now)
-/// -> DateTime.Now. PetHungryLevel.fromId->FromId; doping ids CSV split + Integer.parseInt->int.Parse. Pet types fully-qualified to match
+/// use DateTime?: Timestamp reads/writes use nullable SQL epoch projections/FROM_UNIXTIME; the null despawn fallback new Timestamp(now)
+/// -> DateTime.UtcNow. PetHungryLevel.fromId->FromId; doping ids CSV split + Integer.parseInt->int.Parse. Pet types fully-qualified to match
 /// PetCommonData's declared return types (Services.ToyPet / Model.Templates.Pet). FeedProgress/DopingBag null-guards preserved.
 /// </summary>
 public class PlayerPetsDAO
@@ -86,13 +86,13 @@ public class PlayerPetsDAO
             using MySqlConnection con = DatabaseFactory.GetConnection();
             con.Open();
             using MySqlCommand stmt = con.CreateCommand();
-            stmt.CommandText = "INSERT INTO player_pets(id, player_id, template_id, decoration, name, despawn_time, expire_time) VALUES(?, ?, ?, ?, ?, ?, ?)";
+            stmt.CommandText = "INSERT INTO player_pets(id, player_id, template_id, decoration, name, despawn_time, expire_time) VALUES(?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000.0), ?)";
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetObjectId() });
             stmt.Parameters.Add(new MySqlParameter { Value = player.GetObjectId() });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetTemplateId() });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetDecoration() });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetName() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)petCommonData.GetDespawnTime() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(petCommonData.GetDespawnTime()) });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetExpireTime() });
             stmt.ExecuteNonQuery();
         }
@@ -127,7 +127,7 @@ public class PlayerPetsDAO
             using MySqlConnection con = DatabaseFactory.GetConnection();
             con.Open();
             using MySqlCommand stmt = con.CreateCommand();
-            stmt.CommandText = "SELECT * FROM player_pets WHERE player_id = ?";
+            stmt.CommandText = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`birthday`) * 1000) AS SIGNED) AS `birthday_epoch_millis`, CAST(FLOOR(UNIX_TIMESTAMP(`despawn_time`) * 1000) AS SIGNED) AS `despawn_time_epoch_millis` FROM player_pets WHERE player_id = ?";
             stmt.Parameters.Add(new MySqlParameter { Value = player.GetObjectId() });
             using MySqlDataReader rs = stmt.ExecuteReader();
             while (rs.Read())
@@ -153,16 +153,14 @@ public class PlayerPetsDAO
                             petCommonData.GetDopingBag().SetItem(int.Parse(ids[i]), i);
                     }
                 }
-                int bdOrd = rs.GetOrdinal("birthday");
-                petCommonData.SetBirthday(rs.IsDBNull(bdOrd) ? (DateTime?)null : rs.GetDateTime(bdOrd));
+                petCommonData.SetBirthday(DatabaseTimestamp.ReadNullableUtcDateTime(rs, "birthday_epoch_millis"));
                 petCommonData.SetStartMoodTime(rs.GetInt64(rs.GetOrdinal("mood_started")));
                 petCommonData.SetShuggleCounter(rs.GetInt32(rs.GetOrdinal("counter")));
                 petCommonData.SetMoodCdStarted(rs.GetInt64(rs.GetOrdinal("mood_cd_started")));
                 petCommonData.SetGiftCdStarted(rs.GetInt64(rs.GetOrdinal("gift_cd_started")));
-                int dtOrd = rs.GetOrdinal("despawn_time");
-                DateTime? ts = rs.IsDBNull(dtOrd) ? (DateTime?)null : rs.GetDateTime(dtOrd);
+                DateTime? ts = DatabaseTimestamp.ReadNullableUtcDateTime(rs, "despawn_time_epoch_millis");
                 if (ts == null)
-                    ts = DateTime.Now;
+                    ts = DateTime.UtcNow;
                 petCommonData.SetDespawnTime(ts);
                 pets.Add(petCommonData);
             }
@@ -199,12 +197,12 @@ public class PlayerPetsDAO
             using MySqlConnection con = DatabaseFactory.GetConnection();
             con.Open();
             using MySqlCommand stmt = con.CreateCommand();
-            stmt.CommandText = "UPDATE player_pets SET mood_started = ?, counter = ?, mood_cd_started = ?, gift_cd_started = ?, despawn_time = ? WHERE id = ?";
+            stmt.CommandText = "UPDATE player_pets SET mood_started = ?, counter = ?, mood_cd_started = ?, gift_cd_started = ?, despawn_time = FROM_UNIXTIME(? / 1000.0) WHERE id = ?";
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetMoodStartTime() });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetShuggleCounter() });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetMoodCdStarted() });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetGiftCdStarted() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)petCommonData.GetDespawnTime() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(petCommonData.GetDespawnTime()) });
             stmt.Parameters.Add(new MySqlParameter { Value = petCommonData.GetObjectId() });
             stmt.ExecuteNonQuery();
         }

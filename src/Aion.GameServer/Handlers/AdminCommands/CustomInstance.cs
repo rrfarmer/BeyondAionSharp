@@ -72,7 +72,7 @@ public class CustomInstance : AdminCommand
     private void SetNewRank(Player player, string newRank)
     {
         int rank;
-        if (!int.TryParse(newRank, out rank))
+        if (!TryParseInt(newRank, out rank))
         {
             SendInfo(player, "The new rank have to be a number.");
             return;

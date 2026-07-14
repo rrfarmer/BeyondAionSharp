@@ -13,6 +13,7 @@ using Aion.ChatServer.Network.Handlers;
 using Aion.ChatServer.Network.Packets;
 using Aion.ChatServer.Network.Packets.GameServer;
 using Aion.ChatServer.Services;
+using Aion.Commons.Network;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.ChatServer.Tests.Integration;
@@ -55,6 +56,46 @@ public class ChatConnectionSmokeTests
 		Assert.Equal(48, playerAuthResponse[5]);
 		Assert.Equal(48, playerAuthResponse.Length - 6);
 		Assert.NotNull(chatService.GetPlayer(123));
+	}
+
+	[Fact]
+	public async Task GameServerConnection_HandlerFailureDoesNotCloseSocket()
+	{
+		var options = new ChatServerOptions
+		{
+			GameServerPassword = "secret",
+			ClientConnectEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 10241)
+		};
+		var channels = new ChatChannels(NullLogger<ChatChannels>.Instance);
+		var broadcast = new BroadcastService(NullLogger<BroadcastService>.Instance);
+		var innerChatService = new ChatService(channels, broadcast, NullLogger<ChatService>.Instance);
+		var chatService = new ThrowingOnceChatService(innerChatService);
+		var gameServerService = new GameServerService(options, NullLogger<GameServerService>.Instance);
+
+		await using var harness = await SocketHarness.ConnectAsync(
+			serverClient => new GsConnection(
+				NullLogger.Instance,
+				serverClient,
+				"gs-handler-failure",
+				gameServerService,
+				chatService,
+				options));
+
+		await harness.ClientStream.WriteAsync(ChatPacketFrameCodec.CreateFrame(Packet(w => w.C(GsPacketFactory.CmChatServerAuth).C(1).S("secret"))));
+		Assert.Equal([0x00, 0x00, 0x04, 0x7F, 0x00, 0x00, 0x01, 0x01, 0x28], await ReadPayloadAsync(harness.ClientStream));
+
+		await harness.ClientStream.WriteAsync(
+			ChatPacketFrameCodec.CreateFrame(
+				Packet(w => w.C(GsPacketFactory.CmPlayerAuth).D(123).S("account").S("First").D((int)Race.Elyos).C(0))));
+		await harness.ClientStream.WriteAsync(
+			ChatPacketFrameCodec.CreateFrame(
+				Packet(w => w.C(GsPacketFactory.CmPlayerAuth).D(124).S("account").S("Second").D((int)Race.Elyos).C(0))));
+
+		var playerAuthResponse = await ReadPayloadAsync(harness.ClientStream);
+		Assert.Equal(GsPacketFactory.SmPlayerAuthResponse, playerAuthResponse[0]);
+		Assert.Equal(124, BinaryPrimitives.ReadInt32LittleEndian(playerAuthResponse.AsSpan(1, 4)));
+		Assert.Null(innerChatService.GetPlayer(123));
+		Assert.NotNull(innerChatService.GetPlayer(124));
 	}
 
 	[Fact]
@@ -143,6 +184,34 @@ public class ChatConnectionSmokeTests
 		Assert.Equal(0x1A, secondPayload[0]);
 		Assert.Equal("Hello", ExtractChannelMessageText(firstPayload));
 		Assert.Equal("Hello", ExtractChannelMessageText(secondPayload));
+	}
+
+	[Fact]
+	public async Task ClientConnection_RejectsFrameAboveJavaSixteenKiBLimitFromHeader()
+	{
+		var options = new ChatServerOptions();
+		var channels = new ChatChannels(NullLogger<ChatChannels>.Instance);
+		var broadcast = new BroadcastService(NullLogger<BroadcastService>.Instance);
+		var chatService = new ChatService(channels, broadcast, NullLogger<ChatService>.Instance);
+		var handlerRegistry = CreateHandlerRegistry(options, new NullChatLogRepository());
+		await using var harness = await SocketHarness.ConnectAsync(
+			serverClient => new ClientChannelHandler(
+				NullLogger.Instance,
+				serverClient,
+				"oversized-client-frame",
+				chatService,
+				channels,
+				broadcast,
+				handlerRegistry,
+				options));
+		var header = new byte[2];
+		BinaryPrimitives.WriteUInt16LittleEndian(
+			header,
+			ChatFrameLimits.MaxPacketLength + 1);
+
+		await harness.ClientStream.WriteAsync(header);
+
+		await harness.WaitForConnectionCloseAsync();
 	}
 
 	private static async Task<int> AuthenticateAndJoinAsync(NetworkStream stream, ChatClient client, int requestId)
@@ -236,6 +305,44 @@ public class ChatConnectionSmokeTests
 		public Task InsertChatLogAsync(string sender, string message, string type, CancellationToken cancellationToken = default) => Task.CompletedTask;
 	}
 
+	private sealed class ThrowingOnceChatService : IChatService
+	{
+		private readonly IChatService _inner;
+		private bool _throwOnRegister = true;
+
+		public ThrowingOnceChatService(IChatService inner)
+		{
+			_inner = inner;
+		}
+
+		public ChatClient RegisterPlayer(int playerId, string accountName, string nick, Race race, byte accessLevel)
+		{
+			if (_throwOnRegister)
+			{
+				_throwOnRegister = false;
+				throw new InvalidOperationException("Injected chat gameserver handler failure.");
+			}
+
+			return _inner.RegisterPlayer(playerId, accountName, nick, race, accessLevel);
+		}
+
+		public ChatClient? GetPlayer(int playerId) => _inner.GetPlayer(playerId);
+
+		public bool RegisterPlayerConnection(int playerId, byte[] token, byte[] identifier, string name, string accountName, IChatClientConnection connection)
+		{
+			return _inner.RegisterPlayerConnection(playerId, token, identifier, name, accountName, connection);
+		}
+
+		public Channel? RegisterPlayerWithChannel(ChatClient client, int channelRequestId, string identifier)
+		{
+			return _inner.RegisterPlayerWithChannel(client, channelRequestId, identifier);
+		}
+
+		public ChatClient? PlayerLogout(int playerId) => _inner.PlayerLogout(playerId);
+
+		public void GagPlayer(int playerId, long gagTimeMillis) => _inner.GagPlayer(playerId, gagTimeMillis);
+	}
+
 	private sealed class SocketHarness : IAsyncDisposable
 	{
 		private readonly TcpListener _listener;
@@ -254,6 +361,11 @@ public class ChatConnectionSmokeTests
 		public TcpClient Client { get; }
 
 		public NetworkStream ClientStream { get; }
+
+		public Task WaitForConnectionCloseAsync()
+		{
+			return _connectionTask.WaitAsync(TimeSpan.FromSeconds(5));
+		}
 
 		public static async Task<SocketHarness> ConnectAsync(Func<TcpClient, Aion.Commons.Network.Server.BaseClientConnection> connectionFactory)
 		{

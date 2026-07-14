@@ -44,7 +44,7 @@ public class Combineskill : ConsoleCommand
         int skillId = 0;
         int skillLvl = 1;
 
-        if (!int.TryParse(paramsArr[1], out skillLvl))
+        if (!TryParseInt(paramsArr[1], out skillLvl))
         {
             PacketSendUtility.SendMessage(admin, "Parameters need to be an integer.");
             return;
@@ -81,7 +81,7 @@ public class Combineskill : ConsoleCommand
         public string GetName() => name;
 
         // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
-        public int GetTemplateId() => int.Parse(id);
+        public int GetTemplateId() => JavaNumberParser.ParseInt(id);
     }
 
     [XmlRoot("skills")]

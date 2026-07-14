@@ -1,4 +1,5 @@
 using Aion.Commons.Network;
+using Aion.Commons.Database;
 using Aion.LoginServer.Model;
 
 namespace Aion.LoginServer.Network.GameServer.ServerPackets;
@@ -19,7 +20,7 @@ public sealed class SmMacBanList : GsServerPacket
 		foreach (var entry in _bannedList)
 		{
 			buffer.WriteS(entry.Mac);
-			buffer.WriteQ(new DateTimeOffset(entry.Time).ToUnixTimeMilliseconds());
+			buffer.WriteQ(DatabaseTimestamp.ToUnixTimeMilliseconds(entry.Time));
 			buffer.WriteS(entry.Details);
 		}
 	}

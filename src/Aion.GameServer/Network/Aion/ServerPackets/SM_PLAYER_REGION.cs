@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
@@ -22,18 +23,6 @@ public class SM_PLAYER_REGION : AionServerPacket
         WriteC(0);
         WriteC(0);
         WriteC(0);
-        WriteD(JavaStringHashCode(subZone.Name));
-    }
-
-    // Java parity: String.hashCode() — required because the value is sent on the wire.
-    private static int JavaStringHashCode(string s)
-    {
-        int h = 0;
-        foreach (char c in s)
-            unchecked
-            {
-                h = 31 * h + c;
-            }
-        return h;
+        WriteD(JavaString.HashCode(subZone.Name));
     }
 }

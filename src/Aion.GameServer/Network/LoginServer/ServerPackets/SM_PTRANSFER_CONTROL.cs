@@ -25,6 +25,8 @@ public sealed class SM_PTRANSFER_CONTROL : LoginServerPacket
 {
     private static readonly ILogger Log = NullLogger.Instance;
 
+    private const byte OpCode = 0x0D;
+
     public const byte CHARACTER_INFORMATION = 1;
     public const byte ITEMS_INFORMATION = 5;
     public const byte DATA_INFORMATION = 6;
@@ -63,6 +65,8 @@ public sealed class SM_PTRANSFER_CONTROL : LoginServerPacket
     // Java parity (writeImpl): 1:1 with game-server/.../loginserver/serverpackets/SM_PTRANSFER_CONTROL.java.
     protected override void WritePayload(PacketBuffer buffer)
     {
+        // Java's LsServerPacket writes the opcode passed to super(13) before writeImpl().
+        buffer.WriteC(OpCode);
         buffer.WriteC(_type);
         switch (_type)
         {

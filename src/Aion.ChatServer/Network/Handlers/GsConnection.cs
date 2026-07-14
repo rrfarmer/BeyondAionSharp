@@ -50,6 +50,25 @@ public sealed class GsConnection : BaseClientConnection
 	protected override async Task ProcessPacketAsync(PacketBuffer packet)
 	{
 		var parsed = GsPacketFactory.Create(packet, _state);
+		if (parsed == null)
+		{
+			_logger.LogWarning("Unknown chat gameserver packet from {ClientId} in state {State}", _clientId, _state);
+			return;
+		}
+
+		try
+		{
+			await DispatchPacketAsync(parsed);
+		}
+		catch (Exception ex) when (ex is not GameServerTransportException)
+		{
+			// Java GsClientPacket.run() isolates packet-handler failures from the socket dispatcher.
+			_logger.LogWarning(ex, "Error handling chat gameserver packet 0x{Opcode:X2} from {ClientId}", parsed.OpCode, _clientId);
+		}
+	}
+
+	private async Task DispatchPacketAsync(GsClientPacket parsed)
+	{
 		switch (parsed)
 		{
 			case CmChatServerAuth auth:
@@ -63,9 +82,6 @@ public sealed class GsConnection : BaseClientConnection
 				break;
 			case CmPlayerGag gag:
 				_chatService.GagPlayer(gag.PlayerId, gag.GagTimeMillis);
-				break;
-			case null:
-				_logger.LogWarning("Unknown chat gameserver packet from {ClientId} in state {State}", _clientId, _state);
 				break;
 			default:
 				_logger.LogDebug("Parsed chat gameserver packet 0x{Opcode:X2} in state {State}", parsed.OpCode, _state);
@@ -82,7 +98,14 @@ public sealed class GsConnection : BaseClientConnection
 				return;
 
 			var frame = packet.SerializeFrame();
-			await WriteAsync(frame, 0, frame.Length);
+			try
+			{
+				await WriteAsync(frame, 0, frame.Length);
+			}
+			catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException)
+			{
+				throw new GameServerTransportException("Failed to write a chat gameserver packet.", ex);
+			}
 		}
 		finally
 		{
@@ -162,5 +185,13 @@ public sealed class GsConnection : BaseClientConnection
 		}
 
 		return buffer;
+	}
+
+	private sealed class GameServerTransportException : IOException
+	{
+		public GameServerTransportException(string message, Exception innerException)
+			: base(message, innerException)
+		{
+		}
 	}
 }

@@ -59,7 +59,7 @@ public class GateRepairAI : NpcAI
             return;
         if (GetPosition().GetWorldMapInstance().GetObjectByStaticId(repairStone.GetDoorId()) is Creature door)
         {
-            int healValue = (int)System.Math.Round(door.GetLifeStats().GetMaxHp() * SiegeConfig.DOOR_REPAIR_HEAL_PERCENT);
+            int healValue = (int)JavaMath.Round(door.GetLifeStats().GetMaxHp() * SiegeConfig.DOOR_REPAIR_HEAL_PERCENT);
             if (door.GetLifeStats().GetCurrentHp() + healValue > door.GetLifeStats().GetMaxHp())
             {
                 healValue = door.GetLifeStats().GetMaxHp() - door.GetLifeStats().GetCurrentHp();

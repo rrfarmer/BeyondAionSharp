@@ -255,20 +255,24 @@ public class EventService
     private void UpdateEventTheme()
     {
         EventTheme oldEventTheme = eventTheme;
-        EventTheme newEventTheme = EventTheme.NONE;
-        foreach (Event ev in activeEvents)
-        {
-            if (ev.GetEventTemplate().GetTheme() != null)
-            {
-                newEventTheme = ev.GetEventTemplate().GetTheme();
-                break;
-            }
-        }
+        EventTheme newEventTheme = SelectEventTheme(activeEvents);
         if (oldEventTheme != newEventTheme)
         {
             eventTheme = newEventTheme;
             PacketSendUtility.BroadcastToWorld(new SM_VERSION_CHECK(eventTheme)); // update city decoration (logged in players see changes after teleport)
         }
+    }
+
+    internal static EventTheme SelectEventTheme(IEnumerable<Event> events)
+    {
+        // Java parity: theme-less active events are skipped; the first themed event wins.
+        foreach (Event ev in events)
+        {
+            EventTheme? theme = ev.GetEventTemplate().GetTheme();
+            if (theme != null)
+                return theme.Value;
+        }
+        return EventTheme.NONE;
     }
 
     public EventTheme GetEventTheme()

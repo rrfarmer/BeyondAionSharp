@@ -47,13 +47,13 @@ public class Addquest : ConsoleCommand
         Match result = Regex.Match(quest, "\\[quest:([^%]+)]");
         if (result.Success)
         {
-            if (!int.TryParse(result.Groups[1].Value, out id))
+            if (!TryParseInt(result.Groups[1].Value, out id))
             {
                 Info(admin, null);
                 return;
             }
         }
-        else if (!int.TryParse(paramsArr[0], out id))
+        else if (!TryParseInt(paramsArr[0], out id))
         {
             Info(admin, null);
             return;

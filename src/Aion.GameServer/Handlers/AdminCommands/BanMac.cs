@@ -28,7 +28,7 @@ public class BanMac : AdminCommand
         string targetName = "direct_type";
 
         // try parsing
-        if (!int.TryParse(paramsArr[0], out time))
+        if (!TryParseInt(paramsArr[0], out time))
         {
             Info(player, "Please enter a valid integer amount of minutes");
             return;

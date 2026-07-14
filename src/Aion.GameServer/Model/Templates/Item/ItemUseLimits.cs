@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Templates.Items;
 
@@ -44,7 +45,7 @@ public class ItemUseLimits
     public string GenderXml
     {
         get => genderPermitted?.ToString();
-        set => genderPermitted = value == null ? (Gender?)null : (Gender)Enum.Parse(typeof(Gender), value);
+        set => genderPermitted = JavaEnum.TryValueOf(value, out Gender parsed) ? parsed : null;
     }
 
     [XmlAttribute("ride_usable")]

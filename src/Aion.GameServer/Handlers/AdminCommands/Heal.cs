@@ -77,7 +77,7 @@ public class Heal : AdminCommand
 
                 if (result.Success)
                 {
-                    int hpPercent = int.Parse(result.Groups[1].Value);
+                    int hpPercent = ParseInt(result.Groups[1].Value);
 
                     if (hpPercent < 100)
                         value = (int)(hpPercent / 100f * creature.GetLifeStats().GetMaxHp());
@@ -85,7 +85,7 @@ public class Heal : AdminCommand
                         value = creature.GetLifeStats().GetMaxHp();
                 }
                 else
-                    value = int.Parse(paramsArr[0]);
+                    value = ParseInt(paramsArr[0]);
                 creature.GetLifeStats().IncreaseHp(TYPE.HP, value);
                 if (!player.Equals(creature))
                     SendInfo(player, creature.GetName() + " has been healed by " + value + " health points!");

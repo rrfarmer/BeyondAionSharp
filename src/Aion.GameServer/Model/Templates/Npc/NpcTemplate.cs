@@ -66,7 +66,16 @@ public class NpcTemplate : CreatureTemplate
 
     [XmlAttribute("hpgauge")] public int hpGauge;
 
-    [XmlAttribute("tribe")] public TribeClass tribe;
+    // Java's TribeClass reference is null when the XML attribute is absent. Keep a nullable backing
+    // value so null-sensitive callers do not accidentally see the ordinal-zero C# enum member.
+    [XmlIgnore] private TribeClass? tribe;
+
+    [XmlAttribute("tribe")]
+    public string? TribeRaw
+    {
+        get => tribe?.ToString();
+        set => tribe = value == null ? null : System.Enum.Parse<TribeClass>(value);
+    }
 
     [XmlAttribute("ai")] public string ai;
 
@@ -162,6 +171,11 @@ public class NpcTemplate : CreatureTemplate
     }
 
     public TribeClass GetTribe()
+    {
+        return tribe ?? default;
+    }
+
+    public TribeClass? GetNullableTribe()
     {
         return tribe;
     }

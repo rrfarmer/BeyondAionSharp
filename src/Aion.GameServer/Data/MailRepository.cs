@@ -61,7 +61,7 @@ public sealed record SystemMailRepositoryParameter(string Name, object? Value);
 public static class SystemMailRepositoryPlan
 {
 	public const string StoreLetterSql =
-		"INSERT INTO `mail` (`mail_unique_id`, `mail_recipient_id`, `sender_name`, `mail_title`, `mail_message`, `unread`, `attached_item_id`, `attached_kinah_count`, `express`, `recieved_time`) VALUES(?,?,?,?,?,?,?,?,?,?)";
+		"INSERT INTO `mail` (`mail_unique_id`, `mail_recipient_id`, `sender_name`, `mail_title`, `mail_message`, `unread`, `attached_item_id`, `attached_kinah_count`, `express`, `recieved_time`) VALUES(?,?,?,?,?,?,?,?,?,FROM_UNIXTIME(? / 1000.0))";
 
 	public const string StoreAttachedItemSql =
 		"INSERT INTO `inventory` (`item_unique_id`, `item_id`, `item_count`, `item_color`, `color_expires`, `item_creator`, `expire_time`, `activation_count`, `item_owner`, `is_equipped`, is_soul_bound, `slot`, `item_location`, `enchant`, `enchant_bonus`, `item_skin`, `fusioned_item`, `optional_socket`, `optional_fusion_socket`, `charge`, `tune_count`, `rnd_bonus`, `fusion_rnd_bonus`, `tempering`, `pack_count`, `is_amplified`, `buff_skill`, `rnd_plume_bonus`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -83,7 +83,7 @@ public static class SystemMailRepositoryPlan
 				new("attached_item_id", mail.AttachedItemObjectId),
 				new("attached_kinah_count", mail.AttachedKinah),
 				new("express", mail.LetterType),
-				new("recieved_time", mail.ReceivedTime),
+				new("recieved_time_epoch_millis", DatabaseTimestamp.ToUnixTimeMilliseconds(mail.ReceivedTime)),
 			]);
 	}
 
@@ -528,7 +528,7 @@ public sealed class MySqlMailRepository : IMailRepository
 				mail_unique_id, mail_recipient_id, sender_name, mail_title, mail_message, unread,
 				attached_item_id, attached_kinah_count, express, recieved_time
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000.0))
 			""";
 		mailCommand.Parameters.AddRange(
 			new[]
@@ -542,7 +542,7 @@ public sealed class MySqlMailRepository : IMailRepository
 				new MySqlParameter { Value = mail.AttachedItemObjectId },
 				new MySqlParameter { Value = mail.AttachedKinah },
 				new MySqlParameter { Value = mail.LetterType },
-				new MySqlParameter { Value = mail.ReceivedTime },
+				new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(mail.ReceivedTime) },
 			});
 		await mailCommand.ExecuteNonQueryAsync(cancellationToken);
 	}

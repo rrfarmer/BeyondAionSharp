@@ -45,7 +45,7 @@ public class Classup : ConsoleCommand
             newClass = "SPIRIT_MASTER";
 
         // Java parity: PlayerClass.valueOf(newClass.toUpperCase()); if (playerClass.isStartingClass()) throw new IllegalArgumentException();
-        if (!Enum.TryParse(newClass.ToUpper(), out PlayerClass playerClass) || !Enum.IsDefined(typeof(PlayerClass), playerClass) || playerClass.IsStartingClass())
+        if (!TryParseEnumName(newClass.ToUpper(), out PlayerClass playerClass) || playerClass.IsStartingClass())
         {
             SendInfo(admin, "Invalid player class.");
             return;

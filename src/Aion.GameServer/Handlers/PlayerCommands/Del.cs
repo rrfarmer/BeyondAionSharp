@@ -30,7 +30,7 @@ public class Del : PlayerCommand
         }
 
         // Java parity: NumberUtils.toInt(params[1]) returns 0 on non-numeric input.
-        int itemCount = paramsArr.Length > 1 ? (int.TryParse(paramsArr[1], out int parsed) ? parsed : 0) : 1;
+        int itemCount = paramsArr.Length > 1 ? (TryParseInt(paramsArr[1], out int parsed) ? parsed : 0) : 1;
         if (itemCount == 0)
         {
             SendInfo(player, "Invalid item count.");

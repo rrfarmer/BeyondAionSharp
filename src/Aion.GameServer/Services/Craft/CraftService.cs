@@ -92,8 +92,8 @@ public class CraftService
             return;
         }
 
-        if (recipeTemplate.GetDp() != 0)
-            player.GetCommonData().AddDp(-recipeTemplate.GetDp());
+        // Java getDp() boxes a primitive int, so its null guard is always true.
+        player.GetCommonData().AddDp(-recipeTemplate.GetDp());
 
         int intervalCap = 1200;
         switch (itemTemplate.GetItemQuality())
@@ -154,7 +154,7 @@ public class CraftService
             }
         }
 
-        if (recipeTemplate.GetDp() != null && (player.GetCommonData().GetDp() < recipeTemplate.GetDp()))
+        if (player.GetCommonData().GetDp() < recipeTemplate.GetDp())
         {
             AuditLogger.Log(player, "tried to craft without required DP count");
             return false;

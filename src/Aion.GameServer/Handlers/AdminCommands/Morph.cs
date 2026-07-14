@@ -34,7 +34,7 @@ public class Morph : AdminCommand
         }
         else
         {
-            if (!int.TryParse(paramsArr[0], out npcId))
+            if (!TryParseInt(paramsArr[0], out npcId))
             {
                 SendInfo(admin);
                 return;

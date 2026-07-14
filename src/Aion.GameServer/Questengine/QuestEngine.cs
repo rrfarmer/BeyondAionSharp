@@ -482,13 +482,13 @@ public class QuestEngine : GameEngine
             player.GetController().UpdateNearbyQuests();
     }
 
-    public bool OnKillRanked(QuestEnv env, AbyssRankEnum playerRank)
+    public bool OnKillRanked(QuestEnv env, AbyssRankEnum? playerRank)
     {
         try
         {
-            if (playerRank != null)
+            if (playerRank is AbyssRankEnum rank)
             {
-                if (questOnKillRanked.TryGetValue(playerRank, out List<int> questIds))
+                if (questOnKillRanked.TryGetValue(rank, out List<int> questIds))
                 {
                     foreach (int questId in questIds)
                     {

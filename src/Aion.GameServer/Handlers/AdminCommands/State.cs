@@ -56,13 +56,13 @@ public class State : AdminCommand
                 return;
             }
             int stateId;
-            if (Enum.TryParse<CreatureState>(paramsArr[stateIndex].ToUpper(), out CreatureState parsedState) && Enum.IsDefined(typeof(CreatureState), parsedState))
+            if (TryParseEnumName(paramsArr[stateIndex].ToUpper(), out CreatureState parsedState))
             {
                 stateId = parsedState.GetId();
             }
             else
             {
-                stateId = int.Parse(paramsArr[stateIndex]);
+                stateId = ParseInt(paramsArr[stateIndex]);
                 if (stateId < 0 || stateId > 0xFFFF)
                 {
                     SendInfo(admin, "Out of range state ID.");

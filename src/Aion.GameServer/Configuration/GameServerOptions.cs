@@ -369,16 +369,19 @@ public sealed class GameServerOptions
 		// Java parity: commons/database/DatabaseFactory reads game-server database.properties.
 		var loader = LoadProperties(startDirectory);
 		var jdbcUrl = GetWithEnvironment(loader, "database.url", "jdbc:mysql://localhost:3306/aion_gs");
-		var (server, port, database) = DatabaseOptions.ParseJdbcMysqlUrl(jdbcUrl);
+		var parsed = DatabaseOptions.ParseJdbcMysqlUrl(jdbcUrl);
 		return new DatabaseOptions
 		{
-			Server = server,
-			Port = port,
-			Database = database,
+			Server = parsed.Server,
+			Port = parsed.Port,
+			Database = parsed.Database,
 			UserId = GetWithEnvironment(loader, "database.user", "root"),
 			Password = GetWithEnvironment(loader, "database.password", string.Empty),
 			MaxPoolSize = GetIntWithEnvironment(loader, "database.connectionpool.connections.max", 5),
 			ConnectionTimeout = GetIntWithEnvironment(loader, "database.connectionpool.timeout", 5000),
+			CharacterSet = parsed.CharacterSet,
+			ConnectionTimeZone = parsed.ConnectionTimeZone,
+			SslMode = parsed.SslMode,
 		};
 	}
 
@@ -425,68 +428,66 @@ public sealed class GameServerOptions
 	private static int GetIntWithEnvironment(ConfigLoader loader, string key, int defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue.ToString(CultureInfo.InvariantCulture));
-		return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : defaultValue;
+		return TransformJavaProperty<int>(value);
 	}
 
 	private static long GetLongWithEnvironment(ConfigLoader loader, string key, long defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue.ToString(CultureInfo.InvariantCulture));
-		return long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : defaultValue;
+		return TransformJavaProperty<long>(value);
 	}
 
 	private static byte GetByteWithEnvironment(ConfigLoader loader, string key, byte defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue.ToString(CultureInfo.InvariantCulture));
-		return byte.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) ? parsed : defaultValue;
+		return TransformJavaProperty<byte>(value);
 	}
 
 	private static bool GetBoolWithEnvironment(ConfigLoader loader, string key, bool defaultValue)
 	{
-		var value = GetWithEnvironment(loader, key, defaultValue.ToString(CultureInfo.InvariantCulture));
-		return bool.TryParse(value, out var parsed) ? parsed : defaultValue;
+		var value = GetWithEnvironment(loader, key, defaultValue ? "true" : "false");
+		return TransformJavaProperty<bool>(value);
 	}
 
 	private static float GetFloatWithEnvironment(ConfigLoader loader, string key, float defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue.ToString(CultureInfo.InvariantCulture));
-		return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) ? parsed : defaultValue;
+		return TransformJavaProperty<float>(value);
 	}
 
 	private static IReadOnlySet<int> GetIntSetWithEnvironment(ConfigLoader loader, string key, string defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
-		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-			.Select(v => int.Parse(v, CultureInfo.InvariantCulture))
-			.ToHashSet();
+		return TransformJavaProperty<HashSet<int>>(value);
 	}
 
 	private static IReadOnlyList<int> GetIntListWithEnvironment(ConfigLoader loader, string key, string defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
-		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-			.Select(v => int.Parse(v, CultureInfo.InvariantCulture))
-			.ToArray();
+		return TransformJavaProperty<int[]>(value);
 	}
 
 	private static IReadOnlyList<float> GetFloatListWithEnvironment(ConfigLoader loader, string key, string defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
-		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-			.Select(v => float.Parse(v, CultureInfo.InvariantCulture))
-			.ToArray();
+		return TransformJavaProperty<float[]>(value);
 	}
 
 	private static IReadOnlyList<string> GetStringListWithEnvironment(ConfigLoader loader, string key, string defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
-		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+		return TransformJavaProperty<string[]>(value);
 	}
 
 	private static IReadOnlySet<string> GetStringSetWithEnvironment(ConfigLoader loader, string key, string defaultValue)
 	{
 		var value = GetWithEnvironment(loader, key, defaultValue);
-		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-			.ToHashSet(StringComparer.OrdinalIgnoreCase);
+		return TransformJavaProperty<HashSet<string>>(value);
+	}
+
+	private static T TransformJavaProperty<T>(string value)
+	{
+		return (T)ConfigurableProcessor.Transform(value, typeof(T))!;
 	}
 
 	private static int GetAbyssRankIdWithEnvironment(ConfigLoader loader, string key, string defaultValue)

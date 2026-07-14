@@ -49,7 +49,7 @@ public class RelinquishCraft : AdminCommand
             }
         }
 
-        Profession? profession = ProfessionExtensions.GetBySkillId(int.TryParse(paramsArr[i++], out int skillId) ? skillId : 0);
+        Profession? profession = ProfessionExtensions.GetBySkillId(TryParseInt(paramsArr[i++], out int skillId) ? skillId : 0);
         if (profession == null || !profession.Value.IsCrafting())
         {
             SendInfo(admin, "Invalid skill ID.");

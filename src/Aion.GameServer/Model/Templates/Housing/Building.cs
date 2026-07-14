@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Templates.Housing;
 
@@ -26,14 +27,14 @@ public class Building
     public string SizeRaw
     {
         get => size?.ToString();
-        set => size = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<HouseType>(value);
+        set => size = JavaEnum.TryValueOf(value, out HouseType parsed) ? parsed : null;
     }
 
     [XmlAttribute("type")]
     public string TypeRaw
     {
         get => type?.ToString();
-        set => type = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<BuildingType>(value);
+        set => type = JavaEnum.TryValueOf(value, out BuildingType parsed) ? parsed : null;
     }
 
     [XmlIgnore] private Dictionary<PartType, int> partsByType;

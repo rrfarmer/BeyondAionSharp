@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- These diagnostics identify impossible branches or unsafe value-type unboxing. Keep them at
+         zero instead of allowing them into the count-based legacy warning baseline. -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS0184;CS0472;CS8605</WarningsAsErrors>
+  </PropertyGroup>
+</Project>

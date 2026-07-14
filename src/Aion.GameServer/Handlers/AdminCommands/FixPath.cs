@@ -71,7 +71,7 @@ public class FixPath : AdminCommand
         {
             if (paramsArr.Length > 1)
             {
-                if (!float.TryParse(paramsArr[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out zOffset))
+                if (!TryParseFloat(paramsArr[1], out zOffset))
                 {
                     SendInfo(admin, "Invalid Z offset.");
                     return;
@@ -86,7 +86,7 @@ public class FixPath : AdminCommand
             {
                 if (paramsArr.Length > 0)
                 {
-                    if (!float.TryParse(paramsArr[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out zOffset))
+                    if (!TryParseFloat(paramsArr[0], out zOffset))
                     {
                         SendInfo(admin, "Invalid Z offset.");
                         return;

@@ -221,9 +221,16 @@ public partial class Player : Creature
         {
             int index = playerAccount.GetAccessLevel() - 1;
             if (index >= 0 && index < Aion.GameServer.Configs.Administration.AdminConfig.NAME_TAGS.Length)
-                return string.Format(Aion.GameServer.Configs.Administration.AdminConfig.NAME_TAGS[index], GetCommonData().GetName());
+                return FormatJavaNameTag(Aion.GameServer.Configs.Administration.AdminConfig.NAME_TAGS[index], GetCommonData().GetName());
         }
         return GetCommonData().GetName();
+    }
+
+    private static string FormatJavaNameTag(string format, string playerName)
+    {
+        // AdminConfig.NAME_TAGS is a Java String.format template. Its shipped values use %s, while
+        // C# string.Format expects {0} and would therefore send a literal "%s" as the player's name.
+        return format.Replace("%s", playerName, StringComparison.Ordinal);
     }
 
     public Aion.GameServer.Model.GameObjects.Players.PlayerAppearance GetPlayerAppearance()

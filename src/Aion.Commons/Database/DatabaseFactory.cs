@@ -27,33 +27,122 @@ namespace Aion.Commons.Database
 			int connectionTimeout = 5000
 		)
 		{
-			_connectionString = new MySqlConnectionStringBuilder
-			{
-				Server = server,
-				UserID = userId,
-				Password = password,
-				Database = database,
-				Port = (uint)port,
-				MaximumPoolSize = (uint)maxPoolSize,
-				ConnectionTimeout = (uint)(connectionTimeout / 1000),
-				Pooling = true,
-				AllowUserVariables = true,
-			}.ConnectionString;
-
-			var builder = new MySqlDataSourceBuilder(_connectionString);
-			_dataSource = builder.Build();
+			Initialize(
+				new DatabaseOptions
+				{
+					Server = server,
+					UserId = userId,
+					Password = password,
+					Database = database,
+					Port = port,
+					MaxPoolSize = maxPoolSize,
+					ConnectionTimeout = connectionTimeout,
+				});
 		}
 
 		public static void Initialize(DatabaseOptions options)
 		{
-			Initialize(
-				options.Server,
-				options.UserId,
-				options.Password,
-				options.Database,
-				options.Port,
-				options.MaxPoolSize,
-				options.ConnectionTimeout);
+			ArgumentNullException.ThrowIfNull(options);
+			_connectionString = BuildConnectionString(options);
+
+			var builder = new MySqlDataSourceBuilder(_connectionString);
+			var sessionTimeZone = TranslateConnectionTimeZone(options.ConnectionTimeZone);
+			if (sessionTimeZone != null)
+			{
+				builder.UseConnectionOpenedCallback(
+					(context, cancellationToken) => SetSessionTimeZoneAsync(context.Connection, sessionTimeZone, cancellationToken));
+			}
+
+			var previous = _dataSource;
+			_dataSource = builder.Build();
+			previous?.Dispose();
+		}
+
+		/// <summary>
+		/// Builds the MySqlConnector string after translating supported Connector/J URL options. JDBC
+		/// option names are never copied into this string verbatim.
+		/// </summary>
+		public static string BuildConnectionString(DatabaseOptions options)
+		{
+			ArgumentNullException.ThrowIfNull(options);
+			var sessionTimeZone = TranslateConnectionTimeZone(options.ConnectionTimeZone);
+			var builder = new MySqlConnectionStringBuilder
+			{
+				Server = options.Server,
+				UserID = options.UserId,
+				Password = options.Password,
+				Database = options.Database,
+				Port = checked((uint)options.Port),
+				MaximumPoolSize = checked((uint)options.MaxPoolSize),
+				// Hikari's value is milliseconds, while MySqlConnector only accepts whole seconds.
+				// Round upward so the C# connection cannot time out before the Java deadline; zero
+				// retains both providers' no-timeout sentinel semantics.
+				ConnectionTimeout = TranslateConnectionTimeoutSeconds(options.ConnectionTimeout),
+				Pooling = true,
+				AllowUserVariables = true,
+				CharacterSet = options.CharacterSet,
+				DateTimeKind = string.Equals(sessionTimeZone, "+00:00", StringComparison.Ordinal)
+					? MySqlDateTimeKind.Utc
+					: MySqlDateTimeKind.Unspecified,
+			};
+			if (options.SslMode.HasValue)
+				builder.SslMode = options.SslMode.Value;
+			return builder.ConnectionString;
+		}
+
+		internal static uint TranslateConnectionTimeoutSeconds(int connectionTimeoutMilliseconds)
+		{
+			if (connectionTimeoutMilliseconds < 0)
+				throw new ArgumentOutOfRangeException(
+					nameof(connectionTimeoutMilliseconds),
+					connectionTimeoutMilliseconds,
+					"Database connection timeout must be zero or a positive millisecond value.");
+			if (connectionTimeoutMilliseconds == 0)
+				return 0;
+
+			return checked((uint)(((long)connectionTimeoutMilliseconds + 999L) / 1000L));
+		}
+
+		/// <summary>
+		/// Translates Connector/J connectionTimeZone/serverTimezone values to MySQL session values.
+		/// SERVER (and an omitted/empty JDBC option) intentionally leaves the server session unchanged.
+		/// </summary>
+		public static string? TranslateConnectionTimeZone(string? connectionTimeZone)
+		{
+			if (string.IsNullOrWhiteSpace(connectionTimeZone)
+				|| connectionTimeZone.Equals("SERVER", StringComparison.OrdinalIgnoreCase))
+			{
+				return null;
+			}
+
+			if (connectionTimeZone.Equals("UTC", StringComparison.OrdinalIgnoreCase)
+				|| connectionTimeZone.Equals("Z", StringComparison.OrdinalIgnoreCase)
+				|| connectionTimeZone.Equals("Etc/UTC", StringComparison.OrdinalIgnoreCase)
+				|| connectionTimeZone.Equals("GMT", StringComparison.OrdinalIgnoreCase))
+			{
+				return "+00:00";
+			}
+
+			if (connectionTimeZone.Equals("LOCAL", StringComparison.OrdinalIgnoreCase))
+			{
+				var localId = TimeZoneInfo.Local.Id;
+				if (TimeZoneInfo.Local.Equals(TimeZoneInfo.Utc))
+					return "+00:00";
+				return TimeZoneInfo.TryConvertWindowsIdToIanaId(localId, out var ianaId) ? ianaId : localId;
+			}
+
+			return connectionTimeZone;
+		}
+
+		private static async ValueTask SetSessionTimeZoneAsync(
+			MySqlConnection connection,
+			string sessionTimeZone,
+			CancellationToken cancellationToken)
+		{
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SET time_zone = ?";
+			command.Parameters.Add(new MySqlParameter { Value = sessionTimeZone });
+			await command.ExecuteNonQueryAsync(cancellationToken);
 		}
 
 		/// <summary>

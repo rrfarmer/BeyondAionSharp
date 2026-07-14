@@ -42,7 +42,7 @@ public class Givetitle : ConsoleCommand
         }
 
         // Java parity: Integer.parseInt(params[0]) throws NumberFormatException.
-        if (!int.TryParse(paramsArr[0], out int titleId))
+        if (!TryParseInt(paramsArr[0], out int titleId))
         {
             PacketSendUtility.SendMessage(admin, "You should enter valid second params!");
             return;

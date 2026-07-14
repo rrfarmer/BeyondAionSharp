@@ -29,7 +29,16 @@ public class EventTemplate
         set => _endDate = value is null ? null : DateTime.Parse(value);
     }
 
-    [XmlAttribute("theme")] public EventTheme Theme { get; set; }
+    // Java JAXB leaves a missing optional enum attribute as null. XmlSerializer cannot bind
+    // Nullable<enum> directly as an attribute, so preserve the wire value through a string proxy.
+    [XmlIgnore] public EventTheme? Theme { get; set; }
+
+    [XmlAttribute("theme")]
+    public string? ThemeRaw
+    {
+        get => Theme?.ToString();
+        set => Theme = string.IsNullOrEmpty(value) ? null : Enum.Parse<EventTheme>(value);
+    }
 
     [XmlElement("login_message")] public string? LoginMessage { get; set; }
 
@@ -67,7 +76,7 @@ public class EventTemplate
     public string?         GetName()          => Name;
     public DateTime?       GetStartDate()     => _startDate;
     public DateTime?       GetEndDate()       => _endDate;
-    public EventTheme      GetTheme()         => Theme;
+    public EventTheme?     GetTheme()         => Theme;
     public string?         GetLoginMessage()  => LoginMessage;
     public bool            HasConfigProperties() => ConfigProperties != null;
     public List<GlobalRule>? GetEventDropRules() => EventDropRules;

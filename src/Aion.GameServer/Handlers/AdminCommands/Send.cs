@@ -81,40 +81,7 @@ public class Send : AdminCommand
     // Java parity: Integer.decode (supports 0x/0X hex, leading-0 octal, decimal, optional leading sign).
     private static int Decode(string nm)
     {
-        int index = 0;
-        int sign = 1;
-        if (nm.StartsWith("-"))
-        {
-            sign = -1;
-            index++;
-        }
-        else if (nm.StartsWith("+"))
-        {
-            index++;
-        }
-
-        int radix;
-        if (nm.Length > index + 1 && (nm[index] == '0') && (nm[index + 1] == 'x' || nm[index + 1] == 'X'))
-        {
-            index += 2;
-            radix = 16;
-        }
-        else if (nm.Length > index && nm[index] == '#')
-        {
-            index++;
-            radix = 16;
-        }
-        else if (nm.Length > index + 1 && nm[index] == '0')
-        {
-            index++;
-            radix = 8;
-        }
-        else
-        {
-            radix = 10;
-        }
-
-        return sign * Convert.ToInt32(nm.Substring(index), radix);
+        return JavaNumberParser.DecodeInt(nm);
     }
 
     [XmlRoot("packets")]

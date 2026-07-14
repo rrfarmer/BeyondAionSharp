@@ -47,13 +47,13 @@ public sealed class MailFormatter
         SystemMailService.SendMail(templateName, ownerName, title, message, 0, 0, kinah, LetterType.NORMAL);
     }
 
-    public static void SendHouseAuctionMail(House ownedHouse, PlayerCommonData playerData, AuctionResult result, long time, long returnKinah)
+    public static void SendHouseAuctionMail(House ownedHouse, PlayerCommonData playerData, AuctionResult? result, long time, long returnKinah)
     {
         MailTemplate template = DataManager.SYSTEM_MAIL_TEMPLATES.GetMailTemplate("$$HS_AUCTION_MAIL", "", playerData.GetRace());
-        if (ownedHouse == null || result == null)
+        if (ownedHouse == null || result is not AuctionResult auctionResult)
             return;
 
-        MailPart formatter = new HouseAuctionMailPart(ownedHouse, time, result, playerData);
+        MailPart formatter = new HouseAuctionMailPart(ownedHouse, time, auctionResult, playerData);
 
         string title = template.GetFormattedTitle(formatter);
         string message = template.GetFormattedMessage(formatter);

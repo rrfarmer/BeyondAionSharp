@@ -37,7 +37,7 @@ public class Megaphone : AdminCommand
         }
 
         int i = 0;
-        int colorIndex = Regex.IsMatch(paramsArr[i], "^\\d+$") ? int.Parse(paramsArr[i++]) - 1 : 0;
+        int colorIndex = Regex.IsMatch(paramsArr[i], "^[0-9]+$") ? ParseInt(paramsArr[i++]) - 1 : 0;
         if (colorIndex >= colors.Count)
         {
             SendInfo(admin, "Invalid color ID.");

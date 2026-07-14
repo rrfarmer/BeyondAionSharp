@@ -95,7 +95,7 @@ public class Deleteskill : ConsoleCommand
         public string GetName() => name;
 
         // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
-        public int GetTemplateId() => int.Parse(id);
+        public int GetTemplateId() => JavaNumberParser.ParseInt(id);
     }
 
     [XmlRoot("skills")]

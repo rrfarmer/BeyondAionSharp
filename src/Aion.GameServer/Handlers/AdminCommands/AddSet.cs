@@ -26,7 +26,7 @@ public class AddSet : AdminCommand
         int itemSetId = 0;
         Player receiver = null;
 
-        if (int.TryParse(paramsArr[0], out int parsedId))
+        if (TryParseInt(paramsArr[0], out int parsedId))
         {
             itemSetId = parsedId;
             receiver = player;
@@ -41,7 +41,7 @@ public class AddSet : AdminCommand
                 return;
             }
 
-            if (int.TryParse(paramsArr[1], out int parsedId2))
+            if (TryParseInt(paramsArr[1], out int parsedId2))
             {
                 itemSetId = parsedId2;
             }

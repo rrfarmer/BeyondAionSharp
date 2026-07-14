@@ -26,7 +26,7 @@ public class EventDAO
     private const string SELECT_QUERY = "SELECT `buff_index`, `buff_active_pool_ids`, `buff_allowed_days` FROM `event` WHERE `event_name`=?";
     private const string INSERT_QUERY = "INSERT INTO `event` (`event_name`, `buff_index`, `buff_active_pool_ids`, `buff_allowed_days`) VALUES (?,?,?,?)";
     private const string DELETE_QUERY = "DELETE FROM `event` WHERE `event_name`=?";
-    private const string DELETE_OLD_QUERY = "DELETE FROM `event` WHERE last_change < ?";
+    private const string DELETE_OLD_QUERY = "DELETE FROM `event` WHERE last_change < FROM_UNIXTIME(? / 1000.0)";
 
     public static void DeleteOldBuffData()
     {
@@ -38,7 +38,7 @@ public class EventDAO
             deleteStatement.CommandText = DELETE_OLD_QUERY;
             DateTimeOffset now = ServerTime.Now();
             DateTimeOffset startOfMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
-            deleteStatement.Parameters.Add(new MySqlParameter { Value = startOfMonth.UtcDateTime });
+            deleteStatement.Parameters.Add(new MySqlParameter { Value = startOfMonth.ToUnixTimeMilliseconds() });
             deleteStatement.ExecuteNonQuery();
         }
         catch (Exception e)

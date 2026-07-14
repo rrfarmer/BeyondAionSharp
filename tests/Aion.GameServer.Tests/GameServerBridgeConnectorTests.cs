@@ -39,6 +39,20 @@ public sealed class GameServerBridgeConnectorTests
 	}
 
 	[Fact]
+	public void LoginServerPlayerTransferControlPackets_MatchJavaWireFrames()
+	{
+		Assert.Equal(
+			Convert.FromHexString("08000D0344332211"),
+			new SM_PTRANSFER_CONTROL(SM_PTRANSFER_CONTROL.OK, 0x11223344).SerializeFrame());
+		Assert.Equal(
+			Convert.FromHexString("12000D02443322116E006F00700065000000"),
+			new SM_PTRANSFER_CONTROL(SM_PTRANSFER_CONTROL.ERROR, 0x11223344, "nope").SerializeFrame());
+		Assert.Equal(
+			Convert.FromHexString("18000D0405000000730074006F0070007000650064000000"),
+			new SM_PTRANSFER_CONTROL(SM_PTRANSFER_CONTROL.TASK_STOP, 5, "stopped").SerializeFrame());
+	}
+
+	[Fact]
 	public async Task LoginServerConnector_SendsAuthFrameAndReadsAuthResponse()
 	{
 		await using var mockServer = await MockBridgeServer.StartAsync(CreateLoginAuthResponseFrame(2));
@@ -67,10 +81,12 @@ public sealed class GameServerBridgeConnectorTests
 
 		await connector.StartAsync();
 		await WaitUntilAsync(() => connector.IsAuthed);
+		var accountListFrame = await mockServer.ReadAccountListFrameAsync();
 		var resultTask = connector.RequestAccountAuthAsync(accountId: 99, loginOk: 44, playOk1: 22, playOk2: 11);
 		var accountAuthFrame = await mockServer.ReadAccountAuthFrameAsync();
 		var result = await resultTask;
 
+		Assert.Equal(Convert.FromHexString("07000400000000"), accountListFrame);
 		Assert.Equal(Convert.FromHexString("130001630000002C000000160000000B000000"), accountAuthFrame);
 		Assert.True(result.Ok);
 		Assert.Equal(99, result.AccountId);
@@ -95,8 +111,10 @@ public sealed class GameServerBridgeConnectorTests
 
 		await connector.StartAsync();
 		await WaitUntilAsync(() => connector.IsAuthed);
+		var accountListFrame = await mockServer.ReadAccountListFrameAsync();
 		var characterCountFrame = await mockServer.ReadCharacterCountFrameAsync();
 
+		Assert.Equal(Convert.FromHexString("07000400000000"), accountListFrame);
 		Assert.Equal(77, repository.LastCharacterCountAccountId);
 		Assert.Equal(Convert.FromHexString("0800084D00000003"), characterCountFrame);
 	}
@@ -317,6 +335,7 @@ public sealed class GameServerBridgeConnectorTests
 	{
 		private readonly TcpListener _listener;
 		private readonly TaskCompletionSource _closeAcceptedClient = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private readonly TaskCompletionSource<byte[]> _accountListFrame = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		private readonly TaskCompletionSource<byte[]> _accountAuthFrame = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		private readonly Task _acceptedClientTask;
 		private TcpClient? _acceptedClient;
@@ -342,6 +361,11 @@ public sealed class GameServerBridgeConnectorTests
 			return _accountAuthFrame.Task.WaitAsync(TimeSpan.FromSeconds(5));
 		}
 
+		public Task<byte[]> ReadAccountListFrameAsync()
+		{
+			return _accountListFrame.Task.WaitAsync(TimeSpan.FromSeconds(5));
+		}
+
 		private async Task AcceptAndRespondAsync()
 		{
 			_acceptedClient = await _listener.AcceptTcpClientAsync();
@@ -349,6 +373,7 @@ public sealed class GameServerBridgeConnectorTests
 			await ReadFrameAsync(stream);
 			await stream.WriteAsync(CreateLoginAuthResponseFrame(1));
 			await stream.FlushAsync();
+			_accountListFrame.TrySetResult(await ReadFrameAsync(stream));
 			var accountAuthFrame = await ReadFrameAsync(stream);
 			_accountAuthFrame.TrySetResult(accountAuthFrame);
 			await stream.WriteAsync(CreateAccountAuthResponseFrame());
@@ -377,6 +402,7 @@ public sealed class GameServerBridgeConnectorTests
 		private readonly TcpListener _listener;
 		private readonly int _accountId;
 		private readonly TaskCompletionSource _closeAcceptedClient = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private readonly TaskCompletionSource<byte[]> _accountListFrame = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		private readonly TaskCompletionSource<byte[]> _characterCountFrame = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		private readonly Task _acceptedClientTask;
 		private TcpClient? _acceptedClient;
@@ -403,6 +429,11 @@ public sealed class GameServerBridgeConnectorTests
 			return _characterCountFrame.Task.WaitAsync(TimeSpan.FromSeconds(5));
 		}
 
+		public Task<byte[]> ReadAccountListFrameAsync()
+		{
+			return _accountListFrame.Task.WaitAsync(TimeSpan.FromSeconds(5));
+		}
+
 		private async Task AcceptAndRespondAsync()
 		{
 			_acceptedClient = await _listener.AcceptTcpClientAsync();
@@ -410,6 +441,7 @@ public sealed class GameServerBridgeConnectorTests
 			await ReadFrameAsync(stream);
 			await stream.WriteAsync(CreateLoginAuthResponseFrame(1));
 			await stream.FlushAsync();
+			_accountListFrame.TrySetResult(await ReadFrameAsync(stream));
 			await stream.WriteAsync(CreateCharacterCountRequestFrame(_accountId));
 			await stream.FlushAsync();
 			var characterCountFrame = await ReadFrameAsync(stream);

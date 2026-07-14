@@ -13,16 +13,16 @@ namespace Aion.GameServer.Dao;
 /// DatabaseFactory-style; positional '?' -> ordered MySqlParameter; executeQuery -> ExecuteReader; execute/executeUpdate ->
 /// ExecuteNonQuery; SQL (incl. the IF(...) playerExists join + ORDER BY) verbatim. Map&lt;Integer,HouseBids&gt; -> Dictionary; Map.get
 /// -> GetValueOrDefault (null when absent); Map.put -> indexer; Set&lt;Integer&gt; -> HashSet&lt;int&gt;. Timestamp&lt;-&gt;millis:
-/// getTimestamp(col).getTime() -> new DateTimeOffset(GetDateTime(ord)).ToUnixTimeMilliseconds(); new Timestamp(millis) ->
-/// DateTimeOffset.FromUnixTimeMilliseconds(millis).LocalDateTime. Java HouseBids.bid(...) -> C# DoBid(...); nested HouseBids.Bid kept.
+/// getTimestamp(col).getTime() -> SQL epoch milliseconds; new Timestamp(millis) -> FROM_UNIXTIME(epoch).
+/// Java HouseBids.bid(...) -> C# DoBid(...); nested HouseBids.Bid kept.
 /// deleteOrDisableBids reuses one connection across the delete loop + disable, as Java.
 /// </summary>
 public class HouseBidsDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(HouseBidsDAO));
 
-    public const string LOAD_QUERY = "SELECT b.*, IF(b.player_id = p.id, 1, 0) playerExists FROM `house_bids` b LEFT JOIN `players` p ON p.id = b.player_id ORDER BY `bid`, `bid_time`";
-    public const string INSERT_QUERY = "INSERT INTO `house_bids` (`player_id`, `house_id`, `bid`, `bid_time`) VALUES (?, ?, ?, ?)";
+    public const string LOAD_QUERY = "SELECT b.*, IF(b.player_id = p.id, 1, 0) playerExists, CAST(FLOOR(UNIX_TIMESTAMP(b.bid_time) * 1000) AS SIGNED) AS bid_time_epoch_millis FROM `house_bids` b LEFT JOIN `players` p ON p.id = b.player_id ORDER BY `bid`, `bid_time`";
+    public const string INSERT_QUERY = "INSERT INTO `house_bids` (`player_id`, `house_id`, `bid`, `bid_time`) VALUES (?, ?, ?, FROM_UNIXTIME(? / 1000.0))";
     public const string DELETE_QUERY = "DELETE FROM `house_bids` WHERE `house_id` = ?";
     public const string DELETE_SINGLE_BID_QUERY = "DELETE FROM `house_bids` WHERE `player_id` = ? AND `house_id` = ? AND `bid` = ?";
     public const string DISABLE_QUERY = "UPDATE `house_bids` SET `player_id` = 0 WHERE `player_id` = ?";
@@ -42,7 +42,7 @@ public class HouseBidsDAO
                 int playerId = rset.GetInt32(rset.GetOrdinal("player_id"));
                 int houseId = rset.GetInt32(rset.GetOrdinal("house_id"));
                 long bidOffer = rset.GetInt64(rset.GetOrdinal("bid"));
-                long time = new DateTimeOffset(rset.GetDateTime(rset.GetOrdinal("bid_time"))).ToUnixTimeMilliseconds();
+                long time = rset.GetInt64(rset.GetOrdinal("bid_time_epoch_millis"));
                 HouseBids houseBids = bidsById.TryGetValue(houseId, out var existingBids) ? existingBids : null;
                 if (houseBids == null)
                     bidsById[houseId] = new HouseBids(houseId, bidOffer, time);
@@ -72,7 +72,7 @@ public class HouseBidsDAO
             stmt.Parameters.Add(new MySqlParameter { Value = bid.GetPlayerObjectId() });
             stmt.Parameters.Add(new MySqlParameter { Value = bid.GetHouseObjectId() });
             stmt.Parameters.Add(new MySqlParameter { Value = bid.GetKinah() });
-            stmt.Parameters.Add(new MySqlParameter { Value = DateTimeOffset.FromUnixTimeMilliseconds(bid.GetTime()).LocalDateTime });
+            stmt.Parameters.Add(new MySqlParameter { Value = bid.GetTime() });
             stmt.ExecuteNonQuery();
         }
         catch (Exception e)

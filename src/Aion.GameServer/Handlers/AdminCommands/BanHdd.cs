@@ -21,7 +21,7 @@ public class BanHdd : AdminCommand
         try
         {
             string hddSerial = paramsArr[0];
-            int timeMins = int.Parse(paramsArr[1]);
+            int timeMins = ParseInt(paramsArr[1]);
             if (timeMins == 0)
                 timeMins = 10 * 365 * 24 * 60;
             DateTimeOffset banTime = DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)timeMins * 60 * 1000);

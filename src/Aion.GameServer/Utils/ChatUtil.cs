@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.ChatHandlers;
 using Aion.GameServer.Utils.Extensions;
 
 namespace Aion.GameServer.Utils;
@@ -105,9 +106,9 @@ public static class ChatUtil
 		if (input.StartsWith("[" + linkAccessor + ":"))
 			input = input.Substring(linkAccessor.Length + 2).Trim();
 
-		System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(input, "^(" + validationPattern + ")(?:[^\\d][^\\[]*\\]?$|$)");
+		System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(input, "^(" + validationPattern + ")(?:[^0-9][^\\[]*\\]?$|$)");
 		if (m.Success)
-			return int.TryParse(m.Groups[1].Value, out int result) ? result : 0;
+			return JavaNumberParser.TryParseInt(m.Groups[1].Value, out int result) ? result : 0;
 
 		return 0;
 	}
@@ -226,13 +227,13 @@ public static class ChatUtil
 	// Java parity: org.apache.commons.lang3.math.NumberUtils.toInt(String).
 	private static int ToInt(string s)
 	{
-		return int.TryParse(s, out var r) ? r : 0;
+		return JavaNumberParser.TryParseInt(s, out int result) ? result : 0;
 	}
 
 	// Java parity: org.apache.commons.lang3.math.NumberUtils.toFloat(String).
 	private static float ToFloat(string s)
 	{
-		return float.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var r) ? r : 0f;
+		return JavaNumberParser.TryParseFloat(s, out float result) ? result : 0f;
 	}
 
 	// Java parity: utils/ChatUtil.parsedCoordsToWorldPosition(int, float, float, Float, Integer).

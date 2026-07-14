@@ -44,10 +44,10 @@ public class UseSkill : AdminCommand
                     targetMode = null;
                     break;
             }
-            SkillTemplate template = DataManager.SKILL_DATA.GetSkillTemplate(int.Parse(paramsArr[i++]));
+            SkillTemplate template = DataManager.SKILL_DATA.GetSkillTemplate(ParseInt(paramsArr[i++]));
             if (template != null)
             {
-                int skillLevel = paramsArr.Length > i && IsNumber(paramsArr[i]) ? int.Parse(paramsArr[i++]) : template.GetLvl();
+                int skillLevel = paramsArr.Length > i && IsNumber(paramsArr[i]) ? ParseInt(paramsArr[i++]) : template.GetLvl();
                 bool forceUse = paramsArr.Length > i && paramsArr[i].Equals("f");
                 if (DoUseSkill(admin, template, skillLevel, targetMode, forceUse))
                     SendInfo(admin, "Used skill: " + template.GetL10n());
@@ -107,85 +107,6 @@ public class UseSkill : AdminCommand
         }
     }
 
-    // Java parity: org.apache.commons.lang3.math.NumberUtils.isNumber(String).
-    private static bool IsNumber(string str)
-    {
-        if (string.IsNullOrEmpty(str))
-            return false;
-        char[] chars = str.ToCharArray();
-        int sz = chars.Length;
-        bool hasExp = false;
-        bool hasDecPoint = false;
-        bool allowSigns = false;
-        bool foundDigit = false;
-        int start = (chars[0] == '-' || chars[0] == '+') ? 1 : 0;
-        if (sz > start + 1 && chars[start] == '0' && (chars[start + 1] == 'x' || chars[start + 1] == 'X'))
-        {
-            int i = start + 2;
-            if (i == sz)
-                return false;
-            for (; i < chars.Length; i++)
-            {
-                if ((chars[i] < '0' || chars[i] > '9') && (chars[i] < 'a' || chars[i] > 'f') && (chars[i] < 'A' || chars[i] > 'F'))
-                    return false;
-            }
-            return true;
-        }
-        sz--;
-        int idx = start;
-        while (idx < sz || (idx < sz + 1 && allowSigns && !foundDigit))
-        {
-            if (chars[idx] >= '0' && chars[idx] <= '9')
-            {
-                foundDigit = true;
-                allowSigns = false;
-            }
-            else if (chars[idx] == '.')
-            {
-                if (hasDecPoint || hasExp)
-                    return false;
-                hasDecPoint = true;
-            }
-            else if (chars[idx] == 'e' || chars[idx] == 'E')
-            {
-                if (hasExp)
-                    return false;
-                if (!foundDigit)
-                    return false;
-                hasExp = true;
-                allowSigns = true;
-            }
-            else if (chars[idx] == '+' || chars[idx] == '-')
-            {
-                if (!allowSigns)
-                    return false;
-                allowSigns = false;
-                foundDigit = false;
-            }
-            else
-            {
-                return false;
-            }
-            idx++;
-        }
-        if (idx < chars.Length)
-        {
-            if (chars[idx] >= '0' && chars[idx] <= '9')
-                return true;
-            if (chars[idx] == 'e' || chars[idx] == 'E')
-                return false;
-            if (chars[idx] == '.')
-            {
-                if (hasDecPoint || hasExp)
-                    return false;
-                return foundDigit;
-            }
-            if (!allowSigns && (chars[idx] == 'd' || chars[idx] == 'D' || chars[idx] == 'f' || chars[idx] == 'F'))
-                return foundDigit;
-            if (chars[idx] == 'l' || chars[idx] == 'L')
-                return foundDigit && !hasExp && !hasDecPoint;
-            return false;
-        }
-        return !allowSigns && foundDigit;
-    }
+    // Java parity: NumberUtils.isNumber delegates to Commons Lang 3.20 isCreatable.
+    private static bool IsNumber(string str) => IsCreatableNumber(str);
 }

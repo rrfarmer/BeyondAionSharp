@@ -61,7 +61,7 @@ public class Pet : AdminCommand
                 SendInfo(admin, "You must specify the pet ID.");
                 return;
             }
-            if (!int.TryParse(paramsArr[1], out petId) || DataManager.PET_DATA.GetPetTemplate(petId) == null)
+            if (!TryParseInt(paramsArr[1], out petId) || DataManager.PET_DATA.GetPetTemplate(petId) == null)
             {
                 SendInfo(admin, "Pet ID is invalid.");
                 return;

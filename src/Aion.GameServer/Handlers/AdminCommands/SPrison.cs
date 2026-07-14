@@ -25,7 +25,7 @@ public class SPrison : AdminCommand
         try
         {
             Player playerToPrison = Aion.GameServer.World.World.GetInstance().GetPlayer(Util.ConvertName(paramsArr[0]));
-            int delay = int.Parse(paramsArr[1]);
+            int delay = ParseInt(paramsArr[1]);
 
             string reason = Util.ConvertName(paramsArr[2]);
             for (int itr = 3; itr < paramsArr.Length; itr++)

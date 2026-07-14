@@ -26,7 +26,7 @@ public class AddSkill : AdminCommand
         int skillId = 0;
         int skillLevel = 0;
 
-        if (!int.TryParse(paramsArr[0], out skillId) || !int.TryParse(paramsArr[1], out skillLevel))
+        if (!TryParseInt(paramsArr[0], out skillId) || !TryParseInt(paramsArr[1], out skillLevel))
         {
             PacketSendUtility.SendMessage(player, "Parameters need to be an integer.");
             return;

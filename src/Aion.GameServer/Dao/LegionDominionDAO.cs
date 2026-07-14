@@ -12,19 +12,19 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/LegionDominionDAO (@author Yeats). JDBC DAO over legion_dominion_locations + legion_dominion_participants. MIXED:
 /// loadOrCreate via DatabaseFactory (nested insert per missing location), update/store via DB.InsertUpdate(IUStH->nested), loadParticipants
 /// via DB.Select(ParamReadStH->nested), delete via low-level DB.PrepareStatement+ExecuteUpdateAndClose. Map.get->indexer; Map.put->indexer;
-/// TreeMap->SortedDictionary; list.remove((Integer)x)->List.Remove(x) (by value). getTimestamp nullable->IsDBNull?null:new DateTimeOffset
-/// (GetDateTime) (Location/Info use DateTimeOffset?); setTimestamp(null)->DBNull.Value. SQL verbatim. StoreNewInfo consumed by LegionDominionLocation.
+/// TreeMap->SortedDictionary; list.remove((Integer)x)->List.Remove(x) (by value). Nullable Timestamp values use SQL epoch projections
+/// and FROM_UNIXTIME writes (Location/Info use DateTimeOffset?). StoreNewInfo consumed by LegionDominionLocation.
 /// </summary>
 public class LegionDominionDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(LegionDominionDAO));
 
-    private const string UPDATE_LOC = "UPDATE legion_dominion_locations SET legion_id=?, occupied_date=? WHERE id=?";
-    private const string LOAD1 = "SELECT * FROM `legion_dominion_locations`";
-    private const string LOAD2 = "SELECT * FROM `legion_dominion_participants` WHERE `legion_dominion_id`=? ";
+    private const string UPDATE_LOC = "UPDATE legion_dominion_locations SET legion_id=?, occupied_date=FROM_UNIXTIME(? / 1000.0) WHERE id=?";
+    private const string LOAD1 = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`occupied_date`) * 1000) AS SIGNED) AS `occupied_date_epoch_millis` FROM `legion_dominion_locations`";
+    private const string LOAD2 = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`participated_date`) * 1000) AS SIGNED) AS `participated_date_epoch_millis` FROM `legion_dominion_participants` WHERE `legion_dominion_id`=? ";
     private const string INSERT_NEW_LOCATION = "INSERT INTO legion_dominion_locations(`id`,`legion_id`) VALUES(?,?)";
     private const string INSERT_NEW = "INSERT INTO legion_dominion_participants(`legion_dominion_id`, `legion_id`) VALUES (?, ?)";
-    private const string UPDATE_PARTICIPANT = "UPDATE legion_dominion_participants SET points=?, survived_time=?, participated_date=? WHERE legion_id=?";
+    private const string UPDATE_PARTICIPANT = "UPDATE legion_dominion_participants SET points=?, survived_time=?, participated_date=FROM_UNIXTIME(? / 1000.0) WHERE legion_id=?";
     private const string DELETE_INFO = "DELETE FROM legion_dominion_participants WHERE legion_id=?";
 
     public static bool LoadOrCreateLegionDominionLocations(IDictionary<int, LegionDominionLocation> locations)
@@ -42,8 +42,7 @@ public class LegionDominionDAO
                 {
                     LegionDominionLocation loc = locations[rs.GetInt32(rs.GetOrdinal("id"))];
                     loc.SetLegionId(rs.GetInt32(rs.GetOrdinal("legion_id")));
-                    int odOrd = rs.GetOrdinal("occupied_date");
-                    loc.SetOccupiedDate(rs.IsDBNull(odOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rs.GetDateTime(odOrd)));
+                    loc.SetOccupiedDate(DatabaseTimestamp.ReadNullableDateTimeOffset(rs, "occupied_date_epoch_millis"));
                     nonExistingLocations.Remove(loc.GetLocationId());
                 }
             }
@@ -82,7 +81,7 @@ public class LegionDominionDAO
         public void HandleInsertUpdate(MySqlCommand stmt)
         {
             stmt.Parameters.Add(new MySqlParameter { Value = loc.GetLegionId() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)loc.GetOccupiedDate() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(loc.GetOccupiedDate()) });
             stmt.Parameters.Add(new MySqlParameter { Value = loc.GetLocationId() });
             stmt.ExecuteNonQuery();
         }
@@ -115,8 +114,7 @@ public class LegionDominionDAO
                 info2.SetLegionId(legionId);
                 info2.SetPoints(rset.GetInt32(rset.GetOrdinal("points")));
                 info2.SetTime(rset.GetInt32(rset.GetOrdinal("survived_time")));
-                int pdOrd = rset.GetOrdinal("participated_date");
-                info2.SetDate(rset.IsDBNull(pdOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rset.GetDateTime(pdOrd)));
+                info2.SetDate(DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "participated_date_epoch_millis"));
                 if (!info.ContainsKey(legionId))
                 {
                     info[legionId] = info2;
@@ -172,7 +170,7 @@ public class LegionDominionDAO
         {
             stmt.Parameters.Add(new MySqlParameter { Value = info.GetPoints() });
             stmt.Parameters.Add(new MySqlParameter { Value = info.GetTime() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)info.GetDateAsTimeStamp() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(info.GetDateAsTimeStamp()) });
             stmt.Parameters.Add(new MySqlParameter { Value = info.GetLegionId() });
             stmt.ExecuteNonQuery();
         }

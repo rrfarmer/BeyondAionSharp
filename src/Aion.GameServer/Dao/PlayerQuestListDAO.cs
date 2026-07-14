@@ -16,8 +16,8 @@ namespace Aion.GameServer.Dao;
 /// <summary>
 /// Java parity: dao/PlayerQuestListDAO (@author MrPoke, vlog, Rolandas). JDBC DAO over player_quests.
 /// DatabaseFactory-style; positional '?' -> ordered MySqlParameter; executeQuery -> ExecuteReader; SQL verbatim. getInt+wasNull (reward)
-/// -> IsDBNull ? (int?)null : GetInt32; getTimestamp (nullable) -> IsDBNull ? (DateTime?)null : GetDateTime (QuestState ctor uses
-/// DateTime?/int?); setObject(x, Types.TIMESTAMP/SMALLINT) null-supporting -> (object)x ?? DBNull.Value. QuestStatus.valueOf ->
+/// -> IsDBNull ? (int?)null : GetInt32; nullable Timestamp columns use SQL epoch projections/FROM_UNIXTIME (QuestState uses
+/// DateTime?/int?); SMALLINT null support uses DBNull.Value. QuestStatus.valueOf ->
 /// Enum.Parse&lt;QuestStatus&gt;; status.toString() -> GetStatus().ToString(). store: shared connection (setAutoCommit(false)) with each
 /// helper running its batch under a MySqlTransaction+Commit (matching Java's per-helper con.commit()); addBatch/executeBatch ->
 /// MySqlBatch. stream().filter(Persistable.NEW/CHANGED/DELETED) -> Where(IPersistable.NEW/CHANGED/DELETED) (tolerated red predicate
@@ -27,10 +27,10 @@ public class PlayerQuestListDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(PlayerQuestListDAO));
 
-    public const string SELECT_QUERY = "SELECT `quest_id`, `status`, `quest_vars`, `flags`, `complete_count`, `next_repeat_time`, `reward`, `complete_time` FROM `player_quests` WHERE `player_id`=?";
-    public const string UPDATE_QUERY = "UPDATE `player_quests` SET `status`=?, `quest_vars`=?, `flags`=?, `complete_count`=?, `next_repeat_time`=?, `reward`=?, `complete_time`=? WHERE `player_id`=? AND `quest_id`=?";
+    public const string SELECT_QUERY = "SELECT `quest_id`, `status`, `quest_vars`, `flags`, `complete_count`, CAST(FLOOR(UNIX_TIMESTAMP(`next_repeat_time`) * 1000) AS SIGNED) AS `next_repeat_time_epoch_millis`, `reward`, CAST(FLOOR(UNIX_TIMESTAMP(`complete_time`) * 1000) AS SIGNED) AS `complete_time_epoch_millis` FROM `player_quests` WHERE `player_id`=?";
+    public const string UPDATE_QUERY = "UPDATE `player_quests` SET `status`=?, `quest_vars`=?, `flags`=?, `complete_count`=?, `next_repeat_time`=FROM_UNIXTIME(? / 1000.0), `reward`=?, `complete_time`=FROM_UNIXTIME(? / 1000.0) WHERE `player_id`=? AND `quest_id`=?";
     public const string DELETE_QUERY = "DELETE FROM `player_quests` WHERE `player_id`=? AND `quest_id`=?";
-    public const string INSERT_QUERY = "INSERT INTO `player_quests` (`player_id`, `quest_id`, `status`, `quest_vars`, `flags`, `complete_count`, `next_repeat_time`, `reward`, `complete_time`) VALUES (?,?,?,?,?,?,?,?,?)";
+    public const string INSERT_QUERY = "INSERT INTO `player_quests` (`player_id`, `quest_id`, `status`, `quest_vars`, `flags`, `complete_count`, `next_repeat_time`, `reward`, `complete_time`) VALUES (?,?,?,?,?,?,FROM_UNIXTIME(? / 1000.0),?,FROM_UNIXTIME(? / 1000.0))";
 
     public static QuestStateList Load(int playerObjId)
     {
@@ -49,12 +49,10 @@ public class PlayerQuestListDAO
                 int questVars = rset.GetInt32(rset.GetOrdinal("quest_vars"));
                 int flags = rset.GetInt32(rset.GetOrdinal("flags"));
                 int completeCount = rset.GetInt32(rset.GetOrdinal("complete_count"));
-                int nrtOrd = rset.GetOrdinal("next_repeat_time");
-                DateTime? nextRepeatTime = rset.IsDBNull(nrtOrd) ? (DateTime?)null : rset.GetDateTime(nrtOrd);
+                DateTime? nextRepeatTime = DatabaseTimestamp.ReadNullableUtcDateTime(rset, "next_repeat_time_epoch_millis");
                 int rewardOrd = rset.GetOrdinal("reward");
                 int? reward = rset.IsDBNull(rewardOrd) ? (int?)null : rset.GetInt32(rewardOrd);
-                int ctOrd = rset.GetOrdinal("complete_time");
-                DateTime? completeTime = rset.IsDBNull(ctOrd) ? (DateTime?)null : rset.GetDateTime(ctOrd);
+                DateTime? completeTime = DatabaseTimestamp.ReadNullableUtcDateTime(rset, "complete_time_epoch_millis");
                 QuestStatus status = Enum.Parse<QuestStatus>(rset.GetString(rset.GetOrdinal("status")));
                 QuestState questState = new QuestState(questId, status, questVars, flags, completeCount, nextRepeatTime, reward, completeTime);
                 questState.SetPersistentState(IPersistable.PersistentState.UPDATED);
@@ -115,9 +113,9 @@ public class PlayerQuestListDAO
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetQuestVars().GetQuestVars() });
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetFlags() });
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetCompleteCount() });
-                ps.Parameters.Add(new MySqlParameter { Value = (object)qs.GetNextRepeatTime() ?? DBNull.Value }); // supports inserting null value
+                ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(qs.GetNextRepeatTime()) });
                 ps.Parameters.Add(new MySqlParameter { Value = (object)qs.GetRewardGroup() ?? DBNull.Value }); // supports inserting null value
-                ps.Parameters.Add(new MySqlParameter { Value = (object)qs.GetLastCompleteTime() ?? DBNull.Value }); // supports inserting null value
+                ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(qs.GetLastCompleteTime()) });
                 batch.BatchCommands.Add(ps);
             }
 
@@ -148,9 +146,9 @@ public class PlayerQuestListDAO
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetQuestVars().GetQuestVars() });
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetFlags() });
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetCompleteCount() });
-                ps.Parameters.Add(new MySqlParameter { Value = (object)qs.GetNextRepeatTime() ?? DBNull.Value }); // supports inserting null value
+                ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(qs.GetNextRepeatTime()) });
                 ps.Parameters.Add(new MySqlParameter { Value = (object)qs.GetRewardGroup() ?? DBNull.Value }); // supports inserting null value
-                ps.Parameters.Add(new MySqlParameter { Value = (object)qs.GetLastCompleteTime() ?? DBNull.Value }); // supports inserting null value
+                ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(qs.GetLastCompleteTime()) });
                 ps.Parameters.Add(new MySqlParameter { Value = playerId });
                 ps.Parameters.Add(new MySqlParameter { Value = qs.GetQuestId() });
                 batch.BatchCommands.Add(ps);

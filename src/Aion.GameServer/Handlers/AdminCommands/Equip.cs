@@ -40,7 +40,7 @@ public class Equip : AdminCommand
         if ("socket".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase) && paramsArr.Length >= 2)
         {
             ItemTemplate manastone = DataManager.ITEM_DATA.GetItemTemplate(ChatUtil.GetItemId(paramsArr[1]));
-            int count = paramsArr.Length < 3 ? int.MaxValue : int.Parse(paramsArr[2]);
+            int count = paramsArr.Length < 3 ? int.MaxValue : ParseInt(paramsArr[2]);
             Socket(admin, player, manastone, count);
         }
         else if ("unsocket".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
@@ -49,12 +49,12 @@ public class Equip : AdminCommand
         }
         else if ("enchant".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase) && paramsArr.Length >= 2)
         {
-            int enchant = Math.Max(0, Math.Min(255, int.Parse(paramsArr[1])));
+            int enchant = Math.Max(0, Math.Min(255, ParseInt(paramsArr[1])));
             Enchant(admin, player, enchant);
         }
         else if ("temper".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase) && paramsArr.Length >= 2)
         {
-            int temperingLevel = Math.Max(0, Math.Min(255, int.Parse(paramsArr[1])));
+            int temperingLevel = Math.Max(0, Math.Min(255, ParseInt(paramsArr[1])));
             Temper(admin, player, temperingLevel);
         }
         else

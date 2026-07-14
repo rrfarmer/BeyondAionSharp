@@ -26,7 +26,7 @@ public class SpawnAssembledNpc : AdminCommand
             return;
         }
         int spawnId = 0;
-        if (!int.TryParse(paramsArr[0], out spawnId))
+        if (!TryParseInt(paramsArr[0], out spawnId))
         {
             Info(player, null);
             return;

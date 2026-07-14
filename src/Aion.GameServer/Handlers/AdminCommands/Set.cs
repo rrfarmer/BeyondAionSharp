@@ -39,24 +39,24 @@ public class Set : AdminCommand
 
         if (paramsArr[0].Equals("class"))
         {
-            PlayerClass playerClass = Enum.Parse<PlayerClass>(paramsArr[1].ToUpper());
+            PlayerClass playerClass = ParseEnumName<PlayerClass>(paramsArr[1].ToUpper());
             ClassChangeService.SetClass(target, playerClass, true, true);
         }
         else if (paramsArr[0].Equals("level"))
         {
-            int level = Math.Min(GSConfig.PLAYER_MAX_LEVEL, int.Parse(paramsArr[1]));
+            int level = Math.Min(GSConfig.PLAYER_MAX_LEVEL, ParseInt(paramsArr[1]));
             target.GetCommonData().SetLevel(level);
             SendInfo(admin, "Set " + target.GetName() + " level to " + target.GetLevel());
         }
         else if (paramsArr[0].Equals("exp"))
         {
-            long exp = long.Parse(paramsArr[1]);
+            long exp = ParseLong(paramsArr[1]);
             target.GetCommonData().SetExp(exp);
             PacketSendUtility.SendMessage(admin, "Set exp of target to " + target.GetCommonData().GetExp());
         }
         else if (paramsArr[0].Equals("ap"))
         {
-            int ap = int.Parse(paramsArr[1]);
+            int ap = ParseInt(paramsArr[1]);
             Aion.GameServer.Services.Abyss.AbyssPointsService.AddAp(target, ap - target.GetAbyssRank().GetAp());
             if (target != admin)
             {
@@ -66,7 +66,7 @@ public class Set : AdminCommand
         }
         else if (paramsArr[0].Equals("gp"))
         {
-            int gp = int.Parse(paramsArr[1]);
+            int gp = ParseInt(paramsArr[1]);
             Aion.GameServer.Services.Abyss.GloryPointsService.AddGp(target.GetObjectId(), gp - target.GetAbyssRank().GetCurrentGP());
             if (target != admin)
             {

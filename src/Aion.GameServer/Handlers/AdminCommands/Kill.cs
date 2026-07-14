@@ -58,7 +58,7 @@ public class Kill : AdminCommand
             }
             else
             {
-                float range = float.Parse(paramsArr[0]);
+                float range = ParseFloat(paramsArr[0]);
                 if (range < 0)
                 {
                     SendInfo(player, "The given range must be larger than 0.");
@@ -81,7 +81,7 @@ public class Kill : AdminCommand
                 }
                 else
                 {
-                    int npcId = int.Parse(paramsArr[1]);
+                    int npcId = ParseInt(paramsArr[1]);
                     filter = creature => baseFilter(creature) && creature.GetObjectTemplate().GetTemplateId() == npcId;
                 }
             }

@@ -65,28 +65,28 @@ public class SpawnUpdate : AdminCommand
             if (paramsArr.Length == 1)
                 x = admin.GetX();
             else
-                x = float.Parse(paramsArr[1]);
+                x = ParseFloat(paramsArr[1]);
         }
         else if (paramsArr[0].Equals("y", System.StringComparison.OrdinalIgnoreCase))
         {
             if (paramsArr.Length == 1)
                 y = admin.GetY();
             else
-                y = float.Parse(paramsArr[1]);
+                y = ParseFloat(paramsArr[1]);
         }
         else if (paramsArr[0].Equals("z", System.StringComparison.OrdinalIgnoreCase))
         {
             if (paramsArr.Length == 1)
                 z = admin.GetZ();
             else
-                z = float.Parse(paramsArr[1]);
+                z = ParseFloat(paramsArr[1]);
         }
         else if (paramsArr[0].Equals("h", System.StringComparison.OrdinalIgnoreCase))
         {
             if (paramsArr.Length == 1)
                 h = admin.GetHeading();
             else
-                h = byte.Parse(paramsArr[1]);
+                h = ParseByte(paramsArr[1]);
         }
         else
         {

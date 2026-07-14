@@ -6,16 +6,18 @@ using System.Linq;
 namespace Aion.Commons.Configuration
 {
 	/// <summary>
-	/// Configuration loader for .properties files with cascading override support.
-	/// Matches Java PropertiesUtils behavior for parity testing.
+	/// Compatibility facade for bootstrap callers that need cascading Java properties without a static
+	/// <see cref="ConfigurableProcessor"/> holder. Parsing is delegated to <see cref="JavaProperties"/> and typed
+	/// values are delegated to the same transformer registry used by runtime configuration holders, so bootstrap and
+	/// runtime cannot assign different meanings to the same property text.
 	/// </summary>
 	public class ConfigLoader
 	{
-		private readonly Dictionary<string, string> _properties;
+		private JavaProperties _properties;
 
 		public ConfigLoader()
 		{
-			_properties = new Dictionary<string, string>();
+			_properties = new JavaProperties();
 		}
 
 		/// <summary>
@@ -23,7 +25,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public string? Get(string key)
 		{
-			return _properties.TryGetValue(key, out var value) ? value : null;
+			return _properties.GetProperty(key);
 		}
 
 		/// <summary>
@@ -31,7 +33,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public string Get(string key, string defaultValue)
 		{
-			return _properties.TryGetValue(key, out var value) ? value : defaultValue;
+			return _properties.GetProperty(key, defaultValue);
 		}
 
 		/// <summary>
@@ -39,9 +41,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public int GetInt(string key, int defaultValue)
 		{
-			if (_properties.TryGetValue(key, out var value) && int.TryParse(value, out var result))
-				return result;
-			return defaultValue;
+			return TransformOrDefault(key, defaultValue);
 		}
 
 		/// <summary>
@@ -49,9 +49,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public long GetLong(string key, long defaultValue)
 		{
-			if (_properties.TryGetValue(key, out var value) && long.TryParse(value, out var result))
-				return result;
-			return defaultValue;
+			return TransformOrDefault(key, defaultValue);
 		}
 
 		/// <summary>
@@ -59,9 +57,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public bool GetBool(string key, bool defaultValue)
 		{
-			if (_properties.TryGetValue(key, out var value) && bool.TryParse(value, out var result))
-				return result;
-			return defaultValue;
+			return TransformOrDefault(key, defaultValue);
 		}
 
 		/// <summary>
@@ -69,9 +65,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public float GetFloat(string key, float defaultValue)
 		{
-			if (_properties.TryGetValue(key, out var value) && float.TryParse(value, out var result))
-				return result;
-			return defaultValue;
+			return TransformOrDefault(key, defaultValue);
 		}
 
 		/// <summary>
@@ -85,24 +79,7 @@ namespace Aion.Commons.Configuration
 
 			try
 			{
-				foreach (var line in File.ReadLines(filePath))
-				{
-					var trimmed = line.Trim();
-
-					// Skip empty lines and comments
-					if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#"))
-						continue;
-
-					// Parse key=value
-					var eqIndex = trimmed.IndexOf('=');
-					if (eqIndex <= 0)
-						continue;
-
-					var key = trimmed.Substring(0, eqIndex).Trim();
-					var value = trimmed.Substring(eqIndex + 1).Trim();
-
-					_properties[key] = value;
-				}
+				_properties.LoadFromFile(filePath);
 				return true;
 			}
 			catch (Exception ex)
@@ -120,13 +97,7 @@ namespace Aion.Commons.Configuration
 			if (!Directory.Exists(dirPath))
 				throw new DirectoryNotFoundException($"Directory not found: {dirPath}");
 
-			var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-			var files = Directory.GetFiles(dirPath, "*.properties", searchOption).OrderBy(f => f).ToList();
-
-			foreach (var file in files)
-			{
-				LoadFromFile(file);
-			}
+			_properties.LoadFromDirectory(dirPath, recursive);
 		}
 
 		/// <summary>
@@ -156,7 +127,8 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public Dictionary<string, string> GetAll()
 		{
-			return new Dictionary<string, string>(_properties);
+			return _properties.StringPropertyNames()
+				.ToDictionary(key => key, key => _properties.GetProperty(key)!, StringComparer.Ordinal);
 		}
 
 		/// <summary>
@@ -164,7 +136,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public IEnumerable<string> GetKeysWithPrefix(string prefix)
 		{
-			return _properties.Keys.Where(k => k.StartsWith(prefix));
+			return _properties.StringPropertyNames().Where(k => k.StartsWith(prefix, StringComparison.Ordinal));
 		}
 
 		/// <summary>
@@ -172,7 +144,7 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public void Clear()
 		{
-			_properties.Clear();
+			_properties = new JavaProperties();
 		}
 
 		/// <summary>
@@ -180,12 +152,18 @@ namespace Aion.Commons.Configuration
 		/// </summary>
 		public void Set(string key, string value)
 		{
-			_properties[key] = value;
+			_properties.SetProperty(key, value);
 		}
 
 		/// <summary>
 		/// Return count of loaded properties.
 		/// </summary>
 		public int Count => _properties.Count;
+
+		private T TransformOrDefault<T>(string key, T defaultValue)
+		{
+			var value = _properties.GetProperty(key);
+			return value == null ? defaultValue : (T)ConfigurableProcessor.Transform(value, typeof(T))!;
+		}
 	}
 }

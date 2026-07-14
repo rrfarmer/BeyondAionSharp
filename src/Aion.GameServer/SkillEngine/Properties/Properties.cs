@@ -10,8 +10,12 @@ namespace Aion.GameServer.SkillEngine.Properties;
 [XmlType("Properties")]
 public class Properties
 {
+    // Java's enum reference is null when the attribute is absent. XmlSerializer cannot bind a
+    // nullable enum attribute, so preserve that JAXB state through a string proxy.
     [XmlAttribute("first_target")]
-    public FirstTargetAttribute firstTarget;
+    public string? FirstTargetRaw;
+    private FirstTargetAttribute? _firstTarget;
+    private bool _firstTargetParsed;
 
     [XmlAttribute("first_target_range")]
     public int firstTargetRange;
@@ -94,7 +98,7 @@ public class Properties
 
     public bool Validate(Skill skill, CastState castState)
     {
-        if (firstTarget != null)
+        if (GetFirstTarget() != null)
         {
             if (!FirstTargetProperty.Set(skill, this))
             {
@@ -152,9 +156,16 @@ public class Properties
         return result;
     }
 
-    public FirstTargetAttribute GetFirstTarget()
+    public FirstTargetAttribute? GetFirstTarget()
     {
-        return firstTarget;
+        if (!_firstTargetParsed)
+        {
+            _firstTarget = string.IsNullOrEmpty(FirstTargetRaw)
+                ? (FirstTargetAttribute?)null
+                : System.Enum.Parse<FirstTargetAttribute>(FirstTargetRaw);
+            _firstTargetParsed = true;
+        }
+        return _firstTarget;
     }
 
     public int GetFirstTargetRange()

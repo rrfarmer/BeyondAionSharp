@@ -51,7 +51,16 @@ public partial class ItemTemplate : VisibleObjectTemplate
     [XmlAttribute("temp_exchange_time")] public int temExchangeTime;
     [XmlAttribute("expire_time")] public int expireTime;
     [XmlElement("weapon_stats")] public WeaponStats weaponStats;
-    [XmlAttribute("activate_target")] public ItemActivationTarget activationTarget;
+    // Java's enum reference is null when activate_target is absent. XmlSerializer cannot bind a
+    // nullable enum attribute, so retain the missing/present distinction through a string proxy.
+    [XmlIgnore] public ItemActivationTarget? activationTarget;
+
+    [XmlAttribute("activate_target")]
+    public string? ActivationTargetRaw
+    {
+        get => activationTarget?.ToString();
+        set => activationTarget = value == null ? null : Enum.Parse<ItemActivationTarget>(value);
+    }
     [XmlAttribute("tempering_name")] public string temperingName;
     [XmlAttribute("enchant_name")] public string enchantName;
     [XmlAttribute("activate_count")] public int activationCount;

@@ -43,7 +43,7 @@ public class BanChar : AdminCommand
         }
 
         int dayCount = -1;
-        if (!int.TryParse(paramsArr[1], out dayCount))
+        if (!TryParseInt(paramsArr[1], out dayCount))
         {
             PacketSendUtility.SendMessage(admin, "Second parameter is not an int");
             SendInfo(admin, true);

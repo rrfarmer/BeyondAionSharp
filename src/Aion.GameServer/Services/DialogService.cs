@@ -267,10 +267,10 @@ public class DialogService
                     PacketSendUtility.SendPacket(player, new SM_SELL_ITEM(npc));
                     break;
                 case GIVEUP_CRAFT_EXPERT: // relinquish Expert Status
-                    RelinquishCraftStatus.RelinquishExpertStatus(player, CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc).Value);
+                    RelinquishCraftStatusForNpc(player, npc, false);
                     break;
                 case GIVEUP_CRAFT_MASTER: // relinquish Master Status
-                    RelinquishCraftStatus.RelinquishMasterStatus(player, CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc).Value);
+                    RelinquishCraftStatusForNpc(player, npc, true);
                     break;
                 case FUNC_PET_H_ADOPT:
                     PacketSendUtility.SendPacket(player, new SM_PET(PetAction.H_ADOPT));
@@ -293,6 +293,14 @@ public class DialogService
         {
             HandleQuestDialogueOrSendNextPage(dialogActionId, player, npc, questId, extendedRewardIndex);
         }
+    }
+
+    internal static bool RelinquishCraftStatusForNpc(Player player, Npc npc, bool master)
+    {
+        var profession = CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc);
+        return master
+            ? RelinquishCraftStatus.RelinquishMasterStatus(player, profession)
+            : RelinquishCraftStatus.RelinquishExpertStatus(player, profession);
     }
 
     private static void HandleQuestDialogueOrSendNextPage(int dialogActionId, Player player, Npc npc, int questId, int extendedRewardIndex)

@@ -67,7 +67,9 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 			command.CommandText = """
 				SELECT
 					p.id, p.name, p.exp, p.x, p.y, p.z, p.heading, p.world_id, p.gender, p.race, p.player_class,
-					p.deletion_date, p.last_online, p.title_id,
+					CAST(FLOOR(UNIX_TIMESTAMP(p.deletion_date) * 1000) AS SIGNED) AS deletion_date_epoch_millis,
+					CAST(FLOOR(UNIX_TIMESTAMP(p.last_online) * 1000) AS SIGNED) AS last_online_epoch_millis,
+					p.title_id,
 					pa.face, pa.hair, pa.deco, pa.tattoo, pa.face_contour, pa.expression, pa.jaw_line,
 					pa.skin_rgb, pa.hair_rgb, pa.eye_rgb, pa.lip_rgb, pa.face_shape, pa.forehead, pa.eye_height,
 					pa.eye_space, pa.eye_width, pa.eye_size, pa.eye_shape, pa.eye_angle, pa.brow_height,
@@ -108,9 +110,9 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 						Heading = reader.GetInt32(reader.GetOrdinal("heading")),
 						Level = Math.Max(1, _runtimeContext.DataManager?.StaticData.PlayerExperienceTable.GetLevelForExp(exp) ?? 1),
 						TitleId = reader.GetInt32(reader.GetOrdinal("title_id")),
-						LastOnlineEpochSeconds = ToEpochSeconds(ReadDateTime(reader, "last_online")),
+						LastOnlineEpochSeconds = DatabaseTimestamp.MillisecondsToInt32UnixTimeSeconds(ReadNullableLong(reader, "last_online_epoch_millis")),
 						VisibleItems = visibleItems.TryGetValue(id, out var items) ? items : Array.Empty<VisibleCharacterItem>(),
-						DeletionTimeSeconds = ToEpochSeconds(ReadDateTime(reader, "deletion_date")),
+						DeletionTimeSeconds = DatabaseTimestamp.MillisecondsToInt32UnixTimeSeconds(ReadNullableLong(reader, "deletion_date_epoch_millis")),
 					});
 			}
 
@@ -152,25 +154,26 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 		// Java parity: services/AccountService.deleteCharacter + dao/PlayerDAO.updateDeletionTime.
 		try
 		{
-			var currentDeletionDate = await GetDeletionDateAsync(accountId, characterObjectId, cancellationToken);
-			if (currentDeletionDate.HasValue)
-				return currentDeletionDate.Value > DateTime.Now ? ToEpochSeconds(currentDeletionDate) : 0;
+			var currentDeletionEpoch = await GetDeletionEpochSecondsAsync(accountId, characterObjectId, cancellationToken);
+			var nowEpoch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+			if (currentDeletionEpoch.HasValue)
+				return currentDeletionEpoch.Value > nowEpoch ? unchecked((int)currentDeletionEpoch.Value) : 0;
 
-			var deletionDate = DateTime.Now.Add(deletionDelay);
+			var deletionEpoch = DateTimeOffset.UtcNow.Add(deletionDelay).ToUnixTimeSeconds();
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
-			command.CommandText = "UPDATE players SET deletion_date = ? WHERE id = ? AND account_id = ? AND deletion_date IS NULL";
+			command.CommandText = "UPDATE players SET deletion_date = FROM_UNIXTIME(?) WHERE id = ? AND account_id = ? AND deletion_date IS NULL";
 			command.Parameters.AddRange(
 				new[]
 				{
-					new MySqlParameter { Value = deletionDate },
+					new MySqlParameter { Value = deletionEpoch },
 					new MySqlParameter { Value = characterObjectId },
 					new MySqlParameter { Value = accountId },
 				});
 
 			var rows = await command.ExecuteNonQueryAsync(cancellationToken);
-			return rows > 0 ? ToEpochSeconds(deletionDate) : 0;
+			return rows > 0 ? unchecked((int)deletionEpoch) : 0;
 		}
 		catch (Exception ex)
 		{
@@ -184,10 +187,10 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 		// Java parity: services/AccountService.restoreCharacter + PlayerDAO.updateDeletionTime(null).
 		try
 		{
-			var currentDeletionDate = await GetDeletionDateAsync(accountId, characterObjectId, cancellationToken);
-			if (!currentDeletionDate.HasValue)
+			var currentDeletionEpoch = await GetDeletionEpochSecondsAsync(accountId, characterObjectId, cancellationToken);
+			if (!currentDeletionEpoch.HasValue)
 				return true;
-			if (currentDeletionDate.Value <= DateTime.Now)
+			if (currentDeletionEpoch.Value <= DateTimeOffset.UtcNow.ToUnixTimeSeconds())
 				return false;
 
 			await using var connection = DatabaseFactory.GetConnection();
@@ -210,13 +213,13 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 		}
 	}
 
-	private async Task<DateTime?> GetDeletionDateAsync(int accountId, int characterObjectId, CancellationToken cancellationToken)
+	private async Task<long?> GetDeletionEpochSecondsAsync(int accountId, int characterObjectId, CancellationToken cancellationToken)
 	{
 		// Java parity: dao/PlayerDAO.setCreationDeletionTime deletion_date read.
 		await using var connection = DatabaseFactory.GetConnection();
 		await connection.OpenAsync(cancellationToken);
 		await using var command = connection.CreateCommand();
-		command.CommandText = "SELECT deletion_date FROM players WHERE id = ? AND account_id = ?";
+		command.CommandText = "SELECT UNIX_TIMESTAMP(deletion_date) FROM players WHERE id = ? AND account_id = ?";
 		command.Parameters.AddRange(
 			new[]
 			{
@@ -225,7 +228,7 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 			});
 
 		var result = await command.ExecuteScalarAsync(cancellationToken);
-		return result == null || result == DBNull.Value ? null : Convert.ToDateTime(result);
+		return result == null || result == DBNull.Value ? null : Convert.ToInt64(result);
 	}
 
 	private async Task<Dictionary<int, IReadOnlyList<VisibleCharacterItem>>> LoadVisibleItemsAsync(int accountId, CancellationToken cancellationToken)
@@ -361,18 +364,10 @@ public sealed class MySqlCharacterSelectionRepository : ICharacterSelectionRepos
 		return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
 	}
 
-	private static DateTime? ReadDateTime(MySqlDataReader reader, string name)
+	private static long? ReadNullableLong(MySqlDataReader reader, string name)
 	{
 		var ordinal = reader.GetOrdinal(name);
-		return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
-	}
-
-	private static int ToEpochSeconds(DateTime? value)
-	{
-		if (!value.HasValue)
-			return 0;
-		var local = DateTime.SpecifyKind(value.Value, DateTimeKind.Local);
-		return checked((int)new DateTimeOffset(local).ToUnixTimeSeconds());
+		return reader.IsDBNull(ordinal) ? null : reader.GetInt64(ordinal);
 	}
 
 	private static int ToGenderId(string gender)

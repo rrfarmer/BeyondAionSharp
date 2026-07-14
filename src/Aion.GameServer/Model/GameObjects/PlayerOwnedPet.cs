@@ -24,7 +24,7 @@ public sealed record PlayerOwnedPet(
 	long MoodCooldownStartedMillis = 0,
 	long GiftCooldownStartedMillis = 0)
 {
-	public int BirthdayEpochSeconds => Birthday is null ? 0 : checked((int)(Birthday.Value.ToUnixTimeMilliseconds() / 1000));
+	public int BirthdayEpochSeconds => Birthday is null ? 0 : unchecked((int)(Birthday.Value.ToUnixTimeMilliseconds() / 1000));
 
 	public int SecondsUntilExpiration(DateTimeOffset currentTime) =>
 		ExpireTimeSeconds == 0 ? 0 : ExpireTimeSeconds - (int)currentTime.ToUnixTimeSeconds();

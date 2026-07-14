@@ -79,13 +79,14 @@ public class Wish : ConsoleCommand
             long addCount = 1;
             int itemId;
             int enchant = 0;
-            if (long.TryParse(paramsArr[0], out addCount))
+            if (TryParseInt(paramsArr[0], out int parsedAddCount))
             {
+                addCount = parsedAddCount;
                 itemName = paramsArr[1];
             }
             else
             {
-                int.TryParse(paramsArr[1], out enchant);
+                TryParseInt(paramsArr[1], out enchant);
             }
 
             FileInfo xml = new FileInfo("./data/handlers/consolecommands/data/items.xml");
@@ -157,7 +158,7 @@ public class Wish : ConsoleCommand
         public string GetName() => name;
 
         // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
-        public int GetTemplateId() => int.Parse(id);
+        public int GetTemplateId() => JavaNumberParser.ParseInt(id);
     }
 
     [XmlRoot("items")]
@@ -191,7 +192,7 @@ public class Wish : ConsoleCommand
         public string GetName() => name;
 
         // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
-        public int GetTemplateId() => int.Parse(id);
+        public int GetTemplateId() => JavaNumberParser.ParseInt(id);
     }
 
     [XmlRoot("npcs")]

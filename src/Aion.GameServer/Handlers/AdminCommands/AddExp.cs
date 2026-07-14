@@ -27,7 +27,7 @@ public class AddExp : AdminCommand
             target = p;
 
         long exp;
-        if (!long.TryParse(paramsArr[0], out exp))
+        if (!TryParseLong(paramsArr[0], out exp))
         {
             SendInfo(admin, "Invalid <exp> (must be a number)");
             return;

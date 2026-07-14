@@ -13,8 +13,8 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/AccountPassportsDAO (@author ViAl, Luzien, SVDNESS). JDBC DAO over account_passports + account_stamps (attendance
 /// passport rewards). DatabaseFactory-style; positional '?' -> ordered MySqlParameter; executeQuery -> ExecuteReader; executeUpdate ->
 /// ExecuteNonQuery; SQL (incl. ON DUPLICATE KEY UPDATE GREATEST(...) / GREATEST) verbatim. rewarded int!=0 &lt;-&gt; isRewarded?1:0.
-/// getTimestamp(null) on last_stamp -> IsDBNull?null:new DateTimeOffset(GetDateTime) (Account.GetLastStamp is DateTimeOffset?);
-/// setTimestamp(null) -> DBNull.Value. normTs truncates to whole seconds: Timestamp.from(toInstant().truncatedTo(SECONDS)) -> drop
+/// JDBC Timestamp boundaries use SQL epoch-millisecond projections and FROM_UNIXTIME(epoch), including nullable last_stamp, so
+/// DateTimeKind/session-zone inference cannot alter the instant. normTs truncates to whole seconds: Timestamp.from(toInstant().truncatedTo(SECONDS)) -> drop
 /// sub-second Ticks. NOTE the reworked Passport ctor/GetArriveDate use non-nullable DateTime (Java Timestamp was nullable), so the
 /// Java null-guard in normTs is moot here - arrive_date is read non-null. storePassportList switch-arrow NEW/UPDATE_REQUIRED/DELETED
 /// -> C# switch on IPersistable.PersistentState; UPDATED set after.
@@ -22,15 +22,15 @@ namespace Aion.GameServer.Dao;
 public class AccountPassportsDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(AccountPassportsDAO));
-    private const string SELECT_QUERY = "SELECT `passport_id`, `rewarded`, `arrive_date` FROM `account_passports` WHERE `account_id`=?";
-    private const string UPDATE_QUERY = "UPDATE `account_passports` SET `rewarded`=? WHERE `account_id`=? AND `passport_id`=? AND `arrive_date`=?";
+    private const string SELECT_QUERY = "SELECT `passport_id`, `rewarded`, CAST(FLOOR(UNIX_TIMESTAMP(`arrive_date`) * 1000) AS SIGNED) AS `arrive_date_epoch_millis` FROM `account_passports` WHERE `account_id`=?";
+    private const string UPDATE_QUERY = "UPDATE `account_passports` SET `rewarded`=? WHERE `account_id`=? AND `passport_id`=? AND `arrive_date`=FROM_UNIXTIME(? / 1000.0)";
     private const string RESET_LAST_STAMPS_QUERY = "UPDATE `account_stamps` SET `last_stamp`=NULL";
     private const string RESET_STAMPS_QUERY = "UPDATE `account_stamps` SET `stamps`=0";
-    private const string INSERT_QUERY = "INSERT INTO `account_passports` (`account_id`, `passport_id`, `rewarded`, `arrive_date`) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE `rewarded` = GREATEST(`rewarded`, VALUES(`rewarded`))";
-    private const string DELETE_QUERY = "DELETE FROM `account_passports` WHERE account_id = ? AND passport_id = ? and arrive_date = ?";
-    private const string INSERT_STAMPS_QUERY = "INSERT INTO `account_stamps` (`account_id`, `stamps`, `last_stamp`) VALUES (?,?,?)";
-    private const string UPDATE_STAMPS_QUERY = "UPDATE `account_stamps` SET `stamps`= ?, `last_stamp`  = ? WHERE `account_id` = ?";
-    private const string SELECT_STAMPS_QUERY = "SELECT `stamps`, `last_stamp` FROM `account_stamps` WHERE `account_id`=?";
+    private const string INSERT_QUERY = "INSERT INTO `account_passports` (`account_id`, `passport_id`, `rewarded`, `arrive_date`) VALUES (?,?,?,FROM_UNIXTIME(? / 1000.0)) ON DUPLICATE KEY UPDATE `rewarded` = GREATEST(`rewarded`, VALUES(`rewarded`))";
+    private const string DELETE_QUERY = "DELETE FROM `account_passports` WHERE account_id = ? AND passport_id = ? and arrive_date = FROM_UNIXTIME(? / 1000.0)";
+    private const string INSERT_STAMPS_QUERY = "INSERT INTO `account_stamps` (`account_id`, `stamps`, `last_stamp`) VALUES (?,?,FROM_UNIXTIME(? / 1000.0))";
+    private const string UPDATE_STAMPS_QUERY = "UPDATE `account_stamps` SET `stamps`= ?, `last_stamp` = FROM_UNIXTIME(? / 1000.0) WHERE `account_id` = ?";
+    private const string SELECT_STAMPS_QUERY = "SELECT `stamps`, CAST(FLOOR(UNIX_TIMESTAMP(`last_stamp`) * 1000) AS SIGNED) AS `last_stamp_epoch_millis` FROM `account_stamps` WHERE `account_id`=?";
 
     public static void LoadPassport(Account account)
     {
@@ -48,7 +48,7 @@ public class AccountPassportsDAO
                 {
                     int passport_id = rset.GetInt32(rset.GetOrdinal("passport_id"));
                     bool rewarded = rset.GetInt32(rset.GetOrdinal("rewarded")) != 0;
-                    DateTime arriveDate = NormTs(rset.GetDateTime(rset.GetOrdinal("arrive_date")));
+                    DateTime arriveDate = NormTs(DatabaseTimestamp.ReadUtcDateTime(rset, "arrive_date_epoch_millis"));
                     Passport pp = new Passport(passport_id, rewarded, arriveDate);
                     pp.SetPersistentState(IPersistable.PersistentState.UPDATED);
                     passportList.AddPassport(pp);
@@ -65,8 +65,7 @@ public class AccountPassportsDAO
                 if (rset.Read())
                 {
                     stamps = rset.GetInt32(rset.GetOrdinal("stamps"));
-                    int lsOrd = rset.GetOrdinal("last_stamp");
-                    lastStamp = rset.IsDBNull(lsOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rset.GetDateTime(lsOrd));
+                    lastStamp = DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "last_stamp_epoch_millis");
                 }
                 else
                 {
@@ -119,7 +118,7 @@ public class AccountPassportsDAO
             ps.Parameters.Add(new MySqlParameter { Value = accountId });
             ps.Parameters.Add(new MySqlParameter { Value = passport.GetId() });
             ps.Parameters.Add(new MySqlParameter { Value = passport.IsRewarded() ? 1 : 0 });
-            ps.Parameters.Add(new MySqlParameter { Value = passport.GetArriveDate() });
+            ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(passport.GetArriveDate()) });
             ps.ExecuteNonQuery();
         }
         catch (Exception e)
@@ -139,7 +138,7 @@ public class AccountPassportsDAO
             ps.Parameters.Add(new MySqlParameter { Value = passport.IsRewarded() ? 1 : 0 });
             ps.Parameters.Add(new MySqlParameter { Value = accountId });
             ps.Parameters.Add(new MySqlParameter { Value = passport.GetId() });
-            ps.Parameters.Add(new MySqlParameter { Value = passport.GetArriveDate() });
+            ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(passport.GetArriveDate()) });
             ps.ExecuteNonQuery();
         }
         catch (Exception e)
@@ -158,7 +157,7 @@ public class AccountPassportsDAO
             ps.CommandText = DELETE_QUERY;
             ps.Parameters.Add(new MySqlParameter { Value = accountId });
             ps.Parameters.Add(new MySqlParameter { Value = passport.GetId() });
-            ps.Parameters.Add(new MySqlParameter { Value = passport.GetArriveDate() });
+            ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(passport.GetArriveDate()) });
             ps.ExecuteNonQuery();
         }
         catch (Exception e)
@@ -195,7 +194,7 @@ public class AccountPassportsDAO
             using MySqlCommand ps = con.CreateCommand();
             ps.CommandText = UPDATE_STAMPS_QUERY;
             ps.Parameters.Add(new MySqlParameter { Value = account.GetPassportStamps() });
-            ps.Parameters.Add(new MySqlParameter { Value = (object)account.GetLastStamp() ?? DBNull.Value });
+            ps.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(account.GetLastStamp()) });
             ps.Parameters.Add(new MySqlParameter { Value = account.GetId() });
             ps.ExecuteNonQuery();
         }

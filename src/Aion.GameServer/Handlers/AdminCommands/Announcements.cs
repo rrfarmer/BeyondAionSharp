@@ -81,7 +81,7 @@ public class Announcements : AdminCommand
             int delay;
             // Java: NumberFormatException -> "Delay must be specified in seconds.";
             // IllegalArgumentException (delay < 300) -> "Delay must be at least 300s (5 minutes)."
-            if (!int.TryParse(paramsArr[3], out delay))
+            if (!TryParseInt(paramsArr[3], out delay))
             {
                 SendInfo(player, "Delay must be specified in seconds.");
                 return;
@@ -114,7 +114,7 @@ public class Announcements : AdminCommand
 
             int id;
 
-            if (!int.TryParse(paramsArr[1], out id))
+            if (!TryParseInt(paramsArr[1], out id))
             {
                 SendInfo(player, "Illegal announcement ID.");
                 return;

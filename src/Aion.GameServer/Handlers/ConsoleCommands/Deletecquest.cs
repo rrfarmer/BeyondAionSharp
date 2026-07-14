@@ -32,7 +32,7 @@ public class Deletecquest : ConsoleCommand
         }
 
         // Java parity: Integer.valueOf(params[0]) throws NumberFormatException -> sendInfo(admin).
-        if (!int.TryParse(paramsArr[0], out int questId))
+        if (!TryParseInt(paramsArr[0], out int questId))
         {
             SendInfo(admin);
             return;

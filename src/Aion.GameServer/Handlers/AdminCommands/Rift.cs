@@ -39,7 +39,7 @@ public class Rift : AdminCommand
             return;
         }
 
-        int id = int.TryParse(paramsArr[1], out var r) ? r : 0;
+        int id = TryParseInt(paramsArr[1], out var r) ? r : 0;
         bool result;
         if (!IsValidId(player, id))
         {

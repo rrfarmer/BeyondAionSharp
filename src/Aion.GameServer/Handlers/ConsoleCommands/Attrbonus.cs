@@ -25,16 +25,11 @@ public class Attrbonus : ConsoleCommand, IStatOwner
             return;
         }
 
-        // Java parity: StatEnum.valueOf(name) throws IllegalArgumentException on invalid (the original `if (stat == null)` is dead code);
-        // reproduced as TryParse -> the author's intended "Invalid params." message.
-        if (!System.Enum.TryParse(paramsArr[0], out StatEnum stat) || !System.Enum.IsDefined(typeof(StatEnum), stat))
-        {
-            PacketSendUtility.SendMessage(admin, "Invalid params.");
-            return;
-        }
+        // Java StatEnum.valueOf accepts an exact enum name only and throws for invalid input.
+        StatEnum stat = ParseEnumName<StatEnum>(paramsArr[0]);
 
         // Java parity: Integer.parseInt(params[1]) throws NumberFormatException -> "Invalid params."
-        if (!int.TryParse(paramsArr[1], out int value))
+        if (!TryParseInt(paramsArr[1], out int value))
         {
             PacketSendUtility.SendMessage(admin, "Invalid params.");
             return;

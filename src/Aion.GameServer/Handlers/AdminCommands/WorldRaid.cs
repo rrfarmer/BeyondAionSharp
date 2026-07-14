@@ -55,7 +55,7 @@ public class WorldRaid : AdminCommand
                 return;
             }
 
-            int locationId = int.TryParse(paramsArr[1], out var r) ? r : 0;
+            int locationId = TryParseInt(paramsArr[1], out var r) ? r : 0;
             if (!WorldRaidService.GetInstance().IsValidWorldRaidLocation(locationId))
             {
                 SendInfo(player, "Invalid world raid location: " + locationId);
@@ -123,88 +123,6 @@ public class WorldRaid : AdminCommand
         return ChatUtil.Position(location.GetLocationId().ToString(), location.GetMapId(), location.GetX(), location.GetY(), location.GetZ());
     }
 
-    // Java parity: org.apache.commons.lang3.math.NumberUtils.isNumber(String).
-    private static bool IsNumber(string str)
-    {
-        if (string.IsNullOrEmpty(str))
-            return false;
-        char[] chars = str.ToCharArray();
-        int sz = chars.Length;
-        bool hasExp = false;
-        bool hasDecPoint = false;
-        bool allowSigns = false;
-        bool foundDigit = false;
-        // deal with any possible sign up front
-        int start = (chars[0] == '-' || chars[0] == '+') ? 1 : 0;
-        if (sz > start + 1 && chars[start] == '0' && (chars[start + 1] == 'x' || chars[start + 1] == 'X'))
-        { // leading 0x/0X
-            int i = start + 2;
-            if (i == sz)
-                return false; // str == "0x"
-            for (; i < chars.Length; i++)
-            {
-                if ((chars[i] < '0' || chars[i] > '9') && (chars[i] < 'a' || chars[i] > 'f') && (chars[i] < 'A' || chars[i] > 'F'))
-                    return false;
-            }
-            return true;
-        }
-        sz--; // don't want to loop to the last char, check it afterwards for type qualifiers
-        int idx = start;
-        // loop to the next to last char or to the last char if we need another digit to make a valid number (e.g. chars[0..5] = "1234E")
-        while (idx < sz || (idx < sz + 1 && allowSigns && !foundDigit))
-        {
-            if (chars[idx] >= '0' && chars[idx] <= '9')
-            {
-                foundDigit = true;
-                allowSigns = false;
-            }
-            else if (chars[idx] == '.')
-            {
-                if (hasDecPoint || hasExp)
-                    return false; // two decimal points or dec in exponent
-                hasDecPoint = true;
-            }
-            else if (chars[idx] == 'e' || chars[idx] == 'E')
-            {
-                if (hasExp)
-                    return false; // two E's
-                if (!foundDigit)
-                    return false;
-                hasExp = true;
-                allowSigns = true;
-            }
-            else if (chars[idx] == '+' || chars[idx] == '-')
-            {
-                if (!allowSigns)
-                    return false;
-                allowSigns = false;
-                foundDigit = false; // we need a digit after the E
-            }
-            else
-            {
-                return false;
-            }
-            idx++;
-        }
-        if (idx < chars.Length)
-        {
-            if (chars[idx] >= '0' && chars[idx] <= '9')
-                return true; // no type qualifier, OK
-            if (chars[idx] == 'e' || chars[idx] == 'E')
-                return false; // can't have an E at the last byte
-            if (chars[idx] == '.')
-            {
-                if (hasDecPoint || hasExp)
-                    return false;
-                return foundDigit; // single trailing decimal point after non-exponent is ok
-            }
-            if (!allowSigns && (chars[idx] == 'd' || chars[idx] == 'D' || chars[idx] == 'f' || chars[idx] == 'F'))
-                return foundDigit;
-            if (chars[idx] == 'l' || chars[idx] == 'L')
-                return foundDigit && !hasExp && !hasDecPoint; // not allowing L with an exponent or decimal point
-            return false; // last character is illegal
-        }
-        // allowSigns is true iff the val ends in 'E', return !allowSigns to fail when this happens
-        return !allowSigns && foundDigit;
-    }
+    // Java parity: NumberUtils.isNumber delegates to Commons Lang 3.20 isCreatable.
+    private static bool IsNumber(string str) => IsCreatableNumber(str);
 }

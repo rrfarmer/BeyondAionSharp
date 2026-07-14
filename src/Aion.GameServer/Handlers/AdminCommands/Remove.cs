@@ -46,17 +46,17 @@ public class Remove : AdminCommand
         if (paramsArr.Length > 2 && (itemCountIndex < paramsArr.Length))
         {
             // count parameter was passed
-            if (!long.TryParse(paramsArr[itemCountIndex], out itemCount))
+            if (!TryParseLong(paramsArr[itemCountIndex], out itemCount))
             {
                 Info(admin, "Invalid number parameter passed.");
                 return;
             }
         }
 
-        Match result = Regex.Match(itemString, "(?:\\[item:)??(\\d{9})");
+        Match result = Regex.Match(itemString, "(?:\\[item:)??([0-9]{9})");
         if (result.Success)
         {
-            itemId = int.Parse(result.Groups[1].Value);
+            itemId = ParseInt(result.Groups[1].Value);
         }
 
         if (itemId > 0)

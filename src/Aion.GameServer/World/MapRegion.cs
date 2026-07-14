@@ -17,7 +17,9 @@ namespace Aion.GameServer.World;
 /// </summary>
 public class MapRegion
 {
-    private static readonly Comparison<ZoneInstance> zoneComparator = (a, b) =>
+    private static readonly Comparison<ZoneInstance> zoneComparator = CompareZonesForOrdering;
+
+    internal static int CompareZonesForOrdering(ZoneInstance a, ZoneInstance b)
     {
         int c = a.GetZoneTemplate().GetZoneType().CompareTo(b.GetZoneTemplate().GetZoneType());
         if (c != 0)
@@ -26,7 +28,7 @@ public class MapRegion
         if (c != 0)
             return c;
         return a.GetZoneTemplate().GetName().Id().CompareTo(b.GetZoneTemplate().GetName().Id());
-    };
+    }
 
     private readonly int regionId;
     private readonly WorldMapInstance parent;

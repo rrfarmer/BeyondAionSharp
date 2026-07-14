@@ -50,12 +50,12 @@ public class Time : AdminCommand
         {
             try
             {
-                hour = int.Parse(paramsArr[0]);
+                hour = ParseInt(paramsArr[0]);
                 if (hour < 0 || hour > 23)
                     throw new ArgumentException("A day has only 24 hours!\nMin value: 0 - Max value: 23");
                 if (paramsArr.Length == 2)
                 {
-                    minute = int.Parse(paramsArr[1]);
+                    minute = ParseInt(paramsArr[1]);
                     if (minute < 0 || minute > 59)
                         throw new ArgumentException("An hour has only 60 minutes!\nMin value: 0 - Max value: 59");
                 }

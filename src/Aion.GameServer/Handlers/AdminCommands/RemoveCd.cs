@@ -68,7 +68,7 @@ public class RemoveCd : AdminCommand
                 }
                 else
                 {
-                    int worldId = int.Parse(paramsArr[1]);
+                    int worldId = ParseInt(paramsArr[1]);
                     if (player.GetPortalCooldownList().IsPortalUseDisabled(worldId))
                     {
                         player.GetPortalCooldownList().RemovePortalCooldown(worldId);

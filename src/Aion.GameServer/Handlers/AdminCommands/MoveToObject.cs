@@ -24,7 +24,7 @@ public class MoveToObject : AdminCommand
 
         int objectId = 0;
 
-        if (!int.TryParse(paramsArr[0], out objectId))
+        if (!TryParseInt(paramsArr[0], out objectId))
         {
             PacketSendUtility.SendMessage(admin, "Only numbers please!!!");
         }

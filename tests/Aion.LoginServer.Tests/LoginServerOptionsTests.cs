@@ -76,4 +76,64 @@ public class LoginServerOptionsTests
 			Config.LoadFrom(new JavaProperties());
 		}
 	}
+
+	[Fact]
+	public void ProgramOptionsPath_UsesJavaPropertiesGrammarAndTransformers()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionLoginJavaProperties_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "login-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(
+				Path.Combine(configRoot, "myls.properties"),
+				"""
+				loginserver.accounts.autocreate 1
+				loginserver.server.bruteforceprotector:0
+				loginserver.network.client.logintrybeforeban = \u0039
+				loginserver.network.client.bantimeforbruteforcing = 0x1e
+				loginserver.accounts.external_auth.url = https\://auth.example/\
+				    check
+				"""
+			);
+
+			// Program.cs constructs its singleton with this exact public factory.
+			var options = LoginServerOptions.LoadFromJavaConfig(root);
+
+			Assert.True(options.AutoCreateAccounts);
+			Assert.False(options.BruteForceProtectionEnabled);
+			Assert.Equal(9, options.LoginTryBeforeBan);
+			Assert.Equal(30, options.WrongLoginBanMinutes);
+			Assert.Equal("https://auth.example/check", options.ExternalAuthUrl);
+		}
+		finally
+		{
+			Config.LoadFrom(new JavaProperties());
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
+	}
+
+	[Fact]
+	public void ProgramOptionsPath_RejectsInvalidJavaBoolean()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionLoginInvalidBoolean_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "login-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(Path.Combine(configRoot, "myls.properties"), "loginserver.accounts.autocreate = enabled\n");
+
+			var exception = Assert.Throws<InvalidOperationException>(() => LoginServerOptions.LoadFromJavaConfig(root));
+			Assert.IsType<TransformationException>(exception.InnerException);
+		}
+		finally
+		{
+			Config.LoadFrom(new JavaProperties());
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
+	}
 }

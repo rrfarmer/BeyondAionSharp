@@ -1,0 +1,30 @@
+{
+    "schemaVersion":  1,
+    "solution":  "AionServer.slnx",
+    "build":  "dotnet build -t:Rebuild -v:minimal",
+    "sdkVersion":  "10.0.301",
+    "total":  4318,
+    "codes":  {
+                  "CS0105":  2,
+                  "CS0108":  2,
+                  "CS0169":  3,
+                  "CS0618":  2,
+                  "CS0649":  14,
+                  "CS0675":  2,
+                  "CS1522":  1,
+                  "CS8600":  775,
+                  "CS8601":  75,
+                  "CS8602":  433,
+                  "CS8603":  692,
+                  "CS8604":  429,
+                  "CS8618":  1114,
+                  "CS8619":  3,
+                  "CS8620":  5,
+                  "CS8625":  597,
+                  "CS8629":  150,
+                  "CS8631":  8,
+                  "CS8714":  4,
+                  "CS8765":  2,
+                  "CS8767":  5
+              }
+}

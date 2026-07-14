@@ -23,12 +23,15 @@ public sealed class BannedMacRepository : IBannedMacRepository
 		await using var connection = DatabaseFactory.GetConnection();
 		await connection.OpenAsync(cancellationToken);
 		await using var command = connection.CreateCommand();
-		command.CommandText = "SELECT `address`,`time`,`details` FROM `banned_mac`";
+		command.CommandText = "SELECT `address`,CAST(FLOOR(UNIX_TIMESTAMP(`time`) * 1000) AS SIGNED) AS `time_epoch_millis`,`details` FROM `banned_mac`";
 		await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 		while (await reader.ReadAsync(cancellationToken))
 		{
 			var address = reader.GetString("address");
-			result[address] = new BannedMacEntry(address, reader.GetDateTime("time"), reader.GetString("details"));
+			result[address] = new BannedMacEntry(
+				address,
+				DatabaseTimestamp.FromUnixTimeMilliseconds(reader.GetInt64("time_epoch_millis")),
+				reader.GetString("details"));
 		}
 
 		return result;
@@ -39,12 +42,12 @@ public sealed class BannedMacRepository : IBannedMacRepository
 		await using var connection = DatabaseFactory.GetConnection();
 		await connection.OpenAsync(cancellationToken);
 		await using var command = connection.CreateCommand();
-		command.CommandText = "REPLACE INTO `banned_mac` (`address`,`time`,`details`) VALUES (?,?,?)";
+		command.CommandText = "REPLACE INTO `banned_mac` (`address`,`time`,`details`) VALUES (?,FROM_UNIXTIME(? / 1000.0),?)";
 		command.Parameters.AddRange(
 			new[]
 			{
 				new MySqlParameter { Value = entry.Mac },
-				new MySqlParameter { Value = entry.Time },
+				new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(entry.Time) },
 				new MySqlParameter { Value = entry.Details },
 			});
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;

@@ -66,7 +66,7 @@ public class Dye : AdminCommand
                             else if (colorParam.StartsWith("0x") || colorParam.StartsWith("0X"))
                                 colorParam = colorParam.Substring(2);
                         }
-                        itemColor = Convert.ToInt32(colorParam, 16);
+                        itemColor = ParseInt(colorParam, 16);
                     }
                     colorText = ChatUtil.Color("#" + (itemColor.Value & 0xFFFFFF).ToString("X6"), itemColor.Value);
                 }
@@ -113,6 +113,8 @@ public class Dye : AdminCommand
         PropertyInfo property = typeof(Color).GetProperty(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
         if (property == null || property.PropertyType != typeof(Color))
             throw new MissingFieldException("java.awt.Color", name);
-        return ((Color)property.GetValue(null)).ToArgb();
+        if (property.GetValue(null) is not Color color)
+            throw new MissingFieldException("java.awt.Color", name);
+        return color.ToArgb();
     }
 }

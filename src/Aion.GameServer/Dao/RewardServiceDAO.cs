@@ -12,14 +12,14 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/RewardServiceDAO (@author KID, Neon). JDBC DAO over player_web_rewards (out-of-game web reward delivery).
 /// DatabaseFactory-style; loadUnreceived: executeQuery -> ExecuteReader + RewardEntryItem(entryId,itemId,count). storeReceived: Java
 /// setAutoCommit(false)+addBatch/executeBatch+commit -> explicit MySqlTransaction + MySqlBatch (BatchCommands) + Commit (closest
-/// ADO.NET analog of JDBC batching). new Timestamp(long millis) -> DateTimeOffset.FromUnixTimeMilliseconds(...).LocalDateTime
-/// (Java Timestamp(long) is epoch-millis rendered in local tz). Arrays.toString(ids) -> "[" + string.Join(", ", ids) + "]". SQL verbatim.
+/// ADO.NET analog of JDBC batching). new Timestamp(long millis) -> FROM_UNIXTIME(epoch), preserving the instant without host-local
+/// DateTime conversion. Arrays.toString(ids) -> "[" + string.Join(", ", ids) + "]".
 /// </summary>
 public class RewardServiceDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(RewardServiceDAO));
 
-    private const string UPDATE_QUERY = "UPDATE `player_web_rewards` SET `received`=? WHERE `entry_id`=?";
+    private const string UPDATE_QUERY = "UPDATE `player_web_rewards` SET `received`=FROM_UNIXTIME(? / 1000.0) WHERE `entry_id`=?";
     private const string SELECT_QUERY = "SELECT entry_id, item_id, item_count FROM `player_web_rewards` WHERE `player_id`=? AND `received` IS NULL";
 
     public static List<RewardEntryItem> LoadUnreceived(int playerId)
@@ -50,7 +50,6 @@ public class RewardServiceDAO
 
     public static void StoreReceived(List<int> ids, long timeReceived)
     {
-        DateTime time = DateTimeOffset.FromUnixTimeMilliseconds(timeReceived).LocalDateTime;
         try
         {
             using MySqlConnection con = DatabaseFactory.GetConnection();
@@ -60,7 +59,7 @@ public class RewardServiceDAO
             foreach (int entryId in ids)
             {
                 MySqlBatchCommand cmd = new MySqlBatchCommand(UPDATE_QUERY);
-                cmd.Parameters.Add(new MySqlParameter { Value = time });
+                cmd.Parameters.Add(new MySqlParameter { Value = timeReceived });
                 cmd.Parameters.Add(new MySqlParameter { Value = entryId });
                 batch.BatchCommands.Add(cmd);
             }

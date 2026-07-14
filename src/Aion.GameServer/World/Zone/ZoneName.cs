@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.World.Zone;
 
@@ -31,9 +32,8 @@ public sealed class ZoneName
     // Java parity: name()
     public string Name => _name;
 
-    // Java parity: id() — string.GetHashCode() matches Java's String.hashCode() only on same JVM run;
-    // retained for structural parity; callers should not rely on hash stability across restarts.
-    public int Id() => _name.GetHashCode();
+    // Java parity: id() is stable Java String.hashCode(), used as MapRegion's final zone-ordering key.
+    public int Id() => JavaString.HashCode(_name);
 
     // Java parity: createOrGet(String name)
     public static ZoneName CreateOrGet(string name) =>

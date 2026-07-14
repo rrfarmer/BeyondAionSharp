@@ -50,7 +50,7 @@ public class Symphony : PlayerCommand
         // Java parity: try { rewardIndex = parseInt - 1; ... } catch (IllegalArgumentException e) { sendInfo(player, e instanceof NumberFormatException ? "Invalid prize." : e.getMessage()); }
         // The Java exception-as-control-flow is reproduced as explicit branches with identical outcomes:
         // - non-numeric -> "Invalid prize."; out-of-range index -> null message -> syntax info; insufficient items -> the "You need ..." message.
-        if (!int.TryParse(paramsArr[0], out int parsed))
+        if (!TryParseInt(paramsArr[0], out int parsed))
         {
             SendInfo(player, "Invalid prize.");
             return;

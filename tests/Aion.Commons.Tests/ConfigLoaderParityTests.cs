@@ -69,7 +69,7 @@ key2=value2
 	}
 
 	[Fact]
-	public void LoadFromFile_TrimsWhitespace()
+	public void LoadFromFile_TrimsSeparatorWhitespace_ButPreservesTrailingValueWhitespace()
 	{
 		var filePath = Path.Combine(_testDir, "test.properties");
 		File.WriteAllText(
@@ -83,8 +83,55 @@ key2=value2
 		var loader = new ConfigLoader();
 		loader.LoadFromFile(filePath);
 
-		Assert.Equal("value1", loader.Get("key1"));
+		Assert.Equal("value1  ", loader.Get("key1"));
 		Assert.Equal("value2", loader.Get("key2"));
+	}
+
+	[Fact]
+	public void LoadFromFile_UsesJavaPropertiesGrammarAndSharedTransformers()
+	{
+		var filePath = Path.Combine(_testDir, "java-grammar.properties");
+		File.WriteAllText(
+			filePath,
+			"""
+			escaped\ key\:part = pa\=ss\:word
+			unicode.value = \u0041\u0031
+			whitespace.bool 1
+			zero.bool:0
+			continued.bool = tr\
+			    ue
+			octal.int = 010
+			"""
+		);
+
+		var loader = new ConfigLoader();
+		loader.LoadFromFile(filePath);
+
+		Assert.Equal("pa=ss:word", loader.Get("escaped key:part"));
+		Assert.Equal("A1", loader.Get("unicode.value"));
+		Assert.True(loader.GetBool("whitespace.bool", false));
+		Assert.False(loader.GetBool("zero.bool", true));
+		Assert.True(loader.GetBool("continued.bool", false));
+		Assert.Equal(8, loader.GetInt("octal.int", -1));
+	}
+
+	[Fact]
+	public void TypedGet_InvalidBooleanIsRejectedInsteadOfSilentlyUsingDefault()
+	{
+		var loader = new ConfigLoader();
+		loader.Set("invalid.bool", "yes");
+
+		Assert.Throws<TransformationException>(() => loader.GetBool("invalid.bool", false));
+	}
+
+	[Theory]
+	[InlineData("key=\\u123")]
+	[InlineData("key=\\u0x01")]
+	public void JavaProperties_MalformedUnicodeEscapeIsRejected(string content)
+	{
+		var properties = new JavaProperties();
+
+		Assert.Throws<ArgumentException>(() => properties.Load(new StringReader(content)));
 	}
 
 	[Fact]
@@ -262,6 +309,9 @@ database.user=admin
 		Assert.Equal(5, options.MaxPoolSize);
 		Assert.Equal(5000, options.ConnectionTimeout);
 		Assert.NotNull(options.Password);
+		Assert.Equal("utf8mb4", options.CharacterSet);
+		Assert.Null(options.ConnectionTimeZone);
+		Assert.Null(options.SslMode);
 	}
 
 	/// <summary>

@@ -44,7 +44,7 @@ public class SiegeCommand : AdminCommand
                 Capture(player, ParseLocation(paramsArr), paramsArr);
                 break;
             case "assault":
-                Assault(player, ParseLocation(paramsArr), paramsArr.Length < 3 ? 0 : int.Parse(paramsArr[2]));
+                Assault(player, ParseLocation(paramsArr), paramsArr.Length < 3 ? 0 : ParseInt(paramsArr[2]));
                 break;
             default:
                 SendInfo(player);
@@ -116,7 +116,7 @@ public class SiegeCommand : AdminCommand
             }
             else
             {
-                if (int.TryParse(paramsArr[2], out int legionId))
+                if (TryParseInt(paramsArr[2], out int legionId))
                 {
                     legion = LegionService.GetInstance().GetLegion(legionId);
                 }
@@ -160,7 +160,7 @@ public class SiegeCommand : AdminCommand
 
     private SiegeLocation ParseLocation(string[] paramsArr)
     {
-        SiegeLocation location = paramsArr.Length < 2 ? null : SiegeService.GetInstance().GetSiegeLocation(int.Parse(paramsArr[1]));
+        SiegeLocation location = paramsArr.Length < 2 ? null : SiegeService.GetInstance().GetSiegeLocation(ParseInt(paramsArr[1]));
         if (location == null)
             throw new ArgumentException("Invalid locationId.");
         return location;

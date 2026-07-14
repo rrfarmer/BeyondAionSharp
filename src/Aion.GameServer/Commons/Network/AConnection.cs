@@ -142,7 +142,7 @@ public abstract class AConnection<T> : AConnection where T : BaseServerPacket
 
     public override void Close() => Close(null);
 
-    public void Close(T? closePacket)
+    public virtual void Close(T? closePacket)
     {
         lock (guard)
         {

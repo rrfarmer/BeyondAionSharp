@@ -5,7 +5,11 @@ using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Network.ChatServer.ServerPackets;
+using Aion.GameServer.Services.Ban;
+using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Network.ChatServer;
@@ -14,19 +18,30 @@ public sealed class ChatServer : IAsyncDisposable
 {
 	private readonly ILogger<ChatServer> _logger;
 	private readonly GameServerOptions _options;
+	private readonly OutboundLinkRetryDelays _retryDelays;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
-	private readonly ConcurrentDictionary<int, Func<byte[], Task>> _playerAuthCallbacks = new();
-	private readonly CancellationTokenSource _shutdownTokenSource = new();
-	private TcpClient? _client;
-	private NetworkStream? _stream;
-	private Task? _readerTask;
-	private ChatServerState _state = ChatServerState.Disconnected;
-	private bool _closed;
+	private readonly object _lifecycleLock = new();
+	private readonly ConcurrentDictionary<int, PlayerAuthCallbackRegistration> _playerAuthCallbacks = new();
+	private CancellationTokenSource? _lifetimeTokenSource;
+	private Task? _supervisorTask;
+	private ConnectionSession? _session;
+	private volatile ChatServerState _state = ChatServerState.Disconnected;
+	private int _sessionGeneration;
+	private bool _stopRequested;
 
 	public ChatServer(ILogger<ChatServer> logger, GameServerOptions options)
+		: this(logger, options, null)
+	{
+	}
+
+	internal ChatServer(
+		ILogger<ChatServer> logger,
+		GameServerOptions options,
+		OutboundLinkRetryDelays? retryDelays)
 	{
 		_logger = logger;
 		_options = options;
+		_retryDelays = retryDelays ?? OutboundLinkRetryDelays.JavaDefaults;
 		_instance = this;
 	}
 
@@ -58,14 +73,16 @@ public sealed class ChatServer : IAsyncDisposable
 		if (!IsAuthed)
 			return;
 		var accountName = player.GetClientConnection()?.GetAccount()?.GetName() ?? string.Empty;
-		_ = SendPacketAsync(
-			new SmPlayerAuth(player.ObjectId, accountName, player.Name, ToRaceId(player.Race.ToString()), player.AccessLevel));
+		var packet = new SmPlayerAuth(player.ObjectId, accountName, player.GetName(true), ToRaceId(player.Race.ToString()), player.AccessLevel);
+		OutboundLinkSendObserver.Observe(
+			() => SendPacketAsync(packet), _logger, "chat server", packet.GetType().Name);
 	}
 
 	// Java parity: ChatServer.sendPlayerLogout(Player).
 	public void SendPlayerLogout(Player player)
 	{
-		_ = SendPlayerLogoutAsync(player.ObjectId);
+		OutboundLinkSendObserver.Observe(
+			() => SendPlayerLogoutAsync(player.ObjectId), _logger, "chat server", nameof(SmPlayerLogout));
 	}
 
 	// Java parity: ChatServer.sendPlayerGagPacket(int playerObjId, long gagTime).
@@ -73,7 +90,9 @@ public sealed class ChatServer : IAsyncDisposable
 	{
 		if (!IsAuthed)
 			return;
-		_ = SendPacketAsync(new ServerPackets.SmPlayerGag(playerObjId, gagTime));
+		var packet = new ServerPackets.SmPlayerGag(playerObjId, gagTime);
+		OutboundLinkSendObserver.Observe(
+			() => SendPacketAsync(packet), _logger, "chat server", packet.GetType().Name);
 	}
 
 	public ChatServerState State => _state;
@@ -82,81 +101,208 @@ public sealed class ChatServer : IAsyncDisposable
 
 	public IPEndPoint? PublicEndPoint { get; private set; }
 
-	public async Task StartAsync(CancellationToken cancellationToken = default)
+	public Task StartAsync(CancellationToken cancellationToken = default)
 	{
-		// Java parity: gameserver/network/chatserver/ChatServer connects and sends SM_CS_AUTH.
-		if (_readerTask != null)
-			throw new InvalidOperationException("Chat-server connector has already been started.");
+		// Java parity: ChatServer.connect() owns retry scheduling for the lifetime of the GameServer.
+		cancellationToken.ThrowIfCancellationRequested();
+		lock (_lifecycleLock)
+		{
+			if (_supervisorTask != null)
+				throw new InvalidOperationException("Chat-server connector has already been started.");
+			if (_stopRequested)
+				throw new InvalidOperationException("Chat-server connector has been stopped.");
 
-		var endpoint = _options.Network.ChatEndPoint;
-		_client = new TcpClient();
-		await _client.ConnectAsync(endpoint.Address, endpoint.Port, cancellationToken);
-		_stream = _client.GetStream();
-		_state = ChatServerState.Connected;
-
-		await SendPacketAsync(new SmChatServerAuth(_options), cancellationToken);
-		_readerTask = Task.Run(() => ReadLoopAsync(_shutdownTokenSource.Token), CancellationToken.None);
-		_logger.LogInformation("Connected to chat server at {Endpoint}", endpoint);
+			_lifetimeTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			_supervisorTask = Task.Run(
+				() => SuperviseConnectionsAsync(_lifetimeTokenSource.Token),
+				CancellationToken.None);
+		}
+		return Task.CompletedTask;
 	}
 
-	public async Task SendPacketAsync(ChatServerPacket packet, CancellationToken cancellationToken = default)
+	public Task SendPacketAsync(ChatServerPacket packet, CancellationToken cancellationToken = default)
 	{
-		var stream = _stream ?? throw new InvalidOperationException("Chat-server connector is not connected.");
-		var frame = packet.SerializeFrame();
-		await _sendLock.WaitAsync(cancellationToken);
-		try
+		ConnectionSession session;
+		lock (_lifecycleLock)
 		{
-			await stream.WriteAsync(frame, cancellationToken);
-			await stream.FlushAsync(cancellationToken);
+			session = _session ?? throw new InvalidOperationException("Chat-server connector is not connected.");
+			if (session.State != ChatServerState.Authed)
+				throw new InvalidOperationException("Chat-server connector is not authenticated.");
 		}
-		finally
-		{
-			_sendLock.Release();
-		}
+		return SendPacketAsync(session, packet, cancellationToken);
 	}
 
 	public async Task StopAsync()
 	{
-		CloseConnection();
-		if (_readerTask != null)
-			await Task.WhenAny(_readerTask, Task.Delay(TimeSpan.FromSeconds(2)));
+		Task? supervisorTask;
+		ConnectionSession? session;
+		lock (_lifecycleLock)
+		{
+			_stopRequested = true;
+			_lifetimeTokenSource?.Cancel();
+			supervisorTask = _supervisorTask;
+			session = _session;
+		}
+
+		session?.Close();
+		if (supervisorTask != null)
+			await supervisorTask;
+		else
+			ResetDisconnectedState();
 	}
 
-	private async Task ReadLoopAsync(CancellationToken cancellationToken)
+	private async Task SuperviseConnectionsAsync(CancellationToken cancellationToken)
 	{
-		try
+		while (!cancellationToken.IsCancellationRequested)
 		{
-			while (!cancellationToken.IsCancellationRequested)
+			ConnectionSession? session = null;
+			TimeSpan retryDelay;
+			try
 			{
-				var packet = await ReadPacketAsync(cancellationToken);
-				if (packet == null)
-					break;
+				session = await ConnectSessionAsync(cancellationToken);
+				await SendPacketAsync(session, new SmChatServerAuth(_options), cancellationToken);
+				_logger.LogInformation("Connected to chat server at {Endpoint}", _options.Network.ChatEndPoint);
+				await ReadLoopAsync(session);
+				retryDelay = session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+			}
+			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+			{
+				break;
+			}
+			catch (SocketException ex)
+			{
+				retryDelay = session == null
+					? _retryDelays.SocketFailure
+					: session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+				_logger.LogInformation(ex,
+					"Could not connect to chat server at {Endpoint}; trying again in {Delay}",
+					_options.Network.ChatEndPoint, retryDelay);
+			}
+			catch (IOException ex)
+			{
+				retryDelay = session == null
+					? _retryDelays.IoFailure
+					: session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+				_logger.LogWarning(ex, "Chat-server bridge I/O failed; trying again in {Delay}", retryDelay);
+			}
+			catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
+			{
+				break;
+			}
+			catch (Exception ex)
+			{
+				retryDelay = session == null
+					? _retryDelays.IoFailure
+					: session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+				_logger.LogError(ex, "Error on chat-server bridge; trying again in {Delay}", retryDelay);
+			}
+			finally
+			{
+				if (session != null)
+					DisconnectSession(session);
+			}
 
-				await ProcessPacketAsync(packet);
+			if (cancellationToken.IsCancellationRequested)
+				break;
+
+			try
+			{
+				await Task.Delay(retryDelay, cancellationToken);
+			}
+			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+			{
+				break;
 			}
 		}
-		catch (OperationCanceledException)
+	}
+
+	private async Task<ConnectionSession> ConnectSessionAsync(CancellationToken cancellationToken)
+	{
+		var endpoint = _options.Network.ChatEndPoint;
+		var client = new TcpClient();
+		ConnectionSession? session = null;
+		try
 		{
+			await client.ConnectAsync(endpoint.Address, endpoint.Port, cancellationToken);
+			session = new ConnectionSession(
+				Interlocked.Increment(ref _sessionGeneration),
+				client,
+				client.GetStream(),
+				cancellationToken);
+
+			lock (_lifecycleLock)
+			{
+				if (_stopRequested || cancellationToken.IsCancellationRequested)
+				{
+					session.Close();
+					throw new OperationCanceledException(cancellationToken);
+				}
+				_session = session;
+				_state = ChatServerState.Connected;
+			}
+
+			return session;
 		}
-		catch (IOException) when (cancellationToken.IsCancellationRequested)
+		catch
 		{
-		}
-		catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
-		{
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Error on chat-server bridge");
-		}
-		finally
-		{
-			CloseConnection();
+			if (session != null)
+				DisconnectSession(session);
+			else
+				client.Dispose();
+			throw;
 		}
 	}
 
-	public async Task<bool> SendPlayerLoginRequestAsync(
+	private async Task ReadLoopAsync(ConnectionSession session)
+	{
+		while (!session.Token.IsCancellationRequested)
+		{
+			var packet = await ReadPacketAsync(session, session.Token);
+			if (packet == null)
+				break;
+
+			try
+			{
+				await ProcessPacketAsync(session, packet);
+			}
+			catch (OperationCanceledException) when (session.Token.IsCancellationRequested)
+			{
+				throw;
+			}
+			catch (OutboundLinkTransportException)
+			{
+				throw;
+			}
+			catch (Exception ex)
+			{
+				// Java CsClientPacket.run catches handler failures per packet; the TCP session remains usable.
+				_logger.LogWarning(ex, "Error handling a chat-server packet on session {Generation}", session.Generation);
+			}
+		}
+	}
+
+	public Task<bool> SendPlayerLoginRequestAsync(
 		Player player,
 		string accountName,
+		Func<byte[], Task> sendChatInit,
+		CancellationToken cancellationToken = default)
+	{
+		return SendPlayerLoginRequestAsync(
+			player.ObjectId,
+			accountName,
+			player.GetName(true),
+			ToRaceId(player.Race.ToString()),
+			player.AccessLevel,
+			sendChatInit,
+			cancellationToken);
+	}
+
+	internal async Task<bool> SendPlayerLoginRequestAsync(
+		int playerObjectId,
+		string accountName,
+		string playerName,
+		int raceId,
+		byte accessLevel,
 		Func<byte[], Task> sendChatInit,
 		CancellationToken cancellationToken = default)
 	{
@@ -164,11 +310,21 @@ public sealed class ChatServer : IAsyncDisposable
 		if (!IsAuthed)
 			return false;
 
-		_playerAuthCallbacks[player.ObjectId] = sendChatInit;
-		await SendPacketAsync(
-			new SmPlayerAuth(player.ObjectId, accountName, player.Name, ToRaceId(player.Race.ToString()), player.AccessLevel),
-			cancellationToken);
-		return true;
+		var registration = new PlayerAuthCallbackRegistration(sendChatInit);
+		_playerAuthCallbacks[playerObjectId] = registration;
+		try
+		{
+			await SendPacketAsync(
+				new SmPlayerAuth(playerObjectId, accountName, playerName, raceId, accessLevel),
+				cancellationToken);
+			return true;
+		}
+		catch
+		{
+			((ICollection<KeyValuePair<int, PlayerAuthCallbackRegistration>>)_playerAuthCallbacks).Remove(
+				new KeyValuePair<int, PlayerAuthCallbackRegistration>(playerObjectId, registration));
+			throw;
+		}
 	}
 
 	public async Task<bool> SendPlayerLogoutAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -182,26 +338,26 @@ public sealed class ChatServer : IAsyncDisposable
 		return true;
 	}
 
-	private async Task ProcessPacketAsync(PacketBuffer packet)
+	private async Task ProcessPacketAsync(ConnectionSession session, PacketBuffer packet)
 	{
 		// Java parity: chatserver bridge response packet dispatch.
 		var opcode = packet.ReadC();
-		if (opcode == 0x00 && _state == ChatServerState.Connected)
+		if (opcode == 0x00 && session.State == ChatServerState.Connected)
 		{
-			ProcessAuthResponse(packet);
+			ProcessAuthResponse(session, packet);
 			return;
 		}
 
-		if (opcode == 0x01 && _state == ChatServerState.Authed)
+		if (opcode == 0x01 && session.State == ChatServerState.Authed)
 		{
 			await ProcessPlayerAuthResponseAsync(packet);
 			return;
 		}
 
-		_logger.LogWarning("Unknown chat-server packet 0x{Opcode:X2} in state {State}", opcode, _state);
+		_logger.LogWarning("Unknown chat-server packet 0x{Opcode:X2} in state {State}", opcode, session.State);
 	}
 
-	private void ProcessAuthResponse(PacketBuffer packet)
+	private void ProcessAuthResponse(ConnectionSession session, PacketBuffer packet)
 	{
 		// Java parity: network/chatserver/clientpackets/CM_CS_AUTH_RESPONSE.readImpl/runImpl.
 		var response = packet.ReadC();
@@ -209,14 +365,22 @@ public sealed class ChatServer : IAsyncDisposable
 		{
 			var ipLength = packet.ReadC();
 			var ipBytes = packet.ReadB(ipLength);
-			PublicEndPoint = new IPEndPoint(new IPAddress(ipBytes), packet.ReadH());
-			_state = ChatServerState.Authed;
+			var publicEndPoint = new IPEndPoint(new IPAddress(ipBytes), packet.ReadH());
+			lock (_lifecycleLock)
+			{
+				if (!ReferenceEquals(_session, session) || session.IsClosed)
+					return;
+				session.State = ChatServerState.Authed;
+				session.WasAuthed = true;
+				PublicEndPoint = publicEndPoint;
+				_state = ChatServerState.Authed;
+			}
 			_logger.LogInformation("Authenticated with chat server; public chat endpoint {Endpoint}", PublicEndPoint);
 			return;
 		}
 
 		_logger.LogWarning("Chat-server rejected game-server auth with response {Response}", response);
-		CloseConnection();
+		session.Close();
 	}
 
 	private async Task ProcessPlayerAuthResponseAsync(PacketBuffer packet)
@@ -226,30 +390,96 @@ public sealed class ChatServer : IAsyncDisposable
 		var tokenLength = packet.ReadC();
 		var token = packet.ReadB(tokenLength);
 		if (_playerAuthCallbacks.TryRemove(playerId, out var callback))
-			await callback(token);
+		{
+			await callback.Callback(token);
+			return;
+		}
+
+		// Java parity: CM_CS_PLAYER_AUTH_RESPONSE.runImpl resolves the current World player, sends the
+		// chat token to that player's Aion client, then reapplies any remaining gag to the Chat server.
+		// The production CM_CHAT_AUTH path uses this branch; callbacks are retained only for the optional
+		// C# async API above.
+		var player = global::Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
+		if (player == null)
+			return;
+
+		PacketSendUtility.SendPacket(player, new SM_CHAT_INIT(token));
+		if (ChatBanService.IsBanned(player))
+			SendPlayerGagPacket(player.ObjectId, ChatBanService.GetBanMinutes(player) * 60_000L);
 	}
 
-	private async Task<PacketBuffer?> ReadPacketAsync(CancellationToken cancellationToken)
+	private async Task SendPacketAsync(
+		ConnectionSession session,
+		ChatServerPacket packet,
+		CancellationToken cancellationToken)
 	{
-		var header = await ReadExactOrNullAsync(2, cancellationToken);
+		var frame = packet.SerializeFrame();
+		using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, session.Token);
+		var sendToken = linkedTokenSource.Token;
+		var lockTaken = false;
+		try
+		{
+			await _sendLock.WaitAsync(sendToken);
+			lockTaken = true;
+			lock (_lifecycleLock)
+			{
+				if (!ReferenceEquals(_session, session) || session.IsClosed)
+					throw new OutboundLinkTransportException(
+						"Chat-server connection changed before the packet could be sent.");
+			}
+
+			await session.Stream.WriteAsync(frame, sendToken);
+			await session.Stream.FlushAsync(sendToken);
+		}
+		catch (OperationCanceledException)
+		{
+			throw;
+		}
+		catch (OutboundLinkTransportException)
+		{
+			throw;
+		}
+		catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException)
+		{
+			session.Close();
+			throw new OutboundLinkTransportException("Chat-server packet send failed.", ex);
+		}
+		finally
+		{
+			if (lockTaken)
+				_sendLock.Release();
+		}
+	}
+
+	private async Task<PacketBuffer?> ReadPacketAsync(ConnectionSession session, CancellationToken cancellationToken)
+	{
+		var header = await ReadExactOrNullAsync(session, 2, cancellationToken);
 		if (header == null)
 			return null;
 
 		var frameLength = BinaryPrimitives.ReadUInt16LittleEndian(header);
-		if (frameLength < 3)
+		if (!IsSupportedFrameLength(frameLength))
 			return null;
 
-		var payload = await ReadExactOrNullAsync(frameLength - 2, cancellationToken);
+		var payload = await ReadExactOrNullAsync(session, frameLength - 2, cancellationToken);
 		return payload == null ? null : new PacketBuffer(payload, strictReads: false);
 	}
 
-	private async Task<byte[]?> ReadExactOrNullAsync(int length, CancellationToken cancellationToken)
+	internal static bool IsSupportedFrameLength(int frameLength)
+	{
+		return ChatFrameLimits.IsValid(frameLength);
+	}
+
+	private static async Task<byte[]?> ReadExactOrNullAsync(
+		ConnectionSession session,
+		int length,
+		CancellationToken cancellationToken)
 	{
 		var buffer = new byte[length];
 		var offset = 0;
 		while (offset < length)
 		{
-			var read = await _stream!.ReadAsync(buffer.AsMemory(offset, length - offset), cancellationToken);
+			var read = await session.Stream.ReadAsync(buffer.AsMemory(offset, length - offset), cancellationToken);
 			if (read == 0)
 				return null;
 			offset += read;
@@ -258,24 +488,34 @@ public sealed class ChatServer : IAsyncDisposable
 		return buffer;
 	}
 
-	private void CloseConnection()
+	private void DisconnectSession(ConnectionSession session)
 	{
-		if (_closed)
-			return;
+		session.Close();
+		var wasCurrent = false;
+		lock (_lifecycleLock)
+		{
+			if (ReferenceEquals(_session, session))
+			{
+				_session = null;
+				_state = ChatServerState.Disconnected;
+				PublicEndPoint = null;
+				wasCurrent = true;
+			}
+		}
 
-		_closed = true;
-		_state = ChatServerState.Disconnected;
+		if (wasCurrent)
+			_playerAuthCallbacks.Clear();
+		session.Dispose();
+	}
+
+	private void ResetDisconnectedState()
+	{
+		lock (_lifecycleLock)
+		{
+			_state = ChatServerState.Disconnected;
+			PublicEndPoint = null;
+		}
 		_playerAuthCallbacks.Clear();
-		_shutdownTokenSource.Cancel();
-
-		try
-		{
-			_stream?.Close();
-			_client?.Close();
-		}
-		catch
-		{
-		}
 	}
 
 	private static int ToRaceId(string race)
@@ -287,9 +527,75 @@ public sealed class ChatServer : IAsyncDisposable
 	public async ValueTask DisposeAsync()
 	{
 		await StopAsync();
-		_shutdownTokenSource.Dispose();
+		_lifetimeTokenSource?.Dispose();
 		_sendLock.Dispose();
-		_stream?.Dispose();
-		_client?.Dispose();
+	}
+
+	private sealed class ConnectionSession : IDisposable
+	{
+		private readonly CancellationTokenSource _tokenSource;
+		private int _closed;
+
+		public ConnectionSession(
+			int generation,
+			TcpClient client,
+			NetworkStream stream,
+			CancellationToken lifetimeToken)
+		{
+			Generation = generation;
+			Client = client;
+			Stream = stream;
+			_tokenSource = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken);
+		}
+
+		public int Generation { get; }
+		public TcpClient Client { get; }
+		public NetworkStream Stream { get; }
+		public CancellationToken Token => _tokenSource.Token;
+		public ChatServerState State { get; set; } = ChatServerState.Connected;
+		public bool WasAuthed { get; set; }
+		public bool IsClosed => Volatile.Read(ref _closed) != 0;
+
+		public void Close()
+		{
+			if (Interlocked.Exchange(ref _closed, 1) != 0)
+				return;
+
+			_tokenSource.Cancel();
+			try
+			{
+				Stream.Close();
+				Client.Close();
+			}
+			catch
+			{
+			}
+		}
+
+		public void Dispose()
+		{
+			Close();
+			_tokenSource.Dispose();
+			Stream.Dispose();
+			Client.Dispose();
+		}
+	}
+
+	private sealed class OutboundLinkTransportException : Exception
+	{
+		public OutboundLinkTransportException(string message, Exception? innerException = null)
+			: base(message, innerException)
+		{
+		}
+	}
+
+	private sealed class PlayerAuthCallbackRegistration
+	{
+		public PlayerAuthCallbackRegistration(Func<byte[], Task> callback)
+		{
+			Callback = callback;
+		}
+
+		public Func<byte[], Task> Callback { get; }
 	}
 }

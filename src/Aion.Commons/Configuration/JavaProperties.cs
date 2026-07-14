@@ -75,7 +75,8 @@ public sealed class JavaProperties
     /// <summary>Java parity: PropertiesUtils.loadProperties(properties, file).</summary>
     public void LoadFromFile(string path)
     {
-        using var sr = new StreamReader(path, Encoding.GetEncoding("ISO-8859-1"));
+        // Properties.load(InputStream) decodes each byte as ISO-8859-1 and does not perform BOM detection.
+        using var sr = new StreamReader(path, Encoding.GetEncoding("ISO-8859-1"), detectEncodingFromByteOrderMarks: false);
         Load(sr);
     }
 
@@ -224,14 +225,25 @@ public sealed class JavaProperties
             case 'r': sb.Append('\r'); return i + 1;
             case 'f': sb.Append('\f'); return i + 1;
             case 'u':
-                if (i + 4 < s.Length + 1 && i + 5 <= s.Length)
+                if (i + 4 >= s.Length)
+                    throw new ArgumentException("Malformed \\uxxxx encoding.");
+
+                int unicodeValue = 0;
+                for (int j = 1; j <= 4; j++)
                 {
-                    string hex = s.Substring(i + 1, 4);
-                    sb.Append((char)Convert.ToInt32(hex, 16));
-                    return i + 5;
+                    int digit = s[i + j] switch
+                    {
+                        >= '0' and <= '9' => s[i + j] - '0',
+                        >= 'a' and <= 'f' => s[i + j] - 'a' + 10,
+                        >= 'A' and <= 'F' => s[i + j] - 'A' + 10,
+                        _ => -1,
+                    };
+                    if (digit < 0)
+                        throw new ArgumentException("Malformed \\uxxxx encoding.");
+                    unicodeValue = (unicodeValue << 4) + digit;
                 }
-                sb.Append(c);
-                return i + 1;
+                sb.Append((char)unicodeValue);
+                return i + 5;
             default:
                 sb.Append(c); // \\ \= \: \space etc. -> literal char
                 return i + 1;

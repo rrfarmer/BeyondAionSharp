@@ -5,8 +5,13 @@ using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Data;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Network;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Network.LoginServer.ServerPackets;
+using Aion.GameServer.Services.Transfers;
+using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Network.LoginServer;
@@ -16,18 +21,21 @@ public sealed class LoginServer : IAsyncDisposable
 	private readonly ILogger<LoginServer> _logger;
 	private readonly GameServerOptions _options;
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
+	private readonly ILoginServerInboundPacketDispatcher _inboundPacketDispatcher;
+	private readonly OutboundLinkRetryDelays _retryDelays;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
-	private readonly CancellationTokenSource _shutdownTokenSource = new();
+	private readonly object _lifecycleLock = new();
 	private readonly ConcurrentDictionary<int, TaskCompletionSource<AccountAuthResult>> _pendingAccountAuthRequests = new();
 	// Java parity: network/loginserver/LoginServer.loginRequests (Map<Integer, LoginRequest>).
 	private readonly ConcurrentDictionary<int, LoginRequest> _loginRequests = new();
 	// Java parity: network/loginserver/LoginServer.loggedInAccounts (Map<Integer, AionConnection>).
 	private readonly ConcurrentDictionary<int, global::Aion.GameServer.Network.Aion.AionConnection> _loggedInAccounts = new();
-	private TcpClient? _client;
-	private NetworkStream? _stream;
-	private Task? _readerTask;
-	private LoginServerState _state = LoginServerState.Disconnected;
-	private bool _closed;
+	private CancellationTokenSource? _lifetimeTokenSource;
+	private Task? _supervisorTask;
+	private ConnectionSession? _session;
+	private volatile LoginServerState _state = LoginServerState.Disconnected;
+	private int _sessionGeneration;
+	private bool _stopRequested;
 
 	// Java parity: LoginServer is a singleton (SingletonHolder.instance). The C# transport is DI-constructed,
 	// so the most-recently-constructed instance is exposed as the singleton bridge for faithful callers.
@@ -37,10 +45,22 @@ public sealed class LoginServer : IAsyncDisposable
 		ILogger<LoginServer> logger,
 		GameServerOptions options,
 		ICharacterSelectionRepository? characterSelectionRepository = null)
+		: this(logger, options, characterSelectionRepository, null, null)
+	{
+	}
+
+	internal LoginServer(
+		ILogger<LoginServer> logger,
+		GameServerOptions options,
+		ICharacterSelectionRepository? characterSelectionRepository,
+		ILoginServerInboundPacketDispatcher? inboundPacketDispatcher,
+		OutboundLinkRetryDelays? retryDelays = null)
 	{
 		_logger = logger;
 		_options = options;
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
+		_inboundPacketDispatcher = inboundPacketDispatcher ?? new RuntimeInboundPacketDispatcher(this);
+		_retryDelays = retryDelays ?? OutboundLinkRetryDelays.JavaDefaults;
 		_instance = this;
 	}
 
@@ -60,9 +80,18 @@ public sealed class LoginServer : IAsyncDisposable
 	// false when down (callers use it as a boolean). The idiomatic async transport is bridged fire-and-forget.
 	public bool SendPacket(LoginServerPacket packet)
 	{
-		if (_state == LoginServerState.Disconnected)
-			return false;
-		_ = SendPacketAsync(packet);
+		ConnectionSession session;
+		lock (_lifecycleLock)
+		{
+			if (_session == null || _session.State != LoginServerState.Authed)
+				return false;
+			session = _session;
+		}
+		OutboundLinkSendObserver.Observe(
+			() => SendPacketAsync(session, packet, CancellationToken.None),
+			_logger,
+			"login server",
+			packet.GetType().Name);
 		return true;
 	}
 
@@ -109,7 +138,7 @@ public sealed class LoginServer : IAsyncDisposable
 		}
 		else
 		{
-			client.Close(); // disconnect this client since authentication will not happen
+			client.Close(new SM_L2AUTH_LOGIN_CHECK(false, null!)); // disconnect this client since authentication will not happen
 		}
 	}
 
@@ -197,7 +226,8 @@ public sealed class LoginServer : IAsyncDisposable
 	// When up and the requesting connection owns the account, ask the LoginServer for a reconnect key; otherwise close.
 	public void RequestAuthReconnection(int accountId, global::Aion.GameServer.Network.Aion.AionConnection client)
 	{
-		if (IsAuthed && client.GetAccount() != null && client.GetAccount().GetId() == accountId)
+		if (IsAuthed && _loggedInAccounts.TryGetValue(accountId, out var registeredClient)
+			&& ReferenceEquals(client, registeredClient))
 			SendPacket(new SmAccountReconnectKey(client.GetAccount().GetId()));
 		else
 			client.Close();
@@ -274,140 +304,236 @@ public sealed class LoginServer : IAsyncDisposable
 		}
 	}
 
-	public async Task StartAsync(CancellationToken cancellationToken = default)
+	public Task StartAsync(CancellationToken cancellationToken = default)
 	{
-		// Java parity: gameserver/network/loginserver/LoginServer connects and sends SM_GS_AUTH.
-		if (_readerTask != null)
-			throw new InvalidOperationException("Login-server connector has already been started.");
+		// Java parity: LoginServer.connect() owns retry scheduling for the lifetime of the GameServer.
+		// A fresh ConnectionSession (including a fresh linked CTS) is created for every TCP connection.
+		cancellationToken.ThrowIfCancellationRequested();
+		lock (_lifecycleLock)
+		{
+			if (_supervisorTask != null)
+				throw new InvalidOperationException("Login-server connector has already been started.");
+			if (_stopRequested)
+				throw new InvalidOperationException("Login-server connector has been stopped.");
 
-		var endpoint = _options.Network.LoginEndPoint;
-		_client = new TcpClient();
-		await _client.ConnectAsync(endpoint.Address, endpoint.Port, cancellationToken);
-		_stream = _client.GetStream();
-		_state = LoginServerState.Connected;
-
-		await SendPacketAsync(new SmGameServerAuth(_options), cancellationToken);
-		_readerTask = Task.Run(() => ReadLoopAsync(_shutdownTokenSource.Token), CancellationToken.None);
-		_logger.LogInformation("Connected to login server at {Endpoint}", endpoint);
+			_lifetimeTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			_supervisorTask = Task.Run(
+				() => SuperviseConnectionsAsync(_lifetimeTokenSource.Token),
+				CancellationToken.None);
+		}
+		return Task.CompletedTask;
 	}
 
-	public async Task SendPacketAsync(LoginServerPacket packet, CancellationToken cancellationToken = default)
+	public Task SendPacketAsync(LoginServerPacket packet, CancellationToken cancellationToken = default)
 	{
-		var stream = _stream ?? throw new InvalidOperationException("Login-server connector is not connected.");
-		var frame = packet.SerializeFrame();
-		await _sendLock.WaitAsync(cancellationToken);
-		try
+		ConnectionSession session;
+		lock (_lifecycleLock)
 		{
-			await stream.WriteAsync(frame, cancellationToken);
-			await stream.FlushAsync(cancellationToken);
+			session = _session ?? throw new InvalidOperationException("Login-server connector is not connected.");
+			if (session.State != LoginServerState.Authed)
+				throw new InvalidOperationException("Login-server connector is not authenticated.");
 		}
-		finally
-		{
-			_sendLock.Release();
-		}
+		return SendPacketAsync(session, packet, cancellationToken);
 	}
 
 	public async Task StopAsync()
 	{
-		CloseConnection();
-		if (_readerTask != null)
-			await Task.WhenAny(_readerTask, Task.Delay(TimeSpan.FromSeconds(2)));
+		Task? supervisorTask;
+		ConnectionSession? session;
+		lock (_lifecycleLock)
+		{
+			_stopRequested = true;
+			_lifetimeTokenSource?.Cancel();
+			supervisorTask = _supervisorTask;
+			session = _session;
+		}
+
+		session?.Close();
+		if (supervisorTask != null)
+			await supervisorTask;
+		else
+			CleanupDisconnectedSession();
 	}
 
-	private async Task ReadLoopAsync(CancellationToken cancellationToken)
+	private async Task SuperviseConnectionsAsync(CancellationToken cancellationToken)
 	{
-		try
+		while (!cancellationToken.IsCancellationRequested)
 		{
-			while (!cancellationToken.IsCancellationRequested)
+			ConnectionSession? session = null;
+			TimeSpan retryDelay;
+			try
 			{
-				var packet = await ReadPacketAsync(cancellationToken);
-				if (packet == null)
-					break;
+				session = await ConnectSessionAsync(cancellationToken);
+				await SendPacketAsync(session, new SmGameServerAuth(_options), cancellationToken);
+				_logger.LogInformation("Connected to login server at {Endpoint}", _options.Network.LoginEndPoint);
+				await ReadLoopAsync(session);
+				retryDelay = session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+			}
+			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+			{
+				break;
+			}
+			catch (SocketException ex)
+			{
+				retryDelay = session == null
+					? _retryDelays.SocketFailure
+					: session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+				_logger.LogInformation(ex,
+					"Could not connect to login server at {Endpoint}; trying again in {Delay}",
+					_options.Network.LoginEndPoint, retryDelay);
+			}
+			catch (IOException ex)
+			{
+				retryDelay = session == null
+					? _retryDelays.IoFailure
+					: session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+				_logger.LogWarning(ex, "Login-server bridge I/O failed; trying again in {Delay}", retryDelay);
+			}
+			catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
+			{
+				break;
+			}
+			catch (Exception ex)
+			{
+				retryDelay = session == null
+					? _retryDelays.IoFailure
+					: session.WasAuthed ? _retryDelays.AuthedReconnect : _retryDelays.PreAuthReconnect;
+				_logger.LogError(ex, "Error on login-server bridge; trying again in {Delay}", retryDelay);
+			}
+			finally
+			{
+				if (session != null)
+					DisconnectSession(session);
+			}
 
-				await ProcessPacketAsync(packet, cancellationToken);
+			if (cancellationToken.IsCancellationRequested)
+				break;
+
+			try
+			{
+				await Task.Delay(retryDelay, cancellationToken);
+			}
+			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+			{
+				break;
 			}
 		}
-		catch (OperationCanceledException)
+	}
+
+	private async Task<ConnectionSession> ConnectSessionAsync(CancellationToken cancellationToken)
+	{
+		var endpoint = _options.Network.LoginEndPoint;
+		var client = new TcpClient();
+		ConnectionSession? session = null;
+		try
 		{
+			await client.ConnectAsync(endpoint.Address, endpoint.Port, cancellationToken);
+			session = new ConnectionSession(
+				Interlocked.Increment(ref _sessionGeneration),
+				client,
+				client.GetStream(),
+				cancellationToken);
+
+			lock (_lifecycleLock)
+			{
+				if (_stopRequested || cancellationToken.IsCancellationRequested)
+				{
+					session.Close();
+					throw new OperationCanceledException(cancellationToken);
+				}
+				_session = session;
+				_state = LoginServerState.Connected;
+			}
+
+			return session;
 		}
-		catch (IOException) when (cancellationToken.IsCancellationRequested)
+		catch
 		{
-		}
-		catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
-		{
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Error on login-server bridge");
-		}
-		finally
-		{
-			CloseConnection();
+			if (session != null)
+				DisconnectSession(session);
+			else
+				client.Dispose();
+			throw;
 		}
 	}
 
-	private async Task ProcessPacketAsync(PacketBuffer packet, CancellationToken cancellationToken)
+	private async Task ReadLoopAsync(ConnectionSession session)
 	{
-		// Java parity: gameserver/network/loginserver/LoginServer packet handler for auth, account auth, character count.
-		var opcode = packet.ReadC();
-		if (opcode == 0x01 && _state == LoginServerState.Authed)
+		while (!session.Token.IsCancellationRequested)
 		{
-			ProcessAccountAuthResponse(packet);
-			return;
-		}
+			var packet = await ReadPacketAsync(session, session.Token);
+			if (packet == null)
+				break;
 
-		if (opcode == 0x08 && _state == LoginServerState.Authed)
-		{
-			var accountId = packet.ReadD();
-			var characterCount = await _characterSelectionRepository.GetCharacterCountAsync(accountId, cancellationToken);
-			await SendPacketAsync(new SmGameServerCharacter(accountId, characterCount), cancellationToken);
-			return;
+			try
+			{
+				await ProcessPacketAsync(session, packet, session.Token);
+			}
+			catch (OperationCanceledException) when (session.Token.IsCancellationRequested)
+			{
+				throw;
+			}
+			catch (OutboundLinkTransportException)
+			{
+				throw;
+			}
+			catch (Exception ex)
+			{
+				// Java LsClientPacket.run catches handler failures per packet; the TCP session remains usable.
+				_logger.LogError(ex, "Error handling a login-server packet on session {Generation}", session.Generation);
+			}
 		}
-
-		if (opcode == 0x0B && _state == LoginServerState.Authed)
-		{
-			// Java parity: loginserver clientpacket CM_LS_PING.runImpl -> sendPacket(new SM_LS_PONG()) keep-alive reply.
-			await SendPacketAsync(new SmLsPong(), cancellationToken);
-			return;
-		}
-
-		if (opcode != 0x00 || _state != LoginServerState.Connected)
-		{
-			_logger.LogWarning("Unknown login-server packet 0x{Opcode:X2} in state {State}", opcode, _state);
-			return;
-		}
-
-		var response = packet.ReadC();
-		if (response == 0)
-		{
-			GameServerCount = packet.ReadC();
-			_state = LoginServerState.Authed;
-			_logger.LogInformation("Authenticated with login server; {Count} game servers registered", GameServerCount);
-			return;
-		}
-
-		_logger.LogWarning("Login-server rejected game-server auth with response {Response}", response);
-		CloseConnection();
 	}
 
-	private void ProcessAccountAuthResponse(PacketBuffer packet)
+	private async Task ProcessPacketAsync(ConnectionSession session, PacketBuffer packet, CancellationToken cancellationToken)
 	{
-		// Java parity: loginserver client packet CM_ACOUNT_AUTH_RESPONSE.
-		var accountId = packet.ReadD();
-		var ok = packet.ReadC() == 1;
-		var result = ok
-			? new AccountAuthResult(
-				accountId,
-				Ok: true,
-				AccountName: packet.ReadS(),
-				CreationDate: packet.ReadQ(),
-				AccumulatedOnlineTime: packet.ReadQ(),
-				AccumulatedRestTime: packet.ReadQ(),
-				AccessLevel: packet.ReadC(),
-				Membership: packet.ReadC(),
-				AllowedHddSerial: packet.ReadS())
-			: new AccountAuthResult(accountId, Ok: false);
+		// Java parity: LsClientPacketFactory owns the full opcode/state table and each CM_* read order.
+		if (!LoginServerInboundPacketFactory.TryCreate(packet, session.State, out var inboundPacket, out var opcode))
+		{
+			_logger.LogWarning("Unknown login-server packet 0x{Opcode:X2} in state {State}", opcode, session.State);
+			return;
+		}
 
+		switch (inboundPacket)
+		{
+			case GameServerAuthResponsePacket authResponse:
+				if (authResponse.Response == 0)
+				{
+					if (!TryAuthenticateSession(session, authResponse.GameServerCount))
+						return;
+					_logger.LogInformation("Authenticated with login server; {Count} game servers registered", GameServerCount);
+					// Java CM_GS_AUTH_RESPONSE.runImpl immediately rebuilds the LS online-account view.
+					await SendPacketAsync(session, new SmAccountList(_loggedInAccounts.Keys), cancellationToken);
+					return;
+				}
+
+				_logger.LogWarning("Login-server rejected game-server auth with response {Response}", authResponse.Response);
+				session.Close();
+				return;
+
+			case AccountAuthResponsePacket accountAuthResponse:
+				ProcessAccountAuthResponse(accountAuthResponse.Result);
+				return;
+
+			case CharacterCountRequestPacket characterCountRequest:
+				var characterCount = await _characterSelectionRepository.GetCharacterCountAsync(
+					characterCountRequest.AccountId, cancellationToken);
+				await SendPacketAsync(session,
+					new SmGameServerCharacter(characterCountRequest.AccountId, characterCount), cancellationToken);
+				return;
+
+			case LoginServerPingPacket:
+				await SendPacketAsync(session, new SmLsPong(), cancellationToken);
+				return;
+
+			default:
+				_inboundPacketDispatcher.Dispatch(inboundPacket!);
+				return;
+		}
+	}
+
+	private void ProcessAccountAuthResponse(AccountAuthResult result)
+	{
 		// Java parity: CM_ACCOUNT_AUTH_RESPONSE.runImpl -> LoginServer.getInstance().accountAuthenticationResponse(...).
 		// This completes the client (loginRequests) path so the authenticating client receives SM_L2AUTH_LOGIN_CHECK(true)
 		// and is set AUTHED. Build AccountTime from the parsed accumulated online/rest times (matching CM_ACCOUNT_AUTH_RESPONSE.readImpl).
@@ -417,17 +543,304 @@ public sealed class LoginServer : IAsyncDisposable
 			accountTime.SetAccumulatedOnlineTime(result.AccumulatedOnlineTime);
 			accountTime.SetAccumulatedRestTime(result.AccumulatedRestTime);
 		}
-		AccountAuthenticationResponse(accountId, result.AccountName ?? string.Empty, result.Ok, result.CreationDate, accountTime,
+		AccountAuthenticationResponse(result.AccountId, result.AccountName ?? string.Empty, result.Ok, result.CreationDate, accountTime,
 			(sbyte)result.AccessLevel, (sbyte)result.Membership, result.AllowedHddSerial ?? string.Empty);
 
 		// Dead path (RequestAccountAuthAsync has no callers) — left intact for safety.
-		if (_pendingAccountAuthRequests.TryRemove(accountId, out var pending))
+		if (_pendingAccountAuthRequests.TryRemove(result.AccountId, out var pending))
 			pending.TrySetResult(result);
 	}
 
-	private async Task<PacketBuffer?> ReadPacketAsync(CancellationToken cancellationToken)
+	private void DispatchRuntimePacket(LoginServerInboundPacket packet)
 	{
-		var header = await ReadExactOrNullAsync(2, cancellationToken);
+		switch (packet)
+		{
+			case KickAccountPacket kick:
+				KickAccount(kick.AccountId, kick.NotifyDoubleLogin);
+				break;
+			case AccountReconnectKeyPacket reconnect:
+				AuthReconnectionResponse(reconnect.AccountId, reconnect.ReconnectKey);
+				break;
+			case LoginServerControlResponsePacket control:
+				ProcessLoginServerControlResponse(control);
+				break;
+			case BanResponsePacket ban:
+				ProcessBanResponse(ban);
+				break;
+			case MacBanListPacket macBanList:
+				ProcessMacBanList(macBanList);
+				break;
+			case HddBanListPacket hddBanList:
+				ProcessHddBanList(hddBanList);
+				break;
+			case PlayerTransferResponsePacket transfer:
+				ProcessPlayerTransferResponse(transfer);
+				break;
+		}
+	}
+
+	private void KickAccount(int accountId, bool notifyDoubleLogin)
+	{
+		if (!_loggedInAccounts.TryGetValue(accountId, out var client))
+			return;
+
+		_logger.LogInformation("Kicking account ID {AccountId} by LS request.", accountId);
+		client.Close(notifyDoubleLogin ? SM_SYSTEM_MESSAGE.STR_KICK_ANOTHER_USER_TRY_LOGIN() : null);
+	}
+
+	private void AuthReconnectionResponse(int accountId, int reconnectKey)
+	{
+		if (_loggedInAccounts.TryGetValue(accountId, out var client))
+			client.Close(new SM_RECONNECT_KEY(reconnectKey));
+	}
+
+	private AionConnection? AccountUpdate(int accountId, byte type, byte param)
+	{
+		if (!_loggedInAccounts.TryGetValue(accountId, out var client))
+			return null;
+
+		var account = client.GetAccount();
+		if (type == 1)
+			account.SetAccessLevel(unchecked((sbyte)param));
+		else if (type == 2)
+			account.SetMembership(unchecked((sbyte)param));
+		return client;
+	}
+
+	private void ProcessLoginServerControlResponse(LoginServerControlResponsePacket response)
+	{
+		var admin = global::Aion.GameServer.World.World.GetInstance().GetPlayer(response.AdminObjectId);
+		if (!response.Result)
+		{
+			SendMessage(admin, "The operation failed.");
+			return;
+		}
+
+		var playerConnection = AccountUpdate(response.AccountId, response.Type, response.Param);
+		var player = playerConnection?.GetActivePlayer();
+		var targetAccount = player == null ? $"Account {response.AccountId}" : $"Account of {player.GetName(false)}";
+		switch (response.Type)
+		{
+			case 1:
+				NotifyAboutNewPermissions(admin, player, targetAccount, "access level", response.Param);
+				break;
+			case 2:
+				NotifyAboutNewPermissions(admin, player, targetAccount, "membership level", response.Param);
+				break;
+			default:
+				SendMessage(admin, targetAccount + " has been successfully updated.");
+				break;
+		}
+	}
+
+	private static void NotifyAboutNewPermissions(
+		Player? admin,
+		Player? player,
+		string targetAccount,
+		string permissionType,
+		byte param)
+	{
+		SendMessage(admin, $"{targetAccount} has been granted {permissionType} {param}.");
+		if (admin == null)
+			SendMessage(player, $"You have been granted {permissionType} {param}.");
+		else
+			SendMessage(player, $"You have been granted {permissionType} {param} by {admin.GetName(true)}.");
+	}
+
+	private static void SendMessage(Player? player, string message)
+	{
+		if (player != null)
+			PacketSendUtility.SendMessage(player, message);
+	}
+
+	private static void ProcessBanResponse(BanResponsePacket response)
+	{
+		var admin = global::Aion.GameServer.World.World.GetInstance().GetPlayer(response.AdminObjectId);
+		if (admin == null)
+			return;
+
+		if (response.Type is 1 or 3)
+		{
+			var message = response.Result
+				? response.Time < 0
+					? $"Account ID {response.AccountId} was successfully unbanned"
+					: response.Time == 0
+						? $"Account ID {response.AccountId} was successfully banned"
+						: $"Account ID {response.AccountId} was successfully banned for {response.Time} minutes"
+				: "Error occurred while banning player's account";
+			PacketSendUtility.SendMessage(admin, message);
+		}
+
+		if (response.Type is 2 or 3)
+		{
+			var message = response.Result
+				? response.Time < 0
+					? $"IP mask {response.Ip} was successfully removed from block list"
+					: response.Time == 0
+						? $"IP mask {response.Ip} was successfully added to block list"
+						: $"IP mask {response.Ip} was successfully added to block list for {response.Time} minutes"
+				: $"Error occurred while adding IP mask {response.Ip}";
+			PacketSendUtility.SendMessage(admin, message);
+		}
+	}
+
+	private static void ProcessMacBanList(MacBanListPacket packet)
+	{
+		var manager = BannedMacManager.GetInstance();
+		foreach (var entry in packet.Entries)
+			manager.DbLoad(entry.Address, entry.Time, entry.Details);
+		manager.OnEnd();
+	}
+
+	private void ProcessHddBanList(HddBanListPacket packet)
+	{
+		var service = Services.Ban.HDDBanService.GetInstance();
+		foreach (var entry in packet.Entries)
+			service.LoadBan(entry.Serial, entry.Time);
+		_logger.LogInformation("Loaded {Count} HDD ban entries.", packet.Entries.Count);
+	}
+
+	private void ProcessPlayerTransferResponse(PlayerTransferResponsePacket packet)
+	{
+		var service = PlayerTransferService.GetInstance();
+		switch (packet)
+		{
+			case PlayerTransferInfoPacket info:
+				var transfer = new PlayerTransfer(
+					info.TaskId, info.TargetAccountId, info.AccountName, info.Name);
+				transfer.SetCommonData(info.CommonData);
+				service.PutTransfer(info.TaskId, transfer);
+				break;
+			case PlayerTransferOkPacket ok:
+				service.OnOk(ok.TaskId);
+				break;
+			case PlayerTransferErrorPacket error:
+				service.OnError(error.TaskId, error.Reason);
+				break;
+			case PlayerTransferPerformActionPacket action:
+				if (_options.Network.GameServerId != action.SourceServerId)
+				{
+					_logger.LogError(
+						"Player transfer task {TaskId} targets source server {SourceServerId}, but this server is {GameServerId}.",
+						action.TaskId, action.SourceServerId, _options.Network.GameServerId);
+					break;
+				}
+				service.StartTransfer(
+					action.SourceAccountId,
+					action.TargetAccountId,
+					action.PlayerId,
+					unchecked((sbyte)action.TargetServerId),
+					action.TaskId);
+				break;
+			case PlayerTransferDataPacket data:
+				ProcessPlayerTransferData(service, data);
+				break;
+			case UnknownPlayerTransferResponsePacket unknown:
+				_logger.LogWarning("Unknown player-transfer response action {ActionId}", unknown.ActionId);
+				break;
+		}
+	}
+
+	private static void ProcessPlayerTransferData(PlayerTransferService service, PlayerTransferDataPacket packet)
+	{
+		var transfer = service.GetTransfer(packet.TaskId);
+		switch (packet.ActionId)
+		{
+			case 24:
+				transfer.SetItemsData(packet.Data);
+				break;
+			case 25:
+				transfer.SetData(packet.Data);
+				break;
+			case 26:
+				transfer.SetSkillData(packet.Data);
+				break;
+			case 27:
+				transfer.SetRecipeData(packet.Data);
+				break;
+			case 28:
+				transfer.SetQuestData(packet.Data);
+				service.CloneCharacter(packet.TaskId, transfer);
+				break;
+		}
+	}
+
+	private sealed class RuntimeInboundPacketDispatcher : ILoginServerInboundPacketDispatcher
+	{
+		private readonly LoginServer _owner;
+
+		public RuntimeInboundPacketDispatcher(LoginServer owner)
+		{
+			_owner = owner;
+		}
+
+		public void Dispatch(LoginServerInboundPacket packet)
+		{
+			_owner.DispatchRuntimePacket(packet);
+		}
+	}
+
+	private bool TryAuthenticateSession(ConnectionSession session, int gameServerCount)
+	{
+		lock (_lifecycleLock)
+		{
+			if (!ReferenceEquals(_session, session) || session.IsClosed)
+				return false;
+
+			session.State = LoginServerState.Authed;
+			session.WasAuthed = true;
+			GameServerCount = gameServerCount;
+			_state = LoginServerState.Authed;
+			return true;
+		}
+	}
+
+	private async Task SendPacketAsync(
+		ConnectionSession session,
+		LoginServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		var frame = packet.SerializeFrame();
+		using var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, session.Token);
+		var sendToken = linkedTokenSource.Token;
+		var lockTaken = false;
+		try
+		{
+			await _sendLock.WaitAsync(sendToken);
+			lockTaken = true;
+			lock (_lifecycleLock)
+			{
+				if (!ReferenceEquals(_session, session) || session.IsClosed)
+					throw new OutboundLinkTransportException(
+						"Login-server connection changed before the packet could be sent.");
+			}
+
+			await session.Stream.WriteAsync(frame, sendToken);
+			await session.Stream.FlushAsync(sendToken);
+		}
+		catch (OperationCanceledException)
+		{
+			throw;
+		}
+		catch (OutboundLinkTransportException)
+		{
+			throw;
+		}
+		catch (Exception ex) when (ex is IOException or SocketException or ObjectDisposedException)
+		{
+			session.Close();
+			throw new OutboundLinkTransportException("Login-server packet send failed.", ex);
+		}
+		finally
+		{
+			if (lockTaken)
+				_sendLock.Release();
+		}
+	}
+
+	private async Task<PacketBuffer?> ReadPacketAsync(ConnectionSession session, CancellationToken cancellationToken)
+	{
+		var header = await ReadExactOrNullAsync(session, 2, cancellationToken);
 		if (header == null)
 			return null;
 
@@ -435,17 +848,20 @@ public sealed class LoginServer : IAsyncDisposable
 		if (frameLength < 3)
 			return null;
 
-		var payload = await ReadExactOrNullAsync(frameLength - 2, cancellationToken);
+		var payload = await ReadExactOrNullAsync(session, frameLength - 2, cancellationToken);
 		return payload == null ? null : new PacketBuffer(payload, strictReads: false);
 	}
 
-	private async Task<byte[]?> ReadExactOrNullAsync(int length, CancellationToken cancellationToken)
+	private static async Task<byte[]?> ReadExactOrNullAsync(
+		ConnectionSession session,
+		int length,
+		CancellationToken cancellationToken)
 	{
 		var buffer = new byte[length];
 		var offset = 0;
 		while (offset < length)
 		{
-			var read = await _stream!.ReadAsync(buffer.AsMemory(offset, length - offset), cancellationToken);
+			var read = await session.Stream.ReadAsync(buffer.AsMemory(offset, length - offset), cancellationToken);
 			if (read == 0)
 				return null;
 			offset += read;
@@ -454,36 +870,110 @@ public sealed class LoginServer : IAsyncDisposable
 		return buffer;
 	}
 
-	private void CloseConnection()
+	private void DisconnectSession(ConnectionSession session)
 	{
-		if (_closed)
-			return;
-
-		_closed = true;
-		_state = LoginServerState.Disconnected;
-		_shutdownTokenSource.Cancel();
-
-		try
+		session.Close();
+		var wasCurrent = false;
+		lock (_lifecycleLock)
 		{
-			_stream?.Close();
-			_client?.Close();
+			if (ReferenceEquals(_session, session))
+			{
+				_session = null;
+				_state = LoginServerState.Disconnected;
+				wasCurrent = true;
+			}
 		}
-		catch
+
+		if (wasCurrent)
+			CleanupDisconnectedSession();
+		session.Dispose();
+	}
+
+	private void CleanupDisconnectedSession()
+	{
+		// Java LoginServer.disconnect(): pending client logins cannot complete while LS is down.
+		foreach (var request in _loginRequests.Values)
 		{
+			try
+			{
+				request.Connection.Close();
+			}
+			catch (Exception ex)
+			{
+				_logger.LogDebug(ex, "Failed to close a pending client login after LS disconnect");
+			}
 		}
+		_loginRequests.Clear();
 
 		foreach (var pending in _pendingAccountAuthRequests.Values)
 			pending.TrySetException(new IOException("Login-server connector closed."));
 		_pendingAccountAuthRequests.Clear();
+		// Java intentionally retains loggedInAccounts. The next successful authentication sends a fresh snapshot.
 	}
 
 	public async ValueTask DisposeAsync()
 	{
 		await StopAsync();
-		_shutdownTokenSource.Dispose();
+		_lifetimeTokenSource?.Dispose();
 		_sendLock.Dispose();
-		_stream?.Dispose();
-		_client?.Dispose();
+	}
+
+	private sealed class ConnectionSession : IDisposable
+	{
+		private readonly CancellationTokenSource _tokenSource;
+		private int _closed;
+
+		public ConnectionSession(
+			int generation,
+			TcpClient client,
+			NetworkStream stream,
+			CancellationToken lifetimeToken)
+		{
+			Generation = generation;
+			Client = client;
+			Stream = stream;
+			_tokenSource = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken);
+		}
+
+		public int Generation { get; }
+		public TcpClient Client { get; }
+		public NetworkStream Stream { get; }
+		public CancellationToken Token => _tokenSource.Token;
+		public LoginServerState State { get; set; } = LoginServerState.Connected;
+		public bool WasAuthed { get; set; }
+		public bool IsClosed => Volatile.Read(ref _closed) != 0;
+
+		public void Close()
+		{
+			if (Interlocked.Exchange(ref _closed, 1) != 0)
+				return;
+
+			_tokenSource.Cancel();
+			try
+			{
+				Stream.Close();
+				Client.Close();
+			}
+			catch
+			{
+			}
+		}
+
+		public void Dispose()
+		{
+			Close();
+			_tokenSource.Dispose();
+			Stream.Dispose();
+			Client.Dispose();
+		}
+	}
+
+	private sealed class OutboundLinkTransportException : Exception
+	{
+		public OutboundLinkTransportException(string message, Exception? innerException = null)
+			: base(message, innerException)
+		{
+		}
 	}
 
 	// Java parity: network/loginserver/LoginServer.LoginRequest (connection + pending SM_ACCOUNT_AUTH response).

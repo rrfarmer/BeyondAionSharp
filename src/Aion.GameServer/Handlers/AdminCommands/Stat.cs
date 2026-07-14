@@ -42,7 +42,7 @@ public class Stat : AdminCommand
 
         if (paramsArr.Length == 1)
         {
-            List<IStatFunction> stats = creature.GetGameStats().GetStatsSorted(Enum.Parse<StatEnum>(paramsArr[0]));
+            List<IStatFunction> stats = creature.GetGameStats().GetStatsSorted(ParseEnumName<StatEnum>(paramsArr[0]));
             foreach (IStatFunction stat in stats)
             {
                 SendInfo(admin, stat.ToString());
@@ -50,7 +50,7 @@ public class Stat : AdminCommand
         }
         else if (paramsArr.Length == 2 && "details".Equals(paramsArr[1]))
         {
-            List<IStatFunction> stats = creature.GetGameStats().GetStatsSorted(Enum.Parse<StatEnum>(paramsArr[0]));
+            List<IStatFunction> stats = creature.GetGameStats().GetStatsSorted(ParseEnumName<StatEnum>(paramsArr[0]));
             foreach (IStatFunction stat in stats)
             {
                 string details = CollectDetails(stat);
@@ -65,7 +65,7 @@ public class Stat : AdminCommand
                 return;
             }
             AbsoluteStatOwner absStats = ((Player)target).GetAbsoluteStats();
-            if (int.TryParse(paramsArr[1], out int templateId))
+            if (TryParseInt(paramsArr[1], out int templateId))
             {
                 absStats.SetTemplate(templateId);
                 absStats.Apply();

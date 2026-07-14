@@ -43,7 +43,7 @@ public class Grant : AdminCommand
             return;
         }
 
-        int level = int.Parse(paramsArr[1]);
+        int level = ParseInt(paramsArr[1]);
         if (level < 0)
         {
             SendInfo(admin, "Level must not be negative.");

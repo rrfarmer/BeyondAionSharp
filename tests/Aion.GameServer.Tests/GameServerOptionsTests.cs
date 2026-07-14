@@ -140,6 +140,38 @@ public class GameServerOptionsTests
 		Assert.Equal(5, options.MaxPoolSize);
 		Assert.Equal(5000, options.ConnectionTimeout);
 		Assert.NotNull(options.Password);
+		Assert.Equal("utf8mb4", options.CharacterSet);
+		Assert.Null(options.ConnectionTimeZone);
+		Assert.Null(options.SslMode);
+	}
+
+	[Fact]
+	public void LoadDatabaseOptionsFromJavaConfig_ResolvesTimezonePlaceholderBeforeJdbcTranslation()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionGameDatabaseConfig_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "game-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "administration"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(
+				Path.Combine(configRoot, "main", "gameserver.properties"),
+				"gameserver.timezone = America/New_York\n");
+			File.WriteAllText(
+				Path.Combine(configRoot, "network", "database.properties"),
+				"database.url = jdbc:mysql://localhost:3306/aion_gs?serverTimezone=${gameserver.timezone}&characterEncoding=UTF-8\n");
+
+			var options = GameServerOptions.LoadDatabaseOptionsFromJavaConfig(root);
+
+			Assert.Equal("America/New_York", options.ConnectionTimeZone);
+			Assert.Equal("utf8mb4", options.CharacterSet);
+		}
+		finally
+		{
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
 	}
 
 	[Fact]
@@ -203,7 +235,8 @@ public class GameServerOptionsTests
 			Assert.Equal(17, options.Custom.TopRankingXformMinRank);
 			Assert.Equal(2, options.Custom.DisabledEventNames.Count);
 			Assert.Contains("Broken Hearts", options.Custom.DisabledEventNames);
-			Assert.Contains("ice festival", options.Custom.DisabledEventNames);
+			Assert.Contains("Ice Festival", options.Custom.DisabledEventNames);
+			Assert.DoesNotContain("ice festival", options.Custom.DisabledEventNames); // Java HashSet<String> is case-sensitive.
 			Assert.Equal([1.25f, 2.25f, 3.25f], options.Rates.ApPvpGainRates);
 			Assert.Equal([0.75f, 1.25f], options.Rates.ApPvpLossRates);
 			Assert.Equal([1.5f, 2.5f], options.Rates.ApPveRates);
@@ -236,6 +269,73 @@ public class GameServerOptionsTests
 			Assert.Equal(4, options.Administration.InstanceEnterAllAccessLevel);
 			Assert.Equal("UTC", options.Core.TimeZoneId);
 			Assert.Equal(TimeZoneInfo.Utc, options.Core.GetTimeZone());
+		}
+		finally
+		{
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
+	}
+
+	[Fact]
+	public void ProgramOptionsPath_UsesJavaPropertiesGrammarAndTransformers()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionGameJavaProperties_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "game-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "administration"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(
+				Path.Combine(configRoot, "mygs.properties"),
+				"""
+				gameserver.chatserver.enable 1
+				gameserver.analysis.quest_handlers:0
+				gameserver.geodata.enable = tr\
+				    ue
+				gameserver.network.login.gsid = \u0034\u0032
+				gameserver.network.login.max_players = 0x141
+				gameserver.network.login.password = pa\=ss\:word
+				gameserver.quest.handler_directory = ./handlers/long\
+				    path
+				gameserver.name.forbidden_words = alpha,"beta,gamma"
+				"""
+			);
+
+			// Program.cs constructs its singleton with this exact public factory.
+			var options = GameServerOptions.LoadFromJavaConfig(root);
+
+			Assert.True(options.Core.EnableChatServer);
+			Assert.False(options.Core.AnalyzeQuestHandlers);
+			Assert.True(options.GeoData.Enabled);
+			Assert.Equal(42, options.Network.GameServerId);
+			Assert.Equal(321, options.Network.MaxOnlinePlayers);
+			Assert.Equal("pa=ss:word", options.Network.LoginPassword);
+			Assert.Equal("./handlers/longpath", options.Core.QuestHandlerDirectory);
+			Assert.Equal(["alpha", "beta,gamma"], options.Names.ForbiddenWords);
+		}
+		finally
+		{
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
+	}
+
+	[Fact]
+	public void ProgramOptionsPath_RejectsInvalidJavaBoolean()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionGameInvalidBoolean_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "game-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "administration"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(Path.Combine(configRoot, "mygs.properties"), "gameserver.chatserver.enable = enabled\n");
+
+			Assert.Throws<Aion.Commons.Configuration.TransformationException>(
+				() => GameServerOptions.LoadFromJavaConfig(root));
 		}
 		finally
 		{

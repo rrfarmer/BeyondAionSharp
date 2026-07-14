@@ -45,7 +45,7 @@ public class LegionCommand : AdminCommand
         else if (paramsArr[0].Equals("setlevel", StringComparison.OrdinalIgnoreCase) && paramsArr.Length >= 3)
         {
             Legion legion = GetLegion(paramsArr[1]);
-            int level = int.Parse(paramsArr[2]);
+            int level = ParseInt(paramsArr[2]);
             if (level < 1 || level > 8)
             {
                 SendInfo(player, "Legion level must be between 1 and 8.");
@@ -63,7 +63,7 @@ public class LegionCommand : AdminCommand
         else if (paramsArr[0].Equals("setpoints", StringComparison.OrdinalIgnoreCase) && paramsArr.Length >= 3)
         {
             Legion legion = GetLegion(paramsArr[1]);
-            long points = long.Parse(paramsArr[2]);
+            long points = ParseLong(paramsArr[2]);
             if (points < 1)
             {
                 SendInfo(player, "Points must be larger than zero.");

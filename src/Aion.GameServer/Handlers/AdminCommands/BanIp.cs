@@ -26,7 +26,7 @@ public class BanIp : AdminCommand
         int time = 0; // Default: infinity
         if (paramsArr.Length > 1)
         {
-            if (!int.TryParse(paramsArr[1], out time))
+            if (!TryParseInt(paramsArr[1], out time))
             {
                 Info(player, "For input string: \"" + paramsArr[1] + "\"");
                 return;

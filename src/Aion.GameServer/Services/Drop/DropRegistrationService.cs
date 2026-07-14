@@ -307,8 +307,9 @@ public class DropRegistrationService
         GlobalNpcExclusionData gde = DataManager.GLOBAL_EXCLUSION_DATA;
         if (!gde.IsEmpty())
         {
+            TribeClass? tribe = npc.GetNullableTribe();
             if (gde.GetNpcIds().Contains(npc.GetNpcId()) || gde.GetNpcNames().Contains(npc.GetName())
-                || gde.GetNpcTemplateTypes().Contains(npc.GetNpcTemplateType()) || npc.GetTribe() != null && gde.GetNpcTribes().Contains(npc.GetTribe())
+                || gde.GetNpcTemplateTypes().Contains(npc.GetNpcTemplateType()) || tribe is TribeClass value && gde.GetNpcTribes().Contains(value)
                 || gde.GetNpcAbyssTypes().Contains(npc.GetAbyssNpcType()))
                 return true;
         }

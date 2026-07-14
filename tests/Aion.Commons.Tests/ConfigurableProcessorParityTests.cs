@@ -115,6 +115,19 @@ public class ConfigurableProcessorParityTests
         Assert.Equal(5, Holder.Untouched); // explicit key overrides even the sentinel
     }
 
+    [Theory]
+    [InlineData("1")]
+    [InlineData("FILE, URL")]
+    [InlineData("file")]
+    public void EnumTransformer_RejectsAnythingExceptAnExactJavaEnumName(string value)
+    {
+        var exception = Assert.Throws<TransformationException>(
+            () => ConfigurableProcessor.Transform(value, typeof(Holder.Source)));
+
+        Assert.IsType<ArgumentException>(exception.InnerException);
+        Assert.Equal(Holder.Source.URL, ConfigurableProcessor.Transform("URL", typeof(Holder.Source)));
+    }
+
     [Fact]
     public void CommonsConfig_OverrideFromLoadedProperties()
     {

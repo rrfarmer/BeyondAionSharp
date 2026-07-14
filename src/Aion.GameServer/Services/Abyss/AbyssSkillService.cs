@@ -28,14 +28,12 @@ public class AbyssSkillService
                     SkillLearnService.RemoveSkill(player, skillId);
             }
         }
-        if (RankingConfig.XFORM_MIN_RANK != null)
+        // The Java configuration field has a non-null STAR5_OFFICER default. ConfigLoader preserves
+        // that invariant in C#, so the Java defensive null guard is unreachable for this value type.
+        if (abyssRank.GetRank().GetId() >= RankingConfig.XFORM_MIN_RANK.GetId())
         {
-            // add new skills
-            if (abyssRank.GetRank().GetId() >= RankingConfig.XFORM_MIN_RANK.GetId())
-            {
-                foreach (int skillId in AbyssSkills.GetSkills(player.GetRace(), rankEnum))
-                    SkillLearnService.LearnTemporarySkill(player, skillId, 1);
-            }
+            foreach (int skillId in AbyssSkills.GetSkills(player.GetRace(), rankEnum))
+                SkillLearnService.LearnTemporarySkill(player, skillId, 1);
         }
     }
 }

@@ -14,16 +14,16 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/TownDAO (@author ViAl). JDBC DAO over the towns table (per-race town level/points progression).
 /// DatabaseFactory-style; positional '?' -> ordered MySqlParameter; executeQuery -> ExecuteReader; rset.getInt("col") ->
 /// reader.GetInt32(reader.GetOrdinal("col")); executeUpdate -> ExecuteNonQuery; SQL verbatim. Race.toString() -> Race.ToString();
-/// rset.getTimestamp (nullable) -> IsDBNull ? (DateTime?)null : GetDateTime (Town ctor takes DateTime?); setTimestamp(null) -> DBNull.Value;
+/// level_up_date uses a nullable SQL epoch projection and FROM_UNIXTIME write (Town ctor takes DateTime?);
 /// store() switch-arrow on Persistable.PersistentState -> C# switch on IPersistable.PersistentState (NEW/UPDATE_REQUIRED), set to UPDATED.
 /// </summary>
 public class TownDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(TownDAO));
 
-    private const string SELECT_QUERY = "SELECT * FROM `towns` WHERE `race` = ?";
+    private const string SELECT_QUERY = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`level_up_date`) * 1000) AS SIGNED) AS `level_up_date_epoch_millis` FROM `towns` WHERE `race` = ?";
     private const string INSERT_QUERY = "INSERT INTO `towns`(`id`,`level`,`points`, `race`) VALUES (?,?,?,?)";
-    private const string UPDATE_QUERY = "UPDATE `towns` SET `level` = ?, `points` = ?, `level_up_date` = ? WHERE `id` = ?";
+    private const string UPDATE_QUERY = "UPDATE `towns` SET `level` = ?, `points` = ?, `level_up_date` = FROM_UNIXTIME(? / 1000.0) WHERE `id` = ?";
 
     public static Dictionary<int, Town> Load(Race race)
     {
@@ -41,8 +41,7 @@ public class TownDAO
                 int id = rset.GetInt32(rset.GetOrdinal("id"));
                 int level = rset.GetInt32(rset.GetOrdinal("level"));
                 int points = rset.GetInt32(rset.GetOrdinal("points"));
-                int luOrd = rset.GetOrdinal("level_up_date");
-                DateTime? levelUpDate = rset.IsDBNull(luOrd) ? (DateTime?)null : rset.GetDateTime(luOrd);
+                DateTime? levelUpDate = DatabaseTimestamp.ReadNullableUtcDateTime(rset, "level_up_date_epoch_millis");
                 Town town = new Town(id, level, points, race, levelUpDate);
                 towns[town.GetId()] = town;
             }
@@ -98,7 +97,7 @@ public class TownDAO
             stmt.CommandText = UPDATE_QUERY;
             stmt.Parameters.Add(new MySqlParameter { Value = town.GetLevel() });
             stmt.Parameters.Add(new MySqlParameter { Value = town.GetPoints() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)town.GetLevelUpDate() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(town.GetLevelUpDate()) });
             stmt.Parameters.Add(new MySqlParameter { Value = town.GetId() });
             stmt.ExecuteNonQuery();
             town.SetPersistentState(IPersistable.PersistentState.UPDATED);

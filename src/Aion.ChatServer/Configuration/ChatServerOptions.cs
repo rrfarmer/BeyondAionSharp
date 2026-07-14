@@ -74,16 +74,19 @@ public sealed class ChatServerOptions
 		}
 
 		var jdbcUrl = loader.Get("database.url", "jdbc:mysql://localhost:3306/aion_cs");
-		var (server, port, database) = DatabaseOptions.ParseJdbcMysqlUrl(jdbcUrl);
+		var parsed = DatabaseOptions.ParseJdbcMysqlUrl(jdbcUrl);
 		return new DatabaseOptions
 		{
-			Server = server,
-			Port = port,
-			Database = database,
+			Server = parsed.Server,
+			Port = parsed.Port,
+			Database = parsed.Database,
 			UserId = loader.Get("database.user", "root"),
 			Password = loader.Get("database.password", string.Empty),
 			MaxPoolSize = loader.GetInt("database.connectionpool.connections.max", 5),
 			ConnectionTimeout = loader.GetInt("database.connectionpool.timeout", 5000),
+			CharacterSet = parsed.CharacterSet,
+			ConnectionTimeZone = parsed.ConnectionTimeZone,
+			SslMode = parsed.SslMode,
 		};
 	}
 

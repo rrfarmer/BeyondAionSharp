@@ -26,7 +26,7 @@ public class AddTitle : AdminCommand
             return;
         }
 
-        TitleTemplate titleTemplate = DataManager.TITLE_DATA.GetTitleTemplate(int.TryParse(paramsArr[0], out int titleIdParam) ? titleIdParam : 0);
+        TitleTemplate titleTemplate = DataManager.TITLE_DATA.GetTitleTemplate(TryParseInt(paramsArr[0], out int titleIdParam) ? titleIdParam : 0);
         if (titleTemplate == null)
         {
             SendInfo(player, "Invalid title id.");

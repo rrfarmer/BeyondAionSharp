@@ -211,7 +211,7 @@ public class HouseCommand : AdminCommand
     // Java parity: org.apache.commons.lang3.math.NumberUtils.toInt(String) — returns 0 if not parseable.
     private static int ToInt(string str)
     {
-        return int.TryParse(str, out int result) ? result : 0;
+        return TryParseInt(str, out int result) ? result : 0;
     }
 
     // Java parity: org.apache.commons.lang3.text.WordUtils.capitalizeFully(String).

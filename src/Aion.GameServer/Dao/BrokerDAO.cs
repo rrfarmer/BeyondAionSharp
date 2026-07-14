@@ -13,8 +13,8 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/BrokerDAO. JDBC DAO over the broker table via the commons DB callback helper. Anonymous ReadStH/IUStH -> private
 /// nested classes capturing locals via ctor. BrokerRace.valueOf->Enum.Parse, String.valueOf(race)->race.ToString(); getBoolean->GetBoolean;
 /// getInt/getLong/getString->GetX(GetOrdinal). The reworked BrokerItem ctor/GetExpireTime/GetSettleTime use NON-nullable DateTimeOffset
-/// (Java Timestamp was nullable) -> getTimestamp read as new DateTimeOffset(GetDateTime), DB-null -> default(DateTimeOffset) sentinel;
-/// setTimestamp -> the (non-null) DateTimeOffset directly. store() switch-arrow NEW/DELETED/UPDATE_REQUIRED -> C# switch on
+/// (Java Timestamp was nullable) -> SQL epoch projection, DB-null -> default(DateTimeOffset) sentinel; writes and timestamp predicates
+/// use FROM_UNIXTIME(epoch). store() switch-arrow NEW/DELETED/UPDATE_REQUIRED -> C# switch on
 /// IPersistable.PersistentState, set UPDATED on success. InventoryDAO.LoadBrokerItems/Store and ItemStoneListDAO.Load are tolerated red
 /// refs (those DAOs not yet ported). SQL verbatim.
 /// </summary>
@@ -29,7 +29,7 @@ public class BrokerDAO
         List<Item> items = InventoryDAO.LoadBrokerItems();
         ItemStoneListDAO.Load(items);
 
-        DB.Select("SELECT * FROM broker", new LoadHandler(brokerItems, items));
+        DB.Select("SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`expire_time`) * 1000) AS SIGNED) AS `expire_time_epoch_millis`, CAST(FLOOR(UNIX_TIMESTAMP(`settle_time`) * 1000) AS SIGNED) AS `settle_time_epoch_millis` FROM broker", new LoadHandler(brokerItems, items));
 
         return brokerItems;
     }
@@ -57,10 +57,8 @@ public class BrokerDAO
                 int sellerId = rset.GetInt32(rset.GetOrdinal("seller_id"));
                 long price = rset.GetInt64(rset.GetOrdinal("price"));
                 BrokerRace itemBrokerRace = Enum.Parse<BrokerRace>(rset.GetString(rset.GetOrdinal("broker_race")));
-                int etOrd = rset.GetOrdinal("expire_time");
-                DateTimeOffset expireTime = rset.IsDBNull(etOrd) ? default(DateTimeOffset) : new DateTimeOffset(rset.GetDateTime(etOrd));
-                int stOrd = rset.GetOrdinal("settle_time");
-                DateTimeOffset settleTime = rset.IsDBNull(stOrd) ? default(DateTimeOffset) : new DateTimeOffset(rset.GetDateTime(stOrd));
+                DateTimeOffset expireTime = DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "expire_time_epoch_millis") ?? default;
+                DateTimeOffset settleTime = DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "settle_time_epoch_millis") ?? default;
                 bool isSold = rset.GetBoolean(rset.GetOrdinal("is_sold"));
                 bool isSettled = rset.GetBoolean(rset.GetOrdinal("is_settled"));
                 bool splittingAvailable = rset.GetBoolean(rset.GetOrdinal("splitting_available"));
@@ -118,7 +116,7 @@ public class BrokerDAO
     private static bool InsertBrokerItem(BrokerItem item)
     {
         bool result = DB.InsertUpdate(
-            "INSERT INTO `broker` (`item_pointer`, `item_id`, `item_count`, `item_creator`, `price`, `broker_race`, `expire_time`, `seller_id`, `is_sold`, `is_settled`, `splitting_available`) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO `broker` (`item_pointer`, `item_id`, `item_count`, `item_creator`, `price`, `broker_race`, `expire_time`, `seller_id`, `is_sold`, `is_settled`, `splitting_available`) VALUES (?,?,?,?,?,?,FROM_UNIXTIME(? / 1000.0),?,?,?,?)",
             new InsertHandler(item));
 
         return result;
@@ -141,7 +139,7 @@ public class BrokerDAO
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetItemCreator() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetPrice() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetItemBrokerRace().ToString() });
-            stmt.Parameters.Add(new MySqlParameter { Value = item.GetExpireTime() });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(item.GetExpireTime()) });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetSellerId() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.IsSold() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.IsSettled() });
@@ -152,7 +150,7 @@ public class BrokerDAO
 
     private static bool DeleteBrokerItem(BrokerItem item)
     {
-        bool result = DB.InsertUpdate("DELETE FROM `broker` WHERE `item_pointer` = ? AND `seller_id` = ? AND `expire_time` = ?", new DeleteHandler(item));
+        bool result = DB.InsertUpdate("DELETE FROM `broker` WHERE `item_pointer` = ? AND `seller_id` = ? AND `expire_time` = FROM_UNIXTIME(? / 1000.0)", new DeleteHandler(item));
 
         return result;
     }
@@ -170,7 +168,7 @@ public class BrokerDAO
         {
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetItemUniqueId() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetSellerId() });
-            stmt.Parameters.Add(new MySqlParameter { Value = item.GetExpireTime() });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(item.GetExpireTime()) });
             stmt.ExecuteNonQuery();
         }
     }
@@ -178,7 +176,7 @@ public class BrokerDAO
     private static bool UpdateBrokerItem(BrokerItem item)
     {
         bool result = DB.InsertUpdate(
-            "UPDATE broker SET `is_sold` = ?, `is_settled` = ?, `settle_time` = ?, `item_count` = ? WHERE `item_pointer` = ? AND `expire_time` = ? AND `seller_id` = ? AND `is_settled` = 0",
+            "UPDATE broker SET `is_sold` = ?, `is_settled` = ?, `settle_time` = FROM_UNIXTIME(? / 1000.0), `item_count` = ? WHERE `item_pointer` = ? AND `expire_time` = FROM_UNIXTIME(? / 1000.0) AND `seller_id` = ? AND `is_settled` = 0",
             new UpdateHandler(item));
 
         return result;
@@ -197,10 +195,10 @@ public class BrokerDAO
         {
             stmt.Parameters.Add(new MySqlParameter { Value = item.IsSold() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.IsSettled() });
-            stmt.Parameters.Add(new MySqlParameter { Value = item.GetSettleTime() });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(item.GetSettleTime()) });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetItemCount() });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetItemUniqueId() });
-            stmt.Parameters.Add(new MySqlParameter { Value = item.GetExpireTime() });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(item.GetExpireTime()) });
             stmt.Parameters.Add(new MySqlParameter { Value = item.GetSellerId() });
             stmt.ExecuteNonQuery();
         }

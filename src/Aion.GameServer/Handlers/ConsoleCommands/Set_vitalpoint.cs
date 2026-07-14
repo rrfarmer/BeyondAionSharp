@@ -36,7 +36,7 @@ public class Set_vitalpoint : ConsoleCommand
         }
 
         // Java parity: Integer.parseInt(params[0]) throws NumberFormatException -> info(admin, null).
-        if (!int.TryParse(paramsArr[0], out int value))
+        if (!TryParseInt(paramsArr[0], out int value))
         {
             Info(admin, null);
             return;

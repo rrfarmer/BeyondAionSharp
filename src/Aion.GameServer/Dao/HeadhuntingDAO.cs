@@ -11,14 +11,14 @@ namespace Aion.GameServer.Dao;
 /// <summary>
 /// Java parity: dao/HeadhuntingDAO (@author Estrayl). JDBC DAO over headhunting via the commons DB callback helper. Anonymous
 /// ParamReadStH/IUStH -> private nested classes capturing locals via ctor. TreeMap -> SortedDictionary (sorted by hunter id, as Java).
-/// rset.next()/getInt->Read()/GetInt32(GetOrdinal); getTimestamp("last_update").getTime()->new DateTimeOffset(GetDateTime).ToUnixTimeMilliseconds();
-/// new Timestamp(millis)->DateTimeOffset.FromUnixTimeMilliseconds(millis).LocalDateTime. Persistable.PersistentState->IPersistable.PersistentState.
+/// rset.next()/getInt->Read()/GetInt32(GetOrdinal); getTimestamp("last_update").getTime()->SQL epoch milliseconds;
+/// new Timestamp(millis)->FROM_UNIXTIME(epoch). Persistable.PersistentState->IPersistable.PersistentState.
 /// PvpService.GetInstance().GetHeadhunter red-tolerated if absent. SQL verbatim.
 /// </summary>
 public class HeadhuntingDAO
 {
-    private const string SELECT_QUERY = "SELECT * FROM `headhunting`";
-    private const string UPDATE_QUERY = "REPLACE INTO `headhunting` (`hunter_id`, `accumulated_kills`, `last_update`) VALUES (?,?,?)";
+    private const string SELECT_QUERY = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`last_update`) * 1000) AS SIGNED) AS `last_update_epoch_millis` FROM `headhunting`";
+    private const string UPDATE_QUERY = "REPLACE INTO `headhunting` (`hunter_id`, `accumulated_kills`, `last_update`) VALUES (?,?,FROM_UNIXTIME(? / 1000.0))";
     private const string DELETE_QUERY = "DELETE FROM `headhunting`";
 
     public static IDictionary<int, Headhunter> LoadHeadhunters()
@@ -46,7 +46,7 @@ public class HeadhuntingDAO
                 if (!loadedHunters.ContainsKey(playerId))
                 {
                     int accumulatedKills = rset.GetInt32(rset.GetOrdinal("accumulated_kills"));
-                    long lastUpdate = new DateTimeOffset(rset.GetDateTime(rset.GetOrdinal("last_update"))).ToUnixTimeMilliseconds();
+                    long lastUpdate = rset.GetInt64(rset.GetOrdinal("last_update_epoch_millis"));
                     loadedHunters[playerId] = new Headhunter(playerId, accumulatedKills, lastUpdate, IPersistable.PersistentState.UPDATED);
                 }
             }
@@ -95,7 +95,7 @@ public class HeadhuntingDAO
         {
             stmt.Parameters.Add(new MySqlParameter { Value = hunter.GetHunterId() });
             stmt.Parameters.Add(new MySqlParameter { Value = hunter.GetKills() });
-            stmt.Parameters.Add(new MySqlParameter { Value = DateTimeOffset.FromUnixTimeMilliseconds(hunter.GetLastUpdate()).LocalDateTime });
+            stmt.Parameters.Add(new MySqlParameter { Value = hunter.GetLastUpdate() });
             stmt.ExecuteNonQuery();
         }
     }

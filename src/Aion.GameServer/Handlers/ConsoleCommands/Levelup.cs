@@ -32,7 +32,7 @@ public class Levelup : ConsoleCommand
         }
 
         // Java parity: try { newLevel = getLevel() + parseInt(...) } catch (NumberFormatException) { ... }
-        if (!int.TryParse(paramsArr[0], out int delta))
+        if (!TryParseInt(paramsArr[0], out int delta))
         {
             SendInfo(admin, "Please specify the number of levels to subtract.");
             return;

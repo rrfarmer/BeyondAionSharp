@@ -42,7 +42,7 @@ public class DelSkill : AdminCommand
                 playerSkillList = player.GetSkillList();
             else
             {
-                if (!int.TryParse(paramsArr[1], out skillId))
+                if (!TryParseInt(paramsArr[1], out skillId))
                 {
                     PacketSendUtility.SendMessage(admin, "Param 1 must be an integer or <all>.");
                     return;
@@ -70,7 +70,7 @@ public class DelSkill : AdminCommand
                     playerSkillList = player.GetSkillList();
                 else
                 {
-                    if (!int.TryParse(paramsArr[0], out skillId))
+                    if (!TryParseInt(paramsArr[0], out skillId))
                     {
                         PacketSendUtility.SendMessage(admin, "Param 0 must be an integer or <all>.");
                         return;

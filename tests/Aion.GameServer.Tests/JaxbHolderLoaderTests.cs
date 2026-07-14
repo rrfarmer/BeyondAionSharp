@@ -2076,6 +2076,8 @@ public sealed class JaxbHolderLoaderTests
         // <event name="Celebrate Solorius" start="2024-12-16T00:00:00" end="2024-12-31T23:59:59" theme="CHRISTMAS">
         var solorius = data.GetEvents().First(e => e.GetName() == "Celebrate Solorius");
         Assert.Equal(Model.EventTheme.CHRISTMAS, solorius.GetTheme());
+        var unthemed = data.GetEvents().First(e => e.GetName() == "Beyond Aion Server Buffs");
+        Assert.Null(unthemed.GetTheme());
         Assert.Equal(new System.DateTime(2024, 12, 16, 0, 0, 0), solorius.GetStartDate());
         Assert.Equal(new System.DateTime(2024, 12, 31, 23, 59, 59), solorius.GetEndDate());
         // <maintainable>50007 50008 50009 51007 51008 51009</maintainable> -> @XmlList space-separated proxy.

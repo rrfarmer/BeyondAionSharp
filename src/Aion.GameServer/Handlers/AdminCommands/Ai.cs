@@ -144,7 +144,7 @@ public class Ai : AdminCommand
                 }
                 else if (paramsArr[0].Equals("event2", StringComparison.OrdinalIgnoreCase))
                 {
-                    Creature creature = paramsArr.Length < 3 ? null : (Creature) World.World.GetInstance().FindVisibleObject(int.Parse(paramsArr[2]));
+                    Creature creature = paramsArr.Length < 3 ? null : (Creature) World.World.GetInstance().FindVisibleObject(ParseInt(paramsArr[2]));
                     if (creature == null)
                         SendInfo(admin, "Please provide a valid creature object ID");
                     else

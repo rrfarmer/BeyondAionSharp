@@ -75,7 +75,7 @@ public class Sys : AdminCommand
 
     private void InitShutdown(int exitCode, string delay)
     {
-        int delaySeconds = delay == null ? ShutdownConfig.DELAY : int.Parse(delay);
+        int delaySeconds = delay == null ? ShutdownConfig.DELAY : ParseInt(delay);
         GameServer.InitShutdown(exitCode, delaySeconds);
     }
 

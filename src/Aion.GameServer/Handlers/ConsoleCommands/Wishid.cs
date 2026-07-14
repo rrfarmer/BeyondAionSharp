@@ -38,7 +38,7 @@ public class Wishid : ConsoleCommand
         }
 
         // Java parity: Long.parseLong(params[0]) / Integer.parseInt(params[1]) throw NumberFormatException -> info(admin, null).
-        if (!long.TryParse(paramsArr[0], out long itemCount) || !int.TryParse(paramsArr[1], out int itemId))
+        if (!TryParseLong(paramsArr[0], out long itemCount) || !TryParseInt(paramsArr[1], out int itemId))
         {
             Info(admin, null);
             return;

@@ -48,11 +48,11 @@ public class Auction : AdminCommand
                 return;
             }
 
-            bool isHouseAddress = Regex.IsMatch(paramsArr[1], "^\\d+$");
+            bool isHouseAddress = Regex.IsMatch(paramsArr[1], "^[0-9]+$");
             List<House> houses;
             if (isHouseAddress)
             {
-                House house = HousingService.GetInstance().GetHouseByAddress(int.Parse(paramsArr[1]));
+                House house = HousingService.GetInstance().GetHouseByAddress(ParseInt(paramsArr[1]));
                 if (house == null)
                 {
                     SendInfo(admin, "Invalid house address.");
@@ -81,9 +81,9 @@ public class Auction : AdminCommand
             if (removedHouses == 0)
                 SendInfo(admin, isHouseAddress ? "The house is not for sale." : "No houses for sale in this zone.");
         }
-        else if (Regex.IsMatch(paramsArr[0], "^\\d+$"))
+        else if (Regex.IsMatch(paramsArr[0], "^[0-9]+$"))
         {
-            int address = int.Parse(paramsArr[0]);
+            int address = ParseInt(paramsArr[0]);
             House house = HousingService.GetInstance().GetHouseByAddress(address);
             if (house == null)
             {
@@ -95,7 +95,7 @@ public class Auction : AdminCommand
                 SendInfo(admin, "Address " + address + " is already in auction.");
                 return;
             }
-            long price = paramsArr.Length < 2 ? house.GetDefaultAuctionPrice() : long.Parse(paramsArr[1]);
+            long price = paramsArr.Length < 2 ? house.GetDefaultAuctionPrice() : ParseLong(paramsArr[1]);
             if (price <= 0)
             {
                 SendInfo(admin, "Starting price must be positive.");
@@ -112,8 +112,8 @@ public class Auction : AdminCommand
                 return;
             }
 
-            HouseType houseType = Enum.Parse<HouseType>(paramsArr[2].ToUpper());
-            int maxCount = int.Parse(paramsArr[3]);
+            HouseType houseType = ParseEnumName<HouseType>(paramsArr[2].ToUpper());
+            int maxCount = ParseInt(paramsArr[3]);
             if (maxCount <= 0)
             {
                 SendInfo(admin, "Count must be positive.");
@@ -145,7 +145,7 @@ public class Auction : AdminCommand
                 SendInfo(admin, "No auctionable " + houseType.ToString().ToLower() + "s found.");
                 return;
             }
-            long price = paramsArr.Length < 5 ? houses[0].GetDefaultAuctionPrice() : long.Parse(paramsArr[4]);
+            long price = paramsArr.Length < 5 ? houses[0].GetDefaultAuctionPrice() : ParseLong(paramsArr[4]);
             if (price <= 0)
             {
                 SendInfo(admin, "Starting price must be positive.");

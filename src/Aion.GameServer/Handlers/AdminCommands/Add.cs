@@ -54,7 +54,7 @@ public class Add : AdminCommand
             return;
         }
 
-        long itemCount = paramsArr.Length > ++index ? long.Parse(paramsArr[index]) : 1;
+        long itemCount = paramsArr.Length > ++index ? ParseLong(paramsArr[index]) : 1;
         if (itemCount <= 0
             || (itemId == ItemId.KINAH ? receiver.GetInventory().GetKinah() + itemCount < 0 : itemCount / itemTemplate.GetMaxStackCount() > 126))
         {

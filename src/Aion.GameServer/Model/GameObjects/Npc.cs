@@ -186,14 +186,22 @@ public class Npc : Creature
 
     public override TribeClass GetTribe()
     {
+        // Most of the C# object model predates nullable enums and requires a value. Preserve that
+        // API while exposing Java's actual nullable result to the few callers whose null branch is
+        // behaviorally significant.
+        return GetNullableTribe() ?? default;
+    }
+
+    public TribeClass? GetNullableTribe()
+    {
         if (GetCreator() is Player player)
             return player.GetTribe();
         TribeClass? transformTribe = IsTransformed() ? GetTransformModel().GetTribe() : (TribeClass?)null;
         if (transformTribe != null)
         {
-            return transformTribe.Value;
+            return transformTribe;
         }
-        return GetObjectTemplate().GetTribe();
+        return GetObjectTemplate().GetNullableTribe();
     }
 
     public override TribeClass GetBaseTribe()

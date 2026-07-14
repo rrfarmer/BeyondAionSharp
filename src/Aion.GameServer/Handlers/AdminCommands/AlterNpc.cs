@@ -44,7 +44,7 @@ public class AlterNpc : AdminCommand
 
     private void ChangeStat(Player player, string[] paramsArr)
     {
-        StatEnum toModify = Enum.Parse<StatEnum>(paramsArr[1].ToUpper());
+        StatEnum toModify = ParseEnumName<StatEnum>(paramsArr[1].ToUpper());
         if (!allowedStats.Contains(toModify))
         {
             SendInfo(player, "'" + paramsArr[0] + "' is not supported.");
@@ -80,7 +80,7 @@ public class AlterNpc : AdminCommand
 
     private int ParseValue(string value)
     {
-        if (int.TryParse(value.Replace("_", ""), out int result))
+        if (TryParseInt(value.Replace("_", ""), out int result))
             return result;
         return 0;
     }

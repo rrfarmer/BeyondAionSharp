@@ -14,7 +14,7 @@ namespace Aion.GameServer.Dao;
 /// Java parity: dao/MailDAO (@author kosyachok). JDBC DAO over the mail table. MIXED: loadPlayerMailbox/saves via the commons DB callback
 /// helper (anonymous ParamReadStH/IUStH->nested), haveUnread/getUsedIDs via DatabaseFactory. LetterType.getLetterTypeById->
 /// LetterTypeExtensions.GetLetterTypeById; getLetterType().getId()->GetLetterType().GetId() (extension). Letter ctor takes non-nullable
-/// DateTime (Java Timestamp nullable) -> getTimestamp via IsDBNull?default(DateTime):GetDateTime; getTimeStamp()->DateTime directly.
+/// DateTime (Java Timestamp nullable) -> required SQL epoch projection; getTimeStamp() writes via FROM_UNIXTIME(epoch).
 /// Map&lt;Letter,Integer&gt;->Dictionary&lt;Letter,int&gt;. storeLetter switch NEW/UPDATE_REQUIRED->IPersistable.PersistentState; getUsedIDs
 /// scrollable->forward-only. Uses now-ported InventoryDAO.LoadItems + ItemStoneListDAO.Load (lazy). SQL verbatim.
 /// </summary>
@@ -28,7 +28,7 @@ public class MailDAO
         Dictionary<Letter, int> letters = new Dictionary<Letter, int>();
         List<Item> mailboxItems = null;
 
-        DB.Select("SELECT * FROM mail WHERE mail_recipient_id = ?", new LoadMailboxHandler(player, letters));
+        DB.Select("SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`recieved_time`) * 1000) AS SIGNED) AS `recieved_time_epoch_millis` FROM mail WHERE mail_recipient_id = ?", new LoadMailboxHandler(player, letters));
 
         foreach (KeyValuePair<Letter, int> e in letters)
         {
@@ -82,8 +82,7 @@ public class MailDAO
                 int attachedItemObjId = rset.GetInt32(rset.GetOrdinal("attached_item_id"));
                 long attachedKinahCount = rset.GetInt64(rset.GetOrdinal("attached_kinah_count"));
                 LetterType letterType = LetterTypeExtensions.GetLetterTypeById(rset.GetInt32(rset.GetOrdinal("express")));
-                int rtOrd = rset.GetOrdinal("recieved_time");
-                DateTime receivedTime = rset.IsDBNull(rtOrd) ? default(DateTime) : rset.GetDateTime(rtOrd);
+                DateTime receivedTime = DatabaseTimestamp.ReadUtcDateTime(rset, "recieved_time_epoch_millis");
                 letters[new Letter(mailUniqueId, recipientId, null, attachedKinahCount, mailTitle, mailMessage, senderName, receivedTime, unread, letterType)] =
                     attachedItemObjId;
             }
@@ -155,7 +154,7 @@ public class MailDAO
         int fAttachedItemId = attachedItemId;
 
         return DB.InsertUpdate(
-            "INSERT INTO `mail` (`mail_unique_id`, `mail_recipient_id`, `sender_name`, `mail_title`, `mail_message`, `unread`, `attached_item_id`, `attached_kinah_count`, `express`, `recieved_time`) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO `mail` (`mail_unique_id`, `mail_recipient_id`, `sender_name`, `mail_title`, `mail_message`, `unread`, `attached_item_id`, `attached_kinah_count`, `express`, `recieved_time`) VALUES(?,?,?,?,?,?,?,?,?,FROM_UNIXTIME(? / 1000.0))",
             new SaveLetterHandler(letter, fAttachedItemId));
     }
 
@@ -181,7 +180,7 @@ public class MailDAO
             stmt.Parameters.Add(new MySqlParameter { Value = fAttachedItemId });
             stmt.Parameters.Add(new MySqlParameter { Value = letter.GetAttachedKinah() });
             stmt.Parameters.Add(new MySqlParameter { Value = letter.GetLetterType().GetId() });
-            stmt.Parameters.Add(new MySqlParameter { Value = letter.GetTimeStamp() });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(letter.GetTimeStamp()) });
             stmt.ExecuteNonQuery();
         }
     }
@@ -195,7 +194,7 @@ public class MailDAO
         int fAttachedItemId = attachedItemId;
 
         return DB.InsertUpdate(
-            "UPDATE mail SET  unread=?, attached_item_id=?, attached_kinah_count=?, `express`=?, recieved_time=? WHERE mail_unique_id=?", new UpdateLetterHandler(letter, fAttachedItemId));
+            "UPDATE mail SET  unread=?, attached_item_id=?, attached_kinah_count=?, `express`=?, recieved_time=FROM_UNIXTIME(? / 1000.0) WHERE mail_unique_id=?", new UpdateLetterHandler(letter, fAttachedItemId));
     }
 
     private sealed class UpdateLetterHandler : IUStH
@@ -215,7 +214,7 @@ public class MailDAO
             stmt.Parameters.Add(new MySqlParameter { Value = fAttachedItemId });
             stmt.Parameters.Add(new MySqlParameter { Value = letter.GetAttachedKinah() });
             stmt.Parameters.Add(new MySqlParameter { Value = letter.GetLetterType().GetId() });
-            stmt.Parameters.Add(new MySqlParameter { Value = letter.GetTimeStamp() });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(letter.GetTimeStamp()) });
             stmt.Parameters.Add(new MySqlParameter { Value = letter.GetObjectId() });
             stmt.ExecuteNonQuery();
         }

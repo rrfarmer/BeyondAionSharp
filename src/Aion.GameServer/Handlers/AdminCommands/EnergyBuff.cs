@@ -37,7 +37,7 @@ public class EnergyBuff : AdminCommand
                     PacketSendUtility.SendMessage(player, "Current EoR: " + targetPlayer.GetCommonData().GetCurrentReposeEnergy() + "\n Max EoR: "
                         + targetPlayer.GetCommonData().GetMaxReposeEnergy());
                 else if (paramsArr[1].Equals("add"))
-                    targetPlayer.GetCommonData().AddReposeEnergy(long.Parse(paramsArr[2]));
+                    targetPlayer.GetCommonData().AddReposeEnergy(ParseLong(paramsArr[2]));
                 else if (paramsArr[1].Equals("reset"))
                     targetPlayer.GetCommonData().SetCurrentReposeEnergy(0);
             }
@@ -47,7 +47,7 @@ public class EnergyBuff : AdminCommand
                 if (paramsArr[1].Equals("info"))
                     PacketSendUtility.SendMessage(player, "Current EoS: " + targetPlayer.GetCommonData().GetCurrentSalvationPercent());
                 else if (paramsArr[1].Equals("add"))
-                    targetPlayer.GetCommonData().AddSalvationPoints(long.Parse(paramsArr[2]));
+                    targetPlayer.GetCommonData().AddSalvationPoints(ParseLong(paramsArr[2]));
                 else if (paramsArr[1].Equals("reset"))
                     targetPlayer.GetCommonData().ResetSalvationPoints();
             }

@@ -429,36 +429,43 @@ public class HousingBidService
         bool needsRefresh = false;
 
         foreach (Letter letter in letters)
-        {
-            string[] titleParts = letter.GetTitle().Split(',');
-            string[] bodyParts = letter.GetMessage().Split(',');
-            AuctionResult result = AuctionResultExtensions.GetResultFromId(int.Parse(titleParts[0])).Value;
-            if (result == AuctionResult.FAILED_BID)
-            {
-                needsRefresh = true;
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_CANCEL());
-            }
-            else if (result == AuctionResult.WIN_BID || result == AuctionResult.GRACE_START)
-            {
-                needsRefresh = true;
-                int address = int.Parse(bodyParts[1]);
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_WIN(address));
-            }
-            else if (result == AuctionResult.FAILED_SALE)
-            {
-                needsRefresh = true;
-                int address = int.Parse(bodyParts[1]);
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_FAIL(address));
-            }
-            else if (result == AuctionResult.SUCCESS_SALE || result == AuctionResult.GRACE_SUCCESS)
-            {
-                needsRefresh = true;
-                int address = int.Parse(bodyParts[1]);
-                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_SUCCESS(address));
-            }
-        }
+            needsRefresh |= HousingAuctionMailNotification.Handle(player, letter);
 
         if (needsRefresh)
             PacketSendUtility.SendPacket(player, new SM_RECEIVE_BIDS(0));
+    }
+}
+
+internal static class HousingAuctionMailNotification
+{
+    internal static bool Handle(Player player, Letter letter)
+    {
+        string[] titleParts = letter.GetTitle().Split(',');
+        string[] bodyParts = letter.GetMessage().Split(',');
+        AuctionResult? result = AuctionResultExtensions.GetResultFromId(int.Parse(titleParts[0]));
+        if (result == AuctionResult.FAILED_BID)
+        {
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_CANCEL());
+            return true;
+        }
+        if (result == AuctionResult.WIN_BID || result == AuctionResult.GRACE_START)
+        {
+            int address = int.Parse(bodyParts[1]);
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_BID_WIN(address));
+            return true;
+        }
+        if (result == AuctionResult.FAILED_SALE)
+        {
+            int address = int.Parse(bodyParts[1]);
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_FAIL(address));
+            return true;
+        }
+        if (result == AuctionResult.SUCCESS_SALE || result == AuctionResult.GRACE_SUCCESS)
+        {
+            int address = int.Parse(bodyParts[1]);
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_AUCTION_SUCCESS(address));
+            return true;
+        }
+        return false;
     }
 }

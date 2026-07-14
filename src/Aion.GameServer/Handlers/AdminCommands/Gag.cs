@@ -52,7 +52,7 @@ public class Gag : AdminCommand
         }
 
         int time;
-        if (!int.TryParse(paramsArr[1], out time))
+        if (!TryParseInt(paramsArr[1], out time))
         {
             SendInfo(admin, "<duration> must be an int value (time in minutes).");
             return;

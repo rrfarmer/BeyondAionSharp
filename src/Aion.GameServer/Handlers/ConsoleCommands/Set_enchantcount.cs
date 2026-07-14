@@ -30,8 +30,8 @@ public class Set_enchantcount : ConsoleCommand
 
         try
         {
-            objId = int.Parse(paramsArr[0]);
-            enchant = int.Parse(paramsArr[1]);
+            objId = ParseInt(paramsArr[0]);
+            enchant = ParseInt(paramsArr[1]);
         }
         catch (FormatException)
         {

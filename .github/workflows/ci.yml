@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check out Java 4.8 reference
+        uses: actions/checkout@v6
+        with:
+          repository: beyond-aion/aion-server
+          ref: "4.8"
+          fetch-depth: 1
+          path: .java-reference
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.301
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Restore
+        run: dotnet restore AionServer.slnx
+
+      - name: Rebuild and enforce warning baseline
+        shell: pwsh
+        run: ./scripts/ci/check-warning-baseline.ps1 -NoRestore
+
+      - name: Test complete solution
+        run: dotnet test AionServer.slnx --no-build --no-restore -v:minimal
+
+      - name: Check structural fidelity
+        run: python scripts/parity/check_fidelity.py
+        env:
+          BEYOND_AION_JAVA_ROOT: ${{ github.workspace }}/.java-reference

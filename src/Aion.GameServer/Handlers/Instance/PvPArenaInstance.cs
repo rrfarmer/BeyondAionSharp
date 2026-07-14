@@ -129,7 +129,7 @@ public abstract class PvPArenaInstance : GeneralInstanceHandler
             winnerReward.AddPvPKill();
             QuestEngine.QuestEngine.GetInstance().OnKillInWorld(new QuestEnv(victim, winner, 0), winner.GetWorldId()); // Notify Kill-Quests
         }
-        CalculateAndUpdatePoints(victim, (int)Math.Round(pointsPerKill * GetRunnerUpScoreMod(victimReward, winnerReward)));
+        CalculateAndUpdatePoints(victim, JavaMath.Round(pointsPerKill * GetRunnerUpScoreMod(victimReward, winnerReward)));
         UpdatePoints(victimReward, victim, lastAttacker, pointsPerDeath, false); // Update victim points after rewarding the winner
         ApplyMoraleBoost(victim);
         return true;
@@ -641,9 +641,9 @@ public abstract class PvPArenaInstance : GeneralInstanceHandler
 
     private ArenaRewardItem CalculateIndividualReward(ArenaRewardItem rewardItem, int size, float configRate)
     {
-        int baseCount = (int)Math.Round(rewardItem.BaseCount * configRate / size);
-        int rankingCount = (int)Math.Round(rewardItem.RankingCount * configRate / size);
-        int scoreCount = (int)Math.Round(rewardItem.ScoreCount * configRate / size);
+        int baseCount = JavaMath.Round(rewardItem.BaseCount * configRate / size);
+        int rankingCount = JavaMath.Round(rewardItem.RankingCount * configRate / size);
+        int scoreCount = JavaMath.Round(rewardItem.ScoreCount * configRate / size);
         return new ArenaRewardItem(rewardItem.ItemId, baseCount, rankingCount, scoreCount);
     }
 

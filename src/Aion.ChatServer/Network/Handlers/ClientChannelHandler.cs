@@ -51,7 +51,7 @@ public sealed class ClientChannelHandler : BaseClientConnection, IChatClientConn
 			return null;
 
 		var frameLength = BinaryPrimitives.ReadUInt16LittleEndian(header);
-		if (frameLength < 3)
+		if (!ChatFrameLimits.IsValid(frameLength))
 			return null;
 
 		var payload = await ReadExactOrNullAsync(frameLength - 2);

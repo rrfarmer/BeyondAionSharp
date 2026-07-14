@@ -262,7 +262,7 @@ public class Event
                 }
                 else if (qs.GetStatus() != QuestStatus.START && qs.GetCompleteCount() > 0 && eventTemplate.GetStartDate() != null)
                 {
-                    DateTime completeTime = ServerTime.AtDate(new DateTimeOffset(DateTime.SpecifyKind(qs.GetLastCompleteTime()!.Value, DateTimeKind.Local))).DateTime;
+                    DateTime completeTime = ServerTime.AtDate(new DateTimeOffset(qs.GetLastCompleteTime()!.Value)).DateTime;
                     if (eventTemplate.GetStartDate() > completeTime)
                     { // quest was last completed on a previous event, reset & restart it
                         ActionType actionType = qs.GetStatus() == QuestStatus.COMPLETE ? ActionType.ADD : ActionType.UPDATE;
@@ -280,7 +280,7 @@ public class Event
             QuestState qs = player.GetQuestStateList().GetQuestState(maintainableQuestId);
             if (qs != null && qs.GetCompleteCount() > 0 && IsAllowedToStartEventQuest(player, maintainableQuestId))
             {
-                DateTime completeTime = ServerTime.AtDate(new DateTimeOffset(DateTime.SpecifyKind(qs.GetLastCompleteTime()!.Value, DateTimeKind.Local))).DateTime;
+                DateTime completeTime = ServerTime.AtDate(new DateTimeOffset(qs.GetLastCompleteTime()!.Value)).DateTime;
                 if (eventTemplate.GetStartDate() > completeTime)
                 { // quest was last completed on a previous event, reset it
                     qs.SetCompleteCount(0);

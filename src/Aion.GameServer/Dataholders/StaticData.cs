@@ -11,6 +11,8 @@ namespace Aion.GameServer.Dataholders;
 
 public sealed partial class StaticData
 {
+	private IReadOnlyList<string> _declaredHolderSources = Array.Empty<string>();
+
 	private StaticData(
 		string cacheFilePath,
 		IReadOnlyList<string> importedFiles,
@@ -274,14 +276,28 @@ public sealed partial class StaticData
 	/// directly from their per-feature XML files (game-server/data/static_data/...) via
 	/// <see cref="LoadingUtils.JaxbHolderLoader"/> and assigns them into the *Dh slots that
 	/// <see cref="DataManager"/> delegates to (BIND_POINT_DATA, CHEST_DATA, CURING_OBJECTS_DATA, ROAD_DATA,
-	/// HOTSPOT_DATA). Each load is guarded by a file-exists check and try/catch so a missing or malformed
-	/// feature file never aborts boot (mirrors how Java DataManager tolerates per-holder load failures).
-	/// Only the leaf holders proven against their real XML are wired here; the large/cross-referenced holders
-	/// (Item/Npc/Skill/Quest/AI) remain deferred.
+	/// HOTSPOT_DATA). A holder whose source participates in the active <c>static_data.xml</c> import graph is
+	/// required, matching Java's single JAXB graph: missing files, binding/callback failures, and core-holder
+	/// integrity failures abort boot. A source outside that graph is explicitly an optional C# extension; its
+	/// failure preserves the existing holder. Candidates are fully loaded and validated before any slot changes.
 	/// </summary>
 	public void LoadLeafHoldersFromFiles(string staticDataDirectory, Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
-		StaticDataDirectory = staticDataDirectory;
+		var previousDeclaredSources = _declaredHolderSources;
+		_declaredHolderSources = ReadDeclaredHolderSources(staticDataDirectory);
+		try
+		{
+			LoadLeafHoldersFromFilesCore(staticDataDirectory, logger);
+		}
+		catch
+		{
+			_declaredHolderSources = previousDeclaredSources;
+			throw;
+		}
+	}
+
+	private void LoadLeafHoldersFromFilesCore(string staticDataDirectory, Microsoft.Extensions.Logging.ILogger? logger)
+	{
 		BindPointDataDh = TryLoadHolder(BindPointDataDh, Path.Combine(staticDataDirectory, "bind_points", "bind_points.xml"), logger);
 		ChestDataDh = TryLoadHolder(ChestDataDh, Path.Combine(staticDataDirectory, "chests", "chest_templates.xml"), logger);
 		CuringObjectsDataDh = TryLoadHolder(CuringObjectsDataDh, Path.Combine(staticDataDirectory, "curing_objects", "curing_objects.xml"), logger);
@@ -339,7 +355,7 @@ public sealed partial class StaticData
 		// AIData feeds DataManager.AI_DATA (the 462 ported AI handlers + SummonerAI). Java's static_data import
 		// graph merges every <ai_templates> source into one holder; here we deserialize each ai/*.xml raw, merge
 		// their pending <ai> rows, then run AfterUnmarshal once (fires SummonGroup min/maxCount validation).
-		AiDataDh = TryLoadAiData(Path.Combine(staticDataDirectory, "ai"), logger);
+		AiDataDh = TryLoadAiData(AiDataDh, Path.Combine(staticDataDirectory, "ai"), logger);
 		// Standalone <quests> root (~82k lines, self-contained, no imports / no IDREF resolution): the faithful
 		// QuestsData holder feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
 		Quests = TryLoadHolder(Quests, Path.Combine(staticDataDirectory, "quest_data", "quest_data.xml"), logger);
@@ -354,11 +370,11 @@ public sealed partial class StaticData
 		// <npc_skill_templates> folder (recursive: npc_skills.xml + guard/siege/rift + instances/* + open_worlds/*):
 		// Java imports the npc_skills/ dir with singleRootTag+recursiveImport, so merge every file's <npc_skills>
 		// rows then run AfterUnmarshal once. Feeds DataManager.NPC_SKILL_DATA.
-		NpcSkillDataDh = TryLoadMergedHolder<NpcSkillData>(Path.Combine(staticDataDirectory, "npc_skills"), (m, p) => m.MergePending(p), logger);
+		NpcSkillDataDh = TryLoadMergedHolder(NpcSkillDataDh, Path.Combine(staticDataDirectory, "npc_skills"), (m, p) => m.MergePending(p), logger);
 		// <npc_walker> folder (recursive: per-instance route files): Java imports the npc_walker/ dir with
 		// singleRootTag+recursiveImport, so merge every file's <walker_template> rows then run AfterUnmarshal once.
 		// Feeds DataManager.WALKER_DATA.
-		WalkerDataDh = TryLoadMergedHolder<WalkerData>(Path.Combine(staticDataDirectory, "npc_walker"), (m, p) => m.MergePending(p), logger);
+		WalkerDataDh = TryLoadMergedHolder(WalkerDataDh, Path.Combine(staticDataDirectory, "npc_walker"), (m, p) => m.MergePending(p), logger);
 		// <tribe_relations> root (single file): faithful TribeRelationsData feeds DataManager.TRIBE_RELATIONS_DATA.
 		TribeRelations = TryLoadHolder(TribeRelations, Path.Combine(staticDataDirectory, "tribe", "tribe_relations.xml"), logger);
 		// <npc_shouts> root (single file): faithful NpcShoutData feeds DataManager.NPC_SHOUT_DATA.
@@ -385,13 +401,13 @@ public sealed partial class StaticData
 		// <zones> folder (recursive: zones_*.xml + zone_abyss_shields/zones_quest/zones_weather, all <zones>/<zone>):
 		// Java imports the zones/ dir with singleRootTag+recursiveImport, so merge every file's <zone> rows then run
 		// AfterUnmarshal once (builds Poly/Cylinder/Sphere/Semisphere areas + weather-zone numbering). Feeds ZONE_DATA.
-		ZoneInfo = TryLoadMergedHolder<ZoneData>(Path.Combine(staticDataDirectory, "zones"), (m, p) => m.MergePending(p), logger);
+		ZoneInfo = TryLoadMergedHolder(ZoneInfo, Path.Combine(staticDataDirectory, "zones"), (m, p) => m.MergePending(p), logger);
 		// <mails> root (single file): faithful Mails feeds DataManager.SYSTEM_MAIL_TEMPLATES; AfterUnmarshal cascades
 		// each MailTemplate/SysMail AfterUnmarshal children-first to build the part/case indices.
 		SystemMailTemplates = TryLoadHolder(SystemMailTemplates, Path.Combine(staticDataDirectory, "mail_templates.xml"), logger);
 		// Java imports the town_spawns/ dir file-by-file (each its own <town_spawns_data> root); merge every file's
 		// spawn_map rows then run AfterUnmarshal once. Spawn/SpawnSpotTemplate nullable attrs bind via string proxies.
-		TownSpawns = TryLoadMergedHolder<TownSpawnsData>(Path.Combine(staticDataDirectory, "town_spawns"), (m, p) => m.MergePending(p), logger);
+		TownSpawns = TryLoadMergedHolder(TownSpawns, Path.Combine(staticDataDirectory, "town_spawns"), (m, p) => m.MergePending(p), logger);
 		// Java imports the spawns/ dir with singleRootTag="true" (every file is a <spawns> root of <spawn_map> rows,
 		// recursive across Npcs/Instances/Bases/Rifts/Sieges/Mercenaries/Statics/Gather/AhserionsFlight). Merge every
 		// file's spawn_map rows then run AfterUnmarshal once → SpawnsData.Initialize builds the regular/base/rift/siege/
@@ -399,12 +415,12 @@ public sealed partial class StaticData
 		// per-spawn-type named element lists (spawn/base_spawn/rift_spawn/siege_spawn/vortex_spawn/mercenary_spawn/
 		// ahserion_spawn) + nested enum tokens (handler/occupier/race/mod/state/faction) are all covered (no silent drop).
 		// Feeds DataManager.SPAWNS_DATA → SpawnEngine.SpawnAll spawns the world NPCs.
-		SpawnsDh = TryLoadMergedHolder<SpawnsData>(Path.Combine(staticDataDirectory, "spawns"), (m, p) => m.MergePending(p), logger);
+		SpawnsDh = TryLoadMergedHolder(SpawnsDh, Path.Combine(staticDataDirectory, "spawns"), (m, p) => m.MergePending(p), logger);
 		// Java imports the events/timed_events/ dir (custom_events.xml + retail_events.xml), each its own
 		// <timed_events> root; merge every file's <event> rows then run AfterUnmarshal once (validates dates +
 		// fires each event's SpawnsData.Initialize children-first). EventTemplate's GlobalRule drop-rule cone
 		// binds nullable restriction_race via a string proxy. Feeds DataManager.EVENT_DATA.
-		Events = TryLoadMergedHolder<EventData>(Path.Combine(staticDataDirectory, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
+		Events = TryLoadMergedHolder(Events, Path.Combine(staticDataDirectory, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
 		// <warehouse_expander> root (single file): faithful WarehouseExpandData feeds DataManager.WAREHOUSEEXPANDER_DATA.
 		// ExpandTemplate ids="..." space-separated int[] binds via the IdsRaw string proxy; <expand> rows public.
 		WarehouseExpandDataDh = TryLoadHolder(WarehouseExpandDataDh, Path.Combine(staticDataDirectory, "storage_expander", "warehouse_expander.xml"), logger);
@@ -417,11 +433,11 @@ public sealed partial class StaticData
 		// recursiveImport, so deserialize each file raw, merge every file's polymorphic <xml_quest>/<monster_hunt>/...
 		// rows then run AfterUnmarshal once (builds questsById). The 16-subtype [XmlElement(typeof(...))] map +
 		// deep Events/Conditions/Operations cone bind via the now-public [Xml*] members. Feeds DataManager.XML_QUESTS.
-		XmlQuests = TryLoadMergedHolder<XMLQuests>(Path.Combine(staticDataDirectory, "quest_script_data"), (m, p) => m.MergePending(p), logger);
+		XmlQuests = TryLoadMergedHolder(XmlQuests, Path.Combine(staticDataDirectory, "quest_script_data"), (m, p) => m.MergePending(p), logger);
 		// <world_maps> root (single file): faithful WorldMapsData feeds DataManager.WORLD_MAPS_DATA. The holder is
 		// IEnumerable (collection-typed to XmlSerializer), so the file is read into WorldMapsDataDto and SetData builds
 		// the mapsById index. WorldMapTemplate flags="..." wire tokens map to ZoneAttributes via the FlagsRaw proxy.
-		WorldMaps2 = TryLoadWorldMaps(Path.Combine(staticDataDirectory, "world_maps.xml"), logger);
+		WorldMaps2 = TryLoadWorldMaps(WorldMaps2, Path.Combine(staticDataDirectory, "world_maps.xml"), logger);
 		// Java imports the single file global_drops/global_npc_exclusions.xml (<global_npc_exclusions> root) and binds it
 		// to StaticData.globalExclusionData; feeds DataManager.GLOBAL_EXCLUSION_DATA, read by DropRegistrationService.
 		// HasGlobalNpcExclusions. The @XmlList Set<...> elements bind via the holder's Raw space-split proxy properties,
@@ -431,7 +447,9 @@ public sealed partial class StaticData
 		// rows) and binds it to StaticData.globalDropData; merge every file then run AfterUnmarshal-free. Feeds
 		// DataManager.GLOBAL_DROP_DATA. After NPC data is loaded above, run the gd_npc_names -> gd_npc id expansion
 		// (Java parity: DataManager.init() calls GLOBAL_DROP_DATA.processRules(NPC_DATA.getNpcData()) after field assignment).
-		GlobalDropDataDh = TryLoadMergedHolder<GlobalDropData>(Path.Combine(staticDataDirectory, "global_drops", "rules"), (m, p) => m.MergePending(p), logger);
+		var globalDropSource = Path.Combine(staticDataDirectory, "global_drops", "rules");
+		var globalDropRequirement = ClassifyHolderSource(globalDropSource);
+		var globalDropCandidate = TryLoadMergedHolder(GlobalDropDataDh, globalDropSource, (m, p) => m.MergePending(p), logger, globalDropRequirement);
 		// Java imports the single file instance_exit/instance_exit.xml (<instance_exits> root) and binds it to
 		// StaticData.instanceExitData; feeds DataManager.INSTANCE_EXIT_DATA, read by TeleportService for the
 		// per-world instance-exit teleport. Was a hollow new() -> always empty -> exit lookups returned null.
@@ -450,7 +468,7 @@ public sealed partial class StaticData
 		// Was a hollow new() -> always empty -> stigma/skill-learn trees silently empty. Each file's <skill> rows
 		// (now-public skillTemplates) are merged via MergePending, then the single AfterUnmarshal builds the
 		// per-class/race templates map + templatesById (XmlSerializer doesn't auto-fire JAXB's afterUnmarshal).
-		SkillTreeDataDh = TryLoadMergedHolder<SkillTreeData>(Path.Combine(staticDataDirectory, "skill_tree"), (m, p) => m.MergePending(p), logger);
+		SkillTreeDataDh = TryLoadMergedHolder(SkillTreeDataDh, Path.Combine(staticDataDirectory, "skill_tree"), (m, p) => m.MergePending(p), logger);
 		// Java imports the single file decomposable_items/decomposable_items.xml (<decomposable_items> root) and binds
 		// it to StaticData.decomposableItemsData; feeds DataManager.DECOMPOSABLE_ITEMS_DATA, read by DecomposeAction +
 		// CM_SELECT_DECOMPOSABLE for item-decompose rewards. Was a hollow new() -> always empty -> decompose yielded
@@ -458,7 +476,7 @@ public sealed partial class StaticData
 		// primitive+enum attrs bind via the now-public fields; DecomposableItemsData.AfterUnmarshal cascades each
 		// ResultedItem/RandomItem.AfterUnmarshal children-first (validates reward item ids vs live ITEM_DATA +
 		// defaults/validates min/max counts) before the parent indexing (XmlSerializer doesn't auto-fire nested callbacks).
-		DecomposableItemsDataDh = TryLoadDecomposableItems(Path.Combine(staticDataDirectory, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
+		DecomposableItemsDataDh = TryLoadDecomposableItems(DecomposableItemsDataDh, Path.Combine(staticDataDirectory, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
 		// Java imports the single file quest_data/challenge_tasks.xml (<challenge_tasks> root) and binds it to
 		// StaticData.challengeData; feeds DataManager.CHALLENGE_DATA, read by ChallengeTaskService/ChallengeTasksDAO
 		// for legion/town challenge tasks. Was a hollow new() -> always empty -> challenge tasks unavailable.
@@ -521,15 +539,21 @@ public sealed partial class StaticData
 		// is a JAXB @XmlIDREF (id attr -> ItemTemplate) which XmlSerializer can't bind to an object, so the id is held
 		// in a string proxy and resolved via the in-progress ITEM_DATA in a children-first AfterUnmarshal cascade
 		// (mirrors Java's @XmlIDREF + StaticDataListener handing afterUnmarshal the in-progress StaticData/ItemData).
-		PlayerInitialDataDh = TryLoadPlayerInitialData(Path.Combine(staticDataDirectory, "player_initial_data.xml"), ItemDataDh, logger);
+		PlayerInitialDataDh = TryLoadPlayerInitialData(PlayerInitialDataDh, Path.Combine(staticDataDirectory, "player_initial_data.xml"), ItemDataDh, logger);
 		try
 		{
-			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
+			globalDropCandidate.ProcessRules(NpcDataDh.GetNpcData());
+			GlobalDropDataDh = globalDropCandidate;
+		}
+		catch (Exception ex) when (globalDropRequirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional global drop rules failed post-load processing; preserving the current holder.");
 		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to process global drop rules (gd_npc_names expansion).");
+			throw RequiredHolderFailure(typeof(GlobalDropData), globalDropSource, ex);
 		}
+		StaticDataDirectory = staticDataDirectory;
 		// Java parity: DataManager.init() calls DecomposeAction.validateRandomItemIds() AFTER the holders are wired
 		// into the DataManager bridge — so it runs in GameServerBootstrapService right after
 		// DataManager.RegisterInstance, NOT here (the bridge isn't bound during leaf-holder load, which produced the
@@ -551,51 +575,58 @@ public sealed partial class StaticData
 	public ItemData ReloadItemData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		ItemDataDh = TryLoadHolder(new ItemData(), Path.Combine(dir, "items", "item_templates.xml"), logger);
-		ItemDataDh.Cleanup();
-		return ItemDataDh;
+		var candidate = TryLoadHolder(ItemDataDh, Path.Combine(dir, "items", "item_templates.xml"), logger, StaticDataHolderRequirement.RequiredImport);
+		candidate.Cleanup();
+		ItemDataDh = candidate;
+		return candidate;
 	}
 
 	public SkillData ReloadSkillData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		SkillDataDh = TryLoadHolder(new SkillData(), Path.Combine(dir, "skills", "skill_templates.xml"), logger);
-		return SkillDataDh;
+		var candidate = TryLoadHolder(SkillDataDh, Path.Combine(dir, "skills", "skill_templates.xml"), logger, StaticDataHolderRequirement.RequiredImport);
+		SkillDataDh = candidate;
+		return candidate;
 	}
 
 	public QuestsData ReloadQuestData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		Quests = TryLoadHolder(new QuestsData(), Path.Combine(dir, "quest_data", "quest_data.xml"), logger);
-		return Quests;
+		var candidate = TryLoadHolder(Quests, Path.Combine(dir, "quest_data", "quest_data.xml"), logger, StaticDataHolderRequirement.RequiredImport);
+		Quests = candidate;
+		return candidate;
 	}
 
 	public XMLQuests ReloadXmlQuests(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		XmlQuests = TryLoadMergedHolder<XMLQuests>(Path.Combine(dir, "quest_script_data"), (m, p) => m.MergePending(p), logger);
-		return XmlQuests;
+		var candidate = TryLoadMergedHolder(XmlQuests, Path.Combine(dir, "quest_script_data"), (m, p) => m.MergePending(p), logger, StaticDataHolderRequirement.RequiredImport);
+		XmlQuests = candidate;
+		return candidate;
 	}
 
 	public CustomDrop ReloadCustomDrop(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		CustomNpcDropDh = TryLoadHolder(new CustomDrop(), Path.Combine(dir, "custom_drop", "custom_drop.xml"), logger);
-		return CustomNpcDropDh;
+		var candidate = TryLoadHolder(CustomNpcDropDh, Path.Combine(dir, "custom_drop", "custom_drop.xml"), logger, StaticDataHolderRequirement.RequiredImport);
+		CustomNpcDropDh = candidate;
+		return candidate;
 	}
 
 	public UpgradeArcadeData ReloadUpgradeArcadeData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		UpgradeArcade = TryLoadHolder(new UpgradeArcadeData(), Path.Combine(dir, "events", "arcadelist.xml"), logger);
-		return UpgradeArcade;
+		var candidate = TryLoadHolder(UpgradeArcade, Path.Combine(dir, "events", "arcadelist.xml"), logger, StaticDataHolderRequirement.RequiredImport);
+		UpgradeArcade = candidate;
+		return candidate;
 	}
 
 	public DecomposableItemsData ReloadDecomposableItemsData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		DecomposableItemsDataDh = TryLoadDecomposableItems(Path.Combine(dir, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
-		return DecomposableItemsDataDh;
+		var candidate = TryLoadDecomposableItems(DecomposableItemsDataDh, Path.Combine(dir, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger, StaticDataHolderRequirement.RequiredImport);
+		DecomposableItemsDataDh = candidate;
+		return candidate;
 	}
 
 	// NPC_SKILL and EVENT: Java builds a flat template list from the re-imported dir and calls the holder's
@@ -605,39 +636,48 @@ public sealed partial class StaticData
 	public NpcSkillData ReloadNpcSkillData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		NpcSkillDataDh = TryLoadMergedHolder<NpcSkillData>(Path.Combine(dir, "npc_skills"), (m, p) => m.MergePending(p), logger);
-		return NpcSkillDataDh;
+		var candidate = TryLoadMergedHolder(NpcSkillDataDh, Path.Combine(dir, "npc_skills"), (m, p) => m.MergePending(p), logger, StaticDataHolderRequirement.RequiredImport);
+		NpcSkillDataDh = candidate;
+		return candidate;
 	}
 
 	public EventData ReloadEventData(Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
 		var dir = RequireStaticDataDirectory();
-		Events = TryLoadMergedHolder<EventData>(Path.Combine(dir, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
-		return Events;
+		var candidate = TryLoadMergedHolder(Events, Path.Combine(dir, "events", "timed_events"), (m, p) => m.MergePending(p), logger, StaticDataHolderRequirement.RequiredImport);
+		Events = candidate;
+		return candidate;
 	}
 
 	// DECOMPOSABLE_ITEMS needs the in-progress ItemData for its children-first AfterUnmarshal (ResultedItem validates
 	// reward ids vs ITEM_DATA), but the DataManager singleton bridge is not registered yet during this load. So
 	// deserialize WITHOUT the auto-AfterUnmarshal (which would route through the un-registered DataManager.ITEM_DATA)
 	// and invoke the ItemData overload explicitly with the already-loaded ItemDataDh. Mirrors Java's StaticDataListener.
-	private static DecomposableItemsData TryLoadDecomposableItems(string xmlFilePath, ItemData itemData, Microsoft.Extensions.Logging.ILogger? logger)
+	private DecomposableItemsData TryLoadDecomposableItems(
+		DecomposableItemsData fallback,
+		string xmlFilePath,
+		ItemData itemData,
+		Microsoft.Extensions.Logging.ILogger? logger,
+		StaticDataHolderRequirement? requirementOverride = null)
 	{
+		var requirement = requirementOverride ?? ClassifyHolderSource(xmlFilePath);
 		try
 		{
 			if (!File.Exists(xmlFilePath))
-			{
-				logger?.LogWarning("Static data holder file not found, leaving DecomposableItemsData empty: {Path}", xmlFilePath);
-				return new DecomposableItemsData();
-			}
+				throw new FileNotFoundException($"Static data file not found: {xmlFilePath}", xmlFilePath);
 
 			var holder = LoadingUtils.JaxbHolderLoader.DeserializeFile<DecomposableItemsData>(xmlFilePath);
 			holder.AfterUnmarshal(itemData, null);
 			return holder;
 		}
+		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional static data holder DecomposableItemsData failed to load from {Path}; preserving the current holder.", xmlFilePath);
+			return fallback;
+		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to load DecomposableItemsData from {Path}; leaving it empty.", xmlFilePath);
-			return new DecomposableItemsData();
+			throw RequiredHolderFailure(typeof(DecomposableItemsData), xmlFilePath, ex);
 		}
 	}
 
@@ -645,58 +685,76 @@ public sealed partial class StaticData
 	// the DataManager singleton bridge is not registered yet during this load. So deserialize WITHOUT auto-AfterUnmarshal
 	// (which would route through the un-registered DataManager.ITEM_DATA) and invoke the ItemData overload explicitly with
 	// the already-loaded ItemDataDh. Mirrors Java's StaticDataListener handing afterUnmarshal the in-progress StaticData.
-	private static PlayerInitialData TryLoadPlayerInitialData(string xmlFilePath, ItemData itemData, Microsoft.Extensions.Logging.ILogger? logger)
+	private PlayerInitialData TryLoadPlayerInitialData(
+		PlayerInitialData fallback,
+		string xmlFilePath,
+		ItemData itemData,
+		Microsoft.Extensions.Logging.ILogger? logger,
+		StaticDataHolderRequirement? requirementOverride = null)
 	{
+		var requirement = requirementOverride ?? ClassifyHolderSource(xmlFilePath);
 		try
 		{
 			if (!File.Exists(xmlFilePath))
-			{
-				logger?.LogWarning("Static data holder file not found, leaving PlayerInitialData empty: {Path}", xmlFilePath);
-				return new PlayerInitialData();
-			}
+				throw new FileNotFoundException($"Static data file not found: {xmlFilePath}", xmlFilePath);
 
 			var holder = LoadingUtils.JaxbHolderLoader.DeserializeFile<PlayerInitialData>(xmlFilePath);
 			holder.AfterUnmarshal(itemData, null);
+			ValidateRequiredCoreHolder(holder, xmlFilePath, requirement);
 			return holder;
+		}
+		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional static data holder PlayerInitialData failed to load from {Path}; preserving the current holder.", xmlFilePath);
+			return fallback;
 		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to load PlayerInitialData from {Path}; leaving it empty.", xmlFilePath);
-			return new PlayerInitialData();
+			throw RequiredHolderFailure(typeof(PlayerInitialData), xmlFilePath, ex);
 		}
 	}
 
-	private static WorldMapsData TryLoadWorldMaps(string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger)
+	private WorldMapsData TryLoadWorldMaps(
+		WorldMapsData fallback,
+		string xmlFilePath,
+		Microsoft.Extensions.Logging.ILogger? logger,
+		StaticDataHolderRequirement? requirementOverride = null)
 	{
+		var requirement = requirementOverride ?? ClassifyHolderSource(xmlFilePath);
 		try
 		{
 			if (!File.Exists(xmlFilePath))
-			{
-				logger?.LogWarning("Static data holder file not found, leaving WorldMapsData empty: {Path}", xmlFilePath);
-				return new WorldMapsData();
-			}
+				throw new FileNotFoundException($"Static data file not found: {xmlFilePath}", xmlFilePath);
 
 			var dto = LoadingUtils.JaxbHolderLoader.DeserializeFile<WorldMapsDataDto>(xmlFilePath);
 			var holder = new WorldMapsData();
 			holder.SetData(dto.Maps);
+			ValidateRequiredCoreHolder(holder, xmlFilePath, requirement);
 			return holder;
+		}
+		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional static data holder WorldMapsData failed to load from {Path}; preserving the current holder.", xmlFilePath);
+			return fallback;
 		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to load WorldMapsData from {Path}; leaving it empty.", xmlFilePath);
-			return new WorldMapsData();
+			throw RequiredHolderFailure(typeof(WorldMapsData), xmlFilePath, ex);
 		}
 	}
 
-	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()
+	private T TryLoadMergedHolder<T>(
+		T fallback,
+		string directory,
+		Action<T, T> mergePending,
+		Microsoft.Extensions.Logging.ILogger? logger,
+		StaticDataHolderRequirement? requirementOverride = null) where T : class, new()
 	{
+		var requirement = requirementOverride ?? ClassifyHolderSource(directory);
 		try
 		{
 			if (!Directory.Exists(directory))
-			{
-				logger?.LogWarning("Static data holder directory not found, leaving {Holder} empty: {Path}", typeof(T).Name, directory);
-				return new T();
-			}
+				throw new DirectoryNotFoundException($"Static data directory not found: {directory}");
 
 			T? merged = null;
 			foreach (var file in Directory.EnumerateFiles(directory, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
@@ -709,27 +767,34 @@ public sealed partial class StaticData
 			}
 
 			if (merged == null)
-				return new T();
+				throw new InvalidDataException($"Static data directory contains no XML files: {directory}");
 
 			LoadingUtils.JaxbHolderLoader.RunAfterUnmarshal(merged);
+			ValidateRequiredCoreHolder(merged, directory, requirement);
 			return merged;
+		}
+		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional merged static data holder {Holder} failed to load from {Path}; preserving the current holder.", typeof(T).Name, directory);
+			return fallback;
 		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to load merged static data holder {Holder} from {Path}; leaving it empty.", typeof(T).Name, directory);
-			return new T();
+			throw RequiredHolderFailure(typeof(T), directory, ex);
 		}
 	}
 
-	private static AIData TryLoadAiData(string aiDirectory, Microsoft.Extensions.Logging.ILogger? logger)
+	private AIData TryLoadAiData(
+		AIData fallback,
+		string aiDirectory,
+		Microsoft.Extensions.Logging.ILogger? logger,
+		StaticDataHolderRequirement? requirementOverride = null)
 	{
+		var requirement = requirementOverride ?? ClassifyHolderSource(aiDirectory);
 		try
 		{
 			if (!Directory.Exists(aiDirectory))
-			{
-				logger?.LogWarning("AI data directory not found, leaving AIData empty: {Path}", aiDirectory);
-				return new AIData();
-			}
+				throw new DirectoryNotFoundException($"Static data directory not found: {aiDirectory}");
 
 			AIData? merged = null;
 			foreach (var file in Directory.EnumerateFiles(aiDirectory, "*.xml").OrderBy(f => f, StringComparer.Ordinal))
@@ -742,36 +807,132 @@ public sealed partial class StaticData
 			}
 
 			if (merged == null)
-				return new AIData();
+				throw new InvalidDataException($"Static data directory contains no XML files: {aiDirectory}");
 
 			LoadingUtils.JaxbHolderLoader.RunAfterUnmarshal(merged);
+			ValidateRequiredCoreHolder(merged, aiDirectory, requirement);
 			return merged;
+		}
+		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional static data holder AIData failed to load from {Path}; preserving the current holder.", aiDirectory);
+			return fallback;
 		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to load AIData from {Path}; leaving it empty.", aiDirectory);
-			return new AIData();
+			throw RequiredHolderFailure(typeof(AIData), aiDirectory, ex);
 		}
 	}
 
-	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class
+	private T TryLoadHolder<T>(
+		T fallback,
+		string xmlFilePath,
+		Microsoft.Extensions.Logging.ILogger? logger,
+		StaticDataHolderRequirement? requirementOverride = null) where T : class
 	{
+		var requirement = requirementOverride ?? ClassifyHolderSource(xmlFilePath);
 		try
 		{
 			if (!File.Exists(xmlFilePath))
-			{
-				logger?.LogWarning("Static data holder file not found, leaving {Holder} empty: {Path}", typeof(T).Name, xmlFilePath);
-				return fallback;
-			}
+				throw new FileNotFoundException($"Static data file not found: {xmlFilePath}", xmlFilePath);
 
-			return LoadingUtils.JaxbHolderLoader.LoadFromFile<T>(xmlFilePath);
+			var holder = LoadingUtils.JaxbHolderLoader.LoadFromFile<T>(xmlFilePath);
+			ValidateRequiredCoreHolder(holder, xmlFilePath, requirement);
+			return holder;
+		}
+		catch (Exception ex) when (requirement == StaticDataHolderRequirement.OptionalExtension)
+		{
+			logger?.LogError(ex, "Optional static data holder {Holder} failed to load from {Path}; preserving the current holder.", typeof(T).Name, xmlFilePath);
+			return fallback;
 		}
 		catch (Exception ex)
 		{
-			logger?.LogError(ex, "Failed to load static data holder {Holder} from {Path}; leaving it empty.", typeof(T).Name, xmlFilePath);
-			return fallback;
+			throw RequiredHolderFailure(typeof(T), xmlFilePath, ex);
 		}
 	}
+
+	internal StaticDataHolderRequirement ClassifyHolderSource(string sourcePath)
+	{
+		var fullSourcePath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(sourcePath));
+		var directoryPrefix = fullSourcePath + Path.DirectorySeparatorChar;
+		var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+		foreach (var declaredSource in _declaredHolderSources)
+		{
+			var declaredPrefix = declaredSource + Path.DirectorySeparatorChar;
+			if (string.Equals(declaredSource, fullSourcePath, comparison) ||
+				fullSourcePath.StartsWith(declaredPrefix, comparison) ||
+				declaredSource.StartsWith(directoryPrefix, comparison))
+			{
+				return StaticDataHolderRequirement.RequiredImport;
+			}
+		}
+
+		foreach (var importedFile in ImportedFiles)
+		{
+			var fullImportedPath = Path.GetFullPath(importedFile);
+			if (string.Equals(fullImportedPath, fullSourcePath, comparison) || fullImportedPath.StartsWith(directoryPrefix, comparison))
+				return StaticDataHolderRequirement.RequiredImport;
+		}
+
+		return StaticDataHolderRequirement.OptionalExtension;
+	}
+
+	private static IReadOnlyList<string> ReadDeclaredHolderSources(string staticDataDirectory)
+	{
+		var mainXmlPath = Path.Combine(staticDataDirectory, "static_data.xml");
+		if (!File.Exists(mainXmlPath))
+			return Array.Empty<string>();
+
+		var sources = new List<string>();
+		var settings = new XmlReaderSettings
+		{
+			DtdProcessing = DtdProcessing.Prohibit,
+			IgnoreComments = true,
+			IgnoreProcessingInstructions = true,
+		};
+		using var reader = XmlReader.Create(mainXmlPath, settings);
+		while (reader.Read())
+		{
+			if (reader.NodeType != XmlNodeType.Element || reader.LocalName != "import")
+				continue;
+
+			var relativePath = reader.GetAttribute("file");
+			if (string.IsNullOrWhiteSpace(relativePath))
+				throw new XmlException("Attribute 'file' is missing or empty on import element.");
+
+			var source = LoadingUtils.XmlMerger.ApplyCountryOverride(Path.GetFullPath(Path.Combine(staticDataDirectory, relativePath)));
+			sources.Add(Path.TrimEndingDirectorySeparator(source));
+		}
+
+		return sources;
+	}
+
+	private static void ValidateRequiredCoreHolder<T>(T holder, string sourcePath, StaticDataHolderRequirement requirement)
+		where T : class
+	{
+		if (requirement != StaticDataHolderRequirement.RequiredImport)
+			return;
+
+		var size = holder switch
+		{
+			ItemData value => value.Size(),
+			NpcData value => value.Size(),
+			SkillData value => value.Size(),
+			QuestsData value => value.Size(),
+			AIData value => value.Size(),
+			WorldMapsData value => value.Size(),
+			PlayerInitialData value => value.Size(),
+			SpawnsData value => value.Size(),
+			ZoneData value => value.Size(),
+			_ => (int?)null,
+		};
+
+		if (size == 0)
+			throw new InvalidDataException($"Required core static data holder {typeof(T).Name} is empty after loading {sourcePath}.");
+	}
+
+	private static StaticDataHolderLoadException RequiredHolderFailure(Type holderType, string sourcePath, Exception exception)
+		=> exception as StaticDataHolderLoadException ?? new StaticDataHolderLoadException(holderType, sourcePath, exception);
 
 	public static async Task<StaticData> LoadFromCacheAsync(
 		string cacheFilePath,

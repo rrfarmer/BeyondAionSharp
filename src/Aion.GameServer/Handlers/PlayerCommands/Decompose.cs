@@ -37,7 +37,7 @@ public class Decompose : PlayerCommand
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM());
             return;
         }
-        long count = paramsArr.Length == 1 ? long.MaxValue : long.Parse(paramsArr[1]);
+        long count = paramsArr.Length == 1 ? long.MaxValue : ParseLong(paramsArr[1]);
 
         ItemActions itemActions = item.GetItemTemplate().GetActions();
         DecomposeAction decomposeAction = itemActions == null ? null

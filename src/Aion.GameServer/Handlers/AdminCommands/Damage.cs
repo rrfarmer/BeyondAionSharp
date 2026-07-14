@@ -67,13 +67,13 @@ public class Damage : AdminCommand
 
                 if (result.Success)
                 {
-                    dmg = int.Parse(result.Groups[1].Value);
+                    dmg = ParseInt(result.Groups[1].Value);
                     isPercent = true;
                 }
                 else if (damageType.Equals("hp", System.StringComparison.OrdinalIgnoreCase))
-                    dmg = int.Parse(paramsArr[0]);
+                    dmg = ParseInt(paramsArr[0]);
                 else
-                    dmg = int.Parse(paramsArr[1]);
+                    dmg = ParseInt(paramsArr[1]);
 
                 if (dmg <= 100)
                     isPercent = true;

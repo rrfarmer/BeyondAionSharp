@@ -36,7 +36,7 @@ public class Set_makeup_bonus : ConsoleCommand
         }
 
         // Java parity: Long.parseLong(params[0]) throws NumberFormatException -> info(admin, null).
-        if (!long.TryParse(paramsArr[0], out long value))
+        if (!TryParseLong(paramsArr[0], out long value))
         {
             Info(admin, null);
             return;

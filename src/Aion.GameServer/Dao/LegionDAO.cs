@@ -15,8 +15,8 @@ namespace Aion.GameServer.Dao;
 /// DB-access styles (low-level DB.PrepareStatement/Close/ExecuteUpdateAndClose, DB callback IUStH/ParamReadStH->nested, DatabaseFactory).
 /// Legion[1]/Legion[] capture trick -> nested handler with Result field. getShort->GetInt16; LegionEmblemType/LegionHistoryAction.valueOf->
 /// Enum.Parse, getEmblemType().toString()->ToString(); action.getType()->GetType_(); EnumMap<Type,..>->Dictionary, Type.values()->Enum.GetValues.
-/// getTimestamp(col).getTime()/1000->(int)(new DateTimeOffset(GetDateTime).ToUnixTimeMilliseconds()/1000); new Timestamp(millis)->
-/// FromUnixTimeMilliseconds().LocalDateTime; RETURN_GENERATED_KEYS+getGeneratedKeys->LastInsertedId. deleteHistory dynamic %s placeholders ->
+/// getTimestamp(col).getTime()/1000->SQL epoch milliseconds/1000; new Timestamp(millis)->FROM_UNIXTIME(epoch);
+/// RETURN_GENERATED_KEYS+getGeneratedKeys->LastInsertedId. deleteHistory dynamic %s placeholders ->
 /// string.Join("?")+Replace("%s",...). Legion.Announcement record(Message, DateTime Time); LegionHistoryEntry.Id property. SQL verbatim.
 /// </summary>
 public class LegionDAO
@@ -28,14 +28,14 @@ public class LegionDAO
     private const string SELECT_LEGION_QUERY2 = "SELECT * FROM legions WHERE name=?";
     private const string DELETE_LEGION_QUERY = "DELETE FROM legions WHERE id = ?";
     private const string UPDATE_LEGION_QUERY = "UPDATE legions SET name=?, level=?, contribution_points=?, deputy_permission=?, centurion_permission=?, legionary_permission=?, volunteer_permission=?, disband_time=?, occupied_legion_dominion=?, last_legion_dominion=?, current_legion_dominion=? WHERE id=?";
-    private const string INSERT_ANNOUNCEMENT_QUERY = "INSERT INTO legion_announcement_list(`legion_id`, `announcement`, `date`) VALUES (?, ?, ?)";
-    private const string SELECT_ANNOUNCEMENT_QUERY = "SELECT * FROM legion_announcement_list WHERE legion_id = ? ORDER BY date DESC LIMIT 1";
+    private const string INSERT_ANNOUNCEMENT_QUERY = "INSERT INTO legion_announcement_list(`legion_id`, `announcement`, `date`) VALUES (?, ?, FROM_UNIXTIME(? / 1000.0))";
+    private const string SELECT_ANNOUNCEMENT_QUERY = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`date`) * 1000) AS SIGNED) AS `date_epoch_millis` FROM legion_announcement_list WHERE legion_id = ? ORDER BY date DESC LIMIT 1";
     private const string DELETE_ANNOUNCEMENT_QUERY = "DELETE FROM legion_announcement_list WHERE legion_id = ?";
     private const string INSERT_EMBLEM_QUERY = "INSERT INTO legion_emblems(legion_id, emblem_id, color_a, color_r, color_g, color_b, emblem_type, emblem_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private const string UPDATE_EMBLEM_QUERY = "UPDATE legion_emblems SET emblem_id=?, color_a=?, color_r=?, color_g=?, color_b=?, emblem_type=?, emblem_data=? WHERE legion_id=?";
     private const string SELECT_EMBLEM_QUERY = "SELECT * FROM legion_emblems WHERE legion_id=?";
-    private const string INSERT_HISTORY_QUERY = "INSERT INTO legion_history(`legion_id`, `date`, `history_type`, `name`, `description`) VALUES (?, ?, ?, ?, ?)";
-    private const string SELECT_HISTORY_QUERY = "SELECT * FROM `legion_history` WHERE legion_id=? ORDER BY date DESC, id DESC";
+    private const string INSERT_HISTORY_QUERY = "INSERT INTO legion_history(`legion_id`, `date`, `history_type`, `name`, `description`) VALUES (?, FROM_UNIXTIME(? / 1000.0), ?, ?, ?)";
+    private const string SELECT_HISTORY_QUERY = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`date`) * 1000) AS SIGNED) AS `date_epoch_millis` FROM `legion_history` WHERE legion_id=? ORDER BY date DESC, id DESC";
     private const string DELETE_HISTORY_QUERY = "DELETE FROM `legion_history` WHERE id IN (%s)";
 
     public static bool IsNameUsed(string name)
@@ -214,8 +214,7 @@ public class LegionDAO
             if (resultSet.Read())
             {
                 string message = resultSet.GetString(resultSet.GetOrdinal("announcement"));
-                int dateOrd = resultSet.GetOrdinal("date");
-                DateTime date = resultSet.IsDBNull(dateOrd) ? default(DateTime) : resultSet.GetDateTime(dateOrd);
+                DateTime date = DatabaseTimestamp.ReadUtcDateTime(resultSet, "date_epoch_millis");
                 announcement = new Legion.Announcement(message, date);
             }
         }
@@ -244,7 +243,7 @@ public class LegionDAO
                 insert.CommandText = INSERT_ANNOUNCEMENT_QUERY;
                 insert.Parameters.Add(new MySqlParameter { Value = legionId });
                 insert.Parameters.Add(new MySqlParameter { Value = announcement.Message });
-                insert.Parameters.Add(new MySqlParameter { Value = announcement.Time });
+                insert.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMilliseconds(announcement.Time) });
                 insert.ExecuteNonQuery();
             }
         }
@@ -416,7 +415,7 @@ public class LegionDAO
             while (resultSet.Read())
             {
                 int id = resultSet.GetInt32(resultSet.GetOrdinal("id"));
-                int epochSeconds = (int)(new DateTimeOffset(resultSet.GetDateTime(resultSet.GetOrdinal("date"))).ToUnixTimeMilliseconds() / 1000);
+                int epochSeconds = unchecked((int)(resultSet.GetInt64(resultSet.GetOrdinal("date_epoch_millis")) / 1000));
                 LegionHistoryAction action = LegionHistoryAction.ValueOf(resultSet.GetString(resultSet.GetOrdinal("history_type")));
                 string name = resultSet.GetString(resultSet.GetOrdinal("name"));
                 string description = resultSet.GetString(resultSet.GetOrdinal("description"));
@@ -440,12 +439,12 @@ public class LegionDAO
             stmt.CommandText = INSERT_HISTORY_QUERY;
             long nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             stmt.Parameters.Add(new MySqlParameter { Value = legionId });
-            stmt.Parameters.Add(new MySqlParameter { Value = DateTimeOffset.FromUnixTimeMilliseconds(nowMillis).LocalDateTime });
+            stmt.Parameters.Add(new MySqlParameter { Value = nowMillis });
             stmt.Parameters.Add(new MySqlParameter { Value = action.ToString() });
             stmt.Parameters.Add(new MySqlParameter { Value = name });
             stmt.Parameters.Add(new MySqlParameter { Value = description });
             stmt.ExecuteNonQuery();
-            return new LegionHistoryEntry((int)stmt.LastInsertedId, (int)(nowMillis / 1000), action, name, description);
+            return new LegionHistoryEntry((int)stmt.LastInsertedId, unchecked((int)(nowMillis / 1000)), action, name, description);
         }
         catch (Exception e)
         {

@@ -1,5 +1,6 @@
 using System.Net;
 using Aion.Commons.Database;
+using Aion.Commons.Configuration;
 using Aion.LoginServer.Configuration;
 using Aion.LoginServer.Data;
 using Aion.LoginServer.Model;
@@ -12,6 +13,68 @@ namespace Aion.LoginServer.Tests;
 
 public class LoginDatabaseIntegrationTests
 {
+	[Fact]
+	public async Task TemporalRepositories_PreserveExactEpochsAcrossNonUtcSession_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_LOGIN_DB_INTEGRATION") != "1")
+			return;
+
+		DatabaseFactory.Initialize(
+			new DatabaseOptions
+			{
+				Server = Environment.GetEnvironmentVariable("AION_LOGIN_DB_HOST") ?? "localhost",
+				UserId = Environment.GetEnvironmentVariable("AION_LOGIN_DB_USER") ?? "root",
+				Password = Environment.GetEnvironmentVariable("AION_LOGIN_DB_PASSWORD") ?? "aion",
+				Database = Environment.GetEnvironmentVariable("AION_LOGIN_DB_NAME") ?? "aion_ls",
+				Port = int.Parse(Environment.GetEnvironmentVariable("AION_LOGIN_DB_PORT") ?? "3307"),
+				ConnectionTimeZone = "America/New_York",
+			});
+		await InitializeSchemaAsync();
+
+		const long winterEpochMillis = 1_768_496_400_000L;
+		const long summerEpochMillis = 1_784_131_200_000L;
+		await ExecuteNonQueryAsync("INSERT INTO account_data(id, name, password) VALUES (300, 'temporal', 'hash')");
+
+		var accountTimeRepository = new AccountTimeRepository();
+		await accountTimeRepository.UpdateAccountTimeAsync(
+			300,
+			new AccountTime
+			{
+				LastLoginTime = DatabaseTimestamp.FromUnixTimeMilliseconds(winterEpochMillis),
+				ExpirationTime = DatabaseTimestamp.FromUnixTimeMilliseconds(summerEpochMillis),
+				PenaltyEnd = null,
+				SessionDuration = 11,
+				AccumulatedOnlineTime = 22,
+				AccumulatedRestTime = 33,
+			});
+
+		var accountTime = await accountTimeRepository.GetAccountTimeAsync(300);
+		Assert.NotNull(accountTime);
+		Assert.Equal(winterEpochMillis, DatabaseTimestamp.ToUnixTimeMilliseconds(accountTime.LastLoginTime));
+		Assert.Equal(summerEpochMillis, DatabaseTimestamp.ToUnixTimeMilliseconds(accountTime.ExpirationTime!.Value));
+		Assert.Null(accountTime.PenaltyEnd);
+
+		var bannedIpRepository = new BannedIpRepository();
+		Assert.True(
+			await bannedIpRepository.InsertAsync(
+				"198.51.100.7",
+				DatabaseTimestamp.FromUnixTimeMilliseconds(summerEpochMillis)));
+		var ban = Assert.Single(await bannedIpRepository.GetAllBansAsync(), value => value.Mask == "198.51.100.7");
+		Assert.Equal(summerEpochMillis, DatabaseTimestamp.ToUnixTimeMilliseconds(ban.TimeEnd!.Value));
+
+		await new AccountsLogRepository().AddRecordAsync(
+			300,
+			1,
+			DatabaseTimestamp.FromUnixTimeMilliseconds(winterEpochMillis),
+			"127.0.0.1",
+			"aa-bb",
+			"disk");
+		Assert.Equal(
+			winterEpochMillis,
+			await ExecuteScalarLongAsync(
+				"SELECT CAST(FLOOR(UNIX_TIMESTAMP(date) * 1000) AS SIGNED) FROM account_login_history WHERE account_id=300"));
+	}
+
 	[Fact]
 	public async Task AccountRepository_RoundTripsAgainstLoginSchema_WhenEnabled()
 	{
@@ -101,15 +164,26 @@ public class LoginDatabaseIntegrationTests
 		Assert.DoesNotContain(await bannedIpRepository.GetAllBansAsync(), ban => ban.Mask == "10.0.0.*");
 
 		var bannedMacRepository = new BannedMacRepository();
-		var macEntry = new BannedMacEntry("aa-bb-cc-dd-ee-ff", DateTime.UtcNow.AddDays(1), "integration");
+		var winterEpochMillis = 1_768_496_400_000L; // 2026-01-15 12:00 America/New_York (UTC-05)
+		var macEntry = new BannedMacEntry(
+			"aa-bb-cc-dd-ee-ff",
+			DatabaseTimestamp.FromUnixTimeMilliseconds(winterEpochMillis),
+			"integration");
 		Assert.True(await bannedMacRepository.UpdateAsync(macEntry));
-		Assert.Equal("integration", (await bannedMacRepository.LoadAsync())[macEntry.Mac].Details);
+		var reloadedMac = (await bannedMacRepository.LoadAsync())[macEntry.Mac];
+		Assert.Equal("integration", reloadedMac.Details);
+		Assert.Equal(winterEpochMillis, DatabaseTimestamp.ToUnixTimeMilliseconds(reloadedMac.Time));
 		Assert.True(await bannedMacRepository.RemoveAsync(macEntry.Mac));
 		Assert.False((await bannedMacRepository.LoadAsync()).ContainsKey(macEntry.Mac));
 
 		var bannedHddRepository = new BannedHddRepository();
-		Assert.True(await bannedHddRepository.UpdateAsync("hdd-integration", DateTime.UtcNow.AddDays(1)));
-		Assert.True((await bannedHddRepository.LoadAsync()).ContainsKey("hdd-integration"));
+		var summerEpochMillis = 1_784_131_200_000L; // 2026-07-15 12:00 America/New_York (UTC-04)
+		Assert.True(
+			await bannedHddRepository.UpdateAsync(
+				"hdd-integration",
+				DatabaseTimestamp.FromUnixTimeMilliseconds(summerEpochMillis)));
+		var reloadedHdd = (await bannedHddRepository.LoadAsync())["hdd-integration"];
+		Assert.Equal(summerEpochMillis, DatabaseTimestamp.ToUnixTimeMilliseconds(reloadedHdd));
 		Assert.True(await bannedHddRepository.RemoveAsync("hdd-integration"));
 		Assert.False((await bannedHddRepository.LoadAsync()).ContainsKey("hdd-integration"));
 

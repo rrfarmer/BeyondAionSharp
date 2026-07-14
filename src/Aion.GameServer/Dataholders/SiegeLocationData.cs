@@ -25,6 +25,11 @@ public class SiegeLocationData
         siegeLocations.Clear();
         foreach (SiegeLocationTemplate template in siegeLocationTemplates)
         {
+            // JAXB invokes nested afterUnmarshal callbacks before the holder callback. XmlSerializer does not,
+            // so finish the two nested indexes before wrapping the template in a live siege location.
+            template.GetDoorRepairData()?.AfterUnmarshal(template);
+            template.GetAssaultData()?.AfterUnmarshal(template);
+
             switch (template.GetType_())
             {
                 case SiegeType.FORTRESS:

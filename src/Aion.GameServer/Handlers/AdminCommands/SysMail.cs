@@ -97,8 +97,8 @@ public class SysMail : AdminCommand
         int item = 0, count = 0, kinah = 0;
         LetterType letterType;
 
-        if (!int.TryParse(paramValues[2], out item) || !int.TryParse(paramValues[3], out count) || !int.TryParse(paramValues[4], out kinah)
-            || !int.TryParse(paramValues[1], out int letterTypeId))
+        if (!TryParseInt(paramValues[2], out item) || !TryParseInt(paramValues[3], out count) || !TryParseInt(paramValues[4], out kinah)
+            || !TryParseInt(paramValues[1], out int letterTypeId))
         {
             PacketSendUtility.SendMessage(admin, "<Regular|Blackcloud|Express> <Item|Count|Kinah> value must be an integer.");
             return;

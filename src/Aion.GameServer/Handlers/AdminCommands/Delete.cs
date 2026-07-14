@@ -31,7 +31,7 @@ public class Delete : AdminCommand
         else
         {
             int[] count = { 0 };
-            float range = float.Parse(paramsArr[0]);
+            float range = ParseFloat(paramsArr[0]);
             admin.GetKnownList().ForEachObject(obj =>
             {
                 if (PositionUtil.IsInRange(admin, obj, range) && DeleteObject(admin, obj, false))

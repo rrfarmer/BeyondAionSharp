@@ -25,6 +25,9 @@ public class ChatServerOptionsTests
 		Assert.InRange(options.Port, 1, 65535);
 		Assert.Equal(5, options.MaxPoolSize);
 		Assert.Equal(5000, options.ConnectionTimeout);
+		Assert.Equal("utf8mb4", options.CharacterSet);
+		Assert.Null(options.ConnectionTimeZone);
+		Assert.Null(options.SslMode);
 	}
 
 	[Fact]
@@ -58,5 +61,67 @@ public class ChatServerOptionsTests
 		Assert.Equal(7, Config.NIO_READ_WRITE_THREADS);
 		Assert.True(Config.LOG_CHAT);
 		Assert.Equal("secret", Config.GAMESERVER_PASSWORD);
+	}
+
+	[Fact]
+	public void ProgramOptionsPath_UsesJavaPropertiesGrammarAndTransformers()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionChatJavaProperties_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "chat-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(
+				Path.Combine(configRoot, "mycs.properties"),
+				"""
+				chatserver.log.chat 1
+				chatserver.log.chat_to_db:0
+				chatserver.network.nio.threads = \u0037
+				chatserver.network.gameserver.password = pa\=ss\
+				    word
+				chatserver.network.client.socket_address = 127.0.0.1\:10400
+				chatserver.network.client.connect_address = ${chatserver.network.client.socket_address}
+				"""
+			);
+
+			// Program.cs constructs its singleton with this exact public factory.
+			var options = ChatServerOptions.LoadFromJavaConfig(root);
+
+			Assert.True(options.LogChat);
+			Assert.False(options.LogChatToDatabase);
+			Assert.Equal(7, options.NioReadWriteThreads);
+			Assert.Equal("pa=ssword", options.GameServerPassword);
+			Assert.Equal(10400, options.ClientEndPoint.Port);
+			Assert.Equal(options.ClientEndPoint, options.ClientConnectEndPoint);
+		}
+		finally
+		{
+			Config.LoadFrom(new JavaProperties());
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
+	}
+
+	[Fact]
+	public void ProgramOptionsPath_RejectsInvalidJavaBoolean()
+	{
+		var root = Path.Combine(Path.GetTempPath(), $"AionChatInvalidBoolean_{Guid.NewGuid()}");
+		try
+		{
+			var configRoot = Path.Combine(root, "chat-server", "config");
+			Directory.CreateDirectory(Path.Combine(configRoot, "main"));
+			Directory.CreateDirectory(Path.Combine(configRoot, "network"));
+			File.WriteAllText(Path.Combine(configRoot, "mycs.properties"), "chatserver.log.chat = enabled\n");
+
+			var exception = Assert.Throws<InvalidOperationException>(() => ChatServerOptions.LoadFromJavaConfig(root));
+			Assert.IsType<TransformationException>(exception.InnerException);
+		}
+		finally
+		{
+			Config.LoadFrom(new JavaProperties());
+			if (Directory.Exists(root))
+				Directory.Delete(root, recursive: true);
+		}
 	}
 }

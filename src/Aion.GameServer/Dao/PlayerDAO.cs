@@ -16,8 +16,8 @@ namespace Aion.GameServer.Dao;
 /// <summary>
 /// Java parity: dao/PlayerDAO (@author SoulKeeper, Saelya, cura, KID, xTz). JDBC DAO over the players table. MIXED across all three
 /// DB-access styles. String[1]/int[1] capture tricks -> nested handlers with Result fields. Gender/Race/PlayerClass valueOf->Enum.Parse,
-/// toString()/name()->ToString(); getTimestamp("last_online") (nullable)->IsDBNull?null:GetDateTime (SetLastOnline DateTime?); creation/
-/// deletion dates use DateTimeOffset? (new DateTimeOffset(GetDateTime)); setTimestamp(null)->DBNull.Value; getShort/getByte->GetInt16/GetByte;
+/// toString()/name()->ToString(); getTimestamp("last_online").getTime()->SQL epoch milliseconds (SetLastOnline UTC DateTime?); creation/
+/// creation/deletion dates use nullable SQL epoch projections and FROM_UNIXTIME writes; getShort/getByte->GetInt16/GetByte;
 /// getUsedIDs scrollable->forward-only; deletePlayer via DB.PrepareStatement+ExecuteUpdateAndClose; Mailbox.size()->Size(); Java text-block
 /// SQL->verbatim @-string. Nested Java record PlayerAndLegionInfo->C# positional record (Java lowercase components). DataManager.PLAYER_EXPERIENCE_TABLE/
 /// GSConfig.RATIO_MIN_REQUIRED_LEVEL red-tolerated. SQL verbatim.
@@ -163,7 +163,7 @@ public class PlayerDAO
             using MySqlConnection con = DatabaseFactory.GetConnection();
             con.Open();
             using MySqlCommand stmt = con.CreateCommand();
-            stmt.CommandText = "SELECT * FROM players WHERE id = ?";
+            stmt.CommandText = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(last_online) * 1000) AS SIGNED) AS last_online_epoch_millis FROM players WHERE id = ?";
             stmt.Parameters.Add(new MySqlParameter { Value = playerObjId });
             using MySqlDataReader resultSet = stmt.ExecuteReader();
             if (resultSet.Read())
@@ -175,13 +175,13 @@ public class PlayerDAO
                 cd.SetRecoverableExp(resultSet.GetInt64(resultSet.GetOrdinal("recoverexp")));
                 cd.SetRace(Enum.Parse<Race>(resultSet.GetString(resultSet.GetOrdinal("race"))));
                 cd.SetGender(Enum.Parse<Gender>(resultSet.GetString(resultSet.GetOrdinal("gender"))));
-                int loOrd = resultSet.GetOrdinal("last_online");
-                // last_online is written as UTC wall-clock (PlayerEnterWorldService/PlayerLeaveWorldService store
-                // DateTimeOffset...UtcDateTime; GetLastOnlineEpochSeconds also assumes UTC). MySqlDataReader.GetDateTime
-                // returns Kind=Unspecified, so implicit DateTime->DateTimeOffset conversions (reentry-time check,
-                // energy-of-repose) would misread it as local -> a just-logged-out char looks like it's in the future
-                // -> reentry blocked for hours. Tag it UTC at the load boundary so all conversions are consistent.
-                cd.SetLastOnline(resultSet.IsDBNull(loOrd) ? (DateTime?)null : DateTime.SpecifyKind(resultSet.GetDateTime(loOrd), DateTimeKind.Utc));
+                int loOrd = resultSet.GetOrdinal("last_online_epoch_millis");
+                // Java ResultSet.getTimestamp(...).getTime() is an instant. Read the epoch in SQL so neither the
+                // MySQL session zone nor MySqlDataReader's Unspecified DateTimeKind can change that instant.
+                cd.SetLastOnline(
+                    resultSet.IsDBNull(loOrd)
+                        ? (DateTime?)null
+                        : DatabaseTimestamp.FromUnixTimeMilliseconds(resultSet.GetInt64(loOrd)));
                 int noteOrd = resultSet.GetOrdinal("note"); // Java getString returns null on SQL NULL; C# GetString throws on DBNull (note is nullable)
                 cd.SetNote(resultSet.IsDBNull(noteOrd) ? null : resultSet.GetString(noteOrd));
                 cd.SetQuestExpands(resultSet.GetInt32(resultSet.GetOrdinal("quest_expands")));
@@ -300,7 +300,9 @@ public class PlayerDAO
 
     public static void SetCreationDeletionTime(PlayerAccountData acData)
     {
-        DB.Select("SELECT creation_date, deletion_date FROM players WHERE id = ?", new CreationDeletionHandler(acData));
+        DB.Select(
+            "SELECT CAST(FLOOR(UNIX_TIMESTAMP(creation_date) * 1000) AS SIGNED) AS creation_date_epoch_millis, CAST(FLOOR(UNIX_TIMESTAMP(deletion_date) * 1000) AS SIGNED) AS deletion_date_epoch_millis FROM players WHERE id = ?",
+            new CreationDeletionHandler(acData));
     }
 
     private sealed class CreationDeletionHandler : ParamReadStH
@@ -321,26 +323,24 @@ public class PlayerDAO
         {
             rset.Read();
 
-            int ddOrd = rset.GetOrdinal("deletion_date");
-            acData.SetDeletionDate(rset.IsDBNull(ddOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rset.GetDateTime(ddOrd)));
-            int cdOrd = rset.GetOrdinal("creation_date");
-            acData.SetCreationDate(rset.IsDBNull(cdOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rset.GetDateTime(cdOrd)));
+            acData.SetDeletionDate(DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "deletion_date_epoch_millis"));
+            acData.SetCreationDate(DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "creation_date_epoch_millis"));
         }
     }
 
     public static void UpdateDeletionTime(int objectId, DateTime? deletionDate)
     {
-        DB.InsertUpdate("UPDATE players set deletion_date = ? where id = ?", new UpdateTimeHandler(deletionDate, objectId));
+        DB.InsertUpdate("UPDATE players set deletion_date = FROM_UNIXTIME(? / 1000.0) where id = ?", new UpdateTimeHandler(deletionDate, objectId));
     }
 
     public static void StoreCreationTime(int objectId, DateTime? creationDate)
     {
-        DB.InsertUpdate("UPDATE players set creation_date = ? where id = ?", new UpdateTimeHandler(creationDate, objectId));
+        DB.InsertUpdate("UPDATE players set creation_date = FROM_UNIXTIME(? / 1000.0) where id = ?", new UpdateTimeHandler(creationDate, objectId));
     }
 
     public static void StoreLastOnlineTime(int objectId, DateTime? lastOnline)
     {
-        DB.InsertUpdate("UPDATE players set last_online = ? where id = ?", new UpdateTimeHandler(lastOnline, objectId));
+        DB.InsertUpdate("UPDATE players set last_online = FROM_UNIXTIME(? / 1000.0) where id = ?", new UpdateTimeHandler(lastOnline, objectId));
     }
 
     private sealed class UpdateTimeHandler : IUStH
@@ -356,7 +356,11 @@ public class PlayerDAO
 
         public void HandleInsertUpdate(MySqlCommand preparedStatement)
         {
-            preparedStatement.Parameters.Add(new MySqlParameter { Value = (object)time ?? DBNull.Value });
+            preparedStatement.Parameters.Add(
+                new MySqlParameter
+                {
+                    Value = time.HasValue ? DatabaseTimestamp.ToUnixTimeMilliseconds(time.Value) : DBNull.Value,
+                });
             preparedStatement.Parameters.Add(new MySqlParameter { Value = objectId });
             preparedStatement.ExecuteNonQuery();
         }

@@ -88,7 +88,7 @@ public class Access : AdminCommand
                 }
                 else
                 {
-                    sbyte level = sbyte.TryParse(paramsArr[1], out sbyte parsed) ? parsed : (sbyte)-1;
+                    sbyte level = TryParseSByte(paramsArr[1], out sbyte parsed) ? parsed : (sbyte)-1;
                     if (level == -1 || level > maxLevel)
                     {
                         SendInfo(admin, "Invalid access level.");

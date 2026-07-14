@@ -39,9 +39,9 @@ public class SpawnNpc : AdminCommand
             return;
         }
 
-        int npcId = int.Parse(paramsArr[0]);
-        int staticId = paramsArr.Length < 2 ? 0 : int.Parse(paramsArr[1]);
-        int respawnTime = paramsArr.Length < 3 ? 0 : int.Parse(paramsArr[2]);
+        int npcId = ParseInt(paramsArr[0]);
+        int staticId = paramsArr.Length < 2 ? 0 : ParseInt(paramsArr[1]);
+        int respawnTime = paramsArr.Length < 3 ? 0 : ParseInt(paramsArr[2]);
 
         if (DataManager.NPC_DATA.GetNpcTemplate(npcId) == null && DataManager.GATHERABLE_DATA.GetGatherableTemplate(npcId) == null)
         {

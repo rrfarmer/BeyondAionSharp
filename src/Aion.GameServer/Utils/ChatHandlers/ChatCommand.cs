@@ -43,7 +43,7 @@ public abstract class ChatCommand
             {
                 Execute(player, paramsArr);
             }
-            catch (ArgumentException e)
+            catch (Exception e) when (e is ArgumentException or JavaNumberFormatException)
             {
                 SendInfo(player, ToErrorMessage(e));
             }
@@ -145,8 +145,41 @@ public abstract class ChatCommand
     /// <remarks>Java parity: declared <c>protected abstract</c> in ChatCommand, but GoTo widens its override to <c>public</c> so cross-package wrappers (Teleportto) can call <c>getCommand(GoTo.class).execute(...)</c>. C# cannot widen visibility on an override, so the base contract is public to permit the same cross-command dispatch.</remarks>
     public abstract void Execute(Player player, params string[] paramsArr);
 
+    /// <summary>Java-compatible numeric parsers for command parameters.</summary>
+    protected static int ParseInt(string value) => JavaNumberParser.ParseInt(value);
+
+    protected static int ParseInt(string value, int radix) => JavaNumberParser.ParseInt(value, radix);
+
+    protected static long ParseLong(string value) => JavaNumberParser.ParseLong(value);
+
+    protected static float ParseFloat(string value) => JavaNumberParser.ParseFloat(value);
+
+    protected static double ParseDouble(string value) => JavaNumberParser.ParseDouble(value);
+
+    /// <summary>Returns the unsigned C# bit representation of a signed Java byte.</summary>
+    protected static byte ParseByte(string value) => JavaNumberParser.ParseByte(value);
+
+    protected static bool TryParseInt(string value, out int result) => JavaNumberParser.TryParseInt(value, out result);
+
+    protected static bool TryParseLong(string value, out long result) => JavaNumberParser.TryParseLong(value, out result);
+
+    protected static bool TryParseFloat(string value, out float result) => JavaNumberParser.TryParseFloat(value, out result);
+
+    protected static bool TryParseSByte(string value, out sbyte result) => JavaNumberParser.TryParseSByte(value, out result);
+
+    protected static int DecodeInt(string value) => JavaNumberParser.DecodeInt(value);
+
+    protected static long DecodeLong(string value) => JavaNumberParser.DecodeLong(value);
+
+    protected static bool IsCreatableNumber(string value) => JavaNumberParser.IsCreatable(value);
+
+    /// <summary>Java <c>Enum.valueOf</c> semantics: case-sensitive names only.</summary>
+    protected static TEnum ParseEnumName<TEnum>(string value) where TEnum : struct, Enum => JavaEnum.ValueOf<TEnum>(value);
+
+    protected static bool TryParseEnumName<TEnum>(string value, out TEnum result) where TEnum : struct, Enum => JavaEnum.TryValueOf(value, out result);
+
     /// <summary>Override if the default message extraction is not sufficient. Null sends default syntax info.</summary>
-    protected string ToErrorMessage(ArgumentException e)
+    protected virtual string ToErrorMessage(Exception e)
     {
         string msg = e.Message;
         if (msg != null && msg.StartsWith("No enum constant ")) // "No enum constant com.aionemu.gameserver.model.siege.SiegeRace.invalidName"
@@ -168,7 +201,7 @@ public abstract class ChatCommand
                 log.LogError(ex, "Could not get enum values for " + enumName);
             }
         }
-        else if (e is FormatException) // Integer.parseInt and Long.parseLong don't provide nice error messages
+        else if (e is JavaNumberFormatException) // Java NumberFormatException covers malformed and overflowing numbers.
         {
             if (msg != null && msg.StartsWith("For input string: "))
                 msg = "Invalid number: " + msg.Substring(18);

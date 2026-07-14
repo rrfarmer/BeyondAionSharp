@@ -27,7 +27,7 @@ public class Speed : AdminCommand, IStatOwner
         }
 
         float parameter = 0;
-        if (!float.TryParse(paramsArr[0], NumberStyles.Float, CultureInfo.InvariantCulture, out parameter))
+        if (!TryParseFloat(paramsArr[0], out parameter))
         {
             SendInfo(admin, (string)null); // default info for NumberFormatException
             return;

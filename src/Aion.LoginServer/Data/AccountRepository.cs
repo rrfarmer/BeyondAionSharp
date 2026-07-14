@@ -1,6 +1,7 @@
 using Aion.Commons.Database;
 using Aion.LoginServer.Model;
 using MySqlConnector;
+using System.Data.Common;
 
 namespace Aion.LoginServer.Data;
 
@@ -41,12 +42,20 @@ public sealed class AccountRepository : IAccountRepository
 	public Task<Account?> GetAccountByNameAsync(string name, bool useExternalAuth, CancellationToken cancellationToken = default)
 	{
 		var column = useExternalAuth ? "ext_auth_name" : "name";
-		return GetAccountAsync($"SELECT * FROM account_data WHERE `{column}` = ?", name, useExternalAuth, cancellationToken);
+		return GetAccountAsync(
+			$"SELECT *, {DatabaseTimestamp.UnixTimeMillisecondsSql("creation_date", "creation_date_epoch_millis")} FROM account_data WHERE `{column}` = ?",
+			name,
+			useExternalAuth,
+			cancellationToken);
 	}
 
 	public Task<Account?> GetAccountByIdAsync(int id, bool useExternalAuth, CancellationToken cancellationToken = default)
 	{
-		return GetAccountAsync("SELECT * FROM account_data WHERE `id` = ?", id, useExternalAuth, cancellationToken);
+		return GetAccountAsync(
+			$"SELECT *, {DatabaseTimestamp.UnixTimeMillisecondsSql("creation_date", "creation_date_epoch_millis")} FROM account_data WHERE `id` = ?",
+			id,
+			useExternalAuth,
+			cancellationToken);
 	}
 
 	public async Task<bool> InsertAccountAsync(Account account, bool useExternalAuth, CancellationToken cancellationToken = default)
@@ -161,24 +170,29 @@ public sealed class AccountRepository : IAccountRepository
 		if (!await reader.ReadAsync(cancellationToken))
 			return null;
 
-		var account = new Account
-		{
-			Id = reader.GetInt32("id"),
-			Name = reader.GetString(useExternalAuth ? "ext_auth_name" : "name"),
-			PasswordHash = reader.GetString("password"),
-			CreationDate = reader.GetDateTime("creation_date"),
-			AccessLevel = reader.GetByte("access_level"),
-			Membership = reader.GetByte("membership"),
-			Activated = reader.GetByte("activated"),
-			LastServer = reader.GetSByte("last_server"),
-			LastIp = reader.IsDBNull(reader.GetOrdinal("last_ip")) ? null : reader.GetString("last_ip"),
-			LastMac = reader.GetString("last_mac"),
-			IpForce = reader.IsDBNull(reader.GetOrdinal("ip_force")) ? null : reader.GetString("ip_force"),
-			AllowedHddSerial = reader.IsDBNull(reader.GetOrdinal("allowed_hdd_serial")) ? null : reader.GetString("allowed_hdd_serial"),
-		};
+		var account = ReadAccount(reader, useExternalAuth);
 		account.AccountTime = await _accountTimeRepository.GetAccountTimeAsync(account.Id, cancellationToken)
 			?? throw new InvalidOperationException($"Account time for account {account.Id} is null.");
 		return account;
+	}
+
+	internal static Account ReadAccount(DbDataReader reader, bool useExternalAuth)
+	{
+		return new Account
+		{
+			Id = reader.GetInt32(reader.GetOrdinal("id")),
+			Name = reader.GetString(reader.GetOrdinal(useExternalAuth ? "ext_auth_name" : "name")),
+			PasswordHash = reader.GetString(reader.GetOrdinal("password")),
+			CreationDate = DatabaseTimestamp.ReadUtcDateTime(reader, "creation_date_epoch_millis"),
+			AccessLevel = reader.GetByte(reader.GetOrdinal("access_level")),
+			Membership = reader.GetByte(reader.GetOrdinal("membership")),
+			Activated = reader.GetByte(reader.GetOrdinal("activated")),
+			LastServer = Convert.ToSByte(reader.GetValue(reader.GetOrdinal("last_server"))),
+			LastIp = reader.IsDBNull(reader.GetOrdinal("last_ip")) ? null : reader.GetString(reader.GetOrdinal("last_ip")),
+			LastMac = reader.GetString(reader.GetOrdinal("last_mac")),
+			IpForce = reader.IsDBNull(reader.GetOrdinal("ip_force")) ? null : reader.GetString(reader.GetOrdinal("ip_force")),
+			AllowedHddSerial = reader.IsDBNull(reader.GetOrdinal("allowed_hdd_serial")) ? null : reader.GetString(reader.GetOrdinal("allowed_hdd_serial")),
+		};
 	}
 
 	private static async Task ExecuteAsync(string sql, CancellationToken cancellationToken, params object?[] parameters)

@@ -73,7 +73,7 @@ public class Weather : AdminCommand
                 }
                 else
                 {
-                    weatherCode = int.TryParse(paramsArr[1], out int code) ? code : -1;
+                    weatherCode = TryParseInt(paramsArr[1], out int code) ? code : -1;
                     if (weatherCode < 0 || weatherCode > 12)
                     {
                         SendInfo(admin, "Weather code must be between 0 and 12.");

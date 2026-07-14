@@ -35,7 +35,7 @@ public class MoveTo : AdminCommand
         {
             if (paramsArr.Length == 2 && "forward".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
             {
-                MoveForward(admin, float.Parse(paramsArr[1], System.Globalization.CultureInfo.InvariantCulture));
+                MoveForward(admin, ParseFloat(paramsArr[1]));
                 return;
             }
             WorldPosition pos;
@@ -101,7 +101,7 @@ public class MoveTo : AdminCommand
         bool isMapNameOrId = Regex.IsMatch(paramsArr[0], "^([a-zA-Z_]+|[1-9][0-9]{8,})$");
         if (isMapNameOrId)
         {
-            mapId = int.TryParse(paramsArr[0], out var r) ? r : 0;
+            mapId = TryParseInt(paramsArr[0], out var r) ? r : 0;
             if (mapId == 0)
                 mapId = WorldMapTypeExtensions.GetMapId(paramsArr[0]);
             coordIndex = 1;
@@ -118,7 +118,7 @@ public class MoveTo : AdminCommand
             Match m = p.Match(paramsArr[i]);
             if (m.Success)
             {
-                float coord = float.TryParse(m.Groups["coord"].Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var c) ? c : 0f;
+                float coord = TryParseFloat(m.Groups["coord"].Value, out var c) ? c : 0f;
                 string type = m.Groups["type"].Success ? m.Groups["type"].Value : null;
                 if ("x".Equals(type, StringComparison.OrdinalIgnoreCase) || (x == null && type == null))
                     x = coord;
@@ -153,7 +153,7 @@ public class MoveTo : AdminCommand
     {
         if (IsDigits(paramsArr[0]))
         {
-            int npcId = int.TryParse(paramsArr[0], out var r) ? r : 0;
+            int npcId = TryParseInt(paramsArr[0], out var r) ? r : 0;
             if (npcId > 0 && DataManager.SPAWNS_DATA.GetFirstSpawnByNpcId(admin.GetWorldId(), npcId) != null)
                 return npcId;
         }

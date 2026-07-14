@@ -31,7 +31,7 @@ public class PasskeyReset : AdminCommand
             return;
         }
 
-        if (!int.TryParse(paramsArr[1], out _))
+        if (!TryParseInt(paramsArr[1], out _))
         {
             PacketSendUtility.SendMessage(player, "parameters should be number!");
             return;

@@ -101,7 +101,7 @@ public class BaseCommand : AdminCommand
             return;
         }
 
-        BaseOccupier occupier = Enum.Parse<BaseOccupier>(paramsArr[2].ToUpper());
+        BaseOccupier occupier = ParseEnumName<BaseOccupier>(paramsArr[2].ToUpper());
         BaseService.GetInstance().Capture(baseId, occupier);
     }
 
@@ -122,7 +122,7 @@ public class BaseCommand : AdminCommand
             SendInfo(player, "Base is already under assault.");
             return;
         }
-        BaseOccupier occupier = Enum.Parse<BaseOccupier>(paramsArr[2].ToUpper());
+        BaseOccupier occupier = ParseEnumName<BaseOccupier>(paramsArr[2].ToUpper());
         if (baseLoc.GetOccupier() == occupier)
         {
             SendInfo(player, "Base cannot be assaulted by the same occupier");
@@ -139,7 +139,7 @@ public class BaseCommand : AdminCommand
             return 0;
         }
 
-        int baseId = int.Parse(paramsArr[1]);
+        int baseId = ParseInt(paramsArr[1]);
         if (BaseService.GetInstance().GetBaseLocation(baseId) == null)
         {
             SendInfo(admin, "Invalid base ID.");

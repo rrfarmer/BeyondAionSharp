@@ -156,7 +156,7 @@ public partial class ItemTemplate
 
     public Race? GetActivationRace()
     {
-        return activationTarget == null ? (Race?)null : activationTarget.GetRace();
+        return activationTarget is ItemActivationTarget target ? target.GetRace() : null;
     }
 
     public bool IsCombatActivated()

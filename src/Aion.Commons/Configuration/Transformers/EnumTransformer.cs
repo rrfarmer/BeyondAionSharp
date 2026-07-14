@@ -19,7 +19,10 @@ public sealed class EnumTransformer : PropertyTransformer
         if (value.Length == 0)
             return null;
         var t = Nullable.GetUnderlyingType(type) ?? type;
-        // caseSensitive: true mirrors Java Enum.valueOf (throws if the name does not match exactly).
+        // Enum.Parse also accepts numeric underlying values (and comma-separated flag values), while Java
+        // Enum.valueOf accepts one exact declared name only. Guard the name before delegating to Parse.
+        if (Array.IndexOf(Enum.GetNames(t), value) < 0)
+            throw new ArgumentException($"No enum constant {t.FullName}.{value}");
         return Enum.Parse(t, value, ignoreCase: false);
     }
 }

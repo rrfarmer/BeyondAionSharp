@@ -26,7 +26,7 @@ public class Movie : AdminCommand
             return;
         }
         bool isCutsceneMovie = "m".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase);
-        int cutsceneId = int.Parse(paramsArr[isCutsceneMovie ? 1 : 0]);
+        int cutsceneId = ParseInt(paramsArr[isCutsceneMovie ? 1 : 0]);
         PacketSendUtility.SendPacket(player, new SM_PLAY_MOVIE(isCutsceneMovie, 0, 0, cutsceneId, true));
     }
 }

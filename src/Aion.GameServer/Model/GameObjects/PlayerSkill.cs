@@ -51,6 +51,6 @@ public sealed class PlayerSkill
 			return IsCraftingSkill ? CurrentXp : 0;
 		}
 
-		return IsNormalSkill ? checked((int)now.ToUnixTimeSeconds()) : 0;
+		return IsNormalSkill ? unchecked((int)now.ToUnixTimeSeconds()) : 0;
 	}
 }

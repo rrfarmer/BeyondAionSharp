@@ -1,5 +1,9 @@
 using Aion.Commons.Database;
+using Aion.Commons.Configuration;
+using Aion.GameServer.Custom.Instance;
+using Aion.GameServer.Custom.Instance.Neuralnetwork;
 using Aion.GameServer.Data;
+using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -32,7 +36,7 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 			186000242,
 			AttachedKinah: 123,
 			LetterType: 1,
-			new DateTime(2026, 5, 26, 9, 0, 0));
+			new DateTime(2026, 5, 26, 9, 0, 0, DateTimeKind.Utc));
 		var attachedItem = new InventoryItem
 		{
 			ObjectId = 9101,
@@ -67,6 +71,10 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 		Assert.Equal(9101, await ExecuteScalarLongAsync("SELECT attached_item_id FROM mail WHERE mail_unique_id = 9001"));
 		Assert.Equal(123, await ExecuteScalarLongAsync("SELECT attached_kinah_count FROM mail WHERE mail_unique_id = 9001"));
 		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT express FROM mail WHERE mail_unique_id = 9001"));
+		Assert.Equal(
+			1_779_786_000_000L,
+			await ExecuteScalarLongAsync(
+				"SELECT CAST(FLOOR(UNIX_TIMESTAMP(recieved_time) * 1000) AS SIGNED) FROM mail WHERE mail_unique_id = 9001"));
 		Assert.Equal(186000242, await ExecuteScalarLongAsync("SELECT item_id FROM inventory WHERE item_unique_id = 9101"));
 		Assert.Equal(15, await ExecuteScalarLongAsync("SELECT item_count FROM inventory WHERE item_unique_id = 9101"));
 		Assert.Equal(PlayerObjectId, await ExecuteScalarLongAsync("SELECT item_owner FROM inventory WHERE item_unique_id = 9101"));
@@ -76,6 +84,58 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 		Assert.Equal(3, await ExecuteScalarLongAsync("SELECT enchant FROM inventory WHERE item_unique_id = 9101"));
 		Assert.Equal(55, await ExecuteScalarLongAsync("SELECT rnd_bonus FROM inventory WHERE item_unique_id = 9101"));
 		Assert.Equal(5, await ExecuteScalarLongAsync("SELECT mailbox_letters FROM players WHERE id = 1001"));
+
+		// Representative production DAO timestamp paths: long epoch models, DateTimeOffset models, and UTC DateTime models.
+		const long winterEpochMillis = 1_768_496_400_000L;
+		const long summerEpochMillis = 1_784_131_200_000L;
+		var rank = new CustomInstanceRank(PlayerObjectId, 4, winterEpochMillis, 9, 1200);
+		Assert.True(CustomInstanceDAO.StorePlayer(rank));
+		Assert.Equal(winterEpochMillis, CustomInstanceDAO.LoadPlayerRankObject(PlayerObjectId).GetLastEntry());
+
+		var modelEntry = new PlayerModelEntry(
+			PlayerObjectId,
+			DateTimeOffset.FromUnixTimeMilliseconds(summerEpochMillis),
+			101,
+			4,
+			75,
+			50,
+			false,
+			false,
+			false,
+			false,
+			false,
+			1,
+			2,
+			false,
+			60,
+			40,
+			true,
+			5,
+			false,
+			false,
+			false,
+			false,
+			false,
+			3,
+			4,
+			false);
+		CustomInstancePlayerModelEntryDAO.InsertNewRecords([modelEntry]);
+		var reloadedModelEntry = Assert.Single(CustomInstancePlayerModelEntryDAO.LoadPlayerModelEntries(PlayerObjectId));
+		Assert.Equal(summerEpochMillis, reloadedModelEntry.GetTimestamp().ToUnixTimeMilliseconds());
+
+		PlayerDAO.StoreLastOnlineTime(PlayerObjectId, DatabaseTimestamp.FromUnixTimeMilliseconds(winterEpochMillis));
+		Assert.Equal(
+			winterEpochMillis,
+			await ExecuteScalarLongAsync(
+				$"SELECT CAST(FLOOR(UNIX_TIMESTAMP(last_online) * 1000) AS SIGNED) FROM players WHERE id = {PlayerObjectId}"));
+
+		await ExecuteNonQueryAsync(
+			$"INSERT INTO player_web_rewards(entry_id, player_id, item_id, item_count) VALUES (7001, {PlayerObjectId}, 186000242, 1)");
+		RewardServiceDAO.StoreReceived([7001], summerEpochMillis);
+		Assert.Equal(
+			summerEpochMillis,
+			await ExecuteScalarLongAsync(
+				"SELECT CAST(FLOOR(UNIX_TIMESTAMP(received) * 1000) AS SIGNED) FROM player_web_rewards WHERE entry_id = 7001"));
 	}
 
 	[Fact]
@@ -102,7 +162,7 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 			186000242,
 			AttachedKinah: 0,
 			LetterType: 1,
-			new DateTime(2026, 5, 26, 10, 0, 0));
+			new DateTime(2026, 5, 26, 10, 0, 0, DateTimeKind.Utc));
 		var duplicateAttachedItem = new InventoryItem
 		{
 			ObjectId = 9201,
@@ -143,7 +203,7 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 			186000242,
 			AttachedKinah: 0,
 			LetterType: 1,
-			new DateTime(2026, 5, 26, 11, 0, 0));
+			new DateTime(2026, 5, 26, 11, 0, 0, DateTimeKind.Utc));
 		var attachedItem = new InventoryItem
 		{
 			ObjectId = 9301,
@@ -164,11 +224,15 @@ public sealed class SystemMailRepositoryDatabaseIntegrationTests
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(
-			server: Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_HOST") ?? "localhost",
-			userId: Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_USER") ?? "root",
-			password: Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_PASSWORD") ?? "aion",
-			database: Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_NAME") ?? "aion_gs",
-			port: int.Parse(Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_PORT") ?? "3307"));
+			new DatabaseOptions
+			{
+				Server = Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_HOST") ?? "localhost",
+				UserId = Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_USER") ?? "root",
+				Password = Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_PASSWORD") ?? "aion",
+				Database = Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_NAME") ?? "aion_gs",
+				Port = int.Parse(Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_PORT") ?? "3307"),
+				ConnectionTimeZone = "America/New_York",
+			});
 	}
 
 	private static async Task InitializeSchemaAsync()

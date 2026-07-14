@@ -17,16 +17,16 @@ namespace Aion.GameServer.Dao;
 /// DatabaseFactory-style; positional '?' -> ordered MySqlParameter; executeQuery -> ExecuteReader; executeUpdate -> ExecuteNonQuery;
 /// SQL verbatim. ConcurrentHashMap -> ConcurrentDictionary (containsKey->ContainsKey, putIfAbsent->TryAdd, get->indexer); inner
 /// HashMap&lt;Integer,ChallengeQuest&gt;(2) -> Dictionary(2) with indexer puts. ChallengeType.toString()/getType().toString() ->
-/// ToString(). getTimestamp (nullable) -> IsDBNull ? null : new DateTimeOffset(GetDateTime) (ChallengeTask ctor + GetCompleteTime use
-/// DateTimeOffset?); setTimestamp(null) -> DBNull.Value. Persistable.PersistentState -> IPersistable.PersistentState (NEW/UPDATE_REQUIRED).
+/// ToString(). Nullable Timestamp reads/writes use SQL epoch milliseconds/FROM_UNIXTIME so ChallengeTask.GetCompleteTime keeps the
+/// Java instant without host-local DateTime inference. Persistable.PersistentState -> IPersistable.PersistentState (NEW/UPDATE_REQUIRED).
 /// </summary>
 public class ChallengeTasksDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(ChallengeTasksDAO));
 
-    private const string SELECT_QUERY = "SELECT * FROM `challenge_tasks` WHERE `owner_id` = ? AND `owner_type` = ?";
-    private const string INSERT_QUERY = "INSERT INTO `challenge_tasks` (`task_id`, `quest_id`, `owner_id`, `owner_type`, `complete_count`, `complete_time`) VALUES (?, ?, ?, ?, ?, ?);";
-    private const string UPDATE_QUERY = "UPDATE `challenge_tasks` SET `complete_count` = ?, `complete_time`= ? WHERE `task_id` = ? AND `quest_id` = ? AND `owner_id` = ?";
+    private const string SELECT_QUERY = "SELECT *, CAST(FLOOR(UNIX_TIMESTAMP(`complete_time`) * 1000) AS SIGNED) AS `complete_time_epoch_millis` FROM `challenge_tasks` WHERE `owner_id` = ? AND `owner_type` = ?";
+    private const string INSERT_QUERY = "INSERT INTO `challenge_tasks` (`task_id`, `quest_id`, `owner_id`, `owner_type`, `complete_count`, `complete_time`) VALUES (?, ?, ?, ?, ?, FROM_UNIXTIME(? / 1000.0));";
+    private const string UPDATE_QUERY = "UPDATE `challenge_tasks` SET `complete_count` = ?, `complete_time`= FROM_UNIXTIME(? / 1000.0) WHERE `task_id` = ? AND `quest_id` = ? AND `owner_id` = ?";
 
     public static Dictionary<int, ChallengeTask> Load(int ownerId, ChallengeType type)
     {
@@ -45,8 +45,7 @@ public class ChallengeTasksDAO
                 int taskId = rset.GetInt32(rset.GetOrdinal("task_id"));
                 int questId = rset.GetInt32(rset.GetOrdinal("quest_id"));
                 int completeCount = rset.GetInt32(rset.GetOrdinal("complete_count"));
-                int ctOrd = rset.GetOrdinal("complete_time");
-                DateTimeOffset? date = rset.IsDBNull(ctOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rset.GetDateTime(ctOrd));
+                DateTimeOffset? date = DatabaseTimestamp.ReadNullableDateTimeOffset(rset, "complete_time_epoch_millis");
                 ChallengeQuestTemplate template = DataManager.CHALLENGE_DATA.GetQuestByQuestId(questId);
                 ChallengeQuest quest = new ChallengeQuest(template, completeCount);
                 quest.SetPersistentState(IPersistable.PersistentState.UPDATED);
@@ -99,7 +98,7 @@ public class ChallengeTasksDAO
             stmt.Parameters.Add(new MySqlParameter { Value = task.GetOwnerId() });
             stmt.Parameters.Add(new MySqlParameter { Value = task.GetTemplate().GetType_().ToString() });
             stmt.Parameters.Add(new MySqlParameter { Value = quest.GetCompleteCount() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)task.GetCompleteTime() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(task.GetCompleteTime()) });
             stmt.ExecuteNonQuery();
             quest.SetPersistentState(IPersistable.PersistentState.UPDATED);
         }
@@ -118,7 +117,7 @@ public class ChallengeTasksDAO
             using MySqlCommand stmt = con.CreateCommand();
             stmt.CommandText = UPDATE_QUERY;
             stmt.Parameters.Add(new MySqlParameter { Value = quest.GetCompleteCount() });
-            stmt.Parameters.Add(new MySqlParameter { Value = (object)task.GetCompleteTime() ?? DBNull.Value });
+            stmt.Parameters.Add(new MySqlParameter { Value = DatabaseTimestamp.ToUnixTimeMillisecondsOrDbNull(task.GetCompleteTime()) });
             stmt.Parameters.Add(new MySqlParameter { Value = task.GetTaskId() });
             stmt.Parameters.Add(new MySqlParameter { Value = quest.GetQuestId() });
             stmt.Parameters.Add(new MySqlParameter { Value = task.GetOwnerId() });

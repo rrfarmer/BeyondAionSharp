@@ -295,8 +295,8 @@ public class Preview : PlayerCommand
             {
                 // try to get color by name
                 PropertyInfo field = typeof(Color).GetProperty(ToTitleCaseColorName(colorParam), BindingFlags.Public | BindingFlags.Static);
-                if (field != null && field.PropertyType == typeof(Color))
-                    return ((Color)field.GetValue(null)).ToArgb();
+                if (field != null && field.PropertyType == typeof(Color) && field.GetValue(null) is Color color)
+                    return color.ToArgb();
                 throw new MissingFieldException();
             }
             catch (Exception)
@@ -311,7 +311,7 @@ public class Preview : PlayerCommand
                 }
                 try
                 {
-                    return Convert.ToInt32(colorParam, 16);
+                    return JavaNumberParser.ParseInt(colorParam, 16);
                 }
                 catch (Exception)
                 {

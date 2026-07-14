@@ -68,7 +68,7 @@ public class Ban : AdminCommand
         int time = 0; // Default: infinity
         if (paramsArr.Length > 2)
         {
-            if (!int.TryParse(paramsArr[2], out time))
+            if (!TryParseInt(paramsArr[2], out time))
             {
                 PacketSendUtility.SendMessage(admin, "Syntax: //ban <player> [account|ip|full] [time in minutes]");
                 return;

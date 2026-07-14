@@ -100,7 +100,7 @@ public class Headhunting : AdminCommand
                     SendInfo(admin);
                     return;
                 }
-                if (int.TryParse(paramsArr[1], out int playerId) && int.TryParse(paramsArr[2], out int kills))
+                if (TryParseInt(paramsArr[1], out int playerId) && TryParseInt(paramsArr[2], out int kills))
                     AddKills(admin, playerId, kills);
                 else
                     SendInfo(admin, "playerId and kills should be numbers.");

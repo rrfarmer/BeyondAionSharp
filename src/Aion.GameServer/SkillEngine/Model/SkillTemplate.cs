@@ -8,6 +8,7 @@ using Aion.GameServer.SkillEngine.Condition;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.PeriodicAction;
 using Aion.GameServer.SkillEngine.Properties;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.SkillEngine.Model;
 
@@ -147,7 +148,7 @@ public class SkillTemplate : L10n
     public string? CounterSkillRaw
     {
         get => counterSkill?.ToString();
-        set => counterSkill = value != null && System.Enum.TryParse<AttackStatus>(value, out var v) ? v : (AttackStatus?)null;
+        set => counterSkill = JavaEnum.TryValueOf(value, out AttackStatus parsed) ? parsed : null;
     }
 
     [XmlAttribute("noremoveatdie")]
