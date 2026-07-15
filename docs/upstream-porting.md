@@ -1,31 +1,52 @@
 # Upstream Java porting
 
-Port upstream changes in strict Java history order. One upstream Java commit produces one C# commit or one explicit ledger decision. Never merge or cherry-pick the Java branch into `main`.
+Port merged Java changes in strict `4.8` history order. One upstream Java commit produces one completed C# commit or one explicit blocked record. Never merge or cherry-pick Java history into C#.
+
+## Repository policy
+
+- C# work happens locally on `main`; do not create port branches or pull requests.
+- The C# repository must contain only `main` and must be clean before a package is prepared.
+- The Java checkout is read-only behavioral reference data.
+- `docs/upstream-port-state.json` is the queue cursor. Do not select a later commit manually.
+- `docs/upstream-port-log.md` is the human ledger.
+- Generated patches, prompts, reports, and logs belong under ignored `artifacts/upstream/`.
 
 ## Per-commit workflow
 
-1. Run `scripts/upstream/list-pending.ps1` and select the first commit only.
-2. Read the complete patch with `git show --find-renames <sha>` and identify the behavior being fixed.
-3. Map every affected Java type, configuration key, SQL object, and data file to its C# equivalent.
-4. Create `codex/upstream-<short-sha>-<slug>` from current `main`.
-5. Port only that behavior. Language-neutral XML/SQL/config changes may be carried directly after checking C# compatibility.
-6. Add focused regression coverage that fails before the port and passes after it.
-7. Run focused tests, then broader tests when the change touches shared infrastructure or data loading.
-8. Commit with the trailers below and open a PR for human review.
-9. After merge, update the ledger and `lastCompletedJavaCommit` in `upstream-port-state.json`.
+1. Run `scripts/upstream/scan-upstream.ps1` and confirm the first pending merged commit.
+2. Run `scripts/upstream/prepare-next.ps1`; use its generated `prompt.md` and exact Java patch.
+3. Explain the behavior, map every affected Java artifact to C#, and port only that commit.
+4. Add focused regression coverage and run `scripts/upstream/validate-port.ps1`.
+5. Run `scripts/upstream/complete-port.ps1` with the reviewed status and evidence-based notes.
+6. Review and stage only the intended files, then commit with the generated `commit-message.txt`.
+7. Run `scripts/upstream/verify-port.ps1` before considering the queue item complete.
+
+The detailed commands and n8n setup are in `docs/automation/n8n-upstream-port-workflow.md`.
+
+## Status rules
+
+| CLI status | Ledger status | Advance cursor | Validation required |
+|---|---|---:|---:|
+| `ported` | Ported | Yes | Yes |
+| `direct-data` | Direct data carryover | Yes | Yes |
+| `not-applicable` | Not applicable | Yes | No, but precise evidence is required |
+| `blocked` | Blocked | No | No, but the missing prerequisite is required |
+
+A blocked record may be resolved later. The later completed C# commit uses the same Java SHA, replaces the ledger row, and advances the cursor. Later Java commits remain ineligible until then.
+
+## Commit contract
+
+Every tracker decision is a local C# commit with exactly one trailer pair:
 
 ```text
 Upstream-Java-SHA: <40-character-sha>
-Port-Status: ported
+Port-Status: ported|direct-data|not-applicable|blocked
 ```
-
-Allowed ledger statuses are `Pending`, `In progress`, `Ported`, `Direct data carryover`, `Not applicable`, and `Blocked`. A skipped commit must explain why; do not advance the machine-readable state past a blocked commit because later fixes may depend on it.
 
 ## Review rules
 
-- Java describes intent and observable behavior; C# should use established local infrastructure.
-- Preserve ordering, null behavior, enum/ordinal semantics, numeric overflow, timing, packet layouts, and persistence side effects.
-- Do not bundle cleanup or adjacent upstream commits.
-- A green build alone is insufficient. Require a regression test or a concrete explanation of the validation boundary.
-- Keep automation concurrency at one so commits are never reordered.
-
+- Java describes intent and observable behavior; C# uses established local infrastructure.
+- Preserve ordering, null behavior, enum and ordinal semantics, numeric overflow, timing, packet layouts, persistence effects, and data compatibility.
+- Do not bundle cleanup, redesign, or adjacent Java commits.
+- Language-neutral XML, SQL, and configuration may be carried directly only after C# loader and model compatibility is verified.
+- A green build alone is insufficient. Require focused regression coverage or a concrete explanation of the validation boundary.

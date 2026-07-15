@@ -7,6 +7,8 @@
 *.pyc
 *.log
 
+/artifacts/upstream/
+
 game-server/cache/
 game-server/log/
 login-server/log/

@@ -35,6 +35,10 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Test upstream port automation
+        shell: pwsh
+        run: ./scripts/upstream/test-upstream-automation.ps1
+
       - name: Restore
         run: dotnet restore AionServer.slnx
 

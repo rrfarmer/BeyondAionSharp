@@ -1,0 +1,157 @@
+{
+  "id": "HmUxQf6s9T2kL4vN",
+  "name": "BeyondAionSharp - Monitor Java upstream",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "05b92533-7cf4-4794-b36b-00c12d7cc50a",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "4e8eb550-81c7-4e5f-bee5-bc8312c11448",
+      "name": "Every 6 hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -640,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "command": "pwsh.exe -NoLogo -NoProfile -NonInteractive -File \"%BEYOND_AION_CSHARP_ROOT%\\scripts\\upstream\\scan-upstream.ps1\" -CSharpRepository \"%BEYOND_AION_CSHARP_ROOT%\" -JavaRepository \"%BEYOND_AION_JAVA_ROOT%\" -OutputFormat Json"
+      },
+      "id": "3ac180cf-a76d-4828-9a85-3d9b9752c424",
+      "name": "Scan merged Java commits",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = String($json.stdout ?? '').trim();\nif (!stdout) throw new Error('The scan command returned no JSON.');\nconst line = stdout.split(/\\r?\\n/).filter(Boolean).at(-1);\nreturn [{ json: JSON.parse(line) }];"
+      },
+      "id": "5ecc6964-fc08-49a9-b0bd-df9807270a5f",
+      "name": "Parse scan output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "command": "pwsh.exe -NoLogo -NoProfile -NonInteractive -File \"%BEYOND_AION_CSHARP_ROOT%\\scripts\\upstream\\prepare-next.ps1\" -CSharpRepository \"%BEYOND_AION_CSHARP_ROOT%\" -JavaRepository \"%BEYOND_AION_JAVA_ROOT%\" -NoFetch -SkipPullRequests -OutputFormat Json"
+      },
+      "id": "71c20136-0bc8-4dc7-bc94-342ca14e42de",
+      "name": "Prepare first pending commit",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        80,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = String($json.stdout ?? '').trim();\nif (!stdout) throw new Error('The prepare command returned no JSON.');\nconst line = stdout.split(/\\r?\\n/).filter(Boolean).at(-1);\nconst preparation = JSON.parse(line);\nconst scan = $('Parse scan output').item.json;\nreturn [{ json: { scan, preparation } }];"
+      },
+      "id": "2ca84a19-c83a-4c97-a8bb-80c8cc9c6048",
+      "name": "Monitor result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Scan merged Java commits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 6 hours": {
+      "main": [
+        [
+          {
+            "node": "Scan merged Java commits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scan merged Java commits": {
+      "main": [
+        [
+          {
+            "node": "Parse scan output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse scan output": {
+      "main": [
+        [
+          {
+            "node": "Prepare first pending commit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare first pending commit": {
+      "main": [
+        [
+          {
+            "node": "Monitor result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "versionId": "174fae88-d97c-4a30-b054-27545e4ce63d",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
