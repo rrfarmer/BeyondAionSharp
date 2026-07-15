@@ -1,0 +1,69 @@
+name: beyond-aion-automation
+
+services:
+  n8n:
+    build:
+      context: ./docker
+      args:
+        NODE_VERSION: ${NODE_VERSION:-24.16.0}
+        N8N_VERSION: ${N8N_VERSION:-2.30.5}
+        CODEX_VERSION: ${CODEX_VERSION:-0.144.4}
+    image: beyond-aion-automation:${AUTOMATION_IMAGE_TAG:-local}
+    container_name: beyond-aion-automation
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${N8N_PORT_HOST:-5678}:5678"
+    environment:
+      HOME: /home/app
+      BEYOND_AION_CSHARP_ROOT: /workspace/csharp
+      BEYOND_AION_JAVA_ROOT: /workspace/java
+      BEYOND_AION_CODEX_MODEL: ${BEYOND_AION_CODEX_MODEL:-}
+      BEYOND_AION_WINDOWS_BIND: "true"
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-America/New_York}
+      TZ: ${GENERIC_TIMEZONE:-America/New_York}
+      N8N_HOST: localhost
+      N8N_LISTEN_ADDRESS: 0.0.0.0
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_TEMPLATES_ENABLED: "false"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      NODES_EXCLUDE: '["n8n-nodes-base.localFileTrigger"]'
+      EXECUTIONS_TIMEOUT: ${EXECUTIONS_TIMEOUT:-14400}
+      EXECUTIONS_TIMEOUT_MAX: ${EXECUTIONS_TIMEOUT_MAX:-21600}
+      GIT_COMMITTER_NAME: ${GIT_COMMITTER_NAME:-BeyondAionSharp Codex}
+      GIT_COMMITTER_EMAIL: ${GIT_COMMITTER_EMAIL:-codex@local.invalid}
+    volumes:
+      - type: bind
+        source: ${CSHARP_REPOSITORY:-../..}
+        target: /workspace/csharp
+      - type: bind
+        source: ${JAVA_REPOSITORY:-../../../aion-server}
+        target: /workspace/java
+      - type: volume
+        source: n8n_data
+        target: /home/app/.n8n
+      - type: volume
+        source: codex_data
+        target: /home/app/.codex
+      - type: volume
+        source: nuget_data
+        target: /home/app/.nuget/packages
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:5678/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    stop_grace_period: 5m
+
+volumes:
+  n8n_data:
+  codex_data:
+  nuget_data:

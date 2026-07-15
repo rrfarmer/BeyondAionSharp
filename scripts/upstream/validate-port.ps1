@@ -43,7 +43,7 @@ if (-not [string]::IsNullOrWhiteSpace($UpstreamSha) -and $UpstreamSha -ne $commi
 }
 $UpstreamSha = $commit.sha
 
-$packagePath = Get-ChildItem -LiteralPath (Join-Path $csharpRoot "artifacts\upstream") -Directory -ErrorAction SilentlyContinue |
+$packagePath = Get-ChildItem -LiteralPath (Join-Path $csharpRoot "artifacts/upstream") -Directory -ErrorAction SilentlyContinue |
     Where-Object {
         $metadataPath = Join-Path $_.FullName "metadata.json"
         if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) { return $false }
@@ -105,7 +105,7 @@ $specifications.Add([pscustomobject]@{
         "-NoProfile",
         "-NonInteractive",
         "-File",
-        (Join-Path $csharpRoot "scripts\ci\check-warning-baseline.ps1"),
+        (Join-Path $csharpRoot "scripts/ci/check-warning-baseline.ps1"),
         "-NoRestore"
     )
     Environment = $null

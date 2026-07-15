@@ -16,7 +16,7 @@ function Get-CSharpRepositoryRoot
     }
     if ([string]::IsNullOrWhiteSpace($candidate))
     {
-        $candidate = Join-Path $PSScriptRoot "..\.."
+        $candidate = Join-Path $PSScriptRoot "../.."
     }
 
     if (-not (Test-Path -LiteralPath $candidate -PathType Container))
@@ -116,7 +116,7 @@ function Get-UpstreamPortState
 {
     param([Parameter(Mandatory)] [string]$CSharpRepository)
 
-    $statePath = Join-Path $CSharpRepository "docs\upstream-port-state.json"
+    $statePath = Join-Path $CSharpRepository "docs/upstream-port-state.json"
     if (-not (Test-Path -LiteralPath $statePath -PathType Leaf))
     {
         throw "Upstream state file was not found: $statePath"
@@ -542,6 +542,8 @@ function Invoke-ExternalCommand
         [string[]]$Arguments = @(),
         [Parameter(Mandatory)] [string]$WorkingDirectory,
         [System.Collections.IDictionary]$Environment,
+        [AllowNull()] [string]$StandardInput,
+        [ValidateRange(0, 2147483)] [int]$TimeoutSeconds = 0,
         [string]$LogPath,
         [switch]$AllowFailure
     )
@@ -559,6 +561,7 @@ function Invoke-ExternalCommand
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
+    $startInfo.RedirectStandardInput = $null -ne $StandardInput
     foreach ($argument in $Arguments)
     {
         $startInfo.ArgumentList.Add($argument)
@@ -577,7 +580,25 @@ function Invoke-ExternalCommand
     $null = $process.Start()
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
-    $process.WaitForExit()
+    if ($null -ne $StandardInput)
+    {
+        $process.StandardInput.Write($StandardInput)
+        $process.StandardInput.Close()
+    }
+    $timedOut = $false
+    if ($TimeoutSeconds -gt 0)
+    {
+        $timedOut = -not $process.WaitForExit($TimeoutSeconds * 1000)
+        if ($timedOut)
+        {
+            $process.Kill($true)
+            $process.WaitForExit()
+        }
+    }
+    else
+    {
+        $process.WaitForExit()
+    }
     $stdout = $stdoutTask.GetAwaiter().GetResult()
     $stderr = $stderrTask.GetAwaiter().GetResult()
     $finishedUtc = [DateTime]::UtcNow
@@ -599,6 +620,7 @@ function Invoke-ExternalCommand
             "Started UTC: $($startedUtc.ToString('yyyy-MM-ddTHH:mm:ssZ'))",
             "Finished UTC: $($finishedUtc.ToString('yyyy-MM-ddTHH:mm:ssZ'))",
             "Exit code: $($process.ExitCode)",
+            "Timed out: $timedOut",
             "",
             "--- stdout ---",
             $stdout.TrimEnd(),
@@ -616,11 +638,12 @@ function Invoke-ExternalCommand
         startedUtc = $startedUtc.ToString("yyyy-MM-ddTHH:mm:ssZ")
         finishedUtc = $finishedUtc.ToString("yyyy-MM-ddTHH:mm:ssZ")
         durationSeconds = [Math]::Round(($finishedUtc - $startedUtc).TotalSeconds, 3)
+        timedOut = $timedOut
         stdout = $stdout
         stderr = $stderr
         logPath = $LogPath
     }
-    if ($process.ExitCode -ne 0 -and -not $AllowFailure)
+    if (($process.ExitCode -ne 0 -or $timedOut) -and -not $AllowFailure)
     {
         throw "$commandLine failed with exit code $($process.ExitCode). See $LogPath"
     }

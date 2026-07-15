@@ -8,6 +8,7 @@
 *.log
 
 /artifacts/upstream/
+/automation/n8n/.env
 
 game-server/cache/
 game-server/log/

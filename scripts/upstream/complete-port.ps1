@@ -61,7 +61,7 @@ if ($Status -in @("ported", "direct-data") -and $worktree.clean)
     throw "Status '$Status' requires reviewed implementation or data changes in the C# worktree."
 }
 
-$packagePath = Get-ChildItem -LiteralPath (Join-Path $csharpRoot "artifacts\upstream") -Directory -ErrorAction SilentlyContinue |
+$packagePath = Get-ChildItem -LiteralPath (Join-Path $csharpRoot "artifacts/upstream") -Directory -ErrorAction SilentlyContinue |
     Where-Object {
         $metadataPath = Join-Path $_.FullName "metadata.json"
         if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) { return $false }
@@ -112,7 +112,7 @@ $ledgerStatus = switch ($Status)
     "not-applicable" { "Not applicable" }
     "blocked" { "Blocked" }
 }
-$logPath = Join-Path $csharpRoot "docs\upstream-port-log.md"
+$logPath = Join-Path $csharpRoot "docs/upstream-port-log.md"
 $logLines = [System.Collections.Generic.List[string]]::new()
 foreach ($line in Get-Content -LiteralPath $logPath)
 {
@@ -143,7 +143,7 @@ else
 }
 $null = Write-Utf8File -Path $logPath -Content (($logLines -join [Environment]::NewLine) + [Environment]::NewLine)
 
-$statePath = Join-Path $csharpRoot "docs\upstream-port-state.json"
+$statePath = Join-Path $csharpRoot "docs/upstream-port-state.json"
 $state = Get-UpstreamPortState -CSharpRepository $csharpRoot
 if ($Status -ne "blocked")
 {

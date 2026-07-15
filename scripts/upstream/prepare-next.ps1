@@ -6,7 +6,7 @@ param(
     [string]$JavaRepository,
     [string]$Remote = "upstream",
     [string]$Branch,
-    [string]$ArtifactsRoot = "artifacts\upstream",
+    [string]$ArtifactsRoot = "artifacts/upstream",
     [switch]$NoFetch,
     [switch]$SkipPullRequests,
     [ValidateSet("Json", "Text")] [string]$OutputFormat = "Json"
@@ -76,7 +76,7 @@ else
 
     $metadata = [pscustomobject][ordered]@{
         schemaVersion = 1
-        promptVersion = 2
+        promptVersion = 4
         preparedUtc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
         upstreamRepository = $scan.upstreamRepository
         upstreamBranch = $scan.branch
@@ -92,7 +92,7 @@ else
     $metadataPath = Write-AutomationJson -InputObject $metadata -Path (Join-Path $packagePath "metadata.json")
     $null = Write-AutomationJson -InputObject $commit.changedFiles -Path (Join-Path $packagePath "changed-files.json")
 
-    $promptTemplatePath = Join-Path $csharpRoot "docs\prompts\port-upstream-commit.md"
+    $promptTemplatePath = Join-Path $csharpRoot "docs/prompts/port-upstream-commit.md"
     if (-not (Test-Path -LiteralPath $promptTemplatePath -PathType Leaf))
     {
         throw "Port prompt template was not found: $promptTemplatePath"

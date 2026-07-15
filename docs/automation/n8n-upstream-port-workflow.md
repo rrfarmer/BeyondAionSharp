@@ -1,138 +1,157 @@
-# n8n upstream-port workflow
+# Automated Java-to-C# upstream porting
 
-This automation monitors the Java `4.8` branch and prepares one commit at a time for a reviewed C# port. The repository scripts own ordering and state. n8n only schedules and displays their results.
+n8n is only the scheduler. Repository scripts discover and order Java commits, build the saved prompt, invoke Codex CLI, enforce the one-commit contract, and verify the result.
 
-## Safety boundary
+```mermaid
+flowchart LR
+    A["n8n: every 6 hours"] --> B["Fetch and scan upstream/4.8"]
+    B --> C["Lock and select first pending commit"]
+    C --> D["Generate exact Java patch and prompt"]
+    D --> E["codex exec in C# workspace"]
+    E --> F["Validate and update tracker"]
+    F --> G["Create one local C# commit"]
+    G --> H["Independent repository verification"]
+```
 
-The initial workflow does:
-
-- fetch `upstream/4.8` in the separate Java checkout;
-- list merged commits after `lastCompletedJavaCommit` in strict history order;
-- report open pull requests separately as a watchlist;
-- prepare patch, metadata, and prompt artifacts for the first merged commit only.
-
-It does not invoke an LLM, edit C# code, update the tracker, stage files, create commits, push, or create pull requests. Those steps remain reviewed local work on `main`.
+There is no n8n AI node and no model prompt stored in n8n. The workflow runs `scripts/upstream/run-next-port.ps1`, which reads the versioned prompt from `docs/prompts/port-upstream-commit.md` and passes the generated prompt to `codex exec` over standard input.
 
 ## Repository components
 
 | Path | Purpose |
 |---|---|
-| `scripts/upstream/scan-upstream.ps1` | Fetch and emit the merged queue plus open-PR watchlist. |
-| `scripts/upstream/prepare-next.ps1` | Enforce clean single-`main` state and package the first pending commit. |
+| `scripts/upstream/scan-upstream.ps1` | Fetch Java `upstream/4.8`, list merged commits in order, and report open PRs separately. |
+| `scripts/upstream/prepare-next.ps1` | Require clean single-`main` state and package the first pending commit. |
+| `scripts/upstream/run-next-port.ps1` | Own the lock, invoke Codex, and enforce exactly one verified C# commit. |
 | `scripts/upstream/validate-port.ps1` | Run diff checks, restore, warning rebuild, tests, and fidelity checks. |
-| `scripts/upstream/complete-port.ps1` | Record one reviewed decision and create the required commit message. |
-| `scripts/upstream/verify-port.ps1` | Verify clean state, commit trailers, ledger status, and all completed mappings. |
-| `scripts/upstream/test-upstream-automation.ps1` | Exercise ordering and state transitions in temporary Git repositories. |
-| `scripts/automation/start-n8n.ps1` | Start a pinned local n8n with the required environment and node policy. |
-| `automation/n8n/workflows/upstream-monitor.json` | Inactive workflow to import into n8n. |
+| `scripts/upstream/complete-port.ps1` | Record the decision and generate the commit message and trailers. |
+| `scripts/upstream/verify-port.ps1` | Verify clean state, history, trailers, ledger, and cursor mappings. |
+| `docs/upstream-port-state.json` | Durable Java queue cursor. |
+| `docs/upstream-port-log.md` | Java-to-C# decision ledger. |
+| `docs/prompts/port-upstream-commit.md` | Versioned Codex instructions. |
+| `automation/n8n/workflows/upstream-monitor.json` | Inactive importable scheduler workflow. |
 
-Generated files live below `artifacts/upstream/` and are ignored by Git.
+Generated patches, prompts, reports, and Codex logs are ignored below `artifacts/upstream/`.
 
-## Run without n8n
+## Docker boundary
 
-From the C# repository root:
+The custom image contains the pinned n8n, Codex CLI, PowerShell, .NET SDK, Git, Python, and repository test tools. Docker Compose mounts:
 
-```powershell
-pwsh -NoProfile -File .\scripts\upstream\scan-upstream.ps1 -OutputFormat Text
-pwsh -NoProfile -File .\scripts\upstream\prepare-next.ps1 -OutputFormat Text
+- the Windows C# checkout at `/workspace/csharp` with write access;
+- the Windows Java checkout at `/workspace/java` so the scanner can update remote refs;
+- persistent named volumes for n8n state, Codex authentication, and NuGet packages.
+
+Codex runs with `/workspace/csharp` as its working directory and the `workspace-write` sandbox. The Java checkout is outside that writable workspace. n8n's Execute Command node still has container-level access to both mounts, so the service is bound only to `127.0.0.1` and must not be exposed publicly.
+
+The container matches Git for Windows `core.autocrlf=true`; otherwise Linux Git would incorrectly report most mounted CRLF files as modified.
+Before its warning-baseline rebuild, it removes only generated `*.Up2Date` markers. Host-created markers appear as root-owned through Docker Desktop, so .NET cannot update their explicit timestamps as the non-root container user. MSBuild recreates them; source files and substantive outputs are untouched.
+
+## First-time setup
+
+Prerequisites are Docker Desktop using Linux containers, PowerShell 7.2 or newer, and sibling checkouts at:
+
+```text
+C:\Users\ryanf\Documents\GitHub\BeyondAionSharp
+C:\Users\ryanf\Documents\GitHub\aion-server
 ```
 
-The scanner may show open PRs even when `Pending merged commits` is zero. An open PR is not eligible for the port queue until its commit is reachable from Java `upstream/4.8`.
+Different locations, timezone, commit identity, host port, or Codex model can be set by copying `automation/n8n/.env.example` to `automation/n8n/.env` and editing the values.
 
-## First-time n8n setup
-
-The launcher uses `npx`, so no global n8n installation is required. It pins n8n `2.26.8` and accepts Node.js `20.19` through `24.x`.
-
-1. Start n8n from the C# repository root:
+1. Build and start the container from the C# repository:
 
    ```powershell
    pwsh -NoProfile -File .\scripts\automation\start-n8n.ps1
    ```
 
-2. Open `http://localhost:5678` and create the local owner account when prompted.
-3. In the workflow menu, choose **Import from File** and select `automation/n8n/workflows/upstream-monitor.json`.
-4. Run the workflow manually once. Inspect the final `Monitor result` node.
-5. Activate the workflow only after that manual run succeeds. Its schedule is every six hours.
+2. Open the URL printed by the launcher and create the local n8n owner account.
 
-n8n data is stored at `%USERPROFILE%\.n8n-beyond-aion-sharp` by default. The launcher binds to `127.0.0.1`, disables diagnostics, sets both repository paths, and enables `Execute Command` while leaving `Local File Trigger` disabled.
+3. Authenticate Codex inside its persistent Docker volume:
 
-The `Execute Command` node can run commands as the current Windows user. Keep this n8n instance local and do not expose port `5678` to the network. See the official [npm installation](https://docs.n8n.io/hosting/installation/npm/), [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/), and [workflow import](https://docs.n8n.io/workflows/export-import/) documentation.
+   ```powershell
+   pwsh -NoProfile -File .\scripts\automation\login-codex.ps1
+   ```
 
-## Per-commit lifecycle
+   Follow the displayed device-auth URL and code. Rebuilding the image does not remove this login; `docker compose down --volumes` does.
 
-### 1. Prepare
+4. Import or refresh the inactive workflow:
 
-The scheduled workflow prepares only the first pending merged commit. To do it manually:
+   ```powershell
+   pwsh -NoProfile -File .\scripts\automation\import-workflow.ps1
+   ```
 
-```powershell
-pwsh -NoProfile -File .\scripts\upstream\prepare-next.ps1 -OutputFormat Text
-```
+5. In n8n, open **BeyondAionSharp - Port Java commits with Codex** and run it manually once. Confirm the final result is expected and inspect `git status` afterward.
 
-The package contains `metadata.json`, `changed-files.json`, `commit.patch`, `diff.patch`, `prompt.md`, and `README.md`. Give `prompt.md` to Codex while the C# repository is the active workspace.
+6. Publish or activate the workflow. It then runs every six hours and handles at most one merged Java commit per execution.
 
-### 2. Implement
+The C# repository must be clean, on `main`, and contain no other local branches before a pending commit can run. Untracked files count as dirty.
 
-Port the behavior into established C# structures. Do not edit the Java checkout, include adjacent Java commits, create a branch, or commit yet. Add focused regression coverage.
+## Scheduled lifecycle
 
-### 3. Validate
+Each n8n execution performs two commands:
 
-```powershell
-pwsh -NoProfile -File .\scripts\upstream\validate-port.ps1 `
-  -UpstreamSha <40-character-java-sha> `
-  -OutputFormat Text
-```
+1. `scan-upstream.ps1` fetches Java `upstream/4.8`, calculates the merged queue after `lastCompletedJavaCommit`, and reads the open-PR watchlist. Open PRs are never eligible until their commits are reachable from `upstream/4.8`.
+2. `run-next-port.ps1 -NoFetch` processes only the first pending merged commit under an exclusive filesystem lock.
 
-For a focused test first:
+For a pending commit, the runner:
 
-```powershell
-pwsh -NoProfile -File .\scripts\upstream\validate-port.ps1 `
-  -UpstreamSha <sha> `
-  -FocusedTestProject .\tests\Some.Tests\Some.Tests.csproj `
-  -TestFilter 'FullyQualifiedName~RelevantTests' `
-  -OutputFormat Text
-```
+1. refuses a dirty C# worktree, a branch other than `main`, or additional local branches;
+2. creates the patch, metadata, prompt, and baseline fingerprints;
+3. invokes noninteractive Codex CLI with no approval prompts and a three-hour timeout;
+4. lets the versioned prompt direct implementation, tests, tracker completion, and the local commit;
+5. independently requires a clean worktree, exactly one descendant commit, valid trailers, a matching ledger decision, and a valid queue cursor;
+6. writes machine-readable and human-readable logs below the commit's artifact directory.
 
-The default validation sequence is `git diff --check`, restore, optional focused tests, the warning-baseline rebuild, all solution tests, and the structural fidelity check. The report fingerprints tracked and untracked worktree content so completion refuses changes made after validation.
+Codex never pushes. BeyondAionSharp currently has no Git remote, and the prompt explicitly forbids remotes, branches, pull requests, merges, and history rewriting.
 
-### 4. Record the decision
+## Result states
 
-Use one of `ported`, `direct-data`, `not-applicable`, or `blocked`:
+| Status | Meaning | Automatic next run |
+|---|---|---|
+| `no-pending` | No merged Java commit follows the cursor. | Scan again later. |
+| `busy` | Another run owns `artifacts/upstream/automation.lock`. | Try again later. |
+| `committed` | One port decision was committed and verified. | Process the next commit on a later run. |
+| `blocked` | Codex committed an evidence-based blocked tracker decision. | Stop at this Java SHA. |
+| `blocked-existing` | The first pending SHA already has a blocked ledger row. | Do not retry automatically. |
+| `codex-not-authenticated` | The persistent Codex volume has no valid login. | n8n execution fails; run the login script. |
+| `codex-failed` / `codex-timeout` | Codex exited unsuccessfully or exceeded its timeout. | n8n execution fails; inspect the worktree. |
+| `failed` | A safety, preparation, or postcondition check failed. | n8n execution fails; inspect the reported reason. |
 
-```powershell
-pwsh -NoProfile -File .\scripts\upstream\complete-port.ps1 `
-  -UpstreamSha <sha> `
-  -Status ported `
-  -Notes 'Behavioral fix and focused regression coverage; full validation passed.' `
-  -OutputFormat Text
-```
+A failed Codex run may deliberately leave partial edits for inspection. The next pending run will refuse that dirty tree, preventing it from mixing commits. Review those edits and either finish the same port manually or remove only the automation-created changes before retrying.
 
-`ported` and `direct-data` require a current passing validation report. `not-applicable` and `blocked` require evidence in `-Notes`. A blocked decision updates the ledger but does not advance `lastCompletedJavaCommit`.
+## Manual operation and recovery
 
-### 5. Commit locally
-
-Review `git status` and stage only the intended implementation, tests, `docs/upstream-port-log.md`, and `docs/upstream-port-state.json`. Then use the generated message:
+Run the exact same worker without waiting for n8n:
 
 ```powershell
-git commit -F "<package-path>\commit-message.txt"
+docker compose --project-name beyond-aion-automation `
+  --file .\automation\n8n\docker-compose.yml `
+  exec -T n8n pwsh -NoProfile -File /workspace/csharp/scripts/upstream/run-next-port.ps1 `
+  -CSharpRepository /workspace/csharp -JavaRepository /workspace/java -OutputFormat Text
 ```
 
-This creates the required `Upstream-Java-SHA` and `Port-Status` trailers. Do not create another local branch or push the C# repository.
+After resolving the prerequisite for a blocked SHA, use the same command with `-RetryBlocked`. The scheduler intentionally does not retry blocked decisions on its own.
 
-### 6. Verify
+Inspect a run with:
 
 ```powershell
-pwsh -NoProfile -File .\scripts\upstream\verify-port.ps1 -OutputFormat Text
+git status --short --branch
+Get-Content .\artifacts\upstream\latest-run.json
+Get-ChildItem .\artifacts\upstream -Recurse -Filter runner-result.json
+docker compose --project-name beyond-aion-automation `
+  --file .\automation\n8n\docker-compose.yml logs --tail 200 n8n
 ```
 
-Verification requires a clean worktree, only the local `main` branch, an exact ledger row, a valid HEAD trailer pair, and one completed C# mapping for every Java commit through the state cursor. Earlier blocked records are allowed, but only one completed mapping may exist.
+Per-commit directories also contain `prompt.md`, `commit.patch`, `metadata.json`, `codex-events.jsonl`, `codex-final.md`, and `codex-process.log` when Codex was invoked.
 
-## Follow-up automation tasks
+Stop the service without deleting persistent state:
 
-The next automation phase should be added only after this monitor runs reliably:
+```powershell
+pwsh -NoProfile -File .\scripts\automation\stop-n8n.ps1
+```
 
-1. Choose a notification destination and add an n8n node for newly merged commits or changed PR watchlist state.
-2. Choose the supported Codex or LLM execution surface and credential model. Insert it after package preparation, with the exact `prompt.md` as input.
-3. Run agent edits in an isolated temporary worktree or require explicit human approval before the agent touches local `main`.
-4. Keep deterministic validation outside the model and require a passing `validation.json` before tracker advancement.
-5. Add retry limits and a durable single-item lock before allowing unattended execution.
-6. Back up the n8n user folder and its generated encryption configuration before adding credentials.
+## Maintenance
+
+Runtime versions are pinned as Docker build arguments in `automation/n8n/docker-compose.yml`. Update them deliberately, rebuild, rerun `scripts/upstream/test-upstream-automation.ps1` in the container, import the workflow again, and perform a manual run before reactivating scheduling.
+
+The n8n and Codex volumes contain the owner configuration and login credentials. Back them up if this automation becomes operationally important, keep the n8n port local, and never commit `automation/n8n/.env`.
+
+Official references: [Codex noninteractive mode](https://learn.chatgpt.com/docs/non-interactive-mode.md), [Codex authentication](https://learn.chatgpt.com/docs/auth.md), [n8n with Docker](https://docs.n8n.io/deploy/host-n8n/install-options/install-with-docker/), [n8n Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/), and [n8n workflow import/export](https://docs.n8n.io/workflows/export-import/).

@@ -24,6 +24,26 @@ function Resolve-RepositoryPath([string]$Path)
 $solutionPath = Resolve-RepositoryPath $Solution
 $resolvedBaselinePath = Resolve-RepositoryPath $BaselinePath
 
+if ($env:BEYOND_AION_WINDOWS_BIND -eq "true")
+{
+    # Host-created marker files appear as root-owned through Docker Desktop. MSBuild's
+    # explicit timestamp update then fails even though ordinary writes are allowed.
+    foreach ($relativeRoot in @("src", "tests", "tools"))
+    {
+        $generatedRoot = Resolve-RepositoryPath $relativeRoot
+        if (-not $generatedRoot.StartsWith($repoRoot + [System.IO.Path]::DirectorySeparatorChar,
+                [StringComparison]::Ordinal))
+        {
+            throw "Refusing to inspect generated files outside the repository: $generatedRoot"
+        }
+        foreach ($objDirectory in Get-ChildItem -LiteralPath $generatedRoot -Recurse -Directory -Filter "obj" -ErrorAction SilentlyContinue)
+        {
+            Get-ChildItem -LiteralPath $objDirectory.FullName -Recurse -File -Filter "*.Up2Date" -ErrorAction SilentlyContinue |
+                Remove-Item -Force
+        }
+    }
+}
+
 if (-not (Test-Path -LiteralPath $solutionPath -PathType Leaf))
 {
     throw "Solution was not found: $solutionPath"

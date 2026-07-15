@@ -70,7 +70,7 @@ $ledgerStatus = switch ($headPortStatus)
 }
 $shortSha = $UpstreamSha.Substring(0, 9)
 $ledgerMatches = @(
-    Get-Content -LiteralPath (Join-Path $csharpRoot "docs\upstream-port-log.md") |
+    Get-Content -LiteralPath (Join-Path $csharpRoot "docs/upstream-port-log.md") |
         Where-Object { $_ -match "^\|\s*\x60?$([regex]::Escape($shortSha))\x60?\s*\|" }
 )
 if ($ledgerMatches.Count -ne 1)
@@ -91,7 +91,7 @@ $expectedJavaShas = @(
         "$($state.baselineJavaCommit)..$completedSha"
     )).Lines | Where-Object { $_ -match "^[0-9a-fA-F]{40}$" }
 )
-$allLedgerLines = @(Get-Content -LiteralPath (Join-Path $csharpRoot "docs\upstream-port-log.md"))
+$allLedgerLines = @(Get-Content -LiteralPath (Join-Path $csharpRoot "docs/upstream-port-log.md"))
 $missingMappings = [System.Collections.Generic.List[string]]::new()
 $duplicateMappings = [System.Collections.Generic.List[string]]::new()
 $missingLedgerRows = [System.Collections.Generic.List[string]]::new()

@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 
 Import-Module (Join-Path $PSScriptRoot "UpstreamAutomation.psm1") -Force
 
-$sourceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
+$sourceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "../.."))
 $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("BeyondAionSharp-upstream-test-" + [guid]::NewGuid().ToString("N"))
 $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
@@ -94,14 +94,14 @@ try
         lastScannedJavaCommit = $baselineSha
         updatedUtc = "2026-01-01T00:00:00Z"
     }
-    Write-TestFile -Path (Join-Path $csharpRoot "docs\upstream-port-state.json") -Content (($state | ConvertTo-Json) + "`n")
-    Write-TestFile -Path (Join-Path $csharpRoot "docs\upstream-port-log.md") -Content @"
+    Write-TestFile -Path (Join-Path $csharpRoot "docs/upstream-port-state.json") -Content (($state | ConvertTo-Json) + "`n")
+    Write-TestFile -Path (Join-Path $csharpRoot "docs/upstream-port-log.md") -Content @"
 # Upstream port log
 
 | Upstream SHA | Date | Subject | Status | C# commit / PR | Notes |
 |---|---|---|---|---|---|
 "@
-    Write-TestFile -Path (Join-Path $csharpRoot "docs\prompts\port-upstream-commit.md") -Content @"
+    Write-TestFile -Path (Join-Path $csharpRoot "docs/prompts/port-upstream-commit.md") -Content @"
 Port {{UPSTREAM_SHA}}
 
 {{UPSTREAM_PATCH}}
@@ -185,6 +185,26 @@ Port {{UPSTREAM_SHA}}
     }
     Assert-True $cleanGateFailed "Package preparation must reject a dirty C# worktree."
     Remove-Item -LiteralPath (Join-Path $csharpRoot "dirty.txt") -Force
+
+    $unauthenticatedRun = Invoke-ExternalCommand -FilePath pwsh -Arguments @(
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        (Join-Path $PSScriptRoot "run-next-port.ps1"),
+        "-CSharpRepository",
+        $csharpRoot,
+        "-JavaRepository",
+        $javaRoot,
+        "-CodexCommand",
+        "git",
+        "-NoFetch",
+        "-OutputFormat",
+        "Json"
+    ) -WorkingDirectory $sourceRoot -AllowFailure
+    Assert-True ($unauthenticatedRun.exitCode -ne 0) "An unauthenticated Codex preflight must fail the runner."
+    $unauthenticated = $unauthenticatedRun.stdout.Trim() | ConvertFrom-Json
+    Assert-Equal "codex-not-authenticated" $unauthenticated.status "The runner did not report its authentication failure."
 
     $blockedJson = Invoke-TestScript -Path (Join-Path $PSScriptRoot "complete-port.ps1") -Parameters ($common + @{
         Status = "blocked"

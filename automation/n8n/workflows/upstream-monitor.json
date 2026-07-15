@@ -1,6 +1,6 @@
 {
   "id": "HmUxQf6s9T2kL4vN",
-  "name": "BeyondAionSharp - Monitor Java upstream",
+  "name": "BeyondAionSharp - Port Java commits with Codex",
   "nodes": [
     {
       "parameters": {},
@@ -35,7 +35,7 @@
     },
     {
       "parameters": {
-        "command": "pwsh.exe -NoLogo -NoProfile -NonInteractive -File \"%BEYOND_AION_CSHARP_ROOT%\\scripts\\upstream\\scan-upstream.ps1\" -CSharpRepository \"%BEYOND_AION_CSHARP_ROOT%\" -JavaRepository \"%BEYOND_AION_JAVA_ROOT%\" -OutputFormat Json"
+        "command": "pwsh -NoLogo -NoProfile -NonInteractive -File \"$BEYOND_AION_CSHARP_ROOT/scripts/upstream/scan-upstream.ps1\" -CSharpRepository \"$BEYOND_AION_CSHARP_ROOT\" -JavaRepository \"$BEYOND_AION_JAVA_ROOT\" -OutputFormat Json"
       },
       "id": "3ac180cf-a76d-4828-9a85-3d9b9752c424",
       "name": "Scan merged Java commits",
@@ -61,10 +61,10 @@
     },
     {
       "parameters": {
-        "command": "pwsh.exe -NoLogo -NoProfile -NonInteractive -File \"%BEYOND_AION_CSHARP_ROOT%\\scripts\\upstream\\prepare-next.ps1\" -CSharpRepository \"%BEYOND_AION_CSHARP_ROOT%\" -JavaRepository \"%BEYOND_AION_JAVA_ROOT%\" -NoFetch -SkipPullRequests -OutputFormat Json"
+        "command": "pwsh -NoLogo -NoProfile -NonInteractive -File \"$BEYOND_AION_CSHARP_ROOT/scripts/upstream/run-next-port.ps1\" -CSharpRepository \"$BEYOND_AION_CSHARP_ROOT\" -JavaRepository \"$BEYOND_AION_JAVA_ROOT\" -NoFetch -OutputFormat Json"
       },
       "id": "71c20136-0bc8-4dc7-bc94-342ca14e42de",
-      "name": "Prepare first pending commit",
+      "name": "Run Codex port",
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
@@ -74,7 +74,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const stdout = String($json.stdout ?? '').trim();\nif (!stdout) throw new Error('The prepare command returned no JSON.');\nconst line = stdout.split(/\\r?\\n/).filter(Boolean).at(-1);\nconst preparation = JSON.parse(line);\nconst scan = $('Parse scan output').item.json;\nreturn [{ json: { scan, preparation } }];"
+        "jsCode": "const stdout = String($json.stdout ?? '').trim();\nif (!stdout) throw new Error('The Codex runner returned no JSON.');\nconst line = stdout.split(/\\r?\\n/).filter(Boolean).at(-1);\nconst run = JSON.parse(line);\nconst scan = $('Parse scan output').item.json;\nreturn [{ json: { scan, run } }];"
       },
       "id": "2ca84a19-c83a-4c97-a8bb-80c8cc9c6048",
       "name": "Monitor result",
@@ -125,14 +125,14 @@
       "main": [
         [
           {
-            "node": "Prepare first pending commit",
+            "node": "Run Codex port",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepare first pending commit": {
+    "Run Codex port": {
       "main": [
         [
           {
@@ -149,7 +149,7 @@
     "executionOrder": "v1",
     "timezone": "America/New_York"
   },
-  "versionId": "174fae88-d97c-4a30-b054-27545e4ce63d",
+  "versionId": "6a2c3b6d-ed22-47c1-a35a-b4c5ecad6e45",
   "meta": {
     "templateCredsSetupCompleted": true
   },

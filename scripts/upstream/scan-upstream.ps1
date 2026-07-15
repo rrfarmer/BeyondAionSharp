@@ -29,7 +29,7 @@ $scan = Get-UpstreamScan `
 
 if ([string]::IsNullOrWhiteSpace($OutputPath))
 {
-    $OutputPath = Join-Path $csharpRoot "artifacts\upstream\latest-scan.json"
+    $OutputPath = Join-Path $csharpRoot "artifacts/upstream/latest-scan.json"
 }
 elseif (-not [System.IO.Path]::IsPathRooted($OutputPath))
 {
