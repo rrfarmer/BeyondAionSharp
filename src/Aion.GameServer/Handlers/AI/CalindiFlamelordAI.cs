@@ -10,7 +10,13 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("IDTiamat_2_calindi_flamelord")]
 public class CalindiFlamelordAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(75, 50, 25, 12);
+    /// <summary>
+    /// Retail thresholds, from pattern IDTiamat_Kalrindy: four identical steps at 80/60/40/25
+    /// that each cast and spawn the ground surukana, then a different finisher at 15. We ran
+    /// only three of the repeats, at an invented 75/50/25, and finished at 12.
+    /// See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(80, 60, 40, 25, 15);
 
     public CalindiFlamelordAI(Npc owner)
         : base(owner)
@@ -34,12 +40,13 @@ public class CalindiFlamelordAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 75:
-            case 50:
+            case 80:
+            case 60:
+            case 40:
             case 25:
                 StartHallucinatoryVictoryEvent();
                 break;
-            case 12:
+            case 15:
                 GetOwner().QueueSkill(20942, 1);
                 break;
         }

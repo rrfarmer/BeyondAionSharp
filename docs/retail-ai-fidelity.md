@@ -83,7 +83,7 @@ server-wide worklist. Each produces candidates for review, not auto-fixes.
 |---|---|---|
 | `audit_missing_adds.py` | Encounter adds that exist only as templates, nothing ever spawns them | 812 across 518 encounters (768 implementable, 44 waypoint-blocked) |
 | `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 0 remaining (was 197) |
-| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 24 AI classes (17 threshold, 7 need restructuring); 4 corrected so far |
+| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 24 AI classes; 7 corrected, 2 judged correct as-is, ~8 are sequence-at-one-threshold, 7 regime-guarded |
 
 Notes for whoever works these lists:
 
@@ -117,6 +117,50 @@ Notes for whoever works these lists:
 ---
 
 ## Log
+
+### HP thresholds — Mage Preceptor (217580), Heiramune (233467), Calindi Flamelord (219359)
+
+**Mage Preceptor**, `IDArena_S7_Named_3`: retail has two steps, 60 and 30; we
+had three at 75/50/25. The shapes match once the odd one out is folded in —
+retail's 60 casts three skills and spawns both elementals, its 30 is four casts
+with no spawn, which is our old 50 body plus the 75 cast, and our old 25 body.
+Nothing dropped, invented threshold gone.
+
+**Nightmare Lord Heiramune**, `IDAsteria_IU_world_3Stage_Boss`: add spawns at
+**55**, not 50. Its other two retail steps only shout, which is shout data's
+job, so they are left alone.
+
+**Calindi Flamelord**, `IDTiamat_Kalrindy`: retail runs the hallucinatory event
+**four** times, at 80/60/40/25, then a different finisher at **15**. We ran it
+three times at an invented 75/50/25 and finished at 12 — so this both renumbers
+and restores a missing repeat.
+
+### Not changed, and why
+
+- **King Consierd** (`IDArena_S9_Named_2`) and several others declare a phase
+  whose body only starts a rotation task. That is a start-of-fight trigger
+  wearing a threshold, and retail keeps such rotations on battle timers rather
+  than HP steps. Renumbering it to a retail threshold would delay the boss's
+  entire skill loop. Left alone.
+- **Queen Alukina** (`IDArena_S8_Named_3`) has three escalating steps against
+  retail's one. Folding three phases' casts into a single step is speculative
+  in a way the Mage Preceptor merge was not — there the counts corroborated it
+  exactly — so it waits for a way to observe the fight.
+
+### The sequence-at-one-threshold shape
+
+The largest remaining group is not mis-numbered at all. Retail crosses **one**
+threshold and then runs a flag-latched sequence off a repeating battle timer;
+aionemu reproduced the sequence by inventing a *ladder* of thresholds. The
+Flamelord is the clearest case: retail spawns its delivery NPCs in four steps
+all at 25%, and we spawn the same four NPCs at 40/30/20/10. Engineer Lahulahu
+(8 steps at 25), Empowered Agent (6 at 20), Unstable Triroan (7 at 20) and
+Enraged Modor (3 at 50) are the same shape.
+
+Matching these means driving a timed sequence from a single threshold rather
+than editing numbers, and `HpPhases` cannot express it. That is a small
+sub-system — an ordered, delayed step runner — and the work belongs with the
+regime-guarded reimplementations rather than with the renumbering.
 
 ### HP thresholds — Priest Preceptor (217581) and Gelkmaros Padmarashka (216580)
 
