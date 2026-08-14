@@ -9,7 +9,12 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("nightmarelordheiramune")]
 public class NightmareLordHeiramuneAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(80, 50);
+    /// <summary>
+    /// Retail pattern IDAsteria_IU_world_3Stage_Boss spawns its add at 55%, not the 50% we had.
+    /// Its other two steps (80 and 40) only shout, which is shout data's job rather than this
+    /// class's. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(80, 55);
     private ScheduledTask? spawnTask;
 
     public NightmareLordHeiramuneAI(Npc owner) : base(owner)
@@ -29,7 +34,7 @@ public class NightmareLordHeiramuneAI : AggressiveNpcAI, HpPhases.PhaseHandler
             case 80:
                 StartSpawnTask();
                 break;
-            case 50:
+            case 55:
                 PacketSendUtility.BroadcastMessage(GetOwner(), 1501138);
                 Spawn(233162, GetOwner().GetX() + 5, GetOwner().GetY() + 5, GetOwner().GetZ(), (sbyte)GetOwner().GetHeading());
                 break;

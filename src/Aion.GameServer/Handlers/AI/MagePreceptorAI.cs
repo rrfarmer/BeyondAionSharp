@@ -13,7 +13,13 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("mage_preceptor")]
 public class MagePreceptorAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(75, 50, 25);
+    /// <summary>
+    /// Retail thresholds, from pattern IDArena_S7_Named_3: two latched steps at 60 and 30. We
+    /// had three at 75/50/25; the extra cast now runs inside the 60 step, which makes both
+    /// steps match the pattern's shape — three casts plus both elementals at 60, four casts at
+    /// 30. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(60, 30);
 
     public MagePreceptorAI(Npc owner) : base(owner)
     {
@@ -48,10 +54,11 @@ public class MagePreceptorAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 75:
+            case 60:
+                // Retail's first step casts three skills and spawns both elementals. We had
+                // the third cast split off into an invented 75% step; folding it in here
+                // matches the pattern exactly without dropping the cast.
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19605, 10, GetRandomTarget()).UseNoAnimationSkill();
-                break;
-            case 50:
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19606, 10, GetTarget()).UseNoAnimationSkill();
                 ThreadPoolManager.GetInstance().Schedule(_ =>
                 {
@@ -70,7 +77,8 @@ public class MagePreceptorAI : AggressiveNpcAI, HpPhases.PhaseHandler
                     return ValueTask.CompletedTask;
                 }, 3000L);
                 break;
-            case 25:
+            case 30:
+                // Retail's second step is four casts and no spawn, which is what this is.
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19606, 10, GetTarget()).UseNoAnimationSkill();
                 ScheduleSkill(3000);
                 ScheduleSkill(9000);
