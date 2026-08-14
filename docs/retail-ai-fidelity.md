@@ -83,7 +83,7 @@ server-wide worklist. Each produces candidates for review, not auto-fixes.
 |---|---|---|
 | `audit_missing_adds.py` | Encounter adds that exist only as templates, nothing ever spawns them | 812 across 518 encounters (768 implementable, 44 waypoint-blocked) |
 | `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 0 remaining (was 197) |
-| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 39 AI classes |
+| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 40 AI classes (33 renumberable, 7 need restructuring) |
 
 Notes for whoever works these lists:
 
@@ -91,11 +91,17 @@ Notes for whoever works these lists:
   audit now encodes: an NPC already covered by a broad catch-all group is not
   mute even when this group's own lines never play, and a group's
   `restrict_world` often names a different map than the live NPC's.
-- **HP-phase mismatches need reading, not replacing.** A pattern's HP
-  conditions cover more than phase transitions, so a mismatch is a prompt to
-  read the pattern. The obvious cases are unmistakable though: Modor's
-  `HpPhases(100, 81, 77, 61, 50)` against a retail `100/75/50`, and Vasharti's
-  `75/50/25/10` against `86/56/26`, are observation artifacts meeting the spec.
+- **HP-phase mismatches split into two very different jobs.** `is_hp_lower_than`
+  latched behind a flag is a phase transition, and where retail has a comparable
+  list the fix is renumbering — Adjutant Anuhart's `50/25/10` against a retail
+  `70/40/22`, Vasharti's `75/50/25/10` against `86/56/26`. But
+  `is_hp_in_boundary` is a regime guard that gates timer branches and fires
+  repeatedly, and a boss built from those has no phase list to copy at all.
+  Modor is the example: retail runs her as two regimes, above and below 75%,
+  with flag-latched chains inside each, so our `HpPhases(100, 81, 77, 61, 50)`
+  is not five wrong numbers but the wrong shape. Those seven are
+  reimplementations on the scale of Macunbello, not edits. The audit separates
+  the two.
 
 ---
 

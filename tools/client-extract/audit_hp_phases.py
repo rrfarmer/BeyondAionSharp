@@ -41,19 +41,29 @@ def load_binding(path: pathlib.Path) -> dict[str, str]:
     return out
 
 
-def pattern_thresholds(patterns_dir: pathlib.Path) -> dict[str, set[int]]:
-    out: dict[str, set[int]] = {}
+def pattern_thresholds(patterns_dir: pathlib.Path) -> dict[str, tuple[set[int], set[tuple[int, int]]]]:
+    """pattern -> (one-shot phase thresholds, regime boundaries)
+
+    These are different constructs and must not be conflated. `is_hp_lower_than`
+    latched behind a flag variable is a phase transition, the thing HpPhases
+    models. `is_hp_in_boundary` is a regime guard: it gates which branch of a
+    timer runs while HP sits inside a band, and fires repeatedly. A boss whose
+    pattern is built from boundaries has no phase list to compare against, and
+    porting it means restructuring the fight rather than editing numbers.
+    """
+    out: dict[str, tuple[set[int], set[tuple[int, int]]]] = {}
     for path in sorted(patterns_dir.glob("*.xml")):
         for block in PATTERN_RE.finditer(read_text(path)):
             body = block.group(1)
             m = NAME_RE.search(body)
             if not m:
                 continue
-            vals = {int(v) for v in HP_LOWER_RE.findall(body)}
-            for lo, hi in HP_BOUND_RE.findall(body):
-                vals.add(int(hi))
-            if vals:
-                out.setdefault(m.group(1), set()).update(vals)
+            phases = {int(v) for v in HP_LOWER_RE.findall(body)}
+            regimes = {(int(lo), int(hi)) for lo, hi in HP_BOUND_RE.findall(body)}
+            if phases or regimes:
+                p, r = out.setdefault(m.group(1), (set(), set()))
+                p.update(phases)
+                r.update(regimes)
     return out
 
 
@@ -90,22 +100,34 @@ def main() -> None:
 
         for npc_id in by_ai.get(name.group(1), []):
             pattern = binding.get(npc_id)
-            retail = thresholds.get(pattern) if pattern else None
-            if not retail:
+            entry = thresholds.get(pattern) if pattern else None
+            if not entry:
                 continue
-            missing = [v for v in ours if v not in retail]
+            phases, regimes = entry
+            missing = [v for v in ours if v not in phases]
             if missing:
-                rows.append((path.name, name.group(1), npc_id, pattern,
-                             ours, sorted(retail, reverse=True), missing))
+                rows.append((path.name, name.group(1), npc_id, pattern, ours,
+                             sorted(phases, reverse=True), sorted(regimes, reverse=True),
+                             missing))
             break  # one representative npc_id per AI is enough
 
-    print(f"AI classes using HpPhases with a resolvable retail pattern: "
-          f"{len({r[1] for r in rows})} mismatching\n")
-    for fname, ai, npc_id, pattern, ours, retail, missing in sorted(rows):
+    tweakable = [r for r in rows if r[5]]
+    restructure = [r for r in rows if not r[5]]
+
+    print(f"AI classes whose HpPhases disagree with their retail pattern: {len(rows)}")
+    print(f"  threshold mismatch (retail has a phase list to copy) : {len(tweakable)}")
+    print(f"  no retail phase list at all (regime-guarded fight)   : {len(restructure)}\n")
+
+    print("== threshold mismatches ==")
+    for fname, ai, npc_id, pattern, ours, phases, regimes, missing in sorted(tweakable):
         print(f"{fname}  [{ai}]  npc {npc_id}  pattern {pattern}")
-        print(f"    ours   : {ours}")
-        print(f"    retail : {retail}")
-        print(f"    ours-only (not a retail threshold): {missing}")
+        print(f"    ours          : {ours}")
+        print(f"    retail phases : {phases}")
+        print(f"    ours-only     : {missing}")
+
+    print("\n== regime-guarded: reimplementation, not a threshold edit ==")
+    for fname, ai, npc_id, pattern, ours, phases, regimes, missing in sorted(restructure):
+        print(f"{fname}  [{ai}]  ours {ours}  retail regimes {regimes[:4]}")
 
 
 if __name__ == "__main__":
