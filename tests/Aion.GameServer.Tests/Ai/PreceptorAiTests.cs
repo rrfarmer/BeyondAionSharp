@@ -52,6 +52,7 @@ public sealed class PreceptorAiTests
 		for (int hp = 100; hp >= 3; hp--)
 		{
 			BossAiHarness.SetHpPercent(boss, hp);
+			BossAiHarness.KeepAlive(player);
 			boss.SetTarget(player);
 			boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
 			int observed = boss.GetLifeStats().GetHpPercentage();
@@ -80,11 +81,12 @@ public sealed class PreceptorAiTests
 		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == TempestElemental));
 	}
 
-	[Fact(Skip = "Blocked on the harness's movement gap, not on the boss. His adds aggro the simulated " +
-		"player and enter MoveTaskManager, whose parallel move loop runs inside the virtual clock and " +
-		"resolves a world the harness does not fully stand up (KeyNotFoundException on the map id). The " +
-		"threshold itself is covered by his sibling above and by the retail pattern in docs. Unskip once " +
-		"the harness either stands up movement or keeps spawned adds out of the move list.")]
+	[Fact(Skip = "Needs a stand-in player that cannot die. His phase casts a damaging skill, which kills " +
+		"the level-1 stand-in; PlayerController.OnDie then reaches PvpService, a lazy singleton whose " +
+		"constructor reads kill-bounty data and hits HeadhuntingDAO, so it cannot be stood up headless. " +
+		"Topping the player up between steps does not help because the death happens inside the step. " +
+		"Unskip once the harness can spawn an invulnerable or high-HP stand-in. (An earlier skip here " +
+		"blamed MoveTaskManager, which the stack trace disproved.)")]
 	public void PriestPreceptorSummonsHisTrioAtThirty()
 	{
 		using var harness = NewHarness(typeof(PriestPreceptorAI));

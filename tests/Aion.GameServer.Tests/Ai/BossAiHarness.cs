@@ -128,13 +128,37 @@ public sealed class BossAiHarness : IDisposable
 	/// <c>AiEventType.Attack</c> to the AI class (so its <c>HandleAttack</c> override runs exactly as in
 	/// production) while leaving the auto-attack/move machinery — which needs geodata and a client — out.
 	/// </remarks>
+	/// <summary>
+	/// Puts <paramref name="npc"/> into a fight with <paramref name="attacker"/>.
+	/// </summary>
+	/// <remarks>
+	/// The hate is load-bearing. Without it the AI finds no most-hated target and goes home the moment it
+	/// next thinks, and <c>HandleBackHome</c> resets HP, cleans up spawned adds and re-arms
+	/// <c>HpPhases</c> — so a phase fires and is wiped before the next assertion, which reads as a fight
+	/// that never progressed at all.
+	/// <para>
+	/// Setting <c>FIGHT</c> before delivering the event is deliberate: <c>AttackEventHandler.OnAttack</c>
+	/// only enters <c>AttackManager.StartAttacking</c> when it is the call that flips the state, so this
+	/// delivers a genuine Attack event — the AI's own <c>HandleAttack</c> override runs exactly as in
+	/// production — while leaving geodata, movement and packets out of it.
+	/// </para>
+	/// </remarks>
 	public void Engage(Npc npc, Creature attacker)
 	{
 		MakeMutuallyKnown(npc, attacker);
+		// Order matters: the state flip has to happen before the hate, or AddHate's own aggro handling
+		// flips it first and the Attack event below no longer takes the path that starts the fight.
 		npc.GetAi().SetStateIfNot(AIState.FIGHT);
 		npc.SetTarget(attacker);
+		npc.GetAggroList().AddHate(attacker, InitialHate);
 		npc.GetAi().OnCreatureEvent(AiEventType.Attack, attacker);
 	}
+
+	/// <summary>Enough hate to keep the boss engaged across a test's worth of ticks.</summary>
+	public const int InitialHate = 1000;
+
+	/// <summary>Tops the attacker's hate back up, for tests that drive many ticks.</summary>
+	public static void Rehate(Npc npc, Creature attacker) => npc.GetAggroList().AddHate(attacker, InitialHate);
 
 	/// <summary>Makes two objects visible to each other, which aggro and message broadcast both require.</summary>
 	public static void MakeMutuallyKnown(VisibleObject a, VisibleObject b)
@@ -145,6 +169,17 @@ public sealed class BossAiHarness : IDisposable
 
 	/// <summary>Drops <paramref name="npc"/> to an exact HP percentage without going through combat.</summary>
 	public static void SetHpPercent(Npc npc, int percent) => npc.GetLifeStats().SetCurrentHpPercent(percent);
+
+	/// <summary>
+	/// Restores the stand-in player to full health.
+	/// </summary>
+	/// <remarks>
+	/// Bosses that cast damaging skills will kill it — it is a level-1 stand-in — and a dying player runs
+	/// PlayerController.OnDie, whose reward path reaches PvpService and other services the harness does
+	/// not stand up. Tests that drive many ticks should top it up as they go; the fight under test is the
+	/// boss's behaviour, not whether the stand-in survives.
+	/// </remarks>
+	public static void KeepAlive(Player player) => player.GetLifeStats().SetCurrentHpPercent(100);
 
 	/// <summary>Removes and returns everything the NPC has queued since the last drain, in cast order.</summary>
 	public static List<QueuedCast> DrainQueuedSkills(Npc npc)
