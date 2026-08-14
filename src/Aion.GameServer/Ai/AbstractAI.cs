@@ -64,7 +64,7 @@ public abstract class AbstractAI : AI
 
     public virtual string GetName()
     {
-        AiNameAttribute annotation = GetType().GetCustomAttribute<AiNameAttribute>();
+        AIName annotation = GetType().GetCustomAttribute<AIName>();
         return annotation == null ? "noname" : annotation.Value;
     }
 
