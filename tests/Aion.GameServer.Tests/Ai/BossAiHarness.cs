@@ -106,7 +106,9 @@ public sealed class BossAiHarness : IDisposable
 		common.SetNote("");
 		var player = new Player(new PlayerAccountData(common, new PlayerAppearance()), new Account(1));
 		player.SetKnownlist(new KnownList(player));
-		player.SetEffectController(new EffectController(player));
+		// Must be the Player-specific controller: production builds one in Player's own setup, and code that
+		// applies an effect to a player casts to it (a plain EffectController throws InvalidCastException).
+		player.SetEffectController(new PlayerEffectController(player));
 
 		// Player's ctor leaves position null (production fills it from the DB row on enter-world), and both
 		// World.StoreObject and World.SetPosition dereference it, so the first position is set directly.
@@ -314,6 +316,13 @@ public sealed class BossAiHarness : IDisposable
 			SetHolder(staticData, nameof(StaticData.SkillDataDh), RealSkills.Value);
 			// Aggro (AggroList.IsAware -> Npc.IsEnemy -> TribeRelationService) needs the real tribe graph.
 			SetHolder(staticData, nameof(StaticData.TribeRelations), RealTribeRelations.Value);
+
+			// The skill engine's execution side reads this when resolving target relations, so a boss that
+			// casts through SkillEngine rather than the queue NREs without it. Empty is correct here: no
+			// skill under test is a material skill.
+			var materials = new MaterialData { materialTemplates = new List<Aion.GameServer.Model.Templates.Materials.MaterialTemplate>() };
+			materials.AfterUnmarshal(null!);
+			SetHolder(staticData, nameof(StaticData.Materials), materials);
 
 			var zoneData = new ZoneData { zoneList = new List<Aion.GameServer.Model.Templates.Zone.ZoneTemplate>() };
 			zoneData.AfterUnmarshal(null!);
