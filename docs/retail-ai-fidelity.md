@@ -118,6 +118,18 @@ Notes for whoever works these lists:
 
 ## Log
 
+### HP thresholds — Priest Preceptor (217581) and Gelkmaros Padmarashka (216580)
+
+**Priest Preceptor**, pattern `IDArena_S7_Named_4`: retail steps at **80** and
+**30**, where we had 75 and 25. The actions line up — a skill at the first step,
+an add wave at the second — so this is a straight renumber.
+
+**Gelkmaros Padmarashka**, pattern `DF4_Dramata`: her rock slides drop at
+**10%**, not the 33% we had. The 5% berserk step stays; retail acts there too,
+though with rocks rather than a berserk buff, so that step remains ours.
+
+**Verification.** Build clean, full suite 1,002 tests passing.
+
 ### HP thresholds — Adjutant Anuhart (219357) and Icaronix the Betrayer (214598)
 
 The first two entries off `audit_hp_phases.py`, both cases where retail has a
