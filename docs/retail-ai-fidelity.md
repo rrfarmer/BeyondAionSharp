@@ -82,18 +82,15 @@ server-wide worklist. Each produces candidates for review, not auto-fixes.
 | Audit | Finds | Current count |
 |---|---|---|
 | `audit_missing_adds.py` | Encounter adds that exist only as templates, nothing ever spawns them | 812 across 518 encounters (768 implementable, 44 waypoint-blocked) |
-| `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 197 shout groups |
+| `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 0 remaining (was 197) |
 | `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 39 AI classes |
 
 Notes for whoever works these lists:
 
-- **Dead shouts are not a mechanical fix.** The group's `restrict_world` often
-  names a different map than the live NPC's — Padmarashka's nine lines sit on
-  281454 with `restrict_world="220070000"` while she actually fights in
-  320150000 — so each needs its world checked. It is also an inference that the
-  live twin should speak the lines, though a strong one: the group is keyed by
-  `client_ai`, which is the pattern both twins run, so the lines belong to the
-  pattern rather than to either npc_id.
+- **Dead shouts** were worked in one pass (see the log below). Two traps the
+  audit now encodes: an NPC already covered by a broad catch-all group is not
+  mute even when this group's own lines never play, and a group's
+  `restrict_world` often names a different map than the live NPC's.
 - **HP-phase mismatches need reading, not replacing.** A pattern's HP
   conditions cover more than phase transitions, so a mismatch is a prompt to
   read the pattern. The obvious cases are unmistakable though: Modor's
@@ -103,6 +100,41 @@ Notes for whoever works these lists:
 ---
 
 ## Log
+
+### Server-wide — mute NPCs given their voices back
+
+Retail ships many NPCs twice: one npc_id the world places and a near-identical
+one that goes unused. Both carry the same `<ai_name>`, so both run the same
+retail pattern, but our `npc_shouts.xml` frequently binds an encounter's lines
+to only the twin nothing spawns — leaving the NPC players actually fight silent
+for the whole fight. Hamerun the Bleeder was the first found; the audit turned
+up 197 more groups in the same state, including Padmarashka, the Steel Rake
+officers, Princess Karemiwen and Grand Commander Pashid.
+
+Added 422 `<shout_npcs>` blocks covering 2,244 lines, each inserted into the
+group whose `client_ai` it belongs to. The justification is that a shout group
+is keyed by pattern name, not by npc_id: the lines belong to the AI pattern, and
+the client confirms the live NPC runs it.
+
+Scoping: each block takes the `restrict_world` of the map our spawn data
+actually places that NPC in. Sixteen NPCs are summoned or code-spawned and have
+no spawn-XML map; those use `restrict_world="0"` (global), which is equivalent
+in practice since each exists in exactly one instance.
+
+Two traps the audit now encodes, both found the hard way:
+
+- An NPC covered by a broad catch-all group already speaks, so adding to its
+  per-variant group would double every line. Brass-Eye Grogget sits in a
+  400-npc_id block and needed nothing. 32 groups are in that state and are now
+  reported separately as needing no action.
+- Wildcard `client_ai` values such as `Station_Drakan[A-D]` cover several
+  per-variant patterns at once, and are the reason those duplicates arise.
+
+**Verification.** Diffed the file line-multiset before and after: zero original
+lines lost, groups unchanged at 739, `shout_npcs` 983 → 1,405, shouts
+3,794 → 6,038. Checked that no npc_id/world pair we introduced collides with an
+existing binding. Audit re-run reports zero mute NPCs. Full suite 1,002 tests
+passing.
 
 ### Haramel — Hamerun the Bleeder (216922)
 

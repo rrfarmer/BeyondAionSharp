@@ -55,7 +55,16 @@ def main() -> None:
         read_text(static / "npcs/npc_templates.xml"))}
 
     shouts = read_text(static / "npc_shouts/npc_shouts.xml")
-    findings = []
+
+    # Every npc_id that has lines from any group. A live NPC covered by a broad catch-all group
+    # is not mute, even if this particular group's lines never play, so those are reported
+    # separately -- adding to them would only duplicate what the NPC already says.
+    speaks = set()
+    for g in GROUP_RE.finditer(shouts):
+        for blk in NPCS_RE.finditer(g.group(2)):
+            speaks.update(blk.group(1).split())
+
+    findings, already_speaking = [], []
     groups = 0
 
     for group in GROUP_RE.finditer(shouts):
@@ -77,16 +86,21 @@ def main() -> None:
 
         # Nothing bound is ever spawned. Does a live NPC run the same pattern?
         live = [n for n in by_pattern.get(client_ai.lower(), []) if n in spawnable]
-        if live:
-            findings.append((client_ai, bound, line_count, live))
+        mute = [n for n in live if n not in speaks]
+        if mute:
+            findings.append((client_ai, bound, line_count, mute))
+        elif live:
+            already_speaking.append((client_ai, line_count, live))
 
-    print(f"shout groups examined            : {groups:,}")
-    print(f"groups whose lines can never play: {len(findings)}\n")
-    for client_ai, bound, line_count, live in sorted(findings, key=lambda f: -f[2]):
+    print(f"shout groups examined              : {groups:,}")
+    print(f"groups leaving a live NPC mute     : {len(findings)}")
+    print(f"groups unused but NPC speaks anyway: {len(already_speaking)} "
+          f"(covered by a broader group; no action)\n")
+    for client_ai, bound, line_count, mute in sorted(findings, key=lambda f: -f[2]):
         print(f"{client_ai}  ({line_count} lines, bound to {','.join(bound)} which never spawn)")
-        for npc_id in live[:6]:
+        for npc_id in mute[:6]:
             name = attr(templates.get(npc_id, ""), "name") or "?"
-            print(f"    live: {npc_id}  {name}")
+            print(f"    mute: {npc_id}  {name}")
 
 
 if __name__ == "__main__":
