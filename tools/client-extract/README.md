@@ -16,6 +16,8 @@ both formats directly, so that toolchain is not needed.)
 | `index_paks.py` | Index every entry name across a client install, reading only archive directories. |
 | `build_ai_binding.py` | Join the client's per-NPC `ai_name` against an NpcAIPatterns dump to produce the pattern → `npc_id` table. |
 | `audit_missing_adds.py` | Report retail encounter adds our server never spawns. |
+| `audit_dead_shouts.py` | Report NPCs left mute because their lines sit on a twin we never spawn. |
+| `audit_hp_phases.py` | Report hand-written `HpPhases` thresholds that disagree with the retail pattern. |
 
 `aionpak.py` and `bxml.py` are importable libraries as well as CLIs.
 
@@ -28,7 +30,12 @@ python bxml.py ./out/client_npcs_monster.xml decoded.xml
 python index_paks.py "C:/Program Files (x86)/Beyond Aion" pak_index.tsv
 python build_ai_binding.py "C:/Program Files (x86)/Beyond Aion" "D:/path/to/5.8 AI Patterns" binding.tsv
 python audit_missing_adds.py "C:/Program Files (x86)/Beyond Aion" "D:/path/to/5.8 AI Patterns" binding.tsv
+python audit_dead_shouts.py  "C:/Program Files (x86)/Beyond Aion" "D:/path/to/5.8 AI Patterns" binding.tsv
+python audit_hp_phases.py    "D:/path/to/5.8 AI Patterns" binding.tsv
 ```
+
+The three audits produce candidates for review, not auto-fixes; see
+`docs/retail-ai-fidelity.md` for what to watch for when working their output.
 
 `audit_missing_adds.py` cross-references each live NPC's retail pattern against
 our spawn data and reports adds nothing ever brings into the world. Its

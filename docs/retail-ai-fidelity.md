@@ -74,6 +74,32 @@ archives). Resolve it per NPC using:
 - our own `npc_skills.xml` ordering, which sometimes matches the client's and
   sometimes does not — corroborate it, never assume it.
 
+## Sweeps
+
+`tools/client-extract` carries three audits that turn a hand-found bug into a
+server-wide worklist. Each produces candidates for review, not auto-fixes.
+
+| Audit | Finds | Current count |
+|---|---|---|
+| `audit_missing_adds.py` | Encounter adds that exist only as templates, nothing ever spawns them | 812 across 518 encounters (768 implementable, 44 waypoint-blocked) |
+| `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 197 shout groups |
+| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 39 AI classes |
+
+Notes for whoever works these lists:
+
+- **Dead shouts are not a mechanical fix.** The group's `restrict_world` often
+  names a different map than the live NPC's — Padmarashka's nine lines sit on
+  281454 with `restrict_world="220070000"` while she actually fights in
+  320150000 — so each needs its world checked. It is also an inference that the
+  live twin should speak the lines, though a strong one: the group is keyed by
+  `client_ai`, which is the pattern both twins run, so the lines belong to the
+  pattern rather than to either npc_id.
+- **HP-phase mismatches need reading, not replacing.** A pattern's HP
+  conditions cover more than phase transitions, so a mismatch is a prompt to
+  read the pattern. The obvious cases are unmistakable though: Modor's
+  `HpPhases(100, 81, 77, 61, 50)` against a retail `100/75/50`, and Vasharti's
+  `75/50/25/10` against `86/56/26`, are observation artifacts meeting the spec.
+
 ---
 
 ## Log
