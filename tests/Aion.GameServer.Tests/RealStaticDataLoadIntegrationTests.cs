@@ -10,28 +10,16 @@ namespace Aion.GameServer.Tests;
 /// <see cref="DataManager.LoadAsync(string, string?, bool, Microsoft.Extensions.Logging.ILogger?, System.Threading.CancellationToken)"/>
 /// path and assert it actually parses into non-empty tables. This is the linchpin of Front-A
 /// (server boot): if the C# cannot consume Java's data as-is, nothing runs. NOT a unit test —
-/// it reads the real on-disk data, so it is skipped (not failed) when that data is absent.
+/// it reads the real on-disk data, which is checked in, so a checkout missing it fails here.
 /// </summary>
 public sealed class RealStaticDataLoadIntegrationTests
 {
 	[Fact]
 	public async Task LoadAsync_ParsesRealJavaStaticDataCache_IntoNonEmptyTables()
 	{
-		var repoRoot = FindRepoRoot(AppContext.BaseDirectory);
-		var cacheFile = repoRoot is null
-			? null
-			: Path.Combine(repoRoot, "game-server", "cache", "static_data.xml");
-		if (cacheFile is null || !File.Exists(cacheFile))
-			return; // Real game-server/cache/static_data.xml not present; skip the reuse-in-place integration check.
-
-		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-		// validateWhenCacheChanges:false — just parse the cache; we are proving the parse, not re-validating against source.
-		var dataManager = await DataManager.LoadAsync(
-			repoRoot!,
-			cacheDirectory: null,
-			validateWhenCacheChanges: false,
-			logger: null,
-			cancellationToken: cts.Token);
+		// The cache this parses is built by the load itself from the checked-in source XMLs; see RealStaticData
+		// for why nothing here may gate on that generated file being present.
+		var dataManager = await RealStaticData.LoadAsync();
 
 		var sd = dataManager.StaticData;
 
@@ -458,18 +446,5 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(scriptedQuest);
 		Assert.IsType<QuestEngine.Handlers.Models.XmlQuestData>(scriptedQuest);
 		Assert.IsType<QuestEngine.Handlers.Models.MonsterHuntData>(sd.XmlQuests.GetQuest(1102));
-	}
-
-	private static string? FindRepoRoot(string startDirectory)
-	{
-		var directory = new DirectoryInfo(startDirectory);
-		while (directory != null)
-		{
-			if (File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
-				return directory.FullName;
-			directory = directory.Parent;
-		}
-
-		return null;
 	}
 }

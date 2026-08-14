@@ -238,24 +238,13 @@ public sealed class GameServerBootstrapTests
 		// colliding on the House objectId in World.StoreObject. Both are pre-existing whole-world-boot concerns
 		// orthogonal to proving spawn materialization, so this guard scopes to the deterministic single-map spawn.
 		using var dataManagerGuard = DataManagerSingletonGuard.Capture();
-		var repoRoot = StaticDataFixture.FindRepoRoot(AppContext.BaseDirectory);
-		var cacheFile = repoRoot is null
-			? null
-			: System.IO.Path.Combine(repoRoot, "game-server", "cache", "static_data.xml");
-		if (cacheFile is null || !File.Exists(cacheFile))
-			return; // Real game-server data/cache not present (e.g. data-less CI checkout); skip the spawn integration check.
 
 		// Load + register the real DataManager (the same DataManager.LoadAsync(repoRoot) the production
-		// StaticDataService uses). Register before constructing any engine singleton: some engine ctors read
-		// DataManager.* (e.g. ZoneService reads ZONE_DATA), and Java's engine getInstance() block runs after
-		// DataManager.getInstance().
+		// StaticDataService uses, shared across the real-data tests by RealStaticData). Register before
+		// constructing any engine singleton: some engine ctors read DataManager.* (e.g. ZoneService reads
+		// ZONE_DATA), and Java's engine getInstance() block runs after DataManager.getInstance().
 		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-		var dataManager = await DataManager.LoadAsync(
-			repoRoot!,
-			cacheDirectory: null,
-			validateWhenCacheChanges: false,
-			logger: null,
-			cancellationToken: cts.Token);
+		var dataManager = await RealStaticData.LoadAsync();
 		DataManager.RegisterInstance(dataManager);
 
 		// Java parity: World() ctor loads all world maps (WORLD_MAPS_DATA -> new WorldMap(template)); bind the
@@ -273,7 +262,7 @@ public sealed class GameServerBootstrapTests
 		// loaded assemblies for [AIName] handlers), and Npc OnAfterSpawn reads the per-world geo/zone maps that
 		// GeoService.Init()/ZoneService.Init() seed for every WORLD_MAPS_DATA map (an empty GeoMap is created per
 		// world even when geo files are disabled, so WorldHasTerrainMaterials no longer KeyNotFounds).
-		await Aion.GameServer.Ai.AIEngine.GetInstance().InitAsync(cts.Token);
+		TestAiEngine.EnsureAllRegistered();
 		await Aion.GameServer.World.Zone.ZoneService.GetInstance().InitAsync(cts.Token);
 		await Aion.GameServer.World.Geo.GeoService.GetInstance().InitAsync(cts.Token);
 
@@ -341,12 +330,7 @@ public sealed class GameServerBootstrapTests
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
 			return;
 
-		var repoRoot = StaticDataFixture.FindRepoRoot(AppContext.BaseDirectory);
-		var cacheFile = repoRoot is null
-			? null
-			: System.IO.Path.Combine(repoRoot, "game-server", "cache", "static_data.xml");
-		if (cacheFile is null || !File.Exists(cacheFile))
-			return; // Real game-server data/cache not present; the DB-backed boot needs the real static data.
+		var repoRoot = RealStaticData.RepoRoot();
 
 		// Point DatabaseFactory at the live integration container (root/aion @ 3307/aion_gs) and apply the real
 		// Java aion_gs schema so every DB-backed DAO the boot touches (PlayerDAO.GetUsedIDs, HousesDAO.LoadHouses,
@@ -357,19 +341,14 @@ public sealed class GameServerBootstrapTests
 			password: Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_PASSWORD") ?? "aion",
 			database: Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_NAME") ?? "aion_gs",
 			port: int.Parse(Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_PORT") ?? "3307"));
-		await InitializeGameSchemaAsync(repoRoot!);
+		await InitializeGameSchemaAsync(repoRoot);
 
 		using var dataManagerGuard = DataManagerSingletonGuard.Capture();
 		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
 
 		// Load the REAL DataManager once (147 MB cache) and feed the FULL StartAsync via a pass-through loader so the
 		// boot does not re-parse it. StartAsync itself re-registers DataManager/World/IDFactory/ThreadPool singletons.
-		var dataManager = await DataManager.LoadAsync(
-			repoRoot!,
-			cacheDirectory: null,
-			validateWhenCacheChanges: false,
-			logger: null,
-			cancellationToken: cts.Token);
+		var dataManager = await RealStaticData.LoadAsync();
 		DataManager.RegisterInstance(dataManager);
 
 		// Java parity: GameServer.main inits the engines (AIEngine/ZoneService/GeoService/...) before the spawn path.
@@ -383,7 +362,7 @@ public sealed class GameServerBootstrapTests
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		world.LoadWorldMaps(DataManager.WORLD_MAPS_DATA);
 		GameWorld.RegisterInstance(world);
-		await Aion.GameServer.Ai.AIEngine.GetInstance().InitAsync(cts.Token);
+		TestAiEngine.EnsureAllRegistered();
 		await Aion.GameServer.World.Zone.ZoneService.GetInstance().InitAsync(cts.Token);
 		await Aion.GameServer.World.Geo.GeoService.GetInstance().InitAsync(cts.Token);
 
@@ -411,7 +390,7 @@ public sealed class GameServerBootstrapTests
 		// HTMLCache (and any other production relative-path data lookup) resolves "./data/static_data/..." against the
 		// process working directory, which in a real deployment is the game-server dir. Point CWD at the repo's
 		// game-server dir for the duration of the boot so the production relative paths resolve to the real data tree.
-		var gameServerDir = System.IO.Path.Combine(repoRoot!, "game-server");
+		var gameServerDir = System.IO.Path.Combine(repoRoot, "game-server");
 		var savedCwd = Directory.GetCurrentDirectory();
 		Exception? bootException = null;
 		try
