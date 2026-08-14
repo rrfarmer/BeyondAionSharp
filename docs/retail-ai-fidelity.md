@@ -83,7 +83,7 @@ server-wide worklist. Each produces candidates for review, not auto-fixes.
 |---|---|---|
 | `audit_missing_adds.py` | Encounter adds that exist only as templates, nothing ever spawns them | 812 across 518 encounters (768 implementable, 44 waypoint-blocked) |
 | `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 0 remaining (was 197) |
-| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 24 AI classes; 7 corrected, 2 judged correct as-is, ~8 are sequence-at-one-threshold, 7 regime-guarded |
+| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 21 remaining; 7 corrected, 2 judged correct as-is. Of the 21, 12 are timer-driven and 7 regime-guarded, so only ~2 are true renumbers |
 
 Notes for whoever works these lists:
 
@@ -175,20 +175,28 @@ and restores a missing repeat.
   in a way the Mage Preceptor merge was not — there the counts corroborated it
   exactly — so it waits for a way to observe the fight.
 
-### The sequence-at-one-threshold shape
+### Correction: most of what is left is timer-driven, not mis-numbered
 
-The largest remaining group is not mis-numbered at all. Retail crosses **one**
-threshold and then runs a flag-latched sequence off a repeating battle timer;
-aionemu reproduced the sequence by inventing a *ladder* of thresholds. The
-Flamelord is the clearest case: retail spawns its delivery NPCs in four steps
-all at 25%, and we spawn the same four NPCs at 40/30/20/10. Engineer Lahulahu
-(8 steps at 25), Empowered Agent (6 at 20), Unstable Triroan (7 at 20) and
-Enraged Modor (3 at 50) are the same shape.
+An earlier revision of this document claimed the remaining bosses shared a
+"sequence at one threshold" shape — that retail crossed one threshold and ran a
+latched sequence, while aionemu spread that sequence across a ladder of invented
+thresholds. **That was wrong.** It came from an audit that counted every
+`is_hp_lower_than` in a pattern without noticing how many of them sat inside
+battle-timer branches.
 
-Matching these means driving a timed sequence from a single threshold rather
-than editing numbers, and `HpPhases` cannot express it. That is a small
-sub-system — an ordered, delayed step runner — and the work belongs with the
-regime-guarded reimplementations rather than with the renumbering.
+What the patterns actually show is that these fights are *timer-driven*. The
+Flamelord is the clearest example: it reads as a threshold mismatch, and is
+really four battle timers — a 9s attack beat, a 7s beat carrying three latched
+HP steps, a 20s flame spawn, and a 25s delivery rotation that cycles through
+spawn sets and thickens below 25% HP. Engineer Lahulahu has 29 battle-timer
+branches, Empowered Agent 25, Unstable Triroan 24.
+
+`audit_hp_phases.py` now reports the branch count and flags anything at ten or
+above, because renumbering such a boss cannot match it. Of the 14 remaining
+threshold mismatches, **12 carry that flag**. Together with the 7 regime-guarded
+fights, that means essentially all remaining work is reimplementation on the
+scale of Macunbello and Stormwing — writing the timers out — rather than editing
+constants. The threshold class itself is close to exhausted.
 
 ### HP thresholds — Priest Preceptor (217581) and Gelkmaros Padmarashka (216580)
 

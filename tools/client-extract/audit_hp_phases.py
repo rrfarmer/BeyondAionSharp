@@ -28,6 +28,9 @@ from audit_missing_adds import PATTERN_RE, NAME_RE, read_text
 AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
 HPPHASES_RE = re.compile(r"new HpPhases\(([^)]*)\)")
 HP_LOWER_RE = re.compile(r"<is_hp_lower_than>.*?<percent>(\d+)</percent>", re.S)
+# At or above this many battle-timer branches, the fight is driven by timers rather than HP steps.
+TIMER_HEAVY = 10
+
 HP_BOUND_RE = re.compile(
     r"<is_hp_in_boundary>.*?<larger_than>(\d+)</larger_than>.*?<less_than>(\d+)</less_than>", re.S)
 
@@ -51,7 +54,7 @@ def pattern_thresholds(patterns_dir: pathlib.Path) -> dict[str, tuple[set[int], 
     pattern is built from boundaries has no phase list to compare against, and
     porting it means restructuring the fight rather than editing numbers.
     """
-    out: dict[str, tuple[set[int], set[tuple[int, int]]]] = {}
+    out: dict[str, tuple[set[int], set[tuple[int, int]], int]] = {}
     for path in sorted(patterns_dir.glob("*.xml")):
         for block in PATTERN_RE.finditer(read_text(path)):
             body = block.group(1)
@@ -62,6 +65,7 @@ def pattern_thresholds(patterns_dir: pathlib.Path) -> dict[str, tuple[set[int], 
             # with empty <actions> as sequence markers or paired guards; Watchman Hokuruki
             # has five HP steps of which only two spawn anything, so counting all five
             # made a structural difference look like a renumber.
+            timer_branches = len(re.findall(r"<btimer_indicator>", body))
             phases = set()
             for step in re.finditer(r"<pattern>(.*?)</pattern>", body, re.S):
                 s = step.group(1)
@@ -75,9 +79,10 @@ def pattern_thresholds(patterns_dir: pathlib.Path) -> dict[str, tuple[set[int], 
                     phases.add(int(hp.group(1)))
             regimes = {(int(lo), int(hi)) for lo, hi in HP_BOUND_RE.findall(body)}
             if phases or regimes:
-                p, r = out.setdefault(m.group(1), (set(), set()))
+                p, r, _ = out.setdefault(m.group(1), (set(), set(), timer_branches))
                 p.update(phases)
                 r.update(regimes)
+                out[m.group(1)] = (p, r, max(out[m.group(1)][2], timer_branches))
     return out
 
 
@@ -126,12 +131,12 @@ def main() -> None:
             entry = thresholds.get(pattern) if pattern else None
             if not entry:
                 continue
-            phases, regimes = entry
+            phases, regimes, timers = entry
             missing = [v for v in ours if v not in phases]
             if missing:
                 rows.append((path.name, name.group(1), npc_id, pattern, ours,
                              sorted(phases, reverse=True), sorted(regimes, reverse=True),
-                             missing))
+                             missing, timers))
             break  # one representative npc_id per AI is enough
 
     tweakable = [r for r in rows if r[5]]
@@ -142,15 +147,22 @@ def main() -> None:
     print(f"  no retail phase list at all (regime-guarded fight)   : {len(restructure)}\n")
 
     print("== threshold mismatches ==")
-    for fname, ai, npc_id, pattern, ours, phases, regimes, missing in sorted(tweakable):
+    for fname, ai, npc_id, pattern, ours, phases, regimes, missing, timers in sorted(tweakable):
         print(f"{fname}  [{ai}]  npc {npc_id}  pattern {pattern}")
         print(f"    ours          : {ours}")
         print(f"    retail phases : {phases}")
         print(f"    ours-only     : {missing}")
+        # A pattern built mostly from battle timers is not a threshold problem at all: aionemu turned
+        # a timed rotation into a ladder of invented HP steps, and matching it means writing a
+        # timer-driven AI class rather than renumbering. TheFlamelord reads as a plain threshold
+        # mismatch here and is really a 25s spawn rotation spread across four timers.
+        if timers >= TIMER_HEAVY:
+            print(f"    NOTE          : {timers} battle-timer branches, so this is a timer-driven "
+                  f"rotation; renumbering will not match it")
 
     print("\n== regime-guarded: reimplementation, not a threshold edit ==")
-    for fname, ai, npc_id, pattern, ours, phases, regimes, missing in sorted(restructure):
-        print(f"{fname}  [{ai}]  ours {ours}  retail regimes {regimes[:4]}")
+    for fname, ai, npc_id, pattern, ours, phases, regimes, missing, timers in sorted(restructure):
+        print(f"{fname}  [{ai}]  ours {ours}  retail regimes {regimes[:4]}  timer branches {timers}")
 
 
 if __name__ == "__main__":
