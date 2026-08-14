@@ -12,6 +12,11 @@ source is the reference implementation; the C# port exists to match its behavior
 - When Java and C# disagree, **Java wins** — except pure infrastructure
   (DI, lifecycle, threading, sockets), where idiomatic C# is acceptable.
 
+**One sanctioned exception:** NPC AI behavior sourced from NCSoft's own retail AI
+pattern data outranks aionemu, whose version is an approximation. Those changes are
+logged in `docs/retail-ai-fidelity.md` — read it before "correcting" NPC skill,
+summon, or shout data back toward Java, and add to it when making such a change.
+
 ## Always watch for Java ↔ C# semantic gaps
 
 These differ in ways that silently change behavior. Check them on every port/fix:
