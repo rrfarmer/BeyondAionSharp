@@ -28020,11 +28020,14 @@
 		<npc_skill id="19131" lv="2" prob="25" />
 		<npc_skill id="19130" lv="2" prob="25" />
 	</npc_skills>
+	<!-- Macunbello, hard mode. MacunbelloAI drives the whole rotation off retail pattern
+	     IDCTH_Boss_LichKing, so these entries exist only to define each skill's level;
+	     prob="0" keeps the generic random selection from firing them on top of it. -->
 	<npc_skills npc_ids="216164">
-		<npc_skill id="19052" lv="22" prob="25" />
-		<npc_skill id="19053" lv="22" prob="25" />
-		<npc_skill id="19049" lv="1" prob="25" />
-		<npc_skill id="19054" lv="22" prob="25" max_hp="75" />
+		<npc_skill id="19052" lv="22" prob="0" />
+		<npc_skill id="19053" lv="22" prob="0" />
+		<npc_skill id="19049" lv="1" prob="0" />
+		<npc_skill id="19054" lv="22" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="216165">
 		<npc_skill id="18602" lv="2" prob="20" />
@@ -28462,11 +28465,17 @@
 		<npc_skill id="19130" lv="1" prob="25" />
 		<npc_skill id="19131" lv="1" prob="25" />
 	</npc_skills>
+	<!-- Macunbello. MacunbelloAI drives the whole rotation off retail pattern
+	     IDCT_Boss_LichKing, so these entries exist only to define each skill's level;
+	     prob="0" keeps the generic random selection from firing them on top of it.
+	     19049 is the shield buff he casts on himself at spawn, it was absent here, present
+	     only on the hard-mode twin. -->
 	<npc_skills npc_ids="216245">
-		<npc_skill id="19051" lv="1" prob="25" />
-		<npc_skill id="19052" lv="20" prob="25" />
-		<npc_skill id="19053" lv="20" prob="25" />
-		<npc_skill id="19054" lv="20" prob="25" />
+		<npc_skill id="19051" lv="1" prob="0" />
+		<npc_skill id="19052" lv="20" prob="0" />
+		<npc_skill id="19053" lv="20" prob="0" />
+		<npc_skill id="19054" lv="20" prob="0" />
+		<npc_skill id="19049" lv="1" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="216246">
 		<npc_skill id="18602" lv="2" prob="20" />
@@ -58534,8 +58543,10 @@
 		<npc_skill id="19044" lv="46" prob="25" />
 		<npc_skill id="19045" lv="46" prob="25" />
 	</npc_skills>
+	<!-- Macunbello's soul reapers; MacunbelloSoulReaperAI casts Curse of Souls on its own
+	     12s cadence, so this entry only supplies the level. -->
 	<npc_skills npc_ids="281698">
-		<npc_skill id="19050" lv="20" prob="25" />
+		<npc_skill id="19050" lv="20" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="281756">
 		<npc_skill id="19093" lv="46" prob="25" />
@@ -58553,7 +58564,7 @@
 		<npc_skill id="19098" lv="46" prob="25" />
 	</npc_skills>
 	<npc_skills npc_ids="281775">
-		<npc_skill id="19050" lv="20" prob="25" />
+		<npc_skill id="19050" lv="20" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="281794">
 		<npc_skill id="18619" lv="1" prob="25" />

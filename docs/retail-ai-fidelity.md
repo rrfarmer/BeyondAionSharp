@@ -148,3 +148,54 @@ exist yet.
 **Verification.** Full suite 1,002 tests passing. Confirmed all 47 NPCs with
 `ai="summoner"` have a `spawn_helpers` entry, since `SummonerAI` requires one.
 Not yet observed in a running server.
+
+### Beshmundir Temple — Macunbello (216245, and 216164 hard)
+
+Patterns `IDCT_Boss_LichKing` and `IDCTH_Boss_LichKing` in
+`NpcAIPatterns_TeCa_JM.xml`, plus `IDCT_SumLich` for the adds (281698 / 281775).
+Bindings confirmed from client `ai_name`.
+
+Neither server had an AI class for this boss. He cast four skills at a flat 25%
+chance with no cadence, no phases, and no adds — the fight's entire structure
+was missing. New `MacunbelloAI` and `MacunbelloSoulReaperAI` implement it:
+
+- **10s Shockwave beat** on the current target.
+- **Phase beat**, 10s: the first time each HP band is crossed (91/71/51/31/11%
+  normal, every 10% hard), pull a random attacker and cast Absorb Energy of
+  Darkness. Otherwise self-cast Tide of Darkness. Retail latches each band with
+  its own flag variable, so falling past several at once still fires one per
+  tick; `TryCrossBand` reproduces that.
+- **Add waves**: two soul reapers above 50% HP every 30s, four below every 40s,
+  at four fixed positions. Both modes spawn the normal-mode reaper; hard mode
+  only uses its own variant for an on-hit proc that is not implemented.
+- **The signature combo**: every 12s a reaper yanks a random player, curses
+  them, and reports that player to Macunbello, who devours that exact player.
+- Shield buff self-cast at spawn, and the Start/Wave/Devour/Die shouts.
+
+**New sub-system — `Ai/NpcMessageBus.cs`.** Retail wires encounters together
+with `broadcast_message` / `on_message`: an integer message type, an optional
+object parameter, and a radius. It appears 6,820 times across the dump and has
+no equivalent in aionemu, so every encounter built on it is missing. An AI
+opts in by implementing `INpcMessageListener`. The reaper-to-boss handoff is
+its first use.
+
+**New helper — `Ai/NpcSkillCasting.cs`.** Patterns select skills by index and
+say nothing about level, so a hand-written rotation must take the level from
+the NPC's own `npc_skills` entry; the normal and hard bosses genuinely differ
+(lv20 vs lv22). The convention for AI-driven NPCs is to leave their entries at
+`prob="0"` so the list still defines levels while the generic random selection
+fires nothing on top of the rotation. Applied to all four NPCs here; `19049`
+was also added to 216245, which lacked the shield buff its own pattern casts.
+
+**Not implemented.** Door control on aggro and reset — pattern door ids are
+instance-local and we have no mapping to our door ids. The eight on-death
+corridor markers. The "Macunbello leaves" failure path, which needs the
+Lichkey/DespawnLich chain. Hard mode's 5%-per-hit add proc. Separately,
+**216164 still never spawns**: tier selection lives in condition-spawn data we
+do not have, so changing which variant `BeshmundirInstance` spawns would be
+guesswork.
+
+**Verification.** Build clean, full suite 1,002 tests passing. Confirmed all
+434 distinct `ai=` names in npc_templates resolve to a registered `[AIName]`
+handler, since `AIEngine.ValidateScripts()` hard-fails at boot otherwise.
+Not yet observed in a running server.
