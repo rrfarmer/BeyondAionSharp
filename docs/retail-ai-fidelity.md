@@ -35,6 +35,32 @@ See `tools/client-extract/README.md` for the extraction tooling and the formats.
    `SKILLI_INDEX_N`, which indexes a per-NPC skill list that exists in neither
    the client nor our repos. Where a skill identity is inferred, say so.
 
+## The waypoint-placement problem
+
+A second class of pattern data is unavailable for the same reason as skill
+lists: it lived on NCSoft's server. When a `spawn` action uses
+`SPAWN_LOCATION_WAY_POINT_START`, the add is placed at the start of a named
+designer path (`LDF4_GHObject1_KJS` and the like). Those paths are in neither
+our `npc_walker.xml` nor the client — searched the CryEngine mission files of
+the Inggison, Levinshor and Levinshor-instance levels, and `*-path.dat` is
+navmesh rather than named paths. Without them an add has no position.
+
+This affects little: of 17,892 spawn actions in the dump, 881 (5%) are
+waypoint-placed. Everything else carries its own position — at the spawner, at
+a target, or as literal coordinates. `audit_missing_adds.py` flags the blocked
+ones, and 504 of 518 encounters have none.
+
+**Inggison and Gelkmaros fortress bosses (Enraged Veille 258203 / Enraged
+Mastarius 258207) are blocked by this.** Their pattern `LF4_GH_KJS` / `DF4_GH_KJS`
+is a 30-minute time attack: below 90% HP the boss spawns eight aether
+concentrators at waypoint paths, and messages from those concentrators arm the
+timers and self-buffs that drive the rest of the fight. Without the eight
+positions the mechanic cannot be reconstructed. Java's `EnragedAgent` already
+carries a matching note from its author, who skipped the concentrators
+deliberately as needing "about 100 player to be activated". A few of their
+helper spawns are positionable, but adding those alone would announce a time
+attack that does not happen.
+
 ## The skill-index problem
 
 AI patterns reference skills as `SKILLI_INDEX_0..14`, a 0-based index into the
