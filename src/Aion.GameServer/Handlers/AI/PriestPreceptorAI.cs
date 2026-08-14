@@ -13,7 +13,11 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("priest_preceptor")]
 public class PriestPreceptorAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(75, 25);
+    /// <summary>
+    /// Retail thresholds, from pattern IDArena_S7_Named_4: a skill at 80% and the add wave at
+    /// 30%, where we had an invented 75/25. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(80, 30);
 
     public PriestPreceptorAI(Npc owner) : base(owner)
     {
@@ -41,10 +45,10 @@ public class PriestPreceptorAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 75:
+            case 80:
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19611, 10, GetRandomTarget()).UseNoAnimationSkill();
                 break;
-            case 25:
+            case 30:
                 StartEvent();
                 break;
         }

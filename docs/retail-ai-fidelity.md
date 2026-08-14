@@ -83,7 +83,7 @@ server-wide worklist. Each produces candidates for review, not auto-fixes.
 |---|---|---|
 | `audit_missing_adds.py` | Encounter adds that exist only as templates, nothing ever spawns them | 812 across 518 encounters (768 implementable, 44 waypoint-blocked) |
 | `audit_dead_shouts.py` | NPCs left mute because their lines sit on a twin we never spawn | 0 remaining (was 197) |
-| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 40 AI classes (33 renumberable, 7 need restructuring) |
+| `audit_hp_phases.py` | Hand-written `HpPhases` thresholds that disagree with the retail pattern | 24 AI classes (17 threshold, 7 need restructuring); 4 corrected so far |
 
 Notes for whoever works these lists:
 
@@ -102,6 +102,17 @@ Notes for whoever works these lists:
   is not five wrong numbers but the wrong shape. Those seven are
   reimplementations on the scale of Macunbello, not edits. The audit separates
   the two.
+- **Two false-positive classes the audit now filters out**, both found by
+  working the list. Several classes use `HpPhases` as a start-of-fight trigger
+  rather than a ladder — `HpPhases(95)` with a handler that ignores its argument
+  and just starts a skill loop. Renumbering those to a retail threshold would
+  delay the whole fight: Ebonsoul and Rukril would not begin casting until 7%
+  HP. And patterns carry latched HP steps with empty `<actions>` as sequence
+  markers, so counting them inflates the apparent phase count — Watchman
+  Hokuruki has five HP steps of which only two spawn anything, which made a
+  structural difference look like a clean renumber.
+- Even after filtering, a matching count is not sufficient. Check that each
+  step's *actions* line up before renumbering.
 
 ---
 

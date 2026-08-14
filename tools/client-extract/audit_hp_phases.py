@@ -58,7 +58,21 @@ def pattern_thresholds(patterns_dir: pathlib.Path) -> dict[str, tuple[set[int], 
             m = NAME_RE.search(body)
             if not m:
                 continue
-            phases = {int(v) for v in HP_LOWER_RE.findall(body)}
+            # Only count a step that actually does something. Patterns carry latched steps
+            # with empty <actions> as sequence markers or paired guards; Watchman Hokuruki
+            # has five HP steps of which only two spawn anything, so counting all five
+            # made a structural difference look like a renumber.
+            phases = set()
+            for step in re.finditer(r"<pattern>(.*?)</pattern>", body, re.S):
+                s = step.group(1)
+                hp = HP_LOWER_RE.search(s)
+                if not hp:
+                    continue
+                acts = re.search(r"<actions>(.*?)</actions>", s, re.S)
+                if acts and re.search(r"<(use_skill\w*|spawn\w*|say_to_all|despawn\w*|"
+                                      r"broadcast_message|teleport_target\w*|control_door|"
+                                      r"flee_from|add_hate_point|switch_target\w*)>", acts.group(1)):
+                    phases.add(int(hp.group(1)))
             regimes = {(int(lo), int(hi)) for lo, hi in HP_BOUND_RE.findall(body)}
             if phases or regimes:
                 p, r = out.setdefault(m.group(1), (set(), set()))
@@ -96,6 +110,15 @@ def main() -> None:
         except ValueError:
             continue
         if not ours:
+            continue
+
+        # Several classes use HpPhases as a start-of-fight trigger rather than a phase ladder:
+        # HpPhases(95) with a HandleHpPhase that ignores its argument and just starts a skill
+        # loop. Renumbering those to a retail threshold would delay the whole fight -- Ebonsoul
+        # and Rukril would not begin casting until 7% HP. Detect them by the handler not
+        # switching on the percent at all.
+        handler = re.search(r"HandleHpPhase\(int \w+\)(.*?)\n    }", text, re.S)
+        if handler and not re.search(r"\bcase \d+:", handler.group(1)):
             continue
 
         for npc_id in by_ai.get(name.group(1), []):

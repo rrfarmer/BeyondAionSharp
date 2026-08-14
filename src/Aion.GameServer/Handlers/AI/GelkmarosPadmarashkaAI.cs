@@ -18,7 +18,11 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("padmarashka_world_boss")]
 public class GelkmarosPadmarashkaAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(33, 5);
+    /// <summary>
+    /// Retail pattern DF4_Dramata drops her rocks at 10%, not the 33% we had; the 5% step is
+    /// ours and stays, since retail also acts there. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(10, 5);
     private readonly AtomicInteger deadProtectors = new AtomicInteger();
 
     public GelkmarosPadmarashkaAI(Npc owner)
@@ -68,7 +72,7 @@ public class GelkmarosPadmarashkaAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 33:
+            case 10:
                 SpawnRockSlides();
                 break;
             case 5:
