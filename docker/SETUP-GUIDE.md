@@ -198,4 +198,4 @@ and should never be exposed.
 
 ---
 
-For the technical build details, see [`DEPLOY-PROGRESS.md`](DEPLOY-PROGRESS.md).
+For the compose layout and the `.env` reference, see [`README.md`](README.md).

@@ -5,10 +5,10 @@ the C# structure diverges from Java 1:1 fidelity. Use as the Phase B/C remediati
 
 ## Summary
 
-- Java gameserver types indexed: **4178**
-- C# GameServer files indexed: **4125**
-- Java classes with an exact-name C# counterpart: **3935**
-- C# stem clusters: **3081**
+- Java gameserver types indexed: **4160**
+- C# GameServer files indexed: **4179**
+- Java classes with an exact-name C# counterpart: **3975**
+- C# stem clusters: **3132**
 
 ## Explosion Clusters (remediation priority)
 
@@ -17,59 +17,60 @@ with low `java_classes` is the slop signature (re-port fresh per the plan).
 
 | C# stem | C# files | C# lines | Java classes | Java lines | line ratio | Java match |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| SM | 246 | 37124 | 261 | 42787 | 1x | SM_ABYSS_RANKING_LEGIONS, SM_PRIVATE_STORE_NAME… |
-| CM | 189 | 10717 | 203 | 11691 | 1x | CM_LOOT_ITEM, CM_BLOCK_ADD… |
-| GlobalDrop | 21 | 367 | 21 | 655 | 1x | GlobalDropRating, GlobalDropTribe… |
-| EternalBastion | 16 | 1810 | 16 | 1721 | 1x | EternalBastionCommanderAI, EternalBastionDragonAI… |
-| CustomInstance | 14 | 1333 | 14 | 1238 | 1x | CustomInstanceTeleporter, CustomInstanceRankEnum… |
-| LegionDominion | 14 | 1253 | 13 | 1113 | 1x | LegionDominionIntruderUpdateTask, LegionDominionLocation… |
-| PlayerGroup | 14 | 746 | 9 | 574 | 1x | PlayerGroupStopMentoringEvent, PlayerGroupMember… |
-| NpcSkill | 12 | 966 | 11 | 867 | 1x | NpcSkillTemplates, NpcSkillList… |
-| WorldRaid | 9 | 902 | 9 | 753 | 1x | WorldRaidRunnable, WorldRaidLocation… |
-| PlayerAlliance | 9 | 916 | 9 | 811 | 1x | PlayerAllianceGroup, PlayerAllianceService… |
-| StaticDoor | 8 | 481 | 7 | 427 | 1x | StaticDoorWorld, StaticDoorSpawnManager… |
-| ShugoTomb | 8 | 518 | 8 | 507 | 1x | ShugoTombModoAI, ShugoTombBossAI… |
-| ExpertExpertof | 8 | 642 | 8 | 570 | 1x | _19053ExpertExpertofConstruction, _1979ExpertExpertofCooking… |
-| FlyRing | 7 | 324 | 7 | 340 | 1x | FlyRingPoint, FlyRingTemplate… |
-| AutoGroup | 7 | 1200 | 6 | 1036 | 1x | AutoGroup, AutoGroupData… |
-| DarkPoeta | 7 | 699 | 6 | 575 | 1x | _80219DarkPoetaFinale, _80218DarkPoetaEncore… |
-| ExpertPassionfor | 7 | 560 | 7 | 497 | 1x | _1976ExpertPassionforHandicrafting, _1980ExpertPassionforAlchemy… |
-| GameServer | 6 | 1694 | 2 | 362 | 5x | GameServer, GameServerError |
-| InGame | 6 | 611 | 6 | 545 | 1x | InGameShopProperty, InGameShopLogDAO… |
-| PvP | 6 | 713 | 8 | 1627 | 0x | PvPArenaPlayerReward, PvPZone… |
-| BrigadeGeneral | 6 | 924 | 6 | 904 | 1x | BrigadeGeneralShebaAI, BrigadeGeneralTahabataAI… |
+| SM | 241 | 37142 | 255 | 42538 | 1x | SM_INSTANCE_SCORE, SM_SHOW_NPC_ON_MAP… |
+| CM | 188 | 10646 | 201 | 11570 | 1x | CM_HOUSE_SCRIPT, CM_CHANGE_CHANNEL… |
+| GlobalDrop | 21 | 367 | 21 | 655 | 1x | GlobalDropNpcName, GlobalDropNpc… |
+| EternalBastion | 16 | 1810 | 16 | 1721 | 1x | EternalBastionMountableAI, EternalBastionConstructAI… |
+| CustomInstance | 14 | 1356 | 14 | 1238 | 1x | CustomInstanceRankedPlayer, CustomInstanceTeleporter… |
+| LegionDominion | 14 | 1251 | 13 | 1113 | 1x | LegionDominionIntruderUpdateTask, LegionDominionLocationTemplate… |
+| PlayerGroup | 14 | 746 | 9 | 574 | 1x | PlayerGroupInvite, PlayerGroupStats… |
+| NpcSkill | 12 | 966 | 11 | 867 | 1x | NpcSkillData, NpcSkillList… |
+| WorldRaid | 9 | 820 | 9 | 753 | 1x | WorldRaidAI, WorldRaidSchedule… |
+| PlayerAlliance | 9 | 918 | 9 | 811 | 1x | PlayerAllianceGroup, PlayerAllianceMember… |
+| StaticDoor | 8 | 481 | 7 | 427 | 1x | StaticDoorData, StaticDoorTemplate… |
+| ShugoTomb | 8 | 518 | 8 | 507 | 1x | ShugoTombModoAI, ShugoTombImperialShrineAI… |
+| ExpertExpertof | 8 | 642 | 8 | 570 | 1x | _1981ExpertExpertofAlchemy, _29053ExpertExpertofConstruction… |
+| FlyRing | 7 | 324 | 7 | 340 | 1x | FlyRingController, FlyRingService… |
+| AutoGroup | 7 | 1204 | 6 | 1036 | 1x | AutoGroupData, AutoGroupService… |
+| PvP | 7 | 1447 | 8 | 1627 | 1x | PvPArenaPlayerReward, PvPArenaScore… |
+| DarkPoeta | 7 | 695 | 6 | 575 | 1x | _80218DarkPoetaEncore, _80219DarkPoetaFinale… |
+| ExpertPassionfor | 7 | 560 | 7 | 497 | 1x | _1972ExpertPassionforWeaponsmithing, _1980ExpertPassionforAlchemy… |
+| GameServer | 6 | 1821 | 2 | 362 | 5x | GameServerError, GameServer |
+| BrigadeGeneral | 6 | 924 | 6 | 904 | 1x | BrigadeGeneralChantraAI, BrigadeGeneralLaksyakaAI… |
+| StaticData | 5 | 3095 | 2 | 471 | 7x | StaticDataListener, StaticData |
 | WorldMap | 5 | 1024 | 5 | 1063 | 1x | WorldMapInstanceFactory, WorldMap… |
-| KeyItem | 5 | 108 | 5 | 105 | 1x | _4220KeyItemHiddenQuest02, KeyItem… |
-| ShieldGenerator | 5 | 377 | 5 | 353 | 1x | ShieldGeneratorAI, ShieldGeneratorEastAI… |
-| GroupThe | 5 | 490 | 5 | 447 | 1x | _28407GroupTheGathering, _3937GroupTheDecorationsofSanctum… |
-| VisibleObject | 4 | 542 | 4 | 693 | 1x | VisibleObject, VisibleObjectSpawner… |
-| AbyssRank | 4 | 1033 | 5 | 1176 | 1x | AbyssRankEnum, AbyssRankDAO… |
-| PlayerSkill | 4 | 564 | 3 | 451 | 1x | PlayerSkillList, PlayerSkillEntry… |
-| AtreianPassport | 4 | 551 | 3 | 449 | 1x | AtreianPassportService, AtreianPassport… |
-| BindPoint | 4 | 299 | 4 | 313 | 1x | BindPointPosition, BindPointTemplate… |
-| ItemPurification | 4 | 272 | 3 | 220 | 1x | ItemPurificationTemplate, ItemPurificationData… |
-| PetDoping | 4 | 182 | 3 | 164 | 1x | PetDopingBag, PetDopingEntry… |
-| PetFeed | 4 | 407 | 4 | 380 | 1x | PetFeedResult, PetFeedData… |
-| StaticData | 4 | 2827 | 2 | 471 | 6x | StaticData, StaticDataListener |
-| TradeList | 4 | 452 | 3 | 350 | 1x | TradeListData, TradeListTemplate… |
-| KillIn | 4 | 429 | 4 | 420 | 1x | KillInZoneData, KillInWorld… |
-| ReportTo | 4 | 408 | 4 | 391 | 1x | ReportToMany, ReportToManyData… |
-| SmAccount | 4 | 110 | 0 | 0 | n/a | —(none) |
-| TheShugo | 4 | 901 | 4 | 815 | 1x | TheShugoEmperorsVaultScoreWriter, _3326TheShugoMenace… |
-| PlayerTeam | 4 | 281 | 3 | 293 | 1x | PlayerTeamCommandService, PlayerTeamDistributionService… |
+| SmAccount | 5 | 135 | 0 | 0 | n/a | —(none) |
+| KeyItem | 5 | 108 | 5 | 105 | 1x | _4219KeyItemHiddenQuest01, _3219KeyItemHiddenQuest01… |
+| ShieldGenerator | 5 | 377 | 5 | 353 | 1x | ShieldGeneratorEastAI, ShieldGeneratorWestAI… |
+| GroupThe | 5 | 490 | 5 | 447 | 1x | _30208GroupTheTruthHurts, _3937GroupTheDecorationsofSanctum… |
+| VisibleObject | 4 | 542 | 4 | 693 | 1x | VisibleObjectController, VisibleObject… |
+| AbyssRank | 4 | 1036 | 5 | 1176 | 1x | AbyssRankUpdateService, AbyssRank… |
+| PlayerSkill | 4 | 564 | 3 | 451 | 1x | PlayerSkillEntry, PlayerSkillListDAO… |
+| AtreianPassport | 4 | 551 | 3 | 449 | 1x | AtreianPassportService, AtreianPassportData… |
+| BindPoint | 4 | 299 | 4 | 313 | 1x | BindPointTemplate, BindPointData… |
+| ItemPurification | 4 | 272 | 3 | 220 | 1x | ItemPurificationTemplate, ItemPurificationService… |
+| PetDoping | 4 | 182 | 3 | 164 | 1x | PetDopingData, PetDopingEntry… |
+| PetFeed | 4 | 407 | 4 | 380 | 1x | PetFeedResult, PetFeedCalculator… |
+| TradeList | 4 | 452 | 3 | 350 | 1x | TradeList, TradeListData… |
+| KillIn | 4 | 429 | 4 | 420 | 1x | KillInWorld, KillInZone… |
+| ReportTo | 4 | 408 | 4 | 391 | 1x | ReportTo, ReportToManyData… |
+| LoginServer | 4 | 1246 | 2 | 413 | 3x | LoginServerConnection, LoginServer |
+| TheShugo | 4 | 901 | 4 | 815 | 1x | TheShugoEmperorsVault, _3006TheShugoFugitive… |
+| PlayerTeam | 4 | 281 | 3 | 293 | 1x | PlayerTeamDistributionService, PlayerTeamCommandService… |
 
 ## Orphan C# Stems (no Java counterpart — invented)
 
 | C# stem | files | example file |
 | --- | ---: | --- |
-| SmAccount | 4 | SmAccountAuth |
+| SmAccount | 5 | SmAccountAuth |
+| OutboundLink | 3 | OutboundLinkRetryDelays |
 | SmPlayer | 3 | SmPlayerAuth |
 | PlayerSummon | 3 | PlayerSummonKnownNpcTemplateType |
 | CharacterSelection | 2 | CharacterSelectionRepository |
+| ServerPacket | 2 | ServerPacketFrameCodec |
 | SmGame | 2 | SmGameServerAuth |
 | GlobalUsings | 1 | GlobalUsings |
 | Program | 1 | Program |
-| AiName | 1 | AiNameAttribute |
 | AiState | 1 | AiState |
 | AiSub | 1 | AiSubState |
 | MailRepository | 1 | MailRepository |
@@ -88,20 +89,19 @@ with low `java_classes` is the slop signature (re-port fresh per the plan).
 | IStatic | 1 | IStaticDataLoader |
 | JavaCron | 1 | JavaCronSchedule |
 | LegionBonus | 1 | LegionBonusRuntime |
-| OutboundLink | 1 | OutboundLinkHostedService |
 | AtomicBoolean | 1 | AtomicBoolean |
 | AtomicInteger | 1 | AtomicInteger |
 | AtomicLong | 1 | AtomicLong |
+| CopyOn | 1 | CopyOnWriteArrayList |
 | GenericValidator | 1 | GenericValidator |
+| JavaEnum | 1 | JavaEnum |
+| JavaMath | 1 | JavaMath |
+| JavaString | 1 | JavaString |
 | WorldRegion | 1 | WorldRegionIdService |
 | IAdvanced | 1 | IAdvancedZoneHandler |
 | IZone | 1 | IZoneHandler |
+| JavaNumber | 1 | JavaNumberParser |
 | CollectionIs | 1 | CollectionIsEmptyExtension |
-| DateTime | 1 | DateTimeUnixExtensions |
-| EnumGet | 1 | EnumGetIdExtension |
-| ExpirableExtensions | 1 | ExpirableExtensions |
-| L10nExtensions | 1 | L10nExtensions |
-| StringEscape | 1 | StringEscapeUtils |
 
 ## Missing High-Value Java (engine/services gaps)
 

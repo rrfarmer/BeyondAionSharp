@@ -66,4 +66,4 @@ docker compose (docker/docker-compose.yml)
         └─ chatserver   — :10241 clients, :9021 game-server bridge
 ```
 
-See `DEPLOY-PROGRESS.md` for the build details.
+See [`SETUP-GUIDE.md`](SETUP-GUIDE.md) for a step-by-step walkthrough and troubleshooting.

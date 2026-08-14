@@ -51,7 +51,7 @@ This is a hard rule. Sessions previously generated ~3,500 throwaway docs; that i
 - **Do not create new doc files** — no per-UOW design/plan/audit/handoff/readiness/evidence notes.
 - The **only** mutable docs are `HANDOFF.md` (every unit, in place) and `Structural-Audit-Scorecard.md` (regenerate when structure changes).
 - Record code-level parity with `// Java parity: path::method` breadcrumbs, not prose docs.
-- Do not edit `PHASE-*` history docs.
+- Do not recreate the deleted `PHASE-*` history docs; that archaeology lives in git history.
 - If you feel the urge to write a design doc, put the 2–3 lines that matter in `HANDOFF.md` instead.
 
 ## HANDOFF.md (the cross-session memory)
