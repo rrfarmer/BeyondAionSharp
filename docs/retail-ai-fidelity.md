@@ -97,3 +97,54 @@ mechanism the engine does not have.
 
 **Verification.** `dotnet build` clean; full suite 1,002 tests passing. Not yet
 observed in a running server.
+
+### Kromede's Trial — the encounter cast
+
+Patterns `Cromede_Named_Angry` (217006), `Cromede_Named_Scared` (217005),
+`Cromede_Wife` (217000) and `Cromede_Assijudge` (217002) in
+`NpcAIPatterns_LF4_minho.xml`. All four bindings confirmed from client
+`ai_name`. World 300230000.
+
+**Kaliga the Unjust (217006) — relic re-cast defect.** `19247`/`19248`
+(Strength/Mana Relic Effect) sat in his skill list at `prob="25" cd="30000"`.
+`KromedesTrialInstance` strips the matching buff when players destroy a relic,
+but the generic AI simply re-cast it about 30s later, defeating the mechanic
+entirely. Retail never casts them in combat: `Cromede_Named_Angry` absorbs one
+at each of waypoints 2 and 4 during his scripted intro walk. Removed both from
+the skill list.
+
+**Lady Angerr (217000).** Retail summons all six bats in a single burst the
+first time she falls below 70% HP, together with Protective Shield on herself;
+`spawn_helpers.xml` had two bats each at 90/60/30%. Consolidated to six at 70%
+with `skillId="16409"`. Skill list retuned to match the pattern: Strengthen
+Armor (`16405`, self) once as combat opens, Fear Casting (`16704`, target)
+every 20s, Protective Shield moved to the threshold. Index mapping corroborated
+by shape — the pattern casts indices 0 and 1 on `OBJI_SELF` and index 2 on
+`OBJI_CUR_TARGET`, and our list is exactly two self-buffs followed by a
+target-side debuff.
+
+**Shadow Judge Kaliga (217005).** Retail spawns five of his bloodwings
+(`217111`) the first time he falls below 70% HP; nothing spawned `217111`
+before, so the NPC was dead data. Added the summons entry and switched his
+`ai=` from `aggressive` to `summoner`, without which `spawn_helpers` never
+fires. No skill assigned at the threshold: his four listed skills do not line
+up with the pattern's indices (index 0 is cast on the aggro target, but our
+list starts with a self-heal), so the ordering is not trustworthy for this NPC.
+
+**Justicetaker Wyr (217002).** Judge's Robes (`19286`) was gated
+`max_hp="30" cd="40000"` — held back until he was nearly dead. Retail re-arms
+that timer every 15s under `is_hp_in_boundary 1..100`, i.e. at any HP from the
+opening of the fight. Now `prob="100" cd="15000"`. Identified by role rather
+than index: the pattern casts index 5 on `OBJI_SELF`, our curated list has only
+four entries, and `19286` is Wyr's only self-buff.
+
+**Not implemented.** The scripted intro walk and its two relic absorptions (no
+walker route exists for 217005/217006); the statue adds at 80/50% and the
+votaic column drop below 50%; Wyr's and Angerr's escape-at-30% despawn; the
+Shadow Judge's 3s flee at 30%; and Wyr's counterattack window. All need either
+code or engine features (data-driven flee, HP-triggered despawn) that do not
+exist yet.
+
+**Verification.** Full suite 1,002 tests passing. Confirmed all 47 NPCs with
+`ai="summoner"` have a `spawn_helpers` entry, since `SummonerAI` requires one.
+Not yet observed in a running server.

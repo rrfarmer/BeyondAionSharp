@@ -31924,16 +31924,23 @@
 		<npc_skill id="16663" lv="27" prob="25" />
 		<npc_skill id="18478" lv="27" prob="25" />
 	</npc_skills>
+	<!-- Lady Angerr. Retail pattern Cromede_Wife: Strengthen Armor on herself when combat
+	     opens, Fear Casting on the current target every 20s, and Protective Shield once at
+	     70% HP alongside her bats (driven from spawn_helpers.xml). -->
 	<npc_skills npc_ids="217000">
-		<npc_skill id="16405" lv="27" prob="25" />
-		<npc_skill id="16409" lv="27" prob="25" />
-		<npc_skill id="16704" lv="27" prob="25" />
+		<npc_skill id="16405" lv="27" prob="100" cd="600000" />
+		<npc_skill id="16704" lv="27" prob="100" cd="20000" />
 	</npc_skills>
+	<!-- Justicetaker Wyr. Retail pattern Cromede_Assijudge re-arms his Judge's Robes timer
+	     every 15s under is_hp_in_boundary 1..100, i.e. at any HP from the start of the fight.
+	     The max_hp="30" gate inverted that, holding his only self-buff back until he was
+	     nearly dead. (Retail also opens a brief counterattack window off the same timer,
+	     which the data model cannot express.) -->
 	<npc_skills npc_ids="217002">
 		<npc_skill id="16526" lv="27" prob="70" cd="10000" />
 		<npc_skill id="16542" lv="27" prob="60" cd="20000" />
 		<npc_skill id="18748" lv="10" prob="60" cd="20000" />
-		<npc_skill id="19286" lv="20" prob="100" max_hp="30" cd="40000" />
+		<npc_skill id="19286" lv="20" prob="100" cd="15000" />
 	</npc_skills>
 	<npc_skills npc_ids="217005">
 		<npc_skill id="16401" lv="27" prob="60" cd="50000" />
@@ -31941,14 +31948,16 @@
 		<npc_skill id="16526" lv="27" prob="25" cd="10000" />
 		<npc_skill id="17698" lv="27" prob="50" cd="30000" />
 	</npc_skills>
+	<!-- Kaliga the Unjust. The relic effects 19247/19248 are NOT combat casts: retail pattern
+	     Cromede_Named_Angry absorbs them once each during his scripted intro walk past the two
+	     relics. Leaving them here let him re-buff himself ~30s after players destroyed a relic
+	     and KromedesTrialInstance stripped the buff, defeating the whole mechanic. -->
 	<npc_skills npc_ids="217006">
 		<npc_skill id="16401" lv="27" prob="60" cd="50000" />
 		<npc_skill id="16521" lv="27" prob="70" cd="20000" />
 		<npc_skill id="16523" lv="27" prob="70" cd="20000" />
 		<npc_skill id="17698" lv="27" prob="50" cd="30000" />
 		<npc_skill id="19246" lv="27" prob="100" cd="300000" />
-		<npc_skill id="19247" lv="27" prob="25" cd="30000" />
-		<npc_skill id="19248" lv="27" prob="25" cd="30000" />
 	</npc_skills>
 	<npc_skills npc_ids="217007">
 		<npc_skill id="16516" lv="42" prob="25" />

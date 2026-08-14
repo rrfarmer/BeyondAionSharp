@@ -387,16 +387,23 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Lady Angerr. Retail pattern Cromede_Wife summons all six bats in one burst the first
+	     time she drops below 70% HP, together with Protective Shield on herself — not two at
+	     a time across 90/60/30%. -->
 	<ai npcId="217000">
 		<summons>
-			<percentage percent="90">
-				<summonGroup npcId="217110" minCount="2" distance="2"/>
+			<percentage percent="70" skillId="16409">
+				<summonGroup npcId="217110" minCount="6" distance="2"/>
 			</percentage>
-			<percentage percent="60">
-				<summonGroup npcId="217110" minCount="2" distance="2"/>
-			</percentage>
-			<percentage percent="30">
-				<summonGroup npcId="217110" minCount="2" distance="2"/>
+		</summons>
+	</ai>
+	<!-- Shadow Judge Kaliga. Retail pattern Cromede_Named_Scared spawns five of his bloodwings
+	     the first time he drops below 70% HP. Nothing spawned 217111 before this, so the NPC
+	     was dead data. -->
+	<ai npcId="217005">
+		<summons>
+			<percentage percent="70">
+				<summonGroup npcId="217111" minCount="5" distance="3"/>
 			</percentage>
 		</summons>
 	</ai>
