@@ -114,6 +114,34 @@ Notes for whoever works these lists:
 - Even after filtering, a matching count is not sufficient. Check that each
   step's *actions* line up before renumbering.
 
+## Verifying these changes
+
+`tests/Aion.GameServer.Tests/Ai/` runs a boss headless against a simulated
+player on a virtual clock, so a fight that takes minutes in game is asserted in
+milliseconds. It exists because the changes in this document are the kind that
+`dotnet build` and every other test are blind to: renumbering a threshold or
+mis-ordering a battle timer compiles perfectly and breaks the encounter.
+
+`BossAiHarness` loads the **real** static data — `npc_templates`,
+`skill_templates`, `npc_skills`, `tribe_relations` — so `Spawn(216245)` is the
+actual Macunbello with his real skill list. A wrong npc id, a broken `ai_name`
+binding or a skill that does not exist fails the test rather than passing
+quietly, which synthetic templates would not catch.
+
+Assertions observe an AI's *decisions* — which skill it queued against which
+target attribute, which adds it spawned, which phase it entered — not their
+damage. That is precisely the layer the retail patterns specify, so it is the
+layer worth pinning; it does mean a test cannot tell you a skill actually
+landed.
+
+The one production concession is a test seam: `ThreadPoolManager` is no longer
+`sealed` and its two scheduling entry points are `virtual`, so the harness can
+substitute a virtual clock. Every other overload funnels through those two.
+Production behaviour is unchanged.
+
+Adding a boss costs roughly 30–80 lines and no new infrastructure. Not yet
+covered: shout broadcasts, which need a recording connection.
+
 ---
 
 ## Log

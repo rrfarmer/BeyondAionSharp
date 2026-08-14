@@ -3,7 +3,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Utils;
 
-public sealed class ThreadPoolManager : IAsyncDisposable
+// Non-sealed with two virtual scheduling entry points purely as a TEST SEAM: the headless boss-AI harness
+// (tests/Aion.GameServer.Tests/Ai) registers a virtual-clock subclass through the RegisterInstance bridge so an
+// AI's battle timers can be advanced deterministically instead of slept through in real time. Production behaviour
+// is unchanged. Every other Schedule/ScheduleAtFixedRate/Execute overload funnels into these two, so overriding
+// them is sufficient to intercept all AI scheduling.
+public class ThreadPoolManager : IAsyncDisposable
 {
 	private readonly ILogger<ThreadPoolManager> _logger;
 	private readonly Action<ThreadPoolScheduleObservation>? _scheduleObserver;
@@ -31,7 +36,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 	/// <summary>Composition-root hook: bind the DI-created instance to the Java-style static accessor.</summary>
 	public static void RegisterInstance(ThreadPoolManager instance) => _instance = instance;
 
-	public ScheduledTask Schedule(
+	public virtual ScheduledTask Schedule(
 		Func<CancellationToken, ValueTask> action,
 		TimeSpan delay,
 		CancellationToken cancellationToken = default)
@@ -79,7 +84,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 
 	public void ExecuteLongRunning(Runnable runnable) => Schedule(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.Zero);
 
-	public ScheduledTask ScheduleAtFixedRateTask(
+	public virtual ScheduledTask ScheduleAtFixedRateTask(
 		Func<CancellationToken, ValueTask> action,
 		TimeSpan initialDelay,
 		TimeSpan period,
