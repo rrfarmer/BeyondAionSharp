@@ -42,8 +42,8 @@ public sealed class BossAiHarness : IDisposable
 	/// <summary>Beshmundir Temple; any id works, it only has to be consistent within a harness.</summary>
 	public const int DefaultMapId = 300100000;
 
-	private static readonly object RegistryLock = new();
-	private static readonly HashSet<Type> RegisteredAi = new();
+	/// <summary>Side of the synthetic map, in world units. See <see cref="Builder.WithWorldSize"/>.</summary>
+	public const int DefaultWorldSize = 1024;
 
 	private readonly DataManager? _previousDataManager;
 	private readonly GameWorld? _previousWorld;
@@ -221,8 +221,24 @@ public sealed class BossAiHarness : IDisposable
 	{
 		private readonly int _mapId;
 		private readonly List<Type> _aiHandlers = new();
+		private int _worldSize = DefaultWorldSize;
 
 		internal Builder(int mapId) => _mapId = mapId;
+
+		/// <summary>
+		/// Widens the synthetic map so far-flung coordinates resolve to a region.
+		/// </summary>
+		/// <remarks>
+		/// Anything outside the grid makes <c>World.CreatePosition</c> throw, and a boss whose
+		/// <c>HandleSpawned</c> places objects at hardcoded world coordinates then fails to finish spawning —
+		/// after which <c>HpPhases.TryEnterNextPhase</c> silently does nothing, because it requires
+		/// <c>IsSpawned()</c>. Gelkmaros Padmarashka's shield NPCs sit out past 2900, so she needs this.
+		/// </remarks>
+		public Builder WithWorldSize(int worldSize)
+		{
+			_worldSize = worldSize;
+			return this;
+		}
 
 		/// <summary>
 		/// Registers the AI handler classes this encounter needs.
@@ -248,7 +264,7 @@ public sealed class BossAiHarness : IDisposable
 			EnsureIdFactory();
 			RegisterAiHandlers(_aiHandlers);
 
-			var staticData = BuildStaticData(_mapId);
+			var staticData = BuildStaticData(_mapId, _worldSize);
 			var dataManager = NewDataManager(staticData);
 			var clock = new VirtualThreadPool();
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -276,22 +292,13 @@ public sealed class BossAiHarness : IDisposable
 		}
 
 		/// <summary>
-		/// <c>AIEngine.RegisterAI</c> throws on a duplicate name and the engine is a process-wide singleton,
-		/// so registration is tracked here and done at most once per type per test run.
+		/// <c>AIEngine.RegisterAI</c> throws on a duplicate name and the engine is a process-wide singleton, so
+		/// registration goes through <see cref="TestAiEngine"/>, which tracks what this suite has bound and keeps
+		/// it from colliding with the boot tests that load the full handler set.
 		/// </summary>
-		private static void RegisterAiHandlers(List<Type> types)
-		{
-			lock (RegistryLock)
-			{
-				foreach (Type type in types)
-				{
-					if (RegisteredAi.Add(type))
-						AIEngine.GetInstance().RegisterAI(type);
-				}
-			}
-		}
+		private static void RegisterAiHandlers(List<Type> types) => TestAiEngine.Register(types);
 
-		private static StaticData BuildStaticData(int mapId)
+		private static StaticData BuildStaticData(int mapId, int worldSize)
 		{
 			// GetUninitializedObject skips StaticData's field initializers (which would build every holder);
 			// only the handful the AI/spawn path reads are filled in. Same trick the golden tests use.
@@ -320,9 +327,10 @@ public sealed class BossAiHarness : IDisposable
 					MapId = mapId,
 					Name = "harness-map",
 					CName = "harness-map",
-					// Regions are 128 units square, so this is a 9x9 grid — plenty for one encounter
-					// and cheap to allocate. Coordinates outside it make World.CreatePosition throw.
-					WorldSize = 1024,
+					// Regions are 128 units square, so the default is a 9x9 grid — plenty for one encounter
+					// and cheap to allocate. Coordinates outside it make World.CreatePosition throw; see
+					// WithWorldSize for bosses that place objects at real world coordinates.
+					WorldSize = worldSize,
 					WaterLevel = 0,
 					TwinCount = 1,
 				},
