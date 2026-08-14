@@ -2295,6 +2295,17 @@
 			<shout string_id="1500102" when="CAST_K" skill_no="2"/>
 			<shout string_id="1500103" when="CAST_K" skill_no="2"/>
 		</shout_npcs>
+		<!-- 282040 is never spawned; 216922 is the Hamerun players actually fight, and the
+		     client gives both npc_ids ai_name=IDNovice_Hameroon. The skill_no=2 barks fire on
+		     skill index 1, which that pattern casts at 50% HP, so they belong on the live boss.
+		     Inferred rather than attested: no client-side shout table exists to confirm it. -->
+		<shout_npcs npc_ids="216922" restrict_world="300200000">
+			<shout string_id="1500099" when="ATTACK_BEGIN"/>
+			<shout string_id="1500100" when="ATTACK_BEGIN"/>
+			<shout string_id="1500101" when="ATTACK_BEGIN"/>
+			<shout string_id="1500102" when="CAST_K" skill_no="2"/>
+			<shout string_id="1500103" when="CAST_K" skill_no="2"/>
+		</shout_npcs>
 	</shout_group>
 	<shout_group client_ai="IDNovice_RatmanA">
 		<shout_npcs npc_ids="282044" restrict_world="300200000">

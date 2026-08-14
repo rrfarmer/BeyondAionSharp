@@ -31683,10 +31683,12 @@
 		<npc_skill id="16516" lv="11" prob="25" />
 		<npc_skill id="19226" lv="11" prob="25" />
 	</npc_skills>
+	<!-- Hamerun the Bleeder. Retail pattern IDNovice_Hameroon casts exactly two skills:
+	     Ferocious Strike on the current target every 10s, and Hamerun's Hypnosis (19210)
+	     once at 50% HP, which spawn_helpers.xml drives. Ability Drain (19264) was in our
+	     list but the retail script never casts it. -->
 	<npc_skills npc_ids="216922">
-		<npc_skill id="17230" lv="11" prob="25" />
-		<npc_skill id="19210" lv="11" prob="25" />
-		<npc_skill id="19264" lv="11" prob="25" />
+		<npc_skill id="17230" lv="11" prob="100" cd="10000" />
 	</npc_skills>
 	<npc_skills npc_ids="216926">
 		<npc_skill id="18812" lv="42" prob="25" />

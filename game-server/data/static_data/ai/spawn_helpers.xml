@@ -355,10 +355,13 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Hamerun the Bleeder. Retail pattern IDNovice_Hameroon: the first drop below
+	     50% HP casts Hamerun's Hypnosis and brainwashes one of each prisoner within 5m. -->
 	<ai npcId="216922">
 		<summons>
-			<percentage percent="50">
-				<summonGroup npcId="282041" distance="2"/>
+			<percentage percent="50" skillId="19210">
+				<summonGroup npcId="282041" distance="5"/>
+				<summonGroup npcId="282042" distance="5"/>
 			</percentage>
 		</summons>
 	</ai>
