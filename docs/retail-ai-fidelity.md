@@ -225,3 +225,35 @@ guesswork.
 434 distinct `ai=` names in npc_templates resolve to a registered `[AIName]`
 handler, since `AIEngine.ValidateScripts()` hard-fails at boot otherwise.
 Not yet observed in a running server.
+
+### Beshmundir Temple — Stormwing (216183, and 216264 normal)
+
+Patterns `IDCTH_Rudra` and `IDCT_Rudra` in `NpcAIPatterns_TeCa_JM.xml`.
+`BeshmundirInstance` spawns 216183; 216264 is never spawned.
+
+No AI class existed, so his signature mechanic was entirely absent — he never
+summoned a single twister, and all four twister NPCs (281794 root, 281796
+sharp, plus the 281795/281797 elite variants) sat in npc_templates spawned by
+nothing. New `StormwingAI`:
+
+- **Band timer**, 10s: seven HP bands (95/80/65/50/35/20/5), each firing once,
+  calling Threshing Wind down on himself and summoning four twisters —
+  alternating between the four diagonals at ±10 and directly on top of him.
+- **Escalation timer**, 30s below 50% HP: four waves of the elite variants,
+  sharp twice then root. Retail uses the elite ids here even in normal mode.
+
+**Skill indices.** Corroborated by index 3: the pattern casts it on an attacker
+only below 50% HP, and our entry for Dragon's Quake (`18616`) carries a
+matching `max_hp="45"`. Only Threshing Wind (`18613`) is AI-driven and set to
+`prob="0"`; the other four keep their probabilities, standing in for the retail
+rotation timers this class does not reproduce.
+
+**Shouts** are left to `npc_shouts.xml`, which already carries this NPC's
+START/ATTACK_K/DIED lines and fires them through `NpcShoutsService` — an AI
+broadcasting them directly would double them up.
+
+**Not implemented.** Retail's two skill-rotation timers, whose branches are
+flag-gated chains, and the exit portal spawned on death and on reset.
+
+**Verification.** Build clean, full suite 1,002 tests passing, all `ai=` names
+resolve. Not yet observed in a running server.

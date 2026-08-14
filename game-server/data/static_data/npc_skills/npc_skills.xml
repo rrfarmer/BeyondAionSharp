@@ -28119,9 +28119,12 @@
 		<npc_skill id="18914" lv="46" prob="25" max_hp="80" />
 		<npc_skill id="18959" lv="46" prob="0" max_hp="70" />
 	</npc_skills>
+	<!-- Stormwing. StormwingAI calls Threshing Wind down as each retail HP band breaks, so it
+	     is prob="0" here and only supplies the level; the other four keep their probabilities,
+	     standing in for the retail rotation timers the AI does not reproduce. -->
 	<npc_skills npc_ids="216183">
 		<npc_skill id="18612" lv="5" prob="25" />
-		<npc_skill id="18613" lv="5" prob="25" max_hp="85" />
+		<npc_skill id="18613" lv="5" prob="0" />
 		<npc_skill id="18614" lv="6" prob="25" />
 		<npc_skill id="18616" lv="6" prob="25" max_hp="45" />
 		<npc_skill id="18615" lv="6" prob="25" />
@@ -28573,9 +28576,12 @@
 		<npc_skill id="18914" lv="46" prob="25" max_hp="80" />
 		<npc_skill id="18959" lv="46" prob="0" max_hp="70" />
 	</npc_skills>
+	<!-- Stormwing. StormwingAI calls Threshing Wind down as each retail HP band breaks, so it
+	     is prob="0" here and only supplies the level; the other four keep their probabilities,
+	     standing in for the retail rotation timers the AI does not reproduce. -->
 	<npc_skills npc_ids="216264">
 		<npc_skill id="18612" lv="5" prob="25" />
-		<npc_skill id="18613" lv="5" prob="25" max_hp="85" />
+		<npc_skill id="18613" lv="5" prob="0" />
 		<npc_skill id="18614" lv="6" prob="25" />
 		<npc_skill id="18616" lv="6" prob="25" max_hp="45" />
 		<npc_skill id="18615" lv="6" prob="25" />
