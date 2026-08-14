@@ -107,6 +107,28 @@ Notes for whoever works these lists:
 
 ## Log
 
+### HP thresholds — Adjutant Anuhart (219357) and Icaronix the Betrayer (214598)
+
+The first two entries off `audit_hp_phases.py`, both cases where retail has a
+phase list of the same shape as ours and only the numbers differ.
+
+**Adjutant Anuhart**, pattern `IDTiamat_Anuhart`. Three one-shot latched steps
+at **70/40/22**, each casting the next of his escalating self-buffs — exactly
+the structure our class already had, at an invented 50/25/10. Renumbered, and
+the `HandleHpPhase` switch with it. The buff identities (20938/20939/20940)
+stay as aionemu identified them: our curated skill list holds four entries
+while the pattern casts indices 5–7, so the client list is longer and the
+indices cannot be checked against our data; three consecutive ids for three
+consecutive indices is at least consistent.
+
+**Icaronix the Betrayer**, pattern `ND2_AhC_1`. One latched step at **75%**,
+not 50: shout, spawn the successor at his own position, despawn himself —
+structurally identical to what we already did. The successor's starting HP was
+carried from 50 to 75 to keep the continuity aionemu evidently intended;
+flagged in code as ours rather than the spec's, since retail's spawn sets no HP.
+
+**Verification.** Build clean, full suite 1,002 tests passing.
+
 ### Server-wide — mute NPCs given their voices back
 
 Retail ships many NPCs twice: one npc_id the world places and a near-identical

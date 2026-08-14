@@ -11,7 +11,12 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("adjutantanuhart")]
 public class AdjutantAnuhartAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(50, 25, 10);
+    /// <summary>
+    /// Retail thresholds, from pattern IDTiamat_Anuhart: three one-shot latched steps, each
+    /// casting the next of his escalating self-buffs. The 50/25/10 these replace were derived
+    /// from watching the fight. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(70, 40, 22);
 
     public AdjutantAnuhartAI(Npc owner) : base(owner)
     {
@@ -43,13 +48,13 @@ public class AdjutantAnuhartAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 50:
+            case 70:
                 UseSelfBuff(20938);
                 break;
-            case 25:
+            case 40:
                 UseSelfBuff(20939);
                 break;
-            case 10:
+            case 22:
                 UseSelfBuff(20940);
                 break;
         }

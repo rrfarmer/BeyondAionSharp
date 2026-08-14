@@ -7,7 +7,12 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("betrayericaronix")]
 public class BetrayerIcaronixAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(50);
+    /// <summary>
+    /// Retail threshold, from pattern ND2_AhC_1: the swap is one latched step at 75%, where a
+    /// shout is followed by spawning the successor at his own position and despawning himself.
+    /// Structurally what we already did, at 50%. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(75);
 
     public BetrayerIcaronixAI(Npc owner)
         : base(owner)
@@ -23,7 +28,10 @@ public class BetrayerIcaronixAI : AggressiveNpcAI, HpPhases.PhaseHandler
     public void HandleHpPhase(int phaseHpPercent)
     {
         Npc icaronixTheBetrayer = (Npc)Spawn(214599, GetPosition().GetX(), GetPosition().GetY(), GetPosition().GetZ(), (sbyte)GetPosition().GetHeading());
-        icaronixTheBetrayer.GetLifeStats().SetCurrentHpPercent(50);
+        // Carried over from the swap threshold so the successor picks up where this form left
+        // off, as it did when both were 50. Retail's pattern sets no HP on the spawn at all,
+        // so this figure is ours, not the spec's.
+        icaronixTheBetrayer.GetLifeStats().SetCurrentHpPercent(75);
         AIActions.DeleteOwner(this);
     }
 }
