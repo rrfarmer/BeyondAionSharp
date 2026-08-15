@@ -758,3 +758,38 @@ indices can be resolved.
 seven mutations caught — both changed thresholds, the wave rotation, the closing
 pair, the one-shot latch, the heartbeat re-arm, and the cleanup on death. Not yet
 observed in a running server.
+
+### Inggison — Omega's clone of physical barrier (281948)
+
+Pattern `LF4_FieldRaid_SumD`, the other half of the Omega encounter.
+
+Left alone it does not die quietly: at **10% health it detonates**, casting Self
+Destruct, leaving a self-destruct effect (281952) and a soul essence (281764)
+behind for ten seconds, and removing itself. Killed outright it still leaves the
+soul essence. None of that happened here, and neither NPC was spawned by anything
+in the server.
+
+**Skill index 1 is anchored hard** and is the only one translated: its branch
+fires at 10% immediately before `despawn_self` and alongside the self-destruct
+spawn, and our 19196 is named Self Destruct with the stack
+`BNFI_AREABOMB10_LFRAID_SUM` — the 10 is the threshold. Indices 0 and 2 have no
+such anchor: one fires once each at 70% and 35%, the other every 20s, and our
+remaining two skills (Protective Wave, an attack; Enervating Wave, a debuff) fit
+either role about equally. Both keep their npc_skills probabilities rather than
+being placed on a coin flip.
+
+**Kept, and not retail:** the Magic Ward (18671) it holds on Omega. Retail applies
+that shield from somewhere in Omega's own unresolvable rotation; ours has the
+clone apply it, and it is what makes killing these clones worth doing. One bug
+this port would otherwise have introduced: `despawn_self` deletes without killing,
+so `HandleDied` does not run — a clone that detonated would have left its shield
+on Omega permanently. The removal now hangs off despawn as well.
+
+**Not implemented.** `on_message` 6354: Omega broadcasts it from every phase
+branch and each clone responds by adding hate to the message's parameter and
+attacking, which re-points the whole wave onto his target. Both halves of that
+chain would need translating together. The clone of magical barrier (281949)
+binds to its own sibling pattern and runs `aggressive`.
+
+**Verification.** Full suite 1,071 passing and 1 skipped, five new pins, all seven
+mutations caught after two test fixes. Not yet observed in a running server.
