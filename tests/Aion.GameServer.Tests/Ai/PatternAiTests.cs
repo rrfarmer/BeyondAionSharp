@@ -83,7 +83,7 @@ public sealed class PatternAiTests
 			for (int i = 0; i < 5; i++)
 				harness.Clock.Advance(TimeSpan.FromSeconds(1));
 
-			Assert.Single(ai.Ran.Where(label => label == "once-at-30"));
+			Assert.Single(ai.Ran, label => label == "once-at-30");
 		}
 	}
 

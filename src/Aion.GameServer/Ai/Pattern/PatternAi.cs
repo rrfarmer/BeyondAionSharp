@@ -289,6 +289,26 @@ public abstract class PatternAi : AggressiveNpcAI
             SpawnAround(target.GetPosition(), npcId, spawnId, count, range, liveSeconds);
     }
 
+    /// <summary>Puts one add on each valid target, which is what makes a raid-wide drop raid-wide.</summary>
+    /// <remarks>
+    /// <c>valid_distance</c> is a filter on who counts, not a spawn radius: a target further away than it
+    /// simply gets nothing. Falling back to the current target when the list is empty would turn a
+    /// raid-wide mechanic into a tank-only one, so an empty list spawns nothing.
+    /// </remarks>
+    public void SpawnOnEachTarget(int npcId, int spawnId, float validDistance, float range, int liveSeconds)
+    {
+        foreach (Creature target in new List<Creature>(GetAggroList().StreamValidTargets(validDistance)))
+            SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+    }
+
+    /// <summary>Puts an add on one attacker chosen the way the pattern names them.</summary>
+    public void SpawnOnAttacker(AggroTarget which, int npcId, int spawnId, float range, int liveSeconds)
+    {
+        Creature? target = GetAggroList().GetTarget(which);
+        if (target != null)
+            SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+    }
+
     private void SpawnAround(WorldPosition at, int npcId, int spawnId, int count, float range, int liveSeconds)
     {
         for (int i = 0; i < count; i++)

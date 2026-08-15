@@ -676,3 +676,49 @@ verified. Eleven further tests cover the runtime's own rules, and all twelve
 mutations tried against them were caught (branch order, first-match-wins,
 condition short-circuit, flag consumption, flag reset, slot replacement, the
 in-combat guard, spawn-id despawn, spawn lifetimes).
+
+### Dragon Lord's Refuge — Tiamat's three incarnations (219365, 219366, 219368)
+
+Patterns `IDTiamat_T1_Crack_Key_Named_60_Al`, `..._Gravity_...` and
+`..._Crystal_...` in `NpcAIPatterns_Tiamat_hue.xml`. The first boss translated
+with the pattern runtime rather than by hand.
+
+All three are the same fight with a different element. Retail arms three timers
+on entering combat:
+
+- **3s, re-arming every 9s** — a power attack that leaves one hazard behind.
+  Fissurefang drops it on the tank, Graviwing on a random attacker, Petriscale
+  on everyone in 50m.
+- **15s** — an area attack that drops a hazard on **every** target in 100m,
+  re-arming at 25s (30s for Graviwing).
+- **20s** — a bind on a random player, but only below 30% health. Above that a
+  catch-all re-checks every 3s; once it fires it goes onto its own 30s cadence.
+
+What this replaces was invented: two hazards on two random players within 30m,
+every 30s, on a cycle that started when the boss **activated** rather than when
+anyone fought it, and kept running between pulls. The hazard ids were right; the
+mechanic that placed them was not.
+
+**Skill indices** are corroborated by stack name, and they are a good example of
+why position is not enough: our list runs 20105, 20145, 20146, breath, while the
+pattern's indices are 0 PowerAtk, 1 AreaAtk, 2 HandBind, 3 breath. Reading index
+0 off our list's first entry would have given Bite instead of Smash. The stacks
+settle it — `LDF4B_TIAMATAVATAR_POWERATK` is 20145, `..._AREAATK` is 20146,
+`..._HANDBIND` is 20105 — and the branch comments name the same three.
+
+**One deliberate divergence.** The `on_die` branch spawns two closing effects and
+then despawns the spawn id it just filed them under, which read literally deletes
+them a line after creating them. The effects are given their own id so both
+halves of the branch do something; retail's action order is otherwise kept.
+
+**Not implemented.** Index 3, the breath: its branch fires on `on_message` 71
+from Tiamat, and that message chain is not translated. The skill keeps its
+npc_skills probability, so it still appears. The hard-mode twins (236278/236279/
+236281 and the 856xxx set) bind to their own `IDTiamat_Hard_*` patterns and keep
+the behaviour they had. Fissurefang's hazard is also meant to engage its target
+on arrival with a large hate bonus; we leave that to the add's own AI.
+
+**Verification.** Full suite 1,061 passing and 1 skipped, eleven new pins. Six of
+seven mutations caught; the survivor — dropping the `despawn` from `on_die` —
+survives because the class's existing `HandleDespawned` already deletes those npc
+ids by hand, so two mechanisms cover it. Not yet observed in a running server.

@@ -117,6 +117,16 @@ public static class Do
     public static PatternAction SpawnOnTarget(int npcId, int spawnId, int count = 1, float range = 0f, int liveSeconds = 0)
         => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds);
 
+    /// <summary><c>spawn_on_multi_target</c> — one add on every valid target in range.</summary>
+    public static PatternAction SpawnOnEachTarget(int npcId, int spawnId, float validDistance,
+        float range = 0f, int liveSeconds = 0)
+        => ai => ai.SpawnOnEachTarget(npcId, spawnId, validDistance, range, liveSeconds);
+
+    /// <summary><c>spawn_on_target_by_attacker_indicator</c> — on one attacker rather than the tank.</summary>
+    public static PatternAction SpawnOnAttacker(AggroTarget which, int npcId, int spawnId,
+        float range = 0f, int liveSeconds = 0)
+        => ai => ai.SpawnOnAttacker(which, npcId, spawnId, range, liveSeconds);
+
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
 
