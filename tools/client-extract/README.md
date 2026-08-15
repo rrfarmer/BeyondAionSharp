@@ -21,6 +21,7 @@ both formats directly, so that toolchain is not needed.)
 | `audit_skill_index_reach.py` | Report which timer-driven bosses address skill indices beyond our own list, and so cannot be ported faithfully. |
 | `triage_missing_adds.py` | Bucket the missing adds by how retail spawns them, which decides what each costs. |
 | `summarize_pattern.py` | Print one pattern as a dense digest, branches in evaluation order. |
+| `rotation_table.py` | Print a timer-driven boss's rotation as one row per branch, ready to transcribe. |
 
 `aionpak.py` and `bxml.py` are importable libraries as well as CLIs.
 

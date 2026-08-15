@@ -1409,3 +1409,48 @@ it is worth being blunt about what that means: this backlog is measured by a
 regex over our own source, so it is sensitive to how our source is written. It is
 good enough to prioritise from and not good enough to report as a fact without
 looking.
+
+## Specification: Tiamat's dying phase (219362, and hard 236277)
+
+Pattern `IDTiamat_Tiamat_Dragon_Dying_Named_60_Al`. The richest un-ported
+mechanic found so far, and the reason `rotation_table.py` exists: 45 timer
+branches that read as a wall of XML and resolve to one legible idea.
+
+**The phase is a breath that sweeps left, middle or right, and a beacon that
+tells you which.** Each step spawns a beacon at 458.5/514.7/417.4 — Beacon1
+facing 17° for left, Beacon2 unrotated for middle, Beacon3 facing 105° for right
+— living 7 seconds, then casts the matching breath. As she weakens the chain
+grows extra steps and speeds up.
+
+| regime | chain |
+|---|---|
+| 76-100 | M, M, L, R — 18s apart |
+| 51-75 | L, M, R, then three thorns 5s apart, then R, M, L |
+| 26-50 | L, M, R at 12s, three thorns at 2s, a cyclops crack, then R, M, L, three thorns, another crack |
+| 0-25 | as above at 8s, plus a gravity bomb after each crack and a quake closing the loop |
+
+Timers run 0→1→2→…→16→0 within a regime; a regime change simply means the next
+tick matches a different branch, which is why every branch is guarded by a health
+band rather than a flag.
+
+**What it needs that we do not have yet:**
+
+- `set_idle_timer` / `on_idle_timer` — `on_enter_attack_state` sets one at 0 and
+  `on_leave_attack_state` at 20s. 28 missing adds across the corpus want this.
+- `on_message` 10010, her countdown expiring, which makes her despawn.
+- Nothing else: 17 timer slots against our 30, and the beacons are placed at
+  fixed coordinates in a single-owner pattern, so the shared-coordinate rule is
+  satisfied.
+
+**What is not blocked but is worth knowing.** The beacons (283155/283156/283157)
+carry no display name, so they never appear in the missing-adds count — they are
+markers, not adds. The four adds the audit does report for this pattern
+(283057 "burrowing attack" and three "tiamat") come from the thorn and crack
+steps.
+
+**Skill indices are unresolved.** The breath branches address indices 0-3 and the
+comments name only direction, not skill. Transcribe the spawns and the timing
+first; the casts need the usual corroboration.
+
+`python rotation_table.py <patterns_dir> IDTiamat_Tiamat_Dragon_Dying_Named_60_Al`
+prints the whole table.
