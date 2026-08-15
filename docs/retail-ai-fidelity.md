@@ -1511,3 +1511,38 @@ in the backlog. `on_wake_up`, the message bus and the idle timer are all built.
 The remaining blockers are content, not machinery — server-side waypoint paths
 (91 adds between placement and movement), unresolvable skill indices, and
 encounters our server does not spawn at all.
+
+### Correction: Captain Xasta's Inhibitor Sikars are retail after all
+
+The Captain Xasta entry above says his 28s cycle "summoned two Inhibitor Sikars"
+and that "the Sikars and the walk were reconstructed from observation". Half of
+that is wrong, and it only surfaced once the idle timer made
+`IDYun_Temp_53` legible.
+
+**The Sikars are real content.** They are spawned by the *siege artilleryman*
+(282606) — the NPC Xasta summons at 85/65/45/20 — not by Xasta. Two seconds after
+an artilleryman appears it spawns two Sikars, and fifteen seconds later two more,
+at 340/588/146 and 368/605/146, each living four minutes.
+
+The chain closes neatly on work already done: the artilleryman's `on_message` 500
+makes it **despawn itself**, and 500 is exactly the `broadcast_message` in Xasta's
+`on_leave_attack_state` and `on_enter_idle_state` that this port translated as
+`Do.Despawn(Adds)`. Its `on_despawn` then takes its Sikars with it. So the
+observation behind the original aionemu implementation was right — Sikars do
+appear in that fight — and what was invented was the *mechanism*: Xasta spawning
+them directly, on a walk cycle, instead of by way of the artillerymen.
+
+**Why it is still not implemented.** The Sikar spawns carry
+`pathname=3named_path_01` and `_02`, and they are level-60 combatants whose
+purpose is to march in. Our own `custom_npc_walker.xml` does have routes that the
+old implementation used (30028000014/15) — but those start at 263/537/**203** and
+186/555/**203**, while retail spawns at z **146**. Different levels of the room
+entirely, so our routes were built for aionemu's invented spawn points and cannot
+stand in for retail's. Spawning them where retail says without a path leaves four
+soldiers standing on two tiles, which is the trap documented under *Positionable
+is not the same as implementable*.
+
+**What it would take:** an AI on 282606 that spawns the two waves and answers
+message 500, which is now straightforward — the message bus and idle timer are
+both built — plus walk routes for 3named_path_01/02 that would have to be
+authored by hand against the room's geometry.
