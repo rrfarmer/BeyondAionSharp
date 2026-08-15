@@ -1336,3 +1336,50 @@ arrive: its branches are all priority 2, so evaluation follows document order,
 which the runtime preserves because `Of()` sorts stably; and it needs
 `set_idle_timer` / `on_idle_timer`, still unbuilt, to remove itself two seconds
 after firing.
+
+### Unstable Splinterpath — Yamennes's portals (219555, 219563)
+
+Patterns `IDAbRe_Core_NamedD_02` and `IDAbRe_Core_NamedD_Hard_02`. This one is a
+bug fix rather than a missing mechanic, and the interesting part is what was
+*already* right.
+
+Retail alternates the portal floors using **one flag var toggled by two
+branches**: the higher-priority branch is guarded by `set_flag_var` and opens the
+upstairs gates, the lower by `unset_flag_var` and opens the downstairs ones, so
+each firing flips which one can match next. `UnstableYamennesAI` had arrived at
+the same alternation independently, with a boolean.
+
+Three things were wrong:
+
+- **The cadence.** Retail arms the portal timer at 30s and re-arms at 65s; ours
+  waited a flat 60 both times.
+- **The gates never expired.** Retail gives each `live_time=70`.
+- **A wave only opened if no gate was still standing.** Combined with the missing
+  lifetime that is a stall: a group that ignored the portals instead of killing
+  them saw the first wave and **never another for the rest of the fight**. Retail
+  spawns unconditionally and lets them time out. The 70s life against a 65s cycle
+  bounds it at two overlapping sets for five seconds, which is retail's own
+  behaviour.
+
+**The gate npc_ids are deliberately unchanged.** Retail's patterns name
+283203/283222/283223 upstairs and 283233 downstairs, and the audit reports all
+four as missing adds. They are not: they bind to the *same* retail patterns as
+the 219567/219579/219580 this class already spawns, and only ours carry the
+`unstableyamenessportal` AI that makes a gate do anything. Swapping to the ids
+the pattern names would replace working portals with inert scenery.
+
+**A fifth class of false positive, and a rule for it.** Where retail names one id
+and our data uses a sibling for the same role, an add can read as missing while
+the mechanic is fully implemented. Testing for it: the add's *own* retail pattern
+is bound by a small number of NPCs, at least one of which we do spawn, and that
+sibling carries the same display name. On this corpus that flags **20 adds**. It
+is a flag and not an exclusion — deciding it needed checking which of the two ids
+actually had a working AI, which no heuristic can do.
+
+**Not changed.** Retail's gate coordinates differ from ours by roughly ten metres
+and about a metre in z. Ours look snapped to the floor and have presumably been
+observed working; moving them risks putting a gate inside geometry for a
+cosmetic gain. Recorded rather than applied.
+
+**Verification.** Full suite 1,103 passing and 1 skipped, two new pins, all five
+mutations caught after one test fix.
