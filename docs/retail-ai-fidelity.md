@@ -955,3 +955,38 @@ Needed by the buckets above, in the order they would unblock the most work:
 4. **`attack_target_after_spawn` / `hatepoints_to_add`** — several bosses spawn an
    add that should immediately engage with a large hate bonus. Currently left to
    the add's own aggressive AI.
+
+### Beshmundir Temple — Virhana the Great (216165)
+
+Pattern `IDCTH_Boss_StatueDrakan`. Two independent timers, and ours had them
+crossed.
+
+- **From 12s**, a self-centred Earthly Retribution, re-arming at 15s normally, 8s
+  on a 15% roll and 30s on a 10% roll.
+- **At 70s, once**, Blade of Lunacy on the tank *and* on a second player, opening
+  a 10s chain that casts it and switches him to someone else each time. The chain
+  re-arms itself and never stops.
+
+What it did before: nothing but the opening buff for seventy seconds, then
+*Earthly Retribution* on the ten-second chain where Blade of Lunacy belongs,
+twelve times, then the seventy-second wait again. The fifteen-second chain did
+not exist and neither did the target switching.
+
+**All three indices are corroborated twice.** By role: index 2 is the self-cast
+on entering combat and 19121 is Seal of Reflection, a buff; index 1 is cast at
+`OBJI_SELF` and 18897 is Earthly Retribution, an attack — so a sweep centred on
+him; index 0 is cast at the current target and at a second player, and 18602 is
+Blade of Lunacy. And independently by our own previous code, which already used
+19121 as the opener and 18897 as the repeated cast. All three probabilities go to
+0 now the pattern drives them.
+
+**One quirk kept.** The two probability branches test their roll *before* the
+timer indicator, which is the order the pattern writes them, so the table does
+too.
+
+**Not implemented.** His three shouts, and the `control_door` on death — the
+instance handler owns the door.
+
+**Verification.** Full suite 1,082 passing and 1 skipped, five new pins, all six
+mutations caught: the missing sweep chain, the chain interval, the chain failing
+to repeat, the paired opener, the two skills swapped, and the 70s delay.

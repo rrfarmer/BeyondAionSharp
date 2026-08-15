@@ -28030,7 +28030,9 @@
 		<npc_skill id="19054" lv="22" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="216165">
-		<npc_skill id="18602" lv="2" prob="20" />
+		<!-- All three are driven by VirhanaTheGreatAI from his retail pattern, which casts Blade of
+		     Lunacy only on the chain that opens at 70s. See docs/retail-ai-fidelity.md. -->
+		<npc_skill id="18602" lv="2" prob="0" />
 		<npc_skill id="18897" lv="10" prob="0" />
 		<npc_skill id="19121" lv="7" prob="0" />
 	</npc_skills>
