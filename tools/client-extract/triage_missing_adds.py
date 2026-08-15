@@ -35,8 +35,11 @@ HP_LOWER_RE = re.compile(r"<is_hp_lower_than>.*?<percent>(\d+)</percent>", re.S)
 
 BLOCKED_LOCATION = "SPAWN_LOCATION_WAY_POINT_START"
 
-# Positions expressible by ai/spawn_helpers.xml: at the spawner, or scattered around it.
-SELF_RELATIVE = {"SPAWN_LOCATION_MY_POINT", "SPAWN_LOCATION_RELATIVE", ""}
+# Positions expressible by ai/spawn_helpers.xml: at the spawner, or scattered around it. Only a plain
+# <spawn> carries a location type at all — spawn_on_target and friends place the add at whatever object
+# they are aimed at, which no summon table can express, so an absent value must not count as "at the
+# spawner". Treating it as such put target-placed adds in the data-only bucket.
+SELF_RELATIVE = {"SPAWN_LOCATION_MY_POINT", "SPAWN_LOCATION_RELATIVE"}
 
 
 def load_binding(path: pathlib.Path) -> dict[str, list[str]]:
@@ -59,7 +62,7 @@ def devname_to_id(client_root: pathlib.Path) -> dict[str, str]:
     return out
 
 
-def classify(event: str, step_body: str, location: str) -> str:
+def classify(event: str, step_body: str, location: str, action: str) -> str:
     """How this spawn is triggered, in the terms that decide what fixing it costs."""
     if location == BLOCKED_LOCATION:
         return "blocked: waypoint-placed"
@@ -67,7 +70,7 @@ def classify(event: str, step_body: str, location: str) -> str:
         return "timer: needs a timer-driven AI class"
     if event in ("on_die", "on_killed_by_user", "on_despawn"):
         return "death/despawn: instance handler"
-    if HP_LOWER_RE.search(step_body) and location in SELF_RELATIVE:
+    if HP_LOWER_RE.search(step_body) and action == "spawn" and location in SELF_RELATIVE:
         return "hp threshold at spawner: spawn_helpers (data only)"
     if HP_LOWER_RE.search(step_body):
         return "hp threshold, fixed position: AI class or instance handler"
@@ -124,7 +127,7 @@ def main() -> None:
                             if key in seen:
                                 continue
                             seen.add(key)
-                            buckets[classify(event, step_body, location)].append(
+                            buckets[classify(event, step_body, location, action.group(1))].append(
                                 (pattern, owners[0], add_id, attr(attrs, "name")))
 
     total = sum(len(v) for v in buckets.values())

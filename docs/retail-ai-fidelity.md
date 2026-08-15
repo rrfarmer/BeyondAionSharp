@@ -186,14 +186,18 @@ because that decides what each costs. Of 812:
 | 121 | on death or despawn — instance handler |
 | 143 | on wake-up, aggro, message or idle timer — AI class |
 | 46 | waypoint-placed — blocked, see above |
-| 29 | **HP threshold at the spawner — expressible in `ai/spawn_helpers.xml`** |
+| 19 | **HP threshold — of which only a plain `<spawn>` at the spawner is data** |
 
-So the adds are not a cheap breadth win: only the last bucket is data, and of
-those 29, eleven belong to bosses with bespoke AI classes that would have to
-carry the spawn themselves.
+So the adds are not a cheap breadth win: only that last bucket is data at all.
+The first count here read 29, because the classifier treated a missing
+`<spawn_location_type>` as "at the spawner" — but only a plain `<spawn>` carries
+that field, and `spawn_on_target` and friends place the add at whatever object
+they are aimed at, which no summon table can express. With that corrected the
+bucket is eleven, and **all eleven sit on bosses with bespoke AI classes** that
+would have to carry the spawn themselves.
 
-The remaining eighteen sit on plain `ai="aggressive"` owners, and eight of them
-had complete retail data (threshold, count and scatter). Those eight are now
+Eight bosses on plain `ai="aggressive"` owners had complete retail data
+(threshold, count and scatter). Those eight are now
 `ai="summoner"` with a summon table. `SummonerAI` extends `AggressiveNpcAI`, so
 aggro behaviour is unchanged; it adds the HP-triggered summons and cleans them
 up on reset and death.
