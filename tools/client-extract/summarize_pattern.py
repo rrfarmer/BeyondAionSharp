@@ -74,6 +74,15 @@ def fields(node: ET.Element) -> str:
     return " ".join(out)
 
 
+def is_pure_guard(branch: ET.Element) -> bool:
+    """True when the branch does nothing at all -- not merely when it ends with do_nothing."""
+    actions = branch.find("actions")
+    if actions is None:
+        return True
+    real = [op for op in actions if op.tag != "do_nothing"]
+    return not real
+
+
 def render(branch: ET.Element, indent: str = "    ") -> list[str]:
     priority = branch.findtext("priority", "?").strip()
     category = branch.findtext("action_category", "?").strip()
@@ -122,8 +131,11 @@ def main() -> None:
             for event in handlers if handlers is not None else []:
                 branches = sorted(event.findall("pattern"),
                                   key=lambda b: -int(b.findtext("priority", "0").strip()))
-                # The do_nothing guards repeat verbatim across a dozen events; say so once.
-                if all(b.find("actions/do_nothing") is not None for b in branches) and branches:
+                # The do_nothing guards repeat verbatim across a dozen events; say so once. Only
+                # collapse a branch whose actions are *nothing but* do_nothing: several patterns end a
+                # real branch with one, and treating that as a guard hides the spawn in front of it.
+                # Jurdin the Cursed's wake-up smoke was invisible here for exactly that reason.
+                if branches and all(is_pure_guard(b) for b in branches):
                     print(f"  {event.tag}: do_nothing guard only")
                     continue
                 print(f"  {event.tag}:")
