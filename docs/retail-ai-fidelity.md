@@ -871,3 +871,87 @@ now both applied on spawn and re-applied once per cycle.
 mutations caught — step spacing, opening delay, two steps swapped, the self-cast
 targets, the wrath spawn, and the loop back to step 0. Not yet observed in a
 running server.
+
+## What is left, and what each part costs
+
+Measured against the 5.8 dump as of the Destroyer Kunax commit. Regenerate any of
+these numbers with the tools in `tools/client-extract/`.
+
+### Adds: 779 retail adds our server never spawns, across ~500 encounters
+
+| Bucket | Count | What it needs |
+|---|---:|---|
+| timer-driven | 409 | a table on `PatternAi` for that boss |
+| death / despawn | 107 | the encounter's instance handler |
+| `on_wake_up` | 58 | spawn-time setup, usually a condition variable |
+| `on_enter_attack_state` | 53 | an opener on the boss's table |
+| `on_message` | 47 | the NPC message bus, both halves together |
+| **blocked: waypoint-placed** | 46 | **nothing — server-side paths we do not have** |
+| `on_idle_timer` | 19 | out-of-combat behaviour, no runtime support yet |
+| hp threshold at spawner | 9 | `ai/spawn_helpers.xml`, data only |
+| hp threshold, fixed position | 8 | an AI class or instance handler |
+| **blocked: shared absolute coords** | 6 | **nothing — see the section above** |
+| on hit / spell | 6 | an AI class |
+| other | ~20 | assorted single cases |
+
+So **52 of the 779 are permanently blocked** and the rest are work.
+
+### Bosses: 27 cleanly portable timer-driven bosses, 6 done
+
+Done: Captain Xasta, Stormwing, Tiamat's three incarnations, Omega, his clone of
+physical barrier, Queen Alukina (partial), Destroyer Kunax.
+
+Remaining, roughly cheapest first by pattern size — `top index` vs `our list` is
+the resolvability gate, `timers` is the size of the job:
+
+| Class | npc | timers | note |
+|---|---|---:|---|
+| `VirhanaTheGreatAI` | 216165 | 12 | 3 skills, no spawns |
+| `EternalBastionAggressiveNpcAI` | 230744 | 11 | no spawns |
+| `EternalBastionAssaulterNpcAI` | 230745 | 17 | no spawns |
+| `ShieldNpcAI` | 260207 | 17 | 1 add: ice sheet (295074) |
+| `PopuchinAI` | 217373 | 20 | adds already covered |
+| `CelestiusAI` | 215488 | 20 | 4 spawns |
+| `MonolithicAmbusherAI` | 216215 | 21 | no spawns |
+| `EternalBastionDragonAI` | 231131 | 22 | 1 spawn |
+| `WarriorPreceptorAI` | 217578 | 23 | no spawns |
+| `DorakikiTheBoldAI` | 216169 | 24 | no spawns |
+| `DredgionCommanderAI` | 251383 | 33 | no spawns |
+| `SilikorofMemoryAI` | 214668 | 35 | 11 spawns |
+| `PazuzuAI` | 216951 | 39 | 27 spawns |
+| `EngineerLahulahuAI` | 215080 | 54 | 17 spawns |
+| `RakshaAI` | 217475 | 73 | 12 spawns |
+| `InfernalDynatoumAI` | 234686 | 94 | 13 spawns |
+| `BrassEyeGroggetAI` | 215081 | 110 | 10 spawns |
+| `KaluvaAI` | 216950 | 37 | **waypoint- and message-driven; low value** |
+| `FortressInstanceDukeAI` | 233632 | 11 | **shared absolute coords; blocked** |
+
+**95 further timer-driven bosses reach past our skill list** and cannot have
+their rotations translated at all. Their *spawns and thresholds* are still
+portable — that is how Omega and Queen Alukina were done — so they are worth
+revisiting for structure even though their casts are out of reach.
+
+### Known limits of the tooling
+
+- The spawn sweep does not follow an id returned from a method, so a handler that
+  picks its add out of a `List<int>` helper still reports as missing. Tiamat's
+  incarnations do exactly that; spot-check before acting.
+- `audit_skill_index_reach.py` is a necessary and not sufficient gate — see the
+  skill-index section.
+- Nothing here has been observed in a running server. Every entry in this log is
+  verified by build, test suite and mutation checks only.
+
+### Runtime features not yet built
+
+Needed by the buckets above, in the order they would unblock the most work:
+
+1. **`on_message` / the NPC message bus** — 47 adds. `NpcMessageBus` exists but
+   `PatternAi` has no `OnMessage` hook, and both halves of a chain must be
+   translated together (Omega broadcasts 6354; his clones respond to it).
+2. **`on_idle_timer`** — 19 adds. Out-of-combat timers; the runtime deliberately
+   only runs battle timers.
+3. **`on_wake_up` and condition spawn variables** — 58 adds, most of which are
+   instance-state plumbing rather than combat.
+4. **`attack_target_after_spawn` / `hatepoints_to_add`** — several bosses spawn an
+   add that should immediately engage with a large hate bonus. Currently left to
+   the add's own aggressive AI.
