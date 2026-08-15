@@ -990,3 +990,31 @@ instance handler owns the door.
 **Verification.** Full suite 1,082 passing and 1 skipped, five new pins, all six
 mutations caught: the missing sweep chain, the chain interval, the chain failing
 to repeat, the paired opener, the two skills swapped, and the 70s delay.
+
+### Fortress field generator — the ice sheet (260207)
+
+Pattern `LGuard_Shield`. **Only one mechanic taken, on purpose.**
+
+Once the generator falls below 35% it drops an ice sheet (295074) on whoever is
+attacking it — one time, within two metres, lasting ten minutes. That NPC was
+spawned by nothing in our server. Retail hangs the check on a timer armed at 20s
+and re-checked every 15s, so the sheet is not instantaneous, and our
+implementation keeps that.
+
+**Why the rest is not translated.** This is siege infrastructure rather than an
+encounter: `ShieldNpcAI` extends `SiegeNpcAI` and exists to raise and drop the
+fortress shield, and the pattern's nine skill indices have nothing to corroborate
+them against our nine skills. Restructuring a class that live sieges depend on,
+on the strength of an unresolvable rotation, is not a trade worth making. Adding
+the one mechanic that needs no index is.
+
+**One design note.** Retail's timer 0 re-arms for the whole fight and it is the
+flag var, not the timer stopping, that holds the sheet to one. Cancelling the
+check on the drop would have been equivalent in effect but would have made the
+flag decorative — and a mutation removing the flag then went undetected. The
+check now keeps ticking, as retail's does, and is cancelled only on death,
+despawn and reset.
+
+**Verification.** Full suite 1,085 passing and 1 skipped, three new pins, all five
+mutations caught after that change: the threshold, the one-shot flag, the
+twenty-second delay, the sheet's position, and the cancellation on death.
