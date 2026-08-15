@@ -81,15 +81,15 @@ public class UnstableYamennesAI : AggressiveNpcAI
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_SummonStart());
         if (isTopSpawn)
         {
-            OpenGate(219567, 288.10f, 741.95f, 216.81f, 3);
-            OpenGate(219579, 375.05f, 750.67f, 216.82f, 59);
-            OpenGate(219580, 341.33f, 699.38f, 216.86f, 59);
+            SpawnGate(219567, 288.10f, 741.95f, 216.81f, 3);
+            SpawnGate(219579, 375.05f, 750.67f, 216.82f, 59);
+            SpawnGate(219580, 341.33f, 699.38f, 216.86f, 59);
         }
         else
         {
-            OpenGate(219567, 303.69f, 736.35f, 198.7f, 0);
-            OpenGate(219579, 335.19f, 708.92f, 198.9f, 35);
-            OpenGate(219580, 360.23f, 741.07f, 198.7f, 0);
+            SpawnGate(219567, 303.69f, 736.35f, 198.7f, 0);
+            SpawnGate(219579, 335.19f, 708.92f, 198.9f, 35);
+            SpawnGate(219580, 360.23f, 741.07f, 198.7f, 0);
         }
         ThreadPoolManager.GetInstance().Schedule(_ => { OnHealingDebuff(); return ValueTask.CompletedTask; }, 3000L);
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(!isTopSpawn); return ValueTask.CompletedTask; }, PortalIntervalMillis);
@@ -105,7 +105,7 @@ public class UnstableYamennesAI : AggressiveNpcAI
     /// wave and never another. Retail spawns unconditionally and lets the gates time out, which
     /// bounds them at two overlapping sets for the five seconds the 70s life exceeds the 65s cycle.
     /// </remarks>
-    private void OpenGate(int npcId, float x, float y, float z, sbyte heading)
+    private void SpawnGate(int npcId, float x, float y, float z, sbyte heading)
     {
         if (Spawn(npcId, x, y, z, heading) is not Npc gate)
             return;

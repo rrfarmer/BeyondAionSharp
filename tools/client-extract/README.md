@@ -59,6 +59,12 @@ and any method whose name contains `Spawn` (so `RndSpawnInRange` counts, not jus
 `Spawn`). It does **not** follow an id returned from a method, so a handler that
 picks its add from a `List<int>` helper still reports as missing.
 
+**Naming convention this depends on.** The handler sweep finds code-driven spawns
+by looking for a call to a method whose name *contains* `Spawn`. A helper that
+places an NPC should therefore be named `SpawnSomething`, not `OpenSomething` —
+`UnstableYamennesAI.SpawnGate` was briefly called `OpenGate`, and three gates the
+class demonstrably spawns went invisible to the audit until it was renamed.
+
 **The total is not monotonic.** Teaching the sweep to resolve more spawns can
 *raise* the missing-add count, because an NPC that becomes spawnable brings its
 own pattern's adds into scope for the first time. A rise after a sweep fix is the

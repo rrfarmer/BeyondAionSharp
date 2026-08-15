@@ -1383,3 +1383,29 @@ cosmetic gain. Recorded rather than applied.
 
 **Verification.** Full suite 1,103 passing and 1 skipped, two new pins, all five
 mutations caught after one test fix.
+
+### The sibling flag, and a convention the audit depends on
+
+The duplicate-id case from the previous entry is now reported rather than only
+described. Each finding that has one carries
+`[we spawn NNNNNN for this role -- check before porting]`, and the summary counts
+them: **20 of 752**. The test is the one worked out on Yamennes's gates — the
+add's own retail pattern is bound by at most eight NPCs, one of those is spawned
+by us, and it carries the same display name. A flag and not an exclusion, because
+resolving Yamennes meant checking which of the two ids had a working AI behind
+it, and no heuristic here can do that.
+
+**A convention fell out of this, the hard way.** The handler sweep finds
+code-driven spawns by looking for calls to a method whose name *contains* `Spawn`.
+Refactoring Yamennes's gate placement into a helper called `OpenGate` made three
+gates the class demonstrably spawns invisible to the audit — the missing-add total
+moved by six with no behaviour change at all, in the direction that looks like
+progress. Renamed to `SpawnGate`, and the rule is now in
+`tools/client-extract/README.md`: **a helper that places an NPC must be named
+`SpawnSomething`.**
+
+That is the second time a number has moved for a reason unrelated to the game, and
+it is worth being blunt about what that means: this backlog is measured by a
+regex over our own source, so it is sensitive to how our source is written. It is
+good enough to prioritise from and not good enough to report as a fact without
+looking.

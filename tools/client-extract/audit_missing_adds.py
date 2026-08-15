@@ -244,6 +244,33 @@ def pattern_spawn_targets(patterns_dir: pathlib.Path) -> dict[str, dict[str, boo
     return out
 
 
+# A pattern bound by more NPCs than this is a generic behaviour shared across unrelated monsters,
+# and says nothing about two of them being interchangeable.
+NARROW_PATTERN = 8
+
+
+def sibling_we_already_spawn(add_id: str, name: str, by_pattern: dict[str, list[str]],
+                             pattern_of: dict[str, str], spawnable: set[str],
+                             templates: dict[str, str]) -> str | None:
+    """Another npc_id filling the same role that our data does spawn, if there is one.
+
+    Retail sometimes names one id where our data uses a sibling for the same job: Yamennes's
+    spawn gates are 283203/283222/283223 in the pattern and 219567/219579/219580 in our
+    instance, and only ours carry the portal AI that makes a gate do anything. Such an add
+    reads as missing while the mechanic is fully implemented.
+
+    Deliberately a flag and not an exclusion. Telling the two apart meant checking which id had
+    a working AI behind it, which no heuristic here can do.
+    """
+    binders = by_pattern.get(pattern_of.get(add_id, ""), [])
+    if not binders or len(binders) > NARROW_PATTERN:
+        return None
+    for sib in binders:
+        if sib != add_id and sib in spawnable and attr(templates.get(sib, ""), "name") == name:
+            return sib
+    return None
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("client_root")
@@ -254,6 +281,7 @@ def main() -> None:
 
     repo = pathlib.Path(args.repo)
     by_pattern = load_binding(pathlib.Path(args.binding_tsv))
+    pattern_of = {npc: pat for pat, npcs in by_pattern.items() for npc in npcs}
     dev2id = client_devname_to_id(pathlib.Path(args.client_root))
     spawnable = spawnable_npc_ids(repo)
     spawns = pattern_spawn_targets(pathlib.Path(args.patterns_dir))
@@ -277,7 +305,9 @@ def main() -> None:
             if attrs is None:
                 continue  # content our server does not have at all
             if is_real_combatant(attrs) and not is_effect_object(dev):
-                missing.append((add_id, attr(attrs, "name"), attr(attrs, "level"), positionable, walks))
+                name = attr(attrs, "name")
+                sib = sibling_we_already_spawn(add_id, name, by_pattern, pattern_of, spawnable, templates)
+                missing.append((add_id, name, attr(attrs, "level"), positionable, walks, sib))
         if missing:
             findings.append((pattern, owners, missing))
 
@@ -286,17 +316,21 @@ def main() -> None:
     # Positionable, but the add exists in order to walk a named path we do not have. Spawning one
     # leaves it standing where it appeared, which for a marching column is worse than leaving it out.
     walkers = sum(1 for f in findings for m in f[2] if m[3] and m[4])
+    siblings = len({m[0] for f in findings for m in f[2] if m[5]})
     print(f"Fightable retail adds our server never spawns: {total} "
           f"across {len(findings)} encounters")
     print(f"  fully self-contained                       : {total - blocked - walkers}")
     print(f"  positionable, but walk a server-side path  : {walkers}")
-    print(f"  blocked on server-side waypoint paths      : {blocked}\n")
+    print(f"  blocked on server-side waypoint paths      : {blocked}")
+    print(f"  (of all the above, {siblings} have a sibling npc we already spawn -- spot-check)\n")
     for pattern, owners, missing in sorted(findings, key=lambda f: -len(f[2])):
         print(f"{pattern}  (live npc_ids: {','.join(owners[:4])})")
-        for add_id, name, level, positionable, walks in missing:
+        for add_id, name, level, positionable, walks, sib in missing:
             flag = "" if positionable else "  [BLOCKED: waypoint-placed]"
             if positionable and walks:
                 flag = "  [walks a server-side path]"
+            if sib:
+                flag += f"  [we spawn {sib} for this role -- check before porting]"
             print(f"    {add_id}  lv{level:<3} {name}{flag}")
 
 
