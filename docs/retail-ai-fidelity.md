@@ -816,3 +816,35 @@ can be: 81-100, 56-80, 26-55, below 25, with a 20s low-health chain on timer 6.
 
 **Verification.** Full suite 1,073 passing and 1 skipped, two new pins, all five
 mutations caught — including moving the first step by a single point.
+
+### Idgel Dome — Destroyer Kunax (287249)
+
+Pattern `IDLDF5_Fortress_Re_Vritra_01`. The simplest shape in the corpus and the
+clearest win: his entire fight is **one fixed chain of eight skills, ten seconds
+apart, looping forever**. Each timer branch arms the next slot and the eighth
+arms the first again.
+
+Ours ran the same eight skills off `prob="100"` entries with per-skill cooldowns,
+so neither the order nor the spacing was fixed — and the NPC his last step drops
+on the tank, kunax's wrath (855009), was spawned by nothing at all. Every
+probability is now 0, since the chain drives them.
+
+**The index mapping is positional**, which is only defensible here because three
+independent things agree with it:
+
+- step 7 casts Aether Prison, and the pattern spawns an NPC named *kunax's wrath*
+  on that same step;
+- steps 3 and 4 are the only two cast at `OBJI_SELF`, and they land on Cleaving
+  Massacre and Butcher's Sweep — both sweeps, both plausibly centred on the
+  caster;
+- the list is exactly eight entries against exactly eight indices, with no
+  duplicates and no chain construction.
+
+The one loose end is step 0, Ide Scale: a self-buff the pattern casts at the
+current target. Our data had it as `is_post_spawn`, which is left alone, so it is
+now both applied on spawn and re-applied once per cycle.
+
+**Verification.** Full suite 1,077 passing and 1 skipped, four new pins, all six
+mutations caught — step spacing, opening delay, two steps swapped, the self-cast
+targets, the wrath spawn, and the loop back to step 0. Not yet observed in a
+running server.
