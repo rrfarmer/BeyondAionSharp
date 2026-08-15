@@ -101,6 +101,45 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
         text = read_text(path)
         ids.update(re.findall(r"\bSpawn\w*\(\s*(\d{5,6})\b", text))
         ids.update(re.findall(r"\bnpcId\s*[:=]\s*(\d{5,6})\b", text))
+        ids.update(spawned_via_constants(text))
+    return ids
+
+
+CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
+CONST_ARRAY_RE = re.compile(r"\bint\[\] (\w+)\s*=\s*(?:new int\[\]\s*)?\{([^}]*)\}")
+
+
+def spawned_via_constants(text: str) -> set[str]:
+    """Ids reached through a named constant, e.g. `Spawn(MagicFlame, ...)`.
+
+    Resolving the name rather than accepting any constant matters: skill ids are the same
+    width as npc ids and sit in the same classes, so harvesting every `const int` would
+    quietly mark real gaps as covered. Only names actually passed to a spawn count.
+    """
+    consts = {name: value for name, value in CONST_RE.findall(text)}
+    for name, body in CONST_ARRAY_RE.findall(text):
+        values = re.findall(r"\b(\d{5,6})\b", body)
+        if values:
+            consts[name] = values
+
+    ids: set[str] = set()
+    for used in set(re.findall(r"\bSpawn\w*\(\s*(\w+)", text)) | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text)):
+        value = consts.get(used)
+        if isinstance(value, list):
+            ids.update(value)
+        elif value:
+            ids.add(value)
+            continue
+        # Not a constant, so it is a local carrying one -- `int npcId = odd ? Sharp : Root;`, or a
+        # loop variable over an id array. Harvest whatever its assignments mention.
+        for rhs in re.findall(rf"\b{re.escape(used)}\s*=\s*([^;]+);", text):
+            ids.update(re.findall(r"\b(\d{5,6})\b", rhs))
+            for name in re.findall(r"\b([A-Z]\w+)\b", rhs):
+                value = consts.get(name)
+                if isinstance(value, list):
+                    ids.update(value)
+                elif value:
+                    ids.add(value)
     return ids
 
 
