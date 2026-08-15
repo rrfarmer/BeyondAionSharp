@@ -34,6 +34,8 @@ LOCATION_RE = re.compile(r"<spawn_location_type>([^<]*)</spawn_location_type>")
 HP_LOWER_RE = re.compile(r"<is_hp_lower_than>.*?<percent>(\d+)</percent>", re.S)
 
 BLOCKED_LOCATION = "SPAWN_LOCATION_WAY_POINT_START"
+ABSOLUTE_LOCATION = "SPAWN_LOCATION_ABSOLUTE"
+SPAWN_MAP_RE = re.compile(r'<spawn_map map_id="(\d+)"(.*?)</spawn_map>', re.S)
 
 # Positions expressible by ai/spawn_helpers.xml: at the spawner, or scattered around it. Only a plain
 # <spawn> carries a location type at all — spawn_on_target and friends place the add at whatever object
@@ -62,10 +64,23 @@ def devname_to_id(client_root: pathlib.Path) -> dict[str, str]:
     return out
 
 
-def classify(event: str, step_body: str, location: str, action: str) -> str:
+def npc_maps(repo: pathlib.Path) -> dict[str, set[str]]:
+    """npc_id -> the map ids our spawn data places it in."""
+    out: dict[str, set[str]] = collections.defaultdict(set)
+    for path in (repo / "game-server/data/static_data/spawns").rglob("*.xml"):
+        for block in SPAWN_MAP_RE.finditer(read_text(path)):
+            map_id = block.group(1)
+            for npc_id in re.findall(r'<spawn npc_id="(\d+)"', block.group(2)):
+                out[npc_id].add(map_id)
+    return out
+
+
+def classify(event: str, step_body: str, location: str, action: str, shared_absolute: bool = False) -> str:
     """How this spawn is triggered, in the terms that decide what fixing it costs."""
     if location == BLOCKED_LOCATION:
         return "blocked: waypoint-placed"
+    if shared_absolute:
+        return "blocked: absolute coords in a pattern shared across maps"
     if event == "on_battle_timer":
         return "timer: needs a timer-driven AI class"
     if event in ("on_die", "on_killed_by_user", "on_despawn"):
@@ -91,6 +106,7 @@ def main() -> None:
     by_pattern = load_binding(pathlib.Path(args.binding_tsv))
     dev2id = devname_to_id(pathlib.Path(args.client_root))
     spawnable = spawnable_npc_ids(repo)
+    maps = npc_maps(repo)
     templates = {m.group(1): m.group(2) for m in TEMPLATE_RE.finditer(
         read_text(repo / "game-server/data/static_data/npcs/npc_templates.xml"))}
 
@@ -107,6 +123,15 @@ def main() -> None:
             owners = [n for n in by_pattern.get(pattern, []) if n in spawnable]
             if not owners:
                 continue
+
+            # A pattern shared by NPCs living in more than one map cannot carry usable absolute
+            # coordinates: they can only be right for one of those maps. BGuard_ChiefD_Minor is
+            # bound by seven guard chiefs across three different Abyss fortresses, and its on_die
+            # coordinates land in exactly one of them.
+            owner_maps = set()
+            for n in by_pattern.get(pattern, []):
+                owner_maps.update(maps.get(n, ()))
+            shared = len(owner_maps) > 1
 
             for ev in EVENT_RE.finditer(body):
                 event = ev.group(1)
@@ -127,7 +152,8 @@ def main() -> None:
                             if key in seen:
                                 continue
                             seen.add(key)
-                            buckets[classify(event, step_body, location, action.group(1))].append(
+                            buckets[classify(event, step_body, location, action.group(1),
+                                             shared and location == ABSOLUTE_LOCATION)].append(
                                 (pattern, owners[0], add_id, attr(attrs, "name")))
 
     total = sum(len(v) for v in buckets.values())

@@ -61,6 +61,29 @@ deliberately as needing "about 100 player to be activated". A few of their
 helper spawns are positionable, but adding those alone would announce a time
 attack that does not happen.
 
+## Shared patterns with absolute coordinates
+
+A second placement that cannot be ported, distinct from the waypoint problem
+above and easier to miss because it looks perfectly implementable: a pattern
+whose spawn carries `SPAWN_LOCATION_ABSOLUTE` coordinates, bound by NPCs that
+live in **more than one map**.
+
+`BGuard_ChiefD_Minor` is the example that found this. Its `on_die` drops six
+Balaur at three fixed points, and those points sit right beside a real spawn in
+Krotan Barracks — which is exactly why it looked safe. But seven NPCs bind to
+that pattern: guard chiefs at level 45 and 65 across Krotan, Dkisas and Lamiren,
+plus an Abyss reward guardian. The coordinates can only be right for one of the
+three fortresses, so implementing them would put six NPCs in the wrong place in
+the other two.
+
+`triage_missing_adds.py` now buckets these separately (6 adds). The check is
+whether the pattern's bound NPCs appear in more than one `spawn_map`; when they
+do, its absolute coordinates are unusable without per-map values we do not have.
+
+**The general rule this is an instance of:** before porting anything positional,
+check how many NPCs share the pattern and where they live. A pattern bound by one
+NPC can be taken literally. A pattern bound by seven cannot.
+
 ## The skill-index problem
 
 AI patterns reference skills as `SKILLI_INDEX_0..14`, a 0-based index into the
