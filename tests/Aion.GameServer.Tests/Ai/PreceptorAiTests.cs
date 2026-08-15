@@ -81,12 +81,13 @@ public sealed class PreceptorAiTests
 		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == TempestElemental));
 	}
 
-	[Fact(Skip = "Needs a stand-in player that cannot die. His phase casts a damaging skill, which kills " +
-		"the level-1 stand-in; PlayerController.OnDie then reaches PvpService, a lazy singleton whose " +
-		"constructor reads kill-bounty data and hits HeadhuntingDAO, so it cannot be stood up headless. " +
-		"Topping the player up between steps does not help because the death happens inside the step. " +
-		"Unskip once the harness can spawn an invulnerable or high-HP stand-in. (An earlier skip here " +
-		"blamed MoveTaskManager, which the stack trace disproved.)")]
+	[Fact(Skip = "One layer deeper than the harness currently reaches. The invulnerable stand-in and the " +
+		"geo fixes cleared this boss's first two blockers (player death into PvpService, then " +
+		"GeoService lookups from movement and StaggerEffect), and his sibling above now passes in the " +
+		"full suite because of them. What remains is an NRE inside Effect.ApplyEffect while applying " +
+		"skill 8217 to the stand-in — a sub-effect touching player state the harness does not build. " +
+		"His threshold is recorded in docs/retail-ai-fidelity.md; unskip when the stand-in is a more " +
+		"complete Player.")]
 	public void PriestPreceptorSummonsHisTrioAtThirty()
 	{
 		using var harness = NewHarness(typeof(PriestPreceptorAI));

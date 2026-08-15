@@ -9,6 +9,7 @@ using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Controllers.Effects;
+using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Knownlist;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Templates.Npcskill;
@@ -49,6 +50,8 @@ public sealed class BossAiHarness : IDisposable
 	private readonly GameWorld? _previousWorld;
 	private readonly ThreadPoolManager? _previousThreadPool;
 	private readonly bool _previousCanSee;
+	private readonly bool _previousGeoEnable;
+	private readonly bool _previousGeoNpcMove;
 	private readonly bool _previousGeoMaterials;
 	private readonly bool _previousInstanceScaling;
 	private readonly bool _previousShouts;
@@ -65,6 +68,8 @@ public sealed class BossAiHarness : IDisposable
 		_previousWorld = TryGetWorld();
 		_previousThreadPool = TryGetThreadPool();
 		_previousCanSee = GeoDataConfig.CANSEE_ENABLE;
+		_previousGeoEnable = GeoDataConfig.GEO_ENABLE;
+		_previousGeoNpcMove = GeoDataConfig.GEO_NPC_MOVE;
 		_previousGeoMaterials = GeoDataConfig.GEO_MATERIALS_ENABLE;
 		_previousInstanceScaling = InstanceConfig.INSTANCE_SCALING_ENABLE;
 		_previousShouts = AIConfig.SHOUTS_ENABLE;
@@ -104,7 +109,7 @@ public sealed class BossAiHarness : IDisposable
 		common.SetGender(Gender.MALE);
 		common.SetName("Harness" + common.GetPlayerObjId());
 		common.SetNote("");
-		var player = new Player(new PlayerAccountData(common, new PlayerAppearance()), new Account(1));
+		var player = new HarnessPlayer(new PlayerAccountData(common, new PlayerAppearance()), new Account(1));
 		player.SetKnownlist(new KnownList(player));
 		// Must be the Player-specific controller: production builds one in Player's own setup, and code that
 		// applies an effect to a player casts to it (a plain EffectController throws InvalidCastException).
@@ -170,14 +175,10 @@ public sealed class BossAiHarness : IDisposable
 	/// <summary>Drops <paramref name="npc"/> to an exact HP percentage without going through combat.</summary>
 	public static void SetHpPercent(Npc npc, int percent) => npc.GetLifeStats().SetCurrentHpPercent(percent);
 
-	/// <summary>
-	/// Restores the stand-in player to full health.
-	/// </summary>
+	/// <summary>Restores the stand-in player to full health.</summary>
 	/// <remarks>
-	/// Bosses that cast damaging skills will kill it — it is a level-1 stand-in — and a dying player runs
-	/// PlayerController.OnDie, whose reward path reaches PvpService and other services the harness does
-	/// not stand up. Tests that drive many ticks should top it up as they go; the fight under test is the
-	/// boss's behaviour, not whether the stand-in survives.
+	/// Rarely needed now that the stand-in is invulnerable, but harmless for tests that want a known
+	/// starting point.
 	/// </remarks>
 	public static void KeepAlive(Player player) => player.GetLifeStats().SetCurrentHpPercent(100);
 
@@ -212,6 +213,8 @@ public sealed class BossAiHarness : IDisposable
 	public void Dispose()
 	{
 		GeoDataConfig.CANSEE_ENABLE = _previousCanSee;
+		GeoDataConfig.GEO_ENABLE = _previousGeoEnable;
+		GeoDataConfig.GEO_NPC_MOVE = _previousGeoNpcMove;
 		GeoDataConfig.GEO_MATERIALS_ENABLE = _previousGeoMaterials;
 		InstanceConfig.INSTANCE_SCALING_ENABLE = _previousInstanceScaling;
 		AIConfig.SHOUTS_ENABLE = _previousShouts;
@@ -249,6 +252,31 @@ public sealed class BossAiHarness : IDisposable
 	}
 
 	/// <summary>One entry of an NPC's pending skill queue.</summary>
+	/// <summary>
+	/// A stand-in player that cannot be killed.
+	/// </summary>
+	/// <remarks>
+	/// Bosses under test cast damaging skills, and a level-1 stand-in dies to them immediately.
+	/// <c>PlayerController.OnDie</c> then runs its reward path into <c>PvpService</c>, a lazy singleton
+	/// whose constructor reads kill-bounty data and reaches <c>HeadhuntingDAO</c> — a database call that
+	/// cannot be stood up headless. Topping the player up between steps does not help, because the death
+	/// happens inside the step that damaged it.
+	/// <para>
+	/// <c>CreatureLifeStats.ReduceHp</c> returns early for an invulnerable owner, so the damage simply
+	/// does not land. Nothing under test depends on the stand-in taking damage: these tests observe what
+	/// the boss decides to do, not what its skills do to a target.
+	/// </para>
+	/// </remarks>
+	private sealed class HarnessPlayer : Player
+	{
+		public HarnessPlayer(PlayerAccountData accountData, Account account)
+			: base(accountData, account)
+		{
+		}
+
+		public override bool IsInvulnerable() => true;
+	}
+
 	public readonly record struct QueuedCast(int SkillId, int Level, NpcSkillTargetAttribute Target)
 	{
 		public override string ToString() => $"{SkillId}@{Level}->{Target}";
@@ -295,6 +323,12 @@ public sealed class BossAiHarness : IDisposable
 		{
 			GeoDataConfig.CANSEE_ENABLE = false;
 			GeoDataConfig.GEO_MATERIALS_ENABLE = false;
+			// No geo data is loaded, and GeoService indexes its map dictionary directly. Any NPC that
+			// actually moves — an add walking to the player, say — reaches GeoService.GetZ through
+			// NpcMoveController and throws KeyNotFoundException on the map id, inside MoveTaskManager's
+			// parallel loop where it surfaces as an AggregateException from an unrelated clock advance.
+			GeoDataConfig.GEO_ENABLE = false;
+			GeoDataConfig.GEO_NPC_MOVE = false;
 			InstanceConfig.INSTANCE_SCALING_ENABLE = false;
 			AIConfig.SHOUTS_ENABLE = false;
 
@@ -313,6 +347,13 @@ public sealed class BossAiHarness : IDisposable
 			DataManager.RegisterInstance(dataManager);
 			world.LoadWorldMaps(staticData.WorldMaps2);
 			GameWorld.RegisterInstance(world);
+
+			// GeoService indexes its map dictionary directly, and not every caller checks the geo config
+			// first — StaggerEffect resolves a knockback position through it unconditionally, so any skill
+			// carrying that effect throws KeyNotFoundException on the map id. Init() with GEO_ENABLE off
+			// puts an empty GeoMap in for each world map and loads no geo files, which is exactly what a
+			// headless fight wants: the lookups resolve and return nothing.
+			GeoService.GetInstance().Init();
 			return harness;
 		}
 
