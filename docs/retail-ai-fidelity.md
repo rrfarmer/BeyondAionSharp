@@ -1247,3 +1247,28 @@ because they generalise:
 
 **Verification.** Full suite 1,099 passing and 1 skipped, five new pins, all seven
 mutations caught after those two fixes. Missing adds 770 → **764**.
+
+### Correction: summon-table owners were counted as spawnable
+
+`ai/spawn_helpers.xml` uses the same attribute name twice: `<ai npcId="...">`
+names the NPC that *owns* a summon table, and `<summonGroup npcId="...">` names
+the NPC it summons. The sweep read both, so any NPC with a summon table counted
+as live whether or not anything places it in the world.
+
+Jurdin the Cursed is the case that exposed it. He looked like the largest
+un-ported encounter left — eight missing adds, no AI class — and reading his
+pattern was a genuinely rich fight: wave spawners at fixed points on four
+one-shot steps, a shadow flung at the raid with 1.5 million hate, ten action
+summons across five points. Then it turned out **he is spawned nowhere**: not in
+any spawn file, not in any instance handler, not in any code. Only a summon table
+and a console-command entry. His whole encounter is content our server does not
+have, and porting his AI would have been writing a boss nobody can fight.
+
+Counting only `<summonGroup>` removes him and the other phantom owners: 764 →
+**754**, and the encounter count 489 → 486.
+
+**This is the sixth correction to the missing-adds sweep**, and they have all been
+real: `RndSpawnInRange`, named constants and id arrays, `GetNpcId() + N`, effect
+objects by devname, and now summon-table owners. The number has moved 812 → 754
+without a single add being ported by those changes alone. The instrument is worth
+more than any one boss, because everything downstream is prioritised from it.

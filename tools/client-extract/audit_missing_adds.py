@@ -116,7 +116,12 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
     ids: set[str] = set()
     for path in (static / "spawns").rglob("*.xml"):
         ids.update(re.findall(r'npc_id="(\d+)"', read_text(path)))
-    ids.update(re.findall(r'npcId="(\d+)"', read_text(static / "ai/spawn_helpers.xml")))
+    # `<summonGroup npcId>` is a spawn; `<ai npcId>` is only the owner of a summon table and says
+    # nothing about whether anything places that NPC. Counting the wrapper made Jurdin the Cursed --
+    # who exists in no spawn file, no instance handler and no code -- look like a live encounter, and
+    # brought his whole pattern's adds into the backlog.
+    ids.update(re.findall(r'<summonGroup[^>]*npcId="(\d+)"',
+                          read_text(static / "ai/spawn_helpers.xml")))
     for path in (static / "npc_skills").rglob("*.xml"):
         ids.update(re.findall(r'<spawn_npc[^>]*npc_id="(\d+)"', read_text(path)))
     for path in (repo / "src/Aion.GameServer/Handlers").rglob("*.cs"):
