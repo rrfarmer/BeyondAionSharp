@@ -21,8 +21,8 @@ import re
 import bxml
 from aionpak import read_pak
 from audit_missing_adds import (
-    NAME_RE, PATTERN_RE, TEMPLATE_RE, attr, is_effect_object, is_real_combatant, read_text,
-    spawnable_npc_ids,
+    NAME_RE, PATTERN_RE, TEMPLATE_RE, attr, is_effect_object, is_invisible_twin, is_real_combatant,
+    read_text, spawnable_npc_ids,
 )
 
 EVENT_RE = re.compile(r"<(on_[a-z_]+)>(.*?)</\1>", re.S)
@@ -152,7 +152,7 @@ def main() -> None:
                             attrs = templates.get(add_id)
                             if attrs is None or not is_real_combatant(attrs):
                                 continue
-                            if is_effect_object(dev):
+                            if is_effect_object(dev) or is_invisible_twin(dev, dev2id):
                                 continue
                             key = (pattern, add_id)
                             if key in seen:

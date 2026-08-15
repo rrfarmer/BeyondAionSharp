@@ -84,6 +84,27 @@ def is_effect_object(devname: str) -> bool:
     return any(m in low for m in EFFECT_MARKERS) or low.endswith(EFFECT_SUFFIXES)
 
 
+INVISIBLE_SUFFIX = "_invisible"
+
+
+def is_invisible_twin(devname: str, dev2id: dict[str, str]) -> bool:
+    """True when this is the invisible counterpart of an NPC the client also names.
+
+    Tiamat's hazards each spawn one of these a few seconds after appearing --
+    `LDF4b_Tiamat_Rage_Tranq` spawns `LDF4b_Tiamat_Rage_Tranq_invisible`, which lives two
+    seconds and carries the damage. The twin is scenery, and its devname says so by being the
+    carrier's own devname plus a suffix.
+
+    This is the safe form of a test that is *not* safe in general. A bare `invisible` substring
+    would discard Captain Xasta's siege artilleryman (`IDYun_Rasta_Sum_Invisible`), which is a
+    perfectly visible level-60 NPC -- and so would a bare `_invisible` suffix, since his devname
+    ends that way too. What separates them is that the artilleryman's base name,
+    `IDYun_Rasta_Sum`, is not an NPC; the twins' bases are.
+    """
+    low = devname.strip().lower()
+    return low.endswith(INVISIBLE_SUFFIX) and low[: -len(INVISIBLE_SUFFIX)] in dev2id
+
+
 def load_binding(path: pathlib.Path) -> dict[str, list[str]]:
     by_pattern = collections.defaultdict(list)
     for line in path.read_text(encoding="utf-8").splitlines()[1:]:
@@ -304,7 +325,7 @@ def main() -> None:
             attrs = templates.get(add_id)
             if attrs is None:
                 continue  # content our server does not have at all
-            if is_real_combatant(attrs) and not is_effect_object(dev):
+            if is_real_combatant(attrs) and not is_effect_object(dev)                     and not is_invisible_twin(dev, dev2id):
                 name = attr(attrs, "name")
                 sib = sibling_we_already_spawn(add_id, name, by_pattern, pattern_of, spawnable, templates)
                 missing.append((add_id, name, attr(attrs, "level"), positionable, walks, sib))

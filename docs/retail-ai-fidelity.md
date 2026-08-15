@@ -1546,3 +1546,29 @@ is not the same as implementable*.
 message 500, which is now straightforward — the message bus and idle timer are
 both built — plus walk routes for 3named_path_01/02 that would have to be
 authored by hand against the room's geometry.
+
+### Invisible twins, and the safe form of an unsafe test
+
+Building the idle timer brought a small family into view: Tiamat's hazards each
+spawn a counterpart a few seconds after appearing. `LDF4b_Tiamat_Rage_Tranq`
+spawns `LDF4b_Tiamat_Rage_Tranq_invisible`, which lives two seconds and carries
+the damage; the sphere of wrath, the petrification crystal and the fissure do the
+same. They surfaced now because the carriers only became spawnable when Wrathclaw
+and the incarnations were ported — the non-monotonic effect again, doing its job.
+
+The twins are scenery, and the audit now excludes them. **The test is narrow on
+purpose**, because the obvious version of it is one this log already refused:
+
+- `invisible` as a substring would discard Captain Xasta's siege artilleryman.
+- `_invisible` as a *suffix* would too — `IDYun_Rasta_Sum_Invisible` ends that way.
+- What separates them is that the artilleryman's base name, `IDYun_Rasta_Sum`, is
+  not an NPC in the client, while `LDF4b_Tiamat_Rage_Tranq` is.
+
+So the rule is: **the devname is another NPC's devname plus `_invisible`.** 26
+devnames in the client satisfy it; the artilleryman is not one of them. 746 adds,
+655 fully self-contained.
+
+That is the sixth false-positive class, and the pattern across all six is worth
+stating: every one was found by trying to port something and discovering the
+finding was wrong, never by inspecting the audit. The corrections have moved the
+total 812 → 746 without porting anything.
