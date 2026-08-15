@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Ai.Manager;
-using Aion.GameServer.Controllers.Attack;
-using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.State;
-using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.SkillEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
@@ -16,13 +14,50 @@ using Aion.GameServer.World;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Java parity: ai/instance/rentusBase/CaptainXastaAI (@author xTz).
+/// Captain Xasta, Rentus Base. Retail pattern IDYun_Nmd3 (217309); his second form (217310) runs its
+/// own pattern and is untouched here.
 /// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. His first form ran a 28s cycle that stopped him
+/// attacking, walked him down a path, summoned two Inhibitor Sikars and ended in a sanctuary event.
+/// None of that is in the pattern. Retail runs two battle timers instead:
+/// <list type="bullet">
+/// <item>every 9s, self-cast Dragon Breath and drop three Magic Flames on the current target;</item>
+/// <item>every 6s, check HP and send one siege artilleryman the first time it passes 85/65/45/20.</item>
+/// </list>
+/// Both sets of adds share one spawn id, so leaving the fight clears them together.
+/// <para>
+/// The pattern addresses only skill index 0 of his two, and its branch is named Blaze: skill 19657
+/// is Dragon Breath (stack <c>IDYUN_RASTA_BLAZE</c>) and the branch spawns <c>IDYun_3Nmd_Blaze</c>,
+/// so the index resolves unambiguously. Index 1, Interception Soldier Shout, is the sanctuary shield
+/// the old cycle applied; no branch casts it, so it stays listed but silent.
+/// </para>
+/// </remarks>
 [AIName("captain_xasta")]
 public class CaptainXastaAI : AggressiveNpcAI
 {
-    private bool canThink = true;
+    private const int FirstFormNpcId = 217309;
+    private const int SecondFormNpcId = 217310;
+
+    /// <summary>The 9s beat, and the only skill index his pattern addresses.</summary>
+    private const int BeatSkill = 19657;
+
+    private const int SiegeArtilleryman = 282606;
+
+    /// <summary>The flames the beat drops on whoever he is facing.</summary>
+    private const int MagicFlame = 282390;
+    private const int FlamesPerBeat = 3;
+    private const float FlameSpread = 4f;
+    private const long FlameLifeMillis = 15000L;
+
+    /// <summary>One-shot summon steps, each sending a single artilleryman.</summary>
+    private static readonly int[] SummonSteps = { 85, 65, 45, 20 };
+
+    private readonly object stepLock = new object();
+    private int stepsTaken;
+
     private ScheduledTask? phaseTask;
+    private ScheduledTask? beatTask;
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
 
     public CaptainXastaAI(Npc owner)
@@ -30,20 +65,15 @@ public class CaptainXastaAI : AggressiveNpcAI
     {
     }
 
-    public override bool CanThink()
-    {
-        return canThink;
-    }
-
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
         if (isHome.CompareAndSet(true, false))
         {
-            if (GetNpcId() == 217309)
+            if (GetNpcId() == FirstFormNpcId)
             {
                 PacketSendUtility.BroadcastMessage(GetOwner(), 1500388);
-                StartPhaseTask(this);
+                StartRetailTimers();
             }
             else
             {
@@ -54,42 +84,83 @@ public class CaptainXastaAI : AggressiveNpcAI
 
     private void CancelPhaseTask()
     {
-        if (phaseTask != null && !phaseTask.IsDone())
+        Cancel(ref phaseTask);
+        Cancel(ref beatTask);
+        lock (stepLock)
         {
-            phaseTask.Cancel(true);
+            stepsTaken = 0;
         }
     }
 
-    private void StartPhaseTask(NpcAI ai)
+    private static void Cancel(ref ScheduledTask? task)
     {
-        phaseTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
-        {
-            if (IsDead())
-            {
-                CancelPhaseTask();
-            }
-            else
-            {
-                canThink = false;
-                EmoteManager.EmoteStopAttacking(GetOwner());
-                GetSpawnTemplate().SetWalkerId("B186C8F43FF13FDD50FA9483B7D8C2BEABAE7F5C");
-                WalkManager.StartWalking(ai);
-                StartRun(GetOwner());
-                SpawnHelpers(ai);
-                StartSanctuaryEvent();
-            }
-            return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(28000), TimeSpan.FromMilliseconds(28000));
+        if (task != null && !task.IsDone())
+            task.Cancel(true);
+        task = null;
     }
 
-    protected override void HandleMoveArrived()
+    /// <summary>Retail's two battle timers: the 9s beat, and the 6s summon check.</summary>
+    private void StartRetailTimers()
     {
-        base.HandleMoveArrived();
-        if (GetSpawnTemplate().GetWalkerId() != null)
+        beatTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+            _ => { OnBeatTick(); return ValueTask.CompletedTask; },
+            TimeSpan.FromMilliseconds(6000), TimeSpan.FromMilliseconds(9000));
+
+        phaseTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+            _ => { OnSummonTick(); return ValueTask.CompletedTask; },
+            TimeSpan.FromMilliseconds(6000), TimeSpan.FromMilliseconds(6000));
+    }
+
+    private bool Fighting() => !IsDead() && IsInState(AIState.FIGHT);
+
+    private void OnBeatTick()
+    {
+        if (!Fighting())
+            return;
+
+        // The pattern casts this at OBJI_SELF, which is what makes it a breath rather than a nuke:
+        // the flames it leaves behind are what actually hurts.
+        NpcSkillCasting.QueueAtDataLevel(GetOwner(), BeatSkill, NpcSkillTargetAttribute.ME);
+        if (GetOwner().GetTarget() is Creature target)
+            DropFlames(target);
+    }
+
+    /// <summary>Scatters the beat's flames around <paramref name="target"/>, each burning out on its own.</summary>
+    private void DropFlames(Creature target)
+    {
+        WorldPosition at = target.GetPosition();
+        for (int i = 0; i < FlamesPerBeat; i++)
         {
-            GetSpawnTemplate().SetWalkerId(null);
-            WalkManager.StopWalking(this);
+            double angle = Rnd.NextFloat(360f) * Math.PI / 180.0;
+            float distance = Rnd.NextFloat(FlameSpread);
+            float x = at.GetX() + (float)(Math.Cos(angle) * distance);
+            float y = at.GetY() + (float)(Math.Sin(angle) * distance);
+            if (Spawn(MagicFlame, x, y, at.GetZ(), (sbyte)at.GetHeading()) is not Npc flame)
+                continue;
+
+            ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                flame.GetController().DeleteIfAliveOrCancelRespawn();
+                return ValueTask.CompletedTask;
+            }, FlameLifeMillis);
         }
+    }
+
+    /// <summary>The summon timer acts only on the tick that first crosses one of its four steps.</summary>
+    private void OnSummonTick()
+    {
+        if (!Fighting())
+            return;
+
+        int hp = GetLifeStats().GetHpPercentage();
+        lock (stepLock)
+        {
+            if (stepsTaken >= SummonSteps.Length || hp >= SummonSteps[stepsTaken])
+                return;
+            stepsTaken++;
+        }
+        PacketSendUtility.BroadcastMessage(GetOwner(), 1500389);
+        RndSpawnInRange(SiegeArtilleryman, 5);
     }
 
     private void StartPhase2Task()
@@ -109,70 +180,14 @@ public class CaptainXastaAI : AggressiveNpcAI
         }, TimeSpan.FromMilliseconds(30000), TimeSpan.FromMilliseconds(30000));
     }
 
-    private void StartSanctuaryEvent()
-    {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            if (!IsDead())
-            {
-                canThink = true;
-                Creature creature = GetAggroList().GetTarget(AggroTarget.MOST_HATED);
-                if (creature == null)
-                {
-                    SetStateIfNot(AIState.FIGHT);
-                    GetMoveController().AbortMove();
-                    OnGeneralEvent(AiEventType.ATTACK_FINISH);
-                    OnGeneralEvent(AiEventType.BACK_HOME);
-                }
-                else
-                {
-                    GetMoveController().AbortMove();
-                    GetOwner().SetTarget(creature);
-                    GetOwner().GetGameStats().RenewLastAttackTime();
-                    GetOwner().GetGameStats().RenewLastAttackedTime();
-                    GetOwner().GetGameStats().RenewLastSkillTime();
-                    SetStateIfNot(AIState.FIGHT);
-                    HandleMoveValidate();
-                    SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19657, 60, GetOwner()).UseNoAnimationSkill();
-                }
-            }
-            return ValueTask.CompletedTask;
-        }, 23000L);
-    }
-
-    private void StartRun(Npc npc)
-    {
-        npc.SetState(CreatureState.ACTIVE, true);
-        PacketSendUtility.BroadcastPacket(npc, new SM_EMOTION(npc, EmotionType.CHANGE_SPEED, 0, npc.GetObjectId()));
-    }
-
-    private void SpawnHelpers(NpcAI ai)
-    {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            if (!IsDead())
-            {
-                PacketSendUtility.BroadcastMessage(GetOwner(), 1500389);
-                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19968, 60, GetOwner()).UseNoAnimationSkill();
-                Npc npc1 = (Npc)Spawn(282604, 263f, 537f, 203f, (sbyte)0);
-                Npc npc2 = (Npc)Spawn(282604, 186f, 555f, 203f, (sbyte)0);
-                npc1.GetSpawn().SetWalkerId("30028000014");
-                WalkManager.StartWalking((NpcAI)npc1.GetAi());
-                npc2.GetSpawn().SetWalkerId("30028000015");
-                WalkManager.StartWalking((NpcAI)npc2.GetAi());
-                StartRun(npc1);
-                StartRun(npc2);
-            }
-            return ValueTask.CompletedTask;
-        }, 3000L);
-    }
-
+    /// <summary>Retail despawns his summons when he drops out of the fight or resets.</summary>
     private void DeleteHelpers()
     {
         WorldMapInstance instance = GetPosition().GetWorldMapInstance();
         if (instance != null)
         {
-            DeleteNpcs(instance.GetNpcs(282604));
+            DeleteNpcs(instance.GetNpcs(SiegeArtilleryman));
+            DeleteNpcs(instance.GetNpcs(MagicFlame));
         }
     }
 
@@ -190,10 +205,10 @@ public class CaptainXastaAI : AggressiveNpcAI
     protected override void HandleDied()
     {
         CancelPhaseTask();
-        if (GetNpcId() == 217309)
+        if (GetNpcId() == FirstFormNpcId)
         {
             PacketSendUtility.BroadcastMessage(GetOwner(), 1500390);
-            Spawn(217310, 238.160f, 598.624f, 178.480f, (sbyte)0);
+            Spawn(SecondFormNpcId, 238.160f, 598.624f, 178.480f, (sbyte)0);
             DeleteHelpers();
             AIActions.DeleteOwner(this);
         }
@@ -237,7 +252,6 @@ public class CaptainXastaAI : AggressiveNpcAI
 
     protected override void HandleBackHome()
     {
-        canThink = true;
         CancelPhaseTask();
         DeleteHelpers();
         isHome.Set(true);

@@ -557,3 +557,56 @@ flag-gated chains, and the exit portal spawned on death and on reset.
 
 **Verification.** Build clean, full suite 1,002 tests passing, all `ai=` names
 resolve. Not yet observed in a running server.
+
+### Rentus Base — Captain Xasta, first form (217309)
+
+Pattern `IDYun_Nmd3` in `NpcAIPatterns_IDYun_hue.xml`. His second form (217310)
+shares the AI class but runs its own pattern and is untouched.
+
+The class existed, and almost nothing in it was his. It ran a 28s cycle that
+stopped him attacking, walked him along walker `B186C8F4…` and two helper
+walkers, summoned two Inhibitor Sikars (282604) at fixed coordinates and ended
+in a "sanctuary event" that re-acquired his target. The pattern has no walking,
+no Sikars and no sanctuary: `on_enter_attack_state` arms two battle timers and
+that is the whole fight. Meanwhile both of the NPCs the pattern *does* spawn
+sat in npc_templates spawned by nothing.
+
+Rebuilt to the pattern's two timers, both starting at 6s:
+
+- **Beat**, re-arming every 9s (branch `Blaze`): self-cast index 0, then
+  `spawn_on_target` three Magic Flames (282390) on the current target within
+  4m, each living 15s. The flames are the damage; the cast is what leaves them.
+- **Summons**, re-arming every 6s: four one-shot steps at 85/65/45/20, each
+  sending one siege artilleryman (282606) within 5m of him.
+
+**One step per tick.** The four wave branches are a single priority chain, each
+gated by a `set_flag_var` test-and-set in its *conditions*, so a burst that
+takes him from full health to 10% does not summon four at once — the 85 branch
+matches on the next tick, the 65 branch six seconds after that, and so on.
+`stepsTaken` reproduces that rather than summoning per threshold crossed.
+
+**Skill index.** Index 0 resolves to Dragon Breath (`19657`): the branch is
+named `Blaze`, the skill's stack is `IDYUN_RASTA_BLAZE`, and the branch spawns
+`IDYun_3Nmd_Blaze`. Its target is `OBJI_SELF`, not the tank. Index 1 is
+Interception Soldier Shout (`19968`, stack `IDYUN_RASTA_SANCTUARYSHIELD`) — the
+shield the invented sanctuary event applied; no branch casts it, so both
+entries go to `prob="0"` and it stays listed but silent.
+
+**A devname that lies.** `IDYun_Rasta_Sum_Invisible` is not invisible: 282606 is
+a named level-60 "siege artilleryman" with a real `name_id`. This is why
+`audit_skill_index_reach.py` judges controller NPCs by `name_id="350000"`
+rather than by devname.
+
+**Kept.** His three broadcast messages and the on-death spawn of 217310 at
+fixed coordinates, which already matched the pattern's `SPAWN_LOCATION_MY_POINT`
+closely enough to leave alone.
+
+**Not implemented.** `on_wake_up`'s `InvisibleWall2` spawn variable, and the
+`do_nothing` guards that suppress reactions while walking a waypoint — we no
+longer walk him, so there is nothing to suppress.
+
+**Verification.** Build clean, full suite 1,039 tests passing and 1 skipped, six
+new pins in `CaptainXastaAiTests`, each checked against a mutation of the
+behaviour it covers (period, target, flame count, flame position, flame
+lifetime, step latching, reset cleanup, death cancellation — all eight caught).
+Not yet observed in a running server.

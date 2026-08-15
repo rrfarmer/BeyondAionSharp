@@ -33000,8 +33000,8 @@
 		<npc_skill id="19372" lv="60" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="217309">
-		<npc_skill id="19657" lv="60" prob="38" />
-		<npc_skill id="19968" lv="60" prob="13" />
+		<npc_skill id="19657" lv="60" prob="0" />
+		<npc_skill id="19968" lv="60" prob="0" />
 	</npc_skills>
 	<npc_skills npc_ids="217310">
 		<npc_skill id="19721" lv="60" prob="13" />
