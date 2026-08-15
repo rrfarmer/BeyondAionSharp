@@ -18,6 +18,8 @@ both formats directly, so that toolchain is not needed.)
 | `audit_missing_adds.py` | Report retail encounter adds our server never spawns. |
 | `audit_dead_shouts.py` | Report NPCs left mute because their lines sit on a twin we never spawn. |
 | `audit_hp_phases.py` | Report hand-written `HpPhases` thresholds that disagree with the retail pattern. |
+| `audit_skill_index_reach.py` | Report which timer-driven bosses address skill indices beyond our own list, and so cannot be ported faithfully. |
+| `triage_missing_adds.py` | Bucket the missing adds by how retail spawns them, which decides what each costs. |
 
 `aionpak.py` and `bxml.py` are importable libraries as well as CLIs.
 

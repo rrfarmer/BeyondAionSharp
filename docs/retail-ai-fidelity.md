@@ -74,6 +74,28 @@ archives). Resolve it per NPC using:
 - our own `npc_skills.xml` ordering, which sometimes matches the client's and
   sometimes does not — corroborate it, never assume it.
 
+## What is portable at all
+
+`audit_skill_index_reach.py` answers the question that decides whether a
+timer-driven boss can be ported: does its pattern address any skill index beyond
+the end of our own `npc_skills` list? An index past it cannot be identified —
+the client list that would resolve it is the data we do not have — so a rotation
+reaching that far can be reproduced in shape but not in content, and writing it
+would mean inventing the casts.
+
+Of 127 timer-driven bosses with an AI class, **40 keep every index inside our
+list and 85 reach past it**. Run this before starting a boss, not halfway
+through.
+
+**Unstable Triroan is the cautionary case.** It looked like a natural next
+target — 24 timer branches, an eleven-step invented HP ladder to replace. But
+its pattern addresses indices 0 through 8 against a five-skill list, so most of
+the rotation is unidentifiable; and the pattern carries **no combat spawns at
+all**, while our version spawns fire, water, earth and wind elementals through
+its ladder. Porting it faithfully would delete a visible mechanic and be unable
+to reproduce what retail runs instead. It stays as it is until a client skill
+list turns up.
+
 ## Sweeps
 
 `tools/client-extract` carries three audits that turn a hand-found bug into a
