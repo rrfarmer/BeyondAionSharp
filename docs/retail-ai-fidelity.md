@@ -1447,9 +1447,38 @@ markers, not adds. The four adds the audit does report for this pattern
 (283057 "burrowing attack" and three "tiamat") come from the thorn and crack
 steps.
 
-**Skill indices are unresolved.** The breath branches address indices 0-3 and the
-comments name only direction, not skill. Transcribe the spawns and the timing
-first; the casts need the usual corroboration.
+**Skill indices: partly resolved, and the encounter is not unimplemented.**
+`TiamatWeakenedDragonAI` is 249 lines and already covers sinking sand, divisive
+creations, infinite pain and the gravity crushers. What it does differently from
+retail is the breath itself, and the differences are precise:
+
+| | ours | retail |
+|---|---|---|
+| direction | `20922 + Rnd.NextInt(3) * 2` — **random every cast** | a fixed sequence, different per health regime |
+| pacing | `OnEndUseSkill` re-offers immediately, so breaths run back to back | 18s at 76-100, 18/15s at 51-75, 12s at 26-50, 8s at 0-25 |
+| beacon | none | one spawned with each breath at 458.5/514.7/417.4, living 7s |
+
+She has **no `npc_skills` entry at all**, so the pattern's indices cannot be read
+off a list — but our own three Ultimate Atrocity skills line up with the three
+directions, and one of them is certain: **20924 is the middle breath**, because
+the NPCs it spawns run along y=514.6 and the beacons are placed at y=514.7, the
+same centre line. 20922 spawns around y=543-550 and 20926 around y=480, so they
+are the two sides; which of them retail calls left is *not* established, and the
+beacon headings (17° and 105°) do not settle it without knowing her facing in
+that room.
+
+**That uncertainty does not block the port.** The beacon and the breath are
+spawned by the same branch, so as long as each beacon stays paired with the same
+breath the fight reads correctly whichever way round the pair is. Pair Beacon1
+with 20922, Beacon2 with 20924 and Beacon3 with 20926 — retail's own index order
+— and record the assumption.
+
+**Why this was not ported in the same session as the spec.** Doing it properly
+means the whole 45-branch chain, because the breath steps are interleaved with
+the thorn, cyclops-crack, gravity-bomb and quake steps that share the same timer
+chain; taking only the breaths would leave a rotation that skips steps and
+mistimes the rest. It is a `PatternAi` table job of the same shape as Destroyer
+Kunax, several times longer, and the table is one command away.
 
 `python rotation_table.py <patterns_dir> IDTiamat_Tiamat_Dragon_Dying_Named_60_Al`
 prints the whole table.
