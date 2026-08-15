@@ -1207,3 +1207,43 @@ would add three full-strength bosses rather than retail's controllers.
 **Verification.** Full suite 1,094 passing and 1 skipped, one new pin, all five
 mutations caught — flames never lit, both lit at one point, only one lit, left
 burning after death, and lit before the pull rather than on it.
+
+### Azoturan Fortress — Icaronix the Betrayer (214599)
+
+Pattern `NLehpar_BhB`. **He had no AI at all.** `BetrayerIcaronixAI` spawns him
+when the Deceiver hits 75% and then nothing drives him, so the second half of the
+fight was a plain aggressive monster.
+
+Retail has him call up a different servant as he loses ground, each on its own
+spawn id so they accumulate rather than replace one another:
+
+| when | servant |
+|---|---|
+| on the pull | Kuillus, 280937 |
+| below 80 | Mudthorn, 280939 |
+| below 50 | Pretor, 280938 |
+| below 30 | Rottentree, 280940 |
+| on death | a strange creature, 280941, for twelve seconds |
+
+**All five were spawned by nothing anywhere in the server.** By the end of the
+fight all four servants should be up at once; leaving the fight or dying clears
+them.
+
+**Rotation not translated**: five indices, five skills, no branch comments. The
+timers those branches run on (2 through 6) are deliberately not armed either —
+arming a timer whose branches do not exist only starts a chain that dies on its
+first tick.
+
+**Two test gaps this port exposed**, both found by mutation and worth recording
+because they generalise:
+
+- *Counting is not enough when a step despawns before it spawns.* Each summon
+  clears its own group first, so a step that repeated every tick would delete and
+  replace its servant and still leave exactly one. Only the servant's identity
+  distinguishes them.
+- *A cleanup test has to fill every group first.* Killing him with one servant up
+  cannot notice a missing despawn for a servant that was never summoned, so the
+  test now walks the whole ladder before killing him.
+
+**Verification.** Full suite 1,099 passing and 1 skipped, five new pins, all seven
+mutations caught after those two fixes. Missing adds 770 → **764**.

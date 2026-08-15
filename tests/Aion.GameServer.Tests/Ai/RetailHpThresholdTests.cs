@@ -136,7 +136,11 @@ public sealed class RetailHpThresholdTests
 	[Fact]
 	public void IcaronixSwapsFormAtSeventyFive()
 	{
-		using var harness = BossAiHarness.For(AzoturanFortress).WithAi(typeof(BetrayerIcaronixAI), typeof(AggressiveNpcAI)).Build();
+		// The betrayer form he becomes has its own AI now, and everything an encounter spawns has to be
+		// registered or the Creature constructor throws mid-phase.
+		using var harness = BossAiHarness.For(AzoturanFortress)
+			.WithAi(typeof(BetrayerIcaronixAI), typeof(IcaronixTheBetrayerAI), typeof(AggressiveNpcAI))
+			.Build();
 		Npc boss = harness.Spawn(IcaronixTheDeceiver, 461.07f, 439.876f, 993.046f);
 		Player player = harness.SpawnPlayer(461.07f, 439.876f, 993.046f);
 		harness.Engage(boss, player);
