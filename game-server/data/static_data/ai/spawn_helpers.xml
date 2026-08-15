@@ -467,22 +467,9 @@
 			</percentage>
 		</summons>
 	</ai>
-	<ai npcId="216516">
-		<summons>
-			<percentage percent="80">
-				<summonGroup npcId="281945" minCount="3" distance="5" schedule="12"/>
-			</percentage>
-			<percentage percent="60">
-				<summonGroup npcId="281946" minCount="3" distance="5" schedule="12"/>
-			</percentage>
-			<percentage percent="40">
-				<summonGroup npcId="281947" minCount="3" distance="5" schedule="12"/>
-			</percentage>
-			<percentage percent="20">
-				<summonGroup npcId="281948" minCount="3" distance="5" schedule="12"/>
-			</percentage>
-		</summons>
-	</ai>
+	<!-- Omega (216516) summoned from here at 80/60/40/20, accumulating every wave and never
+	     spawning the clone of magical barrier. His retail pattern rotates four waves at
+	     85/65/45/25, so his summons now come from OmegaAI. See docs/retail-ai-fidelity.md. -->
 	<ai npcId="217238">
 		<summons>
 			<percentage percent="80" skillId="19454" isIndividual="true"/>

@@ -722,3 +722,39 @@ on arrival with a large hate bonus; we leave that to the add's own AI.
 seven mutations caught; the survivor — dropping the `despawn` from `on_die` —
 survives because the class's existing `HandleDespawned` already deletes those npc
 ids by hand, so two mechanisms cover it. Not yet observed in a running server.
+
+### Inggison — Omega (216516)
+
+Pattern `LF4_FieldRaid` in `NpcAIPatterns_LF4_minho.xml`.
+
+His fight is four waves of clones summoned onto whoever he is fighting, and each
+wave **replaces** the one before it — the branch that summons the next wave
+despawns the previous wave's spawn id in its first action:
+
+| HP | wave | clears |
+|---|---|---|
+| 85 | 3× clone of power (281945) | — |
+| 65 | 3× clone of explosion (281946) | the power wave |
+| 45 | 3× clone of healing (281947) | the explosion wave |
+| 25 | 1× magical barrier (281949) + 1× physical barrier (281948) | the healing wave |
+
+Ours came from `ai/spawn_helpers.xml` and differed in four ways at once: the
+thresholds were 80/60/40/20, nothing was ever cleared so all four waves piled up,
+the last wave was three physical barriers instead of one of each, and the clone
+of magical barrier was consequently spawned by nothing anywhere in the server.
+His `spawn_helpers` entry is removed, since his summons now come from the
+pattern.
+
+**Skill rotation not translated, deliberately.** The pattern addresses thirteen
+indices against our fourteen skills and its branches carry no comments, so
+nothing corroborates the mapping — this is precisely the case the skill-index
+rule above exists for. The two casts that accompanied the old summons
+(`19189`, `19191`) stay on the summon branches where they already were, and the
+rest of his casting keeps its npc_skills probabilities. His health regimes
+(86-100 / 66-85 / 46-65 / 26-45 / below 25) are recorded here for whenever the
+indices can be resolved.
+
+**Verification.** Full suite 1,066 passing and 1 skipped, five new pins, all
+seven mutations caught — both changed thresholds, the wave rotation, the closing
+pair, the one-shot latch, the heartbeat re-arm, and the cleanup on death. Not yet
+observed in a running server.
