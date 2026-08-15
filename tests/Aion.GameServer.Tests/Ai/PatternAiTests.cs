@@ -216,6 +216,70 @@ public sealed class PatternAiTests
 	}
 
 	[Fact]
+	public void RunsTheIdleTimerWhetherOrNotItIsFighting()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.SpawnWithAi(SomeNpc, PatternProbeAI.Name);
+		var ai = (PatternProbeAI)boss.GetAi();
+
+		// Never engaged. A battle timer would do nothing here; the idle timer is the one that runs
+		// around a fight rather than in it, and half its uses are on NPCs that never fight.
+		ai.SetIdleTimer(2000);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.Empty(ai.Ran);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.Equal(["idle"], ai.Ran);
+	}
+
+	[Fact]
+	public void KeepsTheIdleTimerGoingWhenItsBranchSetsItAgain()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.SpawnWithAi(SomeNpc, PatternProbeAI.Name);
+		var ai = (PatternProbeAI)boss.GetAi();
+
+		ai.SetIdleTimer(2000);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		harness.Clock.Advance(TimeSpan.FromSeconds(12));
+
+		// Fires at 2s and then every 4s: 2, 6, 10, 14.
+		Assert.Equal(4, ai.Ran.Count(label => label == "idle"));
+	}
+
+	[Fact]
+	public void KeepsOnlyOneIdleTimerHoweverOftenItIsSet()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.SpawnWithAi(SomeNpc, PatternProbeAI.Name);
+		var ai = (PatternProbeAI)boss.GetAi();
+
+		int idle = harness.Clock.ArmedTimerCount;
+		ai.SetIdleTimer(5000);
+		ai.SetIdleTimer(5000);
+		ai.SetIdleTimer(5000);
+
+		// One slot, not thirty. Setting it again replaces what was there rather than stacking.
+		Assert.Equal(idle + 1, harness.Clock.ArmedTimerCount);
+	}
+
+	[Fact]
+	public void StopsTheIdleTimerWhenTheOwnerDies()
+	{
+		var (harness, ai, boss, _) = Engaged();
+		using (harness)
+		{
+			ai.SetIdleTimer(5000);
+			ai.Ran.Clear();
+
+			boss.GetAi().OnGeneralEvent(AiEventType.Died);
+			harness.Clock.Advance(TimeSpan.FromMinutes(1));
+
+			Assert.DoesNotContain("idle", ai.Ran);
+		}
+	}
+
+	[Fact]
 	public void IgnoresATimerThatComesDueOutsideCombat()
 	{
 		using BossAiHarness harness = NewHarness();
@@ -268,6 +332,11 @@ public sealed class PatternProbeAI : PatternAi
 			// The catch-all re-arm every real pattern carries. Without one a tick that matches nothing
 			// ends the chain, since only a branch can re-arm a slot.
 			Branch(1, "repeat", [When.Timer(1)], Do.ArmTimer(1, 1000))),
+
+		// A heartbeat that keeps itself going, the shape controllers and orbs use.
+		OnIdleTimer = Of(
+			Branch(1, "idle", When.Always,
+				Record("idle"), Do.SetIdleTimer(4000))),
 	};
 
 	public PatternProbeAI(Npc owner)

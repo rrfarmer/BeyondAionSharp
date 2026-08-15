@@ -1435,8 +1435,7 @@ band rather than a flag.
 
 **What it needs that we do not have yet:**
 
-- `set_idle_timer` / `on_idle_timer` — `on_enter_attack_state` sets one at 0 and
-  `on_leave_attack_state` at 20s. 28 missing adds across the corpus want this.
+- ~~`set_idle_timer` / `on_idle_timer`~~ — **built**, see below.
 - `on_message` 10010, her countdown expiring, which makes her despawn.
 - Nothing else: 17 timer slots against our 30, and the beacons are placed at
   fixed coordinates in a single-owner pattern, so the shared-coordinate rule is
@@ -1454,3 +1453,32 @@ first; the casts need the usual corroboration.
 
 `python rotation_table.py <patterns_dir> IDTiamat_Tiamat_Dragon_Dying_Named_60_Al`
 prints the whole table.
+
+### The idle timer
+
+The third and last of the runtime features the backlog named, and the one
+blocking Tiamat's dying phase. **28 missing adds want it.**
+
+There is a single idle slot rather than thirty battle-timer slots, any event can
+set it, and setting it again replaces what was there. The rule that matters is
+that **it is not gated on combat**: its whole purpose is the business around a
+fight rather than in it — a controller retiring once it has spawned its wave, an
+orb calling out on a heartbeat, a boss counting down — and half its uses in the
+corpus are on NPCs that never fight at all. A battle timer that came due out of
+combat would correctly do nothing; an idle timer that did the same would be
+useless.
+
+A zero delay is retail's way of saying "next tick", so it is scheduled rather
+than run inline. Running it inline would evaluate an `on_idle_timer` branch from
+inside the event that set it, which is not what the pattern says and would
+reorder actions that follow the `set_idle_timer` in the same branch.
+
+**Verification.** Four new pins in the runtime's own tests, all four mutations
+caught — never firing, gated on combat, stacking instead of replacing, and
+leaking past the owner's death. Full suite 1,107 passing and 1 skipped.
+
+**What is left of the runtime gaps**, now that this one is closed: nothing named
+in the backlog. `on_wake_up`, the message bus and the idle timer are all built.
+The remaining blockers are content, not machinery — server-side waypoint paths
+(91 adds between placement and movement), unresolvable skill indices, and
+encounters our server does not spawn at all.

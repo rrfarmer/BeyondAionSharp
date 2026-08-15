@@ -42,6 +42,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     private readonly ScheduledTask?[] timers = new ScheduledTask?[TimerSlots];
     private readonly bool[] flags = new bool[FlagSlots];
     private readonly Dictionary<int, List<Npc>> spawnGroups = new Dictionary<int, List<Npc>>();
+    private ScheduledTask? idleTimer;
 
     /// <summary>Guards the timer slots, the flags and the spawn groups against concurrent AI events.</summary>
     /// <remarks>
@@ -144,6 +145,9 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             inCombat = false;
             for (int i = 0; i < timers.Length; i++)
                 CancelSlot(i);
+            if (idleTimer != null && !idleTimer.IsDone())
+                idleTimer.Cancel(true);
+            idleTimer = null;
             Array.Clear(flags);
             spawnGroups.Clear();
         }
@@ -224,6 +228,41 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
         GetAggroList().AddHate(target, hate);
         GetOwner().SetTarget(target);
+    }
+
+    // ---- the idle timer ----------------------------------------------------------------------
+
+    /// <summary>Arms the single idle slot, replacing whatever was in it.</summary>
+    /// <remarks>
+    /// Deliberately not gated on combat, unlike <see cref="FireTimer"/>. Its whole purpose is the
+    /// business around a fight rather than in it — a controller retiring once it has spawned its
+    /// wave, an orb calling out on a heartbeat — and half its uses are on NPCs that never fight at
+    /// all. A zero delay is retail's way of saying "next tick", so it is scheduled rather than run
+    /// inline; running it inline would evaluate a branch from inside the event that set it.
+    /// </remarks>
+    public void SetIdleTimer(int delayMillis)
+    {
+        lock (gate)
+        {
+            if (idleTimer != null && !idleTimer.IsDone())
+                idleTimer.Cancel(true);
+
+            idleTimer = ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                FireIdleTimer();
+                return ValueTask.CompletedTask;
+            }, delayMillis);
+        }
+    }
+
+    private void FireIdleTimer()
+    {
+        lock (gate)
+        {
+            idleTimer = null;
+            if (!IsDead())
+                Evaluate(Pattern.OnIdleTimer);
+        }
     }
 
     // ---- battle timers -----------------------------------------------------------------------

@@ -61,6 +61,17 @@ public sealed class AiPattern
     /// </remarks>
     public PatternBranch[] OnMessage { get; init; } = None;
 
+    /// <summary>
+    /// <c>on_idle_timer</c> — the one timer that is not a battle timer.
+    /// </summary>
+    /// <remarks>
+    /// There is a single idle slot rather than thirty, any event can set it, and unlike a battle
+    /// timer it runs whether or not the NPC is fighting. Encounters use it for the things that
+    /// happen around a fight: a controller removing itself once it has done its job, an orb
+    /// calling out on a heartbeat, a boss counting down.
+    /// </remarks>
+    public PatternBranch[] OnIdleTimer { get; init; } = None;
+
     /// <summary>Builds a branch, sorting its conditions and actions as written.</summary>
     public static PatternBranch Branch(int priority, string comment, PatternCondition[] conditions, params PatternAction[] actions)
         => new PatternBranch(priority, comment, conditions, actions);
@@ -152,6 +163,9 @@ public static class Do
 
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
+
+    /// <summary><c>set_idle_timer</c> — arm the single idle slot, replacing whatever was in it.</summary>
+    public static PatternAction SetIdleTimer(int delayMillis) => ai => ai.SetIdleTimer(delayMillis);
 
     /// <summary><c>despawn_self</c>.</summary>
     public static PatternAction DespawnSelf() => ai => ai.DespawnSelf();
