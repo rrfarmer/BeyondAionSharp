@@ -793,3 +793,26 @@ binds to its own sibling pattern and runs `aggressive`.
 
 **Verification.** Full suite 1,071 passing and 1 skipped, five new pins, all seven
 mutations caught after two test fixes. Not yet observed in a running server.
+
+### Empyrean Crucible — Queen Alukina (217590)
+
+Pattern `IDArena_S8_Named_3` in `NpcAIPatterns_IDArena_JM.xml`. Two corrections,
+neither of which needs an index resolved.
+
+**Phase steps 75/50/25 → 80/55/25.** Read off the boundaries her once-only
+branches guard: the `ALPHA_1` branch is gated on 56-80, `ALPHA_2` on 26-55, and
+`ALPHA_3` on below 25. Her per-phase casts are unchanged and stay where they
+were.
+
+**She bursts into seven azure blobbles (280713) when a player kills her**, each
+lasting thirty seconds. Nothing in our server spawned that NPC. The pattern hangs
+it on `on_killed_by_user` rather than `on_die`, so it belongs to being killed and
+not to any despawn — it is in `HandleDied` and deliberately not in
+`HandleDespawned`.
+
+**Rotation not translated.** Seven indices against our seven skills, no branch
+comments, nothing to corroborate the mapping. Her retail regimes, for whenever it
+can be: 81-100, 56-80, 26-55, below 25, with a 20s low-health chain on timer 6.
+
+**Verification.** Full suite 1,073 passing and 1 skipped, two new pins, all five
+mutations caught — including moving the first step by a single point.
