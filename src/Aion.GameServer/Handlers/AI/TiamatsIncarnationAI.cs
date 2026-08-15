@@ -15,13 +15,21 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Tiamat's three incarnations in Dragon Lord's Refuge — Fissurefang, Graviwing and Petriscale.
+/// Tiamat's four incarnations in Dragon Lord's Refuge — Fissurefang, Graviwing, Petriscale and
+/// Wrathclaw.
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md. Patterns <c>IDTiamat_T1_Crack_Key_Named_60_Al</c>,
-/// <c>..._Gravity_...</c> and <c>..._Crystal_...</c>. All three are the same fight with a different
-/// element: a 9s attack that drops a hazard on the tank, a slower area attack that drops one on
-/// everybody, and a bind on a random player once past 30% health.
+/// <c>..._Gravity_...</c>, <c>..._Crystal_...</c> and <c>..._Rage_...</c>. The first three are the
+/// same fight with a different element: a 9s attack that drops a hazard on the tank, a slower area
+/// attack that drops one on everybody, and a bind on a random player once past 30% health.
+/// <para>
+/// Wrathclaw is the odd one and had <b>no AI at all</b> — his template pointed at plain
+/// <c>aggressive</c> while his three siblings shared this class. He places a sphere of wrath and a
+/// sphere of peace when he spawns, and every area attack clears them and puts them out again,
+/// sometimes with the two swapped between the same two points. That is the whole mechanic: players
+/// have to find the right sphere, and where it is keeps changing.
+/// </para>
 /// <para>
 /// What this replaces was invented: two hazards placed on two random players within 30m, every 30s,
 /// starting 20s after activation and continuing whether or not anyone was in combat. Retail places
@@ -39,6 +47,7 @@ public class TiamatsIncarnationAI : PatternAi
     private const int Fissurefang = 219365;
     private const int Graviwing = 219366;
     private const int Petriscale = 219368;
+    private const int Wrathclaw = 219367;
 
     // Skill indices, corroborated by stack name rather than by position in our list -- which is a
     // different order: our entries run 20105, 20145, 20146, breath, while the pattern's indices are
@@ -55,6 +64,13 @@ public class TiamatsIncarnationAI : PatternAi
     private static readonly SpawnSpot BurrowSpot = new SpawnSpot(478.4f, 514.2f, 418f);
     private static readonly SpawnSpot EffectSpot = new SpawnSpot(480.5f, 513.9f, 418f);
     private const int BurrowingAttack = 283060;
+
+    private const int SphereOfWrath = 282979;
+    private const int SphereOfPeace = 282733;
+
+    /// <summary>The two points his spheres occupy. Which sphere is at which is what changes.</summary>
+    private static readonly SpawnSpot NorthPoint = new SpawnSpot(214f, 858f, 246.5f);
+    private static readonly SpawnSpot SouthPoint = new SpawnSpot(185f, 838f, 246.5f);
 
     /// <summary>Combat adds. Retail files these under one id and clears it when the fight ends.</summary>
     private const int Hazards = 1;
@@ -113,8 +129,67 @@ public class TiamatsIncarnationAI : PatternAi
                     Do.Despawn(Hazards))),
         };
 
+    /// <summary>Puts the two spheres out, wrath at whichever point is named first.</summary>
+    private static PatternAction[] PlaceSpheres(SpawnSpot wrathAt, SpawnSpot peaceAt) =>
+    [
+        Do.SpawnAt(SphereOfWrath, Hazards, liveSeconds: 0, wrathAt),
+        Do.SpawnAt(SphereOfPeace, Hazards, liveSeconds: 0, peaceAt),
+    ];
+
+    /// <summary>One of his two area attacks: clear the spheres, cast, put them back as given.</summary>
+    private static PatternBranch AreaAttack(int priority, string comment, PatternCondition[] conditions,
+        SpawnSpot wrathAt, SpawnSpot peaceAt)
+    {
+        PatternAction[] actions =
+        [
+            Do.ArmTimer(1, 25000),
+            Do.Despawn(Hazards),
+            Do.SkillOnSelf(AreaAtk),
+            .. PlaceSpheres(wrathAt, peaceAt),
+        ];
+        return Branch(priority, comment, conditions, actions);
+    }
+
+    private static readonly AiPattern WrathclawPattern = new AiPattern
+    {
+        OnWakeUp = Of(
+            Branch(7, "SpawnCircle", When.Always, PlaceSpheres(NorthPoint, SouthPoint))),
+
+        OnEnterAttack = Of(
+            Branch(6, "SetTimer", When.Always,
+                Do.ArmTimer(0, 3000),
+                Do.ArmTimer(1, 15000),
+                Do.ArmTimer(2, 20000))),
+
+        OnBattleTimer = Of(
+            Branch(5, "PowerAtk", [When.Timer(0)],
+                Do.ArmTimer(0, 9000),
+                Do.SkillOnTarget(PowerAtk)),
+
+            // A third of the time the spheres go back where they were...
+            AreaAttack(4, "AreaAtk_34", [When.Chance(34), When.Timer(1)], NorthPoint, SouthPoint),
+
+            // ...and otherwise they come back swapped, which is the point of the fight.
+            AreaAttack(3, "AreaAtk_100", [When.Timer(1)], SouthPoint, NorthPoint),
+
+            Branch(2, "HandBind", [When.Timer(2), When.HpBelow(30)],
+                Do.ArmTimer(2, 30000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, HandBind)),
+
+            Branch(1, "Repeat_Handbind", [When.Timer(2)],
+                Do.ArmTimer(2, 3000))),
+
+        OnDie = Of(
+            Branch(8, "Int+1", When.Always,
+                Do.SpawnAt(BurrowingAttack, DeathEffects, liveSeconds: 6, BurrowSpot),
+                Do.SpawnAt(283066, DeathEffects, liveSeconds: 6, EffectSpot),
+                Do.Despawn(Hazards))),
+    };
+
     private static readonly Dictionary<int, AiPattern> Tables = new Dictionary<int, AiPattern>
     {
+        [Wrathclaw] = WrathclawPattern,
+
         // Fissurefang's hazard lands under the tank; retail also has it engage its target on arrival,
         // which we leave to the add's own aggressive AI.
         [Fissurefang] = Incarnation(CavityOfEarth, areaAtkRearm: 25000, handBindRearm: 30000,

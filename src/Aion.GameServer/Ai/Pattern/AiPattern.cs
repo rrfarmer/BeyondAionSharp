@@ -35,6 +35,16 @@ public sealed class AiPattern
 {
     public static readonly PatternBranch[] None = Array.Empty<PatternBranch>();
 
+    /// <summary>
+    /// <c>on_wake_up</c> — runs once when the NPC enters the world, before anyone has touched it.
+    /// </summary>
+    /// <remarks>
+    /// Encounters use this to put their furniture out: the spheres a boss makes players run between,
+    /// the controllers that drive an add wave, the condition variables an instance reads later. It is
+    /// not a combat event and does not wait for one.
+    /// </remarks>
+    public PatternBranch[] OnWakeUp { get; init; } = None;
+
     public PatternBranch[] OnEnterAttack { get; init; } = None;
     public PatternBranch[] OnBattleTimer { get; init; } = None;
     public PatternBranch[] OnLeaveAttack { get; init; } = None;

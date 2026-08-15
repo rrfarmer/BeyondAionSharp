@@ -30,6 +30,10 @@ public sealed class TiamatsIncarnationAiTests
 
 	private const int BurrowingAttack = 283060;
 
+	private const int Wrathclaw = 219367;
+	private const int SphereOfWrath = 282979;
+	private const int SphereOfPeace = 282733;
+
 	private const int Smash = 20145;
 	private const int IncarnateSurge = 20146;
 	private const int Bite = 20105;
@@ -154,6 +158,63 @@ public sealed class TiamatsIncarnationAiTests
 		// Having fired, it goes onto its own 30s cadence rather than the 3s re-check.
 		harness.Clock.Advance(TimeSpan.FromSeconds(20));
 		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(boss), c => c.SkillId == Bite);
+	}
+
+	[Fact]
+	public void WrathclawPutsBothSpheresOutTheMomentHeSpawns()
+	{
+		using BossAiHarness harness = NewHarness();
+
+		// Before he exists, nothing is placed. He is the only NPC that puts these out, and until now he
+		// had no AI at all, so neither sphere was ever spawned by anything.
+		Assert.Equal(0, Count(harness, SphereOfWrath));
+
+		SpawnBoss(harness, Wrathclaw);
+
+		Npc wrath = harness.LiveNpcs().Single(n => n.GetNpcId() == SphereOfWrath);
+		Npc peace = harness.LiveNpcs().Single(n => n.GetNpcId() == SphereOfPeace);
+		Assert.Equal(214f, wrath.GetX(), 1f);
+		Assert.Equal(185f, peace.GetX(), 1f);
+	}
+
+	[Fact]
+	public void WrathclawKeepsExactlyOneOfEachSphereHoweverManyAreaAttacksLand()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, Wrathclaw);
+		Player player = harness.SpawnPlayer(472f, 512f, 418f);
+		harness.Engage(boss, player);
+
+		// Each area attack clears the pair and puts a fresh pair out. Getting the despawn wrong would
+		// leave a growing pile of spheres rather than the two the fight is about.
+		for (int i = 0; i < 6; i++)
+		{
+			BossAiHarness.Rehate(boss, player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(25));
+			Assert.Equal(1, Count(harness, SphereOfWrath));
+			Assert.Equal(1, Count(harness, SphereOfPeace));
+		}
+	}
+
+	[Fact]
+	public void WrathclawSwapsHisSpheresBetweenTheTwoPoints()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, Wrathclaw);
+		Player player = harness.SpawnPlayer(472f, 512f, 418f);
+		harness.Engage(boss, player);
+
+		// Two thirds of his area attacks come back swapped, so over a long fight the sphere of wrath
+		// must have stood at both points. A fixed layout would pin it to one.
+		var wrathSeenAt = new HashSet<int>();
+		for (int i = 0; i < 30; i++)
+		{
+			BossAiHarness.Rehate(boss, player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(25));
+			wrathSeenAt.Add((int)MathF.Round(harness.LiveNpcs().Single(n => n.GetNpcId() == SphereOfWrath).GetX()));
+		}
+
+		Assert.Equal([185, 214], wrathSeenAt.Order());
 	}
 
 	[Theory]

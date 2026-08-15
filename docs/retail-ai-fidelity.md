@@ -1095,3 +1095,43 @@ both NPCs as one mechanic. Five of six mutations caught; the survivor — removi
 the one-shot flag from the shout — survives because `PatternAi` already latches
 `on_enter_attack_state` to once per fight, so the flag is redundant *for the
 shout* while remaining load-bearing for the all-clear.
+
+### `on_wake_up`, and Dragon Lord's Refuge — Wrathclaw (219367)
+
+`on_wake_up` is the second runtime feature from the backlog — 58 missing adds
+name it. It runs once when the NPC enters the world, before anyone has touched
+it, and is hooked to `HandleSpawned`. Encounters use it to put their furniture
+out: spheres players must run between, the controllers that drive an add wave,
+the condition variables an instance reads later. It is not a combat event and
+does not wait for one.
+
+**Wrathclaw had no AI at all.** His template pointed at plain `aggressive` while
+his three siblings shared `TiamatsIncarnationAI`, so the fourth incarnation of
+Tiamat simply auto-attacked. His pattern is the same family shape — a 9s power
+attack, an area attack, a bind gated at 30% — plus one mechanic the others do not
+have:
+
+- On spawning he places a **sphere of wrath** (282979) and a **sphere of peace**
+  (282733) at two fixed points, 214/858 and 185/838.
+- Every area attack despawns both and puts a fresh pair out. On a 34% roll they
+  go back where they were; otherwise **they come back swapped**. Players have to
+  find the right sphere, and where it is keeps changing.
+
+Neither sphere was spawned by anything in our server.
+
+**Indices carry over from his siblings** with the same corroboration: identical
+branch comments (`PowerAtk`, `AreaAtk`, `HandBind`) against the same three stack
+names, so 0 is Smash, 1 is Incarnate Surge and 2 is Bite. Index 3 fires only on
+`on_message` 71, which is untranslated, so it needs no resolution — which is just
+as well, since his two remaining skills (20165, 20166) have nothing to separate
+them.
+
+**Only one NPC binds to this pattern**, so its absolute coordinates are safe by
+the rule above.
+
+**Verification.** Full suite 1,093 passing and 1 skipped, three new pins, all five
+mutations caught — the wake-up removed from the runtime, the wake-up branch
+removed from the table, the swap made a no-op, the despawn dropped so spheres
+pile up, and the two spheres exchanged.
+
+Missing adds: 780 → **776**.

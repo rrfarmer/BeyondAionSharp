@@ -74,6 +74,12 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     // ---- the event surface -------------------------------------------------------------------
 
+    protected override void HandleSpawned()
+    {
+        base.HandleSpawned();
+        Evaluate(Pattern.OnWakeUp);
+    }
+
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
