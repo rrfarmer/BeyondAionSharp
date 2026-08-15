@@ -175,6 +175,24 @@ and restores a missing repeat.
   in a way the Mage Preceptor merge was not — there the counts corroborated it
   exactly — so it waits for a way to observe the fight.
 
+### Rentus Base — Brigade General Vasharti (217313)
+
+Pattern `IDYun_Nmd6`: **three** steps at 86/56/26, where we had four at an
+invented 75/50/25/10. His handler does the same thing at every step, so there is
+no per-percent branch to follow the renumbering.
+
+**His Glove Controllers are deliberately still not spawned.** Retail creates one
+at each step, and those npc_ids (283002/283004/283006) do exist unspawned — but
+they are plain `aggressive` clones of Vasharti himself, carrying his name and
+level and no controller AI. Spawning them would put three extra full-strength
+bosses in the room instead of retail's controllers, which is harder than retail
+rather than closer to it. They wait for their own AI class, which is the deep
+part of this encounter: walls, buffers and area attacks driven by their own
+patterns.
+
+**Verification.** Pinned and mutation-checked; restoring the old four-step
+ladder fails.
+
 ### Eight bosses given their retail summons
 
 `triage_missing_adds.py` buckets the missing adds by how retail spawns them,

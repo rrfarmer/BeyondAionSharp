@@ -19,7 +19,18 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("brigade_general_vasharti")]
 public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(75, 50, 25, 10);
+    /// <summary>
+    /// Retail thresholds, from pattern IDYun_Nmd6: three steps at 86/56/26, where we had four at an
+    /// invented 75/50/25/10. Every step does the same thing here, so there is no per-percent branch to
+    /// follow the renumbering.
+    /// </summary>
+    /// <remarks>
+    /// Retail also spawns a Glove Controller at each step. Those NPCs (283002/283004/283006) exist but
+    /// are plain aggressive clones of Vasharti himself with no controller AI, so spawning them would put
+    /// three extra full-strength bosses in the room rather than retail's controllers — harder than
+    /// retail, not closer to it. They wait for their own AI. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    private readonly HpPhases hpPhases = new HpPhases(86, 56, 26);
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
     private readonly AtomicBoolean isInFlameShowerEvent = new AtomicBoolean();
     private ScheduledTask? enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask;

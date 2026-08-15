@@ -42,6 +42,10 @@ public sealed class RetailHpThresholdTests
 	private const int NightmareLordHeiramune = 233467;
 	private const int HeiramuneAdd = 233162;
 
+	private const int RentusBase = 300280000;
+	private const int Vasharti = 217313;
+	private const int VashartiPhaseSkill = 20532;
+
 	private const int AzoturanFortress = 310100000;
 	private const int IcaronixTheDeceiver = 214598;
 	private const int IcaronixTheBetrayer = 214599;
@@ -140,5 +144,34 @@ public sealed class RetailHpThresholdTests
 
 		// Retail pattern ND2_AhC_1 swaps at 75, not the 50 we had.
 		Assert.Equal([75], at);
+	}
+
+	[Fact]
+	public void VashartiStepsAtEightySixFiftySixAndTwentySix()
+	{
+		using var harness = BossAiHarness.For(RentusBase)
+			.WithAi(typeof(BrigadeGeneralVashartiAI), typeof(AggressiveNpcAI))
+			.Build();
+		Npc boss = harness.Spawn(Vasharti);
+		Player player = harness.SpawnPlayer();
+		harness.Engage(boss, player);
+		BossAiHarness.DrainQueuedSkills(boss);
+
+		// Every step queues the same skill, so the observable is when it arrives rather than which.
+		var at = new List<int>();
+		for (int hp = 100; hp >= 5; hp--)
+		{
+			BossAiHarness.SetHpPercent(boss, hp);
+			BossAiHarness.Rehate(boss, player);
+			int observed = boss.GetLifeStats().GetHpPercentage();
+			boss.SetTarget(player);
+			boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+			if (BossAiHarness.DrainQueuedSkills(boss).Any(c => c.SkillId == VashartiPhaseSkill))
+				at.Add(observed);
+		}
+
+		// Retail pattern IDYun_Nmd6 has three steps, not the four at 75/50/25/10 we had. These land on
+		// the thresholds exactly; SetCurrentHpPercent's truncation happens to be a no-op at these values.
+		Assert.Equal([86, 56, 26], at);
 	}
 }
