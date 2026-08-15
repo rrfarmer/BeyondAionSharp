@@ -1572,3 +1572,37 @@ That is the sixth false-positive class, and the pattern across all six is worth
 stating: every one was found by trying to port something and discovering the
 finding was wrong, never by inspecting the audit. The corrections have moved the
 total 812 → 746 without porting anything.
+
+### Theobomos — Lost Balor (214567)
+
+Pattern `ND2_FhV`. A world boss on a four-hour respawn with **no AI at all**, and
+the same shape as Icaronix the Betrayer: statues called up as he loses ground.
+
+| when | statue |
+|---|---|
+| below 80 | a Kuillus statue, 280956 |
+| below 50 | a test statue, 280957 |
+| below 30 | **two at once**, 280954 and 280955 |
+
+All four were spawned by nothing anywhere in the server. Nothing clears them
+mid-fight, so all four stand together by the end; leaving the fight clears them.
+
+**Rotation not translated**: six skills, five indices addressed, no branch
+comments. The timers those branches run on are not armed here either, for the
+reason given under Icaronix — arming a timer whose branches do not exist starts a
+chain that dies on its first tick.
+
+**One mutation deliberately left uncaught.** Retail files the three steps under
+three different spawn ids, and this port keeps them; but since no branch despawns
+an individual group mid-fight and the reset clears all three, moving a statue into
+another group changes nothing observable. The ids are kept because they are what
+the pattern says, not because they are load-bearing here.
+
+**A test gap worth repeating.** Every test drove health *down* before ticking, so
+none of them ever ticked at full health — and the catch-all heartbeat was
+therefore never exercised. Removing it went undetected until a test ticked four
+times at 90% and then dropped to 75, which is the sequence that actually
+distinguishes a live chain from a dead one.
+
+**Verification.** Full suite 1,111 passing and 1 skipped, four new pins, five of
+six mutations caught. Missing adds 746 → **742**.
