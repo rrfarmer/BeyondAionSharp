@@ -175,6 +175,33 @@ and restores a missing repeat.
   in a way the Mage Preceptor merge was not — there the counts corroborated it
   exactly — so it waits for a way to observe the fight.
 
+### Raksang Ruins — The Flamelord (217451)
+
+Pattern `Raksha_Firemage_Nmd`. The first of the timer-driven group to be ported,
+and the boss whose pattern produced the correction below.
+
+We ran an HP ladder at an invented 40/30/20/10 that delivered scalding
+executors in growing bursts — one, then two, then three, then four. Retail runs
+four battle timers instead:
+
+- **9s** — Blazing Cut on the current target, the fight's steady beat.
+- **7s** — carries three one-shot steps at **75/50/25**, each firing a burst on
+  the first tick below it.
+- **20s** — casts and spawns a **Torment Blaze** (282459). Nothing in either
+  server spawned that NPC: it sat in npc_templates with a skill of its own and
+  no way into the world.
+- **25s** — the delivery rotation, sending the next executor in turn and
+  thickening to several at once below 25% HP.
+
+**Skill indices** follow our list order, corroborated by index 0 being the only
+entry with a nonzero probability and the beat repeating it. The delivery tick's
+second cast is index 4, beyond our four-entry list, so it is not reproduced —
+noted rather than guessed.
+
+**Verification.** Six pins in `TheFlamelordAiTests`, mutation-checked: delivering
+all four at once instead of rotating, dropping the low-HP thickening, and never
+spawning Torment Blaze each fail a test. Full suite 780, 1 skipped.
+
 ### Correction: most of what is left is timer-driven, not mis-numbered
 
 An earlier revision of this document claimed the remaining bosses shared a
