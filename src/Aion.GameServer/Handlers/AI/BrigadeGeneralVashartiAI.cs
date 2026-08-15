@@ -31,6 +31,18 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// retail, not closer to it. They wait for their own AI. See docs/retail-ai-fidelity.md.
     /// </remarks>
     private readonly HpPhases hpPhases = new HpPhases(86, 56, 26);
+
+    /// <summary>
+    /// The two flames he lights when the fight starts, and where retail puts them.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. His reflect alternates red and blue on a 40s
+    /// timer and players have to stand in the matching flame, so without these the mechanic has no
+    /// board to play on. <c>DancingFlameAI</c> was already written for them; nothing had ever spawned
+    /// one. Only 217313 is live on this pattern, so the fixed coordinates are unambiguous.
+    /// </remarks>
+    private const int DancingRedFlame = 282996;
+    private const int DancingBlueFlame = 282997;
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
     private readonly AtomicBoolean isInFlameShowerEvent = new AtomicBoolean();
     private ScheduledTask? enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask;
@@ -45,6 +57,7 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
         if (isHome.CompareAndSet(true, false))
         {
             GetPosition().GetWorldMapInstance().SetDoorState(70, false);
+            LightTheFlames();
             enrageSchedule = ThreadPoolManager.GetInstance().Schedule(_ => { HandleEnrageEvent(); return ValueTask.CompletedTask; }, (long)System.TimeSpan.FromMinutes(10).TotalMilliseconds);
             ScheduleFlameShieldBuffEvent(5000);
         }
@@ -168,6 +181,13 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
         return base.IsDestinationReached();
     }
 
+    /// <summary>Places the red and blue flames at the two points retail lights them.</summary>
+    private void LightTheFlames()
+    {
+        Spawn(DancingRedFlame, 167.6f, 418.22f, 262.54f, (sbyte)0);
+        Spawn(DancingBlueFlame, 208.58f, 410.71f, 262.54f, (sbyte)0);
+    }
+
     private void ClearSpawns()
     {
         WorldMapInstance instance = GetPosition().GetWorldMapInstance();
@@ -184,6 +204,8 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
             DeleteNpcs(instance.GetNpcs(283012));
             DeleteNpcs(instance.GetNpcs(283000));
             DeleteNpcs(instance.GetNpcs(283001));
+            DeleteNpcs(instance.GetNpcs(DancingRedFlame));
+            DeleteNpcs(instance.GetNpcs(DancingBlueFlame));
         }
     }
 

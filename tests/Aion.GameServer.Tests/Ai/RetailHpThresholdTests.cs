@@ -45,6 +45,8 @@ public sealed class RetailHpThresholdTests
 	private const int RentusBase = 300280000;
 	private const int Vasharti = 217313;
 	private const int VashartiPhaseSkill = 20532;
+	private const int DancingRedFlame = 282996;
+	private const int DancingBlueFlame = 282997;
 
 	private const int AzoturanFortress = 310100000;
 	private const int IcaronixTheDeceiver = 214598;
@@ -144,6 +146,35 @@ public sealed class RetailHpThresholdTests
 
 		// Retail pattern ND2_AhC_1 swaps at 75, not the 50 we had.
 		Assert.Equal([75], at);
+	}
+
+	[Fact]
+	public void VashartiLightsBothFlamesWhenTheFightStartsAndPutsThemOutWhenItEnds()
+	{
+		using var harness = BossAiHarness.For(RentusBase)
+			.WithAi(typeof(BrigadeGeneralVashartiAI), typeof(AggressiveNpcAI), typeof(DancingFlameAI))
+			.Build();
+		Npc boss = harness.Spawn(Vasharti, 188f, 414f, 262.54f);
+		Player player = harness.SpawnPlayer(190f, 416f, 262.54f);
+
+		// Nothing is lit until someone pulls him. His reflect alternates red and blue on a timer and
+		// players have to stand in the matching flame, so these two are the board the fight is played
+		// on -- and nothing in the server had ever spawned one.
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingRedFlame));
+
+		harness.Engage(boss, player);
+
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingRedFlame));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingBlueFlame));
+
+		// They stand apart, at the two points retail lights them, rather than both on the boss.
+		Npc red = harness.LiveNpcs().Single(n => n.GetNpcId() == DancingRedFlame);
+		Npc blue = harness.LiveNpcs().Single(n => n.GetNpcId() == DancingBlueFlame);
+		Assert.True(MathF.Abs(red.GetX() - blue.GetX()) > 30f, "the two flames should be at opposite ends");
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingRedFlame));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingBlueFlame));
 	}
 
 	[Fact]

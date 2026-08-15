@@ -1182,3 +1182,28 @@ The audits now exclude adds whose **devname** says they are effects: `fobj` or
 The general lesson, now three idioms deep: the template is not authoritative
 about what an NPC *is*. The devname and the branch comment are the designers
 talking, and they are usually right where our data is wrong.
+
+### Rentus Base — Vasharti's dancing flames (217313)
+
+Pattern `IDYun_Nmd6`. His reflect alternates between two colours on a 40s timer —
+`Ref_Blue` on a 35% roll, `Ref_Red` otherwise — and players have to stand in the
+matching flame. **Neither flame was ever spawned.** The mechanic had no board to
+play on.
+
+`on_enter_attack_state` lights a dancing red flame (282996) at 167.6/418.22 and a
+dancing blue flame (282997) at 208.58/410.71, and `on_leave_attack_state` and
+`on_die` put them out. `DancingFlameAI` was already written for them and had
+never been given anything to drive; the class's existing `ClearSpawns()` already
+runs on all three exit paths, so the cleanup came for free.
+
+Only 217313 is live on this pattern — 855903 binds to it but is spawned nowhere —
+so the fixed coordinates are unambiguous under the shared-pattern rule above.
+
+**Still not translated.** His three Glove Controllers at 86/56/26 are placed by
+`on_arrived_at_waypoint`, so they are waypoint-blocked; and as noted earlier they
+are plain aggressive clones of Vasharti himself in our data, so spawning them
+would add three full-strength bosses rather than retail's controllers.
+
+**Verification.** Full suite 1,094 passing and 1 skipped, one new pin, all five
+mutations caught — flames never lit, both lit at one point, only one lit, left
+burning after death, and lit before the pull rather than on it.
