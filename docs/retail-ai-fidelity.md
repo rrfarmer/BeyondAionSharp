@@ -1606,3 +1606,45 @@ distinguishes a live chain from a dead one.
 
 **Verification.** Full suite 1,111 passing and 1 skipped, four new pins, five of
 six mutations caught. Missing adds 746 → **742**.
+
+## A second kind of gap: bosses with no AI at all
+
+Four of the encounters ported in this work were found the same way — by accident,
+while chasing something else. Wrathclaw sat on plain `aggressive` while his three
+sibling incarnations shared a class. Icaronix the Betrayer was spawned by his own
+first form and then driven by nothing. Lost Balor is a world boss on a four-hour
+respawn that auto-attacked. The Adma coffins were scenery.
+
+`audit_missing_adds.py` structurally cannot find these. It reports adds that never
+spawn; an NPC with no behaviour at all has no missing *add*, it has a missing
+*fight*. So `audit_missing_ai.py` now looks for them directly: an NPC our data
+really places, whose template names a generic handler, and whose retail pattern is
+substantial.
+
+**779 NPCs qualify.** The top of the list is unambiguous:
+
+| timers | npc | rating | name | pattern |
+|---:|---|---|---|---|
+| 127 | 297189 | LEGENDARY | ahserion | `Gab1_Sub_Boss` |
+| 55 | 219933 | HERO | arcticore aizenka | `DF5_ItemNamed_12_SSH` |
+| 55 | 235975 | LEGENDARY | gatekeeper flox | `LF5_ItemNamed_24_KJS` |
+| 45 | 215282 | HERO | **vanuka infernus** | `Dragon_G3` |
+| 43 | 220019 | LEGENDARY | tatar's blaze | `LDF4b_Golden_Gururu` |
+| 41 | 215283 | HERO | **asaratu bloodshade** | `Dragon_G4` |
+
+The two in bold are the finding that justifies the tool. Dark Poeta has four
+named bosses on sibling patterns `Dragon_G1` through `Dragon_G4`; **Tahabata and
+Calindi have AI classes, Vanuka and Asaratu have `aggressive`.** Exactly
+Wrathclaw's shape, in a different instance, and it would not have surfaced from
+the adds audit because their adds are counted against patterns nobody drives.
+
+**Two filters do the work**, and both were needed. Without a minimum timer count
+the report is every monster in the game; without a cap on how many NPCs share the
+pattern it is 4,930 rows, mostly ordinary mobs on generic behaviours. Narrowly
+bound plus timer-heavy is what distinguishes a fight somebody forgot to write.
+
+**Read the count with the same caution as the adds total.** 779 is the number of
+NPCs whose pattern *has* content, not the number of fights worth writing: some
+are adequately served by generic AI, and the usual skill-index and waypoint
+limits apply to whatever is left. It is a ranked hypothesis list, and the entries
+at the top of it are the ones this session kept finding by luck.

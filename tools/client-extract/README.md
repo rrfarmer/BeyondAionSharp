@@ -16,6 +16,7 @@ both formats directly, so that toolchain is not needed.)
 | `index_paks.py` | Index every entry name across a client install, reading only archive directories. |
 | `build_ai_binding.py` | Join the client's per-NPC `ai_name` against an NpcAIPatterns dump to produce the pattern → `npc_id` table. |
 | `audit_missing_adds.py` | Report retail encounter adds our server never spawns. |
+| `audit_missing_ai.py` | Report NPCs we spawn that have a real retail fight and no AI class at all. |
 | `audit_dead_shouts.py` | Report NPCs left mute because their lines sit on a twin we never spawn. |
 | `audit_hp_phases.py` | Report hand-written `HpPhases` thresholds that disagree with the retail pattern. |
 | `audit_skill_index_reach.py` | Report which timer-driven bosses address skill indices beyond our own list, and so cannot be ported faithfully. |
