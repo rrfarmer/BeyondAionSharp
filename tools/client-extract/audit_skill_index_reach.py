@@ -10,7 +10,7 @@ it would mean inventing the casts. This reports the reach per boss so that is
 visible before the work starts rather than halfway through it.
 
 CLI:
-    python audit_skill_index_reach.py <patterns_dir> <binding.tsv> [--repo PATH]
+    python audit_skill_index_reach.py <client_root> <patterns_dir> <binding.tsv> [--repo PATH]
 """
 from __future__ import annotations
 
@@ -19,9 +19,12 @@ import collections
 import pathlib
 import re
 
-from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
+from audit_missing_adds import NAME_RE, PATTERN_RE, TEMPLATE_RE, attr, read_text
+from triage_missing_adds import devname_to_id
 
 SKILL_INDEX_RE = re.compile(r"<skill>SKILLI_INDEX_(\d+)</skill>")
+NAMEID_VALUE_RE = re.compile(r"<npc_nameid>([^<]*)</npc_nameid>")
+BLANK_NAME_ID = "350000"  # the "no name" string, which marks an invisible control NPC
 TIMER_RE = re.compile(r"<btimer_indicator>")
 SPAWN_RE = re.compile(r"<npc_nameid>")
 AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
@@ -41,6 +44,7 @@ def our_skill_counts(repo: pathlib.Path) -> dict[str, int]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("client_root")
     ap.add_argument("patterns_dir")
     ap.add_argument("binding_tsv")
     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parents[2]))
@@ -64,10 +68,13 @@ def main() -> None:
                 max(indices) if indices else -1,
                 len(TIMER_RE.findall(body)),
                 len(SPAWN_RE.findall(body)),
+                [d.strip() for d in NAMEID_VALUE_RE.findall(body) if d.strip()],
             )
 
     counts = our_skill_counts(repo)
     tpl = read_text(repo / "game-server/data/static_data/npcs/npc_templates.xml")
+    templates = {m.group(1): m.group(2) for m in TEMPLATE_RE.finditer(tpl)}
+    dev2id = devname_to_id(pathlib.Path(args.client_root))
     by_ai = collections.defaultdict(list)
     for npc_id, ai in re.findall(r'<npc_template npc_id="(\d+)"[^>]*?ai="([^"]+)"', tpl):
         by_ai[ai].append(npc_id)
@@ -81,22 +88,38 @@ def main() -> None:
             entry = reach.get(binding.get(npc_id, ""))
             if not entry or entry[1] < 10:  # only timer-driven bosses
                 continue
-            top, timers, spawns = entry
+            top, timers, spawns, devnames = entry
             ours = counts.get(npc_id, 0)
-            rows.append((path.name, npc_id, binding[npc_id], top, ours, timers, spawns))
+            # A mechanic routed through an invisible control NPC cannot be ported by spawning that NPC:
+            # it does nothing without its own pattern, so the chain has to be ported with it. Judge that
+            # from name_id, not from the devname: Captain Xasta's summon is called
+            # IDYun_Rasta_Sum_Invisible and is a perfectly visible level-60 siege artilleryman.
+            invisible = sum(1 for d in devnames
+                            if attr(templates.get(dev2id.get(d.lower(), ""), ""), "name_id") == BLANK_NAME_ID)
+            rows.append((path.name, npc_id, binding[npc_id], top, ours, timers, spawns, invisible))
             break
 
     portable = [r for r in rows if r[3] >= 0 and r[3] < r[4]]
     partial = [r for r in rows if r[3] >= 0 and r[3] >= r[4]]
 
-    print(f"timer-driven bosses with an AI class: {len(rows)}")
-    print(f"  every index within our skill list : {len(portable)}")
-    print(f"  reaches past it                   : {len(partial)}\n")
-    for label, group in (("PORTABLE", portable), ("INDEXES BEYOND OUR LIST", partial)):
-        print(f"== {label} ==")
-        for fname, npc_id, pattern, top, ours, timers, spawns in sorted(group, key=lambda r: r[3] - r[4]):
+    clean = [r for r in portable if r[7] == 0]
+    controllers = [r for r in portable if r[7] > 0]
+
+    print(f"timer-driven bosses with an AI class : {len(rows)}")
+    print(f"  every index within our skill list  : {len(portable)}")
+    print(f"    of those, no invisible controller: {len(clean)}")
+    print(f"    routed through controllers       : {len(controllers)}")
+    print(f"  reaches past our skill list        : {len(partial)}\n")
+
+    for label, group in (("PORTABLE, NO CONTROLLER CHAIN", clean),
+                         ("PORTABLE BUT ROUTED THROUGH INVISIBLE CONTROLLERS", controllers),
+                         ("INDEXES BEYOND OUR SKILL LIST", partial)):
+        print(f"== {label} ({len(group)}) ==")
+        for fname, npc_id, pattern, top, ours, timers, spawns, invis in sorted(
+                group, key=lambda r: r[3] - r[4]):
+            note = f", {invis} invisible" if invis else ""
             print(f"  {fname:<34} npc {npc_id}  top index {top}, our list {ours}, "
-                  f"{timers} timer branches, {spawns} spawns  [{pattern}]")
+                  f"{timers} timers, {spawns} spawns{note}  [{pattern}]")
         print()
 
 
