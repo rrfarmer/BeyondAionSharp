@@ -175,6 +175,46 @@ and restores a missing repeat.
   in a way the Mage Preceptor merge was not — there the counts corroborated it
   exactly — so it waits for a way to observe the fight.
 
+### Eight bosses given their retail summons
+
+`triage_missing_adds.py` buckets the missing adds by how retail spawns them,
+because that decides what each costs. Of 812:
+
+| | |
+|---|---|
+| 420 | battle-timer spawns — need a timer-driven AI class |
+| 121 | on death or despawn — instance handler |
+| 143 | on wake-up, aggro, message or idle timer — AI class |
+| 46 | waypoint-placed — blocked, see above |
+| 29 | **HP threshold at the spawner — expressible in `ai/spawn_helpers.xml`** |
+
+So the adds are not a cheap breadth win: only the last bucket is data, and of
+those 29, eleven belong to bosses with bespoke AI classes that would have to
+carry the spawn themselves.
+
+The remaining eighteen sit on plain `ai="aggressive"` owners, and eight of them
+had complete retail data (threshold, count and scatter). Those eight are now
+`ai="summoner"` with a summon table. `SummonerAI` extends `AggressiveNpcAI`, so
+aggro behaviour is unchanged; it adds the HP-triggered summons and cleans them
+up on reset and death.
+
+| Boss | Retail summon |
+|---|---|
+| Unstable Drakie | a plant at 70% |
+| Debilkarim the Maker | all seven guardians at once below half, ringed at 5/10/15/20m |
+| Apostate Alchemist | an earth spirit at 50% |
+| Lich Priest | a servant at 50% |
+| Severed Gnarl | two objects at 35% |
+| Coastal Lobsek | an object at 50% |
+| Queen Serusia | one egg at 75%, two at 50%, three at 25% |
+| Ashunatal Shadowslip | decay at 90%, three explosion at 70%, two disruption at 50% |
+
+**Verification.** Two pinned in `RetailSummonTests` — the one whose waves grow
+and the one that sends a different add per step, which between them cover the
+shapes. Mutation-checked: flattening Serusia's counts and giving Ashunatal the
+same shadow each time both fail. Confirmed every `ai=` name still resolves and
+all 55 summoner NPCs have a summon table, since `SummonerAI` requires one.
+
 ### Raksang Ruins — The Flamelord (217451)
 
 Pattern `Raksha_Firemage_Nmd`. The first of the timer-driven group to be ported,

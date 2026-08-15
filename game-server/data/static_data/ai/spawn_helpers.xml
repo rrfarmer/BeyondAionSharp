@@ -843,4 +843,83 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Unstable Drakie. Retail pattern Draky_Bomb2 releases its plant at 70% HP. -->
+	<ai npcId="213564">
+		<summons>
+			<percentage percent="70">
+				<summonGroup npcId="213565" minCount="1" distance="2"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Debilkarim the Maker. Retail pattern IDTP_NepBoss1 calls all seven guardians at once below half health, in rings at 5, 10, 15 and 20m. -->
+	<ai npcId="215795">
+		<summons>
+			<percentage percent="51">
+				<summonGroup npcId="281420" minCount="2" distance="5"/>
+				<summonGroup npcId="281420" minCount="2" distance="10"/>
+				<summonGroup npcId="281420" minCount="2" distance="15"/>
+				<summonGroup npcId="281420" minCount="1" distance="20"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Apostate Alchemist. Retail pattern LF4_Fanatic_WnB raises its earth spirit at 50% HP. -->
+	<ai npcId="215670">
+		<summons>
+			<percentage percent="50">
+				<summonGroup npcId="281838" minCount="1" distance="3"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Lich Priest. Retail pattern ND2_Callsoulst calls its servant at 50% HP. -->
+	<ai npcId="211259">
+		<summons>
+			<percentage percent="50">
+				<summonGroup npcId="286080" minCount="1" distance="3"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Severed Gnarl. Retail pattern ND2_FlyXipeto2 drops two objects at 35% HP. -->
+	<ai npcId="211956">
+		<summons>
+			<percentage percent="35">
+				<summonGroup npcId="280604" minCount="2" distance="2"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Coastal Lobsek. Retail pattern ND2_Xipeto_45 drops its object at 50% HP. -->
+	<ai npcId="214214">
+		<summons>
+			<percentage percent="50">
+				<summonGroup npcId="280934" minCount="1" distance="2"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Queen Serusia. Retail pattern NeutQueen_N_65_Ah lays more eggs as she weakens: one at 75%, two at 50%, three at 25%. -->
+	<ai npcId="231003">
+		<summons>
+			<percentage percent="75">
+				<summonGroup npcId="284273" minCount="1" distance="5"/>
+			</percentage>
+			<percentage percent="50">
+				<summonGroup npcId="284273" minCount="2" distance="5"/>
+			</percentage>
+			<percentage percent="25">
+				<summonGroup npcId="284273" minCount="3" distance="5"/>
+			</percentage>
+		</summons>
+	</ai>
+	<!-- Ashunatal Shadowslip. Retail pattern Station_NinjaNM splits off a different shadow at each step: decay at 90%, explosion at 70%, disruption at 50%. -->
+	<ai npcId="217376">
+		<summons>
+			<percentage percent="90">
+				<summonGroup npcId="217380" minCount="1" distance="5"/>
+			</percentage>
+			<percentage percent="70">
+				<summonGroup npcId="217379" minCount="3" distance="5"/>
+			</percentage>
+			<percentage percent="50">
+				<summonGroup npcId="217381" minCount="2" distance="5"/>
+			</percentage>
+		</summons>
+	</ai>
 </ai_templates>

@@ -4,6 +4,7 @@ using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
@@ -392,6 +393,9 @@ public sealed class BossAiHarness : IDisposable
 			SetHolder(staticData, nameof(StaticData.SkillDataDh), RealSkills.Value);
 			// Aggro (AggroList.IsAware -> Npc.IsEnemy -> TribeRelationService) needs the real tribe graph.
 			SetHolder(staticData, nameof(StaticData.TribeRelations), RealTribeRelations.Value);
+			// SummonerAI reads its whole summon table from here in HandleSpawned, so a boss whose retail
+			// summons live in ai/spawn_helpers.xml summons nothing at all without it.
+			SetHolder(staticData, nameof(StaticData.AiDataDh), RealAiData.Value);
 
 			// The skill engine's execution side reads this when resolving target relations, so a boss that
 			// casts through SkillEngine rather than the queue NREs without it. Empty is correct here: no
@@ -436,6 +440,24 @@ public sealed class BossAiHarness : IDisposable
 
 		private static readonly Lazy<SkillData> RealSkills = new(() =>
 			LoadStaticDataFile<SkillData>("skills", "skill_templates.xml"));
+
+		/// <summary>
+		/// The summon tables, merged the way StaticData does it.
+		/// </summary>
+		/// <remarks>
+		/// AIData spans several files under static_data/ai and is assembled with MergePending, so the
+		/// single-file loader leaves its template list null and AfterUnmarshal then throws. Only
+		/// spawn_helpers.xml matters to a boss fight, but it is merged through the same path so the
+		/// holder ends up in the state the server builds.
+		/// </remarks>
+		private static readonly Lazy<AIData> RealAiData = new(() =>
+		{
+			string path = Path.Combine(RepoRoot(), "game-server", "data", "static_data", "ai",
+				"spawn_helpers.xml");
+			var data = JaxbHolderLoader.DeserializeFile<AIData>(path);
+			JaxbHolderLoader.RunAfterUnmarshal(data);
+			return data;
+		});
 
 		private static readonly Lazy<TribeRelationsData> RealTribeRelations = new(() =>
 			LoadStaticDataFile<TribeRelationsData>("tribe", "tribe_relations.xml"));
