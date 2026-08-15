@@ -41,6 +41,16 @@ public sealed class AiPattern
     public PatternBranch[] OnEnterIdle { get; init; } = None;
     public PatternBranch[] OnDie { get; init; } = None;
 
+    /// <summary>
+    /// <c>on_message</c> — how retail wires two NPCs of one encounter together.
+    /// </summary>
+    /// <remarks>
+    /// Message numbers are chosen per encounter and have no global registry, so a table must guard
+    /// every branch with <see cref="When.Message"/>. A boss and its adds have to be translated
+    /// together: a broadcast nothing listens for, or a listener nothing broadcasts to, is silence.
+    /// </remarks>
+    public PatternBranch[] OnMessage { get; init; } = None;
+
     /// <summary>Builds a branch, sorting its conditions and actions as written.</summary>
     public static PatternBranch Branch(int priority, string comment, PatternCondition[] conditions, params PatternAction[] actions)
         => new PatternBranch(priority, comment, conditions, actions);
@@ -77,6 +87,9 @@ public static class When
 
     /// <summary><c>test_probability</c>.</summary>
     public static PatternCondition Chance(int percent) => ai => ai.RollPercent(percent);
+
+    /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
+    public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 
     /// <summary>No guard at all, for branches that run whenever their event fires.</summary>
     public static PatternCondition[] Always => Array.Empty<PatternCondition>();
@@ -135,6 +148,13 @@ public static class Do
 
     /// <summary><c>say_to_all</c> / <c>broadcast_message</c>, by our own message id.</summary>
     public static PatternAction Say(int messageId, int delayMillis = 0) => ai => ai.Say(messageId, delayMillis);
+
+    /// <summary><c>broadcast_message</c> — tells nearby NPCs of this encounter something happened.</summary>
+    public static PatternAction Broadcast(int messageType, float range, bool aboutTarget = false)
+        => ai => ai.Broadcast(messageType, range, aboutTarget);
+
+    /// <summary><c>add_hate_point</c> at the object a message carried, then attack it.</summary>
+    public static PatternAction HateMessageTarget(int hate) => ai => ai.HateMessageTarget(hate);
 
     /// <summary>Anything with no pattern op behind it — an encounter-specific hook the table needs.</summary>
     public static PatternAction Custom(Action<PatternAi> body) => ai => body(ai);

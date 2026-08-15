@@ -20,6 +20,10 @@ namespace Aion.GameServer.Handlers.AI;
 /// resolvable — see below.
 /// </para>
 /// <para>
+/// It also answers Omega's rally call (message 6354) by piling hate on the player he names and
+/// turning to attack them.
+/// </para>
+/// <para>
 /// Only skill index 1 is translated. It is anchored hard: its branch fires at 10% immediately before
 /// <c>despawn_self</c> and alongside the self-destruct spawn, and our 19196 is named Self Destruct with
 /// the stack <c>BNFI_AREABOMB10_LFRAID_SUM</c> — the 10 is the threshold. Indices 0 and 2 have no such
@@ -44,6 +48,15 @@ public class CloneOfBarrierAI : PatternAi
     /// <summary>Retail leaves these unfiled (<c>SPAWN_ID_NONE</c>); nothing ever despawns them.</summary>
     private const int Unfiled = 0;
 
+    /// <summary>Omega's rally call, and the hate his clones put on the player it names.</summary>
+    /// <remarks>
+    /// The pattern's <c>add_hate_point</c> carries no amount, so this is a judgement: enough to make
+    /// the named player the clone's target on arrival, not so much that nothing can pull it off them
+    /// afterwards. Marked as inferred in docs/retail-ai-fidelity.md.
+    /// </remarks>
+    private const int RallyMessage = 6354;
+    private const int RallyHate = 1000;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -65,6 +78,13 @@ public class CloneOfBarrierAI : PatternAi
         OnDie = Of(
             Branch(1, "", When.Always,
                 Do.SpawnNear(SoulEssence, Unfiled, liveSeconds: EffectLife))),
+
+        // Omega shouts this on every phase, naming whoever he is fighting. A clone that hears it
+        // piles hate on that player and turns to attack, which is what makes a wave arrive aimed at
+        // the tank instead of wandering to whoever happens to hit it first.
+        OnMessage = Of(
+            Branch(1, "", [When.Message(RallyMessage)],
+                Do.HateMessageTarget(RallyHate))),
     };
 
     public CloneOfBarrierAI(Npc owner)

@@ -808,11 +808,14 @@ this port would otherwise have introduced: `despawn_self` deletes without killin
 so `HandleDied` does not run — a clone that detonated would have left its shield
 on Omega permanently. The removal now hangs off despawn as well.
 
-**Not implemented.** `on_message` 6354: Omega broadcasts it from every phase
-branch and each clone responds by adding hate to the message's parameter and
-attacking, which re-points the whole wave onto his target. Both halves of that
-chain would need translating together. The clone of magical barrier (281949)
-binds to its own sibling pattern and runs `aggressive`.
+**The rally chain is now translated** (see the message-bus section below): Omega
+broadcasts 6354 on every phase naming whoever he is fighting, and this clone puts
+hate on that player and turns to attack. The clone of magical barrier (281949)
+binds to its own sibling pattern and runs `aggressive`, so it hears nothing.
+
+**Inferred, and marked as such.** The pattern's `add_hate_point` carries no
+amount. 1000 is a judgement: enough to make the named player the clone's target
+on arrival, not so much that nothing can pull it off them afterwards.
 
 **Verification.** Full suite 1,071 passing and 1 skipped, five new pins, all seven
 mutations caught after two test fixes. Not yet observed in a running server.
@@ -1018,3 +1021,33 @@ despawn and reset.
 **Verification.** Full suite 1,085 passing and 1 skipped, three new pins, all five
 mutations caught after that change: the threshold, the one-shot flag, the
 twenty-second delay, the sheet's position, and the cancellation on death.
+
+### The NPC message bus, wired into the pattern runtime
+
+`on_message` is the single largest unbuilt feature in the backlog — **47 missing
+adds** depend on it — so it is built now, and proven on the one chain that was
+already fully researched.
+
+Retail wires the NPCs of an encounter together with `broadcast_message` and a
+matching `on_message` handler: an integer chosen per encounter, an optional
+object parameter, and a radius. `NpcMessageBus` already existed; what was missing
+was a way for a translated pattern to send or receive on it. `AiPattern` gains an
+`OnMessage` branch list, `When.Message`, `Do.Broadcast` and `Do.HateMessageTarget`,
+and `PatternAi` implements `INpcMessageListener`.
+
+**One rule differs from battle timers, deliberately.** Messages are handled
+whether or not the listener is in combat. Retail uses them to *start* fights as
+well as to coordinate them, so a listener that ignored them out of combat could
+never be pulled by one.
+
+**Both halves must be translated together.** A broadcast nothing listens for, and
+a listener nothing broadcasts to, are both silence — and neither shows up as a
+failure. Omega and his clone of physical barrier are the worked example: he
+shouts 6354 on each of his four phases naming his current target, and the clone
+answers by hating that player, so a wave arrives aimed at the tank instead of
+wandering to whoever hits it first.
+
+**Verification.** Full suite 1,086 passing and 1 skipped. Five mutations, all
+caught: the broadcast removed, the broadcast naming nobody, the listener removed,
+the listener watching the wrong number, and the runtime dropping the message's
+parameter.

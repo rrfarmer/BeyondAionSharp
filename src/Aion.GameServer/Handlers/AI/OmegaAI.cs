@@ -20,6 +20,11 @@ namespace Aion.GameServer.Handlers.AI;
 /// therefore never spawned by anything at all.
 /// </para>
 /// <para>
+/// Each phase also shouts message 6354 at his clones, naming whoever he is fighting; they respond by
+/// piling hate on that player and turning to attack. Both halves of that chain are now translated —
+/// see <see cref="CloneOfBarrierAI"/> — so a wave arrives already aimed at the tank rather than
+/// wandering to whoever happens to hit it first.
+/// <para>
 /// His skill rotation is not translated. The pattern addresses thirteen indices and its branches carry
 /// no comments, so nothing corroborates which of our fourteen skills each index names — see the
 /// skill-index problem in the fidelity doc. The two casts that accompanied the old summons are kept on
@@ -45,6 +50,16 @@ public class OmegaAI : PatternAi
     /// <summary>Waves live ten minutes unless a later phase clears them.</summary>
     private const int WaveLife = 600;
 
+    /// <summary>
+    /// The number he shouts at his clones on every phase, telling them who he is fighting.
+    /// </summary>
+    /// <remarks>
+    /// Designer-assigned and scoped to this encounter; his clones' patterns listen for the same
+    /// number and nothing else does. Broadcast range is 50m, which is the arena.
+    /// </remarks>
+    private const int RallyMessage = 6354;
+    private const float RallyRange = 50f;
+
     // The two casts the old summon path made on every wave. Which pattern indices they correspond to is
     // unresolved, so they stay where they already were rather than being placed by guesswork.
     private const int SummonCastA = 19189;
@@ -63,27 +78,31 @@ public class OmegaAI : PatternAi
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
                 Do.SpawnOnTarget(CloneOfMagicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife),
-                Do.SpawnOnTarget(CloneOfPhysicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife)),
+                Do.SpawnOnTarget(CloneOfPhysicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife),
+                Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(19, "phase 45%", [When.Timer(0), When.HpBelow(45), When.FirstTime(2)],
                 Do.Despawn(ExplosionWave),
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfHealing, HealingWave, count: 3, range: 3f, liveSeconds: WaveLife)),
+                Do.SpawnOnTarget(CloneOfHealing, HealingWave, count: 3, range: 3f, liveSeconds: WaveLife),
+                Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(18, "phase 65%", [When.Timer(0), When.HpBelow(65), When.FirstTime(3)],
                 Do.Despawn(PowerWave),
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfExplosion, ExplosionWave, count: 3, range: 3f, liveSeconds: WaveLife)),
+                Do.SpawnOnTarget(CloneOfExplosion, ExplosionWave, count: 3, range: 3f, liveSeconds: WaveLife),
+                Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(17, "phase 85%", [When.Timer(0), When.HpBelow(85), When.FirstTime(4)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfPower, PowerWave, count: 3, range: 3f, liveSeconds: WaveLife)),
+                Do.SpawnOnTarget(CloneOfPower, PowerWave, count: 3, range: 3f, liveSeconds: WaveLife),
+                Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             // The heartbeat every phase branch depends on: without it the chain ends on the first tick
             // that crosses no threshold, and no later phase ever runs.

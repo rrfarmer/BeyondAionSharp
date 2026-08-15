@@ -133,6 +133,29 @@ public sealed class OmegaAiTests
 	}
 
 	[Fact]
+	public void PointsHisBarrierCloneAtWhoeverHeIsFighting()
+	{
+		var (harness, boss, player) = Engaged();
+		using (harness)
+		{
+			// A second player the clone has no reason to prefer, so hate on the tank has to come from
+			// Omega's rally call rather than from being the only creature in the room.
+			Player bystander = harness.SpawnPlayer(1786f, 2264f, 300f);
+			BossAiHarness.MakeMutuallyKnown(boss, bystander);
+
+			foreach (int hp in new[] { 84, 64, 44, 24 })
+				PhaseAt(harness, boss, player, hp);
+
+			// Only the physical barrier clone runs a pattern; the other three are plain aggressive NPCs
+			// and hear nothing, which is why this is asserted on the last wave rather than the first.
+			Npc clone = harness.LiveNpcs().Single(n => n.GetNpcId() == CloneOfPhysicalBarrier);
+			Assert.True(clone.GetAggroList().GetHate(player) > 0,
+				"the barrier clone should have arrived already hating Omega's target");
+			Assert.Equal(0, clone.GetAggroList().GetHate(bystander));
+		}
+	}
+
+	[Fact]
 	public void ClearsEveryWaveWhenHeDies()
 	{
 		var (harness, boss, player) = Engaged();

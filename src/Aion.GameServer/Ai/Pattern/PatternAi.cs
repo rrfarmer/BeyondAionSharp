@@ -33,7 +33,7 @@ namespace Aion.GameServer.Ai.Pattern;
 /// despawn and reset — so a boss that resets replays its steps rather than starting mid-fight.
 /// </para>
 /// </remarks>
-public abstract class PatternAi : AggressiveNpcAI
+public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 {
     /// <summary>Retail gives every NPC thirty battle-timer slots and thirty-two flag vars.</summary>
     private const int TimerSlots = 30;
@@ -60,6 +60,12 @@ public abstract class PatternAi : AggressiveNpcAI
 
     /// <summary>Which timer slot is being serviced, or -1 outside a battle-timer event.</summary>
     public int FiredTimer { get; private set; } = -1;
+
+    /// <summary>The message being handled, or -1 outside an <c>on_message</c> event.</summary>
+    public int CurrentMessage { get; private set; } = -1;
+
+    /// <summary>The object that message carried — usually the player the sender is complaining about.</summary>
+    public VisibleObject? MessageParam { get; private set; }
 
     public int HpPercent => GetLifeStats().GetHpPercentage();
 
@@ -169,6 +175,49 @@ public abstract class PatternAi : AggressiveNpcAI
                 return;
             }
         }
+    }
+
+    // ---- messages --------------------------------------------------------------------------
+
+    /// <summary>Receives a <c>broadcast_message</c> from another NPC of this encounter.</summary>
+    /// <remarks>
+    /// Unlike a battle timer this is not gated on being in combat: retail uses messages to start
+    /// fights as well as to coordinate them, and a listener that ignored them out of combat could
+    /// never be pulled by one.
+    /// </remarks>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        if (IsDead() || Pattern.OnMessage.Length == 0)
+            return;
+
+        lock (gate)
+        {
+            CurrentMessage = messageType;
+            MessageParam = param;
+            try
+            {
+                Evaluate(Pattern.OnMessage);
+            }
+            finally
+            {
+                CurrentMessage = -1;
+                MessageParam = null;
+            }
+        }
+    }
+
+    /// <summary>Broadcasts to the rest of the encounter, optionally naming who this NPC is fighting.</summary>
+    public void Broadcast(int messageType, float range, bool aboutTarget)
+        => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range);
+
+    /// <summary>Puts hate on whoever a message named and turns to face them.</summary>
+    public void HateMessageTarget(int hate)
+    {
+        if (MessageParam is not Creature target || target.IsDead())
+            return;
+
+        GetAggroList().AddHate(target, hate);
+        GetOwner().SetTarget(target);
     }
 
     // ---- battle timers -----------------------------------------------------------------------
