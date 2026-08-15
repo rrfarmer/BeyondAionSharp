@@ -91,6 +91,7 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
     with a repo-wide grep before acting on them.
     """
     static = repo / "game-server/data/static_data"
+    by_ai = npc_ids_by_ai_name(repo)
     ids: set[str] = set()
     for path in (static / "spawns").rglob("*.xml"):
         ids.update(re.findall(r'npc_id="(\d+)"', read_text(path)))
@@ -102,6 +103,40 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
         ids.update(re.findall(SPAWN_CALL + r"\s*(\d{5,6})\b", text))
         ids.update(re.findall(r"\bnpcId\s*[:=]\s*(\d{5,6})\b", text))
         ids.update(spawned_via_constants(text))
+        ids.update(spawned_relative_to_self(text, by_ai))
+    return ids
+
+
+AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
+RELATIVE_SPAWN_RE = re.compile(r"\b\w*Spawn\w*\(\s*GetNpcId\(\)\s*([+-])\s*(\d+)")
+
+
+def npc_ids_by_ai_name(repo: pathlib.Path) -> dict[str, list[str]]:
+    """ai_name -> the npc_ids whose template points at it."""
+    tpl = read_text(repo / "game-server/data/static_data/npcs/npc_templates.xml")
+    out: dict[str, list[str]] = collections.defaultdict(list)
+    for npc_id, ai in re.findall(r'<npc_template npc_id="(\d+)"[^>]*?ai="([^"]+)"', tpl):
+        out[ai].append(npc_id)
+    return out
+
+
+def spawned_relative_to_self(text: str, by_ai: dict[str, list[str]]) -> set[str]:
+    """Ids reached as `Spawn(GetNpcId() + 1, ...)`, resolved per NPC that uses the class.
+
+    A real and easily-missed idiom: `TiamatSkillHelperAI` spawns its own id plus one, which is
+    how every "infinite pain" and "sinking sand" damage twin reaches the world. Nothing at the
+    call site names those ids, so they read as never spawned. Resolving it takes the AI name off
+    the class and the npc_ids pointing at that name out of npc_templates.
+    """
+    offsets = [(sign, int(n)) for sign, n in RELATIVE_SPAWN_RE.findall(text)]
+    if not offsets:
+        return set()
+
+    ids: set[str] = set()
+    for ai_name in AINAME_RE.findall(text):
+        for owner in by_ai.get(ai_name, ()):
+            for sign, n in offsets:
+                ids.add(str(int(owner) + (n if sign == "+" else -n)))
     return ids
 
 

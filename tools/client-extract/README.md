@@ -54,9 +54,15 @@ our spawn data and reports adds nothing ever brings into the world. Its
 "can we spawn this?" check includes a regex sweep of handler code, which is an
 approximation — spot-check a finding with a repo-wide grep before acting on it.
 The sweep follows literal ids, ids reached through a named constant or an id
-array, and any method whose name contains `Spawn` (so `RndSpawnInRange` counts,
-not just `Spawn`). It does **not** follow an id returned from a method, so a
-handler that picks its add from a `List<int>` helper still reports as missing.
+array, ids computed as `GetNpcId() + N` (resolved per NPC using that AI class),
+and any method whose name contains `Spawn` (so `RndSpawnInRange` counts, not just
+`Spawn`). It does **not** follow an id returned from a method, so a handler that
+picks its add from a `List<int>` helper still reports as missing.
+
+**The total is not monotonic.** Teaching the sweep to resolve more spawns can
+*raise* the missing-add count, because an NPC that becomes spawnable brings its
+own pattern's adds into scope for the first time. A rise after a sweep fix is the
+tool seeing more of the world, not a regression.
 
 `build_ai_binding.py` reads `Npcs.pak` directly and accepts the AI-pattern dump
 as shipped (UTF-16 or UTF-8) — no preprocessing step.

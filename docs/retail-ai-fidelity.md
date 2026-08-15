@@ -1135,3 +1135,26 @@ removed from the table, the swap made a no-op, the despawn dropped so spheres
 pile up, and the two spheres exchanged.
 
 Missing adds: 780 → **776**.
+
+### Correction: the sweep now follows computed ids, and the total went up
+
+`TiamatSkillHelperAI` spawns `GetNpcId() + 1` — which is how every "infinite
+pain" and "sinking sand" damage twin reaches the world. Nothing at the call site
+names those ids, so all three read as never spawned, and this was the fifth
+indirect-spawn idiom the audit had missed (after `RndSpawnInRange`, named
+constants, id arrays, and locals). The sweep now resolves it, using the AI name
+off the class and the npc_ids pointing at that name in npc_templates.
+
+**The count rose from 776 to 786, and that is the fix working.** The missing-add
+total is not monotonic: an NPC that becomes spawnable brings its own pattern's
+adds into scope for the first time. Three twins dropped off the list and ten
+previously-invisible adds appeared behind them. A rise after a sweep fix means
+the tool is seeing more of the world.
+
+**What this run cost, and what it bought.** Four of the six wake-up candidates
+examined turned out to be already implemented — `TiamatSkillHelperAI` covered
+three, and `CelestiusAI`, checked in an earlier pass, covered its own. That rate
+is the argument for spot-checking every finding against the code before writing
+anything, which is now the documented rule. The genuinely missing ones from that
+group are the two Calindi surkana twins (730697, 730698) and the Drakenspire
+exploding flame (856459).
