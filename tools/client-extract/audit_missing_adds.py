@@ -99,11 +99,17 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
         ids.update(re.findall(r'<spawn_npc[^>]*npc_id="(\d+)"', read_text(path)))
     for path in (repo / "src/Aion.GameServer/Handlers").rglob("*.cs"):
         text = read_text(path)
-        ids.update(re.findall(r"\bSpawn\w*\(\s*(\d{5,6})\b", text))
+        ids.update(re.findall(SPAWN_CALL + r"\s*(\d{5,6})\b", text))
         ids.update(re.findall(r"\bnpcId\s*[:=]\s*(\d{5,6})\b", text))
         ids.update(spawned_via_constants(text))
     return ids
 
+
+# Any method whose name *contains* Spawn, not only one that starts with it. `RndSpawnInRange`
+# is the helper most AI classes actually use to place an add, and anchoring on \bSpawn missed
+# every call to it -- RM-1337's sparks of darkness were reported as never spawned while the
+# class had been spawning eight to twelve of them per phase all along.
+SPAWN_CALL = r"\b\w*Spawn\w*\("
 
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
 CONST_ARRAY_RE = re.compile(r"\bint\[\] (\w+)\s*=\s*(?:new int\[\]\s*)?\{([^}]*)\}")
@@ -123,7 +129,7 @@ def spawned_via_constants(text: str) -> set[str]:
             consts[name] = values
 
     ids: set[str] = set()
-    for used in set(re.findall(r"\bSpawn\w*\(\s*(\w+)", text)) | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text)):
+    for used in set(re.findall(SPAWN_CALL + r"\s*(\w+)", text)) | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text)):
         value = consts.get(used)
         if isinstance(value, list):
             ids.update(value)

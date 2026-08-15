@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import pathlib
 import re
+import sys
 import xml.etree.ElementTree as ET
 
 from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
@@ -93,6 +94,11 @@ def render(branch: ET.Element, indent: str = "    ") -> list[str]:
 
 
 def main() -> None:
+    # Branch comments are not all ASCII -- some carry the designer's own Korean -- and Windows
+    # consoles default to cp1252, which kills the whole dump partway through the first boss that
+    # has one. Replacing the odd character is better than losing the rest of the pattern.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("patterns_dir")
     ap.add_argument("pattern_name")
