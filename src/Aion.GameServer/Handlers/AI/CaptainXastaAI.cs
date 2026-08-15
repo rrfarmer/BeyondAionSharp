@@ -1,26 +1,24 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
-using Aion.GameServer.Commons.Utils;
-using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Ai.Manager;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.SkillEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
+using static Aion.GameServer.Ai.Pattern.AiPattern;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
 /// Captain Xasta, Rentus Base. Retail pattern IDYun_Nmd3 (217309); his second form (217310) runs its
-/// own pattern and is untouched here.
+/// own pattern, which is not translated here.
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md. His first form ran a 28s cycle that stopped him
 /// attacking, walked him down a path, summoned two Inhibitor Sikars and ended in a sanctuary event.
-/// None of that is in the pattern. Retail runs two battle timers instead:
+/// None of that is in the pattern, which arms two battle timers and lets them run the fight:
 /// <list type="bullet">
 /// <item>every 9s, self-cast Dragon Breath and drop three Magic Flames on the current target;</item>
 /// <item>every 6s, check HP and send one siege artilleryman the first time it passes 85/65/45/20.</item>
@@ -34,142 +32,94 @@ namespace Aion.GameServer.Handlers.AI;
 /// </para>
 /// </remarks>
 [AIName("captain_xasta")]
-public class CaptainXastaAI : AggressiveNpcAI
+public class CaptainXastaAI : PatternAi
 {
     private const int FirstFormNpcId = 217309;
     private const int SecondFormNpcId = 217310;
 
-    /// <summary>The 9s beat, and the only skill index his pattern addresses.</summary>
-    private const int BeatSkill = 19657;
+    /// <summary>Skill index 0 — Dragon Breath, cast at himself.</summary>
+    private const int DragonBreath = 19657;
 
+    private const int MagicFlame = 282390;
     private const int SiegeArtilleryman = 282606;
 
-    /// <summary>The flames the beat drops on whoever he is facing.</summary>
-    private const int MagicFlame = 282390;
-    private const int FlamesPerBeat = 3;
-    private const float FlameSpread = 4f;
-    private const long FlameLifeMillis = 15000L;
+    /// <summary>Retail files the flames and the artillerymen together, so leaving the fight clears both.</summary>
+    private const int Adds = 1;
 
-    /// <summary>One-shot summon steps, each sending a single artilleryman.</summary>
-    private static readonly int[] SummonSteps = { 85, 65, 45, 20 };
+    /// <summary>The four wave branches differ only in threshold and flag, so their actions are shared.</summary>
+    private static PatternAction[] Wave() =>
+    [
+        Do.Say(1500389),
+        Do.ArmTimer(2, 6000),
+        Do.SpawnNear(SiegeArtilleryman, Adds, count: 1, range: 5f),
+    ];
 
-    private readonly object stepLock = new object();
-    private int stepsTaken;
+    private static readonly AiPattern FirstForm = new AiPattern
+    {
+        OnEnterAttack = Of(
+            Branch(8, "start Timer_0", When.Always,
+                Do.Say(1500388),
+                Do.ArmTimer(1, 6000),
+                Do.ArmTimer(2, 6000))),
 
-    private ScheduledTask? phaseTask;
-    private ScheduledTask? beatTask;
-    private readonly AtomicBoolean isHome = new AtomicBoolean(true);
+        OnBattleTimer = Of(
+            Branch(6, "Blaze", [When.Timer(1)],
+                Do.SkillOnSelf(DragonBreath),
+                Do.SpawnOnTarget(MagicFlame, Adds, count: 3, range: 4f, liveSeconds: 15),
+                Do.ArmTimer(1, 9000)),
+
+            Branch(5, "wave_85%", [When.HpBelow(85), When.Timer(2), When.FirstTime(1)], Wave()),
+            Branch(4, "wave_65%", [When.HpBelow(65), When.Timer(2), When.FirstTime(2)], Wave()),
+            Branch(3, "wave_45%", [When.HpBelow(45), When.Timer(2), When.FirstTime(3)], Wave()),
+            Branch(2, "wave_20%", [When.HpBelow(20), When.Timer(2), When.FirstTime(4)], Wave()),
+
+            Branch(1, "RepeatTimer2", [When.Timer(2)],
+                Do.ArmTimer(2, 6000))),
+
+        OnEnterIdle = Of(
+            Branch(14, "Despawn&Broad", When.Always,
+                Do.Despawn(Adds))),
+
+        OnDie = Of(
+            Branch(13, "FallOff", When.Always,
+                Do.Say(1500390),
+                Do.SpawnAt(SecondFormNpcId, spawnId: 2, liveSeconds: 0,
+                    new SpawnSpot(238.160f, 598.624f, 178.480f)),
+                Do.Despawn(Adds),
+                Do.DespawnSelf())),
+    };
+
+    /// <summary>His second form binds to its own pattern, which this class does not translate.</summary>
+    private static readonly AiPattern SecondForm = new AiPattern();
+
+    private ScheduledTask? secondFormTask;
 
     public CaptainXastaAI(Npc owner)
         : base(owner)
     {
     }
 
+    protected override AiPattern Pattern => GetNpcId() == FirstFormNpcId ? FirstForm : SecondForm;
+
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
-        if (isHome.CompareAndSet(true, false))
-        {
-            if (GetNpcId() == FirstFormNpcId)
-            {
-                PacketSendUtility.BroadcastMessage(GetOwner(), 1500388);
-                StartRetailTimers();
-            }
-            else
-            {
-                StartPhase2Task();
-            }
-        }
+        if (GetNpcId() == SecondFormNpcId && secondFormTask == null)
+            StartSecondFormTask();
     }
 
-    private void CancelPhaseTask()
+    /// <summary>The second form's 30s cast, kept exactly as it was.</summary>
+    /// <remarks>
+    /// 217310 binds to its own pattern, and translating that is separate work from the first form.
+    /// Leaving it alone keeps the fight's second half behaving as it always has.
+    /// </remarks>
+    private void StartSecondFormTask()
     {
-        Cancel(ref phaseTask);
-        Cancel(ref beatTask);
-        lock (stepLock)
-        {
-            stepsTaken = 0;
-        }
-    }
-
-    private static void Cancel(ref ScheduledTask? task)
-    {
-        if (task != null && !task.IsDone())
-            task.Cancel(true);
-        task = null;
-    }
-
-    /// <summary>Retail's two battle timers: the 9s beat, and the 6s summon check.</summary>
-    private void StartRetailTimers()
-    {
-        beatTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
-            _ => { OnBeatTick(); return ValueTask.CompletedTask; },
-            TimeSpan.FromMilliseconds(6000), TimeSpan.FromMilliseconds(9000));
-
-        phaseTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
-            _ => { OnSummonTick(); return ValueTask.CompletedTask; },
-            TimeSpan.FromMilliseconds(6000), TimeSpan.FromMilliseconds(6000));
-    }
-
-    private bool Fighting() => !IsDead() && IsInState(AIState.FIGHT);
-
-    private void OnBeatTick()
-    {
-        if (!Fighting())
-            return;
-
-        // The pattern casts this at OBJI_SELF, which is what makes it a breath rather than a nuke:
-        // the flames it leaves behind are what actually hurts.
-        NpcSkillCasting.QueueAtDataLevel(GetOwner(), BeatSkill, NpcSkillTargetAttribute.ME);
-        if (GetOwner().GetTarget() is Creature target)
-            DropFlames(target);
-    }
-
-    /// <summary>Scatters the beat's flames around <paramref name="target"/>, each burning out on its own.</summary>
-    private void DropFlames(Creature target)
-    {
-        WorldPosition at = target.GetPosition();
-        for (int i = 0; i < FlamesPerBeat; i++)
-        {
-            double angle = Rnd.NextFloat(360f) * Math.PI / 180.0;
-            float distance = Rnd.NextFloat(FlameSpread);
-            float x = at.GetX() + (float)(Math.Cos(angle) * distance);
-            float y = at.GetY() + (float)(Math.Sin(angle) * distance);
-            if (Spawn(MagicFlame, x, y, at.GetZ(), (sbyte)at.GetHeading()) is not Npc flame)
-                continue;
-
-            ThreadPoolManager.GetInstance().Schedule(_ =>
-            {
-                flame.GetController().DeleteIfAliveOrCancelRespawn();
-                return ValueTask.CompletedTask;
-            }, FlameLifeMillis);
-        }
-    }
-
-    /// <summary>The summon timer acts only on the tick that first crosses one of its four steps.</summary>
-    private void OnSummonTick()
-    {
-        if (!Fighting())
-            return;
-
-        int hp = GetLifeStats().GetHpPercentage();
-        lock (stepLock)
-        {
-            if (stepsTaken >= SummonSteps.Length || hp >= SummonSteps[stepsTaken])
-                return;
-            stepsTaken++;
-        }
-        PacketSendUtility.BroadcastMessage(GetOwner(), 1500389);
-        RndSpawnInRange(SiegeArtilleryman, 5);
-    }
-
-    private void StartPhase2Task()
-    {
-        phaseTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        secondFormTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
         {
             if (IsDead())
             {
-                CancelPhaseTask();
+                CancelSecondFormTask();
             }
             else
             {
@@ -180,81 +130,63 @@ public class CaptainXastaAI : AggressiveNpcAI
         }, TimeSpan.FromMilliseconds(30000), TimeSpan.FromMilliseconds(30000));
     }
 
-    /// <summary>Retail despawns his summons when he drops out of the fight or resets.</summary>
-    private void DeleteHelpers()
+    private void CancelSecondFormTask()
     {
-        WorldMapInstance instance = GetPosition().GetWorldMapInstance();
-        if (instance != null)
-        {
-            DeleteNpcs(instance.GetNpcs(SiegeArtilleryman));
-            DeleteNpcs(instance.GetNpcs(MagicFlame));
-        }
-    }
-
-    private void DeleteNpcs(List<Npc> npcs)
-    {
-        foreach (Npc npc in npcs)
-        {
-            if (npc != null)
-            {
-                npc.GetController().Delete();
-            }
-        }
+        if (secondFormTask != null && !secondFormTask.IsDone())
+            secondFormTask.Cancel(true);
+        secondFormTask = null;
     }
 
     protected override void HandleDied()
     {
-        CancelPhaseTask();
-        if (GetNpcId() == FirstFormNpcId)
-        {
-            PacketSendUtility.BroadcastMessage(GetOwner(), 1500390);
-            Spawn(SecondFormNpcId, 238.160f, 598.624f, 178.480f, (sbyte)0);
-            DeleteHelpers();
-            AIActions.DeleteOwner(this);
-        }
-        else
-        {
-            PacketSendUtility.BroadcastMessage(GetOwner(), 1500391);
-            WorldMapInstance instance = GetPosition().GetWorldMapInstance();
-            if (instance != null)
-            {
-                Npc ariana = instance.GetNpc(799668);
-                if (ariana != null)
-                {
-                    ariana.GetEffectController().RemoveEffect(19921);
-                    ThreadPoolManager.GetInstance().Schedule(_ =>
-                    {
-                        ariana.GetSpawn().SetWalkerId("30028000016");
-                        WalkManager.StartWalking((NpcAI)ariana.GetAi());
-                        return ValueTask.CompletedTask;
-                    }, 1000L);
-                    PacketSendUtility.BroadcastMessage(ariana, 1500415, 4000);
-                    PacketSendUtility.BroadcastMessage(ariana, 1500416, 13000);
-                    ThreadPoolManager.GetInstance().Schedule(_ =>
-                    {
-                        SkillEngine.SkillEngine.GetInstance().GetSkill(ariana, 19358, 60, ariana).UseNoAnimationSkill();
-                        instance.SetDoorState(145, true);
-                        DeleteNpcs(instance.GetNpcs(701156));
-                        ThreadPoolManager.GetInstance().Schedule(_ => { ariana.GetController().DeleteIfAliveOrCancelRespawn(); return ValueTask.CompletedTask; }, 13000L);
-                        return ValueTask.CompletedTask;
-                    }, 13000L);
-                }
-            }
-        }
+        CancelSecondFormTask();
+        bool secondForm = GetNpcId() == SecondFormNpcId;
         base.HandleDied();
+        if (secondForm)
+            OnSecondFormDied();
     }
 
     protected override void HandleDespawned()
     {
-        CancelPhaseTask();
+        CancelSecondFormTask();
         base.HandleDespawned();
     }
 
     protected override void HandleBackHome()
     {
-        CancelPhaseTask();
-        DeleteHelpers();
-        isHome.Set(true);
+        CancelSecondFormTask();
         base.HandleBackHome();
+    }
+
+    /// <summary>Ariana's escort out of the instance, unchanged.</summary>
+    private void OnSecondFormDied()
+    {
+        PacketSendUtility.BroadcastMessage(GetOwner(), 1500391);
+        WorldMapInstance instance = GetPosition().GetWorldMapInstance();
+        if (instance == null)
+            return;
+
+        Npc ariana = instance.GetNpc(799668);
+        if (ariana == null)
+            return;
+
+        ariana.GetEffectController().RemoveEffect(19921);
+        ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            ariana.GetSpawn().SetWalkerId("30028000016");
+            WalkManager.StartWalking((NpcAI)ariana.GetAi());
+            return ValueTask.CompletedTask;
+        }, 1000L);
+        PacketSendUtility.BroadcastMessage(ariana, 1500415, 4000);
+        PacketSendUtility.BroadcastMessage(ariana, 1500416, 13000);
+        ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            SkillEngine.SkillEngine.GetInstance().GetSkill(ariana, 19358, 60, ariana).UseNoAnimationSkill();
+            instance.SetDoorState(145, true);
+            foreach (Npc npc in instance.GetNpcs(701156))
+                npc?.GetController().Delete();
+            ThreadPoolManager.GetInstance().Schedule(_ => { ariana.GetController().DeleteIfAliveOrCancelRespawn(); return ValueTask.CompletedTask; }, 13000L);
+            return ValueTask.CompletedTask;
+        }, 13000L);
     }
 }

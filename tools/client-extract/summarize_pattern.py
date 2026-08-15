@@ -41,6 +41,9 @@ KEEP = {
     "range_as_meter", "param_obj", "target_obj", "state", "set", "modify", "value",
     "min", "max", "pathname", "emotion", "walk_type", "hatepoints_to_add", "npc_indicator",
     "attack_target_after_spawn", "despawn_at_attack_state", "valid_distance", "sec",
+    # A SPAWN_LOCATION_ABSOLUTE placement carries its coordinates here, and an HP-boundary
+    # guard its bounds; both are the whole content of the branch they appear in.
+    "x", "y", "z", "dir", "larger_than", "less_than",
 }
 DROP_VALUES = {"", "0", "FALSE", "OBJI_NONE", "NPCI_NONE"}
 

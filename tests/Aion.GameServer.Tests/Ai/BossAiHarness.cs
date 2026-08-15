@@ -94,6 +94,23 @@ public sealed class BossAiHarness : IDisposable
 	}
 
 	/// <summary>
+	/// Spawns an NPC under an AI handler other than the one its template names.
+	/// </summary>
+	/// <remarks>
+	/// For testing shared AI machinery rather than a particular encounter: a probe class can be attached
+	/// to any convenient NPC so the machinery's own rules — branch ordering, flag consumption, timer
+	/// cancellation — are asserted directly instead of being inferred from one boss that happens to
+	/// exercise them.
+	/// </remarks>
+	public Npc SpawnWithAi(int npcId, string aiName, float x = 980f, float y = 135f, float z = 242f, sbyte heading = 0)
+	{
+		var spawn = Spawner.NewSingleTimeSpawn(_mapId, npcId, x, y, z, (byte)heading, null, aiName);
+		var spawned = Spawner.SpawnObject(spawn, 1);
+		Assert.NotNull(spawned);
+		return Assert.IsType<Npc>(spawned);
+	}
+
+	/// <summary>
 	/// Puts a real <see cref="Player"/> into the harness map: the simulated player an encounter fights.
 	/// </summary>
 	/// <remarks>

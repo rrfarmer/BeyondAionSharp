@@ -610,3 +610,49 @@ new pins in `CaptainXastaAiTests`, each checked against a mutation of the
 behaviour it covers (period, target, flame count, flame position, flame
 lifetime, step latching, reset cleanup, death cancellation — all eight caught).
 Not yet observed in a running server.
+
+### A runtime for translated patterns
+
+Hand-porting bosses one at a time was not going to reach the end of this. Of the
+805 retail adds our server never spawns, **427 belong to timer-driven bosses** —
+NPCs that arm a battle timer on entering combat and let each timer branch arm the
+next, so the fight is a chain of timers whose links are chosen by the boss's
+current health regime. Captain Xasta is the small version of that shape; Tahabata
+Pyrelord runs four regimes across nine timer slots.
+
+`src/Aion.GameServer/Ai/Pattern/` runs the structure once so each boss is a table:
+
+- **`AiPattern.cs`** — the table types and the `When` / `Do` vocabulary, named
+  after the pattern ops they translate, so a table reads against the digest from
+  `summarize_pattern.py`.
+- **`PatternAi.cs`** — thirty battle-timer slots, thirty-two flag vars,
+  first-match-wins branch evaluation, and spawn-id groups for `despawn`.
+
+**The runtime decides nothing.** Skill indices, npc ids, coordinates and message
+ids are resolved per boss in that boss's table, where the reasoning can be cited
+here. A boss whose indices cannot be resolved does not get a table with guesses
+in it — see the skill-index problem above.
+
+**Rules worth stating, because they are easy to get subtly wrong:**
+
+- Conditions short-circuit in the order the pattern writes them. A test-and-set
+  guard behind a failing one must not consume its flag, or the step it protects
+  is lost outright rather than delayed.
+- Only a branch can re-arm a timer slot, so a tick matching nothing ends that
+  chain. This is why patterns carry a low-priority catch-all re-arm, and why one
+  missing from a table quietly stops the fight.
+- Arming a slot replaces it. If re-arming stacked, a self-re-arming chain would
+  double its own rate every pass.
+- Battle timers only run in combat, and a reset clears the flags so a boss that
+  resets replays its steps from the top.
+- A spawn's `live_time` belongs to the spawned NPC, not the spawner, so it is not
+  cancelled when the spawner dies — tying it to the spawner strands every add
+  whose group no branch despawns.
+
+**Verification.** Captain Xasta was re-expressed as a table and his six existing
+pins — written against a hand-rolled implementation — pass unchanged, which is
+the evidence that the runtime reproduces a boss whose behaviour was already
+verified. Eleven further tests cover the runtime's own rules, and all twelve
+mutations tried against them were caught (branch order, first-match-wins,
+condition short-circuit, flag consumption, flag reset, slot replacement, the
+in-combat guard, spawn-id despawn, spawn lifetimes).
