@@ -211,6 +211,7 @@ def spawned_via_constants(text: str) -> set[str]:
 
 
 LOCATION_RE = re.compile(r"<spawn_location_type>([^<]*)</spawn_location_type>")
+PATHNAME_RE = re.compile(r"<pathname>([^<]*)</pathname>")
 
 # Adds placed at a named designer waypoint path cannot be positioned: those paths were
 # server-side data and appear in neither the client's level files nor our repos. Every other
@@ -236,7 +237,10 @@ def pattern_spawn_targets(patterns_dir: pathlib.Path) -> dict[str, dict[str, boo
                     if not dev:
                         continue
                     # If any spawn of this add is positionable, the add is implementable.
-                    out[m.group(1)][dev] = out[m.group(1)].get(dev, False) or positionable
+                    was, walked = out[m.group(1)].get(dev, (False, False))
+                    pn = PATHNAME_RE.search(action.group(2))
+                    out[m.group(1)][dev] = (was or positionable,
+                                            walked or bool(pn and pn.group(1).strip()))
     return out
 
 
@@ -265,7 +269,7 @@ def main() -> None:
         if not owners:
             continue  # we never spawn anything running this pattern
         missing = []
-        for dev, positionable in sorted(devnames.items()):
+        for dev, (positionable, walks) in sorted(devnames.items()):
             add_id = dev2id.get(dev.lower())
             if not add_id or add_id in spawnable:
                 continue
@@ -273,20 +277,26 @@ def main() -> None:
             if attrs is None:
                 continue  # content our server does not have at all
             if is_real_combatant(attrs) and not is_effect_object(dev):
-                missing.append((add_id, attr(attrs, "name"), attr(attrs, "level"), positionable))
+                missing.append((add_id, attr(attrs, "name"), attr(attrs, "level"), positionable, walks))
         if missing:
             findings.append((pattern, owners, missing))
 
     total = sum(len(f[2]) for f in findings)
     blocked = sum(1 for f in findings for m in f[2] if not m[3])
+    # Positionable, but the add exists in order to walk a named path we do not have. Spawning one
+    # leaves it standing where it appeared, which for a marching column is worse than leaving it out.
+    walkers = sum(1 for f in findings for m in f[2] if m[3] and m[4])
     print(f"Fightable retail adds our server never spawns: {total} "
           f"across {len(findings)} encounters")
-    print(f"  implementable now                          : {total - blocked}")
+    print(f"  fully self-contained                       : {total - blocked - walkers}")
+    print(f"  positionable, but walk a server-side path  : {walkers}")
     print(f"  blocked on server-side waypoint paths      : {blocked}\n")
     for pattern, owners, missing in sorted(findings, key=lambda f: -len(f[2])):
         print(f"{pattern}  (live npc_ids: {','.join(owners[:4])})")
-        for add_id, name, level, positionable in missing:
+        for add_id, name, level, positionable, walks in missing:
             flag = "" if positionable else "  [BLOCKED: waypoint-placed]"
+            if positionable and walks:
+                flag = "  [walks a server-side path]"
             print(f"    {add_id}  lv{level:<3} {name}{flag}")
 
 

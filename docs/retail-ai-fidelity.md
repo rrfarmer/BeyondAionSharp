@@ -1300,3 +1300,39 @@ in normal mode — blocked twice over.
 
 **Verification.** Full suite 1,101 passing and 1 skipped, two new pins, all six
 mutations caught. Missing adds 754 → **752**.
+
+### Positionable is not the same as implementable
+
+Infinity Shard's Vritra callers looked like the biggest remaining prize: an
+invisible controller (284675) that our spawn data really does place, whose
+pattern rolls down ten equal-priority probability branches and summons one of ten
+Hyperion defense troops. Ten adds from one small pattern.
+
+Every one of those spawns carries `pathname=NPCPathVriAss_Path01`, and they all
+spawn at **the same point**, 150.03/145.5/125.2. The troops exist in order to
+march that path into the battle. We do not have it — those paths are server-side,
+the same gap documented above — so implementing this would pile ten stationary
+soldiers on one tile. That is worse than leaving them out, not closer to retail.
+
+The audit now separates the three cases, because "positionable" was doing too
+much work:
+
+| | count |
+|---|---:|
+| fully self-contained | 661 |
+| positionable, but walk a server-side path | 47 |
+| blocked on waypoint placement | 44 |
+
+so **91 of 752 are gated on path data we will never have**, not 44.
+
+One incidental confirmation while checking this: the client's devname → npc_id
+map has **no duplicates at all** across its two NPC files, so a devname always
+identifies exactly one NPC. Where a resolved name looks wrong — these troops
+carry Vritra devnames and our templates call them Hyperion defense — the mapping
+is right and it is our display names that differ.
+
+Two smaller notes from the same pattern, for whoever ports it if paths ever
+arrive: its branches are all priority 2, so evaluation follows document order,
+which the runtime preserves because `Of()` sorts stably; and it needs
+`set_idle_timer` / `on_idle_timer`, still unbuilt, to remove itself two seconds
+after firing.
