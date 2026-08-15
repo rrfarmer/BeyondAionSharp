@@ -611,6 +611,26 @@ behaviour it covers (period, target, flame count, flame position, flame
 lifetime, step latching, reset cleanup, death cancellation — all eight caught).
 Not yet observed in a running server.
 
+### Correction: the portability gate was counting duplicates
+
+`audit_skill_index_reach.py` compared a pattern's highest `SKILLI_INDEX_n`
+against the number of `<npc_skill>` *entries* we list for that NPC. Many of our
+lists are aionemu chain constructions rather than flat skill lists -- Tahabata
+Pyrelord has fifteen entries built from nine distinct skills, with 18225 repeated
+four times across four `chain_id` sequences -- so the count was inflated and
+bosses looked resolvable when they were not. Counting distinct skills instead
+takes the cleanly-portable set from 32 to 27, dropping Tahabata, Dark Poeta's
+Calindi, Ahserion and Hyperion among others.
+
+**The gate is necessary, not sufficient**, and it is worth being blunt about
+that. Passing it means our list is long enough to hold the indices a pattern
+names. It says nothing about our list being in retail's order, and for a
+chain-built list there is no reason it would be. Every index written down as a
+skill needs its own corroboration -- the branch comment, the skill's stack name,
+the `skill_no` in npc_shouts, or what the branch spawns alongside the cast. One
+index resolved that way is worth more than a whole rotation assumed from
+position.
+
 ### A runtime for translated patterns
 
 Hand-porting bosses one at a time was not going to reach the end of this. Of the

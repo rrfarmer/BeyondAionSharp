@@ -9,6 +9,14 @@ sits outside our list can be reproduced in shape but not in content, and writing
 it would mean inventing the casts. This reports the reach per boss so that is
 visible before the work starts rather than halfway through it.
 
+The gate is necessary, not sufficient. Passing it means our list is *long enough*
+to hold the indices a pattern names; it says nothing about whether our list is in
+retail's order. Several of ours are aionemu chain constructions ordered by
+`chain_id` and HP band, which is not a retail skill list at all. So a boss that
+passes here still needs its mapping corroborated from something else -- the
+branch comment, the skill's stack name, the `skill_no` in npc_shouts, or what the
+branch spawns alongside the cast -- before any index is written down as a skill.
+
 CLI:
     python audit_skill_index_reach.py <client_root> <patterns_dir> <binding.tsv> [--repo PATH]
 """
@@ -30,16 +38,26 @@ SPAWN_RE = re.compile(r"<npc_nameid>")
 AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
 
 
+SKILL_ID_RE = re.compile(r'<npc_skill[^>]*\bid="(\d+)"')
+
+
 def our_skill_counts(repo: pathlib.Path) -> dict[str, int]:
-    """npc_id -> number of skills we list for it, across every npc_skills file."""
-    counts: dict[str, int] = collections.defaultdict(int)
+    """npc_id -> how many *distinct* skills we list for it, across every npc_skills file.
+
+    Distinct, not entries. Many of our lists are aionemu chain constructions rather than
+    flat skill lists: Tahabata Pyrelord has fifteen entries built from nine skills, with
+    18225 repeated four times across four `chain_id` sequences. Counting entries made his
+    list look long enough to resolve a retail index of 10 when it is not, and the whole
+    point of this audit is to refuse exactly that.
+    """
+    skills: dict[str, set[str]] = collections.defaultdict(set)
     for path in (repo / "game-server/data/static_data/npc_skills").rglob("*.xml"):
         text = read_text(path)
         for block in re.finditer(r'<npc_skills npc_ids="([^"]+)">(.*?)</npc_skills>', text, re.S):
-            n = len(re.findall(r"<npc_skill\b", block.group(2)))
+            found = set(SKILL_ID_RE.findall(block.group(2)))
             for npc_id in block.group(1).split():
-                counts[npc_id] += n
-    return counts
+                skills[npc_id].update(found)
+    return {npc_id: len(found) for npc_id, found in skills.items()}
 
 
 def main() -> None:
