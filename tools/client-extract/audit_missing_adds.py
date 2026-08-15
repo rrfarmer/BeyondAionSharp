@@ -63,6 +63,27 @@ def is_real_combatant(attrs: str) -> bool:
     return bool(attr(attrs, "rank"))
 
 
+# Devname markers that identify an effect object rather than a fightable add, drawn from what the
+# designers wrote and not from what the template says. Deliberately conservative:
+#
+#   fobj    -- "field object", used for ground effects
+#   noshow  -- the designers' own "no show NPC"
+#   _fx     -- as a suffix only
+#
+# `invisible` is NOT on this list and must not be added. Captain Xasta's summon is called
+# `IDYun_Rasta_Sum_Invisible` and is a perfectly visible level-60 siege artilleryman -- one of the
+# first real mechanics this audit found. `_dmg` is out too: `BLF3_NM_DMGhostPrSum2_49_Ae` matches
+# it by accident, and it means "DM ghost", not damage.
+EFFECT_MARKERS = ("fobj", "noshow")
+EFFECT_SUFFIXES = ("_fx",)
+
+
+def is_effect_object(devname: str) -> bool:
+    """True when the pattern's own devname says this is scenery, not an add."""
+    low = devname.strip().lower()
+    return any(m in low for m in EFFECT_MARKERS) or low.endswith(EFFECT_SUFFIXES)
+
+
 def load_binding(path: pathlib.Path) -> dict[str, list[str]]:
     by_pattern = collections.defaultdict(list)
     for line in path.read_text(encoding="utf-8").splitlines()[1:]:
@@ -246,7 +267,7 @@ def main() -> None:
             attrs = templates.get(add_id)
             if attrs is None:
                 continue  # content our server does not have at all
-            if is_real_combatant(attrs):
+            if is_real_combatant(attrs) and not is_effect_object(dev):
                 missing.append((add_id, attr(attrs, "name"), attr(attrs, "level"), positionable))
         if missing:
             findings.append((pattern, owners, missing))

@@ -1158,3 +1158,27 @@ is the argument for spot-checking every finding against the code before writing
 anything, which is now the documented rule. The genuinely missing ones from that
 group are the two Calindi surkana twins (730697, 730698) and the Drakenspire
 exploding flame (856459).
+
+### Effect objects are not adds
+
+Chasing the two Calindi surkana twins turned up a third class of false positive.
+`IDTiamat_Temp12` spawns `IDTiamat_FOBJ_GroundSurukana_3` — "FOBJ", field object
+— and its despawn branch is commented `Despawn_noshownpc`. Two independent
+signals from the designers that this is scenery. Our template calls the same NPC
+an `ELITE`-rated `MONSTER` named "surkana", so `is_real_combatant` passed it, and
+spawning it would have added a live elite combatant to the Calindi fight.
+
+The audits now exclude adds whose **devname** says they are effects: `fobj` or
+`noshow` anywhere, or an `_fx` suffix. 16 adds drop out; 786 → **770**.
+
+**Two markers are deliberately excluded**, and both are traps:
+
+- `invisible` — Captain Xasta's summon is `IDYun_Rasta_Sum_Invisible` and is a
+  perfectly visible level-60 siege artilleryman. Filtering on it would have
+  discarded one of the first real mechanics this audit found.
+- `_dmg` — `BLF3_NM_DMGhostPrSum2_49_Ae` matches by accident; it means "DM
+  ghost", not damage.
+
+The general lesson, now three idioms deep: the template is not authoritative
+about what an NPC *is*. The devname and the branch comment are the designers
+talking, and they are usually right where our data is wrong.
