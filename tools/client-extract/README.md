@@ -20,6 +20,7 @@ both formats directly, so that toolchain is not needed.)
 | `audit_hp_phases.py` | Report hand-written `HpPhases` thresholds that disagree with the retail pattern. |
 | `audit_skill_index_reach.py` | Report which timer-driven bosses address skill indices beyond our own list, and so cannot be ported faithfully. |
 | `triage_missing_adds.py` | Bucket the missing adds by how retail spawns them, which decides what each costs. |
+| `summarize_pattern.py` | Print one pattern as a dense digest, branches in evaluation order. |
 
 `aionpak.py` and `bxml.py` are importable libraries as well as CLIs.
 
@@ -34,7 +35,16 @@ python build_ai_binding.py "C:/Program Files (x86)/Beyond Aion" "D:/path/to/5.8 
 python audit_missing_adds.py "C:/Program Files (x86)/Beyond Aion" "D:/path/to/5.8 AI Patterns" binding.tsv
 python audit_dead_shouts.py  "C:/Program Files (x86)/Beyond Aion" "D:/path/to/5.8 AI Patterns" binding.tsv
 python audit_hp_phases.py    "D:/path/to/5.8 AI Patterns" binding.tsv
+python summarize_pattern.py  "D:/path/to/5.8 AI Patterns" IDYun_Nmd3
 ```
+
+`summarize_pattern.py` is the one to start from when porting a boss: a fight
+runs several hundred lines of XML that is mostly repeated placement fields, and
+the digest collapses it to a screen with branches in evaluation order. Two
+markers matter in its output -- `!` is a `set_flag_var` sitting in a branch's
+*conditions*, which is a test-and-set and makes that branch fire once, and `?`
+is an ordinary condition. A threshold branch without a `!` fires on every tick
+below its value, not once. Pass `--raw` for the unabridged XML.
 
 The three audits produce candidates for review, not auto-fixes; see
 `docs/retail-ai-fidelity.md` for what to watch for when working their output.
