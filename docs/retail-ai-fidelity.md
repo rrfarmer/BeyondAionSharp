@@ -1272,3 +1272,31 @@ real: `RndSpawnInRange`, named constants and id arrays, `GetNpcId() + N`, effect
 objects by devname, and now summon-table owners. The number has moved 812 → 754
 without a single add being ported by those changes alone. The instrument is worth
 more than any one boss, because everything downstream is prioritised from it.
+
+### Occupied Rentus Base — hard-mode Vasharti's illusions (236300)
+
+Pattern `IDYun_Nmd6_Hard`. He shares `BrigadeGeneralVashartiAI` with the normal
+version, which is why the dancing flames added in the previous entry already
+reach him: the hard pattern lights them at the same two coordinates, in the same
+room geometry, and only 236300 binds to it.
+
+What hard mode adds is a pair of **illusions of himself**: a kiss of fire
+(856338) and a kiss of ice (856339), conjured 23 seconds into the fight and again
+every 75 seconds. Each stands beside the flame of its own colour — the hard-mode
+twist on a fight that is already about picking the right one. Neither was spawned
+by anything.
+
+Their headings come from the pattern's `dir` in degrees, through the engine's own
+`PositionUtil.ConvertAngleToHeading` rather than by hand.
+
+**Shared classes need a guard, and a test for the guard.** The two Vashartis run
+one AI class, so the illusion branch is gated on the hard-mode npc id and there is
+a pin asserting the normal fight conjures none. Without it the easier version
+would have quietly inherited a hard-mode mechanic, and nothing would have failed.
+
+**Still not translated.** His three Glove Controllers (856351/856352/856353) are
+placed by `on_arrived_at_waypoint` and are clones of Vasharti himself, exactly as
+in normal mode — blocked twice over.
+
+**Verification.** Full suite 1,101 passing and 1 skipped, two new pins, all six
+mutations caught. Missing adds 754 → **752**.

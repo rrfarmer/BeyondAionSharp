@@ -43,9 +43,26 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// </remarks>
     private const int DancingRedFlame = 282996;
     private const int DancingBlueFlame = 282997;
+
+    /// <summary>Hard mode only (236300): the two illusions of himself he conjures beside the flames.</summary>
+    /// <remarks>
+    /// Retail-sourced from <c>IDYun_Nmd6_Hard</c>. Timer 6 is armed at 23s and re-arms every 75s,
+    /// placing a kiss of fire and a kiss of ice at fixed points — each next to the flame of its own
+    /// colour, which is the hard-mode twist on a fight that is already about picking the right one.
+    /// Neither was spawned by anything. Normal mode has no such branch.
+    /// <para>
+    /// Their headings come from the pattern's <c>dir</c> in degrees, through the engine's own
+    /// <c>ConvertAngleToHeading</c> rather than by hand.
+    /// </para>
+    /// </remarks>
+    private const int HardModeVasharti = 236300;
+    private const int KissOfFire = 856338;
+    private const int KissOfIce = 856339;
+    private static readonly TimeSpan FirstIllusion = TimeSpan.FromSeconds(23);
+    private static readonly TimeSpan IllusionInterval = TimeSpan.FromSeconds(75);
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
     private readonly AtomicBoolean isInFlameShowerEvent = new AtomicBoolean();
-    private ScheduledTask? enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask;
+    private ScheduledTask? enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask, illusionTask;
 
     public BrigadeGeneralVashartiAI(Npc owner) : base(owner)
     {
@@ -58,6 +75,8 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
         {
             GetPosition().GetWorldMapInstance().SetDoorState(70, false);
             LightTheFlames();
+            if (GetNpcId() == HardModeVasharti)
+                StartIllusions();
             enrageSchedule = ThreadPoolManager.GetInstance().Schedule(_ => { HandleEnrageEvent(); return ValueTask.CompletedTask; }, (long)System.TimeSpan.FromMinutes(10).TotalMilliseconds);
             ScheduleFlameShieldBuffEvent(5000);
         }
@@ -188,6 +207,25 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
         Spawn(DancingBlueFlame, 208.58f, 410.71f, 262.54f, (sbyte)0);
     }
 
+    /// <summary>Conjures the two illusions, and keeps conjuring them every 75 seconds.</summary>
+    private void StartIllusions()
+    {
+        illusionTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        {
+            if (IsDead())
+                CancelTasks(illusionTask);
+            else
+                ConjureIllusions();
+            return ValueTask.CompletedTask;
+        }, FirstIllusion, IllusionInterval);
+    }
+
+    private void ConjureIllusions()
+    {
+        Spawn(KissOfIce, 205.28f, 410.53f, 261f, (sbyte)PositionUtil.ConvertAngleToHeading(56f));
+        Spawn(KissOfFire, 171.33f, 417.57f, 261f, (sbyte)PositionUtil.ConvertAngleToHeading(116f));
+    }
+
     private void ClearSpawns()
     {
         WorldMapInstance instance = GetPosition().GetWorldMapInstance();
@@ -206,6 +244,8 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
             DeleteNpcs(instance.GetNpcs(283001));
             DeleteNpcs(instance.GetNpcs(DancingRedFlame));
             DeleteNpcs(instance.GetNpcs(DancingBlueFlame));
+            DeleteNpcs(instance.GetNpcs(KissOfFire));
+            DeleteNpcs(instance.GetNpcs(KissOfIce));
         }
     }
 
@@ -223,7 +263,7 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
 
     protected override void HandleDespawned()
     {
-        CancelTasks(enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask);
+        CancelTasks(enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask, illusionTask);
         ClearSpawns();
         base.HandleDespawned();
     }
@@ -232,7 +272,7 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         isHome.Set(true);
         GetPosition().GetWorldMapInstance().SetDoorState(70, true);
-        CancelTasks(enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask);
+        CancelTasks(enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask, illusionTask);
         ClearSpawns();
         base.HandleBackHome();
         hpPhases.Reset();
@@ -241,7 +281,7 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
     protected override void HandleDied()
     {
         GetPosition().GetWorldMapInstance().SetDoorState(70, true);
-        CancelTasks(enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask);
+        CancelTasks(enrageSchedule, flameShieldBuffSchedule, seaOfFireSpawnTask, illusionTask);
         PacketSendUtility.BroadcastMessage(GetOwner(), 1500410);
         ClearSpawns();
         base.HandleDied();

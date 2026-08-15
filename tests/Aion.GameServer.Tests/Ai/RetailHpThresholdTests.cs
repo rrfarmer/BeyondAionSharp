@@ -48,6 +48,11 @@ public sealed class RetailHpThresholdTests
 	private const int DancingRedFlame = 282996;
 	private const int DancingBlueFlame = 282997;
 
+	private const int OccupiedRentusBase = 300620000;
+	private const int HardVasharti = 236300;
+	private const int KissOfFire = 856338;
+	private const int KissOfIce = 856339;
+
 	private const int AzoturanFortress = 310100000;
 	private const int IcaronixTheDeceiver = 214598;
 	private const int IcaronixTheBetrayer = 214599;
@@ -179,6 +184,50 @@ public sealed class RetailHpThresholdTests
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingRedFlame));
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DancingBlueFlame));
+	}
+
+	[Fact]
+	public void HardVashartiConjuresHisTwoIllusionsAndKeepsConjuringThem()
+	{
+		using var harness = BossAiHarness.For(OccupiedRentusBase)
+			.WithAi(typeof(BrigadeGeneralVashartiAI), typeof(AggressiveNpcAI), typeof(DancingFlameAI))
+			.Build();
+		Npc boss = harness.Spawn(HardVasharti, 188f, 414f, 262.54f);
+		Player player = harness.SpawnPlayer(190f, 416f, 262.54f);
+		harness.Engage(boss, player);
+
+		// Nothing for the first 23 seconds; the illusion timer is the slowest thing he arms.
+		harness.Clock.Advance(TimeSpan.FromSeconds(22));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfFire));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfFire));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfIce));
+
+		// And again 75 seconds later, rather than once at the start of the fight.
+		harness.Clock.Advance(TimeSpan.FromSeconds(75));
+		Assert.Equal(2, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfFire));
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfFire));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfIce));
+	}
+
+	[Fact]
+	public void NormalVashartiConjuresNoIllusions()
+	{
+		using var harness = BossAiHarness.For(RentusBase)
+			.WithAi(typeof(BrigadeGeneralVashartiAI), typeof(AggressiveNpcAI), typeof(DancingFlameAI))
+			.Build();
+		Npc boss = harness.Spawn(Vasharti, 188f, 414f, 262.54f);
+		Player player = harness.SpawnPlayer(190f, 416f, 262.54f);
+		harness.Engage(boss, player);
+
+		// The illusions are a hard-mode branch only, and the two share one AI class, so this is what
+		// stops the easier fight quietly inheriting them.
+		harness.Clock.Advance(TimeSpan.FromMinutes(3));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfFire));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == KissOfIce));
 	}
 
 	[Fact]
