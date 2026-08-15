@@ -100,6 +100,9 @@ def main() -> None:
     ap.add_argument("patterns_dir")
     ap.add_argument("binding_tsv")
     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parents[2]))
+    ap.add_argument("--bucket", default="hp threshold at spawner",
+                    help="substring of the bucket name to list in full (default: the data-only one)")
+    ap.add_argument("--limit", type=int, default=40)
     args = ap.parse_args()
 
     repo = pathlib.Path(args.repo)
@@ -162,10 +165,18 @@ def main() -> None:
         print(f"{len(rows):>4}  {name}")
     print()
 
-    key = "hp threshold at spawner: spawn_helpers (data only)"
-    print(f"== the data-only bucket ({len(buckets.get(key, []))}) ==")
-    for pattern, owner, add_id, name in sorted(buckets.get(key, []))[:40]:
-        print(f"  {owner} <- {add_id} {name:<34} ({pattern})")
+    matched = [name for name in buckets if args.bucket.lower() in name.lower()]
+    if not matched:
+        print(f"no bucket matching {args.bucket!r}; pick from the names above")
+        return
+    for name in matched:
+        rows = sorted(buckets[name])
+        print(f"== {name} ({len(rows)}) ==")
+        for pattern, owner, add_id, add_name in rows[:args.limit]:
+            print(f"  {owner} <- {add_id} {add_name:<34} ({pattern})")
+        if len(rows) > args.limit:
+            print(f"  ... and {len(rows) - args.limit} more")
+        print()
 
 
 if __name__ == "__main__":

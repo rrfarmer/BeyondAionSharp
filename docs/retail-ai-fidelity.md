@@ -1051,3 +1051,47 @@ wandering to whoever hits it first.
 caught: the broadcast removed, the broadcast naming nobody, the listener removed,
 the listener watching the wrong number, and the runtime dropping the message's
 parameter.
+
+### Adma Stronghold — the coffins and Lord Lannok (280942/280950/281055-58, 214696)
+
+Patterns `NoAction_CoffinA`..`F` and `Adma_DeathknightNamed`. The first encounter
+translated on the message bus, and a good demonstration of why both halves have
+to be done together.
+
+**Disturbing a coffin is meant to be a mistake.** The first hit makes the coffin
+shout message 6609 naming whoever landed it, within 50m; Lord Lannok hears it and
+comes for that player. When he dies he calls the all-clear (6601, 100m), which
+sends the coffins' skeletons away and re-arms their alarms. Before this the
+coffins were plain aggressive NPCs, nothing listened to them, and Lannok treated
+them as scenery.
+
+**Retail's two-branch idiom, kept.** The all-clear is handled by two branches for
+the same message: the higher-priority one is guarded by `unset_flag_var` so it
+clears the alarm flag on its way past, and the lower one runs once the flag is
+already clear. Both despawn the wave, so the despawn happens either way and only
+the flag differs. The runtime reproduces this directly.
+
+**Not translated: the skeleton waves.** Each coffin spawns a skeleton — or a
+skeleton mage, on a 15% or 30% roll depending on which message arrived — at its
+own fixed coordinates, on messages 6602/6603/6604. Those three messages come from
+`ND2_FhWSumA/B/C` (281045/281046/281047), invisible controllers that broadcast on
+waking. Nothing in our server spawns them, and `on_wake_up` is not implemented in
+the runtime, so this is blocked on two things at once. The despawn branches are
+written and correct; they currently clear an empty group. **This is the 12 adds
+in the on_message bucket that belong to Adma.**
+
+**Also not translated.** Lannok's three escalating shouts on message 6608, whose
+sender appears in no pattern of this encounter; and the two NPCs his death spawns
+(an invisible skeleton-despawner and a treasure box).
+
+**A known divergence.** Retail's alarm flag survives the coffin leaving combat and
+is cleared only by the all-clear. Ours is cleared by the runtime's reset, which
+every boss depends on for replaying its steps, so a coffin that de-aggros will
+shout again where retail's would stay quiet. Not worth a per-pattern opt-out for
+one stationary object; recorded here instead.
+
+**Verification.** Full suite 1,090 passing and 1 skipped, four new pins covering
+both NPCs as one mechanic. Five of six mutations caught; the survivor — removing
+the one-shot flag from the shout — survives because `PatternAi` already latches
+`on_enter_attack_state` to once per fight, so the flag is redundant *for the
+shout* while remaining load-bearing for the all-clear.
