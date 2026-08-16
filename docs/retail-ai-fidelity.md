@@ -8726,3 +8726,92 @@ check it equals what you added — not that it merely went down.
 Full suite **1,792 passing** and 1 skipped; three new pins for the flee; seventeen mutations on the
 krall, sixteen caught and one deliberate survivor. Adds 373 across 286 → **368 across 284**;
 missing-AI unchanged at 707.
+
+## A new audit: what is worth doing next
+
+The audits so far answer "what is missing". `tools/client-extract/audit_translatable.py` answers a
+different question — **how much of an unported pattern could we actually write** — and it had been
+eyeballed rather than measured. The adds audit ranks by adds, and that is a poor proxy twice over: a
+boss can carry a rich mechanic with no spawn in it at all (the Balaur officers' peel, the elemental
+lords' band ladder), while a pattern with three spawns can be nothing but waypoint furniture.
+
+It counts each pattern's actions against our vocabulary and names the blockers separately, because they
+are blocked for different reasons: **skill** (`SKILLI_INDEX` against a per-npc list the dump does not
+carry), **shout** (a client string id with no `npc_shouts.xml` row), **path** (`goto_waypoint`,
+`random_move`), and **script** (instance-progression verbs that belong to a handler). Only patterns
+whose owners our world actually spawns *and* which still sit on a stock AI are listed.
+
+Current state: **956 unported patterns with at least six translatable actions, and 4,899 npcs behind
+them.** The first thing it found was the pattern this entry is about — the only one in the dump with a
+completely clean sheet.
+
+## The Unstable Triroan — a clock that speeds up, and a controller that chooses
+
+`ND2_FhXSum2` scored **twenty-eight translatable actions and nothing blocked at all**, on npc 280983,
+which our spawn file already stands in the Triroan's room. It is the room's summoner.
+
+### The boss says how many; the controller says which
+
+The Triroan broadcasts one of three numbers a hundred metres — `6610` for one elemental, `6611` for
+two, `6612` for three — and the controller picks *which*, from fire, water, earth and air, and puts
+them down where it stands for thirty seconds. Every combination is a branch: four for the single, all
+six unordered pairs, all four triples.
+
+**The chains look uniform and are not.** Retail evaluates `test_probability` *before* `is_message` and
+takes the first branch that passes, so 25/25/25/fallback is 25%, 19%, 14% and **42%** — not four
+quarters. The six-way pair chain runs 17% five times and leaves **39%** on the last pair. Written in
+retail's order with the guards in retail's order, so the weighting falls out of the structure rather
+than being asserted. **Rule: a chain of probability branches is a decay, not a distribution — the
+fallback is always the most likely outcome.**
+
+### What this replaces
+
+The Java class (`ai/instance/theobomosLab/UnstableTriroanAI`, @author Ritsu) had eleven fixed health
+phases — 99, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5 — each spawning a hard-coded list of elementals
+itself. Retail has **one summon slot whose count and clock both track the band**: one elemental in
+61–80 and 41–60, two in 21–40, three below 20, and the interval tightening as it goes. Sanctioned
+exception, and the second Theobomos Lab class to need it.
+
+**The reading was confirmed by a coordinate.** Our spawn file stands the controller at
+602.17 / 488.805; the Java class hard-coded its own spawn point as 601.966 / 488.853. The same spot —
+the Java author had found where the elementals appear without knowing what put them there.
+
+### Two corrections the sweep forced
+
+**The interval is not the one written on the summon branch.** Retail arms that slot two ways: the
+branch re-arms it at its band's figure, and the band timer pokes it three seconds after each of its own
+twenty-second ticks. The poke always lands first, so in the upper bands the cadence is about *twenty*
+seconds and the branch's own re-arm never fires. The first draft of this class said "every thirty
+seconds" in its remarks and its pin agreed with it; the mutation that removed the re-arm survived, and
+that is what exposed it. **Rule: when two timers can arm the same slot, the cadence is the shorter one
+— read both before writing the interval down.**
+
+**And a raid that skips straight to the last third waits for it.** The chain that arms the summon slot
+starts at the 61–80 step, so dropped in at fifteen percent the king takes about thirty-three seconds to
+make his first call. Pinned as the real numbers rather than the ones the branch delays suggest.
+
+### A correction to a shipped class
+
+The Java class set each elemental's walker to `"3101100002"`–`"3101100005"` and started it walking.
+**Those route ids are not in our data.** Theobomos Lab has eighteen walker templates and every one is a
+SHA-style id; numeric ids exist elsewhere in `npc_walker` but not these. So the walk never began, the
+elementals never arrived, and `TriroansSummonAI`'s helper-skill mechanic — which fires on arriving at a
+numbered step — has never run in this port. Routing the spawns through the controller loses nothing
+that worked, and the dead mechanic is now recorded rather than assumed working.
+
+### The next big piece of vocabulary, measured
+
+`pathname` on a spawn — walk this summon in along a route — appears **1,726 times across 282 patterns**,
+larger than `flee_from` was. The mechanism is easy: `GetSpawn().SetWalkerId(id)` then
+`WalkManager.StartWalking`, which two shipped classes already do. **The blocker is the mapping**, and it
+is the same shape as `SKILLI_INDEX`: retail names routes like
+`BIDLF2A_SummonBabyElemental_50_n_Path_00`, our data names them by hash, and nothing in either connects
+them. Adding a `walkerId` parameter with no resolvable mapping would be vocabulary with no user, so it
+is recorded and not built.
+
+### Verification
+
+Full suite **1,803 passing** and 1 skipped; eleven new pins; thirteen mutations, twelve caught and one
+deliberate survivor. Adds and missing-AI unchanged — the elementals were already being spawned, by the
+class this replaces, which is exactly why neither audit could see that the mechanic behind them was
+wrong.
