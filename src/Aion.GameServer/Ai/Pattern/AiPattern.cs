@@ -195,6 +195,12 @@ public static class When
     /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
     public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 
+    /// <summary>
+    /// Which npc sent the message being handled — our stand-in for retail's <c>is_race</c> where two
+    /// senders share a message number. See <see cref="PatternAi.MessageSender"/>.
+    /// </summary>
+    public static PatternCondition SenderIs(int npcId) => ai => ai.MessageSender?.GetNpcId() == npcId;
+
     /// <summary>No guard at all, for branches that run whenever their event fires.</summary>
     public static PatternCondition[] Always => Array.Empty<PatternCondition>();
 }

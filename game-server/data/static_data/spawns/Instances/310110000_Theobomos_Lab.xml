@@ -247,8 +247,8 @@
 		<spawn npc_id="700423">
 			<spot x="654.24506" y="153.35245" z="167.65126" static_id="267"/>
 		</spawn>
-		<!-- First Silikor Guard -->
-		<spawn npc_id="280971" respawn_time="100">
+		<!-- Second Silikor Guard -->
+		<spawn npc_id="280972" respawn_time="100">
 			<spot x="407.067" y="763.333" z="189.247" h="91"/>
 		</spawn>
 		<!-- Fragmented Icy Kalgolem -->
@@ -409,8 +409,8 @@
 		<spawn npc_id="280973" respawn_time="100">
 			<spot x="392.2187" y="727.5579" z="188.14429" h="30" walker_id="81A2D7233FBB15F8B91C5BCE9D48A4FA20A7A40E"/>
 		</spawn>
-		<!-- Second Silikor Guard -->
-		<spawn npc_id="280972" respawn_time="100">
+		<!-- First Silikor Guard -->
+		<spawn npc_id="280971" respawn_time="100">
 			<spot x="377.071" y="762.16" z="189.247" h="91"/>
 		</spawn>
 		<!-- Silikor of Memory -->

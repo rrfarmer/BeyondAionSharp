@@ -86,6 +86,18 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary>The object that message carried — usually the player the sender is complaining about.</summary>
     public VisibleObject? MessageParam { get; private set; }
 
+    /// <summary>
+    /// Who sent the message being handled, or null outside an <c>on_message</c> event.
+    /// </summary>
+    /// <remarks>
+    /// Retail has no condition for this — where two senders share a message number it discriminates
+    /// with <c>is_race</c>. That is fine in the client, which carries a race on every npc; it is not
+    /// readable from the pattern dump, where the element appears with no argument at all. The sealed
+    /// akaimum needs to tell a melee guard's marker from a caster's, and the npc id says it exactly.
+    /// See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public Npc? MessageSender { get; private set; }
+
     public int HpPercent => GetLifeStats().GetHpPercentage();
 
     public Creature? CurrentTarget => GetOwner().GetTarget() as Creature
@@ -267,6 +279,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         {
             CurrentMessage = messageType;
             MessageParam = param;
+            MessageSender = sender;
             try
             {
                 Evaluate(Pattern.OnMessage);
@@ -275,6 +288,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             {
                 CurrentMessage = -1;
                 MessageParam = null;
+                MessageSender = null;
             }
         }
     }

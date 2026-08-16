@@ -8131,3 +8131,97 @@ The one mutation that survived the first sweep was **the 31–50 wave keeping th
 minutes instead of its own twenty**. Every other pin reads a count within a minute of the wave
 landing, and at that range twelve hundred seconds and eighteen hundred are indistinguishable. Pinned
 by outliving it, which is the only way a `live_time` is observable at all.
+
+## The Silikor of Memory — a Java class with the add mechanic inside out, and a guard loop nobody had
+
+Theobomos Lab's last boss (**214668**) was one of the few on this list that already had a class:
+`ai/instance/theobomosLab/SilikorofMemoryAI`, @author Ritsu. Its retail pattern is `ND2_WhG`, and the
+two disagree about almost everything the adds do.
+
+### Health phases against a clock
+
+| | aionemu | retail `ND2_WhG` |
+|---|---|---|
+| when | 50%, 25%, 10% | fifteen seconds in, then every **thirty seconds**, forever |
+| how many | **two** — a fragment *and* an essence | **one** |
+| which | both, always | a **coin flip** between them |
+| where | within two metres | five |
+| how long | until the fight ends | **three minutes** |
+
+Six adds in the first three minutes, coming and going, against two at half health that never leave.
+Neither the count nor the cadence nor the lifetime survives the comparison, and all five differences
+are pinned. This is the sanctioned exception to Java-is-spec, and it is the clearest example of it so
+far: the Java author had no access to the pattern and built something plausible.
+
+He also **points**. Every fifteen seconds `6622` goes out fifty metres carrying whoever he is fighting,
+and both silikor guards drop what they are doing and go for that player. Those guards were on plain
+`aggressive`, which is why the order had nowhere to land.
+
+### The guard loop, which our server did not have at all
+
+`ND2_WhG1` and `ND2_WhG2` are the two guards; `ND2_WhG3` is the sealed akaimum (280973) that walks the
+hall above them; `ND2_WhG4` is a marker. Together they make a loop:
+
+1. a guard dies and leaves a **marker** where it fell, for twelve seconds;
+2. the marker **shouts `6620` a hundred metres**;
+3. the akaimum **stands a new guard of the same kind back on the same post**;
+4. the new guard **shouts on arrival** (`6655` melee, `6656` caster) and the only listener is another
+   guard of its own kind, which leaves — so re-placement can never stack.
+
+Clearing that hall means killing the akaimum, and nothing in our server said so. On top of it the
+caster guard **drops a summon on a random attacker** at a rate that rises as it weakens — one in four
+every fifteen seconds while healthy, one in two every ten through the middle, three in four every ten
+below thirty — which is the reason to kill the caster first.
+
+Both guards also peel to the **second-most-hated** player below thirty percent, on a rung that re-arms
+itself; the pin for that needed a third peel with the hate order turned over twice, because the rung
+that *opens* the peel and the rung that *repeats* it are different branches and the obvious pin only
+reaches the first.
+
+### Two findings in our own data
+
+**The guards were standing on each other's posts.** `ND2_WhG3` places the caster (280972) at x≈407 and
+the melee (280971) at x≈377; our spawn file had 280971 at 407.07 and 280972 at 377.07 — the right two
+spots with the ids exchanged. Swapped, so the akaimum's re-placement puts a killed guard back where it
+actually stood.
+
+**A hundred-metre shout from a fresh spawn does not carry a hundred metres.** `NpcMessageBus` falls
+back to scanning the sender's own map region when its known list is still empty, which is every
+`on_wake_up` broadcast — and that fallback is one region wide. Measured here: a marker left on the
+melee guard's post is a region away from the akaimum and reached nothing, while the caster's marker,
+the same thirty-eight metres off but inside the region, arrived. The marker now waits one idle tick
+before shouting, which is a second out of the twelve it has. **Rule: the region-scan fallback is a
+courtesy for short broadcasts, not a substitute for a known list — anything shouting past about thirty
+metres from a fresh spawn has to wait a tick first.**
+
+### A new condition: `When.SenderIs`
+
+Retail tells the two markers apart with `is_race`, and in the dump that element **carries no argument
+at all** — so as written its two branches have identical guards and, first-match-wins, the second can
+never fire. The mechanic is unambiguous even where the discriminator is not, so the akaimum reads the
+marker's npc id instead. `PatternAi` now records the message sender and `When.SenderIs(npcId)` tests
+it. It is our vocabulary, not retail's, and it exists because retail's own is unreadable here.
+
+### Not translated
+
+Eight skill indices and the branches carrying nothing else. The boss's timers 0, 1 and 14, which
+between them hold two casts and a flag var whose only reader is the branch below. His `on_spelled`
+branch — retail broadcasts `6621` when a *spell* lands on him and that clears the akaimum and both
+guards; we have no `on_spelled` event, and putting it on `on_attacked` would make a melee pull clear
+them too, which retail deliberately does not do. The akaimum's waypoint work (`goto_waypoint`, the
+arrival branch, the return to waypoint 14 when a guard dies within ten metres) — no vocabulary, and it
+already carries a walker route. The two guards and the roamer the boss and the akaimum place on
+waking, which our spawn file already stands there. And `6621` itself, whose senders are those two
+unported events and which would delete statically-spawned NPCs with nothing to bring them back.
+
+### Verification
+
+Full suite **1,725 passing** and 1 skipped; eleven new pins; seventeen mutations, all caught after
+three repairs. Missing-AI 722 → **720**; the other audits unchanged apart from `acts` 35 → 36, which is
+this encounter's own wiring.
+
+**The three repairs are the same failure three times: a pin that passes without the code.** The order
+pin stood two aggressive guards next to the raid, so they found it themselves; the peel pin only
+reached the rung that opens the peel; and the caster's drop was counted at the end of a five-minute
+run when it lives thirty seconds — the fifth time that one has been made, and `BossAiHarness.Watch`
+exists because of the first four.
