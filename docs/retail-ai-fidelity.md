@@ -5004,3 +5004,42 @@ can do it deliberately.
 
 **Verification.** Full suite 1,402 passing and 1 skipped; four new pins; all four mutations caught.
 Backlog 541 → **539 across 384**.
+
+### Kalindi's dispel worm, and why it was not a restructuring after all
+
+Last entry left this as "needs a timer this class does not have — a restructuring rather than an
+addition". That was an over-estimate: the class is an `AggressiveNpcAI` and this codebase's
+hand-written bosses schedule tasks routinely. It is an addition.
+
+Retail's timer 2 carries two branches, and translating both is what makes it right:
+
+| | |
+|---|---|
+| inside 16-70% | plant a `BurrowDispel` on a **random attacker other than the current target**, ten seconds, then wait twenty-two |
+| outside it | wait three seconds and look again |
+
+So the implementation is a **self-rescheduling** timer rather than a fixed-rate one. A twenty-two
+second loop would miss the moment she enters the band; a three-second loop would need a clock to know
+when the next worm is due, and reading wall time would make the pins depend on real elapsed time
+rather than the harness's own. Retail's own shape avoids both.
+
+`ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET` is the mechanic, not a detail: a dispel on the tank lands
+on somebody expecting it. 283059 was spawned by nothing anywhere.
+
+### The transient trap, for the fourth time
+
+`AboveTheBandSheePlantsNone` beat the fight for forty seconds and counted worms at the end. A worm
+lives ten seconds and the interval is twenty-two, so at almost any chosen moment the field is empty
+whether the band is honoured or not — a mutation that ignored the band entirely passed, because both
+worms it planted had already burrowed away before the assertion looked.
+
+That is now the fourth distinct encounter where a pin measured a short-lived thing after it expired,
+after the sand scatter, the hard thorn's bursts and Tiamat's beacons. The rule has earned a place
+next to the others: **if what you are asserting about has a lifetime shorter than your window, count
+across the window rather than at the end of it.** The failure mode is silent — the pin passes, and it
+passes for the mutation too.
+
+**Verification.** Full suite 1,406 passing and 1 skipped; four new pins; all four mutations caught
+after the cumulative count replaced the end-of-window one. Backlog 539 → **538 across 383**.
+
+**Kalindi is complete** — both her surkana ladder and both `spawn_on_multi_target` mechanics.

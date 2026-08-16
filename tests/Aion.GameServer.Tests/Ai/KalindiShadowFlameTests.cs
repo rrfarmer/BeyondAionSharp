@@ -18,6 +18,7 @@ public sealed class KalindiShadowFlameTests
 	private const int DragonLordsRefuge = 300520000;
 	private const int Kalindi = 219359;
 	private const int ShadowFlame = 283132;
+	private const int DispelWorm = 283059;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048)
@@ -122,5 +123,97 @@ public sealed class KalindiShadowFlameTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 
 		Assert.Equal(0, Flames(harness));
+	}
+
+	private static int Worms(BossAiHarness harness) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == DispelWorm);
+
+	private static void Beat(BossAiHarness harness, Npc boss, Player[] players, int seconds)
+	{
+		for (int i = 0; i < seconds; i++)
+		{
+			foreach (Player p in players)
+			{
+				BossAiHarness.Rehate(boss, p);
+				BossAiHarness.KeepAlive(p);
+			}
+
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		}
+	}
+
+	/// <summary>
+	/// Between 16% and 70% she plants a burrowing dispel on somebody, every twenty-two seconds.
+	/// </summary>
+	[Fact]
+	public void InTheBandSheePlantsADispelWorm()
+	{
+		var (harness, boss, players) = Engaged(60, 3);
+		using BossAiHarness _h = harness;
+
+		Beat(harness, boss, players, 5);
+
+		Assert.Equal(1, Worms(harness));
+	}
+
+	/// <summary>Above the band she plants none, however long the fight runs.</summary>
+	/// <remarks>
+	/// Watched every second rather than counted at the end. A worm lives ten seconds and the interval
+	/// is twenty-two, so at any chosen moment the field is usually empty whether the band is honoured
+	/// or not — the first version looked at forty seconds and a mutation that ignored the band passed,
+	/// because both worms it planted had already burrowed away.
+	/// </remarks>
+	[Fact]
+	public void AboveTheBandSheePlantsNone()
+	{
+		var (harness, boss, players) = Engaged(90, 3);
+		using BossAiHarness _h = harness;
+
+		int everSeen = 0;
+		for (int i = 0; i < 40; i++)
+		{
+			Beat(harness, boss, players, 1);
+			everSeen += Worms(harness);
+		}
+
+		Assert.Equal(0, everSeen);
+	}
+
+	/// <summary>
+	/// It lands on somebody who is <b>not</b> the tank — the point of
+	/// <c>ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET</c>.
+	/// </summary>
+	/// <remarks>
+	/// The tank is parked twenty metres from the others so the landing spot is unambiguous. A dispel
+	/// on the tank is a dispel on somebody expecting it; the mechanic is that it lands elsewhere.
+	/// </remarks>
+	[Fact]
+	public void TheWormLandsOnSomebodyOtherThanTheTank()
+	{
+		var (harness, boss, players) = Engaged(60, 3);
+		using BossAiHarness _h = harness;
+		boss.SetTarget(players[0]);
+
+		Beat(harness, boss, players, 5);
+
+		Npc worm = harness.LiveNpcs().First(n => n.GetNpcId() == DispelWorm);
+		Assert.True(Math.Abs(worm.GetX() - players[0].GetX()) > 1f,
+			$"the worm at {worm.GetX():F1} should not be on the tank at {players[0].GetX():F1}");
+	}
+
+	/// <summary>And it burns out after ten seconds.</summary>
+	[Fact]
+	public void TheWormBurrowsAwayAfterTenSeconds()
+	{
+		var (harness, boss, players) = Engaged(60, 3);
+		using BossAiHarness _h = harness;
+		Beat(harness, boss, players, 5);
+		Assert.Equal(1, Worms(harness));
+
+		// Planted on the first three-second beat, so it goes at thirteen; the next is not due until
+		// twenty-five, which is what makes fourteen an unambiguous moment to look.
+		Beat(harness, boss, players, 9);
+
+		Assert.Equal(0, Worms(harness));
 	}
 }

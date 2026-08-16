@@ -27,6 +27,16 @@ public class CalindiFlamelordAI : AggressiveNpcAI, HpPhases.PhaseHandler
     private const float ShadowFlameReach = 100f;
     private const long ShadowFlameLifeMillis = 15000L;
 
+    /// <summary>283059, <c>IDTiamat_BurrowingWorm_BurrowDispel</c> — ten seconds on a non-tank.</summary>
+    private const int DispelWorm = 283059;
+    private const int DispelBandLow = 16;
+    private const int DispelBandHigh = 70;
+    private const long DispelHeartbeatMillis = 3000L;
+    private const long DispelIntervalMillis = 22000L;
+    private const long DispelWormLifeMillis = 10000L;
+
+    private ScheduledTask? dispelTask;
+
     public CalindiFlamelordAI(Npc owner)
         : base(owner)
     {
@@ -36,13 +46,102 @@ public class CalindiFlamelordAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         base.HandleBackHome();
         hpPhases.Reset();
+        StopDispelWorms();
+    }
+
+    protected override void HandleDied()
+    {
+        StopDispelWorms();
+        base.HandleDied();
+    }
+
+    protected override void HandleDespawned()
+    {
+        StopDispelWorms();
+        base.HandleDespawned();
     }
 
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
         BlazeEngraving();
+        StartDispelWorms();
         hpPhases.TryEnterNextPhase(this);
+    }
+
+    /// <summary>
+    /// A burrowing dispel on somebody who is <b>not</b> the tank, every twenty-two seconds while she
+    /// is between 16% and 70%.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. Retail's timer 2 carries two branches: inside
+    /// the band it plants the worm and waits twenty-two seconds, outside it just ticks again after
+    /// three. That is why this is a three-second heartbeat that mostly does nothing rather than a
+    /// twenty-two second loop — the band can be entered or left between beats, and a slow loop would
+    /// miss the moment.
+    /// <para>
+    /// <c>ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET</c> is the mechanic. A dispel dropped on the tank
+    /// is a dispel on somebody who expects it; the point is that it lands on one of the others, and
+    /// which one is not predictable. 283059 was spawned by nothing anywhere.
+    /// </para>
+    /// </remarks>
+    private void StartDispelWorms()
+    {
+        if (dispelTask != null)
+            return;
+
+        ScheduleDispelTick(DispelHeartbeatMillis);
+    }
+
+    /// <summary>
+    /// Reschedules itself rather than running at a fixed rate, which is retail's own shape: timer 2
+    /// waits twenty-two seconds when it planted a worm and three when it did not.
+    /// </summary>
+    /// <remarks>
+    /// A fixed-rate loop at twenty-two seconds would miss the moment she enters the band, and one at
+    /// three would need a clock to know when the next worm is due — and reading wall time would make
+    /// the pins depend on real elapsed time rather than the harness's own.
+    /// </remarks>
+    private void ScheduleDispelTick(long delayMillis)
+    {
+        dispelTask = ThreadPoolManager.GetInstance().Schedule(
+            _ =>
+            {
+                TickDispelWorm();
+                return ValueTask.CompletedTask;
+            },
+            delayMillis);
+    }
+
+    private void TickDispelWorm()
+    {
+        if (IsDead() || !GetOwner().IsSpawned())
+        {
+            dispelTask = null;
+            return;
+        }
+
+        int hp = GetLifeStats().GetHpPercentage();
+        if (hp < DispelBandLow || hp > DispelBandHigh)
+        {
+            ScheduleDispelTick(DispelHeartbeatMillis);
+            return;
+        }
+
+        if (GetAggroList().GetTarget(AggroTarget.RANDOM_EXCEPT_CURRENT_TARGET) is Creature victim
+            && Spawn(DispelWorm, victim.GetX(), victim.GetY(), victim.GetZ(), (sbyte)0) is Npc worm)
+        {
+            RetireAfter(worm, DispelWormLifeMillis);
+        }
+
+        ScheduleDispelTick(DispelIntervalMillis);
+    }
+
+    private void StopDispelWorms()
+    {
+        if (dispelTask != null && !dispelTask.IsCancelled)
+            dispelTask.Cancel(true);
+        dispelTask = null;
     }
 
     public void HandleHpPhase(int phaseHpPercent)
