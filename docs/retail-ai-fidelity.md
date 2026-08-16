@@ -4880,3 +4880,44 @@ done deliberately rather than folded into a sweep.
 **Recorded rather than done** because the encounter works today and the change is a substitution of one
 whole mechanic for another — exactly the kind that wants its own pass with pins written before the
 swap, not after.
+
+### The noble lapilima splits, and the audit could not see a helper
+
+`IDAbRe_Core_FlyingWorm` is a complete translation with nothing left out: ten seconds after something
+engages it, the worm splits off three flash lapilimo at its own feet, and does it again every fifteen
+seconds for as long as the fight lasts. Nothing caps them — a fight that drags becomes a swarm, which
+is why the worm is meant to be killed rather than tanked. All five owners were on plain `aggressive`
+and the three splinters were spawned by nothing.
+
+Worth noting the three summons are **distinct npc ids sharing one display name**, so they read as one
+add in the client and three in the data. And retail never despawns them: no `on_die`, no
+`on_leave_attack_state`, no despawn anywhere in the pattern — they carry `despawn_at_attack_state` and
+the engine retires them when the fight ends.
+
+**The audit could not see them, and the blind spot cost twenty adds.** The class writes
+
+```csharp
+private static PatternAction Splinter(int npcId) => Do.SpawnNear(npcId, Split, count: 1, ...);
+... Splinter(FlashLapilimo53), Splinter(FlashLapilimo54), ...
+```
+
+so the constant never sits next to a spawn call and `spawned_via_constants` — which resolves names
+*passed to a spawn* — found nothing. `audit_missing_adds.py` now treats a method whose body spawns one
+of its own parameters as a spawn call by name. That follows this indirection without following
+arbitrary ones: the body has to contain the spawn, so a `Burn(int skillId) => Do.SkillOnSelf(skillId)`
+helper still does not qualify, which is the false positive that matters.
+
+**This one ran the other way from the earlier three.** The generated-table and tuple-shape gaps made
+the audit miss *code*, so the backlog looked bigger than it was; so did this one — fixing it dropped
+the count from 561 to **541 across 384**, of which only three are this worm. **Seventeen adds were
+already being spawned and listed as missing.** Every previous entry's figure was overstated by that
+much.
+
+That is the fourth shape assumption this audit has been wrong about, and the pattern is now clear
+enough to state: **it can only see spawns written the way its author had seen them written.** Each new
+idiom — a generated table, a three-element tuple, a helper taking the id as a parameter — is invisible
+until something makes it obvious. The check that catches them is not review; it is re-measuring after
+work that should have moved the number, and asking why when it does not.
+
+**Verification.** Full suite 1,395 passing and 1 skipped; four new pins; five of six mutations caught,
+the sixth being the familiar inert one (a battle timer armed outside combat never fires).

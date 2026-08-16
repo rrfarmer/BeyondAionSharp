@@ -250,6 +250,8 @@ def spawn_call_arguments(text: str) -> set[str]:
 
 
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
+# One expression-bodied or braced method: name, parameter list, and enough body to see a spawn.
+HELPER_RE = re.compile(r"\b(\w+)\(([^)]*)\)\s*(?:=>|\{)([^;}]*)")
 CONST_ARRAY_RE = re.compile(r"\bint\[\] (\w+)\s*=\s*(?:new int\[\]\s*)?\{([^}]*)\}")
 
 
@@ -276,7 +278,27 @@ def spawned_via_constants(text: str) -> set[str]:
             consts[name] = values
 
     ids: set[str] = set()
-    for used in set(re.findall(SPAWN_CALL + r"\s*(\w+)", text)) | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text)):
+    # A local helper counts as a spawn call. `NobleLapilimaAI` writes
+    #
+    #     private static PatternAction Splinter(int npcId) => Do.SpawnNear(npcId, ...);
+    #     ... Splinter(FlashLapilimo53), Splinter(FlashLapilimo54), ...
+    #
+    # so the constant never sits next to a spawn, and all three of its adds read as never spawned
+    # while the class was placing them every fifteen seconds. A method whose body spawns one of its
+    # own parameters is treated as a spawn call by name -- which follows this indirection without
+    # following arbitrary ones, because the body has to contain the spawn.
+    helpers = set()
+    for name, params, body in HELPER_RE.findall(text):
+        names = set(re.findall(r"\bint (\w+)", params))
+        if names and any(re.search(SPAWN_CALL + rf"\s*{re.escape(p)}\b", body) for p in names):
+            helpers.add(name)
+    helper_calls: set[str] = set()
+    for name in helpers:
+        helper_calls |= set(re.findall(rf"\b{re.escape(name)}\s*\(\s*(\w+)", text))
+
+    for used in (set(re.findall(SPAWN_CALL + r"\s*(\w+)", text))
+                 | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text))
+                 | helper_calls):
         value = consts.get(used)
         if isinstance(value, list):
             ids.update(value)
