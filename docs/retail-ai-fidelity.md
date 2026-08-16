@@ -4684,3 +4684,59 @@ carefully:
 
 **Verification.** Full suite 1,380 passing and 1 skipped; three new pins; all six mutations caught
 after the vacuous one was repaired. Missing adds 562 → **561**.
+
+### Tiamat's rotation is wired
+
+Both blockers named last entry turned out to be avoidable. The hard-mode coupling is not a coupling at
+all: normal and hard are **different NPCs** (219362 and 236277), so a new pattern class takes 219362
+and `TiamatWeakenedDragonAI` stays exactly as it is, still serving as hard mode's base. Nothing had to
+be rewritten to be replaced.
+
+`TiamatDyingRotationAI` builds its branches from `TiamatRotation` — 45 steps, priorities descending in
+the table's own order, which is retail's evaluation order. **The fixed sequence is the point**: the
+class it replaces for this NPC chose with `Rnd.NextInt(3)`, and the healthiest band's
+middle-middle-left-right would come up about one run in eighty by chance.
+
+**Half the casts are translated, and the half that is not casts nothing.** Indices 1/2/3 resolve to
+20922/20924/20926. The lower two bands address 6/8/10 and 7/9/11 — faster-cast variants, as their
+`Beacon*8s` and `Beacon*4s` marks imply — and those ids are unresolved, so those bands place their
+beacons and hazards faithfully and cast nothing. Inventing a skill id would be a guess in the one
+place this work does not guess.
+
+### Three pins that measured the wrong thing, and what they have in common
+
+Six mutations, three survivors on the first pass, all three my pins rather than the port:
+
+- **Dying with a clear field.** `DyingClearsWhatSheHasPlaced` ran the clock for forty seconds and then
+  killed her — by which time beacons (seven seconds) and thorns (which retire themselves) had gone on
+  their own. Deleting the despawn changed nothing. It now kills her *while a beacon is standing*, and
+  asserts the field is non-empty first.
+- **Headings read after rotation.** The beacons are aggressive NPCs and turn toward whoever is near, so
+  holding a reference and reading `GetHeading()` at the end measures where the beacon swung to, not
+  where it was placed — a beacon placed on 0 read 119. Flattening every heading to zero passed. The
+  heading is now read the tick the beacon is found.
+- (and, last entry, a `foreach` over an expired collection.)
+
+All three are the same mistake in different clothes: **measuring a transient at a moment when it is no
+longer what it was.** Short-lived spawns expire, aggressive NPCs rotate, and a pin that looks later
+than the thing it describes does not fail — it quietly stops testing. Worth checking on every pin that
+observes something with a lifetime.
+
+### The backlog number did not move, and that is the number's fault
+
+561 before and after. The thirteen NPCs this rotation places were already counted as spawnable when
+the **generated table** was committed last entry — `audit_missing_adds.py` sweeps handler code for
+ids, and a table full of them satisfies it whether or not anything executes it.
+
+So last entry's commit moved the count by shipping data nothing ran, and this entry's did not move it
+by making that data run. **The metric answers "does any code reference this id", not "does the
+mechanic happen".** It is still the right measure for finding unported encounters — that is what it
+was built for — but it cannot see the difference between a wired mechanic and an inert table, and this
+is the first time that gap has been visible. Do not read a flat number as a flat week.
+
+**Verification.** Full suite 1,387 passing and 1 skipped; seven new pins; all six mutations caught
+after the three pins above were repaired.
+
+**Still open on this boss:** hard mode (`IDTiamat_Hard_Tiamat_Dragon_Dying`, eight adds) needs the same
+transcription — the extractor takes a pattern name, so it is one run and one table away. And the lower
+bands' breath ids remain unresolved.

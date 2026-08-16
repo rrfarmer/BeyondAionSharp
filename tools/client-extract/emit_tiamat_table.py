@@ -45,9 +45,13 @@ internal static class TiamatRotation
     /// <param name="Low">Inclusive band bounds as retail writes them, or 0/100 for the unbanded heartbeat.</param>
     /// <param name="Label">The pattern's own branch comment, kept so the table reads against the digest.</param>
     /// <param name="Banded">False for the heartbeat, which carries no health guard at all.</param>
+    /// <param name="SkillIndices">
+    /// The <c>SKILLI_INDEX_n</c> values the step casts, in order. Carried rather than resolved: only
+    /// some of them map to a known skill id, and that decision belongs to the AI class, not here.
+    /// </param>
     internal readonly record struct Step(
         int Timer, int NextTimer, int DelayMillis, int Low, int High, bool Banded,
-        string Label, Placement[] Spawns);
+        string Label, int[] SkillIndices, Placement[] Spawns);
 
     internal static readonly Step[] Steps =
     [
@@ -72,7 +76,7 @@ def main() -> None:
         parts = line.split("\t")
         if not parts or parts[0] in ("band", ""):
             continue
-        (band, step, timer, nxt, delay, label, _indices,
+        (band, step, timer, nxt, delay, label, indices,
          npc_id, count, x, y, z, deg, live) = parts
         step = int(step)
         if step not in steps:
@@ -85,6 +89,7 @@ def main() -> None:
                 "timer": int(timer), "next": int(nxt), "delay": int(delay),
                 "low": low, "high": high, "banded": banded,
                 "label": label, "spawns": [],
+                "indices": [int(i) for i in indices.split(",") if i],
             }
             order.append(step)
         if npc_id:
@@ -101,7 +106,8 @@ def main() -> None:
             for n, c, x, y, z, d, lv in s["spawns"])
         lines.append(
             f'        new Step({s["timer"]}, {s["next"]}, {s["delay"]}, {s["low"]}, {s["high"]}, '
-            f'{"true" if s["banded"] else "false"}, "{s["label"]}", [{placements}]),\n')
+            f'{"true" if s["banded"] else "false"}, "{s["label"]}", '
+            f'[{", ".join(str(i) for i in s["indices"])}], [{placements}]),\n')
     lines.append(FOOTER)
     pathlib.Path(args.out).write_text("".join(lines), encoding="utf-8")
     print(f"{len(steps)} steps, {rows} rows, {len(npcs)} distinct npcs")
