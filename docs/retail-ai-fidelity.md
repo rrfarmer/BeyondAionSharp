@@ -7970,3 +7970,70 @@ produces.
 
 **Verification.** Full suite 1,688 passing and 1 skipped; five new pins, all against an instance
 handler for the first time; six mutations, five caught and the sixth documented above.
+
+## Bollvig Blackheart: a wave that changes rather than one that grows
+
+With the twin encounter closed, the missing-AI audit is the better seam again. Its top entries that
+*carry spawns* are three LEGENDARY named bosses with no class at all, and the first of them is the
+biggest thing left on that list.
+
+**Bollvig Blackheart** (212314 and 280801), Heiron's vampire, ran on plain `aggressive`. His whole
+fight was missing:
+
+| band | what happens |
+|---|---|
+| 81–100 | casts, and the six-second clock |
+| 61–80 | two **thirsting bloodwings** (280802), fifteen metres out, forty minutes |
+| 41–60 | two more, into the same group |
+| 21–40 | the bats **become vampires**, and a **cruel vampire** lands on his quarry every 35s |
+| below 20 | the clock stops, and the vampire loop with it |
+
+### The two things worth stating
+
+**His bats are not a wave that grows.** Entering 21–40 he broadcasts `6187`, and every bloodwing still
+alive sheds itself for a cruel vampire *where it stands*. Four bats become four vampires in one beat,
+and the thirty-five-second loop then adds one more on top. That makes the two earlier waves matter
+later rather than only when they land — and it is invisible from the spawn list, which is why the
+adds audit never surfaced it.
+
+**The loop is bounded at both ends by different mechanisms**, which took a pin each to separate. Its
+timer carries no flag var, so it repeats; its branch is guarded on 21–40, so it stops when he leaves
+the band; and the below-twenty rung arms timer 6 rather than timer 0, so the ladder stops too. Push
+him through and nothing more arrives. Linger in the band and he keeps paying.
+
+He also clears up after himself: `6630` on waking dismisses the relic (204655) he leaves on dying, so
+a second pull does not find the first kill's reward standing.
+
+### Four pins that only exist because a mutation survived
+
+The first sweep left four survivors and every one was the same failure — **a pin that sets health
+straight into a band never exercises the clock**:
+
+- unbounding the vampire loop below survived, because the loop is only armed by the band's opening
+  rung, which a pin starting under twenty never fires;
+- the deep rung re-arming survived, because at fifteen percent nothing matches either way — it needs
+  healing him back into a band;
+- the fallback survived for the reason it always does;
+- and **"waking clears nothing" survived because the pin sent the message itself** rather than
+  spawning him. Driving it by spawning works because a boss with an empty known list takes
+  `NpcMessageBus`'s region-scan fallback.
+
+That last one is the fifth time this session a pin turned out to be testing its own setup rather than
+the code. The pattern is consistent enough to state as a rule: **if a pin constructs the stimulus, it
+is pinning the listener; only driving the encounter pins the sender.**
+
+### Not translated
+
+Ten skill indices across timers 1, 2, 3, 4, 6 and 10; the `is_user_flying` guard on timer 10, for
+which we have no vocabulary; and broadcasts `6185` and `6188`, whose only listeners answer with a
+cast. The 81–100 rung is dropped for the usual reason — its re-arm is the same six seconds the
+fallback gives.
+
+**Also recorded, closing an earlier thread.** The twins' `22701` announcer has no counterpart in our
+flow and does not need one: it is retail's *arrival staging*, turning fonts into protectors at stage
+start, while our twins are static spawns in the instance's own spawn file. Not a mechanic, and the
+thread is closed rather than left open.
+
+**Verification.** Full suite 1,699 passing and 1 skipped; eleven new pins; ten mutations, all caught
+after the four repairs above. Missing-AI 724 → **723**, and both other audits unchanged at two triaged
+findings and seven unpaired messages.
