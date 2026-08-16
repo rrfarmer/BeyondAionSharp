@@ -6107,3 +6107,49 @@ wave standing and a two-hundred-second one does not — is what tells them apart
 
 **Verification.** Full suite 1,499 passing and 1 skipped; six new pins; six mutations, all
 caught.
+
+### A sender with no listener: the fortress lords' despawn helpers
+
+`fortress_instance_duke` is next on the shared-name list and is left alone, with the reasoning
+recorded so it is not re-derived.
+
+The three fortress lords each have two patterns — `BGuard_ChiefD_Minor` for the weakened form
+and `BGuard_ChiefD_Tune405` for the enraged one — and on dying they place **six** copies of
+296339 at three teleporter marks, plus 296338 at a barrier in the enraged case, for eighteen
+seconds. Their display name is "dredgion elite fighter", which is why they read as fightable
+adds; their **devnames say what they actually are**: `BAb1_DrakanDespawn_ByTeleporter` and
+`BAb1_DrakanDespawn_ByBarrier`.
+
+They are not fighters. Each one's whole pattern is a single line:
+
+```
+on_wake_up: broadcast_message message_type=10007 range_as_meter=100
+```
+
+The lord dies, a helper appears at each teleporter, and everything listening within a hundred
+metres goes home. **Eleven patterns listen for 10006 and twelve for 10007** — all of them
+`DrGuard_*_WarpH2` and `_WarpH3`, the drakan guards that warp into a fortress.
+
+**And we have neither half.** Twelve NPCs bind those warp patterns and our spawn data places
+none of them; nothing in our code listens for 10006 or 10007. Porting the helpers would put six
+HERO-rated NPCs into every fortress-lord death for eighteen seconds to broadcast at nobody.
+
+**This is a category, not a one-off.** The Yamennes gate listener was a *listener with no
+sender*; this is the mirror. The shared-name audit will keep producing both, because a pattern
+half is missing exactly when the other half was never ported either. The test to apply before
+porting a broadcast: does anything on our side hear it, and does anything on our side send it?
+If neither, the work to do first is the encounter that owns the other half — here, the warp
+guards.
+
+**What is left on the shared-name list**, with `dancing_flame`, `gravity_tornado`, `agrint` and
+`unstableyamennes` now done and `fortress_instance_duke` recorded above:
+
+| ai_name | what to check |
+|---|---|
+| `brigade_general_vasharti` | the hard mode's glove controllers — blocked twice over already |
+| `captain_xasta` | 282444, on the fall-off variant |
+| `eternal_bastion_dragon` | 284075, on two of the four dragons |
+| `orissan_summon_helper` | 855702, 855703, 856306, 856309 |
+| `tiamats_incarnation_spawn` | ten `_invisible` damage twins — scenery the other audit filters |
+| `twin_protector` | 855626 |
+| `yamenessportal` | 282016, the gate summon `YamennesSpawnGateAI` already spawns |
