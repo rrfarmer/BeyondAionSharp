@@ -7814,3 +7814,51 @@ spawner within one branch will need the same treatment.
 
 **Verification.** Full suite 1,669 passing and 1 skipped; five new pins on RM-56c, sixteen in the
 file; six mutations, all caught, including the two that undo the runtime change.
+
+## The time-over rescue: fail the window and your own side finishes the fight
+
+Two entries ago the `no speaker` verdict said the twin protectors' time-over — messages **22704** and
+**22705** — was one npc spawn away from working rather than an encounter away. This is that spawn,
+and the mechanic it lights up is the most dramatic thing translated in this run.
+
+**Kill one twin and it leaves a font.** The raid then has fifteen seconds to kill the other. Miss it
+and a *failure display* appears, announcing the time-over every three seconds; the font answers by
+calling **three of your own side's guards down onto itself** — two soldiers at five metres with a
+million hate each and their leader at six with a hundred thousand — which then destroy it.
+
+Every piece was already on our server and none of them was connected:
+
+| piece | id | was |
+|---|---|---|
+| the fonts | 855708, 855709 | `aggressive_no_loot`, spawned by the instance, inert |
+| the failure displays | 855510, 855511, 856403, 856404 | `general`, spawned by **nothing** |
+| the detachments | 209688/209689, 209753/209754 | `aggressive_no_loot`, spawned by nothing |
+
+And the instance already knew the moment. `DrakenspireDepthsInstance.OnTwinRespawn` runs fifteen
+seconds after a twin falls and checks whether its font is still standing — that check *is* the
+time-over, and nothing was placed there. The template names settle the pairing without inference:
+855510 is `idseal_twin_physical_failuredisplay` and 855511 the magical one, matching the lava and
+heatvent fonts.
+
+### The one invented number, stated as such
+
+Retail's display announces until it is dismissed by message **22696**, sent by a quest guard and a
+scene NPC neither of which this work has reached. Left alone it would announce forever. It is given
+**twenty seconds** instead — long enough for its font to answer once — and that is the only value
+here not taken from the data.
+
+### The guards are the raid's race, not the boss's
+
+Retail splits the branch on `is_race` and ships two of everything. The font has no race of its own,
+so the detachment is read from the players actually in the instance. A pin covers both sides, because
+a fight that always summons Elyos guards would look right in half the runs.
+
+### The flag var is load-bearing
+
+The display repeats every three seconds and the font's branch carries a one-shot flag. Without it a
+failed raid drowns in detachments — twelve seconds of announcements is four sets of three guards. The
+pin drives the full twelve seconds and asserts three.
+
+**Verification.** Full suite 1,683 passing and 1 skipped; fourteen new pins; eight mutations, all
+caught, including the shipped state where no guards are called at all. `audit_retail_messages.py`
+`no speaker` 5 → 3.

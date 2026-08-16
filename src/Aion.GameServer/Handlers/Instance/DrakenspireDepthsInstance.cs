@@ -273,8 +273,29 @@ public class DrakenspireDepthsInstance : GeneralInstanceHandler
         }, System.TimeSpan.FromMilliseconds(30000L), System.TimeSpan.FromMilliseconds(10 * 1000L)));
     }
 
+    /// <summary>
+    /// Fifteen seconds after a twin fell, with its font still standing: the raid missed the window.
+    /// </summary>
+    /// <remarks>
+    /// Retail marks that moment with a <b>failure display</b> — 855510 on the physical side and 855511
+    /// on the magical — whose only job is to announce the time-over so the font can call its guards
+    /// down. Nothing placed one, which is why <see cref="Aion.GameServer.Handlers.AI.TwinFontAI"/>'s
+    /// handler had no sender. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    private void AnnounceTimeOver(int fontId)
+    {
+        Npc font = GetNpc(fontId);
+        if (font == null)
+            return;
+
+        Spawn(fontId == 855708 ? 855510 : 855511, font.GetX(), font.GetY(), font.GetZ(), (byte)0);
+    }
+
     private void OnTwinRespawn()
     {
+        AnnounceTimeOver(855708);
+        AnnounceTimeOver(855709);
+
         if (GetNpc(855708) != null)
             Spawn(236227, 531.0885f, 212.43806f, 1683.4116f, (byte)60);
         if (GetNpc(855709) != null)
