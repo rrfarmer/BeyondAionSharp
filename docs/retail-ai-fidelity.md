@@ -5043,3 +5043,36 @@ passes for the mutation too.
 after the cumulative count replaced the end-of-window one. Backlog 539 → **538 across 383**.
 
 **Kalindi is complete** — both her surkana ladder and both `spawn_on_multi_target` mechanics.
+
+### Removing the footgun instead of catching it a fifth time
+
+Four separate mutations have now survived because a pin measured a short-lived thing after it expired:
+the sand scatter, the hard thorn's bursts, Tiamat's beacons and Kalindi's dispel worm. Each was fixed
+where it was found. Four is enough to stop treating it as a series of mistakes and treat it as a
+missing tool.
+
+`BossAiHarness.Watch(seconds, perSecond, params npcIds)` advances a second at a time and returns both
+numbers a pin actually wants:
+
+- **`Peak`** — the most alive at any one moment, which is the size of a wave;
+- **`Total`** — how many distinct NPCs appeared at all, counted by object id, so a thing that came and
+  went still counts once.
+
+Six test classes had hand-rolled the same loop, each slightly differently, and the two that had *not*
+rolled it were the two that shipped a silent pass. The hand-rolled ones are now on the helper, and its
+remarks say plainly why it exists — a pin that runs the clock and then counts finds an empty field and
+reads it as "nothing happened", and that failure is invisible because the pin passes either way.
+
+**Refactoring a passing test is only safe if the mutations still die.** The four that these pins were
+written to catch were re-run afterwards and all four still fail, which is the check that the refactor
+preserved what the loops were for rather than just their shape.
+
+**One thing the refactor exposed.** Converting the hand-rolled loops meant passing the per-second work
+as a lambda, and the obvious translation — `() => Advance(harness, boss, player, 0)` — calls a helper
+whose loop runs zero times and therefore does *nothing*. The tests still passed, because the bosses
+happened to stay engaged across those windows without the rehate. It was caught by reading the diff
+rather than by the suite, and both instances are now the rehate directly. A no-op lambda in a watch
+loop is the same class of silent failure the helper exists to remove, one level up.
+
+**Verification.** Full suite 1,406 passing and 1 skipped, unchanged; four previously-escaping mutations
+re-checked and still caught.

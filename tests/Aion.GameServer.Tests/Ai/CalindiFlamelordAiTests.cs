@@ -100,14 +100,16 @@ public sealed class CalindiFlamelordAiTests
 		var (harness, boss, player) = EngagedAt(90);
 		using BossAiHarness _h = harness;
 
-		int seen = 0;
-		for (int i = 0; i < 90; i++)
-		{
-			Advance(harness, boss, player, 1);
-			seen += Count(harness, FlameCenter) + Count(harness, WormSpot) + Count(harness, DrakanSpot);
-		}
+		BossAiHarness.Watched seen = harness.Watch(
+			90,
+			() =>
+			{
+				BossAiHarness.Rehate(boss, player);
+				BossAiHarness.KeepAlive(player);
+			},
+			FlameCenter, WormSpot, DrakanSpot);
 
-		Assert.Equal(0, seen);
+		Assert.Equal(0, seen.Total);
 	}
 
 	/// <summary>The 61-80 handover rings the arena with four flame centers, on the shared marks.</summary>
@@ -121,18 +123,16 @@ public sealed class CalindiFlamelordAiTests
 		var (harness, boss, player) = EngagedAt(70);
 		using BossAiHarness _h = harness;
 
-		int peak = 0;
 		var marks = new HashSet<(float, float)>();
-		for (int i = 0; i < 15; i++)
+		BossAiHarness.Watched ring = harness.Watch(15, () =>
 		{
-			Advance(harness, boss, player, 1);
-			Npc[] flames = harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter).ToArray();
-			peak = Math.Max(peak, flames.Length);
-			foreach (Npc flame in flames)
+			BossAiHarness.Rehate(boss, player);
+			BossAiHarness.KeepAlive(player);
+			foreach (Npc flame in harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter))
 				marks.Add((flame.GetX(), flame.GetY()));
-		}
+		}, FlameCenter);
 
-		Assert.Equal(4, peak);
+		Assert.Equal(4, ring.Peak);
 		Assert.Equal(4, marks.Count);
 	}
 

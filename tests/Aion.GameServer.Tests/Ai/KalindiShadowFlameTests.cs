@@ -169,14 +169,19 @@ public sealed class KalindiShadowFlameTests
 		var (harness, boss, players) = Engaged(90, 3);
 		using BossAiHarness _h = harness;
 
-		int everSeen = 0;
-		for (int i = 0; i < 40; i++)
-		{
-			Beat(harness, boss, players, 1);
-			everSeen += Worms(harness);
-		}
+		BossAiHarness.Watched seen = harness.Watch(
+			40,
+			() =>
+			{
+				foreach (Player p in players)
+				{
+					BossAiHarness.Rehate(boss, p);
+					BossAiHarness.KeepAlive(p);
+				}
+			},
+			DispelWorm);
 
-		Assert.Equal(0, everSeen);
+		Assert.Equal(0, seen.Total);
 	}
 
 	/// <summary>

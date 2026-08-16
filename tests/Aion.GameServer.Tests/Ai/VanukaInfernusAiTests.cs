@@ -37,17 +37,8 @@ public sealed class VanukaInfernusAiTests
 		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
 
 	/// <summary>Runs the clock while keeping him engaged, and reports the most flames seen at once.</summary>
-	private static int PeakFlames(BossAiHarness harness, Npc boss, Player player, int seconds)
-	{
-		int peak = 0;
-		for (int i = 0; i < seconds; i++)
-		{
-			BossAiHarness.Rehate(boss, player);
-			harness.Clock.Advance(TimeSpan.FromSeconds(1));
-			peak = Math.Max(peak, Count(harness, FlameCenter));
-		}
-		return peak;
-	}
+	private static int PeakFlames(BossAiHarness harness, Npc boss, Player player, int seconds) =>
+		harness.Watch(seconds, () => BossAiHarness.Rehate(boss, player), FlameCenter).Peak;
 
 	[Fact]
 	public void LightsTwoFlamesTheMomentTheFightStarts()

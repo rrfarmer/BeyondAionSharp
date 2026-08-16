@@ -25,16 +25,8 @@ public sealed class AsaratuBloodshadeAiTests
 	/// <c>NTrap_A</c> trap — it goes off as it appears and leaves when the cast lands — so counting at
 	/// the end of a fight finds an empty arena however many were dropped along the way.
 	/// </summary>
-	private static int PeakFlames(BossAiHarness harness, Npc boss, Player player, int seconds)
-	{
-		int peak = 0;
-		for (int i = 0; i < seconds; i++)
-		{
-			Fight(harness, boss, player, 1);
-			peak = Math.Max(peak, Count(harness, FlameCenter));
-		}
-		return peak;
-	}
+	private static int PeakFlames(BossAiHarness harness, Npc boss, Player player, int seconds) =>
+		harness.Watch(seconds, () => BossAiHarness.Rehate(boss, player), FlameCenter).Peak;
 	private const int FaithfulSubordinate = 281245;
 
 	private static (BossAiHarness, Npc, Player) Engaged()

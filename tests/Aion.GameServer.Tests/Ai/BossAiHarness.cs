@@ -220,6 +220,56 @@ public sealed class BossAiHarness : IDisposable
 	/// </remarks>
 	public static void KeepAlive(Player player) => player.GetLifeStats().SetCurrentHpPercent(100);
 
+	/// <summary>What a <see cref="Watch"/> saw across its whole window.</summary>
+	/// <param name="Peak">The most alive at any one moment — the size of a wave.</param>
+	/// <param name="Total">
+	/// How many distinct NPCs appeared at all, counted by object id, so a thing that came and went
+	/// still counts once.
+	/// </param>
+	public readonly record struct Watched(int Peak, int Total);
+
+	/// <summary>
+	/// Advances a second at a time and reports what was seen at any point, rather than what happens
+	/// to be standing at the end.
+	/// </summary>
+	/// <remarks>
+	/// <b>This exists because the same mistake has been made four times.</b> Almost everything a boss
+	/// places has a lifetime — a beacon lives seven seconds, a burst of sand one, a dispel worm ten
+	/// against a twenty-two second interval — so a pin that runs the clock and then counts finds an
+	/// empty field and reads it as "nothing happened". That failure is silent: the pin passes, and it
+	/// passes for a mutation that really did break the mechanic. Four separate mutations survived that
+	/// way before this helper existed.
+	/// <para>
+	/// <paramref name="perSecond"/> runs before each tick, for the rehate and keep-alive a fight needs
+	/// to stay engaged.
+	/// </para>
+	/// </remarks>
+	public Watched Watch(int seconds, Action? perSecond, params int[] npcIds)
+	{
+		var wanted = new HashSet<int>(npcIds);
+		var everSeen = new HashSet<int>();
+		int peak = 0;
+
+		for (int i = 0; i < seconds; i++)
+		{
+			perSecond?.Invoke();
+			Clock.Advance(TimeSpan.FromSeconds(1));
+
+			int alive = 0;
+			foreach (Npc npc in LiveNpcs())
+			{
+				if (!wanted.Contains(npc.GetNpcId()))
+					continue;
+				alive++;
+				everSeen.Add(npc.GetObjectId());
+			}
+
+			peak = Math.Max(peak, alive);
+		}
+
+		return new Watched(peak, everSeen.Count);
+	}
+
 	/// <summary>Removes and returns everything the NPC has queued since the last drain, in cast order.</summary>
 	public static List<QueuedCast> DrainQueuedSkills(Npc npc)
 	{
