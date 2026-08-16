@@ -7179,3 +7179,67 @@ dying, which are a separate encounter this work has not touched.
 
 **Verification.** Full suite 1,609 passing and 1 skipped; thirteen pins on this class, up from five;
 seven mutations, all caught — including the shipped bug, which survived the first sweep.
+
+## The Empyrean Lords arrived without the gods they call
+
+Following `audit_retail_messages.py`'s next-largest cluster — nine findings on Tiamat hard mode — led
+to the four god avatars of the Dragon Lord's Refuge, and to something the message audit was not
+asking about: **neither of the two NPCs an avatar places was placed at all.**
+
+Eight npc ids share `empyrean_lord` across two difficulties and four roles, and the eight retail
+patterns behind them agree pair for pair. The class already split those four roles for its casts, so
+the spawns slot into a shape that was already there:
+
+| role | places | when | for |
+|---|---|---|---|
+| Kaisinel avatar 1 (219488, 856020) | **kaisinel** (283159) | +7s | 20s |
+| Marchutan avatar 1 (219491, 856023) | **marchutan** (283160) | +7s | 20s |
+| Kaisinel avatar 2 (219489, 856021) | its teleport (283175) | on arrival | 6s |
+| Marchutan avatar 2 (219492, 856024) | its teleport (283176) | on arrival | 6s |
+
+Two details worth stating because a port that read only the spawn action would lose both. The
+**seven seconds** are retail's `set_idle_timer` on `on_wake_up`, so the first avatar arrives alone and
+the god follows — a beat, not a detail. And 283159 and 283160 are not effects: they are named NPCs on
+tribe `IDTIAMAT_SPAWNHEAL`, which is the god itself appearing to mend the raid.
+
+### Not translated: the four corner broadcasters, and why that is not the chakra call again
+
+Each first avatar's `on_die` puts an `IDTiamat_Tiamat_Broadcast_God_OnDie` (283181) on each corner of
+the arena — (215, 188), (791, 195), (216, 834), (777, 839) — for ten seconds, and each relays
+`broadcast_message 71` fifty metres. It is the same trick Lower Udas Temple uses: a hundred-metre
+broadcast covering a room far bigger than that.
+
+Every one of the eight listeners for 71 is a Tiamat key, and every one answers with a bare
+`SKILLI_INDEX` cast. So this is the **unheard** category — placing the four would put NPCs in the
+world whose only purpose is a message nothing on our side can act on.
+
+Worth separating from the Bergrisar decision in the previous entry, because the two look alike and
+are not:
+
+- **Bergrisar's chakras** are blocked because the add's *own* behaviour is a walk we cannot drive. A
+  placed chakra is inert.
+- **These broadcasters** are blocked because their *audience* cannot act. A placed broadcaster would
+  do exactly what retail's does — and land on nobody.
+- **These gods and teleports** are neither. An FX or presence NPC's whole job is to exist and be seen
+  for a stated number of seconds, and that we can reproduce exactly.
+
+The test for "is this worth placing" is therefore not "does it carry a pathname" or "is it an
+effect", but **does the thing it does survive the translation**. For a rolling hazard, no. For a
+relay into silence, no. For something whose job is to be there, yes.
+
+### Also not translated
+
+The avatars' whole message web — 20, 23, 32, 37, 38, 39, 200, 201, 202 — and the
+`set_condition_spawn_variable` calls threaded through it. The one that matters is **32**: Tiamat
+sends it, and a first avatar answers by casting, arming a five-hundred-millisecond timer, and then
+leaving inside its own teleport effect. That is the god withdrawing, and it needs the message and the
+index together.
+
+Worth recording about those message numbers: 20, 23, 27, 31, 32 and 40 are **reused across unrelated
+instances** — Eternity, Infinity Shard, the arenas, the RVR guards all use them — unlike the
+encounter-scoped numbers this work has ported (140505, 6956, 22705). Only 37, 38 and 39 are private to
+the Tiamat family. Any future port here has to be scoped by range and encounter rather than by number,
+which is a caveat the earlier message work never needed.
+
+**Verification.** Full suite 1,626 passing and 1 skipped; seventeen new pins; eight mutations, all
+caught — including the shipped state, in which nothing is placed at all.
