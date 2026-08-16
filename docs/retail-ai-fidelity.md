@@ -3680,3 +3680,40 @@ controllers on the owner, a broadcast each, and three coffin branches.
 **What made this findable.** Not the adds audit, which had counted these pages for months
 without being able to say why nothing spawned them. The message audit crossed the gap,
 because the missing thing was never a spawn — it was a conversation.
+
+### The lookup, and why the chain stops there
+
+The binding table answers it, and the answer is a blocker rather than a task:
+
+| pattern | npc bound in our client |
+|---|---|
+| `Adma_DeathknightNamed` | 214696 — Lord Lannok |
+| `NoAction_CoffinA` / `B` / `C` | 280942, 280950, 281055 — the coffins |
+| **`Adma_T_Control_04`** | **none** |
+| **`Adma_T_Named_05`** | **none** |
+| **`Adma_DeathknightNamed_SP`** | **none** |
+
+**All three patterns that spawn the controllers bind to no NPC at all.** So do the `_SP`
+coffin twins. That is not "we never ported them" — it is that nothing in the 4.8 client
+data this binding table was built from claims those patterns.
+
+The likeliest reading is that the whole `_SP` family is 5.8-era content, and our client is
+4.8: the patterns dump is newer than the client we resolve devnames against. If so the
+mechanic cannot be bound at all until a 5.8 client is indexed, and no amount of reading the
+patterns will fix it.
+
+**This is a limit of the binding table, and it is worth stating as one.** Every
+"unreachable" verdict in this log rests on that table, and the table can only see what the
+4.8 client names. Content newer than the client reads as absent rather than as unknown.
+
+### One thing that is reachable, and is missing
+
+Lord Lannok's own pattern does something our port does not: **battle timer 11 broadcasts
+6605 or 6607 on a coin flip and re-arms itself**, and `on_message` 6608 drives a three-stage
+flag ladder of shouts. `LordLannokAI` implements neither — it carries only the 6601/6609
+alarm pair it shares with the coffins.
+
+That was already in the message audit's sixteen. It is now the only part of the Adma
+mechanism that is not blocked on client data, and the coffins that would answer it are
+already ported and already spawned. **That is the next thing to do here**, and it is small:
+one timer, two broadcasts, and whatever the coffins do with them.
