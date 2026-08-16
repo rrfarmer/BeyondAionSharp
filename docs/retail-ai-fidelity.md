@@ -6574,3 +6574,46 @@ bosses' adds were already reachable through their normal-mode twins.
 
 **Verification.** Full suite 1,542 passing and 1 skipped; five new pins; seven mutations, six
 caught and the one above recorded.
+
+## Flarestorm — the first ladder that runs the other way
+
+A HERO Catacombs boss on plain `aggressive` with no AI class. His ladder is four one-shot rungs on
+`on_attacked`, and the waves grow as he is worn down: **three** calamities at eighty percent, four
+at sixty, five at forty, six at twenty, each on the most-hated of that many players.
+
+**And his priorities descend with depth.** Every threshold pattern translated before this writes
+its branches deepest-first, so a boss burned down quickly skips to the rung it deserves.
+Flarestorm's `p4` guards 80, `p3` guards 60, `p2` guards 40, `p1` guards 20 — so the *shallowest
+unconsumed* rung is always the one that fires.
+
+The consequence is worth spelling out, because it inverts what deepest-first buys the raid
+everywhere else. A group that drops him from full health to ten percent in one burst **does not
+get the twenty-percent wave**. It gets the eighty-percent one on the next hit, the sixty on the
+one after, and so on: he works *up* the ladder a hit at a time, so every wave lands however fast he
+dies. Three, then four, then five, then six, on four consecutive blows.
+
+### An ordering pin that took three attempts
+
+"The wave goes to the least-hated" survived twice before it died, and both reasons are worth
+keeping because they are about how a pin is *set up* rather than what it asserts:
+
+1. **Everyone at equal hate.** The harness's `Rehate` gives every player the same number, so
+   `ORDERI_DESCENDING` and `ORDERI_ASCENDING` pick the same set and the ordering is unobservable.
+2. **Half the raid outside `valid_distance`.** Fixing the first by spreading six players fifteen
+   metres apart put the back three more than fifty metres from the boss — outside the op's own
+   range filter — so both orderings again picked the same front three.
+
+Four players twelve metres apart, at descending hate, all inside fifty metres: the sets differ and
+the mutation dies. **A multi-target ordering can only be pinned when the eligible set is larger
+than the cap** — which means checking the raid's spread against `valid_distance`, not just against
+the spawn scatter.
+
+**Not translated.** Three skill indices across three timers, and the `on_attacked` branch above the
+ladder that reads `is_user_class` and adds a hate point — we have vocabulary for neither half of
+that: not the class test, and not a bare hate bump.
+
+**Where the count went.** Missing-AI 733 → **732**; the adds backlog is unchanged, because the
+calamity is already placed by Beshmundir Temple's spawn file. This is a boss that had no fight
+rather than an add nobody could reach.
+
+**Verification.** Full suite 1,548 passing and 1 skipped; six new pins; five mutations, all caught.
