@@ -4543,3 +4543,57 @@ casting cannot currently be pinned.
 **Where the count went.** 566 across 387 encounters → **562 across 385**.
 
 **Verification.** Full suite 1,377 passing and 1 skipped; seven new pins; all six mutations caught.
+
+### Tiamat's breath rotation: the blocked observation is now made
+
+An earlier pass left the weakened dragon (219362, `IDTiamat_Tiamat_Dragon_Dying_Named_60_Al`) with a
+note that it needed "one observation tying a beacon number to a breath direction". That observation
+exists now, and it is over-determined — **four independent signals agree**:
+
+| signal | left | middle | right |
+|---|---|---|---|
+| branch comment | `BreathL_100-76` | `BreathM1_100-76` | `BreathR_100-76` |
+| beacon spawned | `Breath_Beacon1`, dir 17 | `Breath_Beacon2`, no dir | `Breath_Beacon3`, dir 105 |
+| skill index | `SKILLI_INDEX_1` | `SKILLI_INDEX_2` | `SKILLI_INDEX_3` |
+| skill stack name | `IDTIAMAT_TIAMAT_BREATH**L**_CAST` (20922) | `…BREATH**M**…` (20924) | `…BREATH**R**…` (20926) |
+
+Those three stack names are **unique in the whole skill table** — one skill each, no other candidates.
+And the existing aionemu class corroborates the geometry independently: its 20922 hazards land at
+(445, 550) to one side, 20924's along the y=514.6 centre line, 20926's at (458, 480) to the other.
+
+Note what carries the resolution: the ids come from the **skill templates' own stack names**, not from
+counting `npc_skills`. 219362 has no `npc_skills` entry at all, so a positional reading was never
+available — which is exactly why this sat blocked. The naming is the evidence, as it was for the Dark
+Poeta markers.
+
+### What that unblocks, and what is still wrong
+
+**The breath order is random in our port and a fixed rotation in retail.** `TiamatWeakenedDragonAI`
+picks with `20922 + Rnd.NextInt(3) * 2`. Retail runs a scripted sequence per health band:
+
+| band | sequence |
+|---|---|
+| 100-76 | M, M, L, R — 18s a step |
+| 75-51 | L, M, R, then three Thorn steps 5s apart, then R, M, L — 18s on the breaths, 15s into the thorns |
+| 50-26 | L, M, R … 12s a step, and the beacons move to `Tiamat_BeaconL8s`-style marks at different coordinates |
+| 25-0 | (not yet transcribed) |
+
+A learnable rotation replaced by a coin flip is a real difference in how the fight plays: in retail a
+raid can pre-position for the next breath, and here it cannot.
+
+**The telegraph is missing entirely.** Retail spawns a beacon seven seconds ahead of each breath, at
+(458.5, 514.7, 417.4) with the heading that picks the cone. Those are the twelve adds this encounter
+contributes to the backlog. Without them the breath arrives unannounced.
+
+**Also noted:** retail's own band guards are inconsistent — `BreathL_75-51` tests `51..74` where the
+M and R steps beside it test `51..75`. That is retail's, and belongs in the port as-is.
+
+### Why this is written up rather than ported
+
+Rebuilding the dragon as a pattern table is a Tahabata-sized job — four bands, each a chain of four to
+nine timer steps, with beacon coordinates and headings per step and a separate thorn sub-chain. Every
+fact needed is now established, but starting it with the room left in this pass would mean shipping a
+band or two and a table that reads as complete. **The next pass should transcribe all four bands
+before writing any of it.** The pieces are: the sequence table above, the beacon↔direction↔skill
+mapping proven here, and the existing class's hazard spawns, which are already faithful and should be
+kept as the per-breath effect.
