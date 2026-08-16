@@ -13,16 +13,22 @@ namespace Aion.GameServer.Handlers.AI;
 /// neither spectre it calls up was spawned by anything.
 /// <para>
 /// The fight is two spectre timers running at once, and they are not a wave on the boss — they are
-/// <c>spawn_on_multi_target</c>, <b>one spectre on every player within a hundred metres</b>, each
-/// attacking whoever it landed on. Nothing caps the count, so a larger group gets proportionally more
-/// of them; that is the mechanic rather than an oversight, and it is why the group's size matters
-/// here in a way it does not for a boss that drops a fixed wave at its own feet.
+/// <c>spawn_on_multi_target</c>, dropped on the players themselves and <b>attacking whoever they
+/// landed on</b>.
+/// </para>
+/// <para>
+/// <b>Corrected: they are capped, and tightly.</b> An earlier revision of this class read the pattern
+/// as having no <c>total_set_to_spawn</c> and spawned on every valid target, up to sixty-four. Retail
+/// caps the near spectre at <b>two</b> and the far one at <b>one</b>, which against a full group is
+/// the difference between three spectres per cycle and a dozen — the exact failure
+/// <see cref="Aion.GameServer.Ai.Pattern.PatternAi.SpawnOnEachTarget"/> is documented to cause.
+/// The order matters too: the near pair is random, the far one always goes to the most-hated.
 /// </para>
 /// <list type="bullet">
-/// <item><b>timer 0</b> — a Sum1 spectre on each target three metres out, first at ten seconds and
-/// then every twenty-five</item>
-/// <item><b>timer 1</b> — a Sum2 spectre on each target ten metres out, first at seven seconds and
-/// then <b>every four</b></item>
+/// <item><b>timer 0</b> — two Sum1 spectres, on two random targets three metres out, first at ten
+/// seconds and then every twenty-five</item>
+/// <item><b>timer 1</b> — one Sum2 spectre, on the most-hated ten metres out, first at seven seconds
+/// and then <b>every four</b></item>
 /// <item><b>timer 2</b> — cast-only, every twenty-eight seconds, not translated</item>
 /// <item><b>dying or resetting</b> — the spectres go with it</item>
 /// </list>
@@ -49,11 +55,16 @@ public class ShadowshiftAI : PatternAi
     /// <summary>Retail's <c>valid_distance</c>: a hundred metres, which is the whole room.</summary>
     private const float Reach = 100f;
 
+    /// <summary>Retail's <c>total_set_to_spawn</c> for each of the two spectres.</summary>
+    private const int NearCap = 2;
+    private const int FarCap = 1;
+
     /// <summary>
-    /// Retail sets no <c>total_set_to_spawn</c>, so every valid target gets one. The runtime wants a
-    /// number, and this is high enough to be no cap for any group that can enter a Catacombs run.
+    /// Retail's <c>hatepoints_to_add</c>, with <c>attack_target_after_spawn</c>: a spectre arrives
+    /// already fighting the player it materialised on. One point is a token lead, which is the point —
+    /// the spectre is a thing to peel off someone, not a second boss.
     /// </summary>
-    private const int NoCap = 64;
+    private const int OnArrival = 1;
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {
@@ -66,11 +77,13 @@ public class ShadowshiftAI : PatternAi
         OnBattleTimer = Of(
             Branch(8, "", [When.Timer(0)],
                 Do.ArmTimer(0, 25000),
-                Do.SpawnOnEachTarget(SpectreNear, Spectres, Reach, NoCap, MultiTargetOrder.Random, range: 3f)),
+                Do.SpawnOnEachTarget(SpectreNear, Spectres, Reach, NearCap, MultiTargetOrder.Random,
+                    range: 3f, attackHate: OnArrival)),
 
             Branch(7, "", [When.Timer(1)],
                 Do.ArmTimer(1, 4000),
-                Do.SpawnOnEachTarget(SpectreFar, Spectres, Reach, NoCap, MultiTargetOrder.Random, range: 10f)),
+                Do.SpawnOnEachTarget(SpectreFar, Spectres, Reach, FarCap, MultiTargetOrder.Descending,
+                    range: 10f, attackHate: OnArrival)),
 
             // Timer 2 is cast-only, kept so the chain still re-arms as retail's does.
             Branch(6, "", [When.Timer(2)],

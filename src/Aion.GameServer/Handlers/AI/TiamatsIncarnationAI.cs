@@ -190,11 +190,16 @@ public class TiamatsIncarnationAI : PatternAi
     {
         [Wrathclaw] = WrathclawPattern,
 
-        // Fissurefang's hazard lands under the tank; retail also has it engage its target on arrival,
-        // which we leave to the add's own aggressive AI.
+        // Fissurefang's hazard lands under the tank and engages it on arrival with ten million hate --
+        // retail's way of saying this will not peel. The comment here used to say we left that to the
+        // add's own aggressive AI, which is a different thing: aggression picks up whoever wanders into
+        // range after its own delay, where the flag locks the hazard onto the player it was dropped on.
+        // Note it is only the power attack. The area attack's own spawn is written atk=FALSE, and the
+        // other two incarnations carry the flag nowhere at all.
         [Fissurefang] = Incarnation(areaAtkRearm: 25000, handBindRearm: 30000,
             deathEffect: 283063,
-            powerAtkHazard: Do.SpawnOnTarget(CavityOfEarth, Hazards, range: 1f, liveSeconds: 7),
+            powerAtkHazard: Do.SpawnOnTarget(CavityOfEarth, Hazards, range: 1f, liveSeconds: 7,
+                attackHate: 10000000),
             areaAtkHazard: Do.SpawnOnEachTarget(CavityOfEarth, Hazards, validDistance: 100f,
                 maxTargets: 3, MultiTargetOrder.Descending, liveSeconds: 25)),
 

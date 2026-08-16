@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
@@ -172,6 +173,43 @@ public sealed class OmegaAiTests
 			{
 				Assert.Equal(0, Count(harness, clone));
 			}
+		}
+	}
+
+	/// <summary>
+	/// A wave arrives <b>already fighting</b> the player it materialised around — retail gives all five
+	/// <c>attack_target_after_spawn</c> with a hundred hate.
+	/// </summary>
+	/// <remarks>
+	/// A hundred points is a token lead, gone within a swing or two of real threat, so what it buys is
+	/// the opening moment: a phase transition that turns on the raid rather than one that waits to be
+	/// walked into.
+	/// <para>
+	/// <b>The hate is the observable, not the state.</b> A clone is <c>aggressive</c> with a
+	/// twenty-five-metre search range and lands three metres away, so it engages on its own in the same
+	/// tick; state and target look the same whether or not the flag is honoured. Natural aggro is worth
+	/// one point, so a hundred and one is the fingerprint of retail's number actually arriving.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWaveArrivesAlreadyFighting()
+	{
+		var (harness, boss, player) = Engaged();
+		using (harness)
+		{
+			PhaseAt(harness, boss, player, 84);
+			Assert.Equal(3, Count(harness, CloneOfPower));
+
+			// One more tick: the provoke is deferred, for the reasons PatternAi.ProvokeNextTick gives.
+			BossAiHarness.Rehate(boss, player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+			Npc[] clones = harness.LiveNpcs().Where(n => n.GetNpcId() == CloneOfPower).ToArray();
+			Assert.All(clones, c => Assert.Equal(AIState.FIGHT, c.GetAi().GetState()));
+			Assert.All(clones, c => Assert.Same(player, c.GetTarget()));
+			Assert.All(clones, c => Assert.True(c.GetAggroList().GetHate(player) > 50,
+				$"retail's hundred should be on top of the single point it aggroes with: "
+				+ $"{c.GetAggroList().GetHate(player)}"));
 		}
 	}
 }

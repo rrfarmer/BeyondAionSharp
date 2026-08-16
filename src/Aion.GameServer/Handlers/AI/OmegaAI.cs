@@ -51,6 +51,18 @@ public class OmegaAI : PatternAi
     private const int WaveLife = 600;
 
     /// <summary>
+    /// Retail's <c>hatepoints_to_add</c> on every one of the five waves, with
+    /// <c>attack_target_after_spawn</c>: a clone arrives already fighting whoever it landed on.
+    /// </summary>
+    /// <remarks>
+    /// A hundred points is a token lead — the raid will out-threaten it within a swing or two — so what
+    /// this buys is the opening moment, not the fight. A wave that materialises around the tank and
+    /// immediately turns on them is the phase transition; a wave that stands there until someone walks
+    /// into it is scenery.
+    /// </remarks>
+    private const int CloneHate = 100;
+
+    /// <summary>
     /// The number he shouts at his clones on every phase, telling them who he is fighting.
     /// </summary>
     /// <remarks>
@@ -77,8 +89,8 @@ public class OmegaAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfMagicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife),
-                Do.SpawnOnTarget(CloneOfPhysicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife),
+                Do.SpawnOnTarget(CloneOfMagicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
+                Do.SpawnOnTarget(CloneOfPhysicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(19, "phase 45%", [When.Timer(0), When.HpBelow(45), When.FirstTime(2)],
@@ -86,7 +98,7 @@ public class OmegaAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfHealing, HealingWave, count: 3, range: 3f, liveSeconds: WaveLife),
+                Do.SpawnOnTarget(CloneOfHealing, HealingWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(18, "phase 65%", [When.Timer(0), When.HpBelow(65), When.FirstTime(3)],
@@ -94,14 +106,14 @@ public class OmegaAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfExplosion, ExplosionWave, count: 3, range: 3f, liveSeconds: WaveLife),
+                Do.SpawnOnTarget(CloneOfExplosion, ExplosionWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(17, "phase 85%", [When.Timer(0), When.HpBelow(85), When.FirstTime(4)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfPower, PowerWave, count: 3, range: 3f, liveSeconds: WaveLife),
+                Do.SpawnOnTarget(CloneOfPower, PowerWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             // The heartbeat every phase branch depends on: without it the chain ends on the first tick

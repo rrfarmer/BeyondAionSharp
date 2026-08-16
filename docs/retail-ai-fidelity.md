@@ -5477,3 +5477,71 @@ classes that each need the flag threaded through their own tables.
 
 **Verification.** Full suite 1,427 passing and 1 skipped; one new pin and one repaired;
 five mutations, all caught.
+
+## The rest of `attack_target_after_spawn` — and Shadowshift was spawning four times too many
+
+Finishing the list. Four of the six remaining patterns are hand-written classes whose
+spawns are one edit each; the fifth and sixth turn out not to be flag work at all.
+
+| pattern | class | what it needed |
+|---|---|---|
+| `LF4_FieldRaid` | `OmegaAI` | all five clone waves, hate 100 |
+| `LDF4b_Golden_Gururu` | `GoldenTatarAI` | avatar, eye and magma, hate 1 |
+| `IDCT_Boss_Shadow` | `ShadowshiftAI` | both spectres, hate 1 — **and the caps were wrong** |
+| `IDTiamat_T1_Crack_Key…` | `TiamatsIncarnationAI` | Fissurefang's power attack only, hate 10,000,000 |
+| `DF4_Dramata` | `GelkmarosPadmarashkaAI` | its rocks are not translated at all — a porting job |
+| `IDAbRe_Core_NamedD*` | `UnstableYamennesAI` | same: `IDCatacombs_Hard_Buff` is not translated |
+
+### Shadowshift was dropping a spectre on everybody
+
+Reading the pattern for the flag meant reading it properly, and the class was wrong about
+something bigger. It said *"Retail sets no `total_set_to_spawn`, so every valid target
+gets one"* and used a cap of 64. Retail sets it on both:
+
+| spectre | cap | order | scatter |
+|---|---|---|---|
+| `Sum1`, near | **2** | random | 3m |
+| `Sum2`, far | **1** | most-hated | 10m |
+
+Against a full group that is the difference between three spectres a cycle and a dozen —
+and the far one re-arms **every four seconds**. This is the exact failure the
+`SpawnOnEachTarget` doc comment warns about, written after Fissurefang did the same
+thing, and it had been sitting one class over the whole time. Two pins asserted the bug
+(*"one on every player, not one on the boss"*) and passed; both now assert retail's caps
+and the far spectre's most-hated ordering.
+
+### Only Fissurefang's power attack is hostile
+
+Worth stating because it is the kind of thing that invites a sweeping edit: within the
+incarnations, **the flag appears exactly once**. Fissurefang's power-attack earthquake
+carries it with ten million hate; its own area-attack twin is written `atk=FALSE`, and
+Graviwing and Petriscale carry it nowhere at all. Both facts are pinned — one that the
+quake arrives fighting, one that the whirlpool does not.
+
+### A pin that passed for the wrong reason, caught by mutation
+
+The first version of the three new pins asserted the add's **state and target**. All
+three mutations survived. The reason is worth keeping: these adds are `aggressive` and
+retail drops them *on top of* a player, well inside their own search range, so they engage
+by themselves in the same tick. State and target are identical whether or not the flag is
+honoured.
+
+What separates them is the **hate**. Natural aggression is worth one point; the flag adds
+retail's `hatepoints_to_add` on top. So two points is the fingerprint for the hate-1 cases
+and a hundred and one for Omega — and those pins kill every mutation, including turning
+Omega's hundred into a one.
+
+That also settles what the flag buys us in practice. For an add whose own AI is aggressive
+and which lands on its target, it is nearly a no-op today; it matters for hazards that are
+not aggressive (Fissurefang's quake, the gates' summon), and it is carried on the rest
+because it is what the pattern says and because the adds' own AI is not guaranteed to stay
+aggressive.
+
+**Still owed:** `DF4_Dramata`'s rocks and Yamennes' `IDCatacombs_Hard_Buff` are not
+translated at all — both are `spawn_on_multi_target` with caps and orders in hand, so they
+are ordinary porting jobs rather than flag work. And the 133 multi-target and 39
+attacker-indicator rows in the guard table stay skipped for the reason they always were:
+the row cannot carry a cap, an order and an indicator.
+
+**Verification.** Full suite 1,432 passing and 1 skipped; five new pins and two repointed
+off the bug they were pinning; eight mutations, all caught.

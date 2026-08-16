@@ -637,7 +637,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// is a different fight from one on the two tanks.
     /// </remarks>
     public void SpawnOnEachTarget(int npcId, int spawnId, float validDistance, float range,
-        int liveSeconds, int maxTargets, MultiTargetOrder order)
+        int liveSeconds, int maxTargets, MultiTargetOrder order, int attackHate = 0)
     {
         AggroList aggro = GetAggroList();
         IEnumerable<Creature> valid = aggro.StreamValidTargets(validDistance);
@@ -649,7 +649,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         };
 
         foreach (Creature target in ordered.Take(maxTargets).ToList())
-            SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+        {
+            if (attackHate <= 0)
+            {
+                SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+                continue;
+            }
+
+            // Each add is paired with the player it was placed on, not with the raid at large: this is
+            // the op that puts one hazard on each of several people, and each hazard is theirs.
+            var placed = new List<Npc>();
+            SpawnAroundInto(placed, target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+            foreach (Npc summon in placed)
+                ProvokeNextTick(summon, target, attackHate);
+        }
     }
 
     /// <summary>Overridable so a test can make <c>ORDERI_RANDOM</c> deterministic.</summary>

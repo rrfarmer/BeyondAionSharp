@@ -241,8 +241,9 @@ public static class Do
     /// both required — see the runtime for why neither has a default.
     /// </summary>
     public static PatternAction SpawnOnEachTarget(int npcId, int spawnId, float validDistance,
-        int maxTargets, MultiTargetOrder order, float range = 0f, int liveSeconds = 0)
-        => ai => ai.SpawnOnEachTarget(npcId, spawnId, validDistance, range, liveSeconds, maxTargets, order);
+        int maxTargets, MultiTargetOrder order, float range = 0f, int liveSeconds = 0, int attackHate = 0)
+        => ai => ai.SpawnOnEachTarget(npcId, spawnId, validDistance, range, liveSeconds, maxTargets, order,
+            attackHate);
 
     /// <summary><c>spawn_on_target_by_attacker_indicator</c> — on one attacker rather than the tank.</summary>
     public static PatternAction SpawnOnAttacker(AggroTarget which, int npcId, int spawnId,

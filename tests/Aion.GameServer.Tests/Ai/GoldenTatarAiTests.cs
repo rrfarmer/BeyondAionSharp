@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
@@ -178,5 +179,32 @@ public sealed class GoldenTatarAiTests
 		boss.GetAi().OnGeneralEvent(AiEventType.BackHome);
 
 		Assert.Equal(0, Count(harness, Clone));
+	}
+
+	/// <summary>
+	/// Everything it puts on a player arrives <b>already fighting that player</b> — retail gives all
+	/// three <c>attack_target_after_spawn</c> with a single hate point.
+	/// </summary>
+	/// <remarks>
+	/// <b>The hate is what has to be asserted, not the state.</b> A clone is <c>aggressive</c> with a
+	/// forty-metre search range and lands within twenty, so it engages on its own in the same tick and
+	/// a pin on state or target would pass whether or not the flag were honoured. Natural aggro is one
+	/// point; retail's <c>hatepoints_to_add</c> of one goes on top of it.
+	/// </remarks>
+	[Fact]
+	public void TheCloneArrivesFightingWhoeverItLandedOn()
+	{
+		var (harness, boss, raid) = Engaged(AurelianDadar, 80, raidSize: 1);
+		using BossAiHarness _h = harness;
+
+		// The clone timer first fires at ten seconds; the provoke is deferred a tick past that.
+		Advance(harness, boss, raid, 12);
+
+		Npc clone = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Clone));
+		Assert.Equal(AIState.FIGHT, clone.GetAi().GetState());
+		Assert.Same(raid[0], clone.GetTarget());
+		Assert.True(clone.GetAggroList().GetHate(raid[0]) >= 2,
+			$"one point is what it would aggro on its own; the flag adds retail's own on top: "
+			+ $"{clone.GetAggroList().GetHate(raid[0])}");
 	}
 }

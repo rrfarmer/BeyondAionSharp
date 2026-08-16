@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
@@ -325,5 +326,48 @@ public sealed class TiamatsIncarnationAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(6));
 		Assert.Equal(0, Count(harness, BurrowingAttack));
+	}
+
+	/// <summary>
+	/// Fissurefang's power-attack earthquake arrives <b>already fighting the tank</b>, with ten million
+	/// hate — retail's way of saying it will not peel. Its area-attack twin does not, and neither of
+	/// the other two incarnations carries the flag anywhere.
+	/// </summary>
+	/// <remarks>
+	/// The class used to say this was left to the add's own aggressive AI, which is a different thing:
+	/// aggression picks up whoever wanders into range after its own delay, where the flag locks the
+	/// hazard onto the player it was dropped on the moment it lands. State and target are what is
+	/// observed — hate added against a creature unaware of the attacker does not survive our aggro
+	/// rules.
+	/// </remarks>
+	[Fact]
+	public void FissurefangsEarthquakeArrivesFightingTheTank()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, Fissurefang);
+		Player tank = harness.SpawnPlayer(472f, 512f, 418f);
+		harness.Engage(boss, tank);
+
+		// The power attack lands at three seconds; the provoke is deferred one tick past that.
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+
+		Npc quake = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == CavityOfEarth));
+		Assert.Equal(AIState.FIGHT, quake.GetAi().GetState());
+		Assert.Same(tank, quake.GetTarget());
+	}
+
+	/// <summary>Graviwing's whirlpool does not: its pattern writes the flag FALSE throughout.</summary>
+	[Fact]
+	public void GraviwingsWhirlpoolArrivesInert()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, Graviwing);
+		Player tank = harness.SpawnPlayer(472f, 512f, 418f);
+		harness.Engage(boss, tank);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+
+		Npc whirl = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == GravityWhirlpool));
+		Assert.NotEqual(AIState.FIGHT, whirl.GetAi().GetState());
 	}
 }

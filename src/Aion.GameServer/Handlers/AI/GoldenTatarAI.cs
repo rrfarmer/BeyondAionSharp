@@ -68,9 +68,20 @@ public class GoldenTatarAI : PatternAi
     /// <summary>Every one of the three lands within fifty metres of it, on the aggro list.</summary>
     private const float InRange = 50f;
 
+    /// <summary>
+    /// Retail gives all three <c>attack_target_after_spawn</c> with one hate point: each arrives
+    /// already fighting the player it was dropped on rather than waiting to be walked into.
+    /// </summary>
+    /// <remarks>
+    /// One point is nothing as a threat lead, and that is the design — an avatar, an eye or a pool of
+    /// magma that engages the person under it is a thing that has to be answered, and it will follow
+    /// whoever takes it off them a swing later.
+    /// </remarks>
+    private const int OnArrival = 1;
+
     private static PatternAction LavaBurst() =>
         Do.SpawnOnEachTarget(Lava, Adds, InRange, maxTargets: 6, MultiTargetOrder.Random,
-            range: 1f, liveSeconds: 60);
+            range: 1f, liveSeconds: 60, attackHate: OnArrival);
 
     /// <summary>The four lava steps differ only in their threshold and their one-shot flag.</summary>
     private static PatternBranch LavaStep(int priority, int below, int flag)
@@ -93,14 +104,14 @@ public class GoldenTatarAI : PatternAi
             // --- the clone, below 85 ----------------------------------------------------------------
             Branch(14, "Search", [When.HpBelow(85), When.Timer(4)],
                 Do.SpawnOnEachTarget(Clone, Adds, InRange, maxTargets: 8, MultiTargetOrder.Descending,
-                    range: 20f, liveSeconds: 60),
+                    range: 20f, liveSeconds: 60, attackHate: OnArrival),
                 Do.ArmTimer(4, AfterFiring)),
             Branch(13, "Search_Repeat", [When.Timer(4)], Do.ArmTimer(4, Recheck)),
 
             // --- the paralysis eye, below 60 --------------------------------------------------------
             Branch(12, "ParalyzeEye", [When.HpBelow(60), When.Timer(5)],
                 Do.SpawnOnEachTarget(ParalysisEye, Adds, InRange, maxTargets: 2, MultiTargetOrder.Random,
-                    range: 2f, liveSeconds: 30),
+                    range: 2f, liveSeconds: 30, attackHate: OnArrival),
                 Do.ArmTimer(5, AfterFiring)),
             Branch(11, "ParalyzeEye_Repeat", [When.Timer(5)], Do.ArmTimer(5, Recheck)),
 
