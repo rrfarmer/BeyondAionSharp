@@ -3544,3 +3544,50 @@ asserting something weaker than it claimed. The branch's existence is what the a
 10014 against; the twenty-metre figure rests on the pattern dump alone.
 
 **Verification.** Full suite 1,314 passing and 1 skipped.
+
+---
+
+## Measuring the other axis: retail messages we never implemented
+
+`audit_ai_messages.py` checks our classes against each other. It cannot see an encounter
+that is wired to itself correctly while missing half of what retail does.
+`audit_retail_messages.py` is that second axis: for every class whose doc names a retail
+pattern, which of that pattern's message handlers do we never touch?
+
+**Fifty-four, across twenty-two ported classes.** Split by why:
+
+| verdict | count | meaning |
+|---|---|---|
+| `acts` | 40 | a handler that spawns, moves or arms a timer, or a broadcast something in retail really does listen for |
+| `cast-only` | 14 | every action in the retail branch is a `use_skill`, and this work does not translate casts it cannot map |
+| `unheard` | **0** | a broadcast nothing anywhere in retail listens for |
+
+### The zero is the finding
+
+The tool was built expecting most omitted broadcasts to be announcements — shouts to the
+client with no in-game listener, harmless to drop. **There are none.** Every message our
+ported patterns broadcast is listened for by some pattern in the corpus. Retail does not
+appear to broadcast decoratively.
+
+That reframes fourteen omissions in this log described as "a broadcast nothing listens
+for". They have no listener *in our server*, which is true, and a listener in retail, which
+is the part that was assumed rather than checked. The gateway guards' four rung
+announcements (6301-6304) are the clearest case: written up as announcements, and something
+in retail is waiting for each.
+
+### The tool's own first mistake, recorded
+
+It first classified a broadcast by what its own branch does, so a shout sitting in a branch
+that also spawns counted as a real gap — every gateway-guard rung lit up. A broadcast that
+sits beside a spawn still only broadcasts. It now classifies sends by whether *anything in
+the corpus listens*, which is the question that actually matters.
+
+### What to do with it
+
+Not fix all forty. Triage: for each, find the pattern that listens and decide whether that
+NPC is content we have. That is the same shape as the adds backlog and wants the same
+discipline — the audit ranks, a per-item check decides.
+
+The largest clusters are `KistenianAI` (5), the two gateway guards (4 each), `LordLannokAI`
+and `SuspiciousCoffinAI` (3 each, both predating this work), and `MiddleBossFireAI` (5,
+all `cast-only`).
