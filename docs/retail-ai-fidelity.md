@@ -7302,3 +7302,19 @@ twin protectors' call site and Hokuruki's swing counting.
 
 **Verification.** Full suite 1,632 passing and 1 skipped; six new pins on this family, twenty in the
 file; six mutations, all caught. `audit_ai_messages.py` pairs 3319 and is otherwise unchanged.
+
+### And the message audit could not read a guard clause
+
+`audit_ai_messages.py` reported 3319 as a broadcast with no listener while `ExedilGhostAI` sat there
+listening for it. The listener is written as an early-return guard —
+`if (messageType != ExedilAI.TrueForm || IsDead()) return;` — and the scan read only `==`.
+
+Fixing it to accept both senses cleared **two** findings, not one. The other was **6980**: Macunbello
+answers his soul reapers through the same guard shape, and the audit had been calling that pairing
+broken since the day it was written. Unpaired count 9 → **7**, and both halves of every remaining
+finding are genuinely absent.
+
+Second time this audit has been widened after reporting correct code — `case` last time, `!=` now.
+Both were the same underlying mistake: **assuming a listener declares itself the way the last one
+did.** The listener shapes it now knows are `When.Message`, a `case` label, and a comparison in
+either direction inside `OnNpcMessage`.

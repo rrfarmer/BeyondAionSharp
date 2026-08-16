@@ -45,7 +45,11 @@ CASE_RE = re.compile(r"case\s+([\w.]+)\s*:")
 # A listener for a single message is written as a comparison, not a switch. Reading only `case`
 # reported IDSweepStageAddAI's sender as unpaired against a listener sitting right there, which is
 # the false negative this whole audit exists to prevent.
-EQ_RE = re.compile(r"(?:messageType\s*==\s*([\w.]+)|([\w.]+)\s*==\s*messageType)")
+#
+# Both senses count. ExedilGhostAI writes its listener as an early-return guard --
+# `if (messageType != ExedilAI.TrueForm) return;` -- which declares the message it handles exactly as
+# firmly as an `==` does, and reading only `==` reported that one unpaired too.
+EQ_RE = re.compile(r"(?:messageType\s*[!=]=\s*([\w.]+)|([\w.]+)\s*[!=]=\s*messageType)")
 ON_MESSAGE_RE = re.compile(r"void OnNpcMessage\([^)]*\)\s*\{", re.S)
 SEND_RES = (
     re.compile(r"Do\.Broadcast\(([\w.]+)"),
