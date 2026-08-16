@@ -2070,3 +2070,85 @@ eleven mutations caught. Two pins were added because mutation testing showed the
 originals could not see the difference: *exactly one hand left* (the only count
 that tells `>=` from `>`) and *who he breathes fire at* (self while healthy, at the
 target below 65 — same skill, two regimes).
+
+---
+
+## Derakanak the Reaver — an eighteen-branch rotation nobody could see
+
+**NPC:** derakanak the reaver (233258, HERO). **Pattern:** `IDVritra_Base_Drake_Nmd`.
+**Instance:** Sauro Supply Base (301130000). Was on plain `aggressive`.
+
+He spawns **no adds**, which is why the missing-adds sweep could never surface him:
+there was no absent NPC to count. The whole fight was simply not there, and he
+auto-attacked with whatever his skill probabilities happened to roll.
+
+Three regimes, each its own timer chain, entered by one-shot branches on the
+heartbeat:
+
+| regime | chain | opens with |
+|---|---|---|
+| 81-100 | T1 → T2 → T3 → T4 → T1, 10s a step | — |
+| below 80 | T5 → T6 → T7 → T8 → T9 → T5 | the fear pair |
+| below 40 | T10 → T11 → T12 → T13 → T14 | the fear pair again |
+
+The phase-three tail alternates through a flag: one pass through T14 hops back to
+T11 with a fireball, the next loops the whole way back to T10 and re-casts the fear
+pair.
+
+### Skill indices — the cleanest mapping so far
+
+Seven indices against a twelve-entry list, and the branch comments name **five of
+them outright**, one each, with no ambiguity:
+
+| idx | comment | skill |
+|---|---|---|
+| 0 | 마법구 "magic orb" | 16987 Large Magic Missile |
+| 1 | 화염 | 16574 **Flame** |
+| 2 | 불꽃뿜기 | 16918 **Flame Spurt** |
+| 3 | 강력한 화염 "powerful flame" | 16919 Fireball |
+| 4 | 공포발산 | 17888 **Fear Casting** |
+| 5 | 축복의 저주 | 16702 **Curse of Blessing** |
+| 6 | 공황유발 | 20782 **Fearful Panic** |
+
+The five bold rows are exact name matches. That leaves "magic orb" for Large Magic
+Missile and "powerful flame" for Fireball — the only other flame debuff, and the
+stronger of the pair. The five unaddressed skills stay on their probabilities,
+which is what retail does with them too.
+
+**One comment disagrees with its own branch.** Step 5 is commented 마법구 but casts
+index 2, Flame Spurt, where its three sibling 마법구 steps all cast index 0. The
+action is what runs, so the action is what is reproduced; the comment reads like a
+copy-paste from the step above it.
+
+### Two seams worth knowing
+
+**Phase three kills the heartbeat.** It is the only phase branch that does not
+re-arm timer 0 — its own chain is self-sustaining. The consequence: a boss taken
+straight past 40% never gets another timer-0 tick, so **phase two is locked out for
+the rest of the fight**. Pinned.
+
+**Exactly 80 matches nothing.** The healthy chain wants 81 or better and phase two
+wants strictly below 80, so at 80 no step matches at all and only the heartbeat
+keeps him going until he loses another point. Same class as the Ophidan Bridge fire
+bosses at 40.
+
+**Nothing is left untranslated.** Every branch, every cast and every target of this
+pattern is ported.
+
+### A harness bug this found, and an engine quirk it did not
+
+`BossAiHarness.SetHpPercent` floors on the way in and `GetHpPercentage` truncates a
+float on the way out, so **asking for 80 lands on 79**. Invisible mid-band, fatal at
+a seam: the "exactly 80" test was silently testing 79 and passing for the wrong
+reason. These tests now set health through a helper that asserts the AI reads back
+the percentage asked for.
+
+Chasing that turned up something that looks like a bug and is not: `GetHpPercentage`
+computes `100f * currentHp / maxHp`, and above roughly 167k HP the single-precision
+product loses enough that **full health reads 99, not 100**. The Java reference has
+the *identical* expression, so per the golden rule it stays — this is a faithful
+port of an aionemu quirk, not a porting slip. Worth knowing before writing any
+`HpBetween(x, 100)` test: use 90 for "healthy".
+
+**Verification.** Full suite 1,167 passing and 1 skipped; nine new pins; all nine
+mutations caught.
