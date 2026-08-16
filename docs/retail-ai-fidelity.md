@@ -5899,3 +5899,55 @@ one subordinate in and back out again with its egg.
 
 **Verification.** Full suite 1,477 passing and 1 skipped; eleven new pins; twelve mutations
 caught, one build-broken, one recorded above as inert.
+
+## The duke's gate was pouring out the wrong guards
+
+`IDAB_Reward_Item_NoShowNPC_09`, npc 284978 — and this one was not a missing mechanic but a
+**live wrong one**.
+
+The fortress duke opens an illusion gate, and one abyss chief's last reinforcement band calls
+the same gate. It already carried `ai_name="illusion_gate"`, so it already ran
+<see cref="IllusionGateAI"/> — a class written for the *other* illusion gate, 281226, with one
+hardcoded guard set. The duke's gate opened and the **awakened chamber lord's** warguard,
+bowguard and aetherguard came through it. Its own three (284979, 284980, 284981) were in
+nobody's reach, which is how the audit found it.
+
+The two patterns are the same mechanic with the same clock — five seconds to a warguard and an
+aetherguard, thirty more to a bowguard and two aetherguards, five more and the gate closes —
+and a different set of ids, so the class is now a two-row table.
+
+**The trap is worth naming: a shared `ai_name` is not a shared guard list.** From inside the
+class everything looked right; nothing but reading the second pattern showed that the ids
+differ. Every AI keyed by name rather than by npc id has this exposure, and the audit only
+catches it when the unreachable ids happen to be somebody's adds.
+
+**Where the count went.** 463 across 353 encounters → **460 across 352**.
+
+### Researched and deliberately not ported: the Ophidan Bridge runaway
+
+`BIDF5_U01_Ctrl_01` (856054) was next on the list and is left alone on purpose, with the
+reasoning here so nobody re-derives it.
+
+It is an invisible controller that on waking rolls one of three HERO fugitives — escapee
+asachin, runaway hirakiki, fugitive mazikin — at its own mark, puts two check NPCs on fixed
+coordinates, and removes itself. That much is a twenty-line class.
+
+**What stops it is the chain around it.** Our spawn file has the controller and *fifteen* other
+runaway spawns **commented out** in `300590000_Ophidan_Bridge.xml` — the fugitives at four
+checkpoints in three class flavours. Reading the rest of the chain says why that is not just a
+matter of uncommenting:
+
+- the check NPCs (856062) run `BIDF5_U01_Ctrl_07`, which listens for **message 10800** and
+  spawns despawn-NPCs at two marks. Nothing in our tree sends 10800;
+- each fugitive's own pattern sets `mboss_spawn` to one of four values and `ra_as_spawn` — 
+  **condition spawn variables**, which are instance-script state we do not model at all;
+- the fugitive moves between the four checkpoints, which is the walk-route blocker again.
+
+Porting the controller alone would put a HERO boss and two inert invisible NPCs into a live
+instance, and would move three rows out of the backlog while nothing worked — the same
+"the number moved before anything ran" failure recorded against the generated guard table.
+**What it needs first is condition-variable support and the message bus reaching instance
+scripts**, not another AI class.
+
+**Verification.** Full suite 1,480 passing and 1 skipped; three new pins; four mutations, three
+caught and one inert (a fallback branch no live gate id can reach).

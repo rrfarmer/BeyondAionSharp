@@ -122,4 +122,75 @@ public sealed class IllusionGateAiTests
 
 		Assert.False(gate.IsSpawned());
 	}
+
+	/// <summary>The fortress duke's gate — the same mechanic, its own three guards.</summary>
+	private const int DukesGate = 284978;
+	private const int DukesWarguard = 284979;
+	private const int DukesBowguard = 284980;
+	private const int DukesAetherguard = 284981;
+
+	private static (BossAiHarness, Npc, Player) DukesGateEngaged()
+	{
+		BossAiHarness harness = BossAiHarness.For(KrotanChamber).WithWorldSize(2048)
+			.WithAi(typeof(IllusionGateAI), typeof(AggressiveNpcAI)).Build();
+		Npc gate = harness.Spawn(DukesGate, 526f, 845f, 190f);
+		Player player = harness.SpawnPlayer(528f, 847f, 190f);
+		harness.Engage(gate, player);
+		return (harness, gate, player);
+	}
+
+	/// <summary>
+	/// The duke's gate pours out <b>its own</b> guards, not the chamber lord's.
+	/// </summary>
+	/// <remarks>
+	/// It was pouring out the chamber lord's. Both gates carry the same <c>ai_name</c> and the class
+	/// had one hardcoded set, so 284978 opened and 281227/281228/281229 came through — while its own
+	/// three were in nobody's reach. A shared AI name is not a shared guard list.
+	/// </remarks>
+	[Fact]
+	public void TheDukesGatePoursOutItsOwnGuards()
+	{
+		var (harness, gate, player) = DukesGateEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, gate, player, 6);
+
+		Assert.Equal(1, Count(harness, DukesWarguard));
+		Assert.Equal(1, Count(harness, DukesAetherguard));
+		Assert.Equal(0, Count(harness, Warguard));
+		Assert.Equal(0, Count(harness, Aetherguard));
+	}
+
+	/// <summary>And its second wave is its own too — a bowguard and two more aetherguards.</summary>
+	[Fact]
+	public void TheDukesGatesSecondWaveIsItsOwn()
+	{
+		var (harness, gate, player) = DukesGateEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, gate, player, 36);
+
+		Assert.Equal(1, Count(harness, DukesBowguard));
+		Assert.Equal(3, Count(harness, DukesAetherguard));
+		Assert.Equal(0, Count(harness, Bowguard));
+	}
+
+	/// <summary>Its timings are the chamber lord gate's: five seconds, thirty more, then it closes.</summary>
+	[Fact]
+	public void TheDukesGateKeepsTheSameClock()
+	{
+		var (harness, gate, player) = DukesGateEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, gate, player, 4);
+		Assert.Equal(0, Count(harness, DukesWarguard));
+
+		Advance(harness, gate, player, 2);
+		Assert.Equal(1, Count(harness, DukesWarguard));
+
+		// Five seconds after the second wave the gate itself closes, leaving the guards behind.
+		Advance(harness, gate, player, 35);
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == DukesGate);
+		Assert.Equal(1, Count(harness, DukesBowguard));
+	}
 }

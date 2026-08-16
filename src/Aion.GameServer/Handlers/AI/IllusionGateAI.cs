@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
@@ -6,8 +7,9 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// The illusion gate (281226) the awakened chamber lords open below 25%. Retail pattern
-/// <c>BGuard_DrGateChiefD</c>.
+/// The two illusion gates: the one the awakened chamber lords open below 25% (281226,
+/// <c>BGuard_DrGateChiefD</c>) and the one the fortress duke and the abyss chief open
+/// (284978, <c>IDAB_Reward_Item_NoShowNPC_09</c>).
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md. Found only because porting
@@ -38,15 +40,41 @@ namespace Aion.GameServer.Handlers.AI;
 /// in detail.
 /// </para>
 /// <para>
-/// <b>Not translated:</b> nothing. This pattern casts no skills and every branch is here.
+/// <b>The second gate was pouring out the wrong guards.</b> 284978 already carried this AI name, and
+/// the class had one hardcoded guard set — so the duke's gate opened and the <em>chamber lord's</em>
+/// warguard, bowguard and aetherguard came through it. Its own three (284979, 284980, 284981) were in
+/// nobody's reach, which is how the audit found it. The two patterns are the same mechanic with the
+/// same timings and a different set of ids, so the class is now a two-row table.
+/// <para>
+/// Worth naming the trap: a shared <c>ai_name</c> is not a shared guard list. Only reading the second
+/// pattern showed that the ids differ, and the class looked correct from the inside either way.
+/// </para>
+/// </para>
+/// <para>
+/// <b>Not translated:</b> nothing. Neither pattern casts a skill and every branch is here.
 /// </para>
 /// </remarks>
 [AIName("illusion_gate")]
 public class IllusionGateAI : PatternAi
 {
-    private const int Warguard = 281227;
-    private const int Bowguard = 281228;
-    private const int Aetherguard = 281229;
+    /// <summary>What one gate pours out. Every gate's set is a warguard, a bowguard and an aetherguard.</summary>
+    private readonly record struct Guardians(int Warguard, int Bowguard, int Aetherguard);
+
+    private static readonly Dictionary<int, Guardians> ByGate = new Dictionary<int, Guardians>
+    {
+        // BGuard_DrGateChiefD -- the awakened chamber lords' gate.
+        [281226] = new Guardians(281227, 281228, 281229),
+
+        // IDAB_Reward_Item_NoShowNPC_09 -- the fortress duke's, and one abyss chief's last call.
+        [284978] = new Guardians(284979, 284980, 284981),
+    };
+
+    /// <summary>A gate whose id is not in the table pours out nothing rather than somebody else's set.</summary>
+    private static PatternAction Pour(System.Func<Guardians, int> which, int count) => ai =>
+    {
+        if (ByGate.TryGetValue(ai.GetOwner().GetNpcId(), out Guardians guards))
+            ai.SpawnNear(which(guards), Guards, count: count, range: AtTheGate, liveSeconds: GuardLife);
+    };
 
     /// <summary>Everything it pours out, cleared together if the fight ends.</summary>
     private const int Guards = 1;
@@ -66,13 +94,13 @@ public class IllusionGateAI : PatternAi
         OnBattleTimer = Of(
             Branch(3, "first pair", [When.Timer(0)],
                 Do.ArmTimer(1, 30000),
-                Do.SpawnNear(Warguard, Guards, count: 1, range: AtTheGate, liveSeconds: GuardLife),
-                Do.SpawnNear(Aetherguard, Guards, count: 1, range: AtTheGate, liveSeconds: GuardLife)),
+                Pour(g => g.Warguard, 1),
+                Pour(g => g.Aetherguard, 1)),
 
             Branch(2, "second wave", [When.Timer(1)],
                 Do.ArmTimer(2, 5000),
-                Do.SpawnNear(Bowguard, Guards, count: 1, range: AtTheGate, liveSeconds: GuardLife),
-                Do.SpawnNear(Aetherguard, Guards, count: 2, range: AtTheGate, liveSeconds: GuardLife)),
+                Pour(g => g.Bowguard, 1),
+                Pour(g => g.Aetherguard, 2)),
 
             // The gate closes behind them; the guards it left stay.
             Branch(1, "close", [When.Timer(2)],
