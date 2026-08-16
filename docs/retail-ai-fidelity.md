@@ -2484,3 +2484,53 @@ signal as evidence of reachable content without checking what it pointed at.
 by name (충격파 → Shock Wave, 파멸의 이드분열 → Ide Destruction, and 쾌속의 일격 [랜덤]
 → the 21562/21565 random three-chain). The other ten have no match, so even the real
 277224 could not have its casts translated from this pattern.
+
+---
+
+## Prectaz — eight tentacles, and a branch that can never run
+
+**NPC:** prectaz (219934), Enshar world boss, LEGENDARY, on plain `aggressive`.
+**Pattern:** `DF5_ItemNamed_24_SSH`. Both tentacle types are **HERO**-rated and
+neither was spawned by anything anywhere.
+
+Below 35% it puts out eight at once, on a fifty-second life:
+
+| npc | where |
+|---|---|
+| 855911 | the four cardinals, eighteen metres out |
+| 856067 | the four diagonals, ten metres out |
+
+Three bands, each a T0 → T1 → T2 → T3 → T5 → T0 loop: 10/11/14/10/14 above 85,
+14/17/14/10/10 between 35 and 85, and 25/10/14/10/14 below 35 where the first step is
+the summon. That last works out at about seventy-nine seconds a cycle, so there is a
+real gap — the first set expires at fifty-six — with nothing on the field.
+
+### A dead branch
+
+Retail writes the summon **twice**, with identical guards: same timer, same health
+test, no probability on either. The two differ only in geometry — the higher-priority
+one puts the cardinals at eighteen and the diagonals at ten, the lower one swaps them.
+First-match-wins means the second can never run, so only the first arrangement is
+translated, and a test pins the distances specifically. The same duplication appears
+in the message handlers, where two branches both answer message 55003.
+
+### Not translated
+
+- **The casts.** Eight indices addressed, **five** skills in our `npc_skills`. The
+  chains above 35 are kept regardless — as Gatekeeper Flox's were, unlike the Golden
+  Tatars' — because they are what brings timer 0 round, and timer 0 below 35 is where
+  the tentacles come from.
+- **Timer 10**, a three-second heartbeat broadcasting message 100001 to tentacles
+  whose own pattern is not ported. A forever-ticking timer with no listener, so it is
+  not armed.
+- **`on_message` 55001-55003**, where the tentacles call and he answers with a frontal
+  attack toward the caller — indices 7 and 3, both unresolvable.
+- **Index 0**, the spawn buff, and **timer 4**, which three branches arm and none answers.
+
+**Verification.** Full suite 1,222 passing and 1 skipped; nine pins; all eight
+mutations caught — but only after three rounds. The first pass missed the looping step
+in both upper bands and the summon's period entirely; the second pass added tests for
+them whose arithmetic was wrong, landing the assertion exactly on the tentacles'
+expiry. The lesson worth keeping: **a "fought down from full" test only exercises the
+band's looping step if the health drop comes after a complete lap** — drop it earlier
+and the low chain picks the sequence up mid-flight, and the missing step never shows.
