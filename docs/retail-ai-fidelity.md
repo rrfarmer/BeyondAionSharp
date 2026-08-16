@@ -6617,3 +6617,44 @@ calamity is already placed by Beshmundir Temple's spawn file. This is a boss tha
 rather than an add nobody could reach.
 
 **Verification.** Full suite 1,548 passing and 1 skipped; six new pins; five mutations, all caught.
+
+## Three ND2 named bosses, and a summon branch with no health guard
+
+Exedil, Ulan and RM-13b — three named bosses with no AI class at all, from the same `ND2_*`
+family as Frostmane Lestin. All three share a shape that had not appeared before: **summon
+branches carrying no health guard**, ordered by priority and a flag var each, so they fire as a
+*sequence* rather than as a ladder. The first heartbeat runs the highest-priority unconsumed
+branch, the second runs the next, and each fires once.
+
+| boss | what it calls |
+|---|---|
+| **Exedil** | two `PrSum2` ghosts at seven metres, then two `PrSum1` at six, both for twenty minutes — and below 25%, two more `PrSum2` at six metres with **no lifetime at all** |
+| **Ulan** | three ghosts at ten metres for **forty** minutes, then three others at ten for **ten** |
+| **RM-13b** | two pretorians at five metres, and below 30% three more, both lasting a minute |
+
+**Exedil's deep rung stops his clock, and it is retail's own doing.** It is the only one of his
+three branches that does not re-arm timer 0. So a boss taken below twenty-five percent before his
+first heartbeat calls two permanent ghosts and then *never summons again* — the two twenty-minute
+pairs are skipped entirely. Reproduced rather than tidied, and pinned: the branch that stops the
+clock is as much part of the fight as the ones that keep it running.
+
+**Ulan's asymmetry is the kind a port flattens without noticing:** his two steps are identical
+except that one pair stays forty minutes and the other ten. A single `GhostLife` constant would
+have read perfectly well and been wrong.
+
+### A harness limitation, worked around rather than papered over
+
+Exedil's ghosts are `servant` NPCs that cast at whoever is in reach, and a cast into the harness's
+stand-in player takes the effect engine down — the same limitation that bounds the Shadowshift
+pins to eleven seconds. Here it was avoidable: the pin stands the player sixty metres back, out of
+the ghosts' reach, and the summoning is then observable for as long as it needs. Worth recording as
+a technique, because it is cheaper than the alternatives when what is being pinned is *what the
+boss spawns* rather than what the adds do.
+
+**Where the counts went.** Missing-AI 732 → **729**; adds backlog 445 across 338 → **443 across
+337**.
+
+**Not translated** on any of the three: nineteen skill indices between them, on timers 1 through 6,
+none of which carries a spawn.
+
+**Verification.** Full suite 1,554 passing and 1 skipped; six new pins; nine mutations, all caught.
