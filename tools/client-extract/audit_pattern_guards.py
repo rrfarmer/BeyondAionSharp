@@ -72,6 +72,10 @@ from audit_missing_adds import PATTERN_RE, NAME_RE, read_text
 from audit_hp_phases import load_binding
 
 AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
+# `RagingKraterrAI` builds its pattern from `ElementalSummonerPattern.For(...)`, declared in another
+# file entirely. Reading only the class and its own preamble reported all three of its bands missing.
+DELEGATE_RE = re.compile(r"\b(\w+)\.\w+\(")
+DECLARES_RE = re.compile(r"\b(?:static\s+)?class\s+(\w+)")
 HPBETWEEN_RE = re.compile(r"When\.HpBetween\((\d+),\s*(\d+)\)")
 HPBELOW_RE = re.compile(r"When\.HpBelow\((\d+)\)")
 BOUND_RE = re.compile(
@@ -185,10 +189,18 @@ def main() -> None:
     for npc_id, ai in re.findall(r'<npc_template npc_id="(\d+)"[^>]*?ai="([^"]+)"', tpl):
         by_ai[ai].append(npc_id)
 
+    # Where each helper type is declared, so a class that delegates its pattern can be read with it.
+    ai_paths = sorted((repo / "src/Aion.GameServer/Handlers/AI").rglob("*.cs"))
+    sources = {path: read_text(path) for path in ai_paths}
+    declared: dict[str, str] = {}
+    for path, text in sources.items():
+        for name in DECLARES_RE.findall(text):
+            declared.setdefault(name, text)
+
     checked = 0
     rows = []
-    for path in sorted((repo / "src/Aion.GameServer/Handlers/AI").rglob("*.cs")):
-        text = read_text(path)
+    for path in ai_paths:
+        text = sources[path]
         if "PatternAi" not in text:
             continue
 
@@ -197,6 +209,10 @@ def main() -> None:
         # missing band, which is exactly the confusion this audit is meant to remove.
         for ai_name, own, preamble in classes(text):
             body = own + preamble
+            # Follow whatever the class delegates its pattern to, wherever that is declared.
+            for helper in set(DELEGATE_RE.findall(own)):
+                if helper in declared and declared[helper] is not text:
+                    body += declared[helper]
             ours_bands = {(int(lo), int(hi)) for lo, hi in HPBETWEEN_RE.findall(body)}
             ours_below = {int(p) for p in HPBELOW_RE.findall(body)}
 

@@ -40,14 +40,26 @@ namespace Aion.GameServer.Handlers.AI;
 /// as Padmarashka's cast-only step does.
 /// </para>
 /// </remarks>
-[AIName("frostmane_lestin")]
-public class FrostmaneLestinAI : PatternAi
+/// <summary>
+/// The fight the two Beluslan elemental bosses share. Retail patterns <c>ND2_ElementalSu</c> and
+/// <c>ND2_ElementalSu2</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. The two patterns are <b>numerically identical</b> —
+/// same bands, same timer slots, same delays, same counts, same ranges, same lifetime — and differ only
+/// in which three elementals each calls. So the structure lives here and the ids live with each boss,
+/// which is the same split <see cref="GuardReinforcementPatterns"/> uses.
+/// <list type="bullet">
+/// <item>entering combat arms the heartbeat at ten seconds</item>
+/// <item>66–90 calls four, twelve metres out; 41–65 and 21–40 each call four more fifteen metres out
+/// and <b>take the previous wave away</b></item>
+/// <item>below twenty it summons nothing at all, and still spends the tick</item>
+/// <item>every summoning rung broadcasts the order — see <see cref="ElementalWaveAI"/></item>
+/// <item>leaving the fight or dying clears all three groups</item>
+/// </list>
+/// </remarks>
+internal static class ElementalSummonerPattern
 {
-    // BDF2_NM_ElementalAir_Su1/Su2/Su3_40_Ae. Three waves, three different elementals.
-    private const int FirstWave = 280489;
-    private const int SecondWave = 280490;
-    private const int ThirdWave = 280491;
-
     // Retail's SPAWN_ID_1..3, one per wave, so each can clear the one before it.
     private const int Group1 = 1;
     private const int Group2 = 2;
@@ -70,7 +82,11 @@ public class FrostmaneLestinAI : PatternAi
     private const int RungReArmMillis = 9000;
     private const int IdleMillis = 6000;
 
-    private static readonly AiPattern Pattern_ = new AiPattern
+    /// <summary>
+    /// One boss's fight, given the three elementals it calls. Named <c>For</c> rather than <c>Of</c>
+    /// so it does not shadow <see cref="AiPattern.Of"/>, which its own branches use.
+    /// </summary>
+    internal static AiPattern For(int firstWave, int secondWave, int thirdWave) => new AiPattern
     {
         OnEnterAttack = Of(
             Branch(12, "", When.Always,
@@ -85,20 +101,20 @@ public class FrostmaneLestinAI : PatternAi
             Branch(6, "21-40", [When.Timer(0), When.HpBetween(21, 40), When.FirstTime(Below41)],
                 Do.ArmTimer(0, RungReArmMillis),
                 Do.Despawn(Group2),
-                Do.SpawnNear(ThirdWave, Group3, count: PerWave, range: LaterRing, liveSeconds: WaveLife),
+                Do.SpawnNear(thirdWave, Group3, count: PerWave, range: LaterRing, liveSeconds: WaveLife),
                 Do.Broadcast(ElementalWaveAI.OrderMessage, ElementalWaveAI.OrderRange, aboutTarget: true),
                 Do.SwitchTarget(AggroTarget.LOWEST_HP)),
 
             Branch(4, "41-65", [When.Timer(0), When.HpBetween(41, 65), When.FirstTime(Below66)],
                 Do.ArmTimer(0, RungReArmMillis),
                 Do.Despawn(Group1),
-                Do.SpawnNear(SecondWave, Group2, count: PerWave, range: LaterRing, liveSeconds: WaveLife),
+                Do.SpawnNear(secondWave, Group2, count: PerWave, range: LaterRing, liveSeconds: WaveLife),
                 Do.Broadcast(ElementalWaveAI.OrderMessage, ElementalWaveAI.OrderRange, aboutTarget: true),
                 Do.SwitchTarget(AggroTarget.LOWEST_HP)),
 
             Branch(3, "66-90", [When.Timer(0), When.HpBetween(66, 90), When.FirstTime(Below90)],
                 Do.ArmTimer(0, RungReArmMillis),
-                Do.SpawnNear(FirstWave, Group1, count: PerWave, range: FirstRing, liveSeconds: WaveLife),
+                Do.SpawnNear(firstWave, Group1, count: PerWave, range: FirstRing, liveSeconds: WaveLife),
                 Do.Broadcast(ElementalWaveAI.OrderMessage, ElementalWaveAI.OrderRange, aboutTarget: true)),
 
             Branch(1, "", [When.Timer(0)],
@@ -113,6 +129,18 @@ public class FrostmaneLestinAI : PatternAi
             Branch(11, "", When.Always,
                 Do.Despawn(Group1), Do.Despawn(Group2), Do.Despawn(Group3))),
     };
+}
+
+[AIName("frostmane_lestin")]
+public class FrostmaneLestinAI : PatternAi
+{
+    // BDF2_NM_ElementalAir_Su1/Su2/Su3_40_Ae. Three waves, three different elementals.
+    private const int FirstWave = 280489;
+    private const int SecondWave = 280490;
+    private const int ThirdWave = 280491;
+
+    private static readonly AiPattern Pattern_ =
+        ElementalSummonerPattern.For(FirstWave, SecondWave, ThirdWave);
 
     public FrostmaneLestinAI(Npc owner)
         : base(owner)

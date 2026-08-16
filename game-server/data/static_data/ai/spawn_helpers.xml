@@ -59,20 +59,10 @@
 		</summons>
 	</ai>
 	<!-- Raging Kraterr -->
-	<ai npcId="211715">
-		<summons>
-			<percentage percent="90" skillId="18389">
-				<summonGroup npcId="280333" minCount="2" maxCount="5" distance="10" schedule="4"/>
-			</percentage>
-			<percentage percent="70" skillId="18389">
-				<summonGroup npcId="280333" minCount="2" maxCount="5" distance="10" schedule="4"/>
-			</percentage>
-			<percentage percent="40" skillId="18389">
-				<summonGroup npcId="280333" minCount="2" maxCount="5" distance="10" schedule="4"/>
-			</percentage>
-			<percentage percent="25" skillId="18390"/>
-		</summons>
-	</ai>
+	<!-- Raging kraterr (211715) ran here until his retail pattern ND2_ElementalSu was translated;
+	     see RagingKraterrAI and docs/retail-ai-fidelity.md. The row is removed rather than left
+	     inert so there is one source of truth for what he summons: it named 280333 for all three
+	     waves, at the wrong thresholds, with random counts, no lifetime and no hand-over. -->
 	<!-- Spirit King Agro -->
 	<ai npcId="211908">
 		<summons>

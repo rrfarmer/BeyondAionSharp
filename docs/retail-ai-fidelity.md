@@ -7584,3 +7584,78 @@ class is even finished.
 
 **Verification.** Full suite 1,657 passing and 1 skipped; five new pins plus one harness registration
 fixed; seven mutations, all caught.
+
+## Raging kraterr, and the summon table that was an observation
+
+The fire elemental boss was the step recorded at the end of the last entry: `ND2_ElementalSu`,
+belonging to **raging kraterr** (211715) and its summoned twin (280332), and the sender
+`ElementalWaveAI` shipped without.
+
+**The two patterns are numerically identical.** Same bands, same timer slots, same delays, same
+counts, same ranges, same lifetime — Lestin's `ND2_ElementalSu2` and kraterr's `ND2_ElementalSu`
+differ only in which three elementals each calls. So the fight is now
+`ElementalSummonerPattern.For(first, second, third)` and each boss is three npc ids, the same split
+`GuardReinforcementPatterns` uses.
+
+### What the summon table got wrong, itemised
+
+He ran on `summoner`, and that table is what an observed approximation looks like:
+
+| | the table | the pattern |
+|---|---|---|
+| thresholds | 90 / 70 / 40 | bands 66–90, 41–65, 21–40 |
+| which add | **280333 all three times** | a different elemental per wave |
+| how many | two to five at random | exactly four |
+| how far | ten metres | twelve, then fifteen |
+| how long | no lifetime | ten minutes |
+| hand-over | none | each wave clears the one before it |
+| the order | none | every rung names his target |
+
+The table row is **removed** rather than left inert, so there is one source of truth for what he
+summons.
+
+### What moving him off it costs
+
+The table cast **18389** alongside each summon and **18390** at twenty-five percent, and nothing in
+the pattern runtime replaces them: this trades two casts for the right waves, lifetimes, hand-over
+and order. Stated plainly rather than buried, because it is a real loss in one dimension.
+
+### An index mapping that looked solid and was not
+
+It was tempting to resolve the pattern's `SKILLI_INDEX_0` as 18389 — aionemu casts it beside the
+summons, retail's three summoning rungs cast index 0, and both 18389 and 18390 sit at `prob="0"` in
+his `npc_skills` row, meaning they are never randomly chosen and exist only to be driven by something
+that names them. Three strands, all pointing the same way.
+
+**The skill data refuses it.** 18389 is *Fire Wave*, a `MAGICAL DEBUFF` on a `DEBUFF` slot with a
+damage-over-time stack, and retail casts index 0 on `OBJI_SELF`. A debuff is not a self-cast. What
+aionemu's table records is a cast **at the target**, which in retail lives on the other timers rather
+than on the summoning rungs.
+
+This is the skill-index audit's own rule earning its keep: passing the reach gate is necessary, not
+sufficient, and the corroborating source has to be checked rather than assumed. Two strands agreed
+and the third — the stack name — was the one that mattered.
+
+Worth keeping for whoever does resolve these: the two bosses' lists are **parallel in shape**. 18389
+and 18390 are Fire Wave and Powerful Fire Wave; Lestin's 18394 and 18395 are Small and Powerful
+Bloody Wind, with matching `...WEAKTA10_ADDREFLECT20S` / `...STRONGTA20_ADDREFLECT20S` stack names. A
+mapping established on one is evidence for the other — and they share a pattern but *not* a skill
+list, so resolving one index does not resolve the other's.
+
+### And the guard audit could not see through a shared builder
+
+Splitting the fight into `ElementalSummonerPattern` made `audit_pattern_guards.py` report all three
+of kraterr's bands as missing: the class's guards live in a builder declared in **another file**, and
+the scan read a class's own body plus its file preamble. It now follows whatever a class delegates
+to — `X.Method(` where some file declares `class X` — wherever that is declared. Third widening of
+this audit, and the same underlying mistake each time: **assuming the thing being looked for is
+written where the last one was.**
+
+Repairing it also cost a detour worth recording: the patch was applied through a shell heredoc, which
+turned `\b` into a literal backspace and left two regexes matching nothing. That trap is already in
+this log — *write patch scripts with the Write tool, not a heredoc* — and it still caught me. The
+symptom is a check that suddenly finds zero of something it used to find.
+
+**Verification.** Full suite 1,664 passing and 1 skipped; seven new pins; seven mutations, all
+caught, including the summon table's own shape (one elemental for all three waves) put back.
+`audit_pattern_guards.py` back to its two triaged findings.
