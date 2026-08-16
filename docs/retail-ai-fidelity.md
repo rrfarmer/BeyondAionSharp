@@ -7040,3 +7040,69 @@ real work.
 from fourteen; fourteen mutations, all caught — including both shipped bugs put back exactly as they
 were. Three mutations survived the first sweep (Exedil's fallback, Ulan's stopping rung, Takahan's
 hand-off) and each needed a pin that walks the fight through the rung rather than starting past it.
+
+## Triaging `audit_pattern_guards.py` down from sixteen findings to two
+
+The audit written in the previous entry reported sixteen classes. Working through them one at a time,
+**fourteen were false positives** — and every one was a distinct blind spot rather than the same one
+fourteen times. A check nobody trusts is worse than no check, so the exclusions are recorded here as
+carefully as the findings were.
+
+| what fired wrongly | why | fixed by |
+|---|---|---|
+| `GuardReinforcementAI`, `TiamatDyingRotationAI` bands | both build guards from generated tables, so the source reads `When.HpBetween(band.Low, band.High)` and no literal exists to match | skip a class whose guards are non-literal |
+| `GuardReinforcementAI` again | its whole builder lives in an `internal static class` **above** the first `[AIName]`, so per-class scoping put it in no class at all | read a class as its own body **plus the file preamble**, never a sibling's body |
+| `TahabataPyrelordAI`, `AsaratuBloodshadeAI` fallback | both had written the rung, through a local `Step(...)` helper — with a comment about this exact hazard beside it | find the rung by its guard array alone, not by what follows it |
+| `PrectazAI` fallback | matched his three-second `broadcast_message` heartbeat: a branch that re-arms a timer **and announces something** | a real fallback does *nothing* but re-arm |
+| `PrincessKaremiwenAI` fallback | she translates only her minute-long timer 8; retail's fallback sits on timer 0, a chain she does not run | record the fallback per **timer slot** and only report a slot the class reads |
+| `DarkPoetaCalindiFlamelordAI`, `DeathDropBossAI`, `AbyssGuardSimpleAI` and others | knock-on from the above | — |
+
+**The regression check is the one that matters for a tool written after the fact.** Run against the
+four pre-fix classes from the previous entry it still names every one, and now reports Exedil's
+*both* missing bands where the first version under-reported one. Precision went up and recall did not
+move.
+
+### The two that are left, and both are deliberate
+
+**`GelkmarosPadmarashkaAI`, band 61–90.** Already recorded: part of `DF4_Dramata`'s untranslated half,
+alongside its remaining timers and waypoint egg-laying.
+
+**`BergrisarAI`, bands 11–20, 21–40, 41–60, 61–80.** This one was re-examined rather than assumed,
+because the earlier decision to leave his chakras out was mine and the audit disagreed with it. The
+decision stands, and now with evidence rather than a judgement call:
+
+- His six punishment chakras (281417) are placed by `SPAWN_LOCATION_ABSOLUTE` with coordinates in the
+  pattern, so unlike the waypoint-placed bucket **we could put them exactly where retail does** — one
+  on entering the fight and one per band at 80, 60, 40, 20 and 10 percent, each on its own mark.
+- But reading the chakra's own pattern `IDTP_Keeper2` settles it: `on_wake_up` → `goto_waypoint`,
+  `on_see_user` → cast and `goto_next_waypoint`, `on_arrived_at_waypoint` → `goto_next_waypoint`,
+  and 6956 → despawn. **Its entire behaviour is the walk.** It has no combat branch at all.
+
+So placing them would put six inert twelve-thousand-HP objects around the gate chamber — content that
+looks implemented and is not, which is worse than content that is absent. The band findings stay in
+the report rather than being suppressed, because the gap is real; what is written down is why it is
+not worth closing until walk routes exist.
+
+### A message whose semantics I could not settle, and did not guess
+
+Bergrisar broadcasts **6955** to fifty metres on entering combat, as three other temple patterns do,
+with `param_obj=OBJI_SELF`. Three patterns listen:
+
+| listener | on 6955 |
+|---|---|
+| `IDTP_CyWork` (the cyclops workers) | idle → add hate on the param and attack it; already fighting → switch target to it |
+| `IDTP_NepBoss3` (pyre souls) | the same |
+| `IDTP_NepBoss2` (od nuclei) | cast `SKILLI_INDEX_0` on the param |
+
+If the param is the boss, the cyclopes and pyre souls **turn on their own master** while the nuclei
+cast on him — which reads as a buff. The two halves cannot both be right under one reading, and that
+inconsistency is the reason to stop rather than pick. Compare the Dark Poeta barricades' 3409, which
+carries `param_obj=OBJI_CUR_TARGET` and is unambiguous: "attack whoever I am fighting".
+
+What would settle it: any pattern that broadcasts with `param_obj=OBJI_SELF` to a listener whose
+action is unmistakably hostile or unmistakably friendly. Until then 6955 stays unported, which is the
+same verdict as before but now for a stated reason instead of a blocked skill index.
+
+**Verification.** Full suite unchanged at 1,601 passing and 1 skipped — this entry changes no game
+behaviour, only the tool and what is known about its output. `audit_pattern_guards.py` 16 findings →
+2, both triaged above, with the four pre-fix bugs still caught.
