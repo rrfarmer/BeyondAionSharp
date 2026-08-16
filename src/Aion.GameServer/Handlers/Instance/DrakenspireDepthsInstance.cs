@@ -302,6 +302,19 @@ public class DrakenspireDepthsInstance : GeneralInstanceHandler
         SendMsg(SM_SYSTEM_MESSAGE.STR_MSG_IDSEAL_TWIN_RESSURECT_03());
     }
 
+    /// <summary>What retail's success message leaves where a font was.</summary>
+    private const int OminousDarkness = 702769;
+
+    /// <summary>One font becoming the quest object, on the spot.</summary>
+    private void LeaveOminousDarkness(int fontId)
+    {
+        Npc font = GetNpc(fontId);
+        if (font == null)
+            return;
+
+        Spawn(OminousDarkness, font.GetX(), font.GetY(), font.GetZ(), (byte)font.GetHeading());
+    }
+
     /// <summary>One font becoming its fountless protector, on the spot.</summary>
     private void RespawnFountless(int fontId, int fountlessId)
     {
@@ -312,9 +325,22 @@ public class DrakenspireDepthsInstance : GeneralInstanceHandler
         Spawn(fountlessId, font.GetX(), font.GetY(), font.GetZ(), (byte)font.GetHeading());
     }
 
+    /// <summary>
+    /// Both twins down inside the window. Retail's success message, <c>22709</c>, does not delete the
+    /// font that is still standing — it turns it into the <b>ominous darkness</b> (702769) where it
+    /// stands, and only then removes it.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. It is the fourth and last of the font's
+    /// outcomes: 22701 makes it the Lv3 protector, 22707 the fountless Lv2, 22704/22705 bring the
+    /// guards that destroy it, and this leaves something behind. Java parity deleted the fonts and
+    /// left nothing, so a raid that won saw the same empty floor as one that had never engaged.
+    /// </remarks>
     private void OnTwinsComplete()
     {
         CancelTasks(currentEventTask, additionalEventTask);
+        LeaveOminousDarkness(855708);
+        LeaveOminousDarkness(855709);
         DeleteAliveNpcs(855708, 855709);
 
         ThreadPoolManager.GetInstance().Schedule(() =>

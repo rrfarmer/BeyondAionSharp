@@ -7915,3 +7915,58 @@ fifteen-second timer prevents by construction.
 the instance spawns, which no pin covered before or after, and that gap is itself worth naming: the
 Drakenspire instance handler has no test of its own, so the twin flow is pinned only where it reaches
 an AI class.
+
+## The font's fourth outcome, and the first test of an instance handler
+
+Two things were named at the end of the previous entry. Both are done.
+
+### Winning leaves something behind
+
+Retail's success message, **22709**, does not delete the font that is still standing — it turns it
+into the **ominous darkness** (702769) where it stands, and only then removes it. That is the fourth
+and last of the font's outcomes, completing the table from the previous entry.
+
+Java parity deleted both fonts and left nothing, so a raid that won saw the same empty floor as one
+that had never engaged. `OnTwinsComplete` now leaves the object on the mark where the first twin fell.
+
+### The first instance-handler test in the suite, and why it exists
+
+The previous entry's correction turned on a specific miss: a hook was added to
+`DrakenspireDepthsInstance`, could not have worked, and **every pin passed anyway** — because the pins
+drove the AI class directly and nothing exercised the handler. The twin flow is where this
+encounter's decisions actually live.
+
+`DrakenspireTwinFlowTests` constructs the handler against the harness's own map instance and tells it
+about deaths by hand. Five pins: the first twin leaves a font; missing the window brings back the
+**fountless** protector where it fell; a fountless protector leaves no font; killing both inside the
+window leaves the ominous darkness on the font's mark; and a won encounter never brings a protector
+back.
+
+Every one of them fails against Java parity's version of the flow — the fountless correction and the
+quest object both had no coverage at all until now, including the correction made in the previous
+entry.
+
+**A harness detail worth keeping.** `OnDie` is the decision under test and it does not remove the
+corpse; production's death path does that separately. Leaving the body in the world made a pin that
+counts protectors read the dead one as still standing. The tests kill through a small helper that
+does both, so a count means what it looks like.
+
+**And one pin that cannot isolate what it names.** A won encounter never brings a protector back for
+two reasons — the fifteen-second task is cancelled *and* the font is gone, and the respawn needs a
+font — so removing the cancel alone survives a mutation sweep. It is kept as an outcome pin, because
+the outcome is what a raid sees, and the remark says plainly that the cancel is belt-and-braces here.
+Anything that later leaves a font standing on a win would make it load-bearing.
+
+### What is still missing on this encounter
+
+**22701**, the announcer that turns a font into the *font-leaving* protector, has no moment in our
+flow: our fifteen-second timer is the failure path and always produces the fountless one. Retail
+evidently has a success-side respawn that ours does not model, and finding it means reading the rest
+of the instance's stage machinery rather than the AI patterns.
+
+And **22704/22705** — the guards' rescue, translated two entries ago — still has no sender, for the
+reason recorded there: it answers a font left standing with no outcome at all, which this flow never
+produces.
+
+**Verification.** Full suite 1,688 passing and 1 skipped; five new pins, all against an instance
+handler for the first time; six mutations, five caught and the sixth documented above.
