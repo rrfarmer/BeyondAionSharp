@@ -4630,3 +4630,57 @@ and quake are all index-free and fully evidenced. Keep the existing class's per-
 Translate the top two bands' casts using the resolved 20922/24/26; leave 26-50 and 0-25 casting
 nothing until their variants resolve, and say so in the class. The one thing not to do is carry the
 `Rnd.NextInt(3)` forward into any band that now has a sequence.
+
+### Tiamat's rotation is now a C# table, and the thorn beneath it is ported
+
+`emit_tiamat_table.py` turns the transcription into `TiamatRotation.cs` — **45 steps, 13 hazards,
+249 placements**, flat and in document order because retail's priorities descend down the file and
+this pattern has a place where the ordering between bands matters (`BreathL_75-51` guards 51..74
+where the M and R steps beside it guard 51..75, so at exactly 75 the L step fails and evaluation falls
+through).
+
+### What aionemu's "sinking sand" actually was
+
+Chasing whether the rotation subsumes the old class's schedulers turned up the answer, and it is not
+the one that was assumed. `TiamatWeakenedDragonAI.ScheduleSinkingSand` puts hazard 283135 out
+**itself**, every two minutes, in a hand-computed arc from -25° to +25° at seven distances.
+
+Retail never has the boss place that hazard at all. The boss places **thorns** at fixed marks, and
+each thorn throws its own sand — 283135 appears in exactly one retail pattern, and it is
+`IDTiamat_BurrowingWorm_BurrowFX`, the thorn the rotation spawns thirteen at a time. The arc is
+aionemu inventing a shape for a mechanic whose real shape is the thorn coordinates in the table.
+
+**The thorn is ported** (`TiamatBurrowingThornAI`, 283057, was on `aggressive` and spawned by
+nothing): it appears, waits two seconds, then throws five bursts of sand — three, four, three, four,
+four — at widening intervals before removing itself. Retail's one-shot flags are what make it a
+sequence rather than a loop.
+
+It is **inert until the boss's rotation is wired**, and that is the honest state to leave it in: the
+piece is built and the thing that calls it is not.
+
+### A pin that asserted nothing
+
+A mutation widening the sand's scatter from three metres to forty survived. The pin looked right — it
+loops over every grain and checks the distance — but it advanced three seconds first, past the
+one-second life of the burst, so **the loop ran over an empty collection**. `foreach` over nothing
+passes whatever you assert inside it.
+
+The fix is a length assertion before the loop. The general form is worth keeping in mind alongside
+the two earlier timing traps: a pin that measures after a short-lived thing expires does not fail, it
+silently stops testing.
+
+### What remains on this boss
+
+Wiring `TiamatRotation` into the dragon, which needs two decisions this pass did not have room to make
+carefully:
+
+- **The hard-mode subclass couples to the base.** `HM_TiamatWeakenedDragonAI` extends
+  `TiamatWeakenedDragonAI` and overrides `HandleHpPhase` and `CalculateAtrocitySkillId`, so rebuilding
+  the base as a pattern class breaks it. Hard mode has its own retail pattern
+  (`IDTiamat_Hard_Tiamat_Dragon_Dying`, eight adds in the backlog) which needs the same transcription.
+- **The lower two bands' breath skills are still unresolved** — indices 6/8/10 and 7/9/11 against only
+  three skills carrying `BREATH{L,M,R}_CAST` names. The structure and every spawn are index-free and
+  can land regardless; those bands would simply place their beacons and cast nothing.
+
+**Verification.** Full suite 1,380 passing and 1 skipped; three new pins; all six mutations caught
+after the vacuous one was repaired. Missing adds 562 → **561**.
