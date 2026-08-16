@@ -8459,3 +8459,83 @@ vanishes cannot be counted on the ground at all, so `AnUnpulledKrallLaysNothing`
 that made an idle krall lay one. That is the **seventh** time in this suite. The third was a threshold
 pin that only read at full health, which a `below` guard cannot fail — brackets now come from above as
 well.
+
+## The drakan magisters, and a barrier that is a hazard engine
+
+Seven bosses on plain `aggressive` across two instances — four drakan magisters in Tiamat's Stronghold
+(219370, 219375, 219386, 219399) and three terath magisters in the Dreadgion (Captain Anusa 233371,
+the thaumaturge 233354, the worldwarper 233358) — plus the **great magical barrier** (282984) they
+drop, which had a pattern of its own that nobody had read.
+
+### Tiamat's Stronghold: two hands, and only two
+
+The four Stronghold patterns are identical branch for branch. Ten seconds into the fight a slot starts
+ticking; the first time it finds the mage below eighty percent it puts a **mystical tyrhund** (282989)
+at its own feet for a minute, and the first time below thirty it does it again. Both rungs carry a flag
+var and the slot keeps ticking either way, which is what makes the second hand land promptly rather
+than at whatever moment the crossing happens to be noticed.
+
+**A near miss worth recording.** Three of the four first read as having *no* flag vars — which would
+have meant a hand every seven seconds from eighty percent down, a completely different fight, and a
+"deliberate difference in an otherwise identical family" entry in this log. It was a scratch `grep`
+filter dropping the `set_flag_var` lines. The rule was already written down here — *a scratch regex is
+fine for finding candidates and not for stating facts* — and it earned its keep: the false finding was
+one filter away from being published as retail's.
+
+### The Dreadgion: a barrier on somebody every fifteen seconds
+
+Every fifteen seconds a magister drops a **great magical barrier** on a *random attacker* — eight
+seconds of life, `attack_target_after_spawn` with a single hate point. Below thirty a **hand** lands on
+the tank, once: that rung does not re-arm its slot, so the six-second clock carrying it is over as soon
+as it fires. Unlike the krall escape one entry ago this one *is* observable, because there is no flag
+var doing the same job — remove the missing re-arm and hands rain every six seconds. Both cases are now
+in the log, which is the point: the same construction is load-bearing in one pattern and redundant in
+another, and only reading the rest of the branch tells you which.
+
+**Captain Anusa clears up on waking; the other two on dying.** That is the only difference between the
+three patterns, and it means a second pull of Anusa starts clean rather than the first kill tidying
+after itself. Ported as written.
+
+### The barrier is a pulse, not a debuff
+
+`IDYun_Temp_65` is the barrier's own pattern and it had never been looked at. One second after
+something engages it, and every two seconds after that, it leaves an **invisible** copy of itself
+(282985) where it stands for two seconds — so the ground under it is re-hazarded continuously for the
+eight seconds it lives, and `on_despawn` clears the copies rather than letting them outlast it. That is
+how retail builds a standing area effect out of npcs instead of an aura, and it is worth knowing
+because the same shape will turn up again.
+
+### Two things carried but not observable
+
+`attack_target_after_spawn` on the barrier changes nothing we can read: a barrier is an aggressive npc
+landing on top of a player, so it engages that player whether or not a point of hate was seeded first.
+Left as a deliberate mutation survivor. What *is* pinned is the **random attacker**, measured by which
+player each of ten barriers landed nearest to — position, because nothing else separates it from the
+tank.
+
+`IDDreadgion_03_DrakanWi_Vil_60_Ae` (233350, terath magician) is recorded as **not a gap**: its whole
+pattern is casts and re-arms with no spawn in it at all.
+
+### A third instrument for the same recurring mistake
+
+`BossAiHarness.Watch` exists because pins that count summons at the end of a phase measure the lifetime
+rather than the rung. These pins have several phases each, and hit the mirror of that: a summon that
+survives into the next window is **counted again**, so "nothing more arrived" reads as one arrival and
+a correct translation fails. `BossAiHarness.WatchNew` ignores whatever was already standing when the
+window opened.
+
+**Rule: a single-window pin counts what is standing at the wrong moment; a multi-window pin counts the
+same thing twice. Use `Watch` for one window and `WatchNew` for more than one.** Between them these two
+mistakes have now cost nine repairs across this suite.
+
+### Verification
+
+Full suite **1,776 passing** and 1 skipped; ten new pins; fifteen mutations, fourteen caught and one
+deliberate survivor. Missing-AI 716 → **709**; adds 397/307 → **390/303**.
+
+### Not translated
+
+Three skill indices on each family — the Stronghold mages' area attack and heal-reduction loops, and
+the Dreadgion ones' stumble attack, ranged attack and area fire — and the cast the barrier opens with.
+Retail's `set_idle_timer delay=0` in the barrier's despawn branch, which our runtime does on reset
+anyway.

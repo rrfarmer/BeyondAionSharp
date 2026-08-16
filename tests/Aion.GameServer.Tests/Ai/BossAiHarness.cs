@@ -252,11 +252,36 @@ public sealed class BossAiHarness : IDisposable
 	/// to stay engaged.
 	/// </para>
 	/// </remarks>
-	public Watched Watch(int seconds, Action? perSecond, params int[] npcIds)
+	public Watched Watch(int seconds, Action? perSecond, params int[] npcIds) =>
+		Watch(seconds, perSecond, countExisting: true, npcIds);
+
+	/// <summary>
+	/// <see cref="Watch(int, Action?, int[])"/>, ignoring anything of that kind already standing when
+	/// the window opens.
+	/// </summary>
+	/// <remarks>
+	/// <b>This exists because consecutive windows double-count.</b> A pin that watches one band, then
+	/// another, then a third reads the same summon again in every window it survives into — so
+	/// "nothing more arrived" reads as one arrival, and the pin fails for a translation that is
+	/// correct. It is the mirror of the mistake <see cref="Watch(int, Action?, int[])"/> was written
+	/// for: that one counted too little because summons expire, this one counts too much because they
+	/// do not expire fast enough. Use this whenever a pin has more than one window.
+	/// </remarks>
+	public Watched WatchNew(int seconds, Action? perSecond, params int[] npcIds) =>
+		Watch(seconds, perSecond, countExisting: false, npcIds);
+
+	private Watched Watch(int seconds, Action? perSecond, bool countExisting, int[] npcIds)
 	{
 		var wanted = new HashSet<int>(npcIds);
 		var everSeen = new HashSet<int>();
 		int peak = 0;
+
+		if (!countExisting)
+			foreach (Npc npc in LiveNpcs())
+				if (wanted.Contains(npc.GetNpcId()))
+					everSeen.Add(npc.GetObjectId());
+
+		int alreadyThere = everSeen.Count;
 
 		for (int i = 0; i < seconds; i++)
 		{
@@ -275,7 +300,7 @@ public sealed class BossAiHarness : IDisposable
 			peak = Math.Max(peak, alive);
 		}
 
-		return new Watched(peak, everSeen.Count);
+		return new Watched(peak, everSeen.Count - alreadyThere);
 	}
 
 	/// <summary>Removes and returns everything the NPC has queued since the last drain, in cast order.</summary>
