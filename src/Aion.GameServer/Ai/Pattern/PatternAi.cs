@@ -126,6 +126,8 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     protected override void HandleDespawned()
     {
+        // Before the reset, so a branch here still sees its timers, flags and spawn groups.
+        Evaluate(Pattern.OnDespawn);
         ResetPattern();
         base.HandleDespawned();
     }
@@ -622,11 +624,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Puts an add on one attacker chosen the way the pattern names them.</summary>
-    public void SpawnOnAttacker(AggroTarget which, int npcId, int spawnId, float range, int liveSeconds)
+    public void SpawnOnAttacker(AggroTarget which, int npcId, int spawnId, float range, int liveSeconds,
+        int attackHate = 0)
     {
         Creature? target = GetAggroList().GetTarget(which);
-        if (target != null)
+        if (target == null)
+            return;
+
+        if (attackHate <= 0)
+        {
             SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+            return;
+        }
+
+        // The fourth and last of retail's spawn placements to learn attack_target_after_spawn. Xasta's
+        // trap is why: ten million hate is what keeps it on the player it picked rather than peeling
+        // to whoever is tanking.
+        var placed = new List<Npc>();
+        SpawnAroundInto(placed, target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+        foreach (Npc summon in placed)
+            AttackAfterSpawn.NextTick(summon, target, attackHate);
     }
 
     /// <summary>

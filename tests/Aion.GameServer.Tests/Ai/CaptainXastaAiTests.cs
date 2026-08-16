@@ -195,4 +195,105 @@ public sealed class CaptainXastaAiTests
 		// so a leaked repeating task is invisible from outside while still running forever.
 		Assert.Equal(idle, harness.Clock.ArmedTimerCount);
 	}
+
+	/// <summary>His second form, and the trap that is its clock.</summary>
+	private const int SecondFormXasta = 217310;
+	private const int XastasTrap = 282444;
+
+	private static BossAiHarness SecondFormHarness() => BossAiHarness.For(RentusBase)
+		.WithAi(typeof(CaptainXastaAI), typeof(AggressiveNpcAI), typeof(XastaTrapAI))
+		.Build();
+
+	private static (BossAiHarness, Npc, Player) SecondFormEngaged()
+	{
+		BossAiHarness harness = SecondFormHarness();
+		Npc boss = harness.Spawn(SecondFormXasta, 238f, 598f, 178f);
+		Player player = harness.SpawnPlayer(241f, 598f, 178f);
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+		return (harness, boss, player);
+	}
+
+	private static void Advance(BossAiHarness harness, Npc boss, Player player, int seconds)
+	{
+		for (int i = 0; i < seconds; i++)
+		{
+			BossAiHarness.Rehate(boss, player);
+			BossAiHarness.KeepAlive(player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		}
+	}
+
+	/// <summary>
+	/// Ten seconds into the second form's fight, one trap lands on an attacker. His second form used
+	/// to do nothing but a thirty-second self-cast; the pattern was recorded as untranslated.
+	/// </summary>
+	[Fact]
+	public void TheSecondFormDropsATrapTenSecondsIn()
+	{
+		var (harness, boss, player) = SecondFormEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 9);
+		Assert.Equal(0, Count(harness, XastasTrap));
+
+		Advance(harness, boss, player, 2);
+		Assert.Equal(1, Count(harness, XastasTrap));
+	}
+
+	/// <summary>It arrives fighting whoever it landed on, with retail's ten million hate.</summary>
+	[Fact]
+	public void TheTrapArrivesAlreadyFighting()
+	{
+		var (harness, boss, player) = SecondFormEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 12);
+
+		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == XastasTrap));
+		Assert.Same(player, trap.GetTarget());
+		Assert.True(trap.GetAggroList().GetHate(player) > 1000000,
+			$"ten million is what keeps it on the player it picked: {trap.GetAggroList().GetHate(player)}");
+	}
+
+	/// <summary>
+	/// The trap is his clock. It lives thirteen seconds, and the next one comes <b>five seconds after
+	/// it goes</b> — because the trap broadcasts as it despawns and that is the only thing re-arming
+	/// his timer.
+	/// </summary>
+	/// <remarks>
+	/// Nothing in his own branch re-arms it, so cutting the broadcast leaves him dropping one trap and
+	/// never another. Watched by object id: a head-count cannot tell a second trap from the first.
+	/// </remarks>
+	[Fact]
+	public void TheTrapsBroadcastIsWhatKeepsThemComing()
+	{
+		var (harness, boss, player) = SecondFormEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 11);
+		int first = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == XastasTrap)).GetObjectId();
+
+		// Thirteen seconds of trap, then five of waiting: the second lands around twenty-nine.
+		Advance(harness, boss, player, 12);
+		Assert.Equal(0, Count(harness, XastasTrap));
+
+		Advance(harness, boss, player, 7);
+
+		Npc second = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == XastasTrap));
+		Assert.NotEqual(first, second.GetObjectId());
+	}
+
+	/// <summary>One at a time — it is a single trap on a single player, not a wave.</summary>
+	[Fact]
+	public void OnlyOneTrapStandsAtATime()
+	{
+		var (harness, boss, player) = SecondFormEngaged();
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 60);
+
+		Assert.True(Count(harness, XastasTrap) <= 1,
+			$"his second form drops one trap at a time: {Count(harness, XastasTrap)}");
+	}
 }

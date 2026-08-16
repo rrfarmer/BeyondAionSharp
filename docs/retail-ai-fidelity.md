@@ -6153,3 +6153,51 @@ guards.
 | `tiamats_incarnation_spawn` | ten `_invisible` damage twins — scenery the other audit filters |
 | `twin_protector` | 855626 |
 | `yamenessportal` | 282016, the gate summon `YamennesSpawnGateAI` already spawns |
+
+## Captain Xasta's second form, and the trap that is its clock
+
+`captain_xasta` on the shared-name list, and the class said so itself: *"217310 binds to its own
+pattern, and translating that is separate work from the first form."* That work turned out to be
+one of the tidier chains in the whole dump, and it closes a loop rather than adding a branch.
+
+His second form's entire fight, in `IDYun_Nmd3_FallOff`:
+
+1. ten seconds in, **one** trap lands on a random attacker and engages that player with **ten
+   million hate**, living thirteen seconds;
+2. the trap broadcasts **200** to a hundred metres **as it despawns**;
+3. that re-arms his timer at five seconds, and the next trap goes out.
+
+**Nothing in his own branch re-arms the timer.** The cadence is not a constant anywhere — it is
+thirteen seconds of trap plus five of waiting — and it only continues because the trap tells him
+it is gone. Cut the broadcast and he drops one trap and never another, which is a caught mutation.
+
+The trap (282444) was on the generic `trap` AI, which made it a trap. Its job is not to be a
+trap; it is a clock.
+
+### Two runtime pieces this needed
+
+**`on_despawn` is now a real handler.** 361 of them across the 5.8 files, and until now the
+excuse for not having one was that the pattern reset covers it — which is wrong in a way that
+only shows when a branch touches state: `ResetPattern` *forgets* a spawn group, it does not clear
+it. It is evaluated **before** the reset, so a branch still sees its timers, flags and groups.
+
+The ordering was inert on its own — Xasta's trap only broadcasts — so
+<see cref="YamennesSpawnGateAI"/> was moved onto it at the same time. Retail gives those gates the
+same despawn line on `on_die` *and* `on_despawn`, and only the first was translated; a gate that
+was removed rather than killed left its orkanimums standing for the rest of their seventy
+seconds. Now both halves are there, and the evaluation order is a caught mutation instead of an
+assertion.
+
+**`spawn_on_target_by_attacker_indicator` learned `attack_target_after_spawn`** — the fourth and
+last of retail's four placements to get it. The op is complete across the vocabulary now.
+
+**Not translated:** the eight-cast "Trap Combo" Xasta runs on message 100, which the trap sends on
+engaging. That is a real pairing and both halves exist — but every one of the eight is index-only,
+so sending 100 would reach a listener with nothing to do. Recorded rather than wired, the same
+sender-with-no-useful-listener shape as the fortress lords' despawn helpers, and it becomes worth
+sending the day those indices resolve. His thirty-second self-cast is kept: it is ours, it is the
+only thing making his second form do damage on a schedule, and nothing in the pattern contradicts
+it.
+
+**Verification.** Full suite 1,504 passing and 1 skipped; five new pins; eight mutations, all
+caught.

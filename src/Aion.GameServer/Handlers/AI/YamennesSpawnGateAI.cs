@@ -100,9 +100,15 @@ public class YamennesSpawnGateAI : PatternAi
                     place,
                     Do.ArmTimer(0, feed.IntervalMillis))),
 
-            // Retail clears the group on both on_die and on_despawn; our runtime raises the first and
-            // resets on the second, so the despawn is covered by the pattern reset.
+            // Retail clears the group on both on_die and on_despawn, and now so does this. The second
+            // half used to be left to the pattern reset, which only *forgets* a group rather than
+            // clearing it -- so a gate that was removed rather than killed left its feed standing
+            // until each arrival's own lifetime ran out.
             OnDie = Of(
+                Branch(3, "", When.Always,
+                    Do.Despawn(Fed))),
+
+            OnDespawn = Of(
                 Branch(3, "", When.Always,
                     Do.Despawn(Fed))),
         };

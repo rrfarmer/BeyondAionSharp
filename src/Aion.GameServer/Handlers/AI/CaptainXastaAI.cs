@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
@@ -89,8 +90,67 @@ public class CaptainXastaAI : PatternAi
                 Do.DespawnSelf())),
     };
 
-    /// <summary>His second form binds to its own pattern, which this class does not translate.</summary>
-    private static readonly AiPattern SecondForm = new AiPattern();
+    /// <summary><c>IDYun_Rasta_Trap</c> — the trap the second form drops on one random attacker.</summary>
+    private const int XastasTrap = 282444;
+
+    /// <summary>Retail's <c>SPAWN_ID_1</c> on the second form.</summary>
+    private const int Traps = 1;
+
+    private const int TrapLife = 13;
+
+    /// <summary>
+    /// Retail's <c>hatepoints_to_add</c>, with <c>attack_target_after_spawn</c>: ten million, which is
+    /// how the trap stays on the player it picked instead of peeling to whoever is tanking.
+    /// </summary>
+    private const int TrapHate = 10000000;
+
+    /// <summary>
+    /// Broadcast by the trap as it goes, and the only thing that re-arms his trap timer. See
+    /// <see cref="XastaTrapAI"/>.
+    /// </summary>
+    public const int TrapGone = 200;
+
+    /// <summary>
+    /// His second form, retail pattern <c>IDYun_Nmd3_FallOff</c>.
+    /// </summary>
+    /// <remarks>
+    /// This class used to say the second form's pattern was not translated, and its whole fight was a
+    /// thirty-second self-cast on a hand-written timer. What retail gives it is a trap chain, and the
+    /// chain is self-sustaining in a way worth spelling out:
+    /// <list type="number">
+    /// <item>ten seconds into the fight he drops <b>one</b> trap on a random attacker, which engages
+    /// that player with ten million hate and lives thirteen seconds;</item>
+    /// <item>the trap broadcasts <b>200</b> to a hundred metres <em>as it despawns</em>;</item>
+    /// <item>that re-arms his timer at five seconds, and the next trap goes out.</item>
+    /// </list>
+    /// <para>
+    /// So the cadence is not a constant anywhere — it is thirteen seconds of trap plus five of
+    /// waiting, and it only continues because the trap tells him it is gone. Nothing re-arms the timer
+    /// in his own branch.
+    /// </para>
+    /// <para>
+    /// <b>Not translated:</b> the eight-cast "Trap Combo" he runs on message 100 (the trap sends it on
+    /// engaging), his own <c>SKILLI_INDEX_10</c>, and the condition variable and broadcast 500 on
+    /// dying. All index-only. The thirty-second self-cast this class already had is kept: it is ours,
+    /// it is the only thing making his second form do damage on a schedule, and nothing in the pattern
+    /// contradicts it.
+    /// </para>
+    /// </remarks>
+    private static readonly AiPattern SecondForm = new AiPattern
+    {
+        OnEnterAttack = Of(
+            Branch(2, "Start Timer", When.Always,
+                Do.ArmTimer(0, 10000))),
+
+        OnBattleTimer = Of(
+            Branch(1, "Spawn Trap", [When.Timer(0)],
+                Do.SpawnOnAttacker(AggroTarget.RANDOM, XastasTrap, Traps,
+                    liveSeconds: TrapLife, attackHate: TrapHate))),
+
+        OnMessage = Of(
+            Branch(3, "Reset Timer", [When.Message(TrapGone)],
+                Do.ArmTimer(0, 5000))),
+    };
 
     private ScheduledTask? secondFormTask;
 

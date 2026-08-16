@@ -1,4 +1,5 @@
 using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -430,5 +431,29 @@ public sealed class UnstableYamennesAiTests
 			Assert.Equal(3, harness.LiveNpcs().Count(n => n.GetNpcId() == SummonedAmetgolem));
 			Assert.All(first, id => Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetObjectId() == id));
 		}
+	}
+
+	/// <summary>
+	/// A gate that is <b>removed</b> rather than killed still clears what it has fed out. Retail has
+	/// the line on both <c>on_die</c> and <c>on_despawn</c>; only the first was translated, because
+	/// until now there was no <c>OnDespawn</c> to put the second in.
+	/// </summary>
+	/// <remarks>
+	/// The pattern reset that used to stand in for it only <em>forgets</em> a spawn group — it does not
+	/// clear it — so an orkanimum outlived the gate that called it, for as long as its own seventy
+	/// seconds lasted.
+	/// </remarks>
+	[Fact]
+	public void ARemovedGateStillClearsItsFeed()
+	{
+		using var harness = NewHarness();
+		Npc gate = harness.Spawn(283203, 300f, 740f, 216f);
+
+		BossAiHarness.Watched fed = harness.Watch(6, null, Orkanimum);
+		Assert.Equal(1, fed.Total);
+
+		gate.GetAi().OnGeneralEvent(AiEventType.Despawned);
+
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Orkanimum));
 	}
 }

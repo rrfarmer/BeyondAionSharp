@@ -62,6 +62,21 @@ public sealed class AiPattern
     public PatternBranch[] OnDie { get; init; } = None;
 
     /// <summary>
+    /// <c>on_despawn</c> — the NPC is being removed, whether it was killed, timed out or cleared.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from <see cref="OnDie"/>: a hazard with a <c>live_time</c> never dies, it expires, and
+    /// 361 handlers across the 5.8 files hang work off that moment. Xasta's trap is the case that
+    /// forced this — it tells him to make another one <em>as it goes</em>, so the chain that keeps his
+    /// second form dropping traps runs entirely through this event.
+    /// <para>
+    /// Evaluated before the pattern resets, so a branch here still sees its timers, flags and spawn
+    /// groups.
+    /// </para>
+    /// </remarks>
+    public PatternBranch[] OnDespawn { get; init; } = None;
+
+    /// <summary>
     /// <c>on_message</c> — how retail wires two NPCs of one encounter together.
     /// </summary>
     /// <remarks>
@@ -248,8 +263,8 @@ public static class Do
 
     /// <summary><c>spawn_on_target_by_attacker_indicator</c> — on one attacker rather than the tank.</summary>
     public static PatternAction SpawnOnAttacker(AggroTarget which, int npcId, int spawnId,
-        float range = 0f, int liveSeconds = 0)
-        => ai => ai.SpawnOnAttacker(which, npcId, spawnId, range, liveSeconds);
+        float range = 0f, int liveSeconds = 0, int attackHate = 0)
+        => ai => ai.SpawnOnAttacker(which, npcId, spawnId, range, liveSeconds, attackHate);
 
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
