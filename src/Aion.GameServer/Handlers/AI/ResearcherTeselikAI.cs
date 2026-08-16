@@ -45,10 +45,14 @@ namespace Aion.GameServer.Handlers.AI;
 /// alternate through a flag, so his flame bolt switches target every other cast.
 /// </para>
 /// <para>
-/// <b>Not translated:</b> his three shouts (<c>STR_CHAT_IDVritra_Base_Nmd3_01/02/03</c>) have no
-/// numeric id in our data, and the death tail — open door 210, announce
-/// <c>STR_MSG_IDVritra_Base_DoorOpen_04</c>, and place four bonus hands (284457) on named server paths
-/// — needs door control and waypoints the pattern runtime does not have.
+/// <b>Already handled elsewhere:</b> most of his death tail. <c>SauroSupplyBaseInstance.OnDie</c>
+/// opens the door and sends <c>STR_MSG_IDVritra_Base_DoorOpen_04</c> for this npc id already, which is
+/// the Java-parity place for it — an instance's doors belong to the instance handler, not to a
+/// monster's AI. Retail expresses it inside the pattern; we do not need to.
+/// <para>
+/// <b>Not translated:</b> his three shouts (<c>STR_CHAT_IDVritra_Base_Nmd3_01/02/03</c>), which have
+/// no numeric id in our data, and the four bonus hands (284457) the death tail places on named server
+/// paths — those are spawned by nothing anywhere and remain missing.
 /// </para>
 /// </remarks>
 [AIName("researcher_teselik")]

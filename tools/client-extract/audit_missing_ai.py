@@ -81,9 +81,20 @@ def main() -> None:
     live: set[str] = set()
     for p in (repo / "game-server/data/static_data/spawns").rglob("*.xml"):
         live.update(re.findall(r'<spawn npc_id="(\d+)"', read_text(p)))
-    handlers = "\n".join(read_text(p) for p in
-                         (repo / "src/Aion.GameServer/Handlers/Instance").rglob("*.cs"))
-    live.update(re.findall(r"\b(\d{6})\b", handlers))
+    handler_text = {p: read_text(p) for p in
+                    (repo / "src/Aion.GameServer/Handlers/Instance").rglob("*.cs")}
+    live.update(re.findall(r"\b(\d{6})\b", "\n".join(handler_text.values())))
+
+    # Which NPCs an instance handler already names. Retail packs doors, system messages and score into
+    # the monster's own pattern because that is the only place it has; our server splits them across
+    # instance handlers, which is the Java-parity arrangement and the correct one. So a pattern action
+    # with no counterpart in an AI class is not automatically missing -- it may already live in the
+    # handler. Researcher Teselik was written up as needing door control that SauroSupplyBaseInstance
+    # had implemented all along, for that exact npc id, with the same system message.
+    handled: dict[str, str] = {}
+    for path, text in handler_text.items():
+        for npc_id in set(re.findall(r"\b(\d{6})\b", text)):
+            handled.setdefault(npc_id, path.stem)
 
     rows = []
     for npc_id, attrs in templates.items():
@@ -102,15 +113,19 @@ def main() -> None:
         if binders[pattern] > args.max_binders:
             continue
         rows.append((timers, spawns, messages, skills, npc_id, attr(attrs, "name"),
-                     attr(attrs, "level"), attr(attrs, "rating"), attr(attrs, "ai"), pattern))
+                     attr(attrs, "level"), attr(attrs, "rating"), attr(attrs, "ai"), pattern,
+                     handled.get(npc_id, "")))
 
     rows.sort(reverse=True)
     print(f"NPCs we spawn that have a retail fight and no AI class: {len(rows)}\n")
     print(f"{'timers':>6} {'spawns':>6} {'msgs':>5} {'skills':>6}  {'npc':<8} {'lv':>3} "
-          f"{'rating':<10} {'name':<30} pattern")
-    for timers, spawns, messages, skills, npc_id, name, level, rating, ai, pattern in rows:
+          f"{'rating':<10} {'name':<28} {'pattern':<36} handler")
+    for timers, spawns, messages, skills, npc_id, name, level, rating, ai, pattern, handler in rows:
         print(f"{timers:>6} {spawns:>6} {messages:>5} {skills:>6}  {npc_id:<8} {level:>3} "
-              f"{rating:<10} {name:<30} {pattern}")
+              f"{rating:<10} {name:<28} {pattern:<36} {handler}")
+    print("\nhandler = an instance handler already names this npc id, so part of its retail pattern"
+          "\n(doors, system messages, score) may already be implemented there. Check that before"
+          "\nwriting 'not translated' against anything.")
 
 
 if __name__ == "__main__":

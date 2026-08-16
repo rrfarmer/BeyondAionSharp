@@ -2268,3 +2268,52 @@ the order retail fires them.
 
 **Verification.** Full suite 1,186 passing and 1 skipped; thirteen new pins across
 both bosses; all ten mutations caught.
+
+---
+
+## Correction — Teselik's door was never missing, and door control is not the next thing to build
+
+The Teselik entry above lists his death tail — "open door 210, announce
+`STR_MSG_IDVritra_Base_DoorOpen_04`, and place four bonus hands" — as needing door
+control the runtime does not have. **Two thirds of that was already implemented.**
+
+`SauroSupplyBaseInstance.OnDie` has carried `case 230850:` all along: it sends
+`STR_MSG_IDVritra_Base_DoorOpen_04()` and opens the door. Only the four bonus hands
+(284457) are genuinely absent, and those are waypoint-blocked rather than
+door-blocked.
+
+**The lesson, which is the useful part.** Before writing "not translated" against a
+retail action, check whether something outside the AI already does it. Retail packs
+doors, system messages and score into the monster's own pattern because that is the
+only place it has; our server splits them across instance handlers, which is the
+Java-parity arrangement and the correct one. An instance's doors belong to the
+instance handler. **A retail action absent from an AI class is not the same as a
+missing feature**, and this port claimed one for the other. That check is now part of
+the pre-flight, alongside the audit flags and the single-owner check.
+
+**So the recommendation at the end of the Golden Tatar entry — that door control is
+the clearest next addition to the pattern runtime — is withdrawn.** For instance
+bosses the instance handler already covers it, in the right place. Only world-zone
+bosses like the Golden Tatars have nowhere else to put it, and there the semantics
+are not yet resolved:
+
+### `control_door` method values are still ambiguous
+
+`<control_door><id>N</id><method>M</method></control_door>`, 691 uses, methods 1
+(590), 2 (94) and 0 (7). The two readings conflict:
+
+- **Method 1 = open.** Teselik's pattern uses `method 1` on the door our own
+  Java-parity handler *opens*, with the same system message. That is a hard anchor
+  against working code.
+- **Method 2 = open.** `LDF4b_Golden_Gururu` is internally consistent across four
+  uses: its `OpenDoor` branches are method 2 (on waking, on death, on going idle) and
+  its `CloseTheDoor` branch — sixty seconds into the fight — is method 1. That is
+  also the only reading in which the mechanic makes sense as a trap.
+
+Across the corpus the comments genuinely disagree: `opendoor` appears against method
+1 four times and method 2 three times. Retail's `id` is not our `static_id` either
+(Teselik's pattern says 210 where our instance data uses 375), so the ids need their
+own mapping regardless. **Not implemented, deliberately** — guessing here either
+seals a raid in or opens a progression door early, and both are hard to notice. A
+second anchor of the Teselik kind, on a door some other handler demonstrably closes,
+would settle it.
