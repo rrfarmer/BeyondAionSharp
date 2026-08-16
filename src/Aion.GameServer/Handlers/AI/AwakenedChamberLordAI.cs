@@ -70,6 +70,9 @@ public class AwakenedChamberLordAI : PatternAi
     private const int Band26To50 = 2;
     private const int Band51To75 = 3;
 
+    /// <summary>Retail broadcasts the disengage call to fifty metres.</summary>
+    private const float GateCallRange = 50f;
+
     /// <summary>
     /// The three arrival points and the barrier. Shared by all three chambers — see the class remarks
     /// on why that is safe here.
@@ -112,6 +115,12 @@ public class AwakenedChamberLordAI : PatternAi
 
             Branch(1, "", [When.Timer(0)],
                 Do.ArmTimer(0, 5000))),
+
+        // Retail's on_leave_attack_state. The gate it opened listens for this and shuts itself, so
+        // resetting the lord clears its reinforcements too — see IllusionGateAI.
+        OnLeaveAttack = Of(
+            Branch(12, "call the gate down", When.Always,
+                Do.Broadcast(IllusionGateAI.LordDisengaged, GateCallRange))),
 
         OnDie = Of(
             Branch(7, "the parting shot", When.Always, DeathWave)),

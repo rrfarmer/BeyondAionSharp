@@ -3457,3 +3457,40 @@ bus-level test with deliberate distance, which is worth writing when the bus nex
 
 **Verification.** Full suite 1,313 passing and 1 skipped; the restored disperse pin brings
 Kistenian to twelve.
+
+---
+
+## What the bus fix unblocked, and a listener of mine that had nothing to hear
+
+**615 retail patterns broadcast from `on_wake_up`.** Until the fallback landed, every one of
+them would have been silently inert if ported. The dominant shape is the "despawn" family —
+`BGuard_ChiefDespawn`, `DGuard_KistenianDespawn`, `ABRwd_DespawnBox`, `Bionic_EhADead` and
+their kin — NPCs whose entire pattern is *appear, shout, vanish*. That idiom is how retail
+signals across an encounter, and it now works.
+
+### A gap in my own work, found by auditing messages rather than adds
+
+Chasing which of those 615 mattered turned up something closer to home. The illusion gate
+carries a listener for message **10009**, which I wrote against the chamber lord's
+`on_leave_attack_state` — and then **never implemented that broadcast on the lord**.
+
+A listener nothing broadcasts to is silence. That is a rule this log has stated twice, and
+the code shipped violating it anyway, in a pair of classes committed one after the other.
+The lord now calls the gate down on disengaging, with a pin that fails if the broadcast is
+removed.
+
+**The lesson is about the check, not the bug.** Every port so far has been verified by
+asking "does this add spawn?" — a question about *adds*. Nothing asked "does every message
+this encounter listens for have a sender, and does every message it sends have a listener?"
+Those are cheap greps and they catch a class of half-built mechanic that add-counting
+cannot see. Worth doing across the ported set.
+
+### Still open
+
+`BGuard_ChiefDespawn` broadcasts 10009 too and is **not in our npc data at all** — no id, no
+template — and nothing in the retail dump spawns it either, so it is presumably placed
+server-side. Whether the chamber-lord encounter is meant to have a second source for that
+message is unresolved.
+
+**Verification.** Full suite 1,314 passing and 1 skipped; the new pin fails when the
+broadcast is removed.

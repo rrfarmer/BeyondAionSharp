@@ -158,4 +158,28 @@ public sealed class AwakenedChamberLordAiTests
 		Advance(harness, lord, player, 6);
 		Assert.Equal(0, Count(harness, DrakanByTeleporter));
 	}
+
+	/// <summary>
+	/// Retail's leave-attack branch calls the gate down. Without it the gate's own listener for that
+	/// message is a listener nothing broadcasts to — which is silence, and was the state this class
+	/// shipped in until the message audit caught it.
+	/// </summary>
+	[Fact]
+	public void ResettingShutsTheGateItOpened()
+	{
+		var (harness, lord, player) = Engaged(KrotanChamber, KrotanLord, 20);
+		using BossAiHarness _h = harness;
+
+		Npc? gate = null;
+		for (int i = 0; i < 10 && gate is null; i++)
+		{
+			Advance(harness, lord, player, 1);
+			gate = harness.LiveNpcs().FirstOrDefault(n => n.GetNpcId() == IllusionGate);
+		}
+		Assert.NotNull(gate);
+
+		lord.GetAi().OnGeneralEvent(AiEventType.BackHome);
+
+		Assert.False(gate!.IsSpawned());
+	}
 }
