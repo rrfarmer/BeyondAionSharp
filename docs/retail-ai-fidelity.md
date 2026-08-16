@@ -4142,3 +4142,64 @@ deliberately not answered here.
 
 **Verification.** Full suite 1,346 passing and 1 skipped, stable across eighteen consecutive runs;
 five new pins; four of five mutations caught and the fifth explained above.
+
+### The rest of the traps, and a caution that turned out to be half right
+
+Last entry repointed five `NTrap_A` markers and left the other forty-eight on the grounds that
+repointing a **pre-laid** trap would make it go off in an empty field. That reasoning was sound and
+the scope was too cautious: of the twenty-three that were on plain `aggressive` with exactly one
+skill, **twenty-two are spawned on demand and only one is pre-laid.**
+
+Checked rather than assumed, and one check was wrong on the first pass. Grepping the spawn data for
+each id turned up matches for two more — both false. `281166` appeared inside a walker route's forty-
+character hash (`…81166…`), and `290116` appeared in a quest work order as an *item* id, the npc and
+item namespaces having collided. The single genuine static spawn is **280714**, "strange object"
+(`BDF3_LehparZombietrap_45_Ah`), sitting in Beluslan on a 295-second respawn. That one is left alone.
+
+**Every one of the twenty-two corroborates as a trap.** All bind `NTrap_A`, all carry exactly one
+skill, and every skill is `target_type="AREA"` with a name that reads as a burst — Explosion, Nerve
+Freeze, Strong Contrary Wind, Water Wave, Infernal Rune, Aether Explosion. Two were doing real work
+already: Queen Alukina's azure blobble and the strange creature Icaronix leaves on dying. The other
+twenty are spawned by nothing yet and are simply ready for when their spawners land.
+
+Names worth not trusting: "aetherback titan core" (`BAb1_NM_CyclopesSlave_51_Al`) reads like a minion
+and casts Aether Explosion; "bolstering surkana" casts Wave of Surkana. Same class of misread as the
+Kistenian despawn effect calling itself a dredgion elite fighter.
+
+**Region activation is not spawning.** The engine raises `AiEventType.Activate` when a player enters a
+region, separately from the spawn event, so a field NPC's `on_wake_up` really does fire at server
+start with nobody there. That is what makes 280714 genuinely different, and translating `on_see_user`
+is what it needs.
+
+### Queen Alukina's death nova was seven adds and is seven bursts
+
+Her `on_killed_by_user` spawns seven blobbles at her point with `live_time=30`, which the aionemu
+class matched exactly. The blobble binds `NTrap_A`, so all seven go off where she fell rather than
+standing about for half a minute. The thirty seconds are real and still in the table; they are the
+backstop for a trap whose cast never happens.
+
+Sixth pin to change because a later port made its subject more complete.
+
+### A flake that was diagnosed wrongly and has now been diagnosed
+
+`AHandKnocksItsTargetAboutOnItsOwnTimer` was recorded in this document as "found and fixed". It was
+not. It failed again during this session's full-suite runs.
+
+The earlier fix stretched the window from forty seconds to a hundred and fifty on the theory that four
+ticks became a dozen. **A census over twelve runs shows it bought nothing**: one to two casts at
+either length, and a zero in both samples. Stretching it to twelve hundred seconds changed nothing
+either — same one to two casts.
+
+The cause is not the window. The pin took its hand out of the boss's wave, and Teselik gives the
+self-destruct order on his timer-4 and timer-7 branches within the first minute, so that hand is gone
+after one or two flips however long anyone waits. A hand nobody is about to detonate flips every seven
+or fifteen seconds for the whole window: **six to nine casts across twelve runs, never zero.** The pin
+now spawns one on its own.
+
+**The lesson is about the diagnosis, not the test.** "Make the window longer" is what you reach for
+when a probabilistic pin flakes, and it is right only if the number of trials actually scales with the
+window. Nobody counted. Counting took one scratch test and showed the trial count was flat.
+
+**Verification.** Full suite 1,347 passing and 1 skipped, five consecutive clean runs, and the
+repaired pin clean over six runs of its own. Missing adds unchanged at 673 across 445 encounters —
+traps are hazards rather than combatants, so they were never in that count.

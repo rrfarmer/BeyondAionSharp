@@ -21,7 +21,7 @@ public sealed class QueenAlukinaAiTests
 	private const int AzureBlobble = 280713;
 
 	private static BossAiHarness NewHarness() => BossAiHarness.For(EmpyreanCrucible)
-		.WithAi(typeof(QueenAlukinaAI), typeof(AggressiveNpcAI))
+		.WithAi(typeof(QueenAlukinaAI), typeof(NTrapAI), typeof(AggressiveNpcAI))
 		.Build();
 
 	private static int Count(BossAiHarness harness) =>
@@ -66,8 +66,23 @@ public sealed class QueenAlukinaAiTests
 			.GetValue(phases)!;
 	}
 
+	/// <summary>
+	/// She bursts into seven azure blobbles where she falls, and each one goes off rather than standing
+	/// about — the death nova is seven bursts of Water Wave, not seven adds.
+	/// </summary>
+	/// <remarks>
+	/// <b>The second half of this pin used to say the opposite.</b> It asserted all seven were still
+	/// standing at twenty-nine seconds and gone at thirty, matching the <c>live_time=30</c> retail
+	/// spawns them with. The thirty seconds are real and still in the table; what changed is that the
+	/// blobble turned out to be a <c>NTrap_A</c> trap, so it fires as it appears and leaves when the
+	/// cast lands, long before its lifetime runs out. The <c>live_time</c> is the backstop for a trap
+	/// whose cast never happens — the same reading as Tahabata's flame centers and Vanuka's.
+	/// <para>
+	/// Sixth time a pin has changed because a later port made its subject more complete.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void BurstsIntoSevenAzureBlobblesThatLastThirtySeconds()
+	public void BurstsIntoSevenAzureBlobblesThatGoOffWhereSheFell()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc boss = harness.Spawn(QueenAlukina);
@@ -78,10 +93,8 @@ public sealed class QueenAlukinaAiTests
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 		Assert.Equal(7, Count(harness));
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(29));
-		Assert.Equal(7, Count(harness));
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(1));
 		Assert.Equal(0, Count(harness));
 	}
 }

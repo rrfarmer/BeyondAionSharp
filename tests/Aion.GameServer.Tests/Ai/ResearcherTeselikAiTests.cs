@@ -277,12 +277,32 @@ public sealed class ResearcherTeselikAiTests
 		Assert.Equal(0, Count(boss));
 	}
 
+	/// <summary>
+	/// A hand knocks its target about on its own timer, on a coin flip, and casts nothing else.
+	/// </summary>
+	/// <remarks>
+	/// <b>The hand is spawned on its own here, and that is the fix for a flake this pin had twice.</b>
+	/// Taking one out of the boss's wave looks more realistic and is what made it unreliable: his
+	/// timer-4 and timer-7 branches give the self-destruct order within the first minute, so that
+	/// particular hand is gone after one or two flips however long the window is. The first attempt at
+	/// a fix stretched the window from forty seconds to a hundred and fifty on the theory that it would
+	/// buy a dozen ticks. It bought none — a census over twelve runs showed one to two casts either
+	/// way, and a zero in both samples.
+	/// <para>
+	/// A hand that no boss is about to detonate flips every seven or fifteen seconds for the whole
+	/// window: six to nine casts across twelve runs, never zero. That is the difference between a pin
+	/// that fails one run in ten and one that fails about one in eight thousand.
+	/// </para>
+	/// </remarks>
 	[Fact]
 	public void AHandKnocksItsTargetAboutOnItsOwnTimer()
 	{
-		var (harness, boss, player) = Engaged();
+		BossAiHarness harness = BossAiHarness.For(SauroSupplyBase).WithWorldSize(2048)
+			.WithAi(typeof(ResearcherTeselikAI), typeof(ShebanMysticalTyrhundAI), typeof(AggressiveNpcAI))
+			.Build();
 		using BossAiHarness _h = harness;
-		Npc hand = Live(harness, Hand)[0];
+		Npc hand = harness.Spawn(Hand, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 302f, 200f);
 		harness.Engage(hand, player);
 		BossAiHarness.DrainQueuedSkills(hand);
 
@@ -296,11 +316,6 @@ public sealed class ResearcherTeselikAiTests
 		}
 
 		// 16791 is the only skill our data gives it, and only the coin-flip branch casts it.
-		//
-		// The window is long on purpose. At forty seconds this saw about four ticks, so the branch
-		// missing every one of them had a one-in-sixteen chance -- and it duly failed about that
-		// often in full-suite runs while passing every time in isolation. Two and a half minutes is
-		// a dozen ticks and puts that below one in a thousand.
 		Assert.NotEmpty(cast);
 		Assert.All(cast, c => Assert.Equal(16791, c));
 	}
