@@ -3635,3 +3635,48 @@ with the mechanism already mapped, rather than a dump to read from scratch.
 **Also traced and blocked:** `BGuard_ChiefD_Minor`, whose 6682 makes the chamber lord
 despawn itself, is absent from our npc data and spawned by nothing in retail — the same
 shape as `BGuard_ChiefDespawn`. Both are presumably placed server-side.
+
+### Adma's skeleton waves, mapped end to end
+
+The gap recorded early in this work — *"Adma's 12 skeleton-wave adds need something to
+spawn the three invisible controllers (281045/6/7)"* — is now a complete causal chain
+rather than a dead end. The message audit found the middle of it; the binding table found
+the ends.
+
+```
+Adma_DeathknightNamed_SP  ─┐
+Adma_T_Control_04         ─┼─ spawn ─► 281045 / 281046 / 281047   (the invisible controllers)
+Adma_T_Named_05           ─┘            patterns ND2_FhWSumA / B / C
+                                                  │
+                                     broadcast 6602 / 6603 / 6604
+                                                  │
+                            NoAction_CoffinA/B/C  ▼  listen, and spawn
+                                        faithful page (280933) on 6602
+                                        + diligent page (280949) on 6603 and 6604
+```
+
+**Every link is confirmed.** The controllers are the `BIDDF2A_DeathKnightSum_SumSkels*`
+npcs, which is why the id note recorded years of this work ago pointed at them without a
+mechanism. The wave grows with the message number.
+
+### Where it is still blocked, precisely
+
+- **The controllers (281045/6/7) are spawned by nothing** — `refs=0` across spawns, skills
+  and handlers.
+- **The three patterns that would spawn them are all unported**, and one of them is
+  interesting: `Adma_DeathknightNamed_SP` is Lord Lannok's *hard-mode* twin. Our
+  `LordLannokAI` claims the plain `Adma_DeathknightNamed`, which does **not** reference the
+  controllers at all — so in normal mode this mechanic may not belong to Lannok, and
+  `Adma_T_Control_04` or `Adma_T_Named_05` owns it instead. Which of the three drives the
+  normal-mode instance is the one thing still unknown.
+- **`SuspiciousCoffinAI` listens for none of 6602-6604.** It handles 6601 and 6609, Lord
+  Lannok's alarm pair, and nothing else.
+
+**The next step is a lookup, not an investigation:** find which npc_ids bind
+`Adma_T_Control_04` and `Adma_T_Named_05`, check whether our data spawns them, and the
+owner falls out. If one is reachable, the whole chain is three small branches — the
+controllers on the owner, a broadcast each, and three coffin branches.
+
+**What made this findable.** Not the adds audit, which had counted these pages for months
+without being able to say why nothing spawned them. The message audit crossed the gap,
+because the missing thing was never a spawn — it was a conversation.
