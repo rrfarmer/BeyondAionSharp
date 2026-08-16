@@ -1892,7 +1892,11 @@ Soaring Flames and Inferno Breath, Visha gets Throw Poison and Diffusive Poison,
 Bahapa gets Cold Attack and Cold Air Emission. Four bosses, one chain, four
 flavours.
 
-**Why this is a specification and not a port: Hakara is one skill short.** He
+**Ported after all — see the follow-up below.** What follows was written before
+Hakara's gap was traced; the mapping it describes proved correct and gained two
+further confirmations.
+
+**Hakara is one skill short.** He
 carries six entries where the other three carry seven, so under this alignment he
 has a trait 1 (Losing Rationality) and **no trait 2** — yet the pattern casts
 index 4 in two of its three bands. Either our data for him is incomplete, or the
@@ -1907,3 +1911,44 @@ in the middle of a shared class is worse than porting none, so this waits.
 
 `python rotation_table.py <patterns_dir> BIDF5_U01_Middle_Boss_Fire` reprints the
 chain.
+
+### Follow-up: the fire bosses are ported, and Hakara's gap is upstream
+
+The previous entry stopped on Hakara having six skills where his siblings have
+seven, unsure whether that was a data gap or a wrong offset. Both questions are
+now answered.
+
+**The offset is right, and the mapping is a rotation by two, mod seven.** Two more
+confirmations turned up on the way:
+
+- `on_wake_up` self-casts index 5, and under the rotation index 5 is **Midnight
+  Robe** — the only BUFF in every list, and the only entry our data marks
+  `is_post_spawn`. A self-buff on waking is exactly what that flag means.
+- The branch commented "disease-poison aura" casts indices 0 **and** 1 together,
+  and those land on Fatal Disease and Boost Deadly Virulency — the two disease
+  debuffs, as a pair.
+
+Four independent anchors now agree, and under the rotation every skill in every
+list is used. Under any other offset each boss's last skill would be dead.
+
+**Hakara's gap is upstream.** The Java reference carries the same six skills, so
+this is an aionemu data gap rather than a porting error, and nothing in the client
+can fill it — the client has no per-NPC skill lists at all. His theme is madness
+where his siblings are fire, poison and cold, so the missing entry is a second
+madness skill, but *which* one is not recoverable from anything we have.
+
+**So the earlier judgement is reversed, deliberately.** That entry said porting
+three of four and leaving a hole was worse than porting none. That was the right
+call while the hole might have been a mistake in the mapping; it is the wrong call
+now that the mapping is confirmed and the hole is a known missing row. All four
+are ported. Hakara's trait-2 branches cast nothing — his 41-70 opener, and half
+his openers below 40% — and a test pins that absence so nobody fills it with a
+guess.
+
+**One edge worth keeping.** The bands are 71-100, 41-70 and below-40, so **HP
+exactly 40 matches none of them**. Only the catch-all keeps timer 0 armed through
+it; without one the fight would stop dead for any group that parked a boss on
+exactly 40%. There is a test for that specific value.
+
+**Verification.** Full suite 1,143 passing and 1 skipped, fifteen new pins across
+all four bosses, all seven mutations caught after two test fixes.
