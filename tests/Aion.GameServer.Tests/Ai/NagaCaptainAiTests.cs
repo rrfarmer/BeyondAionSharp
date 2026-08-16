@@ -26,7 +26,7 @@ public sealed class NagaCaptainAiTests
 	private static (BossAiHarness, Npc, Player) Engaged(int npcId, int hpPercent)
 	{
 		BossAiHarness harness = BossAiHarness.For(Reshanta).WithWorldSize(4096)
-			.WithAi(typeof(NagaCaptainAI), typeof(AggressiveNpcAI)).Build();
+			.WithAi(typeof(NagaCaptainAI), typeof(NagaSlaveAI), typeof(AggressiveNpcAI)).Build();
 		Npc boss = harness.Spawn(npcId, 300f, 300f, 200f);
 		Player player = harness.SpawnPlayer(302f, 302f, 200f);
 		BossAiHarness.SetHpPercent(boss, hpPercent);
@@ -102,9 +102,14 @@ public sealed class NagaCaptainAiTests
 	}
 
 	/// <summary>
-	/// Below the band the ninety-second timer stops matching, so a captain fought past it gets no
-	/// further reinforcements.
+	/// Below the band the ninety-second timer stops matching, so no further reinforcements arrive —
+	/// and at 21-40 the ones already out are detonated, so the field ends up empty.
 	/// </summary>
+	/// <remarks>
+	/// This pin used to assert the four survived, which was right until the dismissal was translated.
+	/// Retail hands the captain a one-shot at 21-40 that blows them up, so persisting was the port
+	/// being incomplete rather than the boss being generous.
+	/// </remarks>
 	[Fact]
 	public void DroppingOutOfTheBandStopsTheReinforcements()
 	{
@@ -116,7 +121,7 @@ public sealed class NagaCaptainAiTests
 		BossAiHarness.SetHpPercent(boss, 30);
 		Advance(harness, boss, player, 120);
 
-		Assert.Equal(4, Slaves(harness));
+		Assert.Equal(0, Slaves(harness));
 	}
 
 	/// <summary>
@@ -166,5 +171,70 @@ public sealed class NagaCaptainAiTests
 		boss.GetAi().OnGeneralEvent(AiEventType.BackHome);
 
 		Assert.Equal(0, Slaves(harness));
+	}
+
+	private const int Explosion = 16991;
+
+	/// <summary>
+	/// Dropping to 21-40 it detonates whatever it called up. The slaves answer the call themselves,
+	/// casting Explosion on the way out — which is what makes the identity mapping of their two skills
+	/// readable at all.
+	/// </summary>
+	[Fact]
+	public void DroppingToTwentyOneDetonatesTheSlaves()
+	{
+		var (harness, boss, player) = Engaged(CaptainLahbri, 50);
+		using BossAiHarness _h = harness;
+		Advance(harness, boss, player, 15);
+		Assert.Equal(4, Slaves(harness));
+
+		BossAiHarness.SetHpPercent(boss, 30);
+		Advance(harness, boss, player, 20);
+
+		Assert.Equal(0, Slaves(harness));
+	}
+
+	/// <summary>
+	/// A dismissed slave explodes on the way out. Pinned by handing the call straight to one, because
+	/// it casts and despawns in the same branch — draining a tick later finds it already gone.
+	/// </summary>
+	[Fact]
+	public void ADismissedSlaveExplodes()
+	{
+		var (harness, boss, player) = Engaged(CaptainLahbri, 50);
+		using BossAiHarness _h = harness;
+		Advance(harness, boss, player, 15);
+		Npc slave = harness.LiveNpcs().First(n => n.GetNpcId() == NagaSlave);
+		BossAiHarness.DrainQueuedSkills(slave);
+
+		var listener = (Aion.GameServer.Ai.INpcMessageListener)slave.GetAi();
+		listener.OnNpcMessage(boss, NagaCaptainAI.Dismiss, null);
+
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(slave), c => c.SkillId == Explosion);
+		Assert.False(slave.IsSpawned());
+	}
+
+	/// <summary>It calls the dismissal once, not on every heartbeat through the band.</summary>
+	[Fact]
+	public void TheDismissalIsAOneShot()
+	{
+		var (harness, boss, player) = Engaged(CaptainLahbri, 50);
+		using BossAiHarness _h = harness;
+		Advance(harness, boss, player, 15);
+		BossAiHarness.SetHpPercent(boss, 30);
+		Advance(harness, boss, player, 20);
+		Assert.Equal(0, Slaves(harness));
+
+		// Back into the summon band and out again: the flag is spent, so the next batch survives the
+		// return to 21-40.
+		BossAiHarness.SetHpPercent(boss, 50);
+		Advance(harness, boss, player, 100);
+		int called = Slaves(harness);
+		Assert.True(called > 0, "the summon band should have called more");
+
+		BossAiHarness.SetHpPercent(boss, 30);
+		Advance(harness, boss, player, 20);
+
+		Assert.Equal(called, Slaves(harness));
 	}
 }

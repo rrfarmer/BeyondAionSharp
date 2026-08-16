@@ -54,6 +54,15 @@ public class NagaCaptainAI : PatternAi
     /// <summary>Retail's <c>FLAGVARI_BETA_1</c> — the band is entered once.</summary>
     private const int EnteredSummonBand = 1;
 
+    /// <summary>Retail's <c>FLAGVARI_GAMMA_1</c>: the dismissal happens once, at 21-40.</summary>
+    private const int Dismissed = 2;
+
+    /// <summary>
+    /// The call that detonates the slaves. They answer it themselves — see <see cref="NagaSlaveAI"/>.
+    /// </summary>
+    public const int Dismiss = 3315;
+    private const float DismissRange = 50f;
+
     private static readonly PatternCondition SummonBand = When.HpBetween(41, 60);
 
     private static PatternAction Slaves4() =>
@@ -78,6 +87,13 @@ public class NagaCaptainAI : PatternAi
                 Do.ArmTimer(1, 6000),
                 Do.ArmTimer(4, 90000),
                 Slaves4()),
+
+            // Dropping to 21-40, it detonates whatever it called up. One-shot: the slaves are gone
+            // afterwards and the band is only entered once.
+            Branch(10, "detonate the slaves",
+                [When.Timer(1), When.HpBetween(21, 40), When.FirstTime(Dismissed)],
+                Do.ArmTimer(1, 12000),
+                Do.Broadcast(Dismiss, DismissRange)),
 
             // Timer 1's heartbeat. Every band branch above it is guarded, so this is what carries the
             // fight down through the bands that were not translated and into the one that was.

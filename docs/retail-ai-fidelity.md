@@ -3841,3 +3841,53 @@ consecutive full-suite runs are clean.
 probabilistic branch fires at least once, over a window sized for the deterministic case.
 Worth checking the others — any pin whose subject is a `test_probability` branch needs its
 window sized for the tail, not the mean.
+
+---
+
+## The probabilistic-pin sweep, and the naga slaves
+
+### Sweep: one flake, and it was already fixed
+
+Every AI class with a `test_probability` branch was checked against its pins, asking whether
+any assertion rides the outcome of a roll over a window sized for the deterministic case.
+**None does.** Most are safe by construction, and it is worth recording why, because the
+shape recurs:
+
+- **a fallback with no guard** — Gatekeeper Flox's four eye placements, the coffins' mage
+  rolls, the naga captain's call interval. One branch always matches, so *something* always
+  happens and only *which* is random.
+- **both branches doing the same observable thing** — RM-56c's band timers, whose casts are
+  untranslated so both sides merely re-arm; the Danuar summons, where both switch target.
+- **pins that assert counts rather than choices** — Wrathclaw keeps one sphere of each
+  however the arrangement rolls.
+
+The one real flake, Teselik's hand knockback, was found and fixed by the run that prompted
+this sweep. Tiamat's only positional assertion is on the unconditional wake-up placement,
+not the 34% swap.
+
+### The naga slaves detonate
+
+`Naga_WrF`'s last unimplemented message, 3315, turned out to be a mechanic rather than an
+announcement. Dropping to 21-40 the captain calls it once, and every slave it summoned
+**explodes and removes itself**.
+
+**Both of the slave's skill indices resolve, and the roles corroborate each other** — which
+is rarer than a bare count match. Two indices are addressed and the npc has exactly two
+skills. Index 0 is cast on waking and again on leaving the fight and is `16921 Fire Sparkle`,
+the only BUFF; index 1 is cast in the same breath as despawning and is `16991 Explosion`. A
+minion that buffs itself on arrival and explodes when dismissed is a mechanic; the reverse
+is nonsense. That makes identity the only reading, not merely the default.
+
+### A pin that was right until this landed
+
+`DroppingOutOfTheBandStopsTheReinforcements` asserted the four slaves *survive* below the
+band. True while the dismissal was unported, and wrong the moment it landed — persisting was
+this port being incomplete rather than the captain being generous. Corrected to expect an
+empty field.
+
+That is the fourth time a pin has had to change because a later port made its subject more
+complete. It is worth expecting: **a pin written against a partial translation encodes the
+partiality**, and finishing the translation is supposed to break it.
+
+**Verification.** Full suite 1,323 passing and 1 skipped; three new pins; all seven
+mutations caught after two invalid patches were redone.
