@@ -2737,3 +2737,52 @@ carrying to any boss whose opener and repeat arm the same slot.
 
 **Verification.** Full suite 1,261 passing and 1 skipped; ten pins across both
 captains; all eight mutations caught after that fix.
+
+---
+
+## General Chunapa — burrows under the two most-hated
+
+**NPC:** general chunapa (218183), Cygnea, LEGENDARY, nine-hour respawn, on plain
+`aggressive`. **Pattern:** `LDF4a_SandWarm_General`. The shirik burrow (282556, ELITE)
+was spawned by nothing anywhere.
+
+His spawn sits in `spawns/Npcs/Custom/Sandstorm_Targets.xml`. That folder is otherwise
+this server's own additions — mailboxes, stigma masters, training dummies — so it was
+worth checking before spending effort; but he is a real nine-hour world boss placed in
+Cygnea, so the content is reachable and the port stands.
+
+**Phase two opens burrows.** Between 51 and 75 he puts one under each of the **two
+most-hated** players within seventy-five metres, and repeats every forty-five seconds
+while the fight stays in that band. Each lasts sixty-four seconds, so the first pair is
+still standing when the second opens. Below 51 the branch stops matching.
+
+### Heartbeats that switch themselves off
+
+Retail runs four three-second timers whose only job is to notice a phase boundary, and
+**the phase branch answering each one does not re-arm it** — so the heartbeat goes
+quiet the moment it has done its work. That is how an unflagged branch fires once
+without a flag: timer 0 ticks every three seconds until health first goes under 75, its
+phase branch lights timer 1, and timer 0 stops. A third idiom for once-only behaviour,
+alongside the flag ladder (Karemiwen) and the plain one-shot.
+
+It also produces a small timing quirk the tests had to be corrected for: timer 0 and
+timer 1 both come due at three seconds, and the phase branch re-arms timer 1 as it
+passes, so the **first** pair of burrows lands a tick later than the arming suggests.
+
+### The casts are not translated, and with them three of the four phases
+
+His comments are among the best in the corpus — 가시분출 "thorn burst", 소화액
+"digestive fluid", 스턴 "stun", 격노 "rage", 처형 "execution" aimed at whoever has the
+least health — and **none of it is usable, because he has no `npc_skills` entry at
+all**. Good comments do not help when the other half of the mapping is missing. This is
+the Golden Tatar case, not the Derakanak one, and it is worth stating plainly: the
+comment quality that made Derakanak and Teselik resolvable is necessary, not
+sufficient.
+
+Omitted with the casts: phase one's thorn-burst and digestive-fluid timers, phase
+three's pair, phase four's paralysis and execution timers, and the stuns that mark each
+transition. **Also not translated:** the door he controls on engaging — method
+semantics still unresolved, see the correction entry above — and his five shouts.
+
+**Verification.** Full suite 1,268 passing and 1 skipped; seven pins; all eight
+mutations caught.
