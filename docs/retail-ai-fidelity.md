@@ -2534,3 +2534,51 @@ them whose arithmetic was wrong, landing the assertion exactly on the tentacles'
 expiry. The lesson worth keeping: **a "fought down from full" test only exercises the
 band's looping step if the health drop comes after a complete lap** — drop it earlier
 and the low chain picks the sequence up mid-flight, and the missing step never shows.
+
+---
+
+## RM-56c — a trap ladder that thickens as it weakens
+
+**NPC:** rm-56c (214802), Azoturan Fortress, ELITE, on plain `aggressive`.
+**Pattern:** `NLehpar_BhC`. The complete traps (281281, ELITE) were spawned by nothing
+anywhere — their only reference in the whole server was their own `npc_skills` entry.
+
+Each band lays its own arrangement **once**, the first time timer 0 comes round inside
+it, and lights the band's own timer:
+
+| band | traps | where | band timer |
+|---|---|---|---|
+| 61-80 | 1 | underfoot | 25s |
+| 41-60 | 2 | two metres either side | 30s, then 25s |
+| 21-40 | 3 | four metres out | 25s, then 20s |
+| below 20 | 4 | corners of an eight-metre square | 25s, then 20s |
+
+**The re-lay path.** Each band timer splits on a coin flip: half the time it casts,
+half the time it lights timer 9 a second out, whose branches lay that band's
+arrangement again. The traps live twelve seconds, so they come and go rather than
+accumulating.
+
+**Exactly 20 belongs to no band** — the arrangement below wants `< 20` and the one
+above wants `21-40`. Only the per-timer heartbeats carry the fight through it. Third
+boss with this shape, after the Ophidan Bridge fire bosses at 40 and Derakanak at 80;
+it is clearly a habit of the format rather than a slip in any one pattern.
+
+### The casts, and a hint deliberately not acted on
+
+Five indices addressed, and our `npc_skills` carries **exactly five** skills — which is
+suggestive, but this pattern has **no branch comments at all**, so nothing anchors the
+mapping. The one hint on record: 17910 and 17911 are named `First Rune Carve` and
+`Second Rune Carve`, an ordered pair, and indices 0 and 1 are the pair every
+trap-laying branch casts together. That constrains their order relative to each other
+and nothing else — indices 2, 3 and 4 have no anchor whatever, and an ordered pair
+could sit at any offset. Same refusal as Icaronix, Lost Balor and Prectaz. Recorded
+here so a future session with better evidence can pick it up rather than re-derive it.
+
+**Also not translated:** the shout, which has no numeric id in our data, and message
+6681, broadcast to ten metres alongside every trap-laying branch — the traps run the
+generic `trap` AI, which has no listener for it.
+
+**Verification.** Full suite 1,233 passing and 1 skipped; eleven pins; all eight
+mutations caught. One test counted live traps where the traps expire on a twelve-second
+clock, so "laid once" and "laid four times and expired three" looked identical — it
+now counts by identity, the same fix the frost bombs needed.
