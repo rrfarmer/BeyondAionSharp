@@ -3762,3 +3762,40 @@ lifetimes and the 45-second cadence are read from the patterns.
 mechanism was blocked on a 4.8-versus-5.8 client mismatch. That is true of the *controller*
 route and false of the whole encounter — there was a reachable path one query away, and the
 verdict was written before looking for it. Blocked on one route is not blocked.
+
+### Adma's skeleton waves — built
+
+The gap recorded early in this work is closed on the reachable side. Lord Lannok now calls
+and coffins D, E and F answer.
+
+**Two corrections to the specification written last entry**, both found by reading the
+patterns again rather than trusting the note:
+
+- the mage rolls are **15%** on the second call and **30%** on the third, not 50%. The
+  earlier figure came from the boss's own coin flip between messages and was carried onto
+  the coffins' branches, which are a different roll entirely.
+- each call sends **one** add — a mage *or* a page, never both. The dump lists the two
+  spawns adjacently and they read as a pair; they are the two halves of a probability
+  branch.
+
+**Where the fuse hangs.** Retail lights it from battle timer 0 at 26-50 with a one-shot,
+and that rotation is not translated, so nothing would arm it. It hangs off `on_attacked`
+instead — a real event rather than an invented cadence, firing on every swing and so
+noticing the band as soon as he is in it. The one-shot keeps it a fuse.
+
+**The two triplets are the mechanism, not a detail.** A, B and C answer 6602-6604 from the
+unreachable controllers; D, E and F answer Lannok's 6605-6607. Guarding each coffin on its
+own triplet is what stops an A coffin answering a call meant for D, and a mutation that
+made every coffin answer everything is caught by a pin for exactly that.
+
+**A mutation worth recording.** Removing the timer re-arm from *one* of the two call
+branches survived the first pass: the chain keeps running while the other side of the coin
+flip keeps winning, so a test asking "did anything arrive" cannot see it. The pin now
+counts distinct pages over ten minutes and expects at least eight of a dozen.
+
+**Still missing:** coffins A, B and C stay silent, because nothing spawns the controllers
+that call them — patterns bound to no NPC in our 4.8 client. Half the waves, and the half
+that is blocked is blocked on client data rather than on work.
+
+**Verification.** Full suite 1,320 passing and 1 skipped; six pins; all seven mutations
+caught.
