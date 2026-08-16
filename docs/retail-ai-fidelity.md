@@ -1952,3 +1952,121 @@ exactly 40%. There is a test for that specific value.
 
 **Verification.** Full suite 1,143 passing and 1 skipped, fifteen new pins across
 all four bosses, all seven mutations caught after two test fixes.
+
+---
+
+## Researcher Teselik and his hands — a counter, and a new primitive
+
+**NPCs:** researcher teselik (230850, HERO), sheban mystical tyrhund (284455).
+**Patterns:** `IDVritra_Base_Drakan_Wi_Nmd` and `IDVritra_Base_Drakan_Wi_Nmd_Sum`.
+**Instance:** Sauro Supply Base (301130000). Both were on plain `aggressive`, and
+nothing in our server spawned the hands at all — their only source is a summoning
+ritual the boss had no AI to perform.
+
+### The mechanic our runtime could not express
+
+His fight is not an HP ladder. He keeps a **running count of how many hands are
+still standing**, and every branch point asks that count a question:
+
+| count | branch |
+|---|---|
+| all dead | summon a fresh wave — three or two on a coin flip |
+| any alive | order them to blow up, which writes the count back to zero |
+
+The count is retail's `INTVARI_FIRST`. Each hand decrements it as it dies, by
+broadcasting message 22260 to fifty metres; the boss's `on_message` answers.
+
+This needed a primitive the pattern runtime did not have, so `AiPattern` gains
+three conditions and `PatternAi` four counter slots (`INTVARI_FIRST` through
+`FOURTH`):
+
+- `When.CountBelow(counter, comparand, setTo)` — `set_intvar_if_less_than`
+- `When.CountAbove(counter, comparand, setTo)` — `set_intvar_if_larger_than`
+- `When.Decrement(counter, low, high)` — `decrease_intvar`
+
+Like the flag vars these **mutate when they pass**, so they must be evaluated in
+written order. The clamp on `Decrement` is load-bearing: a hand can report its
+death after the boss has already zeroed the count, and without the clamp that late
+report would drive it negative and he would never summon again.
+
+**This is not a Teselik quirk.** Across the 5.8 dump `increase_intvar` appears
+1,409 times, `set_intvar_if_less_than` 215, `set_intvar_if_larger_than` 170 and
+`decrease_intvar` 176. Counters are one of the most-used primitives in the whole
+pattern language, and until now we could express none of it. Only the four
+operations above are implemented; `increase_intvar`, `add_intvar`, `sub_intvar`
+and the `be_true_only_when_hit_the_bound=TRUE` form of `decrease_intvar` are
+deliberately left out rather than shipped untested — the next pattern that needs
+one should bring a test with it.
+
+### Skill indices — all seven resolve
+
+Our `npc_skills` list has exactly seven entries and retail addresses exactly seven
+indices, but they are **not the same seven**:
+
+| idx | skill | how it was pinned |
+|---|---|---|
+| 0 | 20700 Midnight Robe | one of two buffs he self-casts on resetting ("종족버프") |
+| 1 | 20701 Blessing of Blood | branch comment 피의 축복 — the exact name |
+| 2 | 17335 Flame Bolt | 불꽃화살, four branches, matching its 33% |
+| 3 | 21288 Fire Burst | 불꽃뿜기, two branches, matching its 23% |
+| 4 | 20657 Summoning Ritual | the only skill in the list carrying `spawn_npc` |
+| 5 | **20708 Self-destruct Command** | 자폭명령 — the exact name |
+| 6 | 21135 Beritra's Favor | the other reset buff |
+
+Index 5 is the find. Our data carries 20708 only as a **commented-out** entry with
+the note *"we have no real handling for NPC summon control"* — and the retail
+pattern **is** that handling. In its place the live list repeats 21135 twice; that
+duplicate is what upstream substituted. The list is left as upstream has it, since
+the AI casts by id, and the stale comment has been corrected in place.
+
+### Two retail quirks reproduced rather than tidied
+
+**Phase two can eat itself.** The handover at 65% is guarded by a one-shot flag
+that sits *ahead* of the count test. If the hands all happen to be dead at the tick
+he crosses 65, the branch that wants them alive spends the flag and *then* fails on
+the count — and the summoning variant beneath it can never match again. Phase two
+is skipped for that entire fight. It reads like a bug and it probably is one, but
+it is what the data does, so it is pinned by a test named for it.
+
+**The flame bolt alternates.** The two branches on timer 2 swap through a flag —
+one sets it and switches target, the next consumes it and does not. Not pinned: our
+harness has a single player in the aggro list, so a switch to a random attacker has
+no observable effect. Noted here instead.
+
+### What is deliberately not translated
+
+- **The four named server paths.** Every hand is anchored on
+  `NPCPath_Bboss_Hand_01`–`04`, which we do not have, so they arrive next to him
+  instead. Retail's own phase-two branch already places one of three at his feet, so
+  this is a small stand-in — but it is ours, not theirs.
+- **The hand's own blast.** Retail's hand spawns the burn zone *and* casts its
+  skill index 2, a suicide skill our `npc_skills` does not carry (the list has one
+  entry, the knockback at index 0). The zone (284687) delivers the damage with
+  21206 Burn Zone, so what is missing is the hand's own explosion, not the hazard.
+  It despawns itself instead: the boss has already zeroed his count when he gives
+  the order, so a hand left standing would put the count and the field permanently
+  out of step and the next wave would stack on top of this one.
+- **The self-destruct order's plumbing.** Retail casts index 5 and the hands act on
+  message 22261, but *nothing in the pattern sends 22261* — retail routes it through
+  the skill. Our skill engine has no AI-message effect, so the branch broadcasts it
+  alongside the cast. Same observable behaviour, different plumbing.
+- **His three shouts** (`STR_CHAT_IDVritra_Base_Nmd3_01/02/03`) have no numeric id
+  in our data.
+- **The death tail.** Retail's `on_killed_by_user` opens door 210, announces
+  `STR_MSG_IDVritra_Base_DoorOpen_04`, and places four bonus hands (284457) on those
+  same named paths. Door control and waypoints are not in the pattern runtime; only
+  the despawn half is ported. **This is the largest single piece left on this boss.**
+
+### A tooling fix that changed the answer
+
+`rotation_table.py` kept only the **last** `use_skill` per branch — the same bug
+class already fixed for spawns. Teselik's phase-two branches cast a buff *and* a
+command, and with only the second showing, the skill indices looked one place out
+of step with his list and the whole mapping read as a rotation. It is not a
+rotation. Casts are now joined like spawns.
+
+**Verification.** Full suite 1,158 passing and 1 skipped; fourteen new pins; all
+eleven mutations caught. Two pins were added because mutation testing showed the
+originals could not see the difference: *exactly one hand left* (the only count
+that tells `>=` from `>`) and *who he breathes fire at* (self while healthy, at the
+target below 65 — same skill, two regimes).

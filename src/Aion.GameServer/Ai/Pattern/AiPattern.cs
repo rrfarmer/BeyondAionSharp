@@ -119,6 +119,45 @@ public static class When
     /// <summary><c>test_probability</c>.</summary>
     public static PatternCondition Chance(int percent) => ai => ai.RollPercent(percent);
 
+    /// <summary>
+    /// <c>set_intvar_if_less_than</c>: passes when counter <paramref name="counter"/> is below
+    /// <paramref name="comparand"/>, and on passing sets it to <paramref name="setTo"/>.
+    /// </summary>
+    /// <remarks>
+    /// Retail's counters are how a boss knows how many of its summons are still standing. The pattern
+    /// sets the counter to the number it is about to spawn, each summon decrements it as it dies, and
+    /// this condition asks "are they all gone?" — passing sets the counter to the size of the wave the
+    /// branch is about to place, so the test and the bookkeeping are one step.
+    /// <para>
+    /// Like <see cref="FirstTime"/> this mutates when it passes, so it has to be evaluated in written
+    /// order: a health band or timer guard ahead of it that fails must leave the counter alone.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition CountBelow(int counter, int comparand, int setTo)
+        => ai => ai.TestAndSetCounterIfBelow(counter, comparand, setTo);
+
+    /// <summary>
+    /// <c>set_intvar_if_larger_than</c>: the mirror of <see cref="CountBelow"/>, and the branch that
+    /// answers "some are still alive".
+    /// </summary>
+    public static PatternCondition CountAbove(int counter, int comparand, int setTo)
+        => ai => ai.TestAndSetCounterIfAbove(counter, comparand, setTo);
+
+    /// <summary>
+    /// <c>decrease_intvar</c> with <c>be_true_only_when_hit_the_bound=FALSE</c>: takes one off the
+    /// counter, holds it inside <paramref name="low"/>..<paramref name="high"/>, and always passes.
+    /// </summary>
+    /// <remarks>
+    /// The clamp is the point. A summon that dies after the boss has already re-armed the wave must not
+    /// drive the count negative, or the "are they all gone" test above would stop passing.
+    /// <para>
+    /// The <c>TRUE</c> variant — pass only on reaching the bound — is the more common one in the retail
+    /// files and is deliberately not implemented; no ported pattern uses it, and it would ship untested.
+    /// The same goes for <c>increase_intvar</c>, <c>add_intvar</c> and <c>sub_intvar</c>.
+    /// </remarks>
+    public static PatternCondition Decrement(int counter, int low, int high)
+        => ai => ai.DecrementCounter(counter, low, high);
+
     /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
     public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 

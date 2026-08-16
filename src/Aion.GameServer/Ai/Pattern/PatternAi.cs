@@ -41,6 +41,11 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private readonly ScheduledTask?[] timers = new ScheduledTask?[TimerSlots];
     private readonly bool[] flags = new bool[FlagSlots];
+
+    /// <summary>Retail names four: <c>INTVARI_FIRST</c> through <c>INTVARI_FOURTH</c>.</summary>
+    private const int CounterSlots = 4;
+
+    private readonly int[] counters = new int[CounterSlots];
     private readonly Dictionary<int, List<Npc>> spawnGroups = new Dictionary<int, List<Npc>>();
     private ScheduledTask? idleTimer;
 
@@ -154,6 +159,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
                 idleTimer.Cancel(true);
             idleTimer = null;
             Array.Clear(flags);
+            Array.Clear(counters);
             spawnGroups.Clear();
         }
     }
@@ -341,6 +347,49 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             flags[flag] = false;
             return true;
         }
+    }
+
+    // ---- counters ----------------------------------------------------------------------------
+
+    /// <summary>Test-and-set while below: the "are my summons all dead" branch, and its bookkeeping.</summary>
+    public bool TestAndSetCounterIfBelow(int counter, int comparand, int setTo)
+    {
+        lock (gate)
+        {
+            if (counters[counter] >= comparand)
+                return false;
+            counters[counter] = setTo;
+            return true;
+        }
+    }
+
+    /// <summary>Test-and-set while above: the mirror, for the branch that answers "some are alive".</summary>
+    public bool TestAndSetCounterIfAbove(int counter, int comparand, int setTo)
+    {
+        lock (gate)
+        {
+            if (counters[counter] <= comparand)
+                return false;
+            counters[counter] = setTo;
+            return true;
+        }
+    }
+
+    /// <summary>Takes one off a counter, clamped, and always passes. See <c>When.Decrement</c>.</summary>
+    public bool DecrementCounter(int counter, int low, int high)
+    {
+        lock (gate)
+        {
+            counters[counter] = Math.Clamp(counters[counter] - 1, low, high);
+            return true;
+        }
+    }
+
+    /// <summary>The counters, for tests to read. Not part of the pattern vocabulary.</summary>
+    public int Counter(int counter)
+    {
+        lock (gate)
+            return counters[counter];
     }
 
     public virtual bool RollPercent(int percent) => Rnd.Chance() < percent;

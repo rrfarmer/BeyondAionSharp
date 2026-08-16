@@ -130,9 +130,15 @@
 		<npc_skill id="20701" lv="1" prob="100" cd="30000" target="ME" />
 		<npc_skill id="21135" lv="1" prob="100" max_hp="60" cd="30000" />
 		<npc_skill id="21288" lv="56" prob="23" />
-		<!-- These two skills are used to control the summoned hands to deal big damage. Actual we have no real handling for NPC summon control
+		<!-- Summon control. 20708 Self-destruct Command is now handled: ResearcherTeselikAI casts it by
+			id at the branch points where his hands are still standing, so it does not belong in this
+			probability list — the pattern decides when it happens, not a dice roll. 20707 Attack Command
+			the retail pattern never uses.
 			<npc_skill id="20707" lv="56" prob="6"/>
 			<npc_skill id="20708" lv="56" prob="6"/> -->
+		<!-- This list has seven entries and retail addresses seven skill indices, but they are not the
+			same seven: retail's index 5 is 20708, and in its place this list repeats 21135. Left as
+			upstream has it — see ResearcherTeselikAI for how each index was pinned. -->
 	</npc_skills>
 	<!-- Chief Gunner Kurmata -->
 	<npc_skills npc_ids="230851">

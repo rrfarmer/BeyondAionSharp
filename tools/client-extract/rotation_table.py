@@ -52,14 +52,19 @@ def fired_timer(conditions: ET.Element | None) -> str:
 
 
 def actions_of(actions: ET.Element | None) -> tuple[str, str, str, str]:
-    """(timer armed, delay, everything it spawns, what it casts).
+    """(timer armed, delay, everything it spawns, everything it casts).
 
     Every spawn, not the last one: a branch that drops four hazards at four points is common, and
     keeping only one of them silently halves the mechanic. Vanuka Infernus was nearly ported off a
     table that showed one flame center per branch where the pattern has up to four.
+
+    Casts are joined for the same reason, and it is not hypothetical either: Researcher Teselik's
+    phase-two branches cast a buff *and* a command, and keeping only the second made the skill
+    indices look one place out of step with his skill list.
     """
-    arms = delay = skill = ""
+    arms = delay = ""
     spawned: list[str] = []
+    cast: list[str] = []
     for op in actions if actions is not None else []:
         if op.tag == "add_battle_timer":
             arms = (op.findtext("btimer_indicator") or "").replace(TIMER_PREFIX, "T")
@@ -72,8 +77,8 @@ def actions_of(actions: ET.Element | None) -> tuple[str, str, str, str]:
             facing = op.findtext("dir") or "0"
             spawned.append(name + where + (f" dir={facing}" if facing not in ("0", "") else ""))
         elif op.tag.startswith("use_skill"):
-            skill = (op.findtext("skill") or "").replace("SKILLI_INDEX_", "idx")
-    return arms, delay, " + ".join(spawned), skill
+            cast.append((op.findtext("skill") or "").replace("SKILLI_INDEX_", "idx"))
+    return arms, delay, " + ".join(spawned), " + ".join(cast)
 
 
 def main() -> None:
