@@ -3381,3 +3381,50 @@ readability.
 
 **Verification.** Full suite 1,312 passing and 1 skipped; twelve pins; five of seven
 mutations caught, one equivalent as above and one covering the unverifiable broadcast.
+
+---
+
+## `on_wake_up` broadcasts reach nobody — traced, not fixed
+
+The previous entry left open whether the despawn effect's cry works on the live server or
+only fails in the harness. **It fails everywhere**, and the cause is exact:
+
+```
+World.Spawn(obj):
+    obj.GetController().OnAfterSpawn();   // NpcController fires AiEventType.Spawned here
+    obj.UpdateKnownlist();                // ...and the known list is built here
+```
+
+`NpcController.OnAfterSpawn` raises `Spawned`, which `PatternAi.HandleSpawned` answers by
+evaluating `OnWakeUp`. So **any `on_wake_up` branch runs before the NPC knows about
+anything around it**, and `NpcMessageBus.Broadcast` walks exactly that known list. A
+just-spawned NPC broadcasting reaches nobody.
+
+**The Java reference has the identical order** — `onAfterSpawn()` then `updateKnownlist()`
+— so this is a faithful port of upstream, not a porting slip. It has never mattered
+upstream because aionemu implements no pattern that broadcasts on waking.
+
+### Why it is not fixed here
+
+Three options, none of them safe to take at the end of a session:
+
+1. **Reorder `World.Spawn`** — correct-looking, and diverges from Java on shared world
+   code that every spawn in the server passes through. The golden rule allows infrastructure
+   divergence, but this is a behavioural change, not an idiom change, and the blast radius
+   is everything.
+2. **Defer the pattern runtime's wake-up** by a tick, local to `PatternAi` and away from
+   shared code. Smaller blast radius, but it changes *when* every `OnWakeUp` branch runs,
+   including ones that place furniture other classes then look for.
+3. **Fall back in the bus** — if the sender's known list is empty, scan the map region.
+   Targeted and timing-neutral, but a region scan is a cost on a hot path and needs
+   measuring.
+
+Option 3 looks best on the evidence and is the recommendation, but the measurement was not
+done and picking on a hunch is how a hot path gets slower for a one-NPC mechanic.
+
+**Only one ported pattern is affected today**: `KistenianDespawnEffectAI`, whose cry should
+disperse the fire spirits and hand Kistenian a flame. Its class doc carries this note too.
+Everything else that broadcasts does so from a battle timer or a death, by which point the
+known list is long since built. **Any future pattern with a broadcast in `on_wake_up` will
+be silently inert until this is settled** — that is the reason to record it here rather
+than in a comment on one class.
