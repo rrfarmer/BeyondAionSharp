@@ -171,6 +171,12 @@ public static class When
         ai.MessageParam is Aion.GameServer.Model.GameObjects.VisibleObject param
         && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), param, metres);
 
+    /// <summary><c>is_npc_state(NPCI_SELF, NPC_STATE_ATTACK)</c> — already in a fight.</summary>
+    public static PatternCondition Fighting => ai => ai.InCombat;
+
+    /// <summary><c>is_npc_state(NPCI_SELF, NPC_STATE_IDLE)</c> — standing about.</summary>
+    public static PatternCondition Idle => ai => !ai.InCombat;
+
     /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
     public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 

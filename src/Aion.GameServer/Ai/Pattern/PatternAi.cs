@@ -148,6 +148,23 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private bool inCombat;
 
+    /// <summary>
+    /// Retail's <c>is_npc_state(NPCI_SELF, NPC_STATE_ATTACK)</c> against <c>NPC_STATE_IDLE</c>.
+    /// </summary>
+    /// <remarks>
+    /// The same latch <c>on_enter_attack_state</c> rides, exposed because retail branches on it
+    /// directly 968 times across the 5.8 files — an NPC that is already fighting answers a call
+    /// differently from one standing idle.
+    /// </remarks>
+    public bool InCombat
+    {
+        get
+        {
+            lock (gate)
+                return inCombat;
+        }
+    }
+
     /// <summary>Leaves the fight: cancels every timer, drops the flags, and forgets the spawns.</summary>
     /// <remarks>
     /// The spawns themselves are despawned by the pattern's own <c>on_die</c> / <c>on_enter_idle_state</c>

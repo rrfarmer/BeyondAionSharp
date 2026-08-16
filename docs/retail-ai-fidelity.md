@@ -3891,3 +3891,53 @@ partiality**, and finishing the translation is supposed to break it.
 
 **Verification.** Full suite 1,323 passing and 1 skipped; three new pins; all seven
 mutations caught after two invalid patches were redone.
+
+### Vanuka's subordinates answer a rally
+
+The last clean item on the retail-message audit's `acts` list. `Dragon_G3`'s summon
+branch below 30% does not only call up a faithful subordinate (281275) — it follows the
+spawn with `broadcast_message(3411, range_as_meter 50, param_obj OBJI_CUR_TARGET)`, and
+`Dragon_G3SlaveSuLizard`, bound to that npc, answers on **two** branches:
+
+| its state | what it does |
+|---|---|
+| `NPC_STATE_ATTACK` | `use_skill(idx1)`, then `switch_target()` |
+| `NPC_STATE_IDLE` | `add_hate_point()`, then `attack_most_hating(idx1)` |
+
+So a lizard already in a fight is shaken onto someone else at random, and one standing
+about is pointed at the boss's own quarry. New handler `VanukaLizardAI`, and 281275
+repointed from `aggressive`.
+
+**`is_npc_state` is now in the vocabulary.** Retail branches on it 968 times across the
+5.8 files, and `PatternAi` already latched exactly this bit for `on_enter_attack_state`;
+`When.Fighting` / `When.Idle` expose the latch it was already keeping.
+
+**The casts are not translated.** Three indices are addressed and the npc has exactly
+three skills — 16602 Strike, 17459 Powerful Knockdown, 17471 Tendon Destruction — but all
+three are `prob="25"`, none carries a distinguishing attribute, and the pattern's comments
+name none of them. A bare count match with nothing to corroborate it is not a resolution.
+
+### Three harness limits this pin ran into, all of them Java-faithful
+
+Getting the boss's own broadcast under test took four attempts, and each failure was the
+emulator being right rather than the mechanic being wrong:
+
+- **A summoned lizard arrives already fighting**, so it answers on the `switch_target`
+  branch. The idle branch is for the ones loitering in the room, not for the ones the boss
+  calls up — the pin had to place a lizard rather than summon one.
+- **`AggroList.AddHate` drops a creature the NPC is unaware of**, as it does in Java. A
+  distant quarry therefore defeats the mechanic instead of isolating it; keeping the hate
+  observable would have meant introducing them, and then the lizard's own aggro explains
+  the result. `SetTarget` runs regardless of awareness, so the **target** is the observable
+  that isolates the call.
+- **The harness has no known-list sweep.** On the live server `World.Spawn` files a new NPC
+  into its neighbours' known lists a moment after the AI's spawned event — which is why
+  `NpcMessageBus.Nearby` falls back to the map region for a *just*-spawned sender. Nothing
+  files anything here, so the pin introduces the pair by hand.
+
+The general shape is worth keeping: when a pin cannot see a mechanic, check whether the
+thing blocking it is a guard the Java reference also has before working around it.
+
+**Verification.** Full suite 1,327 passing and 1 skipped; three new pins; all five
+mutations caught — the two that survived the first round (removing the rally, and sending
+it without the target) are exactly what the end-to-end pin was added for.

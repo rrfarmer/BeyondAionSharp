@@ -47,6 +47,12 @@ public class VanukaInfernusAI : PatternAi
 
     private const int FlameLife = 10;
 
+    /// <summary>
+    /// Sent with every subordinate it calls up, carrying its own quarry. See <see cref="VanukaLizardAI"/>.
+    /// </summary>
+    public const int RallyCall = 3411;
+    private const float RallyRange = 50f;
+
     /// <summary>Pattern <c>dir</c> is degrees; the engine's own converter turns it into a heading.</summary>
     private static sbyte Facing(int degrees) =>
         (sbyte)PositionUtil.ConvertAngleToHeading((degrees + 360) % 360);
@@ -89,8 +95,10 @@ public class VanukaInfernusAI : PatternAi
             // The low-health chain, which outranks everything: once timer 0 hands over to timer 5
             // below 30% the fight never returns to the banded steps above.
             Step(29, [When.Timer(8)], next: 5, delay: 9000),
-            Step(28, [When.Timer(7)], next: 8, delay: 18000,
-                extra: Do.SpawnNear(FaithfulSubordinate, Adds, count: 1, range: 3f)),
+            Branch(28, "", [When.Timer(7)],
+                Do.ArmTimer(8, 18000),
+                Do.SpawnNear(FaithfulSubordinate, Adds, count: 1, range: 3f),
+                Do.Broadcast(RallyCall, RallyRange, aboutTarget: true)),
             Step(27, [When.Timer(6)], next: 7, delay: 18000),
             Step(26, [When.Timer(5)], next: 6, delay: 18000),
 
