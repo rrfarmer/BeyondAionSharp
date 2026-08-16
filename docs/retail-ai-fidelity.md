@@ -4838,3 +4838,45 @@ that the right family appears and the wrong one does not, rather than enumeratin
 
 **Tiamat's dying phase is now complete** — both modes, all four bands, every beacon, hazard and
 breath. What remains on this encounter is nothing this data can answer.
+
+### Unstable Yamennes: the deferral was right and its reason was not
+
+Nine adds sat in the backlog under `IDAbRe_Core_NamedD_02` and its hard twin, with a note in
+`UnstableYamennesAI` saying the gate ids were "deliberately left alone" because retail names
+283203/283222/283223 upstairs and 283233 downstairs while our class spawns 219567/219579/219580, and
+only ours carry the AI that makes a gate do anything. Swapping, it said, would replace working portals
+with inert scenery.
+
+The conclusion holds. The reason does not go deep enough, and the difference matters for whoever picks
+this up.
+
+**The two families are the same gates twice.** `idabre_core_02_Sum_Teleport2` (219567) and
+`bidabre_core_02_Sum_Teleport2` (283203) differ by a `b` prefix and **bind the same retail pattern**,
+`IDAbRe_Core_Summon4_02`. Both bosses — normal and hard — spawn the b-prefixed set exclusively. So the
+219xxx family our class uses is not what either boss places.
+
+**But swapping ids would not make it faithful, because our gate AI is not a translation of that
+pattern at all.** Retail's `IDAbRe_Core_Summon4_02` does three things:
+
+| | retail | `UnstableYamenessPortalSummonedAI` |
+|---|---|---|
+| on waking | one `IDAbRe_Core_Sum_Teleport2_Enemy` on itself, seventy seconds, attacking with 100,000 hate | nothing |
+| in combat | a cannon NPC (283200) at a fixed point every twelve seconds | — |
+| twelve seconds in | — | 219565 and 219566 at ±3 metres, repeated once at seventy-two seconds |
+
+Neither the timing, the count, the placement nor the npcs match. Ours is an invention that happens to
+produce adds near a portal.
+
+**And a faithful gate cannot currently be finished.** `IDAbRe_Core_Sum_Teleport2_Enemy` — the thing
+retail's gate summons the moment it appears — **resolves to no npc in our 4.8 client**. The binding
+table has no devname for it, so the on-wake summon is unportable the same way the waypoint bucket is.
+
+**What the work actually is**, for whoever takes it: translate `IDAbRe_Core_Summon4_02` as a gate class
+(cannon at a fixed point on a twelve-second timer, group cleared on death and despawn), repoint
+283203/283222/283223/283233 to it, change the boss to spawn those ids, and leave the on-wake summon
+out with a note. That is a rewrite of a working encounter for fidelity, not a bug fix, and it should be
+done deliberately rather than folded into a sweep.
+
+**Recorded rather than done** because the encounter works today and the change is a substitution of one
+whole mechanic for another — exactly the kind that wants its own pass with pins written before the
+swap, not after.
