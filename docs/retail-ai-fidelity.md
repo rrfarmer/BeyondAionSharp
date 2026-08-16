@@ -4482,3 +4482,28 @@ The two survivors are inert by data rather than untested: every `num_to_spawn` i
 ignoring the count changes nothing, and the reversal mutation was a no-op because `AiPattern.Of`
 re-sorts by priority regardless of list order — redone as "evaluate the fallback first", it was
 caught.
+
+### "Blocked: waypoint-placed" is now proven, not assumed
+
+Forty-six adds have sat in that bucket since the audit was written, on the reasoning that a spawn at
+`SPAWN_LOCATION_WAY_POINT_START` needs the named path's first point and we do not have it. Worth
+settling rather than repeating, because 46 is the third-largest bucket left.
+
+The patterns name paths in plain text — `GuardianChief_SouthCastle_Path_1`,
+`NPCPathVriAss_Path01`. Our own `npc_walker.xml` holds 5,874 routes, but keyed by a 40-hex id with no
+name attached anywhere in the file. Two ways that could have been bridged, both checked:
+
+- **The route id is not a hash of the path name.** Tried SHA-1, MD5 and SHA-256 over UTF-8 and
+  UTF-16LE, in original, lower and upper case, against the full route-id set. No hit.
+- **The client does not carry the paths.** Indexed all 3,332 archives — 525,657 entries — and the
+  only path-named files are flight paths (`fly_path.xml`, `client_airline.xml`), an environment prop
+  and a dozen sound effects. There is no NPC route data in the client at all.
+
+So NPC walk routes are **server-side data we do not have**, the same class of blocker as the
+`SKILLI_INDEX` skill lists. The bucket is genuinely blocked and the only routes forward are a dump of
+NCSoft's own path data, or hand-placing each add from observation — which is a per-encounter judgement
+call, not a mechanical one.
+
+**What this does not block.** A pattern that places absolutely and merely *hands* the spawn a path to
+walk afterwards is fine: the mark is in the pattern, only the walking is lost. The Vritra callers are
+exactly that shape and shipped. The 46 are the ones where the path start **is** the placement.
