@@ -7761,3 +7761,56 @@ than rediscovering it through eleven failing pins.
 **Verification.** No game behaviour changed; full suite unchanged at 1,664 passing and 1 skipped.
 `audit_retail_messages.py` reports 36 `acts`, 5 `no audience`, 5 `no speaker`, 3 `diff world`, 17
 `cast-only`, 14 `unheard`.
+
+## Making spawn-then-broadcast mean what retail means, and RM-56c's traps
+
+The previous entry abandoned RM-56c's trap dismissal and recorded why: our spawn path puts a summon
+in its spawner's known list before the next action of the same branch runs, so a broadcast written
+after a spawn reaches the spawn. Where the thing spawned is a listener for that message, the boss
+deletes what it has just placed.
+
+That was left as "a runtime change on behalf of one encounter, so not made". On reflection it is not
+one encounter's problem — **417 branches across 215 patterns broadcast after a spawn** — and the
+runtime is simply saying something retail does not. So the change is made, and RM-56c is the first
+thing it buys.
+
+### The change
+
+`NpcMessageBus.Broadcast` takes an optional exclusion set, and `PatternAi` remembers what the branch
+currently running has spawned and passes it. Cleared when the branch finishes, so nothing outside one
+branch is affected. Twelve lines across two files.
+
+It is deliberately scoped to *this branch* rather than to some window of time: retail's ordering is a
+property of one action list, and a summon placed by an earlier branch should hear the next broadcast —
+which is exactly the mechanic RM-56c uses.
+
+### RM-56c's traps, re-landed
+
+Every trap-laying branch ends with `broadcast_message 6681` to ten metres, and the traps answer with
+`despawn_self`. Laying a new arrangement takes the last one away, so a boss walked down through two
+bands does not stand in two overlapping sets — which the re-lay path, firing on roughly every other
+cycle of a band's own timer, would otherwise make common rather than rare.
+
+The traps are `CompleteTrapAI`, extending `TrapNpcAI` so a trap still arms and fires on whoever walks
+into it; only the branch that dismisses it is new.
+
+**The pin that matters most is the negative one.** `ATrapSurvivesTheBroadcastItWasLaidWith` asserts
+that the arrangement just placed is still on the floor, and it is the only thing in the suite that
+exercises the runtime change. Removing the exclusion fails fifteen of RM-56c's sixteen pins;
+ignoring it in the bus fails the same fifteen; letting it leak past its branch fails one. All three
+are worth having, because the first two say the mechanism is wired and the third says it is scoped.
+
+### What this does not fix
+
+The exclusion is on `PatternAi`'s broadcasts only. A Java-parity class that spawns and then calls
+`NpcMessageBus.Broadcast` by hand — `WatchmanHokuruki` and `MacunbelloSoulReaperAI` are the two that
+broadcast at all — gets no exclusion, because neither spawns in the same breath and adding a
+parameter they do not need would be noise. If a future hand-written class does both, it has to pass
+its own set.
+
+And the underlying difference is still ours rather than retail's: our spawn is synchronous and
+theirs, by this evidence, is not. Anything else that depends on a summon *not* being visible to its
+spawner within one branch will need the same treatment.
+
+**Verification.** Full suite 1,669 passing and 1 skipped; five new pins on RM-56c, sixteen in the
+file; six mutations, all caught, including the two that undo the runtime change.

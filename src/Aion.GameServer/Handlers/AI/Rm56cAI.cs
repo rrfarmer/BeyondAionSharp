@@ -37,9 +37,13 @@ namespace Aion.GameServer.Handlers.AI;
 /// and Prectaz. The five skills keep their 25% probabilities, so the boss still uses all of them.
 /// </para>
 /// <para>
-/// <b>Not translated:</b> the shout, which has no numeric id in our data, and the message it
-/// broadcasts to ten metres alongside every trap-laying branch (6681) — the traps run the generic
-/// <c>trap</c> AI, which has no listener for it.
+/// <b>Laying an arrangement takes the last one away.</b> Every trap-laying branch ends with
+/// <c>broadcast_message 6681</c> to ten metres and the traps answer by leaving, so a boss walked down
+/// through two bands does not stand in two overlapping sets — which the re-lay path would otherwise
+/// make common. See <see cref="CompleteTrapAI"/>.
+/// </para>
+/// <para>
+/// <b>Not translated:</b> the shout, which has no numeric id in our data.
 /// </para>
 /// </remarks>
 [AIName("rm_56c")]
@@ -81,7 +85,7 @@ public class Rm56cAI : PatternAi
     private static PatternBranch Opens(int priority, PatternCondition band, int flag, int bandTimer,
         int delay, PatternAction[] traps)
         => Branch(priority, "lay traps", [When.Timer(0), band, When.FirstTime(flag)],
-            [Do.ArmTimer(0, 5000), Do.ArmTimer(bandTimer, delay), .. traps]);
+            [Do.ArmTimer(0, 5000), Do.ArmTimer(bandTimer, delay), .. traps, DismissTheLastArrangement]);
 
     /// <summary>
     /// A band's own timer. The coin flip decides between casting — which does not resolve, so this
@@ -98,7 +102,14 @@ public class Rm56cAI : PatternAi
         ];
 
     private static PatternBranch Relays(int priority, PatternCondition band, PatternAction[] traps)
-        => Branch(priority, "re-lay", [When.Timer(9), band], traps);
+        => Branch(priority, "re-lay", [When.Timer(9), band], [.. traps, DismissTheLastArrangement]);
+
+    /// <summary>
+    /// Retail's <c>broadcast_message 6681</c>, last on every branch that lays traps: it reaches the
+    /// arrangement before this one and not the one just placed. See <see cref="CompleteTrapAI"/>.
+    /// </summary>
+    private static readonly PatternAction DismissTheLastArrangement =
+        Do.Broadcast(CompleteTrapAI.LayAnother, CompleteTrapAI.Reach);
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {

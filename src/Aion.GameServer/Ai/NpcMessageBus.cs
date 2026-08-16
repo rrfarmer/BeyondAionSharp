@@ -39,11 +39,22 @@ public static class NpcMessageBus
     /// <paramref name="range"/> metres of <paramref name="sender"/> whose AI listens for
     /// messages. The sender never receives its own broadcast.
     /// </summary>
-    public static void Broadcast(Npc sender, int messageType, VisibleObject? param, float range)
+    /// <param name="except">
+    /// NPCs this broadcast must skip. Retail patterns routinely spawn and then broadcast in the same
+    /// branch — 417 branches across 215 patterns do — and where the thing spawned is also a listener
+    /// for that message, retail plainly does not mean it to hear its own arrival: RM-56c lays traps
+    /// and immediately tells traps to leave, which would delete them the instant they appear. Our
+    /// spawn path puts a summon in its spawner's known list before the next action of that branch
+    /// runs, so the exclusion has to be explicit. See docs/retail-ai-fidelity.md.
+    /// </param>
+    public static void Broadcast(Npc sender, int messageType, VisibleObject? param, float range,
+        IReadOnlyCollection<Npc>? except = null)
     {
         foreach (VisibleObject candidate in Nearby(sender))
         {
             if (candidate is not Npc npc || npc == sender || npc.IsDead())
+                continue;
+            if (except != null && except.Contains(npc))
                 continue;
             if (!PositionUtil.IsInRange(sender, npc, range))
                 continue;

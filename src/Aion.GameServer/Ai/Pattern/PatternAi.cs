@@ -47,6 +47,19 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private readonly int[] counters = new int[CounterSlots];
     private readonly Dictionary<int, List<Npc>> spawnGroups = new Dictionary<int, List<Npc>>();
+
+    /// <summary>
+    /// Everything the branch currently running has spawned, so a <c>broadcast_message</c> later in the
+    /// same branch does not reach it.
+    /// </summary>
+    /// <remarks>
+    /// Retail writes spawn-then-broadcast constantly, and where the spawn is itself a listener the
+    /// message is plainly not meant for it — RM-56c lays traps and then tells traps to leave. Our spawn
+    /// path makes a summon visible to its spawner immediately, so without this the boss deletes the
+    /// arrangement it has just laid. Cleared when the branch finishes, so nothing outside one branch is
+    /// affected. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    private readonly List<Npc> spawnedThisBranch = new List<Npc>();
     private ScheduledTask? idleTimer;
 
     /// <summary>Guards the timer slots, the flags and the spawn groups against concurrent AI events.</summary>
@@ -222,8 +235,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
                 if (!matched)
                     continue;
 
-                foreach (PatternAction action in branch.Actions)
-                    action(this);
+                try
+                {
+                    foreach (PatternAction action in branch.Actions)
+                        action(this);
+                }
+                finally
+                {
+                    spawnedThisBranch.Clear();
+                }
+
                 return;
             }
         }
@@ -259,8 +280,12 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Broadcasts to the rest of the encounter, optionally naming who this NPC is fighting.</summary>
+    /// <remarks>
+    /// Skips whatever the branch now running has already spawned. See <see cref="spawnedThisBranch"/>.
+    /// </remarks>
     public void Broadcast(int messageType, float range, bool aboutTarget)
-        => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range);
+        => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range,
+            spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
 
     /// <summary>Puts hate on whoever a message named and turns to face them.</summary>
     public void HateMessageTarget(int hate)
@@ -709,6 +734,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             if (!spawnGroups.TryGetValue(spawnId, out List<Npc>? group))
                 spawnGroups[spawnId] = group = new List<Npc>();
             group.Add(npc);
+            spawnedThisBranch.Add(npc);
 
             if (liveSeconds <= 0)
                 return;

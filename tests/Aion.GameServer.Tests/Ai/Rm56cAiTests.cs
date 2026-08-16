@@ -26,7 +26,7 @@ public sealed class Rm56cAiTests
 	private static (BossAiHarness, Npc, Player) Engaged(int hpPercent)
 	{
 		BossAiHarness harness = BossAiHarness.For(AzoturanFortress).WithWorldSize(2048)
-			.WithAi(typeof(Rm56cAI), typeof(TrapNpcAI), typeof(AggressiveNpcAI)).Build();
+			.WithAi(typeof(Rm56cAI), typeof(CompleteTrapAI), typeof(TrapNpcAI), typeof(AggressiveNpcAI)).Build();
 		Npc boss = harness.Spawn(Rm56c, BossX, BossY, 200f);
 		Player player = harness.SpawnPlayer(302f, 302f, 200f);
 		BossAiHarness.SetHpPercent(boss, hpPercent);
@@ -187,4 +187,66 @@ public sealed class Rm56cAiTests
 
 		Assert.Equal(0, Traps(harness));
 	}
+	/// <summary>
+	/// <b>The traps he has just laid survive the signal he lays them with.</b> Every trap-laying
+	/// branch ends by broadcasting 6681, and the traps answer by leaving — so without the runtime
+	/// excluding what the running branch spawned, this whole file fails and the boss deletes its own
+	/// arrangement on arrival. Pinned here because the fix lives in shared machinery and nothing else
+	/// exercises it.
+	/// </summary>
+	[Theory]
+	[InlineData(70, 1)]
+	[InlineData(30, 3)]
+	[InlineData(15, 4)]
+	public void ATrapSurvivesTheBroadcastItWasLaidWith(int hpPercent, int expected)
+	{
+		var (harness, boss, player) = Engaged(hpPercent);
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 6);
+		Assert.Equal(expected, Traps(harness));
+	}
+
+	/// <summary>
+	/// <b>And laying a new arrangement takes the last one away.</b> Walked down from the one-trap band
+	/// into the three-trap band, the survivor of the first is dismissed rather than left standing, so
+	/// what is on the floor is the new arrangement and not both.
+	/// </summary>
+	[Fact]
+	public void ANewArrangementDismissesTheOneBeforeIt()
+	{
+		var (harness, boss, player) = Engaged(70);
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 6);
+		Assert.Equal(1, Traps(harness));
+
+		// Into 21-40 well inside the first trap's twelve seconds.
+		BossAiHarness.SetHpPercent(boss, 30);
+		Advance(harness, boss, player, 5);
+
+		Assert.Equal(3, Traps(harness));
+	}
+
+	/// <summary>
+	/// A trap answers 6681 and nothing else. Message numbers are per encounter with no registry, and
+	/// every other pin here passes just as well if the guard is dropped.
+	/// </summary>
+	[Fact]
+	public void ATrapAnswersOnlyItsOwnMessage()
+	{
+		var (harness, boss, player) = Engaged(70);
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 6);
+		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == CompleteTrap));
+		BossAiHarness.MakeMutuallyKnown(boss, trap);
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(boss, CompleteTrapAI.LayAnother + 1, null, CompleteTrapAI.Reach);
+		Assert.True(trap.IsSpawned());
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(boss, CompleteTrapAI.LayAnother, null, CompleteTrapAI.Reach);
+		Assert.False(trap.IsSpawned());
+	}
+
 }
