@@ -10,14 +10,17 @@ Each finding is tagged with why it is probably absent, because most are:
 
     cast-only   every action in the retail branch is a use_skill, and this work
                 does not translate casts it cannot map to a skill id
-    unheard     a broadcast no pattern anywhere listens for -- an announcement to
-                the client, harmless to omit
+    unheard     a broadcast whose every listener in the corpus only casts or does
+                nothing -- omitting it drops an announcement and nothing else
     acts        a handler that spawns, moves or arms a timer, or a broadcast some
                 other pattern really does listen for -- a real gap worth reading
 
-Only `acts` findings need triage. Classifying a broadcast by what its own branch
-does is wrong and was the tool's first mistake: a shout that sits in a branch which
-also spawns still only shouts, and every gateway-guard rung looked like a gap.
+Only `acts` findings need triage. Two earlier versions got this wrong and both are
+worth knowing. Classifying a broadcast by what its *own* branch does is wrong -- a
+shout beside a spawn still only shouts. Classifying it by whether a listener merely
+*exists* is also wrong: the gateway guards' rung announcements have listeners in
+retail, and every one of those listeners only casts, so the shouts really were
+announcements after all. What matters is whether some listener *acts*.
 
 CLI:
     python audit_retail_messages.py <patterns_dir> [--repo PATH]
@@ -59,27 +62,38 @@ def main() -> None:
         return token if token.isdigit() else consts.get(token.rsplit(".", 1)[-1])
 
     # A class names its retail patterns in its doc comment; that is the only binding we have.
+    #
+    # Only the lines that introduce them count. A doc that explains "10016 is broadcast by
+    # DGuard_KistenianPet" mentions a pattern this class does not implement, and taking every <c>
+    # token made KistenianAI answerable for its pet's handlers.
     claimed: dict[str, set[str]] = {}
     for f in ai_files:
         head = f.read_text(encoding="utf-8", errors="replace")[:4000]
-        if "Retail-sourced" not in head and "Retail pattern" not in head:
-            continue
-        pats = set(re.findall(r"<c>([A-Za-z0-9_]{6,})</c>", head))
+        pats: set[str] = set()
+        for line in head.splitlines():
+            if not re.search(r"[Rr]etail pattern", line):
+                continue
+            pats.update(re.findall(r"<c>([A-Za-z0-9_]{6,})</c>", line))
         if pats:
             claimed[f.stem] = pats
 
-    # Every message any pattern in the corpus listens for. A broadcast outside this set has no
-    # listener anywhere in retail, so omitting it drops an announcement and nothing else.
-    listened_anywhere: set[str] = set()
+    # Messages some pattern answers with more than a cast. A broadcast outside this set is heard
+    # only by branches that cast or do nothing, so dropping it drops an announcement.
+    answered_by_action: set[str] = set()
     for path in sorted(pathlib.Path(args.patterns_dir).glob("*.xml")):
         for block in PATTERN_RE.finditer(read_text(path)):
             try:
                 root = ET.fromstring("<r>" + lowercase_tags(block.group(1)) + "</r>")
             except ET.ParseError:
                 continue
-            for m in root.iter("is_message"):
-                if m.findtext("message_type"):
-                    listened_anywhere.add(m.findtext("message_type"))
+            for branch in root.iter("pattern"):
+                actions = branch.find("actions")
+                tags = [a.tag for a in actions] if actions is not None else []
+                if not tags or all(t in ("use_skill", "do_nothing") for t in tags):
+                    continue
+                for m in branch.iter("is_message"):
+                    if m.findtext("message_type"):
+                        answered_by_action.add(m.findtext("message_type"))
 
     kind: dict[tuple[str, str], str] = {}
     for path in sorted(pathlib.Path(args.patterns_dir).glob("*.xml")):
@@ -94,7 +108,8 @@ def main() -> None:
             for branch in root.iter("pattern"):
                 actions = branch.find("actions")
                 acts = [a.tag for a in actions] if actions is not None else []
-                verdict = "cast-only" if acts and all(a == "use_skill" for a in acts) else "acts"
+                verdict = ("cast-only" if acts and all(a in ("use_skill", "do_nothing") for a in acts)
+                           else "acts")
                 heard = {m.findtext("message_type") for m in branch.iter("is_message")}
                 for msg in filter(None, heard):
                     key = (name.group(1), msg)
@@ -106,7 +121,7 @@ def main() -> None:
                     if not msg:
                         continue
                     key = (name.group(1), msg)
-                    sent_verdict = "acts" if msg in listened_anywhere else "unheard"
+                    sent_verdict = "acts" if msg in answered_by_action else "unheard"
                     if kind.get(key) != "acts":
                         kind[key] = sent_verdict
 

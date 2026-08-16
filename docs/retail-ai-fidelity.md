@@ -3591,3 +3591,47 @@ discipline — the audit ranks, a per-item check decides.
 The largest clusters are `KistenianAI` (5), the two gateway guards (4 each), `LordLannokAI`
 and `SuspiciousCoffinAI` (3 each, both predating this work), and `MiddleBossFireAI` (5,
 all `cast-only`).
+
+### Triaging the sixteen, and the tool's third and fourth mistakes
+
+Following the flagged findings back to their listeners collapsed the report from 54 to 16
+and corrected the tool twice more.
+
+**Mistake three: a listener that exists is not a listener that does anything.** The gateway
+guards' rung announcements (6301-6304) *are* heard — by `GwDGuard_PhA` and `GwLGuard_PhA` —
+and every one of those branches only casts or does nothing. So the original write-up
+calling them announcements was right, and the previous entry's correction of it was wrong.
+The tool now classifies a send by whether some listener **acts**, which moved eight
+findings to `unheard`.
+
+**Mistake four: prose is not a claim.** Every `<c>` token in a class doc counted as a
+pattern that class implements, so `KistenianAI` was answerable for its pet's handlers
+because its doc explains where message 10016 comes from. Only the line introducing the
+retail pattern counts now. That removed fourteen more.
+
+**Final tally: 16 acts, 8 cast-only, 6 unheard.**
+
+### The lead this produced: Adma's skeleton waves
+
+The largest cluster is `SuspiciousCoffinAI`, and it connects to a gap recorded early in
+this work and never closed — *"Adma's 12 skeleton-wave adds need something to spawn the
+three invisible controllers"*. The mechanism is now exact:
+
+- `ND2_FhWSumA`, `ND2_FhWSumB` and `ND2_FhWSumC` broadcast **6602**, **6603** and **6604**
+- the coffin patterns (`NoAction_CoffinA/B/C`, and `_SP` hard-mode twins) listen for them
+  and **spawn skeletons** — a faithful page (280933) on 6602, and a diligent page (280949)
+  alongside it on 6603 and 6604
+- both pages have **refs=0**: spawned by nothing anywhere
+
+So the coffins are the controllers, the three `FhWSum` NPCs are the trigger, and the wave
+size grows with the message number. `SuspiciousCoffinAI` is already ported and listens for
+none of the three.
+
+**Not implemented here.** It needs the three trigger NPCs resolved and checked for
+reachability, the `_SP` hard-mode split understood, and the coffin's existing behaviour
+extended without disturbing what it already does for Lord Lannok. That is a session's work
+with the mechanism already mapped, rather than a dump to read from scratch.
+
+**Also traced and blocked:** `BGuard_ChiefD_Minor`, whose 6682 makes the chamber lord
+despawn itself, is absent from our npc data and spawned by nothing in retail — the same
+shape as `BGuard_ChiefDespawn`. Both are presumably placed server-side.
