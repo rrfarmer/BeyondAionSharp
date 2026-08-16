@@ -4323,3 +4323,67 @@ single-ownership check that multi-owner absolute coordinates always need.
 **Verification.** Full suite 1,359 passing and 1 skipped; five new pins; both placement mutations
 caught — the second only after a mirror pin was added, because every self-placement pin stood the
 guard two metres from its quarry, where the two placements are indistinguishable.
+
+### The spawn ops are provably all four
+
+Two entries running have turned on a tool quietly failing to recognise something, so this one is
+worth settling rather than assuming. Counting every element in the 5.8 dumps whose name contains
+"spawn":
+
+| op | uses |
+|---|---|
+| `spawn` | 16,366 |
+| `spawn_on_target` | 896 |
+| `spawn_on_multi_target` | 324 |
+| `spawn_on_target_by_attacker_indicator` | 306 |
+
+That is 17,892, and `num_to_spawn`, `spawn_range` and `despawn_at_attack_state` each appear exactly
+17,892 times. Every spawn action carries those three, so the totals matching is proof the op list is
+complete rather than merely long. `audit_missing_adds.py` already knew all four — **the backlog
+figure has never been wrong for this reason.** It was `extract_guard_reinforcements.py` that knew
+one, and it now imports the audit's pattern instead of keeping its own, so the two cannot drift
+again.
+
+The two ops the guard table still cannot express are now **reported rather than flattened**. Eight
+branches use `spawn_on_multi_target`, which puts one add on every valid target under a cap; calling
+that "on the current target" would put the wave in the wrong place, so those rows are skipped and
+counted.
+
+### The fortress gates, extracted and not yet wired
+
+`BGuard_*Gate*` is the next cluster — 48 adds in the backlog, 230 owners — and despite the name it is
+**not** the guard mechanic. A gate does not call for help as it weakens; it puts a squad out in waves
+on a fixed chain and then removes itself:
+
+```
+on_enter_attack   -> arm T0 (ten seconds)
+T0                -> arm T1 after 30s, spawn the first wave
+T1                -> arm T2 after 5s, spawn the second
+T2                -> despawn_self
+on_leave_attack   -> despawn the squad, despawn_self
+on_message 10009  -> despawn_self
+```
+
+No health bands and no coin flips. `tools/client-extract/extract_gate_squads.py` reads it out: **62
+patterns, 153 rows, 69 gates**, with chains of one to four waves (50 of them two).
+
+**A structural fact about the dumps, found here and worth knowing generally.** A level variant stores
+only what *differs* from its base. `BGuard_DGate_L50` carries the timer branches and nothing else —
+no opener, no leave handler, no message handler — while `BGuard_DGate` carries all three. Reading a
+variant on its own therefore finds a chain nothing ever starts, which is exactly what the first run
+reported: 38 variants, 24 patterns instead of 62. The extractor now falls back to the base pattern
+and says when it does. **Any future extractor over this dump needs the same fallback.**
+
+**Still to do, and the reason it is not done here.** The table carries each wave's delay but not the
+trailing one — retail's last spawning step arms one more timer whose only job is `despawn_self`, and
+that delay sits in a branch with no spawn in it, so the walk stops before reading it. Wiring the AI
+without it would mean either inventing the number or leaving gates standing after their squad is
+out. The schema needs one more field before the class is written; everything else is ready.
+
+**Also still out:** the `BGuard_CDropGateA` family (twelve variants) has no opener in the base either
+— those are siege drop-gates, driven by fortress code rather than by being attacked, so the chain
+starts somewhere this extraction cannot see.
+
+**Verification.** Full suite 1,359 passing and 1 skipped, unchanged — this entry is tooling and
+extraction only. The guard table regenerates byte-identical after the regex was shared, which is the
+check that the sharing changed nothing.

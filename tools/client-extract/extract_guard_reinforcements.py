@@ -32,16 +32,25 @@ import pathlib
 import re
 import sys
 
-from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
+from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
 
 GUARD_RE = re.compile(r"^[DL]Guard_")
 
+# The two ops this can turn into a table row. The other two retail ops place per-target
+# (`spawn_on_multi_target`, one add on every valid target, capped) and per-attacker
+# (`spawn_on_target_by_attacker_indicator`, on a chosen rank in the hate list). The runtime can
+# express both, but each needs fields this table does not carry -- the cap and ordering for one,
+# the attacker indicator for the other -- so rows using them are reported and skipped rather than
+# flattened into "on the current target", which would put the wave in the wrong place.
+EXPRESSIBLE_OPS = {"spawn", "spawn_on_target"}
+
 # The dump is element-based; summarize_pattern.py renders attributes for reading.
-# Two ops, not one. `spawn` places at the guard's own point; `spawn_on_target` puts the
-# reinforcements on whoever it is fighting. Looking only for the first dropped four variants
-# silently -- and a guard whose wave lands on the raid rather than on itself is a different fight.
-SPAWN_RE = re.compile(
-    r"<(?P<op>spawn|spawn_on_target)>(?P<body>.*?)</(?P=op)>", re.S)
+#
+# SPAWN_RE is imported rather than written here. Retail has four spawn ops and this file
+# originally looked for one, which dropped four guard variants silently -- a guard using
+# `spawn_on_target` drops its wave on whoever it is fighting, and reading only `<spawn>` made it
+# look like a guard that calls nobody. The audit already knew all four; the two had drifted.
+# Sharing the pattern is what stops them drifting again.
 NAMEID_RE = re.compile(r"<npc_nameid>([^<]+)</npc_nameid>")
 COUNT_RE = re.compile(r"<num_to_spawn>(\d+)</num_to_spawn>")
 LIVE_RE = re.compile(r"<live_time>(\d+)</live_time>")
@@ -76,8 +85,8 @@ def spawns_in(branch: str) -> list[tuple[str, int, int, int, str]]:
     """(devname, count, live_time, spawn_range, placement) for each spawn in a branch."""
     found = []
     for spawn in SPAWN_RE.finditer(branch):
-        body = spawn.group("body")
-        on_target = spawn.group("op") == "spawn_on_target"
+        body = spawn.group(2)
+        op = spawn.group(1)
         name = NAMEID_RE.search(body)
         if not name:
             continue
@@ -90,7 +99,7 @@ def spawns_in(branch: str) -> list[tuple[str, int, int, int, str]]:
             int(count.group(1)) if count else 1,
             int(live.group(1)) if live else 0,
             int(rng.group(1)) if rng else 0,
-            "TARGET" if on_target else (loc.group(1) if loc else "?"),
+            op,
         ))
     return found
 
@@ -176,7 +185,12 @@ def main() -> None:
 
             for low, high, chance, _timer, spawns in timers:
                 resolved = []
-                placement = "TARGET" if spawns and spawns[0][4] == "TARGET" else "SELF"
+                ops = {sp[4] for sp in spawns}
+                if not ops <= EXPRESSIBLE_OPS:
+                    for op in ops - EXPRESSIBLE_OPS:
+                        unresolved[f"op {op} (placement not expressible yet)"] += 1
+                    continue
+                placement = "TARGET" if ops == {"spawn_on_target"} else "SELF"
                 for devname, count, _live, _rng, _loc in spawns:
                     npc_id = by_devname.get(devname.lower())
                     if npc_id is None:
