@@ -6658,3 +6658,53 @@ boss spawns* rather than what the adds do.
 none of which carries a spawn.
 
 **Verification.** Full suite 1,554 passing and 1 skipped; six new pins; nine mutations, all caught.
+
+## The last four spawn-bearing bosses with no AI at all
+
+After the ND2 three, the missing-AI list has **four** entries left that carry a spawn and no
+handler — everything else on it is cast-only, which is a different problem. All four are done here.
+
+Three of them are one line: **something is left behind when a player kills them.**
+
+| boss | leaves | for |
+|---|---|---|
+| Menotios (251001, LEGENDARY) | an aetherback titan core | 20s |
+| RM-78c (212211) | a strange creature | 120s |
+| RA-45c (213764) | a strange object | 120s |
+
+The fourth, **Takahan** (216884), is a trap loop: the first explosive trap lands on his quarry at
+**twenty-five** seconds and then every **six**. Slow, then relentless — and a single interval would
+have been wrong in both directions.
+
+**On `on_killed_by_user`, not `on_die`.** Retail distinguishes the two and all three drops use the
+player-kill form, so nothing is left when one of these dies to something else. Our runtime raises
+one death event, which is as close as we get; the difference only shows for an NPC killed by
+another NPC, and none of the three is anywhere that happens.
+
+### The `live_time` a boss gives an add is a ceiling, not a duration
+
+A pin tried to check Menotios' twenty seconds by survival and failed at eighteen — because **every
+one of these three adds ends itself sooner than its boss allows**:
+
+- the titan core and Takahan's trap are `ntrap`, whose pattern is "cast once, then `despawn_self`",
+  so twenty seconds is a ceiling the trap never reaches. That is retail's own design, not a
+  divergence: the trap's own pattern outlives nothing.
+- the strange creature deletes itself after **six and a half seconds** against retail's **hundred
+  and twenty**. That one *is* a divergence, and it belongs to `StrangeCreatureAI` — a Java-parity
+  class with its own hardcoded clock — rather than to the boss that drops it. Recorded here so it
+  is findable; not changed, because it is somebody else's encounter.
+
+The general shape is worth keeping: when a boss's `live_time` cannot be observed, check whether the
+add removes itself first before assuming the port is wrong.
+
+**Where the counts went.** Missing-AI 729 → **725**; adds backlog 443 across 337 → **431 across
+325**. The adds figure moved by twelve rather than four because these four bosses' patterns name
+adds that other bosses' patterns also name — reaching one reached several.
+
+**What is left on the missing-AI list**, and it is now a single category: **725 NPCs whose patterns
+are cast-only**. Every one of them is blocked on the same thing — `SKILLI_INDEX` resolution — and
+no amount of spawn-side work will move them. That is the next real lever on this audit, and it is a
+research problem rather than a porting one.
+
+**Verification.** Full suite 1,562 passing and 1 skipped; eight new pins; seven mutations, all
+caught.
