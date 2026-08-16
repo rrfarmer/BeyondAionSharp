@@ -252,6 +252,9 @@ def spawn_call_arguments(text: str) -> set[str]:
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
 # One expression-bodied or braced method: name, parameter list, and enough body to see a spawn.
 HELPER_RE = re.compile(r"\b(\w+)\(([^)]*)\)\s*(?:=>|\{)([^;}]*)")
+
+# `private readonly record struct Traps(int Snare, int Throw, int Explosion, int Mine);`
+INT_RECORD_RE = re.compile(r"\brecord\s+(?:struct\s+)?(\w+)\(([^)]*)\)\s*;")
 CONST_ARRAY_RE = re.compile(r"\bint\[\] (\w+)\s*=\s*(?:new int\[\]\s*)?\{([^}]*)\}")
 
 
@@ -262,14 +265,14 @@ def spawned_via_constants(text: str) -> set[str]:
     width as npc ids and sit in the same classes, so harvesting every `const int` would
     quietly mark real gaps as covered. Only names actually passed to a spawn count.
 
-    Known limitation: an id that reaches the spawn through a *field of a record* is not
-    followed. `GatewayGuardAI` holds its eight trap ids in `new Traps(281472, ...)` and
-    selects one with `Lay(t => t.Snare)`, so all eight still read as never spawned even
-    though the class places them. Following that needs a type resolver rather than a
-    regex, and harvesting every literal out of every constructor call risks swallowing
-    skill ids -- which fails in the dangerous direction, marking real gaps as covered.
-    Left as a false positive rather than fixed unsafely; the per-add `refs=` check in the
-    pre-flight is what actually protects a port, and this report is for prioritising.
+    Record fields *are* followed now, narrowly -- see the `INT_RECORD_RE` block below.
+    The earlier note here said this needed a type resolver and left `GatewayGuardAI`'s
+    eight traps as a standing false positive. It did not: requiring the record to be
+    declared in the same file, all of its components to be `int`, and the file to spawn
+    something is enough to separate a table of npc ids from anything else. Harvesting
+    every constructor call in every handler, which is what that note was rejecting, would
+    indeed have swallowed skill ids -- the objection was to the broad rule, and it was
+    read as an objection to the whole idea.
     """
     consts = {name: value for name, value in CONST_RE.findall(text)}
     for name, body in CONST_ARRAY_RE.findall(text):
@@ -295,6 +298,26 @@ def spawned_via_constants(text: str) -> set[str]:
     helper_calls: set[str] = set()
     for name in helpers:
         helper_calls |= set(re.findall(rf"\b{re.escape(name)}\s*\(\s*(\w+)", text))
+
+    # An id reached through a record's field. `GatewayGuardAI` holds its eight trap ids in
+    #
+    #     private readonly record struct Traps(int Snare, int Throw, int Explosion, int Mine);
+    #     private static readonly Traps Elyos = new Traps(281472, 281473, 281474, 281475);
+    #
+    # and picks one with `Lay(t => t.Snare)`, so no id ever appears as a spawn argument and all
+    # eight read as never spawned while the class places them -- a false positive this file used to
+    # record as unfixable without a type resolver.
+    #
+    # It is fixable narrowly. The record has to be declared in this same file, every one of its
+    # components has to be an `int`, and the file has to spawn something. An all-int record declared
+    # beside a spawn is a table of npc ids; harvesting every constructor call in every handler, which
+    # is what the earlier note rejected, would have swallowed skill ids instead.
+    for record, components in INT_RECORD_RE.findall(text):
+        parts = [c.strip() for c in components.split(",") if c.strip()]
+        if not parts or not all(c.startswith("int ") for c in parts):
+            continue
+        for args in re.findall(rf"\bnew {re.escape(record)}\s*\(([^)]*)\)", text):
+            ids.update(re.findall(r"\b(\d{5,6})\b", args))
 
     for used in (set(re.findall(SPAWN_CALL + r"\s*(\w+)", text))
                  | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text))

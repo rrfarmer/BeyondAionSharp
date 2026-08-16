@@ -5076,3 +5076,47 @@ loop is the same class of silent failure the helper exists to remove, one level 
 
 **Verification.** Full suite 1,406 passing and 1 skipped, unchanged; four previously-escaping mutations
 re-checked and still caught.
+
+### The gateway guards' traps were never missing
+
+Six adds in the backlog under `GwLGuard_FlA` and `GwDGuard_FlA` — the guardians' and archon's throw,
+explosion and mine traps — are placed by `GatewayGuardAI` and always have been. They read as missing
+because the class holds them in a record:
+
+```csharp
+private readonly record struct Traps(int Snare, int Throw, int Explosion, int Mine);
+private static readonly Traps Elyos = new Traps(281472, 281473, 281474, 281475);
+...
+Rung(priority, below, flag, t => t.Snare)
+```
+
+so no id ever appears as a spawn argument.
+
+**This file recorded that as unfixable, and it was not.** The earlier note said following a record
+field "needs a type resolver rather than a regex", and that harvesting every literal out of every
+constructor call "risks swallowing skill ids -- which fails in the dangerous direction". The second
+half is right and the first does not follow from it. The objection was to a *broad* rule; it was
+written down as an objection to the idea.
+
+The narrow rule is safe and is three conditions: the record must be **declared in the same file**,
+**every component must be `int`**, and the file must **spawn something**. An all-int record declared
+beside a spawn is a table of npc ids. Checked across the whole handler tree before committing: it
+contributes exactly the eight trap ids and nothing else.
+
+**Backlog 538 → 522 across 381** — sixteen rows, because the eight traps appear under several guard
+variants each.
+
+### Two directions of wrong, and only one of them is dangerous
+
+That makes five shape assumptions this audit has been wrong about, but this one differs in kind. The
+first four made it **miss code**, so the backlog was too big — annoying, and self-correcting the moment
+someone re-measures. This one was the same, but the *reason* it went unfixed was a fear of the other
+direction: marking a real gap as covered.
+
+That fear is correct and should stay. What it should not do is stop a rule that cannot fail that way.
+The test for any new sweep is not "could a broad version of this be unsafe" but "what does this exact
+version add" — and that is answerable by running it over the tree and reading the list, which takes a
+minute.
+
+**Verification.** Full suite 1,406 passing and 1 skipped, unchanged — this entry changes only the
+measurement. The eight ids the new rule contributes were enumerated and checked individually.
