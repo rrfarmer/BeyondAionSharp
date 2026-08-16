@@ -2152,3 +2152,61 @@ port of an aionemu quirk, not a porting slip. Worth knowing before writing any
 
 **Verification.** Full suite 1,167 passing and 1 skipped; nine new pins; all nine
 mutations caught.
+
+---
+
+## Correction — Tiamat's incarnations dropped one hazard per player
+
+A fidelity bug in already-shipped code, found while reading a different boss.
+
+Retail's `spawn_on_multi_target` carries **`total_set_to_spawn`**, a cap on how many
+targets it lands on, together with `order_in_attacker_list` — descending, so the cap
+keeps the top of the hate list. Our `SpawnOnEachTarget` had no cap at all and
+spawned on **every** valid target in range.
+
+The incarnations' area attack is the one that hurts: in a full alliance Fissurefang
+dropped one earthquake per player where retail drops **three**. And each incarnation
+has its own numbers, where this port used a single generic set for all three:
+
+| incarnation | cap | range | lifetime | was |
+|---|---|---|---|---|
+| Fissurefang | 3 | 0 | 25s | uncapped, 20s |
+| Petriscale | 3 | 1 | 20s | uncapped, range 0 |
+| Graviwing | 1 | 6 | 12s | uncapped, range 0, 20s |
+
+Petriscale's *power* attack is also multi-target and capped tighter still, at **two**
+— it was uncapped too.
+
+**The fix.** `maxTargets` is now a **required** parameter of `SpawnOnEachTarget`,
+not an optional one with a permissive default. Every `spawn_on_multi_target` in the
+retail files carries the field, so omitting it is never right, and making it
+required means the next boss cannot repeat the mistake by silence. The cap takes the
+most-hated first, matching `ORDERI_DESCENDING`.
+
+**Why the existing pins missed it.** All fourteen passed against the buggy code.
+They asserted that hazards appear, where they come from and how often — never how
+many, how long they last, or how wide they spread. Two of the four mutations written
+for this fix survived the first attempt at new tests as well:
+
+- the lifetime pin counted hazards, and the power attack keeps adding its own every
+  nine seconds, so the count could never isolate what aged out. It now follows the
+  exact objects the area attack placed.
+- the power-attack cap had no pin at all; the cap test was measuring the area attack
+  either side of the 15s tick and Petriscale's earlier crystals were inside the
+  baseline.
+
+**Verification.** Full suite 1,173 passing and 1 skipped; seven new pins; all four
+mutations caught after the two test fixes above.
+
+### Screened and deliberately not ported this round
+
+- **Volatile / Furious / Wounded Belsagos** (233898, 234991, 234990 —
+  `IDLDF4_Re_01_{Phy,Hard,Easy}Boss`, 41-53 timers). Well commented, but the comments
+  name skills only by *index number* ("스킬1", "스킬6"), never by name, so the casts
+  stay unresolvable — and these three spawn **nothing**. A structure-only port would
+  add timers that fire and do nothing observable. Worth revisiting only if a skill
+  list for them ever surfaces. They do carry one genuinely distinctive mechanic worth
+  recording: below 29% they branch on whether the current target is a **caster or a
+  melee** and cast a different skill for each.
+- **Naga_WrF, ND2_WhF, NLehpar_BhC** — 18-24 branches each, **zero** commented
+  branches. Same refusal as Icaronix and Lost Balor.

@@ -61,6 +61,94 @@ public sealed class TiamatsIncarnationAiTests
 	private static int Count(BossAiHarness harness, int npcId) =>
 		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
 
+	/// <summary>
+	/// Retail caps every <c>spawn_on_multi_target</c> with <c>total_set_to_spawn</c>, and each
+	/// incarnation's area attack has its own number: three for Fissurefang and Petriscale, one for
+	/// Graviwing. Uncapped — as this port originally was — a full alliance takes one hazard each, so
+	/// Fissurefang dropped one per player instead of three.
+	/// </summary>
+	[Theory]
+	[InlineData(Fissurefang, CavityOfEarth, 3)]
+	[InlineData(Petriscale, PetrificationCrystal, 3)]
+	[InlineData(Graviwing, GravityWhirlpool, 1)]
+	public void TheAreaAttackHazardStopsAtItsRetailCap(int npcId, int hazard, int cap)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, npcId);
+
+		// Six in range and all hating it — comfortably more than any of the three caps.
+		var raid = new List<Player>();
+		for (int i = 0; i < 6; i++)
+			raid.Add(harness.SpawnPlayer(472f + i, 512f, 418f));
+		harness.Engage(boss, raid[0]);
+		foreach (Player member in raid)
+			BossAiHarness.Rehate(boss, member);
+
+		// Past the power attack at 3s, and on to the area attack at 15s.
+		harness.Clock.Advance(TimeSpan.FromSeconds(14));
+		int beforeArea = Count(harness, hazard);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(cap, Count(harness, hazard) - beforeArea);
+	}
+
+	/// <summary>
+	/// The three hazards do not live equally long: 25 seconds for Fissurefang, 20 for Petriscale and
+	/// only 12 for Graviwing. The port used to give all three 20.
+	/// </summary>
+	/// <remarks>
+	/// The power attack keeps dropping its own hazards every nine seconds, so a count cannot tell you
+	/// which ones aged out. This follows the exact objects the area attack placed.
+	/// </remarks>
+	[Theory]
+	[InlineData(Fissurefang, CavityOfEarth, 25)]
+	[InlineData(Petriscale, PetrificationCrystal, 20)]
+	[InlineData(Graviwing, GravityWhirlpool, 12)]
+	public void EachAreaHazardLivesForItsOwnRetailSpan(int npcId, int hazard, int seconds)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, npcId);
+		Player player = harness.SpawnPlayer(472f, 512f, 418f);
+		harness.Engage(boss, player);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(14));
+		HashSet<Npc> before = harness.LiveNpcs().Where(n => n.GetNpcId() == hazard).ToHashSet();
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		List<Npc> fromArea = harness.LiveNpcs()
+			.Where(n => n.GetNpcId() == hazard && !before.Contains(n)).ToList();
+		Assert.NotEmpty(fromArea);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(seconds - 2));
+		Assert.All(fromArea, h => Assert.True(h.IsSpawned(),
+			$"hazard should still be standing two seconds short of {seconds}"));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		Assert.All(fromArea, h => Assert.False(h.IsSpawned(),
+			$"hazard should have aged out a second past {seconds}"));
+	}
+
+	/// <summary>
+	/// Petriscale is the only one whose <i>power</i> attack is raid-wide, and retail caps that at two
+	/// — a tighter cap than its area attack's three.
+	/// </summary>
+	[Fact]
+	public void PetriscalesPowerAttackCrystalsStopAtTwo()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, Petriscale);
+		var raid = new List<Player>();
+		for (int i = 0; i < 6; i++)
+			raid.Add(harness.SpawnPlayer(472f + i, 512f, 418f));
+		harness.Engage(boss, raid[0]);
+		foreach (Player member in raid)
+			BossAiHarness.Rehate(boss, member);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+
+		Assert.Equal(2, Count(harness, PetrificationCrystal));
+	}
+
 	[Theory]
 	[MemberData(nameof(Incarnations))]
 	public void DropsItsFirstHazardWithItsPowerAttackThreeSecondsIn(int npcId, int hazard)

@@ -443,9 +443,28 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// simply gets nothing. Falling back to the current target when the list is empty would turn a
     /// raid-wide mechanic into a tank-only one, so an empty list spawns nothing.
     /// </remarks>
-    public void SpawnOnEachTarget(int npcId, int spawnId, float validDistance, float range, int liveSeconds)
+    /// <summary>
+    /// Retail <c>spawn_on_multi_target</c>: one spawn per target, most-hated first, capped.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="maxTargets"/> is retail's <c>total_set_to_spawn</c> and is deliberately not
+    /// optional. Every <c>spawn_on_multi_target</c> in the retail files carries one, and leaving it
+    /// out is not a harmless default: uncapped, a full alliance takes one hazard each, so Tiamat's
+    /// Fissurefang dropped twenty-four earthquakes where retail drops three.
+    /// <para>
+    /// The ordering is retail's <c>order_in_attacker_list = ORDERI_DESCENDING</c> — the cap keeps the
+    /// top of the hate list, not an arbitrary slice of it.
+    /// </para>
+    /// </remarks>
+    public void SpawnOnEachTarget(int npcId, int spawnId, float validDistance, float range,
+        int liveSeconds, int maxTargets)
     {
-        foreach (Creature target in new List<Creature>(GetAggroList().StreamValidTargets(validDistance)))
+        AggroList aggro = GetAggroList();
+        List<Creature> targets = aggro.StreamValidTargets(validDistance)
+            .OrderByDescending(t => aggro.GetHate(t))
+            .Take(maxTargets)
+            .ToList();
+        foreach (Creature target in targets)
             SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
     }
 

@@ -90,8 +90,8 @@ public class TiamatsIncarnationAI : PatternAi
     /// <c>on_message</c> 71 from Tiamat rather than on a timer, and that message chain is not
     /// translated. The skill keeps its npc_skills probability so it still appears in the fight.
     /// </remarks>
-    private static AiPattern Incarnation(int hazard, int areaAtkRearm, int handBindRearm,
-        int deathEffect, PatternAction powerAtkHazard)
+    private static AiPattern Incarnation(int areaAtkRearm, int handBindRearm,
+        int deathEffect, PatternAction powerAtkHazard, PatternAction areaAtkHazard)
         => new AiPattern
         {
             OnEnterAttack = Of(
@@ -109,7 +109,7 @@ public class TiamatsIncarnationAI : PatternAi
                 Branch(3, "AreaAtk", [When.Timer(1)],
                     Do.ArmTimer(1, areaAtkRearm),
                     Do.SkillOnSelf(AreaAtk),
-                    Do.SpawnOnEachTarget(hazard, Hazards, validDistance: 100f, liveSeconds: 20)),
+                    areaAtkHazard),
 
                 Branch(2, "HandBind", [When.Timer(2), When.HpBelow(30)],
                     Do.ArmTimer(2, handBindRearm),
@@ -192,21 +192,28 @@ public class TiamatsIncarnationAI : PatternAi
 
         // Fissurefang's hazard lands under the tank; retail also has it engage its target on arrival,
         // which we leave to the add's own aggressive AI.
-        [Fissurefang] = Incarnation(CavityOfEarth, areaAtkRearm: 25000, handBindRearm: 30000,
+        [Fissurefang] = Incarnation(areaAtkRearm: 25000, handBindRearm: 30000,
             deathEffect: 283063,
-            powerAtkHazard: Do.SpawnOnTarget(CavityOfEarth, Hazards, range: 1f, liveSeconds: 7)),
+            powerAtkHazard: Do.SpawnOnTarget(CavityOfEarth, Hazards, range: 1f, liveSeconds: 7),
+            areaAtkHazard: Do.SpawnOnEachTarget(CavityOfEarth, Hazards, validDistance: 100f,
+                maxTargets: 3, liveSeconds: 25)),
 
         // Graviwing's lands on a random attacker instead, and does not live as long.
-        [Graviwing] = Incarnation(GravityWhirlpool, areaAtkRearm: 30000, handBindRearm: 35000,
+        [Graviwing] = Incarnation(areaAtkRearm: 30000, handBindRearm: 35000,
             deathEffect: 283065,
             powerAtkHazard: Do.SpawnOnAttacker(AggroTarget.RANDOM, GravityWhirlpool, Hazards,
-                range: 1f, liveSeconds: 4)),
+                range: 1f, liveSeconds: 4),
+            // Only the most-hated gets one, and it is the widest and shortest-lived of the three.
+            areaAtkHazard: Do.SpawnOnEachTarget(GravityWhirlpool, Hazards, validDistance: 100f,
+                maxTargets: 1, range: 6f, liveSeconds: 12)),
 
         // Petriscale's power attack is already raid-wide, so both of its timers drop on everyone.
-        [Petriscale] = Incarnation(PetrificationCrystal, areaAtkRearm: 25000, handBindRearm: 30000,
+        [Petriscale] = Incarnation(areaAtkRearm: 25000, handBindRearm: 30000,
             deathEffect: 283064,
             powerAtkHazard: Do.SpawnOnEachTarget(PetrificationCrystal, Hazards, validDistance: 50f,
-                liveSeconds: 20)),
+                maxTargets: 2, liveSeconds: 20),
+            areaAtkHazard: Do.SpawnOnEachTarget(PetrificationCrystal, Hazards, validDistance: 100f,
+                maxTargets: 3, range: 1f, liveSeconds: 20)),
     };
 
     private static readonly AiPattern Untranslated = new AiPattern();
