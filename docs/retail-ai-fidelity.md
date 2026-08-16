@@ -3428,3 +3428,32 @@ Everything else that broadcasts does so from a battle timer or a death, by which
 known list is long since built. **Any future pattern with a broadcast in `on_wake_up` will
 be silently inert until this is settled** — that is the reason to record it here rather
 than in a comment on one class.
+
+### Fixed, the way the last entry recommended
+
+Option 3 from the entry above is implemented: `NpcMessageBus` falls back to the sender's
+map region when its known list is **empty**. The concern that stopped it — a region scan on
+a hot path — does not apply, and the reason is the gate: every broadcast from a battle
+timer, a death or another message runs with a populated list and takes the original path
+untouched. Only a just-spawned NPC reaches the fallback. No reordering of `World.Spawn`,
+so no divergence from Java on code every spawn passes through.
+
+The disperse half of Kistenian's loop is now pinned: killing one fire spirit clears the
+rest. That test existed, failed, and was removed last round rather than weakened — it is
+back and passing.
+
+**Scope deliberately narrowed by a mutation.** The first version also scanned neighbouring
+regions, and mutating that away broke nothing: retail's wake-up broadcasts carry ranges of
+fifty metres or less against far larger regions, so the extra breadth was untestable and
+would have been code no pin could reach. It was **removed rather than tested around**. The
+known limit is now stated in the class: a wake-up broadcast from a sender close to a region
+edge will under-deliver.
+
+**Two mutations survive and are equivalent, not gaps.** Making the fallback run
+unconditionally passes everything, because a region scan is a superset of the known list —
+that is a performance change, not a behavioural one. Removing the range check also passes,
+because every NPC in these tests is within range of every other; pinning it needs a
+bus-level test with deliberate distance, which is worth writing when the bus next changes.
+
+**Verification.** Full suite 1,313 passing and 1 skipped; the restored disperse pin brings
+Kistenian to twelve.

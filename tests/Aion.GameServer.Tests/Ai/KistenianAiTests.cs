@@ -212,4 +212,31 @@ public sealed class KistenianAiTests
 
 		Assert.Equal(0, Count(harness, FlameOfKistenian));
 	}
+
+	/// <summary>
+	/// The other half of the loop, and the reason the fight does not simply accumulate adds: the
+	/// effect a dying spirit leaves disperses every other spirit near it.
+	/// </summary>
+	/// <remarks>
+	/// This could not be pinned until <c>NpcMessageBus</c> gained its empty-known-list fallback. The
+	/// effect shouts from <c>on_wake_up</c>, which <c>World.Spawn</c> raises before it builds the
+	/// known list, so the cry previously reached nobody — on the live server as well as here.
+	/// </remarks>
+	[Fact]
+	public void TheEffectsCryDispersesTheOtherSpirits()
+	{
+		var (harness, boss, player) = Spawned();
+		using BossAiHarness _h = harness;
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		var listener = (Aion.GameServer.Ai.INpcMessageListener)boss.GetAi();
+		listener.OnNpcMessage(boss, KistenianPetAI.CallForMore, null);
+		Assert.InRange(Count(harness, FireSpirit), 2, 3);
+
+		harness.LiveNpcs().First(n => n.GetNpcId() == FireSpirit)
+			.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Equal(0, Count(harness, FireSpirit));
+	}
 }
