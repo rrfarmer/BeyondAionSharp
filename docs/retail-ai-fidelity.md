@@ -5235,3 +5235,37 @@ this family grows: the repoint is the slow step, not the extraction.
 | `BGuard_RhAPet*` | ranger pets, 20 patterns | **not looked at** |
 
 The pets are the one group in this family nobody has read yet.
+
+### The ranger pets, and the guard families are done
+
+The last unread group, and the tidiest thing in this whole family: **twenty patterns, twenty-seven
+pets, one shape.** Every branch spawns at two metres, for ten minutes, on a target within fifty —
+nothing had to be judged, and the shape census is a single row.
+
+Attack a pet and it lays a trap on you and disappears. It is not a fighter: it exists to place one
+thing and go, and walking away makes it leave rather than follow. The level bracket is the only thing
+that differs across the twenty patterns, which is why the class is a pet-to-trap table and nothing
+else.
+
+**Two notes on what is not literal.** Retail lays the trap on `OBJI_EVENT_TARGET` — whoever just
+attacked — where this uses the current target. For an NPC whose entire life is the moment it is first
+hit those are the same creature. And the casts are not translated: two indices against a bare count
+match is not a resolution, *and* retail casts them in the same breath as `despawn_self`, so a queued
+cast would not survive the despawn anyway. Unfounded and inert, which is an easy call.
+
+**The backlog did not move**, and for a reason worth recording: every trap these pets lay is already
+placed by the ranger *guards*, which were ported with the abyss guards. The pets are a second route to
+NPCs that were already reachable. A flat number here means the adds were already counted, not that
+nothing was fixed — the pets themselves did nothing at all before this.
+
+**The guard families are now complete:**
+
+| prefix | state |
+|---|---|
+| `DGuard_` / `LGuard_` / `DrGuard_` | ported, 1,856 rows over 1,200 guards |
+| `BGuard_Chief*` | ported, same table |
+| `BGuard_*Gate*` | ported, own extractor |
+| `BGuard_RhAPet*` | ported, this entry |
+| `GwDGuard_` / `GwLGuard_` | own hand-written class |
+
+**Verification.** Full suite 1,415 passing and 1 skipped; four new pins; all five mutations caught.
