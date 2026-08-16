@@ -25,6 +25,16 @@ import sys
 
 AI_DIR = "src/Aion.GameServer/Handlers/AI"
 
+# Two blind spots this scan had, both found when it started reporting phantom gaps against
+# correct code -- which is how a check loses its usefulness:
+#
+#   name collisions   `CallForMore` is declared in KistenianPetAI as 10016 and in LordLannokAI
+#                     as 6607. A flat name->value map lets one silently win, so a const is
+#                     resolved against its own file first and only then globally.
+#   table-held ids    SuspiciousCoffinAI keeps each coffin's three message numbers in a record
+#                     rather than in When.Message, so a scan looking only at call sites cannot
+#                     see them. A file that reads CurrentMessage is doing its own matching, so
+#                     its bare four-to-five digit literals count as messages it handles.
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{3,7})\b")
 
 # Pattern-table listeners, and the hand-rolled kind. Classes that do not extend PatternAi
@@ -48,16 +58,26 @@ def main() -> None:
     files = sorted((pathlib.Path(args.repo) / AI_DIR).glob("*.cs"))
     texts = {f: f.read_text(encoding="utf-8", errors="replace") for f in files}
 
-    consts: dict[str, str] = {}
-    for text in texts.values():
-        for name, value in CONST_RE.findall(text):
-            consts[name] = value
+    per_file = {path: dict(CONST_RE.findall(text)) for path, text in texts.items()}
+    globals_: dict[str, str] = {}
+    for table in per_file.values():
+        globals_.update(table)
 
-    def resolve(token: str) -> str | None:
+    by_stem = {p.stem: table for p, table in per_file.items()}
+
+    def resolve(token: str, path: pathlib.Path) -> str | None:
         token = token.strip()
         if token.isdigit():
             return token
-        return consts.get(token.rsplit(".", 1)[-1])
+        # `KistenianPetAI.CallForMore` means that class's constant, not this file's and not
+        # whichever file happened to be read last. Without this, LordLannokAI's own CallForMore
+        # (6607) answered for the pet's (10016) and the report paired two unrelated encounters.
+        if "." in token:
+            owner, name = token.rsplit(".", 1)
+            if owner in by_stem and name in by_stem[owner]:
+                return by_stem[owner][name]
+        name = token.rsplit(".", 1)[-1]
+        return per_file[path].get(name) or globals_.get(name)
 
     listens: dict[str, set[str]] = collections.defaultdict(set)
     sends: dict[str, set[str]] = collections.defaultdict(set)
@@ -77,8 +97,13 @@ def main() -> None:
             tokens += [(t, listens) for t in CASE_RE.findall(text[match.end():i])]
         tokens += [(t, sends) for r in SEND_RES for t in r.findall(text)]
 
+        # A file that inspects CurrentMessage matches messages itself, so its bare literals are
+        # message numbers it handles -- SuspiciousCoffinAI holds three per coffin in a record.
+        if "CurrentMessage" in text:
+            tokens += [(t, listens) for t in re.findall(r"(?<![\w.])(\d{4,5})(?![\w.])", text)]
+
         for token, table in tokens:
-            value = resolve(token)
+            value = resolve(token, path)
             if value:
                 table[value].add(path.stem)
 

@@ -287,7 +287,7 @@ public sealed class ResearcherTeselikAiTests
 		BossAiHarness.DrainQueuedSkills(hand);
 
 		var cast = new List<int>();
-		for (int i = 0; i < 40; i++)
+		for (int i = 0; i < 150; i++)
 		{
 			BossAiHarness.Rehate(hand, player);
 			BossAiHarness.KeepAlive(player);
@@ -295,8 +295,12 @@ public sealed class ResearcherTeselikAiTests
 			cast.AddRange(BossAiHarness.DrainQueuedSkills(hand).Select(c => c.SkillId));
 		}
 
-		// 16791 is the only skill our data gives it, and only the coin-flip branch casts it, so over
-		// forty seconds of ticking it should land at least once and never anything else.
+		// 16791 is the only skill our data gives it, and only the coin-flip branch casts it.
+		//
+		// The window is long on purpose. At forty seconds this saw about four ticks, so the branch
+		// missing every one of them had a one-in-sixteen chance -- and it duly failed about that
+		// often in full-suite runs while passing every time in isolation. Two and a half minutes is
+		// a dozen ticks and puts that below one in a thousand.
 		Assert.NotEmpty(cast);
 		Assert.All(cast, c => Assert.Equal(16791, c));
 	}

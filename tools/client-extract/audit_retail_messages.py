@@ -38,6 +38,16 @@ from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
 from summarize_pattern import lowercase_tags
 
 AI_DIR = "src/Aion.GameServer/Handlers/AI"
+# Two blind spots this scan had, both found when it started reporting phantom gaps against
+# correct code -- which is how a check loses its usefulness:
+#
+#   name collisions   `CallForMore` is declared in KistenianPetAI as 10016 and in LordLannokAI
+#                     as 6607. A flat name->value map lets one silently win, so a const is
+#                     resolved against its own file first and only then globally.
+#   table-held ids    SuspiciousCoffinAI keeps each coffin's three message numbers in a record
+#                     rather than in When.Message, so a scan looking only at call sites cannot
+#                     see them. A file that reads CurrentMessage is doing its own matching, so
+#                     its bare four-to-five digit literals count as messages it handles.
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{3,7})\b")
 USES = (re.compile(r"When\.Message\(([\w.]+)\)"), re.compile(r"Do\.Broadcast\(([\w.]+)"),
         re.compile(r"NpcMessageBus\.Broadcast\([^,]+,\s*([\w.]+)"), re.compile(r"case\s+([\w.]+)\s*:"))
@@ -53,13 +63,23 @@ def main() -> None:
     repo = pathlib.Path(args.repo)
     ai_files = sorted((repo / AI_DIR).glob("*.cs"))
 
-    consts: dict[str, str] = {}
-    for f in ai_files:
-        consts.update(CONST_RE.findall(f.read_text(encoding="utf-8", errors="replace")))
+    per_file = {f.stem: dict(CONST_RE.findall(f.read_text(encoding="utf-8", errors="replace")))
+                for f in ai_files}
+    globals_: dict[str, str] = {}
+    for table in per_file.values():
+        globals_.update(table)
 
-    def resolve(token: str) -> str | None:
+    def resolve(token: str, stem: str) -> str | None:
         token = token.strip()
-        return token if token.isdigit() else consts.get(token.rsplit(".", 1)[-1])
+        if token.isdigit():
+            return token
+        # See audit_ai_messages.py: a qualified token belongs to the class it names.
+        if "." in token:
+            owner, name = token.rsplit(".", 1)
+            if owner in per_file and name in per_file[owner]:
+                return per_file[owner][name]
+        name = token.rsplit(".", 1)[-1]
+        return per_file[stem].get(name) or globals_.get(name)
 
     # A class names its retail patterns in its doc comment; that is the only binding we have.
     #
@@ -128,7 +148,9 @@ def main() -> None:
     rows: list[tuple[str, str, str, str]] = []
     for cls, pats in sorted(claimed.items()):
         text = (repo / AI_DIR / f"{cls}.cs").read_text(encoding="utf-8", errors="replace")
-        ours = {resolve(t) for regex in USES for t in regex.findall(text)}
+        ours = {resolve(t, cls) for regex in USES for t in regex.findall(text)}
+        if "CurrentMessage" in text:
+            ours |= set(re.findall(r"(?<![\w.])(\d{4,5})(?![\w.])", text))
         ours.discard(None)
         for pat in sorted(pats):
             for (pattern, msg), verdict in kind.items():

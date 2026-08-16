@@ -3799,3 +3799,45 @@ that is blocked is blocked on client data rather than on work.
 
 **Verification.** Full suite 1,320 passing and 1 skipped; six pins; all seven mutations
 caught.
+
+---
+
+## The audits started reporting phantoms against correct code
+
+Re-running the message audits after building the Adma waves produced two findings that were
+wrong, both caused by shapes this work introduced. A check that cries wolf about correct
+code is worse than no check, so they are fixed and recorded.
+
+**Name collisions.** `CallForMore` is declared in `KistenianPetAI` as 10016 and — added the
+same session — in `LordLannokAI` as 6607. The scan kept one flat name→value map, so
+whichever file was read last silently won, and the report claimed Kistenian's pet was
+talking to nobody while pairing Lannok's call to *Kistenian*. Constants now resolve against
+the class a qualified token names, then the current file, then globally.
+
+**Message numbers held in a table.** `SuspiciousCoffinAI` keeps each coffin's three calls in
+a record rather than in `When.Message`, because six coffins need six different triplets. A
+scan reading only call sites cannot see them, so it reported the coffins as deaf and
+Lannok's 6605 as unheard. A file that reads `CurrentMessage` is doing its own matching, so
+its bare four-to-five digit literals now count as messages it handles.
+
+With both fixed the picture is honest: **8 unpaired, down from a claimed 5 that included two
+phantoms and hid two real ones**, and the retail-side `acts` list drops from 16 to 11.
+
+The eight are all understood: the coffins listen for 6602-6604 and 6606, which only the
+unreachable controllers send; the Vritra rearguards' two; `MacunbelloSoulReaperAI`'s 6980,
+predating this work; and the Kistenian pet's 10015, whose retail listener is cast-only.
+
+## A flaky test of mine, found by the same run
+
+`AHandKnocksItsTargetAboutOnItsOwnTimer` failed in a full-suite run and passed six times in
+isolation. Not interference: the hand casts on a **coin flip**, and forty seconds gave it
+about four ticks, so missing every one had a one-in-sixteen chance. It had been quietly
+failing at roughly that rate.
+
+The window is now two and a half minutes — a dozen ticks, under one in a thousand. Five
+consecutive full-suite runs are clean.
+
+**This is the second flake this work has produced from the same mistake**: asserting that a
+probabilistic branch fires at least once, over a window sized for the deterministic case.
+Worth checking the others — any pin whose subject is a `test_probability` branch needs its
+window sized for the tail, not the mean.
