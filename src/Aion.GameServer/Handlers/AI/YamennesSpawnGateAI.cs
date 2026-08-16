@@ -16,7 +16,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// both the normal and hard patterns spawn this b-prefixed set exclusively — and none of them was
 /// spawned by anything, nor was either thing they call up.
 /// <para>
-/// A gate waits to be attacked, then feeds the room on a timer: the three upper gates put a
+/// A gate starts its own fight and then feeds the room on a timer: the three upper gates put a
 /// <b>summoned orkanimum</b> (283200) on a fixed mark every twelve seconds, and the lower gate puts a
 /// <b>summoned lapilima</b> (283201) at its own feet every nine. Each arrival lasts a little over a
 /// minute, and killing or removing the gate clears everything it has fed out.
@@ -29,11 +29,13 @@ namespace Aion.GameServer.Handlers.AI;
 /// gates in <see cref="UnstableYamennesAI"/>.
 /// </para>
 /// <para>
-/// <b>Not translated: the gate's on-wake summon.</b> Every one of these patterns opens by putting an
-/// <c>IDAbRe_Core_Sum_Teleport2_Enemy</c> on itself with a hundred thousand hate — and that devname
-/// <b>resolves to no npc in our 4.8 client</b>. It is unportable for the same reason the waypoint
-/// bucket is: the data names something the client does not have. The gate therefore opens quietly and
-/// starts its timer, which is the rest of the mechanic intact.
+/// <b>The on-wake summon is what starts everything, and it was nearly left out.</b> Every one of these
+/// patterns opens by putting an <c>IDAbRe_Core_Sum_Teleport2_Enemy</c> on itself with a hundred
+/// thousand hate and <c>attack_target_after_spawn</c>, so the gate is attacked by its own summon. That
+/// is not decoration: <c>on_enter_attack_state</c> is where the feed timer is armed, so without it the
+/// gate stands inert forever. An earlier revision of this class called the devname unresolvable in our
+/// 4.8 client — it resolves to <b>282016</b>, and the mistake was reading the AI binding table, which
+/// maps pattern owners rather than devnames. See docs/retail-ai-fidelity.md.
 /// </para>
 /// </remarks>
 [AIName("yamennes_spawn_gate")]
@@ -50,6 +52,12 @@ public class YamennesSpawnGateAI : PatternAi
 
     private const int Orkanimum = 283200;
     private const int Lapilima = 283201;
+
+    /// <summary><c>IDAbRe_Core_Sum_Teleport2_Enemy</c> — the spawn gate that attacks the gate.</summary>
+    private const int TeleportEnemy = 282016;
+
+    private const int EnemyLife = 70;
+    private const int EnemyHate = 100000;
 
     private static readonly Dictionary<int, Feed> ByGate = new Dictionary<int, Feed>
     {
@@ -76,6 +84,13 @@ public class YamennesSpawnGateAI : PatternAi
 
         return new AiPattern
         {
+            // The gate opens its own fight: it summons a spawn gate on itself that attacks it with a
+            // hundred thousand hate. Nothing a player does is required, and without this the feed timer
+            // below never starts, because nobody attacks a gate.
+            OnWakeUp = Of(
+                Branch(3, "", When.Always,
+                    Do.SpawnAsMyEnemy(TeleportEnemy, Fed, EnemyLife, EnemyHate))),
+
             OnEnterAttack = Of(
                 Branch(2, "", When.Always,
                     Do.ArmTimer(0, feed.OpeningMillis))),

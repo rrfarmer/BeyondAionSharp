@@ -501,6 +501,71 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     public void SpawnNear(int npcId, int spawnId, int count, float range, int liveSeconds)
         => SpawnAround(GetPosition(), npcId, spawnId, count, range, liveSeconds);
 
+    /// <summary>
+    /// <c>spawn_on_target target_obj=OBJI_SELF</c> with <c>attack_target_after_spawn</c>: an NPC that
+    /// appears at this one's feet and immediately attacks <em>it</em>.
+    /// </summary>
+    /// <remarks>
+    /// Retail's way of making something fight without a player having touched it. The spawner is the
+    /// victim, so the flag starts <em>the spawner's</em> fight — its <c>on_enter_attack_state</c> runs and
+    /// its battle timers begin — which is the whole point wherever it is used: a gate that feeds a room
+    /// on a timer needs to be in combat, and nobody is going to attack a gate first.
+    /// <para>
+    /// <paramref name="hate"/> is retail's <c>hatepoints_to_add</c>. The values are absurd on purpose
+    /// (100,000 for the Abyssal Reliquary gates, up to 99,999,999 elsewhere): they are meant to outrank
+    /// anything a raid can build, so the summon stays locked on its spawner rather than peeling.
+    /// </para>
+    /// </remarks>
+    public void SpawnAsMyEnemy(int npcId, int spawnId, int liveSeconds, int hate)
+    {
+        WorldPosition here = GetPosition();
+        VisibleObject? spawned = Spawn(npcId, here.GetX(), here.GetY(), here.GetZ(), (sbyte)here.GetHeading());
+        Track(spawnId, liveSeconds, spawned);
+        if (spawned is not Npc summon)
+            return;
+
+        Npc victim = GetOwner();
+        summon.GetKnownList().Add(victim);
+        victim.GetKnownList().Add(summon);
+
+        // Deferred by a tick, and it has to be. Every use of this op is on `on_wake_up`, which runs from
+        // inside the owner's own BringIntoWorld -- so a state flip made here is overwritten by the rest
+        // of that spawn path, which leaves the NPC IDLE. Scheduling it is the same answer SetIdleTimer
+        // gives to a zero delay: next tick, not inline.
+        ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            Provoke(summon, victim, hate);
+            return ValueTask.CompletedTask;
+        }, 0L);
+    }
+
+    /// <summary>Puts two NPCs into a fight with each other, as <c>attack_target_after_spawn</c> does.</summary>
+    /// <remarks>
+    /// Both sides, deliberately. Retail's engine makes the summon attack and the victim's entering combat
+    /// is a consequence of being hit; here the summon may be a passive <c>general</c> NPC that never
+    /// swings, so waiting for a hit would leave the pair standing. What the flag means is that these two
+    /// are now fighting, and that is what this sets up.
+    /// <para>
+    /// Order matters within each side, and it is the order the harness uses to start a fight by hand: the
+    /// state flip has to land before the hate, or <c>AddHate</c>'s own aggro handling flips it first and
+    /// the Attack event no longer takes the path that runs <c>on_enter_attack_state</c>.
+    /// </para>
+    /// </remarks>
+    private static void Provoke(Npc summon, Npc victim, int hate)
+    {
+        if (summon.IsDead() || victim.IsDead())
+            return;
+
+        summon.GetAi().SetStateIfNot(AIState.FIGHT);
+        summon.SetTarget(victim);
+        summon.GetAggroList().AddHate(victim, hate);
+
+        victim.GetAi().SetStateIfNot(AIState.FIGHT);
+        victim.SetTarget(summon);
+        victim.GetAggroList().AddHate(summon, hate);
+        victim.GetAi().OnCreatureEvent(AiEventType.Attack, summon);
+    }
+
     /// <summary>Spawns around whoever this NPC is facing, which is where <c>spawn_on_target</c> puts them.</summary>
     public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds)
     {

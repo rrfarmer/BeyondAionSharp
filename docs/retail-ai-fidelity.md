@@ -5361,3 +5361,71 @@ the eight rush drakan stay in the walk-path bucket. The four mages are the four.
 
 **Verification.** Full suite 1,425 passing and 1 skipped; seven new pins; eleven of
 twelve mutations caught, the twelfth recorded above.
+
+## The same mistake, one file over — and an op we never had
+
+Having just found that reading `ai_binding.tsv` for a devname proves nothing, the
+obvious next question was where else I had done it. The answer was one file:
+`YamennesSpawnGateAI` said its gates' on-wake summon "resolves to no npc in our 4.8
+client". **`IDAbRe_Core_Sum_Teleport2_Enemy` is npc 282016**, a spawn gate, and it is in
+our templates.
+
+That one was worse than a missing add, because of what the summon is for:
+
+```
+spawn_on_target target_obj=OBJI_SELF npc_nameid=IDAbRe_Core_Sum_Teleport2_Enemy
+    live_time=70 valid_distance=50 attack_target_after_spawn=TRUE hatepoints_to_add=100000
+```
+
+The gate summons something **that attacks the gate**. That is how a gate gets into
+combat — and `on_enter_attack_state` is where its feed timer is armed. Without it the
+gate stands inert unless a player attacks it, which no player has a reason to do. The
+class's own pin said so out loud: `AnUnattackedGateFeedsNothing` asserted the gate feeds
+nothing, and passed. It was pinning the bug.
+
+### `attack_target_after_spawn` — a vocabulary gap, not a one-off
+
+The op is not rare. Across the 5.8 dump, **384 spawns set it TRUE**, over 189 patterns,
+and our pattern runtime had no word for it at all:
+
+| where the add is placed | rows | what our runtime does today |
+|---|---|---|
+| `OBJI_SELF` — at the spawner, attacking the spawner | 53 | **now translated**: `Do.SpawnAsMyEnemy` |
+| `OBJI_CUR_TARGET` — on the tank, attacking the tank | 99 | arrives passive |
+| `spawn_on_multi_target` — one per player, each attacking | 133 | arrives passive |
+| `spawn_on_target_by_attacker_indicator` | 39 | arrives passive |
+| `OBJI_ATTACKER` / `OBJI_EVENT_TARGET` / others | 60 | arrives passive |
+
+`hatepoints_to_add` runs from 1 to 99,999,999; the common values are 100 and 1, with the
+huge ones (100,000 for these gates, a million elsewhere) meant to outrank anything a raid
+can build so the summon never peels.
+
+**What is owed.** Twenty-one patterns our source already names carry TRUE rows, and every
+one of them currently spawns a passive add where retail spawns a fighting one:
+
+```
+DF4_Dramata (20)          LDF4b_Golden_Gururu (6)   LF4_FieldRaid (5)
+DGuard_RsA/WsA/WsB (7)    DrGuard_RsA/RsB (5)       LGuard_RsA/WsA/WsB (7)
+IDAbRe_Core_NamedD{,_02,_Hard,_Hard_02} (4)         IDCT_Boss_Shadow (2)
+IDTiamat_T1_Crack_Key_Named_60_Al (1)               IDAbRe_Core_Summon4* (4, done)
+```
+
+The guard families are the bulk of it and they are table-driven, so the fix is a column
+in `extract_guard_reinforcements.py` rather than twelve edits — a next pass, not this one.
+
+### Two things the primitive had to learn
+
+**Both sides get provoked, not just the summon.** Retail's engine makes the summon
+attack and the victim's entering combat follows from being hit. Here the summon can be a
+passive `general` NPC that never swings — 282016 is exactly that — so waiting for a hit
+leaves the pair standing next to each other forever.
+
+**And it has to happen a tick later.** Every use of this op is on `on_wake_up`, which
+runs from inside the owner's own `BringIntoWorld`; a state flip made there is overwritten
+by the rest of the spawn path and the NPC ends up IDLE. Deferring by a zero-delay
+schedule is the same answer `SetIdleTimer` already gives to a zero delay. Both of these
+are mutations that were caught rather than guesses: provoking one side survives nothing,
+and running inline survives nothing.
+
+**Verification.** Full suite 1,426 passing and 1 skipped. Two new pins on the gates, one
+of them replacing the pin that had been asserting the bug; four mutations, all caught.

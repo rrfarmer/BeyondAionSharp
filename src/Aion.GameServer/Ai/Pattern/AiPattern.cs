@@ -219,6 +219,13 @@ public static class Do
     public static PatternAction SpawnOnTarget(int npcId, int spawnId, int count = 1, float range = 0f, int liveSeconds = 0)
         => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds);
 
+    /// <summary>
+    /// <c>spawn_on_target target_obj=OBJI_SELF</c> with <c>attack_target_after_spawn</c> — a summon that
+    /// appears at the caster's feet and attacks the caster, starting the caster's own fight.
+    /// </summary>
+    public static PatternAction SpawnAsMyEnemy(int npcId, int spawnId, int liveSeconds, int hate)
+        => ai => ai.SpawnAsMyEnemy(npcId, spawnId, liveSeconds, hate);
+
     /// <summary><c>spawn_on_multi_target</c> — one add on every valid target in range.</summary>
     /// <summary><c>SPAWN_LOCATION_RELATIVE</c> — a fixed offset from where the NPC stands.</summary>
     public static PatternAction SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds = 0)

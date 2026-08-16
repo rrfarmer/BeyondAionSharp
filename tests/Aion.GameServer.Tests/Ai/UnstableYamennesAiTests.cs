@@ -39,14 +39,14 @@ public sealed class UnstableYamennesAiTests
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI))
 			.Build();
 
 	private static (BossAiHarness, Npc, Player) EngagedSingle(int npcId)
 	{
 		BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		Player player = harness.SpawnPlayer(332f, 732f, 216f);
@@ -58,7 +58,7 @@ public sealed class UnstableYamennesAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		var raid = new List<Player>();
@@ -271,15 +271,40 @@ public sealed class UnstableYamennesAiTests
 		Assert.Equal(gate.GetX(), worm.GetX(), 1);
 	}
 
-	/// <summary>A gate nobody attacks feeds nothing — the timer hangs off entering combat.</summary>
+	/// <summary><c>IDAbRe_Core_Sum_Teleport2_Enemy</c> — the summon that attacks the gate.</summary>
+	private const int TeleportEnemy = 282016;
+
+	/// <summary>
+	/// A gate nobody touches feeds the room anyway: it summons its own attacker on waking, and that is
+	/// what puts it into the attack state its feed timer hangs off.
+	/// </summary>
+	/// <remarks>
+	/// This pin used to assert the opposite — that an unattacked gate feeds nothing — which was true of
+	/// the code and false of retail. The on-wake summon had been read as unportable; see
+	/// docs/retail-ai-fidelity.md.
+	/// </remarks>
 	[Fact]
-	public void AnUnattackedGateFeedsNothing()
+	public void AGateNobodyTouchesStartsItsOwnFight()
+	{
+		using var harness = NewHarness();
+		Npc gate = harness.Spawn(283203, 300f, 740f, 216f);
+
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == TeleportEnemy));
+
+		BossAiHarness.Watched fed = harness.Watch(20, null, Orkanimum);
+
+		Assert.Equal(2, fed.Total);
+	}
+
+	/// <summary>The summon it opens with is on a seventy-second clock, like everything else it places.</summary>
+	[Fact]
+	public void TheOpeningSummonIsNotPermanent()
 	{
 		using var harness = NewHarness();
 		harness.Spawn(283203, 300f, 740f, 216f);
 
-		BossAiHarness.Watched fed = harness.Watch(60, null, Orkanimum, Lapilima);
+		harness.Clock.Advance(TimeSpan.FromSeconds(71));
 
-		Assert.Equal(0, fed.Total);
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == TeleportEnemy));
 	}
 }
