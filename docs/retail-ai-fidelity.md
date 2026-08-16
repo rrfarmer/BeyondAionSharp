@@ -2903,3 +2903,60 @@ did not reproduce in nine subsequent runs (three full-suite, six of that project
 so its name was never captured. Nothing in this work touches the login server. Recorded
 because a test that fails one time in ten is worth knowing about before it is blamed on
 something else.
+
+---
+
+## Tiamat's dying phase — the breath indices, half solved
+
+This has been the standing blocker: a 45-branch spec written long ago, unportable
+because the breath skills could not be mapped to `SKILLI_INDEX_1/2/3` and she has **no
+`npc_skills` entry**. Two pieces of that fell out this session, and one did not.
+
+### Solved: what the indices are anchored to
+
+The dying pattern spawns a **breath beacon alongside every breath cast**, and the
+beacons are named by number:
+
+| branch casts | branch spawns |
+|---|---|
+| `SKILLI_INDEX_1` | `IDTiamat_Breath_Beacon1` (283155) |
+| `SKILLI_INDEX_2` | `IDTiamat_Breath_Beacon2` (283156) |
+| `SKILLI_INDEX_3` | `IDTiamat_Breath_Beacon3` (283157) |
+
+The beacon number *is* the skill index, on every branch, without exception. That is a
+naming anchor of a kind nothing else in this corpus has offered — the pattern labels its
+own indices. **Any future work here starts from that, not from scratch.**
+
+### Solved: the three breaths already exist in our code
+
+`TiamatWeakenedDragonAI` casts **20922, 20924 and 20926** — all three named "Ultimate
+Atrocity" — chosen at random in normal mode and, in hard mode, by the *median angle of
+the raid around her*: 20924 when they are massed east, 20922 north, 20926 south. Each
+already spawns its own hazard line on cast. So the breaths are implemented; only the
+mapping to retail's indices is missing.
+
+### Not solved: which beacon is which breath
+
+The beacons will not separate on position. All three sit on y ≈ 514.7, at x 458.5 or
+485.5 — the two ends of one line — whereas the three implemented breaths spray at
+y ≈ 550 (20922), y ≈ 514.6 (20924) and y ≈ 480 (20926). Only 20924 shares the beacons'
+line. Two readings fit and nothing separates them:
+
+- the beacons mark *where a breath starts*, so all three share an origin and the number
+  distinguishes direction; or
+- the dying phase breathes only along the middle line, and the beacons mark *stages*
+  along it.
+
+The dying pattern's arena coordinates also differ from the ones this class already uses,
+so placing its absolute spawns is not safe on the strength of a name match alone.
+
+**Deliberately not wired.** Guessing here would put a telegraph in front of the wrong
+breath — worse than no telegraph, because players would learn to dodge the wrong way.
+What is needed is one observation tying a beacon number to a breath direction: a video,
+a client effect binding, or a `Beacon` referenced from another pattern whose geometry is
+unambiguous.
+
+**Still missing on this encounter**, and now with a clear reason rather than a shrug:
+the three beacons (283155-7), the burrowing-attack markers (283057, six at fixed points
+on a cast-free branch — the one piece here that *is* index-free), and on hard mode the
+six lv1 markers plus a path-blocked gravity crusher.
