@@ -19,6 +19,12 @@ public sealed class TiamatDyingRotationAiTests
 	private const int DragonLordsRefuge = 300520000;
 	private const int Tiamat = 219362;
 
+	/// <summary>Hard mode: the same 45 steps with its own cast of thirteen hazards.</summary>
+	private const int HardTiamat = 236277;
+	private const int HardBeaconLeft = 856034;
+	private const int HardBeaconMiddle = 856036;
+	private const int HardBeaconRight = 856038;
+
 	private const int BeaconLeft = 283155;
 	private const int BeaconMiddle = 283156;
 	private const int BeaconRight = 283157;
@@ -227,5 +233,48 @@ public sealed class TiamatDyingRotationAiTests
 
 		Assert.Empty(harness.LiveNpcs().Where(
 			n => n.GetNpcId() is BeaconLeft or BeaconMiddle or BeaconRight or Thorn or CyclopsCrack));
+	}
+
+	/// <summary>
+	/// Hard mode runs the same rotation with its own hazards — and <b>only</b> its own.
+	/// </summary>
+	/// <remarks>
+	/// The two tables are structurally identical, which is exactly why this pin is needed: a class
+	/// that looked up the wrong one would produce a rotation that timed out perfectly and placed the
+	/// normal fight's beacons. Both halves are asserted — hard mode's appear, normal mode's do not.
+	/// </remarks>
+	[Fact]
+	public void HardModeRunsItsOwnCastOnTheSameRotation()
+	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+		Npc boss = harness.Spawn(HardTiamat, 470f, 514f, 417f);
+		Player player = harness.SpawnPlayer(474f, 514f, 417f);
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		BossAiHarness.SetHpPercent(boss, 90);
+		harness.Engage(boss, player);
+
+		var hard = new List<int>();
+		int normalSeen = 0;
+		var standing = new HashSet<int>();
+		for (int i = 0; i < 70; i++)
+		{
+			BossAiHarness.Rehate(boss, player);
+			BossAiHarness.KeepAlive(player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+			foreach (Npc beacon in harness.LiveNpcs()
+						.Where(n => n.GetNpcId() is HardBeaconLeft or HardBeaconMiddle or HardBeaconRight))
+			{
+				if (standing.Add(beacon.GetObjectId()))
+					hard.Add(beacon.GetNpcId());
+			}
+
+			normalSeen += harness.LiveNpcs()
+				.Count(n => n.GetNpcId() is BeaconLeft or BeaconMiddle or BeaconRight);
+		}
+
+		Assert.Equal([HardBeaconMiddle, HardBeaconMiddle, HardBeaconLeft, HardBeaconRight], hard.Take(4));
+		Assert.Equal(0, normalSeen);
 	}
 }

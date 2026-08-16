@@ -75,14 +75,20 @@ public class TiamatDyingRotationAI : PatternAi
     private static sbyte Facing(int degrees) =>
         (sbyte)PositionUtil.ConvertAngleToHeading((degrees + 360) % 360);
 
-    private static AiPattern Build()
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId = new();
+    private static readonly AiPattern Nothing = new AiPattern();
+
+    private static AiPattern Build(int npcId)
     {
+        if (!TiamatRotation.ByBoss.TryGetValue(npcId, out TiamatRotation.Step[]? table))
+            return Nothing;
+
         var branches = new List<PatternBranch>();
 
         // Priorities descend in the table's own order, which is retail's evaluation order.
-        int priority = TiamatRotation.Steps.Length;
+        int priority = table.Length;
 
-        foreach (TiamatRotation.Step step in TiamatRotation.Steps)
+        foreach (TiamatRotation.Step step in table)
         {
             var actions = new List<PatternAction> { Do.ArmTimer(step.NextTimer, step.DelayMillis) };
 
@@ -129,12 +135,10 @@ public class TiamatDyingRotationAI : PatternAi
         };
     }
 
-    private static readonly AiPattern Pattern_ = Build();
-
     public TiamatDyingRotationAI(Npc owner)
         : base(owner)
     {
     }
 
-    protected override AiPattern Pattern => Pattern_;
+    protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => Build(id));
 }

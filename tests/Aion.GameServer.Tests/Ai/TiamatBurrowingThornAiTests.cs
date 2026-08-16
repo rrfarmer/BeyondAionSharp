@@ -14,12 +14,16 @@ public sealed class TiamatBurrowingThornAiTests
 	private const int Thorn = 283057;
 	private const int Uplift = 283135;
 
+	/// <summary>Hard mode's thorn and its own sand.</summary>
+	private const int HardThorn = 856040;
+	private const int HardUplift = 856041;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048)
 			.WithAi(typeof(TiamatBurrowingThornAI), typeof(TiamatSkillHelperAI), typeof(AggressiveNpcAI)).Build();
 
-	private static int Sand(BossAiHarness harness) =>
-		harness.LiveNpcs().Count(n => n.GetNpcId() == Uplift);
+	private static int Sand(BossAiHarness harness, int uplift = Uplift) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == uplift);
 
 	/// <summary>It throws nothing the instant it appears — the first burst is two seconds out.</summary>
 	/// <remarks>
@@ -94,5 +98,48 @@ public sealed class TiamatBurrowingThornAiTests
 		foreach (Npc grain in sand)
 			Assert.True(Math.Abs(grain.GetX() - thorn.GetX()) <= 4f,
 				$"sand at {grain.GetX():F1} should be within the thorn's three-metre scatter of {thorn.GetX():F1}");
+	}
+
+	/// <summary>
+	/// The hard-mode thorn runs its own sequence and never throws normal mode's sand.
+	/// </summary>
+	/// <remarks>
+	/// Worth its own pin because the devname invites the mistake: 856040 is called
+	/// <c>…BurrowingWorm_BurrowFX_Hard</c>, which reads as the same NPC with a suffix, but it binds
+	/// <c>IDTiamat_Hard_Earthquake_00</c> and throws <c>…Uplift_Hard</c>. Pointing it at the normal
+	/// class — which the name encourages — would have put normal-mode sand in the hard fight and
+	/// nothing would have looked wrong.
+	/// <para>
+	/// <b>The hard sand cannot be counted here, and why is a finding rather than a limitation.</b>
+	/// 856041 carries no <c>npc_skills</c> entry and sits on <c>useSkillAndDie</c>, which deletes an
+	/// NPC with an empty skill list the instant it spawns — so hard mode's hazard is inert on our
+	/// server today. Registering that AI in this harness is also what made two unrelated bootstrap
+	/// tests fail, so it is deliberately not registered and the sand simply never materialises. Both
+	/// findings are written up in docs/retail-ai-fidelity.md.
+	/// </para>
+	/// <para>
+	/// What is pinned is what this class is responsible for and what a mutation can reach: the hard
+	/// thorn runs its own sequence, and no normal-mode sand appears at any point during it.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheHardThornRunsItsOwnSequence()
+	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+		Npc thorn = harness.Spawn(HardThorn, 470f, 514f, 417f);
+
+		// Sampled every second: the sand lives one second, so checking between bursts sees an empty
+		// field whatever was thrown — which is how a mutation that made this thorn throw normal-mode
+		// sand first slipped through.
+		int normalSandSeen = 0;
+		for (int i = 0; i < 12; i++)
+		{
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			normalSandSeen += Sand(harness, Uplift);
+		}
+
+		Assert.Equal(0, normalSandSeen);
+		Assert.True(thorn.IsSpawned(), "it should still be working through its bursts");
 	}
 }

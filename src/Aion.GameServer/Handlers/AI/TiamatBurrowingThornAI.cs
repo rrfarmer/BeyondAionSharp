@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
@@ -35,8 +37,21 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("tiamat_burrowing_thorn")]
 public class TiamatBurrowingThornAI : PatternAi
 {
-    /// <summary>283135, <c>IDTiamat_Tiamat_Uplift</c> — the sand itself, one second at a time.</summary>
-    private const int Uplift = 283135;
+    /// <summary>
+    /// The sand each thorn throws, by the thorn that throws it — one second at a time.
+    /// </summary>
+    /// <remarks>
+    /// Hard mode runs a structurally identical pattern with its own cast: same two-second opening,
+    /// same 3/4/3/4/4 bursts, same widening waits, and a different uplift. The devname does not say
+    /// so — 856040 is called <c>…BurrowFX_Hard</c> but binds <c>IDTiamat_Hard_Earthquake_00</c> — so
+    /// pointing it at the normal class would have thrown <b>normal-mode sand</b> in the hard fight.
+    /// A table keyed by the thorn is what makes that impossible to get wrong by accident.
+    /// </remarks>
+    private static readonly Dictionary<int, int> UpliftByThorn = new Dictionary<int, int>
+    {
+        [283057] = 283135, // IDTiamat_BurrowingWorm_BurrowFX -> IDTiamat_Tiamat_Uplift
+        [856040] = 856041, // ...BurrowFX_Hard -> BIDTiamat_Tiamat_Uplift_Hard
+    };
 
     private const int Tracked = 1;
     private const int UpliftLife = 1;
@@ -49,41 +64,50 @@ public class TiamatBurrowingThornAI : PatternAi
     private const int Fourth = 4;
     private const int Fifth = 5;
 
-    private static PatternAction Burst(int howMany) =>
-        Do.SpawnNear(Uplift, Tracked, count: howMany, range: Around, liveSeconds: UpliftLife);
+    private static PatternAction Burst(int uplift, int howMany) =>
+        Do.SpawnNear(uplift, Tracked, count: howMany, range: Around, liveSeconds: UpliftLife);
 
-    private static readonly AiPattern Pattern_ = new AiPattern
+    private static readonly ConcurrentDictionary<int, AiPattern> ByNpcId = new ConcurrentDictionary<int, AiPattern>();
+    private static readonly AiPattern Nothing = new AiPattern();
+
+    private static AiPattern Build(int npcId)
     {
-        OnWakeUp = Of(
-            Branch(6, "SetTimer", When.Always,
-                Do.SetIdleTimer(2000))),
+        if (!UpliftByThorn.TryGetValue(npcId, out int uplift))
+            return Nothing;
 
-        OnIdleTimer = Of(
-            Branch(5, "Spawn_#1", [When.FirstTime(First)],
-                Burst(3),
-                Do.SetIdleTimer(2000)),
+        return new AiPattern
+        {
+            OnWakeUp = Of(
+                Branch(6, "SetTimer", When.Always,
+                    Do.SetIdleTimer(2000))),
 
-            Branch(4, "Spawn_#2", [When.FirstTime(Second)],
-                Burst(4),
-                Do.SetIdleTimer(2500)),
+            OnIdleTimer = Of(
+                Branch(5, "Spawn_#1", [When.FirstTime(First)],
+                    Burst(uplift, 3),
+                    Do.SetIdleTimer(2000)),
 
-            Branch(3, "Spawn_#3", [When.FirstTime(Third)],
-                Burst(3),
-                Do.SetIdleTimer(3000)),
+                Branch(4, "Spawn_#2", [When.FirstTime(Second)],
+                    Burst(uplift, 4),
+                    Do.SetIdleTimer(2500)),
 
-            Branch(2, "Spawn_#4", [When.FirstTime(Fourth)],
-                Burst(4),
-                Do.SetIdleTimer(3500)),
+                Branch(3, "Spawn_#3", [When.FirstTime(Third)],
+                    Burst(uplift, 3),
+                    Do.SetIdleTimer(3000)),
 
-            Branch(1, "Spawn_#5", [When.FirstTime(Fifth)],
-                Burst(4),
-                Do.DespawnSelf())),
-    };
+                Branch(2, "Spawn_#4", [When.FirstTime(Fourth)],
+                    Burst(uplift, 4),
+                    Do.SetIdleTimer(3500)),
+
+                Branch(1, "Spawn_#5", [When.FirstTime(Fifth)],
+                    Burst(uplift, 4),
+                    Do.DespawnSelf())),
+        };
+    }
 
     public TiamatBurrowingThornAI(Npc owner)
         : base(owner)
     {
     }
 
-    protected override AiPattern Pattern => Pattern_;
+    protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => Build(id));
 }

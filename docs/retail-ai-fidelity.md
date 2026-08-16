@@ -4740,3 +4740,58 @@ after the three pins above were repaired.
 **Still open on this boss:** hard mode (`IDTiamat_Hard_Tiamat_Dragon_Dying`, eight adds) needs the same
 transcription — the extractor takes a pattern name, so it is one run and one table away. And the lower
 bands' breath ids remain unresolved.
+
+### Hard-mode Tiamat, and two names that lied
+
+Hard mode was "one run and one table away", and it was — the extractor now takes a `--pattern`, and
+`IDTiamat_Hard_Tiamat_Dragon_Dying` transcribes to **the same 45 steps, the same delays, the same
+coordinates and headings** as normal mode, with an entirely different cast of thirteen hazards
+(856xxx against 283xxx). One class, two tables, keyed by boss npc id.
+
+**Two devnames pointed the wrong way, and both would have shipped silently.**
+
+- `BIDTiamat_Breath_Beacon1_Hard` binds a pattern called `IDTiamat_Hard_Breath_**Centarl**_00`, and
+  Beacon2's says `_Right_`, Beacon3's `_Left_`. Read as labels those say the hard beacons are shuffled
+  relative to normal mode's Beacon1=Left. They are not: the boss spawns Beacon1 on its `BreathL` step
+  with **dir 17** in both modes, Beacon2 on `BreathM` with no heading, Beacon3 on `BreathR` with 105.
+  The boss that places a beacon is the authority on what that beacon is; the beacon's own pattern name
+  is a label, and this one is even misspelled.
+- `BIDTiamat_BurrowingWorm_BurrowFX_Hard` reads as "the same thorn with a suffix" and binds
+  `IDTiamat_Hard_Earthquake_00` — the same structure throwing a **different** uplift. Pointing 856040
+  at the normal thorn class, which the name invites, would have thrown normal-mode sand in the hard
+  fight and nothing would have looked wrong. The thorn's uplift is now a table keyed by thorn.
+
+That is twice in one encounter that a name disagreed with the structure. **The structure wins, every
+time** — the same lesson the Kistenian "dredgion elite fighter" and the "aetherback titan core"
+taught, and worth stating as a rule rather than an anecdote.
+
+### Hard mode's sand is inert, and registering its AI breaks the bootstrap
+
+Two things found while pinning it, neither about Tiamat:
+
+- **856041 has no `npc_skills` entry and sits on `useSkillAndDie`**, which deletes an NPC with an empty
+  skill list the instant it spawns. Hard mode's ground hazard therefore does nothing on our server
+  today, whatever places it. Normal mode's equivalent (283135) has no skills either but sits on
+  `tiamat_skill_helper`, which does not delete itself — so the same data gap is visible in one mode and
+  not the other.
+- **Registering `UseSkillAndDieAI` in a harness makes `GameServerBootstrapTests` fail.**
+  `SiegeService`'s static initializer throws a `NullReferenceException` once that AI has been
+  registered under a test DataManager, and the bootstrap tests run later and inherit the poisoned
+  static. Two tests, reproducible, and nothing to do with the AI under test. Recorded rather than
+  worked around silently: it is a real coupling between the harness and a static service singleton,
+  and it will bite the next person who registers that AI.
+
+### Three mutations, three pins that could not see them
+
+All three survived the first pass, for the third entry running, and the cause was the same each time:
+
+- the hard-thorn pin sampled at twelve and sixteen seconds, which fall **between** bursts that live one
+  second, so throwing normal-mode sand was invisible — it samples every second now;
+- nothing spawned the hard boss at all, so pointing both modes at normal mode's table changed nothing;
+- and the unknown-thorn fallback is unreachable from data, as the equivalent guards have been.
+
+**Verification.** Full suite 1,389 passing and 1 skipped; two new pins; both reachable mutations
+caught.
+
+**Still open:** the lower two bands' breath skill ids (6/8/10 and 7/9/11) remain unresolved in both
+modes, so those bands place beacons and hazards and cast nothing.

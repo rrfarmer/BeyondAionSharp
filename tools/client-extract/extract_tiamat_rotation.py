@@ -30,7 +30,7 @@ import sys
 from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
 from extract_guard_reinforcements import BOUNDARY_RE, TIMER_RE, branches_of
 
-PATTERN = "IDTiamat_Tiamat_Dragon_Dying_Named_60_Al"
+DEFAULT_PATTERN = "IDTiamat_Tiamat_Dragon_Dying_Named_60_Al"
 COMMENT_RE = re.compile(r"<comment>([^<]*)</comment>")
 INDEX_RE = re.compile(r"<skill>SKILLI_INDEX_(\d+)</skill>")
 ARM_RE = re.compile(
@@ -47,6 +47,8 @@ def main() -> None:
     ap.add_argument("patterns_dir")
     ap.add_argument("binding_tsv")
     ap.add_argument("--out")
+    ap.add_argument("--pattern", default=DEFAULT_PATTERN,
+                    help="pattern name to transcribe; hard mode is IDTiamat_Hard_Tiamat_Dragon_Dying")
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -67,7 +69,7 @@ def main() -> None:
         for match in PATTERN_RE.finditer(text):
             block = match.group(0)
             name = NAME_RE.search(block)
-            if not name or name.group(1) != PATTERN:
+            if not name or name.group(1) != args.pattern:
                 continue
 
             for order, branch in enumerate(branches_of(block, "on_battle_timer")):
