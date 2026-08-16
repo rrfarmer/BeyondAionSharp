@@ -1,0 +1,275 @@
+ai_names our code implements : 510
+  of those, shared by 2..12 npcs : 205
+
+IDSweep_Boss  (IDSweep_Bosses.cs)
+    235647  grand commander gradi        IDSweeP_S2_Boss_Doubling_04            -> 235682
+    235685  longknife zodica             IDSweep_S2_Boss_Doubling_01            -> 235632
+
+agrint  (AgrintAI.cs)
+    218850  spring agrint                HLFP_AgrintSpring                      -> 218874,219170
+    218851  summer agrint                HLFP_AgrintSummer                      -> 218876,219171
+    218852  autumn agrint                HLFP_AgrintFall                        -> 218878,219172
+    218853  winter agrint                HLFP_AgrintWinter                      -> 218880,219173
+    218862  spring agrint                HDFP_AgrintSpring                      -> 218882,219170
+    218863  summer agrint                HDFP_AgrintSummer                      -> 218884,219171
+    218864  autumn agrint                HDFP_AgrintFall                        -> 218886,219172
+    218865  winter agrint                HDFP_AgrintWinter                      -> 218888,219173
+
+ahserion_sky_assaulter  (AhserionSkyAssaulterAI.cs)
+    297352  ahserion troopers assault pod Gab1_Sub_AssultPod_Strike              -> 297187,297191,297192
+    297353  ahserion troopers sky assaulter Gab1_Sub_AssultTBM_Strike              -> 297188,297190,297191
+
+barrel  (BarrelAI.cs)
+    217840  meat barrel                  IDArena_Solo_S4_meatBarrel             -> 217841
+    218560  aether barrel                IDArena_Solo_S4_odBarrel               -> 218561
+
+brigade_general_vasharti  (BrigadeGeneralVashartiAI.cs)
+    217313  brigade general vasharti     IDYun_Nmd6                             -> 282996,282997,283000,283001,283002,283004,283006
+    236300  brigade general vasharti     IDYun_Nmd6_Hard                        -> 282996,282997,856338,856339,856351,856352,856353
+
+captain_xasta  (CaptainXastaAI.cs)
+    217309  captain xasta                IDYun_Nmd3                             -> 217310,282390,282606
+    217310  captain xasta                IDYun_Nmd3_FallOff                     -> 282444
+
+chantrarings  (ChantraRingsAI.cs)
+    283171  drana reactor                IDTiamat_Temp24                        -> 283051,283093
+    283172  drana reactor                IDTiamat_Temp25                        -> 283095
+
+dancing_flame  (DancingFlameAI.cs)
+    282996  dancing red flame            IDYun_Vasharti_Fire_Red                -> 282998
+    282997  dancing blue flame           IDYun_Vasharti_Fire_Blue               -> 282999
+
+divisive_creation  (DivisiveCreationAI.cs)
+    283139  divisive creation            IDTiamat_Tiamat_CyclopsCrack           -> 283137
+    856042  divisive creation            IDTiamat_Hard_CyclopsCrack             -> 856043
+
+dredgion_generator  (DredgionGeneratorAI.cs)
+    700981  dredgion generator           Station_TOWER1A                        -> 282281
+    700982  dredgion generator           Station_TOWER2A                        -> 282279
+    700983  dredgion generator           Station_TOWER3A                        -> 282278
+    700984  dredgion generator           Station_TOWER4A                        -> 282280
+    700985  dredgion generator           Station_TOWER5A                        -> 282277
+
+empadministratorarminos  (EmpyreanAdministratorArminosAI.cs)
+    217744  administrator arminos        IDArena_S3_Bonus_CTRL                  -> 217740,217741,217742,217743
+    217749  administrator arminos        IDArena_S4_Bonus_CTRL                  -> 217778
+
+empyrean_lord  (EmpyreanLordAI.cs)
+    219488  kaisinel                     Kaisinel_Avatar1                       -> 283159
+    219489  kaisinel                     Kaisinel_Avatar2                       -> 283061
+    219491  marchutan                    Markutan_Avatar1                       -> 283160
+    219492  marchutan                    Markutan_Avatar2                       -> 283061
+    856020  kaisinel                     IDTiamat_Hard_GodKaisinel_01           -> 283159
+    856021  kaisinel                     IDTiamat_Hard_GodKaisinel_02           -> 283061
+    856023  marchutan                    IDTiamat_Hard_GodMarkutan_01           -> 283160
+    856024  marchutan                    IDTiamat_Hard_GodMarkutan_02           -> 283061
+
+enraged_agent  (EnragedAgent.cs)
+    258200  enraged veille               LF4_GH_KJS                             -> 281434,281435,281436,281437,296910,296912,296922,296947,296949,296950,296951,296952,296953,296954,296955,296956
+    258201  enraged veille               LF4_GH_KJS                             -> 281434,281435,281436,281437,296910,296912,296922,296947,296949,296950,296951,296952,296953,296954,296955,296956
+    258202  enraged veille               LF4_GH_KJS                             -> 281434,281435,281436,281437,296910,296912,296922,296947,296949,296950,296951,296952,296953,296954,296955,296956
+    258203  enraged veille               LF4_GH_KJS                             -> 281434,281435,281436,281437,296910,296912,296922,296947,296949,296950,296951,296952,296953,296954,296955,296956
+    258204  enraged veille               LF4_GH_KJS                             -> 281434,281435,281436,281437,296910,296912,296922,296947,296949,296950,296951,296952,296953,296954,296955,296956
+    258205  enraged mastarius            DF4_GH_KJS                             -> 282890,282891,282892,282893,296910,296918,296919,296947,296957,296958,296959,296960,296961,296962,296963,296964
+    258206  enraged mastarius            DF4_GH_KJS                             -> 282890,282891,282892,282893,296910,296918,296919,296947,296957,296958,296959,296960,296961,296962,296963,296964
+    258207  enraged mastarius            DF4_GH_KJS                             -> 282890,282891,282892,282893,296910,296918,296919,296947,296957,296958,296959,296960,296961,296962,296963,296964
+    258208  enraged mastarius            DF4_GH_KJS                             -> 282890,282891,282892,282893,296910,296918,296919,296947,296957,296958,296959,296960,296961,296962,296963,296964
+    258209  enraged mastarius            DF4_GH_KJS                             -> 282890,282891,282892,282893,296910,296918,296919,296947,296957,296958,296959,296960,296961,296962,296963,296964
+
+enraged_queen_modor  (EnragedQueenModorAI.cs)
+    231305  enraged queen modor          Rune_FrostNmd_2_N_65_Ah                -> 856493,856494,856495,856496,856497,856498
+    234691  crazed modor                 Rune_FrostNmd_2_N_65_Ah_ver47          -> 284659,284660,284661,284662,284663,284664
+    284376  enraged queen modor          Rune_FrostNmd_2_N_65_Ah                -> 856493,856494,856495,856496,856497,856498
+
+eternal_bastion_dragon  (EternalBastionDragonAI.cs)
+    231131  pashid siege dragon          IDF5_TD_Wave5_Boss_Sum2                -> 284697
+    231132  pashid siege dragon          IDF5_TD_Wave5_Boss_Sum3                -> 284075,284697
+    231133  pashid siege dragon          IDF5_TD_Wave5_Boss_Sum1                -> 284697
+    231134  pashid siege dragon          IDF5_TD_Wave5_Boss_Sum4                -> 284075,284697
+
+eternal_bastion_siege_mine  (EternalBastionSiegeMineAI.cs)
+    284685  shatter mine                 IDF5_TD_AntiTankMine2                  -> 284695
+    831330  siege mine                   IDF5_TD_BombBarrel                     -> 284696
+
+feeding_mantutu  (FeedingMantutuAI.cs)
+    701386  feed supply device           IDSShip_LeverA                         -> 281128
+    701387  water supply device          IDSShip_LeverB                         -> 281129
+
+fortress_instance_duke  (FortressInstanceDukeAI.cs)
+    233632  weakened krotan lord         BGuard_ChiefD_Minor                    -> 296339
+    233633  enraged krotan lord          BGuard_ChiefD_Tune405                  -> 284978,296338,296339
+    233675  weakened kysis duke          BGuard_ChiefD_Minor                    -> 296339
+    233676  enraged kysis duke           BGuard_ChiefD_Tune405                  -> 284978,296338,296339
+    233718  weakend miren prince         BGuard_ChiefD_Minor                    -> 296339
+    233719  enraged miren prince         BGuard_ChiefD_Tune405                  -> 284978,296338,296339
+
+gateway_guard  (GatewayGuardAI.cs)
+    296444  trigon                       GwLGuard_FlA                           -> 281472,281473,281474,281475
+    296453  matigium                     GwDGuard_FlA                           -> 281482,281483,281484,281485
+    296488  lord skyrose                 GwLGuard_FlA                           -> 281472,281473,281474,281475
+    296489  lord agios                   GwLGuard_FlA                           -> 281472,281473,281474,281475
+    296490  lady eiros                   GwLGuard_FlA                           -> 281472,281473,281474,281475
+    296492  sands kukinsia               GwDGuard_FlA                           -> 281482,281483,281484,281485
+    296493  sibarum darkwing             GwDGuard_FlA                           -> 281482,281483,281484,281485
+    296494  revolver blackhands          GwDGuard_FlA                           -> 281482,281483,281484,281485
+
+gateway_trap_guard  (GatewayTrapGuardAI.cs)
+    296449  royal combat priest          GwLGuard_PhA                           -> 281477,281478,281480
+    296450  royal combat priest          GwLGuard_PhA                           -> 281477,281478,281480
+    296451  royal combat mage            GwLGuard_WhA                           -> 281479,281480,281481
+    296452  royal combat mage            GwLGuard_WhA                           -> 281479,281480,281481
+    296458  royal combat priest          GwDGuard_PhA                           -> 281487,281488,281490
+    296459  royal combat priest          GwDGuard_PhA                           -> 281487,281488,281490
+    296460  royal combat mage            GwDGuard_WhA                           -> 281489,281490,281491
+    296461  royal combat mage            GwDGuard_WhA                           -> 281489,281490,281491
+    296894  royal combat mage            GwLGuard_WhA                           -> 281479,281480,281481
+    296896  royal combat mage            GwLGuard_WhA                           -> 281479,281480,281481
+    296902  royal combat mage            GwDGuard_WhA                           -> 281489,281490,281491
+    296904  royal combat mage            GwDGuard_WhA                           -> 281489,281490,281491
+
+gravity_crusher  (GravityCrusherAI.cs)
+    283141  gravity crusher              IDTiamat_Tiamat_GravityBomb            -> 283140
+    856045  gravity crusher              IDTiamat_Hard_GravityBomb              -> 856046
+
+gravity_tornado  (GravityTornadoAI.cs)
+    283140  gravity tornado              IDTiamat_Tiamat_Gravity                -> 283142
+    856046  gravity tornado              IDTiamat_Hard_Gravity                  -> 856047
+
+guard_captain_ahuradim_generator  (GuardCaptainAhuradimGenerator.cs)
+    284437  protective shield generator  IDVritra_Base_Boss2_Sum1               -> 284437
+    284445  protective shield generator  IDVritra_Base_Boss2_Sum2               -> 284445
+    284446  protective shield generator  IDVritra_Base_Boss2_Sum3               -> 284446
+
+illusion_gate  (IllusionGateAI.cs)
+    281226  illusion gate                BGuard_DrGateChiefD                    -> 281227,281228,281229
+    284978  illusion gate                IDAB_Reward_Item_NoShowNPC_09          -> 284979,284980,284981
+
+macunbello  (MacunbelloAI.cs)
+    216164  macunbello                   IDCTH_Boss_LichKing                    -> 281698,281775
+    216245  macunbello                   IDCT_Boss_LichKing                     -> 281698
+
+marabata_controller  (MarabataControllerAI.cs)
+    700439  marabata attack booster      ND2_WhHS1                              -> 281095
+    700440  marabata defense booster     ND2_WhHS2                              -> 281096
+    700441  marabata property controller ND2_WhHS3                              -> 281097
+    700442  marabata attack booster      ND2_WhHS1                              -> 281095
+    700443  marabata defense booster     ND2_WhHS2                              -> 281096
+    700444  marabata property controller ND2_WhHS3                              -> 281097
+    700445  marabata attack booster      ND2_WhHS1                              -> 281095
+    700446  marabata defense booster     ND2_WhHS2                              -> 281096
+    700447  marabata property controller ND2_WhHS3                              -> 281097
+
+orissan_summon_helper  (OrissanSummonHelperAI.cs)
+    855607  icing crystal                IDSeal_Glacier_Spread_Summon_01        -> 855699,855700,855702,855703
+    855608  icing crystal                IDSeal_Glacier_Spread_Summon_02        -> 855699,855702,856306,856309
+
+padmarashkaegg  (PadmarashkaEggAI.cs)
+    282613  padmarashka's spawn          IDDramata_Egg_01                       -> 282616
+    282614  huge padmarashka's spawn     IDDramata_H_Egg_01                     -> 282620
+
+rednosedgrankerking  (RedNosedGrankerKingAI.cs)
+    219292  red nosed granker king       ChristMas_Light_Boss                   -> 219293
+    219294  red nosed granker king       ChristMas_Dark_Boss                    -> 219295
+
+sematariux_thunder_shield  (SematariuxThunderShieldAI.cs)
+    281931  thunder shield               LF4_DramataG1                          -> 281932
+    281932  thunder shield               LF4_DramataG2                          -> 281933
+
+tahabataaltar  (TahabataAltarAI.cs)
+    283116  tahabata's altar             IDTiamat_Tahabata_Area1_FX             -> 283117
+    283118  tahabata's altar             IDTiamat_Tahabata_Area2_FX             -> 283119
+    283120  tahabata's altar             IDTiamat_Tahabata_Area3_FX             -> 283121
+
+tiamat_burrowing_thorn  (TiamatBurrowingThornAI.cs)
+    283057  burrowing attack             IDTiamat_BurrowingWorm_BurrowFX        -> 283135
+    856040  burrowing attack             IDTiamat_Hard_Earthquake_00            -> 856041
+
+tiamat_dying_rotation  (TiamatDyingRotationAI.cs)
+    219362  tiamat                       IDTiamat_Tiamat_Dragon_Dying_Named_60_Al -> 283057,283134,283139,283141,283143,283234,283236,283238,283240,283242,283244
+    236277  tiamat                       IDTiamat_Hard_Tiamat_Dragon_Dying      -> 283134,856040,856042,856045,856048,856112,856114,856116,856118,856120,856122
+
+tiamat_skill_helper  (TiamatSkillHelperAI.cs)
+    283135  sinking sand                 IDTiamat_Tiamat_Uplift                 -> 283136
+    283137  rockslam                     IDTiamat_Tiamat_FallingRock            -> 283138
+    283143  infinite pain                IDTiamat_Tiamat_SlowPain               -> 283144
+    856043  rockslam                     IDTiamat_Hard_FallingRock              -> 856044
+    856048  infinite pain                IDTiamat_Hard_SlowPain                 -> 856049
+
+tiamats_incarnation  (TiamatsIncarnationAI.cs)
+    219365  fissurefang                  IDTiamat_T1_Crack_Key_Named_60_Al      -> 282735,283060,283063
+    219366  graviwing                    IDTiamat_T1_Gravity_Key_Named_60_Al    -> 282727,283060,283065
+    219367  wrathclaw                    IDTiamat_T1_Rage_Key_Named_60_Al       -> 282733,282979,283060,283066
+    219368  petriscale                   IDTiamat_T1_Crystal_Key_Named_60_Al    -> 282731,283060,283064
+    236278  fissurefang                  IDTiamat_Hard_Crack_Key                -> 283060,283063,856068
+    236279  graviwing                    IDTiamat_Hard_Gravity_Key              -> 283060,283065,856074
+    236281  petriscale                   IDTiamat_Hard_Crystal_Key              -> 283060,283064,856072
+    856030  fissurefang                  IDTiamat_Hard_Crack_Key                -> 283060,283063,856068
+    856031  graviwing                    IDTiamat_Hard_Gravity_Key              -> 283060,283065,856074
+    856033  petriscale                   IDTiamat_Hard_Crystal_Key              -> 283060,283064,856072
+
+tiamats_incarnation_spawn  (TiamatsIncarnationSpawnsAI.cs)
+    282727  gravity whirlpool            LDF4b_Tiamat_Temp01                    -> 282728,282729
+    282729  thunderbolt whirlpool        LDF4b_Tiamat_Temp03                    -> 282730
+    282731  petrification crystal        LDF4b_Tiamat_Temp05                    -> 282732
+    282735  cavity of earth              LDF4b_Tiamat_Temp09                    -> 282736,282737
+    282737  collapsing earth             LDF4b_Tiamat_Temp11                    -> 282738
+    856068  cavity of earth              IDTiamat_Hard_Temp_01                  -> 856069,856070
+    856070  collapsing earth             IDTiamat_Hard_Temp_03                  -> 856071
+    856072  petrification crystal        IDTiamat_Hard_Temp_05                  -> 856073
+    856074  gravity whirlpool            IDTiamat_Hard_Temp_07                  -> 856075,856076
+    856076  thunderbolt whirlpool        IDTiamat_Hard_Temp_09                  -> 856077
+
+twin_door_destroyer  (TwinDoorDestroyerAI.cs)
+    209690  detachment demolisher        IDSeal_Scene_06_Bomber_Li              -> 209697
+    209755  detachment demolisher        IDSeal_Scene_06_Bomber_Da              -> 209762
+
+twin_protector  (TwinProtectorAI.cs)
+    236225  fountless lava protector     IDSeal_Twin_P_Failed                   -> 855621,855626
+    236226  fountless heatvent protector IDSeal_Twin_M_Failed                   -> 855712
+    236227  lava protector               IDSeal_Twin_P                          -> 855621,855626,855708
+    236228  heatvent protector           IDSeal_Twin_M                          -> 855709,855712
+
+ultimate_atrocity  (UltimateAtrocityAI.cs)
+    283240  tiamat                       IDTiamat_Tiamat_BeaconM8s              -> 283241
+    283244  tiamat                       IDTiamat_Tiamat_BeaconR8s              -> 283245
+
+unstablekaluvaspawn  (UnstableKaluvaSpawnAI.cs)
+    219564  kaluva's unstable spawner    IDAbRe_Core_Egg_02                     -> 283209
+    219581  kaluva's unstable spawner    IDAbRe_Core_Egg2_02                    -> 283208
+    219582  kaluva's unstable spawner    IDAbRe_Core_Egg3_02                    -> 283208
+    219583  kaluva's unstable spawner    IDAbRe_Core_Egg4_02                    -> 283208,283209
+
+unstableyamennes  (UnstableYamennesAI.cs)
+    219555  durable yamennes blindsight  IDAbRe_Core_NamedD_02                  -> 281819,282065,283203,283222,283223,283233
+    219563  unstable yamennes painflare  IDAbRe_Core_NamedD_Hard_02             -> 281819,282065,283203,283222,283223,283229,283233
+
+vritra_caller  (VritraCallerAI.cs)
+    284675  bidrunewp_invisiblenpc_beritraspawn_2 ea BIDRuneWP_Main_CallVritra02            -> 231096,231097,231098,233288,233289,233292,233293,233294,233295,233296
+    284676  bidrunewp_invisiblenpc_beritraspawn_4 ea BIDRuneWP_Main_CallVritra04            -> 231096,231097,231098,233288,233289,233292,233293,233294,233295,233296
+    284677  bidrunewp_invisiblenpc_beritraspawn_6 ea BIDRuneWP_Main_CallVritra06            -> 231096,233294,233296
+    284678  bidrunewp_invisiblenpc_beritraspawn_10 ea BIDRuneWP_Main_CallVritra10            -> 231096,233293,233294,233295,233296
+    284679  bidrunewp_invisiblenpc_beritraspawn_2 ea BIDRuneWP_Main_CallVritra02B           -> 231099,231100,231101,233290,233291,233297,233298,233299,233300,233301
+    284680  bidrunewp_invisiblenpc_beritraspawn_4 ea BIDRuneWP_Main_CallVritra04B           -> 231099,231100,231101,233290,233291,233297,233298,233299,233300,233301
+    284681  bidrunewp_invisiblenpc_beritraspawn_6 ea BIDRuneWP_Main_CallVritra06B           -> 231099,233299,233301
+    284682  bidrunewp_invisiblenpc_beritraspawn_10 ea BIDRuneWP_Main_CallVritra10B           -> 231099,233298,233299,233300,233301
+
+wave_defender  (WaveDefenderAI.cs)
+    209722  detachment entry soldier     IDSeal_Scene_16_PCGuard_Li             -> 236248
+    209787  detachment entry soldier     IDSeal_Scene_16_PCGuard_Da             -> 236249
+
+wave_event_executor  (WaveEventExecutorAI.cs)
+    209720  masionel                     IDSeal_Scene_16_QuestNPC_Li            -> 209723
+    209785  parsia                       IDSeal_Scene_16_QuestNPC_Da            -> 209788
+
+yamenessportal  (YamenessPortalSummonedAI.cs)
+    282014  spawn gate                   IDAbRe_Core_Summon4_3                  -> 281903,282016
+    282015  spawn gate                   IDAbRe_Core_Summon4_6                  -> 281903,282016
+    282131  spawn gate                   IDAbRe_Core_Summon4_Low                -> 281904,282016
+
+yamennes_spawn_gate  (YamennesSpawnGateAI.cs)
+    283203  spawn gate                   IDAbRe_Core_Summon4_02                 -> 282016,283200
+    283222  spawn gate                   IDAbRe_Core_Summon4_3_02               -> 282016,283200
+    283223  spawn gate                   IDAbRe_Core_Summon4_6_02               -> 282016,283200
+    283233  spawn gate                   IDAbRe_Core_Summon4_Low_02             -> 282016,283201
+
+shared names whose patterns disagree about what to spawn: 46

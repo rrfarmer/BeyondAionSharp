@@ -5951,3 +5951,71 @@ scripts**, not another AI class.
 
 **Verification.** Full suite 1,480 passing and 1 skipped; three new pins; four mutations, three
 caught and one inert (a fallback branch no live gate id can reach).
+
+## A new audit: AI classes that reach the *wrong* ids
+
+The illusion gate was found by accident. A class shared by two NPCs hardcoded one guard set,
+so the second gate poured out the first one's guards — and the only visible symptom was three
+ids nobody could reach. The missing-adds audit answers "does anything reach this id"; it is
+blind by construction to "does this reach the *right* id", because from inside such a class
+everything is consistent. It is just consistent with somebody else's pattern.
+
+`tools/client-extract/audit_shared_ai_names.py` looks for the family on purpose. For every
+`ai_name` our code implements and 2..12 NPCs carry, it compares the spawn sets of the retail
+patterns those NPCs bind. Where the sets disagree, the class has to be choosing between them
+somehow — and if it does not, one NPC is wrong.
+
+```
+ai_names our code implements : 510
+  of those, shared by 2..12 npcs : 205
+shared names whose patterns disagree about what to spawn: 46
+```
+
+Of the 46, **eleven** name some of the ids in the class and are missing others — the shape the
+gate had. They are, with what the class is missing:
+
+| ai_name | missing |
+|---|---|
+| `agrint` | 219170-3, one per season, on all eight agrints |
+| `brigade_general_vasharti` | 856351-3 (the hard mode's glove controllers, blocked separately) |
+| `captain_xasta` | 282444 |
+| `dancing_flame` | 282999 |
+| `eternal_bastion_dragon` | 284075 |
+| `fortress_instance_duke` | 296338, 296339 |
+| `gravity_tornado` | 856047 |
+| `orissan_summon_helper` | 855702, 855703, 856306, 856309 |
+| `tiamats_incarnation_spawn` | ten `_invisible` damage twins |
+| `twin_protector` | 855626 |
+
+A difference is a candidate, not a verdict: `tiamats_incarnation_spawn`'s ten are the
+`_invisible` twins the missing-adds audit deliberately filters as scenery, and Vasharti's three
+are the glove controllers already recorded as blocked twice over. The rest are worth reading
+one at a time.
+
+### Vasharti's dancing flames, the first one read
+
+All **four** NPCs — the two flames and the two skill launchers — share `dancing_flame`, and the
+class treated them as one thing: every one of them cast the buff directly, on a ten-then-nine
+second timer, if a player stood within ten metres.
+
+Retail splits the job. **A flame is a spawner**: every three seconds it puts a launcher of its
+own colour on its own mark, and that launcher lives **two seconds**. **A launcher is a caster**:
+its entire pattern is one self-cast as it appears. So the buff lands three times as often as
+ours did, and it lands whether or not anyone is standing there — the ten-metre check was ours.
+
+**282999 was reachable by nobody**, and the reason is the exact shape this audit was written
+for. The class picked its skill with `GetNpcId() == 282998 ? 20536 : 20535` — red launcher
+against *everything else* — so the blue launcher was the anonymous half of a ternary and nothing
+ever created it.
+
+**The one inference, stated plainly.** The launcher casts `SKILLI_INDEX_0` and neither launcher
+carries an `npc_skills` row, so the index does not resolve from our data. What does resolve is
+the pair of ids the Java class already carried, and the colour mapping its ternary already
+implied. Structure from retail, skill ids from Java, and the blue launcher named rather than
+left as "else".
+
+**The backlog does not move**, and that is right: the launchers are `name_id`-bearing FX rather
+than fightable adds, so they were never in it. What moved is that one of them exists.
+
+**Verification.** Full suite 1,486 passing and 1 skipped; six new pins; five mutations, four
+caught and one that will not compile.
