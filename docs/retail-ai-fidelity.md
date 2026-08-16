@@ -1688,3 +1688,30 @@ mutations caught. Missing adds 742 → **740**.
 
 **Still open in this instance.** Asaratu Bloodshade (215283, `Dragon_G4`, 41
 timers) is the other half of the finding and has no AI either.
+
+### Dark Poeta — Asaratu Bloodshade (215283)
+
+Pattern `Dragon_G4`, and the other half of the finding: **Dark Poeta's boss roster
+is now fully implemented.** Tahabata and Calindi already had classes; Vanuka and
+Asaratu had none.
+
+Two chains run at once, both armed six seconds in. Timer 0 is the banded one and
+slows as he weakens — 16s at full health, 22s below 80 and again below 50, its
+slower steps leaving a flame center at his feet. Timer 9 drives a faster loop that
+does nothing until 20%, where it starts summoning a subordinate every 22 seconds.
+
+The flame center (281246) was spawned by nothing. His subordinate (281245) already
+reaches the world elsewhere, so only the flame is new content — but the chain that
+places it is the fight, and none of it happened.
+
+**One designer quirk reproduced rather than tidied.** Two adjacent branches are
+guarded at `80-100` and `81-100`. At exactly 80 the first matches and the second
+does not, which is almost certainly a typo in the original; it is kept as written,
+since guessing which number was meant is a worse error than reproducing a
+one-point overlap.
+
+**Casts not translated**: ten skills, indices to 9, no branch comments.
+
+**Verification.** Full suite 1,122 passing and 1 skipped, five new pins, all seven
+mutations caught — every flame step, the summon gate, the timer-9 arm and the
+cleanup. Missing adds 740 → **739**; the missing-AI list 779 → **777**.
