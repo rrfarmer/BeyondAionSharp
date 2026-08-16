@@ -3064,3 +3064,55 @@ engaging and dying that nothing on our side reads, the broadcast on leaving, and
 **Verification.** Full suite 1,296 passing and 1 skipped; eleven pins across all three
 lords; seven of eight mutations caught, the eighth confirmed equivalent and the comment
 that misdescribed it corrected.
+
+---
+
+## The harness trap that cost three detours
+
+Three times in this work an add spawned nothing and the test read zero: the frost bombs
+(`useSkillAndDie`), the Vritra traps (`trap`) and the illusion gate (`groupgate`). The
+cause each time was the same and is worth writing down where it will be found.
+
+`BossAiHarness.WithAi` registers only the handlers named. When a boss spawns an add whose
+`ai_name` has no handler registered, `AIEngine.NewAI` throws — and
+`VisibleObjectSpawner.SpawnNpc` catches **every** exception, logs it to a
+`NullLoggerFactory` logger, deletes the NPC and returns it anyway. The spawn produces
+nothing and there is no message anywhere.
+
+In production that catch is right: one bad spawn should not take the server down. In a
+test it means a missing registration and a broken table look identical.
+
+**It is a papercut, not a correctness hole** — a test asserting "the add appeared" does
+fail, every time, which is how all three were found within a step. What it costs is
+diagnosis, and only because the failure points at the wrong thing. `WithAi`'s
+documentation now says so, with the three cases named, so the next person checks the
+registration list before the table.
+
+Not changed: the catch itself. Making `SpawnNpc` rethrow would suit tests and hurt the
+running server, and swapping its logger means making a production field settable for a
+test's benefit. Neither trade is worth it for a failure that already fails loudly.
+
+---
+
+## Where the backlog stands
+
+Screened and rejected this round, with reasons, so they are not re-derived:
+
+- **`IDSeal_Scene_17_QuestNPC`** (6 "adds", the largest remaining count) — Masionel and
+  Parsia. The six are **level-variants of those same two NPCs**, and neither owner is
+  placed by any spawn file. A cutscene ladder, not a fight with adds. The audit counts
+  variants it cannot tell apart from reinforcements; this is what that looks like.
+- **`DF4_GH_KJS`** (enraged mastarius) — all four adds both waypoint-blocked *and*
+  sibling-substituted by ids we already spawn. Nothing to do.
+- **`IDSeal_Glacier_Spread_Summon_01`/`_02`** — the owners (855607, 855608) are not
+  placed by any spawn file either.
+
+**Still open, in the order they are worth attempting:**
+
+1. **Tiamat's dying phase** — the beacon↔index anchor is established (see above); what
+   remains is one observation tying a beacon number to a breath direction.
+2. **Tahabata Pyrelord's markers** — needs the fight rebuilt as a timer table rather than
+   a skill hook, and the flame-center points are shared with Vanuka Infernus.
+3. **`Bionic_EhA`** (telepathy controller, Dark Poeta) — three adds against an existing
+   class: a bionic clodworm and the control room's entrance and exit. Not yet screened.
+4. The long tail: 444 encounters, most missing one or two adds each.

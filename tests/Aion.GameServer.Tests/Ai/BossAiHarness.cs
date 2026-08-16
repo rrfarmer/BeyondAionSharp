@@ -330,6 +330,15 @@ public sealed class BossAiHarness : IDisposable
 		/// <c>AIEngine.Init()</c> would discover all 460 of them by reflection, but it also validates that every
 		/// <c>ai_name</c> in npc_templates has a handler and is not idempotent, so registering the handful under
 		/// test by type is both faster and safe to repeat across test classes.
+		/// <para>
+		/// <b>Register the adds too, not just the boss.</b> If an NPC the boss spawns has an <c>ai_name</c> with
+		/// no handler registered here, <c>AIEngine.NewAI</c> throws, <c>VisibleObjectSpawner.SpawnNpc</c> catches
+		/// it, logs to a null logger and deletes the NPC — so the spawn silently produces nothing and the only
+		/// symptom is a count of zero. That has cost three separate debugging detours in this work: the frost
+		/// bombs (<c>useSkillAndDie</c>), the drakan traps (<c>trap</c>) and the illusion gate (<c>groupgate</c>).
+		/// A test asserting "the add appeared" does catch it, but the failure looks like a broken table rather
+		/// than a missing registration, so check this list first.
+		/// </para>
 		/// </remarks>
 		public Builder WithAi(params Type[] aiHandlerTypes)
 		{
