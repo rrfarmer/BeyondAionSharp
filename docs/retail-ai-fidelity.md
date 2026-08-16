@@ -2637,3 +2637,56 @@ pin that leans on it is waiting to break.
 **Verification.** Full suite 1,245 passing and 1 skipped; twelve pins across both
 rearguards; all nine mutations caught, the last only after adding the heal-and-drop
 test that makes the never-again flag observable.
+
+---
+
+## Princess Karemiwen — a countdown written as a flag ladder
+
+**NPC:** princess karemiwen (214695), Adma Stronghold, ELITE, on plain `aggressive`.
+**Pattern:** `ND2_WhF`. Her banshee maid (281052) and vampire maid (281051) were
+spawned by nothing anywhere; their only trace in the server was their own
+`npc_skills` entries. `AdmaStrongholdInstance` does not name her.
+
+**The maids arrive on a three-minute fuse.** Retail writes one sixty-second timer and
+three branches on it, each guarded by its own one-shot flag. The first two only shout
+and re-arm; the third shouts, calls both maids, and does **not** re-arm. So the timer
+turns at 60, 120 and 180 seconds and only the last does anything, after which the
+ladder is finished for the fight. The maids arrive at her feet and stay five minutes.
+
+It is a countdown expressed as a flag ladder rather than as a delay — which is why the
+shouts matter to retail: the first two turns are the warning that the third is coming.
+Our data has no numeric id for `STR_CHAT_BIDDF2A_NM_Princess_50_Ah`, so the warning is
+silent and only the arrival shows.
+
+### Two equivalent mutants, and why they are equivalent
+
+Two mutations survived, and both for the same reason: **the one-shot flag on the third
+branch and its absence of a re-arm are redundant with each other.** Either alone ends
+the ladder — with the flag spent no branch matches the next turn, and with no re-arm
+there is no next turn. So removing either one changes nothing observable.
+
+Rather than record that as a gap, it was checked: removing **both together** does spawn
+repeatedly, and `TheLadderIsSpentAndNoMoreArrive` catches it. Six of eight mutations
+caught directly, two equivalent with their combination caught. Retail wrote a belt and
+braces here, and it is worth knowing that either can be cut without a test noticing.
+
+### The rest of the pattern is omitted, deliberately
+
+Six skills, indices 0 through 5, and **no branch comments at all** — the same refusal as
+Icaronix, Prectaz and RM-56c. Her other five timers exist only to cast, and none of them
+spawns, moves or says anything, so arming them would schedule work forever to do
+nothing. Recorded here against the day a mapping turns up:
+
+- a five-second heartbeat whose bands each light one cast-only timer once — below 30
+  lights T2 at 10s, 31-50 lights T4 at 15s, 51-80 lights T5 at 20s
+- T9, a twenty-five second alternation between two skills on a coin flip, tightening to
+  twenty seconds below 50
+- T1, a twenty-second band timer that only runs at 81-100
+
+**Verification.** Full suite 1,251 passing and 1 skipped; six pins.
+
+### Sweep: no other test leans on world order
+
+Following the Flamelord fix, every `LiveNpcs()` use in the suite was checked. Nothing
+else indexes into it — the rest use `Single`, counts, `foreach`, or sort explicitly
+before comparing. The Flamelord pin was the only one, and it is fixed.
