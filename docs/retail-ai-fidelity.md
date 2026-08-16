@@ -7318,3 +7318,64 @@ Second time this audit has been widened after reporting correct code — `case` 
 Both were the same underlying mistake: **assuming a listener declares itself the way the last one
 did.** The listener shapes it now knows are `When.Message`, a `case` label, and a comparison in
 either direction inside `OnNpcMessage`.
+
+## High priest yatri, the sender the naga ghosts had been waiting for
+
+The previous entry shipped a listener with no sender on purpose: `ExedilGhostAI`'s naga half answered
+`3319` and nothing in the world sent it, because `Naga_PhA` belongs to **high priest yatri** (212308
+and 280768) and he was on plain `aggressive` with no class at all. This closes that.
+
+**He is `ExedilAI`'s architecture with none of his numbers**, which makes the pair worth reading side
+by side — the same eight-branch skeleton, and every value different:
+
+| | Exedil (`ND2_PhA`) | yatri (`Naga_PhA`) |
+|---|---|---|
+| opening heartbeat | 10s | 8s |
+| 81–100 rung | re-arms at 6s — same as the fallback, so **dropped** | re-arms at **10s**, so **kept** |
+| 56–80 | two ghosts **around himself**, 6m | two **on his target**, 5m |
+| 26–55 | hand-over, **around himself**, 7m | hand-over, **on his target**, 5m |
+| below 25 | two around himself, **no lifetime at all** | two around himself, 8m, **twenty minutes** |
+| deep rung ends the chain | yes (arms timer 6) | yes (arms timer 6) |
+
+**His waves land on the raid.** That is the difference that changes how the fight feels: Exedil
+scatters ghosts around his own feet and yatri's first two waves are `spawn_on_target`. Only his
+deepest comes home to him. Two bosses cut from one template, and the placement is what separates them.
+
+The 81–100 rung is the clearest case yet of the rule this log has been applying: its casts are not
+translated and nothing else about it differs from the fallback **except a four-second re-arm**, and
+that alone earns it a place in the table. Exedil's equivalent rung re-arms at the same six seconds as
+his fallback and is not in his.
+
+### Two harness limits this boss found, both worth knowing before the next `spawn_on_target` port
+
+**A far-away stand-in player does not help when the summons land on it.** Exedil's pins keep the
+player sixty metres back so his ghosts' casts never reach it. That trick is useless here: a
+`spawn_on_target` wave appears *on* the target whatever the distance, and a `servant` cast into the
+harness's stand-in takes the effect engine down. The fix is to stand a plain `aggressive` NPC in as
+the thing he is fighting — placement stays observable and the casts never touch a player.
+
+**And `NpcMessageBus` under-delivers to summons the harness placed away from the sender.** It walks
+the sender's known list and falls back to a region scan only when that list is *empty* — which it is
+not, once the harness has made the quarry known. Production keeps a summon five metres away in the
+boss's list through the visibility system; the harness runs none, so a pin about a broadcast to
+placed summons has to make them known by hand. Exedil's equivalent pin needs none of this only
+because his ghosts land on his own position, which is why the limitation did not surface until now.
+
+There is a real consequence hiding behind the second one, and it is retail's rather than ours: **his
+waves land on the raid and his broadcast reaches fifty metres**, so a raid that fights him at range
+puts its own waves outside the message that would have upgraded them. The pin that exercises 3319
+therefore stands the quarry five metres out, where a real fight is.
+
+### Still not translated
+
+Seven skill indices across timers 1–7 and the rungs that arm them; `valid_distance=50` on both
+`spawn_on_target` waves, which retail uses to skip the spawn when the target is further off than
+that; and four broadcasts — **3316** and **3318** reach only cast branches, **3301** and **3302**
+reach nothing we have, and **3320** is the re-aim recorded last entry, still blocked on `servant`
+capturing its target at spawn.
+
+**Verification.** Full suite 1,644 passing and 1 skipped; twelve new pins; eleven mutations, all
+caught. Three needed a pin written for them — the fallback, the ten-second re-arm and the chain
+stopping — because every other pin sets health straight into a band and never exercises the clock.
+`audit_pattern_guards.py` still reports its two triaged findings and no new ones;
+`audit_ai_messages.py` is unchanged at seven, with 3319 paired in both directions.
