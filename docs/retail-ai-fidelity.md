@@ -2852,3 +2852,54 @@ ours carry the AI that makes a gate do anything.
 
 **Verification.** Full suite 1,273 passing and 1 skipped; five new pins across both
 difficulties; all seven mutations caught.
+
+---
+
+## Tahabata Pyrelord — an enrage that started too early and ran half as long
+
+**NPC:** tahabata pyrelord (215280), Dark Poeta, on `tahabata_pyrelord` since long before this
+work. **Pattern:** `Dragon_G1`. Two corrections and one addition, all against retail:
+
+- **The enrage ran on a five-minute fuse** where retail arms battle timer 9 at **ten**.
+- **It started counting on spawn**, where retail arms it in `on_enter_attack_state` —
+  so a group that spent four minutes fighting its way to him arrived with one minute to
+  kill him. Both halves of that were wrong, and both made the fight harder than retail.
+- **The primal dragon (281265)** he leaves where he falls was spawned by nothing anywhere.
+
+### What is deliberately not reconciled
+
+Retail also places two kinds of short-lived marker at fixed arena points — a flame
+center (281261) on four points, and summon spots (281262, 281263) on four more — each
+living ten seconds, across most of its timer branches. This class instead spawns
+faithful subordinates (281258, 281259) off the casts of Eruption of Power and Powerful
+Flame.
+
+**These are not the same things under different ids.** Retail's are the markers a summon
+emerges from; ours are the summons. Reconciling them means rebuilding the fight as a
+timer table rather than a skill hook — more than a correction, so it is written up here
+rather than attempted.
+
+One thing worth noting for whoever does: **the flame center's four points are the same
+four Vanuka Infernus uses** — (1177,1241), (1173,1231), (1187,1229), (1190,1238). Dark
+Poeta's dragons share the arena and its hazard spots, which is a useful cross-check on
+any future translation of either.
+
+### A mutation that took three attempts to catch
+
+Removing the latch that lights the fuse only once survived twice. First because nothing
+in the tests actually hit him — `Rehate` adds hate but never calls the attack handler.
+Then, once it did, it still survived: **scheduling is not cancelling**, so the extra
+tasks each hit books do not delay the original, they pile up alongside it. The symptom
+is not a late enrage but *one per swing* from the ten-minute mark. The pin now asserts
+exactly one.
+
+**Verification.** Full suite 1,277 passing and 1 skipped; four pins; all five mutations
+caught.
+
+### An unrelated flake, recorded
+
+One `Aion.LoginServer.Tests` case failed once during a full-suite run in this session and
+did not reproduce in nine subsequent runs (three full-suite, six of that project alone),
+so its name was never captured. Nothing in this work touches the login server. Recorded
+because a test that fails one time in ten is worth knowing about before it is blamed on
+something else.
