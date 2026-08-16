@@ -1715,3 +1715,61 @@ one-point overlap.
 **Verification.** Full suite 1,122 passing and 1 skipped, five new pins, all seven
 mutations caught — every flame step, the summon gate, the timer-9 arm and the
 cleanup. Missing adds 740 → **739**; the missing-AI list 779 → **777**.
+
+## The skill-index problem is not universal: 337 patterns describe their own branches
+
+Every boss ported in this work has left its rotation untranslated with the same
+reason — "no branch comments to corroborate a mapping". That reason is correct for
+the bosses it was given for, and it turns out to be **wrong as a general claim**.
+
+Of 1,191 boss-shaped patterns (narrowly bound, six or more timer branches), **337
+carry branch comments that describe what the branch does**, usually in the
+designers' Korean. `DF5_ItemNamed_12_SSH` — Arcticore Aizenka and Machine Spirit
+Tottal — is the worked example:
+
+| comment | meaning | index |
+|---|---|---|
+| `일격` | single strike | 1 |
+| `자신중심 광역` | self-centred area | 2 |
+| `자신중심 도넛 광역` | self-centred *donut* area | 3 |
+| `랜덤타겟 도넛 광역` | random-target donut area | 4 |
+| `개체소환` | entity summon | 5 |
+
+Against our five skills for 219933, two of those pin exactly:
+
+- **index 4 is random-target**, and 21851 Gelid Impel is the only entry with
+  `target="RANDOM"`;
+- **index 5 summons**, and 21852 Shiver Wrath is the only entry carrying a
+  `<spawn_npc>`.
+
+Both anchors agree on the same alignment, and the remaining three then fall into
+place by role: Sever as the single strike, Earth Cleave and Tectonic Shift as the
+two self-centred areas.
+
+**The alignment is offset by one.** Retail's index N is our list's position N-1 —
+retail has an index 0 these branches never use, and we do not list it. That is
+exactly why positional mapping has been refused throughout: the offset is
+invisible without an anchor, and guessing it wrong shifts every cast in the
+rotation by one.
+
+**The method, for reuse:**
+
+1. Read the branch comments. If they describe behaviour, continue.
+2. Look for uniquely-attributed skills in `npc_skills`: the only `target="RANDOM"`,
+   the only one with `<spawn_npc>`, the only `BUFF`, the only one gated by `max_hp`.
+3. Match those against the comments that describe the same thing. Two independent
+   anchors agreeing is enough to fix the alignment, including any offset.
+4. Fill the rest by elimination and role, and record which were anchored and which
+   inferred.
+
+**Aizenka is not ported here.** His pattern is 55 branches with probability-gated
+variants — three different branches answer timer 1 in the 80-100 band alone — and
+transcribing that needs its own session. What has changed is that his rotation is
+now known to be *resolvable*, which none of the previously deferred rotations
+were.
+
+**Worth re-checking with this.** The bosses whose casts this work deliberately
+left alone — Omega, Queen Alukina, Icaronix the Betrayer, Lost Balor, Vanuka
+Infernus, Asaratu Bloodshade — were each refused on "no comments". That was
+verified per boss and remains true for them. But the 337 figure means the refusal
+should be a *check*, not an assumption, on everything still to come.
