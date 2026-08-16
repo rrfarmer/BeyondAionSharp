@@ -370,6 +370,12 @@ HELPER_RE = re.compile(r"\b(\w+)\(([^)]*)\)\s*(?:=>|\{)([^;}]*)")
 
 # `private readonly record struct Traps(int Snare, int Throw, int Explosion, int Mine);`
 INT_RECORD_RE = re.compile(r"\brecord\s+(?:struct\s+)?(\w+)\(([^)]*)\)\s*;")
+
+# A tuple-valued lookup table, which is the same idea as the record without declaring a type:
+#   Dictionary<int, (int Lesser, int Greater, bool Peels)> Lords = new() { [214663] = (280986, ...) }
+# Captures the component list and the whole initialiser body.
+TUPLE_TABLE_RE = re.compile(r"<[^<>]*,\s*\(([^()]*)\)>\s+\w+\s*=\s*new\(\)\s*\{(.*?)\n\s*\};", re.S)
+TUPLE_ROW_RE = re.compile(r"=\s*\(([^()]*)\)")
 CONST_ARRAY_RE = re.compile(r"\bint\[\] (\w+)\s*=\s*(?:new int\[\]\s*)?\{([^}]*)\}")
 
 
@@ -449,6 +455,24 @@ def spawned_via_constants(text: str) -> set[str]:
                 # table does exactly that -- `new Feed(OldOrkanimum, ...)` -- and reading only
                 # literals put both of its older NPCs straight back into the backlog the moment
                 # the class that had spawned them literally was retired.
+                if fields[i] in record_consts:
+                    ids.add(record_consts[fields[i]])
+
+    # The tuple-table equivalent of the record block above. `ElementalLordAI` keeps four bosses'
+    # summons in one dictionary and passes them into a builder through `e.Value.Lesser`, so no id ever
+    # reaches a spawn argument by name and all eight read as never spawned. Same narrow conditions as
+    # the record rule: declared here, read positionally, ids only out of `int` components.
+    for components, body in TUPLE_TABLE_RE.findall(text):
+        parts = [c.strip() for c in components.split(",") if c.strip()]
+        int_positions = {i for i, c in enumerate(parts) if c.startswith("int ")}
+        if not int_positions:
+            continue
+        for row in TUPLE_ROW_RE.findall(body):
+            fields = [f.strip() for f in row.split(",")]
+            if len(fields) != len(parts):
+                continue  # a nested tuple or a named element; not worth guessing at
+            for i in int_positions:
+                ids.update(re.findall(r"^(\d{5,6})$", fields[i]))
                 if fields[i] in record_consts:
                     ids.add(record_consts[fields[i]])
 

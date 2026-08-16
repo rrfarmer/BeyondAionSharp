@@ -8297,3 +8297,84 @@ The opening-peel pin also runs **six separate fights**. Retail's pick is a rando
 short window has a one-in-five chance of landing back on the tank and reading as nothing happening.
 **Rule: pinning a random choice takes either a long window or repeated trials, and a long window
 measures whatever else is running in it — so for a rung that fires once, repeat the fight.**
+
+## Theobomos Lab's four elemental lords — one shape, and the one that breaks it
+
+Torch Spirit Iprita (**214663**), Wistful Syripne (**214664**), Soul Spirit Nomura (**214665**) and
+Water Spirit Undine (**214666**) were all on plain `aggressive` with no class, and between them they
+account for **eight** of the adds our server never spawned — the largest unblocked cluster left on
+`audit_missing_adds.py`.
+
+### The ladder is a step per band, not a wave
+
+| | |
+|---|---|
+| on engaging | one **lesser** elemental, five metres out, five minutes |
+| below 75 | one **greater**, once |
+| below 30 | one of **each**, once |
+| on going home | every one of them despawns |
+
+Four standing at the end of a fight walked down through the bands, and never more however long any
+band lasts — both rungs carry flag vars. A raid that pushes straight from full health to twenty gets
+**three**, not four: the 31–75 rung is out of range and simply never fires. That asymmetry is the
+ladder's own and is pinned.
+
+The despawn here is retail's own `on_leave_attack_state`, not our reading of `despawn_at_attack_state`
+— worth stating because the Drakan camp summons two entries ago went the other way, and the difference
+is that retail declares the handler here and does not there.
+
+### Iprita is the exception, in exactly two places
+
+Three of the four come off the tank onto the **second-most-hated** player at each band crossing, and
+below thirty keep turning every fifteen seconds. Iprita turns **once**, at the thirty crossing; her
+75-crossing and her deep rung are casts. Her deep rung is still carried, because it re-arms its slot at
+fifteen seconds where the fallback gives twenty — a cadence difference, not a no-op.
+
+Two deliberate differences inside an otherwise identical family is precisely what a shared builder
+loses. The builder here takes a `peels` flag and the pins are `[Theory]`-driven over all four, with
+Iprita held out of the peeling set and given her own two pins instead.
+
+### The audit could not see the fix, and that is now fixed too
+
+`ElementalLordAI` keeps the four bosses' summons in a lookup table
+
+```csharp
+Dictionary<int, (int Lesser, int Greater, bool Peels)> Lords = new()
+{
+    [214663] = (280986, 280987, false), ...
+};
+```
+
+and passes them into a builder as `Build(e.Value.Lesser, e.Value.Greater, ...)`. The builder does spawn
+its own parameters, so `audit_missing_adds.py`'s helper rule fired — but the call site passes a tuple
+field, not a constant, so nothing resolved and all eight adds still read as never spawned **after they
+were being placed**.
+
+`audit_missing_adds.py` now reads tuple-valued tables the same way it already read records: declared in
+the same file, components taken positionally, ids only out of components typed `int`. The count moved
+421 → **413** and the encounters 319 → **315**, which is exactly the eight adds and four encounters
+this change added and nothing else — the precision check that matters for a widening.
+
+That is the **fourth** indirection this audit has had to learn (a returner method, a local, a record, a
+tuple table), and the pattern in all four is the same: **an id that never sits next to a spawn call is
+invisible to it.** Worth stating as a habit rather than a fix — when a class reaches its ids through a
+table, check the audit still sees them before trusting the number.
+
+### Not translated
+
+Between four and six skill indices per lord and the branches that carry nothing else, including
+Iprita's timer 2 (a thirty-second cast loop). The eight summons' own patterns — `ND2_FeJSum` and its
+three siblings — are a single cast on a ten- or fifteen-second timer with nothing else in them, so
+those npcs stay on `aggressive`; recorded so the gap is not re-opened by someone reading the pattern
+list rather than the patterns.
+
+### Verification
+
+Full suite **1,757 passing** and 1 skipped; twenty-two new pins across four bosses; twelve mutations,
+all caught after three repairs. Missing-AI 720 → **716**; adds 421/319 → **413/315**.
+
+**All three repairs were pins that read at the wrong moment.** A band widened to full health went
+unseen because the first reading was at two seconds and the ladder's first tick is at five. The deep
+peel's re-arm went unseen because one firing satisfied the pin. And nothing followed an elemental as
+far as its five minutes. The first two are new; the third is the lifetime mistake this suite has now
+made six times, and `BossAiHarness.Watch` only helps when you are counting rather than following.
