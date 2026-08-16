@@ -1,8 +1,8 @@
 patterns with spawn actions : 4,158
-npc_ids our data can spawn  : 21,353
+npc_ids our data can spawn  : 21,363
 
-Fightable retail adds our server never spawns: 487 across 361 encounters
-  fully self-contained                       : 429
+Fightable retail adds our server never spawns: 475 across 357 encounters
+  fully self-contained                       : 417
   positionable, but walk a server-side path  : 14
   blocked on server-side waypoint paths      : 44
   (of all the above, 22 have a sibling npc we already spawn -- spot-check)
@@ -65,14 +65,6 @@ ND2_ElementalSu2  (live npc_ids: 212875)
     280489  lv40  faithful subordinate
     280490  lv40  faithful subordinate
     280491  lv40  faithful subordinate
-GwDGuard_PhA  (live npc_ids: 296458)
-    281490  lv55  archon's magic trap
-    281488  lv55  flash trap
-    281487  lv55  archon's net trap
-GwDGuard_WhA  (live npc_ids: 296902)
-    281490  lv55  archon's magic trap
-    281489  lv55  archon's erosion trap
-    281491  lv55  sleepdust trap
 F4_Rotation_Normal_Monster  (live npc_ids: 236307,236311,236315,236319)
     856176  lv65  chitrunerk
     856177  lv65  rapirunerk
@@ -109,14 +101,6 @@ LF4_GHObject1_KJS  (live npc_ids: 296907)
     296910  lv55  aether concentrator
     296911  lv55  aether concentrator
     296923  lv1   yushin
-GwLGuard_PhA  (live npc_ids: 296449,296450)
-    281480  lv55  rune trap
-    281478  lv55  flash trap
-    281477  lv55  net trap
-GwLGuard_WhA  (live npc_ids: 296451,296452)
-    281480  lv55  rune trap
-    281479  lv1   acidic trap
-    281481  lv55  guardian's tranquilizing cloud trap
 Bionic_EhA  (live npc_ids: 214894)
     281122  lv50  control room exit
     281123  lv50  control room entrance

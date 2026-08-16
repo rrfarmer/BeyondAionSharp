@@ -362,27 +362,45 @@ PATHNAME_RE = re.compile(r"<pathname>([^<]*)</pathname>")
 BLOCKED_LOCATION = "SPAWN_LOCATION_WAY_POINT_START"
 
 
-def pattern_spawn_targets(patterns_dir: pathlib.Path) -> dict[str, dict[str, bool]]:
-    """pattern name -> {devname: positionable?}"""
-    out: dict[str, dict[str, bool]] = collections.defaultdict(dict)
+# Which event handler a spawn sits under. `on_arrived_at_waypoint` only ever fires for an NPC that
+# is walking a named route, and our spawn data gives most bosses a single static spot -- so an add
+# whose every spawn hangs off that event is blocked on the same missing server-side walk data as the
+# waypoint-placed bucket, even though the spawn itself names a perfectly ordinary location.
+#
+# Vasharti is the case that made this worth separating: his three glove controllers are
+# SPAWN_LOCATION_MY_POINT, which reads as fully implementable, and they can never fire because he
+# stands still. Counting them as actionable work sends somebody to port a mechanic that has nothing
+# to trigger it.
+HANDLER_RE = re.compile(r"<(on_[a-z_]+)>(.*?)</\1>", re.S)
+WAYPOINT_EVENT = "on_arrived_at_waypoint"
+
+
+def pattern_spawn_targets(patterns_dir: pathlib.Path) -> dict[str, dict[str, tuple]]:
+    """pattern name -> {devname: (positionable?, walks a path?, only on waypoint arrival?)}"""
+    out: dict[str, dict[str, tuple]] = collections.defaultdict(dict)
     for path in sorted(patterns_dir.glob("*.xml")):
         for block in PATTERN_RE.finditer(read_text(path)):
             body = block.group(1)
             m = NAME_RE.search(body)
             if not m:
                 continue
+            # Spawn actions, paired with the event handler each one sits under.
+            spans = [(h.group(1), h.start(2), h.end(2)) for h in HANDLER_RE.finditer(body)]
             for action in SPAWN_RE.finditer(body):
                 loc = LOCATION_RE.search(action.group(2))
                 positionable = not (loc and loc.group(1).strip() == BLOCKED_LOCATION)
+                event = next((name for name, lo, hi in spans if lo <= action.start() < hi), "")
                 for dev in NAMEID_RE.findall(action.group(2)):
                     dev = dev.strip()
                     if not dev:
                         continue
-                    # If any spawn of this add is positionable, the add is implementable.
-                    was, walked = out[m.group(1)].get(dev, (False, False))
+                    # If any spawn of this add is positionable, the add is implementable -- and if any
+                    # one of them hangs off something other than a waypoint arrival, it is reachable.
+                    was, walked, waypoint_only = out[m.group(1)].get(dev, (False, False, True))
                     pn = PATHNAME_RE.search(action.group(2))
                     out[m.group(1)][dev] = (was or positionable,
-                                            walked or bool(pn and pn.group(1).strip()))
+                                            walked or bool(pn and pn.group(1).strip()),
+                                            waypoint_only and event == WAYPOINT_EVENT)
     return out
 
 
@@ -439,7 +457,7 @@ def main() -> None:
         if not owners:
             continue  # we never spawn anything running this pattern
         missing = []
-        for dev, (positionable, walks) in sorted(devnames.items()):
+        for dev, (positionable, walks, waypoint_only) in sorted(devnames.items()):
             add_id = dev2id.get(dev.lower())
             if not add_id or add_id in spawnable:
                 continue
@@ -449,7 +467,8 @@ def main() -> None:
             if is_real_combatant(attrs) and not is_effect_object(dev)                     and not is_invisible_twin(dev, dev2id):
                 name = attr(attrs, "name")
                 sib = sibling_we_already_spawn(add_id, name, by_pattern, pattern_of, spawnable, templates)
-                missing.append((add_id, name, attr(attrs, "level"), positionable, walks, sib))
+                missing.append((add_id, name, attr(attrs, "level"), positionable, walks, sib,
+                                waypoint_only))
         if missing:
             findings.append((pattern, owners, missing))
 
@@ -458,19 +477,24 @@ def main() -> None:
     # Positionable, but the add exists in order to walk a named path we do not have. Spawning one
     # leaves it standing where it appeared, which for a marching column is worse than leaving it out.
     walkers = sum(1 for f in findings for m in f[2] if m[3] and m[4])
+    # Spawned somewhere ordinary, but only ever from on_arrived_at_waypoint -- see HANDLER_RE.
+    waypoint_fired = sum(1 for f in findings for m in f[2] if m[3] and not m[4] and m[6])
     siblings = len({m[0] for f in findings for m in f[2] if m[5]})
     print(f"Fightable retail adds our server never spawns: {total} "
           f"across {len(findings)} encounters")
-    print(f"  fully self-contained                       : {total - blocked - walkers}")
+    print(f"  fully self-contained                       : {total - blocked - walkers - waypoint_fired}")
     print(f"  positionable, but walk a server-side path  : {walkers}")
+    print(f"  positionable, but only a waypoint fires it : {waypoint_fired}")
     print(f"  blocked on server-side waypoint paths      : {blocked}")
     print(f"  (of all the above, {siblings} have a sibling npc we already spawn -- spot-check)\n")
     for pattern, owners, missing in sorted(findings, key=lambda f: -len(f[2])):
         print(f"{pattern}  (live npc_ids: {','.join(owners[:4])})")
-        for add_id, name, level, positionable, walks, sib in missing:
+        for add_id, name, level, positionable, walks, sib, waypoint_only in missing:
             flag = "" if positionable else "  [BLOCKED: waypoint-placed]"
             if positionable and walks:
                 flag = "  [walks a server-side path]"
+            elif positionable and waypoint_only:
+                flag = "  [BLOCKED: only a waypoint arrival spawns it]"
             if sib:
                 flag += f"  [we spawn {sib} for this role -- check before porting]"
             print(f"    {add_id}  lv{level:<3} {name}{flag}")

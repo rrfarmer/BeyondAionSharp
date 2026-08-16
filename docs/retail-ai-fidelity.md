@@ -5666,3 +5666,50 @@ they are the whole of it.
 
 **Verification.** Full suite 1,454 passing and 1 skipped; ten new pins; ten mutations, all
 caught.
+
+## A third blocked bucket: spawns nothing can trigger
+
+Vasharti was next on the list — three glove controllers on `IDYun_Nmd6` and three more on
+the hard pattern, all reading as fully implementable. They are not, and the reason is one
+the audit could not see.
+
+All six sit under **`on_arrived_at_waypoint`**. Their placement is ordinary
+(`SPAWN_LOCATION_MY_POINT`, at the boss's feet), so nothing about the spawn looks blocked —
+but the event only ever fires for an NPC walking a named route, and our spawn data gives
+Vasharti a **single static spot**:
+
+```xml
+<spawn npc_id="217313">
+    <spot x="188.17" y="414.06" z="260.7549" h="86" />
+</spawn>
+```
+
+He never arrives anywhere, so the branch never runs. Porting it would have produced a
+mechanic with nothing to trigger it — the same dead end as the waypoint-*placed* bucket,
+reached from the other direction.
+
+The audit now separates them. It tracks which event handler each spawn action sits under,
+and an add whose **every** spawn hangs off a waypoint arrival is reported as
+`[BLOCKED: only a waypoint arrival spawns it]`. If any one of its spawns hangs off anything
+else, it stays actionable.
+
+```
+  fully self-contained                       : 407
+  positionable, but walk a server-side path  : 14
+  positionable, but only a waypoint fires it : 10
+  blocked on server-side waypoint paths      : 44
+```
+
+**Ten adds**, and they are a tidy set: Vasharti's six glove controllers, and four Seal of
+Destruction escort NPCs whose bombers and guards spawn a replacement as they patrol.
+
+**This does not lower the backlog** — the total is still 475 across 357 — and it should not.
+Nothing was fixed; what changed is that ten rows moved out of the column that says "somebody
+could port this today". A measurement that calls blocked work actionable wastes the next
+session, which is the same argument the walk-path bucket was split out on.
+
+**What would unblock all sixty-eight.** One thing, and it is server-side data rather than
+AI work: the walk routes. Give Vasharti his patrol and his glove controllers become
+ordinary one-shot HP steps; give the waypoint-placed bucket its routes and their positions
+resolve. That is a data-import job against the client's own path files, and it is the
+single largest remaining lever on this backlog.
