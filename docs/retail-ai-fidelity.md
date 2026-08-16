@@ -5194,3 +5194,44 @@ statistical test that would be flaky, and a flaky pin is worse than an honest ga
 
 **Verification.** Full suite 1,411 passing and 1 skipped; one new pin; the lifetime mutation caught, the
 range one not — see above.
+
+### The fortress chiefs, and checking the other prefixes on purpose
+
+Missing `DrGuard` for one letter was worth not repeating, so the remaining `*Guard_` prefixes were
+counted rather than assumed. `BGuard` has 148 patterns with spawns and the gate extractor covered 62 of
+them; the rest are the **fortress chiefs** — `BGuard_ChiefA`, `ChiefB`, `Chief4`, `ChiefF4`, `ChiefF5`,
+`ChiefD`, `ChiefS` — running the same band-driven reinforcement mechanic.
+
+What they call up is **warp gates**, which now have a class of their own. So the chain is three deep and
+all of it is ported: a chief calls a gate, the gate feeds a squad, the squad fights.
+
+Including them takes the family to **1,856 rows over 1,200 guards** across 204 patterns. 67 more npcs
+repointed; the other 48 already carried real handlers — `fortress_protector`, `fortress_instance_duke`,
+`artifact_protector`, `gate_squad`, and the three `awakened_chamber_lord` chamber lords that were
+hand-ported earlier. The repoint touches only `aggressive` and `simple_abyssguard`, so those were never
+at risk, which is the property that makes widening the family cheap.
+
+**Backlog 503 → 498 across 365** — five, because most of what the chiefs summon was already reachable
+through the gates.
+
+### A tooling note that cost ten minutes
+
+Repointing by running two regex searches per guard over the whole `npc_templates.xml` is fine at 460
+guards and times out at 1,200 — the file is large and the work is quadratic in guards × file size. One
+`re.sub` pass with a replacement function does the same job in seconds. Worth remembering the next time
+this family grows: the repoint is the slow step, not the extraction.
+
+**Verification.** Full suite 1,411 passing and 1 skipped, unchanged.
+
+### Where the guard families stand
+
+| prefix | what it is | state |
+|---|---|---|
+| `DGuard_` / `LGuard_` | abyss guards, both factions | ported |
+| `DrGuard_` | drakan guards | ported |
+| `BGuard_Chief*` | fortress chiefs | ported |
+| `BGuard_*Gate*` | the gates chiefs and guards open | ported, own extractor |
+| `GwDGuard_` / `GwLGuard_` | gateway guards | own hand-written class |
+| `BGuard_RhAPet*` | ranger pets, 20 patterns | **not looked at** |
+
+The pets are the one group in this family nobody has read yet.

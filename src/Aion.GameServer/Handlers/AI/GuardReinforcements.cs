@@ -9,8 +9,8 @@ namespace Aion.GameServer.Handlers.AI;
 /// Which reinforcements each abyss guard calls up, and in which health band.
 /// </summary>
 /// <remarks>
-/// Read straight out of the retail <c>[DL]Guard_*</c> patterns — 1693 rows for 1085 guards
-/// across 177 pattern variants, all running the same mechanic with a different pair of summons
+/// Read straight out of the retail <c>[DL]Guard_*</c> patterns — 1856 rows for 1200 guards
+/// across 204 pattern variants, all running the same mechanic with a different pair of summons
 /// per level bracket and faction. The bands are retail's own guards verbatim, gaps included: a guard
 /// written as <c>is_hp_lower_than 35</c> and <c>is_hp_in_boundary 36..70</c> matches nothing at
 /// exactly 35, and that is left alone rather than tidied.
@@ -607,8 +607,22 @@ internal static class GuardReinforcements
         [214785] = [new Band(0, 34, 100, false, 100, 2f, [(281067, 1)])],
         // DrGuard_PhA_Reward
         [214789] = [new Band(36, 70, 100, false, 600, 3f, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281068, 1)])],
+        // BGuard_ChiefD
+        [215136] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
+        // BGuard_ChiefD
+        [215179] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
+        // BGuard_ChiefD
+        [215222] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
         // DrGuard_PhA_Reward_L50
         [215450] = [new Band(36, 70, 100, false, 600, 3f, [(281358, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281359, 1)])],
+        // BGuard_ChiefF4_Dr_1
+        [219632] = [new Band(41, 60, 100, false, 0, 0f, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296540, 1)])],
+        // BGuard_ChiefD_Tune405
+        [233633] = [new Band(0, 24, 100, false, 600, 3f, [(284978, 1)])],
+        // BGuard_ChiefD_Tune405
+        [233676] = [new Band(0, 24, 100, false, 600, 3f, [(284978, 1)])],
+        // BGuard_ChiefD_Tune405
+        [233719] = [new Band(0, 24, 100, false, 600, 3f, [(284978, 1)])],
         // DrGuard_RsB
         [257035] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
         // LGuard_WsB
@@ -1005,6 +1019,36 @@ internal static class GuardReinforcements
         [263419] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
         // DrGuard_WeA
         [263420] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
+        // BGuard_ChiefB_L
+        [264501] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_L
+        [264502] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_L
+        [264503] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_L
+        [264504] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_L
+        [264505] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_D
+        [264506] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_D
+        [264507] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_D
+        [264508] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_D
+        [264509] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_D
+        [264510] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_Dr
+        [264511] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
+        // BGuard_ChiefB_Dr
+        [264512] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
+        // BGuard_ChiefB_Dr
+        [264513] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
+        // BGuard_ChiefB_Dr
+        [264514] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
+        // BGuard_ChiefB_Dr
+        [264515] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
         // LGuard_ReA
         [264591] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
         // LGuard_ReA
@@ -1045,6 +1089,36 @@ internal static class GuardReinforcements
         [264619] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
         // DrGuard_WeA
         [264620] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
+        // BGuard_ChiefB_L_L50M
+        [266301] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [266302] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [266303] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [266304] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [266305] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [266306] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [266307] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [266308] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [266309] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [266310] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [266311] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [266312] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [266313] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [266314] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [266315] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
         // LGuard_ReA_L50M
         [266391] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
         // LGuard_ReA_L50M
@@ -1205,6 +1279,36 @@ internal static class GuardReinforcements
         [270019] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
         // DrGuard_WeA_L50M
         [270020] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
+        // BGuard_ChiefB_L_L50M
+        [270801] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [270802] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [270803] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [270804] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [270805] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [270806] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [270807] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [270808] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [270809] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [270810] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [270811] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [270812] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [270813] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [270814] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [270815] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
         // LGuard_ReA_L50M
         [270891] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
         // LGuard_ReA_L50M
@@ -1381,6 +1485,44 @@ internal static class GuardReinforcements
         [281065] = [new Band(36, 70, 100, false, 600, 3f, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281068, 1)])],
         // DrGuard_PhB_Reward
         [281081] = [new Band(0, 34, 100, false, 100, 2f, [(281067, 1)])],
+        // BGuard_ChiefD
+        [281224] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
+        // BGuard_ChiefA_L
+        [294518] = [new Band(26, 50, 100, false, 0, 3f, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294892, 1)])],
+        // BGuard_ChiefA_L
+        [294519] = [new Band(26, 50, 100, false, 0, 3f, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294892, 1)])],
+        // BGuard_ChiefA_L
+        [294520] = [new Band(26, 50, 100, false, 0, 3f, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294892, 1)])],
+        // BGuard_ChiefB_L
+        [294521] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_L
+        [294522] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefB_L
+        [294523] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
+        // BGuard_ChiefA_D
+        [294527] = [new Band(26, 50, 100, false, 0, 3f, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294893, 1)])],
+        // BGuard_ChiefA_D
+        [294528] = [new Band(26, 50, 100, false, 0, 3f, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294893, 1)])],
+        // BGuard_ChiefA_D
+        [294529] = [new Band(26, 50, 100, false, 0, 3f, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294893, 1)])],
+        // BGuard_ChiefB_D
+        [294530] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_D
+        [294531] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefB_D
+        [294532] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
+        // BGuard_ChiefA_Dr
+        [294536] = [new Band(26, 50, 100, false, 0, 3f, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294894, 1)])],
+        // BGuard_ChiefA_Dr
+        [294537] = [new Band(26, 50, 100, false, 0, 3f, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294894, 1)])],
+        // BGuard_ChiefA_Dr
+        [294538] = [new Band(26, 50, 100, false, 0, 3f, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294894, 1)])],
+        // BGuard_ChiefB_Dr
+        [294539] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
+        // BGuard_ChiefB_Dr
+        [294540] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
+        // BGuard_ChiefB_Dr
+        [294541] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
         // LGuard_RhA
         [294574] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
         // LGuard_AhA
@@ -1551,6 +1693,24 @@ internal static class GuardReinforcements
         [295194] = [new Band(0, 34, 50, true, 600, 3f, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295152, 2)])],
         // DrGuard_RhB_L50
         [295196] = [new Band(36, 70, 100, true, 100, 2f, [(295153, 2)]), new Band(0, 100, 100, true, 100, 2f, [(295153, 2)]), new Band(0, 34, 100, true, 0, 2f, [(295153, 1)])],
+        // BGuard_ChiefA_L_L50
+        [295271] = [new Band(26, 50, 100, false, 600, 8f, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295212, 1)])],
+        // BGuard_ChiefA_L_L50
+        [295272] = [new Band(26, 50, 100, false, 600, 8f, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295212, 1)])],
+        // BGuard_ChiefA_L_L50
+        [295273] = [new Band(26, 50, 100, false, 600, 8f, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295212, 1)])],
+        // BGuard_ChiefA_D_L50
+        [295274] = [new Band(26, 50, 100, false, 600, 8f, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295213, 1)])],
+        // BGuard_ChiefA_D_L50
+        [295275] = [new Band(26, 50, 100, false, 600, 8f, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295213, 1)])],
+        // BGuard_ChiefA_D_L50
+        [295276] = [new Band(26, 50, 100, false, 600, 8f, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295213, 1)])],
+        // BGuard_ChiefA_Dr_L50
+        [295277] = [new Band(26, 50, 100, false, 0, 3f, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, [(295214, 1)])],
+        // BGuard_ChiefA_Dr_L50
+        [295278] = [new Band(26, 50, 100, false, 0, 3f, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, [(295214, 1)])],
+        // BGuard_ChiefA_Dr_L50
+        [295279] = [new Band(26, 50, 100, false, 0, 3f, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, [(295214, 1)])],
         // LGuard_ReA_L50
         [295286] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
         // LGuard_RhA_L50
@@ -1683,6 +1843,24 @@ internal static class GuardReinforcements
         [295522] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
         // DrGuard_WeA_L50
         [295526] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
+        // BGuard_ChiefA_L_L50M
+        [295660] = [new Band(26, 50, 100, false, 600, 8f, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296052, 1)])],
+        // BGuard_ChiefA_L_L50M
+        [295661] = [new Band(26, 50, 100, false, 600, 8f, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296052, 1)])],
+        // BGuard_ChiefA_L_L50M
+        [295662] = [new Band(26, 50, 100, false, 600, 8f, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296052, 1)])],
+        // BGuard_ChiefA_D_L50M
+        [295663] = [new Band(26, 50, 100, false, 600, 8f, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296053, 1)])],
+        // BGuard_ChiefA_D_L50M
+        [295664] = [new Band(26, 50, 100, false, 600, 8f, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296053, 1)])],
+        // BGuard_ChiefA_D_L50M
+        [295665] = [new Band(26, 50, 100, false, 600, 8f, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296053, 1)])],
+        // BGuard_ChiefA_Dr_L50M
+        [295666] = [new Band(26, 50, 100, false, 0, 3f, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, [(296054, 1)])],
+        // BGuard_ChiefA_Dr_L50M
+        [295667] = [new Band(26, 50, 100, false, 0, 3f, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, [(296054, 1)])],
+        // BGuard_ChiefA_Dr_L50M
+        [295668] = [new Band(26, 50, 100, false, 0, 3f, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, [(296054, 1)])],
         // LGuard_ReA_L50M
         [295675] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
         // LGuard_RhA_L50M
@@ -1825,6 +2003,42 @@ internal static class GuardReinforcements
         [296034] = [new Band(0, 34, 50, true, 600, 3f, [(296082, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296082, 2)])],
         // DrGuard_RhB_L50M
         [296036] = [new Band(36, 70, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296083, 1)])],
+        // BGuard_ChiefB_L_L50
+        [296127] = [new Band(0, 24, 100, false, 600, 8f, [(295215, 1)])],
+        // BGuard_ChiefB_L_L50
+        [296128] = [new Band(0, 24, 100, false, 600, 8f, [(295215, 1)])],
+        // BGuard_ChiefB_L_L50
+        [296129] = [new Band(0, 24, 100, false, 600, 8f, [(295215, 1)])],
+        // BGuard_ChiefB_D_L50
+        [296130] = [new Band(0, 24, 100, false, 600, 8f, [(295216, 1)])],
+        // BGuard_ChiefB_D_L50
+        [296131] = [new Band(0, 24, 100, false, 600, 8f, [(295216, 1)])],
+        // BGuard_ChiefB_D_L50
+        [296132] = [new Band(0, 24, 100, false, 600, 8f, [(295216, 1)])],
+        // BGuard_ChiefB_Dr_L50
+        [296133] = [new Band(0, 24, 100, false, 600, 8f, [(295217, 1)])],
+        // BGuard_ChiefB_Dr_L50
+        [296134] = [new Band(0, 24, 100, false, 600, 8f, [(295217, 1)])],
+        // BGuard_ChiefB_Dr_L50
+        [296135] = [new Band(0, 24, 100, false, 600, 8f, [(295217, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [296145] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [296146] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_L_L50M
+        [296147] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [296148] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [296149] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_D_L50M
+        [296150] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [296151] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [296152] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
+        // BGuard_ChiefB_Dr_L50M
+        [296153] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
         // LGuard_WhA_L43
         [296193] = [new Band(0, 34, 100, false, 600, 3f, [(207612, 1)])],
         // LGuard_WhA_L53
@@ -1945,6 +2159,8 @@ internal static class GuardReinforcements
         [296430] = [new Band(0, 34, 50, true, 600, 3f, [(296082, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296082, 2)])],
         // DrGuard_RhB_L50M
         [296432] = [new Band(36, 70, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296083, 1)])],
+        // BGuard_ChiefS
+        [296441] = [new Band(56, 70, 100, false, 0, 0f, [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]), new Band(56, 70, 100, false, 0, 0f, [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]), new Band(41, 55, 100, false, 0, 0f, [(296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1)]), new Band(41, 55, 100, true, 0, 2f, [(296437, 1)]), new Band(41, 55, 100, true, 0, 2f, [(296437, 1)]), new Band(41, 55, 100, false, 0, 0f, [(296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(0, 100, 100, false, 6, 0f, [(296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1)]), new Band(0, 100, 100, false, 6, 0f, [(296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1)]), new Band(0, 19, 100, false, 6, 0f, [(296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1)])],
         // LGuard_RsA
         [296464] = [new Band(0, 49, 100, true, 18, 3f, [(296465, 2)])],
         // LGuard_WsA
@@ -1967,6 +2183,10 @@ internal static class GuardReinforcements
         [296501] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
         // DrGuard_PsA
         [296506] = [new Band(26, 50, 100, false, 0, 5f, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, [(296509, 1)])],
+        // BGuard_ChiefF4_D
+        [296515] = [new Band(41, 60, 100, false, 0, 0f, [(296534, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296534, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296533, 1)])],
+        // BGuard_ChiefF4_Dr
+        [296520] = [new Band(41, 60, 100, false, 0, 0f, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296540, 1)])],
         // LGuard_RsA
         [296529] = [new Band(0, 49, 100, true, 18, 3f, [(296465, 2)])],
         // LGuard_WsA
@@ -2153,6 +2373,16 @@ internal static class GuardReinforcements
         [296846] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
         // DrGuard_WeA_L55
         [296851] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
+        // BGuard_ChiefF4_D
+        [297079] = [new Band(41, 60, 100, false, 0, 0f, [(296534, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296534, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296533, 1)])],
+        // BGuard_ChiefF4_Dr
+        [297080] = [new Band(41, 60, 100, false, 0, 0f, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296540, 1)])],
+        // BGuard_ChiefA_Renew_Gate_Li
+        [297117] = [new Band(0, 100, 100, false, 600, 2f, [(297111, 1), (297112, 1)])],
+        // BGuard_ChiefA_Renew_Gate_Da
+        [297118] = [new Band(0, 100, 100, false, 600, 2f, [(297113, 1), (297114, 1)])],
+        // BGuard_ChiefA_Renew_Gate_Dr
+        [297119] = [new Band(0, 100, 100, false, 600, 2f, [(297115, 1), (297116, 1)])],
         // LGuard_WhA_L60
         [798926] = [new Band(0, 34, 100, false, 600, 3f, [(296639, 1)])],
         // LGuard_WhA_L58

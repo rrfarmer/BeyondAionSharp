@@ -38,7 +38,7 @@ from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
 # the same mechanic and was missed for one letter. BGuard is deliberately out -- those are the gates,
 # a different mechanic with its own extractor -- and so are GwDGuard/GwLGuard, which have their own
 # class already.
-GUARD_RE = re.compile(r"^(?:D|L|Dr)Guard_")
+GUARD_RE = re.compile(r"^(?:(?:D|L|Dr)Guard_|BGuard_Chief)")
 
 # The two ops this can turn into a table row. The other two retail ops place per-target
 # (`spawn_on_multi_target`, one add on every valid target, capped) and per-attacker
