@@ -4921,3 +4921,47 @@ work that should have moved the number, and asking why when it does not.
 
 **Verification.** Full suite 1,395 passing and 1 skipped; four new pins; five of six mutations caught,
 the sixth being the familiar inert one (a battle timer armed outside combat never fires).
+
+### Auditing the audit, and the one thing it found
+
+Four shape assumptions in a row made this worth checking deliberately rather than waiting for the next
+surprise. The check: for every AI class that spawns anything, take its `const int` values that are
+real npc ids, and ask which the audit cannot see. If a class places an add the sweep misses, the
+constant is there and the id is not in `spawnable_npc_ids`.
+
+**One class, two constants** — `MacunbelloAI`'s `HardModeNpcId` and `SoulReaperHard`. The first is a
+true negative: it is a comparison (`GetNpcId() == HardModeNpcId`), not a spawn, and the audit is right
+to ignore it. The second was a genuine gap the class already knew about — the constant was declared,
+never used, and carried a note saying hard mode's variant "is not implemented".
+
+That is a good result for the audit. After the helper fix it can see every add every ported class
+places, and the one thing it flagged was real.
+
+### Macunbello's hard-mode reaper
+
+Retail's `IDCTH_Boss_LichKing` puts it on `on_attacked` behind `test_probability 5` and a one-shot
+flag: a five-percent roll on every hit, and at most one per fight. What settled the port is that it is
+**additional** to the timed wave rather than a substitute — the waves spawn the normal reaper (281698)
+in both modes, and this hard-only variant (281775) arrives on top of them.
+
+The two ids differ by a single `H` in the devname — `BIDCT_SumLich` against `BIDCTH_SumLich` — which is
+the same trap that would have put normal-mode sand in hard-mode Tiamat, and the third time this
+encounter family has set it.
+
+**The flag is only spent on a successful roll.** Retail sets it *inside* the branch the probability
+guards, so a failed roll leaves the chance open for the next hit. Latching first and rolling second
+would give one attempt per fight instead of one success.
+
+### Two pins for one behaviour, because the latch hides the roll
+
+Hitting a boss two hundred times and asserting exactly one reaper pins the latch — and passes just as
+well if the roll is a certainty, since the latch caps the count either way. A mutation making it always
+fire survived on that pin alone. Twenty separate fights hit once each is what separates them: at five
+percent about one summons, at a hundred all twenty do.
+
+The general form: **a cap and a probability cannot be pinned by the same observation.** One bounds the
+count, the other bounds the rate, and a test that only counts sees the cap.
+
+**Verification.** Full suite 1,398 passing and 1 skipped, three consecutive clean runs of the affected
+class; three new pins; all four mutations caught after the probability pin was added. Backlog
+unchanged at 541 — this add was already counted, because the constant was in the file.

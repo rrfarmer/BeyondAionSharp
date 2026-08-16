@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Utils;
@@ -33,6 +34,9 @@ public class MacunbelloAI : AggressiveNpcAI, INpcMessageListener
 {
     private const int HardModeNpcId = 216164;
 
+    /// <summary>Latched so the hard-only reaper arrives at most once, as retail's flag var does.</summary>
+    private readonly AtomicBoolean hardReaperCalled = new AtomicBoolean();
+
     private const int DevourSoul = 19051;
     private const int Shockwave = 19052;
     private const int TideOfDarkness = 19053;
@@ -41,6 +45,10 @@ public class MacunbelloAI : AggressiveNpcAI, INpcMessageListener
 
     private const int SoulReaper = 281698;
     private const int SoulReaperHard = 281775;
+
+    /// <summary>Retail's <c>test_probability</c> and <c>spawn_range</c> on the hard-only reaper.</summary>
+    private const int HardReaperPercent = 5;
+    private const float HardReaperRange = 5f;
 
     private const int ShoutStart = 1500060;
     private const int ShoutWave = 1500061;
@@ -96,6 +104,39 @@ public class MacunbelloAI : AggressiveNpcAI, INpcMessageListener
     {
         base.HandleAttack(creature);
         StartRotation();
+        TryHardModeReaper();
+    }
+
+    /// <summary>
+    /// Hard mode's own reaper: a five-percent roll on every hit, once per fight.
+    /// </summary>
+    /// <remarks>
+    /// Retail's <c>IDCTH_Boss_LichKing</c> puts this on <c>on_attacked</c> behind
+    /// <c>test_probability 5</c> and a <c>set_flag_var</c>, which is its idiom for "rare, and only
+    /// the once". It is <b>additional</b> to the wave rather than a substitute: the timed waves spawn
+    /// the normal reaper (281698) in both modes, and this hard-only variant (281775) arrives on top of
+    /// them at most once.
+    /// <para>
+    /// The constant for it had been declared and never used, with a note saying so — the two ids
+    /// differ by a <c>H</c> in the devname (<c>BIDCT_SumLich</c> against <c>BIDCTH_SumLich</c>) and
+    /// read as the same summon, which is exactly the trap that put normal-mode sand in hard-mode
+    /// Tiamat.
+    /// </para>
+    /// </remarks>
+    private void TryHardModeReaper()
+    {
+        if (!IsHardMode || !hardReaperCalled.CompareAndSet(false, true))
+            return;
+
+        if (Rnd.NextInt(100) >= HardReaperPercent)
+        {
+            // The flag is only spent on a successful roll: retail sets it inside the branch the
+            // probability guards, so a failed roll leaves the chance open for the next hit.
+            hardReaperCalled.Set(false);
+            return;
+        }
+
+        RndSpawnInRange(SoulReaperHard, HardReaperRange);
     }
 
     private void StartRotation()
@@ -173,8 +214,8 @@ public class MacunbelloAI : AggressiveNpcAI, INpcMessageListener
         bool desperate = GetLifeStats().GetHpPercentage() <= 50;
         int count = desperate ? WavePositions.Length : 2;
         PacketSendUtility.BroadcastMessage(GetOwner(), ShoutWave);
-        // Both modes spawn the normal-mode reaper here; hard mode only uses its own variant for
-        // the on-hit proc, which is not implemented.
+        // Both modes spawn the normal-mode reaper here. Hard mode's own variant is the rare on-hit
+        // proc in TryHardModeReaper, which is additional to this wave rather than a substitute.
         for (int i = 0; i < count; i++)
         {
             (float x, float y, float z, int degrees) = WavePositions[i];

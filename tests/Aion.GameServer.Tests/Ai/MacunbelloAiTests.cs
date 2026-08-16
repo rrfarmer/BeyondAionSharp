@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -18,6 +19,10 @@ public sealed class MacunbelloAiTests
 {
 	private const int Macunbello = 216245;
 	private const int SoulReaper = 281698;
+
+	/// <summary>Hard mode's own boss and its own reaper — a `H` apart in the devname.</summary>
+	private const int HardMacunbello = 216164;
+	private const int SoulReaperHard = 281775;
 
 	private const int DevourSoul = 19051;
 	private const int Shockwave = 19052;
@@ -168,5 +173,80 @@ public sealed class MacunbelloAiTests
 
 		harness.Clock.Advance(TimeSpan.FromMinutes(2));
 		Assert.Empty(BossAiHarness.DrainQueuedSkills(boss));
+	}
+
+	private static int Reapers(BossAiHarness harness, int npcId) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
+
+	/// <summary>
+	/// Hard mode calls up its own reaper on being hit — a five-percent roll, and at most once.
+	/// </summary>
+	/// <remarks>
+	/// Retail puts this on <c>on_attacked</c> behind <c>test_probability 5</c> and a one-shot flag.
+	/// The constant for it had been declared and never used, with a note in the class saying so; what
+	/// settled it was reading the branch and finding it is <b>additional</b> to the timed wave rather
+	/// than a substitute for it.
+	/// <para>
+	/// Hit two hundred times, which puts a run of misses past one in ten million, and assert exactly
+	/// one arrives — the roll and the latch in a single observation.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void HardModeCallsItsOwnReaperOnceOnBeingHit()
+	{
+		using var harness = NewHarness();
+		Npc boss = harness.Spawn(HardMacunbello);
+		Player player = harness.SpawnPlayer();
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		for (int i = 0; i < 200; i++)
+			boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+
+		Assert.Equal(1, Reapers(harness, SoulReaperHard));
+	}
+
+	/// <summary>Normal mode never calls it, however long it is beaten on.</summary>
+	[Fact]
+	public void NormalModeNeverCallsTheHardReaper()
+	{
+		using var harness = NewHarness();
+		Npc boss = harness.Spawn(Macunbello);
+		Player player = harness.SpawnPlayer();
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		for (int i = 0; i < 200; i++)
+			boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+
+		Assert.Equal(0, Reapers(harness, SoulReaperHard));
+	}
+
+	/// <summary>
+	/// It is a five-percent roll, not a certainty — one hit does not summon it.
+	/// </summary>
+	/// <remarks>
+	/// The once-per-fight pin cannot see this: the latch caps the count at one whether the roll is
+	/// five percent or a hundred, so a mutation making it certain passed. Twenty separate fights hit
+	/// once each is what tells them apart — at five percent about one summons, at a hundred all twenty
+	/// do, and the chance of all twenty summoning honestly is 0.05^20.
+	/// </remarks>
+	[Fact]
+	public void TheHardReaperIsARollRatherThanACertainty()
+	{
+		int summoned = 0;
+		for (int fight = 0; fight < 20; fight++)
+		{
+			using var harness = NewHarness();
+			Npc boss = harness.Spawn(HardMacunbello);
+			Player player = harness.SpawnPlayer();
+			BossAiHarness.MakeMutuallyKnown(boss, player);
+			harness.Engage(boss, player);
+
+			boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+			summoned += Reapers(harness, SoulReaperHard);
+		}
+
+		Assert.True(summoned < 20, $"a five-percent roll should not fire on every first hit: {summoned}/20");
 	}
 }
