@@ -4387,3 +4387,53 @@ starts somewhere this extraction cannot see.
 **Verification.** Full suite 1,359 passing and 1 skipped, unchanged — this entry is tooling and
 extraction only. The guard table regenerates byte-identical after the regex was shared, which is the
 check that the sharing changed nothing.
+
+### The fortress gates, wired — and they are the other half of the guards
+
+The schema gap named last entry is closed and the family is ported. What it turned out to be is more
+interesting than a second table: **the gates are what the abyss guards summon.** A `W`-family guard
+(`LGuard_WhA`, `DGuard_WhA`, Kimeia) calls up a *warp gate*; the gate, once something attacks it, puts
+a squad out in waves. Two ports that looked separate are one mechanic with two levels, and the guard
+half shipped two entries ago.
+
+```
+attacked          -> arm the chain (ten seconds on the common variants)
+wave 0            -> squad out, arm wave 1
+wave 1            -> squad out, arm the closing link
+closing link      -> despawn_self
+left alone        -> despawn the squad, and the gate with it
+```
+
+62 pattern variants, 153 steps, 69 gates; chains of one to four waves, fifty of them two.
+
+**The trailing delay and the loop.** Retail's last spawning step arms one more timer whose only job is
+`despawn_self`, and that delay lives in a branch with no spawn in it — the chain walk stopped before
+reading it, which is why this was deferred. Reading it turned up a second shape the first pass would
+have got wrong: **the fortress-chief gates have no closing link at all.** Their last wave arms the
+*first* one again, so they cycle for as long as the fight lasts. A missing despawn delay and a loop
+look identical in one column, and treating the chiefs as "no despawn step found" would have left them
+standing idle after three waves instead of producing squads indefinitely. The table now carries both
+`despawn_after_ms` and `loops_to`, and a mutation that sent looping gates to the closing branch
+survived until a pin existed for them.
+
+**The AI name they carried was a display-name misread.** All 68 were on `groupgate` — aionemu's
+handler for the portal a *player* summons with Group Gate — because their display name is "warp gate"
+or "illusion gate". Checked before repointing: no player skill template and no spawn helper references
+any of the 69, and `GroupGateAI`'s dialog path gates on a player creator these have never had. It was
+inert. The one on `illusion_gate` is left alone; it has a real handler of its own.
+
+**Not translated:** `on_message` 10009, which dismisses a gate. It belongs to the fortress siege code
+rather than to any NPC, so translating it would add a listener with no speaker.
+
+### Where the count went
+
+626 across 395 encounters → **586 across 390**. `BGuard_*` rows in the timer bucket: 48 → 6, the
+remainder being the `CDropGateA` siege drop-gates.
+
+**Still open on this family:** the twelve `BGuard_CDropGateA*` variants have no opener in the base
+pattern either — they are siege drop-gates started by fortress code rather than by being attacked, so
+the chain begins somewhere this extraction cannot see. They need whatever spawns them ported first.
+
+**Verification.** Full suite 1,365 passing and 1 skipped; six new pins; five of six mutations caught.
+The survivor is the familiar inert one — moving the opener to `on_wake_up` changes nothing because
+battle timers only fire in combat.

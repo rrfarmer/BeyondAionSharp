@@ -13,7 +13,9 @@ timer chain, and then it removes itself. No health bands, no coin flips.
 
 Emits one row per (gate npc, step), in chain order:
 
-    gate_npc_id  pattern  step  delay_ms  placement  summons
+    gate_npc_id  pattern  step  delay_ms  placement  summons  despawn_after_ms  loops_to
+
+`loops_to` is the step the chain returns to, or -1 when it ends by removing itself.
 
 `delay_ms` is how long after the previous step this one fires — the opening delay
 for step 0 comes from `on_enter_attack_state`. `summons` is `npc_id*count` joined
@@ -84,6 +86,7 @@ def main() -> None:
     rows: list[tuple] = []
     skipped: collections.Counter = collections.Counter()
     inherited: collections.Counter = collections.Counter()
+    unclosed: collections.Counter = collections.Counter()
     chain_lengths: collections.Counter = collections.Counter()
     patterns_seen = 0
 
@@ -109,22 +112,22 @@ def main() -> None:
                     continue
                 inherited[base] += 1
 
-            # timer slot -> (spawns, next slot, delay to it)
+            # Every timer branch, spawning or not. The non-spawning ones matter: the last link of
+            # the chain is a branch whose only action is despawn_self, and its delay is how long the
+            # gate stands after its final wave. Collecting only spawning branches loses it.
             steps: dict[int, tuple] = {}
             for branch in branches_of(block, "on_battle_timer"):
                 slot = TIMER_RE.search(branch)
                 if slot is None:
                     continue
-                spawns = spawns_in(branch)
-                if not spawns:
-                    continue
                 nxt = ARM_RE.search(branch)
                 steps[int(slot.group(1))] = (
-                    spawns,
+                    spawns_in(branch),
                     int(nxt.group(1)) if nxt else None,
                     int(nxt.group(2)) if nxt else 0,
+                    bool(DESPAWN_SELF_RE.search(branch)),
                 )
-            if not steps:
+            if not any(step[0] for step in steps.values()):
                 continue
             patterns_seen += 1
 
@@ -135,18 +138,33 @@ def main() -> None:
 
             # Walk the chain from whatever entering combat armed, so the order is retail's.
             walked: list[tuple] = []
+            despawn_after = 0
+            loops_to = -1
             slot, delay = opening
-            seen_slots: set[int] = set()
+            seen_slots: dict[int, int] = {}
             while slot in steps and slot not in seen_slots:
-                seen_slots.add(slot)
-                spawns, nxt, nxt_delay = steps[slot]
-                walked.append((delay, spawns))
+                seen_slots[slot] = len(walked)
+                spawns, nxt, nxt_delay, despawns = steps[slot]
+                if spawns:
+                    walked.append((delay, spawns))
+                elif despawns:
+                    # The last link: it stood `delay` after the final wave, then left.
+                    despawn_after = delay
+                    break
                 if nxt is None:
                     break
                 slot, delay = nxt, nxt_delay
+            else:
+                # Fell out because the chain came back to a slot it had already run: this gate does
+                # not leave, it cycles. Distinguishing that from "no despawn step" matters -- one
+                # keeps producing squads for as long as the fight lasts, the other stands idle.
+                if slot in seen_slots:
+                    loops_to = seen_slots[slot]
             if not walked:
                 skipped[f"{name}: chain never reaches a spawning step"] += 1
                 continue
+            if despawn_after == 0 and loops_to < 0:
+                unclosed[name] += 1
 
             chain_lengths[len(walked)] += 1
 
@@ -176,10 +194,11 @@ def main() -> None:
 
             for gate_id in gate_ids:
                 for index, (delay_ms, placement, summons) in enumerate(resolved_steps):
-                    rows.append((gate_id, name, index, delay_ms, placement, summons))
+                    rows.append((gate_id, name, index, delay_ms, placement, summons,
+                                 despawn_after, loops_to))
 
     rows.sort(key=lambda r: (int(r[0]), r[2]))
-    header = "gate_npc_id\tpattern\tstep\tdelay_ms\tplacement\tsummons"
+    header = "gate_npc_id\tpattern\tstep\tdelay_ms\tplacement\tsummons\tdespawn_after_ms\tloops_to"
     body = "\n".join([header] + ["\t".join(str(c) for c in r) for r in rows]) + "\n"
     if args.out:
         pathlib.Path(args.out).write_text(body, encoding="utf-8")
