@@ -7106,3 +7106,76 @@ same verdict as before but now for a stated reason instead of a blocked skill in
 **Verification.** Full suite unchanged at 1,601 passing and 1 skipped — this entry changes no game
 behaviour, only the tool and what is known about its output. `audit_pattern_guards.py` 16 findings →
 2, both triaged above, with the four pre-fix bugs still caught.
+
+## The twin protectors' lava side was summoning the heatvent side's wave
+
+`audit_retail_messages.py` — the third audit, which asks what a translated class's pattern does with
+messages that the class never touches — puts eleven findings on `TwinProtectorAI`, more than on any
+other class. Following them meant resolving the whole `IDSeal_Twin_*` NPC web, and the web turned up
+something the message audit was not looking for.
+
+### One id, four protectors, two sides
+
+| devname | id | side |
+|---|---|---|
+| `BIDSeal_Twin_M_Sum_Tornado` | 855625 | heatvent |
+| `BIDSeal_Twin_M_Sum_65_Ae` | 855622 | heatvent |
+| `bidseal_twin_m_hellfirefield` | 855712 | heatvent |
+| `BIDSeal_Twin_P_Sum_65_Ae` | 855621 | lava |
+| `BIDSeal_Twin_P_Sum_Crater` | 855623 | lava |
+| `bidseal_twin_p_hellfirefield` | 855626 | lava |
+
+Every `spawn_on_multi_target` branch in the two heatvent patterns calls **855625**, and every one in
+the two lava patterns calls **855621**. This class had 855625 hardcoded on its hellfire branch for all
+four protectors, so **the two lava protectors summoned a heatvent NPC**.
+
+What makes it worth stating rather than just fixing: the class was *already* side-aware. The field is
+chosen by parity and so is the phase ladder's wave. Only the hellfire branch was not — which is how a
+side-specific id hides in a fight where most of the summons are already side-specific, and the same
+shape as the Dark Poeta barricades holding each other's coordinates.
+
+### The waves arrive fighting, and did not
+
+Retail carries `hatepoints_to_add=1000` on every one of those branches, both sides. Ours spawned them
+at the target's feet with no hate, so they stood there until a player walked into them. Now routed
+through the shared `AttackAfterSpawn` helper, as every other `attack_target_after_spawn` spawn is.
+
+### A pin that agreed with the table and not with the fight
+
+The first version of these pins asserted `WaveFor(protectorId)` and nothing else. Putting the shipped
+bug back — hardcoding the tornado at the call site again — **survived the whole mutation sweep**,
+because the table was still right and no pin ever watched a lava protector actually summon.
+
+That is the mirror of an earlier lesson in this log. "Pin the decision when the effect leaves no
+trace" is right; the corollary is that when the effect *does* leave a trace, pinning only the decision
+is not enough. Both are pinned now, and the phase ladder's split — correct all along, and guarded by
+nothing, so flattening it also survived — has a pin of its own.
+
+### Not spawned by anything
+
+`BIDSeal_Twin_P_Sum_Crater` (855623) has a template and a pattern and **no branch in the 5.8 files
+names it**. The same shape as Watchman Hokuruki's gunners: a template that exists for the room rather
+than for a summon. Recorded so it is not read as a gap.
+
+### What is still not translated here, and why
+
+The eleven message findings that started this remain open, and they are a coherent group rather than
+eleven separate jobs:
+
+| message | what it does | blocked on |
+|---|---|---|
+| 22714 / 22715 | the hellfire field casts | `SKILLI_INDEX` on the field |
+| 22712 | the heatvent tornado **turns into** 855622 and despawns | reachable — needs the timer chain that sends it |
+| 22713 | a heatvent Sum heals the protector and despawns | the heal is an index; the despawn is not |
+| 22697 / 22698 | every Sum despawns when the protector leaves the fight | ours clears its own tracked list instead, which covers the same ground by a different route |
+| 22704 / 22705 | **time over**: the protector summons three PC guards onto itself that attack it, Elyos or Asmodian by `is_race` | the sender is a `_Source` / `_Change_Failed` NPC neither of which is translated |
+| 22710 / 22718 / 22719 | instance sequencing between the protector and its spawn markers | nothing on our side listens |
+
+The one worth naming for later is **22705**. It is a real mechanic and an unusual one — fail the
+timer and allied NPC guards arrive and finish the protector for you, with a million hate so nothing
+peels them — and both halves of it are portable in principle. What is missing is the sender:
+`IDSeal_Twin_M_Source` and `IDSeal_Twin_M_Change_Failed`, the NPCs the protector leaves behind on
+dying, which are a separate encounter this work has not touched.
+
+**Verification.** Full suite 1,609 passing and 1 skipped; thirteen pins on this class, up from five;
+seven mutations, all caught — including the shipped bug, which survived the first sweep.

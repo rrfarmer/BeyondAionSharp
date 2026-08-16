@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.SkillEngine.Model;
 
@@ -28,6 +29,24 @@ namespace Aion.GameServer.Handlers.AI;
 /// the split rather than inferring it.
 /// </para>
 /// <para>
+/// <b>The hellfire wave was the other side's.</b> Every <c>spawn_on_multi_target</c> branch in the
+/// heatvent patterns calls <c>BIDSeal_Twin_M_Sum_Tornado</c> (855625) and every one in the lava
+/// patterns calls <c>BIDSeal_Twin_P_Sum_65_Ae</c> (855621) — this class had the tornado hardcoded for
+/// all four protectors, so the two lava protectors summoned a heatvent NPC. The phase ladder's own
+/// wave was already split by the same parity; only the hellfire one was not, which is how a
+/// side-specific id hides in a fight where most of the summons are already side-specific.
+/// </para>
+/// <para>
+/// <b>And the waves arrive fighting.</b> Retail carries <c>hatepoints_to_add=1000</c> on every one of
+/// those branches, both sides. Without it the adds stand where they were put until a player walks
+/// into them.
+/// </para>
+/// <para>
+/// <b>Not spawned by anything, on either side:</b> <c>BIDSeal_Twin_P_Sum_Crater</c> (855623). It has a
+/// pattern and a template and no branch in the 5.8 files names it — the same shape as Hokuruki's
+/// gunners, and worth stating so it is not read as a gap here.
+/// </para>
+/// <para>
 /// <b>Not translated:</b> the <c>Source</c> NPC each pattern leaves behind on dying, its condition
 /// spawn variables, and the four <c>broadcast_message</c> numbers around them — instance sequencing
 /// with nothing on our side listening. The HP ladder, the adds and the Raging Hellfire cast are ours
@@ -44,13 +63,32 @@ public class TwinProtectorAI : AggressiveNoLootNpcAI, HpPhases.PhaseHandler
     private const int LavaField = 855626;
     private const int HeatventField = 855712;
 
+    /// <summary>
+    /// What each side's <c>spawn_on_multi_target</c> branches call up: the heatvent side's
+    /// <b>tornado</b> (<c>BIDSeal_Twin_M_Sum_Tornado</c>) and the lava side's own wave
+    /// (<c>BIDSeal_Twin_P_Sum_65_Ae</c>).
+    /// </summary>
+    private const int HeatventWave = 855625;
+    private const int LavaWave = 855621;
+
+    /// <summary>
+    /// Retail's <c>hatepoints_to_add</c> on every one of those branches, both sides.
+    /// </summary>
+    private const int OnArrival = 1000;
+
     private static readonly (float X, float Y, float Z) LavaMark = (530.5f, 212f, 1682f);
     private static readonly (float X, float Y, float Z) HeatventMark = (531.4f, 151f, 1682f);
 
     private Npc? field;
 
+    /// <summary>Which side this protector is on. Even ids are the heatvent side.</summary>
+    private bool IsHeatvent => GetNpcId() % 2 == 0;
+
     /// <summary>Which field this protector opens with. Even ids are the heatvent side.</summary>
     internal static int FieldFor(int protectorId) => protectorId % 2 == 0 ? HeatventField : LavaField;
+
+    /// <summary>Which wave its hellfire calls up, by the same parity.</summary>
+    internal static int WaveFor(int protectorId) => protectorId % 2 == 0 ? HeatventWave : LavaWave;
 
     public TwinProtectorAI(Npc owner) : base(owner)
     {
@@ -84,7 +122,7 @@ public class TwinProtectorAI : AggressiveNoLootNpcAI, HpPhases.PhaseHandler
                 break;
             case 25:
             case 10:
-                SpawnAdds(GetNpcId() % 2 == 0 ? 855622 : 855621, 20);
+                SpawnAdds(IsHeatvent ? 855622 : 855621, 20);
                 break;
         }
     }
@@ -94,15 +132,30 @@ public class TwinProtectorAI : AggressiveNoLootNpcAI, HpPhases.PhaseHandler
         if (skillTemplate.GetSkillId() == 21644) // Raging Hellfire
         {
             SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 21645, 1, GetTarget()).UseNoAnimationSkill();
-            SpawnAdds(855625, 50);
+            SpawnAdds(WaveFor(GetNpcId()), 50);
         }
     }
 
+    /// <summary>
+    /// One wave, on up to <c>count</c> of the players in reach.
+    /// </summary>
+    /// <remarks>
+    /// Retail's <c>spawn_on_multi_target</c> carries <c>hatepoints_to_add=1000</c> on every branch of
+    /// both patterns, so a wave arrives <em>already fighting</em> whoever it landed on. Without it the
+    /// adds stand where they were put until someone walks into them, which is a materially easier
+    /// fight — the same difference recorded for every other <c>attack_target_after_spawn</c> spawn.
+    /// </remarks>
     private void SpawnAdds(int npcId, int hpThreshold)
     {
         int count = GetLifeStats().GetHpPercentage() < hpThreshold ? 3 : 1;
         foreach (var target in GetAggroList().StreamValidTargets(20).Take(count))
-            adds.Add((Npc)Spawn(npcId, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0));
+        {
+            if (Spawn(npcId, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0) is not Npc add)
+                continue;
+
+            adds.Add(add);
+            AttackAfterSpawn.Now(add, target, OnArrival);
+        }
     }
 
     private void DespawnAdds()

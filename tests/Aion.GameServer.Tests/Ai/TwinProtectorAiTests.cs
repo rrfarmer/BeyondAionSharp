@@ -26,6 +26,18 @@ public sealed class TwinProtectorAiTests
 	private const int LavaField = 855626;
 	private const int HeatventField = 855712;
 
+	/// <summary><c>BIDSeal_Twin_M_Sum_Tornado</c> — the heatvent side's wave, and only its.</summary>
+	private const int HeatventWave = 855625;
+
+	/// <summary><c>BIDSeal_Twin_P_Sum_65_Ae</c> — the lava side's.</summary>
+	private const int LavaWave = 855621;
+
+	/// <summary>Retail's <c>hatepoints_to_add</c> on every <c>spawn_on_multi_target</c> branch.</summary>
+	private const int OnArrival = 1000;
+
+	/// <summary>The cast the wave hangs off in this class.</summary>
+	private const int RagingHellfire = 21644;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(SealOfDestruction).WithWorldSize(2048)
 			.WithAi(typeof(TwinProtectorAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI),
@@ -78,6 +90,101 @@ public sealed class TwinProtectorAiTests
 		harness.Spawn(FountlessLavaProtector, 520f, 200f, 1682f);
 
 		Assert.Equal(1, Count(harness, LavaField));
+	}
+
+	/// <summary>
+	/// <b>The hellfire wave is the side's own, and it was not.</b> Both of the heatvent pattern's
+	/// <c>spawn_on_multi_target</c> branches call <c>BIDSeal_Twin_M_Sum_Tornado</c> and both of the
+	/// lava pattern's call <c>BIDSeal_Twin_P_Sum_65_Ae</c>; this class had the tornado hardcoded for
+	/// all four protectors, so the lava side summoned the other side's wave.
+	/// </summary>
+	[Fact]
+	public void EachSideCallsItsOwnWave()
+	{
+		Assert.Equal(HeatventWave, TwinProtectorAI.WaveFor(HeatventProtector));
+		Assert.Equal(LavaWave, TwinProtectorAI.WaveFor(LavaProtector));
+		Assert.Equal(LavaWave, TwinProtectorAI.WaveFor(FountlessLavaProtector));
+	}
+
+	/// <summary>
+	/// Stated separately because it is the bug rather than a consequence of it: the tornado is a
+	/// heatvent NPC and no lava protector should ever produce one.
+	/// </summary>
+	[Fact]
+	public void NoLavaProtectorCallsTheTornado()
+	{
+		Assert.NotEqual(HeatventWave, TwinProtectorAI.WaveFor(LavaProtector));
+		Assert.NotEqual(HeatventWave, TwinProtectorAI.WaveFor(FountlessLavaProtector));
+	}
+
+	/// <summary>
+	/// <b>A wave arrives already fighting whoever it landed on.</b> Retail carries
+	/// <c>hatepoints_to_add=1000</c> on every one of those branches; without it the adds stand where
+	/// they were put until someone walks into them, which is a materially easier fight.
+	/// </summary>
+	[Fact]
+	public void AWaveArrivesAlreadyFightingItsTarget()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc protector = harness.Spawn(HeatventProtector, 520f, 200f, 1682f);
+		var player = harness.SpawnPlayer(524f, 200f, 1682f);
+		harness.Engage(protector, player);
+
+		// Drive the hellfire cast the wave hangs off, as the phase ladder does.
+		protector.GetAi().OnEndUseSkill(
+			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(RagingHellfire), 1);
+
+		Npc wave = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventWave));
+		Assert.Equal(OnArrival, wave.GetAggroList().GetHate(player));
+		Assert.Same(player, wave.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>The live half of the side pin, and it is the one that matters.</b> Asserting
+	/// <see cref="TwinProtectorAI.WaveFor"/> alone passes while the call site still hardcodes the
+	/// tornado — putting the shipped bug back survived a mutation sweep against every other pin here.
+	/// This drives a lava protector's hellfire and looks at what actually appears.
+	/// </summary>
+	[Theory]
+	[InlineData(LavaProtector, LavaWave, HeatventWave)]
+	[InlineData(FountlessLavaProtector, LavaWave, HeatventWave)]
+	[InlineData(HeatventProtector, HeatventWave, LavaWave)]
+	public void TheWaveThatAppearsIsThisSidesOwn(int protectorId, int expected, int theOtherSides)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc protector = harness.Spawn(protectorId, 520f, 200f, 1682f);
+		var player = harness.SpawnPlayer(524f, 200f, 1682f);
+		harness.Engage(protector, player);
+
+		protector.GetAi().OnEndUseSkill(
+			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(RagingHellfire), 1);
+
+		Assert.Equal(1, Count(harness, expected));
+		Assert.Equal(0, Count(harness, theOtherSides));
+	}
+
+	/// <summary>
+	/// The phase ladder's own wave is side-split too, and was already right — but nothing guarded it,
+	/// so flattening it survived a mutation sweep. Pinned here for the same reason as the hellfire
+	/// wave: in a two-sided fight every summon is a place a hardcoded id can hide.
+	/// </summary>
+	[Theory]
+	[InlineData(HeatventProtector, 855622, 855621)]
+	[InlineData(LavaProtector, 855621, 855622)]
+	public void ThePhaseLaddersWaveIsThisSidesOwn(int protectorId, int expected, int theOtherSides)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc protector = harness.Spawn(protectorId, 520f, 200f, 1682f);
+		var player = harness.SpawnPlayer(524f, 200f, 1682f);
+		harness.Engage(protector, player);
+
+		// The ladder advances one phase per swing, so 65 and 40 come first and 25 is the third.
+		BossAiHarness.SetExactPercent(protector, 25);
+		for (int i = 0; i < 3; i++)
+			protector.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+
+		Assert.True(Count(harness, expected) > 0, "this side's wave should have arrived");
+		Assert.Equal(0, Count(harness, theOtherSides));
 	}
 
 	/// <summary>
