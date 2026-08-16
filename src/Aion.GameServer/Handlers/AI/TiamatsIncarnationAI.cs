@@ -196,7 +196,7 @@ public class TiamatsIncarnationAI : PatternAi
             deathEffect: 283063,
             powerAtkHazard: Do.SpawnOnTarget(CavityOfEarth, Hazards, range: 1f, liveSeconds: 7),
             areaAtkHazard: Do.SpawnOnEachTarget(CavityOfEarth, Hazards, validDistance: 100f,
-                maxTargets: 3, liveSeconds: 25)),
+                maxTargets: 3, MultiTargetOrder.Descending, liveSeconds: 25)),
 
         // Graviwing's lands on a random attacker instead, and does not live as long.
         [Graviwing] = Incarnation(areaAtkRearm: 30000, handBindRearm: 35000,
@@ -205,15 +205,15 @@ public class TiamatsIncarnationAI : PatternAi
                 range: 1f, liveSeconds: 4),
             // Only the most-hated gets one, and it is the widest and shortest-lived of the three.
             areaAtkHazard: Do.SpawnOnEachTarget(GravityWhirlpool, Hazards, validDistance: 100f,
-                maxTargets: 1, range: 6f, liveSeconds: 12)),
+                maxTargets: 1, MultiTargetOrder.Descending, range: 6f, liveSeconds: 12)),
 
         // Petriscale's power attack is already raid-wide, so both of its timers drop on everyone.
         [Petriscale] = Incarnation(areaAtkRearm: 25000, handBindRearm: 30000,
             deathEffect: 283064,
             powerAtkHazard: Do.SpawnOnEachTarget(PetrificationCrystal, Hazards, validDistance: 50f,
-                maxTargets: 2, liveSeconds: 20),
+                maxTargets: 2, MultiTargetOrder.Descending, liveSeconds: 20),
             areaAtkHazard: Do.SpawnOnEachTarget(PetrificationCrystal, Hazards, validDistance: 100f,
-                maxTargets: 3, range: 1f, liveSeconds: 20)),
+                maxTargets: 3, MultiTargetOrder.Descending, range: 1f, liveSeconds: 20)),
     };
 
     private static readonly AiPattern Untranslated = new AiPattern();

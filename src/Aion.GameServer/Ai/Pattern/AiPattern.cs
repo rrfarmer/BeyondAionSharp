@@ -201,10 +201,13 @@ public static class Do
         => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds);
 
     /// <summary><c>spawn_on_multi_target</c> — one add on every valid target in range.</summary>
-    /// <summary><c>spawn_on_multi_target</c>. <paramref name="maxTargets"/> is required — see the runtime.</summary>
+    /// <summary>
+    /// <c>spawn_on_multi_target</c>. <paramref name="maxTargets"/> and <paramref name="order"/> are
+    /// both required — see the runtime for why neither has a default.
+    /// </summary>
     public static PatternAction SpawnOnEachTarget(int npcId, int spawnId, float validDistance,
-        int maxTargets, float range = 0f, int liveSeconds = 0)
-        => ai => ai.SpawnOnEachTarget(npcId, spawnId, validDistance, range, liveSeconds, maxTargets);
+        int maxTargets, MultiTargetOrder order, float range = 0f, int liveSeconds = 0)
+        => ai => ai.SpawnOnEachTarget(npcId, spawnId, validDistance, range, liveSeconds, maxTargets, order);
 
     /// <summary><c>spawn_on_target_by_attacker_indicator</c> — on one attacker rather than the tank.</summary>
     public static PatternAction SpawnOnAttacker(AggroTarget which, int npcId, int spawnId,

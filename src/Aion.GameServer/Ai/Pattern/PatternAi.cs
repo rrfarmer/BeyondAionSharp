@@ -98,8 +98,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         Evaluate(Pattern.OnAttacked);
     }
 
+    /// <summary>
+    /// Retail splits this into two events — <c>on_leave_attack_state</c> as the fight ends and
+    /// <c>on_enter_idle_state</c> once the NPC is home — and fires them in that order. Our engine has
+    /// one moment for both, so both run here, leave-attack first.
+    /// </summary>
+    /// <remarks>
+    /// Patterns put different work in each: Golden Tatar clears its adds on leaving the fight and only
+    /// re-opens its door on going idle, while Derakanak and Asaratu do everything in the idle handler.
+    /// Running only one of the two silently dropped whichever half a pattern happened to use — which is
+    /// what happened before this was wired: <c>OnLeaveAttack</c> was declared and never evaluated.
+    /// </remarks>
     protected override void HandleBackHome()
     {
+        Evaluate(Pattern.OnLeaveAttack);
         Evaluate(Pattern.OnEnterIdle);
         ResetPattern();
         base.HandleBackHome();
@@ -447,25 +459,39 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// Retail <c>spawn_on_multi_target</c>: one spawn per target, most-hated first, capped.
     /// </summary>
     /// <remarks>
-    /// <paramref name="maxTargets"/> is retail's <c>total_set_to_spawn</c> and is deliberately not
-    /// optional. Every <c>spawn_on_multi_target</c> in the retail files carries one, and leaving it
-    /// out is not a harmless default: uncapped, a full alliance takes one hazard each, so Tiamat's
-    /// Fissurefang dropped twenty-four earthquakes where retail drops three.
-    /// <para>
-    /// The ordering is retail's <c>order_in_attacker_list = ORDERI_DESCENDING</c> — the cap keeps the
-    /// top of the hate list, not an arbitrary slice of it.
-    /// </para>
+    /// <paramref name="maxTargets"/> is retail's <c>total_set_to_spawn</c> and <paramref name="order"/>
+    /// its <c>order_in_attacker_list</c>. Neither is optional. Every <c>spawn_on_multi_target</c> in
+    /// the retail files carries both, and neither has a safe default: uncapped, a full alliance takes
+    /// one hazard each, so Tiamat's Fissurefang dropped twenty-four earthquakes where retail drops
+    /// three — and which players the cap keeps is the mechanic. A paralysis eye on two random players
+    /// is a different fight from one on the two tanks.
     /// </remarks>
     public void SpawnOnEachTarget(int npcId, int spawnId, float validDistance, float range,
-        int liveSeconds, int maxTargets)
+        int liveSeconds, int maxTargets, MultiTargetOrder order)
     {
         AggroList aggro = GetAggroList();
-        List<Creature> targets = aggro.StreamValidTargets(validDistance)
-            .OrderByDescending(t => aggro.GetHate(t))
-            .Take(maxTargets)
-            .ToList();
-        foreach (Creature target in targets)
+        IEnumerable<Creature> valid = aggro.StreamValidTargets(validDistance);
+        IEnumerable<Creature> ordered = order switch
+        {
+            MultiTargetOrder.Descending => valid.OrderByDescending(t => aggro.GetHate(t)),
+            MultiTargetOrder.Ascending => valid.OrderBy(t => aggro.GetHate(t)),
+            _ => Shuffle(valid),
+        };
+
+        foreach (Creature target in ordered.Take(maxTargets).ToList())
             SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
+    }
+
+    /// <summary>Overridable so a test can make <c>ORDERI_RANDOM</c> deterministic.</summary>
+    protected virtual IEnumerable<Creature> Shuffle(IEnumerable<Creature> targets)
+    {
+        List<Creature> pool = targets.ToList();
+        for (int i = pool.Count - 1; i > 0; i--)
+        {
+            int j = Rnd.Get(0, i);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+        return pool;
     }
 
     /// <summary>Puts an add on one attacker chosen the way the pattern names them.</summary>

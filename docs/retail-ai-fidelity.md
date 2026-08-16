@@ -2210,3 +2210,61 @@ mutations caught after the two test fixes above.
   melee** and cast a different skill for each.
 - **Naga_WrF, ND2_WhF, NLehpar_BhC** — 18-24 branches each, **zero** commented
   branches. Same refusal as Icaronix and Lost Balor.
+
+---
+
+## Aurelian Dadar and Tatar's Blaze — three adds nobody could summon
+
+**NPCs:** aurelian dadar (235966, Cygnea) and tatar's blaze (220019, Enshar), both
+LEGENDARY world bosses on plain `aggressive`. **Pattern:** `LDF4b_Golden_Gururu`.
+
+All three things they call up were spawned by **nothing** anywhere in the server:
+
+| threshold | add | how many | picked |
+|---|---|---|---|
+| below 85 | tatar's clone (282743) | 8 | most-hated first |
+| below 60 | paralysis eye (282744) | 2 | at random |
+| 90 / 70 / 45 / 25 | lava (282746) | 6 | at random |
+
+Each runs on its own timer with a repeat branch beneath it: the threshold branch
+rests fifty seconds after firing, the repeat re-checks every six. The four lava
+thresholds are one-shots, one flag each.
+
+### `ORDERI_RANDOM` — and a second correction to yesterday's fix
+
+Yesterday's cap fix hardcoded "most-hated first", because every Tiamat spawn uses
+`ORDERI_DESCENDING`. This boss shows that was too narrow: **`ORDERI_RANDOM` is the
+common case by a wide margin** — 254 uses across the 5.8 files against 65 descending
+and 5 ascending. A paralysis eye on two random players is a different fight from one
+on the two tanks.
+
+`MultiTargetOrder` is now a **required** parameter alongside `maxTargets`, for the
+same reason: the field is always present in the data, so there is no safe default.
+Tiamat's four call sites were re-checked and are all genuinely descending.
+
+### A declared event that never fired
+
+`AiPattern.OnLeaveAttack` existed as API and **was evaluated nowhere in the runtime**.
+No shipped boss used it, so nothing was broken — but this pattern puts its add
+cleanup in `on_leave_attack_state` rather than `on_enter_idle_state`, and the adds
+simply never went away. `HandleBackHome` now runs both, leave-attack first, matching
+the order retail fires them.
+
+### What is deliberately left out
+
+- **The casts, and two entire chains with them.** Fifteen skill indices are addressed
+  and **neither boss has an `npc_skills` entry at all** — not a short list, no list.
+  Retail's other two chains do nothing but cast, so arming them would schedule a
+  heartbeat forever to do nothing. Both are omitted, as Lost Balor's were, with their
+  timings recorded so they can be restored if a skill list ever surfaces:
+  - main rotation: T0 → T1 → T2 → T3 → T0 at 8s, 8s, 8s, 12s — indices 14, 13, 11, then 7+8+8
+  - debuff cycle: T7 → T8 → T9 → T10 → T11 → T7 at 40s — indices 2, 3, 4, 5, 6
+- **The door.** Retail opens door 1 on waking, closes it sixty seconds into the fight
+  — shutting the raid in — and re-opens it on death, reset and leaving combat. The
+  pattern runtime has no door control. **This is now the second boss to want it**
+  (Researcher Teselik opens door 210 on death), and is the clearest next addition to
+  the runtime.
+- **The three shouts**, which have no numeric id in our data.
+
+**Verification.** Full suite 1,186 passing and 1 skipped; thirteen new pins across
+both bosses; all ten mutations caught.
