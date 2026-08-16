@@ -2690,3 +2690,50 @@ nothing. Recorded here against the day a mapping turns up:
 Following the Flamelord fix, every `LiveNpcs()` use in the suite was checked. Nothing
 else indexes into it — the rest use `Single`, counts, `foreach`, or sort explicitly
 before comparing. The Flamelord pin was the only one, and it is fixed.
+
+---
+
+## The naga captains — four slaves on whoever is tanking
+
+**NPCs:** naga sorcerer (290126) and captain lahbri (256115), Reshanta, both HERO and
+both on plain `aggressive`. **Pattern:** `Naga_WrF`. The naga slave (290127, ELITE) was
+spawned by nothing anywhere; its only trace in the server was its own `npc_skills`
+entry.
+
+**Four slaves, on the current target**, once on first dropping into 41-60 and then
+every ninety seconds for as long as the fight stays in that band. Each lands within ten
+metres of whoever the captain was facing. Below 41 the timer stops matching and no more
+come.
+
+`num_to_spawn` was 4 — the fourth time this has mattered, after Vanuka, Flox and the
+Vritra rearguards. The digest still shows one row per spawn element.
+
+### Why the casts stay untranslated even though the count matches
+
+Ten indices are addressed. Captain Lahbri has ten skills — but the **naga sorcerer has
+no `npc_skills` entry at all**, so one of the two NPCs sharing this pattern could not
+cast anything even with a perfect mapping. There are no branch comments either. Same
+refusal as Icaronix, Prectaz, RM-56c and Karemiwen.
+
+Omitted with it: a one-shot per health band on timer 1, each lighting a cast-only
+ping-pong pair — T2/T3 at 76-90 and again at 61-75, T5/T6 at 21-40, T7/T8 below 20 —
+plus a broadcast of message 3315 and three shouts. Only the band that summons is kept,
+with the timer-1 heartbeat that carries the fight into it.
+
+### One deliberate divergence
+
+Retail clears the slaves only on death and leans on `despawn_at_attack_state` for the
+rest — a flag our runtime does not model. Their `live_time` is **fifty minutes**, so a
+reset that left them standing would strand four elites in the abyss for the best part
+of an hour. They are cleared on leaving the fight as well, and a test pins it.
+
+### The blind spot the mutation pass found
+
+Two mutations survived the first pass — a nine-second repeat instead of ninety, and a
+repeat branch that never re-arms — and both for one reason: **the first repeat rides
+the timer the *opening* branch armed**, so watching only that far cannot tell the
+repeat's own period from anything. The pin now runs to the second repeat. Worth
+carrying to any boss whose opener and repeat arm the same slot.
+
+**Verification.** Full suite 1,261 passing and 1 skipped; ten pins across both
+captains; all eight mutations caught after that fix.
