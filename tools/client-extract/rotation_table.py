@@ -52,19 +52,28 @@ def fired_timer(conditions: ET.Element | None) -> str:
 
 
 def actions_of(actions: ET.Element | None) -> tuple[str, str, str, str]:
-    """(timer armed, delay, what it spawns, what it casts)."""
-    arms = delay = spawns = skill = ""
+    """(timer armed, delay, everything it spawns, what it casts).
+
+    Every spawn, not the last one: a branch that drops four hazards at four points is common, and
+    keeping only one of them silently halves the mechanic. Vanuka Infernus was nearly ported off a
+    table that showed one flame center per branch where the pattern has up to four.
+    """
+    arms = delay = skill = ""
+    spawned: list[str] = []
     for op in actions if actions is not None else []:
         if op.tag == "add_battle_timer":
             arms = (op.findtext("btimer_indicator") or "").replace(TIMER_PREFIX, "T")
             delay = op.findtext("delay") or ""
         elif op.tag.startswith("spawn"):
             name = (op.findtext("npc_nameid") or "").strip()
+            where = ""
+            if (op.findtext("spawn_location_type") or "").strip() == "SPAWN_LOCATION_ABSOLUTE":
+                where = f"@{op.findtext('x')},{op.findtext('y')}"
             facing = op.findtext("dir") or "0"
-            spawns = name + (f" dir={facing}" if facing not in ("0", "") else "")
+            spawned.append(name + where + (f" dir={facing}" if facing not in ("0", "") else ""))
         elif op.tag.startswith("use_skill"):
             skill = (op.findtext("skill") or "").replace("SKILLI_INDEX_", "idx")
-    return arms, delay, spawns, skill
+    return arms, delay, " + ".join(spawned), skill
 
 
 def main() -> None:

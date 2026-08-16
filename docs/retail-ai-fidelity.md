@@ -1648,3 +1648,43 @@ NPCs whose pattern *has* content, not the number of fights worth writing: some
 are adequately served by generic AI, and the usual skill-index and waypoint
 limits apply to whatever is left. It is a ranked hypothesis list, and the entries
 at the top of it are the ones this session kept finding by luck.
+
+### Dark Poeta — Vanuka Infernus (215282)
+
+Pattern `Dragon_G3`, and the first boss ported from `audit_missing_ai.py` rather
+than found by luck. He had **no AI at all** in an instance where half the roster
+is implemented.
+
+His fight is a four-step chain that runs at a different speed in each health
+band, dropping flame centers at four fixed points as it goes, plus a separate
+chain below 30% that summons instead:
+
+| band | chain |
+|---|---|
+| 81-100 | four steps, 15s apart bar one at 12s, a **pair** of flames on the last |
+| 61-80 | the same four faster, a **ring of four** on two of them |
+| 31-60 | slower, 22s on the long steps, one ring |
+| below 30 | timer 0 hands over to T5-T8, which summons a faithful subordinate once per loop and never returns |
+
+Neither the flame center (281276) nor the subordinate (281275) was spawned by
+anything. **Casts not translated**: ten skills, nine indices, no branch comments.
+The chain itself is index-free, so the timing and the spawns are faithful.
+
+**A tool bug caught just in time.** `rotation_table.py` kept only the *last* spawn
+per branch, so the table showed one flame center where the pattern drops four. The
+port was written from that table and would have shipped a quarter of the mechanic.
+It surfaced only because counting the distinct coordinates in the raw pattern gave
+sixteen spawns across four points, which did not match. The tool now joins every
+spawn in a branch and prints absolute coordinates with each, and there is a pin
+asserting four flames at four distinct points.
+
+**A test of mine that was wrong for the right reason.** The first version asserted
+exactly four flames after dropping him to 70%, and got six — the opening pair
+lasts ten seconds and the first ring lands at six, so they overlap. That is retail
+behaviour; the test now lets the opener burn out before measuring the ring.
+
+**Verification.** Full suite 1,117 passing and 1 skipped, six new pins, all seven
+mutations caught. Missing adds 742 → **740**.
+
+**Still open in this instance.** Asaratu Bloodshade (215283, `Dragon_G4`, 41
+timers) is the other half of the finding and has no AI either.
