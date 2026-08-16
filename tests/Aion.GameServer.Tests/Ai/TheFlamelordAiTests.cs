@@ -62,13 +62,23 @@ public sealed class TheFlamelordAiTests
 		Assert.Equal(0, ExecutorCount(harness));
 
 		// Four ticks send the four executors, one each, in order.
+		//
+		// The one that just arrived is found by diffing the live set, not by taking the last entry of
+		// it: LiveNpcs() yields world order, which follows globally allocated object ids, so "last"
+		// only happened to mean "newest" while this file ran early enough in the suite. Adding tests
+		// elsewhere shifted the allocation and the assertion started reading a different executor.
 		var order = new List<int>();
+		var seen = new HashSet<Npc>(harness.LiveNpcs().Where(n => Executors.Contains(n.GetNpcId())));
 		for (int i = 0; i < 4; i++)
 		{
 			int before = ExecutorCount(harness);
 			harness.Clock.Advance(TimeSpan.FromSeconds(25));
 			Assert.Equal(before + 1, ExecutorCount(harness));
-			order.Add(harness.LiveNpcs().Select(n => n.GetNpcId()).Last(id => Executors.Contains(id)));
+
+			Npc arrived = Assert.Single(harness.LiveNpcs()
+				.Where(n => Executors.Contains(n.GetNpcId()) && !seen.Contains(n)));
+			seen.Add(arrived);
+			order.Add(arrived.GetNpcId());
 		}
 		Assert.Equal(Executors, order);
 	}

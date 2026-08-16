@@ -2582,3 +2582,58 @@ generic `trap` AI, which has no listener for it.
 mutations caught. One test counted live traps where the traps expire on a twelve-second
 clock, so "laid once" and "laid four times and expired three" looked identical — it
 now counts by identity, the same fix the frost bombs needed.
+
+---
+
+## The Vritra rearguards — two trap types nobody could lay
+
+**NPCs:** guard post rearguard (233487) and defense post rearguard (233477), Engulfed
+Ophidan Bridge, both ELITE and both on plain `aggressive`. **Pattern:**
+`IDF5_U1_War_Vri_Def01_Ra_SN_65_Ae`. The drakan mine trap (284693) and drakan net trap
+(284692) were spawned by nothing anywhere. `EngulfedOphidanBridgeInstance` names both
+rearguards — but only to award score, so the pre-flight check came back clear.
+
+Two chains of eight timers, one per side of 50%, structurally identical and each
+opening by putting **three mine traps** on the current target: T1 → … → T8 → T1 above,
+T9 → … → T16 → T9 below, both at 10, 21, 10, 9, 7, 15, 15 and 9 seconds. Crossing 50
+for the first time also drops **two net traps** and switches to a random attacker.
+Everything lands within five metres of the target and lives fifteen seconds.
+
+### `num_to_spawn` again
+
+The rotation digest showed one row per spawn *element*, and both spawns carry
+`num_to_spawn` — 2 for the nets, 3 for the mines. Read off the digest this would have
+been one trap of each. That is the third distinct way this digest has under- or
+over-reported a spawn count: Vanuka's four flame points collapsed to one, Gatekeeper
+Flox's one eye read as four, and now a multiplier ignored entirely. **Always open the
+spawn element.**
+
+### A flag pair that can strand it
+
+The branch laying the net traps tests two one-shots in order — its own latch, then the
+never-again flag. While health stays below 50 the latch alone blocks re-entry, so the
+second flag looks redundant. It earns its keep only on a *second* descent, and there
+the pair misbehaves: the latch passes and is spent, the never-again flag then fails,
+and the branch beneath — which exists precisely to re-arm the low chain without laying
+traps — finds the latch already gone. The rearguard has no chain at all below 50 from
+then on. Reproduced as written, and pinned by a test that heals it back over 50 and
+pushes it down again. Same shape as Researcher Teselik's phase two eating its own flag.
+
+**Not translated:** the casts (neither npc has an `npc_skills` entry at all, and the
+comments are timer labels like "BT14"), the waypoint return our AI does anyway, and
+message 4444444.
+
+### A latent test bug this exposed
+
+Adding these tests broke `TheFlamelordAiTests.DeliversOneExecutorEveryTwentyFiveSecondsInRotation`
+— in the full suite only, never alone. The rotation was fine. The test identified "the
+executor that just arrived" as the **last** entry of `LiveNpcs()`, which yields world
+order and therefore follows globally allocated object ids; "last" only meant "newest"
+while that file happened to run early enough. New tests elsewhere shifted the
+allocation and it started reading a different executor. It now diffs the live set
+instead. Worth remembering: **`LiveNpcs()` ordering is not spawn ordering**, and any
+pin that leans on it is waiting to break.
+
+**Verification.** Full suite 1,245 passing and 1 skipped; twelve pins across both
+rearguards; all nine mutations caught, the last only after adding the heal-and-drop
+test that makes the never-again flag observable.
