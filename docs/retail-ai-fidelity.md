@@ -9146,3 +9146,54 @@ both ends.
 
 Full suite **1,854 passing** and 1 skipped; eight new pins, run three times over; thirteen mutations,
 all caught after the count-based repairs.
+
+## Medeus the Vile — Ulan's fight with a target switch on every step
+
+`ND2_WhC` binds to Medeus the Vile (211265), a HERO on plain `aggressive`, and he turns out to be the
+fourth member of a family already half-translated: **the same summon pair as `UlanAI`, with different
+ids.** Both patterns place `ND2_Sum_WhB1` and then hand over to `ND2_Sum_WhB2`; Ulan's are the ghost
+wizards (280806/280807), Medeus's the lich summons (280809/280810), with the same three-at-a-time and
+the same ten- and forty-minute lifetimes. Two bosses of one design with a different cast — which is
+also why the adds audit had been flagging Medeus's pair with "we spawn 280806 for this role".
+
+| | |
+|---|---|
+| 61–80 | three lich summons, ten minutes |
+| 36–60 | those three **removed**, three of the other kind take their place, forty minutes — and a peel opens onto the third-most-hated every forty seconds |
+| below 35 | no summon at all; the clock is spent entirely on peeling, every twenty seconds |
+
+**Where Ulan's deep rung stops the clock, Medeus's opens a loop.** Same rung, opposite consequence: Ulan
+below thirty-five summons nothing and never ticks again, Medeus summons nothing either but keeps
+ticking and spends every tick coming off the tank. That is why the two are written out separately
+rather than shared — the shape is identical and the meaning is not.
+
+### A pin that was wrong rather than weak
+
+The first version of the opening pin wounded a bystander and expected Medeus to take them, because
+`on_enter_attack_state` carries `ATTACKERI_HAS_LOWEST_HP`. It failed, and the reason is the mechanic
+rather than the harness: **an attacker indicator picks from the hate list, and at the instant a fight
+starts that list holds only whoever pulled.** The wounded bystander is not an attacker yet, so the
+switch resolves to the puller and changes nothing.
+
+So the pin now asserts what the action actually returns, and the mutation that removes the switch
+entirely is left as a **deliberate survivor** — on a fresh pull the two are indistinguishable. It would
+matter on a re-engage, where a hate list already exists.
+
+**Rule: an attacker indicator on an <em>enter-attack</em> handler is nearly always a no-op. Retail
+writes them anyway; do not pin them as though they choose anything.**
+
+### Not translated
+
+Sixteen skill indices. Both broadcasts — `6184` at 61–80 and `6186` below thirty-five — because their
+only listeners are these very summons' own patterns, whose handlers are a single cast each. **And with
+the broadcasts dropped, the timer 2 and 3 chain that exists only to pace `6184` goes with them**, while
+the timer 4 and 5 chain is kept, because that one paces a peel. That is the helper-rung rule cutting
+both ways in one pattern, which is the clearest illustration of it so far: a chain earns its place by
+what survives at the end of it.
+
+### Verification
+
+Full suite **1,862 passing** and 1 skipped; eight new pins run three times over; eleven mutations, ten
+caught and one deliberate survivor. One mutation had to be rewritten after it failed to compile —
+removing a spawn from the middle of an action list leaves a dangling comma, and a mutation that does
+not build is not a survivor.

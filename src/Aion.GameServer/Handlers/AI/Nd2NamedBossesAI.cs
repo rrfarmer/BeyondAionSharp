@@ -1,5 +1,6 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 using static Aion.GameServer.Ai.Pattern.AiPattern;
 
@@ -288,6 +289,129 @@ public class Rm13bAI : PatternAi
     };
 
     public Rm13bAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// Medeus the Vile (211265). Retail pattern <c>ND2_WhC</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. A HERO on plain <c>aggressive</c>, and the fourth
+/// member of this family: <b>Ulan's wave hand-over with a target switch on top of every step</b>.
+/// <list type="table">
+/// <item><term>on engaging</term><description>he goes straight for whoever is <b>closest to
+/// dying</b></description></item>
+/// <item><term>81–100</term><description>casts, and re-arms the heartbeat at seven seconds rather than
+/// the fallback's six</description></item>
+/// <item><term>61–80</term><description>three lich summons (280809), <b>ten minutes</b></description></item>
+/// <item><term>36–60</term><description>those three are <b>removed</b> and three of the other kind
+/// (280810) replace them, forty minutes — and a peel opens that turns him onto the third-most-hated
+/// every forty seconds</description></item>
+/// <item><term>below 35</term><description>no summon; instead the peel becomes his whole fight, every
+/// twenty seconds for the rest of it</description></item>
+/// </list>
+/// <para>
+/// <b>He is the same summon pair as <see cref="UlanAI"/> with different ids.</b> Both patterns place
+/// <c>ND2_Sum_WhB1</c> then hand over to <c>ND2_Sum_WhB2</c>; Ulan's are the ghost wizards
+/// (280806/280807) and Medeus's the lich summons (280809/280810), with the same ten- and forty-minute
+/// lifetimes and the same three-at-a-time. Two bosses of one design with a different cast.
+/// </para>
+/// <para>
+/// <b>And where Ulan's deep rung stops the clock, Medeus's opens a loop.</b> Ulan below thirty-five
+/// summons nothing and never ticks again; Medeus below thirty-five summons nothing either but keeps
+/// the clock and spends it entirely on coming off the tank. Same rung, opposite consequence — which is
+/// why the two are written out separately rather than shared.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> Sixteen skill indices. Both broadcasts — <c>6184</c> at 61–80 and
+/// <c>6186</c> below thirty-five — because their only listeners are these very summons' own patterns,
+/// whose handlers are a single cast each. With the broadcasts dropped, the timer 2 and 3 chain that
+/// exists only to pace <c>6184</c> goes with them; the timer 4 and 5 chain is kept, because that one
+/// paces a peel. The <c>say_to_all</c> lines, which have no <c>npc_shouts.xml</c> row.
+/// </para>
+/// </remarks>
+[AIName("medeus_the_vile")]
+public class MedeusTheVileAI : PatternAi
+{
+    /// <summary><c>BLF3_NM_LichSum1_45_An</c> and <c>LichSum2</c>.</summary>
+    private const int LichOne = 280809;
+    private const int LichTwo = 280810;
+
+    private const int First = 1;
+    private const int Second = 2;
+
+    private const int ShortLife = 600;
+    private const int LongLife = 2400;
+
+    private const float OutTen = 10f;
+
+    private const int Ladder = 0;
+    private const int MiddlePeel = 4;
+    private const int MiddlePeelBack = 5;
+    private const int DeepPeel = 6;
+
+    // Retail's ALPHA_1..4.
+    private const int Opening = 1;
+    private const int Step1 = 2;
+    private const int Step2 = 3;
+    private const int Below35 = 4;
+
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        OnEnterAttack = Of(
+            Branch(12, "", When.Always,
+                Do.ArmTimer(Ladder, 12000),
+                Do.SwitchTarget(AggroTarget.LOWEST_HP))),
+
+        OnBattleTimer = Of(
+            Branch(11, "and keeps peeling", [When.Timer(DeepPeel), When.HpBelow(35)],
+                Do.ArmTimer(DeepPeel, 20000),
+                Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
+
+            // No summon: below thirty-five the waves are over and the peel is the whole fight.
+            Branch(10, "below 35", [When.Timer(Ladder), When.HpBelow(35), When.FirstTime(Below35)],
+                Do.ArmTimer(DeepPeel, 25000),
+                Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
+
+            Branch(9, "", [When.Timer(MiddlePeelBack), When.HpBetween(36, 60)],
+                Do.ArmTimer(MiddlePeel, 25000)),
+
+            Branch(8, "the middle peel", [When.Timer(MiddlePeel), When.HpBetween(36, 60)],
+                Do.ArmTimer(MiddlePeelBack, 15000),
+                Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
+
+            Branch(7, "36-60 hands over", [When.Timer(Ladder), When.HpBetween(36, 60),
+                    When.FirstTime(Step2)],
+                Do.ArmTimer(Ladder, 10000),
+                Do.ArmTimer(MiddlePeel, 9000),
+                Do.Despawn(First),
+                Do.SpawnNear(LichTwo, Second, count: 3, range: OutTen, liveSeconds: LongLife)),
+
+            Branch(4, "61-80", [When.Timer(Ladder), When.HpBetween(61, 80), When.FirstTime(Step1)],
+                Do.ArmTimer(Ladder, 8000),
+                Do.SpawnNear(LichOne, First, count: 3, range: OutTen, liveSeconds: ShortLife)),
+
+            // Kept for its re-arm, which is seven seconds against the fallback's six.
+            Branch(2, "81-100", [When.Timer(Ladder), When.HpBetween(81, 100), When.FirstTime(Opening)],
+                Do.ArmTimer(Ladder, 7000)),
+
+            Branch(1, "", [When.Timer(Ladder)],
+                Do.ArmTimer(Ladder, 6000))),
+
+        OnLeaveAttack = Of(
+            Branch(14, "", When.Always,
+                Do.Despawn(First), Do.Despawn(Second))),
+
+        OnDie = Of(
+            Branch(13, "", When.Always,
+                Do.Despawn(First), Do.Despawn(Second))),
+    };
+
+    public MedeusTheVileAI(Npc owner)
         : base(owner)
     {
     }
