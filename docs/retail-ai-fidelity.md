@@ -9092,3 +9092,57 @@ of places it appears. Count the receiving end before promising anything.**
 Left unbuilt, deliberately, with the measurements above so the decision can be revisited if a listener
 set that does something translatable turns up — `10001` is the one to look at, and it needs separating
 by sender first.
+
+## The drakan high priests — three summon relays that stack
+
+`XDrakan_HighPriest` binds to Elder Malekor (236449) and Head Priest Nashuma (236494), both on plain
+`aggressive`.
+
+**He does not have a summon ladder, he has three of them, and none of them ever stops.** One relay
+starts with the fight; crossing fifty opens a second; dropping below twenty-five opens a third. The
+band rungs are once-only, but each relay is a *pair* of timers that re-arm one another for the rest of
+the fight, and the relay branches carry no health guard at all.
+
+| | |
+|---|---|
+| from twenty seconds | **two** lesser summons every forty |
+| crossing fifty | one greater, then **three** lesser every thirty *on top* |
+| below twenty-five | one greater again, and a third relay of **three** every thirty |
+
+Measured in the harness: **eight** lesser summons in three minutes with one relay running,
+**twenty-eight** with two, **forty-four** with three. Each lives thirty seconds, which is what keeps
+that from being unbounded — the pressure is the arrival rate, not the count.
+
+### Each relay is two timers, and collapsing one would double its rate
+
+Retail writes them as a hand-off: the first slot arms the second, the second arms the first and spawns.
+The interval is therefore the **sum** of the two delays. This is the Unstable Triroan's lesson from the
+other direction — there two timers could arm one slot and the *shorter* won; here two timers chain and
+the delays *add*. **Rule: before writing an interval down, work out whether the timers race or queue.**
+
+### The pins that were too loose to see a whole relay disappear
+
+Three of the mutations survived the first sweep, all for the same reason: the relay pins asserted
+`together > alone`. That is satisfied by noise. Removing the second relay outright still left the count
+higher than the previous window's, because the windows differ in when the base relay's first payment
+lands. Counted exactly — 24–32 with two relays, 40–50 with three — all three are caught, and so is a
+relay paying two instead of three, which no comparison would have noticed.
+
+**Rule: "more than before" is not a pin. If a mechanic adds a known quantity, assert the quantity.**
+
+A fourth survivor was a bad mutation rather than a missing pin: moving `OnEnterAttack` to `OnWakeUp`
+does nothing, because battle timers only fire in combat. That is the second time this session I have
+written that same no-op — worth remembering that arming a timer outside a fight is not a change.
+
+### Not translated
+
+Sixteen skill indices and the branches that carry nothing else, including timer 20's twenty-second cast
+loop and the four `unset_flag_var` rungs, which each let one relay tick do a different cast the first
+time after its band opens. The `6311` broadcast on timer 29 and the `on_message` handler that arms it:
+nothing in the dump sends whatever message that handler waits for, so the chain is unreachable from
+both ends.
+
+### Verification
+
+Full suite **1,854 passing** and 1 skipped; eight new pins, run three times over; thirteen mutations,
+all caught after the count-based repairs.
