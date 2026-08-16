@@ -46,6 +46,16 @@ public sealed class AiPattern
     public PatternBranch[] OnWakeUp { get; init; } = None;
 
     public PatternBranch[] OnEnterAttack { get; init; } = None;
+
+    /// <summary>
+    /// <c>on_attacked</c> — every hit, not just the one that starts the fight.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from <see cref="OnEnterAttack"/>, which fires once per fight. Retail uses this for
+    /// reactions that can happen at any moment — rounding on whoever just hit you, calling for help —
+    /// and gates the once-only ones with a flag var of their own rather than by the event.
+    /// </remarks>
+    public PatternBranch[] OnAttacked { get; init; } = None;
     public PatternBranch[] OnBattleTimer { get; init; } = None;
     public PatternBranch[] OnLeaveAttack { get; init; } = None;
     public PatternBranch[] OnEnterIdle { get; init; } = None;

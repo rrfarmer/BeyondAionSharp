@@ -1818,3 +1818,41 @@ has 127 unused timer branches and Tiamat's dying phase is still the richest
 mechanic found. Those need their skill lists resolved by other means, or porting
 without casts as several bosses here already were. This queue is simply the set
 where nothing is blocked and the method is known.
+
+### Danuar Reliquary — the frost summons (284377, 284378)
+
+Patterns `Rune_FrostNmd_TankSum_65_Ae` and `Rune_FrostNmd_DealSum_65_Ae`, first off
+the resolvable queue, and **the first bosses in this work whose casts are
+translated** rather than left to npc_skills probabilities.
+
+Both ran on plain `aggressive`. Each runs a five-step chain that cycles. The tank
+shields itself on waking and again on the chain's second step, and closes each
+cycle with its area attack; the dealer has no shield and hits more often. Below
+half health either rounds on a random attacker — once, and then it stays angry.
+
+**How the indices were resolved**, as the worked example of the method:
+
+- The tank's `on_wake_up` comment reads *"cast defence buff (skill 2)"* and the
+  branch casts index 2. Boost Physical Defense is the **only BUFF** in its list, so
+  index 2 is pinned by two independent things at once.
+- Index 0 then falls to Strike, which four branches label "single strike", and
+  index 1 to Insanity Eruption, labelled "area strike".
+- The list is **rotated, not offset**: our data lists the buff first because it
+  carries `is_post_spawn`, where retail has it third.
+
+**One comment is stale** — a branch labelled "skill 1" casts index 2. Four other
+comments and the wake-up all agree with each other, so the odd one out is treated
+as a typo rather than evidence. Worth knowing that these comments are written by
+hand and can drift from the branch they sit on: they are a strong signal, not an
+oracle.
+
+**A runtime addition.** `on_attacked` now exists, distinct from
+`on_enter_attack_state`: it runs on **every hit**, and a branch that should fire
+once carries its own flag var. Gating on the event instead would be a different
+mechanic — the coffins' alarm and these summons' switch look alike but are not.
+
+**Verification.** Full suite 1,128 passing and 1 skipped, six new pins, all six
+mutations caught after three fixes. Two of the three gaps were the same mistake:
+asserting an outcome (which skill appeared, which target it holds) where the
+mechanism is a flag, so a random-target branch could satisfy the assertion by
+accident. Both now assert the flag the branches consume.

@@ -86,6 +86,11 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         base.HandleAttack(creature);
         if (EnterCombat())
             Evaluate(Pattern.OnEnterAttack);
+
+        // on_attacked runs on every hit. A branch that should only fire once carries its own flag
+        // var, which is how retail writes them -- gating on the event instead would be a different
+        // mechanic.
+        Evaluate(Pattern.OnAttacked);
     }
 
     protected override void HandleBackHome()
