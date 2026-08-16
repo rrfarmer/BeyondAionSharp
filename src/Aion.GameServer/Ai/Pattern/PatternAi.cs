@@ -639,14 +639,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <para>
     /// Taken as a world-axis offset from the NPC's position. Whether retail rotates it by the NPC's
     /// heading is not settled here; for the four-way symmetric placements this was written for, the
-    /// distinction cannot be observed, and no ported pattern yet depends on an asymmetric one.
+    /// distinction cannot be observed.
+    /// <para>
+    /// <b>An asymmetric case now exists</b> and the question is still open. Captain Adhati's waves sit
+    /// at offsets like (8, 8) and (3, -2), which under a rotating interpretation would land somewhere
+    /// else entirely. He stands on a fixed mark on the Dreadgion facing one way, so the two readings
+    /// cannot be told apart from the pattern alone, and this keeps the world-axis one it has always
+    /// had. Settling it needs observation of the live encounter, not more data.
     /// </para>
     /// </remarks>
-    public void SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds)
+    public void SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds, float dz = 0f)
     {
         WorldPosition at = GetPosition();
         Track(spawnId, liveSeconds,
-            Spawn(npcId, at.GetX() + dx, at.GetY() + dy, at.GetZ(), (sbyte)at.GetHeading()));
+            Spawn(npcId, at.GetX() + dx, at.GetY() + dy, at.GetZ() + dz, (sbyte)at.GetHeading()));
     }
 
     private void SpawnAround(WorldPosition at, int npcId, int spawnId, int count, float range, int liveSeconds)

@@ -5779,3 +5779,57 @@ and between uneven and uniform, is only observable statistically, and this work 
 retired one flaky probabilistic pin. Making it verifiable means an injectable RNG at the
 `Rnd` static, which is a change to shared infrastructure rather than to this encounter.
 Worth doing when something else needs it too.
+
+## Captain Adhati — a boss wearing a shared behaviour
+
+`Dread_DrakanBoss`, npc 214823, on the Dreadgion. He was on **`xdrakanpriest`**, a
+Java-parity behaviour shared with **ninety-four other NPCs**: a three-percent chance per hit
+of calling up one to three of npc 282988. Not a weaker version of his fight — somebody
+else's fight entirely, and none of his own three servants was spawned by anything anywhere.
+
+**What he does is a five-rung escalation.** Two attackers the moment he is engaged, onto
+fixed marks on the deck; then a heartbeat carries one-shot steps that each call a
+differently-composed wave and **round on somebody else**:
+
+| rung | wave | lifetime | then |
+|---|---|---|---|
+| on engaging | 2 attackers, on fixed marks | 25s | — |
+| below 80 | 4 attackers | 30s | second-most-hated |
+| below 65 | 1 attacker + a **buffer** | **22s** | third-most-hated |
+| below 45 | 3 attackers + a **healer** | 30s | second-most-hated |
+| below 35 | nothing but a cast | — | — |
+| below 20 | 4 attackers + healer **and** buffer | 30s | a random attacker |
+
+The rungs are one-shots with the deepest outranking the rest, so a boss burned down fast
+skips to the wave it deserves rather than walking every one down.
+
+**Two things that look like nothing and are not.** The empty rung at 35 re-arms the
+heartbeat at **ten** seconds where the idle fallback re-arms at **seven** — running it
+changes when the next rung can fire, and both are caught mutations. And the difference
+between the two cadences is a single second at the first opportunity, which is why the pin
+measures it after five idle ticks, where it has grown to five.
+
+**A lifetime pin that had to be tightened.** "The 65 wave keeps thirty seconds" survived the
+first pass: the pin let the wave land somewhere inside an eleven-second window, and measured
+loosely a thirty-second wave and a twenty-two-second one both read as gone. Landing it on an
+exact second — the heartbeat's cadence is known, so this is arithmetic rather than luck —
+kills it. The transient-window family again, in its timing form rather than its
+did-it-happen form.
+
+**`SpawnOffset` gained a height offset**, because every one of his waves carries `z=3` or
+`z=4`. It also gained an honest note: his offsets are the **first asymmetric ones** any
+ported pattern uses — (8, 8), (3, -2) — and whether retail rotates a relative offset by the
+NPC's heading is still unsettled. He stands on a fixed mark facing one way, so the two
+readings cannot be told apart from the pattern alone. Settling it needs observation of the
+live encounter.
+
+**Not translated.** Four skill indices, and with them timer 1 (a cast on a twenty-second
+cycle carrying nothing else) and timers 2 and 3, which are a chain of `broadcast_message` at
+6835 and 6837 that nothing in our tree listens for — his servants run plain `servant` AI,
+which is not a message listener. Also out: the `goto_waypoint` he opens with, since we have
+no route for him.
+
+**Where the count went.** 469 across 355 encounters → **466 across 354**.
+
+**Verification.** Full suite 1,466 passing and 1 skipped; twelve new pins; thirteen
+mutations, all caught after the two above were addressed.

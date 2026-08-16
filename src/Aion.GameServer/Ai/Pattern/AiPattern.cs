@@ -233,8 +233,9 @@ public static class Do
 
     /// <summary><c>spawn_on_multi_target</c> — one add on every valid target in range.</summary>
     /// <summary><c>SPAWN_LOCATION_RELATIVE</c> — a fixed offset from where the NPC stands.</summary>
-    public static PatternAction SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds = 0)
-        => ai => ai.SpawnOffset(npcId, spawnId, dx, dy, liveSeconds);
+    public static PatternAction SpawnOffset(int npcId, int spawnId, float dx, float dy,
+        int liveSeconds = 0, float dz = 0f)
+        => ai => ai.SpawnOffset(npcId, spawnId, dx, dy, liveSeconds, dz);
 
     /// <summary>
     /// <c>spawn_on_multi_target</c>. <paramref name="maxTargets"/> and <paramref name="order"/> are
