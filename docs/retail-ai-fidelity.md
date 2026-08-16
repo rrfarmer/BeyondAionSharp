@@ -6378,3 +6378,56 @@ retail's own loose end rather than ours.
 
 **Verification.** Full suite 1,520 passing and 1 skipped; eight new pins; nine mutations, eight
 caught and one that will not compile.
+
+## Kingspin — the first ladder that is regimes rather than steps
+
+Second off the missing-AI list ranked by spawns. An ELITE boss of Lower Udas Temple on plain
+`aggressive`, no AI class, and the one NPC his fight is made of — the **web** (281391) —
+reachable by nobody.
+
+He opens by throwing a web on each of up to three players and **four more behind himself**, at
+fixed offsets two metres up: (-15, 0), (-15, -5), (-5, -15), (0, -15). Those four last six seconds
+where everything he throws on a player lasts eight or thirty. They are the only thing in the
+pattern placed relative to the boss.
+
+**Then a health ladder with no flag vars anywhere on it.** Every threshold pattern translated
+before this one guards its branches with `set_flag_var`, which makes them steps that fire once.
+These do not: while he is below the threshold the branch fires **every eight seconds**, for as
+long as the fight lasts. The distinction is the whole shape of the fight, and it is written in the
+pattern by the absence of a line.
+
+| rung | what happens |
+|---|---|
+| below 86 | casts only |
+| below 71 | a web on each of the **four most-hated** |
+| below 51 | a web on each of the **five least-hated** |
+| below 36 | casts only |
+
+**The ordering flips, and that is the mechanic.** At 71 he webs the top of his hate list — the
+tanks. At 51 he webs the bottom of it, which is the healers and the ranged. Retail says
+`ORDERI_DESCENDING` and then `ORDERI_ASCENDING`; getting it backwards would invert who the fight
+is hard on, and both are caught mutations.
+
+A second timer throws four more on random targets every eighteen seconds from twelve, regardless
+of health.
+
+### Two pins that had to be measured rather than reasoned
+
+**The two timers overlap**, so a count at an arbitrary second means nothing. Tracing the fight
+second by second gave the windows where it does — every web after the opening lasts eight seconds,
+so 20-29 and 38-47 are empty of the second timer's contribution — and the pins use those.
+
+**And the top rung has to be measured where it matches.** "Above eighty-six the ladder throws
+nothing" passed against a mutation that made the top rung throw webs, because *above* eighty-six
+no rung matches at all and the mistake was invisible. Measuring at **eighty** — inside the top
+rung's band, outside the next one's — is what makes it a test of that rung.
+
+**Where the count went.** 447 across 340 encounters → **446 across 339**; missing-AI 737 → 736.
+
+**Still owed on this instance.** Three more Lower Udas Temple bosses are in the same state, each
+with one unreachable add: Bergrisar (`IDTP_Keeper1`, whose five blood wheels are all walk-path
+blocked, so only its on-death controllers are portable), Anvilface (`IDTP_NepEx1`, add 281424) and
+the Nepilim boss (`IDTP_NepBoss1`, add 281421).
+
+**Verification.** Full suite 1,527 passing and 1 skipped; seven new pins; eight mutations, seven
+caught and one that will not compile.
