@@ -2451,3 +2451,36 @@ before someone "tightens" a guard that is already doing nothing.
 bosses; all nine mutations caught, one of them only after replacing an equivalent
 mutant with a real one. One test was wrong before it was right: it counted bombs
 standing, where the bombs remove themselves — it now counts them by identity.
+
+---
+
+## Correction — Ahserion was never the biggest missing fight
+
+For several runs `audit_missing_ai.py` put **ahserion (297189)** at the top of its
+report — 127 timer references, 13 spawns, no AI class — and this log repeatedly named
+it as the largest unused fight in the game. It is not a fight at all.
+
+- **297189 is placed in exactly one spawn file: `900190000_Tag_Match_Test_Level.xml`.**
+  A developer map. No player can reach it.
+- The Ahserion players actually fight is **277224**, which has had `AhserionAI` all
+  along — and that class already spawns Ereshkigal's Voice (297186), which is most of
+  what the retail pattern's spawns amount to.
+- The second Ahserion the pattern summons, 297195, is already reachable too: skill
+  21574 carries its `spawn_npc`, and that skill is in our `npc_skills`.
+
+NCSoft ships developer maps — tag-match arenas, time-attack rigs, zone tests — and
+their spawn files sit in the same tree as the real ones. The audit's liveness check
+counted any placement anywhere, so a phantom led the report. It now skips spawn files
+whose name matches `test|_dev|sample`, which drops the total from 767 to **760** and
+puts real content back at the top.
+
+**Had it been ported it would have been wasted work**, and worse, it would have looked
+like progress. Two audit corrections in as many sessions now — first that an instance
+handler may already implement a pattern's doors and messages, now that a spawn file
+may not be a real place. Both were failures of the same kind: treating a mechanical
+signal as evidence of reachable content without checking what it pointed at.
+
+**Screened while there:** Ahserion's pattern resolves only 3 of its 13 skill indices
+by name (충격파 → Shock Wave, 파멸의 이드분열 → Ide Destruction, and 쾌속의 일격 [랜덤]
+→ the 21562/21565 random three-chain). The other ten have no match, so even the real
+277224 could not have its casts translated from this pattern.

@@ -78,8 +78,17 @@ def main() -> None:
 
     # Only NPCs our data really places, so this cannot report a boss nobody can fight -- the trap
     # Jurdin the Cursed set for the adds audit.
+    # NCSoft ships developer maps -- tag-match arenas, time-attack rigs, zone tests -- and their spawn
+    # files sit alongside the real ones. An NPC placed only there is not content anyone can reach, so
+    # counting it as live puts phantoms at the top of this report. Ahserion 297189 led it for several
+    # runs on the strength of a single placement in 900190000_Tag_Match_Test_Level, while the Ahserion
+    # players actually fight (277224) has had an AI class all along.
+    TEST_MAPS = re.compile(r"test|_dev|sample", re.IGNORECASE)
+
     live: set[str] = set()
     for p in (repo / "game-server/data/static_data/spawns").rglob("*.xml"):
+        if TEST_MAPS.search(p.stem):
+            continue
         live.update(re.findall(r'<spawn npc_id="(\d+)"', read_text(p)))
     handler_text = {p: read_text(p) for p in
                     (repo / "src/Aion.GameServer/Handlers/Instance").rglob("*.cs")}
