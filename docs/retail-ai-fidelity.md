@@ -4022,3 +4022,47 @@ precisely when its known list is still empty. The comment now says so.
 **Verification.** Full suite 1,337 passing and 1 skipped; ten new pins and four existing ones passing
 unchanged against the rebuilt table; twelve of thirteen mutations caught, the thirteenth being the
 runtime limit above. Missing adds 679 → **676 across 446 encounters**.
+
+### Calindi Flamelord, the same fight and the same two faults
+
+`Dragon_G2` is Tahabata's twin: same arena, same marks, same four-chained-timers-per-band shape, and
+the class had both of his faults — **no rotation**, and an enrage armed in `HandleSpawned` where
+retail arms it in `on_enter_attack_state`. A group that spent four minutes reaching her arrived with
+six on the A-rank clock.
+
+Where she genuinely differs, and it is not renaming:
+
+- her low chain places **two** drakan spots, on the first and third marks; his places four
+- she turns on her **second** most hated on one step where he takes a random one
+- her 81-100 wrap arms T2 rather than T1, so T1 fires exactly once all fight
+- she leaves no primal dragon — retail's `on_killed_by_user` clears her markers and nothing else
+
+**Two calls rather than one.** 3413 rides every ring of worm spots and 3412 every pair of drakan
+spots, each clearing only its own kind. That is what stops the worm band's wave and the drakan band's
+wave from stacking when the fight crosses between them.
+
+### The guard that reads like a typo
+
+Both dragons enter their last chain at **below 30** and guard every step of it at **below 45**. It
+looks like a mistake and writing all five as `HpBelow(30)` looks like the fix — it matches the entry
+guard, and it quietly ends the fight's last chain the moment a healer catches her.
+
+A mutation to exactly that survived the first pass of pins on both bosses. The pin that catches it
+has to heal her back into the thirties and watch for another placement, and even then the first
+version of it passed under mutation because the pair already standing had not expired yet: watching
+for "a spot appears" one second after four spots were placed proves nothing. It waits for them to go
+first now.
+
+**This is a general shape worth naming.** A pin that watches for an event has to start from a state
+where the event has not already happened. Two of the pins written today failed this way — one
+counting markers after they had expired, one counting them before they had.
+
+### Also of note
+
+The drakan's own combat chain is untranslated: four indices against three distinct skills, and its
+`on_despawn` effect spawn names an NPC that binds to nothing in our 4.8 client. The worm has no
+combat pattern at all — one branch, and it is the call.
+
+**Verification.** Full suite 1,346 passing and 1 skipped; ten new pins; all eleven mutations caught,
+two of them only after the pins that should have caught them were fixed. Missing adds 676 → **673
+across 445 encounters**.
