@@ -4597,3 +4597,36 @@ band or two and a table that reads as complete. **The next pass should transcrib
 before writing any of it.** The pieces are: the sequence table above, the beacon↔direction↔skill
 mapping proven here, and the existing class's hazard spawns, which are already faithful and should be
 kept as the per-breath effect.
+
+### Tiamat's rotation, transcribed
+
+Last entry said the next pass should transcribe all four bands before writing any of the table. Done,
+and as data rather than by eye: `tools/client-extract/extract_tiamat_rotation.py` emits
+`out/tiamat_rotation.tsv` — **249 rows, 45 steps, 13 distinct NPCs, nothing unresolved.**
+
+| band | steps | what happens |
+|---|---|---|
+| 76-100 | 4 | M, M, L, R — 18s a step, beacons all from (458.5, 514.7, 417.4) at dir 0/0/17/105 |
+| 51-75 | 9 | L, M, R, then Thorn L/M/R five seconds apart, then R, M, L |
+| 26-50 | 14 | L, M, R at twelve seconds with the `Beacon*8s` marks, Thorn L/M/R and a Cyclops crack every two, then the same in reverse |
+| 0-25 | 17 | the `Beacon*4s` marks at eight seconds, and Gravity Bombs and a Quake join the thorns and cracks |
+| any | 1 | `Repeat_0`, the unbanded three-second heartbeat every banded chain hangs off |
+
+Reading that by hand was not an option: one wrong delay or one wrong beacon heading is not something
+review catches, and there are several hundred coordinates.
+
+**Every NPC it places resolves**, and most already have handlers of their own — `ultimate_atrocity`,
+`calculated_atrocity`, `divisive_creation`, `gravity_crusher`, `tiamat_skill_helper`. The hazards are
+built; what is missing is the boss placing them in retail's order instead of rolling a die.
+
+**The lower bands use different breath skills.** The top two bands address indices 1/2/3, which the
+last entry resolved to 20922/20924/20926 by their stack names. 26-50 addresses 7/9/11 and 0-25
+addresses 6/8/10 — and the beacon names say why: `Beacon*8s` and `Beacon*4s`, an eight-second and a
+four-second telegraph. Those are faster-cast breath variants and their ids are **not yet resolved**;
+only three skills in the table carry the `IDTIAMAT_TIAMAT_BREATH{L,M,R}_CAST` names.
+
+**What remains, precisely.** Write the table from the TSV — structure, beacons, thorns, cracks, bombs
+and quake are all index-free and fully evidenced. Keep the existing class's per-breath hazard spawns.
+Translate the top two bands' casts using the resolved 20922/24/26; leave 26-50 and 0-25 casting
+nothing until their variants resolve, and say so in the class. The one thing not to do is carry the
+`Rnd.NextInt(3)` forward into any band that now has a sequence.
