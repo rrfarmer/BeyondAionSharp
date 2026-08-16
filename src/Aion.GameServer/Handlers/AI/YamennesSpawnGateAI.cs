@@ -8,8 +8,10 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// The spawn gates Unstable Yamennes opens (283203, 283222, 283223, 283233). Retail patterns
-/// <c>IDAbRe_Core_Summon4_02</c>, <c>_3_02</c>, <c>_6_02</c> and <c>_Low_02</c>.
+/// The spawn gates of the Abyssal Reliquary, both generations: the four Unstable Yamennes opens
+/// (283203, 283222, 283223, 283233, patterns <c>IDAbRe_Core_Summon4_02</c>, <c>_3_02</c>, <c>_6_02</c>
+/// and <c>_Low_02</c>) and the three older ones (282014, 282015, 282131, the same patterns without
+/// the <c>_02</c>).
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md. These are the gates the boss actually opens —
@@ -23,10 +25,17 @@ namespace Aion.GameServer.Handlers.AI;
 /// </para>
 /// <para>
 /// <b>What this replaces, and what it does not.</b> The class the boss used before —
-/// <c>UnstableYamenessPortalSummonedAI</c> on a different set of gate ids — spawns two other npcs at
+/// <c>YamenessPortalSummonedAI</c> on a different set of gate ids — spawns two other npcs at
 /// ±3 metres twelve seconds in and once more at seventy-two. That is not this pattern under a
 /// different name; it is an invention. This class is the pattern. The boss is repointed to open these
 /// gates in <see cref="UnstableYamennesAI"/>.
+/// </para>
+/// <para>
+/// <b>And the older three are here too now.</b> 282014, 282015 and 282131 were the gates that class
+/// ran, and their patterns turn out to be these ones without the <c>_02</c>: identical clock,
+/// identical marks, and a different pair of NPCs to feed out — 281903 and 281904 against 283200 and
+/// 283201. So the invention was on both generations at once, on two classes. They are rows in the
+/// same table now and that class is gone.
 /// </para>
 /// <para>
 /// <b>The on-wake summon is what starts everything, and it was nearly left out.</b> Every one of these
@@ -53,6 +62,13 @@ public class YamennesSpawnGateAI : PatternAi
     private const int Orkanimum = 283200;
     private const int Lapilima = 283201;
 
+    /// <summary>
+    /// The older generation's pair, fed by the same three patterns without the <c>_02</c> suffix:
+    /// <c>IDAbRe_Core_Sum_CannonF</c> and <c>_WormF</c>.
+    /// </summary>
+    private const int OldOrkanimum = 281903;
+    private const int OldLapilima = 281904;
+
     /// <summary><c>IDAbRe_Core_Sum_Teleport2_Enemy</c> — the spawn gate that attacks the gate.</summary>
     private const int TeleportEnemy = 282016;
 
@@ -68,6 +84,12 @@ public class YamennesSpawnGateAI : PatternAi
 
         // IDAbRe_Core_Summon4_Low_02 — a worm at its own feet, faster and shorter-lived.
         [283233] = new Feed(Lapilima, 9000, 9000, 13, true, 0f, 0f, 0f),
+
+        // The older generation: IDAbRe_Core_Summon4_3, _6 and _Low. Same clock, same marks, a
+        // different pair of NPCs to feed out.
+        [282014] = new Feed(OldOrkanimum, 3000, 12000, 70, false, 331.33f, 722.18f, 212.93f),
+        [282015] = new Feed(OldOrkanimum, 3000, 12000, 70, false, 348.55f, 741.76f, 212.93f),
+        [282131] = new Feed(OldLapilima, 9000, 9000, 13, true, 0f, 0f, 0f),
     };
 
     private static readonly ConcurrentDictionary<int, AiPattern> ByNpcId = new ConcurrentDictionary<int, AiPattern>();

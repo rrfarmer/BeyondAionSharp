@@ -41,14 +41,14 @@ public sealed class UnstableYamennesAiTests
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI), typeof(GatesSummonedAI))
 			.Build();
 
 	private static (BossAiHarness, Npc, Player) EngagedSingle(int npcId)
 	{
 		BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI), typeof(GatesSummonedAI))
 			.Build();
 		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		Player player = harness.SpawnPlayer(332f, 732f, 216f);
@@ -60,7 +60,7 @@ public sealed class UnstableYamennesAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI), typeof(GeneralNpcAI), typeof(GatesSummonedAI))
 			.Build();
 		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		var raid = new List<Player>();
@@ -455,5 +455,61 @@ public sealed class UnstableYamennesAiTests
 		gate.GetAi().OnGeneralEvent(AiEventType.Despawned);
 
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Orkanimum));
+	}
+
+	/// <summary>The older generation of gates, and what they feed.</summary>
+	private const int OldUpperGate = 282014;
+	private const int OldLowerGate = 282131;
+	private const int OldOrkanimum = 281903;
+	private const int OldLapilima = 281904;
+
+	/// <summary>
+	/// The three older gates run the same mechanic with their own pair of NPCs. They were on a second
+	/// class carrying the same invention — two npcs at ±3 metres, twelve seconds in and once more at
+	/// seventy-two — so the made-up shape was on both generations at once.
+	/// </summary>
+	[Fact]
+	public void TheOlderUpperGateFeedsItsOwnOrkanimum()
+	{
+		using var harness = NewHarness();
+		harness.Spawn(OldUpperGate, 300f, 740f, 216f);
+
+		BossAiHarness.Watched fed = harness.Watch(20, null, OldOrkanimum);
+
+		Assert.Equal(2, fed.Total);
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Orkanimum));
+
+		Npc first = harness.LiveNpcs().First(n => n.GetNpcId() == OldOrkanimum);
+		Assert.Equal(331.33f, first.GetX(), 1);
+	}
+
+	/// <summary>And the other older upper gate has its own mark, not the first one's.</summary>
+	[Fact]
+	public void TheOtherOlderUpperGateHasItsOwnMark()
+	{
+		using var harness = NewHarness();
+		harness.Spawn(282015, 340f, 745f, 216f);
+
+		harness.Watch(6, null, OldOrkanimum);
+
+		Npc fed = harness.LiveNpcs().First(n => n.GetNpcId() == OldOrkanimum);
+		Assert.Equal(348.55f, fed.GetX(), 1);
+		Assert.Equal(741.76f, fed.GetY(), 1);
+	}
+
+	/// <summary>And the older lower gate feeds its worm at its own feet, faster.</summary>
+	[Fact]
+	public void TheOlderLowerGateFeedsItsOwnLapilima()
+	{
+		using var harness = NewHarness();
+		Npc gate = harness.Spawn(OldLowerGate, 305f, 736f, 198f);
+
+		BossAiHarness.Watched fed = harness.Watch(11, null, OldLapilima);
+
+		Assert.Equal(1, fed.Total);
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Lapilima));
+
+		Npc worm = harness.LiveNpcs().First(n => n.GetNpcId() == OldLapilima);
+		Assert.Equal(gate.GetX(), worm.GetX(), 1);
 	}
 }

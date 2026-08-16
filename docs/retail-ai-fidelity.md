@@ -6252,3 +6252,75 @@ expression rather than reading it.
 tornado's two crushers, and two more the same sweep uncovered.
 
 **Verification.** Full suite 1,509 passing and 1 skipped; five new pins; six mutations, all caught.
+
+## The same invention, on both generations of Yamennes gate
+
+`yamenessportal` — the last actionable name on the shared list, and it turned out to be the
+other half of a job already done.
+
+There are **two generations** of Abyssal Reliquary spawn gate. The four Unstable Yamennes opens
+(283203, 283222, 283223, 283233) were ported earlier. The other three — **282014, 282015,
+282131** — were on `YamenessPortalSummonedAI`, a second class carrying the *same invention* the
+first four had: two npcs at ±3 metres, twelve seconds in and once more at seventy-two.
+
+Their patterns are the ported ones without the `_02` suffix. Identical clock, identical marks,
+one difference: the pair they feed out is **281903 and 281904** where the newer gates feed 283200
+and 283201. So they are three rows in the same table, and that class is gone.
+
+Worth naming: **the invention was on two classes at once, and the first pass only found one of
+them.** The shared-name audit is what connected them — not because the two classes disagreed, but
+because the three older gates' patterns named NPCs their class never reached.
+
+### Two more audit shapes, both found by the count moving the wrong way
+
+Retiring the old class **raised** the backlog, twice over, and both were the audit rather than
+the port:
+
+- **A record row naming its id through a constant.** `new Feed(OldOrkanimum, …)` — the sweep that
+  follows record tables read only literals, so retiring the class that had spawned 281903 and
+  281904 *literally* put both straight back in. It now resolves this file's `const int` names at
+  int positions, the same thing the id-returner sweep already did.
+- The id-returner sweep from the previous entry, which is what made 855626 and 855712 visible.
+
+Four ways an npc id can hide from a text sweep have now been met and closed: a generated table, a
+computed `self + n`, a local assignment, a helper's return value — and now a constant inside a
+record row. The through-line is the same each time: **the audit measures what the code says, and
+code says the same thing five different ways.**
+
+**Where the count went.** 453 across 345 encounters → **449 across 341**.
+
+**What is left on the shared-name list.** Two, both already recorded and neither actionable:
+`brigade_general_vasharti` (the hard mode's glove controllers — blocked on the waypoint trigger
+*and* on the controllers having no controller AI) and `tiamats_incarnation_spawn` (ten
+`_invisible` damage twins, which the missing-adds audit filters as scenery on purpose).
+
+`orissan_summon_helper` is the one genuinely open case, and it is written up below.
+
+### Researched, not ported: the Orissan crystals
+
+The two icing crystals (855607, 855608) are **message-driven** in retail and spawn-driven here.
+Each answers four messages with four different products:
+
+| message | what the crystal puts out |
+|---|---|
+| 22729 broken Lv3 | 855699 |
+| 22730 broken Lv2 | 855700 |
+| 22735 spread Lv3 | 855702 (crystal 1) / 856309 (crystal 2) |
+| 22736 spread Lv2 | 855703 (crystal 1) / 856306 (crystal 2) |
+| 22737 Orissan dies | clears its group and itself |
+
+Ours casts once on spawning and puts out 855699 or 855700 by crystal id — so the two *spread*
+products, four NPCs, are unreachable.
+
+**Both halves exist here**, unlike the fortress lords' despawn helpers: the senders are the
+Orissan bosses' own patterns (`IDSeal_HalfWake_Lv2/3`, `IDSeal_FullWake_Lv2/3`), which bind
+236230/236231/236233/236234 — all four on our `orissan` AI, all four placed by
+`DrakenspireDepthsInstance`. What is missing is the **plumbing**: `OrissanAI` is a hand-written
+Java-parity fight that never broadcasts, and the helper never listens.
+
+So this is not an AI-class-sized job; it is translating four boss patterns and replacing a
+working implementation of a complex fight. Recorded with the message numbers and the products so
+whoever takes it does not have to re-derive them.
+
+**Verification.** Full suite 1,512 passing and 1 skipped; three new pins; five mutations, all
+caught.

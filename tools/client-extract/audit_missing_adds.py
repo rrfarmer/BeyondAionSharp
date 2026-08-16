@@ -433,6 +433,7 @@ def spawned_via_constants(text: str) -> set[str]:
     # twelve trap ids in `Kit(bool OnTarget, int Opening, float OpeningRange, int OpeningLife, ...)`,
     # and one `bool` in front of the ids hid all ten of them. Reading per component rather than
     # all-or-nothing costs no precision: a non-`int` component was never going to hold an npc id.
+    record_consts = dict(CONST_RE.findall(text))
     for record, components in INT_RECORD_RE.findall(text):
         parts = [c.strip() for c in components.split(",") if c.strip()]
         int_positions = {i for i, c in enumerate(parts) if c.startswith("int ")}
@@ -444,6 +445,12 @@ def spawned_via_constants(text: str) -> set[str]:
                 continue  # a nested call or a named argument; not worth guessing at
             for i in int_positions:
                 ids.update(re.findall(r"^(\d{5,6})$", fields[i]))
+                # A row may name its id through a constant rather than inline. The Yamennes gate
+                # table does exactly that -- `new Feed(OldOrkanimum, ...)` -- and reading only
+                # literals put both of its older NPCs straight back into the backlog the moment
+                # the class that had spawned them literally was retired.
+                if fields[i] in record_consts:
+                    ids.add(record_consts[fields[i]])
 
     for used in (set(re.findall(SPAWN_CALL + r"\s*(\w+)", text))
                  | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text))
