@@ -46,8 +46,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// 10001. What is here is index-free: the timers, the bands, the counts and the summons.
 /// </para>
 /// </remarks>
-[AIName("guard_reinforcement")]
-public class GuardReinforcementAI : PatternAi
+internal static class GuardReinforcementPatterns
 {
     /// <summary>Retail's <c>SPAWN_ID_1</c>: leaving the fight clears exactly this group.</summary>
     private const int Called = 1;
@@ -92,8 +91,15 @@ public class GuardReinforcementAI : PatternAi
         {
             var actions = new List<PatternAction>();
             foreach ((int summonId, int count) in band.Summons)
-                actions.Add(Do.SpawnNear(summonId, Called, count: count, range: Nearby,
-                    liveSeconds: ReinforcementLife));
+            {
+                // spawn_on_target puts the wave on whoever the guard is fighting, which is a
+                // materially different fight from a wave at its own feet.
+                actions.Add(band.OnTarget
+                    ? Do.SpawnOnTarget(summonId, Called, count: count, range: Nearby,
+                        liveSeconds: ReinforcementLife)
+                    : Do.SpawnNear(summonId, Called, count: count, range: Nearby,
+                        liveSeconds: ReinforcementLife));
+            }
 
             PatternCondition[] guards = band.Chance >= 100
                 ? [When.Timer(1), When.HpBetween(band.Low, band.High)]
@@ -117,11 +123,47 @@ public class GuardReinforcementAI : PatternAi
         };
     }
 
+    /// <summary>The pattern this guard runs, or an empty one if it is not in the table.</summary>
+    internal static AiPattern For(int npcId) => ByNpcId.GetOrAdd(npcId, static id => Build(id));
+}
+
+/// <summary>
+/// The 407 guards that carried nothing but <c>aggressive</c> before this.
+/// </summary>
+/// <remarks>Retail-sourced; see <see cref="GuardReinforcementPatterns"/> and docs/retail-ai-fidelity.md.</remarks>
+[AIName("guard_reinforcement")]
+public class GuardReinforcementAI : PatternAi
+{
     public GuardReinforcementAI(Npc owner)
         : base(owner)
     {
     }
 
-    protected override AiPattern Pattern =>
-        ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => Build(id));
+    protected override AiPattern Pattern => GuardReinforcementPatterns.For(GetOwner().GetNpcId());
+}
+
+/// <summary>
+/// The same reinforcements, on a guard that also carries the abyss guards' aggro rules.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. Forty-nine of the 460 guards in the table were
+/// already on <c>simple_abyssguard</c>, which is a faithful port of aionemu's own class: it aggroes
+/// npc-on-npc, ignores movement while fighting, and refuses to answer another guard's call for help.
+/// Overwriting that with <see cref="GuardReinforcementAI"/> would have traded one mechanic for
+/// another, and copying it into a second class would have forked Java-parity code.
+/// <para>
+/// So the reinforcement branches are shared rather than the aggro rules duplicated:
+/// <see cref="AbyssGuardSimpleAI"/> now runs on the pattern base with an empty table, and this
+/// subclass fills the table in. The Java-parity class keeps every override it had.
+/// </para>
+/// </remarks>
+[AIName("abyssguard_reinforcement")]
+public class AbyssGuardReinforcementAI : AbyssGuardSimpleAI
+{
+    public AbyssGuardReinforcementAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => GuardReinforcementPatterns.For(GetOwner().GetNpcId());
 }

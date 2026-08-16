@@ -12,7 +12,7 @@ carries the facts.
 
 What it emits, one row per (guard npc, band):
 
-    guard_npc_id  pattern  low_hp  high_hp  chance  summons
+    guard_npc_id  pattern  low_hp  high_hp  chance  placement  summons
 
 where `summons` is `npc_id*count` joined by commas, and the band is the retail
 `is_hp_in_boundary` / `is_hp_lower_than` guard verbatim.
@@ -37,8 +37,11 @@ from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
 GUARD_RE = re.compile(r"^[DL]Guard_")
 
 # The dump is element-based; summarize_pattern.py renders attributes for reading.
+# Two ops, not one. `spawn` places at the guard's own point; `spawn_on_target` puts the
+# reinforcements on whoever it is fighting. Looking only for the first dropped four variants
+# silently -- and a guard whose wave lands on the raid rather than on itself is a different fight.
 SPAWN_RE = re.compile(
-    r"<spawn>(?P<body>.*?)</spawn>", re.S)
+    r"<(?P<op>spawn|spawn_on_target)>(?P<body>.*?)</(?P=op)>", re.S)
 NAMEID_RE = re.compile(r"<npc_nameid>([^<]+)</npc_nameid>")
 COUNT_RE = re.compile(r"<num_to_spawn>(\d+)</num_to_spawn>")
 LIVE_RE = re.compile(r"<live_time>(\d+)</live_time>")
@@ -70,10 +73,11 @@ def branches_of(block: str, event: str) -> list[str]:
 
 
 def spawns_in(branch: str) -> list[tuple[str, int, int, int, str]]:
-    """(devname, count, live_time, spawn_range, location) for each spawn in a branch."""
+    """(devname, count, live_time, spawn_range, placement) for each spawn in a branch."""
     found = []
     for spawn in SPAWN_RE.finditer(branch):
         body = spawn.group("body")
+        on_target = spawn.group("op") == "spawn_on_target"
         name = NAMEID_RE.search(body)
         if not name:
             continue
@@ -86,7 +90,7 @@ def spawns_in(branch: str) -> list[tuple[str, int, int, int, str]]:
             int(count.group(1)) if count else 1,
             int(live.group(1)) if live else 0,
             int(rng.group(1)) if rng else 0,
-            loc.group(1) if loc else "?",
+            "TARGET" if on_target else (loc.group(1) if loc else "?"),
         ))
     return found
 
@@ -98,7 +102,10 @@ def band_of(branch: str) -> tuple[int, int] | None:
     lower = LOWER_RE.search(branch)
     if lower:
         return 0, int(lower.group(1)) - 1
-    return None
+    # No health guard at all: the call is unconditional. Returning None here dropped every
+    # DGuard_PsA row on the floor, which reads as "this guard never calls" rather than
+    # "this guard always calls".
+    return 0, 100
 
 
 def main() -> None:
@@ -169,6 +176,7 @@ def main() -> None:
 
             for low, high, chance, _timer, spawns in timers:
                 resolved = []
+                placement = "TARGET" if spawns and spawns[0][4] == "TARGET" else "SELF"
                 for devname, count, _live, _rng, _loc in spawns:
                     npc_id = by_devname.get(devname.lower())
                     if npc_id is None:
@@ -179,10 +187,10 @@ def main() -> None:
                 if not resolved:
                     continue
                 for guard_id in guard_ids:
-                    rows.append((guard_id, name, low, high, chance, ",".join(resolved)))
+                    rows.append((guard_id, name, low, high, chance, placement, ",".join(resolved)))
 
     rows.sort(key=lambda r: (int(r[0]), r[2]))
-    lines = ["guard_npc_id\tpattern\tlow_hp\thigh_hp\tchance\tsummons"]
+    lines = ["guard_npc_id\tpattern\tlow_hp\thigh_hp\tchance\tplacement\tsummons"]
     lines += ["\t".join(str(c) for c in r) for r in rows]
     body = "\n".join(lines) + "\n"
     if args.out:

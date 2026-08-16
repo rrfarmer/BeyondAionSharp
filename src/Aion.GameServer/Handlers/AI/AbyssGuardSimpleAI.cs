@@ -1,5 +1,6 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
@@ -7,9 +8,26 @@ using Aion.GameServer.World.Geo;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>Java parity: ai/AbyssGuardSimpleAI (Rolandas, Neon).</summary>
+/// <remarks>
+/// Every override below is the Java class verbatim. What changed is the base: it was
+/// <c>AggressiveNpcAI</c> and is now <see cref="PatternAi"/>, which derives from it and adds nothing
+/// when the table is empty — every pattern hook returns immediately on a zero-length branch list.
+/// <para>
+/// The reason is <see cref="AbyssGuardReinforcementAI"/>. Forty-nine abyss guards need this class's
+/// aggro rules <i>and</i> the retail reinforcement branches, and C# gives one base class: either the
+/// aggro rules get copied into a second class, forking Java-parity code, or this one moves onto the
+/// pattern base so a subclass can supply a table. Moving the base is the smaller change and leaves
+/// the behaviour identical.
+/// </para>
+/// </remarks>
 [AIName("simple_abyssguard")]
-public class AbyssGuardSimpleAI : AggressiveNpcAI
+public class AbyssGuardSimpleAI : PatternAi
 {
+    /// <summary>Nothing, unless a subclass says otherwise.</summary>
+    private static readonly AiPattern Nothing = new AiPattern();
+
+    protected override AiPattern Pattern => Nothing;
+
     public AbyssGuardSimpleAI(Npc owner)
         : base(owner)
     {

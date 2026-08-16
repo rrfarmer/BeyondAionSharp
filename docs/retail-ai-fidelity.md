@@ -4273,3 +4273,53 @@ an inventory.**
 The two survivors are both inert by construction and were checked rather than assumed: arming a battle
 timer outside combat does nothing (the runtime only fires them in a fight), and no NPC carries this AI
 without a table row, because the repoint list *was* the table's key set.
+
+### Finishing the guards, and what the first pass quietly dropped
+
+Two follow-ups were named last entry: the 53 guards left on their own handlers, and the six
+absolute-placement variants. Doing the first turned up something worse than either.
+
+**The 49 abyss guards now have both.** `simple_abyssguard` is a faithful port of aionemu's class —
+npc-on-npc aggro, movement ignored while fighting, refusing another guard's call for help — and C#
+gives one base class. Copying those rules into a second class would have forked Java-parity code, so
+`AbyssGuardSimpleAI` moved onto the pattern base with an empty table (`PatternAi` derives from
+`AggressiveNpcAI` and every pattern hook returns immediately on a zero-length branch list) and
+`AbyssGuardReinforcementAI` fills the table in. Every override in the Java-parity class is untouched.
+
+### The extractor was dropping two whole shapes
+
+The guard rows in the backlog fell from 95 to 35 and stopped. The remainder were not the 53 guards —
+they were **variants my extractor never emitted**, for two reasons it should have reported and did
+not:
+
+- **`spawn_on_target`.** Retail has more than one spawn op, and I only looked for `<spawn>`. Guards
+  using `spawn_on_target` drop their wave **on whoever they are fighting** rather than at their own
+  feet. Four pattern variants read as guards that call nobody, and the difference is not cosmetic: a
+  wave that lands on the raid is a different fight from one that lands on the guard.
+- **Branches with no health guard at all.** `band_of` returned `None` and the row was skipped, so
+  `DGuard_PsA`'s unconditional calls read as "never calls" rather than "always calls".
+
+Fixed, the family goes from 90 patterns and 692 rows to **158 patterns and 1,388 rows across 870
+guards** — nearly double what the first pass claimed to have covered.
+
+**The lesson is the same one the audit taught two entries ago.** A tool that silently drops what it
+does not recognise reports a smaller problem than exists, and the report looks like progress. Both
+failures here were invisible: the extractor said "90 patterns" and nothing said 68 were missing. The
+`unresolved` counter existed and covered only the case I had thought of.
+
+### Where the count went
+
+676 across 441 encounters → **626 across 395**. Guard-family rows in the timer bucket: **95 → 0.**
+The whole `[DL]Guard_` family is resolved — 778 guards on `guard_reinforcement`, 82 on
+`abyssguard_reinforcement`.
+
+**Still open:** 8 guards on `general` (killios, aimah, kutos, varzeni and their variants) and 2 on
+`siege_shieldnpc`. `GeneralNpcAI` descends from `NpcAI` rather than `AggressiveNpcAI`, so the trick
+that worked for the abyss guards — move the base, subclass it — does not apply without deciding what
+a `general` guard's aggro rules are for. The six absolute-placement artifact variants are also still
+out; they place at fixed fortress coordinates rather than relative to anything, so they need the
+single-ownership check that multi-owner absolute coordinates always need.
+
+**Verification.** Full suite 1,359 passing and 1 skipped; five new pins; both placement mutations
+caught — the second only after a mirror pin was added, because every self-placement pin stood the
+guard two metres from its quarry, where the two placements are indistinguishable.

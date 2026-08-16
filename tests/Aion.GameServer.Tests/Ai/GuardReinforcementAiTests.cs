@@ -152,4 +152,149 @@ public sealed class GuardReinforcementAiTests
 		Assert.Equal(0, Count(harness, HolyServantAttacker));
 		Assert.Equal(0, Count(harness, HolyServantHealer));
 	}
+
+	/// <summary>A medic leader, <c>DGuard_PhA_L50</c> — an abyss guard on its own aggro class.</summary>
+	private const int MedicLeader = 207596;
+	private const int MedicAttacker = 295151;
+	private const int MedicHealer = 295152;
+
+	private static BossAiHarness AbyssHarness() =>
+		BossAiHarness.For(Reshanta).WithWorldSize(4096)
+			.WithAi(typeof(AbyssGuardReinforcementAI), typeof(AbyssGuardSimpleAI), typeof(ServantNpcAI),
+				typeof(AggressiveNpcAI)).Build();
+
+	private static (BossAiHarness, Npc, Player) AbyssEngaged(int npcId, int hpPercent)
+	{
+		BossAiHarness harness = AbyssHarness();
+		Npc guard = harness.Spawn(npcId, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 302f, 200f);
+		BossAiHarness.SetHpPercent(guard, hpPercent);
+		harness.Engage(guard, player);
+		return (harness, guard, player);
+	}
+
+	private static (int Attackers, int Healers) FirstAbyssCall(BossAiHarness harness, Npc guard, Player player)
+	{
+		for (int i = 0; i < 10 * 21; i++)
+		{
+			Advance(harness, guard, player, 1);
+			int attackers = Count(harness, MedicAttacker);
+			if (attackers > 0)
+				return (attackers, Count(harness, MedicHealer));
+		}
+
+		return (0, 0);
+	}
+
+	/// <summary>
+	/// The forty-nine guards that already carried <c>simple_abyssguard</c> get the reinforcements too,
+	/// without losing the aggro rules that class exists for.
+	/// </summary>
+	[Fact]
+	public void AnAbyssGuardCallsReinforcementsToo()
+	{
+		var (harness, guard, player) = AbyssEngaged(MedicLeader, 20);
+		using BossAiHarness _h = harness;
+
+		Assert.Equal((3, 2), FirstAbyssCall(harness, guard, player));
+	}
+
+	/// <summary>And it reads its own band, not Nina's.</summary>
+	[Fact]
+	public void AnAbyssGuardReadsItsOwnBand()
+	{
+		var (harness, guard, player) = AbyssEngaged(MedicLeader, 90);
+		using BossAiHarness _h = harness;
+
+		Assert.Equal((2, 0), FirstAbyssCall(harness, guard, player));
+	}
+
+	/// <summary>
+	/// It still refuses to answer another guard's call for help, which is the aggro rule its own class
+	/// carries and the thing that would have been lost by overwriting the AI name.
+	/// </summary>
+	[Fact]
+	public void AnAbyssGuardKeepsItsOwnAggroRules()
+	{
+		var (harness, guard, _) = AbyssEngaged(MedicLeader, 90);
+		using BossAiHarness _h = harness;
+
+		Assert.IsAssignableFrom<AbyssGuardSimpleAI>(guard.GetAi());
+	}
+
+	/// <summary>
+	/// Most guards keep their wave at their own feet — the <c>spawn</c> op rather than
+	/// <c>spawn_on_target</c>.
+	/// </summary>
+	/// <remarks>
+	/// The mirror of <see cref="SomeGuardsDropTheirWaveOnTheirQuarry"/>, and it exists because without
+	/// it a mutation that sent <i>every</i> wave onto the target passed: the other self-placement pins
+	/// stand the guard two metres from its quarry, where the two placements are indistinguishable.
+	/// </remarks>
+	[Fact]
+	public void MostGuardsKeepTheirWaveAtTheirOwnFeet()
+	{
+		BossAiHarness harness = BossAiHarness.For(Reshanta).WithWorldSize(4096)
+			.WithAi(typeof(GuardReinforcementAI), typeof(ServantNpcAI), typeof(AggressiveNpcAI)).Build();
+		using BossAiHarness _h = harness;
+		Npc guard = harness.Spawn(Nina, 300f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(360f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, quarry);
+		BossAiHarness.SetHpPercent(guard, 20);
+		harness.Engage(guard, quarry);
+
+		Npc? arrived = null;
+		for (int i = 0; i < 10 * 21 && arrived is null; i++)
+		{
+			Advance(harness, guard, quarry, 1);
+			arrived = harness.LiveNpcs().FirstOrDefault(n => n.GetNpcId() == HolyServantAttacker);
+		}
+
+		Assert.NotNull(arrived);
+		Assert.True(Math.Abs(arrived!.GetX() - guard.GetX()) < Math.Abs(arrived.GetX() - quarry.GetX()),
+			"the wave should land at the guard's own feet");
+	}
+
+	/// <summary>A garrison senior patrol, <c>LGuard_PhB</c> — the <c>spawn_on_target</c> shape.</summary>
+	private const int GarrisonPatrol = 207773;
+	private const int PatrolAttacker = 294734;
+	private const int PatrolHealer = 294737;
+
+	/// <summary>
+	/// Some guards drop their wave <b>on whoever they are fighting</b> rather than at their own feet —
+	/// retail's <c>spawn_on_target</c>. That is a materially different fight for a raid, and it was
+	/// missed entirely on the first pass: the extractor only looked for the <c>spawn</c> op, so four
+	/// pattern variants read as guards that call nobody.
+	/// </summary>
+	/// <remarks>
+	/// The guard and its quarry are kept well apart so the landing spot is unambiguous. Retail scatters
+	/// the wave three metres around the target, so what is asserted is which of the two they arrived
+	/// next to, not an exact coordinate.
+	/// </remarks>
+	[Fact]
+	public void SomeGuardsDropTheirWaveOnTheirQuarry()
+	{
+		BossAiHarness harness = BossAiHarness.For(Reshanta).WithWorldSize(4096)
+			.WithAi(typeof(GuardReinforcementAI), typeof(ServantNpcAI), typeof(AggressiveNpcAI)).Build();
+		using BossAiHarness _h = harness;
+		Npc guard = harness.Spawn(GarrisonPatrol, 300f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(360f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, quarry);
+		BossAiHarness.SetHpPercent(guard, 20);
+		harness.Engage(guard, quarry);
+
+		Npc? arrived = null;
+		for (int i = 0; i < 10 * 21 && arrived is null; i++)
+		{
+			Advance(harness, guard, quarry, 1);
+			arrived = harness.LiveNpcs().FirstOrDefault(
+				n => n.GetNpcId() == PatrolAttacker || n.GetNpcId() == PatrolHealer);
+		}
+
+		Assert.NotNull(arrived);
+		float toQuarry = Math.Abs(arrived!.GetX() - quarry.GetX());
+		float toGuard = Math.Abs(arrived.GetX() - guard.GetX());
+		Assert.True(toQuarry < toGuard,
+			$"the wave should land on the quarry: {toQuarry:F1}m from it, {toGuard:F1}m from the guard");
+	}
 }
