@@ -88,16 +88,37 @@ public class DeathDropBossAI : PatternAi
 /// Retail-sourced; see docs/retail-ai-fidelity.md. On plain <c>aggressive</c> with no AI class, and
 /// the <b>explosive trap</b> (281619) his fight is built on reachable by nobody.
 /// <para>
-/// One timer does it: armed at twenty-five seconds when the fight starts, it drops a trap on whoever
-/// he is fighting, five metres out, and comes back every <b>six</b> seconds after that. So the first
-/// one is slow and then they are relentless — which is the shape of the fight rather than a detail,
-/// and a single interval would have got it wrong in both directions.
+/// <b>One trap, once, and only in the middle of the fight.</b> An earlier translation of this class
+/// read the trap branch as a six-second loop; it carries both an <c>is_hp_in_boundary</c> band and a
+/// test-and-set flag var, so it lays a single trap and only while he is between <b>36 and 70</b>
+/// percent. Found by <c>tools/client-extract/audit_pattern_guards.py</c>, which exists because of it.
 /// </para>
 /// <para>
-/// <b>Not translated.</b> Thirteen skill indices on timers 0, 1, 3 and 4, and the branch on timer 3
-/// that re-arms timer 2 at eighteen seconds while casting — the re-arm is reproduced only through
-/// timer 2's own six-second loop, because translating a branch whose sole other action is a cast
-/// would put a bare re-arm in the table with nothing to justify it.
+/// <b>What the rest of the timer-2 chain is for is <em>when</em> that trap can land.</b> Timer 2 is
+/// armed at twenty-five seconds and every other branch on it only casts — but they re-arm it at
+/// different delays per band, and that decides how soon after entering the band he gets his chance:
+/// </para>
+/// <list type="table">
+/// <item><term>76–100</term><description>seventeen seconds</description></item>
+/// <item><term>36–70, trap already laid</term><description>seventeen seconds</description></item>
+/// <item><term>below 35</term><description>hands off to timer 3, which comes back to timer 2
+/// eighteen seconds later — the one place the chain leaves its own timer</description></item>
+/// <item><term>anything else, 71–75 included</term><description>six seconds</description></item>
+/// </list>
+/// <para>
+/// Those branches are kept although their casts are not, because each re-arms at a delay the
+/// fallback does not. A branch earns its place by changing what happens.
+/// </para>
+/// <para>
+/// <b>One retail branch is dead in retail.</b> The below-35 rung is written twice — priority 10 with
+/// no flag var and priority 9 with one, otherwise identical. Ten always matches first, so nine can
+/// never run. Collapsed to one here rather than reproduced as a pair.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> Thirteen skill indices on timers 0, 1, 3 and 4; the <c>valid_distance</c> of
+/// fifty on the trap spawn, which retail uses to skip the spawn when the target is further off than
+/// that; and the <c>on_see_friend_attacked</c> / <c>on_friend_spelled</c> pair, which is a cast and a
+/// target switch.
 /// </para>
 /// </remarks>
 [AIName("takahan")]
@@ -110,20 +131,42 @@ public class TakahanAI : PatternAi
 
     private const float OnThem = 5f;
 
-    private const int FirstTrapMillis = 25000;
-    private const int TrapIntervalMillis = 6000;
+    /// <summary>Retail's <c>FLAGVARI_ALPHA_1</c> — the trap is laid once.</summary>
+    private const int TrapLaid = 1;
+
+    private const int FirstCheckMillis = 25000;
+    private const int SlowMillis = 17000;
+    private const int QuickMillis = 6000;
+    private const int HandBackMillis = 18000;
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         // Retail also arms timers 0, 1 and 4 here; all three are cast loops.
         OnEnterAttack = Of(
             Branch(11, "", When.Always,
-                Do.ArmTimer(2, FirstTrapMillis))),
+                Do.ArmTimer(2, FirstCheckMillis))),
 
         OnBattleTimer = Of(
-            Branch(2, "", [When.Timer(2)],
-                Do.ArmTimer(2, TrapIntervalMillis),
-                Do.SpawnOnTarget(ExplosiveTrap, Traps, count: 1, range: OnThem))),
+            // Retail writes this rung twice, at 10 and at 9; the second carries a flag var and can
+            // never run behind the first. It is the only branch that does not re-arm timer 2.
+            Branch(10, "below 35", [When.Timer(2), When.HpBelow(35)],
+                Do.ArmTimer(3, 9000)),
+
+            Branch(8, "", [When.Timer(3)],
+                Do.ArmTimer(2, HandBackMillis)),
+
+            Branch(7, "36-70 trap", [When.Timer(2), When.HpBetween(36, 70), When.FirstTime(TrapLaid)],
+                Do.ArmTimer(2, QuickMillis),
+                Do.SpawnOnTarget(ExplosiveTrap, Traps, count: 1, range: OnThem)),
+
+            Branch(6, "36-70", [When.Timer(2), When.HpBetween(36, 70)],
+                Do.ArmTimer(2, SlowMillis)),
+
+            Branch(5, "76-100", [When.Timer(2), When.HpBetween(76, 100)],
+                Do.ArmTimer(2, SlowMillis)),
+
+            Branch(1, "", [When.Timer(2)],
+                Do.ArmTimer(2, QuickMillis))),
     };
 
     public TakahanAI(Npc owner)

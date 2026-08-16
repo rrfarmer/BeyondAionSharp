@@ -6942,3 +6942,101 @@ prevent. It now reads `messageType == X` in either order.
 caught — including aionemu's five-phase ladder put back, and the three stage-counter rungs both
 dropped and demoted below the summoning pair. `audit_ai_messages.py` pairs 140505 and is otherwise
 unchanged at eight pre-existing unpaired messages.
+
+## Four bosses shipped with their health guards dropped, and a new audit for it
+
+This one is a correction to work in this log rather than to aionemu. Chasing an unrelated finding in
+`audit_retail_messages.py` meant re-reading `ND2_PhA` in full, and the pattern did not say what the
+class translated from it says. Then neither did two of its siblings, nor a fourth boss done in a
+later pass.
+
+### What the mistake is
+
+Retail writes a summoning ladder as battle-timer branches guarded by `is_hp_in_boundary` — a **band**,
+not a threshold — with a bottom branch whose only condition is the timer and whose only action is
+re-arming it. Read quickly, the bands are easy to miss, and what is left looks like an unguarded
+sequence ordered by priority alone. It runs. It summons. It is a different fight:
+
+- **waves arrive at full health** instead of when the raid has pushed the boss into their band;
+- **in the reverse order**, because priority descends as the bands get shallower;
+- **a band the raid jumps over still fires**, where retail skips it for good;
+- and the bottom branch, dropped as "a re-arm that does nothing", turns out to be the only thing
+  keeping the clock alive between bands.
+
+The last of those is the one that would have been hardest to find in play: with the bands restored
+but no fallback, the first heartbeat matches nothing and the boss never summons at all.
+
+### What was wrong
+
+| class | pattern | what was dropped |
+|---|---|---|
+| `ExedilAI` | `ND2_PhA` | bands 26–55 and 56–80, the hand-over despawn, the fallback |
+| `UlanAI` | `ND2_WhB` | bands 36–60 and 61–80, the hand-over despawn, the fallback, the 81–100 rung's seven-second re-arm |
+| `Rm13bAI` | `ND2_AhD` | band 31–75, the fallback |
+| `TakahanAI` | `Dread02_SurkanaNm06` | band 36–70 **and the flag var** |
+
+Takahan is the worst of the four. His trap branch carries both a band and a test-and-set, so retail
+lays **one** trap, once, and only while he is between 36 and 70 percent. The shipped class laid one
+every six seconds for the rest of the fight.
+
+Exedil and Ulan both gained something the earlier reading could not have produced: **a hand-over**.
+The middle band despawns `SPAWN_ID_1` before it spawns into `SPAWN_ID_2`, so a raid never faces both
+twenty-minute pairs at once — the first is taken away as the second arrives. And Ulan's deepest rung
+summons *nothing* while sitting above both summoning rungs and not re-arming the clock, so a raid that
+takes him under thirty-five quickly gets **fewer** adds, not more.
+
+Two smaller things fell out of reading the patterns properly:
+
+- Ulan's 81–100 rung is kept although its casts are not, because it re-arms at seven seconds where the
+  fallback re-arms at six. Exedil's equivalent rung re-arms at the same six seconds as its fallback
+  and is dropped. **A branch earns its place by changing what happens** — the same test that kept
+  Hokuruki's stage-counter rungs.
+- Takahan's below-35 rung is written **twice** in retail, at priority 10 without a flag var and at 9
+  with one. Ten always matches first, so nine can never run: a dead branch in the shipped data.
+  Collapsed to one rather than reproduced as a pair.
+
+Retail's bands leave gaps — at exactly 25 for Exedil, 35 for Ulan, 30 for Rm13b — where no rung
+matches and only the fallback runs. Preserved rather than closed; widening a band to tidy the seam
+would move a threshold.
+
+### The pins were wrong too, and are rewritten rather than relaxed
+
+Five of the six ND2 pins failed against the corrected classes, because they had been written to
+agree with the translation instead of with the pattern. That is the worse failure of the two: a
+mistranslation with a passing pin reads as verified. They are replaced with pins that state the
+bands, the hand-over, the skipping and the fallback, and the fallback pins in particular have to walk
+the boss *into* a band from above rather than starting inside one — starting inside a band passes
+whether or not the clock survives.
+
+### `audit_pattern_guards.py`
+
+New, and it exists because of this. For every `PatternAi` class bound to a retail pattern it reports:
+
+- a retail branch that **spawns or despawns**, guarded by a band the class has no `When.HpBetween`
+  for — cast-only branches are ignored, since this work does not translate casts it cannot map;
+- a pattern with a bare-timer fallback branch where the class has none.
+
+Run against the pre-fix classes it names all four bosses and both faults, which is the check that
+matters for a tool written after the fact. Guards are scanned **per class, not per file**: the ND2
+trio share one file, and a file-wide scan let one boss's `HpBelow` answer for another's missing band —
+under-reporting Exedil by one band on the first run.
+
+**Sixteen findings remain**, and they are the next work from this audit:
+
+| class | what is unaccounted for |
+|---|---|
+| `TiamatDyingRotationAI` | five bands and the fallback |
+| `UdasTempleBossesAI` (bergrisar) | bands 11–20, 21–40, 41–60, 61–80 |
+| `GuardReinforcementAI` (both names) | four bands across two patterns, and the fallback |
+| `GatekeeperFloxAI` | bands 0–25 and 51–75 |
+| `GelkmarosPadmarashkaAI` | band 61–90 — already known, part of `DF4_Dramata`'s untranslated half |
+| nine others | fallback only |
+
+The fallback-only findings need triage rather than a fix: a class with no battle timers at all cannot
+want a fallback, and the check cannot tell that apart from one that dropped it. The band findings are
+real work.
+
+**Verification.** Full suite 1,601 passing and 1 skipped; twenty-seven pins across the two files, up
+from fourteen; fourteen mutations, all caught — including both shipped bugs put back exactly as they
+were. Three mutations survived the first sweep (Exedil's fallback, Ulan's stopping rung, Takahan's
+hand-off) and each needed a pin that walks the fight through the rung rather than starting past it.
