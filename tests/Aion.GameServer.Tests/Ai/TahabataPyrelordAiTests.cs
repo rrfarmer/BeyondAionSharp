@@ -10,8 +10,9 @@ namespace Aion.GameServer.Tests.Ai;
 /// <c>Dragon_G1</c> (see <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
 /// <remarks>
-/// The class predates this work and keeps its own skill-hook mechanic; what is pinned here is only
-/// what was corrected — when the enrage starts, how long it runs, and the primal dragon he leaves.
+/// The first four pins were written when this class was still aionemu's, with an enrage timer bolted
+/// on: they cover when the enrage starts, how long it runs, and the primal dragon he leaves. They pass
+/// unchanged against the rebuilt table, which is the point of keeping them.
 /// </remarks>
 [Collection("GoldenDataManager")]
 public sealed class TahabataPyrelordAiTests
@@ -19,6 +20,11 @@ public sealed class TahabataPyrelordAiTests
 	private const int DarkPoeta = 300040000;
 	private const int Tahabata = 215280;
 	private const int PrimalDragon = 281265;
+	private const int FlameCenter = 281261;
+	private const int CyclopsSpot = 281262;
+	private const int DrakanSpot = 281263;
+	private const int FaithfulSubordinate = 281258;
+	private const int Drakan = 281259;
 
 	/// <summary>The enrage he casts when the ten minutes run out.</summary>
 	private const int YouAreUnworthy = 19679;
@@ -26,7 +32,8 @@ public sealed class TahabataPyrelordAiTests
 	private static (BossAiHarness, Npc, Player) Spawned()
 	{
 		BossAiHarness harness = BossAiHarness.For(DarkPoeta).WithWorldSize(2048)
-			.WithAi(typeof(TahabataPyrelordAI), typeof(AggressiveNpcAI)).Build();
+			.WithAi(typeof(TahabataPyrelordAI), typeof(TahabataSummonSpotAI), typeof(TahabataDrakanSpotAI),
+				typeof(TahabataGargoyleAI), typeof(AggressiveNpcAI)).Build();
 		Npc boss = harness.Spawn(Tahabata, 1180f, 1235f, 143f);
 
 		// Well out of his aggro range: he is an aggressive NPC and will pull anyone standing next to
@@ -117,5 +124,146 @@ public sealed class TahabataPyrelordAiTests
 		Npc dragon = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == PrimalDragon));
 		Assert.Equal(boss.GetX(), dragon.GetX());
 		Assert.Equal(boss.GetY(), dragon.GetY());
+	}
+
+	private static int Count(BossAiHarness harness, int npcId) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
+
+	/// <summary>Engaged at a chosen health, with the quarry kept out of his aggro range.</summary>
+	private static (BossAiHarness, Npc, Player) EngagedAt(int hpPercent)
+	{
+		var (harness, boss, player) = Spawned();
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		BossAiHarness.SetHpPercent(boss, hpPercent);
+		harness.Engage(boss, player);
+		return (harness, boss, player);
+	}
+
+	/// <summary>
+	/// The healthiest band is four chained casts and nothing else — no marker of any kind goes out
+	/// above 80%. Retail only starts placing things when T0 hands over to the 61-80 loop.
+	/// </summary>
+	/// <remarks>
+	/// Watched every second rather than counted at the end. Every marker in this fight lives ten
+	/// seconds, so a band that put one out on a fifteen-second step would be standing empty again by
+	/// the time anything looked — the first version of this pin counted at ninety seconds and could
+	/// not tell a band that places nothing from one that places a ring every step.
+	/// </remarks>
+	[Fact]
+	public void AboveEightyHePlacesNothing()
+	{
+		var (harness, boss, player) = EngagedAt(90);
+		using BossAiHarness _h = harness;
+
+		int seen = 0;
+		for (int i = 0; i < 90; i++)
+		{
+			Advance(harness, boss, player, 1);
+			seen += Count(harness, FlameCenter) + Count(harness, CyclopsSpot) + Count(harness, DrakanSpot);
+		}
+
+		Assert.Equal(0, seen);
+	}
+
+	/// <summary>
+	/// Below 80 the T0 heartbeat hands over to the second loop, and the branch that does it rings him
+	/// with four flame centers. Nothing in the server spawned this NPC before.
+	/// </summary>
+	[Fact]
+	public void TheSecondBandRingsHimWithFlames()
+	{
+		var (harness, boss, player) = EngagedAt(70);
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 15);
+
+		Npc[] flames = harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter).ToArray();
+		Assert.Equal(4, flames.Length);
+		Assert.Equal(4, flames.Select(f => (f.GetX(), f.GetY())).Distinct().Count());
+	}
+
+	/// <summary>
+	/// The 31-60 band puts four summon spots out instead, and each of those is what calls up a
+	/// faithful subordinate. Neither the spot nor this route to the subordinate existed before: the
+	/// old class spawned subordinates directly off a cast, at coordinates of aionemu's own choosing.
+	/// </summary>
+	[Fact]
+	public void TheThirdBandCallsUpSubordinatesThroughSummonSpots()
+	{
+		var (harness, boss, player) = EngagedAt(50);
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 15);
+
+		Assert.Equal(4, Count(harness, CyclopsSpot));
+		Assert.Equal(4, Count(harness, FaithfulSubordinate));
+
+		// Each subordinate stands on its own spot's mark, which is what makes the wave land on four
+		// fixed marks rather than wherever the boss happens to be.
+		var spots = harness.LiveNpcs().Where(n => n.GetNpcId() == CyclopsSpot)
+			.Select(n => (n.GetX(), n.GetY())).OrderBy(p => p.Item1).ToArray();
+		var slaves = harness.LiveNpcs().Where(n => n.GetNpcId() == FaithfulSubordinate)
+			.Select(n => (n.GetX(), n.GetY())).OrderBy(p => p.Item1).ToArray();
+		Assert.Equal(spots, slaves);
+	}
+
+	/// <summary>
+	/// Below 30 the marks are the same four and what steps off them is a drakan. It takes longer to
+	/// arrive: entry hands over to T5, and the drakan branch is three links along that chain.
+	/// </summary>
+	[Fact]
+	public void BelowThirtyTheSameMarksCallUpDrakan()
+	{
+		var (harness, boss, player) = EngagedAt(25);
+		using BossAiHarness _h = harness;
+
+		Advance(harness, boss, player, 35);
+		Assert.Equal(0, Count(harness, DrakanSpot));
+
+		Advance(harness, boss, player, 15);
+
+		Assert.Equal(4, Count(harness, DrakanSpot));
+		Assert.Equal(4, Count(harness, Drakan));
+
+		// The cyclops band is behind him and does not come back.
+		Assert.Equal(0, Count(harness, CyclopsSpot));
+	}
+
+	/// <summary>
+	/// Every fresh ring of spots is preceded by a call that clears whatever the last ring left, which
+	/// is what holds the wave at four however long he sits in the band.
+	/// </summary>
+	/// <remarks>
+	/// The subordinate is placed and introduced by hand rather than taken from the first ring: the
+	/// harness has no known-list sweep, so a subordinate that arrived through a spawn is not in his
+	/// known list and the call cannot reach it. On the live server <c>World.Spawn</c> files it in a
+	/// moment after the spawn hook runs.
+	/// </remarks>
+	[Fact]
+	public void AFreshRingClearsTheSubordinatesTheLastOneLeft()
+	{
+		var (harness, boss, player) = EngagedAt(50);
+		using BossAiHarness _h = harness;
+		Npc leftover = harness.Spawn(FaithfulSubordinate, 1183f, 1238f, 143f);
+		BossAiHarness.MakeMutuallyKnown(boss, leftover);
+
+		Advance(harness, boss, player, 15);
+
+		Assert.False(leftover.IsSpawned(), "the ring call should have sent the leftover away");
+	}
+
+	/// <summary>Dying takes the markers with him — retail despawns all three spawn ids.</summary>
+	[Fact]
+	public void DyingClearsTheMarkers()
+	{
+		var (harness, boss, player) = EngagedAt(50);
+		using BossAiHarness _h = harness;
+		Advance(harness, boss, player, 15);
+		Assert.Equal(4, Count(harness, CyclopsSpot));
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Equal(0, Count(harness, CyclopsSpot));
+		Assert.Equal(0, Count(harness, FlameCenter));
 	}
 }

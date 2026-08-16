@@ -25,12 +25,11 @@ namespace Aion.GameServer.Handlers.AI;
 /// thinning them, and the reason the fight does not simply accumulate adds.
 /// </para>
 /// <para>
-/// <b>Untested, and worth a look.</b> This shouts from <c>on_wake_up</c> and removes itself in the
-/// same branch, so it broadcasts at the instant it enters the world. <c>NpcMessageBus</c> walks the
-/// sender's known list, and a just-spawned NPC's known list is not populated yet in the test harness —
-/// the cry reaches nobody there. Whether the live server fills it before the AI's spawn hook runs was
-/// not established. If it does not, this pattern is inert on the server too and the fix belongs in the
-/// bus or in the spawn order, not here.
+/// <b>The spawn-order question this used to raise is settled.</b> It shouts from <c>on_wake_up</c>,
+/// so it broadcasts at the instant it enters the world, and <c>NpcMessageBus</c> walks the sender's
+/// known list — which <c>World.Spawn</c> builds <i>after</i> raising the AI's spawned event, in Java
+/// as here. The bus therefore falls back to the sender's map region when its known list is still
+/// empty, which is exactly this case. The cry lands.
 /// </para>
 /// </remarks>
 [AIName("kistenian_despawn_effect")]

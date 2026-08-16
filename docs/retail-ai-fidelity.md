@@ -3941,3 +3941,84 @@ thing blocking it is a guard the Java reference also has before working around i
 **Verification.** Full suite 1,327 passing and 1 skipped; three new pins; all five
 mutations caught — the two that survived the first round (removing the rally, and sending
 it without the target) are exactly what the end-to-end pin was added for.
+
+### Tahabata Pyrelord gets his rotation back
+
+The deferred item from the first Dark Poeta pass, written up then rather than attempted: the class
+was aionemu's, with an enrage timer bolted on and **no rotation at all**. Everything he did between
+being pulled and dying was whatever his npc_skills probabilities rolled. `Dragon_G1` is four chained
+battle-timer slots per health band, a fifth chain the banded ones never return from, and a ten-minute
+fuse on slot 9 — all of it now translated.
+
+| band | chain | what it places |
+|---|---|---|
+| 81-100 | T1→T2→T3→T4→T1, fifteen seconds a step | nothing |
+| 61-80 | T0 hands over to T5→T6→T7→T8→T5 | a ring of four flame centers on the two steps bracketing it |
+| 31-60 | T0 hands over to T1→T2→T3→T4→T1 | a ring of four cyclops summon spots, twice per loop |
+| below 30 | T0 hands over to T5→T6→T7→T8→T5 for good | a ring of four drakan summon spots |
+
+**The guards on the low chain are worth reading twice.** Entry needs below 30, but every step of the
+chain itself only tests below **45** — so it cannot be entered early and cannot be left once running.
+Writing all five as `HpBelow(30)` would have been the obvious mistake.
+
+### The summon spots are the mechanic, and we had replaced them with a shortcut
+
+The old class spawned the slaves directly, hung off the casts of Eruption of Power and Powerful Flame,
+at eight coordinates of aionemu's own choosing. Retail spawns **neither** slave directly. It places
+short-lived *summon spots* — 281262 for the cyclops, 281263 for the drakan — on the same four marks,
+and each spot is what calls up its slave. That is why both kinds arrive on the same four points, and
+why the wave is bounded by the spots rather than by the boss.
+
+Three NPCs were spawned by nothing anywhere before this: the flame center (281261), and both spots.
+
+**Every marker's cast resolves, and by name rather than by counting.** Each has exactly one skill and
+each pattern addresses exactly one index, which alone is only a count match — but the skill names
+corroborate it outright:
+
+| npc | retail devname | skill | stack name |
+|---|---|---|---|
+| 281261 flame center | `Dragon_G1N**FrRain**_A` | 18221 **Flame** Shower | `…_**FRRAIN**NR` |
+| 281262/281263 spots | `Dragon_G1Slave**Su**…` | 18222 **Summon** | `…_APPEAR_NR` |
+| 281258 subordinate | `Dragon_G1Slave` | 18219 Mana Regression | `…_**SELFBLOW**_NR` |
+| 281265 primal dragon | `Dragon_G1**Final**_A` | 18224 **Final** Blow | `…_DRAGON**FINAL**_NO` |
+
+A devname and a stack name agreeing on the same word is the strongest corroboration this work has
+found. It also retroactively resolves Vanuka Infernus's flame center (281276), which is the same
+NPC shape with the same skill.
+
+### The subordinate is a fuse, and it answers a ring call
+
+`Dragon_G1Slave` is not a fighter. Ten seconds after something engages it, it casts Mana Regression on
+itself and four seconds later it is gone; left alone it stands there indefinitely. The aionemu class
+had the explosion right — it hooked exactly that skill — and removed it the instant the cast ended, so
+the four-second gap did not exist.
+
+What it did not have at all is 3415, the last unimplemented message on this pattern: **every time
+Tahabata puts a fresh ring of spots out he first calls the previous wave away.** They do not explode,
+they simply leave. That is what holds the wave at four however long he stays in the band.
+
+### A runtime limit found by a mutation that survived
+
+One mutation could not be killed: making the ring call detonate the subordinate on its way out rather
+than dismissing it quietly. The reason is not the pin — it is that **a queued self-cast does not
+survive a despawn in the same branch.** The control is clean: the same cast is plainly visible when
+the despawn comes four seconds later on its own timer, and invisible when the two share a branch.
+
+This is why `NTrap_A` is **not** ported here. Fifty-three NPCs bind that pattern, all of them
+cast-once-and-vanish markers, and a literal translation — cast index 0, `despawn_self` — would be
+inert for exactly this reason. It needs either a cast path that outlives the despawn or a delay
+between the two, which is a runtime question rather than a translation one. The skill ids are all
+resolved above, so the follow-up is mechanical once that is settled. Until then the flame centers and
+the primal dragon keep their current `aggressive` template entry and are removed by the `live_time`
+of whoever placed them.
+
+### Also fixed
+
+`KistenianDespawnEffectAI` carried a caveat wondering whether a broadcast from `on_wake_up` reaches
+anyone, since the sender's known list is not built until after the spawn hook. That was answered by
+the naga work and never written back: `NpcMessageBus.Nearby` falls back to the sender's map region
+precisely when its known list is still empty. The comment now says so.
+
+**Verification.** Full suite 1,337 passing and 1 skipped; ten new pins and four existing ones passing
+unchanged against the rebuilt table; twelve of thirteen mutations caught, the thirteenth being the
+runtime limit above. Missing adds 679 → **676 across 446 encounters**.
