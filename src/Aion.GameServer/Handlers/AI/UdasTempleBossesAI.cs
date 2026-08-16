@@ -164,3 +164,46 @@ public class DebilkarimTheMakerAI : PatternAi
 
     protected override AiPattern Pattern => Pattern_;
 }
+
+/// <summary>
+/// Bergrisar (215797), the gatekeeper of Lower Udas Temple. Retail pattern <c>IDTP_Keeper1</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. The last of the temple's four bosses without a
+/// class, and the one with the least to give — <b>almost all of his pattern is blocked</b>, so what
+/// is here is small on purpose.
+/// <para>
+/// <b>What he actually does.</b> A punishment chakra on entering the fight and five more as he is
+/// worn down, at 80, 60, 40, 20 and 10 percent, each onto its own absolute mark by the gate. Every
+/// one of the six carries a <c>pathname</c> — <c>Path_IDTemple_Low_AI01_1</c> through <c>_6</c> — and
+/// those are server-side walk routes we do not have. A chakra is a thing that rolls at you; left
+/// standing on its mark it is a different encounter rather than a partial one, which is the call this
+/// work has made for the walk-path bucket since it was measured.
+/// </para>
+/// <para>
+/// So what is translated is his <c>on_die</c>: the five clear controllers every boss in the temple
+/// drops, which take the room's adds with them. That is the whole of what he has that is not blocked,
+/// and it is worth having on its own — he is the boss whose chakras the clear-up exists to remove.
+/// </para>
+/// <para>
+/// <b>Not translated, and worth stating separately from the blocked half:</b> four skill indices on
+/// two timers, and the <c>broadcast_message</c> 6955 he sends on entering the fight. That number is
+/// the one the temple's nuclei and pyre souls answer with a cast — so his half of that pairing is
+/// here and theirs is not, and it stays out until the indices resolve.
+/// </para>
+/// </remarks>
+[AIName("bergrisar")]
+public class BergrisarAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        OnDie = Of(AnvilfaceAI.DropTheClearControllers(11)),
+    };
+
+    public BergrisarAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}

@@ -6521,3 +6521,56 @@ is four lines rather than a research problem.
 
 **Verification.** Full suite 1,538 passing and 1 skipped; three new pins; six mutations, four
 caught, one that will not compile, and the inert one written up above.
+
+## Bergrisar, and hard-mode Shadowshift
+
+**Bergrisar** is the last of Lower Udas Temple's four bosses, and the one with the least to give.
+Almost all of his pattern is blocked: a punishment chakra on entering the fight and five more at
+80, 60, 40, 20 and 10 percent, each onto its own absolute mark by the gate — and every one of the
+six carries a `pathname`, `Path_IDTemple_Low_AI01_1` through `_6`. A chakra is a thing that rolls
+at you; left standing on its mark it is a different encounter rather than a partial one, which is
+the call this work has made for the walk-path bucket since it was measured.
+
+So what he gets is his `on_die`: the five clear controllers the previous entry wired up. That is
+worth having on its own — **he is the boss whose chakras the clear-up exists to remove.**
+
+Also not translated, and worth stating apart from the blocked half: he broadcasts **6955** on
+entering the fight, which is the number the temple's nuclei and pyre souls answer with a cast. His
+half of that pairing is here and theirs is not, so it stays out until those indices resolve — and
+it is exactly the collision the previous entry predicted, which is why the clear-up uses 6956 and
+not 6955.
+
+### Hard-mode Shadowshift: the same fight with every number moved
+
+216166 was on plain `aggressive` with no class, and its pattern is `IDCT_Boss_Shadow` re-tuned
+rather than rewritten:
+
+| | normal | hard |
+|---|---|---|
+| near pair, re-arm | 25s | **20s** |
+| near pair, order | random | **the two most-hated** |
+| near pair, range | 3m | **2m** |
+| far spectre, re-arm | 4s | **10s** |
+| far spectre, range | 10m | **6m** |
+
+So the near pair is faster and *aimed*, and the far one is much slower but lands closer. Reading
+the two side by side is the only way to see that the **ordering** changes as well as the clock:
+normal mode scatters its near pair at random, hard mode puts them on whoever is holding it. One
+class, two rows of a tuning record.
+
+**A pin that had to be a table read.** Hard mode's timings are only observable in the harness for
+about eleven seconds: the near spectre is *black essence*, which starts casting into the stand-in
+player shortly after it lands and takes the effect engine down with it — and deleting the spectre
+does not cancel the cast it has already scheduled. So the tuning table is `internal` and pinned
+directly, the same answer the gravity tornado needed.
+
+**The residual gap, stated.** Pinning the decision leaves the wiring between table and pattern
+half-covered: the *ordering* is exercised by a real observation, the two re-arm delays are not, and
+a mutation that reads the tuning and then ignores it survives. It cannot be closed without a
+harness that can run this fight past eleven seconds.
+
+**Where the counts went.** Missing-AI 735 → **733**; the adds backlog is unchanged, since both
+bosses' adds were already reachable through their normal-mode twins.
+
+**Verification.** Full suite 1,542 passing and 1 skipped; five new pins; seven mutations, six
+caught and the one above recorded.

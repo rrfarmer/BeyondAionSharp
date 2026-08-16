@@ -1,4 +1,5 @@
 using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
@@ -224,5 +225,80 @@ public sealed class ShadowshiftAiTests
 		Assert.True(spectre.GetAggroList().GetHate(players[0]) >= 2,
 			$"one point is what it would aggro on its own; the flag adds retail's own on top: "
 			+ $"{spectre.GetAggroList().GetHate(players[0])}");
+	}
+
+	/// <summary>Hard mode — the same fight with every number moved.</summary>
+	private const int HardShadowshift = 216166;
+
+	private static (BossAiHarness, Npc, Player[]) HardEngaged(int howManyPlayers)
+	{
+		BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(HardShadowshift, 300f, 300f, 200f);
+		var players = new Player[howManyPlayers];
+		for (int i = 0; i < howManyPlayers; i++)
+		{
+			players[i] = harness.SpawnPlayer(310f + (i * 25f), 300f, 200f);
+			BossAiHarness.MakeMutuallyKnown(boss, players[i]);
+			BossAiHarness.Rehate(boss, players[i]);
+		}
+
+		harness.Engage(boss, players[0]);
+		return (harness, boss, players);
+	}
+
+	/// <summary>
+	/// Hard mode's near pair goes to the <b>two most-hated</b> where normal mode scatters at random —
+	/// the ordering changes as well as the clock, which only reading the two side by side shows.
+	/// </summary>
+	[Fact]
+	public void HardModeAimsItsNearPairAtWhoeverIsHoldingIt()
+	{
+		var (harness, boss, players) = HardEngaged(3);
+		using BossAiHarness _h = harness;
+
+		// The tank and the second on the list; hate descends with the index.
+		boss.GetAggroList().AddHate(players[1], 500);
+		boss.GetAggroList().AddHate(players[2], 100);
+
+		Advance(harness, boss, players, 11);
+
+		Npc[] near = harness.LiveNpcs().Where(n => n.GetNpcId() == SpectreNear).ToArray();
+		Assert.Equal(2, near.Length);
+
+		int[] claimed = near
+			.Select(s => players.OrderBy(p => Math.Abs(p.GetX() - s.GetX())).First().GetObjectId())
+			.OrderBy(id => id).ToArray();
+		Assert.Equal(new[] { players[0].GetObjectId(), players[1].GetObjectId() }.OrderBy(i => i).ToArray(),
+			claimed);
+	}
+
+	/// <summary>
+	/// Every number hard mode moves, read off the table rather than out of a fight.
+	/// </summary>
+	/// <remarks>
+	/// Its timings are only observable in the harness for about eleven seconds — after that the near
+	/// spectre, which is <c>black essence</c>, starts casting into the stand-in player and takes the
+	/// effect engine down, and deleting it does not cancel the cast it has already scheduled. So the
+	/// decision is pinned rather than the effect, the same answer the gravity tornado needed.
+	/// </remarks>
+	[Fact]
+	public void HardModeMovesEveryNumber()
+	{
+		ShadowshiftAI.Tuning normal = ShadowshiftAI.TuningFor(Shadowshift);
+		ShadowshiftAI.Tuning hard = ShadowshiftAI.TuningFor(HardShadowshift);
+
+		// The near pair: slower, aimed, and closer in.
+		Assert.Equal(25000, normal.NearReArmMillis);
+		Assert.Equal(20000, hard.NearReArmMillis);
+		Assert.Equal(3f, normal.NearRange);
+		Assert.Equal(2f, hard.NearRange);
+		Assert.Equal(MultiTargetOrder.Random, normal.NearOrder);
+		Assert.Equal(MultiTargetOrder.Descending, hard.NearOrder);
+
+		// The far one: much slower, and it lands closer too.
+		Assert.Equal(4000, normal.FarReArmMillis);
+		Assert.Equal(10000, hard.FarReArmMillis);
+		Assert.Equal(10f, normal.FarRange);
+		Assert.Equal(6f, hard.FarRange);
 	}
 }

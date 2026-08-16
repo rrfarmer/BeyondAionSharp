@@ -24,7 +24,7 @@ public sealed class UdasTempleBossesAiTests
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(LowerUdasTemple).WithWorldSize(2048)
 			.WithAi(typeof(AnvilfaceAI), typeof(DebilkarimTheMakerAI), typeof(AggressiveNpcAI),
-				typeof(UdasTempleClearAI), typeof(UdasTempleAddAI))
+				typeof(UdasTempleClearAI), typeof(UdasTempleAddAI), typeof(BergrisarAI))
 			.Build();
 
 	/// <summary>
@@ -256,5 +256,45 @@ public sealed class UdasTempleBossesAiTests
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 
 		Assert.Equal(0, Count(harness, Nucleus));
+	}
+
+	private const int Bergrisar = 215797;
+	private const int PunishmentChakra = 281417;
+
+	/// <summary>
+	/// Bergrisar clears the room too, which matters because the chakras the clear-up exists to remove
+	/// are <em>his</em>. His own six are walk-path blocked and not translated; the ones cleared here
+	/// stand in for them.
+	/// </summary>
+	[Fact]
+	public void KillingBergrisarClearsTheRoom()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Bergrisar, 300f, 300f, 200f);
+		Npc chakra = harness.Spawn(PunishmentChakra, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, chakra);
+
+		Assert.Equal(1, Count(harness, PunishmentChakra));
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Equal(0, Count(harness, PunishmentChakra));
+	}
+
+	/// <summary>He does not place his chakras: every one of the six walks a route we do not have.</summary>
+	[Fact]
+	public void BergrisarPlacesNoChakrasHimself()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Bergrisar, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		BossAiHarness.SetExactPercent(boss, 15);
+		for (int i = 0; i < 10; i++)
+			Hit(boss, player);
+
+		Assert.Equal(0, Count(harness, PunishmentChakra));
 	}
 }
