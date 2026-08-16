@@ -21,12 +21,21 @@ namespace Aion.GameServer.Handlers.AI;
 /// which its `no speaker` verdict had already shown were unreachable for a spawn-data reason rather
 /// than a porting one.
 /// <para>
-/// <b>Fail the timer and the fortress finishes the job for you.</b> Killing one twin leaves a font;
-/// the raid then has fifteen seconds to kill the other. If it does not,
-/// <see cref="TwinFailureDisplayAI"/> announces the time-over and this font answers by calling
-/// <b>three of your own side's guards down onto itself</b> — two soldiers and their leader — which
-/// then destroy it. The soldiers arrive with a million hate and the leader with a hundred thousand,
-/// so nothing peels them.
+/// <b>Told its change has failed, a font calls your own side's guards down onto itself.</b> Two
+/// soldiers at five metres and their leader at six, which then destroy it — the soldiers with a
+/// million hate and the leader with a hundred thousand, so nothing peels them.
+/// </para>
+/// <para>
+/// <b>Nothing in our instance sends that message yet, and an earlier version of this file said
+/// otherwise.</b> The font is a thing that changes into something else, and retail has a separate
+/// announcer for each outcome: <c>22701</c> turns it into the strong protector, <c>22707</c> into the
+/// fountless one, <c>22709</c> into a quest object, and <c>22704</c>/<c>22705</c> — these — say the
+/// change failed and bring the guards. The fifteen-second window our instance measures is the
+/// <c>22707</c> moment, not this one, and it is now translated directly in
+/// <c>DrakenspireDepthsInstance.OnTwinRespawn</c>. The state this handler answers is a font left
+/// standing with no outcome at all, which our instance never produces. Kept because it is a correct
+/// translation and the day that state exists it will work; recorded as a listener without a sender
+/// rather than left looking wired.
 /// </para>
 /// <para>
 /// <b>The guards are your race, not the boss's.</b> Retail splits the branch on <c>is_race</c> and

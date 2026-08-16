@@ -13,9 +13,10 @@ namespace Aion.GameServer.Tests.Ai;
 /// <c>_Change_Failed</c> announcers (see <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
 /// <remarks>
-/// The time-over rescue: fail to kill the second twin inside fifteen seconds and your own side's
-/// detachment arrives and destroys the font for you. The audit's <c>no speaker</c> verdict found it —
-/// both halves were portable and the announcer was in no spawn file.
+/// A font told its change has failed calls your own side's detachment down onto itself. Both halves
+/// are translated and pinned here; what our instance does <em>not</em> yet have is a moment that sends
+/// the message — see <see cref="TwinFontAI"/>, which explains why the fifteen-second window is a
+/// different announcer. These pins drive the message directly for that reason.
 /// </remarks>
 [Collection("GoldenDataManager")]
 public sealed class TwinFontAiTests

@@ -7862,3 +7862,56 @@ pin drives the full twelve seconds and asserts three.
 **Verification.** Full suite 1,683 passing and 1 skipped; fourteen new pins; eight mutations, all
 caught, including the shipped state where no guards are called at all. `audit_retail_messages.py`
 `no speaker` 5 → 3.
+
+## Correcting the time-over: the font is a thing that changes, and there are four ways it can
+
+The previous entry landed the twin protectors' rescue and hooked it to
+`DrakenspireDepthsInstance.OnTwinRespawn`. **That hook was wrong**, and reading the rest of the font's
+pattern is what showed it.
+
+A font is not a timer — it is a **transformer**, and retail ships a separate announcer for each thing
+it can become:
+
+| message | announcer | the font becomes |
+|---|---|---|
+| **22701** | `IDSeal_Twin_*_Spawn` (855710, 855711) | the **Lv3** protector — the one that leaves a font |
+| **22707** | `IDSeal_Twin_*_Failed_Spawn` (855713, 855714) | the **Lv2** protector — *fountless*, leaving none |
+| **22709** | `IDSeal_Twin_*_Success` | the mind-control quest object (702769) |
+| **22704 / 22705** | `IDSeal_Twin_*_Change_Failed` | nothing: your own guards arrive and destroy it |
+
+The fifteen-second window our instance measures is the **22707** moment — the raid failed to kill the
+second twin, so the first comes back. It is not the "change failed" moment, which is a font left
+standing with no outcome at all, and which our instance never produces. So the hook is removed and
+the guards' handler is recorded honestly as a listener without a sender.
+
+**And the hook would not have worked anyway.** `OnTwinRespawn` deletes both fonts in the same method
+that spawned the display, and the display's first announcement is scheduled rather than immediate —
+so the font was gone before it could be told anything. The pins passed because they drive the message
+directly. A mechanic that is wired only in its own tests is exactly what this log's sender/listener
+rule exists to catch, and it took reading the pattern rather than running the suite to catch it.
+
+### What replaces it, and it is a better find
+
+`OnTwinRespawn` now does what 22707 does, and two things about it were wrong in Java parity:
+
+- **The fountless one comes back.** Lv2 is 236225 and 236226, and their own names say what they are —
+  *fountless* lava and heatvent protector. A fountless protector leaves no font when it dies. Java
+  respawned **Lv3**, the font-leaving version, so a raid that missed the window could miss it forever:
+  kill, font, fifteen seconds, kill, font. Retail closes the loop after one failure, and the message
+  name — `Failed_Spawn` — says which spawn it is.
+- **Where it fell, not where it started.** Retail's spawn is `SPAWN_LOCATION_MY_POINT` on the font,
+  and the font is left where the protector died. The two fixed marks Java uses are their opening
+  positions, which is the same place only if nothing dragged them.
+
+### What is still missing here
+
+The other three announcers. **22701** and **22709** need moments our instance drives its own way —
+`OnTwinsComplete` is the success path and could send 22709 to turn the fonts into the quest object
+rather than deleting them, which is the obvious next step and a visible one, since retail leaves
+something behind and we leave nothing. **22704/22705** needs a font left unresolved, which our
+fifteen-second timer prevents by construction.
+
+**Verification.** Full suite unchanged at 1,683 passing and 1 skipped — the correction changes what
+the instance spawns, which no pin covered before or after, and that gap is itself worth naming: the
+Drakenspire instance handler has no test of its own, so the twin flow is pinned only where it reaches
+an AI class.

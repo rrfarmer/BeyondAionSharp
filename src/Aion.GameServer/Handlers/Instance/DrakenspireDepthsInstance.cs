@@ -274,34 +274,42 @@ public class DrakenspireDepthsInstance : GeneralInstanceHandler
     }
 
     /// <summary>
-    /// Fifteen seconds after a twin fell, with its font still standing: the raid missed the window.
+    /// Fifteen seconds after a twin fell with its font still standing: the raid missed the window,
+    /// and the font becomes a protector again.
     /// </summary>
     /// <remarks>
-    /// Retail marks that moment with a <b>failure display</b> — 855510 on the physical side and 855511
-    /// on the magical — whose only job is to announce the time-over so the font can call its guards
-    /// down. Nothing placed one, which is why <see cref="Aion.GameServer.Handlers.AI.TwinFontAI"/>'s
-    /// handler had no sender. See docs/retail-ai-fidelity.md.
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. This is the moment retail marks with
+    /// <c>IDSeal_Twin_*_Failed_Spawn</c>, which announces <c>22707</c> until the font hears it and
+    /// turns into <c>IDSeal_Twin_*_Lv2</c> where it stands. Two things follow from that and neither
+    /// was here.
+    /// <list type="bullet">
+    /// <item><b>The fountless one comes back.</b> Lv2 is 236225 and 236226, whose own names say what
+    /// they are — <i>fountless</i> lava and heatvent protector — and a fountless protector leaves no
+    /// font when it dies. Java parity respawned Lv3, the font-leaving version, so a raid that missed
+    /// the window could miss it again forever: kill, font, fifteen seconds, kill, font. Retail closes
+    /// the loop after one failure.</item>
+    /// <item><b>Where it fell, not where it started.</b> Retail's spawn is
+    /// <c>SPAWN_LOCATION_MY_POINT</c> on the font, and the font is left where the protector died. The
+    /// two fixed marks Java uses are their opening positions, which is only the same place if nothing
+    /// moved them.</item>
+    /// </list>
     /// </remarks>
-    private void AnnounceTimeOver(int fontId)
+    private void OnTwinRespawn()
+    {
+        RespawnFountless(855708, 236225);
+        RespawnFountless(855709, 236226);
+        DeleteAliveNpcs(855708, 855709);
+        SendMsg(SM_SYSTEM_MESSAGE.STR_MSG_IDSEAL_TWIN_RESSURECT_03());
+    }
+
+    /// <summary>One font becoming its fountless protector, on the spot.</summary>
+    private void RespawnFountless(int fontId, int fountlessId)
     {
         Npc font = GetNpc(fontId);
         if (font == null)
             return;
 
-        Spawn(fontId == 855708 ? 855510 : 855511, font.GetX(), font.GetY(), font.GetZ(), (byte)0);
-    }
-
-    private void OnTwinRespawn()
-    {
-        AnnounceTimeOver(855708);
-        AnnounceTimeOver(855709);
-
-        if (GetNpc(855708) != null)
-            Spawn(236227, 531.0885f, 212.43806f, 1683.4116f, (byte)60);
-        if (GetNpc(855709) != null)
-            Spawn(236228, 530.8584f, 151.8681f, 1683.4116f, (byte)60);
-        DeleteAliveNpcs(855708, 855709);
-        SendMsg(SM_SYSTEM_MESSAGE.STR_MSG_IDSEAL_TWIN_RESSURECT_03());
+        Spawn(fountlessId, font.GetX(), font.GetY(), font.GetZ(), (byte)font.GetHeading());
     }
 
     private void OnTwinsComplete()
