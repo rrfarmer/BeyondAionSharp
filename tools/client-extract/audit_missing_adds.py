@@ -151,6 +151,7 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
         ids.update(re.findall(r"\bnpcId\s*[:=]\s*(\d{5,6})\b", text))
         ids.update(spawned_via_constants(text))
         ids.update(spawned_relative_to_self(text, by_ai))
+        ids.update(spawned_via_local(text))
         ids.update(generated_table_ids(text))
     return ids
 
@@ -192,6 +193,65 @@ def npc_ids_by_ai_name(repo: pathlib.Path) -> dict[str, list[str]]:
     for npc_id, ai in re.findall(r'<npc_template npc_id="(\d+)"[^>]*?ai="([^"]+)"', tpl):
         out[ai].append(npc_id)
     return out
+
+
+# `npcId = 856175 + Rnd.Get(0, 3);` -- a base id and a random offset, resolved to the whole range.
+LOCAL_ID_RE = re.compile(r"\b(\w+)\s*=\s*(\d{5,6})\b\s*(?:\+\s*Rnd\.Get\(\s*0\s*,\s*(\d+)\s*\))?")
+
+# How wide a `+ Rnd.Get(0, n)` span is allowed to be. Four ids is a shugo table; forty would be
+# somebody adding an offset to something that is not an id at all.
+MAX_RANDOM_SPAN = 8
+
+
+def spawned_via_local(text: str) -> set[str]:
+    """Ids assigned to a local that a spawn call later passes.
+
+    `ConquestOfferingAggressiveAI` picks one of four shugos with
+
+        npcId = 856175 + Rnd.Get(0, 3);
+        ...
+        Spawn(npcId, ...)
+
+    so no id is inside a spawn call's parentheses and three of the four read as never spawned --
+    the class has been placing one of them on every rotation kill since it was ported.
+
+    Narrow on purpose: the variable has to be one a spawn call actually passes, which is what keeps
+    this from harvesting skill ids out of the same method. The `Rnd.Get` form resolves the whole
+    span, capped, because the point of the idiom is that every id in it can appear.
+    """
+    # Only the *first* argument of a spawn call. Every spawn helper in this codebase takes the npc
+    # id first, and taking identifiers from anywhere in the list harvests whatever else is passed:
+    # `Do.SpawnAsMyEnemy(TeleportEnemy, Fed, EnemyLife, EnemyHate)` gave up EnemyHate = 100000, a
+    # hate value read as an npc id. Harmless there -- no npc has that id -- and not harmless in
+    # general, since a delay or a hate value the width of an npc id would suppress a real finding.
+    passed: set[str] = set()
+    for match in re.finditer(SPAWN_CALL, text):
+        depth, i, first_end = 1, match.end(), None
+        while i < len(text) and depth:
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+                if depth == 0 and first_end is None:
+                    first_end = i
+            elif text[i] == "," and depth == 1 and first_end is None:
+                first_end = i
+            elif text[i] == ";":
+                break
+            i += 1
+        if first_end is not None:
+            passed.update(re.findall(r"\b([A-Za-z_]\w*)\b", text[match.end():first_end]))
+    if not passed:
+        return set()
+
+    ids: set[str] = set()
+    for name, base, span in LOCAL_ID_RE.findall(text):
+        if name not in passed:
+            continue
+        ids.add(base)
+        if span and int(span) <= MAX_RANDOM_SPAN:
+            ids.update(str(int(base) + n) for n in range(1, int(span) + 1))
+    return ids
 
 
 def spawned_relative_to_self(text: str, by_ai: dict[str, list[str]]) -> set[str]:

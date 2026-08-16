@@ -1,8 +1,8 @@
 patterns with spawn actions : 4,158
-npc_ids our data can spawn  : 21,385
+npc_ids our data can spawn  : 21,363
 
-Fightable retail adds our server never spawns: 469 across 355 encounters
-  fully self-contained                       : 401
+Fightable retail adds our server never spawns: 475 across 357 encounters
+  fully self-contained                       : 407
   positionable, but walk a server-side path  : 14
   positionable, but only a waypoint fires it : 10
   blocked on server-side waypoint paths      : 44
@@ -66,6 +66,14 @@ ND2_ElementalSu2  (live npc_ids: 212875)
     280489  lv40  faithful subordinate
     280490  lv40  faithful subordinate
     280491  lv40  faithful subordinate
+F4_Rotation_Normal_Monster  (live npc_ids: 236307,236311,236315,236319)
+    856176  lv65  chitrunerk
+    856177  lv65  rapirunerk
+    856178  lv65  dandrunerk
+F4_Rotation_Party_Monster  (live npc_ids: 236335,236339,236343,236347)
+    856176  lv65  chitrunerk
+    856177  lv65  rapirunerk
+    856178  lv65  dandrunerk
 IDAB_Reward_Item_NoShowNPC_09  (live npc_ids: 284978)
     284979  lv65  warguard
     284980  lv65  bowguard

@@ -5708,8 +5708,74 @@ Nothing was fixed; what changed is that ten rows moved out of the column that sa
 could port this today". A measurement that calls blocked work actionable wastes the next
 session, which is the same argument the walk-path bucket was split out on.
 
-**What would unblock all sixty-eight.** One thing, and it is server-side data rather than
-AI work: the walk routes. Give Vasharti his patrol and his glove controllers become
-ordinary one-shot HP steps; give the waypoint-placed bucket its routes and their positions
-resolve. That is a data-import job against the client's own path files, and it is the
-single largest remaining lever on this backlog.
+**Correction, immediately.** The first draft of this entry called the walk routes "a data
+import job against the client's own path files" and "the single largest remaining lever".
+That is wrong, and it is wrong against a finding in this same document: the client carries
+**no NPC route data at all** — 3,332 archives and 525,657 entries indexed, and the only
+path-named files are flight paths. The routes are server-side data nobody has. Sixty-eight
+adds are blocked on it and there is no import to run.
+
+**And Vasharti's six were already blocked twice over.** `BrigadeGeneralVashartiAI` records
+the other half: 283002/283004/283006 are plain aggressive clones of Vasharti himself with
+no controller AI, so spawning them would put three extra full-strength bosses in the room
+rather than retail's controllers. The waypoint finding is a second, independent reason —
+useful because it is one the audit can see and act on, where the first lives only in a
+class comment.
+
+## Two audit false positives, and a divergence left deliberately alone
+
+Next on the ranked list were `F4_Rotation_Normal_Monster` and `F4_Rotation_Party_Monster`
+— eight NPCs sharing two patterns, three adds each. Neither is missing. Both are the same
+false positive, and it is a shape the audit had not met:
+
+```csharp
+npcId = 856175 + Rnd.Get(0, 3);
+...
+Spawn(npcId, ...)
+```
+
+`ConquestOfferingAggressiveAI` has been placing one of the four shugos on every rotation
+kill since it was ported. No id appears inside a spawn call's parentheses, so three of the
+four read as never spawned. The audit now resolves an id assigned to a local that a spawn
+call later passes, and resolves the `+ Rnd.Get(0, n)` form to the whole span, capped at
+eight.
+
+**Restricted to the first argument, on the second attempt.** Taking identifiers from
+anywhere in the argument list harvested `EnemyHate = 100000` out of
+`Do.SpawnAsMyEnemy(TeleportEnemy, Fed, EnemyLife, EnemyHate)` — a hate value read as an npc
+id. Harmless there, since no npc has that id, and not harmless in general: a delay or a
+hate value the width of an npc id would silently suppress a real finding. Every spawn helper
+in this codebase takes the id first, so the first argument is the whole of it. Nine ids
+stopped being harvested and the backlog did not move, which is what that change should look
+like.
+
+**Where the count went.** 475 across 357 encounters → **469 across 355**. Six rows, all of
+them the same three shugos under two patterns.
+
+### The rotation kill's odds do diverge, and are left as they are
+
+Reading the pattern to confirm the false positive turned up a real difference, recorded
+here rather than acted on:
+
+| | retail `F4_Rotation_*_Monster` | ours (`ConquestOfferingAggressiveAI`) |
+|---|---|---|
+| shugo | ~31.4% — four branches at 9% each, first match wins | 24.75% |
+| which shugo | **uneven**: 9.0 / 8.2 / 7.5 / 6.8 | uniform, one in four |
+| portal | — | 30.25%, `833018`/`833021` by world |
+| broadcaster | **always**, `856502` | never |
+| nothing | never | 45% |
+
+**Not changed, for two reasons.** Retail's always-spawned `BF4_Rotation_Time_Reset_BR_NPC`
+is an invisible control NPC whose whole pattern is "broadcast message 13929 to fifty metres,
+three times, then despawn" — and nothing in our tree listens for 13929, so porting it adds
+an NPC that does nothing. And the secret portal is the other way round: it is real,
+player-facing, has its own working AI, and retail's pattern does not spawn it. Deleting it
+to match would remove content that works, on the authority of a 5.8 pattern for content our
+4.8 target may carry differently.
+
+**What it would take.** The shugo odds alone are portable without touching the portal — that
+is a five-line change. What stopped it is pinning: the difference between 31.4% and 24.75%,
+and between uneven and uniform, is only observable statistically, and this work has already
+retired one flaky probabilistic pin. Making it verifiable means an injectable RNG at the
+`Rnd` static, which is a change to shared infrastructure rather than to this encounter.
+Worth doing when something else needs it too.
