@@ -45,11 +45,27 @@ namespace Aion.GameServer.Handlers.AI;
 /// across it, and widening a band to tidy the seam would move a threshold.
 /// </para>
 /// <para>
+/// <b>And the deep rung does one more thing: it broadcasts 3319 to fifty metres.</b> Every first-wave
+/// ghost that hears it sheds its form and becomes a second-wave one — see <see cref="ExedilGhostAI"/>.
+/// Usually there are none, because the 26–55 rung took the first pair away. It matters exactly when a
+/// raid <em>skipped</em> that band: the pair that survived because a rung was jumped over gets
+/// upgraded instead of removed, so burning him down fast trades two twenty-minute ghosts for two
+/// permanent ones rather than for nothing.
+/// </para>
+/// <para>
 /// <b>Not translated.</b> Seven skill indices across timers 1, 2, 4, 5 and 6, and the branches that
 /// arm those timers — every one of them is cast-only, so arming them would start clocks whose branches
 /// do nothing. Also dropped: retail's 81–100 rung, whose only effect we can reproduce is re-arming
 /// timer 0 at six seconds, which is exactly what the fallback below it already does. Kept where the
 /// same test would keep it — a branch earns its place by changing what happens, and that one does not.
+/// </para>
+/// <para>
+/// <b>Also not translated: message 3320</b>, which his timer-6 branch sends every twenty seconds once
+/// the deep rung has armed it. Retail's second-wave ghosts answer it by taking hate on whoever he is
+/// fighting and turning on them. Our <c>servant</c> class binds a summon's target when it spawns and
+/// drives its casts from that captured target, so a re-aim has nothing to act on — the hate would
+/// move and the ghost would keep casting at whoever it first saw. Sending it would look wired and
+/// would not be.
 /// </para>
 /// </remarks>
 [AIName("exedil")]
@@ -73,6 +89,15 @@ public class ExedilAI : PatternAi
 
     private const int HeartbeatMillis = 6000;
 
+    /// <summary>
+    /// Retail's 3319: every first-wave ghost still standing sheds its old form. See
+    /// <see cref="ExedilGhostAI"/>.
+    /// </summary>
+    public const int TrueForm = 3319;
+
+    /// <summary>Retail's <c>range_as_meter</c> on that broadcast.</summary>
+    private const float Reach = 50f;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -82,6 +107,7 @@ public class ExedilAI : PatternAi
         OnBattleTimer = Of(
             // Highest priority, and the only spawning rung that does not re-arm the heartbeat.
             Branch(10, "below 25", [When.Timer(0), When.HpBelow(25), When.FirstTime(Below25)],
+                Do.Broadcast(TrueForm, Reach),
                 Do.SpawnNear(GhostPriestTwo, Deep, count: 2, range: 6f)),
 
             Branch(7, "26-55", [When.Timer(0), When.HpBetween(26, 55), When.FirstTime(Step2)],

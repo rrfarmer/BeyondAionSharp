@@ -7243,3 +7243,62 @@ which is a caveat the earlier message work never needed.
 
 **Verification.** Full suite 1,626 passing and 1 skipped; seventeen new pins; eight mutations, all
 caught — including the shipped state, in which nothing is placed at all.
+
+## Exedil's first-wave ghosts do not die when he reaches the end — they change
+
+Working down `audit_retail_messages.py`'s list by *what the listeners do* rather than by class size
+puts most of the forty-four findings out of reach quickly: the listener answers with a bare
+`SKILLI_INDEX` cast, and there is nothing to port. Sorting by the ones whose listeners **spawn,
+despawn or take hate** leaves a short list, and the clearest entry on it belongs to a boss corrected
+two entries ago.
+
+`ND2_PhA`'s deep rung broadcasts **3319** to fifty metres. `ND2_Sum_PhA1` — the first-wave ghost
+(280774) — answers it by spawning the second-wave ghost where it stands, with the same twenty-minute
+lifetime the boss's own rungs use, and removing itself. One in, one out, on the spot.
+
+**Why it usually looks like nothing.** The 26–55 rung despawns the first pair as it hands over, so by
+the time Exedil is under twenty-five there is normally nothing left to hear the broadcast. It matters
+exactly when a raid **skipped that band**: the pair that survived because a rung was jumped over gets
+*upgraded* rather than removed. Burning him down fast trades two twenty-minute ghosts for two
+permanent ones instead of for nothing — which is the opposite of what skipping a band costs
+everywhere else in this family, and only visible once the bands themselves were right.
+
+The same branch exists on the naga side: `ND2_Sum_Naga_PhA1` (280769, "power of yatri") becomes
+280819. Both listeners are shipped here, because it is one branch.
+
+### What is missing, and it is a boss
+
+**`Naga_PhA` belongs to high priest yatri (212308 and 280768), which is on plain `aggressive` with no
+class at all.** It is Exedil's shape with its own numbers — banded rungs on a heartbeat, a deep rung
+at 25 that broadcasts 3319, and a first wave placed with `spawn_on_target` rather than scattered. So
+the naga listener now works and has nobody to hear from. That asymmetry is deliberate and recorded
+rather than hidden: the alternative was to hold back a correct branch until a whole boss was
+translated.
+
+### Message 3320, and a limit of our `servant` class
+
+His timer-6 branch broadcasts **3320** every twenty seconds once the deep rung has armed it, and
+retail's second-wave ghosts answer by taking hate on whoever he is fighting and turning on them.
+
+That one is **not** ported, and the reason is on our side rather than in the data.
+`ServantNpcAI` captures a summon's target when it spawns and drives its cast loop from that captured
+reference. A re-aim would move the hate and change `GetTarget()`, and the ghost would go on casting
+at whoever it first saw. Sending 3320 would look wired and would not be.
+
+Worth stating as a general limit, because several of the remaining findings are this shape: **an
+`add_hate_point` + `attack_most_hating` listener is only portable onto an AI that re-reads its
+target.** Of the pending findings, 444 (Danuar frost summons), 104 (the Dramata drakan), 3403
+(Takahan's drakan) and 6952 (Kingspin's fanatics) are all that shape and all need the same check
+before porting.
+
+### A pin that every other pin agreed with
+
+Making the ghost answer *any* message survived the first mutation sweep — five other mutations were
+caught and that one was not, because nothing else in the fight broadcasts to a ghost. Message numbers
+are chosen per encounter with no registry, so a listener that answers everything transforms on a
+neighbour's broadcast. There is now a pin that sends the wrong number first. **Third time this
+session that the surviving mutation was the one nothing else in the test file could see** — after the
+twin protectors' call site and Hokuruki's swing counting.
+
+**Verification.** Full suite 1,632 passing and 1 skipped; six new pins on this family, twenty in the
+file; six mutations, all caught. `audit_ai_messages.py` pairs 3319 and is otherwise unchanged.

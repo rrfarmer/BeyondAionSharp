@@ -38,7 +38,8 @@ public sealed class Nd2NamedBossesAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Brusthonin).WithWorldSize(2048)
-			.WithAi(typeof(ExedilAI), typeof(UlanAI), typeof(Rm13bAI), typeof(AggressiveNpcAI), typeof(ServantNpcAI))
+			.WithAi(typeof(ExedilAI), typeof(UlanAI), typeof(Rm13bAI), typeof(AggressiveNpcAI),
+				typeof(ServantNpcAI), typeof(ExedilGhostAI))
 			.Build();
 
 	/// <summary>
@@ -185,6 +186,94 @@ public sealed class Nd2NamedBossesAiTests
 
 		Advance(harness, boss, player, 1300);
 		Assert.Equal(2, Count(harness, GhostPriestTwo));
+	}
+
+	/// <summary>
+	/// <b>A first-wave ghost does not die when he reaches the end — it changes.</b> The deep rung
+	/// broadcasts 3319 and every <c>PrSum1</c> still standing sheds its form for a <c>PrSum2</c> where
+	/// it stands. Driven by skipping the 26–55 band, because that is the only way a first pair is
+	/// still alive to hear it.
+	/// </summary>
+	[Fact]
+	public void SkippingTheMiddleBandUpgradesTheFirstPairInstead()
+	{
+		var (harness, boss, player) = Engaged(Exedil);
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 70);
+		Advance(harness, boss, player, 12);
+		Assert.Equal(2, Count(harness, GhostPriestOne));
+
+		// Straight past 26-55, so nothing ever despawned the first pair.
+		BossAiHarness.SetExactPercent(boss, 20);
+		Advance(harness, boss, player, 11);
+
+		Assert.Equal(0, Count(harness, GhostPriestOne));
+		// The two the rung calls, plus the two the first pair became.
+		Assert.Equal(4, Count(harness, GhostPriestTwo));
+	}
+
+	/// <summary>
+	/// And when the band was <em>not</em> skipped there is nothing left to upgrade, so the deep rung
+	/// leaves exactly the two it calls. Stated separately because the counts only differ by the
+	/// broadcast.
+	/// </summary>
+	[Fact]
+	public void WalkingTheLadderLeavesOnlyTheDeepPair()
+	{
+		var (harness, boss, player) = Engaged(Exedil);
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 70);
+		Advance(harness, boss, player, 12);
+
+		BossAiHarness.SetExactPercent(boss, 40);
+		Advance(harness, boss, player, 10);
+		Assert.Equal(2, Count(harness, GhostPriestTwo));
+
+		BossAiHarness.SetExactPercent(boss, 20);
+		Advance(harness, boss, player, 11);
+
+		Assert.Equal(0, Count(harness, GhostPriestOne));
+		Assert.Equal(4, Count(harness, GhostPriestTwo));
+	}
+
+	/// <summary>Each first-wave ghost knows its own true form, and neither knows the other's.</summary>
+	[Theory]
+	[InlineData(GhostPriestOne, GhostPriestTwo)]
+	[InlineData(280769, 280819)]
+	public void EachGhostShedsIntoItsOwn(int ghost, int trueForm)
+	{
+		Assert.Equal(trueForm, ExedilGhostAI.TrueFormOf(ghost));
+	}
+
+	/// <summary>A summon that is not one of the two sheds into nothing rather than somebody else's.</summary>
+	[Fact]
+	public void AnUnlistedGhostShedsIntoNothing()
+	{
+		Assert.Equal(0, ExedilGhostAI.TrueFormOf(123456));
+	}
+
+	/// <summary>
+	/// It sheds for 3319 and for nothing else. Message numbers are chosen per encounter with no
+	/// registry, so a listener that answered anything would transform on a neighbour's broadcast —
+	/// and every other pin here passes just as well if it does, which is why this one exists.
+	/// </summary>
+	[Fact]
+	public void AGhostShedsOnlyForItsOwnMessage()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Exedil, 300f, 300f, 200f);
+		Npc ghost = harness.Spawn(GhostPriestOne, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, ghost);
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(boss, ExedilAI.TrueForm + 1, null, 50f);
+		Assert.True(ghost.IsSpawned());
+		Assert.Equal(0, Count(harness, GhostPriestTwo));
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(boss, ExedilAI.TrueForm, null, 50f);
+		Assert.False(ghost.IsSpawned());
+		Assert.Equal(1, Count(harness, GhostPriestTwo));
 	}
 
 	// ---- Ulan -----------------------------------------------------------------------------------
