@@ -4965,3 +4965,42 @@ count, the other bounds the rate, and a test that only counts sees the cap.
 **Verification.** Full suite 1,398 passing and 1 skipped, three consecutive clean runs of the affected
 class; three new pins; all four mutations caught after the probability pin was added. Backlog
 unchanged at 541 — this add was already counted, because the constant was in the file.
+
+### Kalindi's shadow flame
+
+`IDTiamat_Kalrindy` — the Dragon Lord's Refuge Kalindi (219359), not Dark Poeta's Calindi (215281),
+which is a different encounter one letter away. Her four surkana rungs at 80/60/40/25 were already
+ported and correct; what each of them also carries is a `spawn_on_multi_target` that had no
+counterpart here at all.
+
+**One shadow flame on every player, and more each rung** — one within five metres at 80%, two within
+seven at 60%, three within nine at 40%, four within ten at 25%, each lasting fifteen seconds and
+reaching a hundred metres, which is the whole room. 283132 was spawned by nothing anywhere; the class
+placed 283133 on a skill hook instead, which is a different npc that lands once near the boss rather
+than once per player. The escalation and the per-player placement are both the mechanic: the room
+fills faster the longer the fight runs.
+
+### A test that asked the ladder the wrong question
+
+The first version set the boss to each threshold in turn and asserted that rung's count. It read three
+flames a player where the code produced six, and the code was right: `HpPhases` fires **every** rung it
+has crossed, so dropping a boss straight to 39% runs the 80, 60 and 40 steps together. The pin walks
+the boss down one rung at a time now and lets the flames burn out between measurements.
+
+That is the same family as the earlier timing traps, one level up: not *when* to measure but *how much
+has already happened* by the time you do. A threshold ladder is stateful, and a test that jumps to a
+threshold skips the states rather than reaching them.
+
+**One existing pin needed a registration**, not a change: making Calindi spawn 283132 broke
+`RetailHpThresholdTests` because that npc's template AI is `noaction` and the harness had never needed
+it. Worth noting as the standing cost of adding a spawn — every harness that runs the spawner needs the
+spawned NPC's AI registered, and the failure is a hard `ArgumentException` rather than a silent miss.
+
+**Still open on this boss:** the second gap, `IDTiamat_BurrowingWorm_BurrowDispel` (283059), which
+retail drops on a **random attacker other than the current target** every twenty-two seconds between
+16% and 70%. It needs a timer this class does not have — it is an HP-phase handler with skill hooks,
+not a timer table — so it is a restructuring rather than an addition, and it is left for a pass that
+can do it deliberately.
+
+**Verification.** Full suite 1,402 passing and 1 skipped; four new pins; all four mutations caught.
+Backlog 541 → **539 across 384**.

@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Controllers.Attack;
@@ -17,6 +21,11 @@ public class CalindiFlamelordAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// See docs/retail-ai-fidelity.md.
     /// </summary>
     private readonly HpPhases hpPhases = new HpPhases(80, 60, 40, 25, 15);
+
+    /// <summary>283132, <c>IDTiamat_Kalyndi_ShadowFire</c> — fifteen seconds, out to a hundred metres.</summary>
+    private const int ShadowFlame = 283132;
+    private const float ShadowFlameReach = 100f;
+    private const long ShadowFlameLifeMillis = 15000L;
 
     public CalindiFlamelordAI(Npc owner)
         : base(owner)
@@ -45,12 +54,68 @@ public class CalindiFlamelordAI : AggressiveNpcAI, HpPhases.PhaseHandler
             case 40:
             case 25:
                 StartHallucinatoryVictoryEvent();
+                DropShadowFlame(phaseHpPercent);
                 break;
             case 15:
                 GetOwner().QueueSkill(20942, 1);
                 break;
         }
     }
+
+    /// <summary>
+    /// One shadow flame on <b>every</b> player in the room, and more of them each rung.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. The pattern's four surkana rungs each carry a
+    /// <c>spawn_on_multi_target</c> whose count and scatter climb together — one flame within five
+    /// metres at 80%, two within seven at 60%, three within nine at 40%, four within ten at 25% — so
+    /// the room fills faster the further the fight goes. It reaches a hundred metres, which is
+    /// everyone, and each flame lasts fifteen seconds.
+    /// <para>
+    /// This was missing entirely: 283132 was spawned by nothing anywhere. The class placed 283133 on a
+    /// skill hook instead, which is a different npc and lands once near the boss rather than once per
+    /// player — the escalation and the per-player placement are both the mechanic.
+    /// </para>
+    /// </remarks>
+    private void DropShadowFlame(int rung)
+    {
+        (int count, float range) = rung switch
+        {
+            80 => (1, 5f),
+            60 => (2, 7f),
+            40 => (3, 9f),
+            _ => (4, 10f),
+        };
+
+        foreach (Creature target in GetAggroList().StreamValidTargets(ShadowFlameReach).ToList())
+        {
+            for (int i = 0; i < count; i++)
+            {
+                double angle = Rnd.NextFloat(360f) * Math.PI / 180.0;
+                float distance = Rnd.NextFloat(range);
+                Npc? flame = Spawn(
+                    ShadowFlame,
+                    target.GetX() + (float)(Math.Cos(angle) * distance),
+                    target.GetY() + (float)(Math.Sin(angle) * distance),
+                    target.GetZ(),
+                    (sbyte)0) as Npc;
+
+                if (flame != null)
+                    RetireAfter(flame, ShadowFlameLifeMillis);
+            }
+        }
+    }
+
+    /// <summary>Retail's <c>live_time</c> on a flame; nothing else removes it.</summary>
+    private static void RetireAfter(Npc npc, long millis) =>
+        ThreadPoolManager.GetInstance().Schedule(
+            _ =>
+            {
+                if (npc.IsSpawned())
+                    npc.GetController().Delete();
+                return ValueTask.CompletedTask;
+            },
+            millis);
 
     protected virtual void StartHallucinatoryVictoryEvent()
     {

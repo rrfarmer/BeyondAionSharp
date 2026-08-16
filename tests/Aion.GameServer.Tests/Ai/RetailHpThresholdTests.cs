@@ -94,7 +94,7 @@ public sealed class RetailHpThresholdTests
 	[Fact]
 	public void CalindiRunsHisEventFourTimesThenFinishesAtFifteen()
 	{
-		using var harness = BossAiHarness.For(DragonLordsRefuge).WithAi(typeof(CalindiFlamelordAI)).Build();
+		using var harness = BossAiHarness.For(DragonLordsRefuge).WithAi(typeof(CalindiFlamelordAI), typeof(NoActionAI)).Build();
 		Npc boss = harness.Spawn(CalindiFlamelord);
 		Player player = harness.SpawnPlayer();
 		harness.Engage(boss, player);
