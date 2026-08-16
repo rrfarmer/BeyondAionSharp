@@ -6072,3 +6072,38 @@ counted; the ametgolem is.
 
 **Verification.** Full suite 1,493 passing and 1 skipped; nine new pins; ten mutations, all
 caught.
+
+### The agrints' underlings were on the wrong trigger
+
+Eight seasonal agrints, eight patterns, and all eight agree — so this is one mechanic eight
+times over rather than a per-season judgement.
+
+The class called five underlings **once, when the agrint fell past half health**, and they
+stayed for the rest of the fight. Retail calls five **thirty seconds into the fight and every
+two hundred seconds after**, five metres out, each living **twenty seconds**. A recurring squall
+rather than a single permanent wave — and an agrint killed inside three minutes never sees the
+second one, which our version could not express at all.
+
+The ids were right. `GetNpcId() + 320` for the Elyos four and `+ 308` for the Asmodian four both
+land on the shared underlings 219170-3, and reading the patterns confirms both factions call the
+same ones. This entry is here because the **trigger** was wrong, not the target — which is a
+failure the missing-adds audit is structurally unable to see, and the shared-name audit only
+surfaced by accident: its triage greps for literal ids and a computed one reads as absent.
+
+**Recorded, deliberately not changed: the death drop.** Every pattern spawns **48** chests at 24
+metres for ten minutes; this class spawns **6** at one to six metres with no lifetime. That is an
+eightfold difference in what an agrint pays out, and it is reward economy rather than AI
+behaviour — the same call already recorded for the Conquest rotation's shugo odds. The numbers
+are in the class so the decision is a one-line change whenever somebody wants to make it.
+
+One detail worth keeping because it says what kind of data this is: the **Asmodian winter**
+pattern scatters its chests at 23 metres where the other seven use 24. Eight hand-written
+patterns, not one template stamped eight times.
+
+**An interval pin that needed a better window.** "The wave repeats every two hundred seconds"
+first passed against a hundred-second mutation: the pin looked just before and just after 230,
+and both cadences have a wave there. Checking at 140 — where a hundred-second interval has a
+wave standing and a two-hundred-second one does not — is what tells them apart.
+
+**Verification.** Full suite 1,499 passing and 1 skipped; six new pins; six mutations, all
+caught.
