@@ -1773,3 +1773,48 @@ left alone — Omega, Queen Alukina, Icaronix the Betrayer, Lost Balor, Vanuka
 Infernus, Asaratu Bloodshade — were each refused on "no comments". That was
 verified per boss and remains true for them. But the 337 figure means the refusal
 should be a *check*, not an assumption, on everything still to come.
+
+### Checking the claim on every boss it was made about
+
+The previous entry says the "no branch comments" refusal should be a check rather
+than an assumption. Applying that to the twelve patterns this work refused on
+those grounds: **all twelve claims hold.** Ten carry no branch comments at all
+(Vanuka, Asaratu, Lost Balor, Icaronix, Omega, the clone of barrier, Queen
+Alukina, Yamennes, Monolithic Ambusher, the field generator).
+
+Two are worth stating precisely, because their comments are not empty:
+
+- **RM-1337** has two, both on spawn branches that need no index.
+- **Vasharti** has ten, and they *are* semantic — `Ref_Blue` and `Ref_Red` say
+  plainly what the two reflect branches cast. His rotation is still unresolvable,
+  but for a different reason than recorded elsewhere: our npc_skills lists only
+  **two** skills for him against nine indices, and his real skill set lives in
+  `BrigadeGeneralVashartiAI` as hardcoded ids. The blocker there is the length of
+  our list, not the absence of comments.
+
+### A ready work queue: 12 bosses that are resolvable, portable and unwritten
+
+Intersecting the three conditions this session established gives a queue that can
+be worked without re-deriving any of it:
+
+1. no AI class (from `audit_missing_ai.py`),
+2. branch comments that describe behaviour,
+3. every `SKILLI_INDEX` within our own distinct-skill count.
+
+| branches | npc | rating | top idx / ours | name | pattern |
+|---:|---|---|---:|---|---|
+| 8 | 284377 | ELITE | 2 / 3 | danuar reliquary novun | `Rune_FrostNmd_TankSum_65_Ae` |
+| 8 | 284378 | ELITE | 1 / 2 | idean lapilima | `Rune_FrostNmd_DealSum_65_Ae` |
+| 11 | 235772-5 | HERO | 5 / 6-7 | hakara, zubala, visha, bahapa | `BIDF5_U01_Middle_Boss_Fire` |
+| 15 | 230850 | HERO | 6 / 8 | researcher teselik | `IDVritra_Base_Drakan_Wi_Nmd` |
+| 18 | 233258 | HERO | 6 / 11 | derakanak the reaver | `IDVritra_Base_Drake_Nmd` |
+
+The four HERO bosses on `BIDF5_U01_Middle_Boss_Fire` are one pattern and one
+class, but each has its own skill list, so the index mapping has to be anchored
+four times rather than once.
+
+Note what this queue is *not*: it is not the highest-impact list. Ahserion still
+has 127 unused timer branches and Tiamat's dying phase is still the richest
+mechanic found. Those need their skill lists resolved by other means, or porting
+without casts as several bosses here already were. This queue is simply the set
+where nothing is blocked and the method is known.
