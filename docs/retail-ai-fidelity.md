@@ -6475,3 +6475,49 @@ with no listener, so it waits for those four.
 
 **Verification.** Full suite 1,535 passing and 1 skipped; eight new pins; nine mutations, eight
 caught and one that will not compile.
+
+## Closing the temple's clear-up: a sender and its four listeners, together
+
+Last entry recorded the invisible controllers Lower Udas Temple's bosses drop as a **sender with
+no listener** and left them out. This closes it, because the listeners turned out to be four
+patterns whose only translatable branch is the one that answers.
+
+The chain is three pieces and each is one line:
+
+1. a boss dies and drops **five** controllers (281418) — one at its feet, four scattered to
+   twenty-five metres;
+2. each controller **broadcasts 6956 to fifty metres and removes itself**;
+3. every add the boss called answers 6956 with **`despawn_self`**.
+
+Ten NPCs across four patterns do step three — the punishment chakras, the protection of aion, the
+pyre souls and the shatters — and *that branch is identical in all four*. What is not identical is
+everything else they do, and none of it is translatable: the chakras walk a route we do not have,
+the nuclei and pyre souls answer 6955 with a cast, the shatters run a fourteen-second cast loop,
+and a pyre soul has a one-in-two chance of casting and vanishing when hit. Sharing one class for
+the despawn is not a claim that the four patterns are the same, only that this branch of them is.
+
+**Why five controllers for a fifty-metre broadcast.** Because the room is bigger than fifty
+metres. One lands on the boss and four scatter to twenty-five, so the union covers what a single
+broadcast could not — which is also why the pin's raid had to be moved closer together: at the old
+spacing the furthest add sat sixty metres from the boss and whether it heard anything depended on
+where the scattered four happened to land.
+
+### A mutation that is inert because both halves are ours
+
+Changing the message number from 6956 to 6955 survives every pin: sender and listener share the
+same constant, so the value cancels out. It is not a gap in the pins — it is that the number only
+matters for talking to NPCs *outside* this pair, and there are none translated yet. It will start
+mattering the moment Bergrisar is: **he broadcasts 6955 on entering attack**, and a temple wired
+to the wrong number would have him clear the room as he pulls.
+
+**Where the counts went.** Neither audit moves: the controllers are `name_id`-blank scenery the
+missing-adds audit filters, and the ten adds were already reachable through their bosses. What
+moved is that killing a boss now takes its adds with it, which is the mechanic.
+
+**Still owed in this instance.** Bergrisar (`IDTP_Keeper1`) is the last of the four bosses without
+a class. His five blood wheels are all walk-path blocked, so what he has left to give is the same
+on-die clear-up — worth doing when somebody is next in the file, and now that the chain exists it
+is four lines rather than a research problem.
+
+**Verification.** Full suite 1,538 passing and 1 skipped; three new pins; six mutations, four
+caught, one that will not compile, and the inert one written up above.

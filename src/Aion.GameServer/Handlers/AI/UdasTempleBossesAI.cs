@@ -47,6 +47,18 @@ public class AnvilfaceAI : PatternAi
     private const int Below50 = 1;
     private const int Below30 = 2;
 
+    /// <summary>
+    /// Retail's <c>on_die</c> on every boss in the temple: five invisible controllers, one at its
+    /// feet and four scattered to twenty-five metres, each of which broadcasts the room clear. See
+    /// <see cref="UdasTempleClearAI"/>.
+    /// </summary>
+    private const int ClearController = 281418;
+
+    internal static PatternBranch DropTheClearControllers(int priority) =>
+        Branch(priority, "", When.Always,
+            Do.SpawnNear(ClearController, 0, count: 1, range: 1f),
+            Do.SpawnNear(ClearController, 0, count: 4, range: 25f));
+
     private static PatternAction CallShatter =>
         Do.SpawnOnAttacker(AggroTarget.THIRD_MOST_HATED, Shatter, Called, attackHate: OnArrival);
 
@@ -59,6 +71,8 @@ public class AnvilfaceAI : PatternAi
 
             Branch(9, "below 50", [When.HpBelow(50), When.FirstTime(Below50)],
                 CallShatter)),
+
+        OnDie = Of(DropTheClearControllers(11)),
     };
 
     public AnvilfaceAI(Npc owner)
@@ -138,6 +152,9 @@ public class DebilkarimTheMakerAI : PatternAi
                 Do.SpawnNear(Nucleus, Untracked, count: 2, range: 10f),
                 Do.SpawnNear(Nucleus, Untracked, count: 2, range: 15f),
                 Do.SpawnNear(Nucleus, Untracked, count: 1, range: 20f))),
+
+        // Retail also drops a small treasure box here, which is loot rather than behaviour.
+        OnDie = Of(AnvilfaceAI.DropTheClearControllers(11)),
     };
 
     public DebilkarimTheMakerAI(Npc owner)

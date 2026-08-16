@@ -23,10 +23,15 @@ public sealed class UdasTempleBossesAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(LowerUdasTemple).WithWorldSize(2048)
-			.WithAi(typeof(AnvilfaceAI), typeof(DebilkarimTheMakerAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(AnvilfaceAI), typeof(DebilkarimTheMakerAI), typeof(AggressiveNpcAI),
+				typeof(UdasTempleClearAI), typeof(UdasTempleAddAI))
 			.Build();
 
-	/// <summary>Three players at distinct hate, so "third-most-hated" is unambiguous.</summary>
+	/// <summary>
+	/// Three players at distinct hate, so "third-most-hated" is unambiguous — and close enough
+	/// together that the clear controllers, which scatter to twenty-five metres around the boss, are
+	/// always inside their own fifty-metre broadcast of whatever landed on the furthest player.
+	/// </summary>
 	private static (BossAiHarness, Npc, List<Player>) Engaged(int npcId)
 	{
 		BossAiHarness harness = NewHarness();
@@ -34,7 +39,7 @@ public sealed class UdasTempleBossesAiTests
 		var raid = new List<Player>();
 		for (int i = 0; i < 3; i++)
 		{
-			raid.Add(harness.SpawnPlayer(320f + (i * 20), 300f, 200f));
+			raid.Add(harness.SpawnPlayer(305f + (i * 8), 300f, 200f));
 			BossAiHarness.MakeMutuallyKnown(boss, raid[i]);
 		}
 
@@ -193,5 +198,63 @@ public sealed class UdasTempleBossesAiTests
 		// calls, so a hundred and twenty souls. Every hit calling would be twelve hundred, and the
 		// bound is far enough out that the roll's own variance cannot reach it.
 		Assert.True(souls < 400, $"the one-in-ten roll should have skipped most hits: {souls}");
+	}
+
+	/// <summary>The invisible controller every temple boss drops as it dies.</summary>
+	private const int ClearController = 281418;
+
+	/// <summary>
+	/// Killing a boss drops five clear controllers — one at its feet and four scattered to
+	/// twenty-five metres, which is how a fifty-metre broadcast covers a bigger room.
+	/// </summary>
+	[Fact]
+	public void DyingDropsFiveClearControllers()
+	{
+		var (harness, boss, raid) = Engaged(Anvilface);
+		using BossAiHarness _h = harness;
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		// They broadcast and remove themselves on the tick they wake, so what is counted is the
+		// spawn itself: five of them existed.
+		Assert.Equal(0, Count(harness, ClearController));
+	}
+
+	/// <summary>
+	/// And what the boss called goes with it. That is the whole point of the controller: the adds
+	/// answer 6956 with <c>despawn_self</c>, and until both halves were translated the broadcast had
+	/// nobody to reach.
+	/// </summary>
+	[Fact]
+	public void KillingTheBossClearsWhatItCalled()
+	{
+		var (harness, boss, raid) = Engaged(Anvilface);
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 49);
+		Hit(boss, raid[0]);
+		Assert.Equal(1, Count(harness, Shatter));
+
+		foreach (Player p in raid)
+			BossAiHarness.MakeMutuallyKnown(boss, p);
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Equal(0, Count(harness, Shatter));
+	}
+
+	/// <summary>Debilkarim's ring goes the same way.</summary>
+	[Fact]
+	public void KillingDebilkarimClearsHisRing()
+	{
+		var (harness, boss, raid) = Engaged(Debilkarim);
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 50);
+		Hit(boss, raid[0]);
+		Assert.Equal(7, Count(harness, Nucleus));
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Equal(0, Count(harness, Nucleus));
 	}
 }
