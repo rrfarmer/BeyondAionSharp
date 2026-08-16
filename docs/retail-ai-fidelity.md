@@ -5429,3 +5429,51 @@ and running inline survives nothing.
 
 **Verification.** Full suite 1,426 passing and 1 skipped. Two new pins on the gates, one
 of them replacing the pin that had been asserting the bug; four mutations, all caught.
+
+## The guards' traps arrive fighting — thirty-four rows, one column
+
+The list left owed by the last entry, worked from the top. The `[DL]Guard_*` family is
+table-driven, so carrying `attack_target_after_spawn` for it is a column in
+`extract_guard_reinforcements.py` rather than twelve hand edits: **34 of the 1,856 rows**,
+across six patterns, all of them `spawn_on_target` — the rangers' traps and the wizards'
+frost pillars.
+
+They land on the player the guard is fighting and, in retail, **engage that player**.
+Ours landed inert: a trap you could stand next to and walk away from. The hate retail
+gives them is 1 or 100 — enough to start the fight, nowhere near enough to hold a raid's
+attention, which is why it reads as a trap rather than as a second guard.
+
+The runtime side is `SpawnOnTarget(..., attackHate:)`, sharing the `Provoke` the gates
+introduced. Two details the shared path needed:
+
+- **The victim's half only runs for an NPC victim.** A player has no AI to put into a
+  fight, and being attacked is handled everywhere else. For the `OBJI_SELF` form that half
+  *is* the point — the spawner's own `on_enter_attack_state` is what the summon exists to
+  trigger — so it is kept, conditionally.
+- **Hate does not land on a player who is unaware of the attacker**, the same rule that
+  moved Vanuka's rally pins onto `SetTarget` months of entries ago. So the pin observes
+  the trap's state and its target, which is what the mechanic is, rather than a hate
+  number that our aggro rules drop on the floor.
+
+### A flaky pin, found by walking past it
+
+`AWaveLivesForItsOwnPatternsLifetime` failed on this run: *"a hundred-second wave should
+have retired most of 18 arrivals, 10 standing"*. Nothing to do with this change — the
+patrol calls at **fifty percent**, so that pin was comparing two numbers that both depend
+on coin flips, and the ratio it wanted was inside the variance. It has been passing on
+luck.
+
+It now remembers **which** NPCs landed, by object id, and asks whether those are still
+there at 99 seconds and gone at 102. Deterministic, and it pins the hundred seconds to the
+second instead of to a plateau. Five consecutive runs clean.
+
+**What is still owed on this op.** 331 of the 384 rows remain, in forms the table cannot
+carry: `spawn_on_multi_target` (133) and `spawn_on_target_by_attacker_indicator` (39) are
+skipped by the guard extractor for the reason they were always skipped — the cap, the
+ordering and the attacker indicator are fields the row does not have — and the remaining
+per-boss patterns (`DF4_Dramata` 20, `LDF4b_Golden_Gururu` 6, `LF4_FieldRaid` 5,
+`IDAbRe_Core_NamedD*` 4, `IDCT_Boss_Shadow` 2, `IDTiamat_T1_Crack_Key` 1) are hand-written
+classes that each need the flag threaded through their own tables.
+
+**Verification.** Full suite 1,427 passing and 1 skipped; one new pin and one repaired;
+five mutations, all caught.

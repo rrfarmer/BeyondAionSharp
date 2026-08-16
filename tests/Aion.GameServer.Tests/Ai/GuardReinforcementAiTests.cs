@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
@@ -309,11 +310,12 @@ public sealed class GuardReinforcementAiTests
 	/// hundred. A constant taken from a uniform subset is a constant that will be wrong as soon as the
 	/// subset grows.
 	/// <para>
-	/// What separates the two is where the population <b>plateaus</b>, not any single wave. The patrol
-	/// calls every twenty seconds and never stops, so waves accumulate until the oldest start
-	/// expiring: at a hundred seconds that settles around five calls' worth, at ten minutes it keeps
-	/// climbing. Ninety seconds tells them apart not at all — nothing has expired yet under either —
-	/// which is what the first version of this pin asserted.
+	/// <b>What is watched is the wave itself, by object id</b>, rather than the size of the standing
+	/// population. An earlier version of this pin compared how many were standing against how many had
+	/// ever arrived, which is a ratio between two numbers that both depend on coin flips — the patrol
+	/// calls at fifty percent — and it failed on a run that produced eighteen arrivals with ten still
+	/// up. Remembering which NPCs landed and asking whether <em>those</em> are still there is
+	/// deterministic, and it pins the hundred seconds to the second rather than to a plateau.
 	/// </para>
 	/// </remarks>
 	[Fact]
@@ -328,15 +330,67 @@ public sealed class GuardReinforcementAiTests
 		BossAiHarness.SetHpPercent(guard, 20);
 		harness.Engage(guard, quarry);
 
-		BossAiHarness.Watched run = harness.Watch(
-			300, () => BossAiHarness.Rehate(guard, quarry), PatrolAttacker, PatrolHealer);
+		int[] firstWave = [];
+		for (int i = 0; i < 120 && firstWave.Length == 0; i++)
+		{
+			Advance(harness, guard, quarry, 1);
+			firstWave = harness.LiveNpcs()
+				.Where(n => n.GetNpcId() == PatrolAttacker || n.GetNpcId() == PatrolHealer)
+				.Select(n => n.GetObjectId()).ToArray();
+		}
 
-		Assert.True(run.Total > 10, $"five minutes of calls should be more than ten arrivals: {run.Total}");
+		Assert.NotEmpty(firstWave);
 
-		// Five minutes of twenty-second calls is around fifteen waves. With a hundred-second lifetime
-		// only the last five or so are still standing; with ten minutes, all of them would be.
-		int standing = Count(harness, PatrolAttacker) + Count(harness, PatrolHealer);
-		Assert.True(standing < run.Total / 2,
-			$"a hundred-second wave should have retired most of {run.Total} arrivals, {standing} standing");
+		// Ninety-nine seconds after they landed they are all still standing.
+		Advance(harness, guard, quarry, 98);
+		Assert.All(firstWave, id => Assert.Contains(harness.LiveNpcs(), n => n.GetObjectId() == id));
+
+		// Three seconds later, none of them is. Ten minutes would have left every one in place.
+		Advance(harness, guard, quarry, 3);
+		Assert.All(firstWave, id => Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetObjectId() == id));
+	}
+
+	/// <summary>An elyos wizard guard, <c>LGuard_WsA</c> — one band, certain, and hostile on arrival.</summary>
+	private const int WizardGuard = 296469;
+
+	/// <summary>Its call: an ice sheet, thirty seconds, on whoever it is fighting.</summary>
+	private const int IceSheet = 296470;
+
+	/// <summary>
+	/// The rangers' traps and the wizards' pillars arrive <b>already fighting</b> whoever they landed
+	/// on — retail's <c>attack_target_after_spawn</c> with a hate of one.
+	/// </summary>
+	/// <remarks>
+	/// Thirty-four rows across six patterns carry it and every one of them landed passive before this:
+	/// a trap you could stand next to. The hate is deliberately tiny — one point, enough to start the
+	/// fight and nowhere near enough to hold a raid's attention — so what is asserted is the trap's
+	/// state and its target, not that it out-threatens anyone.
+	/// </remarks>
+	[Fact]
+	public void ADrakanTrapArrivesAlreadyFighting()
+	{
+		BossAiHarness harness = BossAiHarness.For(Reshanta).WithWorldSize(4096)
+			.WithAi(typeof(GuardReinforcementAI), typeof(ServantNpcAI), typeof(AggressiveNpcAI),
+				typeof(AggressiveNpcAI)).Build();
+		using BossAiHarness _h = harness;
+		Npc guard = harness.Spawn(WizardGuard, 300f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(360f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, quarry);
+		harness.Engage(guard, quarry);
+
+		Npc? trap = null;
+		for (int i = 0; i < 40 && trap is null; i++)
+		{
+			Advance(harness, guard, quarry, 1);
+			trap = harness.LiveNpcs().FirstOrDefault(n => n.GetNpcId() == IceSheet);
+		}
+
+		Assert.NotNull(trap);
+
+		// One more tick: the provoke is deferred, for the reasons PatternAi.ProvokeNextTick gives.
+		Advance(harness, guard, quarry, 1);
+
+		Assert.Equal(AIState.FIGHT, trap!.GetAi().GetState());
+		Assert.Same(quarry, trap.GetTarget());
 	}
 }

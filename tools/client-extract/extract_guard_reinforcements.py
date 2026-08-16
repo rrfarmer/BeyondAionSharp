@@ -12,7 +12,8 @@ carries the facts.
 
 What it emits, one row per (guard npc, band):
 
-    guard_npc_id  pattern  low_hp  high_hp  chance  placement  live_seconds  spawn_range  summons
+    guard_npc_id  pattern  low_hp  high_hp  chance  placement  live_seconds  spawn_range
+    attack_hate  summons
 
 where `summons` is `npc_id*count` joined by commas, and the band is the retail
 `is_hp_in_boundary` / `is_hp_lower_than` guard verbatim.
@@ -61,6 +62,12 @@ LIVE_RE = re.compile(r"<live_time>(\d+)</live_time>")
 RANGE_RE = re.compile(r"<spawn_range>(\d+)</spawn_range>")
 LOCATION_RE = re.compile(r"<spawn_location_type>([^<]+)</spawn_location_type>")
 
+# `attack_target_after_spawn` with `hatepoints_to_add`: the summon arrives already fighting whoever
+# it was dropped on, rather than waiting to be walked into. Carried per band because it changes the
+# mechanic, not the decoration -- a trap that engages you is not a trap you can step around.
+ATTACK_RE = re.compile(r"<attack_target_after_spawn>([A-Z]+)</attack_target_after_spawn>")
+HATE_RE = re.compile(r"<hatepoints_to_add>(\d+)</hatepoints_to_add>")
+
 BOUNDARY_RE = re.compile(
     r"<is_hp_in_boundary>.*?<larger_than>(\d+)</larger_than>.*?<less_than>(\d+)</less_than>.*?</is_hp_in_boundary>",
     re.S)
@@ -85,8 +92,12 @@ def branches_of(block: str, event: str) -> list[str]:
     return out
 
 
-def spawns_in(branch: str) -> list[tuple[str, int, int, int, str]]:
-    """(devname, count, live_time, spawn_range, placement) for each spawn in a branch."""
+def spawns_in(branch: str) -> list[tuple[str, int, int, int, str, int]]:
+    """(devname, count, live_time, spawn_range, placement, hate) for each spawn in a branch.
+
+    `hate` is 0 unless the spawn carries `attack_target_after_spawn=TRUE`, in which case it is
+    retail's `hatepoints_to_add` -- what the summon starts with against whoever it landed on.
+    """
     found = []
     for spawn in SPAWN_RE.finditer(branch):
         body = spawn.group(2)
@@ -98,12 +109,15 @@ def spawns_in(branch: str) -> list[tuple[str, int, int, int, str]]:
         live = LIVE_RE.search(body)
         rng = RANGE_RE.search(body)
         loc = LOCATION_RE.search(body)
+        attack = ATTACK_RE.search(body)
+        hate = HATE_RE.search(body)
         found.append((
             name.group(1),
             int(count.group(1)) if count else 1,
             int(live.group(1)) if live else 0,
             int(rng.group(1)) if rng else 0,
             op,
+            int(hate.group(1)) if attack and attack.group(1) == "TRUE" and hate else 0,
         ))
     return found
 
@@ -179,8 +193,8 @@ def main() -> None:
 
             # The shape census: which timer slot, which lifetime, which placement.
             for low, high, _chance, timer, spawns in timers:
-                for _dev, _count, live, rng, loc in spawns:
-                    shapes[(timer, live, rng, loc)] += 1
+                for _dev, _count, live, rng, loc, hate in spawns:
+                    shapes[(timer, live, rng, loc, hate)] += 1
 
             guard_ids = owners.get(name, [])
             if not guard_ids:
@@ -192,12 +206,18 @@ def main() -> None:
                 lifetimes = {sp[2] for sp in spawns}
                 ranges = {sp[3] for sp in spawns}
                 ops = {sp[4] for sp in spawns}
+                hates = {sp[5] for sp in spawns}
                 if not ops <= EXPRESSIBLE_OPS:
                     for op in ops - EXPRESSIBLE_OPS:
                         unresolved[f"op {op} (placement not expressible yet)"] += 1
                     continue
                 placement = "TARGET" if ops == {"spawn_on_target"} else "SELF"
-                for devname, count, _live, _rng, _loc in spawns:
+                # A band whose summons disagree about arriving hostile would need one flag per
+                # summon rather than one per band. None do; if that ever changes, this reports it
+                # instead of quietly taking the larger number.
+                if len(hates) > 1:
+                    unresolved[f"pattern {name} mixes hate {sorted(hates)} within one band"] += 1
+                for devname, count, _live, _rng, _loc, _hate in spawns:
                     npc_id = by_devname.get(devname.lower())
                     if npc_id is None:
                         unresolved[f"devname {devname}"] += 1
@@ -208,10 +228,11 @@ def main() -> None:
                     continue
                 for guard_id in guard_ids:
                     rows.append((guard_id, name, low, high, chance, placement,
-                                 max(lifetimes), max(ranges), ",".join(resolved)))
+                                 max(lifetimes), max(ranges), max(hates), ",".join(resolved)))
 
     rows.sort(key=lambda r: (int(r[0]), r[2]))
-    lines = ["guard_npc_id\tpattern\tlow_hp\thigh_hp\tchance\tplacement\tlive_seconds\tspawn_range\tsummons"]
+    lines = ["guard_npc_id\tpattern\tlow_hp\thigh_hp\tchance\tplacement"
+             "\tlive_seconds\tspawn_range\tattack_hate\tsummons"]
     lines += ["\t".join(str(c) for c in r) for r in rows]
     body = "\n".join(lines) + "\n"
     if args.out:
@@ -221,7 +242,8 @@ def main() -> None:
 
     print(f"\npatterns with reinforcement branches: {patterns_seen}", file=sys.stderr)
     print(f"rows emitted: {len(rows)} for {len({r[0] for r in rows})} guards", file=sys.stderr)
-    print("\nshape census (timer, live_time, spawn_range, location) -> branches:", file=sys.stderr)
+    print(f"rows whose summons arrive fighting: {sum(1 for r in rows if r[8])}", file=sys.stderr)
+    print("\nshape census (timer, live_time, spawn_range, location, hate) -> branches:", file=sys.stderr)
     for shape, n in shapes.most_common():
         print(f"  {shape} -> {n}", file=sys.stderr)
     if unresolved:

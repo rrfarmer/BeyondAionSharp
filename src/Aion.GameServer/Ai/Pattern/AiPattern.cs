@@ -216,8 +216,13 @@ public static class Do
         => ai => ai.SpawnNear(npcId, spawnId, count, range, liveSeconds);
 
     /// <summary><c>spawn_on_target</c> — placed at whoever the caster is facing.</summary>
-    public static PatternAction SpawnOnTarget(int npcId, int spawnId, int count = 1, float range = 0f, int liveSeconds = 0)
-        => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds);
+    /// <param name="attackHate">
+    /// Retail's <c>hatepoints_to_add</c> where the spawn carries <c>attack_target_after_spawn</c>;
+    /// leave at 0 and the add arrives passive, as most of them do.
+    /// </param>
+    public static PatternAction SpawnOnTarget(int npcId, int spawnId, int count = 1, float range = 0f,
+        int liveSeconds = 0, int attackHate = 0)
+        => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds, attackHate);
 
     /// <summary>
     /// <c>spawn_on_target target_obj=OBJI_SELF</c> with <c>attack_target_after_spawn</c> — a summon that

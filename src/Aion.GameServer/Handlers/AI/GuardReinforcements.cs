@@ -30,2412 +30,2419 @@ internal static class GuardReinforcements
     /// reinforcements ten minutes, the drakan guards a hundred seconds.
     /// </param>
     /// <param name="Range">Retail's <c>spawn_range</c>, one to three metres depending on the guard.</param>
+    /// <param name="AttackHate">
+    /// Retail's <c>hatepoints_to_add</c> where the spawn also carries
+    /// <c>attack_target_after_spawn</c>, and 0 where it does not. Non-zero means the summon arrives
+    /// <b>already fighting whoever it landed on</b> rather than waiting to be walked into — which for
+    /// the rangers' traps and the wizards' frost pillars is the whole mechanic. The values retail
+    /// gives here are 1 and 100: enough to start the fight, not enough to hold aggro against a raid.
+    /// </param>
     /// <param name="Summons">npc id and count, in the order the pattern lists them.</param>
     internal readonly record struct Band(
-        int Low, int High, int Chance, bool OnTarget, int LiveSeconds, float Range,
+        int Low, int High, int Chance, bool OnTarget, int LiveSeconds, float Range, int AttackHate,
         (int NpcId, int Count)[] Summons);
 
     internal static readonly IReadOnlyDictionary<int, Band[]> ByGuard = new Dictionary<int, Band[]>
     {
-        // LGuard_WhA_L43
-        [203338] = [new Band(0, 34, 100, false, 600, 3f, [(207612, 1)])],
-        // LGuard_ReA_L51
-        [203378] = [new Band(0, 34, 100, true, 100, 1f, [(207635, 1)])],
-        // LGuard_WhA_L50
-        [203902] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_PhA
-        [203903] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_RhA_L50
-        [203904] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_Kimeia
-        [203996] = [new Band(51, 75, 100, false, 600, 0f, [(207549, 1)]), new Band(26, 50, 100, false, 600, 0f, [(207549, 1), (207550, 1)]), new Band(0, 24, 100, false, 600, 0f, [(207549, 1), (207550, 1), (207551, 1)])],
-        // DGuard_PhA
-        [204303] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_WhA_L50
-        [204304] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_AhA_L50
-        [204312] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_WhA_L50
-        [204314] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_RhA_L50
-        [204315] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_AhA_L50
-        [204317] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_RhA_L45
-        [204391] = [new Band(36, 70, 100, true, 600, 3f, [(207823, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207824, 2), (207823, 3)])],
-        // DGuard_WhA_L50
-        [204434] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // LGuard_WhA_L53
-        [204502] = [new Band(0, 34, 100, false, 600, 3f, [(207622, 1)])],
-        // LGuard_PhA_L53
-        [204503] = [new Band(71, 100, 50, false, 600, 3f, [(207688, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207688, 2), (207689, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207688, 3), (207689, 2)])],
-        // LGuard_RhA_L50
-        [204510] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_WhA_L50
-        [204518] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_ReA_L50
-        [204574] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204575] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204576] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204584] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_AhA_L50
-        [204590] = [new Band(0, 34, 100, false, 600, 3f, [(295133, 2), (295134, 1)])],
-        // LGuard_ReA_L50
-        [204591] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204598] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204599] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204602] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204606] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [204608] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_WhA_L50
-        [204629] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_WhA_L53
-        [204646] = [new Band(0, 34, 100, false, 600, 3f, [(207622, 1)])],
-        // LGuard_RhB_L52
-        [204654] = [new Band(36, 70, 100, true, 100, 3f, [(207636, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207636, 3)])],
-        // DGuard_PhA_L53
-        [204701] = [new Band(71, 100, 50, false, 600, 3f, [(207694, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207694, 2), (207695, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207694, 3), (207695, 2)])],
-        // DGuard_WhA_L53
-        [204703] = [new Band(0, 34, 100, false, 600, 3f, [(207627, 1)])],
-        // DGuard_RhA_L53
-        [204707] = [new Band(36, 70, 100, true, 600, 3f, [(207690, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207691, 2), (207690, 3)])],
-        // DGuard_RhA_L50
-        [204711] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_RhA_L50
-        [204713] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_ReA_L50
-        [204743] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_WhA_L50
-        [204763] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_ReA_L50
-        [204764] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_ReA_L50
-        [204765] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_WhA_L50
-        [204768] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_AhA_L53
-        [204774] = [new Band(0, 34, 100, false, 600, 3f, [(207692, 2), (207693, 1)])],
-        // DGuard_WhA_L50
-        [204784] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_ReA_L50
-        [204804] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_ReA_L50
-        [204816] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_WhA_L53
-        [204818] = [new Band(0, 34, 100, false, 600, 3f, [(207627, 1)])],
-        // DGuard_RhB_L53
-        [205239] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // LGuard_WhA_L60
-        [205535] = [new Band(0, 34, 100, false, 600, 3f, [(296639, 1)])],
-        // LGuard_PhB_L55
-        [205581] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // LGuard_PhB_L55
-        [205583] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhA_L60
-        [205617] = [new Band(71, 100, 50, false, 600, 3f, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296764, 3), (296765, 2)])],
-        // LGuard_ReA
-        [207514] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_RhB
-        [207515] = [new Band(36, 70, 100, true, 100, 3f, [(294707, 2)]), new Band(0, 34, 100, true, 100, 3f, [(294707, 3)])],
-        // LGuard_Kimeia
-        [207520] = [new Band(51, 75, 100, false, 600, 0f, [(207549, 1)]), new Band(26, 50, 100, false, 600, 0f, [(207549, 1), (207550, 1)]), new Band(0, 24, 100, false, 600, 0f, [(207549, 1), (207550, 1), (207551, 1)])],
-        // LGuard_PhB
-        [207523] = [new Band(0, 34, 50, true, 100, 3f, [(294737, 2)]), new Band(0, 100, 50, true, 100, 3f, [(294734, 2)])],
-        // LGuard_ReA_L50
-        [207556] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [207557] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_PhA_L50
-        [207566] = [new Band(71, 100, 50, false, 600, 3f, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295140, 3), (295141, 2)])],
-        // LGuard_ReA_L50
-        [207571] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [207572] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_PhA_L50
-        [207581] = [new Band(71, 100, 50, false, 600, 3f, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295140, 3), (295141, 2)])],
-        // DGuard_ReA_L50
-        [207586] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [207587] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_PhA_L50
-        [207596] = [new Band(71, 100, 50, false, 600, 3f, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295151, 3), (295152, 2)])],
-        // DGuard_ReA_L50
-        [207601] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [207602] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_PhA_L50
-        [207611] = [new Band(71, 100, 50, false, 600, 3f, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295151, 3), (295152, 2)])],
-        // LGuard_ReA_L41
-        [207651] = [new Band(0, 34, 100, true, 100, 1f, [(207632, 1)])],
-        // LGuard_RhB_L42
-        [207652] = [new Band(36, 70, 100, true, 100, 3f, [(207633, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207633, 3)])],
-        // LGuard_ReA_L51
-        [207657] = [new Band(0, 34, 100, true, 100, 1f, [(207635, 1)])],
-        // LGuard_RhB_L52
-        [207658] = [new Band(36, 70, 100, true, 100, 3f, [(207636, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207636, 3)])],
-        // DGuard_ReA_L41
-        [207663] = [new Band(0, 34, 100, true, 100, 1f, [(207637, 1)])],
-        // DGuard_RhB_L42
-        [207664] = [new Band(36, 70, 100, true, 100, 3f, [(207638, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207638, 3)])],
-        // DGuard_ReA_L51
-        [207669] = [new Band(0, 34, 100, true, 100, 1f, [(207640, 1)])],
-        // DGuard_RhB_L52
-        [207670] = [new Band(36, 70, 100, true, 100, 3f, [(207641, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207641, 3)])],
-        // LGuard_ReA
-        [207749] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA_L45
-        [207750] = [new Band(0, 34, 100, true, 100, 1f, [(207812, 1)])],
-        // LGuard_ReA_L50
-        [207751] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhB
-        [207752] = [new Band(36, 70, 100, true, 100, 3f, [(294707, 2)]), new Band(0, 34, 100, true, 100, 3f, [(294707, 3)])],
-        // LGuard_RhB_L45
-        [207753] = [new Band(36, 70, 100, true, 100, 3f, [(207812, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207812, 3)])],
-        // LGuard_RhB_L50
-        [207754] = [new Band(36, 70, 100, true, 100, 3f, [(295131, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295131, 3)])],
-        // LGuard_RhA_L50
-        [207755] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_AhA_L50
-        [207762] = [new Band(0, 34, 100, false, 600, 3f, [(295133, 2), (295134, 1)])],
-        // LGuard_WhA_L50
-        [207769] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_PhB
-        [207773] = [new Band(0, 34, 50, true, 100, 3f, [(294737, 2)]), new Band(0, 100, 50, true, 100, 3f, [(294734, 2)])],
-        // LGuard_PhB_L45
-        [207774] = [new Band(0, 34, 50, true, 600, 3f, [(207822, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207821, 2)])],
-        // LGuard_PhB_L50
-        [207775] = [new Band(0, 34, 50, true, 600, 3f, [(295141, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295141, 2)])],
-        // LGuard_PhA
-        [207776] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_ReA
-        [207784] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA_L45
-        [207785] = [new Band(0, 34, 100, true, 100, 1f, [(207823, 1)])],
-        // DGuard_ReA_L50
-        [207786] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhB
-        [207787] = [new Band(36, 70, 100, true, 100, 3f, [(294740, 2)]), new Band(0, 34, 100, true, 100, 3f, [(294740, 3)])],
-        // DGuard_RhB_L45
-        [207788] = [new Band(36, 70, 100, true, 100, 3f, [(207823, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207823, 3)])],
-        // DGuard_RhB_L50
-        [207789] = [new Band(36, 70, 100, true, 100, 3f, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295142, 3)])],
-        // DGuard_RhA_L50
-        [207790] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_AhA_L50
-        [207797] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_WhA_L50
-        [207804] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_PhB
-        [207808] = [new Band(0, 34, 50, true, 100, 3f, [(294770, 2)]), new Band(0, 100, 50, true, 100, 3f, [(294767, 2)])],
-        // DGuard_PhB_L45
-        [207809] = [new Band(0, 34, 50, true, 600, 3f, [(207833, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207832, 2)])],
-        // DGuard_PhB_L50
-        [207810] = [new Band(0, 34, 50, true, 600, 3f, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295152, 2)])],
-        // DGuard_PhA
-        [207811] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // LGuard_ReA_L45
-        [207849] = [new Band(0, 34, 100, true, 100, 1f, [(207812, 1)])],
-        // LGuard_RhA_L45
-        [207850] = [new Band(36, 70, 100, true, 600, 3f, [(207812, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207813, 2), (207812, 3)])],
-        // LGuard_PhA_L45
-        [207859] = [new Band(71, 100, 50, false, 600, 3f, [(207821, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207821, 2), (207822, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207821, 3), (207822, 2)])],
-        // DGuard_ReA_L45
-        [207864] = [new Band(0, 34, 100, true, 100, 1f, [(207823, 1)])],
-        // DGuard_RhA_L45
-        [207865] = [new Band(36, 70, 100, true, 600, 3f, [(207823, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207824, 2), (207823, 3)])],
-        // DGuard_PhA_L45
-        [207874] = [new Band(71, 100, 50, false, 600, 3f, [(207832, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207832, 2), (207833, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207832, 3), (207833, 2)])],
-        // DGuard_ReA_L50
-        [207875] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhB_L50
-        [207876] = [new Band(36, 70, 100, true, 100, 3f, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295142, 3)])],
-        // LGuard_RhB_L45
-        [207946] = [new Band(36, 70, 100, true, 100, 3f, [(207812, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207812, 3)])],
-        // LGuard_RhB_L45
-        [207947] = [new Band(36, 70, 100, true, 100, 3f, [(207812, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207812, 3)])],
-        // LGuard_ReA_L55
-        [209013] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // LGuard_ReA_L56
-        [209014] = [new Band(0, 34, 100, true, 100, 1f, [(296618, 1)])],
-        // LGuard_RhB_L53
-        [209015] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_RhB_L55
-        [209016] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L56
-        [209017] = [new Band(36, 70, 100, true, 600, 3f, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207698, 2), (207697, 3)])],
-        // LGuard_RhA_L57
-        [209018] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [209019] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_AhA_L56
-        [209027] = [new Band(0, 34, 100, false, 600, 3f, [(296626, 2), (296627, 1)])],
-        // LGuard_AhA_L57
-        [209028] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_AhA_L57
-        [209029] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_WhA_L56
-        [209037] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L57
-        [209038] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [209039] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_PhB_L53
-        [209045] = [new Band(0, 34, 50, true, 600, 3f, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296644, 2)])],
-        // LGuard_PhB_L55
-        [209046] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // LGuard_PhA_L56
-        [209047] = [new Band(71, 100, 50, false, 600, 3f, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207709, 3), (207710, 2)])],
-        // LGuard_PhA_L57
-        [209048] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_PhA_L57
-        [209049] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_RhB_L53
-        [209055] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_RhB_L55
-        [209056] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L56
-        [209057] = [new Band(36, 70, 100, true, 600, 3f, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207698, 2), (207697, 3)])],
-        // LGuard_RhA_L57
-        [209058] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [209059] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_AhA_L56
-        [209062] = [new Band(0, 34, 100, false, 600, 3f, [(296626, 2), (296627, 1)])],
-        // LGuard_AhA_L57
-        [209063] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_AhA_L57
-        [209064] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_WhA_L56
-        [209067] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L57
-        [209068] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [209069] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_PhB_L53
-        [209070] = [new Band(0, 34, 50, true, 600, 3f, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296644, 2)])],
-        // LGuard_PhB_L55
-        [209071] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // LGuard_PhA_L56
-        [209072] = [new Band(71, 100, 50, false, 600, 3f, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207709, 3), (207710, 2)])],
-        // LGuard_PhA_L57
-        [209073] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_PhA_L57
-        [209074] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_RhB_L53
-        [209106] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_RhB_L54
-        [209107] = [new Band(36, 70, 100, true, 100, 3f, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296616, 3)])],
-        // LGuard_RhB_L55
-        [209108] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L56
-        [209109] = [new Band(36, 70, 100, true, 600, 3f, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207698, 2), (207697, 3)])],
-        // LGuard_RhA_L57
-        [209110] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [209111] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_AhA_L56
-        [209115] = [new Band(0, 34, 100, false, 600, 3f, [(296626, 2), (296627, 1)])],
-        // LGuard_AhA_L57
-        [209116] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_AhA_L57
-        [209117] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_WhA_L56
-        [209121] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L57
-        [209122] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [209123] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_PhB_L53
-        [209124] = [new Band(0, 34, 50, true, 600, 3f, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296644, 2)])],
-        // LGuard_PhB_L54
-        [209125] = [new Band(0, 34, 50, true, 600, 3f, [(296647, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296646, 2)])],
-        // LGuard_PhB_L55
-        [209126] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // LGuard_PhA_L56
-        [209127] = [new Band(71, 100, 50, false, 600, 3f, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207709, 3), (207710, 2)])],
-        // LGuard_PhA_L57
-        [209128] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_PhA_L57
-        [209129] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_RhB_L53
-        [209130] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_RhB_L54
-        [209131] = [new Band(36, 70, 100, true, 100, 3f, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296616, 3)])],
-        // LGuard_RhB_L55
-        [209132] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L56
-        [209133] = [new Band(36, 70, 100, true, 600, 3f, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207698, 2), (207697, 3)])],
-        // LGuard_RhA_L57
-        [209134] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [209135] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_WhA_L56
-        [209139] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L57
-        [209140] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [209141] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_RhB_L53
-        [209142] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_RhB_L54
-        [209143] = [new Band(36, 70, 100, true, 100, 3f, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296616, 3)])],
-        // LGuard_RhB_L55
-        [209144] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L56
-        [209145] = [new Band(36, 70, 100, true, 600, 3f, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207698, 2), (207697, 3)])],
-        // LGuard_RhA_L57
-        [209146] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [209147] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_WhA_L56
-        [209151] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L57
-        [209152] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [209153] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // DGuard_ReA_L55
-        [209213] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L56
-        [209214] = [new Band(0, 34, 100, true, 100, 1f, [(296728, 1)])],
-        // DGuard_RhB_L53
-        [209215] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // DGuard_RhB_L55
-        [209216] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L56
-        [209217] = [new Band(36, 70, 100, true, 600, 3f, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296732, 2), (296728, 3)])],
-        // DGuard_RhA_L57
-        [209218] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209219] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_AhA_L56
-        [209227] = [new Band(0, 34, 100, false, 600, 3f, [(296736, 2), (296737, 1)])],
-        // DGuard_AhA_L57
-        [209228] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_AhA_L57
-        [209229] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_WhA_L56
-        [209237] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L57
-        [209238] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L57
-        [209239] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_PhB_L53
-        [209245] = [new Band(0, 34, 50, true, 600, 3f, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296754, 2)])],
-        // DGuard_PhB_L55
-        [209246] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // DGuard_PhA_L56
-        [209247] = [new Band(71, 100, 50, false, 600, 3f, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207722, 3), (207723, 2)])],
-        // DGuard_PhA_L57
-        [209248] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_PhA_L57
-        [209249] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_RhB_L53
-        [209255] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // DGuard_RhB_L55
-        [209256] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L56
-        [209257] = [new Band(36, 70, 100, true, 600, 3f, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296732, 2), (296728, 3)])],
-        // DGuard_RhA_L57
-        [209258] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209259] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_AhA_L56
-        [209262] = [new Band(0, 34, 100, false, 600, 3f, [(296736, 2), (296737, 1)])],
-        // DGuard_AhA_L57
-        [209263] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_AhA_L57
-        [209264] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_WhA_L56
-        [209267] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L57
-        [209268] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L57
-        [209269] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_PhB_L53
-        [209270] = [new Band(0, 34, 50, true, 600, 3f, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296754, 2)])],
-        // DGuard_PhB_L55
-        [209271] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // DGuard_PhA_L56
-        [209272] = [new Band(71, 100, 50, false, 600, 3f, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207722, 3), (207723, 2)])],
-        // DGuard_PhA_L57
-        [209273] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_PhA_L57
-        [209274] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_RhB_L53
-        [209306] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // DGuard_RhB_L54
-        [209307] = [new Band(36, 70, 100, true, 100, 3f, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296726, 3)])],
-        // DGuard_RhB_L55
-        [209308] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L56
-        [209309] = [new Band(36, 70, 100, true, 600, 3f, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296732, 2), (296728, 3)])],
-        // DGuard_RhA_L57
-        [209310] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209311] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_AhA_L56
-        [209315] = [new Band(0, 34, 100, false, 600, 3f, [(296736, 2), (296737, 1)])],
-        // DGuard_AhA_L57
-        [209316] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_AhA_L57
-        [209317] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_WhA_L56
-        [209321] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L57
-        [209322] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L57
-        [209323] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_PhB_L53
-        [209324] = [new Band(0, 34, 50, true, 600, 3f, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296754, 2)])],
-        // DGuard_PhB_L54
-        [209325] = [new Band(0, 34, 50, true, 600, 3f, [(296757, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296756, 2)])],
-        // DGuard_PhB_L55
-        [209326] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // DGuard_PhA_L56
-        [209327] = [new Band(71, 100, 50, false, 600, 3f, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207722, 3), (207723, 2)])],
-        // DGuard_PhA_L57
-        [209328] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_PhA_L57
-        [209329] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_RhB_L53
-        [209330] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // DGuard_RhB_L54
-        [209331] = [new Band(36, 70, 100, true, 100, 3f, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296726, 3)])],
-        // DGuard_RhB_L55
-        [209332] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L56
-        [209333] = [new Band(36, 70, 100, true, 600, 3f, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296732, 2), (296728, 3)])],
-        // DGuard_RhA_L57
-        [209334] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209335] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_WhA_L56
-        [209339] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L57
-        [209340] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L57
-        [209341] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_RhB_L53
-        [209342] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // DGuard_RhB_L54
-        [209343] = [new Band(36, 70, 100, true, 100, 3f, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296726, 3)])],
-        // DGuard_RhB_L55
-        [209344] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L56
-        [209345] = [new Band(36, 70, 100, true, 600, 3f, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296732, 2), (296728, 3)])],
-        // DGuard_RhA_L57
-        [209346] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209347] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_WhA_L56
-        [209351] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L57
-        [209352] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L57
-        [209353] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // LGuard_RhA_L57
-        [209356] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [209357] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_AhA_L57
-        [209358] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_AhA_L57
-        [209359] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_WhA_L57
-        [209360] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [209361] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_PhA_L57
-        [209362] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_PhA_L57
-        [209363] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // DGuard_ReA_L55
-        [209375] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L55
-        [209376] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_RhA_L57
-        [209379] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209380] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209381] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209382] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_ReA_L55
-        [209385] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L55
-        [209386] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_RhA_L57
-        [209389] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209390] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209391] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209392] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_ReA_L55
-        [209395] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L55
-        [209396] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_RhA_L57
-        [209399] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209400] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209401] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [209402] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DrGuard_WeA_L47
-        [214128] = [new Band(0, 34, 75, false, 600, 2f, [(296346, 2)])],
-        // DrGuard_WeA_L47
-        [214129] = [new Band(0, 34, 75, false, 600, 2f, [(296346, 2)])],
-        // DrGuard_PhB_L48
-        [214163] = [new Band(0, 34, 100, false, 100, 2f, [(296349, 1)])],
-        // DrGuard_PhB_Reward
-        [214766] = [new Band(0, 34, 100, false, 100, 2f, [(281067, 1)])],
-        // DrGuard_PhA_Reward
-        [214770] = [new Band(36, 70, 100, false, 600, 3f, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281068, 1)])],
-        // DrGuard_PhB_Reward
-        [214785] = [new Band(0, 34, 100, false, 100, 2f, [(281067, 1)])],
-        // DrGuard_PhA_Reward
-        [214789] = [new Band(36, 70, 100, false, 600, 3f, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281068, 1)])],
-        // BGuard_ChiefD
-        [215136] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
-        // BGuard_ChiefD
-        [215179] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
-        // BGuard_ChiefD
-        [215222] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
-        // DrGuard_PhA_Reward_L50
-        [215450] = [new Band(36, 70, 100, false, 600, 3f, [(281358, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281359, 1)])],
-        // BGuard_ChiefF4_Dr_1
-        [219632] = [new Band(41, 60, 100, false, 0, 0f, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296540, 1)])],
-        // BGuard_ChiefD_Tune405
-        [233633] = [new Band(0, 24, 100, false, 600, 3f, [(284978, 1)])],
-        // BGuard_ChiefD_Tune405
-        [233676] = [new Band(0, 24, 100, false, 600, 3f, [(284978, 1)])],
-        // BGuard_ChiefD_Tune405
-        [233719] = [new Band(0, 24, 100, false, 600, 3f, [(284978, 1)])],
-        // DrGuard_RsB
-        [257035] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // LGuard_WsB
-        [257036] = [new Band(0, 100, 33, true, 30, 0f, [(296470, 1)])],
-        // DGuard_WsB
-        [257037] = [new Band(0, 100, 33, true, 30, 0f, [(296483, 1)])],
-        // LGuard_PsA
-        [257039] = [new Band(0, 100, 50, false, 30, 5f, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296474, 1)])],
-        // DGuard_PsA
-        [257040] = [new Band(0, 100, 50, false, 30, 5f, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296487, 1)])],
-        // DrGuard_PsA
-        [257041] = [new Band(26, 50, 100, false, 0, 5f, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, [(296509, 1)])],
-        // LGuard_RhB_L55
-        [257048] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257049] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257050] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257054] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257055] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257063] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257064] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_RhB_L55
-        [257078] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257079] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257080] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257084] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257085] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257093] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257094] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_ReA_L55
-        [257123] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257124] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [257125] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // LGuard_ReA_L55
-        [257168] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257169] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [257170] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_RsB
-        [257335] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // LGuard_WsB
-        [257336] = [new Band(0, 100, 33, true, 30, 0f, [(296470, 1)])],
-        // DGuard_WsB
-        [257337] = [new Band(0, 100, 33, true, 30, 0f, [(296483, 1)])],
-        // LGuard_PsA
-        [257339] = [new Band(0, 100, 50, false, 30, 5f, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296474, 1)])],
-        // DGuard_PsA
-        [257340] = [new Band(0, 100, 50, false, 30, 5f, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296487, 1)])],
-        // LGuard_RhB_L55
-        [257348] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257349] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257350] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257354] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257355] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257363] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257364] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_RhB_L55
-        [257378] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257379] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257380] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257384] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257385] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257393] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257394] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_ReA_L55
-        [257423] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257424] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [257425] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // LGuard_ReA_L55
-        [257468] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257469] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [257470] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_RsB
-        [257635] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // LGuard_WsB
-        [257636] = [new Band(0, 100, 33, true, 30, 0f, [(296470, 1)])],
-        // DGuard_WsB
-        [257637] = [new Band(0, 100, 33, true, 30, 0f, [(296483, 1)])],
-        // LGuard_PsA
-        [257639] = [new Band(0, 100, 50, false, 30, 5f, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296474, 1)])],
-        // DGuard_PsA
-        [257640] = [new Band(0, 100, 50, false, 30, 5f, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296487, 1)])],
-        // DrGuard_PsA
-        [257641] = [new Band(26, 50, 100, false, 0, 5f, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, [(296509, 1)])],
-        // LGuard_RhB_L55
-        [257648] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257649] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257650] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257654] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257655] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257663] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257664] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_RhB_L55
-        [257678] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257679] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257680] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257684] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257685] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257693] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257694] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_ReA_L55
-        [257723] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257724] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [257725] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // LGuard_ReA_L55
-        [257768] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257769] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [257770] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_RsB
-        [257935] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // LGuard_WsB
-        [257936] = [new Band(0, 100, 33, true, 30, 0f, [(296470, 1)])],
-        // DGuard_WsB
-        [257937] = [new Band(0, 100, 33, true, 30, 0f, [(296483, 1)])],
-        // LGuard_PsA
-        [257939] = [new Band(0, 100, 50, false, 30, 5f, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296474, 1)])],
-        // DGuard_PsA
-        [257940] = [new Band(0, 100, 50, false, 30, 5f, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296487, 1)])],
-        // LGuard_RhB_L55
-        [257948] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257949] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257950] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257954] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257955] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257963] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257964] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_RhB_L55
-        [257978] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // DGuard_RhB_L55
-        [257979] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DrGuard_RhB_L55
-        [257980] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // LGuard_PhB_L55
-        [257984] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhB_L55
-        [257985] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // LGuard_ReA_L55
-        [257993] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [257994] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_ReA_L55
-        [258023] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [258024] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [258025] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // LGuard_ReA_L55
-        [258068] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [258069] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [258070] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_RhA_L55
-        [258244] = [new Band(36, 70, 100, true, 600, 3f, [(296883, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296883, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296883, 2)])],
-        // LGuard_ReA_L55
-        [259021] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259022] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259023] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259026] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259036] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259037] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259038] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259041] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259221] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259222] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259223] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259226] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259236] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259237] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259238] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259241] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259421] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259422] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259423] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259426] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259436] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259437] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259438] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259441] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259621] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259622] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259623] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259626] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L55
-        [259636] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // DGuard_ReA_L55
-        [259637] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DrGuard_ReA_L55
-        [259638] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_WeA_L55
-        [259641] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // LGuard_ReA_L50
-        [260090] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [260091] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [260092] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [260093] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_ReA_L50
-        [260094] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // DGuard_ReA_L50
-        [260095] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_ReA_L50
-        [260096] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_ReA_L50
-        [260097] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_ReA_L50
-        [260098] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_ReA_L50
-        [260099] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DrGuard_ReA_L50
-        [260100] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_ReA_L50
-        [260101] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_ReA_L50
-        [260102] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_ReA_L50
-        [260103] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_ReA_L50
-        [260104] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_WeA_L50
-        [260115] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [260116] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [260117] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [260118] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [260119] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // LGuard_Shield
-        [260207] = [new Band(0, 34, 100, true, 600, 2f, [(295074, 1)])],
-        // DGuard_Shield
-        [260208] = [new Band(0, 34, 100, true, 600, 2f, [(295075, 1)])],
-        // DrGuard_Shield
-        [260209] = [new Band(0, 34, 100, true, 600, 2f, [(295076, 1)])],
-        // LGuard_ReA
-        [263091] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263092] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263093] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263094] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263095] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // DGuard_ReA
-        [263096] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263097] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263098] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263099] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263100] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DrGuard_ReA
-        [263101] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263102] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263103] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263104] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263105] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_WeA
-        [263116] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263117] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263118] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263119] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263120] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_ReA
-        [263391] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263392] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263393] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263394] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [263395] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // DGuard_ReA
-        [263396] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263397] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263398] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263399] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [263400] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DrGuard_ReA
-        [263401] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263402] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263403] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263404] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [263405] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_WeA
-        [263416] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263417] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263418] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263419] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [263420] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // BGuard_ChiefB_L
-        [264501] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_L
-        [264502] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_L
-        [264503] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_L
-        [264504] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_L
-        [264505] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_D
-        [264506] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_D
-        [264507] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_D
-        [264508] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_D
-        [264509] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_D
-        [264510] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_Dr
-        [264511] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // BGuard_ChiefB_Dr
-        [264512] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // BGuard_ChiefB_Dr
-        [264513] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // BGuard_ChiefB_Dr
-        [264514] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // BGuard_ChiefB_Dr
-        [264515] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // LGuard_ReA
-        [264591] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [264592] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [264593] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [264594] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_ReA
-        [264595] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // DGuard_ReA
-        [264596] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [264597] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [264598] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [264599] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_ReA
-        [264600] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DrGuard_ReA
-        [264601] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [264602] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [264603] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [264604] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_ReA
-        [264605] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_WeA
-        [264616] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [264617] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [264618] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [264619] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // DrGuard_WeA
-        [264620] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // BGuard_ChiefB_L_L50M
-        [266301] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [266302] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [266303] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [266304] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [266305] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [266306] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [266307] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [266308] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [266309] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [266310] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [266311] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [266312] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [266313] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [266314] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [266315] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // LGuard_ReA_L50M
-        [266391] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [266392] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [266393] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [266394] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [266395] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // DGuard_ReA_L50M
-        [266396] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [266397] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [266398] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [266399] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [266400] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DrGuard_ReA_L50M
-        [266401] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [266402] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [266403] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [266404] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [266405] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_WeA_L50M
-        [266416] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [266417] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [266418] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [266419] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [266420] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_ReA_L50M
-        [267891] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [267892] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [267893] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [267894] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [267895] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // DGuard_ReA_L50M
-        [267896] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [267897] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [267898] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [267899] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [267900] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DrGuard_ReA_L50M
-        [267901] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [267902] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [267903] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [267904] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [267905] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_WeA_L50M
-        [267916] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [267917] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [267918] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [267919] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [267920] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_ReA_L50M
-        [269091] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269092] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269093] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269094] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269095] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // DGuard_ReA_L50M
-        [269096] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269097] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269098] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269099] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269100] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DrGuard_ReA_L50M
-        [269101] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [269102] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [269103] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [269104] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [269105] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_WeA_L50M
-        [269116] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [269117] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [269118] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [269119] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [269120] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_ReA_L50M
-        [269991] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269992] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269993] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269994] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [269995] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // DGuard_ReA_L50M
-        [269996] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269997] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269998] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [269999] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [270000] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DrGuard_ReA_L50M
-        [270001] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270002] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270003] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270004] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270005] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_WeA_L50M
-        [270016] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270017] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270018] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270019] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270020] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // BGuard_ChiefB_L_L50M
-        [270801] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [270802] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [270803] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [270804] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [270805] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [270806] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [270807] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [270808] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [270809] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [270810] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [270811] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [270812] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [270813] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [270814] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [270815] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // LGuard_ReA_L50M
-        [270891] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [270892] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [270893] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [270894] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_ReA_L50M
-        [270895] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // DGuard_ReA_L50M
-        [270896] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [270897] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [270898] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [270899] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_ReA_L50M
-        [270900] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DrGuard_ReA_L50M
-        [270901] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270902] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270903] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270904] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_ReA_L50M
-        [270905] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_WeA_L50M
-        [270916] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270917] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270918] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270919] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [270920] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_PhA
-        [271803] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271804] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271805] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271806] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271807] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_PhA
-        [271808] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271809] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271810] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271811] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271812] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // LGuard_PhA
-        [271833] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271834] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271835] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271836] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271837] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_PhA
-        [271838] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271839] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271840] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271841] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271842] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // LGuard_PhA
-        [271863] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271864] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271865] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271866] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // LGuard_PhA
-        [271867] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_PhA
-        [271868] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271869] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271870] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271871] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DGuard_PhA
-        [271872] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // LGuard_PhA_L50M
-        [271893] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // LGuard_PhA_L50M
-        [271894] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // LGuard_PhA_L50M
-        [271895] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // LGuard_PhA_L50M
-        [271896] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // LGuard_PhA_L50M
-        [271897] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // DGuard_PhA_L50M
-        [271898] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DGuard_PhA_L50M
-        [271899] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DGuard_PhA_L50M
-        [271900] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DGuard_PhA_L50M
-        [271901] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DGuard_PhA_L50M
-        [271902] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DGuard_WhA
-        [278000] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_WhA_L58
-        [278003] = [new Band(0, 34, 100, false, 600, 3f, [(207717, 1)])],
-        // DGuard_WhA
-        [278013] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_WhA
-        [278014] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_WhA
-        [278015] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_WhA
-        [278016] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_AhA
-        [278017] = [new Band(0, 34, 100, false, 600, 3f, [(294746, 2), (294749, 1)])],
-        // DGuard_PhB_L56
-        [278019] = [new Band(0, 34, 50, true, 600, 3f, [(207723, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207722, 2)])],
-        // DGuard_AhA
-        [278067] = [new Band(0, 34, 100, false, 600, 3f, [(294746, 2), (294749, 1)])],
-        // DGuard_WhA_L56
-        [278140] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L56
-        [278141] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L56
-        [278142] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // LGuard_WhA_L58
-        [278502] = [new Band(0, 34, 100, false, 600, 3f, [(207704, 1)])],
-        // LGuard_WhA
-        [278513] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_WhA
-        [278514] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_WhA
-        [278515] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_WhA
-        [278516] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_RhB_L56
-        [278517] = [new Band(36, 70, 100, true, 100, 3f, [(207697, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207697, 3)])],
-        // LGuard_WhA
-        [278518] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_PhB_L56
-        [278520] = [new Band(0, 34, 50, true, 600, 3f, [(207710, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207709, 2)])],
-        // LGuard_RhB_L53
-        [278567] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_ReA_L41
-        [278599] = [new Band(0, 34, 100, true, 100, 1f, [(207632, 1)])],
-        // LGuard_ReA_L41
-        [278614] = [new Band(0, 34, 100, true, 100, 1f, [(207632, 1)])],
-        // LGuard_WhA_L56
-        [278640] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L56
-        [278641] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L56
-        [278642] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // DrGuard_PhA_Reward
-        [281065] = [new Band(36, 70, 100, false, 600, 3f, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, [(281068, 1)])],
-        // DrGuard_PhB_Reward
-        [281081] = [new Band(0, 34, 100, false, 100, 2f, [(281067, 1)])],
-        // BGuard_ChiefD
-        [281224] = [new Band(0, 24, 100, false, 600, 3f, [(281226, 1)])],
-        // BGuard_ChiefA_L
-        [294518] = [new Band(26, 50, 100, false, 0, 3f, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294892, 1)])],
-        // BGuard_ChiefA_L
-        [294519] = [new Band(26, 50, 100, false, 0, 3f, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294892, 1)])],
-        // BGuard_ChiefA_L
-        [294520] = [new Band(26, 50, 100, false, 0, 3f, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294892, 1)])],
-        // BGuard_ChiefB_L
-        [294521] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_L
-        [294522] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefB_L
-        [294523] = [new Band(0, 24, 100, false, 600, 8f, [(295125, 1)])],
-        // BGuard_ChiefA_D
-        [294527] = [new Band(26, 50, 100, false, 0, 3f, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294893, 1)])],
-        // BGuard_ChiefA_D
-        [294528] = [new Band(26, 50, 100, false, 0, 3f, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294893, 1)])],
-        // BGuard_ChiefA_D
-        [294529] = [new Band(26, 50, 100, false, 0, 3f, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294893, 1)])],
-        // BGuard_ChiefB_D
-        [294530] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_D
-        [294531] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefB_D
-        [294532] = [new Band(0, 24, 100, false, 600, 8f, [(295126, 1)])],
-        // BGuard_ChiefA_Dr
-        [294536] = [new Band(26, 50, 100, false, 0, 3f, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294894, 1)])],
-        // BGuard_ChiefA_Dr
-        [294537] = [new Band(26, 50, 100, false, 0, 3f, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294894, 1)])],
-        // BGuard_ChiefA_Dr
-        [294538] = [new Band(26, 50, 100, false, 0, 3f, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, [(294894, 1)])],
-        // BGuard_ChiefB_Dr
-        [294539] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // BGuard_ChiefB_Dr
-        [294540] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // BGuard_ChiefB_Dr
-        [294541] = [new Band(0, 24, 100, false, 600, 8f, [(295127, 1)])],
-        // LGuard_RhA
-        [294574] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
-        // LGuard_AhA
-        [294577] = [new Band(0, 34, 100, false, 600, 3f, [(294713, 2), (294716, 1)])],
-        // LGuard_WhA
-        [294580] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_PhA
-        [294583] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_RhA
-        [294589] = [new Band(36, 70, 100, true, 600, 3f, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294743, 2), (294740, 3)])],
-        // DGuard_AhA
-        [294592] = [new Band(0, 34, 100, false, 600, 3f, [(294746, 2), (294749, 1)])],
-        // DGuard_WhA
-        [294595] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_PhA
-        [294598] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DrGuard_RhA
-        [294604] = [new Band(36, 70, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, [(294773, 2)])],
-        // LGuard_RhA
-        [294621] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
-        // LGuard_AhA
-        [294624] = [new Band(0, 34, 100, false, 600, 3f, [(294713, 2), (294716, 1)])],
-        // LGuard_WhA
-        [294627] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_PhA
-        [294630] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_RhA
-        [294636] = [new Band(36, 70, 100, true, 600, 3f, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294743, 2), (294740, 3)])],
-        // DGuard_AhA
-        [294639] = [new Band(0, 34, 100, false, 600, 3f, [(294746, 2), (294749, 1)])],
-        // DGuard_WhA
-        [294642] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_PhA
-        [294645] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DrGuard_RhA
-        [294651] = [new Band(36, 70, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, [(294773, 2)])],
-        // LGuard_RhA
-        [294666] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
-        // LGuard_AhA
-        [294669] = [new Band(0, 34, 100, false, 600, 3f, [(294713, 2), (294716, 1)])],
-        // LGuard_WhA
-        [294672] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // LGuard_PhA
-        [294675] = [new Band(71, 100, 50, false, 600, 3f, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294734, 3), (294737, 2)])],
-        // DGuard_RhA
-        [294681] = [new Band(36, 70, 100, true, 600, 3f, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294743, 2), (294740, 3)])],
-        // DGuard_AhA
-        [294684] = [new Band(0, 34, 100, false, 600, 3f, [(294746, 2), (294749, 1)])],
-        // DGuard_WhA
-        [294687] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DGuard_PhA
-        [294690] = [new Band(71, 100, 50, false, 600, 3f, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, [(294767, 3), (294770, 2)])],
-        // DrGuard_RhA
-        [294696] = [new Band(36, 70, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, [(294773, 2)])],
-        // LGuard_ReA
-        [294794] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // DGuard_ReA
-        [294799] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DrGuard_ReA
-        [294804] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_WeA
-        [294806] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_ReA
-        [294809] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // DGuard_ReA
-        [294814] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DrGuard_ReA
-        [294819] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_WeA
-        [294821] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_ReA
-        [294824] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // DGuard_ReA
-        [294829] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DrGuard_ReA
-        [294834] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_WeA
-        [294836] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_ReA
-        [294897] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_RhA
-        [294898] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
-        // LGuard_WhA
-        [294902] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // DGuard_ReA
-        [294905] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_RhA
-        [294906] = [new Band(36, 70, 100, true, 600, 3f, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294743, 2), (294740, 3)])],
-        // DGuard_WhA
-        [294910] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DrGuard_ReA
-        [294913] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_RhA
-        [294914] = [new Band(36, 70, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, [(294773, 2)])],
-        // DrGuard_WeA
-        [294917] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_ReA
-        [294952] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_RhA
-        [294953] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
-        // LGuard_WhA
-        [294957] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // DGuard_ReA
-        [294960] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_RhA
-        [294961] = [new Band(36, 70, 100, true, 600, 3f, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294743, 2), (294740, 3)])],
-        // DGuard_WhA
-        [294965] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DrGuard_ReA
-        [294968] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_RhA
-        [294969] = [new Band(36, 70, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, [(294773, 2)])],
-        // DrGuard_WeA
-        [294972] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_ReA
-        [294976] = [new Band(0, 34, 100, true, 600, 1f, [(294707, 1)])],
-        // LGuard_RhA
-        [294977] = [new Band(36, 70, 100, true, 600, 3f, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294710, 2), (294707, 3)])],
-        // LGuard_WhA
-        [294981] = [new Band(0, 34, 100, false, 600, 3f, [(294719, 1)])],
-        // DGuard_ReA
-        [294984] = [new Band(0, 34, 100, false, 600, 1f, [(294740, 1)])],
-        // DGuard_RhA
-        [294985] = [new Band(36, 70, 100, true, 600, 3f, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, [(294743, 2), (294740, 3)])],
-        // DGuard_WhA
-        [294989] = [new Band(0, 34, 100, false, 600, 3f, [(294752, 1)])],
-        // DrGuard_ReA
-        [294992] = [new Band(0, 34, 100, true, 600, 3f, [(294773, 1)])],
-        // DrGuard_RhA
-        [294993] = [new Band(36, 70, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, [(294773, 2)])],
-        // DrGuard_WeA
-        [294996] = [new Band(0, 34, 75, false, 600, 2f, [(294776, 2)])],
-        // LGuard_Shield
-        [295077] = [new Band(0, 34, 100, true, 600, 2f, [(295074, 1)])],
-        // LGuard_Shield
-        [295078] = [new Band(0, 34, 100, true, 600, 2f, [(295074, 1)])],
-        // LGuard_Shield
-        [295079] = [new Band(0, 34, 100, true, 600, 2f, [(295074, 1)])],
-        // DGuard_Shield
-        [295080] = [new Band(0, 34, 100, true, 600, 2f, [(295075, 1)])],
-        // DGuard_Shield
-        [295081] = [new Band(0, 34, 100, true, 600, 2f, [(295075, 1)])],
-        // DGuard_Shield
-        [295082] = [new Band(0, 34, 100, true, 600, 2f, [(295075, 1)])],
-        // DrGuard_Shield
-        [295083] = [new Band(0, 34, 100, true, 600, 2f, [(295076, 1)])],
-        // DrGuard_Shield
-        [295084] = [new Band(0, 34, 100, true, 600, 2f, [(295076, 1)])],
-        // DrGuard_Shield
-        [295085] = [new Band(0, 34, 100, true, 600, 2f, [(295076, 1)])],
-        // LGuard_RhB
-        [295108] = [new Band(36, 70, 100, true, 100, 3f, [(294707, 2)]), new Band(0, 34, 100, true, 100, 3f, [(294707, 3)])],
-        // LGuard_PhB
-        [295111] = [new Band(0, 34, 50, true, 100, 3f, [(294737, 2)]), new Band(0, 100, 50, true, 100, 3f, [(294734, 2)])],
-        // DGuard_RhB
-        [295113] = [new Band(36, 70, 100, true, 100, 3f, [(294740, 2)]), new Band(0, 34, 100, true, 100, 3f, [(294740, 3)])],
-        // DGuard_PhB
-        [295116] = [new Band(0, 34, 50, true, 100, 3f, [(294770, 2)]), new Band(0, 100, 50, true, 100, 3f, [(294767, 2)])],
-        // DrGuard_RhB
-        [295118] = [new Band(36, 70, 100, true, 100, 2f, [(294773, 2)]), new Band(0, 100, 100, true, 100, 2f, [(294773, 2)]), new Band(0, 34, 100, true, 0, 2f, [(294773, 1)])],
-        // LGuard_RhB_L50
-        [295186] = [new Band(36, 70, 100, true, 100, 3f, [(295131, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295131, 3)])],
-        // LGuard_PhB_L50
-        [295189] = [new Band(0, 34, 50, true, 600, 3f, [(295141, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295141, 2)])],
-        // DGuard_RhB_L50
-        [295191] = [new Band(36, 70, 100, true, 100, 3f, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295142, 3)])],
-        // DGuard_PhB_L50
-        [295194] = [new Band(0, 34, 50, true, 600, 3f, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295152, 2)])],
-        // DrGuard_RhB_L50
-        [295196] = [new Band(36, 70, 100, true, 100, 2f, [(295153, 2)]), new Band(0, 100, 100, true, 100, 2f, [(295153, 2)]), new Band(0, 34, 100, true, 0, 2f, [(295153, 1)])],
-        // BGuard_ChiefA_L_L50
-        [295271] = [new Band(26, 50, 100, false, 600, 8f, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295212, 1)])],
-        // BGuard_ChiefA_L_L50
-        [295272] = [new Band(26, 50, 100, false, 600, 8f, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295212, 1)])],
-        // BGuard_ChiefA_L_L50
-        [295273] = [new Band(26, 50, 100, false, 600, 8f, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295212, 1)])],
-        // BGuard_ChiefA_D_L50
-        [295274] = [new Band(26, 50, 100, false, 600, 8f, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295213, 1)])],
-        // BGuard_ChiefA_D_L50
-        [295275] = [new Band(26, 50, 100, false, 600, 8f, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295213, 1)])],
-        // BGuard_ChiefA_D_L50
-        [295276] = [new Band(26, 50, 100, false, 600, 8f, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, [(295213, 1)])],
-        // BGuard_ChiefA_Dr_L50
-        [295277] = [new Band(26, 50, 100, false, 0, 3f, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, [(295214, 1)])],
-        // BGuard_ChiefA_Dr_L50
-        [295278] = [new Band(26, 50, 100, false, 0, 3f, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, [(295214, 1)])],
-        // BGuard_ChiefA_Dr_L50
-        [295279] = [new Band(26, 50, 100, false, 0, 3f, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, [(295214, 1)])],
-        // LGuard_ReA_L50
-        [295286] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [295287] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_ReA_L50
-        [295290] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [295291] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_AhA_L50
-        [295295] = [new Band(0, 34, 100, false, 600, 3f, [(295133, 2), (295134, 1)])],
-        // LGuard_WhA_L50
-        [295299] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_WhA_L50
-        [295303] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_PhA_L50
-        [295307] = [new Band(71, 100, 50, false, 600, 3f, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295140, 3), (295141, 2)])],
-        // DGuard_ReA_L50
-        [295314] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [295315] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_ReA_L50
-        [295318] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [295319] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_AhA_L50
-        [295323] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_WhA_L50
-        [295327] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_WhA_L50
-        [295331] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_PhA_L50
-        [295335] = [new Band(71, 100, 50, false, 600, 3f, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295151, 3), (295152, 2)])],
-        // DrGuard_ReA_L50
-        [295342] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_RhA_L50
-        [295343] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // DrGuard_ReA_L50
-        [295346] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_RhA_L50
-        [295347] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // DrGuard_WeA_L50
-        [295354] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [295358] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // LGuard_ReA_L50
-        [295370] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [295371] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_ReA_L50
-        [295374] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [295375] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_AhA_L50
-        [295379] = [new Band(0, 34, 100, false, 600, 3f, [(295133, 2), (295134, 1)])],
-        // LGuard_WhA_L50
-        [295383] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_WhA_L50
-        [295387] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_PhA_L50
-        [295391] = [new Band(71, 100, 50, false, 600, 3f, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295140, 3), (295141, 2)])],
-        // DGuard_ReA_L50
-        [295398] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [295399] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_ReA_L50
-        [295402] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [295403] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_AhA_L50
-        [295407] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_WhA_L50
-        [295411] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_WhA_L50
-        [295415] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_PhA_L50
-        [295419] = [new Band(71, 100, 50, false, 600, 3f, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295151, 3), (295152, 2)])],
-        // DrGuard_ReA_L50
-        [295426] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_RhA_L50
-        [295427] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // DrGuard_ReA_L50
-        [295430] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_RhA_L50
-        [295431] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // DrGuard_WeA_L50
-        [295438] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [295442] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // LGuard_ReA_L50
-        [295454] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [295455] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_ReA_L50
-        [295458] = [new Band(0, 34, 100, true, 100, 1f, [(295131, 1)])],
-        // LGuard_RhA_L50
-        [295459] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_AhA_L50
-        [295463] = [new Band(0, 34, 100, false, 600, 3f, [(295133, 2), (295134, 1)])],
-        // LGuard_WhA_L50
-        [295467] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_WhA_L50
-        [295471] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_PhA_L50
-        [295475] = [new Band(71, 100, 50, false, 600, 3f, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295140, 3), (295141, 2)])],
-        // DGuard_ReA_L50
-        [295482] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [295483] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_ReA_L50
-        [295486] = [new Band(0, 34, 100, true, 100, 1f, [(295142, 1)])],
-        // DGuard_RhA_L50
-        [295487] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_AhA_L50
-        [295491] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_WhA_L50
-        [295495] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_WhA_L50
-        [295499] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_PhA_L50
-        [295503] = [new Band(71, 100, 50, false, 600, 3f, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295151, 3), (295152, 2)])],
-        // DrGuard_ReA_L50
-        [295510] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_RhA_L50
-        [295511] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // DrGuard_ReA_L50
-        [295514] = [new Band(0, 34, 100, true, 600, 3f, [(295153, 1)])],
-        // DrGuard_RhA_L50
-        [295515] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // DrGuard_WeA_L50
-        [295522] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // DrGuard_WeA_L50
-        [295526] = [new Band(0, 34, 75, false, 600, 2f, [(295154, 2)])],
-        // BGuard_ChiefA_L_L50M
-        [295660] = [new Band(26, 50, 100, false, 600, 8f, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296052, 1)])],
-        // BGuard_ChiefA_L_L50M
-        [295661] = [new Band(26, 50, 100, false, 600, 8f, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296052, 1)])],
-        // BGuard_ChiefA_L_L50M
-        [295662] = [new Band(26, 50, 100, false, 600, 8f, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296052, 1)])],
-        // BGuard_ChiefA_D_L50M
-        [295663] = [new Band(26, 50, 100, false, 600, 8f, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296053, 1)])],
-        // BGuard_ChiefA_D_L50M
-        [295664] = [new Band(26, 50, 100, false, 600, 8f, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296053, 1)])],
-        // BGuard_ChiefA_D_L50M
-        [295665] = [new Band(26, 50, 100, false, 600, 8f, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, [(296053, 1)])],
-        // BGuard_ChiefA_Dr_L50M
-        [295666] = [new Band(26, 50, 100, false, 0, 3f, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, [(296054, 1)])],
-        // BGuard_ChiefA_Dr_L50M
-        [295667] = [new Band(26, 50, 100, false, 0, 3f, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, [(296054, 1)])],
-        // BGuard_ChiefA_Dr_L50M
-        [295668] = [new Band(26, 50, 100, false, 0, 3f, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, [(296054, 1)])],
-        // LGuard_ReA_L50M
-        [295675] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_RhA_L50M
-        [295676] = [new Band(36, 70, 100, true, 600, 3f, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296062, 2), (296061, 3)])],
-        // LGuard_ReA_L50M
-        [295679] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_RhA_L50M
-        [295680] = [new Band(36, 70, 100, true, 600, 3f, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296062, 2), (296061, 3)])],
-        // LGuard_AhA_L50M
-        [295684] = [new Band(0, 34, 100, false, 600, 3f, [(296063, 2), (296064, 1)])],
-        // LGuard_WhA_L50M
-        [295688] = [new Band(0, 34, 100, false, 600, 3f, [(296065, 1)])],
-        // LGuard_WhA_L50M
-        [295692] = [new Band(0, 34, 100, false, 600, 3f, [(296065, 1)])],
-        // LGuard_PhA_L50M
-        [295696] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // DGuard_ReA_L50M
-        [295703] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_RhA_L50M
-        [295704] = [new Band(36, 70, 100, true, 600, 3f, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296073, 2), (296072, 3)])],
-        // DGuard_ReA_L50M
-        [295707] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_RhA_L50M
-        [295708] = [new Band(36, 70, 100, true, 600, 3f, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296073, 2), (296072, 3)])],
-        // DGuard_AhA_L50M
-        [295712] = [new Band(0, 34, 100, false, 600, 3f, [(296074, 2), (296075, 1)])],
-        // DGuard_WhA_L50M
-        [295716] = [new Band(0, 34, 100, false, 600, 3f, [(296076, 1)])],
-        // DGuard_WhA_L50M
-        [295720] = [new Band(0, 34, 100, false, 600, 3f, [(296076, 1)])],
-        // DGuard_PhA_L50M
-        [295724] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DrGuard_ReA_L50M
-        [295731] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_RhA_L50M
-        [295732] = [new Band(36, 70, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296083, 2)])],
-        // DrGuard_ReA_L50M
-        [295735] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_RhA_L50M
-        [295736] = [new Band(36, 70, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296083, 2)])],
-        // DrGuard_WeA_L50M
-        [295743] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [295747] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_ReA_L50M
-        [295759] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_RhA_L50M
-        [295760] = [new Band(36, 70, 100, true, 600, 3f, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296062, 2), (296061, 3)])],
-        // LGuard_ReA_L50M
-        [295763] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_RhA_L50M
-        [295764] = [new Band(36, 70, 100, true, 600, 3f, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296062, 2), (296061, 3)])],
-        // LGuard_AhA_L50M
-        [295768] = [new Band(0, 34, 100, false, 600, 3f, [(296063, 2), (296064, 1)])],
-        // LGuard_WhA_L50M
-        [295772] = [new Band(0, 34, 100, false, 600, 3f, [(296065, 1)])],
-        // LGuard_WhA_L50M
-        [295776] = [new Band(0, 34, 100, false, 600, 3f, [(296065, 1)])],
-        // LGuard_PhA_L50M
-        [295780] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // DGuard_ReA_L50M
-        [295787] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_RhA_L50M
-        [295788] = [new Band(36, 70, 100, true, 600, 3f, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296073, 2), (296072, 3)])],
-        // DGuard_ReA_L50M
-        [295791] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_RhA_L50M
-        [295792] = [new Band(36, 70, 100, true, 600, 3f, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296073, 2), (296072, 3)])],
-        // DGuard_AhA_L50M
-        [295796] = [new Band(0, 34, 100, false, 600, 3f, [(296074, 2), (296075, 1)])],
-        // DGuard_WhA_L50M
-        [295800] = [new Band(0, 34, 100, false, 600, 3f, [(296076, 1)])],
-        // DGuard_WhA_L50M
-        [295804] = [new Band(0, 34, 100, false, 600, 3f, [(296076, 1)])],
-        // DGuard_PhA_L50M
-        [295808] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DrGuard_ReA_L50M
-        [295815] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_RhA_L50M
-        [295816] = [new Band(36, 70, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296083, 2)])],
-        // DrGuard_ReA_L50M
-        [295819] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_RhA_L50M
-        [295820] = [new Band(36, 70, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296083, 2)])],
-        // DrGuard_WeA_L50M
-        [295827] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [295831] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_ReA_L50M
-        [295843] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_RhA_L50M
-        [295844] = [new Band(36, 70, 100, true, 600, 3f, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296062, 2), (296061, 3)])],
-        // LGuard_ReA_L50M
-        [295847] = [new Band(0, 34, 100, true, 100, 1f, [(296061, 1)])],
-        // LGuard_RhA_L50M
-        [295848] = [new Band(36, 70, 100, true, 600, 3f, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296062, 2), (296061, 3)])],
-        // LGuard_AhA_L50M
-        [295852] = [new Band(0, 34, 100, false, 600, 3f, [(296063, 2), (296064, 1)])],
-        // LGuard_WhA_L50M
-        [295856] = [new Band(0, 34, 100, false, 600, 3f, [(296065, 1)])],
-        // LGuard_WhA_L50M
-        [295860] = [new Band(0, 34, 100, false, 600, 3f, [(296065, 1)])],
-        // LGuard_PhA_L50M
-        [295864] = [new Band(71, 100, 50, false, 600, 3f, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296070, 3), (296071, 2)])],
-        // DGuard_ReA_L50M
-        [295871] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_RhA_L50M
-        [295872] = [new Band(36, 70, 100, true, 600, 3f, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296073, 2), (296072, 3)])],
-        // DGuard_ReA_L50M
-        [295875] = [new Band(0, 34, 100, true, 100, 1f, [(296072, 1)])],
-        // DGuard_RhA_L50M
-        [295876] = [new Band(36, 70, 100, true, 600, 3f, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296073, 2), (296072, 3)])],
-        // DGuard_AhA_L50M
-        [295880] = [new Band(0, 34, 100, false, 600, 3f, [(296074, 2), (296075, 1)])],
-        // DGuard_WhA_L50M
-        [295884] = [new Band(0, 34, 100, false, 600, 3f, [(296076, 1)])],
-        // DGuard_WhA_L50M
-        [295888] = [new Band(0, 34, 100, false, 600, 3f, [(296076, 1)])],
-        // DGuard_PhA_L50M
-        [295892] = [new Band(71, 100, 50, false, 600, 3f, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296081, 3), (296082, 2)])],
-        // DrGuard_ReA_L50M
-        [295899] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_RhA_L50M
-        [295900] = [new Band(36, 70, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296083, 2)])],
-        // DrGuard_ReA_L50M
-        [295903] = [new Band(0, 34, 100, true, 600, 3f, [(296083, 1)])],
-        // DrGuard_RhA_L50M
-        [295904] = [new Band(36, 70, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296083, 2)])],
-        // DrGuard_WeA_L50M
-        [295911] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // DrGuard_WeA_L50M
-        [295915] = [new Band(0, 34, 75, false, 600, 2f, [(296084, 2)])],
-        // LGuard_RhB_L50M
-        [296026] = [new Band(36, 70, 100, true, 100, 3f, [(296061, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296061, 3)])],
-        // LGuard_PhB_L50M
-        [296029] = [new Band(0, 34, 50, true, 600, 3f, [(296071, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296071, 2)])],
-        // DGuard_RhB_L50M
-        [296031] = [new Band(36, 70, 100, true, 100, 3f, [(296072, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296072, 3)])],
-        // DGuard_PhB_L50M
-        [296034] = [new Band(0, 34, 50, true, 600, 3f, [(296082, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296082, 2)])],
-        // DrGuard_RhB_L50M
-        [296036] = [new Band(36, 70, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296083, 1)])],
-        // BGuard_ChiefB_L_L50
-        [296127] = [new Band(0, 24, 100, false, 600, 8f, [(295215, 1)])],
-        // BGuard_ChiefB_L_L50
-        [296128] = [new Band(0, 24, 100, false, 600, 8f, [(295215, 1)])],
-        // BGuard_ChiefB_L_L50
-        [296129] = [new Band(0, 24, 100, false, 600, 8f, [(295215, 1)])],
-        // BGuard_ChiefB_D_L50
-        [296130] = [new Band(0, 24, 100, false, 600, 8f, [(295216, 1)])],
-        // BGuard_ChiefB_D_L50
-        [296131] = [new Band(0, 24, 100, false, 600, 8f, [(295216, 1)])],
-        // BGuard_ChiefB_D_L50
-        [296132] = [new Band(0, 24, 100, false, 600, 8f, [(295216, 1)])],
-        // BGuard_ChiefB_Dr_L50
-        [296133] = [new Band(0, 24, 100, false, 600, 8f, [(295217, 1)])],
-        // BGuard_ChiefB_Dr_L50
-        [296134] = [new Band(0, 24, 100, false, 600, 8f, [(295217, 1)])],
-        // BGuard_ChiefB_Dr_L50
-        [296135] = [new Band(0, 24, 100, false, 600, 8f, [(295217, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [296145] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [296146] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_L_L50M
-        [296147] = [new Band(0, 24, 100, false, 600, 8f, [(296058, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [296148] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [296149] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_D_L50M
-        [296150] = [new Band(0, 24, 100, false, 600, 8f, [(296059, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [296151] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [296152] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // BGuard_ChiefB_Dr_L50M
-        [296153] = [new Band(0, 24, 100, false, 600, 8f, [(296060, 1)])],
-        // LGuard_WhA_L43
-        [296193] = [new Band(0, 34, 100, false, 600, 3f, [(207612, 1)])],
-        // LGuard_WhA_L53
-        [296194] = [new Band(0, 34, 100, false, 600, 3f, [(207622, 1)])],
-        // DGuard_WhA_L43
-        [296195] = [new Band(0, 34, 100, false, 600, 3f, [(207617, 1)])],
-        // DGuard_WhA_L53
-        [296196] = [new Band(0, 34, 100, false, 600, 3f, [(207627, 1)])],
-        // LGuard_ReA_L43
-        [296197] = [new Band(0, 34, 100, true, 100, 1f, [(207634, 1)])],
-        // DGuard_ReA_L43
-        [296198] = [new Band(0, 34, 100, true, 100, 1f, [(207639, 1)])],
-        // LGuard_PhB_L52
-        [296199] = [new Band(0, 34, 50, true, 600, 3f, [(207645, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207644, 2)])],
-        // DGuard_ReA_L51
-        [296200] = [new Band(0, 34, 100, true, 100, 1f, [(207640, 1)])],
-        // DGuard_PhB_L52
-        [296201] = [new Band(0, 34, 50, true, 600, 3f, [(207649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207648, 2)])],
-        // LGuard_RhA_L43
-        [296253] = [new Band(36, 70, 100, true, 600, 3f, [(207634, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207674, 2), (207634, 3)])],
-        // LGuard_RhA_L43
-        [296254] = [new Band(36, 70, 100, true, 600, 3f, [(207634, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207674, 2), (207634, 3)])],
-        // LGuard_AhA_L43
-        [296255] = [new Band(0, 34, 100, false, 600, 3f, [(207675, 2), (207676, 1)])],
-        // LGuard_WhA_L43
-        [296256] = [new Band(0, 34, 100, false, 600, 3f, [(207612, 1)])],
-        // LGuard_PhA_L43
-        [296257] = [new Band(71, 100, 50, false, 600, 3f, [(207677, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207677, 2), (207678, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207677, 3), (207678, 2)])],
-        // DGuard_RhA_L43
-        [296258] = [new Band(36, 70, 100, true, 600, 3f, [(207639, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207679, 2), (207639, 3)])],
-        // DGuard_RhA_L43
-        [296259] = [new Band(36, 70, 100, true, 600, 3f, [(207639, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207679, 2), (207639, 3)])],
-        // DGuard_AhA_L43
-        [296260] = [new Band(0, 34, 100, false, 600, 3f, [(207680, 2), (207681, 1)])],
-        // DGuard_WhA_L43
-        [296261] = [new Band(0, 34, 100, false, 600, 3f, [(207617, 1)])],
-        // DGuard_PhA_L43
-        [296262] = [new Band(71, 100, 50, false, 600, 3f, [(207682, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207682, 2), (207683, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207682, 3), (207683, 2)])],
-        // LGuard_RhA_L53
-        [296263] = [new Band(36, 70, 100, true, 600, 3f, [(207684, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207685, 2), (207684, 3)])],
-        // LGuard_RhA_L53
-        [296264] = [new Band(36, 70, 100, true, 600, 3f, [(207684, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207685, 2), (207684, 3)])],
-        // LGuard_AhA_L53
-        [296265] = [new Band(0, 34, 100, false, 600, 3f, [(207686, 2), (207687, 1)])],
-        // LGuard_WhA_L53
-        [296266] = [new Band(0, 34, 100, false, 600, 3f, [(207622, 1)])],
-        // LGuard_PhA_L53
-        [296267] = [new Band(71, 100, 50, false, 600, 3f, [(207688, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207688, 2), (207689, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207688, 3), (207689, 2)])],
-        // DGuard_RhA_L53
-        [296268] = [new Band(36, 70, 100, true, 600, 3f, [(207690, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207691, 2), (207690, 3)])],
-        // DGuard_RhA_L53
-        [296269] = [new Band(36, 70, 100, true, 600, 3f, [(207690, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207691, 2), (207690, 3)])],
-        // DGuard_AhA_L53
-        [296270] = [new Band(0, 34, 100, false, 600, 3f, [(207692, 2), (207693, 1)])],
-        // DGuard_WhA_L53
-        [296271] = [new Band(0, 34, 100, false, 600, 3f, [(207627, 1)])],
-        // DGuard_PhA_L53
-        [296272] = [new Band(71, 100, 50, false, 600, 3f, [(207694, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207694, 2), (207695, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207694, 3), (207695, 2)])],
-        // LGuard_ReA_L41
-        [296277] = [new Band(0, 34, 100, true, 100, 1f, [(207632, 1)])],
-        // LGuard_RhB_L42
-        [296278] = [new Band(36, 70, 100, true, 100, 3f, [(207633, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207633, 3)])],
-        // LGuard_PhB_L42
-        [296287] = [new Band(0, 34, 50, true, 600, 3f, [(207643, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207642, 2)])],
-        // LGuard_ReA_L51
-        [296292] = [new Band(0, 34, 100, true, 100, 1f, [(207635, 1)])],
-        // LGuard_RhB_L52
-        [296293] = [new Band(36, 70, 100, true, 100, 3f, [(207636, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207636, 3)])],
-        // LGuard_PhB_L52
-        [296302] = [new Band(0, 34, 50, true, 600, 3f, [(207645, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207644, 2)])],
-        // DGuard_ReA_L41
-        [296307] = [new Band(0, 34, 100, true, 100, 1f, [(207637, 1)])],
-        // DGuard_RhB_L42
-        [296308] = [new Band(36, 70, 100, true, 100, 3f, [(207638, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207638, 3)])],
-        // DGuard_PhB_L42
-        [296317] = [new Band(0, 34, 50, true, 600, 3f, [(207647, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207646, 2)])],
-        // DGuard_ReA_L51
-        [296322] = [new Band(0, 34, 100, true, 100, 1f, [(207640, 1)])],
-        // DGuard_RhB_L52
-        [296323] = [new Band(36, 70, 100, true, 100, 3f, [(207641, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207641, 3)])],
-        // DGuard_PhB_L52
-        [296332] = [new Band(0, 34, 50, true, 600, 3f, [(207649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(207648, 2)])],
-        // LGuard_RhB_L50
-        [296392] = [new Band(36, 70, 100, true, 100, 3f, [(295131, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295131, 3)])],
-        // LGuard_PhB_L50
-        [296395] = [new Band(0, 34, 50, true, 600, 3f, [(295141, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295141, 2)])],
-        // DGuard_RhB_L50
-        [296397] = [new Band(36, 70, 100, true, 100, 3f, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, [(295142, 3)])],
-        // DGuard_PhB_L50
-        [296400] = [new Band(0, 34, 50, true, 600, 3f, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, [(295152, 2)])],
-        // DrGuard_RhB_L50
-        [296402] = [new Band(36, 70, 100, true, 100, 2f, [(295153, 2)]), new Band(0, 100, 100, true, 100, 2f, [(295153, 2)]), new Band(0, 34, 100, true, 0, 2f, [(295153, 1)])],
-        // LGuard_RhA_L50
-        [296407] = [new Band(36, 70, 100, true, 600, 3f, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295132, 2), (295131, 3)])],
-        // LGuard_AhA_L50
-        [296408] = [new Band(0, 34, 100, false, 600, 3f, [(295133, 2), (295134, 1)])],
-        // LGuard_WhA_L50
-        [296409] = [new Band(0, 34, 100, false, 600, 3f, [(295135, 1)])],
-        // LGuard_PhA_L50
-        [296410] = [new Band(71, 100, 50, false, 600, 3f, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295140, 3), (295141, 2)])],
-        // DGuard_RhA_L50
-        [296412] = [new Band(36, 70, 100, true, 600, 3f, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, [(295143, 2), (295142, 3)])],
-        // DGuard_AhA_L50
-        [296413] = [new Band(0, 34, 100, false, 600, 3f, [(295144, 2), (295145, 1)])],
-        // DGuard_WhA_L50
-        [296414] = [new Band(0, 34, 100, false, 600, 3f, [(295146, 1)])],
-        // DGuard_PhA_L50
-        [296415] = [new Band(71, 100, 50, false, 600, 3f, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, [(295151, 3), (295152, 2)])],
-        // DrGuard_RhA_L50
-        [296417] = [new Band(36, 70, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, [(295153, 2)])],
-        // LGuard_RhB_L50M
-        [296422] = [new Band(36, 70, 100, true, 100, 3f, [(296061, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296061, 3)])],
-        // LGuard_PhB_L50M
-        [296425] = [new Band(0, 34, 50, true, 600, 3f, [(296071, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296071, 2)])],
-        // DGuard_RhB_L50M
-        [296427] = [new Band(36, 70, 100, true, 100, 3f, [(296072, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296072, 3)])],
-        // DGuard_PhB_L50M
-        [296430] = [new Band(0, 34, 50, true, 600, 3f, [(296082, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296082, 2)])],
-        // DrGuard_RhB_L50M
-        [296432] = [new Band(36, 70, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296083, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296083, 1)])],
-        // BGuard_ChiefS
-        [296441] = [new Band(56, 70, 100, false, 0, 0f, [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]), new Band(56, 70, 100, false, 0, 0f, [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]), new Band(41, 55, 100, false, 0, 0f, [(296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1)]), new Band(41, 55, 100, true, 0, 2f, [(296437, 1)]), new Band(41, 55, 100, true, 0, 2f, [(296437, 1)]), new Band(41, 55, 100, false, 0, 0f, [(296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(0, 100, 100, false, 6, 0f, [(296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1)]), new Band(0, 100, 100, false, 6, 0f, [(296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1)]), new Band(0, 19, 100, false, 6, 0f, [(296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1)])],
-        // LGuard_RsA
-        [296464] = [new Band(0, 49, 100, true, 18, 3f, [(296465, 2)])],
-        // LGuard_WsA
-        [296469] = [new Band(0, 100, 100, true, 30, 0f, [(296470, 1)])],
-        // LGuard_WsB
-        [296471] = [new Band(0, 100, 33, true, 30, 0f, [(296470, 1)])],
-        // LGuard_PsA
-        [296472] = [new Band(0, 100, 50, false, 30, 5f, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296474, 1)])],
-        // DGuard_RsA
-        [296477] = [new Band(0, 49, 100, true, 18, 3f, [(296478, 2)])],
-        // DGuard_WsA
-        [296482] = [new Band(0, 100, 100, true, 30, 0f, [(296483, 1)])],
-        // DGuard_WsB
-        [296484] = [new Band(0, 100, 33, true, 30, 0f, [(296483, 1)])],
-        // DGuard_PsA
-        [296485] = [new Band(0, 100, 50, false, 30, 5f, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296487, 1)])],
-        // DrGuard_RsA
-        [296498] = [new Band(0, 49, 100, true, 18, 3f, [(296499, 2)]), new Band(0, 49, 100, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // DrGuard_RsB
-        [296501] = [new Band(0, 100, 50, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // DrGuard_PsA
-        [296506] = [new Band(26, 50, 100, false, 0, 5f, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, [(296509, 1)])],
-        // BGuard_ChiefF4_D
-        [296515] = [new Band(41, 60, 100, false, 0, 0f, [(296534, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296534, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296533, 1)])],
-        // BGuard_ChiefF4_Dr
-        [296520] = [new Band(41, 60, 100, false, 0, 0f, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296540, 1)])],
-        // LGuard_RsA
-        [296529] = [new Band(0, 49, 100, true, 18, 3f, [(296465, 2)])],
-        // LGuard_WsA
-        [296531] = [new Band(0, 100, 100, true, 30, 0f, [(296470, 1)])],
-        // LGuard_PsA
-        [296532] = [new Band(0, 100, 50, false, 30, 5f, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296474, 1)])],
-        // DGuard_RsA
-        [296536] = [new Band(0, 49, 100, true, 18, 3f, [(296478, 2)])],
-        // DGuard_WsA
-        [296538] = [new Band(0, 100, 100, true, 30, 0f, [(296483, 1)])],
-        // DGuard_PsA
-        [296539] = [new Band(0, 100, 50, false, 30, 5f, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, [(296487, 1)])],
-        // DrGuard_RsA
-        [296543] = [new Band(0, 49, 100, true, 18, 3f, [(296499, 2)]), new Band(0, 49, 100, true, 18, 0f, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, [(296500, 1)])],
-        // LGuard_ReA_L55
-        [296564] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // LGuard_ReA_L56
-        [296565] = [new Band(0, 34, 100, true, 100, 1f, [(296618, 1)])],
-        // LGuard_RhB_L53
-        [296566] = [new Band(36, 70, 100, true, 100, 3f, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207684, 3)])],
-        // LGuard_RhB_L54
-        [296567] = [new Band(36, 70, 100, true, 100, 3f, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296616, 3)])],
-        // LGuard_RhB_L55
-        [296568] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L56
-        [296569] = [new Band(36, 70, 100, true, 600, 3f, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, [(207698, 2), (207697, 3)])],
-        // LGuard_RhA_L57
-        [296570] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L57
-        [296571] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // LGuard_RhA_L58
-        [296572] = [new Band(36, 70, 100, true, 600, 3f, [(296620, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296624, 2), (296620, 3)])],
-        // LGuard_RhA_L60
-        [296573] = [new Band(36, 70, 100, true, 600, 3f, [(296621, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296625, 2), (296621, 3)])],
-        // LGuard_AhA_L56
-        [296583] = [new Band(0, 34, 100, false, 600, 3f, [(296626, 2), (296627, 1)])],
-        // LGuard_AhA_L57
-        [296584] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_AhA_L57
-        [296585] = [new Band(0, 34, 100, false, 600, 3f, [(296628, 2), (296629, 1)])],
-        // LGuard_AhA_L58
-        [296586] = [new Band(0, 34, 100, false, 600, 3f, [(296630, 2), (296631, 1)])],
-        // LGuard_AhA_L60
-        [296587] = [new Band(0, 34, 100, false, 600, 3f, [(296632, 2), (296633, 1)])],
-        // LGuard_WhA_L56
-        [296597] = [new Band(0, 34, 100, false, 600, 3f, [(207699, 1)])],
-        // LGuard_WhA_L57
-        [296598] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [296599] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L58
-        [296600] = [new Band(0, 34, 100, false, 600, 3f, [(207704, 1)])],
-        // LGuard_WhA_L60
-        [296601] = [new Band(0, 34, 100, false, 600, 3f, [(296639, 1)])],
-        // LGuard_PhB_L53
-        [296608] = [new Band(0, 34, 50, true, 600, 3f, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296644, 2)])],
-        // LGuard_PhB_L54
-        [296609] = [new Band(0, 34, 50, true, 600, 3f, [(296647, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296646, 2)])],
-        // LGuard_PhB_L55
-        [296610] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // LGuard_PhA_L56
-        [296611] = [new Band(71, 100, 50, false, 600, 3f, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207709, 3), (207710, 2)])],
-        // LGuard_PhA_L57
-        [296612] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_PhA_L57
-        [296613] = [new Band(71, 100, 50, false, 600, 3f, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296650, 3), (296651, 2)])],
-        // LGuard_PhA_L58
-        [296614] = [new Band(71, 100, 50, false, 600, 3f, [(296652, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296652, 2), (296653, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296652, 3), (296653, 2)])],
-        // LGuard_PhA_L60
-        [296615] = [new Band(71, 100, 50, false, 600, 3f, [(296654, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296654, 2), (296655, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296654, 3), (296655, 2)])],
-        // DGuard_ReA_L55
-        [296674] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L56
-        [296675] = [new Band(0, 34, 100, true, 100, 1f, [(296728, 1)])],
-        // DGuard_RhB_L53
-        [296676] = [new Band(36, 70, 100, true, 100, 3f, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, [(207690, 3)])],
-        // DGuard_RhB_L54
-        [296677] = [new Band(36, 70, 100, true, 100, 3f, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296726, 3)])],
-        // DGuard_RhB_L55
-        [296678] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L56
-        [296679] = [new Band(36, 70, 100, true, 600, 3f, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296732, 2), (296728, 3)])],
-        // DGuard_RhA_L57
-        [296680] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [296681] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L58
-        [296682] = [new Band(36, 70, 100, true, 600, 3f, [(296730, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296734, 2), (296730, 3)])],
-        // DGuard_RhA_L60
-        [296683] = [new Band(36, 70, 100, true, 600, 3f, [(296731, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296735, 2), (296731, 3)])],
-        // DGuard_AhA_L56
-        [296693] = [new Band(0, 34, 100, false, 600, 3f, [(296736, 2), (296737, 1)])],
-        // DGuard_AhA_L57
-        [296694] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_AhA_L57
-        [296695] = [new Band(0, 34, 100, false, 600, 3f, [(296738, 2), (296739, 1)])],
-        // DGuard_AhA_L58
-        [296696] = [new Band(0, 34, 100, false, 600, 3f, [(296740, 2), (296741, 1)])],
-        // DGuard_AhA_L60
-        [296697] = [new Band(0, 34, 100, false, 600, 3f, [(296742, 2), (296743, 1)])],
-        // DGuard_WhA_L56
-        [296707] = [new Band(0, 34, 100, false, 600, 3f, [(207712, 1)])],
-        // DGuard_WhA_L57
-        [296708] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L57
-        [296709] = [new Band(0, 34, 100, false, 600, 3f, [(296744, 1)])],
-        // DGuard_WhA_L58
-        [296710] = [new Band(0, 34, 100, false, 600, 3f, [(207717, 1)])],
-        // DGuard_WhA_L60
-        [296711] = [new Band(0, 34, 100, false, 600, 3f, [(296749, 1)])],
-        // DGuard_PhB_L53
-        [296718] = [new Band(0, 34, 50, true, 600, 3f, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296754, 2)])],
-        // DGuard_PhB_L54
-        [296719] = [new Band(0, 34, 50, true, 600, 3f, [(296757, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296756, 2)])],
-        // DGuard_PhB_L55
-        [296720] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // DGuard_PhA_L56
-        [296721] = [new Band(71, 100, 50, false, 600, 3f, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, [(207722, 3), (207723, 2)])],
-        // DGuard_PhA_L57
-        [296722] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_PhA_L57
-        [296723] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_PhA_L58
-        [296724] = [new Band(71, 100, 50, false, 600, 3f, [(296762, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296762, 2), (296763, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296762, 3), (296763, 2)])],
-        // DGuard_PhA_L60
-        [296725] = [new Band(71, 100, 50, false, 600, 3f, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296764, 3), (296765, 2)])],
-        // LGuard_ReA_L55
-        [296771] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // LGuard_RhB_L55
-        [296772] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L55
-        [296773] = [new Band(36, 70, 100, true, 600, 3f, [(296617, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296867, 2), (296617, 3)])],
-        // LGuard_ReA_L55
-        [296776] = [new Band(0, 34, 100, true, 100, 1f, [(296617, 1)])],
-        // LGuard_RhB_L55
-        [296777] = [new Band(36, 70, 100, true, 100, 3f, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296617, 3)])],
-        // LGuard_RhA_L55
-        [296778] = [new Band(36, 70, 100, true, 600, 3f, [(296617, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296867, 2), (296617, 3)])],
-        // LGuard_AhA_L55
-        [296781] = [new Band(0, 34, 100, false, 600, 3f, [(296868, 2), (296869, 1)])],
-        // LGuard_WhA_L55
-        [296786] = [new Band(0, 34, 100, false, 600, 3f, [(296870, 1)])],
-        // LGuard_WhA_L55
-        [296791] = [new Band(0, 34, 100, false, 600, 3f, [(296870, 1)])],
-        // LGuard_PhB_L55
-        [296793] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // LGuard_PhA_L55
-        [296794] = [new Band(71, 100, 50, false, 600, 3f, [(296648, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296648, 2), (296649, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296648, 3), (296649, 2)])],
-        // DGuard_ReA_L55
-        [296800] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_RhB_L55
-        [296801] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L55
-        [296802] = [new Band(36, 70, 100, true, 600, 3f, [(296727, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296875, 2), (296727, 3)])],
-        // DGuard_ReA_L55
-        [296805] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_RhB_L55
-        [296806] = [new Band(36, 70, 100, true, 100, 3f, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, [(296727, 3)])],
-        // DGuard_RhA_L55
-        [296807] = [new Band(36, 70, 100, true, 600, 3f, [(296727, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296875, 2), (296727, 3)])],
-        // DGuard_AhA_L55
-        [296810] = [new Band(0, 34, 100, false, 600, 3f, [(296876, 2), (296877, 1)])],
-        // DGuard_WhA_L55
-        [296815] = [new Band(0, 34, 100, false, 600, 3f, [(296878, 1)])],
-        // DGuard_WhA_L55
-        [296820] = [new Band(0, 34, 100, false, 600, 3f, [(296878, 1)])],
-        // DGuard_PhB_L55
-        [296822] = [new Band(0, 34, 50, true, 600, 3f, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296758, 2)])],
-        // DGuard_PhA_L55
-        [296823] = [new Band(71, 100, 50, false, 600, 3f, [(296758, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296758, 2), (296759, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296758, 3), (296759, 2)])],
-        // DrGuard_ReA_L55
-        [296831] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_RhB_L55
-        [296832] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // DrGuard_RhA_L55
-        [296833] = [new Band(36, 70, 100, true, 600, 3f, [(296883, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296883, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296883, 2)])],
-        // DrGuard_ReA_L55
-        [296836] = [new Band(0, 34, 100, true, 600, 3f, [(296883, 1)])],
-        // DrGuard_RhB_L55
-        [296837] = [new Band(36, 70, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, [(296883, 1)])],
-        // DrGuard_RhA_L55
-        [296838] = [new Band(36, 70, 100, true, 600, 3f, [(296883, 3)]), new Band(0, 34, 100, true, 600, 3f, [(296883, 3)]), new Band(0, 100, 100, true, 600, 3f, [(296883, 2)])],
-        // DrGuard_WeA_L55
-        [296846] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // DrGuard_WeA_L55
-        [296851] = [new Band(0, 34, 75, false, 600, 2f, [(296884, 2)])],
-        // BGuard_ChiefF4_D
-        [297079] = [new Band(41, 60, 100, false, 0, 0f, [(296534, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296534, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296533, 1)])],
-        // BGuard_ChiefF4_Dr
-        [297080] = [new Band(41, 60, 100, false, 0, 0f, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, [(296540, 1)])],
-        // BGuard_ChiefA_Renew_Gate_Li
-        [297117] = [new Band(0, 100, 100, false, 600, 2f, [(297111, 1), (297112, 1)])],
-        // BGuard_ChiefA_Renew_Gate_Da
-        [297118] = [new Band(0, 100, 100, false, 600, 2f, [(297113, 1), (297114, 1)])],
-        // BGuard_ChiefA_Renew_Gate_Dr
-        [297119] = [new Band(0, 100, 100, false, 600, 2f, [(297115, 1), (297116, 1)])],
-        // LGuard_WhA_L60
-        [798926] = [new Band(0, 34, 100, false, 600, 3f, [(296639, 1)])],
-        // LGuard_WhA_L58
-        [798927] = [new Band(0, 34, 100, false, 600, 3f, [(207704, 1)])],
-        // LGuard_AhA_L58
-        [798928] = [new Band(0, 34, 100, false, 600, 3f, [(296630, 2), (296631, 1)])],
-        // LGuard_WhA_L57
-        [798929] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_WhA_L57
-        [798930] = [new Band(0, 34, 100, false, 600, 3f, [(296634, 1)])],
-        // LGuard_RhA_L58
-        [798931] = [new Band(36, 70, 100, true, 600, 3f, [(296620, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296624, 2), (296620, 3)])],
-        // LGuard_WhA_L60
-        [798958] = [new Band(0, 34, 100, false, 600, 3f, [(296639, 1)])],
-        // LGuard_ReA_L56
-        [799005] = [new Band(0, 34, 100, true, 100, 1f, [(296618, 1)])],
-        // LGuard_ReA_L56
-        [799009] = [new Band(0, 34, 100, true, 100, 1f, [(296618, 1)])],
-        // LGuard_RhA_L57
-        [799010] = [new Band(36, 70, 100, true, 600, 3f, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296623, 2), (296619, 3)])],
-        // DGuard_PhA_L60
-        [799225] = [new Band(71, 100, 50, false, 600, 3f, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296764, 3), (296765, 2)])],
-        // DGuard_RhA_L58
-        [799226] = [new Band(36, 70, 100, true, 600, 3f, [(296730, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296734, 2), (296730, 3)])],
-        // DGuard_PhA_L57
-        [799227] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_ReA_L55
-        [799295] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L56
-        [799300] = [new Band(0, 34, 100, true, 100, 1f, [(296728, 1)])],
-        // DGuard_ReA_L56
-        [799318] = [new Band(0, 34, 100, true, 100, 1f, [(296728, 1)])],
-        // DGuard_PhA_L60
-        [799323] = [new Band(71, 100, 50, false, 600, 3f, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296764, 3), (296765, 2)])],
-        // DGuard_PhA_L57
-        [799327] = [new Band(71, 100, 50, false, 600, 3f, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296760, 3), (296761, 2)])],
-        // DGuard_ReA_L56
-        [799363] = [new Band(0, 34, 100, true, 100, 1f, [(296728, 1)])],
-        // DGuard_ReA_L55
-        [800136] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L55
-        [800144] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // DGuard_ReA_L55
-        [800152] = [new Band(0, 34, 100, true, 100, 1f, [(296727, 1)])],
-        // LGuard_PhB_L55
-        [800295] = [new Band(0, 34, 50, true, 600, 3f, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, [(296648, 2)])],
-        // DGuard_PhA_L60
-        [800297] = [new Band(71, 100, 50, false, 600, 3f, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, [(296764, 3), (296765, 2)])],
-        // LGuard_WhA_L60
-        [800298] = [new Band(0, 34, 100, false, 600, 3f, [(296639, 1)])],
-        // DGuard_RhA_L57
-        [831012] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
-        // DGuard_RhA_L57
-        [831015] = [new Band(36, 70, 100, true, 600, 3f, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, [(296733, 2), (296729, 3)])],
+        // [(207612, 1)]
+        [203338] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207612, 1)])],
+        // [(207635, 1)]
+        [203378] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207635, 1)])],
+        // [(295135, 1)]
+        [203902] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(294734, 2)]
+        [203903] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(295131, 3)]
+        [203904] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(207549, 1)]
+        [203996] = [new Band(51, 75, 100, false, 600, 0f, 0, [(207549, 1)]), new Band(26, 50, 100, false, 600, 0f, 0, [(207549, 1), (207550, 1)]), new Band(0, 24, 100, false, 600, 0f, 0, [(207549, 1), (207550, 1), (207551, 1)])],
+        // [(294767, 2)]
+        [204303] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(295146, 1)]
+        [204304] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295144, 2), (295145, 1)]
+        [204312] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(295146, 1)]
+        [204314] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295142, 3)]
+        [204315] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295144, 2), (295145, 1)]
+        [204317] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(207823, 3)]
+        [204391] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207823, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207824, 2), (207823, 3)])],
+        // [(295146, 1)]
+        [204434] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(207622, 1)]
+        [204502] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207622, 1)])],
+        // [(207688, 2)]
+        [204503] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207688, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207688, 2), (207689, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207688, 3), (207689, 2)])],
+        // [(295131, 3)]
+        [204510] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295135, 1)]
+        [204518] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295131, 1)]
+        [204574] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204575] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204576] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204584] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295133, 2), (295134, 1)]
+        [204590] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295133, 2), (295134, 1)])],
+        // [(295131, 1)]
+        [204591] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204598] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204599] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204602] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204606] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [204608] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295135, 1)]
+        [204629] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(207622, 1)]
+        [204646] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207622, 1)])],
+        // [(207636, 2)]
+        [204654] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207636, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207636, 3)])],
+        // [(207694, 2)]
+        [204701] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207694, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207694, 2), (207695, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207694, 3), (207695, 2)])],
+        // [(207627, 1)]
+        [204703] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207627, 1)])],
+        // [(207690, 3)]
+        [204707] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207690, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207691, 2), (207690, 3)])],
+        // [(295142, 3)]
+        [204711] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295142, 3)]
+        [204713] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295142, 1)]
+        [204743] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295146, 1)]
+        [204763] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295142, 1)]
+        [204764] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 1)]
+        [204765] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295146, 1)]
+        [204768] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(207692, 2), (207693, 1)]
+        [204774] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207692, 2), (207693, 1)])],
+        // [(295146, 1)]
+        [204784] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295142, 1)]
+        [204804] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 1)]
+        [204816] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(207627, 1)]
+        [204818] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207627, 1)])],
+        // [(207690, 2)]
+        [205239] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296639, 1)]
+        [205535] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296639, 1)])],
+        // [(296649, 2)]
+        [205581] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296649, 2)]
+        [205583] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296764, 2)]
+        [205617] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296764, 3), (296765, 2)])],
+        // [(294707, 1)]
+        [207514] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 2)]
+        [207515] = [new Band(36, 70, 100, true, 100, 3f, 0, [(294707, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(294707, 3)])],
+        // [(207549, 1)]
+        [207520] = [new Band(51, 75, 100, false, 600, 0f, 0, [(207549, 1)]), new Band(26, 50, 100, false, 600, 0f, 0, [(207549, 1), (207550, 1)]), new Band(0, 24, 100, false, 600, 0f, 0, [(207549, 1), (207550, 1), (207551, 1)])],
+        // [(294737, 2)]
+        [207523] = [new Band(0, 34, 50, true, 100, 3f, 0, [(294737, 2)]), new Band(0, 100, 50, true, 100, 3f, 0, [(294734, 2)])],
+        // [(295131, 1)]
+        [207556] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [207557] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295140, 2)]
+        [207566] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295140, 3), (295141, 2)])],
+        // [(295131, 1)]
+        [207571] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [207572] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295140, 2)]
+        [207581] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295140, 3), (295141, 2)])],
+        // [(295142, 1)]
+        [207586] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [207587] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295151, 2)]
+        [207596] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295151, 3), (295152, 2)])],
+        // [(295142, 1)]
+        [207601] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [207602] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295151, 2)]
+        [207611] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295151, 3), (295152, 2)])],
+        // [(207632, 1)]
+        [207651] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207632, 1)])],
+        // [(207633, 2)]
+        [207652] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207633, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207633, 3)])],
+        // [(207635, 1)]
+        [207657] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207635, 1)])],
+        // [(207636, 2)]
+        [207658] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207636, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207636, 3)])],
+        // [(207637, 1)]
+        [207663] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207637, 1)])],
+        // [(207638, 2)]
+        [207664] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207638, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207638, 3)])],
+        // [(207640, 1)]
+        [207669] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207640, 1)])],
+        // [(207641, 2)]
+        [207670] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207641, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207641, 3)])],
+        // [(294707, 1)]
+        [207749] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(207812, 1)]
+        [207750] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207812, 1)])],
+        // [(295131, 1)]
+        [207751] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(294707, 2)]
+        [207752] = [new Band(36, 70, 100, true, 100, 3f, 0, [(294707, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(294707, 3)])],
+        // [(207812, 2)]
+        [207753] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207812, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207812, 3)])],
+        // [(295131, 2)]
+        [207754] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295131, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295131, 3)])],
+        // [(295131, 3)]
+        [207755] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295133, 2), (295134, 1)]
+        [207762] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295133, 2), (295134, 1)])],
+        // [(295135, 1)]
+        [207769] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(294737, 2)]
+        [207773] = [new Band(0, 34, 50, true, 100, 3f, 0, [(294737, 2)]), new Band(0, 100, 50, true, 100, 3f, 0, [(294734, 2)])],
+        // [(207822, 2)]
+        [207774] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207822, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207821, 2)])],
+        // [(295141, 2)]
+        [207775] = [new Band(0, 34, 50, true, 600, 3f, 0, [(295141, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(295141, 2)])],
+        // [(294734, 2)]
+        [207776] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294740, 1)]
+        [207784] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(207823, 1)]
+        [207785] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207823, 1)])],
+        // [(295142, 1)]
+        [207786] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(294740, 2)]
+        [207787] = [new Band(36, 70, 100, true, 100, 3f, 0, [(294740, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(294740, 3)])],
+        // [(207823, 2)]
+        [207788] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207823, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207823, 3)])],
+        // [(295142, 2)]
+        [207789] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295142, 3)])],
+        // [(295142, 3)]
+        [207790] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295144, 2), (295145, 1)]
+        [207797] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(295146, 1)]
+        [207804] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(294770, 2)]
+        [207808] = [new Band(0, 34, 50, true, 100, 3f, 0, [(294770, 2)]), new Band(0, 100, 50, true, 100, 3f, 0, [(294767, 2)])],
+        // [(207833, 2)]
+        [207809] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207833, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207832, 2)])],
+        // [(295152, 2)]
+        [207810] = [new Band(0, 34, 50, true, 600, 3f, 0, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(295152, 2)])],
+        // [(294767, 2)]
+        [207811] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(207812, 1)]
+        [207849] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207812, 1)])],
+        // [(207812, 3)]
+        [207850] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207812, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207813, 2), (207812, 3)])],
+        // [(207821, 2)]
+        [207859] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207821, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207821, 2), (207822, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207821, 3), (207822, 2)])],
+        // [(207823, 1)]
+        [207864] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207823, 1)])],
+        // [(207823, 3)]
+        [207865] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207823, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207824, 2), (207823, 3)])],
+        // [(207832, 2)]
+        [207874] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207832, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207832, 2), (207833, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207832, 3), (207833, 2)])],
+        // [(295142, 1)]
+        [207875] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 2)]
+        [207876] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295142, 3)])],
+        // [(207812, 2)]
+        [207946] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207812, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207812, 3)])],
+        // [(207812, 2)]
+        [207947] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207812, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207812, 3)])],
+        // [(296617, 1)]
+        [209013] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296618, 1)]
+        [209014] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296618, 1)])],
+        // [(207684, 2)]
+        [209015] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(296617, 2)]
+        [209016] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(207697, 3)]
+        [209017] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207698, 2), (207697, 3)])],
+        // [(296619, 3)]
+        [209018] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [209019] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296626, 2), (296627, 1)]
+        [209027] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296626, 2), (296627, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209028] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209029] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(207699, 1)]
+        [209037] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(296634, 1)]
+        [209038] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [209039] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296645, 2)]
+        [209045] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296644, 2)])],
+        // [(296649, 2)]
+        [209046] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(207709, 2)]
+        [209047] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207709, 3), (207710, 2)])],
+        // [(296650, 2)]
+        [209048] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296650, 2)]
+        [209049] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(207684, 2)]
+        [209055] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(296617, 2)]
+        [209056] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(207697, 3)]
+        [209057] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207698, 2), (207697, 3)])],
+        // [(296619, 3)]
+        [209058] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [209059] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296626, 2), (296627, 1)]
+        [209062] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296626, 2), (296627, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209063] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209064] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(207699, 1)]
+        [209067] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(296634, 1)]
+        [209068] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [209069] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296645, 2)]
+        [209070] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296644, 2)])],
+        // [(296649, 2)]
+        [209071] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(207709, 2)]
+        [209072] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207709, 3), (207710, 2)])],
+        // [(296650, 2)]
+        [209073] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296650, 2)]
+        [209074] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(207684, 2)]
+        [209106] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(296616, 2)]
+        [209107] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296616, 3)])],
+        // [(296617, 2)]
+        [209108] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(207697, 3)]
+        [209109] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207698, 2), (207697, 3)])],
+        // [(296619, 3)]
+        [209110] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [209111] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296626, 2), (296627, 1)]
+        [209115] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296626, 2), (296627, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209116] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209117] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(207699, 1)]
+        [209121] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(296634, 1)]
+        [209122] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [209123] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296645, 2)]
+        [209124] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296644, 2)])],
+        // [(296647, 2)]
+        [209125] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296647, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296646, 2)])],
+        // [(296649, 2)]
+        [209126] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(207709, 2)]
+        [209127] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207709, 3), (207710, 2)])],
+        // [(296650, 2)]
+        [209128] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296650, 2)]
+        [209129] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(207684, 2)]
+        [209130] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(296616, 2)]
+        [209131] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296616, 3)])],
+        // [(296617, 2)]
+        [209132] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(207697, 3)]
+        [209133] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207698, 2), (207697, 3)])],
+        // [(296619, 3)]
+        [209134] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [209135] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(207699, 1)]
+        [209139] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(296634, 1)]
+        [209140] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [209141] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(207684, 2)]
+        [209142] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(296616, 2)]
+        [209143] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296616, 3)])],
+        // [(296617, 2)]
+        [209144] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(207697, 3)]
+        [209145] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207698, 2), (207697, 3)])],
+        // [(296619, 3)]
+        [209146] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [209147] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(207699, 1)]
+        [209151] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(296634, 1)]
+        [209152] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [209153] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296727, 1)]
+        [209213] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296728, 1)]
+        [209214] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296728, 1)])],
+        // [(207690, 2)]
+        [209215] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296727, 2)]
+        [209216] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296728, 3)]
+        [209217] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296732, 2), (296728, 3)])],
+        // [(296729, 3)]
+        [209218] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209219] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296736, 2), (296737, 1)]
+        [209227] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296736, 2), (296737, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [209228] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [209229] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(207712, 1)]
+        [209237] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(296744, 1)]
+        [209238] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296744, 1)]
+        [209239] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296755, 2)]
+        [209245] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296754, 2)])],
+        // [(296759, 2)]
+        [209246] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(207722, 2)]
+        [209247] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207722, 3), (207723, 2)])],
+        // [(296760, 2)]
+        [209248] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296760, 2)]
+        [209249] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(207690, 2)]
+        [209255] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296727, 2)]
+        [209256] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296728, 3)]
+        [209257] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296732, 2), (296728, 3)])],
+        // [(296729, 3)]
+        [209258] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209259] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296736, 2), (296737, 1)]
+        [209262] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296736, 2), (296737, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [209263] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [209264] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(207712, 1)]
+        [209267] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(296744, 1)]
+        [209268] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296744, 1)]
+        [209269] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296755, 2)]
+        [209270] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296754, 2)])],
+        // [(296759, 2)]
+        [209271] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(207722, 2)]
+        [209272] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207722, 3), (207723, 2)])],
+        // [(296760, 2)]
+        [209273] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296760, 2)]
+        [209274] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(207690, 2)]
+        [209306] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296726, 2)]
+        [209307] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296726, 3)])],
+        // [(296727, 2)]
+        [209308] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296728, 3)]
+        [209309] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296732, 2), (296728, 3)])],
+        // [(296729, 3)]
+        [209310] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209311] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296736, 2), (296737, 1)]
+        [209315] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296736, 2), (296737, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [209316] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [209317] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(207712, 1)]
+        [209321] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(296744, 1)]
+        [209322] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296744, 1)]
+        [209323] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296755, 2)]
+        [209324] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296754, 2)])],
+        // [(296757, 2)]
+        [209325] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296757, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296756, 2)])],
+        // [(296759, 2)]
+        [209326] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(207722, 2)]
+        [209327] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207722, 3), (207723, 2)])],
+        // [(296760, 2)]
+        [209328] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296760, 2)]
+        [209329] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(207690, 2)]
+        [209330] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296726, 2)]
+        [209331] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296726, 3)])],
+        // [(296727, 2)]
+        [209332] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296728, 3)]
+        [209333] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296732, 2), (296728, 3)])],
+        // [(296729, 3)]
+        [209334] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209335] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(207712, 1)]
+        [209339] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(296744, 1)]
+        [209340] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296744, 1)]
+        [209341] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(207690, 2)]
+        [209342] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296726, 2)]
+        [209343] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296726, 3)])],
+        // [(296727, 2)]
+        [209344] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296728, 3)]
+        [209345] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296732, 2), (296728, 3)])],
+        // [(296729, 3)]
+        [209346] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209347] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(207712, 1)]
+        [209351] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(296744, 1)]
+        [209352] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296744, 1)]
+        [209353] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296619, 3)]
+        [209356] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [209357] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296628, 2), (296629, 1)]
+        [209358] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [209359] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296634, 1)]
+        [209360] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [209361] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296650, 2)]
+        [209362] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296650, 2)]
+        [209363] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296727, 1)]
+        [209375] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 1)]
+        [209376] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296729, 3)]
+        [209379] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209380] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209381] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209382] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296727, 1)]
+        [209385] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 1)]
+        [209386] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296729, 3)]
+        [209389] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209390] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209391] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209392] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296727, 1)]
+        [209395] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 1)]
+        [209396] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296729, 3)]
+        [209399] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209400] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209401] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [209402] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296346, 2)]
+        [214128] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296346, 2)])],
+        // [(296346, 2)]
+        [214129] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296346, 2)])],
+        // [(296349, 1)]
+        [214163] = [new Band(0, 34, 100, false, 100, 2f, 0, [(296349, 1)])],
+        // [(281067, 1)]
+        [214766] = [new Band(0, 34, 100, false, 100, 2f, 0, [(281067, 1)])],
+        // [(281067, 1)]
+        [214770] = [new Band(36, 70, 100, false, 600, 3f, 0, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, 0, [(281068, 1)])],
+        // [(281067, 1)]
+        [214785] = [new Band(0, 34, 100, false, 100, 2f, 0, [(281067, 1)])],
+        // [(281067, 1)]
+        [214789] = [new Band(36, 70, 100, false, 600, 3f, 0, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, 0, [(281068, 1)])],
+        // [(281226, 1)]
+        [215136] = [new Band(0, 24, 100, false, 600, 3f, 0, [(281226, 1)])],
+        // [(281226, 1)]
+        [215179] = [new Band(0, 24, 100, false, 600, 3f, 0, [(281226, 1)])],
+        // [(281226, 1)]
+        [215222] = [new Band(0, 24, 100, false, 600, 3f, 0, [(281226, 1)])],
+        // [(281358, 1)]
+        [215450] = [new Band(36, 70, 100, false, 600, 3f, 0, [(281358, 1)]), new Band(0, 34, 100, false, 600, 3f, 0, [(281359, 1)])],
+        // [(296541, 1)]
+        [219632] = [new Band(41, 60, 100, false, 0, 0f, 0, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, 0, [(296540, 1)])],
+        // [(284978, 1)]
+        [233633] = [new Band(0, 24, 100, false, 600, 3f, 0, [(284978, 1)])],
+        // [(284978, 1)]
+        [233676] = [new Band(0, 24, 100, false, 600, 3f, 0, [(284978, 1)])],
+        // [(284978, 1)]
+        [233719] = [new Band(0, 24, 100, false, 600, 3f, 0, [(284978, 1)])],
+        // [(296499, 1)]
+        [257035] = [new Band(0, 100, 50, true, 18, 0f, 1, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 1, [(296500, 1)])],
+        // [(296470, 1)]
+        [257036] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296483, 1)]
+        [257037] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296473, 1)]
+        [257039] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296474, 1)])],
+        // [(296486, 1)]
+        [257040] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296487, 1)])],
+        // [(296508, 2)]
+        [257041] = [new Band(26, 50, 100, false, 0, 5f, 0, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, 0, [(296509, 1)])],
+        // [(296617, 2)]
+        [257048] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257049] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257050] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257054] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257055] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257063] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257064] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 2)]
+        [257078] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257079] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257080] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257084] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257085] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257093] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257094] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 1)]
+        [257123] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257124] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [257125] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296617, 1)]
+        [257168] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257169] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [257170] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296499, 1)]
+        [257335] = [new Band(0, 100, 50, true, 18, 0f, 1, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 1, [(296500, 1)])],
+        // [(296470, 1)]
+        [257336] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296483, 1)]
+        [257337] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296473, 1)]
+        [257339] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296474, 1)])],
+        // [(296486, 1)]
+        [257340] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296487, 1)])],
+        // [(296617, 2)]
+        [257348] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257349] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257350] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257354] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257355] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257363] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257364] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 2)]
+        [257378] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257379] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257380] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257384] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257385] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257393] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257394] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 1)]
+        [257423] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257424] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [257425] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296617, 1)]
+        [257468] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257469] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [257470] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296499, 1)]
+        [257635] = [new Band(0, 100, 50, true, 18, 0f, 1, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 1, [(296500, 1)])],
+        // [(296470, 1)]
+        [257636] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296483, 1)]
+        [257637] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296473, 1)]
+        [257639] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296474, 1)])],
+        // [(296486, 1)]
+        [257640] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296487, 1)])],
+        // [(296508, 2)]
+        [257641] = [new Band(26, 50, 100, false, 0, 5f, 0, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, 0, [(296509, 1)])],
+        // [(296617, 2)]
+        [257648] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257649] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257650] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257654] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257655] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257663] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257664] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 2)]
+        [257678] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257679] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257680] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257684] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257685] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257693] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257694] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 1)]
+        [257723] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257724] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [257725] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296617, 1)]
+        [257768] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257769] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [257770] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296499, 1)]
+        [257935] = [new Band(0, 100, 50, true, 18, 0f, 1, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 1, [(296500, 1)])],
+        // [(296470, 1)]
+        [257936] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296483, 1)]
+        [257937] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296473, 1)]
+        [257939] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296474, 1)])],
+        // [(296486, 1)]
+        [257940] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296487, 1)])],
+        // [(296617, 2)]
+        [257948] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257949] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257950] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257954] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257955] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257963] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257964] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 2)]
+        [257978] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296727, 2)]
+        [257979] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296883, 2)]
+        [257980] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296649, 2)]
+        [257984] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296759, 2)]
+        [257985] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296617, 1)]
+        [257993] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [257994] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296617, 1)]
+        [258023] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [258024] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [258025] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296617, 1)]
+        [258068] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [258069] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [258070] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296883, 3)]
+        [258244] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296883, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296883, 2)])],
+        // [(296617, 1)]
+        [259021] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259022] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259023] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259026] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259036] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259037] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259038] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259041] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259221] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259222] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259223] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259226] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259236] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259237] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259238] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259241] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259421] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259422] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259423] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259426] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259436] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259437] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259438] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259441] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259621] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259622] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259623] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259626] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296617, 1)]
+        [259636] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296727, 1)]
+        [259637] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296883, 1)]
+        [259638] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296884, 2)]
+        [259641] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(295131, 1)]
+        [260090] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [260091] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [260092] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [260093] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 1)]
+        [260094] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295142, 1)]
+        [260095] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 1)]
+        [260096] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 1)]
+        [260097] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 1)]
+        [260098] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 1)]
+        [260099] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295153, 1)]
+        [260100] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 1)]
+        [260101] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 1)]
+        [260102] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 1)]
+        [260103] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 1)]
+        [260104] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295154, 2)]
+        [260115] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [260116] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [260117] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [260118] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [260119] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295074, 1)]
+        [260207] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295074, 1)])],
+        // [(295075, 1)]
+        [260208] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295075, 1)])],
+        // [(295076, 1)]
+        [260209] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295076, 1)])],
+        // [(294707, 1)]
+        [263091] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263092] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263093] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263094] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263095] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294740, 1)]
+        [263096] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263097] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263098] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263099] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263100] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294773, 1)]
+        [263101] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263102] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263103] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263104] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263105] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294776, 2)]
+        [263116] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263117] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263118] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263119] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263120] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294707, 1)]
+        [263391] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263392] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263393] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263394] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [263395] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294740, 1)]
+        [263396] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263397] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263398] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263399] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [263400] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294773, 1)]
+        [263401] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263402] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263403] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263404] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [263405] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294776, 2)]
+        [263416] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263417] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263418] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263419] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [263420] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(295125, 1)]
+        [264501] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295125, 1)]
+        [264502] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295125, 1)]
+        [264503] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295125, 1)]
+        [264504] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295125, 1)]
+        [264505] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295126, 1)]
+        [264506] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295126, 1)]
+        [264507] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295126, 1)]
+        [264508] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295126, 1)]
+        [264509] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295126, 1)]
+        [264510] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295127, 1)]
+        [264511] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(295127, 1)]
+        [264512] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(295127, 1)]
+        [264513] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(295127, 1)]
+        [264514] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(295127, 1)]
+        [264515] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(294707, 1)]
+        [264591] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [264592] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [264593] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [264594] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 1)]
+        [264595] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294740, 1)]
+        [264596] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [264597] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [264598] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [264599] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 1)]
+        [264600] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294773, 1)]
+        [264601] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [264602] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [264603] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [264604] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 1)]
+        [264605] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294776, 2)]
+        [264616] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [264617] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [264618] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [264619] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294776, 2)]
+        [264620] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(296058, 1)]
+        [266301] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [266302] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [266303] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [266304] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [266305] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296059, 1)]
+        [266306] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [266307] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [266308] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [266309] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [266310] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296060, 1)]
+        [266311] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [266312] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [266313] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [266314] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [266315] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296061, 1)]
+        [266391] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [266392] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [266393] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [266394] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [266395] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296072, 1)]
+        [266396] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [266397] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [266398] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [266399] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [266400] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296083, 1)]
+        [266401] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [266402] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [266403] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [266404] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [266405] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296084, 2)]
+        [266416] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [266417] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [266418] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [266419] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [266420] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296061, 1)]
+        [267891] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [267892] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [267893] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [267894] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [267895] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296072, 1)]
+        [267896] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [267897] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [267898] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [267899] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [267900] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296083, 1)]
+        [267901] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [267902] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [267903] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [267904] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [267905] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296084, 2)]
+        [267916] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [267917] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [267918] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [267919] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [267920] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296061, 1)]
+        [269091] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269092] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269093] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269094] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269095] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296072, 1)]
+        [269096] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269097] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269098] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269099] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269100] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296083, 1)]
+        [269101] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [269102] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [269103] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [269104] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [269105] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296084, 2)]
+        [269116] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [269117] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [269118] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [269119] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [269120] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296061, 1)]
+        [269991] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269992] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269993] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269994] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [269995] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296072, 1)]
+        [269996] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269997] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269998] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [269999] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [270000] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296083, 1)]
+        [270001] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270002] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270003] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270004] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270005] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296084, 2)]
+        [270016] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270017] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270018] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270019] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270020] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296058, 1)]
+        [270801] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [270802] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [270803] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [270804] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [270805] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296059, 1)]
+        [270806] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [270807] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [270808] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [270809] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [270810] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296060, 1)]
+        [270811] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [270812] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [270813] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [270814] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [270815] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296061, 1)]
+        [270891] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [270892] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [270893] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [270894] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 1)]
+        [270895] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296072, 1)]
+        [270896] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [270897] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [270898] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [270899] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 1)]
+        [270900] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296083, 1)]
+        [270901] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270902] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270903] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270904] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 1)]
+        [270905] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296084, 2)]
+        [270916] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270917] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270918] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270919] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [270920] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(294734, 2)]
+        [271803] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271804] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271805] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271806] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271807] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294767, 2)]
+        [271808] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271809] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271810] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271811] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271812] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294734, 2)]
+        [271833] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271834] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271835] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271836] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271837] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294767, 2)]
+        [271838] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271839] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271840] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271841] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271842] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294734, 2)]
+        [271863] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271864] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271865] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271866] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294734, 2)]
+        [271867] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294767, 2)]
+        [271868] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271869] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271870] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271871] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294767, 2)]
+        [271872] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(296070, 2)]
+        [271893] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296070, 2)]
+        [271894] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296070, 2)]
+        [271895] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296070, 2)]
+        [271896] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296070, 2)]
+        [271897] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296081, 2)]
+        [271898] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296081, 2)]
+        [271899] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296081, 2)]
+        [271900] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296081, 2)]
+        [271901] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296081, 2)]
+        [271902] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(294752, 1)]
+        [278000] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(207717, 1)]
+        [278003] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207717, 1)])],
+        // [(294752, 1)]
+        [278013] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294752, 1)]
+        [278014] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294752, 1)]
+        [278015] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294752, 1)]
+        [278016] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294746, 2), (294749, 1)]
+        [278017] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294746, 2), (294749, 1)])],
+        // [(207723, 2)]
+        [278019] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207723, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207722, 2)])],
+        // [(294746, 2), (294749, 1)]
+        [278067] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294746, 2), (294749, 1)])],
+        // [(207712, 1)]
+        [278140] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(207712, 1)]
+        [278141] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(207712, 1)]
+        [278142] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(207704, 1)]
+        [278502] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207704, 1)])],
+        // [(294719, 1)]
+        [278513] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294719, 1)]
+        [278514] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294719, 1)]
+        [278515] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294719, 1)]
+        [278516] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(207697, 2)]
+        [278517] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207697, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207697, 3)])],
+        // [(294719, 1)]
+        [278518] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(207710, 2)]
+        [278520] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207710, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207709, 2)])],
+        // [(207684, 2)]
+        [278567] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(207632, 1)]
+        [278599] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207632, 1)])],
+        // [(207632, 1)]
+        [278614] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207632, 1)])],
+        // [(207699, 1)]
+        [278640] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(207699, 1)]
+        [278641] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(207699, 1)]
+        [278642] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(281067, 1)]
+        [281065] = [new Band(36, 70, 100, false, 600, 3f, 0, [(281067, 1)]), new Band(0, 34, 100, false, 600, 3f, 0, [(281068, 1)])],
+        // [(281067, 1)]
+        [281081] = [new Band(0, 34, 100, false, 100, 2f, 0, [(281067, 1)])],
+        // [(281226, 1)]
+        [281224] = [new Band(0, 24, 100, false, 600, 3f, 0, [(281226, 1)])],
+        // [(295122, 1)]
+        [294518] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294892, 1)])],
+        // [(295122, 1)]
+        [294519] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294892, 1)])],
+        // [(295122, 1)]
+        [294520] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295122, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294892, 1)])],
+        // [(295125, 1)]
+        [294521] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295125, 1)]
+        [294522] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295125, 1)]
+        [294523] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295125, 1)])],
+        // [(295123, 1)]
+        [294527] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294893, 1)])],
+        // [(295123, 1)]
+        [294528] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294893, 1)])],
+        // [(295123, 1)]
+        [294529] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295123, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294893, 1)])],
+        // [(295126, 1)]
+        [294530] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295126, 1)]
+        [294531] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295126, 1)]
+        [294532] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295126, 1)])],
+        // [(295124, 1)]
+        [294536] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294894, 1)])],
+        // [(295124, 1)]
+        [294537] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294894, 1)])],
+        // [(295124, 1)]
+        [294538] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295124, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(294894, 1)])],
+        // [(295127, 1)]
+        [294539] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(295127, 1)]
+        [294540] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(295127, 1)]
+        [294541] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295127, 1)])],
+        // [(294707, 3)]
+        [294574] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294710, 2), (294707, 3)])],
+        // [(294713, 2), (294716, 1)]
+        [294577] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294713, 2), (294716, 1)])],
+        // [(294719, 1)]
+        [294580] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294734, 2)]
+        [294583] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294740, 3)]
+        [294589] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294743, 2), (294740, 3)])],
+        // [(294746, 2), (294749, 1)]
+        [294592] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294746, 2), (294749, 1)])],
+        // [(294752, 1)]
+        [294595] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294767, 2)]
+        [294598] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294773, 3)]
+        [294604] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(294773, 2)])],
+        // [(294707, 3)]
+        [294621] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294710, 2), (294707, 3)])],
+        // [(294713, 2), (294716, 1)]
+        [294624] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294713, 2), (294716, 1)])],
+        // [(294719, 1)]
+        [294627] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294734, 2)]
+        [294630] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294740, 3)]
+        [294636] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294743, 2), (294740, 3)])],
+        // [(294746, 2), (294749, 1)]
+        [294639] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294746, 2), (294749, 1)])],
+        // [(294752, 1)]
+        [294642] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294767, 2)]
+        [294645] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294773, 3)]
+        [294651] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(294773, 2)])],
+        // [(294707, 3)]
+        [294666] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294710, 2), (294707, 3)])],
+        // [(294713, 2), (294716, 1)]
+        [294669] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294713, 2), (294716, 1)])],
+        // [(294719, 1)]
+        [294672] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294734, 2)]
+        [294675] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294734, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294734, 2), (294737, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294734, 3), (294737, 2)])],
+        // [(294740, 3)]
+        [294681] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294743, 2), (294740, 3)])],
+        // [(294746, 2), (294749, 1)]
+        [294684] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294746, 2), (294749, 1)])],
+        // [(294752, 1)]
+        [294687] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294767, 2)]
+        [294690] = [new Band(71, 100, 50, false, 600, 3f, 0, [(294767, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(294767, 2), (294770, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(294767, 3), (294770, 2)])],
+        // [(294773, 3)]
+        [294696] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(294773, 2)])],
+        // [(294707, 1)]
+        [294794] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294740, 1)]
+        [294799] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294773, 1)]
+        [294804] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294776, 2)]
+        [294806] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294707, 1)]
+        [294809] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294740, 1)]
+        [294814] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294773, 1)]
+        [294819] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294776, 2)]
+        [294821] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294707, 1)]
+        [294824] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294740, 1)]
+        [294829] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294773, 1)]
+        [294834] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294776, 2)]
+        [294836] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294707, 1)]
+        [294897] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 3)]
+        [294898] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294710, 2), (294707, 3)])],
+        // [(294719, 1)]
+        [294902] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294740, 1)]
+        [294905] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 3)]
+        [294906] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294743, 2), (294740, 3)])],
+        // [(294752, 1)]
+        [294910] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294773, 1)]
+        [294913] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 3)]
+        [294914] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(294773, 2)])],
+        // [(294776, 2)]
+        [294917] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294707, 1)]
+        [294952] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 3)]
+        [294953] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294710, 2), (294707, 3)])],
+        // [(294719, 1)]
+        [294957] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294740, 1)]
+        [294960] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 3)]
+        [294961] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294743, 2), (294740, 3)])],
+        // [(294752, 1)]
+        [294965] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294773, 1)]
+        [294968] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 3)]
+        [294969] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(294773, 2)])],
+        // [(294776, 2)]
+        [294972] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(294707, 1)]
+        [294976] = [new Band(0, 34, 100, true, 600, 1f, 0, [(294707, 1)])],
+        // [(294707, 3)]
+        [294977] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294707, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294710, 2), (294707, 3)])],
+        // [(294719, 1)]
+        [294981] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294719, 1)])],
+        // [(294740, 1)]
+        [294984] = [new Band(0, 34, 100, false, 600, 1f, 0, [(294740, 1)])],
+        // [(294740, 3)]
+        [294985] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294740, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(294743, 2), (294740, 3)])],
+        // [(294752, 1)]
+        [294989] = [new Band(0, 34, 100, false, 600, 3f, 0, [(294752, 1)])],
+        // [(294773, 1)]
+        [294992] = [new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 1)])],
+        // [(294773, 3)]
+        [294993] = [new Band(36, 70, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(294773, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(294773, 2)])],
+        // [(294776, 2)]
+        [294996] = [new Band(0, 34, 75, false, 600, 2f, 0, [(294776, 2)])],
+        // [(295074, 1)]
+        [295077] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295074, 1)])],
+        // [(295074, 1)]
+        [295078] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295074, 1)])],
+        // [(295074, 1)]
+        [295079] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295074, 1)])],
+        // [(295075, 1)]
+        [295080] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295075, 1)])],
+        // [(295075, 1)]
+        [295081] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295075, 1)])],
+        // [(295075, 1)]
+        [295082] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295075, 1)])],
+        // [(295076, 1)]
+        [295083] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295076, 1)])],
+        // [(295076, 1)]
+        [295084] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295076, 1)])],
+        // [(295076, 1)]
+        [295085] = [new Band(0, 34, 100, true, 600, 2f, 0, [(295076, 1)])],
+        // [(294707, 2)]
+        [295108] = [new Band(36, 70, 100, true, 100, 3f, 0, [(294707, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(294707, 3)])],
+        // [(294737, 2)]
+        [295111] = [new Band(0, 34, 50, true, 100, 3f, 0, [(294737, 2)]), new Band(0, 100, 50, true, 100, 3f, 0, [(294734, 2)])],
+        // [(294740, 2)]
+        [295113] = [new Band(36, 70, 100, true, 100, 3f, 0, [(294740, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(294740, 3)])],
+        // [(294770, 2)]
+        [295116] = [new Band(0, 34, 50, true, 100, 3f, 0, [(294770, 2)]), new Band(0, 100, 50, true, 100, 3f, 0, [(294767, 2)])],
+        // [(294773, 2)]
+        [295118] = [new Band(36, 70, 100, true, 100, 2f, 0, [(294773, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(294773, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(294773, 1)])],
+        // [(295131, 2)]
+        [295186] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295131, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295131, 3)])],
+        // [(295141, 2)]
+        [295189] = [new Band(0, 34, 50, true, 600, 3f, 0, [(295141, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(295141, 2)])],
+        // [(295142, 2)]
+        [295191] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295142, 3)])],
+        // [(295152, 2)]
+        [295194] = [new Band(0, 34, 50, true, 600, 3f, 0, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(295152, 2)])],
+        // [(295153, 2)]
+        [295196] = [new Band(36, 70, 100, true, 100, 2f, 0, [(295153, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(295153, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(295153, 1)])],
+        // [(295215, 1)]
+        [295271] = [new Band(26, 50, 100, false, 600, 8f, 0, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(295212, 1)])],
+        // [(295215, 1)]
+        [295272] = [new Band(26, 50, 100, false, 600, 8f, 0, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(295212, 1)])],
+        // [(295215, 1)]
+        [295273] = [new Band(26, 50, 100, false, 600, 8f, 0, [(295215, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(295212, 1)])],
+        // [(295216, 1)]
+        [295274] = [new Band(26, 50, 100, false, 600, 8f, 0, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(295213, 1)])],
+        // [(295216, 1)]
+        [295275] = [new Band(26, 50, 100, false, 600, 8f, 0, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(295213, 1)])],
+        // [(295216, 1)]
+        [295276] = [new Band(26, 50, 100, false, 600, 8f, 0, [(295216, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(295213, 1)])],
+        // [(295217, 1)]
+        [295277] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(295214, 1)])],
+        // [(295217, 1)]
+        [295278] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(295214, 1)])],
+        // [(295217, 1)]
+        [295279] = [new Band(26, 50, 100, false, 0, 3f, 0, [(295217, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(295214, 1)])],
+        // [(295131, 1)]
+        [295286] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [295287] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295131, 1)]
+        [295290] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [295291] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295133, 2), (295134, 1)]
+        [295295] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295133, 2), (295134, 1)])],
+        // [(295135, 1)]
+        [295299] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295135, 1)]
+        [295303] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295140, 2)]
+        [295307] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295140, 3), (295141, 2)])],
+        // [(295142, 1)]
+        [295314] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [295315] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295142, 1)]
+        [295318] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [295319] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295144, 2), (295145, 1)]
+        [295323] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(295146, 1)]
+        [295327] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295146, 1)]
+        [295331] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295151, 2)]
+        [295335] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295151, 3), (295152, 2)])],
+        // [(295153, 1)]
+        [295342] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 3)]
+        [295343] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(295153, 1)]
+        [295346] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 3)]
+        [295347] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(295154, 2)]
+        [295354] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [295358] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295131, 1)]
+        [295370] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [295371] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295131, 1)]
+        [295374] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [295375] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295133, 2), (295134, 1)]
+        [295379] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295133, 2), (295134, 1)])],
+        // [(295135, 1)]
+        [295383] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295135, 1)]
+        [295387] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295140, 2)]
+        [295391] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295140, 3), (295141, 2)])],
+        // [(295142, 1)]
+        [295398] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [295399] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295142, 1)]
+        [295402] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [295403] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295144, 2), (295145, 1)]
+        [295407] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(295146, 1)]
+        [295411] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295146, 1)]
+        [295415] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295151, 2)]
+        [295419] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295151, 3), (295152, 2)])],
+        // [(295153, 1)]
+        [295426] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 3)]
+        [295427] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(295153, 1)]
+        [295430] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 3)]
+        [295431] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(295154, 2)]
+        [295438] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [295442] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295131, 1)]
+        [295454] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [295455] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295131, 1)]
+        [295458] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295131, 1)])],
+        // [(295131, 3)]
+        [295459] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295133, 2), (295134, 1)]
+        [295463] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295133, 2), (295134, 1)])],
+        // [(295135, 1)]
+        [295467] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295135, 1)]
+        [295471] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295140, 2)]
+        [295475] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295140, 3), (295141, 2)])],
+        // [(295142, 1)]
+        [295482] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [295483] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295142, 1)]
+        [295486] = [new Band(0, 34, 100, true, 100, 1f, 0, [(295142, 1)])],
+        // [(295142, 3)]
+        [295487] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295144, 2), (295145, 1)]
+        [295491] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(295146, 1)]
+        [295495] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295146, 1)]
+        [295499] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295151, 2)]
+        [295503] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295151, 3), (295152, 2)])],
+        // [(295153, 1)]
+        [295510] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 3)]
+        [295511] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(295153, 1)]
+        [295514] = [new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 1)])],
+        // [(295153, 3)]
+        [295515] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(295154, 2)]
+        [295522] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(295154, 2)]
+        [295526] = [new Band(0, 34, 75, false, 600, 2f, 0, [(295154, 2)])],
+        // [(296055, 1)]
+        [295660] = [new Band(26, 50, 100, false, 600, 8f, 0, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(296052, 1)])],
+        // [(296055, 1)]
+        [295661] = [new Band(26, 50, 100, false, 600, 8f, 0, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(296052, 1)])],
+        // [(296055, 1)]
+        [295662] = [new Band(26, 50, 100, false, 600, 8f, 0, [(296055, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(296052, 1)])],
+        // [(296056, 1)]
+        [295663] = [new Band(26, 50, 100, false, 600, 8f, 0, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(296053, 1)])],
+        // [(296056, 1)]
+        [295664] = [new Band(26, 50, 100, false, 600, 8f, 0, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(296053, 1)])],
+        // [(296056, 1)]
+        [295665] = [new Band(26, 50, 100, false, 600, 8f, 0, [(296056, 1)]), new Band(0, 24, 100, false, 600, 8f, 0, [(296053, 1)])],
+        // [(296057, 1)]
+        [295666] = [new Band(26, 50, 100, false, 0, 3f, 0, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(296054, 1)])],
+        // [(296057, 1)]
+        [295667] = [new Band(26, 50, 100, false, 0, 3f, 0, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(296054, 1)])],
+        // [(296057, 1)]
+        [295668] = [new Band(26, 50, 100, false, 0, 3f, 0, [(296057, 1)]), new Band(0, 24, 100, false, 100, 3f, 0, [(296054, 1)])],
+        // [(296061, 1)]
+        [295675] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 3)]
+        [295676] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296062, 2), (296061, 3)])],
+        // [(296061, 1)]
+        [295679] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 3)]
+        [295680] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296062, 2), (296061, 3)])],
+        // [(296063, 2), (296064, 1)]
+        [295684] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296063, 2), (296064, 1)])],
+        // [(296065, 1)]
+        [295688] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296065, 1)])],
+        // [(296065, 1)]
+        [295692] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296065, 1)])],
+        // [(296070, 2)]
+        [295696] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296072, 1)]
+        [295703] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 3)]
+        [295704] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296073, 2), (296072, 3)])],
+        // [(296072, 1)]
+        [295707] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 3)]
+        [295708] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296073, 2), (296072, 3)])],
+        // [(296074, 2), (296075, 1)]
+        [295712] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296074, 2), (296075, 1)])],
+        // [(296076, 1)]
+        [295716] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296076, 1)])],
+        // [(296076, 1)]
+        [295720] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296076, 1)])],
+        // [(296081, 2)]
+        [295724] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296083, 1)]
+        [295731] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 3)]
+        [295732] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296083, 2)])],
+        // [(296083, 1)]
+        [295735] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 3)]
+        [295736] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296083, 2)])],
+        // [(296084, 2)]
+        [295743] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [295747] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296061, 1)]
+        [295759] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 3)]
+        [295760] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296062, 2), (296061, 3)])],
+        // [(296061, 1)]
+        [295763] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 3)]
+        [295764] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296062, 2), (296061, 3)])],
+        // [(296063, 2), (296064, 1)]
+        [295768] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296063, 2), (296064, 1)])],
+        // [(296065, 1)]
+        [295772] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296065, 1)])],
+        // [(296065, 1)]
+        [295776] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296065, 1)])],
+        // [(296070, 2)]
+        [295780] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296072, 1)]
+        [295787] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 3)]
+        [295788] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296073, 2), (296072, 3)])],
+        // [(296072, 1)]
+        [295791] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 3)]
+        [295792] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296073, 2), (296072, 3)])],
+        // [(296074, 2), (296075, 1)]
+        [295796] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296074, 2), (296075, 1)])],
+        // [(296076, 1)]
+        [295800] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296076, 1)])],
+        // [(296076, 1)]
+        [295804] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296076, 1)])],
+        // [(296081, 2)]
+        [295808] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296083, 1)]
+        [295815] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 3)]
+        [295816] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296083, 2)])],
+        // [(296083, 1)]
+        [295819] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 3)]
+        [295820] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296083, 2)])],
+        // [(296084, 2)]
+        [295827] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [295831] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296061, 1)]
+        [295843] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 3)]
+        [295844] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296062, 2), (296061, 3)])],
+        // [(296061, 1)]
+        [295847] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296061, 1)])],
+        // [(296061, 3)]
+        [295848] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296061, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296062, 2), (296061, 3)])],
+        // [(296063, 2), (296064, 1)]
+        [295852] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296063, 2), (296064, 1)])],
+        // [(296065, 1)]
+        [295856] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296065, 1)])],
+        // [(296065, 1)]
+        [295860] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296065, 1)])],
+        // [(296070, 2)]
+        [295864] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296070, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296070, 2), (296071, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296070, 3), (296071, 2)])],
+        // [(296072, 1)]
+        [295871] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 3)]
+        [295872] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296073, 2), (296072, 3)])],
+        // [(296072, 1)]
+        [295875] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296072, 1)])],
+        // [(296072, 3)]
+        [295876] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296072, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296073, 2), (296072, 3)])],
+        // [(296074, 2), (296075, 1)]
+        [295880] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296074, 2), (296075, 1)])],
+        // [(296076, 1)]
+        [295884] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296076, 1)])],
+        // [(296076, 1)]
+        [295888] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296076, 1)])],
+        // [(296081, 2)]
+        [295892] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296081, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296081, 2), (296082, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296081, 3), (296082, 2)])],
+        // [(296083, 1)]
+        [295899] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 3)]
+        [295900] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296083, 2)])],
+        // [(296083, 1)]
+        [295903] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 1)])],
+        // [(296083, 3)]
+        [295904] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296083, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296083, 2)])],
+        // [(296084, 2)]
+        [295911] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296084, 2)]
+        [295915] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296084, 2)])],
+        // [(296061, 2)]
+        [296026] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296061, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296061, 3)])],
+        // [(296071, 2)]
+        [296029] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296071, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296071, 2)])],
+        // [(296072, 2)]
+        [296031] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296072, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296072, 3)])],
+        // [(296082, 2)]
+        [296034] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296082, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296082, 2)])],
+        // [(296083, 2)]
+        [296036] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296083, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296083, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296083, 1)])],
+        // [(295215, 1)]
+        [296127] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295215, 1)])],
+        // [(295215, 1)]
+        [296128] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295215, 1)])],
+        // [(295215, 1)]
+        [296129] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295215, 1)])],
+        // [(295216, 1)]
+        [296130] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295216, 1)])],
+        // [(295216, 1)]
+        [296131] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295216, 1)])],
+        // [(295216, 1)]
+        [296132] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295216, 1)])],
+        // [(295217, 1)]
+        [296133] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295217, 1)])],
+        // [(295217, 1)]
+        [296134] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295217, 1)])],
+        // [(295217, 1)]
+        [296135] = [new Band(0, 24, 100, false, 600, 8f, 0, [(295217, 1)])],
+        // [(296058, 1)]
+        [296145] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [296146] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296058, 1)]
+        [296147] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296058, 1)])],
+        // [(296059, 1)]
+        [296148] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [296149] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296059, 1)]
+        [296150] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296059, 1)])],
+        // [(296060, 1)]
+        [296151] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [296152] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(296060, 1)]
+        [296153] = [new Band(0, 24, 100, false, 600, 8f, 0, [(296060, 1)])],
+        // [(207612, 1)]
+        [296193] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207612, 1)])],
+        // [(207622, 1)]
+        [296194] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207622, 1)])],
+        // [(207617, 1)]
+        [296195] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207617, 1)])],
+        // [(207627, 1)]
+        [296196] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207627, 1)])],
+        // [(207634, 1)]
+        [296197] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207634, 1)])],
+        // [(207639, 1)]
+        [296198] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207639, 1)])],
+        // [(207645, 2)]
+        [296199] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207645, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207644, 2)])],
+        // [(207640, 1)]
+        [296200] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207640, 1)])],
+        // [(207649, 2)]
+        [296201] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207648, 2)])],
+        // [(207634, 3)]
+        [296253] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207634, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207674, 2), (207634, 3)])],
+        // [(207634, 3)]
+        [296254] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207634, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207674, 2), (207634, 3)])],
+        // [(207675, 2), (207676, 1)]
+        [296255] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207675, 2), (207676, 1)])],
+        // [(207612, 1)]
+        [296256] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207612, 1)])],
+        // [(207677, 2)]
+        [296257] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207677, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207677, 2), (207678, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207677, 3), (207678, 2)])],
+        // [(207639, 3)]
+        [296258] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207639, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207679, 2), (207639, 3)])],
+        // [(207639, 3)]
+        [296259] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207639, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207679, 2), (207639, 3)])],
+        // [(207680, 2), (207681, 1)]
+        [296260] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207680, 2), (207681, 1)])],
+        // [(207617, 1)]
+        [296261] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207617, 1)])],
+        // [(207682, 2)]
+        [296262] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207682, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207682, 2), (207683, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207682, 3), (207683, 2)])],
+        // [(207684, 3)]
+        [296263] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207684, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207685, 2), (207684, 3)])],
+        // [(207684, 3)]
+        [296264] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207684, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207685, 2), (207684, 3)])],
+        // [(207686, 2), (207687, 1)]
+        [296265] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207686, 2), (207687, 1)])],
+        // [(207622, 1)]
+        [296266] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207622, 1)])],
+        // [(207688, 2)]
+        [296267] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207688, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207688, 2), (207689, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207688, 3), (207689, 2)])],
+        // [(207690, 3)]
+        [296268] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207690, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207691, 2), (207690, 3)])],
+        // [(207690, 3)]
+        [296269] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207690, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207691, 2), (207690, 3)])],
+        // [(207692, 2), (207693, 1)]
+        [296270] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207692, 2), (207693, 1)])],
+        // [(207627, 1)]
+        [296271] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207627, 1)])],
+        // [(207694, 2)]
+        [296272] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207694, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207694, 2), (207695, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207694, 3), (207695, 2)])],
+        // [(207632, 1)]
+        [296277] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207632, 1)])],
+        // [(207633, 2)]
+        [296278] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207633, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207633, 3)])],
+        // [(207643, 2)]
+        [296287] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207643, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207642, 2)])],
+        // [(207635, 1)]
+        [296292] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207635, 1)])],
+        // [(207636, 2)]
+        [296293] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207636, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207636, 3)])],
+        // [(207645, 2)]
+        [296302] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207645, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207644, 2)])],
+        // [(207637, 1)]
+        [296307] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207637, 1)])],
+        // [(207638, 2)]
+        [296308] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207638, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207638, 3)])],
+        // [(207647, 2)]
+        [296317] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207647, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207646, 2)])],
+        // [(207640, 1)]
+        [296322] = [new Band(0, 34, 100, true, 100, 1f, 0, [(207640, 1)])],
+        // [(207641, 2)]
+        [296323] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207641, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207641, 3)])],
+        // [(207649, 2)]
+        [296332] = [new Band(0, 34, 50, true, 600, 3f, 0, [(207649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(207648, 2)])],
+        // [(295131, 2)]
+        [296392] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295131, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295131, 3)])],
+        // [(295141, 2)]
+        [296395] = [new Band(0, 34, 50, true, 600, 3f, 0, [(295141, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(295141, 2)])],
+        // [(295142, 2)]
+        [296397] = [new Band(36, 70, 100, true, 100, 3f, 0, [(295142, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(295142, 3)])],
+        // [(295152, 2)]
+        [296400] = [new Band(0, 34, 50, true, 600, 3f, 0, [(295152, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(295152, 2)])],
+        // [(295153, 2)]
+        [296402] = [new Band(36, 70, 100, true, 100, 2f, 0, [(295153, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(295153, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(295153, 1)])],
+        // [(295131, 3)]
+        [296407] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295131, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295132, 2), (295131, 3)])],
+        // [(295133, 2), (295134, 1)]
+        [296408] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295133, 2), (295134, 1)])],
+        // [(295135, 1)]
+        [296409] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295135, 1)])],
+        // [(295140, 2)]
+        [296410] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295140, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295140, 2), (295141, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295140, 3), (295141, 2)])],
+        // [(295142, 3)]
+        [296412] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295142, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(295143, 2), (295142, 3)])],
+        // [(295144, 2), (295145, 1)]
+        [296413] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295144, 2), (295145, 1)])],
+        // [(295146, 1)]
+        [296414] = [new Band(0, 34, 100, false, 600, 3f, 0, [(295146, 1)])],
+        // [(295151, 2)]
+        [296415] = [new Band(71, 100, 50, false, 600, 3f, 0, [(295151, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(295151, 2), (295152, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(295151, 3), (295152, 2)])],
+        // [(295153, 3)]
+        [296417] = [new Band(36, 70, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(295153, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(295153, 2)])],
+        // [(296061, 2)]
+        [296422] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296061, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296061, 3)])],
+        // [(296071, 2)]
+        [296425] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296071, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296071, 2)])],
+        // [(296072, 2)]
+        [296427] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296072, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296072, 3)])],
+        // [(296082, 2)]
+        [296430] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296082, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296082, 2)])],
+        // [(296083, 2)]
+        [296432] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296083, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296083, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296083, 1)])],
+        // [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]
+        [296441] = [new Band(56, 70, 100, false, 0, 0f, 0, [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]), new Band(56, 70, 100, false, 0, 0f, 0, [(296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1), (296436, 1)]), new Band(41, 55, 100, false, 0, 0f, 0, [(296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1)]), new Band(41, 55, 100, true, 0, 2f, 0, [(296437, 1)]), new Band(41, 55, 100, true, 0, 2f, 0, [(296437, 1)]), new Band(41, 55, 100, false, 0, 0f, 0, [(296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1), (296437, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1), (296438, 1)]), new Band(0, 100, 100, false, 6, 0f, 0, [(296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1)]), new Band(0, 100, 100, false, 6, 0f, 0, [(296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1), (296440, 1)]), new Band(0, 19, 100, false, 6, 0f, 0, [(296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1), (296439, 1)])],
+        // [(296465, 2)]
+        [296464] = [new Band(0, 49, 100, true, 18, 3f, 1, [(296465, 2)])],
+        // [(296470, 1)]
+        [296469] = [new Band(0, 100, 100, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296470, 1)]
+        [296471] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296473, 1)]
+        [296472] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296474, 1)])],
+        // [(296478, 2)]
+        [296477] = [new Band(0, 49, 100, true, 18, 3f, 100, [(296478, 2)])],
+        // [(296483, 1)]
+        [296482] = [new Band(0, 100, 100, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296483, 1)]
+        [296484] = [new Band(0, 100, 33, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296486, 1)]
+        [296485] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296487, 1)])],
+        // [(296499, 2)]
+        [296498] = [new Band(0, 49, 100, true, 18, 3f, 1, [(296499, 2)]), new Band(0, 49, 100, true, 18, 0f, 100, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 100, [(296500, 1)])],
+        // [(296499, 1)]
+        [296501] = [new Band(0, 100, 50, true, 18, 0f, 1, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 1, [(296500, 1)])],
+        // [(296508, 2)]
+        [296506] = [new Band(26, 50, 100, false, 0, 5f, 0, [(296508, 2)]), new Band(0, 100, 100, false, 30, 5f, 0, [(296509, 1)])],
+        // [(296534, 1)]
+        [296515] = [new Band(41, 60, 100, false, 0, 0f, 0, [(296534, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296534, 1)]), new Band(0, 19, 100, false, 0, 0f, 0, [(296533, 1)])],
+        // [(296541, 1)]
+        [296520] = [new Band(41, 60, 100, false, 0, 0f, 0, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, 0, [(296540, 1)])],
+        // [(296465, 2)]
+        [296529] = [new Band(0, 49, 100, true, 18, 3f, 1, [(296465, 2)])],
+        // [(296470, 1)]
+        [296531] = [new Band(0, 100, 100, true, 30, 0f, 1, [(296470, 1)])],
+        // [(296473, 1)]
+        [296532] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296473, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296474, 1)])],
+        // [(296478, 2)]
+        [296536] = [new Band(0, 49, 100, true, 18, 3f, 100, [(296478, 2)])],
+        // [(296483, 1)]
+        [296538] = [new Band(0, 100, 100, true, 30, 0f, 1, [(296483, 1)])],
+        // [(296486, 1)]
+        [296539] = [new Band(0, 100, 50, false, 30, 5f, 0, [(296486, 1)]), new Band(0, 100, 100, false, 30, 0f, 0, [(296487, 1)])],
+        // [(296499, 2)]
+        [296543] = [new Band(0, 49, 100, true, 18, 3f, 1, [(296499, 2)]), new Band(0, 49, 100, true, 18, 0f, 100, [(296499, 1)]), new Band(0, 100, 100, true, 18, 0f, 100, [(296500, 1)])],
+        // [(296617, 1)]
+        [296564] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296618, 1)]
+        [296565] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296618, 1)])],
+        // [(207684, 2)]
+        [296566] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207684, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207684, 3)])],
+        // [(296616, 2)]
+        [296567] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296616, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296616, 3)])],
+        // [(296617, 2)]
+        [296568] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(207697, 3)]
+        [296569] = [new Band(36, 70, 100, true, 600, 3f, 0, [(207697, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(207698, 2), (207697, 3)])],
+        // [(296619, 3)]
+        [296570] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296619, 3)]
+        [296571] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296620, 3)]
+        [296572] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296620, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296624, 2), (296620, 3)])],
+        // [(296621, 3)]
+        [296573] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296621, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296625, 2), (296621, 3)])],
+        // [(296626, 2), (296627, 1)]
+        [296583] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296626, 2), (296627, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [296584] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296628, 2), (296629, 1)]
+        [296585] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296628, 2), (296629, 1)])],
+        // [(296630, 2), (296631, 1)]
+        [296586] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296630, 2), (296631, 1)])],
+        // [(296632, 2), (296633, 1)]
+        [296587] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296632, 2), (296633, 1)])],
+        // [(207699, 1)]
+        [296597] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207699, 1)])],
+        // [(296634, 1)]
+        [296598] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [296599] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(207704, 1)]
+        [296600] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207704, 1)])],
+        // [(296639, 1)]
+        [296601] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296639, 1)])],
+        // [(296645, 2)]
+        [296608] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296645, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296644, 2)])],
+        // [(296647, 2)]
+        [296609] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296647, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296646, 2)])],
+        // [(296649, 2)]
+        [296610] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(207709, 2)]
+        [296611] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207709, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207709, 2), (207710, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207709, 3), (207710, 2)])],
+        // [(296650, 2)]
+        [296612] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296650, 2)]
+        [296613] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296650, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296650, 2), (296651, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296650, 3), (296651, 2)])],
+        // [(296652, 2)]
+        [296614] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296652, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296652, 2), (296653, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296652, 3), (296653, 2)])],
+        // [(296654, 2)]
+        [296615] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296654, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296654, 2), (296655, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296654, 3), (296655, 2)])],
+        // [(296727, 1)]
+        [296674] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296728, 1)]
+        [296675] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296728, 1)])],
+        // [(207690, 2)]
+        [296676] = [new Band(36, 70, 100, true, 100, 3f, 0, [(207690, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(207690, 3)])],
+        // [(296726, 2)]
+        [296677] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296726, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296726, 3)])],
+        // [(296727, 2)]
+        [296678] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296728, 3)]
+        [296679] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296728, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296732, 2), (296728, 3)])],
+        // [(296729, 3)]
+        [296680] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [296681] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296730, 3)]
+        [296682] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296730, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296734, 2), (296730, 3)])],
+        // [(296731, 3)]
+        [296683] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296731, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296735, 2), (296731, 3)])],
+        // [(296736, 2), (296737, 1)]
+        [296693] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296736, 2), (296737, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [296694] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(296738, 2), (296739, 1)]
+        [296695] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296738, 2), (296739, 1)])],
+        // [(296740, 2), (296741, 1)]
+        [296696] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296740, 2), (296741, 1)])],
+        // [(296742, 2), (296743, 1)]
+        [296697] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296742, 2), (296743, 1)])],
+        // [(207712, 1)]
+        [296707] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207712, 1)])],
+        // [(296744, 1)]
+        [296708] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(296744, 1)]
+        [296709] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296744, 1)])],
+        // [(207717, 1)]
+        [296710] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207717, 1)])],
+        // [(296749, 1)]
+        [296711] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296749, 1)])],
+        // [(296755, 2)]
+        [296718] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296755, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296754, 2)])],
+        // [(296757, 2)]
+        [296719] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296757, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296756, 2)])],
+        // [(296759, 2)]
+        [296720] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(207722, 2)]
+        [296721] = [new Band(71, 100, 50, false, 600, 3f, 0, [(207722, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(207722, 2), (207723, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(207722, 3), (207723, 2)])],
+        // [(296760, 2)]
+        [296722] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296760, 2)]
+        [296723] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296762, 2)]
+        [296724] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296762, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296762, 2), (296763, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296762, 3), (296763, 2)])],
+        // [(296764, 2)]
+        [296725] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296764, 3), (296765, 2)])],
+        // [(296617, 1)]
+        [296771] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296617, 2)]
+        [296772] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296617, 3)]
+        [296773] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296617, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296867, 2), (296617, 3)])],
+        // [(296617, 1)]
+        [296776] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296617, 1)])],
+        // [(296617, 2)]
+        [296777] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296617, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296617, 3)])],
+        // [(296617, 3)]
+        [296778] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296617, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296867, 2), (296617, 3)])],
+        // [(296868, 2), (296869, 1)]
+        [296781] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296868, 2), (296869, 1)])],
+        // [(296870, 1)]
+        [296786] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296870, 1)])],
+        // [(296870, 1)]
+        [296791] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296870, 1)])],
+        // [(296649, 2)]
+        [296793] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296648, 2)]
+        [296794] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296648, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296648, 2), (296649, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296648, 3), (296649, 2)])],
+        // [(296727, 1)]
+        [296800] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 2)]
+        [296801] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296727, 3)]
+        [296802] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296727, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296875, 2), (296727, 3)])],
+        // [(296727, 1)]
+        [296805] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 2)]
+        [296806] = [new Band(36, 70, 100, true, 100, 3f, 0, [(296727, 2)]), new Band(0, 34, 100, true, 100, 3f, 0, [(296727, 3)])],
+        // [(296727, 3)]
+        [296807] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296727, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296875, 2), (296727, 3)])],
+        // [(296876, 2), (296877, 1)]
+        [296810] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296876, 2), (296877, 1)])],
+        // [(296878, 1)]
+        [296815] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296878, 1)])],
+        // [(296878, 1)]
+        [296820] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296878, 1)])],
+        // [(296759, 2)]
+        [296822] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296759, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296758, 2)])],
+        // [(296758, 2)]
+        [296823] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296758, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296758, 2), (296759, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296758, 3), (296759, 2)])],
+        // [(296883, 1)]
+        [296831] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296883, 2)]
+        [296832] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296883, 3)]
+        [296833] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296883, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296883, 2)])],
+        // [(296883, 1)]
+        [296836] = [new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 1)])],
+        // [(296883, 2)]
+        [296837] = [new Band(36, 70, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 100, 100, true, 100, 2f, 0, [(296883, 2)]), new Band(0, 34, 100, true, 0, 2f, 0, [(296883, 1)])],
+        // [(296883, 3)]
+        [296838] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296883, 3)]), new Band(0, 34, 100, true, 600, 3f, 0, [(296883, 3)]), new Band(0, 100, 100, true, 600, 3f, 0, [(296883, 2)])],
+        // [(296884, 2)]
+        [296846] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296884, 2)]
+        [296851] = [new Band(0, 34, 75, false, 600, 2f, 0, [(296884, 2)])],
+        // [(296534, 1)]
+        [297079] = [new Band(41, 60, 100, false, 0, 0f, 0, [(296534, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296534, 1)]), new Band(0, 19, 100, false, 0, 0f, 0, [(296533, 1)])],
+        // [(296541, 1)]
+        [297080] = [new Band(41, 60, 100, false, 0, 0f, 0, [(296541, 1)]), new Band(21, 40, 100, false, 0, 0f, 0, [(296541, 1)]), new Band(0, 19, 100, false, 0, 0f, 0, [(296540, 1)])],
+        // [(297111, 1), (297112, 1)]
+        [297117] = [new Band(0, 100, 100, false, 600, 2f, 0, [(297111, 1), (297112, 1)])],
+        // [(297113, 1), (297114, 1)]
+        [297118] = [new Band(0, 100, 100, false, 600, 2f, 0, [(297113, 1), (297114, 1)])],
+        // [(297115, 1), (297116, 1)]
+        [297119] = [new Band(0, 100, 100, false, 600, 2f, 0, [(297115, 1), (297116, 1)])],
+        // [(296639, 1)]
+        [798926] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296639, 1)])],
+        // [(207704, 1)]
+        [798927] = [new Band(0, 34, 100, false, 600, 3f, 0, [(207704, 1)])],
+        // [(296630, 2), (296631, 1)]
+        [798928] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296630, 2), (296631, 1)])],
+        // [(296634, 1)]
+        [798929] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296634, 1)]
+        [798930] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296634, 1)])],
+        // [(296620, 3)]
+        [798931] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296620, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296624, 2), (296620, 3)])],
+        // [(296639, 1)]
+        [798958] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296639, 1)])],
+        // [(296618, 1)]
+        [799005] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296618, 1)])],
+        // [(296618, 1)]
+        [799009] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296618, 1)])],
+        // [(296619, 3)]
+        [799010] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296619, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296623, 2), (296619, 3)])],
+        // [(296764, 2)]
+        [799225] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296764, 3), (296765, 2)])],
+        // [(296730, 3)]
+        [799226] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296730, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296734, 2), (296730, 3)])],
+        // [(296760, 2)]
+        [799227] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296727, 1)]
+        [799295] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296728, 1)]
+        [799300] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296728, 1)])],
+        // [(296728, 1)]
+        [799318] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296728, 1)])],
+        // [(296764, 2)]
+        [799323] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296764, 3), (296765, 2)])],
+        // [(296760, 2)]
+        [799327] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296760, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296760, 2), (296761, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296760, 3), (296761, 2)])],
+        // [(296728, 1)]
+        [799363] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296728, 1)])],
+        // [(296727, 1)]
+        [800136] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 1)]
+        [800144] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296727, 1)]
+        [800152] = [new Band(0, 34, 100, true, 100, 1f, 0, [(296727, 1)])],
+        // [(296649, 2)]
+        [800295] = [new Band(0, 34, 50, true, 600, 3f, 0, [(296649, 2)]), new Band(0, 100, 50, true, 600, 3f, 0, [(296648, 2)])],
+        // [(296764, 2)]
+        [800297] = [new Band(71, 100, 50, false, 600, 3f, 0, [(296764, 2)]), new Band(36, 70, 50, false, 600, 3f, 0, [(296764, 2), (296765, 1)]), new Band(0, 34, 50, false, 600, 3f, 0, [(296764, 3), (296765, 2)])],
+        // [(296639, 1)]
+        [800298] = [new Band(0, 34, 100, false, 600, 3f, 0, [(296639, 1)])],
+        // [(296729, 3)]
+        [831012] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
+        // [(296729, 3)]
+        [831015] = [new Band(36, 70, 100, true, 600, 3f, 0, [(296729, 3)]), new Band(0, 34, 100, false, 600, 3f, 0, [(296733, 2), (296729, 3)])],
     };
 }

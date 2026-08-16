@@ -45,9 +45,16 @@ internal static class GuardReinforcements
     /// reinforcements ten minutes, the drakan guards a hundred seconds.
     /// </param>
     /// <param name="Range">Retail's <c>spawn_range</c>, one to three metres depending on the guard.</param>
+    /// <param name="AttackHate">
+    /// Retail's <c>hatepoints_to_add</c> where the spawn also carries
+    /// <c>attack_target_after_spawn</c>, and 0 where it does not. Non-zero means the summon arrives
+    /// <b>already fighting whoever it landed on</b> rather than waiting to be walked into — which for
+    /// the rangers' traps and the wizards' frost pillars is the whole mechanic. The values retail
+    /// gives here are 1 and 100: enough to start the fight, not enough to hold aggro against a raid.
+    /// </param>
     /// <param name="Summons">npc id and count, in the order the pattern lists them.</param>
     internal readonly record struct Band(
-        int Low, int High, int Chance, bool OnTarget, int LiveSeconds, float Range,
+        int Low, int High, int Chance, bool OnTarget, int LiveSeconds, float Range, int AttackHate,
         (int NpcId, int Count)[] Summons);
 
     internal static readonly IReadOnlyDictionary<int, Band[]> ByGuard = new Dictionary<int, Band[]>
@@ -72,14 +79,14 @@ def main() -> None:
         parts = line.split("\t")
         if not parts or parts[0] in ("guard_npc_id", ""):
             continue
-        guard, pattern, low, high, chance, placement, live, rng, summons = parts
+        (guard, pattern, low, high, chance, placement, live, rng, hate, summons) = parts
         patterns.add(pattern)
         pairs = []
         for chunk in summons.split(","):
             npc_id, count = chunk.split("*")
             pairs.append((int(npc_id), int(count)))
         by_guard[int(guard)].append(
-            (int(low), int(high), int(chance), placement, int(live), int(rng), pairs, pattern))
+            (int(low), int(high), int(chance), placement, int(live), int(rng), int(hate), pairs, pattern))
         rows += 1
 
     lines = [HEADER.format(rows=rows, guards=len(by_guard), patterns=len(patterns))]
@@ -87,11 +94,11 @@ def main() -> None:
         bands = sorted(by_guard[guard], key=lambda b: -b[0])
         pattern = bands[0][7]
         rendered = []
-        for low, high, chance, placement, live, rng, pairs, _p in bands:
+        for low, high, chance, placement, live, rng, hate, pairs, _p in bands:
             summons = ", ".join(f"({npc}, {count})" for npc, count in pairs)
             on_target = "true" if placement == "TARGET" else "false"
             rendered.append(
-                f"new Band({low}, {high}, {chance}, {on_target}, {live}, {rng}f, [{summons}])")
+                f"new Band({low}, {high}, {chance}, {on_target}, {live}, {rng}f, {hate}, [{summons}])")
         body = ", ".join(rendered)
         lines.append(f"        // {pattern}\n        [{guard}] = [{body}],\n")
     lines.append(FOOTER)

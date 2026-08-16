@@ -525,53 +525,98 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             return;
 
         Npc victim = GetOwner();
-        summon.GetKnownList().Add(victim);
-        victim.GetKnownList().Add(summon);
-
         // Deferred by a tick, and it has to be. Every use of this op is on `on_wake_up`, which runs from
         // inside the owner's own BringIntoWorld -- so a state flip made here is overwritten by the rest
         // of that spawn path, which leaves the NPC IDLE. Scheduling it is the same answer SetIdleTimer
         // gives to a zero delay: next tick, not inline.
-        ThreadPoolManager.GetInstance().Schedule(_ =>
+        ProvokeNextTick(summon, victim, hate);
+    }
+
+    /// <summary>
+    /// Puts a fresh summon into a fight with whoever it was dropped on, as
+    /// <c>attack_target_after_spawn</c> does, one tick from now.
+    /// </summary>
+    /// <remarks>
+    /// <b>Deferred, and it has to be for the <c>OBJI_SELF</c> form.</b> Those all sit on
+    /// <c>on_wake_up</c>, which runs from inside the owner's own <c>BringIntoWorld</c> — a state flip
+    /// made there is overwritten by the rest of that spawn path and the NPC ends up IDLE. Scheduling is
+    /// the same answer <see cref="SetIdleTimer"/> gives to a zero delay: next tick, not inline. The
+    /// other forms do not need it, and share it anyway so one op has one behaviour.
+    /// </remarks>
+    private static void ProvokeNextTick(Npc summon, Creature victim, int hate)
+        => ThreadPoolManager.GetInstance().Schedule(_ =>
         {
             Provoke(summon, victim, hate);
             return ValueTask.CompletedTask;
         }, 0L);
-    }
 
-    /// <summary>Puts two NPCs into a fight with each other, as <c>attack_target_after_spawn</c> does.</summary>
+    /// <summary>Starts the fight <c>attack_target_after_spawn</c> describes.</summary>
     /// <remarks>
-    /// Both sides, deliberately. Retail's engine makes the summon attack and the victim's entering combat
-    /// is a consequence of being hit; here the summon may be a passive <c>general</c> NPC that never
-    /// swings, so waiting for a hit would leave the pair standing. What the flag means is that these two
-    /// are now fighting, and that is what this sets up.
+    /// The summon's side is unconditional. Retail's engine makes it attack, and here it may be a passive
+    /// <c>general</c> NPC that never swings on its own, so waiting for it to act would leave the pair
+    /// standing next to each other. What the flag means is that these two are now fighting.
+    /// <para>
+    /// The victim's side runs only for an NPC victim, because only an NPC has an AI to put into the
+    /// fight — and for the <c>OBJI_SELF</c> form that half <em>is</em> the point: the spawner's own
+    /// <c>on_enter_attack_state</c> is what the summon exists to trigger. A player victim needs nothing:
+    /// being attacked is already handled everywhere else.
+    /// </para>
     /// <para>
     /// Order matters within each side, and it is the order the harness uses to start a fight by hand: the
     /// state flip has to land before the hate, or <c>AddHate</c>'s own aggro handling flips it first and
     /// the Attack event no longer takes the path that runs <c>on_enter_attack_state</c>.
     /// </para>
     /// </remarks>
-    private static void Provoke(Npc summon, Npc victim, int hate)
+    private static void Provoke(Npc summon, Creature victim, int hate)
     {
         if (summon.IsDead() || victim.IsDead())
             return;
+
+        summon.GetKnownList().Add(victim);
+        victim.GetKnownList().Add(summon);
 
         summon.GetAi().SetStateIfNot(AIState.FIGHT);
         summon.SetTarget(victim);
         summon.GetAggroList().AddHate(victim, hate);
 
-        victim.GetAi().SetStateIfNot(AIState.FIGHT);
-        victim.SetTarget(summon);
-        victim.GetAggroList().AddHate(summon, hate);
-        victim.GetAi().OnCreatureEvent(AiEventType.Attack, summon);
+        if (victim is not Npc npcVictim)
+            return;
+
+        npcVictim.GetAi().SetStateIfNot(AIState.FIGHT);
+        npcVictim.SetTarget(summon);
+        npcVictim.GetAggroList().AddHate(summon, hate);
+        npcVictim.GetAi().OnCreatureEvent(AiEventType.Attack, summon);
     }
 
     /// <summary>Spawns around whoever this NPC is facing, which is where <c>spawn_on_target</c> puts them.</summary>
     public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds)
+        => SpawnOnTarget(npcId, spawnId, count, range, liveSeconds, attackHate: 0);
+
+    /// <summary>
+    /// <c>spawn_on_target</c>, optionally with <c>attack_target_after_spawn</c>: the adds land on
+    /// whoever this NPC is fighting and, when <paramref name="attackHate"/> is non-zero, arrive
+    /// already fighting that same player.
+    /// </summary>
+    /// <remarks>
+    /// The difference is not cosmetic. A guard's ranger trap that engages the player it lands on is a
+    /// thing you have to deal with; the same trap standing inert is a thing you walk away from.
+    /// </remarks>
+    public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds, int attackHate)
     {
         Creature? target = CurrentTarget;
-        if (target != null)
+        if (target == null)
+            return;
+
+        if (attackHate <= 0)
+        {
             SpawnAround(target.GetPosition(), npcId, spawnId, count, range, liveSeconds);
+            return;
+        }
+
+        var placed = new List<Npc>();
+        SpawnAroundInto(placed, target.GetPosition(), npcId, spawnId, count, range, liveSeconds);
+        foreach (Npc summon in placed)
+            ProvokeNextTick(summon, target, attackHate);
     }
 
     /// <summary>Puts one add on each valid target, which is what makes a raid-wide drop raid-wide.</summary>
@@ -648,6 +693,11 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     private void SpawnAround(WorldPosition at, int npcId, int spawnId, int count, float range, int liveSeconds)
+        => SpawnAroundInto(null, at, npcId, spawnId, count, range, liveSeconds);
+
+    /// <summary>The same, collecting what was placed for callers that have to do something with it.</summary>
+    private void SpawnAroundInto(List<Npc>? placed, WorldPosition at, int npcId, int spawnId,
+        int count, float range, int liveSeconds)
     {
         for (int i = 0; i < count; i++)
         {
@@ -661,7 +711,10 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
                 y += (float)(Math.Sin(angle) * distance);
             }
 
-            Track(spawnId, liveSeconds, Spawn(npcId, x, y, at.GetZ(), (sbyte)at.GetHeading()));
+            VisibleObject? spawned = Spawn(npcId, x, y, at.GetZ(), (sbyte)at.GetHeading());
+            Track(spawnId, liveSeconds, spawned);
+            if (placed != null && spawned is Npc npc)
+                placed.Add(npc);
         }
     }
 

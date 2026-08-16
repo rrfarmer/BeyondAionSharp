@@ -94,10 +94,13 @@ internal static class GuardReinforcementPatterns
             foreach ((int summonId, int count) in band.Summons)
             {
                 // spawn_on_target puts the wave on whoever the guard is fighting, which is a
-                // materially different fight from a wave at its own feet.
+                // materially different fight from a wave at its own feet -- and where the band carries
+                // an attack hate, the wave arrives already fighting that player rather than waiting to
+                // be walked into. Only the on-target bands ever do; a call at the guard's own feet has
+                // nothing to be hostile towards yet.
                 actions.Add(band.OnTarget
                     ? Do.SpawnOnTarget(summonId, Called, count: count, range: band.Range,
-                        liveSeconds: band.LiveSeconds)
+                        liveSeconds: band.LiveSeconds, attackHate: band.AttackHate)
                     : Do.SpawnNear(summonId, Called, count: count, range: band.Range,
                         liveSeconds: band.LiveSeconds));
             }
