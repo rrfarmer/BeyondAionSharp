@@ -30,15 +30,23 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 
-TRANSLATABLE = {
+# Actions that *do* something a player can see. These are what a translation is worth.
+PAYLOAD = {
     "spawn", "spawn_on_target", "spawn_on_target_by_attacker_indicator", "spawn_on_multi_target",
     "despawn", "despawn_self",
-    "add_battle_timer", "set_idle_timer",
     "broadcast_message",
     "switch_target", "switch_target_by_attacker_indicator",
     "add_hate_point", "attack_most_hating",
     "flee_from",
 }
+
+# Translatable, but only ever a means to an end. A pattern whose "translatable" actions are all
+# timer arms is a cast chain with scaffolding, and porting it changes nothing at all -- the Belsagos
+# trio scored 27, 33 and 34 that way and turned out to be one broadcast each. Counted separately so
+# the ranking cannot be fooled by scaffolding again.
+SCAFFOLDING = {"add_battle_timer", "set_idle_timer"}
+
+TRANSLATABLE = PAYLOAD | SCAFFOLDING
 
 BLOCKED = {
     "use_skill": "skill",
@@ -65,7 +73,7 @@ def main() -> None:
     ap.add_argument("patterns_dir", type=pathlib.Path)
     ap.add_argument("binding_tsv", type=pathlib.Path)
     ap.add_argument("--repo", type=pathlib.Path, default=pathlib.Path(__file__).parents[2])
-    ap.add_argument("--min", type=int, default=4, help="least translatable actions worth listing")
+    ap.add_argument("--min", type=int, default=4, help="least payload actions worth listing")
     args = ap.parse_args()
 
     live = A.spawnable_npc_ids(args.repo)
@@ -103,7 +111,8 @@ def main() -> None:
                 continue
 
             counts = collections.Counter(ACTION_RE.findall(block))
-            good = sum(v for k, v in counts.items() if k in TRANSLATABLE)
+            good = sum(v for k, v in counts.items() if k in PAYLOAD)
+            scaffold = sum(v for k, v in counts.items() if k in SCAFFOLDING)
             blocked = collections.Counter()
             for tag, why in BLOCKED.items():
                 if counts.get(tag):
@@ -111,19 +120,19 @@ def main() -> None:
             if good < args.min:
                 continue
 
-            rows.append((good, blocked, pattern, unported))
+            rows.append((good, scaffold, blocked, pattern, unported))
 
-    rows.sort(key=lambda r: (-r[0], r[2]))
-    print(f"{'good':>4}  {'blocked':22} {'pattern':40} owners")
-    for good, blocked, pattern, unported in rows:
+    rows.sort(key=lambda r: (-r[0], r[3]))
+    print(f"{'do':>3} {'arm':>4}  {'blocked':22} {'pattern':40} owners")
+    for good, scaffold, blocked, pattern, unported in rows:
         why = " ".join(f"{k}:{v}" for k, v in sorted(blocked.items())) or "-"
         who = ", ".join(f"{n} {name_of.get(n, '?')}" for n in unported[:3])
         if len(unported) > 3:
             who += f" (+{len(unported) - 3})"
-        print(f"{good:4}  {why:22} {pattern:40} {who}")
+        print(f"{good:3} {scaffold:4}  {why:22} {pattern:40} {who}")
     print()
-    print(f"{len(rows)} unported patterns with at least {args.min} translatable actions; "
-          f"{sum(len(r[3]) for r in rows)} npcs behind them.")
+    print(f"{len(rows)} unported patterns with at least {args.min} payload actions; "
+          f"{sum(len(r[4]) for r in rows)} npcs behind them.")
 
 
 if __name__ == "__main__":

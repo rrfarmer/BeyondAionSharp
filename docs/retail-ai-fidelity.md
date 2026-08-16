@@ -9301,3 +9301,30 @@ NPC's own state inside a branch, and the outcome does not depend on it.
 
 Full suite **1,880 passing** and 1 skipped; ten new pins run three times over; fourteen mutations, all
 caught. Adds 362/281 → **361/280**; missing-AI 699 → **698**; translatable 938 → **937**.
+
+## The next-worth-doing ranking was counting its own scaffolding
+
+`audit_translatable.py` ranks unported patterns by how much of them we could actually write. It had
+one class of action in the "translatable" set that should never have been there: `add_battle_timer`.
+
+The Belsagos trio — `IDLDF4_Re_01_EasyBoss`, `IDLDF4_Re_01_PhyBoss` and `IDLDF4_Re_01_HardBoss` —
+scored 27, 33 and 34 and sat at the top of the list for it. Reading them, each is a **cast chain**:
+seven or eight health rungs whose every action is a `use_skill` and the timer arm that brings the next
+one round. The only translatable content in all three together is one `1001` on entering combat, two
+`1002` broadcasts on death, and a `set_condition_spawn_variable Boss_Die` that belongs to the instance
+handler rather than to an AI pattern. Porting any of them changes nothing a player would see.
+
+A timer arm is *translatable* — we have `Do.ArmTimer` — but it is never the point. It is how a pattern
+gets from one action to the next, so counting it rewards patterns for being long rather than for doing
+anything. The audit now counts two columns: `do` for actions with a visible effect (spawn, despawn,
+broadcast, switch target, add hate, flee) and `arm` for the scaffolding, and ranks on `do` alone.
+
+**Rule: an audit that ranks work by "how much of this could we write" must not count the plumbing.**
+Only the actions a player could see are the reason to do the work; a high score made of timer arms is a
+cast loop wearing a suit. The same trap is available to the adds audit and to any future one that
+counts elements rather than effects.
+
+The re-ranked head of the list is unrecognisable from the old one: Ahserion's sub-boss pattern at 43,
+the cowardly tutu at 36, kaliga the unjust at 19, and the naga pair — high mage brashuna and commander
+gitimuka — at 17 each. 461 unported patterns still carry four or more payload actions, with 1,564 npcs
+behind them.
