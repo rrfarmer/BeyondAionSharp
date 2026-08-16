@@ -33,7 +33,8 @@ public sealed class TahabataPyrelordAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(DarkPoeta).WithWorldSize(2048)
 			.WithAi(typeof(TahabataPyrelordAI), typeof(TahabataSummonSpotAI), typeof(TahabataDrakanSpotAI),
-				typeof(TahabataGargoyleAI), typeof(NTrapAI), typeof(AggressiveNpcAI)).Build();
+				typeof(TahabataGargoyleAI), typeof(TahabataDrakanAI), typeof(NTrapAI),
+				typeof(AggressiveNpcAI)).Build();
 		Npc boss = harness.Spawn(Tahabata, 1180f, 1235f, 143f);
 
 		// Well out of his aggro range: he is an aggressive NPC and will pull anyone standing next to

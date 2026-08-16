@@ -8225,3 +8225,75 @@ pin stood two aggressive guards next to the raid, so they found it themselves; t
 reached the rung that opens the peel; and the caster's drop was counted at the end of a five-minute
 run when it lives thirty seconds — the fifth time that one has been made, and `BossAiHarness.Watch`
 exists because of the first four.
+
+## Dragon Lord's Refuge — the drakan that explodes twice over, and the fifth grade
+
+Three npcs left in an instance earlier sessions had otherwise finished: Tahabata's drakan (**281259**)
+on plain `aggressive`, Calindi's (**281268**) with only its message branch translated, and **Chramati
+Firetail** (215284), the only one of the five grades with no class at all.
+
+### One relay, two drakan
+
+`Dragon_G1SlaveDrakan` and `Dragon_G2SlaveDrakan` have **identical timer halves** — branch for branch,
+delay for delay — so they are now one shared builder. Above half health a drakan holds whoever is
+holding it. Below half, a once-only rung turns it onto a **random attacker** and opens a four-stage
+relay: timer 2 hands to 3, 3 to 4, 4 to 5, and the far end turns it again and hands back to 2. The
+peel therefore comes once immediately and then about every fifty-three seconds.
+
+**The relay's middle rungs are casts and they are kept anyway.** Each exists only to arm the next;
+drop one and the far end never fires, so the peel happens once and never again. That is the
+"helper rung" case, and the mutation sweep confirms it — removing a middle rung is caught.
+
+### The exploder asymmetry, ported as written
+
+A drakan leaves an **exploder** behind whichever way it goes, for ten seconds — and the two branches
+name **different npcs**. `on_despawn` leaves 281260, the G1 drakan's own; `on_killed_by_user` leaves
+**281269, which belongs to Calindi's drakan**. Both are called "exploder", both lv50 ELITE, so nothing
+in play distinguishes them; it reads like a copy-paste in NCSoft's data. Ported as written and pinned
+as written, so a later reader does not tidy it into consistency. This is the same call the project
+makes about Java quirks, applied to retail's own.
+
+Calindi's drakan had the message branch but not the explosion, which matters more there than it looks:
+her clear-call is what removes the standing pair, so **calling a fresh pair detonates the old one**
+rather than quietly deleting it.
+
+### Two claims in our own comments that were wrong
+
+`CalindiDrakanAI` recorded its combat chain as *"every branch on them is a cast"* — two of the eight
+carry `switch_target_by_attacker_indicator` and the rest carry the arms that pace them. And it recorded
+`Dragon_G2SlaveDrakanSu` as *"binds to nothing in our 4.8 client"* — it resolves to 281269, which has a
+template. Both were the same mistake: **a gap asserted rather than looked up**. Corrected in place, and
+the correction is why the explosion and the relay exist now.
+
+### Chramati Firetail
+
+`Dragon_G5` is two timer slots and, apart from casts, one thing: **ten seconds after something engages
+it, it turns on whoever is closest to dying**, and then every thirty-five seconds. Retail alternates a
+fifteen-second slot and a twenty-second one, which is why the gap is neither number — a translation
+that collapsed the two into one would get the cadence wrong in a way no single reading catches.
+
+### Not translated
+
+Four skill indices on the drakan relay — the cast on engaging, the self-buff each peel opens with, and
+the two attack skills the relay carries — and three on Chramati, plus its `say_to_all_str` on engaging,
+which has no `npc_shouts.xml` row.
+
+### Verification
+
+Full suite **1,735 passing** and 1 skipped; ten new pins; twelve mutations, all caught after two
+repairs. Adds 424 across 321 → **421 across 319**. Missing-AI unchanged at 720: neither of these npcs
+was ever on that list, which is worth knowing about it — **it ranks patterns by timer count and these
+two are small**, so an instance can be finished on that audit and still be missing mechanics. The adds
+audit is what found them.
+
+### The two repairs, and a rule for pinning a random choice
+
+Both survivors were rungs hidden behind a longer-running one. The opening peel survived a mutation
+because the four-hundred-second window that measures the relay also contains it; it needed its own
+fifteen-second window. Chramati's ten-second delay survived because the pin only looked after it had
+elapsed; it needed a reading at nine seconds.
+
+The opening-peel pin also runs **six separate fights**. Retail's pick is a random attacker, so a single
+short window has a one-in-five chance of landing back on the tank and reading as nothing happening.
+**Rule: pinning a random choice takes either a long window or repeated trials, and a long window
+measures whatever else is running in it — so for a rung that fires once, repeat the fight.**
