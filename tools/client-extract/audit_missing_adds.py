@@ -364,6 +364,30 @@ def spawn_call_arguments(text: str) -> set[str]:
     return ids
 
 
+def spawn_call_names(text: str) -> set[str]:
+    """Every identifier anywhere inside a spawn call's argument list.
+
+    The name half of `spawn_call_arguments`. Reading only the token after the paren assumes the id is
+    the first argument, and `SpawnOnAttacker(which, npcId, ...)` puts the aggro indicator there
+    instead -- so the Dreadgion magisters' barrier read as never spawned while three bosses dropped
+    one every fifteen seconds. Greedy on purpose: a name only counts if it resolves to a `const int`
+    holding an npc-shaped value, so the extra tokens cost nothing.
+    """
+    names: set[str] = set()
+    for match in re.finditer(SPAWN_CALL, text):
+        depth, i = 1, match.end()
+        while i < len(text) and depth:
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+            elif text[i] == ";":
+                break
+            i += 1
+        names.update(re.findall(r"\b([A-Za-z_]\w*)\b", text[match.end():i]))
+    return names
+
+
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
 # One expression-bodied or braced method: name, parameter list, and enough body to see a spawn.
 HELPER_RE = re.compile(r"\b(\w+)\(([^)]*)\)\s*(?:=>|\{)([^;}]*)")
@@ -476,7 +500,7 @@ def spawned_via_constants(text: str) -> set[str]:
                 if fields[i] in record_consts:
                     ids.add(record_consts[fields[i]])
 
-    for used in (set(re.findall(SPAWN_CALL + r"\s*(\w+)", text))
+    for used in (spawn_call_names(text)
                  | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text))
                  | helper_calls):
         value = consts.get(used)

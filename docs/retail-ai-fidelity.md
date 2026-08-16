@@ -8595,3 +8595,65 @@ minutes are the only thing that removes them. Carried as written.
 Full suite **1,781 passing** and 1 skipped; five new pins; six mutations, all caught. Adds 390 across
 303 → **382 across 295**; missing-AI unchanged at 709, for the usual reason — these patterns have no
 battle timers at all, and that audit ranks by timer count.
+
+## The Balaur officers who put a trap under you
+
+`Dread_XDrakanReA`, `XDrakan_ReB_50` and `Dread_SurkanaNm06` bind to **eight spawned npcs** across the
+Dredgion and Dark Poeta — Baranath Triaris, Auditor Nirshaka, Sentinel Garkusa, Prison Guard Mahnena
+and the four Anuhart officers. All eight were on plain `aggressive`. The three patterns differ only in
+their cast loops; the translatable part is identical in all three.
+
+| | |
+|---|---|
+| ten seconds in | it turns on the **second-most-hated** player — once, because the timer carrying it is armed on entering combat and never re-armed |
+| crossing 70% | a **dragon's trap** (281161) goes down **on whoever it is fighting**, five metres out, and it peels again |
+
+So a fight has exactly two peels and one trap, and a raid pushed through seventy inside ten seconds
+still gets both. The trap landing on the *player* rather than at the officer's feet is the part that
+makes it a mechanic: a tank that has just been peeled off is standing on it.
+
+### Carried but not observable, from the other direction
+
+The band rung also re-arms the six-second clock. Once its flag var is consumed there is nothing else on
+that slot but the bare fallback, so a dead clock and a live one behave identically. This is the krall
+escape's situation reached the other way round: **there two guards enforced one limit; here one guard
+makes the other pointless.** Deliberate mutation survivor, and now the second entry of this kind — the
+pattern is worth naming. **Rule: before pinning a "the clock stops here" claim, look at what else is on
+that timer slot. If the answer is "only the re-arm", the claim has no consequence to pin.**
+
+### Three events we do not raise
+
+Between them these carry the rest of the patterns: `on_see_friend_attacked` and `on_friend_spelled`,
+each turning the officer onto whoever touched its neighbour, once a fight; and
+`on_enter_abnormal_state`, which broadcasts `3403` or `6836` ten metres when the officer is
+crowd-controlled. That last one is a genuine mechanic — a stunned Balaur calling its friends — and it
+is doubly unreachable: no event to raise it, and no listener for the message in our data either.
+
+### Also not translated
+
+Seven skill indices and the branches that carry nothing else — the 76–100 and 36–70 cast loops on
+timer 2, the below-35 chain across timers 3, 4 and 5, and Garkusa's extra 90–100 loop on timer 4. The
+`say_to_all` lines, which have no `npc_shouts.xml` row.
+
+## The adds audit learns its fifth indirection
+
+`audit_missing_adds.py` walks a spawn call's whole argument list for **literals**, but harvested
+**names** with `SPAWN_CALL + r"\s*(\w+)"` — the first token only. `Do.SpawnOnAttacker(which, npcId, …)`
+puts the aggro indicator there, so the id was never seen, and the Dreadgion magisters' great magical
+barrier read as never spawned **while three bosses were dropping one every fifteen seconds**.
+
+Same paren walk, collecting identifiers instead of digits. It is safe to be greedy: a name only
+contributes if it resolves to a `const int` holding a five- or six-digit value. The diff is exactly six
+rows and all six are correct crediting — 281025 (the silikor caster's summon), 282984 ×3, 281424
+("shatter"), 282444 (Xasta's trap) — nothing else moved.
+
+That is the fifth: a returner method, a local, a record, a tuple table, and now an argument position.
+**The habit stands: when a class reaches its ids by any route other than a literal first argument,
+re-run the audit and check it still sees them.**
+
+### Verification
+
+Full suite **1,789 passing** and 1 skipped; eight new pins; ten mutations, nine caught and one
+deliberate survivor (plus one mutation replaced after it turned out to be a no-op — arming a battle
+timer on `on_wake_up` does nothing at all, because battle timers only fire in combat). Adds 382 across
+295 → **373 across 286**; missing-AI 709 → **707**.
