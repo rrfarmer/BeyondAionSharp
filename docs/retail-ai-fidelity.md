@@ -2385,3 +2385,69 @@ mutations caught. Two pins were added because mutation testing showed the origin
 were blind to the 26-50 band putting nothing out, and to the catch-all being the only
 thing that brings timer 0 round at full health — the case that matters, since nobody
 pulls a world boss at 60%.
+
+---
+
+## Machine Spirit Tottal and Arcticore Aizenka — replacing a stand-in with the real thing
+
+**NPCs:** machine spirit tottal (235971, Cygnea) and arcticore aizenka (219933,
+Enshar), HERO world bosses with **identical** skill lists, both on plain
+`aggressive`. **Pattern:** `DF5_ItemNamed_12_SSH`.
+
+Three regimes, each a five-slot loop, plus a summon chain below 40:
+
+| band | loop |
+|---|---|
+| 80-100 | 10s, 14s, 10.5s, 10s, 14s |
+| 40-80 | 11s, 14s, 14s, 10s, 14s, opening on a random target |
+| below 40 | timer 0 becomes the summon and hands to T5 → T6 → T7 |
+
+**Four waves of six frost bombs** (855913), eight seconds apart — two within five
+metres, two within ten, two within twenty — while timer 1 restarts the ordinary
+rotation on a 36-second fuse, so the waves run *alongside* the rotation rather than
+replacing it. The bombs are `useSkillAndDie`: each detonates and removes itself, so
+they never accumulate.
+
+### The doubled summon
+
+Our `npc_skills` hung a `spawn_npc` of **three to six** bombs off skill 21852 for both
+bosses — aionemu's stand-in for a summon mechanic it had no other way to express.
+With the pattern in place that stand-in double-counts, so it is **removed from both
+entries** and the pattern now owns the summoning at retail's count, distances and
+timings. Same class of change as Teselik's commented-out summon-control skill: a
+workaround superseded by the thing it was working around.
+
+### Skill indices — anchored on structure, not names
+
+Index 4 is the only skill in either list with `target="RANDOM"`, and every branch
+using it is a random-target branch. Index 5 is the only one carrying `spawn_npc`, is
+marked `max_hp="40"`, and is used by exactly the branches guarded below 40. Both land
+on the identity mapping, which fixes the rest.
+
+**Three variants collapse to one.** Retail writes the paired area attack three ways —
+centred plus donut at 28%, centred twice at 40%, donut twice as fallback — but our
+data resolves index 2 *and* index 3 to the same skill, 21850, because aionemu stores
+it as a chain rather than as two skills. All three variants therefore have identical
+effect and are written once. If the donut is ever separated out, the three come back.
+
+### An equivalent mutant worth recording
+
+Widening the summon branch's guard from `below 40` to `below 80` changes **nothing**:
+the 40-80 branch outranks it on timer 0 across that whole band, so the summon can only
+ever fire below 40 regardless. The guard is redundant with the way the bands tile.
+Confirmed by mutating to `below 20` instead, which fails seven pins. Worth knowing
+before someone "tightens" a guard that is already doing nothing.
+
+### Not translated
+
+- **Index 0**, self-cast on waking and on returning to spawn. Our index 0 is `Sever`,
+  an attack, and self-casting an attack on waking is far likelier to be a slot
+  aionemu filled differently than something retail meant.
+- **Timer 15**, which only broadcasts message 60000 to bombs that already detonate on
+  their own clock, so it is not armed.
+- **Timer 8**, which retail's last summon wave arms and no branch answers.
+
+**Verification.** Full suite 1,213 passing and 1 skipped; seventeen pins across both
+bosses; all nine mutations caught, one of them only after replacing an equivalent
+mutant with a real one. One test was wrong before it was right: it counted bombs
+standing, where the bombs remove themselves — it now counts them by identity.

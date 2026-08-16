@@ -63251,9 +63251,10 @@
 		<npc_skill id="21850" lv="65" prob="60" cd="30000" next_chain_id="1" next_skill_time="7000" target="ME" />
 		<npc_skill id="21850" lv="65" prob="50" cd="10000" chain_id="1" target="ME" />
 		<npc_skill id="21851" lv="65" prob="60" cd="35000" target="RANDOM" max_hp="55" />
-		<npc_skill id="21852" lv="65" prob="60" cd="40000" target="ME" max_hp="40">
-			<spawn_npc npc_id="855913" min_distance="5" max_distance="20" min_count="3" max_count="6" />
-		</npc_skill>
+		<!-- The spawn_npc that used to hang here was aionemu's stand-in for a summon mechanic it could
+			not otherwise express. FrostNamedAI now runs the retail pattern, which puts out six bombs per
+			wave over four waves below 40%, so keeping it as well would double the count. -->
+		<npc_skill id="21852" lv="65" prob="60" cd="40000" target="ME" max_hp="40" />
 	</npc_skills>
 	<!-- Frost Bomb -->
 	<npc_skills npc_ids="855913">
@@ -63268,9 +63269,10 @@
 		<npc_skill id="21850" lv="65" prob="60" cd="30000" next_chain_id="1" next_skill_time="7000" target="ME" />
 		<npc_skill id="21850" lv="65" prob="50" cd="10000" chain_id="1" target="ME" />
 		<npc_skill id="21851" lv="65" prob="60" cd="35000" target="RANDOM" max_hp="55" />
-		<npc_skill id="21852" lv="65" prob="60" cd="40000" target="ME" max_hp="40">
-			<spawn_npc npc_id="855913" min_distance="5" max_distance="20" min_count="3" max_count="6" />
-		</npc_skill>
+		<!-- The spawn_npc that used to hang here was aionemu's stand-in for a summon mechanic it could
+			not otherwise express. FrostNamedAI now runs the retail pattern, which puts out six bombs per
+			wave over four waves below 40%, so keeping it as well would double the count. -->
+		<npc_skill id="21852" lv="65" prob="60" cd="40000" target="ME" max_hp="40" />
 	</npc_skills>
 	<!-- Seized Danuar Sanctuary -->
 	<!-- Warmage Suyaroka -->
