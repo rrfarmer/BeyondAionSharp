@@ -6324,3 +6324,57 @@ whoever takes it does not have to re-derive them.
 
 **Verification.** Full suite 1,512 passing and 1 skipped; three new pins; five mutations, all
 caught.
+
+## Ragnarok — a world boss that auto-attacked
+
+With the shared-name list closed, back to `audit_missing_ai.py`, which reports **737 NPCs that
+have a retail fight and no AI class at all**. Ranked by *spawn* actions rather than by timers —
+timers are usually casts we cannot translate, spawns are the part we can — the top of that list
+is Ragnarok: a **LEGENDARY** field raid boss in Gelkmaros, on a twenty-hour respawn, on plain
+`aggressive`. He auto-attacked and did nothing else, and both NPCs his fight is made of were
+reachable by nobody.
+
+His Elyos counterpart `LF4_FieldRaid` has been ported for a while as `OmegaAI`. This is the other
+side of the same content, and it had been sitting in a different audit the whole time.
+
+**A five-rung ladder on a five-second heartbeat**, one-shot at each threshold, deepest first:
+
+| rung | what arrives |
+|---|---|
+| below 85 | five parasites on the tank, one on each of up to twenty-five others |
+| below 65 | the same, into its own spawn group |
+| below 45 | the same, **and** a slime on up to five |
+| below 35 | a slime on up to five |
+| below 30 | a slime on up to five, again |
+| below 25 | five parasites on the tank at **fifty** hate, one on each of up to twenty-five |
+
+Everything lives five minutes and arrives already fighting whoever it landed on. The fifty at the
+deepest rung is the one asymmetry in the whole pattern — every other spawn carries a hundred — and
+it is kept.
+
+**Two rungs that look like a copy-paste error are not one.** Below 35 and below 30 do exactly the
+same thing into the same spawn group behind two different flag vars. That is retail giving the
+slime step twice on the way down, and translating it as one step would halve it.
+
+### A pin that could not see its own mutation
+
+"The two slime rungs collapse into one" survived at first, and the reason is worth keeping. The
+pin dropped him straight to 34% — but with the below-35 rung deleted, the **below-45** rung
+matches there instead and it brings slime too, so the count was right for the wrong reason.
+
+Walking the ladder one rung at a time — 44, then 34, then 29, checking the slime count grows by
+four each time — is what isolates them. This is the third time in this work that a threshold pin
+has had to walk rather than jump, and the reason is always the same: a `HpBelow` guard is true for
+everything below it, so the rung you skipped past is still available to cover for the one you
+deleted.
+
+**Not translated.** Fourteen skill indices — the opening cast, three or four on most rungs, and
+the whole of timer 1, which is eight health-banded branches that cast, re-arm and carry nothing
+else. Timer 2 is armed at 145 seconds and **has no branch in the pattern at all**, which is
+retail's own loose end rather than ours.
+
+**Where the count went.** 449 across 341 encounters → **447 across 340**, and the missing-AI count
+738 → 737.
+
+**Verification.** Full suite 1,520 passing and 1 skipped; eight new pins; nine mutations, eight
+caught and one that will not compile.

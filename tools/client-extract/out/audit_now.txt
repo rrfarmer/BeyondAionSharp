@@ -1,12 +1,12 @@
 patterns with spawn actions : 4,158
-npc_ids our data can spawn  : 21,397
+npc_ids our data can spawn  : 21,411
 
-Fightable retail adds our server never spawns: 459 across 351 encounters
-  fully self-contained                       : 391
+Fightable retail adds our server never spawns: 449 across 341 encounters
+  fully self-contained                       : 381
   positionable, but walk a server-side path  : 14
   positionable, but only a waypoint fires it : 10
   blocked on server-side waypoint paths      : 44
-  (of all the above, 21 have a sibling npc we already spawn -- spot-check)
+  (of all the above, 19 have a sibling npc we already spawn -- spot-check)
 
 DF4_GH_KJS  (live npc_ids: 258207)
     282891  lv60  hurrikane  [BLOCKED: waypoint-placed]  [we spawn 281435 for this role -- check before porting]
@@ -476,14 +476,6 @@ IDAbRe_Core_NamedA1_02  (live npc_ids: 219551)
     282011  lv55  giant of light death
 IDAbRe_Core_NamedA2_02  (live npc_ids: 219552)
     282012  lv55  giant of darkness death
-IDAbRe_Core_Summon4_02  (live npc_ids: 283203)
-    283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
-IDAbRe_Core_Summon4_3_02  (live npc_ids: 283222)
-    283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
-IDAbRe_Core_Summon4_6_02  (live npc_ids: 283223)
-    283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
-IDAbRe_Core_Summon4_Low_02  (live npc_ids: 283233)
-    283201  lv1   summoned lapilima  [we spawn 281904 for this role -- check before porting]
 IDAbRe_Core_Cannon  (live npc_ids: 216953)
     282106  lv55  holy orkanimum
 IDAbRe_Core_NamedA1  (live npc_ids: 216948)
@@ -594,14 +586,6 @@ IDSeal_Scene_07_PCGuard_Da  (live npc_ids: 209758)
     209761  lv1   detachment entry soldier  [BLOCKED: only a waypoint arrival spawns it]
 IDSeal_Scene_07_PCGuard_Li  (live npc_ids: 209693)
     209696  lv65  detachment entry soldier  [BLOCKED: only a waypoint arrival spawns it]
-IDSeal_Twin_M  (live npc_ids: 236228)
-    855712  lv65  cinderspeak immolator
-IDSeal_Twin_M_Failed  (live npc_ids: 236226)
-    855712  lv65  cinderspeak immolator
-IDSeal_Twin_P  (live npc_ids: 236227)
-    855626  lv65  cinderhorn ravager
-IDSeal_Twin_P_Failed  (live npc_ids: 236225)
-    855626  lv65  cinderhorn ravager
 IDSweeP_S2_Boss_Doubling_04  (live npc_ids: 235647)
     235682  lv65  intruder sentinel
 IDTP_Fanatic_EeA  (live npc_ids: 215807,215856,216334,216342)
@@ -714,8 +698,6 @@ IDTiamat_Anuhart  (live npc_ids: 219357)
     283039  lv60  exploding flyer
 IDTiamat_Breath_Beacon2  (live npc_ids: 283156)
     283068  lv60  tiamat tornado
-IDTiamat_BurrowingWorm_BurrowDispel  (live npc_ids: 283059)
-    283130  lv60  flame crown
 IDTiamat_Kumbanda  (live npc_ids: 219355)
     283035  lv1   end combat
 IDTiamat_Kumbanda_Avatar  (live npc_ids: 283085)
@@ -804,8 +786,6 @@ IDTiamat_Hard_GodKaisinel_01  (live npc_ids: 856020)
     283159  lv60  kaisinel
 IDTiamat_Hard_GodKaisinel_02  (live npc_ids: 856021)
     283061  lv60  burrowing attack
-IDTiamat_Hard_Gravity  (live npc_ids: 856046)
-    856047  lv65  gravity crusher
 IDStation_forAct_003  (live npc_ids: 219186)
     217610  lv58  idstation section 3 pc dispel form invisible npc
 Station_DrakanC  (live npc_ids: 217382)
