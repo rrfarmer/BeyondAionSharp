@@ -4203,3 +4203,73 @@ window. Nobody counted. Counting took one scratch test and showed the trial coun
 **Verification.** Full suite 1,347 passing and 1 skipped, five consecutive clean runs, and the
 repaired pin clean over six runs of its own. Missing adds unchanged at 673 across 445 encounters —
 traps are hazards rather than combatants, so they were never in that count.
+
+### The abyss guards: one mechanic, 460 guards, 86 patterns
+
+The largest single cluster in the missing-adds backlog was never eighty separate encounters. The
+`DGuard_*` and `LGuard_*` families are **one mechanic replicated per faction and per level bracket**:
+a guard in combat arms a twenty-second heartbeat, and each beat lights a one-second timer that calls
+up its bracket's attackers and healer, three metres out, for ten minutes. Leaving the fight sends them
+away.
+
+| band | what a three-band guard calls |
+|---|---|
+| 71-100 | two attackers, on a coin flip |
+| 36-70 | two attackers and a healer, on a coin flip |
+| below 35 | three attackers and two healers, on a coin flip |
+
+344 of the 460 have a single band instead — below 35, always, one kind of summon.
+
+**The structure is in the class and the facts are in a generated table.** Hand-writing 86 AI classes
+for one mechanic would be absurd; hand-copying 692 rows of npc ids into a table would be worse and
+wrong within a week. `tools/client-extract/extract_guard_reinforcements.py` reads the mechanic out of
+the patterns and `emit_guard_table.py` transcribes it, so the TSV is the reviewable claim and the C#
+is a transcription of it.
+
+**The shape census is what made this safe.** Before writing anything, the extractor counted every
+spawn branch in the family by (timer slot, lifetime, spawn range, placement): **198 of 205 identical**,
+six absolute-placement artifact variants and one outlier. That is the evidence that one class can
+serve the family — not an impression from reading two patterns.
+
+**The band gaps are kept.** Retail writes `is_hp_lower_than 35` against `is_hp_in_boundary 36..70`, so
+a guard at exactly 35% matches nothing and calls nobody. Tidying that into `0..35` would be a change
+dressed as a translation; it is pinned as a dead spot instead. Getting the pin to sit *on* 35 needed a
+harness helper — `SetHpPercent` truncates going in and the reader truncates coming out, so asking for
+35 reads back 34, which is harmless inside a band and fatal on a boundary.
+
+**Repointed 407 of 460.** The other 53 already carry `simple_abyssguard` (49) or `general` (4), which
+add aggro rules this class does not have. Folding the reinforcement branches into those is the
+follow-up; overwriting them would have traded one mechanic for another.
+
+**Casts not translated:** thirteen indices across the family and no guard carries thirteen skills.
+Timer 2, the two friend-rescue handlers and the `on_message` pair on 10001 are cast-only and go with
+them.
+
+### The audit could not see a table, and then saw too much of one
+
+The backlog did not move when this landed. `audit_missing_adds.py` sweeps handler code for spawn
+*calls*, and a generated table is data in code shape — the ids sit in tuple literals no call-shaped
+regex matches. Ninety-five adds stayed in the backlog after the code to spawn them shipped.
+
+The first fix was worse than the bug. Taking every long integer out of any file declaring itself
+generated swept up the table's **dictionary keys — the 460 guards themselves** — so guards that
+nothing spawns started counting as live encounters and dragged their own adds in. The total went
+*up*, from 673 to 683, while looking like a fix for an undercount. Narrowed to `(npc_id, count)`
+pairs it picks up 130 summons and no guards.
+
+**Both guards on that sweep earn their keep**, and the near-miss is the argument for them: a
+false positive here silently shrinks the backlog, which is the one failure this audit must not have.
+
+### Where the count actually went
+
+673 across 445 encounters → **676 across 441**. Guard-family rows in the timer bucket fell from 95 to
+35 — the remainder being the 53 guards left on their existing handlers, plus the separate `BGuard_`
+gate family. The total rose by three because resolving an encounter makes what stands behind it
+reachable: the 130 summons are now live NPCs with patterns of their own. That is the fourth time the
+backlog has grown by being worked on, and it is worth restating that **the backlog is a frontier, not
+an inventory.**
+
+**Verification.** Full suite 1,357 passing and 1 skipped; six new pins; five of seven mutations caught.
+The two survivors are both inert by construction and were checked rather than assumed: arming a battle
+timer outside combat does nothing (the runtime only fires them in a fight), and no NPC carries this AI
+without a table row, because the repoint list *was* the table's key set.

@@ -193,6 +193,26 @@ public sealed class BossAiHarness : IDisposable
 	/// <summary>Drops <paramref name="npc"/> to an exact HP percentage without going through combat.</summary>
 	public static void SetHpPercent(Npc npc, int percent) => npc.GetLifeStats().SetCurrentHpPercent(percent);
 
+	/// <summary>
+	/// Sets HP so the NPC's own <c>GetHpPercentage()</c> reads exactly <paramref name="percent"/>.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="SetHpPercent"/> truncates on the way in and the reader truncates again on the way
+	/// out, so asking for 35 can read back as 34. That is harmless when a test only needs to be inside
+	/// a band and fatal when it needs to be on a boundary — retail bands leave gaps at exactly the
+	/// values a boundary test cares about. This nudges upwards until the reader agrees.
+	/// </remarks>
+	public static void SetExactPercent(Npc npc, int percent)
+	{
+		var stats = npc.GetLifeStats();
+		stats.SetCurrentHpPercent(percent);
+		int maxHp = stats.GetMaxHp();
+		for (int i = 0; i < 100 && stats.GetHpPercentage() != percent; i++)
+			stats.SetCurrentHp(stats.GetCurrentHp() + Math.Max(1, maxHp / 1000));
+
+		Assert.Equal(percent, stats.GetHpPercentage());
+	}
+
 	/// <summary>Restores the stand-in player to full health.</summary>
 	/// <remarks>
 	/// Rarely needed now that the stand-in is invulnerable, but harmless for tests that want a known
