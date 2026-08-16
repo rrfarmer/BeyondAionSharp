@@ -8891,3 +8891,65 @@ Full suite **1,814 passing** and 1 skipped; eleven new pins; thirteen mutations,
 repairs. Missing-AI 707 → **705**; translatable 956 → **953**. Adds unchanged: Jeshuchi's disciples were
 already on the spawn list through their static placement, and Zapiel's reinforcements are the blocked
 half.
+
+## The cheapest work in the project, and nothing was looking for it
+
+Retail ships an encounter as **several npc ids** bound to one pattern — a normal-mode boss and a
+hard-mode one, an Elyos copy and an Asmodian one, three difficulty variants of one room. Translate one
+of them and the others keep whatever their template said, which is almost always `aggressive`. Nothing
+in this project was looking for that, and it turns out to be the cheapest fix available: the class
+already exists, already matches the pattern, and already has pins.
+
+**Macunbello is the case that prompted it.** `MacunbelloAI` has been a complete translation of
+`IDCT_Boss_LichKing` for some time, and **three live HERO copies of the same boss** — 216734, 216735,
+216737 — were still fighting as plain monsters beside it.
+
+`tools/client-extract/audit_orphan_siblings.py` reports these, and it is deliberately conservative,
+because a false positive here means a *wrong* fight rather than a missing one:
+
+- **narrow patterns only.** More than eight binders and it is a generic behaviour shared by unrelated
+  monsters, not one encounter. `D2_FnA` alone would otherwise report 994 "orphans" with nothing to do
+  with each other.
+- **one bespoke class only.** If the siblings already run two different classes the pattern is being
+  specialised on purpose, and nothing here can say which one is right.
+- **stock means stock.** The generic set includes the semi-generic helpers — `servant`, `summoner`,
+  `noaction`, `simple_abyssguard` — because sharing one of those with a sibling says nothing at all.
+
+It found **32 npcs across 23 patterns**. Twenty-two of them were repointed this pass.
+
+### What was checked before repointing
+
+Every hit still needs reading: a class may key on its own npc id, and the sibling may be exactly the
+variant that check excludes. Two of the candidate classes do use `GetNpcId()`, and both turned out to
+be safe for different reasons — `MacunbelloAI` uses it only to pick the hard-mode band table, and the
+three siblings bind to the *normal* pattern; `MonolithicAmbusherAI` uses it to identify a **different**
+npc it pulls, not itself. The other eight classes never look at their own id.
+
+Repointed: three Macunbellos; six Danuar frost summons and their four `85xxxx` hard-mode twins; three
+drakan priests; and one each of the pazuzu worm, the Vasharti assassin, the Nidalber balaur, the
+monolithic ambusher, and two reian prisoners.
+
+Pinned by **spawning** each one and asserting the AI object's type rather than by comparing the
+template string — it is the registration path that matters, and a mistyped `ai=` name resolves to
+nothing rather than failing loudly.
+
+### The ten left, and why each needs a decision rather than a sweep
+
+| npc | pattern | class it would take | why it is being left |
+|---|---|---|---|
+| 297189 ahserion | `Gab1_Sub_Boss` | `ahserion` | a second Ahserion, and `AhserionRaid` drives the first through a service; repointing without reading that service could start a raid twice |
+| 236297 captain xasta | `IDYun_Nmd3_FallOff` | `captain_xasta` | the pattern name says *fall off* — likely the scripted retreat copy rather than the fight |
+| 216883 quartermaster nupakun | `Dread02_SurkanaNm06` | `takahan` | a different named npc on a shared pattern; the class carries Takahan's own drop behaviour |
+| 296495 hora akacha, 296491 lady pasiphae | `Gw*Guard_FlA` | `gateway_guard` | both LEGENDARY named bosses sharing a pattern with the guards; the class is the guards' |
+| 282140 padmarashka | `DF4_DramataSumD` | `rock_slide` | Padmarashka herself on a rockfall summon's pattern — almost certainly a data quirk worth reading first |
+| 799363 raeyena, 209472 baltasar hill field gun, 700169 klaw spawner, 230995 captain rata | — | — | one-off scripted npcs whose classes are instance-driven |
+
+**Rule: this audit finds candidates, not conclusions. A shared pattern is evidence that two npcs do
+the same thing; a shared *name* or a shared *role* is what confirms it.** The twenty-two taken this
+pass all had both.
+
+### Verification
+
+Full suite **1,836 passing** and 1 skipped; twenty-two new pins; no mutation sweep, because nothing
+was written — this is a data change against classes that already carry their own sweeps. Missing-AI
+705 → **700**; orphan siblings 32 → **10**.
