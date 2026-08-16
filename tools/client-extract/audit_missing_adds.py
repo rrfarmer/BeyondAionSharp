@@ -147,7 +147,7 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
         ids.update(re.findall(r'<spawn_npc[^>]*npc_id="(\d+)"', read_text(path)))
     for path in (repo / "src/Aion.GameServer/Handlers").rglob("*.cs"):
         text = read_text(path)
-        ids.update(re.findall(SPAWN_CALL + r"\s*(\d{5,6})\b", text))
+        ids.update(spawn_call_arguments(text))
         ids.update(re.findall(r"\bnpcId\s*[:=]\s*(\d{5,6})\b", text))
         ids.update(spawned_via_constants(text))
         ids.update(spawned_relative_to_self(text, by_ai))
@@ -193,6 +193,35 @@ def spawned_relative_to_self(text: str, by_ai: dict[str, list[str]]) -> set[str]
 # class had been spawning eight to twelve of them per phase all along.
 SPAWN_CALL = r"\b\w*Spawn\w*\("
 
+def spawn_call_arguments(text: str) -> set[str]:
+    """Every npc-shaped literal anywhere inside a spawn call's argument list.
+
+    Matching a literal immediately after the opening paren only finds calls whose first argument
+    *is* the id. It misses every call that computes it -- and the idiom is common enough to matter:
+
+        RndSpawnInRange(Rnd.NextInt(2) == 0 ? 281150 : 281334, 7, 10)
+
+    reported both of TelepathyControllerAI's adds as never spawned while the class had been placing
+    one of them every sixty seconds. Walking to the matching paren costs nothing and catches the
+    ternaries, the nested calls and the `cond ? a : b` pairs alike.
+    """
+    ids: set[str] = set()
+    for match in re.finditer(SPAWN_CALL, text):
+        depth, i = 1, match.end()
+        while i < len(text) and depth:
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+            # A statement boundary means the call was never closed -- malformed, so stop rather
+            # than run on into the rest of the method and collect numbers that are not arguments.
+            elif text[i] == ";":
+                break
+            i += 1
+        ids.update(re.findall(r"\b(\d{5,6})\b", text[match.end():i]))
+    return ids
+
+
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
 CONST_ARRAY_RE = re.compile(r"\bint\[\] (\w+)\s*=\s*(?:new int\[\]\s*)?\{([^}]*)\}")
 
@@ -203,6 +232,15 @@ def spawned_via_constants(text: str) -> set[str]:
     Resolving the name rather than accepting any constant matters: skill ids are the same
     width as npc ids and sit in the same classes, so harvesting every `const int` would
     quietly mark real gaps as covered. Only names actually passed to a spawn count.
+
+    Known limitation: an id that reaches the spawn through a *field of a record* is not
+    followed. `GatewayGuardAI` holds its eight trap ids in `new Traps(281472, ...)` and
+    selects one with `Lay(t => t.Snare)`, so all eight still read as never spawned even
+    though the class places them. Following that needs a type resolver rather than a
+    regex, and harvesting every literal out of every constructor call risks swallowing
+    skill ids -- which fails in the dangerous direction, marking real gaps as covered.
+    Left as a false positive rather than fixed unsafely; the per-add `refs=` check in the
+    pre-flight is what actually protects a port, and this report is for prioritising.
     """
     consts = {name: value for name, value in CONST_RE.findall(text)}
     for name, body in CONST_ARRAY_RE.findall(text):

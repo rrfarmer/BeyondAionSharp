@@ -3116,3 +3116,42 @@ Screened and rejected this round, with reasons, so they are not re-derived:
 3. **`Bionic_EhA`** (telepathy controller, Dark Poeta) — three adds against an existing
    class: a bionic clodworm and the control room's entrance and exit. Not yet screened.
 4. The long tail: 444 encounters, most missing one or two adds each.
+
+---
+
+## An audit blind spot: ids computed rather than passed
+
+`audit_missing_adds.py` looked for a literal *immediately after* a spawn call's opening
+paren. That misses every call that computes the id, and the idiom is common:
+
+```csharp
+RndSpawnInRange(Rnd.NextInt(2) == 0 ? 281150 : 281334, 7, 10)
+```
+
+Both of `TelepathyControllerAI`'s adds read as never spawned while the class had been
+placing one of them every sixty seconds. The scan now walks to the matching paren and
+takes every npc-shaped literal in the argument list, stopping at a statement boundary so
+a malformed call cannot run on into the rest of the method.
+
+**The correction is large.** 193 more ids are recognised as spawnable, and the backlog
+drops from 722 missing adds across 470 encounters to **685 across 449** — 594 of them
+fully self-contained, across 423 encounters. Thirty-seven of what this work has been
+prioritising against was noise.
+
+### What this did *not* invalidate
+
+None of the ports. Every add was checked individually with a `refs=` query before being
+written, which is what the pre-flight exists for — the audit ranks, the per-add check
+decides. That division held: the tool was wrong and no wrong code shipped because of it.
+
+### A second blind spot, left in deliberately
+
+The gateway guards this work ported still read as four missing adds each. Their trap ids
+live in `new Traps(281472, …)` and are selected with `Lay(t => t.Snare)` — reaching the
+spawn through a *record field*, which a regex cannot follow.
+
+Fixing it properly needs a type resolver. Fixing it cheaply means harvesting every
+literal from every constructor call, which would swallow skill ids — the same width, the
+same classes — and **fail in the dangerous direction**, marking real gaps as covered. A
+false positive costs a wasted screening; a false negative hides content forever. Left as
+a documented false positive, in the tool's own docstring as well as here.
