@@ -44,11 +44,12 @@ public sealed class ElementalWaveAiTests
 	/// see and inside his fifty-metre broadcast.
 	/// </para>
 	/// <para>
-	/// And the listener is a <b>stand-in placed before the fight</b>, not one of the four he summons.
-	/// <c>NpcMessageBus</c> walks the sender's known list, the harness runs no visibility, and the
-	/// broadcast sits in the same branch as the spawn — so an elemental he places is invisible to him
-	/// at the instant he calls out to it, and nothing a test does between ticks can change that. A
-	/// listener that was already known hears the same broadcast and pins the same fact.
+	/// The listener is a <b>stand-in placed before the fight</b> rather than one of the four he
+	/// summons. That is belt-and-braces rather than necessity: the four <em>do</em> hear the order —
+	/// measured, not assumed — because our spawn path puts a summon in its spawner's known list before
+	/// the next action of the same branch runs. Asserting on a listener that was already there pins
+	/// the same fact without depending on that ordering, which is a property of our engine rather than
+	/// of the pattern. See docs/retail-ai-fidelity.md, where the same ordering blocks RM-56c.
 	/// </para>
 	/// <para>
 	/// Asserts the target rather than the hate: the exact single point retail adds is pinned in

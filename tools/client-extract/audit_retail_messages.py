@@ -65,7 +65,19 @@ AI_DIR = "src/Aion.GameServer/Handlers/AI"
 #                     its bare four-to-five digit literals count as messages it handles.
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{3,7})\b")
 USES = (re.compile(r"When\.Message\(([\w.]+)\)"), re.compile(r"Do\.Broadcast\(([\w.]+)"),
-        re.compile(r"NpcMessageBus\.Broadcast\([^,]+,\s*([\w.]+)"), re.compile(r"case\s+([\w.]+)\s*:"))
+        re.compile(r"NpcMessageBus\.Broadcast\([^,]+,\s*([\w.]+)"), re.compile(r"case\s+([\w.]+)\s*:"),
+        # A listener for a single message is a comparison, in either direction and either sense --
+        # `ExedilGhostAI` writes it as an early-return guard. Same widening audit_ai_messages.py
+        # needed, and for the same reason: assuming a listener declares itself the way the last one
+        # did makes the audit report finished work.
+        re.compile(r"messageType\s*[!=]=\s*([\w.]+)"),
+        re.compile(r"([\w.]+)\s*[!=]=\s*messageType"))
+
+# A class whose pattern comes from a shared builder keeps its broadcasts there. RagingKraterrAI's
+# live in ElementalSummonerPattern, declared in FrostmaneLestinAI.cs, and reading only its own file
+# reported the order it sends as missing.
+DELEGATE_RE = re.compile(r"\b(\w+)\.\w+\(")
+DECLARES_RE = re.compile(r"\b(?:static\s+)?class\s+(\w+)")
 
 
 def main() -> None:
@@ -79,8 +91,14 @@ def main() -> None:
     repo = pathlib.Path(args.repo)
     ai_files = sorted((repo / AI_DIR).glob("*.cs"))
 
-    per_file = {f.stem: dict(CONST_RE.findall(f.read_text(encoding="utf-8", errors="replace")))
-                for f in ai_files}
+    texts = {f.stem: f.read_text(encoding="utf-8", errors="replace") for f in ai_files}
+    per_file = {stem: dict(CONST_RE.findall(text)) for stem, text in texts.items()}
+
+    # Where each helper type is declared, so a class that delegates can be read together with it.
+    declared: dict[str, str] = {}
+    for stem, text in texts.items():
+        for name in DECLARES_RE.findall(text):
+            declared.setdefault(name, stem)
     globals_: dict[str, str] = {}
     for table in per_file.values():
         globals_.update(table)
@@ -233,8 +251,18 @@ def main() -> None:
 
     rows: list[tuple[str, str, str, str]] = []
     for cls, pats in sorted(claimed.items()):
-        text = (repo / AI_DIR / f"{cls}.cs").read_text(encoding="utf-8", errors="replace")
-        ours = {resolve(t, cls) for regex in USES for t in regex.findall(text)}
+        text = texts[cls]
+        # The class plus whatever it delegates to, wherever that is declared.
+        reachable = [(cls, text)]
+        for helper in set(DELEGATE_RE.findall(text)):
+            owner = declared.get(helper)
+            if owner is not None and owner != cls:
+                reachable.append((owner, texts[owner]))
+
+        ours = {resolve(t, stem)
+                for stem, body in reachable
+                for regex in USES
+                for t in regex.findall(body)}
         if "CurrentMessage" in text:
             ours |= set(re.findall(r"(?<![\w.])(\d{4,5})(?![\w.])", text))
         ours.discard(None)

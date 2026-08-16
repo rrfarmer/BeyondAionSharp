@@ -7706,3 +7706,58 @@ share nothing: they are one encounter, built twice.
 **Verification.** No game behaviour changed; full suite unchanged at 1,664 passing and 1 skipped.
 `audit_retail_messages.py` now reports 38 `acts`, 5 `no audience`, 5 `no speaker`, 3 `diff world`,
 17 `cast-only` and 14 `unheard`.
+
+## A branch that spawns and then broadcasts means something different here
+
+Two blind spots closed and one port abandoned, and the abandoned one is the useful part.
+
+### The audit was reporting finished work
+
+`audit_retail_messages.py` still had two blind spots its siblings had already fixed, and both made it
+list work that was done:
+
+- **comparison listeners** — `ExedilGhostAI` writes `if (messageType != ExedilAI.TrueForm) return;`,
+  and the scan knew only `When.Message`, `Do.Broadcast`, `NpcMessageBus.Broadcast` and `case`. Same
+  widening `audit_ai_messages.py` needed.
+- **delegated builders** — `RagingKraterrAI`'s broadcast lives in `ElementalSummonerPattern`, declared
+  in another file. Same widening `audit_pattern_guards.py` needed.
+
+Both are the same underlying mistake, now made three times across three tools: **assuming the thing
+being looked for is written where the last one was.** `acts` 38 → 36, and the two rows that left were
+`ExedilGhostAI 3319` and `RagingKraterrAI 6505`, both shipped in the last two entries.
+
+### RM-56c's trap dismissal, and why it is not ported
+
+The next finding was **6681** on RM-56c: every trap-laying branch ends by broadcasting it to ten
+metres, and the traps answer with `despawn_self`. Laying a new arrangement takes the last one away —
+without it a boss walked down through two bands stands in two overlapping sets.
+
+It was written, wired and reverted. **In our engine the broadcast reaches the traps it was just laid
+alongside, and removes them the instant they appear.** All eleven of RM-56c's pins failed; changing
+only the message number made all eleven pass, which isolates the cause exactly.
+
+The reason is an ordering our runtime has and retail's evidently does not: `NpcMessageBus` walks the
+sender's known list, and **our spawn path puts a summon into its spawner's known list before the next
+action of the same branch runs**. Measured directly rather than inferred — all four of Frostmane
+Lestin's elementals receive the summon order sent from the branch that spawned them.
+
+That measurement also **corrects an explanation given one entry ago.** The Lestin pins use a stand-in
+listener placed before the fight, and the reason recorded was that a just-spawned elemental cannot
+hear its spawner. That is not true, and the note is fixed. The stand-in is still worth keeping — it
+pins the broadcast without depending on an ordering that belongs to our engine rather than to the
+pattern — but for that reason, not the one written down.
+
+**This is not a one-boss problem.** 417 branches across 215 patterns broadcast after a spawn in the
+same branch. Every one of them will behave differently here than in retail wherever the spawn is also
+a listener for that message. Most are harmless — the listener is somebody else — and RM-56c is the
+shape where it bites: the spawn *is* the listener.
+
+**What would fix it properly**, and is a runtime change rather than a translation: make a broadcast
+skip NPCs spawned by the sender during the current branch, or defer known-list entry until the branch
+completes. Both are changes to shared machinery on behalf of one encounter, so neither is made here.
+Recorded so that the next person who meets a `spawn`-then-`broadcast` branch knows the shape rather
+than rediscovering it through eleven failing pins.
+
+**Verification.** No game behaviour changed; full suite unchanged at 1,664 passing and 1 skipped.
+`audit_retail_messages.py` reports 36 `acts`, 5 `no audience`, 5 `no speaker`, 3 `diff world`, 17
+`cast-only`, 14 `unheard`.
