@@ -79,7 +79,17 @@ public class KistenianPetAI : PatternAi
 
         OnMessage = Of(
             Branch(13, "disperse", [When.Message(Disperse)],
-                Do.DespawnSelf())),
+                Do.DespawnSelf()),
+
+            // His three-second call, answered only by spirits that have drifted more than twenty
+            // metres from him. Retail also casts here, which does not resolve; the target switch does.
+            //
+            // Unpinned, deliberately. Observing it needs a spirit with no target that then acquires
+            // one, and an aggressive NPC in the harness targets anything spawned within reach before
+            // the message arrives — so the "before" state cannot be staged. The branch is what the
+            // message audit pairs 10014 against; the distance gate itself rests on the pattern dump.
+            Branch(12, "answer the call", [When.Message(LordCalls), When.MessageParamFartherThan(20)],
+                Do.SwitchTarget(AggroTarget.RANDOM))),
 
         OnDie = Of(
             Branch(15, "leave the effect", When.Always,

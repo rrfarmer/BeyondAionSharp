@@ -158,6 +158,19 @@ public static class When
     public static PatternCondition Decrement(int counter, int low, int high)
         => ai => ai.DecrementCounter(counter, low, high);
 
+    /// <summary>
+    /// <c>is_distance_longer_than(OBJI_MESSAGE_PARAM, n)</c> — the object the message carried is
+    /// further away than <paramref name="metres"/>.
+    /// </summary>
+    /// <remarks>
+    /// Retail uses this to make a call selective: Kistenian shouts to seventy-five metres every three
+    /// seconds, and only the spirits that have drifted more than twenty metres from him answer it, so
+    /// the call pulls stragglers back rather than churning the whole pack.
+    /// </remarks>
+    public static PatternCondition MessageParamFartherThan(int metres) => ai =>
+        ai.MessageParam is Aion.GameServer.Model.GameObjects.VisibleObject param
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), param, metres);
+
     /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
     public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 

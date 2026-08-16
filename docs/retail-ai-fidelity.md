@@ -3494,3 +3494,53 @@ message is unresolved.
 
 **Verification.** Full suite 1,314 passing and 1 skipped; the new pin fails when the
 broadcast is removed.
+
+---
+
+## A message audit, and what it found
+
+`tools/client-extract/audit_ai_messages.py` cross-references every `broadcast_message` and
+`on_message` in our AI classes: which numbers we send with nobody listening, and which we
+listen for with nobody sending. It exits non-zero when anything is unpaired, so it can gate
+a build.
+
+This check did not exist. Every port in this work was verified by asking *does this add
+spawn* — a question about adds — and the illusion gate shipped with a listener for 10009
+that its chamber lord never broadcast, in two classes committed one after the other.
+
+**Nine pairs matched.** Omega to its clone, Lord Lannok and the coffin both ways, the
+chamber lord to its gate, Teselik and his hands both ways, and Kistenian's three-way loop.
+
+**Two false starts in the tool itself**, worth recording because both would have made it
+useless:
+
+- scanning `case` labels anywhere in a file swept up skill ids from `OnEndUseSkill` and
+  state numbers from `MercenaryAI` — nineteen phantom "unpaired" messages. The scan is now
+  carved to the body of `OnNpcMessage` by brace depth.
+- a first pass missed hand-rolled listeners entirely, because they switch rather than using
+  `When.Message`, and so reported their senders as talking to nobody — exactly backwards.
+
+**Four remain unpaired, all understood:**
+
+| message | state |
+|---|---|
+| 21212, 21221 → `VritraRearguardAI` | listeners for NPCs not ported; already documented |
+| 6980 ← `MacunbelloSoulReaperAI` | predates this work, not investigated |
+| 10015 ← `KistenianPetAI` | retail's listener is a cast-only branch, and the cast does not resolve |
+
+### 10014 closed, and one thing left unpinned
+
+Kistenian's three-second call had no listener at all. Retail's fire spirit answers it with a
+target switch, gated on `is_distance_longer_than(OBJI_MESSAGE_PARAM, 20)` — only spirits
+that have drifted more than twenty metres reply, so the call pulls stragglers back rather
+than churning the pack. That is index-free and is now implemented, with a new
+`When.MessageParamFartherThan` condition.
+
+**The distance gate is not pinned.** Observing it needs a spirit with no target that then
+acquires one, and an aggressive NPC in this harness targets anything spawned within reach
+before the message arrives, so the "before" state cannot be staged. Three attempts went
+into the harness rather than the behaviour, and the test was removed rather than left
+asserting something weaker than it claimed. The branch's existence is what the audit pairs
+10014 against; the twenty-metre figure rests on the pattern dump alone.
+
+**Verification.** Full suite 1,314 passing and 1 skipped.
