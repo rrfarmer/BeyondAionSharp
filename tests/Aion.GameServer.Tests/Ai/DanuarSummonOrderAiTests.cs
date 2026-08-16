@@ -58,7 +58,7 @@ public sealed class DanuarSummonOrderAiTests
 
 		Assert.Equal(0, summon.GetAggroList().GetHate(named));
 
-		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.SummonOrder, named, 50f);
+		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.OrderMessage, named, 50f);
 
 		Assert.Equal(1, summon.GetAggroList().GetHate(named));
 		Assert.Same(named, summon.GetTarget());
@@ -83,7 +83,7 @@ public sealed class DanuarSummonOrderAiTests
 		BossAiHarness.MakeMutuallyKnown(summon, busyWith);
 		summon.GetAggroList().AddHate(busyWith, 500);
 
-		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.SummonOrder, named, 50f);
+		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.OrderMessage, named, 50f);
 
 		Assert.Equal(1, summon.GetAggroList().GetHate(named));
 		Assert.Same(busyWith, summon.GetTarget());
@@ -99,10 +99,10 @@ public sealed class DanuarSummonOrderAiTests
 		var (harness, queen, summon, named) = Called(Bodyguard);
 		using BossAiHarness _h = harness;
 
-		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.SummonOrder + 1, named, 50f);
+		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.OrderMessage + 1, named, 50f);
 		Assert.Equal(0, summon.GetAggroList().GetHate(named));
 
-		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.SummonOrder, named, 50f);
+		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.OrderMessage, named, 50f);
 		Assert.Equal(1, summon.GetAggroList().GetHate(named));
 	}
 
@@ -124,7 +124,7 @@ public sealed class DanuarSummonOrderAiTests
 			BossAiHarness.MakeMutuallyKnown(summon, named);
 		}
 
-		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.SummonOrder, named, 50f);
+		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.OrderMessage, named, 50f);
 
 		Assert.Equal(1, near.GetAggroList().GetHate(named));
 		Assert.Equal(0, far.GetAggroList().GetHate(named));
@@ -149,7 +149,7 @@ public sealed class DanuarSummonOrderAiTests
 		var (harness, queen, summon, _) = Called(Bodyguard);
 		using BossAiHarness _h = harness;
 
-		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.SummonOrder, null, 50f);
+		NpcMessageBus.Broadcast(queen, DanuarSummonOrderAI.OrderMessage, null, 50f);
 
 		Assert.Null(summon.GetTarget());
 	}

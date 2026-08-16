@@ -264,7 +264,7 @@ public class CursedQueenModorAI : AggressiveNpcAI, HpPhases.PhaseHandler
         Spawn(284382, 246.65663f, 275.51996f, 241.54623f, (sbyte)96);
 
         if (GetAggroList().GetTarget(AggroTarget.MOST_HATED) is Creature named)
-            NpcMessageBus.Broadcast(GetOwner(), DanuarSummonOrderAI.SummonOrder, named,
+            NpcMessageBus.Broadcast(GetOwner(), DanuarSummonOrderAI.OrderMessage, named,
                 DanuarSummonOrderAI.OrderRange);
     }
 

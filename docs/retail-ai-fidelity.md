@@ -7514,3 +7514,73 @@ its senders are patterns this work has not read.
 
 **Verification.** Full suite 1,652 passing and 1 skipped; eight new pins; four mutations, all caught.
 `audit_ai_messages.py` pairs 444 and is otherwise unchanged.
+
+## The same order, a second time — and it is now an op
+
+Frostmane Lestin turned out to be the other half of the shape found on Queen Modor. **All three of
+his summoning rungs** — at 66–90, 41–65 and 21–40 — place four elementals and then broadcast
+**6505** to fifty metres naming his current target, and the wave that has just arrived takes a hate
+point on that player and attacks.
+
+His spawn side was already right (bands, hand-over and fallback verified three entries ago). Only the
+order was missing.
+
+### One op, two encounters
+
+Rather than a second copy of the listener, the branch is now `Ai/SummonOrder.cs` — the same shape as
+`AttackAfterSpawn`, and for the same reason: the retail branch is identical across unrelated
+encounters and only the message number differs. It takes the `Npc` rather than its AI, because the
+aggro list and the state flip are reachable from the owner and protected on the AI, so one op serves
+any listener base.
+
+`DanuarSummonOrderAI` was rewired onto it in the same commit, which is what makes this a shared op
+rather than a copy.
+
+The listener covers all six `ND2_PnF` NPCs, not only Lestin's three waves. The other three are the
+fire elemental boss's **faithful servants**, and their master — `ND2_ElementalSu`, raging kraterr
+(211715) — runs on `summoner` and broadcasts 6505 from its own rungs in retail. Listing them here is
+deliberate: it is one retail pattern, and splitting it would leave the next reader to rediscover
+that. **That boss is the obvious next step**, and it is a boss's worth of work rather than a branch's.
+
+### Four pins that only exist because a mutation survived
+
+This encounter was unusually hard to pin honestly, and every difficulty was the same one: *the thing
+being asserted had a second cause.*
+
+- **The quarry stands forty-five metres out.** These elementals are aggressive and spawn within
+  fifteen metres of Lestin, so a quarry beside him is one they would find by themselves. Removing the
+  broadcast entirely survived until the player moved out of their sight and inside his fifty-metre
+  order.
+- **The listener is a stand-in placed before the fight, not one of the four he summons.**
+  `NpcMessageBus` walks the sender's known list, the harness runs no visibility, and the broadcast
+  sits in the *same branch* as the spawn — so an elemental he places is invisible to him at the
+  instant he calls out to it, and nothing a test does between ticks can change that. A listener that
+  was already known hears the same broadcast and pins the same fact. (A `MakeEveryoneKnown` helper was
+  written for this and then removed: it cannot help, because the gap is inside one branch.)
+- **The stand-in is deliberately not made known to the quarry.** Linking those two lets an aggressive
+  elemental find the player on its own, and the pin then passes whether or not the order named
+  anybody.
+- **The range is pinned against a literal**, as the Danuar one is.
+
+### A mutation that survived for a reason in the mutation
+
+"The order names nobody" survived a sweep, and the cause was the sweep rather than the pins: the
+edit replaced the *first* `aboutTarget: true` in the file, which is the 21–40 rung, while the pin
+under it drives 66–90. Re-run against all three sites and against the 66–90 site alone, it is caught
+both times.
+
+Worth keeping as a rule: **a mutation on a file with several identical call sites must say which one
+it is changing**, or a survivor means nothing. Every earlier sweep in this log mutated a unique
+string; this is the first file where that stopped being true.
+
+### And the registration trap, in a new form
+
+Repointing six templates to `elemental_wave` broke eight of `FrostmaneLestinAiTests` — the harness
+registers the AI classes it needs, and Lestin's waves were `aggressive` when those pins were written.
+This is the same trap recorded eight times already, but a distinct form of it: not "I forgot to
+register the add's class" but **"repointing a template breaks every existing harness that spawns
+it"**. Anything that changes an `ai=` attribute should be followed by a full-suite run before the
+class is even finished.
+
+**Verification.** Full suite 1,657 passing and 1 skipped; five new pins plus one harness registration
+fixed; seven mutations, all caught.

@@ -86,17 +86,20 @@ public class FrostmaneLestinAI : PatternAi
                 Do.ArmTimer(0, RungReArmMillis),
                 Do.Despawn(Group2),
                 Do.SpawnNear(ThirdWave, Group3, count: PerWave, range: LaterRing, liveSeconds: WaveLife),
+                Do.Broadcast(ElementalWaveAI.OrderMessage, ElementalWaveAI.OrderRange, aboutTarget: true),
                 Do.SwitchTarget(AggroTarget.LOWEST_HP)),
 
             Branch(4, "41-65", [When.Timer(0), When.HpBetween(41, 65), When.FirstTime(Below66)],
                 Do.ArmTimer(0, RungReArmMillis),
                 Do.Despawn(Group1),
                 Do.SpawnNear(SecondWave, Group2, count: PerWave, range: LaterRing, liveSeconds: WaveLife),
+                Do.Broadcast(ElementalWaveAI.OrderMessage, ElementalWaveAI.OrderRange, aboutTarget: true),
                 Do.SwitchTarget(AggroTarget.LOWEST_HP)),
 
             Branch(3, "66-90", [When.Timer(0), When.HpBetween(66, 90), When.FirstTime(Below90)],
                 Do.ArmTimer(0, RungReArmMillis),
-                Do.SpawnNear(FirstWave, Group1, count: PerWave, range: FirstRing, liveSeconds: WaveLife)),
+                Do.SpawnNear(FirstWave, Group1, count: PerWave, range: FirstRing, liveSeconds: WaveLife),
+                Do.Broadcast(ElementalWaveAI.OrderMessage, ElementalWaveAI.OrderRange, aboutTarget: true)),
 
             Branch(1, "", [When.Timer(0)],
                 Do.ArmTimer(0, IdleMillis))),

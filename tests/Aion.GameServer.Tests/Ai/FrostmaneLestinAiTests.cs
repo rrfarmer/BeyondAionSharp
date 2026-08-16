@@ -28,7 +28,7 @@ public sealed class FrostmaneLestinAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Beluslan).WithWorldSize(2048)
-			.WithAi(typeof(FrostmaneLestinAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(FrostmaneLestinAI), typeof(ElementalWaveAI), typeof(AggressiveNpcAI))
 			.Build();
 
 	private static (BossAiHarness, Npc, List<Player>) Engaged(int raidSize = 3)

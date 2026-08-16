@@ -1,6 +1,4 @@
 using Aion.GameServer.Ai;
-using Aion.GameServer.Ai.Event;
-using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Handlers.AI;
@@ -24,11 +22,9 @@ namespace Aion.GameServer.Handlers.AI;
 /// adds <em>onto a named player</em>.
 /// </para>
 /// <para>
-/// <b>Deliberately one point, and deliberately most-hated rather than the named player.</b> Retail's
-/// <c>add_hate_point</c> carries no value and its follow-up attacks the most-hated, not the message
-/// parameter. On a fresh summon those are the same thing. On one already fighting they are not, and
-/// reproducing the pair rather than collapsing it to "switch target" keeps that difference: a summon
-/// that has built real hate on somebody else stays on them, and the order does nothing.
+/// <b>Deliberately one point, and deliberately most-hated rather than the named player</b> — see
+/// <see cref="SummonOrder"/>, which is the shared op, and which the same branch in Frostmane Lestin's
+/// elementals uses.
 /// </para>
 /// <para>
 /// <b>Why a listener rather than a pattern.</b> These three run plain <c>aggressive</c> and their full
@@ -46,8 +42,11 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("danuar_summon_order")]
 public class DanuarSummonOrderAI : AggressiveNpcAI, INpcMessageListener
 {
-    /// <summary>Retail's message: the three she just called go to the player she named.</summary>
-    public const int SummonOrder = 444;
+    /// <summary>
+    /// Retail's message: the three she just called go to the player she named. Named for the message
+    /// rather than the op so it does not shadow <see cref="SummonOrder"/> at the call site below.
+    /// </summary>
+    public const int OrderMessage = 444;
 
     /// <summary>
     /// Retail's <c>range_as_meter</c> on the broadcast. Kept beside the message rather than with the
@@ -56,9 +55,6 @@ public class DanuarSummonOrderAI : AggressiveNpcAI, INpcMessageListener
     /// </summary>
     public const float OrderRange = 50f;
 
-    /// <summary>Retail's bare <c>add_hate_point</c>, which carries no value.</summary>
-    private const int OnePoint = 1;
-
     public DanuarSummonOrderAI(Npc owner)
         : base(owner)
     {
@@ -66,20 +62,9 @@ public class DanuarSummonOrderAI : AggressiveNpcAI, INpcMessageListener
 
     public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
-        if (messageType != SummonOrder || IsDead())
+        if (messageType != OrderMessage || IsDead())
             return;
 
-        if (param is not Creature named || named.IsDead())
-            return;
-
-        GetAggroList().AddHate(named, OnePoint);
-
-        // attack_most_hating: whoever that now is, which on a fresh summon is the player she named.
-        if (GetAggroList().GetTarget(AggroTarget.MOST_HATED) is not Creature mostHated)
-            return;
-
-        SetStateIfNot(AIState.FIGHT);
-        GetOwner().SetTarget(mostHated);
-        GetOwner().GetAi().OnCreatureEvent(AiEventType.Attack, mostHated);
+        SummonOrder.Take(GetOwner(), param);
     }
 }
