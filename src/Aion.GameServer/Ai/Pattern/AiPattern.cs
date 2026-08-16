@@ -193,6 +193,19 @@ public static class When
     public static PatternCondition Idle => ai => !ai.InCombat;
 
     /// <summary><c>is_message</c> — this branch belongs to one designer-assigned message number.</summary>
+    /// <summary>
+    /// <c>is_distance_shorter_than who=OBJI_CUR_TARGET</c> — the NPC it is fighting is inside
+    /// <paramref name="metres"/>.
+    /// </summary>
+    /// <remarks>
+    /// Retail uses this to make a branch melee-only. The krall trappers' escape rung is the case that
+    /// needed it: they lay their heavy trap and run <em>only</em> when something is standing on top of
+    /// them at six metres, so a ranged group never sees it. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public static PatternCondition TargetWithin(int metres) => ai =>
+        ai.CurrentTarget is Aion.GameServer.Model.GameObjects.Creature target
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), target, metres);
+
     public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 
     /// <summary>

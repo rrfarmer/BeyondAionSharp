@@ -8378,3 +8378,84 @@ unseen because the first reading was at two seconds and the ladder's first tick 
 peel's re-arm went unseen because one firing satisfied the pin. And nothing followed an elemental as
 far as its five minutes. The first two are new; the third is the lifetime mistake this suite has now
 made six times, and `BossAiHarness.Watch` only helps when you are counting rather than following.
+
+## The krall trappers — twenty-five world NPCs that were supposed to be laying traps
+
+`NKrall_ReA`, `NKrall_ReB`, `NKrall_ReC` and `Nkrall_RhA` bind to **twenty-five npcs our world
+spawns** — the kaidan and kishar scouts, loudmouths, lancers, chuckers and Chieftain Kurka across
+Beluslan and Morheim. Every one of them was on plain `aggressive`. They lay traps; the traps
+(280449–280452) already had an AI; **nothing had ever placed one**.
+
+A trap goes down at the krall's feet when the fight starts and another every twenty seconds. The
+heavy trappers add one more rung: below thirty-five percent, **once**, a *powerful* trap — guarded on
+`is_distance_shorter_than OBJI_CUR_TARGET distance=6`, so a group killing them at range never sees it
+at all. That guard needed a new condition, `When.TargetWithin`, and it is the first branch in this
+work that is melee-only.
+
+### `live_time` on a trap is a ceiling, not a duration
+
+The four patterns give their traps wildly different lifetimes — none at all, sixty seconds, fifty
+minutes — and it reads like a mechanic. It is not. `NTrapAI` fires the trap's one skill on waking and
+removes it when that lands, **measured at about five seconds**, so a trap is a one-shot area effect
+wherever it comes from and the lifetime only ever mattered for a trap nobody triggered. Two pins were
+written against the difference before it was measured, and both were wrong. Carried as written and
+recorded, so the numbers are not mistaken for a mechanic again.
+
+### Two things retail guards twice, and one pin that had to be deleted
+
+The escape rung carries a flag var **and** declines to re-arm timer 0. Either alone limits it to one
+firing, because the only other branch on that slot is a bare re-arm — so **removing either guard
+changes nothing we can measure**. A pin was written for the missing re-arm, it passed for the wrong
+reason, and it was deleted rather than contorted; the flag var is left as a deliberate mutation
+survivor. Both guards are carried. The redundancy is presumably retail's: there the krall runs after
+laying it, and the dead clock is what stops it turning round to try again.
+
+**Rule: when two guards enforce the same limit, at most one of them is pinnable — say which, and stop.**
+A pin that cannot fail is worse than no pin, because it reads as coverage.
+
+### The largest piece of vocabulary we are still missing
+
+Every one of these patterns ends its escape or its trap loop with `flee_from`, and answers
+`on_stop_to_flee` when it stops running. We have neither. Counted across the 5.8 dump:
+
+| action | uses | patterns |
+|---|---|---|
+| `goto_waypoint` | 1,112 | — |
+| **`flee_from`** | **353** | **226** |
+| `random_move` | 187 | — |
+| `on_stop_to_flee` | 138 | — |
+
+After waypoints it is the single largest gap, and unlike waypoints it is not obviously out of reach:
+`AIState.FEAR` already exists and `EffectController.IsUnderFear` already drives player movement. What
+is missing is an NPC flee that the AI can start deliberately rather than as a debuff, and a
+`stop_to_flee` event when it ends. **The blocker for translating it is testing, not writing:** the boss
+harness has no geodata and no visibility, so nothing about where an NPC runs to can be pinned there.
+Recorded with its size so the next attempt starts from what it buys.
+
+### Also not translated
+
+Two skill indices per pattern; the `say_to_all` lines, which have no `npc_shouts.xml` row; the `1001`
+broadcast on stopping fleeing, unreachable for the same reason as the flee; and the **`6199`** listener
+on the scouts and Kurka — a trap telling the krall who tripped it, whose only retail sender is pattern
+`D2_Trap`, which binds to no npc our world places.
+
+**`D2_Trap` is very probably these four traps' own pattern**, and it is worth writing the evidence down
+rather than losing it: its shape is `on_wake_up` → broadcast `6199`, cast, `despawn_self`, which is
+`NTrapAI`'s shape plus the broadcast; the traps are already on `ntrap` by somebody's earlier judgement;
+and the only listeners for `6199` anywhere in the dump are exactly the krall patterns above. Three
+strands agreeing is usually enough — but the binding table does not resolve it, and wiring a mechanic
+on an inference is how the `_Source`/`_Change_Failed` mistake happened earlier in this work. Left as a
+lead.
+
+### Verification
+
+Full suite **1,766 passing** and 1 skipped; nine new pins; twelve mutations, eleven caught and one
+deliberate survivor. Adds 413 across 315 → **397 across 307**; missing-AI unchanged at 716, which is
+the same story as the Dragon Lord's Refuge entry — these patterns are small and that audit ranks by
+timer count.
+
+Two of the three repairs were the lifetime mistake again, in a new disguise: a trap that fires and
+vanishes cannot be counted on the ground at all, so `AnUnpulledKrallLaysNothing` passed for a mutation
+that made an idle krall lay one. That is the **seventh** time in this suite. The third was a threshold
+pin that only read at full health, which a `below` guard cannot fail — brackets now come from above as
+well.
