@@ -191,6 +191,18 @@ public sealed class BossAiHarness : IDisposable
 	/// </remarks>
 	public static void Rehate(Npc npc, Creature attacker) => npc.GetAggroList().AddHate(attacker, InitialHate);
 
+	/// <summary>
+	/// Records damage as well as hate, which is what makes an attacker the <em>killer</em>.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="Rehate"/> only moves the hate list, and hate is not who killed anything: the server
+	/// credits a kill by most damage, and so does <see cref="Aion.GameServer.Ai.Pattern.PatternAi.Killer"/>.
+	/// A pin for a death branch that spawns on its killer has to put damage on the list or the branch
+	/// finds nobody and silently does nothing.
+	/// </remarks>
+	public static void Wound(Npc npc, Creature attacker, int damage = 100) =>
+		npc.GetAggroList().AddDamage(attacker, damage, notifyAttack: false, hopType: null);
+
 	/// <summary>Makes two objects visible to each other, which aggro and message broadcast both require.</summary>
 	public static void MakeMutuallyKnown(VisibleObject a, VisibleObject b)
 	{

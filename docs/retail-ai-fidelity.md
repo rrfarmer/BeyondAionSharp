@@ -8539,3 +8539,59 @@ Three skill indices on each family — the Stronghold mages' area attack and hea
 the Dreadgion ones' stumble attack, ranged attack and area fire — and the cast the barrier opens with.
 Retail's `set_idle_timer delay=0` in the barrier's despawn branch, which our runtime does on reset
 anyway.
+
+## The Abyss undead — killing one is a coin flip, and it lands on you
+
+Eight retail patterns (`AD2_UnDeadFi_Da`, `_Fi_Li`, `_Pr_Da`, `_Pr_Li`, `_Ra_Da`, `_Ra_Li`, `_Wi_Da`,
+`_Wi_Li`) bind to **twenty-one spawned npcs** — the eternal and immortal warriors, fencers, guards,
+mages and healers of the lower Abyss. All twenty-one were on plain `aggressive`. All eight patterns are
+identical in the part that can be translated, and it is one branch:
+
+> **Half the time, killing one leaves a *fear* (290137) standing on the player who brought it down, for
+> six minutes.**
+
+Not near the corpse and not on the tank — on the killer, forty metres away if that is where the killer
+was standing. It is what makes clearing a field of them a decision rather than a chore, and it is the
+kind of mechanic that is invisible in a spawn table because the add belongs to no encounter.
+
+### New vocabulary: `OBJI_KILLER`
+
+`spawn_on_target target_obj=OBJI_KILLER` had never come up in this work, and the pattern runtime had no
+way to say who had killed anything. `PatternAi.Killer` now reads `AggroList.GetMostPlayerDamage()` —
+**most damage, not most hate** — because that is the lookup the rest of the server already treats as
+the killer; it is the same one loot ownership uses. Reading it as most-hated would have handed the fear
+to the tank in every group, which is the opposite of the mechanic, and that mutation is one of the six
+the sweep catches.
+
+`BossAiHarness.Wound` came with it. `Rehate` only moves the hate list, and a pin for a death branch that
+spawns on its killer finds nobody unless damage is on the list — the branch would silently do nothing
+and the pin would read as coverage.
+
+### Pinning a coin flip, again
+
+Twenty separate kills per pin, counting how many left a fear, and asserting the count is neither near
+zero nor near twenty. The same shape as the drakan's opening peel two entries ago and for the same
+reason: **a probability branch cannot be pinned by one trial, and a long window measures whatever else
+is running in it.** Repeated fights are the instrument for a rung that fires once.
+
+### Not translated
+
+Two skill indices: the cast on engaging, and a self-cast on being hit or spelled below thirty-five
+percent — a fifty-percent, once-a-fight reaction whose entire content is that cast. The `say_to_all` on
+the death branch, which has no `npc_shouts.xml` row.
+
+And the branch's **`is_race` guard**, which appears in the dump with no argument at all — the same
+unreadable element recorded against the sealed akaimum. There the mechanic was inferable from the
+sender's npc id; here nothing recovers it, because the Elyos-side and Asmodian-side patterns spawn the
+*same* npc, so whatever it distinguishes is not the summon. Dropped rather than guessed at, which means
+our version fires for any killer. **That is a widening, and it is deliberate: a guard whose argument is
+not in the data cannot be honoured, and inventing one would be our mechanic rather than retail's.**
+
+Retail also declares no spawn group (`SPAWN_ID_NONE`), so nothing ever clears these as a set — the six
+minutes are the only thing that removes them. Carried as written.
+
+### Verification
+
+Full suite **1,781 passing** and 1 skipped; five new pins; six mutations, all caught. Adds 390 across
+303 → **382 across 295**; missing-AI unchanged at 709, for the usual reason — these patterns have no
+battle timers at all, and that audit ranks by timer count.

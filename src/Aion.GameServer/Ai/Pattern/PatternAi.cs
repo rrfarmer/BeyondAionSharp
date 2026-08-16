@@ -100,6 +100,17 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     public int HpPercent => GetLifeStats().GetHpPercentage();
 
+    /// <summary>
+    /// <c>OBJI_KILLER</c>: the player retail would credit with the kill.
+    /// </summary>
+    /// <remarks>
+    /// Read as most-damage rather than most-hated, because that is what the rest of the server already
+    /// treats as the killer — it is the same lookup loot ownership uses. A death branch that spawns on
+    /// its killer is a real family of mechanics (the Abyss undead are twenty-one npcs of it), and
+    /// nothing in the pattern runtime could say who that was. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public Player? Killer => GetAggroList().GetMostPlayerDamage();
+
     public Creature? CurrentTarget => GetOwner().GetTarget() as Creature
         ?? GetAggroList().GetTarget(AggroTarget.MOST_HATED);
 
@@ -576,6 +587,13 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary>Spawns around whoever this NPC is facing, which is where <c>spawn_on_target</c> puts them.</summary>
     public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds)
         => SpawnOnTarget(npcId, spawnId, count, range, liveSeconds, attackHate: 0);
+
+    /// <summary><c>spawn_on_target target_obj=OBJI_KILLER</c>.</summary>
+    public void SpawnOnKiller(int npcId, int spawnId, int count, float range, int liveSeconds)
+    {
+        if (Killer is Player killer)
+            SpawnAround(killer.GetPosition(), npcId, spawnId, count, range, liveSeconds);
+    }
 
     /// <summary>
     /// <c>spawn_on_target</c>, optionally with <c>attack_target_after_spawn</c>: the adds land on
