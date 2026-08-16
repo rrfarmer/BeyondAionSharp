@@ -4507,3 +4507,39 @@ call, not a mechanical one.
 **What this does not block.** A pattern that places absolutely and merely *hands* the spawn a path to
 walk afterwards is fine: the mark is in the pattern, only the walking is lost. The Vritra callers are
 exactly that shape and shipped. The 46 are the ones where the path start **is** the placement.
+
+### Shadowshift, and the first `spawn_on_multi_target` boss
+
+The Catacombs boss (216247 and 281546, both on plain `aggressive`), and the first encounter ported
+where the adds are **per player rather than per boss**. `spawn_on_multi_target` puts one spectre on
+*every* valid target within a hundred metres, each attacking whoever it landed on, and nothing caps
+the count — so a larger group gets proportionally more. That is the mechanic, not an oversight, and it
+is why this fight scales with the group where a fixed wave at the boss's feet does not.
+
+Two spectre timers run at once: a Sum1 three metres out, first at ten seconds then every twenty-five;
+a Sum2 ten metres out, first at seven seconds then **every four**. Neither spectre was spawned by
+anything.
+
+**Casts not translated:** four indices against fewer skills than that. Going with them is the whole
+`on_attacked`/`on_spelled` surface — a four-rung health ladder of self-casts plus a near/far pair —
+and the timer-2 branch, all of it casting. Also out: `control_door` on leaving the fight, since our
+door handling lives in the instance and the pattern does not say which door.
+
+### Two pins that were measuring the harness rather than the boss
+
+**Scatter wider than the spacing.** The pin for "each spectre lands on its own player" assigns each
+spectre to its nearest player. With the players four metres apart and retail scattering each spectre
+ten metres around its target, a spectre routinely lands nearer somebody else — two players duly
+claimed three spectres. They stand twenty-five apart now, comfortably outside the scatter.
+
+**A limit worth recording.** Watching the four-second repeat past about thirteen seconds fails, and
+not because of this boss: the near spectre's own `servant` AI starts casting into the harness's
+stand-in player and `Effect.ApplyEffect` throws a `NullReferenceException`. The stand-in is
+deliberately minimal — invulnerable, with no real effect graph — so this is a harness limit rather
+than a server bug, but it **bounds what any pin here can watch**. The repeat is measured at seven and
+eleven seconds, short of it. Anything in this fight that only becomes visible after the spectres start
+casting cannot currently be pinned.
+
+**Where the count went.** 566 across 387 encounters → **562 across 385**.
+
+**Verification.** Full suite 1,377 passing and 1 skipped; seven new pins; all six mutations caught.
