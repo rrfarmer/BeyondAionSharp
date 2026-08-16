@@ -6431,3 +6431,47 @@ the Nepilim boss (`IDTP_NepBoss1`, add 281421).
 
 **Verification.** Full suite 1,527 passing and 1 skipped; seven new pins; eight mutations, seven
 caught and one that will not compile.
+
+## Two more of Lower Udas Temple, and a summon table that was already right
+
+**Anvilface** (`IDTP_NepEx1`) was on plain `aggressive` with the one NPC his fight is made of —
+*shatter* (281424) — reachable by nobody. Two one-shot calls, at fifty percent and again at
+thirty, and **both go to the third-most-hated**. Not the tank, not a random player: third, both
+times, which in a party is the second damage dealer or a healer who has been working. They hang
+off `on_attacked`, so they land on the blow that crosses the threshold rather than on the next
+tick after it.
+
+**Debilkarim the Maker** (`IDTP_NepBoss1`) is the more interesting half, because **his summon
+table was already correct**. Somebody had matched the seven `protection of aion` and their four
+rings — two at five metres, two at ten, two at fifteen, one at twenty — to the pattern exactly.
+
+What a percentage table cannot express is the rest of his fight: below nineteen percent, **one hit
+in ten**, three *pyre souls* on whoever he is fighting. A `<percentage>` row has no way to say
+"sometimes", so that NPC was reachable by nothing. Moving him onto the pattern runtime keeps the
+ring and adds the roll; the now-dead table row is removed.
+
+**Two pins that passed for the wrong reason**, both familiar shapes:
+
+- *"The shatter arrives already fighting"* asserted its target. The shatter is `aggressive` and
+  lands on top of the player, so it engages by itself within the tick — the target reads the same
+  whether or not the flag is honoured. The **hate** is the fingerprint: natural aggression is one
+  point, retail's `hatepoints_to_add` of one goes on top, so two.
+- *"The pyre souls come in threes"* checked `souls % 3 == 0` over four hundred hits — which is
+  just as true when every hit calls them. An upper bound turns it into a test of the roll: one in
+  ten of four hundred is about a hundred and twenty souls, and every hit calling would be twelve
+  hundred.
+
+**A note on the probabilistic branch.** The ten percent cannot be pinned deterministically — the
+limitation recorded against the Conquest rotation's shugo odds still stands — but it can be
+bounded from both sides, and that is enough to catch both the "always" and the "never" mutations.
+Worth remembering the next time a `test_probability` shows up: bounding beats sampling.
+
+**Still not translated on either boss:** the invisible controllers they drop on dying. Each is one
+line — broadcast **6956** to fifty metres and remove itself — and the four patterns that listen for
+it (`IDTP_Keeper2`, `IDTP_NepBoss2`, `IDTP_NepBoss3`, `IDTP_NepEx2`) are all untranslated. A sender
+with no listener, so it waits for those four.
+
+**Where the count went.** 446 across 339 encounters → **445 across 338**; missing-AI 736 → 735.
+
+**Verification.** Full suite 1,535 passing and 1 skipped; eight new pins; nine mutations, eight
+caught and one that will not compile.

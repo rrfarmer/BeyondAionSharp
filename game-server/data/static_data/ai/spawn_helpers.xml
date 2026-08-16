@@ -826,16 +826,6 @@
 		</summons>
 	</ai>
 	<!-- Debilkarim the Maker. Retail pattern IDTP_NepBoss1 calls all seven guardians at once below half health, in rings at 5, 10, 15 and 20m. -->
-	<ai npcId="215795">
-		<summons>
-			<percentage percent="51">
-				<summonGroup npcId="281420" minCount="2" distance="5"/>
-				<summonGroup npcId="281420" minCount="2" distance="10"/>
-				<summonGroup npcId="281420" minCount="2" distance="15"/>
-				<summonGroup npcId="281420" minCount="1" distance="20"/>
-			</percentage>
-		</summons>
-	</ai>
 	<!-- Apostate Alchemist. Retail pattern LF4_Fanatic_WnB raises its earth spirit at 50% HP. -->
 	<ai npcId="215670">
 		<summons>
