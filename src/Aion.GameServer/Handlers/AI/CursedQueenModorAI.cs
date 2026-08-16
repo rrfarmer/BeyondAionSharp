@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
@@ -242,11 +243,29 @@ public class CursedQueenModorAI : AggressiveNpcAI, HpPhases.PhaseHandler
             Spawn(GetFakeCloneId(), 284.6919f, 262.7201f, 248.75252f, (sbyte)63);
     }
 
+    /// <summary>
+    /// The pillar trio, and the order that comes with them.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. Every branch of <c>Rune_FrostNmd_N_65_Ah</c>
+    /// that places these three follows the spawns with <c>broadcast_message 444</c> to fifty metres,
+    /// naming <b>her current target</b>. All six summon patterns answer it by taking a hate point on
+    /// that player and attacking whoever is then most-hated — which, on a summon that has just
+    /// appeared and holds no hate, is the player she named. She does not call three adds; she calls
+    /// three adds <em>onto someone</em>. See <see cref="DanuarSummonOrderAI"/>.
+    /// <para>
+    /// Sent after the spawns, as retail sends it, so the three are already in the world to hear it.
+    /// </para>
+    /// </remarks>
     private void SpawnAdds()
     {
         Spawn(284380, 266.26517f, 273.97614f, 241.54623f, (sbyte)83);
         Spawn(284381, 256.57727f, 278.18225f, 241.54623f, (sbyte)90);
         Spawn(284382, 246.65663f, 275.51996f, 241.54623f, (sbyte)96);
+
+        if (GetAggroList().GetTarget(AggroTarget.MOST_HATED) is Creature named)
+            NpcMessageBus.Broadcast(GetOwner(), DanuarSummonOrderAI.SummonOrder, named,
+                DanuarSummonOrderAI.OrderRange);
     }
 
     private void QueueSkill(int id, int lvl)

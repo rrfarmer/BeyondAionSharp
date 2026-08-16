@@ -7456,3 +7456,61 @@ that should be checked against retail spawn tables rather than invented.
 **Verification.** No game behaviour changed; full suite unchanged at 1,644 passing and 1 skipped.
 `audit_retail_messages.py` reclassifies ten findings and its sender scan now counts every broadcast,
 including those beside a cast — without that the time-over rescue's real sender was invisible.
+
+## Queen Modor called three adds; she was meant to call them onto someone
+
+With the message audit's noise classified, the remaining `acts` findings sort by one question: **can
+the listeners act, on NPCs our world actually places?** Message **444** is the best answer in the
+list, and it belongs to a boss already on our server.
+
+Every branch of `Rune_FrostNmd_N_65_Ah` that teleports Queen Modor to a pillar and places her three
+summons at fixed coordinates follows the spawns with `broadcast_message 444` to fifty metres, naming
+**her current target**. All six summon patterns answer it identically: `add_hate_point` on the player
+she named, then `attack_most_hating`.
+
+`CursedQueenModorAI.SpawnAdds()` already placed the three at exactly retail's coordinates. It sent
+nothing, so they arrived and picked their own quarry.
+
+**A summon that has just appeared holds no hate at all**, which is why one point is enough — it makes
+the named player the most-hated by itself. That is the mechanic: she does not summon three adds, she
+summons three adds *onto somebody*.
+
+### The pair is reproduced, not collapsed
+
+`add_hate_point` + `attack_most_hating` is not "switch to the named player", and the difference is
+observable: a summon that has built real hate on somebody else **stays on them** and the order does
+nothing. Collapsing the two into a target switch would be a stronger mechanic than retail ships, so
+the listener adds one point and then attacks whoever is most-hated, exactly as written.
+
+This is also the first of the `add_hate_point` findings that turned out to be portable. The limit
+recorded two entries ago still stands — `ServantNpcAI` captures its target at spawn, so a re-aim has
+nothing to act on — but **these eighteen summons are `aggressive`, not `servant`**, so it does not
+apply. Worth stating as the rule: *that* limit is about the listener's AI base, not about the message
+shape, and it has to be checked per encounter rather than assumed from the branch.
+
+### Two pins that existed only because a mutation survived
+
+- **The range.** The behavioural pin broadcasts at fifty metres and checks who hears it, which passes
+  for any range the pin and the sender happen to share. Widening the order to the whole room survived
+  the sweep until a pin asserted the constant against a literal fifty. The constant now lives beside
+  the message on the listener rather than with the sender, because the two are one fact about the
+  order and a sender that invented its own range would be a different mechanic.
+- **The message number.** Answering *any* message survived until a pin sent the wrong one first —
+  the fourth time this session, and by now an expected outcome rather than a surprise.
+
+### And a harness detail worth keeping
+
+The "already fighting somebody else" pin first used a second NPC as the thing the summon was busy
+with, and failed: the aggro list only offers a valid **enemy** as most-hated, and two NPCs of one
+tribe are not enemies. The stand-in read as "no hate at all" and the pin would have passed for the
+wrong reason. **A pin about hate ordering needs players on both sides**, or it is not testing
+ordering at all.
+
+### Still not translated here
+
+Everything else in those six summon patterns, which is casts. And message **104**, the other number
+the audit reports on this family: its listeners are the Dramata drakan rather than these summons, and
+its senders are patterns this work has not read.
+
+**Verification.** Full suite 1,652 passing and 1 skipped; eight new pins; four mutations, all caught.
+`audit_ai_messages.py` pairs 444 and is otherwise unchanged.
