@@ -8037,3 +8037,97 @@ thread is closed rather than left open.
 **Verification.** Full suite 1,699 passing and 1 skipped; eleven new pins; ten mutations, all caught
 after the four repairs above. Missing-AI 724 → **723**, and both other audits unchanged at two triaged
 findings and seven unpaired messages.
+
+## Deputy Hanuman and Missing Indratu — the adds are the same four, re-forged twice
+
+`NDrakan_KhB` binds to **212306 deputy hanuman** and **280751 missing indratu**, two LEGENDARY
+captains in Heiron. Both were on plain `aggressive` with no class at all, and between them they were
+the second of the three spawn-carrying named bosses left at the top of `audit_missing_ai.py`. Their
+three summons — 280752, 280753, 280754, `BLF3_NM_DrakanDF3Slave1/2/3_48_Ae` — appear in no spawn file
+and were called by nothing.
+
+### The mechanic the spawn list cannot show
+
+The three summons **share one display name**, "faithful subordinate", and differ only in id. That is
+not an accident of the data: they are one add in three forms, and the fight is the escalation between
+them.
+
+| band | what he does |
+|---|---|
+| 91–100 | the six-second clock, and casts |
+| 71–90 | two subordinates, ten metres out, thirty minutes |
+| 51–70 | two more, into the same group |
+| 31–50 | broadcast `5001` — **every subordinate sheds itself for the second form** — and five seconds later two already-changed ones arrive |
+| below 30 | broadcast `5002` — **they all change again** — and the clock stops |
+
+So a raid that kills the adds each time meets four weak ones over the fight; a raid that ignores them
+meets six of the strongest. The count only ever goes 2 → 4 → 6, but what those six *are* is decided
+by how long the earlier ones were left alive. Reading the spawn table alone gives three unrelated
+waves of two and misses the whole thing.
+
+`NDrakan_ChSlave4` carries the first change and `NDrakan_Chslave5` the second, and they are not
+symmetrical: the first form arms a **two-second battle timer** and changes when it fires, the second
+changes in the same beat as the message. That gap is the difference between the change reading as a
+stagger down the pack and reading as a blink.
+
+### Two peels, and the pick changes
+
+Each band arms its own alarm. When it rings he tells the group to re-pick (`6001`) and turns on the
+**third-most-hated** player — behind the tank and the off-tank. The 71–90 and 31–50 alarms alternate
+between two timer slots so they keep ringing for as long as the band lasts; the 51–70 one rings once
+and hands over to a cast loop, so that band peels exactly once.
+
+Below thirty the pick changes: timer 9 re-arms itself every twenty-eight seconds and takes the
+**lowest health fraction** in the room instead. That is what makes the last third the dangerous part
+of the fight, and it is the second use of `AggroTarget.LOWEST_HP` since it was added.
+
+The two forms answer `6001` differently too — the first takes a random attacker, the second takes
+whoever is closest to dying — so the pack itself gets harder to peel off a healer as it escalates.
+
+### The stop is only visible if you heal him
+
+The below-thirty rung is the only one that does not re-arm timer 0. Below thirty that looks free:
+every band rung is out of range anyway, so a mutation that re-arms the clock there changes nothing a
+pin sitting at twenty percent can see. It costs a whole wave the moment a healer brings him back up
+into 31–50 — the rung would fire, and with the stop in place it cannot. That case is now pinned
+directly, and it is the same lesson Bollvig's sweep taught one entry ago in a new disguise: **a pin
+that never moves the boss between bands cannot see a rung that only matters between bands.**
+
+### Not translated
+
+Eight skill indices and the four branches that are nothing but casts — the 91–100 timer-1 loop, the
+51–70 timer-4 loop and the cast halves of the peel rungs. The `6001` sent below thirty, whose only
+audience by then is 280754, whose whole pattern (`NDrakan_ChSlave6`) is a single `use_skill`.
+`on_see_friend_killed_by_user` on all three forms, an event our runtime does not raise — retail uses
+it to make a subordinate leave when it watches another die to a player, which is why a pack thins out
+rather than fighting to the last. And `despawn_at_attack_state=TRUE` on all three spawns, left to
+`live_time` for the reason already recorded against the Abyssal Reliquary flying worm: retail
+declares no despawn handler in this pattern, so writing one would be our behaviour and not theirs.
+
+**The four `say_to_all` lines are refused for a reason worth stating.** `STR_CHAT_CoDragon_AIPattern_4`,
+`_33`, `_57` and `_59` have no row in `npc_shouts.xml` for any of these five npcs, and `Do.Say` takes
+our own numeric string id. There is nothing to say them with, and inventing an id would put arbitrary
+text in a boss's mouth. This is the general shape of the remaining shout gap and not specific to
+Hanuman.
+
+### A note on the other faction's mirror
+
+`5001`, `5002` and `6001` are also answered by `NDrakan_ChSlave1/2/3` — 280685, 280686, 280687, the
+`BDF3_` Asmodian-side summons of a different captain. Their handlers are **not** the same: ChSlave1's
+`5001` turns it into 280686 outright, and their `6001` is the `add_hate_point` + `attack` summon-order
+shape rather than a re-pick. Porting those onto Hanuman's adds would have given the Elyos captain the
+Asmodian one's fight. The binding table is what separated them, and it is the third time this session
+that a message number shared across two encounters needed the `--binding` check before it could be
+read at all.
+
+### Verification
+
+Full suite **1,714 passing** and 1 skipped; fifteen new pins; thirteen mutations, all caught after the
+lifetime pin below was added. Missing-AI 723 → **722**; adds 426 across 322 → **424 across 321**;
+`audit_pattern_guards.py` unchanged at two triaged findings and `audit_ai_messages.py` at seven
+unpaired.
+
+The one mutation that survived the first sweep was **the 31–50 wave keeping the first form's thirty
+minutes instead of its own twenty**. Every other pin reads a count within a minute of the wave
+landing, and at that range twelve hundred seconds and eighteen hundred are indistinguishable. Pinned
+by outliving it, which is the only way a `live_time` is observable at all.
