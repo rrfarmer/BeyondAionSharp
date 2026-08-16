@@ -297,4 +297,46 @@ public sealed class GuardReinforcementAiTests
 		Assert.True(toQuarry < toGuard,
 			$"the wave should land on the quarry: {toQuarry:F1}m from it, {toGuard:F1}m from the guard");
 	}
+
+	/// <summary>
+	/// A wave lives as long as its own pattern says, not as long as the first guard read did.
+	/// </summary>
+	/// <remarks>
+	/// The garrison patrol's reinforcements last a hundred seconds where Nina's last ten minutes, and
+	/// the class hardcoded ten minutes for everyone. That was right for the guards it was written
+	/// against — every branch the extractor could then see carried <c>live_time=600</c> — and wrong for
+	/// the family: the ops it could not see, and the drakan guards it did not match at all, carry a
+	/// hundred. A constant taken from a uniform subset is a constant that will be wrong as soon as the
+	/// subset grows.
+	/// <para>
+	/// What separates the two is where the population <b>plateaus</b>, not any single wave. The patrol
+	/// calls every twenty seconds and never stops, so waves accumulate until the oldest start
+	/// expiring: at a hundred seconds that settles around five calls' worth, at ten minutes it keeps
+	/// climbing. Ninety seconds tells them apart not at all — nothing has expired yet under either —
+	/// which is what the first version of this pin asserted.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWaveLivesForItsOwnPatternsLifetime()
+	{
+		BossAiHarness harness = BossAiHarness.For(Reshanta).WithWorldSize(4096)
+			.WithAi(typeof(GuardReinforcementAI), typeof(ServantNpcAI), typeof(AggressiveNpcAI)).Build();
+		using BossAiHarness _h = harness;
+		Npc guard = harness.Spawn(GarrisonPatrol, 300f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(360f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, quarry);
+		BossAiHarness.SetHpPercent(guard, 20);
+		harness.Engage(guard, quarry);
+
+		BossAiHarness.Watched run = harness.Watch(
+			300, () => BossAiHarness.Rehate(guard, quarry), PatrolAttacker, PatrolHealer);
+
+		Assert.True(run.Total > 10, $"five minutes of calls should be more than ten arrivals: {run.Total}");
+
+		// Five minutes of twenty-second calls is around fifteen waves. With a hundred-second lifetime
+		// only the last five or so are still standing; with ten minutes, all of them would be.
+		int standing = Count(harness, PatrolAttacker) + Count(harness, PatrolHealer);
+		Assert.True(standing < run.Total / 2,
+			$"a hundred-second wave should have retired most of {run.Total} arrivals, {standing} standing");
+	}
 }

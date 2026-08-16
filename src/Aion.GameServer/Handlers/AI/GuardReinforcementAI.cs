@@ -57,9 +57,10 @@ internal static class GuardReinforcementPatterns
     /// <summary>Timer 2 carries only casts, but it is armed so the table still reads against retail.</summary>
     private const int CastTimerMillis = 10000;
 
-    /// <summary>Ten minutes, three metres out — the same on every branch in the family.</summary>
-    private const int ReinforcementLife = 600;
-    private const float Nearby = 3f;
+    // Lifetime and range come from the table rather than a constant. They were uniform across the
+    // abyss guards -- ten minutes, three metres, on every branch -- which is why they were hardcoded
+    // when only those were covered. The drakan guards give a hundred seconds and one to three metres,
+    // so the constant was right for the set it was written against and wrong for the family.
 
     /// <summary>
     /// One pattern per guard npc id. Built on demand because the table differs per guard and a
@@ -95,10 +96,10 @@ internal static class GuardReinforcementPatterns
                 // spawn_on_target puts the wave on whoever the guard is fighting, which is a
                 // materially different fight from a wave at its own feet.
                 actions.Add(band.OnTarget
-                    ? Do.SpawnOnTarget(summonId, Called, count: count, range: Nearby,
-                        liveSeconds: ReinforcementLife)
-                    : Do.SpawnNear(summonId, Called, count: count, range: Nearby,
-                        liveSeconds: ReinforcementLife));
+                    ? Do.SpawnOnTarget(summonId, Called, count: count, range: band.Range,
+                        liveSeconds: band.LiveSeconds)
+                    : Do.SpawnNear(summonId, Called, count: count, range: band.Range,
+                        liveSeconds: band.LiveSeconds));
             }
 
             PatternCondition[] guards = band.Chance >= 100

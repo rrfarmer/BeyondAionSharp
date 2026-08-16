@@ -40,8 +40,15 @@ internal static class GuardReinforcements
     /// True when retail uses <c>spawn_on_target</c> — the wave lands on whoever the guard is
     /// fighting rather than at the guard's own feet, which is a different fight for the raid.
     /// </param>
+    /// <param name="LiveSeconds">
+    /// Retail's <c>live_time</c>. Not uniform across the family: the abyss guards give their
+    /// reinforcements ten minutes, the drakan guards a hundred seconds.
+    /// </param>
+    /// <param name="Range">Retail's <c>spawn_range</c>, one to three metres depending on the guard.</param>
     /// <param name="Summons">npc id and count, in the order the pattern lists them.</param>
-    internal readonly record struct Band(int Low, int High, int Chance, bool OnTarget, (int NpcId, int Count)[] Summons);
+    internal readonly record struct Band(
+        int Low, int High, int Chance, bool OnTarget, int LiveSeconds, float Range,
+        (int NpcId, int Count)[] Summons);
 
     internal static readonly IReadOnlyDictionary<int, Band[]> ByGuard = new Dictionary<int, Band[]>
     {{
@@ -65,24 +72,26 @@ def main() -> None:
         parts = line.split("\t")
         if not parts or parts[0] in ("guard_npc_id", ""):
             continue
-        guard, pattern, low, high, chance, placement, summons = parts
+        guard, pattern, low, high, chance, placement, live, rng, summons = parts
         patterns.add(pattern)
         pairs = []
         for chunk in summons.split(","):
             npc_id, count = chunk.split("*")
             pairs.append((int(npc_id), int(count)))
-        by_guard[int(guard)].append((int(low), int(high), int(chance), placement, pairs, pattern))
+        by_guard[int(guard)].append(
+            (int(low), int(high), int(chance), placement, int(live), int(rng), pairs, pattern))
         rows += 1
 
     lines = [HEADER.format(rows=rows, guards=len(by_guard), patterns=len(patterns))]
     for guard in sorted(by_guard):
         bands = sorted(by_guard[guard], key=lambda b: -b[0])
-        pattern = bands[0][5]
+        pattern = bands[0][7]
         rendered = []
-        for low, high, chance, placement, pairs, _p in bands:
+        for low, high, chance, placement, live, rng, pairs, _p in bands:
             summons = ", ".join(f"({npc}, {count})" for npc, count in pairs)
             on_target = "true" if placement == "TARGET" else "false"
-            rendered.append(f"new Band({low}, {high}, {chance}, {on_target}, [{summons}])")
+            rendered.append(
+                f"new Band({low}, {high}, {chance}, {on_target}, {live}, {rng}f, [{summons}])")
         body = ", ".join(rendered)
         lines.append(f"        // {pattern}\n        [{guard}] = [{body}],\n")
     lines.append(FOOTER)

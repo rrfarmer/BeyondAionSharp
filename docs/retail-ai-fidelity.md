@@ -5155,3 +5155,42 @@ can sit indefinitely behind values that happen to fit both.
 **Verification.** Full suite 1,410 passing and 1 skipped; four new pins plus the seven existing ones
 repointed at the retail gates and passing unchanged; three of four mutations caught, the fourth the
 familiar inert one — a battle timer armed outside combat never fires.
+
+### The drakan guards were one letter away
+
+`DrGuard_RhB` turned up in the tail as a three-add encounter and is the same mechanic as the abyss
+guards — enter combat, arm a twenty-second heartbeat, call reinforcements by health band. The
+extractor's `^[DL]Guard_` never matched it. Counting properly: **`DrGuard` has 142 patterns with
+spawns**, more than `DGuard` or `LGuard` have.
+
+Widened to `(?:D|L|Dr)Guard_`, the family goes from 194 patterns and 1,388 rows over 870 guards to
+**1,693 rows over 1,085**, and 214 more guards are repointed. `BGuard` stays out — those are the gates,
+a different mechanic with its own extractor — and so do the gateway guards, which have their own class.
+
+### A constant that was right for its subset and wrong for the family
+
+The table did not carry `live_time` or `spawn_range`; the class hardcoded ten minutes and three metres.
+That was not careless — **every branch the extractor could then see carried exactly those values**, and
+this document quoted the shape census as evidence: 198 of 205 identical.
+
+Both parts of that were narrower than they sounded. The census covered only the ops the extractor then
+recognised — it matched `<spawn>` and nothing else — so the branches using `spawn_on_target` were never
+in it. Those carry `live_time=100`. **Guards already shipped were affected**, not just the new drakan
+ones: the garrison patrol's reinforcements last a hundred seconds and were being given ten minutes.
+
+The table carries both columns now. The lesson is narrower than "don't hardcode": a constant lifted
+from a census is only as good as the census's coverage, and a census over a filtered subset will
+happily report uniformity that the whole set does not have.
+
+**What is pinned and what is not.** The lifetime now has a pin, and it needs the right observable: a
+guard that calls every twenty seconds and never stops accumulates waves, so no single wave's
+disappearance is visible and ninety seconds tells a hundred-second lifetime from a ten-minute one not
+at all. What separates them is where the population **plateaus** — five minutes of calls leaves most of
+them retired at a hundred seconds and all of them standing at six hundred. `spawn_range` is carried
+from the table but **not pinned**: telling a one-metre scatter from a three-metre one needs a
+statistical test that would be flaky, and a flaky pin is worse than an honest gap.
+
+**Backlog 516 → 503 across 370.**
+
+**Verification.** Full suite 1,411 passing and 1 skipped; one new pin; the lifetime mutation caught, the
+range one not — see above.

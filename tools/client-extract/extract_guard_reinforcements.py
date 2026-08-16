@@ -12,7 +12,7 @@ carries the facts.
 
 What it emits, one row per (guard npc, band):
 
-    guard_npc_id  pattern  low_hp  high_hp  chance  placement  summons
+    guard_npc_id  pattern  low_hp  high_hp  chance  placement  live_seconds  spawn_range  summons
 
 where `summons` is `npc_id*count` joined by commas, and the band is the retail
 `is_hp_in_boundary` / `is_hp_lower_than` guard verbatim.
@@ -34,7 +34,11 @@ import sys
 
 from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
 
-GUARD_RE = re.compile(r"^[DL]Guard_")
+# D, L and Dr. The first two are the Elyos/Asmodian abyss guards; Dr is the drakan side, which runs
+# the same mechanic and was missed for one letter. BGuard is deliberately out -- those are the gates,
+# a different mechanic with its own extractor -- and so are GwDGuard/GwLGuard, which have their own
+# class already.
+GUARD_RE = re.compile(r"^(?:D|L|Dr)Guard_")
 
 # The two ops this can turn into a table row. The other two retail ops place per-target
 # (`spawn_on_multi_target`, one add on every valid target, capped) and per-attacker
@@ -185,6 +189,8 @@ def main() -> None:
 
             for low, high, chance, _timer, spawns in timers:
                 resolved = []
+                lifetimes = {sp[2] for sp in spawns}
+                ranges = {sp[3] for sp in spawns}
                 ops = {sp[4] for sp in spawns}
                 if not ops <= EXPRESSIBLE_OPS:
                     for op in ops - EXPRESSIBLE_OPS:
@@ -201,10 +207,11 @@ def main() -> None:
                 if not resolved:
                     continue
                 for guard_id in guard_ids:
-                    rows.append((guard_id, name, low, high, chance, placement, ",".join(resolved)))
+                    rows.append((guard_id, name, low, high, chance, placement,
+                                 max(lifetimes), max(ranges), ",".join(resolved)))
 
     rows.sort(key=lambda r: (int(r[0]), r[2]))
-    lines = ["guard_npc_id\tpattern\tlow_hp\thigh_hp\tchance\tplacement\tsummons"]
+    lines = ["guard_npc_id\tpattern\tlow_hp\thigh_hp\tchance\tplacement\tlive_seconds\tspawn_range\tsummons"]
     lines += ["\t".join(str(c) for c in r) for r in rows]
     body = "\n".join(lines) + "\n"
     if args.out:
