@@ -2317,3 +2317,71 @@ own mapping regardless. **Not implemented, deliberately** — guessing here eith
 seals a raid in or opens a progression door early, and both are hard to notice. A
 second anchor of the Teselik kind, on a door some other handler demonstrably closes,
 would settle it.
+
+---
+
+## Gatekeeper Flox — four branches that spawn one add
+
+**NPC:** gatekeeper flox (235975), Cygnea world boss, LEGENDARY, eight-hour respawn,
+on plain `aggressive`. **Pattern:** `LF5_ItemNamed_24_KJS`. The watching eye (855728)
+it calls up is **HERO**-rated and was spawned by nothing anywhere in the server.
+
+Four phases, each a T0 → T1 → T2 → T3 → T0 loop at its own speed. Two of them open
+by putting an eye out: once between 51 and 75, once below 25.
+
+| band | loop | eye |
+|---|---|---|
+| 76-100 | 15s, 10s, 10s | — |
+| 51-75 | 10s, 15s, 10s | yes |
+| 26-50 | 15s, 7s, 15s | — |
+| 0-25 | 7s, 15s, 5s | yes |
+
+### The trap: one eye, not four
+
+Retail writes **four** branches for each eye, one per cardinal point twenty metres
+out — and all four share **one** one-shot flag. Branches are first-match-wins, so the
+first of the four whose 25% roll passes spawns its eye and spends the flag; the
+fourth carries no probability and catches the case where the other three miss.
+
+The effect is one eye, at one of four places, once per phase. A table written off the
+rotation digest — which shows four spawn rows — would put **eight** eyes out over a
+fight where retail puts two. This is the same class of misread as Vanuka Infernus,
+where the digest hid three of four flame points; here it shows four where there is
+one. The digest is a reading aid, not the pattern.
+
+### `SPAWN_LOCATION_RELATIVE`
+
+New primitive: `Do.SpawnOffset`, a fixed offset from where the NPC stands, distinct
+from `SpawnNear`'s random scatter. 726 uses across the 5.8 files. Taken as a
+world-axis offset; whether retail rotates it by the NPC's heading is not settled, and
+for the four-way symmetric placement this was written for the distinction cannot be
+observed.
+
+### The cast-only chain is kept here, unlike the Golden Tatars
+
+Twelve skills, indices 0 through 9, and the branch comments are phase labels ("1P",
+"2P") rather than skill names — nothing to map them onto. But T1, T2 and T3 are what
+bring timer 0 back round, and **timer 0 is where the eyes come from**. Dropping them,
+as the Golden Tatars' cast-only chains were dropped, would leave the second eye
+unreachable. The rule is not "always keep" or "always drop": keep a chain when
+something observable hangs off it.
+
+Retail's timer-0 branch for the 26-50 band *is* dropped, on the same rule — it is a
+one-shot that only casts, so with the cast gone it does exactly what the catch-all
+already does.
+
+### Not translated
+
+- **Timer 25** — broadcasts message 550020 and casts index 8. The message is
+  presumably for the eye, whose own pattern is not ported, and the cast is
+  unresolvable, so the timer is not armed.
+- **`on_message` 44022** and **`on_see_friend_killed_by_user`**, the latter having no
+  counterpart event in our AI at all.
+- The **hate reset and target switch** that ride along with several casts.
+- His **four shouts**, which have no numeric id in our data.
+
+**Verification.** Full suite 1,196 passing and 1 skipped; ten pins; all eight
+mutations caught. Two pins were added because mutation testing showed the originals
+were blind to the 26-50 band putting nothing out, and to the catch-all being the only
+thing that brings timer 0 round at full health — the case that matters, since nobody
+pulls a world boss at 60%.

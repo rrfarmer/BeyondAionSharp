@@ -502,6 +502,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             SpawnAround(target.GetPosition(), npcId, spawnId, 1, range, liveSeconds);
     }
 
+    /// <summary>
+    /// Retail <c>SPAWN_LOCATION_RELATIVE</c>: a fixed offset from where this NPC stands.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from <see cref="SpawnNear"/>, which scatters inside a radius. Patterns use this to put
+    /// something at a specific bearing — four cardinal points around a boss, a wall across one side of
+    /// a room — so the offset has to be exact rather than random.
+    /// <para>
+    /// Taken as a world-axis offset from the NPC's position. Whether retail rotates it by the NPC's
+    /// heading is not settled here; for the four-way symmetric placements this was written for, the
+    /// distinction cannot be observed, and no ported pattern yet depends on an asymmetric one.
+    /// </para>
+    /// </remarks>
+    public void SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds)
+    {
+        WorldPosition at = GetPosition();
+        Track(spawnId, liveSeconds,
+            Spawn(npcId, at.GetX() + dx, at.GetY() + dy, at.GetZ(), (sbyte)at.GetHeading()));
+    }
+
     private void SpawnAround(WorldPosition at, int npcId, int spawnId, int count, float range, int liveSeconds)
     {
         for (int i = 0; i < count; i++)
