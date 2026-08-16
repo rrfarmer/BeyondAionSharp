@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -306,5 +307,37 @@ public sealed class UnstableYamennesAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(71));
 
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == TeleportEnemy));
+	}
+
+	/// <summary>
+	/// A fury arrives <b>already fighting</b> the player it landed on, with retail's two million hate.
+	/// </summary>
+	/// <remarks>
+	/// The hate is the observable rather than the state: a fury is <c>aggressive</c> with a fifty-metre
+	/// search range and lands on top of its target, so it would engage on its own within the same tick
+	/// and a pin on state alone would pass whether or not the flag were honoured. Natural aggression is
+	/// worth a single point, so anything near two million is retail's number actually arriving — and it
+	/// has to arrive, because a fury lives ten seconds and is meant to be dealt with by whoever it
+	/// picked rather than peeled onto a tank.
+	/// </remarks>
+	[Fact]
+	public void AProtectorsFuryArrivesAlreadyFighting()
+	{
+		var (harness, boss, player) = Engaged();
+		using (harness)
+		{
+			for (int i = 0; i < 62; i++)
+			{
+				BossAiHarness.Rehate(boss, player);
+				BossAiHarness.KeepAlive(player);
+				harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			}
+
+			Npc[] furies = harness.LiveNpcs().Where(n => n.GetNpcId() == ProtectorsFury).ToArray();
+			Assert.NotEmpty(furies);
+			Assert.All(furies, f => Assert.Equal(AIState.FIGHT, f.GetAi().GetState()));
+			Assert.All(furies, f => Assert.True(f.GetAggroList().GetHate(player) > 1000000,
+				$"retail's two million should be on the fury: {f.GetAggroList().GetHate(player)}"));
+		}
 	}
 }

@@ -5545,3 +5545,76 @@ the row cannot carry a cap, an order and an indicator.
 
 **Verification.** Full suite 1,432 passing and 1 skipped; five new pins and two repointed
 off the bug they were pinning; eight mutations, all caught.
+
+## Padmarashka's forty-rock ring was an invention
+
+The last item on the owed list, and the biggest single divergence found in a while. Her
+class dropped **forty rocks in a ring around a fixed point**, once, at 10% health, with no
+lifetime. Retail's `DF4_Dramata` does none of those things.
+
+| what retail does | what we did |
+|---|---|
+| rocks land **on players**, `spawn_on_multi_target` | in a ring around a hardcoded centre |
+| capped at 3, 4 or 5 depending on the source | forty, always |
+| twelve-second lifetime | none — they stayed for the fight |
+| **five** sources on their own timers | one, at one threshold |
+| each engages whoever it landed on | inert |
+| two rock npcs — 281936 and **282140** | only 281936 |
+
+The five sources, which is the shape of the fight rather than a detail:
+
+- **opening step** — three B rocks, once, on the third heartbeat tick
+- **every 90s from then** — three more (timer 17)
+- **every 90s from the first tick** — four B rocks (timers 6 and 7, handing off at 45 each)
+- **below 10%** — *fifteen* heavy rocks at once, three draws of five, and four more every
+  90s afterwards (timers 2 and 3)
+- **below 5%** — fifteen more, once
+
+### The heartbeat is a ladder, and the cast-only step is load-bearing
+
+Timer 0 re-arms every five seconds and its branches are one-shot steps guarded by flag
+vars, so the fight walks down them rather than looping: tick one opens the long-cycle
+chains, **tick two is a step that does nothing but cast**, tick three is the opening
+rockfall. Translating that second step looks like translating nothing — and dropping it
+is a caught mutation, because the rocks then arrive five seconds early. A step that
+consumes a heartbeat is doing work even when its actions are all untranslatable.
+
+The class is now a `PatternAi`. Everything Java does is untouched: the protective slumber,
+the four shield NPCs that break it, the stat overrides, the berserk at 5%. `HpPhases`
+drops from `(10, 5)` to `(5)` because the 10% rockfall belongs to the pattern now.
+
+**A pin that was describing the invention** — `GelkmarosPadmarashkaDropsHerRocksAtTenPercent`,
+which walked HP down and asserted rocks appeared at exactly 10 — is retired. It was not
+wrong about the old code; it was pinning a mechanic that does not exist. Twelve pins in
+`PadmarashkaRockfallTests` replace it, on when each chain fires and how many it drops.
+
+### Two mutations that survived, and what they were hiding
+
+**"Leaving the fight leaves the rocks standing"** survives and cannot be killed: the
+Java-parity `HandleBackHome` already deletes both rock ids by hand, so the pattern's
+`on_leave_attack_state` branch is redundant with it. It is kept because retail has it and
+because `on_die` — which nothing else covers — is the same line. That half is pinned.
+
+**"The timer-2 chain fires once and stops"** survived the first time round because the pin
+only watched the chain's first firing. Extended to its ninety-second repeat, it dies. The
+first version was measuring that something happened rather than that it keeps happening,
+which is the same shape of mistake as the transient-window family.
+
+### Yamennes' furies were translated; only the flag was missing
+
+Filed as "not translated at all" last entry, which was wrong — `SpawnFuries` had the cap,
+the ordering and all three timings right. What it lacked was the two million hate, which
+matters: a fury lives ten seconds and is meant to be dealt with by whoever it picked
+rather than peeled onto a tank. `AttackAfterSpawn` moved out of `PatternAi` into its own
+file so a Java-parity class with hand-written timers can use the same op.
+
+**Where the count went.** 494 across 364 encounters → **487 across 361**. The seven are
+Padmarashka's B rock and the six adds that came with reading her pattern properly.
+
+**Still owed on this boss.** The rest of `DF4_Dramata` is not translated: fourteen skill
+indices across timers 1, 5, 9, 10, 11, 12, 15, 16, 20, 25, 26, 27, 28 and 29, the
+waypoint branches that lay eggs on patrol, the abnormal-state handlers, and the
+`on_message` pair. The rocks are the part that is index-free.
+
+**Verification.** Full suite 1,444 passing and 1 skipped; thirteen new pins and one
+retired; thirteen mutations, all caught after the two above were addressed.

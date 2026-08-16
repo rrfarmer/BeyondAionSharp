@@ -75,21 +75,10 @@ public sealed class RetailHpThresholdTests
 		return at;
 	}
 
-	[Fact]
-	public void GelkmarosPadmarashkaDropsHerRocksAtTenPercent()
-	{
-		using var harness = BossAiHarness.For(Gelkmaros).WithWorldSize(4096).WithAi(typeof(GelkmarosPadmarashkaAI), typeof(AggressiveNpcAI), typeof(RockSlideAI)).Build();
-		// Her own shield NPCs sit around 2906..2963 / 859..878, so spawn her where she actually stands.
-		Npc boss = harness.Spawn(GelkmarosPadmarashka, 2940.20f, 851.29f, 35.89f);
-		Player player = harness.SpawnPlayer(2945f, 855f, 35.89f);
-		harness.Engage(boss, player);
-
-		var at = PhasesEnteredWhile(boss, player,
-			() => harness.LiveNpcs().Count(n => n.GetNpcId() == PadmarashkaRockSlide));
-
-		// Retail pattern DF4_Dramata puts the rock slide at 10%, not the 33% we had.
-		Assert.Equal([10], at);
-	}
+	// Padmarashka's rockfall used to be pinned here, as a single event at exactly 10% health. It is not
+	// a threshold mechanic at all: retail drives it from five timer chains, two of which happen to carry
+	// health guards, and the rocks land on players rather than in a ring. Moved to
+	// PadmarashkaRockfallTests, which pins when each chain fires and how many it drops.
 
 	[Fact]
 	public void CalindiRunsHisEventFourTimesThenFinishesAtFifteen()

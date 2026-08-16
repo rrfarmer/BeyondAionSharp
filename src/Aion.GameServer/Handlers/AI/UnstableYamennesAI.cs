@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Ai.Poll;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
@@ -75,6 +76,9 @@ public class UnstableYamennesAI : AggressiveNpcAI
     private const long FuryLifeMillis = 10000L;
     private const float FuryRange = 300f;
 
+    /// <summary>Retail's <c>hatepoints_to_add</c> on the fury, with <c>attack_target_after_spawn</c>.</summary>
+    private const int FuryHate = 2000000;
+
     /// <summary>Retail's <c>IDAbRe_Core_Sum_NamedD_onDie</c> — a sliver left on the killer's side.</summary>
     private const int YamennesSliver = 282065;
     private const float SliverRange = 50f;
@@ -120,6 +124,11 @@ public class UnstableYamennesAI : AggressiveNpcAI
     /// Drops a protector's fury on each of the most-hated, then books the next wave. Retail's cap is
     /// two here and three for Painflare, taken from the top of the hate list rather than at random.
     /// </summary>
+    /// <remarks>
+    /// Each one arrives <b>already fighting the player it landed on</b>, with two million hate. That is
+    /// retail's <c>attack_target_after_spawn</c>, and the number is not decoration: a fury lives ten
+    /// seconds, so it has to be dealt with by whoever it picked rather than peeled onto a tank.
+    /// </remarks>
     private void SpawnFuries()
     {
         AggroList aggro = GetAggroList();
@@ -132,6 +141,8 @@ public class UnstableYamennesAI : AggressiveNpcAI
         {
             if (Spawn(ProtectorsFury, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0) is not Npc fury)
                 continue;
+
+            AttackAfterSpawn.NextTick(fury, target, FuryHate);
 
             ThreadPoolManager.GetInstance().Schedule(_ =>
             {
