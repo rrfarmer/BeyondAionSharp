@@ -9027,3 +9027,68 @@ missing after the friend-attacked pair.
 Full suite **1,846 passing** and 1 skipped; ten new pins, checked five times over for flakiness after
 two of them turned out to be racy; twelve mutations, eleven caught and one deliberate survivor. Adds
 368/284 → **367/283**; translatable 953 → **941**.
+
+## `on_enter_abnormal_state` — measured, and not worth building. A correction.
+
+Three entries in this log call this "the most-wanted single event we are missing", on the strength of a
+listener count. That framing was wrong, and this entry withdraws it.
+
+### What it would cost
+
+Almost nothing, which is why it looked attractive. `EffectController.SetAbnormal` already notifies
+observers and is the obvious place to raise it; `AbnormalState` already carries compound values that
+map onto retail's groups without inventing anything:
+
+| retail group | uses | ours |
+|---|---|---|
+| `ABNSTATEI_CANNOT_ACT_GROUP` | 74 | `CANT_ATTACK_STATE` |
+| *(no guard — any state)* | 36 | — |
+| `ABNSTATEI_PHYSICAL_GROUP` | 30 | **nothing** |
+| `ABNSTATEI_STUN_LIKE_GROUP` | 6 | `ANY_STUN` |
+| `ABNSTATEI_SLEEP`, `_SANCTUARY`, `_ROOT`, `_BLEED`, `_POISON` | 23 | direct |
+| `ABNSTATEI_MENTAL_GROUP` | 80 (+18 paired) | **nothing** |
+
+Two of the groups have no counterpart in our data — the same shape as `SKILLI_INDEX` and the walker
+route ids — but the rest would cover roughly 130 of the 272 handlers.
+
+### What it would buy, which is the part nobody had measured
+
+**272 handlers across 272 patterns, and 245 of them are a single `broadcast_message`.** So the whole
+event is "I have been crowd-controlled — tell the room". The question that matters is therefore not how
+many patterns *have* the handler, it is what the listeners *do*. Nineteen distinct message numbers are
+broadcast this way, and the five that carry it are:
+
+| message | senders | what its listeners do |
+|---|---|---|
+| `3403` | 64 | `add_hate_point` at the message's object, then attack |
+| `23003` | 59 | cast, and nothing else |
+| `10001` | 56 | spawn, hate, attack, cast — genuinely mixed |
+| `6836` | 36 | cast and arm a timer |
+| `1022` | 9 | cast, and nothing else |
+
+**And `3403` — the largest — is a no-op in our engine.** Its senders broadcast with
+`param_obj=OBJI_SELF`, so the object the listeners hate is *the stunned npc itself*. Adding hate toward
+a same-tribe ally does nothing here, for the reason recorded much earlier in this log: our aggro list
+only offers a valid **enemy** as most-hated. Whatever retail means by it — most likely making the room
+converge on the stunned one's position — is not something the action says.
+
+Add up what is left: two of the five biggest messages are cast-only, the biggest is inert for us, and
+`10001`'s listener actions are aggregated across every sender of a very generic number rather than the
+abnormal-state ones. **The event is cheap to raise and would light up almost nothing we can express.**
+
+### The three bosses that wanted it
+
+`XDrakan_ReB_50` and `XDrakan_EeB_F_50` send `3403` — inert. `Dread_XDrakanReA` and `Dread_SurkanaNm06`
+send `6836` — cast-only, already recorded as such. So all four of the families ported in the last three
+entries would gain nothing from it, which is the opposite of what those entries implied.
+
+### The rule this is really about
+
+`flee_from` was recorded as blocked and turned out to be cheap once its *arguments* were read. This is
+the mirror: an event recorded as valuable on a count of handlers, which turns out to be nearly empty
+once its *listeners* are read. **Rule: the size of a gap is the size of what it unlocks, not the number
+of places it appears. Count the receiving end before promising anything.**
+
+Left unbuilt, deliberately, with the measurements above so the decision can be revisited if a listener
+set that does something translatable turns up — `10001` is the one to look at, and it needs separating
+by sender first.
