@@ -6830,3 +6830,115 @@ different fight, not a closer one.
 
 **Verification.** Full suite 1,578 passing and 1 skipped; sixteen new pins; ten mutations, all
 caught — including the transposition put back exactly as aionemu has it.
+
+## Watchman Hokuruki was summoning the room he stands in
+
+The second non-rotation mismatch from `audit_hp_phases.py`, and the larger of the two: our
+(100, 75, 50, 25, 15) against retail's two summoning rungs at 50 and 25. Reading the pattern to check
+the thresholds turned up something the audit could not see — **the adds are wrong as well.**
+
+### He summons one template, and aionemu had him summoning three
+
+`IDSweep_Monster_Nmd03` names exactly one: `IDSweep_S1_Mosbear_65_An`, the **tamed mosbear**
+(235632). aionemu already used it for two of its five phases, and for the other three it called an
+intruder marksman (236083) and two intruder snipers (235649) at hand-placed coordinates, one of three
+position sets shuffled per fight.
+
+**No retail pattern spawns either gunner.** They are stage one's own room population — a sweep of the
+whole 5.8 dump finds them named by nothing. Their real connection to Hokuruki is the opposite of a
+summon, and is below.
+
+| | retail | aionemu |
+|---|---|---|
+| entering combat | 4 mosbears, scattered within 5m of him | 4 mosbears, 3–5m (matches) |
+| below 75 | — | marksman + 2 snipers at a fixed spot |
+| below 50 | **2 mosbears**, within 8m | marksman + 2 snipers at a fixed spot |
+| below 25 | **3 mosbears**, within 8m | marksman + 2 snipers at a fixed spot |
+| below 15 | — | 4 mosbears |
+
+There are no coordinates anywhere in the pattern: every wave is a `spawn_range` scatter from his own
+position. So the nine hand-placed positions and their per-fight shuffle were an approximation of a
+random spawn — a reasonable thing to build from watching, and not what the fight is.
+
+Retail gives no `hatepoints_to_add` to any of the three waves either, so the single hate point
+aionemu put on the most-hated is gone with them. The mosbears are aggressive and find their own way
+in.
+
+### Rungs we cannot perform still have to cost a swing
+
+Retail's `on_attacked` chain is five rungs, and the two that summon are the **bottom** two:
+
+| priority | guard | action |
+|---|---|---|
+| 9 | HP < 30 | `set_condition_spawn_variable 2STAGE_ING` |
+| 7 | HP < 60 | `set_condition_spawn_variable 2STAGE_ING` |
+| 6 | HP < 80 | `set_condition_spawn_variable 2STAGE_ING` |
+| 5 | HP < 50 | shout, **2 mosbears** |
+| 5 | HP < 25 | shout, **3 mosbears** |
+
+Every rung carries its own flag var, so each fires once. We cannot express
+`set_condition_spawn_variable` — it drives the instance's stage progression, not the fight — but the
+three rungs are **kept anyway**, because these are first-match-wins chains and a rung that matches
+consumes the swing whether or not we can perform what it does.
+
+The consequence is measurable and pinned. Below fifty with nothing spent, retail spends one swing on
+the sixty rung, one on the eighty rung, and calls the bears on the **third**. Dropping the three
+rungs as unportable would have brought every wave several swings early — a plausible-looking port
+that is a different fight.
+
+**Worth generalising: an unportable action is not an unportable branch.** In a first-match-wins
+chain the branch's position is behaviour in its own right, and translating it as an empty rung is
+more faithful than omitting it.
+
+### Death clears stage one, and that is where the gunners belong
+
+`on_killed_by_user` broadcasts **140505** to a hundred metres. Three retail patterns answer it, and
+all three answer identically — `despawn_self`:
+
+| pattern | templates |
+|---|---|
+| `IDSweep_Monster_02` | 235632, 235682 |
+| `IDSweep_S1_Monster` | 235629, 235630, 235631, 235641, 235649, 235652, 235653 |
+| `IDSweep_S1_Shulack_Gu_01` | 235633, 236083 |
+
+Eleven templates, including both gunners aionemu had him summoning and the mosbears he really calls.
+So the gunners *are* part of his fight — as things that leave when he falls, not things he brings.
+Both halves are shipped together, which is what the sender/listener rule asks for: `IDSweepStageAddAI`
+extends `IDSweep_Shugos` rather than replacing it, so the instance-progression check on spawn and the
+damage variance every Vault NPC shares are untouched and this only adds the listener.
+
+### Not translated
+
+The ten-second cast loop on battle timer 0 (two `SKILLI_INDEX`); the three `say_to_all` lines, which
+have no rows in our `npc_shouts.xml` at all; every `set_condition_spawn_variable` — on the ladder, on
+entering combat, and on both death branches; `despawn_at_attack_state` on the bear spawns; and the
+seven-second cast loops the mosbears and marksmen run.
+
+**One retail branch is unreachable for us.** A second `on_enter_attack_state` rung sits below the
+opening wave and sets the same flag var the fifty-percent bears are gated on — so a retail Hokuruki
+that resets and is re-engaged loses that wave for good. Our convention is that a boss which resets
+replays its steps, which clears the flag that rung would have consumed, so it can never fire.
+Recorded rather than modelled: changing the reset convention for one branch would be a worse trade
+than losing it.
+
+### A harness trap worth naming: `Rehate` swings
+
+`BossAiHarness.Rehate` adds hate, and **adding hate raises an Attack event**. Harmless for a test
+that advances a clock, and quietly fatal for one that counts swings: a `Rehate` plus an explicit
+Attack is two swings per call, so the first rung-counting pin here read half the ladder it thought it
+did and failed by exactly one rung. Count swings with a bare `OnCreatureEvent(Attack, …)` and let
+`Engage`'s hate hold the fight open. Noted on the method.
+
+### And a blind spot in `audit_ai_messages.py`
+
+The audit reported 140505 as a broadcast with no listener while the listener sat in the same file.
+It recognised hand-rolled listeners only through `case <token>:` inside `OnNpcMessage`, and a
+listener for a *single* message is naturally written as a comparison rather than a switch. Fixed
+there rather than by reshaping the class into a one-arm switch: bending code to suit a check leaves
+the next single-message listener silently unpaired, which is the exact failure this audit exists to
+prevent. It now reads `messageType == X` in either order.
+
+**Verification.** Full suite 1,588 passing and 1 skipped; ten new pins; eleven mutations, all
+caught — including aionemu's five-phase ladder put back, and the three stage-counter rungs both
+dropped and demoted below the summoning pair. `audit_ai_messages.py` pairs 140505 and is otherwise
+unchanged at eight pre-existing unpaired messages.

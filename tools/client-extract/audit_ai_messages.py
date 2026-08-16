@@ -42,6 +42,10 @@ CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{3,7})\b")
 # `When.Message` reports their senders as unpaired -- which is exactly backwards.
 LISTEN_RE = re.compile(r"When\.Message\(([\w.]+)\)")
 CASE_RE = re.compile(r"case\s+([\w.]+)\s*:")
+# A listener for a single message is written as a comparison, not a switch. Reading only `case`
+# reported IDSweepStageAddAI's sender as unpaired against a listener sitting right there, which is
+# the false negative this whole audit exists to prevent.
+EQ_RE = re.compile(r"(?:messageType\s*==\s*([\w.]+)|([\w.]+)\s*==\s*messageType)")
 ON_MESSAGE_RE = re.compile(r"void OnNpcMessage\([^)]*\)\s*\{", re.S)
 SEND_RES = (
     re.compile(r"Do\.Broadcast\(([\w.]+)"),
@@ -94,7 +98,9 @@ def main() -> None:
                 elif text[i] == "}":
                     depth -= 1
                 i += 1
-            tokens += [(t, listens) for t in CASE_RE.findall(text[match.end():i])]
+            body = text[match.end():i]
+            tokens += [(t, listens) for t in CASE_RE.findall(body)]
+            tokens += [(a or b, listens) for a, b in EQ_RE.findall(body)]
         tokens += [(t, sends) for r in SEND_RES for t in r.findall(text)]
 
         # A file that inspects CurrentMessage matches messages itself, so its bare literals are

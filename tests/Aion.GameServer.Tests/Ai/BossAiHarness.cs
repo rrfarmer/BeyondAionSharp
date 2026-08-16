@@ -181,6 +181,14 @@ public sealed class BossAiHarness : IDisposable
 	public const int InitialHate = 1000;
 
 	/// <summary>Tops the attacker's hate back up, for tests that drive many ticks.</summary>
+	/// <remarks>
+	/// <b>This raises an Attack event of its own.</b> Harmless for a test that advances a clock — the
+	/// point is to keep the fight open across ticks — but it means a test which also delivers Attack
+	/// explicitly is delivering <em>two</em> swings per call. A pin that counts swings, as any
+	/// first-match-wins ladder needs to, will then read half the rungs it thinks it does and pass for
+	/// the wrong reason. Count swings with a bare <c>OnCreatureEvent(AiEventType.Attack, …)</c> and
+	/// rely on <see cref="Engage"/>'s hate to hold the fight open.
+	/// </remarks>
 	public static void Rehate(Npc npc, Creature attacker) => npc.GetAggroList().AddHate(attacker, InitialHate);
 
 	/// <summary>Makes two objects visible to each other, which aggro and message broadcast both require.</summary>
