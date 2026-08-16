@@ -6019,3 +6019,56 @@ than fightable adds, so they were never in it. What moved is that one of them ex
 
 **Verification.** Full suite 1,486 passing and 1 skipped; six new pins; five mutations, four
 caught and one that will not compile.
+
+### Two more read off the shared-name list
+
+**Tiamat's gravity tornado** was wrong in two ways at once, and both are the same root cause.
+
+Its class chose with `GetNpcId() == 283142 ? 20966 : 21901` — and **283142 is the crusher**, which
+never carries this AI. The test could not be true, so every tornado took the else branch and
+*both modes cast the hard-mode skill*. And it never spawned the crusher at all, which both
+patterns do on waking; the hard one (856047) was reachable by nobody.
+
+Which skill is which is corroborated rather than guessed: both are named "Gravitational
+Confusion" and are told apart by stack name — 20966 is `IDTIAMAT_TIAMAT_GRAVITY_SKILL`, 21901 is
+`IDTIAMAT_HARD_TIAMAT_GRAVITY_SKILL`. That matches the two patterns exactly, so the ternary's
+intent is certain even though what it tested could never work.
+
+**The cast cadence stays ours, deliberately.** Retail casts once on waking and then only on
+`on_message` 204. Nothing in our tree sends 204, so translating that literally would leave the
+tornado casting once and falling silent. Recorded rather than repaired: repairing it means an
+instance script we do not have.
+
+**A pin that had to change shape.** `AIActions.UseSkill` goes through `NpcController.UseSkill`,
+which fires immediately instead of queueing, so `DrainQueuedSkills` sees nothing and the cast is
+not observable in the harness. The *choice* is: `GravitySkillFor` and `CrusherFor` are `internal`
+and pinned directly. Pinning the decision rather than the effect is the right move when the
+effect leaves no trace the harness can read.
+
+**Unstable Yamennes' hard mode was missing a whole branch.** Painflare's pattern has a battle
+timer the durable boss's does not: two minutes into the fight, and every three thereafter, three
+**summoned ametgolems** (283229) take fixed marks on the lower floor for three minutes each. The
+class is shared by both bosses and had no such branch, so 283229 was in nobody's reach. Its wave
+lifetime is exactly its interval, so the waves hand over with no gap — which means a head-count
+never reads zero and the pin has to watch object ids instead.
+
+**Where the count went.** 460 across 352 encounters → **459 across 351**. One, because the
+tornado's crusher and the flames' launcher are FX rather than fightable adds and were never
+counted; the ametgolem is.
+
+**What is left on the shared-name list.** Nine, and they are not all bugs:
+
+| ai_name | what to check |
+|---|---|
+| `agrint` | 219170-3, one per season, on all eight — likely a second summon per agrint |
+| `brigade_general_vasharti` | the hard mode's glove controllers, blocked twice over already |
+| `captain_xasta` | 282444, on the fall-off variant |
+| `eternal_bastion_dragon` | 284075, on two of the four dragons |
+| `fortress_instance_duke` | 296338, 296339 |
+| `orissan_summon_helper` | 855702, 855703, 856306, 856309 |
+| `tiamats_incarnation_spawn` | ten `_invisible` damage twins — scenery the other audit filters |
+| `twin_protector` | 855626 |
+| `yamenessportal` | 282016, which is the gate summon `YamennesSpawnGateAI` now spawns |
+
+**Verification.** Full suite 1,493 passing and 1 skipped; nine new pins; ten mutations, all
+caught.

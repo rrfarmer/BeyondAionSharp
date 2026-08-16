@@ -340,4 +340,95 @@ public sealed class UnstableYamennesAiTests
 				$"retail's two million should be on the fury: {f.GetAggroList().GetHate(player)}"));
 		}
 	}
+
+	/// <summary><c>bidabre_core_02_Sum_Golem</c> — hard mode's three ametgolems.</summary>
+	private const int SummonedAmetgolem = 283229;
+
+	/// <summary>
+	/// Painflare calls three ametgolems onto fixed downstairs marks two minutes in, and again every
+	/// three. Only the hard pattern has the branch, so nothing here reached 283229 at all.
+	/// </summary>
+	/// <remarks>Found by <c>tools/client-extract/audit_shared_ai_names.py</c>.</remarks>
+	[Fact]
+	public void PainflareCallsThreeAmetgolemsAtTwoMinutes()
+	{
+		var (harness, boss, player) = EngagedSingle(Painflare);
+		using (harness)
+		{
+			for (int i = 0; i < 119; i++)
+			{
+				BossAiHarness.Rehate(boss, player);
+				BossAiHarness.KeepAlive(player);
+				harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			}
+
+			Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == SummonedAmetgolem));
+
+			BossAiHarness.Rehate(boss, player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+			Npc[] golems = harness.LiveNpcs().Where(n => n.GetNpcId() == SummonedAmetgolem).ToArray();
+			Assert.Equal(3, golems.Length);
+
+			// Three separate marks, not three on one.
+			Assert.Equal(3, golems.Select(g => (g.GetX(), g.GetY())).Distinct().Count());
+		}
+	}
+
+	/// <summary>The durable one does not: the branch is hard mode's alone.</summary>
+	[Fact]
+	public void DurableYamennesCallsNoAmetgolems()
+	{
+		var (harness, boss, player) = Engaged();
+		using (harness)
+		{
+			for (int i = 0; i < 125; i++)
+			{
+				BossAiHarness.Rehate(boss, player);
+				BossAiHarness.KeepAlive(player);
+				harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			}
+
+			Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == SummonedAmetgolem));
+		}
+	}
+
+	/// <summary>
+	/// Each golem stays three minutes — which is exactly the interval, so the waves hand over rather
+	/// than leaving a gap.
+	/// </summary>
+	/// <remarks>
+	/// So absence cannot show it: the first wave expires at three hundred seconds and the second
+	/// arrives at three hundred, and a head-count never reads zero. What is watched is <b>which</b>
+	/// three, by object id.
+	/// </remarks>
+	[Fact]
+	public void AWaveOfAmetgolemsHandsOverToTheNext()
+	{
+		var (harness, boss, player) = EngagedSingle(Painflare);
+		using (harness)
+		{
+			for (int i = 0; i < 121; i++)
+			{
+				BossAiHarness.Rehate(boss, player);
+				BossAiHarness.KeepAlive(player);
+				harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			}
+
+			int[] first = harness.LiveNpcs().Where(n => n.GetNpcId() == SummonedAmetgolem)
+				.Select(n => n.GetObjectId()).ToArray();
+			Assert.Equal(3, first.Length);
+
+			for (int i = 0; i < 181; i++)
+			{
+				BossAiHarness.Rehate(boss, player);
+				BossAiHarness.KeepAlive(player);
+				harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			}
+
+			// Three standing, and not one of them from the first wave.
+			Assert.Equal(3, harness.LiveNpcs().Count(n => n.GetNpcId() == SummonedAmetgolem));
+			Assert.All(first, id => Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetObjectId() == id));
+		}
+	}
 }

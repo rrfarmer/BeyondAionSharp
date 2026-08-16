@@ -79,6 +79,27 @@ public class UnstableYamennesAI : AggressiveNpcAI
     /// <summary>Retail's <c>hatepoints_to_add</c> on the fury, with <c>attack_target_after_spawn</c>.</summary>
     private const int FuryHate = 2000000;
 
+    /// <summary>
+    /// <c>bidabre_core_02_Sum_Golem</c> — three summoned ametgolems on fixed downstairs marks, hard
+    /// mode only. Retail's battle timer 5: two minutes into the fight, then every three.
+    /// </summary>
+    /// <remarks>
+    /// Found by <c>tools/client-extract/audit_shared_ai_names.py</c>: this class is shared by the two
+    /// bosses, and only the hard pattern has this branch, so nothing here reached 283229 at all.
+    /// </remarks>
+    private const int SummonedAmetgolem = 283229;
+    private static readonly TimeSpan FirstGolems = TimeSpan.FromSeconds(120);
+    private static readonly TimeSpan GolemInterval = TimeSpan.FromSeconds(180);
+    private const long GolemLifeMillis = 180000L;
+
+    /// <summary>The three marks, with the headings retail gives them.</summary>
+    private static readonly (float X, float Y, float Z, int Dir)[] GolemMarks =
+    [
+        (361.53f, 741.54f, 198.31f, 66),
+        (302.85f, 735.30f, 198.15f, 115),
+        (334.30f, 709.31f, 198.81f, 37),
+    ];
+
     /// <summary>Retail's <c>IDAbRe_Core_Sum_NamedD_onDie</c> — a sliver left on the killer's side.</summary>
     private const int YamennesSliver = 282065;
     private const float SliverRange = 50f;
@@ -95,6 +116,7 @@ public class UnstableYamennesAI : AggressiveNpcAI
 
     private ScheduledTask? portalTask;
     private ScheduledTask? furyTask;
+    private ScheduledTask? golemTask;
     private ScheduledTask? enrageTask;
     private readonly AtomicBoolean isStart = new AtomicBoolean();
 
@@ -118,6 +140,25 @@ public class UnstableYamennesAI : AggressiveNpcAI
         enrageTask = ThreadPoolManager.GetInstance().Schedule(_ => { GetOwner().QueueSkill(19098, 55, 0); return ValueTask.CompletedTask; }, 600000L);
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, FirstPortalMillis);
         furyTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnFuries(); return ValueTask.CompletedTask; }, FirstFuryMillis);
+        if (GetOwner().GetNpcId() == Painflare)
+            golemTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+                _ => { SpawnGolems(); return ValueTask.CompletedTask; }, FirstGolems, GolemInterval);
+    }
+
+    /// <summary>Hard mode's timer 5: three ametgolems on their marks, three minutes each.</summary>
+    private void SpawnGolems()
+    {
+        foreach ((float x, float y, float z, int dir) in GolemMarks)
+        {
+            if (Spawn(SummonedAmetgolem, x, y, z, Facing(dir)) is not Npc golem)
+                continue;
+
+            ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                golem.GetController().DeleteIfAliveOrCancelRespawn();
+                return ValueTask.CompletedTask;
+            }, GolemLifeMillis);
+        }
     }
 
     /// <summary>
@@ -231,6 +272,8 @@ public class UnstableYamennesAI : AggressiveNpcAI
             furyTask.Cancel(true);
         if (enrageTask != null && !enrageTask.IsDone())
             enrageTask.Cancel(true);
+        if (golemTask != null && !golemTask.IsDone())
+            golemTask.Cancel(true);
     }
 
     protected override void HandleBackHome()
