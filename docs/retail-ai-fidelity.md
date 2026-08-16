@@ -3305,3 +3305,33 @@ as well.
 share one name_id, and run `ai="general"` — a non-combat handler. NORMAL and HERO
 variants of the same figure, so almost certainly a quest or scene NPC rather than a
 reinforcement. Not pursued.
+
+### Kistenian — ported, after the blocker turned out not to be one
+
+The previous entry stopped short of porting him because he runs `AbyssGuardSimpleAI`,
+shared by 859 NPCs, whose `CanHandleEvent` override might have filtered the events the
+hooks need. **It does not** — it special-cases only `CREATURE_MOVED`, and everything else
+falls through to the base. One read settled it.
+
+So `KistenianAI` extends that handler rather than replacing it, the same shape
+`TahabataPyrelordAI` uses, and adds the two spawns that need nothing else:
+
+- **on entering combat** — a flame of kistenian beside him, with no lifetime, cleared when
+  he leaves the fight, dies or despawns
+- **on dying** — the despawn effect, six seconds
+
+The flame is latched to the first swing. Without that, every hit would light another, and
+the mutation pass showed five pins failing when the latch is removed — the same class of
+bug the Tahabata enrage had, where a handler that fires on every attack schedules work
+each time.
+
+**The fire spirits (295180) remain missing**, and the reason is now precise rather than a
+shrug: they arrive on message 10016, which `DGuard_KistenianPet` broadcasts — the fire
+spirit's own pattern. He calls out with 10014 every three seconds to seventy-five metres
+and they answer. Neither the heartbeat nor the reply handler is implemented, because a
+broadcast nothing listens for and a listener nothing broadcasts to are both silence.
+Porting the pet's pattern unlocks both, and would also unlock message 10018, which places
+a second flame from the death effect's own pattern.
+
+**Verification.** Full suite 1,308 passing and 1 skipped; seven pins; all seven mutations
+caught.
