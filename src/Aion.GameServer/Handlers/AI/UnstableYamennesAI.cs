@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Poll;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
@@ -39,7 +40,32 @@ public class UnstableYamennesAI : AggressiveNpcAI
     /// <summary>Retail's <c>live_time</c> on each gate.</summary>
     private const long GateLifeMillis = 70000L;
 
+    /// <summary>
+    /// Retail's <c>IDCatacombs_Hard_Buff</c> — protector's fury, dropped on the most-hated. Battle
+    /// timer 6, armed at sixty seconds and re-armed at twenty, one per target, ten-second life.
+    /// </summary>
+    private const int ProtectorsFury = 281819;
+    private const long FirstFuryMillis = 60000L;
+    private const long FuryIntervalMillis = 20000L;
+    private const long FuryLifeMillis = 10000L;
+    private const float FuryRange = 300f;
+
+    /// <summary>Retail's <c>IDAbRe_Core_Sum_NamedD_onDie</c> — a sliver left on the killer's side.</summary>
+    private const int YamennesSliver = 282065;
+    private const float SliverRange = 50f;
+
+    /// <summary>
+    /// Painflare is the hard-mode twin and gets one more of each: three furies a wave against two, and
+    /// two slivers on death against one. Both npc ids share this class, as they share the pattern.
+    /// </summary>
+    private const int Painflare = 219563;
+
+    private int FuriesPerWave => GetOwner().GetNpcId() == Painflare ? 3 : 2;
+
+    private int SliversOnDeath => GetOwner().GetNpcId() == Painflare ? 2 : 1;
+
     private ScheduledTask? portalTask;
+    private ScheduledTask? furyTask;
     private ScheduledTask? enrageTask;
     private readonly AtomicBoolean isStart = new AtomicBoolean();
 
@@ -62,6 +88,45 @@ public class UnstableYamennesAI : AggressiveNpcAI
     {
         enrageTask = ThreadPoolManager.GetInstance().Schedule(_ => { GetOwner().QueueSkill(19098, 55, 0); return ValueTask.CompletedTask; }, 600000L);
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, FirstPortalMillis);
+        furyTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnFuries(); return ValueTask.CompletedTask; }, FirstFuryMillis);
+    }
+
+    /// <summary>
+    /// Drops a protector's fury on each of the most-hated, then books the next wave. Retail's cap is
+    /// two here and three for Painflare, taken from the top of the hate list rather than at random.
+    /// </summary>
+    private void SpawnFuries()
+    {
+        AggroList aggro = GetAggroList();
+        List<Creature> targets = aggro.StreamValidTargets(FuryRange)
+            .OrderByDescending(t => aggro.GetHate(t))
+            .Take(FuriesPerWave)
+            .ToList();
+
+        foreach (Creature target in targets)
+        {
+            if (Spawn(ProtectorsFury, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0) is not Npc fury)
+                continue;
+
+            ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                fury.GetController().DeleteIfAliveOrCancelRespawn();
+                return ValueTask.CompletedTask;
+            }, FuryLifeMillis);
+        }
+
+        furyTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnFuries(); return ValueTask.CompletedTask; }, FuryIntervalMillis);
+    }
+
+    /// <summary>Retail leaves these behind when it falls; they have no lifetime and stay.</summary>
+    private void SpawnSlivers()
+    {
+        Creature? target = GetAggroList().GetTarget(AggroTarget.MOST_HATED);
+        if (target == null || !PositionUtil.IsInRange(GetOwner(), target, SliverRange, false))
+            return;
+
+        for (int i = 0; i < SliversOnDeath; i++)
+            Spawn(YamennesSliver, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0);
     }
 
     private void OnHealingDebuff()
@@ -126,6 +191,8 @@ public class UnstableYamennesAI : AggressiveNpcAI
     {
         if (portalTask != null && !portalTask.IsDone())
             portalTask.Cancel(true);
+        if (furyTask != null && !furyTask.IsDone())
+            furyTask.Cancel(true);
         if (enrageTask != null && !enrageTask.IsDone())
             enrageTask.Cancel(true);
     }
@@ -147,6 +214,7 @@ public class UnstableYamennesAI : AggressiveNpcAI
     protected override void HandleDied()
     {
         CancelTasks();
+        SpawnSlivers();
         DeleteNpcs(GetPosition().GetWorldMapInstance().GetNpcs(219586));
         base.HandleDied();
     }

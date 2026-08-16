@@ -2786,3 +2786,69 @@ semantics still unresolved, see the correction entry above — and his five shou
 
 **Verification.** Full suite 1,268 passing and 1 skipped; seven pins; all eight
 mutations caught.
+
+---
+
+## Re-measuring the backlog, and what it says to do next
+
+The queue this work has been drawing from was built many commits ago. Re-derived from
+scratch:
+
+**722 fightable retail adds our server never spawns, across 470 encounters.** Of those:
+
+| bucket | count |
+|---|---|
+| fully self-contained | 631 |
+| positionable, but walk a server-side path | 47 |
+| blocked on server-side waypoint paths | 44 |
+| (of all the above, carrying a sibling we already spawn) | 20 |
+
+Down from 739 at the last measure and ~805 when this began. The self-contained 631 sit
+across **444** encounters — a long tail: the largest single encounter is missing seven,
+and most are missing one or two. There is no more low-hanging fruit of the
+"boss-with-a-whole-fight-missing" kind; that seam is worked out.
+
+**A ranking mistake worth recording.** The first pass at ranking encounters filtered on
+the `BLOCKED` marker alone and put `BIDRuneWP_Main_CallVritra02` on top with ten adds —
+every one of which is annotated `[walks a server-side path]`, a different marker for a
+different blocker. Filtering on both drops it off the list entirely. The audit prints
+the distinction; the ranking has to read it.
+
+**What the corrected ranking says.** The top entries are no longer bosses with no AI at
+all. They are **existing AI classes with partial coverage** — Tiamat's dying phase
+(7 and 4, still blocked on breath indices), the Yamennes pair (7 and 6), Tahabata
+Pyrelord (4, which has had `tahabata_pyrelord` all along and is missing a primal dragon,
+a flame center and two summon spots). That is the shape of the remaining work: not
+"port the fight", but "finish the fight someone already started".
+
+---
+
+## Yamennes Blindsight and Painflare — two adds an existing class never spawned
+
+**NPCs:** durable yamennes blindsight (219555) and unstable yamennes painflare (219563),
+Unstable Splinterpath, both LEGENDARY and both already on `UnstableYamennesAI`.
+**Patterns:** `IDAbRe_Core_NamedD_02` and `..._Hard_02`.
+
+The portal cadence in this class was corrected against these same patterns earlier in
+this work — and **two of the encounter's adds were missed at the time**, because the
+question then was "is the timing right", not "is everything here". Both were spawned by
+nothing anywhere:
+
+- **Protector's fury (281819, ELITE)** — retail's `IDCatacombs_Hard_Buff`. One on each
+  of the most-hated, a minute into the fight and every twenty seconds after, ten-second
+  life. Two for Blindsight, **three** for Painflare.
+- **Yamennes sliver (282065, ELITE)** — retail's `IDAbRe_Core_Sum_NamedD_onDie`. Left
+  where the top of the hate list stood when it falls, with no lifetime. One for
+  Blindsight, **two** for Painflare.
+
+Both additions are purely additive: the gate logic, its coordinates and its alternation
+are untouched, which matters because that part works and the ids in it are deliberate
+substitutions (see the earlier entry).
+
+Three of the six adds the audit lists against this encounter are those gate
+substitutions — 283203, 283222 and 283223, which our data covers with 219567, 219579 and
+219580. The audit flags them for spot-check and the spot-check says leave them: only
+ours carry the AI that makes a gate do anything.
+
+**Verification.** Full suite 1,273 passing and 1 skipped; five new pins across both
+difficulties; all seven mutations caught.
