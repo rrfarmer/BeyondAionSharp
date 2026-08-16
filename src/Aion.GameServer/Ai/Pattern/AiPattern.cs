@@ -87,6 +87,17 @@ public sealed class AiPattern
     public PatternBranch[] OnMessage { get; init; } = None;
 
     /// <summary>
+    /// <c>on_stop_to_flee</c> — the NPC has finished running and is turning back round.
+    /// </summary>
+    /// <remarks>
+    /// Retail hangs real work off this: across the 5.8 files its handlers carry 71 broadcasts, 69
+    /// shouts and 66 casts. A boss that runs is not simply out of the fight for three seconds — it
+    /// comes back shouting for help, or onto whoever is weakest. See <see cref="Do.Flee"/> and
+    /// docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public PatternBranch[] OnStopFleeing { get; init; } = None;
+
+    /// <summary>
     /// <c>on_idle_timer</c> — the one timer that is not a battle timer.
     /// </summary>
     /// <remarks>
@@ -289,6 +300,16 @@ public static class Do
     public static PatternAction SpawnOnKiller(int npcId, int spawnId, int count = 1, float range = 0f,
         int liveSeconds = 0)
         => ai => ai.SpawnOnKiller(npcId, spawnId, count, range, liveSeconds);
+
+    /// <summary>
+    /// <c>flee_from</c> — run away from whoever this NPC is fighting for <paramref name="seconds"/>.
+    /// </summary>
+    /// <remarks>
+    /// Retail's element carries only <c>from</c>, <c>seconds</c> and <c>push_state</c>; how far the
+    /// NPC gets is its run speed times the time, which is what this computes. When the clock runs out
+    /// it stops and <see cref="AiPattern.OnStopFleeing"/> runs.
+    /// </remarks>
+    public static PatternAction Flee(int seconds) => ai => ai.Flee(seconds);
 
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);

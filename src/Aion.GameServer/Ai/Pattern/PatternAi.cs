@@ -62,6 +62,9 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     private readonly List<Npc> spawnedThisBranch = new List<Npc>();
     private ScheduledTask? idleTimer;
 
+    /// <summary>The flee in progress, or null. See <see cref="Flee"/>.</summary>
+    private ScheduledTask? fleeing;
+
     /// <summary>Guards the timer slots, the flags and the spawn groups against concurrent AI events.</summary>
     /// <remarks>
     /// Re-entrant on purpose: a branch's actions run while this is held and almost always re-arm the
@@ -110,6 +113,14 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// nothing in the pattern runtime could say who that was. See docs/retail-ai-fidelity.md.
     /// </remarks>
     public Player? Killer => GetAggroList().GetMostPlayerDamage();
+
+    /// <summary>Where a flee is heading, or null when this NPC is not running from anything.</summary>
+    /// <remarks>
+    /// Exposed for pinning. Our harness has no movement, so the only thing a test can read about a
+    /// flee is where it was aimed and when it ended — which is also the whole of what the pattern
+    /// specifies, since retail gives a duration and not a distance.
+    /// </remarks>
+    public (float X, float Y)? FleeingTo { get; private set; }
 
     public Creature? CurrentTarget => GetOwner().GetTarget() as Creature
         ?? GetAggroList().GetTarget(AggroTarget.MOST_HATED);
@@ -225,6 +236,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             if (idleTimer != null && !idleTimer.IsDone())
                 idleTimer.Cancel(true);
             idleTimer = null;
+            CancelFlee();
             Array.Clear(flags);
             Array.Clear(counters);
             spawnGroups.Clear();
@@ -587,6 +599,80 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary>Spawns around whoever this NPC is facing, which is where <c>spawn_on_target</c> puts them.</summary>
     public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds)
         => SpawnOnTarget(npcId, spawnId, count, range, liveSeconds, attackHate: 0);
+
+    /// <summary>
+    /// <c>flee_from</c>: run directly away from whoever this NPC is fighting, for a number of seconds.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail specifies a duration, not a distance</b> — <c>&lt;seconds&gt;</c> and nothing else —
+    /// so how far the NPC gets is its own run speed times that time, which is what this computes.
+    /// It is the fourth most common action in the 5.8 files after waypoints (353 uses across 226
+    /// patterns) and it was the largest piece of vocabulary this port was missing.
+    /// <para>
+    /// Standing exactly on its target it has no direction to run in, and picks the way it is already
+    /// facing rather than dividing by zero.
+    /// </para>
+    /// <para>
+    /// <c>push_state</c> is not translated: retail pushes the AI state so the NPC returns to what it
+    /// was doing, and ours never left — it keeps its hate list and its timers throughout, and the
+    /// move controller is simply told to stop when the clock runs out.
+    /// </para>
+    /// </remarks>
+    public void Flee(int seconds)
+    {
+        if (seconds <= 0 || IsDead() || CurrentTarget is not Creature from)
+            return;
+
+        lock (gate)
+        {
+            CancelFlee();
+
+            WorldPosition here = GetPosition();
+            float dx = here.GetX() - from.GetX();
+            float dy = here.GetY() - from.GetY();
+            float length = MathF.Sqrt((dx * dx) + (dy * dy));
+            if (length < 0.001f)
+            {
+                double facing = here.GetHeading() * 3.0 * Math.PI / 180.0;
+                dx = (float)Math.Cos(facing);
+                dy = (float)Math.Sin(facing);
+                length = 1f;
+            }
+
+            float distance = GetOwner().GetGameStats().GetMovementSpeedFloat() * seconds;
+            float x = here.GetX() + (dx / length * distance);
+            float y = here.GetY() + (dy / length * distance);
+
+            FleeingTo = (x, y);
+            GetOwner().GetMoveController().MoveToPoint(x, y, here.GetZ());
+
+            fleeing = ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                StopFleeing();
+                return ValueTask.CompletedTask;
+            }, seconds * 1000);
+        }
+    }
+
+    private void StopFleeing()
+    {
+        lock (gate)
+        {
+            fleeing = null;
+            FleeingTo = null;
+            GetOwner().GetMoveController().AbortMove();
+            if (!IsDead())
+                Evaluate(Pattern.OnStopFleeing);
+        }
+    }
+
+    private void CancelFlee()
+    {
+        if (fleeing != null && !fleeing.IsDone())
+            fleeing.Cancel(true);
+        fleeing = null;
+        FleeingTo = null;
+    }
 
     /// <summary><c>spawn_on_target target_obj=OBJI_KILLER</c>.</summary>
     public void SpawnOnKiller(int npcId, int spawnId, int count, float range, int liveSeconds)

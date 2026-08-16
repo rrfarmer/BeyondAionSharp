@@ -238,4 +238,98 @@ public sealed class KrallTrapperAiTests
 		}, Trap29, PowerfulTrap29);
 		Assert.Equal(0, light.Total);
 	}
+
+	/// <summary>
+	/// <b>Laying the heavy trap is an escape, not just a trap.</b> Retail's <c>flee_from</c> runs the
+	/// krall directly away from whoever it is fighting for five seconds.
+	/// </summary>
+	/// <remarks>
+	/// Read as the point it is aimed at rather than where it ends up: our harness has no movement, and
+	/// retail specifies a duration rather than a distance anyway, so the aim and the clock are the
+	/// whole of what the pattern says.
+	/// </remarks>
+	[Fact]
+	public void TheEscapeRunsAwayFromItsQuarry()
+	{
+		var (harness, krall, quarry) = Engaged(Loudmouth);
+		using BossAiHarness _h = harness;
+
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)krall.GetAi();
+		Assert.Null(ai.FleeingTo);
+
+		BossAiHarness.SetExactPercent(krall, 20);
+		Advance(harness, krall, quarry, 8);
+
+		(float X, float Y)? aim = ai.FleeingTo;
+		Assert.NotNull(aim);
+
+		// The quarry stands two metres along +x, so running away means going the other way.
+		Assert.True(aim!.Value.X < krall.GetX(),
+			$"it aimed at x={aim.Value.X} with the player at x={quarry.GetX()} — that is towards them");
+	}
+
+	/// <summary>And it stops after five seconds, not before and not never.</summary>
+	[Fact]
+	public void TheEscapeLastsFiveSeconds()
+	{
+		var (harness, krall, quarry) = Engaged(Loudmouth);
+		using BossAiHarness _h = harness;
+
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)krall.GetAi();
+
+		BossAiHarness.SetExactPercent(krall, 20);
+		Advance(harness, krall, quarry, 7);
+		Assert.NotNull(ai.FleeingTo);
+
+		Advance(harness, krall, quarry, 3);
+		Assert.NotNull(ai.FleeingTo);
+
+		Advance(harness, krall, quarry, 3);
+		Assert.Null(ai.FleeingTo);
+	}
+
+	/// <summary>
+	/// <b>A scout backs off every time it lays.</b> Two seconds rather than the heavy trappers' five,
+	/// and it comes back onto whoever is closest to dying.
+	/// </summary>
+	[Fact]
+	public void AScoutBacksOffAfterLayingAndReturnsToTheWeakest()
+	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+		Npc scout = harness.Spawn(Scout, 300f, 300f, 200f);
+		var raid = new List<Player>
+		{
+			harness.SpawnPlayer(320f, 300f, 200f),
+			harness.SpawnPlayer(320f, 320f, 200f),
+			harness.SpawnPlayer(320f, 340f, 200f),
+		};
+
+		harness.Engage(scout, raid[0]);
+		foreach (Player member in raid)
+			BossAiHarness.Rehate(scout, member);
+
+		raid[2].GetLifeStats().SetCurrentHpPercent(5);
+		Assert.Same(raid[0], scout.GetTarget());
+
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)scout.GetAi();
+		for (int i = 0; i < 21; i++)
+		{
+			foreach (Player member in raid)
+				BossAiHarness.Rehate(scout, member);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		}
+
+		Assert.NotNull(ai.FleeingTo);
+
+		for (int i = 0; i < 3; i++)
+		{
+			foreach (Player member in raid)
+				BossAiHarness.Rehate(scout, member);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		}
+
+		Assert.Null(ai.FleeingTo);
+		Assert.Same(raid[2], scout.GetTarget());
+	}
 }

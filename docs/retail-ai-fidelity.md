@@ -8657,3 +8657,72 @@ Full suite **1,789 passing** and 1 skipped; eight new pins; ten mutations, nine 
 deliberate survivor (plus one mutation replaced after it turned out to be a no-op — arming a battle
 timer on `on_wake_up` does nothing at all, because battle timers only fire in combat). Adds 382 across
 295 → **373 across 286**; missing-AI 709 → **707**.
+
+## `flee_from` — the largest missing piece of vocabulary, now translated
+
+Recorded two entries ago as the biggest gap after waypoints and **blocked on testing**: 353 uses across
+226 patterns, 138 `on_stop_to_flee` handlers, and a boss harness with no geodata and no movement to
+observe it with. That reasoning was half right and the half that was wrong is the interesting part.
+
+**Retail specifies a duration, not a distance.** The element carries only `<from>` (invariably
+`OBJI_CUR_TARGET`), `<seconds>` — one to five — and `<push_state>`. How far an NPC gets is its own run
+speed times the time. So there is nothing about *where it ends up* to translate, and the two things
+the pattern does say — **which way it aims** and **when it stops** — are both readable without moving
+anything. `PatternAi.Flee` computes the point directly away from the current target at
+`GetMovementSpeedFloat() × seconds`, hands it to the move controller, and schedules the stop.
+
+**Rule: "we cannot test it" is a claim about what the mechanic specifies, not about the harness. Read
+the element's arguments before concluding it needs movement — half the actions that look like movement
+specify a timer and a direction.**
+
+### `on_stop_to_flee` was the point of it
+
+An NPC that runs is not simply out of the fight for three seconds. Across the 5.8 files these handlers
+carry **71 broadcasts, 69 shouts and 66 casts** — a boss comes back shouting for help, or onto whoever
+is weakest. `AiPattern.OnStopFleeing` is the event; the krall are the first users of it, and their
+`1001` shout came out of the message audit as **acting** rather than `no audience`, so it lands on
+something.
+
+### What the krall do now
+
+| | |
+|---|---|
+| heavy trappers | lay the powerful trap, back away **five seconds**, turn round and shout `1001` fifteen metres naming their quarry |
+| scouts | back off **two seconds** after every trap, and come back onto whoever is closest to dying |
+| Chieftain Kurka | the same, **three seconds** |
+
+That is the half of those patterns the previous entry recorded as unreachable, and it is a large part
+of what makes a krall camp feel different from a pack of monsters: they lay, they back off, and they
+come back for the weakest.
+
+### Not translated
+
+`push_state`, which restores an AI state ours never leaves — our NPC keeps its hate list and its timers
+throughout, and the move controller is simply told to stop when the clock runs out. And the `<from>`
+argument is not honoured as a general case: every one of the 353 uses names `OBJI_CUR_TARGET`, so
+`Flee` runs from the current target and nothing else. If a pattern ever names something different that
+is a widening to make then, not a guess to make now.
+
+## The adds audit learns its sixth indirection
+
+`RagingKraterrAI` holds its three faithful servants as constants and builds its whole fight with
+`ElementalSummonerPattern.For(FirstWave, SecondWave, ThirdWave)` — a builder declared in
+*another file*. The same-file helper rule cannot see it, so all three read as never spawned **while the
+class had been placing twelve of them a fight**. `audit_pattern_guards.py` and
+`audit_retail_messages.py` were both taught to follow shared builders; this one never was.
+
+Now indexed across every handler file and qualified by type (`Type.Method`), so a common method name
+like `For` cannot credit an unrelated class. The diff is exactly five adds across two encounters — the
+Kraterr trio and two of Frostmane Lestin's waves, which had additionally been carrying a "we spawn
+280489 for this role" flag that was simply wrong. Nothing else moved.
+
+Six indirections now: a returner method, a local, a record, a tuple table, an argument position, and a
+cross-file builder. **Every one was found by noticing a number that should have moved and did not.**
+That is worth stating as the practice: after any change that adds spawns, read the audit's delta and
+check it equals what you added — not that it merely went down.
+
+### Verification
+
+Full suite **1,792 passing** and 1 skipped; three new pins for the flee; seventeen mutations on the
+krall, sixteen caught and one deliberate survivor. Adds 373 across 286 → **368 across 284**;
+missing-AI unchanged at 707.

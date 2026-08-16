@@ -145,6 +145,11 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
                           read_text(static / "ai/spawn_helpers.xml")))
     for path in (static / "npc_skills").rglob("*.xml"):
         ids.update(re.findall(r'<spawn_npc[^>]*npc_id="(\d+)"', read_text(path)))
+    handler_texts = {str(p): read_text(p)
+                     for p in (repo / "src/Aion.GameServer/Handlers").rglob("*.cs")}
+    builders = spawning_builders(handler_texts)
+    for text in handler_texts.values():
+        ids.update(spawned_via_builder(text, builders))
     for path in (repo / "src/Aion.GameServer/Handlers").rglob("*.cs"):
         text = read_text(path)
         ids.update(spawn_call_arguments(text))
@@ -391,6 +396,44 @@ def spawn_call_names(text: str) -> set[str]:
 CONST_RE = re.compile(r"\bconst int (\w+)\s*=\s*(\d{5,6})\b")
 # One expression-bodied or braced method: name, parameter list, and enough body to see a spawn.
 HELPER_RE = re.compile(r"\b(\w+)\(([^)]*)\)\s*(?:=>|\{)([^;}]*)")
+
+# `internal static class ElementalSummonerPattern` — where a shared builder lives.
+CLASS_RE = re.compile(r"\b(?:static\s+)?class\s+(\w+)")
+
+
+def spawning_builders(texts: dict[str, str]) -> set[str]:
+    """`Type.Method` names whose body spawns one of its own parameters, across every handler file.
+
+    The same test the same-file helper rule uses, lifted to a cross-file index and qualified by the
+    type the method is declared in. A boss whose whole fight is one call into a shared builder --
+    `ElementalSummonerPattern.For(FirstWave, SecondWave, ThirdWave)` -- otherwise has no spawn call
+    in its own file at all, and every id it passes reads as never spawned.
+    """
+    builders: set[str] = set()
+    for text in texts.values():
+        # Split on class declarations so a method is attributed to the type it sits in.
+        marks = [(m.start(), m.group(1)) for m in CLASS_RE.finditer(text)]
+        for i, (start, cls) in enumerate(marks):
+            end = marks[i + 1][0] if i + 1 < len(marks) else len(text)
+            for name, params, body in HELPER_RE.findall(text[start:end]):
+                names = set(re.findall(r"\bint (\w+)", params))
+                if names and any(re.search(SPAWN_CALL + rf"\s*{re.escape(p)}\b", body) for p in names):
+                    builders.add(f"{cls}.{name}")
+    return builders
+
+
+def spawned_via_builder(text: str, builders: set[str]) -> set[str]:
+    """Ids passed by name into one of those builders."""
+    consts = dict(CONST_RE.findall(text))
+    ids: set[str] = set()
+    for qualified in builders:
+        cls, method = qualified.split(".", 1)
+        for args in re.findall(rf"\b{re.escape(cls)}\.{re.escape(method)}\s*\(([^)]*)\)", text):
+            for token in re.findall(r"\b([A-Za-z_]\w*)\b", args):
+                if token in consts:
+                    ids.add(consts[token])
+            ids.update(re.findall(r"\b(\d{5,6})\b", args))
+    return ids
 
 # `private readonly record struct Traps(int Snare, int Throw, int Explosion, int Mine);`
 INT_RECORD_RE = re.compile(r"\brecord\s+(?:struct\s+)?(\w+)\(([^)]*)\)\s*;")

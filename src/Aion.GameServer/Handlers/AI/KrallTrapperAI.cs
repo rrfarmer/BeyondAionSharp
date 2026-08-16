@@ -1,5 +1,6 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 using static Aion.GameServer.Ai.Pattern.AiPattern;
 
@@ -42,17 +43,17 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>npc_templates.xml</c> rather than in a table here, because that is where a reader looks for it.
 /// </para>
 /// <para>
-/// <b>Not translated, and the reason is worth the space.</b> Every one of these patterns ends its
-/// escape or its trap loop with <c>flee_from</c>, and answers <c>on_stop_to_flee</c> when it stops
-/// running. We have neither. <c>flee_from</c> appears <b>353 times across 226 patterns</b> in the 5.8
-/// dump and <c>on_stop_to_flee</c> 138 times — after <c>goto_waypoint</c> it is the largest single
-/// piece of vocabulary we are missing, and it needs movement work our pattern harness cannot pin
-/// (no geodata, no visibility). Recorded with its size so the next attempt knows what it buys.
+/// <b>They run, and that is now translated.</b> The heavy trappers lay their powerful trap and back
+/// away for <b>five seconds</b>, then turn round and shout <c>1001</c> fifteen metres naming their
+/// quarry; the scouts back off for <b>two</b> after every trap and come back onto whoever is closest
+/// to dying, and Chieftain Kurka for <b>three</b>. Retail's <c>flee_from</c> gives a duration and no
+/// distance, so how far they get is their own run speed times the time — see
+/// <see cref="Aion.GameServer.Ai.Pattern.Do.Flee"/>.
 /// </para>
 /// <para>
-/// Also not translated: two skill indices per pattern; the <c>say_to_all</c> lines, which have no
-/// <c>npc_shouts.xml</c> row; the <c>1001</c> broadcast on stopping fleeing, which is unreachable for
-/// the same reason as the flee itself; and the <c>6199</c> listener on the scouts and Kurka. That last
+/// Not translated: two skill indices per pattern; the <c>say_to_all</c> lines, which have no
+/// <c>npc_shouts.xml</c> row; retail's <c>push_state</c>, which restores an AI state ours never
+/// leaves; and the <c>6199</c> listener on the scouts and Kurka. That last
 /// one is a trap telling the krall who tripped it — a real mechanic, and its only retail sender is
 /// pattern <c>D2_Trap</c>, which binds to no npc our world places. A listener with no speaker, and it
 /// stays that way until the trap npcs' own binding is resolved.
@@ -82,6 +83,13 @@ public class KrallTrapperAI : PatternAi
     /// <summary>Retail's <c>distance</c> on the escape rung.</summary>
     private const int MeleeRange = 6;
 
+    /// <summary>Retail's <c>&lt;seconds&gt;</c> on the flee: five for the heavy trappers.</summary>
+    private const int EscapeSeconds = 5;
+
+    /// <summary>Retail's message on stopping: "it is over here". Fifteen metres, naming its quarry.</summary>
+    public const int OverHere = 1001;
+    private const float ShoutReach = 15f;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -95,7 +103,8 @@ public class KrallTrapperAI : PatternAi
             // here, which we cannot express.
             Branch(3, "lay the heavy one and run", [When.Timer(Escape), When.HpBelow(35),
                     When.TargetWithin(MeleeRange), When.FirstTime(Escaped)],
-                Do.SpawnNear(HeavyPowerfulTrap, Laid, count: 1, range: Reach, liveSeconds: PowerfulLife)),
+                Do.SpawnNear(HeavyPowerfulTrap, Laid, count: 1, range: Reach, liveSeconds: PowerfulLife),
+                Do.Flee(EscapeSeconds)),
 
             Branch(2, "another one", [When.Timer(Loop)],
                 Do.ArmTimer(Loop, 20000),
@@ -103,6 +112,10 @@ public class KrallTrapperAI : PatternAi
 
             Branch(1, "", [When.Timer(Escape)],
                 Do.ArmTimer(Escape, 6000))),
+
+        OnStopFleeing = Of(
+            Branch(4, "turns round shouting", When.Always,
+                Do.Broadcast(OverHere, ShoutReach, aboutTarget: true))),
     };
 
     public KrallTrapperAI(Npc owner)
@@ -140,6 +153,9 @@ public class KrallScoutTrapperAI : PatternAi
     private const int OpenerLife = 3000;
     private const int LoopLife = 60;
 
+    /// <summary>Retail's <c>&lt;seconds&gt;</c>: two for a scout.</summary>
+    private const int FleeSeconds = 2;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -149,10 +165,15 @@ public class KrallScoutTrapperAI : PatternAi
                     liveSeconds: OpenerLife))),
 
         OnBattleTimer = Of(
-            Branch(3, "another one", [When.Timer(Loop)],
+            Branch(3, "another one, then back off", [When.Timer(Loop)],
                 Do.ArmTimer(Loop, 20000),
                 Do.SpawnNear(PowerfulTrap, KrallTrapperAI.Laid, count: 1, range: KrallTrapperAI.Reach,
-                    liveSeconds: LoopLife))),
+                    liveSeconds: LoopLife),
+                Do.Flee(FleeSeconds))),
+
+        OnStopFleeing = Of(
+            Branch(4, "and turns on the weakest", When.Always,
+                Do.SwitchTarget(AggroTarget.LOWEST_HP))),
     };
 
     public KrallScoutTrapperAI(Npc owner)
@@ -180,6 +201,9 @@ public class KrallHunterTrapperAI : PatternAi
     private const int Loop = 0;
     private const int Life = 60;
 
+    /// <summary>Retail's <c>&lt;seconds&gt;</c>: three for a chieftain, against the scouts' two.</summary>
+    private const int FleeSeconds = 3;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -189,10 +213,15 @@ public class KrallHunterTrapperAI : PatternAi
                     liveSeconds: Life))),
 
         OnBattleTimer = Of(
-            Branch(3, "another one", [When.Timer(Loop)],
+            Branch(3, "another one, then back off", [When.Timer(Loop)],
                 Do.ArmTimer(Loop, 20000),
                 Do.SpawnNear(PowerfulTrap, KrallTrapperAI.Laid, count: 1, range: KrallTrapperAI.Reach,
-                    liveSeconds: Life))),
+                    liveSeconds: Life),
+                Do.Flee(FleeSeconds))),
+
+        OnStopFleeing = Of(
+            Branch(4, "and turns on the weakest", When.Always,
+                Do.SwitchTarget(AggroTarget.LOWEST_HP))),
     };
 
     public KrallHunterTrapperAI(Npc owner)
