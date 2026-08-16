@@ -3203,3 +3203,53 @@ branch is ported.
 
 **Verification.** Full suite 1,301 passing and 1 skipped; five pins; all seven mutations
 caught.
+
+---
+
+## Re-measure after the gate, and the Dark Poeta arena finding
+
+Re-running the audit after landing the illusion gate, as the previous entry argued one
+should: **682 missing adds across 448 encounters, 591 of them self-contained across 422**.
+The gate's three are resolved and nothing new appeared in their place.
+
+The top of the ranking is now entirely **already-analysed or known-blocked**:
+
+| encounter | state |
+|---|---|
+| Tiamat's dying phase (7 and 4) | blocked on one beacon-direction observation |
+| `IDSeal_Scene_17_QuestNPC` (6) | cutscene level-variants, not adds — rejected |
+| `IDAbRe_Core_NamedD_*` (5 and 4) | gate ids we deliberately substitute |
+| `GwDGuard_FlA` / `GwLGuard_FlA` (4 each) | **false positives from our own record-constructor blind spot** — ported |
+| `DF4_GH_KJS` (3) | waypoint-blocked *and* sibling-substituted |
+
+That is worth saying plainly: **the ranked head of this backlog is now noise and known
+blockers, not work.** The remaining real content is the long tail — 422 encounters
+missing one to three adds each, where the screening cost per encounter is close to the
+porting cost.
+
+### The Dark Poeta dragons share one arena's hazard points
+
+Screening Calindi Flamelord (`Dragon_G2`) confirmed something first noticed on Tahabata:
+**all of Dark Poeta's dragons place their hazards on the same fixed points.**
+
+- flame rain / flame centre — (1177, 1241), (1173, 1231), (1187, 1229), (1190, 1238)
+  — used by Tahabata (`Dragon_G1`), Calindi (`Dragon_G2`) and Vanuka (`Dragon_G3`),
+  the last of which is already ported against exactly these coordinates
+- summon spots — (1192, 1254), (1169, 1246), (1173, 1217), (1198, 1224)
+  — shared by Tahabata and Calindi
+
+This is a free cross-check for any future work on that instance: a translation of one
+dragon that lands on different points than another is wrong, and the ported Vanuka gives
+a known-good reference for the flame set.
+
+**Calindi is not ported**, for the same reason Tahabata's markers are not: retail places
+short-lived markers on timer branches, our classes spawn different long-lived things off
+skill hooks, and reconciling means rebuilding the fight as a timer table rather than
+patching a spawn in. Calindi additionally has several classes in our tree
+(`CalindiFlamelordAI`, `DarkPoetaCalindiFlamelordAI`, `HM_CalindiFlamelordAI`,
+`CalindiSummonsAI`, `CalindiSurkanaAI`), so establishing which one 215281 actually runs is
+a prerequisite and was not attempted here.
+
+**Still unscreened**, and the honest next candidates: `DGuard_Kistenian` (204753, three
+adds, two of them level 1 and so likely control objects rather than fighters) and
+`LF4_GH_KJS` (258203, two "yushin" adds plus one waypoint-blocked).
