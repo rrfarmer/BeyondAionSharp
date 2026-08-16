@@ -4437,3 +4437,48 @@ the chain begins somewhere this extraction cannot see. They need whatever spawns
 **Verification.** Full suite 1,365 passing and 1 skipped; six new pins; five of six mutations caught.
 The survivor is the familiar inert one — moving the opener to `on_wake_up` changes nothing because
 battle timers only fire in combat.
+
+### The Runatorium's Vritra callers
+
+The largest cluster left after the guards and gates, and a small one — the tail is now individual
+encounters rather than families. Eight invisible controllers stand in Infinity Shard (300800000),
+they are in our spawn data, and their templates pointed at `general`, so they did nothing at all.
+Each wakes, puts a Vritra trooper on the floor and removes itself two seconds later.
+
+**The cascade is a weighted pick, not ten rolls.** Four of the eight carry ten branches at equal
+priority, each with its own `test_probability`, and one unguarded branch beneath them. Retail
+evaluates in priority order and stops at the first branch that passes, so **exactly one** trooper
+appears every time and the unguarded branch is what guarantees it. Read as ten independent rolls it
+would put anywhere from nought to ten troopers on the floor. The other four are a single unguarded
+branch spawning three at once, one of them five metres from the other two.
+
+**Two pins, because one is not enough.** "Exactly one trooper" is satisfied just as well by a table
+read in the wrong order — fallback first, where retail puts it last — which produces exactly one, and
+the *same* one, every time. A mutation doing precisely that survived until a second pin counted
+distinct troopers across twenty runs.
+
+**Not translated: the walk.** Retail hands each trooper a `pathname` so it walks a fixed route from
+the drop point. We have no server-path following, so troopers arrive on retail's mark and then behave
+as their own template says. That is the audit's own "blocked: waypoint-placed" category and it is the
+only part of this mechanic left out.
+
+### The audit's table sweep was too narrow, for the third time
+
+The backlog did not move when this landed. The generated-table sweep matches `(npc_id, count)` tuples
+and required the tuple to **close** after the count — the Vritra placements carry coordinates as well,
+so twenty ids went unseen. Widened to "an id at the head of a tuple whose next element is a small
+integer", which picks up both tables and still excludes dictionary keys.
+
+That is the third time this audit's shape assumptions have cost a measurement: it could not see a
+generated table at all, then it saw the guards' keys as well as their summons, and now it could not
+see a tuple with a third element. **Each was found by the backlog failing to move after work that
+should have moved it** — which is the only reason to re-measure after every change rather than
+trusting the number.
+
+**Where the count went.** 586 across 390 encounters → **566 across 387**.
+
+**Verification.** Full suite 1,370 passing and 1 skipped; five new pins; four of six mutations caught.
+The two survivors are inert by data rather than untested: every `num_to_spawn` in this family is 1, so
+ignoring the count changes nothing, and the reversal mutation was a no-op because `AiPattern.Of`
+re-sorts by priority regardless of list order — redone as "evaluate the fallback first", it was
+caught.

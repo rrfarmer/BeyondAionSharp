@@ -166,8 +166,10 @@ def generated_table_ids(text: str) -> set[str]:
     code shape: the ids sit in tuple literals that no call-shaped regex will match,
     so ninety-five adds stayed in the backlog after the code to spawn them landed.
 
-    Gated on the file declaring itself generated, and narrowed to the `(npc_id, count)`
-    pairs a spawn table is made of. Both guards earn their keep. Taking every long
+    Gated on the file declaring itself generated, and narrowed to the `(npc_id, count, ...)`
+    tuples a spawn table is made of -- an id at the head of a tuple whose next element is a
+    small integer. The first version required the tuple to *close* after the count, which
+    silently missed the Vritra callers, whose placements carry coordinates as well. Both guards earn their keep. Taking every long
     integer out of every handler would sweep up skill, string and item ids; taking
     every long integer out of the generated file swept up its dictionary *keys* -- the
     460 guards themselves -- so guards nothing spawns began counting as live
@@ -176,7 +178,7 @@ def generated_table_ids(text: str) -> set[str]:
     """
     if not GENERATED_RE.search(text):
         return set()
-    return set(re.findall(r"\((\d{5,6}),\s*\d+\)", text))
+    return set(re.findall(r"\((\d{5,6}),\s*\d+[,\)]", text))
 
 
 AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
