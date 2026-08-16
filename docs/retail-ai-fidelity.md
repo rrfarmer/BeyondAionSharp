@@ -3253,3 +3253,55 @@ a prerequisite and was not attempted here.
 **Still unscreened**, and the honest next candidates: `DGuard_Kistenian` (204753, three
 adds, two of them level 1 and so likely control objects rather than fighters) and
 `LF4_GH_KJS` (258203, two "yushin" adds plus one waypoint-blocked).
+
+---
+
+## Kistenian — fully mapped, deliberately not ported
+
+**NPC:** kistenian (204753), Beluslan, LEGENDARY. **Pattern:** `DGuard_Kistenian`. Three
+ELITE adds, all spawned by nothing anywhere. This entry exists so the next attempt starts
+from a mapped encounter rather than a dump.
+
+### What each add is, and what triggers it
+
+| npc | devname | trigger |
+|---|---|---|
+| 295179 flame of kistenian | `..._FireElemental_Al` | **on entering combat**, at his feet, permanent — and again on message 10018 |
+| 295180 fire spirit | `..._Pet_An` | on message **10016**: two on the current target within 50m, three on a 25% roll, six-second life |
+| 295181 dredgion elite fighter | `..._Despawn` | **on dying**, at his feet, six-second life |
+
+Despite the name, 295181 is a death effect, not a fighter — the audit reports the display
+name and this one is misleading.
+
+### The message loop, mapped
+
+Kistenian broadcasts **10014** to seventy-five metres every three seconds. The replies
+come from patterns of their own:
+
+- **10016** and **10015** ← `DGuard_KistenianPet` (the fire spirit's own pattern)
+- **10018** ← `DGuard_KistenianDespawn` (the death effect's own pattern)
+- **10015** ← additionally every abyss artifact guard pattern, both factions
+
+So two of the three adds are reachable only once their *own* patterns are ported: the pet
+and the death effect talk back, and his replies are what put more of them out. Only the
+flame on engaging and the effect on dying need nothing else.
+
+### Why it is not ported here
+
+He runs **`AbyssGuardSimpleAI`**, which **859 NPCs share** and which overrides
+`CanHandleEvent` and `HandleCreatureSee` — real abyss-guard behaviour, not a placeholder.
+`PatternAi` extends `AggressiveNpcAI`, so the pattern runtime cannot be dropped onto him
+without losing that. The correct shape is a hand-rolled subclass of `AbyssGuardSimpleAI`
+adding the two unconditional spawns, exactly as `TahabataPyrelordAI` was extended — but
+whether `CanHandleEvent` filters the attack and death events those hooks need has to be
+checked first, and that check was not done here rather than guessed at.
+
+**Two of the three adds are one small subclass away.** The third needs the pet's pattern
+as well.
+
+### Also screened
+
+`LF4_GH_KJS` (enraged veille, 258203): its two remaining adds are both named "yushin",
+share one name_id, and run `ai="general"` — a non-combat handler. NORMAL and HERO
+variants of the same figure, so almost certainly a quest or scene NPC rather than a
+reinforcement. Not pursued.
