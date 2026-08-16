@@ -9247,3 +9247,57 @@ read by no branch at all — retail arms it and nothing uses it, left as written
 
 Full suite **1,870 passing** and 1 skipped; eight new pins; twelve mutations, eleven caught and one
 deliberate survivor. Adds 363/281 → **362/281**; translatable 940 → **938**.
+
+## Brigade General Anuhart — Dark Poeta's last boss, on plain `aggressive`
+
+`XDrakan_LastBoss` binds to Brigade General Anuhart (214904). The other five grades of his instance
+were translated some time ago; the boss at the end of it was still a plain monster.
+
+| | |
+|---|---|
+| on engaging | takes a **random** attacker, which is what he does at every step |
+| crossing seventy | four **faithful subordinates** (281249) on four fixed marks, an order to take whoever he is fighting, another random turn |
+| from then on | a relay re-issues that order about every twenty-seven seconds |
+| below thirty | four **flame centres** (281246) at his feet, a random turn, and the ladder stops |
+| and then | every thirty-four seconds: four more flame centres, **two more subordinates**, and the order again |
+
+**The four opening subordinates are placed absolutely**, which is what makes them portable at all —
+retail names four coordinates around his platform rather than a walker route, so unlike the Akairun's
+protectors an entry ago these go exactly where they belong. The pin checks one of them stands on the
+mark furthest from him, which a spawn-at-his-feet would not.
+
+### Two of retail's own branches are unreachable
+
+The enrage relay exists **twice**: once unguarded at priorities 10 and 11, once guarded on 31–100 at
+priorities 8 and 9. First-match-wins means the unguarded pair always wins, so the guarded copies never
+run — and the practical consequence is that **the enrage relay is not bounded by health at all**, only
+by the rung that starts it. Recorded rather than ported, so nobody restores them as a missing band.
+
+That is the third pattern in this log with dead branches in retail's own data, after the Unstable
+Triroan's `p16` and the sealed akaimum's second `is_race` rung. **Rule: when two branches on one timer
+differ only by a guard, check which one outranks the other before believing the guarded one runs.**
+
+### The same-branch broadcast, for the second time
+
+The step spawns the four and broadcasts in the same branch, so — under the rule measured for RM-56c —
+they do not hear it, and they stand idle until the relay's first order thirty seconds later. This is
+the **second** encounter to want the opposite of that rule (the anuhart casters' pet was the first),
+and our measured behaviour is kept in both. Both pins say so in their names rather than quietly
+advancing past it.
+
+### Not translated
+
+Nineteen skill indices; the 71–100 timer 1 and 2 chain, which is a cast loop and nothing else; and the
+subordinates' `on_leave_attack_state` self-despawn, which would only race the general's own clean-up of
+the same group.
+
+The subordinates' pattern is written as a **four-way split on npc state** — idle it adds hate and
+attacks, fighting it switches target and casts, once for each of the two messages — and collapses to
+one action for each message. That is the second pattern to be written that way; the anuhart casters'
+pet was the first, and it collapses for the same reason: our runtime has no vocabulary for testing an
+NPC's own state inside a branch, and the outcome does not depend on it.
+
+### Verification
+
+Full suite **1,880 passing** and 1 skipped; ten new pins run three times over; fourteen mutations, all
+caught. Adds 362/281 → **361/280**; missing-AI 699 → **698**; translatable 938 → **937**.
