@@ -32,14 +32,17 @@ namespace Aion.GameServer.Handlers.AI;
 /// existed here — the beacons were spawned by nothing at all, so every breath arrived unannounced.
 /// </para>
 /// <para>
-/// <b>Half the casts are translated.</b> The top two bands address indices 1/2/3, resolved to 20922 /
-/// 20924 / 20926 by their stack names (<c>IDTIAMAT_TIAMAT_BREATH{L,M,R}_CAST</c>, unique in the skill
-/// table, and agreeing with the branch comment, the beacon number and the index all at once). The
-/// lower two bands address 6/8/10 and 7/9/11 — faster-cast variants, as their <c>Beacon*8s</c> and
-/// <c>Beacon*4s</c> marks imply — whose ids are <b>not resolved</b>. Those bands place their beacons
-/// and hazards faithfully and cast nothing, which is the honest half-translation: the telegraph and
-/// the ground hazards are what a raid reads, and inventing a skill id would be a guess in the one
-/// place this work does not guess.
+/// <b>All nine breaths are translated.</b> The three cast times retail ships — twelve seconds, eight
+/// and four — line up with the three beacon families the bands use, the stack names spell the
+/// direction and the duration, and the index pairs interleave in the same order as the skill ids.
+/// See <see cref="ResolvedBreaths"/>.
+/// <para>
+/// <b>Hard mode casts the same skills, and that is an inference from absence.</b> The skill table has
+/// hard-specific <i>damage</i> halves for every breath (<c>IDTIAMAT_HARD_TIAMAT_BREATH*_DMG</c>) and
+/// <b>no hard cast half at all</b>, so there is nothing else it could be casting. That is weaker
+/// evidence than normal mode's name match — it rests on the absence being deliberate rather than an
+/// omission in the data — and it is flagged here rather than buried.
+/// </para>
 /// </para>
 /// <para>
 /// <b>Evaluation order is retail's, flat.</b> <see cref="TiamatRotation"/> keeps the steps in document
@@ -62,14 +65,32 @@ public class TiamatDyingRotationAI : PatternAi
     private const int Placed = 1;
 
     /// <summary>
-    /// The breaths whose ids resolve, by the index the pattern addresses. See the class remarks —
-    /// only the top two bands' indices are here, and the rest deliberately cast nothing.
+    /// Every breath the rotation casts, by the index the pattern addresses.
     /// </summary>
+    /// <remarks>
+    /// All nine resolve, and the structure is what settles them. Retail has exactly three breath cast
+    /// times — twelve seconds, eight and four — and the skill table names them
+    /// <c>BREATH{L,M,R}_CAST</c>, <c>BREATH{L,M,R}8S_CAST</c> and <c>BREATH{L,M,R}4S_CAST</c>, with
+    /// <c>duration</c> 12000, 8000 and 4000 to match. The bands that address indices 6-11 place the
+    /// <c>Beacon*8s</c> and <c>Beacon*4s</c> marks, which is the same claim from the other side.
+    /// <para>
+    /// The index numbering closes it: 6/8/10 and 7/9/11 are interleaved L/M/R pairs, and so are the
+    /// skill ids — 21149/21151 for left, 21153/21155 for middle, 21157/21159 for right, even for four
+    /// seconds and odd for eight. Four independent orderings agreeing is not a coincidence to be
+    /// hedged against.
+    /// </para>
+    /// </remarks>
     private static readonly Dictionary<int, int> ResolvedBreaths = new Dictionary<int, int>
     {
-        [1] = 20922, // Ultimate Atrocity, stack IDTIAMAT_TIAMAT_BREATHL_CAST
-        [2] = 20924, // ...BREATHM_CAST
-        [3] = 20926, // ...BREATHR_CAST
+        [1] = 20922,  // BREATHL_CAST,   12s
+        [2] = 20924,  // BREATHM_CAST,   12s
+        [3] = 20926,  // BREATHR_CAST,   12s
+        [6] = 21149,  // BREATHL4S_CAST,  4s — the 0-25 band's Beacon*4s marks
+        [8] = 21153,  // BREATHM4S_CAST,  4s
+        [10] = 21157, // BREATHR4S_CAST,  4s
+        [7] = 21151,  // BREATHL8S_CAST,  8s — the 26-50 band's Beacon*8s marks
+        [9] = 21155,  // BREATHM8S_CAST,  8s
+        [11] = 21159, // BREATHR8S_CAST,  8s
     };
 
     private static sbyte Facing(int degrees) =>

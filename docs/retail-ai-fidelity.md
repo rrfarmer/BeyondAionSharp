@@ -4795,3 +4795,46 @@ caught.
 
 **Still open:** the lower two bands' breath skill ids (6/8/10 and 7/9/11) remain unresolved in both
 modes, so those bands place beacons and hazards and cast nothing.
+
+### The last open piece on Tiamat: all nine breaths resolve
+
+Two entries ago the lower bands' breath ids were "not resolved" and those bands cast nothing. They
+resolve, and the evidence is the strongest this work has assembled — **four independent orderings all
+agreeing**:
+
+| | left | middle | right |
+|---|---|---|---|
+| 12s (bands 76-100, 51-75; indices 1/2/3) | 20922 | 20924 | 20926 |
+| 8s (band 26-50; indices 7/9/11) | 21151 | 21155 | 21159 |
+| 4s (band 0-25; indices 6/8/10) | 21149 | 21153 | 21157 |
+
+1. Retail ships exactly three breath cast times and the skill table names them
+   `BREATH{L,M,R}_CAST`, `…8S_CAST` and `…4S_CAST`.
+2. Each one's `duration` is 12000, 8000 and 4000 to match its name.
+3. The bands addressing 6-11 place the `Beacon*8s` and `Beacon*4s` marks — the same claim from the
+   telegraph's side rather than the skill's.
+4. The index numbering closes it: 6/8/10 and 7/9/11 are interleaved L/M/R pairs, and so are the skill
+   ids — even index for four seconds, odd for eight, in the same order.
+
+The pin that matters is the **pairing**, not the id: a band that places a `Beacon*8s` while casting a
+twelve-second breath telegraphs one thing and does another, which is exactly what a wrong index
+mapping produces. All three mutations — swapping the 4s and 8s sets, swapping left and right, and
+dropping the lower bands back to casting nothing — are caught.
+
+**Hard mode shares the casts, and that rests on absence rather than a name.** The skill table has
+hard-specific *damage* halves for every breath (`IDTIAMAT_HARD_TIAMAT_BREATH*_DMG`) and **no hard cast
+half at all**, so there is nothing else it could be casting. That is weaker than normal mode's name
+match — it assumes the absence is deliberate rather than a gap in the data — and it is flagged in the
+class rather than buried.
+
+### A sampling limit worth knowing for any cast pin
+
+The first version of the eight-second pin asked for both the left and the middle breath and saw only
+the left. The queue is drained by the **attack loop** as well as by the test, so sampling once a
+second sees some casts and misses others. Any pin that counts casts is sampling, not observing; assert
+that the right family appears and the wrong one does not, rather than enumerating.
+
+**Verification.** Full suite 1,391 passing and 1 skipped; two new pins; all three mutations caught.
+
+**Tiamat's dying phase is now complete** — both modes, all four bands, every beacon, hazard and
+breath. What remains on this encounter is nothing this data can answer.

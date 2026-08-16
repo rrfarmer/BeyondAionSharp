@@ -277,4 +277,70 @@ public sealed class TiamatDyingRotationAiTests
 		Assert.Equal([HardBeaconMiddle, HardBeaconMiddle, HardBeaconLeft, HardBeaconRight], hard.Take(4));
 		Assert.Equal(0, normalSeen);
 	}
+
+	/// <summary>The twelve-second breaths of the healthiest band, in the beacons' own order.</summary>
+	private const int BreathLeft12s = 20922;
+	private const int BreathMiddle12s = 20924;
+	private const int BreathRight12s = 20926;
+
+	/// <summary>The eight-second variants the 26-50 band uses, off its <c>Beacon*8s</c> marks.</summary>
+	private const int BreathLeft8s = 21151;
+	private const int BreathMiddle8s = 21155;
+
+	/// <summary>
+	/// The healthiest band casts the twelve-second breaths, matching the beacons it places.
+	/// </summary>
+	[Fact]
+	public void TheHealthiestBandCastsTheTwelveSecondBreaths()
+	{
+		var (harness, boss, player) = Engaged(90);
+		using BossAiHarness _h = harness;
+
+		var cast = new List<int>();
+		for (int i = 0; i < 70; i++)
+		{
+			BossAiHarness.Rehate(boss, player);
+			BossAiHarness.KeepAlive(player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			cast.AddRange(BossAiHarness.DrainQueuedSkills(boss).Select(c => c.SkillId));
+		}
+
+		Assert.Equal([BreathMiddle12s, BreathMiddle12s, BreathLeft12s, BreathRight12s], cast.Take(4));
+	}
+
+	/// <summary>
+	/// And a band that places the eight-second beacons casts the eight-second breaths — the pairing
+	/// that resolves indices 6-11.
+	/// </summary>
+	/// <remarks>
+	/// The point of this pin is the <i>match</i> between mark and cast time. A band placing a
+	/// <c>Beacon*8s</c> while casting the twelve-second breath would telegraph one thing and do
+	/// another, which is precisely the failure a wrong index mapping produces.
+	/// <para>
+	/// It asserts one eight-second breath rather than all three. The queue is drained by the attack
+	/// loop as well as by the test, so a sample every second sees some casts and not others — the
+	/// first version asked for both left and middle and saw only left. What is reliable is that an
+	/// eight-second breath appears and no twelve-second one does.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheEightSecondBandCastsTheEightSecondBreaths()
+	{
+		var (harness, boss, player) = Engaged(40);
+		using BossAiHarness _h = harness;
+
+		var cast = new List<int>();
+		for (int i = 0; i < 60; i++)
+		{
+			BossAiHarness.Rehate(boss, player);
+			BossAiHarness.KeepAlive(player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			cast.AddRange(BossAiHarness.DrainQueuedSkills(boss).Select(c => c.SkillId));
+		}
+
+		Assert.Contains(cast, id => id == BreathLeft8s || id == BreathMiddle8s);
+		Assert.DoesNotContain(BreathLeft12s, cast);
+		Assert.DoesNotContain(BreathMiddle12s, cast);
+		Assert.DoesNotContain(BreathRight12s, cast);
+	}
 }
