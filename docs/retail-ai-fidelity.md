@@ -8815,3 +8815,79 @@ Full suite **1,803 passing** and 1 skipped; eleven new pins; thirteen mutations,
 deliberate survivor. Adds and missing-AI unchanged — the elementals were already being spawned, by the
 class this replaces, which is exactly why neither audit could see that the mechanic behind them was
 wrong.
+
+## The two Heiron watchers — one summons, one commands
+
+`audit_translatable.py`'s next two picks, and they are a useful pair because they fail in opposite
+ways. Both were on plain `aggressive`.
+
+### Bulwark Jeshuchi (212282) — a wave that grows
+
+`ND2_KeD`, twenty-six translatable actions against ten casts, the best ratio left with a spawn in it.
+Three **disciples of Jeshuchi** (280758) on the first clock tick, **four** on crossing seventy,
+**five** on crossing thirty-five, ten metres out and thirty minutes each. Each step also turns him off
+the tank — the first two onto the **third-most-hated** player, the last one onto whoever is **closest
+to dying**, which is the escalation that matters more than the extra disciple. He clears them on both
+exits, because retail declares the despawn on `on_leave_attack_state` *and* on `on_killed_by_user`.
+
+Both of his broadcasts are **not** sent. `6191` and `6192` reach only the disciple's own pattern, whose
+handlers are a cast and a two-second timer leading to a cast — nothing we can express, so sending them
+would be noise. Recorded as cast-only rather than left looking like a gap.
+
+### Watcher Zapiel (212283) — a commander whose reinforcements we cannot place
+
+`ND2_KeE` is the mirror. Every band step — at eighty-one, at eighty, at fifty-five — he broadcasts
+`6190` fifty metres carrying whoever he is fighting, and every **disciple of Zapiel** (280760) in range
+drops what it is doing and goes for that player, while he turns onto the third-most-hated himself.
+Below thirty he stops stepping and starts repeating: `6189`, the same order, roughly every thirty-two
+seconds for the rest of the fight — and that rung does not re-arm the ladder, so there are no more band
+steps however long the fight lasts.
+
+**His spawns are not translated, and they are the clearest case yet for the walker gap.** All four band
+steps place disciples with `SPAWN_LOCATION_WAY_POINT_START` and a `pathname` — `E3_Cheru3_1` through
+`_4` — meaning "at the start of that route, then walk it". We have neither the location kind nor the
+route mapping. What saves the encounter is that our spawn file already stands disciples around him, so
+the orders land on real cherubim; what is missing is the reinforcement.
+
+**Rule, and it is the useful half of this entry: a blocked spawn does not block the mechanic.** Zapiel's
+value to a raid is not that four more cherubim arrive, it is that the ones already there stop hitting
+the tank. That half needed no vocabulary we did not have.
+
+### Retail's two orders differ by one action and ours cannot tell them apart
+
+`6190` is `add_hate_point` + `attack_most_hating` + `switch_target`; `6189` is `add_hate_point` +
+`switch_target` with no attack. `Do.HateMessageTarget` does hate-then-attack, so the second comes out
+very slightly stronger than retail wrote it. An aggressive cherubim that has just switched target was
+going to attack anyway, which is why this is accepted as a widening rather than worked around — and
+recorded so it is not mistaken for a translation error later.
+
+### The pin that would not fail, and why
+
+Removing the order from one of Zapiel's three band steps survived the sweep twice over. The first
+version stood the disciple beside the raid, where an aggressive cherubim finds a player without being
+told. Moving it forty metres out did not fix it either: the disciple still joined, because it sees its
+friend attacked. What works is a **decoy** — the disciple gets its own player next to it, takes that one
+unprompted, and only the order moves it to Zapiel's quarry.
+
+That is the third time in this suite an aggressive add has made an order pin pass on its own (the
+Dreadgion barrier and the silikor guards were the others). **Rule: to pin "X was told to attack Y",
+give X something else it would have attacked. Distance is not enough — an add that can see the fight
+will join it.**
+
+### Also fixed: a pin measuring nothing
+
+`TheLastStepTakesTheWeakestRatherThanTheThird` healed the whole raid every tick, so at the moment the
+below-thirty-five rung fired everybody was at full health and "closest to dying" was whatever the aggro
+list happened to return. The wounded player is now left wounded.
+
+### Not translated
+
+Ten skill indices on Jeshuchi and fifteen on Zapiel; Zapiel's `6191` per-band cast loops, cast-only at
+the listener like Jeshuchi's; and the waypoint-start spawns above.
+
+### Verification
+
+Full suite **1,814 passing** and 1 skipped; eleven new pins; thirteen mutations, all caught after four
+repairs. Missing-AI 707 → **705**; translatable 956 → **953**. Adds unchanged: Jeshuchi's disciples were
+already on the spawn list through their static placement, and Zapiel's reinforcements are the blocked
+half.
