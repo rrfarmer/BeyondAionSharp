@@ -3717,3 +3717,48 @@ That was already in the message audit's sixteen. It is now the only part of the 
 mechanism that is not blocked on client data, and the coffins that would answer it are
 already ported and already spawned. **That is the next thing to do here**, and it is small:
 one timer, two broadcasts, and whatever the coffins do with them.
+
+### Adma's normal-mode waves are reachable after all — full specification
+
+The blocked chain was the wrong one. Chasing Lord Lannok's own broadcasts instead of the
+controllers' found a second route where **every NPC binds and every add is one we can
+already place**:
+
+```
+Lord Lannok (214696, Adma_DeathknightNamed)
+    battle timer 11, re-arming every 45s:
+        50%  → broadcast 6605 (range 50)
+        else → broadcast 6607 (range 50)
+
+Coffins D, E, F (281056, 281057, 281058 — all bound, all on suspicious_coffin)
+    on 6605 → spawn faithful page (280933)
+    on 6606 → 50% diligent page (280949), else faithful page
+    on 6607 → 50% diligent page,          else faithful page
+        each ABSOLUTE, spawn_range 0, live_time 180
+```
+
+Coffins A, B and C answer 6602-6604 from the unbound controllers; **D, E and F answer
+Lannok directly.** The same two pages, reached by a route that is entirely inside content
+we have. `LordLannokAI` broadcasts neither message and `SuspiciousCoffinAI` listens for
+neither.
+
+### Why it is specified here rather than implemented
+
+One thing does not fit the shape of our port. Retail writes **six separate coffin patterns**
+— `NoAction_CoffinA` through `F` — precisely because each spawns at its *own* absolute
+point. Our `SuspiciousCoffinAI` is one class serving all six npc ids, so it needs the six
+coordinate sets keyed by npc id, the way `MiddleBossFireAI` keys its traits.
+
+That is the work: pull the absolute spawn point out of each of the six patterns, key them,
+add three message branches, and add Lannok's timer 11 — including finding where it is first
+armed, which was not captured here. Plus pins and a mutation pass. It is a session, and
+starting it on the last of one is how the coordinates end up guessed.
+
+**Everything needed is above.** Nothing further has to be derived: the npc ids are
+confirmed bound, the two pages are confirmed spawned by nothing, the probabilities,
+lifetimes and the 45-second cadence are read from the patterns.
+
+**What this changes about the earlier verdict.** The previous entry concluded the Adma
+mechanism was blocked on a 4.8-versus-5.8 client mismatch. That is true of the *controller*
+route and false of the whole encounter — there was a reachable path one query away, and the
+verdict was written before looking for it. Blocked on one route is not blocked.
