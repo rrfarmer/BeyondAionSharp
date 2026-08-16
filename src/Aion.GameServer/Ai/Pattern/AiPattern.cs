@@ -253,6 +253,18 @@ public static class Do
     public static PatternAction Broadcast(int messageType, float range, bool aboutTarget = false)
         => ai => ai.Broadcast(messageType, range, aboutTarget);
 
+    /// <summary>
+    /// <c>use_skill(OBJI_SELF, SKILLI_INDEX_0)</c> where the NPC's list holds exactly one skill.
+    /// </summary>
+    /// <remarks>Does nothing if it holds any other number — see <see cref="PatternAi.CastOnlySkillOnSelf"/>.</remarks>
+    public static PatternAction OnlySkillOnSelf() => ai => ai.CastOnlySkillOnSelf();
+
+    /// <summary>
+    /// <c>use_skill(OBJI_SELF, …)</c> for an NPC that never fights, cast outright rather than queued.
+    /// </summary>
+    /// <remarks>A queued cast on such an NPC never fires — see <see cref="PatternAi.CastSkillNow"/>.</remarks>
+    public static PatternAction SkillOnSelfNow(int skillId) => ai => ai.CastSkillNow(skillId);
+
     /// <summary><c>add_hate_point</c> at the object a message carried, then attack it.</summary>
     public static PatternAction HateMessageTarget(int hate) => ai => ai.HateMessageTarget(hate);
 

@@ -33,7 +33,7 @@ public sealed class TahabataPyrelordAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(DarkPoeta).WithWorldSize(2048)
 			.WithAi(typeof(TahabataPyrelordAI), typeof(TahabataSummonSpotAI), typeof(TahabataDrakanSpotAI),
-				typeof(TahabataGargoyleAI), typeof(AggressiveNpcAI)).Build();
+				typeof(TahabataGargoyleAI), typeof(NTrapAI), typeof(AggressiveNpcAI)).Build();
 		Npc boss = harness.Spawn(Tahabata, 1180f, 1235f, 143f);
 
 		// Well out of his aggro range: he is an aggressive NPC and will pull anyone standing next to
@@ -109,21 +109,34 @@ public sealed class TahabataPyrelordAiTests
 		Assert.Equal(1, BossAiHarness.DrainQueuedSkills(boss).Count(c => c.SkillId == YouAreUnworthy));
 	}
 
-	/// <summary>Spawned by nothing anywhere before this.</summary>
+	/// <summary>
+	/// The primal dragon he leaves where he falls is a <c>NTrap_A</c> marker: it appears, lands Final
+	/// Blow on whatever is standing round the corpse, and is gone. Nothing is left standing.
+	/// </summary>
+	/// <remarks>
+	/// Both halves matter and both are visible only because the despawn waits for the cast. Had the
+	/// trap removed itself in the same breath as casting, a despawned NPC being dropped from the world
+	/// map outright would leave no way to tell "he placed a marker that fired and left" from "he placed
+	/// nothing at all".
+	/// </remarks>
 	[Fact]
-	public void HeLeavesAPrimalDragonWhereHeFalls()
+	public void ThePrimalDragonHeLeavesGoesOffWhereHeFellAndIsGone()
 	{
 		var (harness, boss, player) = Spawned();
 		using BossAiHarness _h = harness;
 		BossAiHarness.MakeMutuallyKnown(boss, player);
 		harness.Engage(boss, player);
-		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == PrimalDragon));
+		Assert.Equal(0, Count(harness, PrimalDragon));
 
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 
-		Npc dragon = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == PrimalDragon));
+		Npc dragon = harness.LiveNpcs().First(n => n.GetNpcId() == PrimalDragon);
 		Assert.Equal(boss.GetX(), dragon.GetX());
 		Assert.Equal(boss.GetY(), dragon.GetY());
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+
+		Assert.Equal(0, Count(harness, PrimalDragon));
 	}
 
 	private static int Count(BossAiHarness harness, int npcId) =>
@@ -169,17 +182,30 @@ public sealed class TahabataPyrelordAiTests
 	/// Below 80 the T0 heartbeat hands over to the second loop, and the branch that does it rings him
 	/// with four flame centers. Nothing in the server spawned this NPC before.
 	/// </summary>
+	/// <remarks>
+	/// Watched second by second and measured at its peak. A flame center is a trap: it goes off as soon
+	/// as it appears and leaves when the cast lands, so counting at any chosen moment finds an empty
+	/// arena unless that moment is the one the ring landed on.
+	/// </remarks>
 	[Fact]
 	public void TheSecondBandRingsHimWithFlames()
 	{
 		var (harness, boss, player) = EngagedAt(70);
 		using BossAiHarness _h = harness;
 
-		Advance(harness, boss, player, 15);
+		int peak = 0;
+		var marks = new HashSet<(float, float)>();
+		for (int i = 0; i < 15; i++)
+		{
+			Advance(harness, boss, player, 1);
+			Npc[] flames = harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter).ToArray();
+			peak = Math.Max(peak, flames.Length);
+			foreach (Npc flame in flames)
+				marks.Add((flame.GetX(), flame.GetY()));
+		}
 
-		Npc[] flames = harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter).ToArray();
-		Assert.Equal(4, flames.Length);
-		Assert.Equal(4, flames.Select(f => (f.GetX(), f.GetY())).Distinct().Count());
+		Assert.Equal(4, peak);
+		Assert.Equal(4, marks.Count);
 	}
 
 	/// <summary>
@@ -250,6 +276,23 @@ public sealed class TahabataPyrelordAiTests
 		Advance(harness, boss, player, 15);
 
 		Assert.False(leftover.IsSpawned(), "the ring call should have sent the leftover away");
+	}
+
+	/// <summary>
+	/// A summon spot fires its Summon rather than leaving it queued. The queue is drained by the attack
+	/// loop and only while the NPC has a target it hates, so a marker that queues its one cast never
+	/// fires it — which is what these spots did on the day they shipped.
+	/// </summary>
+	[Fact]
+	public void TheSpotsDoNotLeaveTheirCastSittingInTheQueue()
+	{
+		var (harness, boss, player) = EngagedAt(50);
+		using BossAiHarness _h = harness;
+		Advance(harness, boss, player, 15);
+
+		Npc spot = harness.LiveNpcs().First(n => n.GetNpcId() == CyclopsSpot);
+
+		Assert.Empty(BossAiHarness.DrainQueuedSkills(spot));
 	}
 
 	/// <summary>Dying takes the markers with him — retail despawns all three spawn ids.</summary>

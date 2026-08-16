@@ -41,7 +41,7 @@ public class TahabataSummonSpotAI : PatternAi
         OnWakeUp = Of(
             Branch(1, "", When.Always,
                 Do.SpawnNear(FaithfulSubordinate, Called, count: 1, range: 0f, liveSeconds: SubordinateLife),
-                Do.SkillOnSelf(Summon))),
+                Do.SkillOnSelfNow(Summon))),
     };
 
     public TahabataSummonSpotAI(Npc owner)
@@ -77,7 +77,7 @@ public class TahabataDrakanSpotAI : PatternAi
         OnWakeUp = Of(
             Branch(1, "", When.Always,
                 Do.SpawnNear(Drakan, Called, count: 1, range: 0f),
-                Do.SkillOnSelf(Summon))),
+                Do.SkillOnSelfNow(Summon))),
     };
 
     public TahabataDrakanSpotAI(Npc owner)

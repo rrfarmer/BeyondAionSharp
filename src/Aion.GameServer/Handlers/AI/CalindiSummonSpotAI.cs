@@ -26,7 +26,7 @@ public class CalindiSummonSpotAI : PatternAi
         OnWakeUp = Of(
             Branch(1, "", When.Always,
                 Do.SpawnNear(Worm, Called, count: 1, range: 0f),
-                Do.SkillOnSelf(Summon))),
+                Do.SkillOnSelfNow(Summon))),
     };
 
     public CalindiSummonSpotAI(Npc owner)
@@ -57,7 +57,7 @@ public class CalindiDrakanSpotAI : PatternAi
         OnWakeUp = Of(
             Branch(1, "", When.Always,
                 Do.SpawnNear(Drakan, Called, count: 1, range: 0f),
-                Do.SkillOnSelf(Summon))),
+                Do.SkillOnSelfNow(Summon))),
     };
 
     public CalindiDrakanSpotAI(Npc owner)

@@ -25,7 +25,7 @@ public sealed class VanukaInfernusAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(DarkPoeta)
 			.WithWorldSize(2048)
-			.WithAi(typeof(VanukaInfernusAI), typeof(VanukaLizardAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(VanukaInfernusAI), typeof(VanukaLizardAI), typeof(NTrapAI), typeof(AggressiveNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(VanukaInfernus, 1182f, 1235f, 143f);
 		Player player = harness.SpawnPlayer(1184f, 1237f, 143f);
@@ -60,16 +60,29 @@ public sealed class VanukaInfernusAiTests
 		}
 	}
 
+	/// <summary>
+	/// The opening pair goes off and is gone well inside the ten seconds he gives them.
+	/// </summary>
+	/// <remarks>
+	/// <b>This pin used to say the opposite, and was right at the time.</b> It asserted the pair was
+	/// still standing at nine seconds and gone at ten, which is what a flame center did while it was
+	/// inert furniture on plain <c>aggressive</c>. It is a <c>NTrap_A</c> trap: it goes off the moment
+	/// it appears and leaves when the cast lands. The ten-second <c>live_time</c> he spawns them with
+	/// is the backstop for a trap whose cast never happens, not the length of the effect.
+	/// <para>
+	/// Fifth time a pin has had to change because a later port made its subject more complete.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void LetsTheOpeningFlamesBurnOutAfterTenSeconds()
+	public void TheOpeningFlamesGoOffWellInsideTheirTenSeconds()
 	{
 		var (harness, boss, player) = Engaged();
 		using (harness)
 		{
-			harness.Clock.Advance(TimeSpan.FromSeconds(9));
 			Assert.Equal(2, Count(harness, FlameCenter));
 
-			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			harness.Clock.Advance(TimeSpan.FromSeconds(5));
+
 			Assert.Equal(0, Count(harness, FlameCenter));
 		}
 	}
@@ -211,7 +224,7 @@ public sealed class VanukaInfernusAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(DarkPoeta)
 			.WithWorldSize(2048)
-			.WithAi(typeof(VanukaInfernusAI), typeof(VanukaLizardAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(VanukaInfernusAI), typeof(VanukaLizardAI), typeof(NTrapAI), typeof(AggressiveNpcAI))
 			.Build();
 		using BossAiHarness _h = harness;
 		Npc boss = harness.Spawn(VanukaInfernus, 1182f, 1235f, 143f);

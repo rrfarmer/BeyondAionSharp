@@ -31,7 +31,7 @@ public sealed class CalindiFlamelordAiTests
 		BossAiHarness.For(DarkPoeta).WithWorldSize(2048)
 			.WithAi(typeof(DarkPoetaCalindiFlamelordAI), typeof(CalindiSummonSpotAI),
 				typeof(CalindiDrakanSpotAI), typeof(CalindiSlaveAI), typeof(CalindiDrakanAI),
-				typeof(AggressiveNpcAI)).Build();
+				typeof(NTrapAI), typeof(AggressiveNpcAI)).Build();
 
 	/// <summary>Engaged at a chosen health, with the quarry kept out of her aggro range.</summary>
 	private static (BossAiHarness, Npc, Player) EngagedAt(int hpPercent)
@@ -111,17 +111,29 @@ public sealed class CalindiFlamelordAiTests
 	}
 
 	/// <summary>The 61-80 handover rings the arena with four flame centers, on the shared marks.</summary>
+	/// <remarks>
+	/// Measured at its peak: a flame center goes off as soon as it appears and leaves when the cast
+	/// lands, so it is only there on the tick the ring landed on.
+	/// </remarks>
 	[Fact]
 	public void TheSecondBandRingsTheArenaWithFlames()
 	{
 		var (harness, boss, player) = EngagedAt(70);
 		using BossAiHarness _h = harness;
 
-		Advance(harness, boss, player, 10);
+		int peak = 0;
+		var marks = new HashSet<(float, float)>();
+		for (int i = 0; i < 15; i++)
+		{
+			Advance(harness, boss, player, 1);
+			Npc[] flames = harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter).ToArray();
+			peak = Math.Max(peak, flames.Length);
+			foreach (Npc flame in flames)
+				marks.Add((flame.GetX(), flame.GetY()));
+		}
 
-		Npc[] flames = harness.LiveNpcs().Where(n => n.GetNpcId() == FlameCenter).ToArray();
-		Assert.Equal(4, flames.Length);
-		Assert.Equal(4, flames.Select(f => (f.GetX(), f.GetY())).Distinct().Count());
+		Assert.Equal(4, peak);
+		Assert.Equal(4, marks.Count);
 	}
 
 	/// <summary>

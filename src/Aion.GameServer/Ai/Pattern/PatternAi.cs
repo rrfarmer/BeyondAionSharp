@@ -432,6 +432,49 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             NpcSkillCasting.QueueAtDataLevel(GetOwner(), skillId, target);
     }
 
+    /// <summary>
+    /// Casts one of this NPC's own skills on itself now, bypassing the queue.
+    /// </summary>
+    /// <remarks>
+    /// For NPCs that never fight. The queue is drained by the attack loop and only while the NPC has a
+    /// target it hates, so a marker — a flame patch, a summon spot, a trap that appears, goes off and
+    /// leaves — queues its one cast and never fires it. The summon spots that shipped with Tahabata's
+    /// rebuild sat on an unfired 18222 until this existed.
+    /// <para>
+    /// <b>Chosen by the table rather than inferred.</b> Making <see cref="CastSkill"/> pick the
+    /// immediate path whenever the NPC was out of combat looked tidier and was wrong: bosses buff
+    /// themselves from <c>on_wake_up</c> too, and switching those from queued to immediate changed the
+    /// behaviour of four fights that had nothing to do with markers. Retail draws no such distinction —
+    /// <c>use_skill</c> is <c>use_skill</c> — so this is a runtime accommodation, and a table asks for
+    /// it explicitly or does not get it.
+    /// </para>
+    /// </remarks>
+    public void CastSkillNow(int skillId)
+    {
+        if (!IsDead())
+            NpcSkillCasting.UseOnSelfNow(GetOwner(), skillId);
+    }
+
+    /// <summary>
+    /// Casts this NPC's one and only skill on itself — retail's <c>SKILLI_INDEX_0</c> where the list
+    /// holds nothing else.
+    /// </summary>
+    /// <remarks>
+    /// The single-entry check is the whole point. Resolving a skill index by its position in our
+    /// npc_skills is unreliable and has been proven wrong more than once, so this refuses rather than
+    /// guesses: point it at an NPC with two skills and it does nothing. That keeps a shared trap class
+    /// usable across the NPCs where index 0 is unambiguous without letting it quietly pick the wrong
+    /// skill on the ones where it is not.
+    /// </remarks>
+    public void CastOnlySkillOnSelf()
+    {
+        Aion.GameServer.Model.Skill.NpcSkillList? skills = GetOwner().GetSkillList();
+        if (skills == null || skills.GetNpcSkills().Count != 1)
+            return;
+
+        CastSkillNow(skills.GetNpcSkills()[0].GetSkillId());
+    }
+
     public void SwitchTarget(AggroTarget which)
     {
         Creature? next = GetAggroList().GetTarget(which);

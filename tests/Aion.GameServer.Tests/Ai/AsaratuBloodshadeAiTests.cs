@@ -19,13 +19,29 @@ public sealed class AsaratuBloodshadeAiTests
 	private const int DarkPoeta = 300040000;
 	private const int AsaratuBloodshade = 215283;
 	private const int FlameCenter = 281246;
+
+	/// <summary>
+	/// Fights for a while and reports the most flame centers standing at once. A flame center is a
+	/// <c>NTrap_A</c> trap — it goes off as it appears and leaves when the cast lands — so counting at
+	/// the end of a fight finds an empty arena however many were dropped along the way.
+	/// </summary>
+	private static int PeakFlames(BossAiHarness harness, Npc boss, Player player, int seconds)
+	{
+		int peak = 0;
+		for (int i = 0; i < seconds; i++)
+		{
+			Fight(harness, boss, player, 1);
+			peak = Math.Max(peak, Count(harness, FlameCenter));
+		}
+		return peak;
+	}
 	private const int FaithfulSubordinate = 281245;
 
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(DarkPoeta)
 			.WithWorldSize(2048)
-			.WithAi(typeof(AsaratuBloodshadeAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(AsaratuBloodshadeAI), typeof(NTrapAI), typeof(AggressiveNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(AsaratuBloodshade, 1182f, 1235f, 143f);
 		Player player = harness.SpawnPlayer(1184f, 1237f, 143f);
@@ -64,8 +80,7 @@ public sealed class AsaratuBloodshadeAiTests
 		using (harness)
 		{
 			BossAiHarness.SetHpPercent(boss, 70);
-			Fight(harness, boss, player, 40);
-			Assert.True(Count(harness, FlameCenter) > 0,
+			Assert.True(PeakFlames(harness, boss, player, 40) > 0,
 				"the 51-80 step should have left a flame center behind");
 		}
 	}
@@ -77,8 +92,7 @@ public sealed class AsaratuBloodshadeAiTests
 		using (harness)
 		{
 			BossAiHarness.SetHpPercent(boss, 40);
-			Fight(harness, boss, player, 60);
-			Assert.True(Count(harness, FlameCenter) > 0,
+			Assert.True(PeakFlames(harness, boss, player, 60) > 0,
 				"the 21-50 step should have left a flame center behind");
 		}
 	}

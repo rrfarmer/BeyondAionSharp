@@ -29,6 +29,22 @@ public static class NpcSkillCasting
         owner.QueueSkill(skillId, LevelOf(owner, skillId, fallbackLevel), 0, target);
     }
 
+    /// <summary>
+    /// Casts one of <paramref name="owner"/>'s own skills on itself now, without going through the
+    /// queue, at the level its npc_skills entry defines.
+    /// </summary>
+    /// <remarks>
+    /// For NPCs that never fight. The queue is drained by the attack loop and only while the NPC has
+    /// a target it hates, so an NPC that appears, casts once and leaves would queue its cast and never
+    /// fire it. <c>UseSkillAndDieAI</c> takes the same route for the same reason.
+    /// </remarks>
+    public static void UseOnSelfNow(Npc owner, int skillId, int fallbackLevel = 1)
+    {
+        SkillEngine.SkillEngine.GetInstance()
+            .GetSkill(owner, skillId, LevelOf(owner, skillId, fallbackLevel), owner)
+            .UseSkill();
+    }
+
     /// <summary>Returns the level an NPC's npc_skills entry gives a skill.</summary>
     public static int LevelOf(Npc owner, int skillId, int fallbackLevel = 1)
     {

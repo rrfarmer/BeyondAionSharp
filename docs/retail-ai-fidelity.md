@@ -4066,3 +4066,79 @@ combat pattern at all — one branch, and it is the call.
 **Verification.** Full suite 1,346 passing and 1 skipped; ten new pins; all eleven mutations caught,
 two of them only after the pins that should have caught them were fixed. Missing adds 676 → **673
 across 445 encounters**.
+
+### NTrap_A, and a cast that was never firing
+
+Deferred one entry ago on the grounds that a literal translation would be inert. It is ported now,
+and the reason it was inert turned out to be worse than described.
+
+**A queued cast on an NPC that never fights never fires at all.** The skill queue is drained by the
+attack loop, and only while the NPC has a target it hates. Verified rather than reasoned: a summon
+spot spawned into the harness was still sitting on an unfired 18222 thirty seconds later. That is not
+a trap-only problem — it means the summon spots shipped with Tahabata's rebuild were placing their
+slaves correctly and casting nothing, and every one of the fifty-three `NTrap_A` NPCs was on plain
+`aggressive`, doing neither.
+
+`NpcSkillCasting.UseOnSelfNow` casts through the skill engine directly, as `UseSkillAndDieAI` already
+did for the same reason.
+
+### Two mistakes made while fixing it, both worth recording
+
+**Inferring the immediate path instead of asking for it.** The first version had `CastSkill` choose:
+out of combat and self-targeted meant cast now, anything else meant queue. It looked tidier and broke
+four unrelated fights — bosses buff themselves from `on_wake_up` too, and switching those from queued
+to immediate is a real behaviour change with nothing to do with markers. `Do.SkillOnSelfNow` is now an
+explicit choice a table makes.
+
+**Despawning in the same branch as the cast.** The first `NTrapAI` did what the pattern literally
+says — `use_skill`, `despawn_self` — and removed the NPC while its own skill was still in flight.
+Both are PLANNED actions, so retail queues the despawn *behind* the cast; the despawn belongs in
+`OnEndUseSkill`. This is not cosmetic in two ways. A marker gone before its skill resolves is a marker
+nobody sees, and its ten-second `live_time` — which every boss placing one supplies — would be
+meaningless. And a despawned NPC is dropped from the world map outright, so the collapsed version made
+the boss's own decision to place it unobservable: three pins across two dragons went quiet, and one
+was rewritten to say so before the real cause was found.
+
+**The self-cast reaches players even though it is aimed at the caster.** These skills are all
+`target_type="AREA"` with `target_relation="ENEMY"`, so aiming at itself puts the trap at the centre
+and everyone hostile within range takes it. That is how a stationary marker with a self-cast becomes a
+patch of fire on the floor.
+
+### What is repointed, and what is deliberately not
+
+Five markers, all placed by a boss on top of the people they are meant to hit: the flame centers of
+all four Dark Poeta dragons (281246, 281261, 281270, 281276) and Tahabata's primal dragon (281265).
+
+**The other forty-eight are not**, and the dividing line is `on_see_user`. `NTrap_A` carries two
+identical branches — one on waking, one on seeing a player — because a trap *laid in advance* has to
+wait for someone to walk into it. Ours are all placed mid-fight, so waking is enough. Repointing a
+pre-laid trap (`LycanTrap_18`, `BDF2_Monster_trapA_29_An`, the drakan traps) would make it go off the
+instant it spawned, in an empty field, which is strictly worse than today. That needs `on_see_user`
+support and is the next piece of this.
+
+Of the fifty-three, 36 have exactly one skill and are safe by the guard; 17 have none and would simply
+vanish; 8 already have real handlers (`trap`, `useitem`, `general`, `strange_creature`) and should
+keep them.
+
+**One mutation survives on purpose.** Relaxing `CastOnlySkillOnSelf`'s exactly-one-skill check changes
+nothing, because no `NTrap_A` NPC in our data has more than one skill. It is a refusal-to-guess
+safeguard for future repoints — resolving an index by its position in our npc_skills has been proven
+wrong more than once — not live behaviour, and it has no test because the data cannot produce one.
+
+### A pin that was right until this landed, again
+
+`LetsTheOpeningFlamesBurnOutAfterTenSeconds` asserted Vanuka's opening pair was still standing at nine
+seconds and gone at ten. True while a flame center was inert furniture; wrong once it became a trap.
+The ten seconds are the backstop for a trap whose cast never happens, not the length of the effect.
+That is the **fifth** time a pin has had to change because a later port made its subject more
+complete, and the second time in two entries.
+
+### Still open
+
+Bosses that buff themselves from `on_wake_up` queue that cast and only fire it when combat starts —
+so the buff lands a moment into the fight rather than before it. Four fights are pinned on the queued
+behaviour. Whether retail expects it up beforehand is a separate question from this change and was
+deliberately not answered here.
+
+**Verification.** Full suite 1,346 passing and 1 skipped, stable across eighteen consecutive runs;
+five new pins; four of five mutations caught and the fifth explained above.
