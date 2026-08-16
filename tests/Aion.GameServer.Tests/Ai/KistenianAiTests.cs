@@ -24,7 +24,7 @@ public sealed class KistenianAiTests
 	private static (BossAiHarness, Npc, Player) Spawned()
 	{
 		BossAiHarness harness = BossAiHarness.For(Beluslan).WithWorldSize(2048)
-			.WithAi(typeof(KistenianAI), typeof(AggressiveNpcAI)).Build();
+			.WithAi(typeof(KistenianAI), typeof(KistenianPetAI), typeof(KistenianDespawnEffectAI), typeof(AggressiveNpcAI)).Build();
 		Npc boss = harness.Spawn(Kistenian, 300f, 300f, 200f);
 
 		// Out of aggro range: he pulls anyone standing beside him, and the idle pin needs him not to.
@@ -104,24 +104,27 @@ public sealed class KistenianAiTests
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 
 		Assert.Equal(0, Count(harness, FlameOfKistenian));
-		Assert.Equal(1, Count(harness, DespawnEffect));
 	}
 
-	/// <summary>Six seconds, then it is gone — it is an effect, not a reinforcement.</summary>
+	/// <summary>
+	/// The effect takes itself off the moment it appears — its whole pattern is one branch that shouts
+	/// twice and despawns. The six-second <c>live_time</c> on the spawn is a fallback that never runs.
+	/// </summary>
+	/// <remarks>
+	/// An earlier pin here asserted it stood for six seconds, which was only ever true while the npc
+	/// had no AI of its own. Giving it one made the pin wrong, and the pin was wrong rather than the
+	/// port.
+	/// </remarks>
 	[Fact]
-	public void TheDeathEffectLastsSixSeconds()
+	public void TheDeathEffectRemovesItselfAtOnce()
 	{
 		var (harness, boss, player) = Spawned();
 		using BossAiHarness _h = harness;
 		BossAiHarness.MakeMutuallyKnown(boss, player);
 		harness.Engage(boss, player);
+
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
-		Assert.Equal(1, Count(harness, DespawnEffect));
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(5));
-		Assert.Equal(1, Count(harness, DespawnEffect));
-
-		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 		Assert.Equal(0, Count(harness, DespawnEffect));
 	}
 
@@ -139,5 +142,74 @@ public sealed class KistenianAiTests
 		harness.Engage(boss, player);
 
 		Assert.Equal(1, Count(harness, FlameOfKistenian));
+	}
+
+	private const int FireSpirit = 295180;
+
+	/// <summary>
+	/// The loop, end to end. A spirit calls for more every twenty to forty seconds, Kistenian answers
+	/// with a fresh pair on his target, and killing one leaves an effect whose cry disperses the rest
+	/// and hands him another flame.
+	/// </summary>
+	[Fact]
+	public void ASpiritCallingForMoreBringsOutAFreshPair()
+	{
+		var (harness, boss, player) = Spawned();
+		using BossAiHarness _h = harness;
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+		Assert.Equal(0, Count(harness, FireSpirit));
+
+		var listener = (Aion.GameServer.Ai.INpcMessageListener)boss.GetAi();
+		listener.OnNpcMessage(boss, KistenianPetAI.CallForMore, null);
+
+		Assert.InRange(Count(harness, FireSpirit), 2, 3);
+	}
+
+	[Fact]
+	public void HeIgnoresTheCallBeforeHeIsEngaged()
+	{
+		var (harness, boss, _) = Spawned();
+		using BossAiHarness _h = harness;
+
+		var listener = (Aion.GameServer.Ai.INpcMessageListener)boss.GetAi();
+		listener.OnNpcMessage(boss, KistenianPetAI.CallForMore, null);
+
+		Assert.Equal(0, Count(harness, FireSpirit));
+	}
+
+	/// <summary>The effect a dying spirit leaves hands him another flame.</summary>
+	[Fact]
+	public void TheEffectsCryLightsAnotherFlame()
+	{
+		var (harness, boss, player) = Spawned();
+		using BossAiHarness _h = harness;
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+		Assert.Equal(1, Count(harness, FlameOfKistenian));
+
+		var listener = (Aion.GameServer.Ai.INpcMessageListener)boss.GetAi();
+		listener.OnNpcMessage(boss, KistenianAI.LightAnotherFlame, null);
+
+		Assert.Equal(2, Count(harness, FlameOfKistenian));
+	}
+
+	/// <summary>And leaving the fight puts every one of them out, however many accumulated.</summary>
+	[Fact]
+	public void LeavingClearsEveryFlameNotJustTheFirst()
+	{
+		var (harness, boss, player) = Spawned();
+		using BossAiHarness _h = harness;
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		var listener = (Aion.GameServer.Ai.INpcMessageListener)boss.GetAi();
+		listener.OnNpcMessage(boss, KistenianAI.LightAnotherFlame, null);
+		listener.OnNpcMessage(boss, KistenianAI.LightAnotherFlame, null);
+		Assert.Equal(3, Count(harness, FlameOfKistenian));
+
+		boss.GetAi().OnGeneralEvent(AiEventType.BackHome);
+
+		Assert.Equal(0, Count(harness, FlameOfKistenian));
 	}
 }

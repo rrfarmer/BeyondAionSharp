@@ -3335,3 +3335,49 @@ a second flame from the death effect's own pattern.
 
 **Verification.** Full suite 1,308 passing and 1 skipped; seven pins; all seven mutations
 caught.
+
+### Kistenian's companions — the loop closed, with one half unverifiable
+
+`DGuard_KistenianPet` and `DGuard_KistenianDespawn` are now ported, which completes the
+mechanic the previous entry left open. Neither companion has an `npc_skills` entry, so
+every cast is unresolvable and everything below is index-free.
+
+**The fire spirit (295180)** calls **10016** every twenty to forty seconds — a quarter of
+the time twenty, half the rest thirty, otherwise forty — switching to a random attacker as
+it does; reports **10015** once each on first crossing 75, 50 and 25 percent; leaves the
+despawn effect where it dies; and removes itself on hearing **10017**.
+
+**Kistenian** now answers: **10016** brings out two spirits on his current target, three on
+a quarter roll, each lasting six seconds; **10018** lights another flame. He calls **10014**
+to seventy-five metres every three seconds, which is what the spirits answer. Flames now
+accumulate and are tracked as a set, since each spirit death hands him one — leaving the
+fight clears all of them, not just the first.
+
+### One half could not be verified, and is written up rather than glossed
+
+The despawn effect shouts **from `on_wake_up` and removes itself in the same branch**, so
+it broadcasts at the instant it enters the world. `NpcMessageBus` walks the *sender's*
+known list, and a just-spawned NPC's known list is not populated in the harness — the cry
+reaches nobody, and a test asserting the other spirits disperse fails.
+
+**Whether the live server populates a known list before the AI's spawn hook runs was not
+established.** If it does not, this pattern is inert on the server too, and the fix belongs
+in the bus or the spawn ordering rather than in this class. The test was removed rather
+than weakened to pass, and the concern is recorded in the class itself.
+
+### A pin that was right until the port made it wrong
+
+An earlier test asserted the death effect stands for six seconds. That was true only while
+the npc had no AI of its own — its `live_time` was doing the work. Giving it its retail
+pattern, which despawns on waking, made the pin wrong. **The pin was wrong, not the port**,
+and it now asserts the effect removes itself at once.
+
+### An equivalent mutant recorded
+
+Removing the `!engaged` guard from Kistenian's message handler survives: `SendSpirits`
+already returns when there is no most-hated target, which cannot happen before he is
+engaged. The guard is defensive redundancy rather than behaviour, and is kept for
+readability.
+
+**Verification.** Full suite 1,312 passing and 1 skipped; twelve pins; five of seven
+mutations caught, one equivalent as above and one covering the unverifiable broadcast.

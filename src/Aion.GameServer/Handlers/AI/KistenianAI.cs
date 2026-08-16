@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Commons.Utils;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
@@ -37,8 +40,23 @@ namespace Aion.GameServer.Handlers.AI;
 /// </para>
 /// </remarks>
 [AIName("kistenian")]
-public class KistenianAI : AbyssGuardSimpleAI
+public class KistenianAI : AbyssGuardSimpleAI, INpcMessageListener
 {
+    /// <summary>What he calls out every three seconds; his spirits answer it.</summary>
+    public const int CallToPets = 10014;
+
+    /// <summary>Sent by the despawn effect a dying spirit leaves: he lights another flame.</summary>
+    public const int LightAnotherFlame = 10018;
+
+    private const int FireSpirit = 295180;
+
+    private const float CallRange = 75f;
+    private const long CallIntervalMillis = 3000L;
+
+    /// <summary>Retail puts them on the current target, two of them, three on a quarter roll.</summary>
+    private const float SpiritRange = 2f;
+    private const int SpiritLife = 6;
+
     private const int FlameOfKistenian = 295179;
     private const int DespawnEffect = 295181;
 
@@ -48,7 +66,8 @@ public class KistenianAI : AbyssGuardSimpleAI
     /// <summary>The death effect's <c>live_time</c>.</summary>
     private const long EffectLifeMillis = 6000L;
 
-    private Npc? flame;
+    private readonly List<Npc> flames = new List<Npc>();
+    private ScheduledTask? callTask;
     private bool engaged;
 
     public KistenianAI(Npc owner)
@@ -63,9 +82,64 @@ public class KistenianAI : AbyssGuardSimpleAI
             return;
 
         engaged = true;
+        LightFlame();
+        callTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        {
+            if (!IsDead())
+                NpcMessageBus.Broadcast(GetOwner(), CallToPets, GetOwner(), CallRange);
+            return ValueTask.CompletedTask;
+        }, System.TimeSpan.FromMilliseconds(CallIntervalMillis),
+           System.TimeSpan.FromMilliseconds(CallIntervalMillis));
+    }
+
+    private void LightFlame()
+    {
         WorldPosition at = GetPosition();
-        flame = Spawn(FlameOfKistenian, at.GetX() + NearHim, at.GetY(), at.GetZ(),
-            (sbyte)at.GetHeading()) as Npc;
+        if (Spawn(FlameOfKistenian, at.GetX() + NearHim, at.GetY(), at.GetZ(),
+                (sbyte)at.GetHeading()) is Npc lit)
+            flames.Add(lit);
+    }
+
+    /// <summary>
+    /// The two halves of the loop. A spirit calling for more brings a fresh pair out on whoever he is
+    /// facing; the effect a dying spirit leaves hands him another flame.
+    /// </summary>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        if (IsDead() || !engaged)
+            return;
+
+        switch (messageType)
+        {
+            case KistenianPetAI.CallForMore:
+                SendSpirits();
+                break;
+            case LightAnotherFlame:
+                LightFlame();
+                break;
+        }
+    }
+
+    private void SendSpirits()
+    {
+        if (GetAggroList().GetTarget(AggroTarget.MOST_HATED) is not Creature target)
+            return;
+
+        int count = Rnd.Chance() < 25 ? 3 : 2;
+        for (int i = 0; i < count; i++)
+        {
+            float angle = Rnd.NextFloat(360f) * (float)System.Math.PI / 180f;
+            float x = target.GetX() + (float)(System.Math.Cos(angle) * SpiritRange);
+            float y = target.GetY() + (float)(System.Math.Sin(angle) * SpiritRange);
+            if (Spawn(FireSpirit, x, y, target.GetZ(), (sbyte)0) is not Npc spirit)
+                continue;
+
+            ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                spirit.GetController().DeleteIfAliveOrCancelRespawn();
+                return ValueTask.CompletedTask;
+            }, SpiritLife * 1000L);
+        }
     }
 
     /// <summary>Retail's <c>on_leave_attack_state</c> clears what he called up.</summary>
@@ -101,8 +175,13 @@ public class KistenianAI : AbyssGuardSimpleAI
     private void ClearFlame()
     {
         engaged = false;
-        if (flame != null && flame.IsSpawned())
-            flame.GetController().DeleteIfAliveOrCancelRespawn();
-        flame = null;
+        if (callTask != null && !callTask.IsDone())
+            callTask.Cancel(true);
+        callTask = null;
+
+        foreach (Npc lit in flames)
+            if (lit.IsSpawned())
+                lit.GetController().DeleteIfAliveOrCancelRespawn();
+        flames.Clear();
     }
 }
