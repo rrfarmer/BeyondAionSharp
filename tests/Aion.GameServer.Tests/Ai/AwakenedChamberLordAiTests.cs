@@ -44,7 +44,7 @@ public sealed class AwakenedChamberLordAiTests
 	private static (BossAiHarness, Npc, Player) Engaged(int mapId, int npcId, int hpPercent)
 	{
 		BossAiHarness harness = BossAiHarness.For(mapId).WithWorldSize(2048)
-			.WithAi(typeof(AwakenedChamberLordAI), typeof(GroupGateAI), typeof(AggressiveNpcAI)).Build();
+			.WithAi(typeof(AwakenedChamberLordAI), typeof(IllusionGateAI), typeof(AggressiveNpcAI)).Build();
 		Npc lord = harness.Spawn(npcId, LordX, LordY, LordZ);
 		Player player = harness.SpawnPlayer(LordX + 2f, LordY + 2f, LordZ);
 		BossAiHarness.SetHpPercent(lord, hpPercent);
@@ -84,9 +84,16 @@ public sealed class AwakenedChamberLordAiTests
 		var (harness, lord, player) = Engaged(mapId, npcId, 20);
 		using BossAiHarness _h = harness;
 
-		Advance(harness, lord, player, 8);
+		// Caught as it appears rather than after the fact: the gate runs IllusionGateAI now, and an
+		// unaggroed gate goes home and shuts itself, so a later look can legitimately find nothing.
+		Npc? gate = null;
+		for (int i = 0; i < 10 && gate is null; i++)
+		{
+			Advance(harness, lord, player, 1);
+			gate = harness.LiveNpcs().FirstOrDefault(n => n.GetNpcId() == IllusionGate);
+		}
 
-		Npc gate = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == IllusionGate));
+		Assert.NotNull(gate);
 		Assert.InRange(gate.GetX(), LordX - 4f, LordX + 4f);
 		Assert.InRange(gate.GetY(), LordY - 4f, LordY + 4f);
 	}

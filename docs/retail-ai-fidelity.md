@@ -3155,3 +3155,51 @@ literal from every constructor call, which would swallow skill ids — the same 
 same classes — and **fail in the dangerous direction**, marking real gaps as covered. A
 false positive costs a wasted screening; a false negative hides content forever. Left as
 a documented false positive, in the tool's own docstring as well as here.
+
+---
+
+## The illusion gate — content that only became findable after porting its owner
+
+**NPC:** illusion gate (281226). **Pattern:** `BGuard_DrGateChiefD`. Its three guards —
+warguard (281227), bowguard (281228) and aetherguard (281229) — were spawned by nothing.
+
+This one is worth recording for *how* it was found. The gate is opened by the awakened
+chamber lords below 25%, and until those were ported the gate itself was unreachable, so
+the audit never listed it: an encounter whose owner nothing spawns is correctly excluded.
+Porting the lords made the gate spawnable, and **the next audit run surfaced a new
+encounter with three more missing adds**.
+
+The backlog is not a fixed list being worked down. Finishing one encounter can uncover
+the next, and the only way to see that is to re-run the audit after landing work rather
+than continuing down a queue derived once.
+
+**The gate is a spawner, not scenery.** Engaged, it pours out five guards and closes:
+
+| when | what |
+|---|---|
+| five seconds in | a warguard and an aetherguard |
+| thirty seconds later | a bowguard and two more aetherguards |
+| five seconds after that | the gate closes, leaving them behind |
+
+It also listens for message **10009** — exactly what the chamber lord broadcasts when it
+leaves the fight. Reset the lord and its gate shuts on its own. That pairing was only
+visible reading both patterns together, and neither half makes sense alone.
+
+### A change in kind, stated plainly
+
+Our data had this npc on **`groupgate`** — the dialog-driven portal AI that 207539 and its
+neighbours use to teleport a group. That is a devname match, not a behaviour match:
+retail gives this npc attack-state handlers and an ELITE rating.
+
+Moving it onto the pattern runtime therefore also **makes it aggressive**, where before it
+stood inert offering a dialog. That is the retail behaviour and the reason the guards
+exist at all, but it is a change in kind rather than in detail, so it is called out here
+rather than buried in a table.
+
+It also broke a pin on the chamber lords: their test looked for the gate eight seconds
+after it opened, and an unaggroed gate now goes home and shuts itself. The pin catches it
+as it appears instead. **Nothing translated:** this pattern casts no skills and every
+branch is ported.
+
+**Verification.** Full suite 1,301 passing and 1 skipped; five pins; all seven mutations
+caught.
