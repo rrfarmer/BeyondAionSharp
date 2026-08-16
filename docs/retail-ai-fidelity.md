@@ -1856,3 +1856,54 @@ mutations caught after three fixes. Two of the three gaps were the same mistake:
 asserting an outcome (which skill appeared, which target it holds) where the
 mechanism is a flag, so a random-target branch could satisfy the assertion by
 accident. Both now assert the flag the branches consume.
+
+### Specification: the four fire bosses of `BIDF5_U01_Middle_Boss_Fire`
+
+Hakara (235772), Zubala (235773), Visha (235774) and Bahapa (235775) share one
+pattern and one shape, and each has its own skill list. Eleven branches, three
+health bands, no adds — the whole fight is which skill lands when.
+
+The comments name every index:
+
+| index | comment | meaning |
+|---|---|---|
+| 1 | `질병독기운` | disease-poison aura |
+| 2 | `베기` | slash |
+| 3 | `특징1` | **trait 1** |
+| 4 | `특징2` | **trait 2** |
+
+| band | chain |
+|---|---|
+| 71-100 | trait 1 (6s) → slash (9s) → slash (9s) |
+| 41-70 | trait 2 (6s) → disease aura (11.5s) → slash (9s) |
+| 0-40 | trait 1 *or* trait 2 (6s) → slash (13s) → disease aura (11.5s) |
+
+**The alignment is offset by two**, anchored twice:
+
+- index 2 is "slash", and **Swift Edge is the only ATTACK** in every one of the
+  four lists — at position 4, so retail index N is our position N+2;
+- index 1 is a disease-poison aura, and position 3 is **Boost Deadly Virulency**,
+  which is exactly that.
+
+The offset then puts indices 3 and 4 — the "traits" — on each boss's own
+**unique** skills, which is what makes the reading convincing: the four share
+positions 0-4 and differ only in the tail, and the tail is elemental. Zubala gets
+Soaring Flames and Inferno Breath, Visha gets Throw Poison and Diffusive Poison,
+Bahapa gets Cold Attack and Cold Air Emission. Four bosses, one chain, four
+flavours.
+
+**Why this is a specification and not a port: Hakara is one skill short.** He
+carries six entries where the other three carry seven, so under this alignment he
+has a trait 1 (Losing Rationality) and **no trait 2** — yet the pattern casts
+index 4 in two of its three bands. Either our data for him is incomplete, or the
+offset is wrong; and the offset is supported by two anchors that hold for all
+four, while the missing entry would be an ordinary data gap of the kind this log
+has found repeatedly.
+
+Resolving it means finding what Hakara's seventh skill should be — most likely by
+comparing him against his three siblings in the client's own data, since the
+symmetry of the other three is strong. Porting three of four and leaving a hole
+in the middle of a shared class is worse than porting none, so this waits.
+
+`python rotation_table.py <patterns_dir> BIDF5_U01_Middle_Boss_Fire` reprints the
+chain.
