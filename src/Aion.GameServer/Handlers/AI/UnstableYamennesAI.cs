@@ -23,11 +23,18 @@ namespace Aion.GameServer.Handlers.AI;
 /// the timing was off: retail arms the portal timer at <b>30s</b> and re-arms it at <b>65s</b>, where
 /// this waited a flat 60 both times.
 /// <para>
-/// The gate npc_ids are deliberately left alone. Retail's patterns name 283203/283222/283223 upstairs
-/// and 283233 downstairs, and those look like missing adds — but they bind to the same retail patterns
-/// as the 219567/219579/219580 this class already spawns, and only ours carry the
-/// <c>unstableyamenessportal</c> AI that makes a gate do anything. Swapping to the ids the pattern
-/// names would replace working portals with inert scenery.
+/// <b>The gates are now retail's, and so is what they do.</b> An earlier pass left 219567/219579/219580
+/// in place on the reasoning that the ids the pattern names — 283203/283222/283223 upstairs, 283233
+/// downstairs — would be inert scenery, since only ours carried an AI. The conclusion was right and
+/// the reason stopped a level short: our gate AI is not a translation of the pattern those ids bind at
+/// all. It spawns two npcs at ±3 metres twelve seconds in and once more at seventy-two, where retail's
+/// gate feeds an orkanimum onto a fixed mark every twelve seconds — or, downstairs, a lapilima at its
+/// own feet every nine. Swapping ids alone would indeed have been inert; swapping ids <i>and</i>
+/// porting the pattern is <see cref="YamennesSpawnGateAI"/>.
+/// <para>
+/// The upstairs three are three different gates on three marks; the downstairs three are the
+/// <b>same</b> gate on three marks, which is why only one id appears below.
+/// </para>
 /// </para>
 /// </remarks>
 [AIName("unstableyamennes")]
@@ -39,6 +46,24 @@ public class UnstableYamennesAI : AggressiveNpcAI
 
     /// <summary>Retail's <c>live_time</c> on each gate.</summary>
     private const long GateLifeMillis = 70000L;
+
+    // Retail's own gate ids, from IDAbRe_Core_NamedD_02. Both bosses spawn this b-prefixed set.
+    private const int GateNorthWest = 283203;
+    private const int GateSouth = 283222;
+    private const int GateEast = 283223;
+    private const int GateLow = 283233;
+
+    /// <summary>
+    /// Retail's <c>dir</c> is degrees, and the spawn helper wants a heading.
+    /// </summary>
+    /// <remarks>
+    /// The coordinates this class carried before passed their <c>dir</c> straight through as a
+    /// heading. That happened to compile because they were all small — 0, 3, 35, 59 — but retail's
+    /// own gate directions run to 279, which does not fit a heading at all. The old numbers were
+    /// being read as headings when they were degrees.
+    /// </remarks>
+    private static sbyte Facing(int degrees) =>
+        (sbyte)Aion.GameServer.Utils.PositionUtil.ConvertAngleToHeading((degrees + 360) % 360);
 
     /// <summary>
     /// Retail's <c>IDCatacombs_Hard_Buff</c> — protector's fury, dropped on the most-hated. Battle
@@ -146,15 +171,15 @@ public class UnstableYamennesAI : AggressiveNpcAI
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_SummonStart());
         if (isTopSpawn)
         {
-            SpawnGate(219567, 288.10f, 741.95f, 216.81f, 3);
-            SpawnGate(219579, 375.05f, 750.67f, 216.82f, 59);
-            SpawnGate(219580, 341.33f, 699.38f, 216.86f, 59);
+            SpawnGate(GateNorthWest, 297.66f, 736.42f, 215.99f, Facing(171));
+            SpawnGate(GateSouth, 333.15f, 702.77f, 215.99f, Facing(279));
+            SpawnGate(GateEast, 368.95f, 740.09f, 215.99f, Facing(3));
         }
         else
         {
-            SpawnGate(219567, 303.69f, 736.35f, 198.7f, 0);
-            SpawnGate(219579, 335.19f, 708.92f, 198.9f, 35);
-            SpawnGate(219580, 360.23f, 741.07f, 198.7f, 0);
+            SpawnGate(GateLow, 302.22f, 735.60f, 197.70f, Facing(119));
+            SpawnGate(GateLow, 334.41f, 708.80f, 197.90f, Facing(33));
+            SpawnGate(GateLow, 361.11f, 741.87f, 197.52f, Facing(64));
         }
         ThreadPoolManager.GetInstance().Schedule(_ => { OnHealingDebuff(); return ValueTask.CompletedTask; }, 3000L);
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(!isTopSpawn); return ValueTask.CompletedTask; }, PortalIntervalMillis);

@@ -5120,3 +5120,38 @@ minute.
 
 **Verification.** Full suite 1,406 passing and 1 skipped, unchanged — this entry changes only the
 measurement. The eight ids the new rule contributes were enumerated and checked individually.
+
+### Unstable Yamennes' gates, done properly
+
+The deliberate pass this was scoped for. Two entries ago the finding was that the gates our class
+opened were not the ones either boss opens, and that swapping ids alone would not help because our
+gate AI was not a translation of the pattern those ids bind. Both halves are fixed now.
+
+**The gates are retail's.** `IDAbRe_Core_NamedD_02` and its hard twin both spawn 283203/283222/283223
+upstairs and 283233 downstairs — and the downstairs three are the **same** gate on three marks, where
+our class used three different ids. The boss now opens those, at retail's coordinates.
+
+**And they do what the pattern says.** `YamennesSpawnGateAI` translates all four gate patterns: an
+attacked upper gate feeds a **summoned orkanimum** onto its own fixed mark every twelve seconds, and
+the lower gate a **summoned lapilima** at its own feet every nine. Neither npc was spawned by
+anything. What it replaces spawned two other npcs at ±3 metres, twelve seconds in and once more at
+seventy-two — a different mechanic that happened to produce adds near a portal.
+
+**Not translated, and unportable rather than deferred:** every gate pattern opens by putting an
+`IDAbRe_Core_Sum_Teleport2_Enemy` on itself with a hundred thousand hate, and that devname **resolves
+to no npc in our 4.8 client**. Same class of blocker as the waypoint bucket — the data names something
+the client does not have.
+
+### A units bug the coordinates were hiding
+
+Retail's `dir` is degrees; the spawn helper takes a heading. The coordinates this class carried before
+passed their `dir` straight through — and it compiled, because every one of them was small: 0, 3, 35,
+59. Retail's own gate directions run to 279, which does not fit a heading at all, and that is what
+surfaced it: **the old numbers were being read as headings when they were degrees.** A wrong-units bug
+can sit indefinitely behind values that happen to fit both.
+
+**Backlog 522 → 516 across 381.**
+
+**Verification.** Full suite 1,410 passing and 1 skipped; four new pins plus the seven existing ones
+repointed at the retail gates and passing unchanged; three of four mutations caught, the fourth the
+familiar inert one — a battle timer armed outside combat never fires.

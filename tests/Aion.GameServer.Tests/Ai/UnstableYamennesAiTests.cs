@@ -25,18 +25,28 @@ public sealed class UnstableYamennesAiTests
 	private const int YamennesSliver = 282065;
 
 	/// <summary>The three gates, spawned as a set at whichever floor is due.</summary>
-	private static readonly int[] Gates = { 219567, 219579, 219580 };
+	/// <summary>
+	/// Retail's own gate ids, from <c>IDAbRe_Core_NamedD_02</c>. The upstairs three are three
+	/// different gates; the downstairs three are the same gate on three marks.
+	/// </summary>
+	private static readonly int[] Gates = { 283203, 283222, 283223, 283233 };
 
 	/// <summary>Upstairs sits around z 216, downstairs around z 198.</summary>
 	private const float UpstairsZ = 210f;
 
 	private static (BossAiHarness, Npc, Player) Engaged() => EngagedSingle(DurableYamennes);
 
+	private static BossAiHarness NewHarness() =>
+		BossAiHarness.For(UnstableSplinterpath)
+			.WithWorldSize(2048)
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI))
+			.Build();
+
 	private static (BossAiHarness, Npc, Player) EngagedSingle(int npcId)
 	{
 		BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(UnstableYamenessPortalSummonedAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI))
 			.Build();
 		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		Player player = harness.SpawnPlayer(332f, 732f, 216f);
@@ -48,7 +58,7 @@ public sealed class UnstableYamennesAiTests
 	{
 		BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath)
 			.WithWorldSize(2048)
-			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(UnstableYamenessPortalSummonedAI))
+			.WithAi(typeof(UnstableYamennesAI), typeof(AggressiveNpcAI), typeof(YamennesSpawnGateAI))
 			.Build();
 		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		var raid = new List<Player>();
@@ -194,5 +204,82 @@ public sealed class UnstableYamennesAiTests
 		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
 
 		Assert.Equal(expected, harness.LiveNpcs().Count(n => n.GetNpcId() == YamennesSliver));
+	}
+
+	private const int Orkanimum = 283200;
+	private const int Lapilima = 283201;
+
+	/// <summary>
+	/// An upstairs gate feeds an orkanimum onto its own fixed mark every twelve seconds once attacked.
+	/// </summary>
+	/// <remarks>
+	/// This is the pattern the gates actually run. The class they carried before spawned two other
+	/// npcs at ±3 metres from itself, twelve seconds in and once more at seventy-two — a different
+	/// mechanic that happened to produce adds near a portal.
+	/// </remarks>
+	[Fact]
+	public void AnUpstairsGateFeedsAnOrkanimumOnItsMark()
+	{
+		using var harness = NewHarness();
+		Npc gate = harness.Spawn(283203, 300f, 740f, 216f);
+		Player player = harness.SpawnPlayer(302f, 742f, 216f);
+		harness.Engage(gate, player);
+
+		BossAiHarness.Watched fed = harness.Watch(
+			5, () => BossAiHarness.Rehate(gate, player), Orkanimum);
+
+		Assert.Equal(1, fed.Total);
+
+		Npc orkanimum = harness.LiveNpcs().First(n => n.GetNpcId() == Orkanimum);
+		Assert.Equal(309.95f, orkanimum.GetX(), 1);
+		Assert.Equal(738.02f, orkanimum.GetY(), 1);
+	}
+
+	/// <summary>And keeps feeding — a second at twelve seconds, not one and done.</summary>
+	[Fact]
+	public void AnUpstairsGateKeepsFeeding()
+	{
+		using var harness = NewHarness();
+		Npc gate = harness.Spawn(283203, 300f, 740f, 216f);
+		Player player = harness.SpawnPlayer(302f, 742f, 216f);
+		harness.Engage(gate, player);
+
+		BossAiHarness.Watched fed = harness.Watch(
+			20, () => BossAiHarness.Rehate(gate, player), Orkanimum);
+
+		Assert.Equal(2, fed.Total);
+	}
+
+	/// <summary>
+	/// The lower gate feeds something else, faster, and at its own feet rather than a fixed mark.
+	/// </summary>
+	[Fact]
+	public void TheLowerGateFeedsALapilimaAtItsOwnFeet()
+	{
+		using var harness = NewHarness();
+		Npc gate = harness.Spawn(283233, 305f, 736f, 198f);
+		Player player = harness.SpawnPlayer(307f, 738f, 198f);
+		harness.Engage(gate, player);
+
+		BossAiHarness.Watched fed = harness.Watch(
+			11, () => BossAiHarness.Rehate(gate, player), Lapilima);
+
+		Assert.Equal(1, fed.Total);
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Orkanimum));
+
+		Npc worm = harness.LiveNpcs().First(n => n.GetNpcId() == Lapilima);
+		Assert.Equal(gate.GetX(), worm.GetX(), 1);
+	}
+
+	/// <summary>A gate nobody attacks feeds nothing — the timer hangs off entering combat.</summary>
+	[Fact]
+	public void AnUnattackedGateFeedsNothing()
+	{
+		using var harness = NewHarness();
+		harness.Spawn(283203, 300f, 740f, 216f);
+
+		BossAiHarness.Watched fed = harness.Watch(60, null, Orkanimum, Lapilima);
+
+		Assert.Equal(0, fed.Total);
 	}
 }
