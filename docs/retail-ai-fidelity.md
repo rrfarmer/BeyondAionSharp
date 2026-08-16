@@ -2960,3 +2960,55 @@ unambiguous.
 the three beacons (283155-7), the burrowing-attack markers (283057, six at fixed points
 on a cast-free branch — the one piece here that *is* index-free), and on hard mode the
 six lv1 markers plus a path-blocked gravity crusher.
+
+---
+
+## The eight gateway guards — a trap ladder per faction
+
+**NPCs:** Trigon, Lord Skyrose, Lord Agios and Lady Eiros in Inggison; Matigium, Sands
+Kukinsia, Sibarum Darkwing and Revolver Blackhands in Gelkmaros. All eight LEGENDARY,
+all eight on plain `aggressive`. **Patterns:** `GwLGuard_FlA` and `GwDGuard_FlA`, which
+are identical bar the faction prefix on the trap names — so one class serves both and
+picks the ids per guard.
+
+**All eight trap types were spawned by nothing anywhere.** The largest single block of
+missing content left in the audit, and it went out as one class.
+
+| when | trap |
+|---|---|
+| on engaging | snare |
+| below 70 | throw |
+| below 50 | explosion |
+| below 30 | mine |
+
+Each within two metres of the guard, each lasting a minute, each a one-shot. Below 10 it
+calls out once more and lays nothing.
+
+### The empty rungs are load-bearing
+
+Retail interleaves one-shots at 60, 40 and 20 that only cast. They are reproduced as
+bare re-arms even though the casts are not translated, because **each occupies the
+timer-0 tick it fires on** — drop them and every trap below comes forward by five
+seconds. A guard pulled at 5% does not skip to the bottom: every threshold under 70
+matches, and because each is a separate one-shot they fire in turn a tick apart, so the
+whole ladder goes down over about fifteen seconds.
+
+That last behaviour was the opposite of what the first test asserted, and the test was
+wrong rather than the code.
+
+### Two mutations that needed better pins
+
+- **Widening the mine's threshold to 70** survived, because the ladder walks: the mutant
+  lays the mine at 65 and then lays the throw one tick later anyway, so a test asserting
+  only "the throw appeared" passes. The pin now also asserts that traps from rungs the
+  guard has *not* reached are absent.
+- **Dropping the empty rungs** survived, because every window was generous enough to
+  absorb ten seconds. The pin now checks the throw is *still absent* at thirty seconds,
+  which is only true if the empty rungs are spending their ticks.
+
+**Not translated:** ten skill indices with no branch comments naming any of them, the
+timer-1 ladder that casts a different skill per health band, timer 2's coin-flip pair on
+a fifteen-minute fuse, and the four shouts and four broadcasts that accompany the rungs.
+
+**Verification.** Full suite 1,286 passing and 1 skipped; nine pins across both factions;
+all eight mutations caught after the two fixes above.
