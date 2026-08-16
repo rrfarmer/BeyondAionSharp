@@ -8953,3 +8953,77 @@ pass all had both.
 Full suite **1,836 passing** and 1 skipped; twenty-two new pins; no mutation sweep, because nothing
 was written — this is a data change against classes that already carry their own sweeps. Missing-AI
 705 → **700**; orphan siblings 32 → **10**.
+
+## The anuhart casters — four pets, and an order that never stops
+
+`XDrakan_EeB_F_50` binds to the four Dark Poeta casters — spiritlord (215249), invoker (215258),
+conjurer (215267) and transporter (215276) — all on plain `aggressive`, and picked by
+`audit_translatable.py` for the best owner count against blocked actions left on the list.
+
+Each of them fights **with a pet**. On engaging it puts a faithful subordinate (281171) at its own feet
+and broadcasts `3406` naming whoever it is fighting; nine seconds in it does it again; crossing seventy
+it does it again and takes the second-most-hated itself; and below thirty-five it settles into a loop
+that re-points the pet roughly every twenty-seven seconds for the rest of the fight. Retail even
+shrinks the shout radius as the fight goes on — fifteen metres, then thirteen, then ten.
+
+**The order is the mechanic, not the pet.** One extra monster is a detail; a pet that is moved onto the
+healer every time the caster changes its mind is why these four are dangerous in a group.
+
+### One rule, two encounters that want opposite things from it
+
+The caster spawns the pet and broadcasts **in the same branch**, and `PatternAi` deliberately excludes
+whatever the running branch spawned from that branch's own broadcast. That exclusion was *measured*,
+for RM-56c, which lays traps and immediately tells traps to leave — without it the boss deleted the
+arrangement it had just laid.
+
+Here the same rule means the pet does not hear the order it arrives with, and stands idle until the
+nine-second one. **The two encounters want opposite things and nothing in the runtime distinguishes
+them.** Our measured behaviour is kept rather than widened on a guess, and the evidence on both sides
+is worth writing down, because it is the kind of thing that gets "fixed" later without it:
+
+- *for the pet hearing it:* `XD_EPet` has two `3406` branches split on whether the pet is already
+  fighting, and the idle branch only makes sense if orders can arrive before it has a target;
+- *against:* retail's spawn action is `PLANNED` — queued — so the pet may genuinely not exist yet when
+  the next action of the same branch runs, which is exactly what the RM-56c note concluded.
+
+Nothing in the dump settles it. Recorded as an open question with a named test either way.
+
+### Three pins rewritten, and what each was claiming falsely
+
+**"He re-points the pet at whoever he turns on."** He does not: the rung broadcasts *before* it
+switches, so the pet gets the player he was holding and he moves on. The first version asserted they
+ended up together.
+
+**"…and they end up on different people."** Also false, and the second thing this pin asserted. The
+switch on that rung is `ATTACKERI_RANDOM_ONE`, which can land back on the same player. What the branch
+order actually guarantees is only that the pet gets the *pre-switch* victim, and that is what is
+pinned now.
+
+**"The loop brings the pet back to his victim."** Failed two runs in five with a raid of three, because
+the caster's own target drifts back to the most-hated between orders, so the next order can name the
+very player the pin had just moved the pet to. Narrowed to one player in the fight and a decoy a
+hundred metres away.
+
+**Rule: when a branch both broadcasts and switches, read the order of the actions before naming who
+ends up where — and if the switch is random, do not assert a difference it is not obliged to produce.**
+
+### Carried but not observable
+
+The shrinking shout radius. The pet stands at its master's feet and our harness has no movement, so
+every radius reaches it; it would matter in the live game to a pet that had chased somebody out past
+ten metres. Deliberate mutation survivor.
+
+### Not translated
+
+Eleven skill indices and the two cast-only timer loops. The `3407` broadcast, whose only listener
+answers with a self-cast — its rung is kept anyway, because the timer it arms is what paces the order
+loop. And `on_enter_abnormal_state`, which broadcasts `3403` when the caster is crowd-controlled: an
+event our runtime does not raise, and **the third pattern in this log to want it**. That message has
+**twenty-seven** listener patterns across the dump, which makes it the most-wanted single event we are
+missing after the friend-attacked pair.
+
+### Verification
+
+Full suite **1,846 passing** and 1 skipped; ten new pins, checked five times over for flakiness after
+two of them turned out to be racy; twelve mutations, eleven caught and one deliberate survivor. Adds
+368/284 → **367/283**; translatable 953 → **941**.
