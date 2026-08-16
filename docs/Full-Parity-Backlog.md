@@ -8,6 +8,18 @@ Branch `feature/object-spine-bigbang` @ `b9c908e25` · build 0 · golden 221/221
 
 ## Standing reality (so the backlog isn't misread)
 
+- **"AI 462/462" means Java parity, not retail fidelity — and there is a large open axis this
+  document does not track.** Every aionemu AI handler is ported, which is what that count says. It
+  does not say the NPCs behave as retail does: aionemu's NPC AI is an approximation of NCSoft's own
+  `NpcAIPatterns` data, and where the two disagree the retail data wins (the one sanctioned exception
+  to the Java-is-spec rule — see `CLAUDE.md`).
+
+  That work has its own log, **`docs/retail-ai-fidelity.md`**, and its own measurement: retail
+  encounter adds our server never spawns, counted by
+  `tools/client-extract/audit_missing_adds.py`. **Currently 586 across 390 encounters**, down from
+  812 when the audit was written. Anyone reading "content parity COMPLETE" above should read it as
+  *the Java tree is fully ported*, not as *the encounters are finished*.
+
 - **De-slop + structural port is DONE.** 126→0 reworked duplicate packets, `GameServerPacket` dropped, object store unified to single `World._allObjects`, all reworked `*Summary`/`*Table`/WorldNpc/Kisk/Rift/Housing slop retired, `GameServerConnection` god-class gone, guardrail baseline empty (0/0). ~92% of Java types (2269/2456) have an exact-name C# file. Content scripts: quests 1035/1035 · AI 462/462 · zone 3/3 · console 35/35 · player 16/16 · admin 103/103 · **instance 78/78** — **content parity COMPLETE** (instance set finished 2026-06-18 with the final 7-handler pvparenas arena chain; 5 tier-1 bases + 36 leaves ported, incl. full abyss barracks/chamber cluster, all dredgion/crucible/basicpvp leaves, and the TrainingGrounds→ArenaOf* chain + ArenaOfGlory) (corrected 2026-06-17; the prior "instance 37" was a stale miscount — the Java instance dir has 78, not 37). **§H DONE — see below.**
 - **A faithful Java TODO is parity, not a gap.** Of 277 `TODO`/`FIXME` markers in C# src, the large majority are verbatim copies of TODOs in the Java source (e.g. "most retail npcs lose 364 hate. TODO: find formula"). The doctrine says mirror them; reproducing them *is* 1:1. Only the **C#-specific** subset (config framework, "port the rest") are real gaps — see §C.
 - **The only thing that cannot be done here is the live-client test (§F)** — it needs the user's Aion 4.8 client. Everything else in this backlog is workable now.
