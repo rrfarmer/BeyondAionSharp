@@ -3012,3 +3012,55 @@ a fifteen-minute fuse, and the four shouts and four broadcasts that accompany th
 
 **Verification.** Full suite 1,286 passing and 1 skipped; nine pins across both factions;
 all eight mutations caught after the two fixes above.
+
+---
+
+## The three awakened chamber lords — and when shared absolute coordinates are safe
+
+**NPCs:** awakened krotan lord (215136), kysis duke (215179) and miren prince (215222),
+all HERO, all on plain `aggressive`. **Pattern:** `BGuard_ChiefD`. The illusion gate
+(281226) and both dredgion elite fighters (296338, 296339) were spawned by nothing
+anywhere.
+
+- **below 25** — an illusion gate opens at its feet and stands ten minutes
+- **on dying** — six drakan arrive by teleporter, two at each of three points, and three
+  more through the barrier. Eighteen seconds and twelve respectively: a parting shot,
+  not a second fight.
+
+### The single-owner rule, refined
+
+The death spawns are placed absolutely, and this pattern has **three** owners — which by
+the standing rule makes absolute coordinates untrustworthy. Here the check passes, for a
+reason worth recording rather than assuming: the three chambers are separate maps
+(300140000, 300120000, 300130000) that **share one layout**. Each lord stands at
+(526.4, 845.3) in its own map, and the coordinate ranges match across all three.
+
+So the rule is not "one owner or nothing". It is: **absolute coordinates are safe when
+the owners' maps agree, and our own spawn data can settle that in one query.** Comparing
+where each owner is placed, and the coordinate span of each map, is the check.
+
+The pattern's z of 200 is nominal — the chambers' own spawns sit near 190 — so the death
+wave is placed at the lord's own height instead.
+
+### A comment of mine that was wrong, caught by a mutation
+
+The two one-shots at 26-50 and 51-75 are kept as bare re-arms, and I first wrote that
+they matter the way the gateway guards' empty rungs do — each spending the tick it fires
+on. **That is false here**, and removing one survived the mutation pass because of it.
+
+There the empty rungs mattered because a deeper *trap* rung would otherwise match on the
+consumed tick. Here the only rung that does anything is guarded below 25, which cannot
+overlap 26-50 or 51-75, and both empty branches do exactly what the catch-all beneath
+them does. They are genuinely inert. They are still kept so the table reads against the
+pattern — but the comment now says so, instead of claiming behaviour they do not have.
+
+The same reasoning does not transfer between bosses just because the shapes look alike;
+whether an empty branch is load-bearing depends on what else could match that tick.
+
+**Not translated:** ten skill indices with no branch comments, the world flag set on
+engaging and dying that nothing on our side reads, the broadcast on leaving, and the
+`on_message` 6682 dismissal that no ported NPC sends.
+
+**Verification.** Full suite 1,296 passing and 1 skipped; eleven pins across all three
+lords; seven of eight mutations caught, the eighth confirmed equivalent and the comment
+that misdescribed it corrected.
