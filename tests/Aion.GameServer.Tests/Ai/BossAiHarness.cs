@@ -404,10 +404,18 @@ public sealed class BossAiHarness : IDisposable
 		/// <b>Register the adds too, not just the boss.</b> If an NPC the boss spawns has an <c>ai_name</c> with
 		/// no handler registered here, <c>AIEngine.NewAI</c> throws, <c>VisibleObjectSpawner.SpawnNpc</c> catches
 		/// it, logs to a null logger and deletes the NPC — so the spawn silently produces nothing and the only
-		/// symptom is a count of zero. That has cost three separate debugging detours in this work: the frost
-		/// bombs (<c>useSkillAndDie</c>), the drakan traps (<c>trap</c>) and the illusion gate (<c>groupgate</c>).
-		/// A test asserting "the add appeared" does catch it, but the failure looks like a broken table rather
-		/// than a missing registration, so check this list first.
+		/// symptom is a count of zero. That has cost four separate debugging detours in this work: the frost
+		/// bombs (<c>useSkillAndDie</c>), the drakan traps (<c>trap</c>), the illusion gate (<c>groupgate</c>)
+		/// and hard-mode Tiamat's four corner mages (<c>aggressive_no_loot</c>). A test asserting "the add
+		/// appeared" does catch it, but the failure looks like a broken table rather than a missing
+		/// registration, so check this list first.
+		/// </para>
+		/// <para>
+		/// <b>It is worse than a missing add when the spawn happens on <c>on_wake_up</c>.</b> That branch runs
+		/// inside the owner's own <c>BringIntoWorld</c>, so the throw unwinds into the owner's spawn path: the
+		/// same catch deletes <b>the boss</b>, and the rest of the branch never runs. The symptom is then a
+		/// wake-up that half-happened, which reads like a branch-ordering bug. Registering the effect NPCs' own
+		/// handlers — <c>general</c>, <c>thick_dust</c> and the like — is not optional for those tests.
 		/// </para>
 		/// </remarks>
 		public Builder WithAi(params Type[] aiHandlerTypes)

@@ -5269,3 +5269,95 @@ nothing was fixed — the pets themselves did nothing at all before this.
 | `GwDGuard_` / `GwLGuard_` | own hand-written class |
 
 **Verification.** Full suite 1,415 passing and 1 skipped; four new pins; all five mutations caught.
+
+## Hard-mode Tiamat's first form — and a claim I had no business making
+
+`IDTiamat_Hard_Tiamat_Dragon`, npc 236276, the phase before the dying rotation
+`TiamatDyingRotationAI` already covers. Ten adds, the largest cluster left, and the
+first of them the fight is actually built around.
+
+**What it does.** She wakes inside a transformation flash on its own mark a few metres
+west of her, with a blazing inferno spirit and a burrowing arrival at her feet — ten,
+six and eight seconds, none of the three spawned by anything before now. Fifteen
+seconds into the fight a one-shot arms a four-second fuse, and on it **four drakan
+mages take the four corners of the arena**, each on the heading retail gives it. A
+ten-second heartbeat runs alongside adding hate. Killing her clears the group, which
+takes the mages with her.
+
+### The claim I got wrong
+
+I wrote in the class, and would have committed, that the nineteen `IDTiamat_TiamatRush_*`
+drakan of the idle timer "do not appear anywhere in our 4.8 client — the binding table
+has zero matches for `TiamatRush`", and filed them with Yamennes' gate enemy as content
+the client does not carry.
+
+That was wrong, and the mistake was methodological. **`out/ai_binding.tsv` maps
+*owners* — which npc runs which pattern — not devnames to ids.** Grepping it for a
+spawn target and finding nothing means nothing at all. The audit resolves spawn targets
+through `client_devname_to_id`, which is keyed **lower-case**, and through it all four
+of the devnames I called absent resolve:
+
+| devname | npc | what it is |
+|---|---|---|
+| `IDTiamat_TiamatRush_*` | 236713-236720 | the protectorate elites, eight of them |
+| `IDTiamat_Tiamat_ShapeChangeFlash` | 283174 | the transformation flash — **now ported** |
+| `IDTiamat_Tiamat_Dust` | 283134 | the cloud she leaves on dying — **now ported** |
+| `IDTiamat_Tiamat_cutscene_play3` | 283184 | the deadly-howling cutscene |
+
+Two of the four went straight into the class the moment they resolved. The rush is
+still left out, but for the real reason: every one of its spawns carries
+`pathname=path_tiamatdrakan_*`, a server-side walk route we do not have, so spawning
+them leaves nineteen elites standing in the corners instead of charging the raid. That
+is the audit's own "walks a server-side path" bucket — fourteen adds, eight of them
+these — and the established call for that bucket is to leave them out. **The difference
+matters: "the client does not have it" is closed, "we do not have the route" is owed.**
+
+**The rule going forward:** to ask whether a devname exists, use `client_devname_to_id`
+and lower-case the key. The binding table answers a different question.
+
+### The dust cloud cancels itself, and that is kept
+
+Retail's `on_die` spawns the dust under `SPAWN_ID_1` and then, four lines later in the
+same branch, despawns that group. The cloud is placed and taken away in one breath. It
+is translated literally, with a pin that asserts the cloud does *not* survive her death,
+because the alternative is inventing a lingering cloud retail does not have.
+
+### What is not translated, and why
+
+- **The message half.** She listens for five types — 31 arms a twenty-second timer that
+  rebroadcasts to the gods, 38/39/40 each cast a `SKILLI_INDEX`, 27 removes her — and
+  broadcasts three of her own on entering the fight. Every cast is index-only, and
+  **nothing in our tree sends her any of those numbers**: the senders are the instance
+  script and her adds' own patterns. A listener with no sender is silence.
+- **The hate bump** on the ten-second heartbeat: no vocabulary for it, nothing
+  observable on our threat model. The heartbeat itself is translated so the chain ticks.
+- **`say_to_all`, system messages, and the condition variables** (`GOD_SPAWN`,
+  `TELEPORT_FUTUREIN1..4`, `SURUKANAFALLING`, `TIAMAT_SPAWN`) — instance sequencing.
+- Normal mode's first form (219361, `IDTiamat_Tiamat_Dragon_Named_60_Al`, two adds) is
+  still on the old `TiamatDragonAI`, and owner **856028** also binds the hard pattern;
+  only 236276 was repointed.
+
+### An unkillable mutation, honestly
+
+Dropping `When.FirstTime(FLAGVARI_BETA_1)` from the portal step **survives every pin**,
+and no pin can be written for it: nothing re-arms timer 1, so the step is a one-shot
+whether or not the flag guards it. It is carried because retail carries it — if the
+message half is ever translated and something re-arms that slot, the guard is already
+right. Eleven of the twelve mutations tried were caught; this is the twelfth.
+
+### The harness trap, for the fourth and fifth time
+
+The four mages are `aggressive_no_loot` and produced **nothing** with only
+`AggressiveNpcAI` registered — the fourth detour this trap has cost. The flash and the
+dust then produced a worse one: they spawn from `on_wake_up`, which runs inside the
+owner's own `BringIntoWorld`, so the unregistered-handler throw unwound into the
+*boss's* spawn path and the same catch **deleted the boss**. The symptom was a wake-up
+that half-happened, which reads like a branch-ordering bug rather than a missing
+registration. `BossAiHarness.WithAi` now says so.
+
+**Where the count went.** 498 across 365 encounters → **494 across 364**. Four, not ten:
+the spirit, the arrival, the flash and the dust are all reachable elsewhere already, and
+the eight rush drakan stay in the walk-path bucket. The four mages are the four.
+
+**Verification.** Full suite 1,425 passing and 1 skipped; seven new pins; eleven of
+twelve mutations caught, the twelfth recorded above.
