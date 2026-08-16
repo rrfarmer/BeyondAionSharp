@@ -6708,3 +6708,125 @@ research problem rather than a porting one.
 
 **Verification.** Full suite 1,562 passing and 1 skipped; eight new pins; seven mutations, all
 caught.
+
+## Dark Poeta's barricades called their guards to the wrong barricade
+
+The missing-AI and missing-adds audits are both down to blocked or cast-only remainders, so this
+one came from a different tool: `audit_hp_phases.py`, which compares a hand-written `HpPhases`
+ladder against the thresholds its retail pattern actually states. Eighteen classes disagree. Two of
+them are not timer-driven rotations, which means retail's numbers are directly copyable rather than
+being one strand of a larger clock — and the first of those is `BalaurBarricadeAI`.
+
+The binding table gives all three of Dark Poeta's barricades a pattern of their own:
+
+| barricade | retail pattern |
+|---|---|
+| 700517 `IDLF1_Barricade_Dragon` | `ND2_H50_3` |
+| 700556 `IDLF1_Barricade_DragonB` | `ND2_H50_4` |
+| 700558 `IDLF1_Barricade_DragonC` | `ND2_KnQ` |
+
+Three things were wrong, and only the third is the one the audit was looking for.
+
+### The two barricades' postings are transposed
+
+Every one of the six guard positions is written out as `SPAWN_LOCATION_ABSOLUTE` in the pattern, so
+there is nothing to derive. Laid side by side:
+
+| | aionemu spawns at | retail posts at |
+|---|---|---|
+| 700517 | (282.29, 1003.04), (289.50, 1000.16) | **(315, 982), (308, 990)** |
+| 700556 | (315.84, 982.89), (309.10, 989.51) | **(290.71, 1002.67), (284.28, 1004.98)** |
+| 700558 | (199.75, 843.69), (201.98, 853.49) | (202, 856), (201, 843) |
+
+700558's are right to within a metre. The other two hold **each other's** coordinates — aionemu's
+700517 positions sit in `ND2_H50_4`'s neighbourhood and its 700556 positions are `ND2_H50_3`'s, to
+within the same metre. The two barricades stand about thirty metres apart, so on our server two of
+the three called their reinforcements to the far side of the room.
+
+This is what an observed port looks like when the observation was right and the label was not: the
+positions were recorded accurately and then filed under the wrong barricade.
+
+### The guards were the wrong templates
+
+Retail summons a dedicated trio, and aionemu used the ones already standing in Dark Poeta:
+
+| role | retail | aionemu |
+|---|---|---|
+| fighter | 215452 `IDLF1_G_FeB_DrakanFighterSum_50_Ae` | 215262 |
+| knight | 215453 `IDLF1_G_KeA_DrakanKnSum_50_Ae` | 215263 |
+| wizard | 215451 `IDLF1_G_DrakanWizardSum_50_Ae` | 214883 |
+
+The names on screen match pair for pair — anuhart proconsul, praefectus, magist — which is exactly
+why watching the fight picks the wrong one. Only the `name_id` differs, and no player sees that.
+Worth generalising: **a summoned add and its world twin are usually separate templates**, and the
+name is not evidence.
+
+### It is not a health ladder at all
+
+This is the part the audit flagged: ours reads `HpPhases(50, 10)` and spawns two guards at each.
+Retail has one threshold, at **seventy**, and reaches it on a clock:
+
+- `on_enter_attack_state` arms battle timer 0 at **six seconds**;
+- the timer branch guarded on HP below 70 (with a flag var, so once) calls **two fighters** — and
+  is the one branch that **does not re-arm the timer**;
+- the lower-priority branch re-arms at six seconds and does nothing else;
+- the death branch leaves the **knight and the wizard**.
+
+So the poll exists only to watch for the crossing, and it stops itself once it has done its job.
+Two consequences an `HpPhases` port cannot produce, both now pinned:
+
+- crossing seventy does **not** summon on the crossing hit — the fighters arrive at the next
+  six-second tick, up to six seconds later;
+- a barricade killed **inside six seconds** never calls its fighters at all, and leaves only the
+  death pair. Four guards in a slow fight, two in a fast one.
+
+All four guards carry `live_time=300`, and unlike the death drops in the previous entry this is
+observable: the three summoned templates are plain `aggressive` with no pattern of their own, so
+nothing removes them earlier.
+
+### Headings are degrees, and ours are not
+
+Retail writes `dir` in degrees (141, 324, 66, 225…); our positions take the client's 0..120. The
+conversion is `PositionUtil.ConvertAngleToHeading`, i.e. degrees / 3. A raw copy overflows `sbyte`
+past a full turn and leaves guards facing backwards — pinned, because the two are the same kind of
+number and nothing about the data says which.
+
+### Not translated: the broadcast
+
+All three barricades `broadcast_message 3409` to ten metres naming whoever they are fighting, and
+retail's `XDrakan` pattern answers it — an idle drakan takes hate and attacks, one already fighting
+switches target. Dark Poeta's barricades stand in drakan camps, so **a barricade pulls its
+neighbours onto you**. Nothing on our side listens for 3409, so this is a sender with no listener
+and shipping it would be a no-op; recorded here instead. Reaching it means porting `XDrakan` for
+the camp drakan, which is a much larger job than the barricades.
+
+### One death event where retail has two
+
+700517 spawns its pair on `on_die`; 700556 and 700558 use `on_killed_by_user`, so retail leaves
+nothing when something other than a player finishes them. Our runtime raises a single death event
+and all three behave as 700517 does. Nothing in Dark Poeta kills a barricade except a player.
+
+### What the rest of the HP-phase audit says
+
+Eighteen classes disagree with their pattern. Thirteen are **timer-driven rotations** — Tahabata
+has 36 battle-timer branches, Hyperion 141, Sematariux 172 — where the retail "phase list" is only
+the HP guards on a much larger clock, so renumbering our ladder to match would be worse than
+leaving it: it would claim a fidelity the class does not have. Those need the whole pattern
+translated or nothing.
+
+Five are **regime-guarded**: retail has no threshold list at all, only HP *bands* that gate a
+running rotation. `ShugoTombImperialObeliskAI` is the tractable one of the five — retail bands
+(30–69) and (0–29) against our (70, 35), and **zero** timer branches — and is the next candidate
+from this audit. `CursedQueenModorAI`, `DaliaCharlandsAI`, `EmpyreanLordAI` and `IsbariyaTheResoluteAI`
+each carry 14–84 timer branches and belong with the thirteen.
+
+The one remaining non-rotation mismatch is `WatchmanHokuruki` (235634, `IDSweep_Monster_Nmd03`):
+ours reads (100, 75, 50, 25, 15), retail spawns bears at **50** and **25** only, two then three,
+`spawn_range=8` from its own position, with the ladder's higher-priority rungs at 80/60/30 spending
+their turn on a `set_condition_spawn_variable` we cannot express. That last part is why it was not
+done here: the ordering consequence is real — the first hit below 80 spends on the condition
+variable and the bears come on the following hit — and reproducing the bears without it would be a
+different fight, not a closer one.
+
+**Verification.** Full suite 1,578 passing and 1 skipped; sixteen new pins; ten mutations, all
+caught — including the transposition put back exactly as aionemu has it.
