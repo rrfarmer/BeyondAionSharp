@@ -9197,3 +9197,53 @@ Full suite **1,862 passing** and 1 skipped; eight new pins run three times over;
 caught and one deliberate survivor. One mutation had to be rewritten after it failed to compile —
 removing a spawn from the middle of an action list leaves a dangling comma, and a mutation that does
 not build is not a survivor.
+
+## The Akairun of Medeus — a fight made almost entirely of target switches
+
+`ND2_AhB` binds to the Akairun of Medeus (212008), a LEGENDARY on plain `aggressive`, and he is the odd
+one out in this family. The others call waves; **his fight is about who he is hitting.**
+
+Every band opens a target-switch loop *of its own*, and none of them ever closes:
+
+| | |
+|---|---|
+| crossing 85 | takes whoever is **closest to dying**, every twenty-five seconds |
+| crossing 65 | a second loop, taking the **second-most-hated**, on its own twenty-five |
+| crossing 45 | a third, back to the weakest |
+| below 25 | the ladder stops and a **faster** pair of timers hand off every twenty-seven, taking the weakest |
+
+Each loop is guarded only on being *above* the band that opened it, so they accumulate: a raid that has
+walked him down is being peeled from three independent clocks at once. That is the whole encounter, and
+it is invisible in a spawn table because it has almost nothing to do with adds.
+
+### One protector where retail places four
+
+At 46–65 retail puts out four **splendid protectors** (280816) for twenty minutes. Three of them use
+`SPAWN_LOCATION_WAY_POINT_START` with a `pathname` — "at the start of that route, then walk it" — and
+we have neither the location kind nor the route mapping. The fourth is at his own point and is carried.
+
+**One instead of four is a real divergence and is recorded as one rather than smoothed over.** The
+alternative was placing none; a wave at quarter strength is closer to the fight than a wave that does
+not exist, and the pin says so in its name.
+
+### Two guards enforcing one limit, for the third time
+
+The wave's band is `46–65` *and* the deep rung declines to re-arm the heartbeat. Below twenty-five the
+deep rung wins first-match and takes the clock with it, so a wave band widened downward would never get
+a tick to fire on — and with the band correct, adding the re-arm changes nothing either. Each guard
+hides the other.
+
+This is the third instance in this log, after the krall escape and the Balaur officers, and it now has
+a reliable answer: **pin the guard at a health where the other one is not in play.** Thirty-five percent
+is where the ladder is still running and the wave band is still closed, and that catches the band; the
+missing re-arm stays a deliberate survivor.
+
+### Not translated
+
+Twenty skill indices; the three waypoint-start protectors; and timer 1, armed on entering combat and
+read by no branch at all — retail arms it and nothing uses it, left as written rather than tidied away.
+
+### Verification
+
+Full suite **1,870 passing** and 1 skipped; eight new pins; twelve mutations, eleven caught and one
+deliberate survivor. Adds 363/281 → **362/281**; translatable 940 → **938**.

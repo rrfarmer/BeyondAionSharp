@@ -418,3 +418,137 @@ public class MedeusTheVileAI : PatternAi
 
     protected override AiPattern Pattern => Pattern_;
 }
+
+/// <summary>
+/// Akairun of Medeus (212008). Retail pattern <c>ND2_AhB</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. A LEGENDARY on plain <c>aggressive</c>, and the
+/// odd one out in this family: <b>his fight is almost entirely about who he is hitting.</b>
+/// <para>
+/// Every band opens a <em>target-switch loop of its own</em>, and none of them ever closes. At
+/// eighty-five he starts taking whoever is closest to dying every twenty-five seconds; at sixty-five a
+/// second loop opens that takes the second-most-hated on its own twenty-five; at forty-five a third,
+/// back to the weakest. So a raid that has walked him down through the bands is being peeled from
+/// three independent clocks at once, and the loops carry no upper bound — each is guarded only on
+/// being <em>above</em> the band that opened it.
+/// </para>
+/// <para>
+/// <b>Below twenty-five the ladder stops and a faster loop replaces it.</b> That rung does not re-arm
+/// the heartbeat, so no further band can open; what it does arm is a pair of timers that hand off to
+/// one another every twenty-seven seconds, taking the weakest each time. The fight ends as it began,
+/// on whoever is nearly dead.
+/// </para>
+/// <para>
+/// <b>He calls one wave, and we can only place a quarter of it.</b> At 46–65 retail puts out four
+/// <b>splendid protectors</b> (280816) for twenty minutes — but three of them use
+/// <c>SPAWN_LOCATION_WAY_POINT_START</c> with a <c>pathname</c>, meaning "at the start of that route,
+/// then walk it", and we have neither the location kind nor the route mapping. The fourth is placed at
+/// his own point and is carried. <b>One protector instead of four is a real divergence</b> and is
+/// recorded as one rather than smoothed over: the alternative was placing none, and a wave that exists
+/// at a quarter strength is closer to the fight than a wave that does not exist.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> Twenty skill indices; the three waypoint-start protectors above; and timer 1,
+/// armed on engaging and never used by any branch — retail arms it and nothing reads it, which is
+/// left as written rather than tidied away.
+/// </para>
+/// <para>
+/// <b>The deep rung's missing re-arm is carried and is not observable.</b> Below twenty-five every
+/// other rung is out of its band anyway, so a dead clock and a live one behave identically — the third
+/// time this shape has been recorded, after the krall escape and the Balaur officers. Deliberate
+/// mutation survivor. Its partner guard <em>is</em> pinned, at thirty-five percent, where the ladder
+/// is still running and a wave band widened downward would show.
+/// </para>
+/// </remarks>
+[AIName("akairun_of_medeus")]
+public class AkairunOfMedeusAI : PatternAi
+{
+    /// <summary><c>BLF3_NM_BoneDrakeSum2_45_Al</c> — a splendid protector.</summary>
+    private const int Protector = 280816;
+
+    /// <summary>Retail's <c>SPAWN_ID_1</c> and its <c>live_time</c>.</summary>
+    private const int Wave = 1;
+    private const int WaveLife = 1200;
+
+    private const int Ladder = 0;
+    private const int Peel85 = 2;
+    private const int Peel65 = 3;
+    private const int Peel45 = 4;
+    private const int DeepPeel = 5;
+    private const int DeepPeelBack = 6;
+
+    // Retail's ALPHA_1..4.
+    private const int Below85 = 1;
+    private const int Below65 = 2;
+    private const int Below45 = 3;
+    private const int Below25 = 4;
+
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        // Retail also arms timer 1 here, which no branch ever reads.
+        OnEnterAttack = Of(
+            Branch(14, "", When.Always,
+                Do.ArmTimer(Ladder, 7000))),
+
+        OnBattleTimer = Of(
+            Branch(13, "", [When.Timer(DeepPeelBack)],
+                Do.ArmTimer(DeepPeel, 7000)),
+
+            Branch(12, "the deep loop", [When.Timer(DeepPeel)],
+                Do.ArmTimer(DeepPeelBack, 20000),
+                Do.SwitchTarget(AggroTarget.LOWEST_HP)),
+
+            // Does not re-arm the heartbeat: below twenty-five no further band can open.
+            Branch(11, "below 25 opens it", [When.Timer(Ladder), When.HpBelow(25),
+                    When.FirstTime(Below25)],
+                Do.ArmTimer(DeepPeel, 7000)),
+
+            Branch(10, "the third loop", [When.HpBetween(26, 100), When.Timer(Peel45)],
+                Do.ArmTimer(Peel45, 25000),
+                Do.SwitchTarget(AggroTarget.LOWEST_HP)),
+
+            Branch(9, "26-45 opens it", [When.HpBetween(26, 45), When.Timer(Ladder),
+                    When.FirstTime(Below45)],
+                Do.ArmTimer(Peel45, 12000),
+                Do.ArmTimer(Ladder, 7000)),
+
+            Branch(7, "the second loop", [When.Timer(Peel65), When.HpBetween(46, 100)],
+                Do.ArmTimer(Peel65, 25000),
+                Do.SwitchTarget(AggroTarget.SECOND_MOST_HATED)),
+
+            // Retail places four here; the other three are waypoint-start and cannot be positioned.
+            Branch(6, "46-65 calls the wave", [When.Timer(Ladder), When.HpBetween(46, 65),
+                    When.FirstTime(Below65)],
+                Do.ArmTimer(Ladder, 10000),
+                Do.ArmTimer(Peel65, 15000),
+                Do.SpawnNear(Protector, Wave, count: 1, liveSeconds: WaveLife)),
+
+            Branch(5, "the first loop", [When.Timer(Peel85), When.HpBetween(66, 100)],
+                Do.ArmTimer(Peel85, 25000),
+                Do.SwitchTarget(AggroTarget.LOWEST_HP)),
+
+            Branch(3, "66-85 opens it", [When.Timer(Ladder), When.HpBetween(66, 85),
+                    When.FirstTime(Below85)],
+                Do.ArmTimer(Ladder, 10000),
+                Do.ArmTimer(Peel85, 15000)),
+
+            Branch(1, "", [When.Timer(Ladder)],
+                Do.ArmTimer(Ladder, 7000))),
+
+        OnLeaveAttack = Of(
+            Branch(15, "", When.Always,
+                Do.Despawn(Wave))),
+
+        OnDie = Of(
+            Branch(17, "", When.Always,
+                Do.Despawn(Wave))),
+    };
+
+    public AkairunOfMedeusAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
