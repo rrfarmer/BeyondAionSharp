@@ -5833,3 +5833,69 @@ no route for him.
 
 **Verification.** Full suite 1,466 passing and 1 skipped; twelve new pins; thirteen
 mutations, all caught after the two above were addressed.
+
+## Frostmane Lestin, and the add that was only reachable by mistake
+
+`ND2_ElementalSu2`, npc 212875. He was on `summoner`, the generic table-driven Java AI, and
+his whole fight was five lines of data that got three separate things wrong:
+
+```xml
+<percentage percent="80"><summonGroup npcId="280481" minCount="4" distance="10"/></percentage>
+<percentage percent="60"><summonGroup npcId="280481" minCount="4" distance="10"/></percentage>
+<percentage percent="40"><summonGroup npcId="280481" minCount="4" distance="10"/></percentage>
+```
+
+| | retail | ours |
+|---|---|---|
+| what he calls | **three different elementals**, 280489 → 280490 → 280491 | the same NPC three times |
+| which NPC | those three | **280481**, a fourth of the same name, a level lower |
+| thresholds | 66-90, 41-65, 21-40 — so below 90, 66 and 41 | 80, 60, 40 |
+| what happens to the last wave | **each wave despawns the one before it** | all twelve accumulate |
+| who he turns on | whoever is **closest to dying**, from the second rung | nobody, he stays on the tank |
+
+### The vocabulary gap that last row is
+
+`ATTACKERI_HAS_LOWEST_HP` had no equivalent in our `AggroTarget`, and it is not rare. Across
+the 5.8 files the attacker indicators run:
+
+```
+ATTACKERI_RANDOM_ONE                3,492
+ATTACKERI_SECOND_HATING               725
+ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT   399
+ATTACKERI_HAS_LOWEST_HP               356
+ATTACKERI_THIRD_HATING                281
+ATTACKERI_HAS_MOST_HP                  58
+```
+
+Picking on whoever is closest to dying is the **fourth most common** thing a retail boss does
+with a target and there was no way to say it. `LOWEST_HP` and `MOST_HP` are now in the enum,
+ranked by health **fraction** rather than absolute HP — absolute would make a boss reaching for
+the most nearly dead pick whichever class has the smallest pool, every time, however healthy
+they were. A mutation swapping the two ranking directions is caught.
+
+### Correcting him made the backlog go up by one, correctly
+
+280481 was in nobody's retail pattern for Lestin — it was only *reachable* because his summon
+table called it by mistake. Removing the now-dead table left it unspawned, and the audit
+immediately reported it under **`ND2_NeutEgg2`**: the klaw egg (280482), which was on plain
+`aggressive` and therefore sat there as a fightable egg that never hatched. Retail has it put a
+faithful subordinate on its own mark for ten minutes and remove itself. Ported, so the
+subordinate is back in the world through the door it was meant to come through.
+
+That egg's `on_see_user` branch is **dead in retail too**: it repeats the wake branch's actions
+behind the same test-and-set flag, so waking consumes the flag and the copy can never pass.
+
+### An ordering mutation that is genuinely inert
+
+"The shallow rung outranks the deep one" survives every pin here and cannot be killed. Lestin's
+guards are `is_hp_in_boundary` bands that **tile without overlapping** — 66-90, 41-65, 21-40 —
+so at most one can ever match and evaluation order changes nothing. That is the opposite of
+Captain Adhati one entry above, whose rungs are `is_hp_lower_than` and therefore all true at
+once below the deepest threshold, where the ordering is the whole mechanic. Both patterns write
+their branches deepest-first; only one of them needs it.
+
+**Where the count went.** 466 across 354 encounters → **463 across 353**. Three elementals out,
+one subordinate in and back out again with its egg.
+
+**Verification.** Full suite 1,477 passing and 1 skipped; eleven new pins; twelve mutations
+caught, one build-broken, one recorded above as inert.

@@ -193,8 +193,21 @@ public class AggroList
             AggroTarget.MOST_HATED => stream.MaxBy(ai => ai.GetHate())?.GetAttacker(),
             AggroTarget.SECOND_MOST_HATED => stream.OrderByDescending(ai => ai.GetHate()).Take(2).LastOrDefault()?.GetAttacker(),
             AggroTarget.THIRD_MOST_HATED => stream.OrderByDescending(ai => ai.GetHate()).Take(3).LastOrDefault()?.GetAttacker(),
+            AggroTarget.LOWEST_HP => stream.MinBy(ai => HpFraction(ai.GetAttacker()))?.GetAttacker(),
+            AggroTarget.MOST_HP => stream.MaxBy(ai => HpFraction(ai.GetAttacker()))?.GetAttacker(),
             _ => null,
         };
+    }
+
+    /// <summary>Health as a fraction of maximum, which is how retail's HP indicators rank.</summary>
+    /// <remarks>
+    /// Absolute HP would make a boss reaching for the one most nearly dead pick whichever class has
+    /// the smallest pool instead, every time, regardless of how hurt anyone is.
+    /// </remarks>
+    private static float HpFraction(Creature creature)
+    {
+        int max = creature.GetLifeStats().GetMaxHp();
+        return max <= 0 ? 0f : creature.GetLifeStats().GetCurrentHp() / (float)max;
     }
 
     /// <summary>

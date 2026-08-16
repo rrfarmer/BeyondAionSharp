@@ -1,8 +1,8 @@
 patterns with spawn actions : 4,158
-npc_ids our data can spawn  : 21,385
+npc_ids our data can spawn  : 21,388
 
-Fightable retail adds our server never spawns: 469 across 355 encounters
-  fully self-contained                       : 401
+Fightable retail adds our server never spawns: 466 across 354 encounters
+  fully self-contained                       : 398
   positionable, but walk a server-side path  : 14
   positionable, but only a waypoint fires it : 10
   blocked on server-side waypoint paths      : 44
@@ -54,10 +54,6 @@ IDSeal_Scene_17_QuestNPC  (live npc_ids: 209723,209788)
     209726  lv65  masionel
     209792  lv1   parsia
     209727  lv65  masionel
-Dread_DrakanBoss  (live npc_ids: 214823)
-    281345  lv50  healing energy of adhati
-    281344  lv50  holy servant of adhati
-    281346  lv50  chaotic energy of adhati
 IDDF3_NamedLFi  (live npc_ids: 213776)
     282156  lv60  summon brigade general npc
     282154  lv60  summon brigade general npc

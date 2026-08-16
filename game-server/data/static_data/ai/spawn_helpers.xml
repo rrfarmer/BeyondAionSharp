@@ -128,19 +128,6 @@
 			</percentage>
 		</summons>
 	</ai>
-	<ai npcId="212875">
-		<summons>
-			<percentage percent="80">
-				<summonGroup npcId="280481" minCount="4" distance="10"/>
-			</percentage>
-			<percentage percent="60">
-				<summonGroup npcId="280481" minCount="4" distance="10"/>
-			</percentage>
-			<percentage percent="40">
-				<summonGroup npcId="280481" minCount="4" distance="10"/>
-			</percentage>
-		</summons>
-	</ai>
 	<ai npcId="213738">
 		<summons>
 			<percentage percent="75">
