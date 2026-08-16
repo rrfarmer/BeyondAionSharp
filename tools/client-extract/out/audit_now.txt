@@ -1,12 +1,12 @@
 patterns with spawn actions : 4,158
-npc_ids our data can spawn  : 21,391
+npc_ids our data can spawn  : 21,397
 
-Fightable retail adds our server never spawns: 463 across 353 encounters
-  fully self-contained                       : 395
+Fightable retail adds our server never spawns: 459 across 351 encounters
+  fully self-contained                       : 391
   positionable, but walk a server-side path  : 14
   positionable, but only a waypoint fires it : 10
   blocked on server-side waypoint paths      : 44
-  (of all the above, 22 have a sibling npc we already spawn -- spot-check)
+  (of all the above, 21 have a sibling npc we already spawn -- spot-check)
 
 DF4_GH_KJS  (live npc_ids: 258207)
     282891  lv60  hurrikane  [BLOCKED: waypoint-placed]  [we spawn 281435 for this role -- check before porting]
@@ -58,10 +58,6 @@ IDDF3_NamedLFi  (live npc_ids: 213776)
     282156  lv60  summon brigade general npc
     282154  lv60  summon brigade general npc
     282155  lv1   summon brigade general npc
-IDAB_Reward_Item_NoShowNPC_09  (live npc_ids: 284978)
-    284979  lv65  warguard
-    284980  lv65  bowguard
-    284981  lv65  aetherguard
 BIDF5_U01_Ctrl_01  (live npc_ids: 856054)
     235782  lv65  escapee asachin
     235781  lv65  runaway hirakiki
@@ -480,8 +476,6 @@ IDAbRe_Core_NamedA1_02  (live npc_ids: 219551)
     282011  lv55  giant of light death
 IDAbRe_Core_NamedA2_02  (live npc_ids: 219552)
     282012  lv55  giant of darkness death
-IDAbRe_Core_NamedD_Hard_02  (live npc_ids: 219563)
-    283229  lv60  summoned ametgolem  [we spawn 282107 for this role -- check before porting]
 IDAbRe_Core_Summon4_02  (live npc_ids: 283203)
     283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
 IDAbRe_Core_Summon4_3_02  (live npc_ids: 283222)

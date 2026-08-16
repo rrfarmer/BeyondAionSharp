@@ -152,6 +152,7 @@ def spawnable_npc_ids(repo: pathlib.Path) -> set[str]:
         ids.update(spawned_via_constants(text))
         ids.update(spawned_relative_to_self(text, by_ai))
         ids.update(spawned_via_local(text))
+        ids.update(spawned_via_id_returner(text))
         ids.update(generated_table_ids(text))
     return ids
 
@@ -203,6 +204,76 @@ LOCAL_ID_RE = re.compile(r"\b(\w+)\s*=\s*(\d{5,6})\b\s*(?:\+\s*Rnd\.Get\(\s*0\s*
 MAX_RANDOM_SPAN = 8
 
 
+# `internal static int FieldFor(int id) => id % 2 == 0 ? HeatventField : LavaField;` -- a method whose
+# body is nothing but a choice between npc-id constants, called where the id argument goes.
+ID_RETURNER_RE = re.compile(
+    r"\b(?:internal|private|public|protected)\s+(?:static\s+)?int\s+(\w+)\s*\([^)]*\)\s*"
+    r"(?:=>(?P<expr>[^;]*);|\{(?P<body>(?:[^{}]|\{[^{}]*\})*)\})", re.S)
+
+
+def spawned_via_id_returner(text: str) -> set[str]:
+    """Ids returned by a helper that a spawn call passes as its npc id.
+
+    `TwinProtectorAI` places its hellfire field with
+
+        internal static int FieldFor(int protectorId) => protectorId % 2 == 0 ? Heatvent : Lava;
+        ...
+        Spawn(FieldFor(GetNpcId()), x, y, z, 0)
+
+    so the id is neither a literal in the call nor a local assigned one: it is the *result* of a
+    method. Both of its fields read as never spawned while the class places one of them on every
+    protector that wakes.
+
+    Narrow in the same way the other sweeps are: the method has to be declared in this file and
+    return `int`, its name has to appear where a spawn call's npc id goes, and only ids named
+    inside its own body -- directly or through this file's `const int` names -- are taken.
+
+    Known and accepted over-reach: a helper that *tests* an id to choose between two others gives
+    up the id it tested as well. `CrusherFor(id) => id == HardTornado ? Hard : Normal` yields the
+    tornado alongside its two crushers. Those are owners rather than adds and are spawned by their
+    instance anyway, so the cost is a mark on something already marked; separating them would mean
+    parsing the expression rather than reading it.
+    """
+    consts = dict(CONST_RE.findall(text))
+    called = first_spawn_arguments(text)
+    if not called:
+        return set()
+
+    ids: set[str] = set()
+    for match in ID_RETURNER_RE.finditer(text):
+        name = match.group(1)
+        if name not in called:
+            continue
+        body = match.group("expr") or match.group("body") or ""
+        ids.update(re.findall(r"\b(\d{5,6})\b", body))
+        for word in re.findall(r"\b([A-Za-z_]\w*)\b", body):
+            if word in consts:
+                ids.add(consts[word])
+    return ids
+
+
+def first_spawn_arguments(text: str) -> set[str]:
+    """Identifiers appearing in the first argument of any spawn call in this file."""
+    out: set[str] = set()
+    for match in re.finditer(SPAWN_CALL, text):
+        depth, i, first_end = 1, match.end(), None
+        while i < len(text) and depth:
+            if text[i] == "(":
+                depth += 1
+            elif text[i] == ")":
+                depth -= 1
+                if depth == 0 and first_end is None:
+                    first_end = i
+            elif text[i] == "," and depth == 1 and first_end is None:
+                first_end = i
+            elif text[i] == ";":
+                break
+            i += 1
+        if first_end is not None:
+            out.update(re.findall(r"\b([A-Za-z_]\w*)\b", text[match.end():first_end]))
+    return out
+
+
 def spawned_via_local(text: str) -> set[str]:
     """Ids assigned to a local that a spawn call later passes.
 
@@ -224,23 +295,7 @@ def spawned_via_local(text: str) -> set[str]:
     # `Do.SpawnAsMyEnemy(TeleportEnemy, Fed, EnemyLife, EnemyHate)` gave up EnemyHate = 100000, a
     # hate value read as an npc id. Harmless there -- no npc has that id -- and not harmless in
     # general, since a delay or a hate value the width of an npc id would suppress a real finding.
-    passed: set[str] = set()
-    for match in re.finditer(SPAWN_CALL, text):
-        depth, i, first_end = 1, match.end(), None
-        while i < len(text) and depth:
-            if text[i] == "(":
-                depth += 1
-            elif text[i] == ")":
-                depth -= 1
-                if depth == 0 and first_end is None:
-                    first_end = i
-            elif text[i] == "," and depth == 1 and first_end is None:
-                first_end = i
-            elif text[i] == ";":
-                break
-            i += 1
-        if first_end is not None:
-            passed.update(re.findall(r"\b([A-Za-z_]\w*)\b", text[match.end():first_end]))
+    passed = first_spawn_arguments(text)
     if not passed:
         return set()
 

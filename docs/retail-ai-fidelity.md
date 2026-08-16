@@ -6201,3 +6201,54 @@ it.
 
 **Verification.** Full suite 1,504 passing and 1 skipped; five new pins; eight mutations, all
 caught.
+
+## The twin protectors' hellfire fields, and a fourth way to hide an npc id
+
+`twin_protector` on the shared-name list: four protectors on one class, two sides' patterns
+naming different NPCs, and **neither side's hellfire field was ever placed**.
+
+Every one of the four patterns opens the same way — a field on a fixed mark, cleared when the
+protector falls:
+
+| side | field | mark |
+|---|---|---|
+| lava (236225, 236227) | **cinderhorn ravager** 855626 | 530.5 / 212 |
+| heatvent (236226, 236228) | **cinderspeak immolator** 855712 | 531.4 / 151 |
+
+Both are HERO-rated NPCs rather than scenery, and the class already had the "Raging Hellfire"
+cast that names the mechanic — without the thing the mechanic is about. The side is chosen by the
+same parity the adds already used (the heatvent pair are even ids), which reading the four
+patterns confirms rather than infers.
+
+**And it cleared its spawns on despawning and on going home, but not on dying** — where retail
+clears both groups. A killed protector left its adds and its field standing until they decayed.
+
+### A fourth way an npc id can hide from the audit
+
+The backlog did not move on the first measurement, for the fourth distinct reason in this work.
+The others were: an id in a generated table, an id computed as `self + 1`, an id assigned to a
+local. This one is an id **returned by a helper**:
+
+```csharp
+internal static int FieldFor(int protectorId) => protectorId % 2 == 0 ? Heatvent : Lava;
+...
+Spawn(FieldFor(GetNpcId()), x, y, z, 0)
+```
+
+Neither a literal in the call nor a local assigned one — the *result* of a method. The audit now
+follows a helper that returns `int` and whose name sits where a spawn call's npc id goes, taking
+ids named in its body directly or through this file's `const int` names.
+
+It also picks up `GravityTornadoAI`'s crusher, written the same way and missed for the same
+reason — which is why last entry's claim that the tornado's crusher "was never counted" was only
+half right: it is a fightable add, and it was invisible rather than excluded.
+
+**Known over-reach, accepted:** a helper that *tests* an id to choose between two others gives up
+the tested id as well, so `CrusherFor` yields the tornado alongside its crushers. Those are owners
+rather than adds and their instances spawn them anyway; separating the two would mean parsing the
+expression rather than reading it.
+
+**Where the count went.** 459 across 351 encounters → **453 across 345**. Six: the two fields, the
+tornado's two crushers, and two more the same sweep uncovered.
+
+**Verification.** Full suite 1,509 passing and 1 skipped; five new pins; six mutations, all caught.
