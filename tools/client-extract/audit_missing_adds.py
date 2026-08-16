@@ -308,16 +308,27 @@ def spawned_via_constants(text: str) -> set[str]:
     # eight read as never spawned while the class places them -- a false positive this file used to
     # record as unfixable without a type resolver.
     #
-    # It is fixable narrowly. The record has to be declared in this same file, every one of its
-    # components has to be an `int`, and the file has to spawn something. An all-int record declared
-    # beside a spawn is a table of npc ids; harvesting every constructor call in every handler, which
-    # is what the earlier note rejected, would have swallowed skill ids instead.
+    # It is fixable narrowly. The record has to be declared in this same file, the file has to spawn
+    # something, and ids are read only out of the components typed `int` -- by position, so a record
+    # that mixes an id table with flags and distances still gives up its ids. Harvesting every
+    # constructor call in every handler, which is what the earlier note rejected, would have swallowed
+    # skill ids instead.
+    #
+    # The all-int rule this started as was too tight by exactly one table: `GatewayTrapGuardAI` holds
+    # twelve trap ids in `Kit(bool OnTarget, int Opening, float OpeningRange, int OpeningLife, ...)`,
+    # and one `bool` in front of the ids hid all ten of them. Reading per component rather than
+    # all-or-nothing costs no precision: a non-`int` component was never going to hold an npc id.
     for record, components in INT_RECORD_RE.findall(text):
         parts = [c.strip() for c in components.split(",") if c.strip()]
-        if not parts or not all(c.startswith("int ") for c in parts):
+        int_positions = {i for i, c in enumerate(parts) if c.startswith("int ")}
+        if not int_positions:
             continue
         for args in re.findall(rf"\bnew {re.escape(record)}\s*\(([^)]*)\)", text):
-            ids.update(re.findall(r"\b(\d{5,6})\b", args))
+            fields = [a.strip() for a in args.split(",")]
+            if len(fields) != len(parts):
+                continue  # a nested call or a named argument; not worth guessing at
+            for i in int_positions:
+                ids.update(re.findall(r"^(\d{5,6})$", fields[i]))
 
     for used in (set(re.findall(SPAWN_CALL + r"\s*(\w+)", text))
                  | set(re.findall(r"\bnpcId\s*[:=]\s*(\w+)", text))

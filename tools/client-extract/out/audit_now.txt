@@ -1,0 +1,857 @@
+patterns with spawn actions : 4,158
+npc_ids our data can spawn  : 21,353
+
+Fightable retail adds our server never spawns: 487 across 361 encounters
+  fully self-contained                       : 429
+  positionable, but walk a server-side path  : 14
+  blocked on server-side waypoint paths      : 44
+  (of all the above, 22 have a sibling npc we already spawn -- spot-check)
+
+DF4_GH_KJS  (live npc_ids: 258207)
+    282891  lv60  hurrikane  [BLOCKED: waypoint-placed]  [we spawn 281435 for this role -- check before porting]
+    282892  lv60  earth spirit  [BLOCKED: waypoint-placed]  [we spawn 281436 for this role -- check before porting]
+    282890  lv60  fire spirit  [BLOCKED: waypoint-placed]  [we spawn 281434 for this role -- check before porting]
+    282893  lv60  undertow  [BLOCKED: waypoint-placed]  [we spawn 281437 for this role -- check before porting]
+    296918  lv55  mijien
+    296919  lv1   mijien
+    296957  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296958  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296959  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296960  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296961  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296962  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296963  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296964  lv1   mastarius' aether concentrator  [BLOCKED: waypoint-placed]
+    296910  lv55  aether concentrator  [BLOCKED: waypoint-placed]
+    296947  lv55  destroyed tower core
+LF4_GH_KJS  (live npc_ids: 258203)
+    296910  lv55  aether concentrator  [BLOCKED: waypoint-placed]
+    296912  lv55  yushin
+    296922  lv60  yushin
+    296947  lv55  destroyed tower core
+    296949  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296950  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296951  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296952  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296953  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296954  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296955  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+    296956  lv60  veille's aetheric concentrator  [BLOCKED: waypoint-placed]
+IDTiamat_Hard_Tiamat_Dragon  (live npc_ids: 236276)
+    236716  lv65  protectorate elite healer  [walks a server-side path]
+    236713  lv65  protectorate elite fighter  [walks a server-side path]
+    236715  lv65  protectorate elite scout  [walks a server-side path]
+    236714  lv65  protectorate elite infantryman  [walks a server-side path]
+    236720  lv65  protectorate elite surgeon  [walks a server-side path]
+    236717  lv65  protectorate elite officer  [walks a server-side path]
+    236719  lv65  protectorate elite scouting officer  [walks a server-side path]
+    236718  lv65  protectorate elite magistrate  [walks a server-side path]
+IDSeal_Scene_17_QuestNPC  (live npc_ids: 209723,209788)
+    209790  lv1   parsia
+    209725  lv65  masionel
+    209791  lv1   parsia
+    209726  lv65  masionel
+    209792  lv1   parsia
+    209727  lv65  masionel
+Dread_DrakanBoss  (live npc_ids: 214823)
+    281345  lv50  healing energy of adhati
+    281344  lv50  holy servant of adhati
+    281346  lv50  chaotic energy of adhati
+IDDF3_NamedLFi  (live npc_ids: 213776)
+    282156  lv60  summon brigade general npc
+    282154  lv60  summon brigade general npc
+    282155  lv1   summon brigade general npc
+ND2_ElementalSu2  (live npc_ids: 212875)
+    280489  lv40  faithful subordinate
+    280490  lv40  faithful subordinate
+    280491  lv40  faithful subordinate
+GwDGuard_PhA  (live npc_ids: 296458)
+    281490  lv55  archon's magic trap
+    281488  lv55  flash trap
+    281487  lv55  archon's net trap
+GwDGuard_WhA  (live npc_ids: 296902)
+    281490  lv55  archon's magic trap
+    281489  lv55  archon's erosion trap
+    281491  lv55  sleepdust trap
+F4_Rotation_Normal_Monster  (live npc_ids: 236307,236311,236315,236319)
+    856176  lv65  chitrunerk
+    856177  lv65  rapirunerk
+    856178  lv65  dandrunerk
+F4_Rotation_Party_Monster  (live npc_ids: 236335,236339,236343,236347)
+    856176  lv65  chitrunerk
+    856177  lv65  rapirunerk
+    856178  lv65  dandrunerk
+IDAB_Reward_Item_NoShowNPC_09  (live npc_ids: 284978)
+    284979  lv65  warguard
+    284980  lv65  bowguard
+    284981  lv65  aetherguard
+BIDF5_U01_Ctrl_01  (live npc_ids: 856054)
+    235782  lv65  escapee asachin
+    235781  lv65  runaway hirakiki
+    235780  lv65  fugitive mazikin
+IDSeal_Glacier_Spread_Summon_02  (live npc_ids: 855608)
+    855702  lv65  frigid crystal  [we spawn 855699 for this role -- check before porting]
+    856309  lv1   icing crystal
+    856306  lv1   icing crystal
+IDYun_Nmd6  (live npc_ids: 217313)
+    283002  lv60  brigade general vasharti
+    283004  lv60  brigade general vasharti
+    283006  lv60  brigade general vasharti
+IDYun_Nmd6_Hard  (live npc_ids: 236300)
+    856351  lv1   brigade general vasharti
+    856352  lv1   brigade general vasharti
+    856353  lv1   brigade general vasharti
+DF4_GHObject1_KJS  (live npc_ids: 296913)
+    296917  lv55  aether concentrator
+    296910  lv55  aether concentrator
+    296923  lv1   yushin
+LF4_GHObject1_KJS  (live npc_ids: 296907)
+    296910  lv55  aether concentrator
+    296911  lv55  aether concentrator
+    296923  lv1   yushin
+GwLGuard_PhA  (live npc_ids: 296449,296450)
+    281480  lv55  rune trap
+    281478  lv55  flash trap
+    281477  lv55  net trap
+GwLGuard_WhA  (live npc_ids: 296451,296452)
+    281480  lv55  rune trap
+    281479  lv1   acidic trap
+    281481  lv55  guardian's tranquilizing cloud trap
+Bionic_EhA  (live npc_ids: 214894)
+    281122  lv50  control room exit
+    281123  lv50  control room entrance
+Dragon_G1SlaveDrakan  (live npc_ids: 281259)
+    281260  lv50  exploder
+    281269  lv50  exploder
+DrGuard_PhA  (live npc_ids: 271845,271876)
+    294788  lv40  earth spirit
+    294785  lv40  fire spirit
+IDDF3_NamedNWi  (live npc_ids: 213778)
+    280647  lv48  faithful underling
+    282155  lv1   summon brigade general npc
+IDLF1_Gener_02  (live npc_ids: 214896)
+    281090  lv50  torpidity generator core  [BLOCKED: waypoint-placed]
+    281091  lv50  shockwave generator core  [BLOCKED: waypoint-placed]
+IDLF1_Gener_03  (live npc_ids: 214897)
+    281092  lv50  confusion generator core  [BLOCKED: waypoint-placed]
+    281093  lv50  summons generator core  [BLOCKED: waypoint-placed]
+IDLF1_Generator  (live npc_ids: 214895)
+    281088  lv50  light generator core  [BLOCKED: waypoint-placed]
+    281089  lv50  wave generator core  [BLOCKED: waypoint-placed]
+Naga_PhA  (live npc_ids: 212308)
+    280819  lv47  true power of yatri
+    280769  lv47  power of yatri
+ND2_AeD  (live npc_ids: 214664)
+    280992  lv50  syripne's breeze
+    280993  lv50  syripne's wind
+ND2_AhB  (live npc_ids: 212008)
+    280815  lv45  protector  [walks a server-side path]
+    280816  lv45  splendid protector  [walks a server-side path]
+ND2_ElementalSu  (live npc_ids: 211715)
+    280334  lv40  faithful servant  [we spawn 280333 for this role -- check before porting]
+    280335  lv40  faithful servant  [we spawn 280333 for this role -- check before porting]
+ND2_FeJ  (live npc_ids: 214663)
+    280986  lv50  iprita's fire
+    280987  lv50  iprita's flame
+ND2_H50_3  (live npc_ids: 700517)
+    215451  lv50  anuhart magist
+    215453  lv50  anuhart praefectus  [we spawn 215263 for this role -- check before porting]
+ND2_H50_4  (live npc_ids: 700556)
+    215451  lv50  anuhart magist
+    215453  lv50  anuhart praefectus  [we spawn 215263 for this role -- check before porting]
+ND2_KnQ  (live npc_ids: 700558)
+    215451  lv50  anuhart magist
+    215453  lv50  anuhart praefectus  [we spawn 215263 for this role -- check before porting]
+ND2_PeD  (live npc_ids: 214665)
+    280990  lv50  nomura's earth
+    280991  lv50  nomura's mud
+ND2_PhA  (live npc_ids: 212317)
+    280774  lv49  power of exedil
+    280775  lv49  power of exedil
+ND2_WeH  (live npc_ids: 214666)
+    280988  lv50  undine's waterdrop
+    280989  lv50  undine's dew
+ND2_WhC  (live npc_ids: 211265)
+    280809  lv45  faithful subordinate  [we spawn 280806 for this role -- check before porting]
+    280810  lv45  faithful subordinate  [we spawn 280807 for this role -- check before porting]
+NDrakan_KhB  (live npc_ids: 212306)
+    280752  lv48  faithful subordinate
+    280753  lv48  faithful subordinate
+NKrall_ReA  (live npc_ids: 211018,211035,211777,232135)
+    280451  lv38  trap
+    280452  lv38  powerful trap
+NKrall_ReB  (live npc_ids: 211176,211201,212040,212041)
+    280451  lv38  trap
+    280452  lv38  powerful trap
+NKrall_ReC  (live npc_ids: 212010,232131,235466,235467)
+    280449  lv29  trap
+    280450  lv29  powerful trap
+Nkrall_RhA  (live npc_ids: 211039,212263)
+    280451  lv38  trap
+    280452  lv38  powerful trap
+NKrall_WhA  (live npc_ids: 212351,212880)
+    280357  lv40  wheel of death
+    280356  lv40  stone guard
+NLycan_LELA  (live npc_ids: 212874)
+    280470  lv40  grand chieftain kasika  [BLOCKED: waypoint-placed]
+    280471  lv40  grand chieftain kasika  [BLOCKED: waypoint-placed]
+NLycan_ReB_S1  (live npc_ids: 212729,212730)
+    280449  lv29  trap
+    280450  lv29  powerful trap
+NLycan_ReB_S2  (live npc_ids: 211461)
+    280451  lv38  trap
+    280452  lv38  powerful trap
+NLycan_ReC_S1  (live npc_ids: 211458,212731)
+    280449  lv29  trap
+    280450  lv29  powerful trap
+NLycan_ReC_S2  (live npc_ids: 214568)
+    280451  lv38  trap
+    280452  lv38  powerful trap
+Slime_Bo1  (live npc_ids: 213587)
+    280678  lv47  tiny slime
+    280679  lv47  tiny slime
+DF4_FieldRaid  (live npc_ids: 216576)
+    281950  lv55  ragnarok's parasite
+    281951  lv55  ragnarok slime
+IDDreadgion_03_DrakanWi_Boss_Ae  (live npc_ids: 233371)
+    282984  lv60  great magical barrier
+    282989  lv60  mystical tyrhund
+IDDreadgion_03_DrakanWi_Noble_60_Ae  (live npc_ids: 233354)
+    282984  lv60  great magical barrier
+    282989  lv60  mystical tyrhund
+IDDreadgion_03_DrakanWi_Tiamat_60_Ae  (live npc_ids: 233358)
+    282984  lv60  great magical barrier
+    282989  lv60  mystical tyrhund
+IDAbRe_Core_Egg4_02  (live npc_ids: 219583)
+    283208  lv1   kaluva's limbs  [we spawn 281911 for this role -- check before porting]
+    283209  lv1   kaluva's debris  [we spawn 281912 for this role -- check before porting]
+IDAbRe_Core_NamedB_02  (live npc_ids: 219553)
+    281926  lv55  fragment of pazuzu
+    283207  lv1   cobweb  [we spawn 219571 for this role -- check before porting]
+IDDramata_Dramata  (live npc_ids: 218756)
+    282697  lv57  stone energy
+    282698  lv57  acid cloud
+IDSeal_Glacier_Spread_Summon_01  (live npc_ids: 855607)
+    855702  lv65  frigid crystal  [we spawn 855699 for this role -- check before porting]
+    855703  lv65  icing crystal  [we spawn 855700 for this role -- check before porting]
+DF4_GHObject2_KJS  (live npc_ids: 296914)
+    296917  lv55  aether concentrator
+    296910  lv55  aether concentrator
+LF4_GHObject2_KJS  (live npc_ids: 296908)
+    296910  lv55  aether concentrator
+    296911  lv55  aether concentrator
+XDrakan_HighPriest  (live npc_ids: 236449,236494)
+    281824  lv55  earth spirit
+    281825  lv55  fire spirit
+BGuard_Chief4_Da_ver47  (live npc_ids: 257005,257905)
+    297168  lv65  protection tower  [BLOCKED: waypoint-placed]
+    297170  lv65  protection tower  [BLOCKED: waypoint-placed]
+BGuard_Chief4_Da_ver47_1  (live npc_ids: 257305,257605)
+    297168  lv65  protection tower  [BLOCKED: waypoint-placed]
+    297170  lv65  protection tower  [BLOCKED: waypoint-placed]
+BGuard_Chief4_Li_ver47  (live npc_ids: 257000,257900)
+    297163  lv65  protection tower  [BLOCKED: waypoint-placed]
+    297165  lv65  protection tower  [BLOCKED: waypoint-placed]
+BGuard_Chief4_Li_ver47_1  (live npc_ids: 257300,257600)
+    297163  lv65  protection tower  [BLOCKED: waypoint-placed]
+    297165  lv65  protection tower  [BLOCKED: waypoint-placed]
+BGuard_Chief4_ver47  (live npc_ids: 257010,257910)
+    297173  lv65  protection tower  [BLOCKED: waypoint-placed]
+    297175  lv65  protection tower  [BLOCKED: waypoint-placed]
+BGuard_Chief4_ver47_1  (live npc_ids: 257310,257610)
+    297173  lv65  protection tower  [BLOCKED: waypoint-placed]
+    297175  lv65  protection tower  [BLOCKED: waypoint-placed]
+IDTiamat_Tahabata  (live npc_ids: 219358)
+    283101  lv60  intense barrage
+    283104  lv60  gushing flame
+IDTiamat_Hard_Crack_Key  (live npc_ids: 236278)
+    856068  lv65  cavity of earth
+    283063  lv1   burrowing arrival
+IDTiamat_Hard_Crystal_Key  (live npc_ids: 236281)
+    856072  lv65  petrification crystal
+    283064  lv1   blazing inferno
+IDTiamat_Hard_Gravity_Key  (live npc_ids: 236279)
+    856074  lv65  gravity whirlpool
+    283065  lv60  blazing inferno
+IDTiamat_Hard_Rage_Key  (live npc_ids: 236280)
+    856078  lv1   sphere of wrath
+    856080  lv1   sphere of peace
+Station_HugenNM_Sum  (live npc_ids: 701029)
+    217610  lv58  idstation section 3 pc dispel form invisible npc
+    217372  lv58  invisible npc for controlling hugen work leader
+Station_NinjaNM  (live npc_ids: 217376)
+    217377  lv1   ashunatal clone controls
+    217378  lv1   ashunatal death controls
+Station_Shadow3_3  (live npc_ids: 701043)
+    217610  lv58  idstation section 3 pc dispel form invisible npc
+    217372  lv58  invisible npc for controlling hugen work leader
+AD2_NeutQueen  (live npc_ids: 255155)
+    290118  lv41  queen's egg
+AD2_UnDeadFi_Da  (live npc_ids: 252518,253012,253013,253014)
+    290137  lv41  fear
+AD2_UnDeadFi_Li  (live npc_ids: 252511,252513,252514,253004)
+    290137  lv41  fear
+AD2_UnDeadPr_Da  (live npc_ids: 252535,253034,253035)
+    290137  lv41  fear
+AD2_UnDeadPr_Li  (live npc_ids: 253026)
+    290137  lv41  fear
+AD2_UnDeadRa_Da  (live npc_ids: 253029,253030,253031)
+    290137  lv41  fear
+AD2_UnDeadRa_Li  (live npc_ids: 253022)
+    290137  lv41  fear
+AD2_UnDeadWi_Da  (live npc_ids: 252522,253017,253018)
+    290137  lv41  fear
+AD2_UnDeadWi_Li  (live npc_ids: 252515)
+    290137  lv41  fear
+CKrall_RhA  (live npc_ids: 212227)
+    280782  lv41  underling of chantar
+D2_AnH  (live npc_ids: 212205)
+    212206  lv44  perfected mudthorn
+DGuard_FhA_Officer  (live npc_ids: 263259,263561,264761,266546)
+    294563  lv40  warrior's soul
+Dragon_G2SlaveDrakan  (live npc_ids: 281268)
+    281269  lv50  exploder
+Dread_DrakanWeA  (live npc_ids: 214817)
+    281352  lv50  divine crusader
+Dread_Surkana  (live npc_ids: 700485,700486,700487,700488)
+    281287  lv50  bolstering surkana
+Dread_SurkanaNm06  (live npc_ids: 215087,215088)
+    281161  lv50  dragon's trap
+Dread_XDrakanPeA  (live npc_ids: 214822,215427)
+    281176  lv50  sacred dragon relic  [we spawn 281839 for this role -- check before porting]
+Dread_XDrakanReA  (live npc_ids: 214820,215390)
+    281161  lv50  dragon's trap
+DrGuard_FhB_F20  (live npc_ids: 296437)
+    296443  lv50  awakened dragon
+DrGuard_WhA_Reward_L50  (live npc_ids: 215444)
+    281357  lv50  fire spirit
+FD2_FrA  (live npc_ids: 251001)
+    290116  lv51  aetherback titan core
+IDDF3_NamedNCh  (live npc_ids: 213802)
+    282155  lv1   summon brigade general npc
+IDDF3_NamedNKn  (live npc_ids: 213779)
+    282155  lv1   summon brigade general npc
+IDSlk_GunnerBombA  (live npc_ids: 281212,281213)
+    281336  lv45  bomb fragment
+IDSlk_Mate  (live npc_ids: 215069)
+    281216  lv45  menekiki's manduri
+Krall_ReA  (live npc_ids: 210165,210166,210308)
+    211294  lv18  explosive trap
+Krall_ReB  (live npc_ids: 210167,210168,210169)
+    211295  lv18  lacerating trap
+LF2A_LehparBeeder  (live npc_ids: 213927)
+    280718  lv25  runt-in-training
+LGuard_FhA_Officer  (live npc_ids: 263258,263560,264760,266545)
+    294564  lv40  warrior's soul
+Lizardman_ReB_1_ABRwdD  (live npc_ids: 215104,215147,233601,233644)
+    281355  lv45  clone
+Lizardman_ReB_1_ABRwdI  (live npc_ids: 215190,233687)
+    281355  lv45  clone
+Lizardman_ReB_2  (live npc_ids: 213403,213474)
+    280626  lv46  clone  [we spawn 280625 for this role -- check before porting]
+Lizardman_ReB_3  (live npc_ids: 215225,215228,215234)
+    280627  lv48  clone  [we spawn 280625 for this role -- check before porting]
+Lizardman_RhA  (live npc_ids: 212311)
+    280784  lv46  pyroshard
+Lycan_ReA  (live npc_ids: 210558,210559,210560,210605)
+    211294  lv18  explosive trap
+Lycan_ReB  (live npc_ids: 210561,211283)
+    211295  lv18  lacerating trap
+MiNaga_WeB  (live npc_ids: 256691)
+    290163  lv26  nochsana reservist
+Naga_PeA2  (live npc_ids: 213431,213432,213495,214121)
+    280639  lv46  sacred dragon relic
+Naga_PeA3  (live npc_ids: 213497,214123,214859,235489)
+    280640  lv48  sacred dragon relic
+Naga_WeB1  (live npc_ids: 213681,213784,235495)
+    280645  lv44  faithful underling
+Naga_WeB2  (live npc_ids: 213501,235496,235497,235498)
+    280646  lv46  faithful underling
+Naga_WhA  (live npc_ids: 214843)
+    280645  lv44  faithful underling
+Naga_WrF2  (live npc_ids: 212310)
+    280797  lv47  faithful subordinate
+Naga_WrF3  (live npc_ids: 212307)
+    280799  lv48  faithful subordinate
+ND2_AhD  (live npc_ids: 214800)
+    281278  lv45  rm-13ba
+ND2_ChC  (live npc_ids: 211088)
+    280780  lv43  dedrun fragment
+ND2_CheatboxSu  (live npc_ids: 211801)
+    211795  lv34  cursed camu
+ND2_FeH  (live npc_ids: 214691)
+    280968  lv50  suspicious box
+ND2_FeK  (live npc_ids: 214649)
+    214650  lv50  icy blobble
+ND2_PeC  (live npc_ids: 211908)
+    280772  lv43  underling of agro
+ND2_QeenNeut  (live npc_ids: 210929,211653)
+    280327  lv40  queen's egg
+ND2_ReA_1  (live npc_ids: 214700)
+    214701  lv50  betrayer villaire
+ND2_RnG  (live npc_ids: 280946)
+    280947  lv46  strange object
+ND2_Sum_B  (live npc_ids: 212846,214621)
+    280501  lv37  suspicious object
+ND2_Trap_IDDF2A  (live npc_ids: 281027)
+    281028  lv50  suspicious zombie
+ND2_WeG  (live npc_ids: 214693)
+    280963  lv50  ice fragment
+ND2_WhG2  (live npc_ids: 280972)
+    281025  lv50  thorny vines
+ND2_WhHS1  (live npc_ids: 700439,700442,700445)
+    281095  lv1   aquar
+ND2_WhHS2  (live npc_ids: 700440,700443,700446)
+    281096  lv1   pura
+ND2_WhHS3  (live npc_ids: 700441,700444,700447)
+    281097  lv1   hydros
+NDrakan_ChSlave2  (live npc_ids: 280686)
+    280687  lv48  relic guardian
+NLehpar_AeB1  (live npc_ids: 212151)
+    280793  lv43  garnisian spawn
+NLycan_FeC  (live npc_ids: 212872)
+    280502  lv39  suspicious object
+NLycan_WeB_S1  (live npc_ids: 211457)
+    280437  lv29  faithful subordinate
+NLycan_WeB_S2  (live npc_ids: 211596,211609)
+    280438  lv38  faithful subordinate
+NoAction_AbyssDoor  (live npc_ids: 257192,257193,258230,258231)
+    296337  lv40  dredgion elite fighter
+Ratman_FnR_LWaSu11  (live npc_ids: 210467,210468)
+    210627  lv11  summoned black claw patrol
+Ratman_FnR_LWaSu12  (live npc_ids: 210469)
+    210628  lv12  summoned black claw patrol
+Ratman_FnR_LWaSu13  (live npc_ids: 210449,210450)
+    210629  lv13  summoned black claw patrol
+Shulack_AeA  (live npc_ids: 215066)
+    281252  lv43  steel rake infiltrator
+Shulack_AeA_51  (live npc_ids: 216467)
+    281807  lv51  shadow of shulack necksnapper
+Shulack_ReA  (live npc_ids: 214977,214978,214979,214982)
+    281243  lv43  sticky trap
+Shulack_ReA_51  (live npc_ids: 215556,215557,215558,215559)
+    281243  lv43  sticky trap
+XDrakan_EeB_F_50  (live npc_ids: 215249,215258,215267,215276)
+    281171  lv50  faithful subordinate
+XDrakan_LastBoss  (live npc_ids: 214904)
+    281249  lv50  faithful subordinate
+XDrakan_PeB  (live npc_ids: 214868,214875,214884,214893)
+    281176  lv50  sacred dragon relic  [we spawn 281839 for this role -- check before porting]
+XDrakan_ReB_50  (live npc_ids: 215247,215256,215265,215274)
+    281161  lv50  dragon's trap
+XDrakan_ReG_50  (live npc_ids: 215248,215257,215266,215275)
+    281163  lv50  dragon's trap
+XDrakan_ReG_55  (live npc_ids: 215755,216473,236479,236514)
+    281804  lv55  dragon's trap
+XDrakan_WeS  (live npc_ids: 215428)
+    281166  lv50  dragon's trap
+XLehpar_ReB_S1  (live npc_ids: 211539,212171,212190,212499)
+    280466  lv29  trap
+XLehpar_ReB_S2  (live npc_ids: 211190,211210,212917,213272)
+    280467  lv38  powerful trap
+XLehpar_ReB_S3  (live npc_ids: 213939,213954,213959,213961)
+    280682  lv42  trap
+DF4_CondorEgg  (live npc_ids: 217121)
+    217089  lv55  angry conchi
+GwDGuard_FhA  (live npc_ids: 296454)
+    281486  lv55  archon thorn trap
+GwDGuard_RhA  (live npc_ids: 296457,296898)
+    281486  lv55  archon thorn trap
+KrallDR_RnA  (live npc_ids: 216082,216083,216084,216453)
+    281758  lv53  small trap
+DF5_ItemNamed_6_Ra_01_SSH  (live npc_ids: 219929)
+    855920  lv65  waterdrop bomb
+IDDreadgion_03_DrakanCl_Noble_60_Ae  (live npc_ids: 233355)
+    282986  lv60  concealing mist
+IDDreadgion_03_DrakanCl_Tiamat_60_Ae  (live npc_ids: 233359)
+    282986  lv60  concealing mist
+IDDreadgion_03_DrakanRa_Vil_60_Ae  (live npc_ids: 233349)
+    281619  lv55  explosive trap
+IDDreadgion_03_DrakanSc_Tiamat_60_Ae  (live npc_ids: 233357)
+    282990  lv60  ice trap
+Dread02_Drakan_Ra  (live npc_ids: 216862)
+    281619  lv55  explosive trap
+Dread02_DrakanHi_Ra  (live npc_ids: 216867,216887)
+    281619  lv55  explosive trap
+Dread02_DrakanNo_Ra  (live npc_ids: 216872)
+    281619  lv55  explosive trap
+Dread02_SurkanaNm06  (live npc_ids: 216883,216884)
+    281619  lv55  explosive trap
+Legion_04_2_FOBJ  (live npc_ids: 855833)
+    855264  lv65  lava
+Gab1_Sub_AssultPod_Strike  (live npc_ids: 297352)
+    297187  lv65  ahserion troopers assault pod
+HDFP_AgrintFall  (live npc_ids: 218864)
+    219172  lv60  autumn agrint underling
+HDFP_AgrintSpring  (live npc_ids: 218862)
+    219170  lv60  spring agrint underling
+HDFP_AgrintSummer  (live npc_ids: 218863)
+    219171  lv60  summer agrint underling
+HDFP_AgrintWinter  (live npc_ids: 218865)
+    219173  lv60  winter agrint underling
+HLFP_AgrintFall  (live npc_ids: 218852)
+    219172  lv60  autumn agrint underling
+HLFP_AgrintSpring  (live npc_ids: 218850)
+    219170  lv60  spring agrint underling
+HLFP_AgrintSummer  (live npc_ids: 218851)
+    219171  lv60  summer agrint underling
+HLFP_AgrintWinter  (live npc_ids: 218853)
+    219173  lv60  winter agrint underling
+IDAbRe_Core_Cannon_02  (live npc_ids: 219545)
+    282106  lv55  holy orkanimum
+IDAbRe_Core_Egg2_02  (live npc_ids: 219581)
+    283208  lv1   kaluva's limbs  [we spawn 281911 for this role -- check before porting]
+IDAbRe_Core_Egg3_02  (live npc_ids: 219582)
+    283208  lv1   kaluva's limbs  [we spawn 281911 for this role -- check before porting]
+IDAbRe_Core_Egg_02  (live npc_ids: 219564)
+    283209  lv1   kaluva's debris  [we spawn 281912 for this role -- check before porting]
+IDAbRe_Core_FlyingWorm_02  (live npc_ids: 219549,219560)
+    283216  lv59  flash lapilimo
+IDAbRe_Core_NamedA1_02  (live npc_ids: 219551)
+    282011  lv55  giant of light death
+IDAbRe_Core_NamedA2_02  (live npc_ids: 219552)
+    282012  lv55  giant of darkness death
+IDAbRe_Core_NamedD_Hard_02  (live npc_ids: 219563)
+    283229  lv60  summoned ametgolem  [we spawn 282107 for this role -- check before porting]
+IDAbRe_Core_Summon4_02  (live npc_ids: 283203)
+    283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
+IDAbRe_Core_Summon4_3_02  (live npc_ids: 283222)
+    283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
+IDAbRe_Core_Summon4_6_02  (live npc_ids: 283223)
+    283200  lv1   summoned orkanimum  [we spawn 281903 for this role -- check before porting]
+IDAbRe_Core_Summon4_Low_02  (live npc_ids: 283233)
+    283201  lv1   summoned lapilima  [we spawn 281904 for this role -- check before porting]
+IDAbRe_Core_Cannon  (live npc_ids: 216953)
+    282106  lv55  holy orkanimum
+IDAbRe_Core_NamedA1  (live npc_ids: 216948)
+    282011  lv55  giant of light death
+IDAbRe_Core_NamedA2  (live npc_ids: 216949)
+    282012  lv55  giant of darkness death
+IDAbRe_Core_NamedB  (live npc_ids: 216950)
+    281926  lv55  fragment of pazuzu
+IDAbRe_Core_NamedD  (live npc_ids: 216952)
+    281906  lv55  spawn gate
+IDAbRe_Core_NamedD_Hard  (live npc_ids: 216960)
+    281906  lv55  spawn gate
+IDAbRe_Core_Summon7  (live npc_ids: 281909,283206)
+    281926  lv55  fragment of pazuzu
+IDArena_pvp02_S3_meatBarrel  (live npc_ids: 218757)
+    218758  lv1   incredibly tasty lump of meat
+IDArena_Solo_S4B_Bbobby  (live npc_ids: 217802)
+    218571  lv55  poppy's present
+IDArena_Solo_S5_Ma  (live npc_ids: 217809)
+    218213  lv55  weakened flame spirit
+IDArena_Solo_S5_Ma_D  (live npc_ids: 217813)
+    218213  lv55  weakened flame spirit
+IDArena_Solo_S5_Pr  (live npc_ids: 217810)
+    218214  lv55  weakened holy servant
+IDArena_Solo_S5_Pr_D  (live npc_ids: 217814)
+    218214  lv55  weakened holy servant
+IDArena_Solo_B1_Box03  (live npc_ids: 217829)
+    217837  lv55  pet kirca
+IDCT_Boss_DeathKnight  (live npc_ids: 216248)
+    281773  lv55  taros pureblood
+IDCT_Boss_Hidden  (live npc_ids: 216526)
+    281664  lv55  immortal watcher
+IDCT_Boss_Spectre  (live npc_ids: 216239)
+    281538  lv55  soulform
+IDCT_Boss_DeathKnight_Hard  (live npc_ids: 216167)
+    281773  lv55  taros pureblood
+IDCT_Boss_Hidden_Hard  (live npc_ids: 216525)
+    281664  lv55  immortal watcher
+IDCT_Normal_Slime02  (live npc_ids: 216286)
+    281672  lv55  carcass slime
+IDDramata_Drakan_G_As  (live npc_ids: 218673)
+    281619  lv55  explosive trap
+IDDramata_Drakan_M_As  (live npc_ids: 218680)
+    281619  lv55  explosive trap
+IDHouse_Zadra_Blaze_Move  (live npc_ids: 282390)
+    282184  lv60  magical blaze
+IDForest_Bridge_Sum1  (live npc_ids: 282429)
+    282430  lv60  lost canyonguard spirit
+Elim_NeutflyEgg  (live npc_ids: 282006)
+    282082  lv51  spawned supraklaw
+IDF4Re_Drana_Drakan_Vil_Ra  (live npc_ids: 217183,217189)
+    281619  lv55  explosive trap
+IDF4Re_Drana_Drakanlab_Pr  (live npc_ids: 217203)
+    281631  lv55  holy servant  [we spawn 281621 for this role -- check before porting]
+IDF4Re_Drana_Drakanlab_Ra  (live npc_ids: 217228)
+    281619  lv55  explosive trap
+IDF4Re_Drana_NamedA_Sum_1  (live npc_ids: 282176)
+    281926  lv55  fragment of pazuzu
+IDF4Re_Drana_NamedA_Sum_2  (live npc_ids: 282177)
+    281926  lv55  fragment of pazuzu
+IDF4Re_Drana_NamedA_Sum_3  (live npc_ids: 282178)
+    281926  lv55  fragment of pazuzu
+BIDF5_U1_SummonSupport_3  (live npc_ids: 284710)
+    231186  lv65  beritran support magus  [walks a server-side path]
+BIDF5_U1_SummonSupport_4  (live npc_ids: 284711)
+    231187  lv65  beritran support scout  [walks a server-side path]
+IDF5_U1_SummonAmbush  (live npc_ids: 233332)
+    231193  lv65  beritran recon slicer
+IDF5_U1_War_Vri_PVPNamed_Wi_N_65_Ah  (live npc_ids: 233491)
+    233590  lv65  avran assassin
+BIDF5_U3_hard_Vri_Pr  (live npc_ids: 233732,234732)
+    284683  lv1   revitalizing servant
+BIDF5_U3_SemiNmd_Vri_Pr  (live npc_ids: 233739,234685)
+    284982  lv65  revitalizing servant
+IDF5_TD_Cannon  (live npc_ids: 231137)
+    284529  lv1   siege cannon
+IDF5_TD_Cannon_02  (live npc_ids: 231138)
+    284529  lv1   siege cannon
+IDF5_TD_Siege_Ra  (live npc_ids: 231112)
+    283620  lv65  beritra's regulars sapper
+IDF5_TD_Wave5_Boss  (live npc_ids: 231130)
+    284698  lv65  grand commander pashid
+IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi  (live npc_ids: 283804)
+    230077  lv65  pashid lab unit sentinel
+Raksha_MirrorMage_Nmd  (live npc_ids: 217425)
+    282576  lv57  healing servant
+IDSeal_Boss_Lv1  (live npc_ids: 236244)
+    856349  lv1   lord beritra
+IDSeal_Boss_Lv2  (live npc_ids: 236245)
+    856348  lv1   lord beritra
+IDSeal_Guardian_Chief_01  (live npc_ids: 855460)
+    855540  lv65  drakenspire protector
+IDSeal_Guardian_Chief_02  (live npc_ids: 855461)
+    855540  lv65  drakenspire protector  [BLOCKED: waypoint-placed]
+IDSeal_Guardian_Chief_03  (live npc_ids: 855462)
+    855540  lv65  drakenspire protector
+IDSeal_Guardian_Chief_04  (live npc_ids: 855463)
+    855540  lv65  drakenspire protector
+IDSeal_TrueBoss  (live npc_ids: 236247)
+    856350  lv1   lord beritra
+IDSeal_RandomRoom_Bomb  (live npc_ids: 207127)
+    856459  lv1   exploding flame
+IDSeal_Scene_06_Bomber_Da  (live npc_ids: 209755)
+    209762  lv1   detachment demolisher
+IDSeal_Scene_06_Bomber_Li  (live npc_ids: 209690)
+    209697  lv65  detachment demolisher
+IDSeal_Scene_07_PCGuard_Da  (live npc_ids: 209758)
+    209761  lv1   detachment entry soldier
+IDSeal_Scene_07_PCGuard_Li  (live npc_ids: 209693)
+    209696  lv65  detachment entry soldier
+IDSeal_Twin_M  (live npc_ids: 236228)
+    855712  lv65  cinderspeak immolator
+IDSeal_Twin_M_Failed  (live npc_ids: 236226)
+    855712  lv65  cinderspeak immolator
+IDSeal_Twin_P  (live npc_ids: 236227)
+    855626  lv65  cinderhorn ravager
+IDSeal_Twin_P_Failed  (live npc_ids: 236225)
+    855626  lv65  cinderhorn ravager
+IDSweeP_S2_Boss_Doubling_04  (live npc_ids: 235647)
+    235682  lv65  intruder sentinel
+IDTP_Fanatic_EeA  (live npc_ids: 215807,215856,216334,216342)
+    281381  lv53  udas darkwatcher's summoned pet
+IDTP_Fanatic_EeB  (live npc_ids: 215813,216326,216383)
+    281382  lv52  udas seer's summoned pet
+IDTP_Keeper1  (live npc_ids: 215797)
+    281417  lv55  punishment chakra  [walks a server-side path]
+IDTP_NepBoss1  (live npc_ids: 215795)
+    281421  lv54  pyre soul
+IDTP_NepEx1  (live npc_ids: 215794)
+    281424  lv55  shatter
+IDVritra_Base_EvilEye_Alert  (live npc_ids: 230843)
+    284451  lv1   sheban sauro combatant
+IDVritra_Base_Boss1  (live npc_ids: 230858)
+    284674  lv65  sheban devastator
+IDVritra_Base_Boss2  (live npc_ids: 230857)
+    284674  lv65  sheban devastator
+IDVritra_Base_Drakan_Gi_Nmd  (live npc_ids: 230851)
+    284454  lv65  military supply base flame cannon
+IDVritra_Base_Drakan_Wi_Nmd  (live npc_ids: 230850)
+    284457  lv65  sheban mystical tyrhund  [BLOCKED: waypoint-placed]
+IDYun_Drakan_ND3  (live npc_ids: 236283)
+    282528  lv60  vasharti butcher
+IDYun_Nmd3_FallOff  (live npc_ids: 217310,236297)
+    282444  lv60  xasta's trap
+IDYun_Nmd4_Sum2  (live npc_ids: 282394)
+    282541  lv60  broken barrel
+IDYun_Nmd_Hard_03  (live npc_ids: 236296)
+    856500  lv1   siege artilleryman
+IDYun_Temp_31  (live npc_ids: 217292,236707)
+    282551  lv1   vasharti butcher
+IDYun_Temp_53  (live npc_ids: 282606)
+    282604  lv60  inhibitor sikar  [walks a server-side path]
+DGuard_RsA  (live npc_ids: 296536)
+    296479  lv55  sandstorm trap
+DrGuard_WsA  (live npc_ids: 296545)
+    296504  lv55  fire spirit
+IDTP_Fanatic_EeB_1  (live npc_ids: 216800)
+    281816  lv51  udas seer's summoned pet
+LGuard_RsA  (live npc_ids: 296529)
+    296466  lv55  sandstorm trap
+Shulack_VChief  (live npc_ids: 216504)
+    281814  lv53  clone
+LDF4a_Owllau_Elementalist  (live npc_ids: 217964)
+    217937  lv57  eternal strigik protector
+LDF4a_Public_Mob_004  (live npc_ids: 282916)
+    282924  lv60  explosive rift
+LDF4a_Public_Mob_011  (live npc_ids: 282922)
+    282924  lv60  explosive rift
+LDF4a_Public_Mob_012  (live npc_ids: 282923)
+    282924  lv60  explosive rift
+LDF4a_SandWarm_Monarch_Warmhole  (live npc_ids: 282556)
+    282535  lv58  shirik regulator
+LDF4b_Tiamat_Temp01  (live npc_ids: 282727)
+    282729  lv60  thunderbolt whirlpool
+LDF4b_Tiamat_Temp09  (live npc_ids: 282735)
+    282737  lv60  collapsing earth
+LDF5_D2_Xipeto_Clodworm  (live npc_ids: 219754,219755)
+    284155  lv61  infectious clodworm swarm
+LDF5_D2_Xipeto_Clodworm_63  (live npc_ids: 230494)
+    284157  lv63  infectious clodworm swarm
+LDF5_D2_Xipeto_Clodworm_65  (live npc_ids: 235878,235879)
+    283903  lv65  infectious clodworm swarm
+LDF5_D2_Xipeto_Sufur_Clodworm_65  (live npc_ids: 230586)
+    283904  lv65  infectious clodworm
+GhostRune_As_N_65_Ae  (live npc_ids: 233304)
+    284300  lv65  eremion's fragment
+Neuth2_Abyss_65_An  (live npc_ids: 231196)
+    282437  lv55  kamara
+NeutQueenSumEgg_N_65_e  (live npc_ids: 284273)
+    284278  lv65  serusia's larvae
+LDF5_Fortress_Anoha  (live npc_ids: 855263)
+    855264  lv65  lava
+Cromede_Gardenerfungy  (live npc_ids: 216992)
+    217032  lv38  man-eating fungie
+Cromede_Named_Angry  (live npc_ids: 217006)
+    282124  lv38  ancient temple nagolem
+GwLGuard_FhA  (live npc_ids: 296445,296446)
+    281476  lv55  guardian thorn trap
+GwLGuard_RhA  (live npc_ids: 296447,296448)
+    281476  lv55  guardian thorn trap
+LF5_ItemNamed_6_As1_KJS  (live npc_ids: 235973)
+    235974  lv1   cloned seagric
+LF5_ItemNamed_6_Ra_KJS  (live npc_ids: 235963)
+    855732  lv65  exploding pearl
+IDRaksha_Re_A_KJS  (live npc_ids: 236303)
+    855909  lv62  lich guard
+IDRaksha_Re_Boss_KJS  (live npc_ids: 236306)
+    855854  lv63  reviver nasto
+IDCT_DrakanRa  (live npc_ids: 215748,216108,216109,216187)
+    281619  lv55  explosive trap
+IDCT_Lichkey4  (live npc_ids: 216586,216590)
+    281697  lv1   summon brigade general npc
+IDCT_UnDrakanPr  (live npc_ids: 216203,216284)
+    281631  lv55  holy servant  [we spawn 281621 for this role -- check before porting]
+IDCT_UnDrakanRa  (live npc_ids: 216198,216202,216279,216283)
+    281619  lv55  explosive trap
+IDCT_UnDrakanWi  (live npc_ids: 216196,216200,216277,216281)
+    281352  lv50  divine crusader
+IDCTH_Rudra  (live npc_ids: 216183)
+    281798  lv55  voltaic storm
+IDTP_OctaNm  (live npc_ids: 215792)
+    281391  lv55  web
+Test_JM_Monster_6  (live npc_ids: 286931)
+    286932  lv55  nexus
+Test_JM_Monster_8  (live npc_ids: 286933)
+    286934  lv55  tahabata pyrelord
+IDTiamat_Anuhart  (live npc_ids: 219357)
+    283039  lv60  exploding flyer
+IDTiamat_Breath_Beacon2  (live npc_ids: 283156)
+    283068  lv60  tiamat tornado
+IDTiamat_BurrowingWorm_BurrowDispel  (live npc_ids: 283059)
+    283130  lv60  flame crown
+IDTiamat_Kumbanda  (live npc_ids: 219355)
+    283035  lv1   end combat
+IDTiamat_Kumbanda_Avatar  (live npc_ids: 283085)
+    283036  lv60  crushing spin
+IDTiamat_Kumbanda_CircleFX  (live npc_ids: 283086)
+    283087  lv60  time accelerator
+IDTiamat_R2_NobleDrakanWi_60_Ae  (live npc_ids: 219370)
+    282989  lv60  mystical tyrhund
+IDTiamat_R2_NoblePagati_60_Ae  (live npc_ids: 219373)
+    283122  lv60  protectorate elite commander
+IDTiamat_S1_NobleDrakanCl_60_Ae  (live npc_ids: 219377)
+    856490  lv1   healing servant
+IDTiamat_S1_NobleDrakanWi_60_Ae  (live npc_ids: 219375)
+    282989  lv60  mystical tyrhund
+IDTiamat_S1_NoblePagati_60_Ae  (live npc_ids: 219378)
+    283122  lv60  protectorate elite commander
+IDTiamat_S2_SurkanaOrb_60_Ae  (live npc_ids: 219382)
+    283128  lv60  surkana cry
+IDTiamat_S3_SardhaDrakanWi_60_Ae  (live npc_ids: 219386)
+    282989  lv60  mystical tyrhund
+IDTiamat_S3_SurkanaOrb_60_Ae  (live npc_ids: 219389)
+    283128  lv60  surkana cry
+IDTiamat_S5_TiamatDrakanWi_60_Ae  (live npc_ids: 219399)
+    282989  lv60  mystical tyrhund
+IDTiamat_S5_TiamatPagati_60_Ae  (live npc_ids: 219402)
+    283122  lv60  protectorate elite commander
+IDTiamat_Shavorkhan  (live npc_ids: 219352)
+    283081  lv60  invincible shabokan
+IDTiamat_T1_Crack_Key_Named_60_Al  (live npc_ids: 219365)
+    283063  lv1   burrowing arrival
+IDTiamat_T1_Crystal_Key_Named_60_Al  (live npc_ids: 219368)
+    283064  lv1   blazing inferno
+IDTiamat_T1_Gravity_Key_Named_60_Al  (live npc_ids: 219366)
+    283065  lv60  blazing inferno
+IDTiamat_Tahabata_Tornado  (live npc_ids: 283102)
+    283103  lv60  fire tornado
+IDTiamat_Temp24  (live npc_ids: 283171)
+    283093  lv60  drana reactor
+IDTiamat_Temp25  (live npc_ids: 283172)
+    283095  lv60  drana reactor
+IDTiamat_Tiamat_BeaconL4s  (live npc_ids: 283234)
+    283235  lv60  tiamat
+IDTiamat_Tiamat_BeaconM4s  (live npc_ids: 283238)
+    283239  lv60  tiamat
+IDTiamat_Tiamat_BeaconR4s  (live npc_ids: 283242)
+    283243  lv60  tiamat
+IDTiamat_Tiamat_BeaconR8s  (live npc_ids: 283244)
+    283245  lv60  tiamat
+IDTiamat_Tiamat_CyclopsCrack  (live npc_ids: 283139)
+    283137  lv60  rockslam
+IDTiamat_Tiamat_GravityBomb  (live npc_ids: 283141)
+    283140  lv60  gravity tornado
+Kaisinel_Avatar1  (live npc_ids: 219488)
+    283159  lv60  kaisinel
+Kaisinel_Avatar2  (live npc_ids: 219489)
+    283061  lv60  burrowing attack
+TR_Drakan_El_Summon_solo  (live npc_ids: 230896)
+    284131  lv61  mystical tyrhund
+TR_Drakan_El_Summon_solo_65  (live npc_ids: 230948)
+    283598  lv65  mystical tyrhund
+TR_Drakan_Pr_Heal_Party  (live npc_ids: 230925)
+    284135  lv61  healing totem
+TR_Drakan_Wi_Summon_Party  (live npc_ids: 230928)
+    284131  lv61  mystical tyrhund
+IDTiamat_Hard_BeaconL4s  (live npc_ids: 856112)
+    856113  lv1   tiamat
+IDTiamat_Hard_BeaconL8s  (live npc_ids: 856114)
+    856115  lv1   tiamat
+IDTiamat_Hard_BeaconM4s  (live npc_ids: 856116)
+    856117  lv1   tiamat
+IDTiamat_Hard_BeaconM8s  (live npc_ids: 856118)
+    856119  lv1   tiamat
+IDTiamat_Hard_BeaconR4s  (live npc_ids: 856120)
+    856121  lv1   tiamat
+IDTiamat_Hard_BeaconR8s  (live npc_ids: 856122)
+    856123  lv1   tiamat
+IDTiamat_Hard_Breath_Centarl_00  (live npc_ids: 856034)
+    856035  lv1   lightning storm
+IDTiamat_Hard_Breath_Right_00  (live npc_ids: 856036)
+    856037  lv1   tiamat tornado
+IDTiamat_Hard_CyclopsCrack  (live npc_ids: 856042)
+    856043  lv65  rockslam
+IDTiamat_Hard_Earthquake_00  (live npc_ids: 856040)
+    856041  lv65  sinking sand
+IDTiamat_Hard_GodKaisinel_01  (live npc_ids: 856020)
+    283159  lv60  kaisinel
+IDTiamat_Hard_GodKaisinel_02  (live npc_ids: 856021)
+    283061  lv60  burrowing attack
+IDTiamat_Hard_Gravity  (live npc_ids: 856046)
+    856047  lv65  gravity crusher
+IDStation_forAct_003  (live npc_ids: 219186)
+    217610  lv58  idstation section 3 pc dispel form invisible npc
+Station_DrakanC  (live npc_ids: 217382)
+    217611  lv58  idstation section 3 boss chamber door open invisible npc
+Station_eye_Su  (live npc_ids: 855419)
+    855426  lv57  shulack watcher  [we spawn 217360 for this role -- check before porting]
+Station_Shadow3_1  (live npc_ids: 217381)
+    217387  lv80  disruption shadows
+Owllau_PeN_ver40  (live npc_ids: 216553)
+    281526  lv53  chopstick
+XDrakan_ReG_ver40  (live npc_ids: 216126,216832)
+    281804  lv55  dragon's trap

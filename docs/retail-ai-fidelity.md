@@ -5618,3 +5618,51 @@ waypoint branches that lay eggs on patrol, the abnormal-state handlers, and the
 
 **Verification.** Full suite 1,444 passing and 1 skipped; thirteen new pins and one
 retired; thirteen mutations, all caught after the two above were addressed.
+
+## The gateway garrisons' priests and mages
+
+With the owed list closed, back to the ranked audit — and the top of it is now flat, a long
+tail of threes and twos rather than a cluster. The largest coherent group left was the
+gateway guards' rank and file: `GwLGuard_PhA`, `GwLGuard_WhA`, `GwDGuard_PhA` and
+`GwDGuard_WhA`, **twelve guards, all on plain `aggressive`**, with every trap they lay
+spawned by nothing. `GatewayGuardAI` already covered the named `Gw*Guard_FlA` fighters;
+these are the ordinary garrison.
+
+**Two roles, and the difference is where the trap goes.** A priest lays at its own feet —
+ground it is defending. A mage lays on whoever it is fighting, so the trap follows the
+player. Same three-rung shape either way: one on engaging, one below 50, one below 30,
+with the deeper rung outranking the shallower so a guard burned down fast skips the middle.
+
+**Two quirks kept literal**, and both are pinned because a family constant is exactly the
+kind of thing that gets tidied later:
+
+- the **Elyos priest's** opening net trap lives **fifty** seconds where every other trap in
+  the family lives sixty;
+- the **Asmodian priest** lays its opening trap within **one** metre rather than two.
+
+**Timer 1 is deliberately not reproduced.** It is a health-banded cast ladder carrying
+nothing else. `GatewayGuardAI` keeps its cast-only rungs as bare re-arms because those sit
+on timer 0 and each one spends a tick of the trap ladder — dropping them moves every trap
+below forward five seconds. This timer cannot do that: it is a different slot, so an empty
+version of it would be a branch that does nothing at all. The distinction is worth stating
+because the two classes look inconsistent side by side and are not.
+
+### The audit's record rule was one table too tight
+
+The backlog did not move on the first measurement, and the reason was the audit rather than
+the port. It follows npc ids held in a record's fields — added earlier for exactly this
+family — but only when **every** component is an `int`. This class holds its ids in
+`Kit(bool OnTarget, int Opening, float OpeningRange, int OpeningLife, …)`, and one `bool`
+in front of them hid all ten.
+
+Now read **per component, by position**: only the `int` slots are harvested. That costs no
+precision, since a `bool` or a `float` was never going to hold an npc id, and it turns a
+rule that happened to fit one class's shape into one that fits the shape of the problem.
+The same third-time-lucky lesson as the spawn ops: a rule written against the example in
+front of you fits that example.
+
+**Where the count went.** 487 across 361 encounters → **475 across 357**. Twelve traps, and
+they are the whole of it.
+
+**Verification.** Full suite 1,454 passing and 1 skipped; ten new pins; ten mutations, all
+caught.
