@@ -7659,3 +7659,50 @@ symptom is a check that suddenly finds zero of something it used to find.
 **Verification.** Full suite 1,664 passing and 1 skipped; seven new pins; seven mutations, all
 caught, including the summon table's own shape (one elemental for all three waves) put back.
 `audit_pattern_guards.py` back to its two triaged findings.
+
+## Message numbers collide, and the audit was reading a collision as work
+
+Following the next `acts` finding — **6508** on both elemental bosses — turned out to be a false
+lead, and the reason generalises.
+
+Their deepest rung, below twenty percent, broadcasts 6507 and then 6508 every twenty-five seconds.
+6508 has an acting listener, `ND2_Xipeto3_1`, which takes hate on the named player and attacks. On
+that basis the audit called it `acts` and it looked like the deep rung had a translatable effect
+after all.
+
+**It does not.** `ND2_Xipeto3_1` belongs to the Dark Poeta xipetos (214870, 281189), which stand on
+map 300040000. The elemental bosses stand on Morheim and Eltnen. They could never be within fifty
+metres of each other, and the shared number is retail assigning message ids per encounter with no
+registry — low numbers collide freely. Within their own encounter, 6507 and 6508 are heard only by
+`ND2_PnF`, with casts, which is exactly the `unheard` verdict. The deep rung's translation as "spends
+the tick and summons nothing" was already right.
+
+### `diff world`
+
+`audit_retail_messages.py` gains a fifth verdict: **every NPC that would answer this message stands
+on maps this class's NPCs never appear on.** It builds an npc → maps index from our own spawn files
+(19,415 npcs) and compares the sender's maps against the listeners'.
+
+Only spawn files count. An NPC placed by an instance handler has no map in the data — Watchman
+Hokuruki is one — and the check **abstains** rather than guessing, because a wrong "different world"
+would hide real work.
+
+Three findings move out of `acts`, all of them this same 6508. The verdict does not fire on anything
+this session shipped: 140505, 3319, 444 and 6505 are all same-world, which is the check that mattered
+before trusting it.
+
+This is the caveat recorded two entries ago against the Tiamat numbers — 20, 23, 27, 31, 32, 40 are
+reused across Eternity, Infinity Shard, the arenas and the RVR guards — now expressed as a check
+rather than a note. **Any message-driven port has to be scoped by range and encounter, not by
+number**, and the tool can now say which findings fail that test.
+
+### A small confirmation that came free
+
+The map index also settles what the two elemental bosses are to each other: Frostmane Lestin stands
+in **Morheim** and raging kraterr in **Eltnen** — the Asmodian and Elyos halves of the same content.
+That is why their patterns are numerically identical and their skill lists are parallel in shape but
+share nothing: they are one encounter, built twice.
+
+**Verification.** No game behaviour changed; full suite unchanged at 1,664 passing and 1 skipped.
+`audit_retail_messages.py` now reports 38 `acts`, 5 `no audience`, 5 `no speaker`, 3 `diff world`,
+17 `cast-only` and 14 `unheard`.

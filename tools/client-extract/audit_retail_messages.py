@@ -20,6 +20,12 @@ Each finding is tagged with why it is probably absent, because most are:
     no speaker  the mirror -- a handler worth implementing for a message whose
                 every retail sender is an NPC our world never places. Also needs
                 --binding.
+    diff world  the message number is reused by an unrelated encounter: every
+                NPC that would answer it stands on maps this class's NPCs never
+                appear on, so the two could not be in range of each other. Not a
+                gap, an artifact of numbering -- retail assigns message numbers
+                per encounter with no registry, and low numbers collide freely.
+                Needs --binding.
     acts        a handler that spawns, moves or arms a timer, or a broadcast some
                 other pattern really does listen for -- a real gap worth reading
 
@@ -175,8 +181,19 @@ def main() -> None:
     # retail and unreachable here for a reason that is neither a skill index nor our AI's shape:
     # the audience is missing from our spawn data. Found on the Abyssal Reliquary chamber lords,
     # whose death helpers relay to twelve drakan warp guards that no spawn file contains.
+    # Which maps our own spawn data puts each npc on. Only spawn files count: an npc placed by an
+    # instance handler has no map in the data, and guessing one would be worse than abstaining.
+    maps_of: dict[str, set[str]] = collections.defaultdict(set)
+    for path in (repo / "game-server/data/static_data/spawns").rglob("*.xml"):
+        text = read_text(path)
+        for block in re.finditer(r'<spawn_map[^>]*map_id="(\d+)"(.*?)</spawn_map>', text, re.S):
+            world = block.group(1)
+            for npc in re.findall(r'npc_id="(\d+)"', block.group(2)):
+                maps_of[npc].add(world)
+
     silent: set[str] = set()
     unspoken: set[str] = set()
+    elsewhere: set[tuple[str, str]] = set()
     if args.binding:
         binding = load_binding(pathlib.Path(args.binding))
         owners: dict[str, set[str]] = collections.defaultdict(set)
@@ -199,6 +216,21 @@ def main() -> None:
             if all_unspawned(patterns):
                 unspoken.add(msg)
 
+        def worlds(patterns: set[str]) -> set[str]:
+            return {w for p in patterns
+                    for npc in owners.get(p, ())
+                    for w in maps_of.get(npc, ())}
+
+        # A class's own maps, against the maps of whoever would answer its broadcast.
+        for cls_name, cls_pats in claimed.items():
+            mine = worlds(cls_pats)
+            if not mine:
+                continue
+            for msg, listeners in answering_patterns.items():
+                theirs = worlds(listeners - cls_pats)
+                if theirs and not (theirs & mine):
+                    elsewhere.add((cls_name, msg))
+
     rows: list[tuple[str, str, str, str]] = []
     for cls, pats in sorted(claimed.items()):
         text = (repo / AI_DIR / f"{cls}.cs").read_text(encoding="utf-8", errors="replace")
@@ -213,9 +245,11 @@ def main() -> None:
                         verdict = "no audience"
                     elif verdict == "acts" and msg in unspoken:
                         verdict = "no speaker"
+                    elif verdict == "acts" and (cls, msg) in elsewhere:
+                        verdict = "diff world"
                     rows.append((verdict, cls, pat, msg))
 
-    for want in ("acts", "no audience", "no speaker", "cast-only", "unheard"):
+    for want in ("acts", "no audience", "no speaker", "diff world", "cast-only", "unheard"):
         chosen = [r for r in rows if r[0] == want]
         print(f"=== {want} ({len(chosen)}) ===")
         for _, cls, pat, msg in sorted(chosen, key=lambda r: (r[1], r[2], int(r[3]))):
