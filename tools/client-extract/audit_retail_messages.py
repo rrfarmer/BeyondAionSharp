@@ -12,6 +12,14 @@ Each finding is tagged with why it is probably absent, because most are:
                 does not translate casts it cannot map to a skill id
     unheard     a broadcast whose every listener in the corpus only casts or does
                 nothing -- omitting it drops an announcement and nothing else
+    no audience a broadcast whose listeners would act, but every NPC bound to
+                those listener patterns is one our world never spawns. Real in
+                retail, unreachable here, and for a reason that is neither a
+                skill index nor our AI's shape: the audience is missing from our
+                spawn data. Needs --binding. See docs/retail-ai-fidelity.md.
+    no speaker  the mirror -- a handler worth implementing for a message whose
+                every retail sender is an NPC our world never places. Also needs
+                --binding.
     acts        a handler that spawns, moves or arms a timer, or a broadcast some
                 other pattern really does listen for -- a real gap worth reading
 
@@ -34,7 +42,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
-from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
+from audit_missing_adds import NAME_RE, PATTERN_RE, read_text, spawnable_npc_ids
+from audit_hp_phases import load_binding
 from summarize_pattern import lowercase_tags
 
 AI_DIR = "src/Aion.GameServer/Handlers/AI"
@@ -57,6 +66,7 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("patterns_dir")
+    ap.add_argument("--binding", help="ai_binding.tsv; enables the `no audience` verdict")
     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parents[2]))
     args = ap.parse_args()
 
@@ -99,21 +109,37 @@ def main() -> None:
 
     # Messages some pattern answers with more than a cast. A broadcast outside this set is heard
     # only by branches that cast or do nothing, so dropping it drops an announcement.
+    #
+    # `answering_patterns` is the same relation kept by name, so a broadcast can be checked against
+    # *who* would answer it and not merely whether anyone would. See the `no audience` verdict below.
     answered_by_action: set[str] = set()
+    answering_patterns: dict[str, set[str]] = collections.defaultdict(set)
+    sending_patterns: dict[str, set[str]] = collections.defaultdict(set)
     for path in sorted(pathlib.Path(args.patterns_dir).glob("*.xml")):
         for block in PATTERN_RE.finditer(read_text(path)):
             try:
                 root = ET.fromstring("<r>" + lowercase_tags(block.group(1)) + "</r>")
             except ET.ParseError:
                 continue
+            named = NAME_RE.search(block.group(1))
             for branch in root.iter("pattern"):
                 actions = branch.find("actions")
                 tags = [a.tag for a in actions] if actions is not None else []
+                # Every sender counts, whatever else its branch does. A broadcast beside a cast is
+                # still a broadcast, and the question `no speaker` asks is only whether anything in
+                # the world could send it. Recorded above the cast-only skip for that reason: with it
+                # below, the Seal of Destruction's `_Source` NPCs did not count as senders and the
+                # time-over rescue was reported unreachable against an instance that spawns them.
+                for m in branch.iter("broadcast_message"):
+                    if m.findtext("message_type") and named:
+                        sending_patterns[m.findtext("message_type")].add(named.group(1))
                 if not tags or all(t in ("use_skill", "do_nothing") for t in tags):
                     continue
                 for m in branch.iter("is_message"):
                     if m.findtext("message_type"):
                         answered_by_action.add(m.findtext("message_type"))
+                        if named:
+                            answering_patterns[m.findtext("message_type")].add(named.group(1))
 
     kind: dict[tuple[str, str], str] = {}
     for path in sorted(pathlib.Path(args.patterns_dir).glob("*.xml")):
@@ -145,6 +171,34 @@ def main() -> None:
                     if kind.get(key) != "acts":
                         kind[key] = sent_verdict
 
+    # A broadcast whose every listener is an NPC our world never places. It is a real mechanic in
+    # retail and unreachable here for a reason that is neither a skill index nor our AI's shape:
+    # the audience is missing from our spawn data. Found on the Abyssal Reliquary chamber lords,
+    # whose death helpers relay to twelve drakan warp guards that no spawn file contains.
+    silent: set[str] = set()
+    unspoken: set[str] = set()
+    if args.binding:
+        binding = load_binding(pathlib.Path(args.binding))
+        owners: dict[str, set[str]] = collections.defaultdict(set)
+        for npc_id, pattern in binding.items():
+            owners[pattern].add(npc_id)
+        live = spawnable_npc_ids(repo)
+
+        def all_unspawned(patterns: set[str]) -> bool:
+            npcs = {npc for p in patterns for npc in owners.get(p, ())}
+            return bool(npcs) and not (npcs & live)
+
+        for msg, patterns in answering_patterns.items():
+            if all_unspawned(patterns):
+                silent.add(msg)
+        # The mirror: a handler we could implement, for a message whose every retail sender is an
+        # NPC our world never places. Found on the same encounter -- the Abyssal Reliquary awakened
+        # lord answers 6682 by dismissing itself, and the weakened lord that announces it is in no
+        # spawn file either.
+        for msg, patterns in sending_patterns.items():
+            if all_unspawned(patterns):
+                unspoken.add(msg)
+
     rows: list[tuple[str, str, str, str]] = []
     for cls, pats in sorted(claimed.items()):
         text = (repo / AI_DIR / f"{cls}.cs").read_text(encoding="utf-8", errors="replace")
@@ -155,9 +209,13 @@ def main() -> None:
         for pat in sorted(pats):
             for (pattern, msg), verdict in kind.items():
                 if pattern == pat and msg not in ours:
+                    if verdict == "acts" and msg in silent:
+                        verdict = "no audience"
+                    elif verdict == "acts" and msg in unspoken:
+                        verdict = "no speaker"
                     rows.append((verdict, cls, pat, msg))
 
-    for want in ("acts", "cast-only", "unheard"):
+    for want in ("acts", "no audience", "no speaker", "cast-only", "unheard"):
         chosen = [r for r in rows if r[0] == want]
         print(f"=== {want} ({len(chosen)}) ===")
         for _, cls, pat, msg in sorted(chosen, key=lambda r: (r[1], r[2], int(r[3]))):

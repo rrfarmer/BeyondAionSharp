@@ -7379,3 +7379,80 @@ caught. Three needed a pin written for them — the fallback, the ten-second re-
 stopping — because every other pin sets health straight into a band and never exercises the clock.
 `audit_pattern_guards.py` still reports its two triaged findings and no new ones;
 `audit_ai_messages.py` is unchanged at seven, with 3319 paired in both directions.
+
+## A third reason a mechanic is unreachable: nobody to say it to
+
+Chasing the next `audit_retail_messages.py` finding — **6682**, on the Abyssal Reliquary chamber
+lords — turned up a complete retail chain and a new kind of dead end.
+
+### The chain, end to end
+
+1. The **weakened** lord (`BGuard_ChiefD_Minor`) broadcasts **6682** to ten metres as it wakes. The
+   **awakened** lord (`BGuard_ChiefD`) answers with `despawn_self`: the fortress swaps which version
+   of the lord is present and the one being replaced bows out. Ten metres, because they stand on the
+   same spot.
+2. Either lord's death places despawn helpers on four fixed marks — already ported, in the entry on
+   the chamber lords' death spawns.
+3. Each helper broadcasts on waking, a hundred metres: 296338 → **10006**, 296339 → **10007**.
+4. Twenty `DrGuard_*_WarpH2/H3` patterns answer with `despawn_self`. Killing a chamber lord clears
+   the drakan garrison.
+
+Links 3 and 4 are the reachable half — the listeners despawn rather than cast. And they cannot be
+reached, because **none of the twelve NPCs bound to those listener patterns exists in our world**.
+No spawn file, no instance handler, no code. The same is true of the weakened lord that would send
+6682 at link 1.
+
+So the mechanic is blocked on **missing world spawn data** — not a skill index, not a walk route,
+not the shape of our AI. That is a category this log did not have, and the tool now names it.
+
+### Two verdicts, and the mirror
+
+`audit_retail_messages.py` gains **`no audience`** — a broadcast whose listeners would act, but every
+NPC bound to those listener patterns is one our world never spawns — and **`no speaker`**, the mirror,
+for a handler worth writing whose every retail sender is unspawned. Both need `--binding`.
+
+Ten of the forty-seven findings move out of `acts`, which materially changes what is worth picking up
+next:
+
+| verdict | count | examples |
+|---|---|---|
+| `acts` | 37 | still the work |
+| `no audience` | 5 | Takahan's drakan (3403), Prectaz (100001), three Twin Protector |
+| `no speaker` | 5 | the chamber lords (6682), Lord Lannok (6608), **the twin protectors' time-over rescue (22704/22705)** |
+
+### A correction to two entries ago
+
+The Twin Protector write-up named 22705's missing half as `IDSeal_Twin_M_Source`, "a separate
+encounter this work has not touched". **Both halves of that are wrong.** `_Source` (855709) is the
+*listener* — it is the NPC that spawns the PC guards — and `DrakenspireDepthsInstance` already spawns
+it. The sender is `IDSeal_Twin_M_Change_Failed` (855511, 856404), which broadcasts 22705 on waking and
+again every three seconds, and which nothing in our world places.
+
+So the rescue is one npc spawn away from working, not an encounter away. That is a much better lead
+than the one recorded, and it only appeared because the audit was made to ask the question precisely.
+
+### How the wrong claim got made, and what it means for the rest of this session
+
+Every ad-hoc sender/listener map in this session's notes was built with a proximity regex —
+`broadcast_message[\s\S]{0,400}?<message_type>N<` — and **that pattern conflates the two roles**. A
+branch that listens for a message and broadcasts a different one puts both tags within four hundred
+characters of each other, so `_Source` was read as a sender when it is a listener.
+
+Re-checked every message this session shipped behaviour for, against a proper parse of the branch
+tree — 140505, 3319, 3320, 6956, 6682, 3409, 71, 22714, 22715 — and **all of them hold**. The
+proximity regex was wrong exactly once, on the one message that was only ever written up rather than
+ported. The audits themselves never used it; they parse `<conditions>` and `<actions>` separately,
+which is why the tool disagreed with the note and was right.
+
+**Worth generalising: a scratch regex is fine for finding candidates and not for stating facts.**
+The ones stated in this log now come from the parsers.
+
+### Still not done here
+
+The chamber lords' 6682, and links 3 and 4 of the garrison clear-up, stay unported. Reaching them
+needs the twelve warp guards and the weakened lords placed in the world — a spawn-data job, and one
+that should be checked against retail spawn tables rather than invented.
+
+**Verification.** No game behaviour changed; full suite unchanged at 1,644 passing and 1 skipped.
+`audit_retail_messages.py` reclassifies ten findings and its sender scan now counts every broadcast,
+including those beside a cast — without that the time-over rescue's real sender was invisible.
