@@ -9328,3 +9328,82 @@ The re-ranked head of the list is unrecognisable from the old one: Ahserion's su
 the cowardly tutu at 36, kaliga the unjust at 19, and the naga pair — high mage brashuna and commander
 gitimuka — at 17 each. 461 unported patterns still carry four or more payload actions, with 1,564 npcs
 behind them.
+
+## Heiron's two naga field bosses, and a dismissal hidden inside a cast
+
+`Naga_WrF2` binds to High Mage Brashuna (212310) and `Naga_WrF3` to Commander Gitimuka (212307). Both
+were HEROes on plain `aggressive`. They are the same fight written twice — six health bands, each
+opened once by a ladder timer and then held by a relay of its own — so they share one builder.
+
+| | |
+|---|---|
+| 91–100 | nothing but a slower tick: the ladder re-arms at ten seconds instead of six |
+| 76–90 | off the tank and onto **whoever is closest to dying**, then again every fifteen or twenty seconds |
+| 61–75 | the same rule on its own relay |
+| 41–60 | **three faithful subordinates land on the player he is fighting**, an order sends them after that player, and a relay adds one more every thirty seconds and re-issues the order |
+| 21–40 | he **dismisses the subordinates**, takes a random attacker, and starts a forty-five-second peel that runs to the end |
+| below 20 | the ladder stops and he goes for the **third**-most-hated, over and over |
+
+### The dismissal is a `despawn_self` wearing a cast's clothes
+
+Retail's `6185` branch on `Naga_Sum_WrF2` is an `add_battle_timer` and a `use_skill`, which is exactly
+the shape this log has been dropping as *cast-only* for weeks. It is not cast-only. The timer it arms
+has one handler — `despawn_self` — so the branch is how the boss clears his own wave on the way past
+forty. The cast is the animation; the despawn is the mechanic.
+
+**Rule: a timer arm is only scaffolding if you have looked at what the timer does.** The cast-only
+rule asks whether a branch changes anything; a branch that arms a timer changes something exactly when
+that timer's own branch does. This is the first time in this log that reading one branch in isolation
+would have deleted a whole mechanic.
+
+The other half of that reading is the reverse, and it also applies here: retail's timer **1** is armed
+by the 91–100 rung and re-armed by its own relay every twenty seconds, and its handler really is one
+cast and nothing else. No other branch uses that slot, so both the arm and the relay are dropped. The
+91–100 rung itself is kept — its ladder re-arm is four seconds longer than the fallback's, and that is
+a real difference in cadence.
+
+### The wave lands on the player, which changes what the same-branch rule costs
+
+`spawn_on_target` puts the three within seven metres of whoever he is fighting, and the relay's extra
+one within three. This is the **third** encounter to want the opposite of the same-branch broadcast
+exclusion measured for RM-56c, after the anuhart casters' pet and Anuhart's own subordinates: the three
+do not hear the order issued in the branch that spawned them, and wait thirty seconds for the relay.
+
+Here it costs almost nothing, and for a reason worth writing down: **they land on a player, so they
+aggro unaided.** Anuhart's four land on marks away from the raid and genuinely stand idle. Same rule,
+same divergence, opposite practical weight — which is the argument for keeping the measured behaviour
+rather than special-casing either encounter.
+
+### The pin that passed for the wrong reason, twice, at two different distances
+
+Pinning "the boss told the subordinate whom to hit" needs a witness that could not have found the
+target itself. Three geometries were tried before one was decisive:
+
+- **Witness thirty metres from the boss**, quarry five metres from the boss. Three order mutations
+  survived: the witness reaches the quarry on its own.
+- **Witness forty metres from the boss.** Better, but `the step order names nobody` still survived —
+  the witness was still finding the quarry by itself in the twelve seconds the pin allows.
+- **Witness forty-five metres from the boss** — decisive but *flaky*, failing about one run in three
+  with no target at all. Broadcast delivery walks the sender's known list rather than a clean radius,
+  so a listener at the edge of `range_as_meter` is not reliably a listener.
+
+What worked was moving **the quarry**, not the witness: the boss holds the quarry forty metres out and
+the witness stands thirty metres behind him, seventy from any player. Inside his order, outside
+everything else. Nineteen mutations, all caught.
+
+**Rule: to pin "X was told about Y", put Y out of X's reach — moving X away is not the same thing.**
+Every earlier version of this pin moved the witness, and every one of them left the quarry sitting
+next to the fight where the witness could reach it. The decoy rule from the anuhart entry said distance
+is not enough; this says which distance.
+
+### Not translated
+
+Thirty-three skill indices and five shouts across the pair. Retail's timer 1 cast loop, as above. The
+two bosses differ in three delays and one npc id and in nothing else, plus one attacker indicator on a
+cast that is blocked anyway.
+
+### Verification
+
+Full suite **1,893 passing** and 1 skipped; thirteen new pins run five times over; nineteen mutations,
+all caught. Adds 361/280 → **359/278**; missing-AI 698 → **696**; translatable 461/1,564 →
+**459/1,562** — each delta exactly the two patterns translated.
