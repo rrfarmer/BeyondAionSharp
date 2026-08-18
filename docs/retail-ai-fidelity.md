@@ -16536,3 +16536,51 @@ applied without checking, and this one would have been wrong half the time.
 ### Verification
 
 Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
+
+## The silikor guard's band is misaligned, and the contradiction is what shows it
+
+The previous entry called this the cheaper of the two jobs: nothing missing beneath the ladder, so the
+reverted `31–100` guard should go back in once three pins were re-derived. **It should not go back in at
+all.**
+
+`SilikorGuardAI`'s `on_battle_timer` reads:
+
+| branch | guard | action |
+|---|---|---|
+| 6 | `Timer(Heartbeat)`, **`HpBelow(30)`**, once | arm `Low` at 23s, peel to second-most-hated |
+| 4 | `Timer(Low)` | re-arm `Low` at 15s, peel again |
+| 1 | `Timer(Heartbeat)` | re-arm the heartbeat |
+
+**Branch 4 is the peel repeating.** The peel *opens* below thirty. Retail's `#4` wants
+`is_hp_in_boundary(31,100)`. A step that only starts below thirty and may only repeat above thirty-one
+**can never repeat** — the guard and the branch contradict each other, which is proof they are not the
+same step.
+
+So this row is **misaligned**, and the alignment check passed it because our branch and retail's both carry
+`attack` kinds. Same blind spot that let the four Anuhart `state` rows through: *sharing an action kind is
+not sharing a purpose.*
+
+**That is the second time this pass a row's own arithmetic caught what the tool could not.** The check
+compares what branches do; it cannot compare what they are for, and a health guard that makes a branch
+unreachable is the cheapest available signal that the pairing is wrong.
+
+### What that means for the tool
+
+`report_dropped_guards.py` should refuse a row when **the proposed guard cannot be true at the same time as
+a guard already on our branch** — here, `HpBetween(31,100)` against an opening step gated `HpBelow(30)` on
+the branch that arms it. That is a real check and it is not written.
+
+### Still to do
+
+- **The contradiction check** in `report_dropped_guards.py`, which would have caught this row and is worth
+  more than the row.
+- `6952`'s callers, then Kingspin's accelerators as a conversation.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 14 remaining ready guard rows; the 4
+  mixed; the 3 misaligned — **now 4**, with this one.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+No code changed — the guard stays out, for a better reason than before. Full suite **2,049 passing**,
+1 skipped.
