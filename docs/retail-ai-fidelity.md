@@ -16953,3 +16953,49 @@ will not be free.
 ### Verification
 
 Correction only. Full suite **2,049 passing**, 1 skipped.
+
+## `on_see_user` now respects sight range, which is why the webs died
+
+Chasing why Kingspin's webs vanished instantly turned up an engine fault with a far wider blast radius than
+the encounter.
+
+`PatternAi.HandleCreatureSee` fired for **any** creature the known list admitted. The known list is a
+visibility radius; an NPC's `srange` is its own sight, and the two are not close. So every `on_see_user`
+trap in this port fired **the moment a raid came anywhere near it**, rather than when somebody stepped into
+its range.
+
+For the web, whose `srange` is **1 metre**, that is the whole difference between a trap and a puff of smoke:
+four webs thrown fifteen metres behind the boss saw a raid twenty metres away, fired, and despawned on the
+tick they landed.
+
+`HandleCreatureSee` now reads the owner's `GetAggroRange()` and returns when the creature is outside it —
+the same accessor `FriendDeathNotice` already uses for the same purpose, and the same rule.
+
+### One pin moved, and it was leaning on the fault
+
+`DrakeMarkAiTests.ADrakieThatSeesAPlayerRunsFromIt` put its passer **ten metres** from a drakie whose
+`srange` is **seven**. It passed only because sight was not checked. The passer now stands at five, and the
+pin says what it always meant to.
+
+**That is one pin across the whole suite**, which is a smaller blast radius than expected for a change this
+broad — and worth reading as a warning rather than a reassurance: `on_see_user` is rare in this port
+(twelve classes), so the suite had little to say about it either way.
+
+### What this unblocks
+
+The web repoint, most likely. With sight respected, webs thrown behind the boss no longer see the raid, and
+the six Kingspin pins that count four standing webs may simply pass. **Not verified** — the repoint is
+still out, and checking it is the first thing to do next.
+
+### Still to do
+
+- **Repoint 281391 and re-run**, now that sight is gated.
+- Then the accelerator pin, and the six web pins only if they still disagree.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One engine gate, one pin moved onto it. Full suite **2,049 passing**, 1 skipped.

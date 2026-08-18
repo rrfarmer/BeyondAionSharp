@@ -540,6 +540,14 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         if (branches.Length == 0)
             return;
 
+        // RANGE IS PART OF SEEING. The engine event fires when the known list admits an object, which is
+        // a much wider radius than an NPC's own sight -- so a trap with srange 1 was firing the moment a
+        // raid came anywhere near it rather than when somebody stepped on it. Retail's on_see_user is
+        // the NPC's sight, and FriendDeathNotice already reads it the same way.
+        int sight = GetOwner().GetObjectTemplate().GetAggroRange();
+        if (sight > 0 && !Aion.GameServer.Utils.PositionUtil.IsInRange(GetOwner(), creature, sight))
+            return;
+
         SeenCreature = creature;
         try
         {

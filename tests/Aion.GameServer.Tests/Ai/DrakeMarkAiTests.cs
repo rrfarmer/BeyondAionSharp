@@ -122,7 +122,9 @@ public sealed class DrakeMarkAiTests
 		using BossAiHarness _h = harness;
 
 		Npc drakie = harness.Spawn(LonghornDrakie, 300f, 300f, 200f);
-		Player passer = harness.SpawnPlayer(310f, 300f, 200f, race: Race.ASMODIANS);
+		// Inside the drakie's own srange of seven. Ten metres worked only while on_see_user ignored
+		// sight range, which is the thing this pin is now written against.
+		Player passer = harness.SpawnPlayer(305f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(drakie, passer);
 
 		Aion.GameServer.Ai.Pattern.PatternAi ai =
