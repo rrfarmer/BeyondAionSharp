@@ -20003,3 +20003,59 @@ with no reader is not a mechanic.**
 ### Verification
 
 **Scoping only, no code.** Full suite unchanged at **2,091 passing**, 1 skipped.
+
+## Tiamat's dragon form calls four mages, and did not
+
+The previous entry freed this by striking a phantom engine gap. **The work was there immediately.**
+
+`TiamatDragonAI` made **no spawns at all** — a `grep -c "Spawn("` returns zero — where retail's
+`IDTiamat_Tiamat_Dragon_Named_60_Al` spawns seventeen distinct npcs. All four drakan mages
+(283163-283166) sat in `npc_templates` with a working AI, summoned by nothing.
+
+### What was built
+
+**One mage at each corner of the platform, nineteen seconds after he engages.** Retail builds that delay
+as two timers — `on_enter_attack_state` arms timer 1 at fifteen seconds, its branch arms timer 3 at four
+more — and the pair is kept in the comment rather than collapsed, because the fifteen-second step is also
+where retail says its line and a later port of that line needs the seam.
+
+Three pins: the arrival and its timing, the once-per-fight latch, and a dragon killed before they arrive.
+Each fails with its own step removed.
+
+### The pin that was right and the guard that was wrong
+
+`ADeadDragonCallsNoMages` failed against the first version, which guarded the task body with `IsDead()`.
+**A boss killed by the death event still reads as alive to that check** for as long as the corpse stands,
+so the mages arrived anyway.
+
+**The fix was to cancel the task instead**, which is what the rest of this port already does — Stormwing
+and Pazuzu both cancel in `HandleDied`. **The pin was right and the code was wrong**, which is worth
+recording after several passes where it went the other way: the last four failing pins in this log were
+all pins measuring the wrong thing.
+
+### What is still missing here
+
+**The rush wave.** Retail's other spawn branch sends roughly twenty drakan — noble and sardha, fighter,
+scout, wizard and cleric — along `path_tiamatdrakan_*` walker paths. **This port has no waypoint support
+in either AI layer**, so the wave cannot be placed: spawning them without their paths would drop twenty
+drakan standing still at one point, which is not the mechanic.
+
+That is the **same gap that blocks the silikor dismissal**, and it has now blocked two encounters. It is
+the largest remaining named gap.
+
+### Still to do
+
+- **Waypoints**, now blocking Tiamat's rush wave as well as the silikor dismissal.
+- **The hard variant**, `IDTiamat_Hard_Tiamat_Dragon`, not yet read against `tiamat_dragon_hard`.
+- The four lords' staged spawns — `KAISINEL_SPAWN` and friends — against our `empyrean_lord`.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence; `IDRaksha_Re_A_KJS`'s despawn
+  and `IDTP_Keeper1`'s spawn.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Build clean. The latch pin fails with the latch removed and the death pin with the cancellation removed.
+Full suite **2,094 passing**, 1 skipped.
