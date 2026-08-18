@@ -14814,3 +14814,78 @@ insurgents and the nunu farmers.
 
 The support-aggro drift bit for the fourth time — every assertion here is a band rather than an equality
 for that reason. Full suite **2,036 passing**, 1 skipped.
+
+## Two thirds of the calls in the game are answered wrongly
+
+The previous entry noticed that `Do.HateMessageTarget` sets a target, and wondered what that costs
+elsewhere. **It costs more than expected, and the size of it is now measured.**
+
+Retail answers a `broadcast_message` two ways:
+
+| op | what it does | branches in 5.8 |
+|---|---|---|
+| `add_hate_point target=OBJI_MESSAGE_PARAM` | note the call, **keep fighting whoever you were** | **700** |
+| `switch_target target=OBJI_MESSAGE_PARAM` | drop it and go | 349 |
+| both, in one branch | — | 54 |
+
+**This port has only the switching form.** Two out of every three answers in the game turn an NPC that
+retail leaves facing where it was.
+
+`PatternAi.AddHateToMessageTarget` and `Do.HateMessageParam` are the missing half, and they ship here.
+**Nothing else does** — see below.
+
+### Which of our classes are wrong
+
+`tools/client-extract/audit_message_answers.py` reads the retail pattern names each AI class documents,
+looks up what those patterns' `on_message` branches actually do, and reports a verdict per class. Of
+**83 uses across 41 classes**:
+
+- **14 classes: `add`** — every pattern they name only adds hate. These are wrong today.
+  `ShulackMercenaryAI` (10 uses), `KlawPackAI` (3), `GuardianVingeveuAI`, `OphidanBridgeCallAI` (2 each),
+  and ten with one apiece.
+- **19 classes: `mixed`** — the class covers patterns that disagree, so each branch needs reading.
+- **4 classes: `unknown`** — no retail pattern name in the file to check against.
+- **4 classes: `switch`** — correct as written, including the kaidan smackstoppers from the last entry.
+
+### Why the fix is not in this commit
+
+**It was applied, and reverted.** Changing the 14 unambiguous classes turned four pins red, and the four
+failures were not the mechanical kind:
+
+1. **Three of them were asserting the bug.** `Assert.Same(player, npc.GetTarget())` was pinning *our*
+   forced target as if it were the mechanic. Those pins pass today because the answer turns the NPC, and
+   the turn is the part retail does not do.
+
+2. **`NagaSummonerAI` and `MiddleBossFireAI` turned out not to add hate at all.** With the switch gone
+   the answer does nothing whatsoever: `AggroList.IsAware` refuses hate aimed at a creature the owner is
+   not hostile to, and the faithful subordinates are tribe **`NNAGA`**, which is not hostile to a player
+   race. **The forced target was the only thing making those encounters look alive.** Fifth time the
+   tribe check has decided a result in this log, and the first time it has hidden behind another bug.
+
+3. **`OphidanBridgeCallAI`'s chain does not chain.** Its pin claims a call hops from a listener to a
+   listener beyond the caller's reach, and that worked only because a forced target puts an NPC in
+   combat at once, which fires its own entry branch and its own call. With `add_hate_point` the middle
+   listener takes the hate and never acts on it — at eight seconds of ticks or at none. **The missing
+   step is "has hate" → "is fighting"**, which this port does not take by itself here.
+
+Each of those needs its encounter re-derived, not its assertion patched. Fixing 14 classes properly
+means re-reading their patterns, re-picking npcs whose tribe can actually take hate, and deciding what a
+chained call should do without a forced target. **Doing a third of that and leaving the rest would make
+this log less trustworthy than doing none**, which is the same call the pure-broadcaster revert made two
+entries ago.
+
+### What is left to do, precisely
+
+1. Add the non-switching action to the **14 `add` classes**, and re-derive each pin that asserted a
+   target rather than hate.
+2. Resolve the **19 `mixed`** classes branch by branch with the audit's per-pattern verdicts.
+3. Name a retail pattern in the **4 `unknown`** files so they can be checked at all.
+4. **Fix the `NNAGA` answerers** — an encounter whose answer is dropped by `IsAware` is not shipped, it
+   only looks shipped.
+5. **Build the hate-to-combat step**, without which every chained call in the retail data stops at its
+   first listener.
+
+### Verification
+
+Engine addition and audit tool only. Full suite **2,036 passing**, 1 skipped, with the 14-class change
+reverted.

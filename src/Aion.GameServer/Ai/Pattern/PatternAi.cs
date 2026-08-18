@@ -644,7 +644,32 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         GetOwner().SetTarget(seen);
     }
 
-    /// <summary>Puts hate on whoever a message named and turns to face them.</summary>
+    /// <summary>
+    /// <c>add_hate_point target=OBJI_MESSAGE_PARAM</c> — hate on whoever a message named, <b>without</b>
+    /// touching the current target.
+    /// </summary>
+    /// <remarks>
+    /// Retail has two ways to answer a call and they are not interchangeable: this one, and
+    /// <see cref="HateMessageTarget"/>, which is <c>switch_target</c> and moves the NPC. <b>Across the
+    /// 5.8 files the plain form is the common one</b> — 700 answering branches use it alone against 349
+    /// that switch — so an NPC already busy with somebody usually notes the call and keeps fighting.
+    /// <para>
+    /// Having only the switching form was a silent divergence: an answerer mid-fight would drop its
+    /// target for whoever a neighbour named, every time, on two thirds of the calls in the game.
+    /// </para>
+    /// </remarks>
+    public void AddHateToMessageTarget(int hate)
+    {
+        if (MessageParam is not Creature target || target.IsDead())
+            return;
+
+        GetAggroList().AddHate(target, hate);
+    }
+
+    /// <summary>
+    /// <c>switch_target target=OBJI_MESSAGE_PARAM</c> — hate on whoever a message named, and turn to
+    /// face them. See <see cref="AddHateToMessageTarget"/> for the form that does not turn.
+    /// </summary>
     public void HateMessageTarget(int hate)
     {
         if (MessageParam is not Creature target || target.IsDead())

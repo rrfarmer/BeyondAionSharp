@@ -545,7 +545,14 @@ public static class Do
     public static PatternAction TargetMessageParam()
         => ai => ai.TargetMessageParam();
 
+    /// <summary><c>switch_target target=OBJI_MESSAGE_PARAM</c> — hate, and turn to face.</summary>
     public static PatternAction HateMessageTarget(int hate) => ai => ai.HateMessageTarget(hate);
+
+    /// <summary>
+    /// <c>add_hate_point target=OBJI_MESSAGE_PARAM</c> — hate, and <b>leave the target alone</b>. The
+    /// commoner of retail's two answers; see <see cref="PatternAi.AddHateToMessageTarget"/>.
+    /// </summary>
+    public static PatternAction HateMessageParam(int hate) => ai => ai.AddHateToMessageTarget(hate);
 
     /// <summary><c>spawn_on_target target_obj=OBJI_SEEN</c>.</summary>
     public static PatternAction SpawnOnSeen(int npcId, int spawnId, int count = 1, float range = 0f,
