@@ -10079,3 +10079,73 @@ cleared only by their twenty-second lifetime and by the gunner's own despawns.
 Full suite **1,947 passing** and 1 skipped; nine new pins run three times over; **sixteen mutations, all
 caught**. Missing-AI 681 → **680**; adds 357/276 → **356/275**, the one being the mark; translatable
 337/1,111 → **336/1,110**.
+
+## Darkblade Ovanuka, and a second handler our runtime can never fire
+
+`IDVritra_Base_Drakan_As_IU_Nmd` binds to Darkblade Ovanuka (233256) of the Sauro Supply Base, a HERO
+on plain `aggressive` with a three-phase timer chain. What survives translation is the turning and one
+order:
+
+| | |
+|---|---|
+| above eighty | a thirty-second loop, one step of which takes a **random** attacker |
+| crossing eighty | **he names the player he is fighting and his bladesmen take them** |
+| below thirty-five | a shorter loop that turns him twice more, and stops |
+
+### `on_stop_to_random_move` joins `on_arrived_at_waypoint`
+
+Two phases of this fight are reached through `random_move` and the `on_stop_to_random_move` event it
+raises. Timers 5, 6, 7 and 10 are armed **there and nowhere else**, so in our runtime — which has
+neither the action nor the event — those branches are dead.
+
+`audit_timer_reach.py` now carries both handlers in its unreachable set. The two are the same shape:
+**an NPC that never walks a route never arrives at a waypoint, and an NPC that never wanders never
+stops wandering.** The audit's numbers move from 13 patterns / 26 actions to 14 / 28, and Ovanuka's own
+score drops from fourteen payload to twelve.
+
+**His second call goes with those phases.** `22271` — the soft one, which the bladesmen answer one time
+in three with a turn rather than a charge — is broadcast only from timer 10. Neither half is built: not
+the call, and not his own thirty-percent answer to it. Both come back the day `random_move` does.
+
+**And phase three ends early, faithfully.** The branch on timer 9 is a two-way toggle on one flag: the
+first turn arms timer 11 and takes a random attacker, the second wanders. So our last phase turns twice
+and stops, exactly where retail's walked away.
+
+### The alarm that is one broadcast from being real
+
+The bladesmen also answer `22251`, and so do the **sheban legion ambushers** (233277): both take
+whoever the boss is fighting. Retail broadcasts it from `IDVritra_Base_Boss1` and `Boss2` — **Brigade
+General Sheba (230858) and Guard Captain Ahuradim (230857)** — as they engage. Neither sends it here,
+because both run Java-parity classes rather than patterns, so this is an addition to those classes
+rather than a translation. It is the largest unbuilt thing left in this instance and it is one
+broadcast wide.
+
+### A pin that measured drift, and a decoy that measured nothing
+
+The last-phase pin took three attempts, and both failures are worth keeping:
+
+1. **Sampling from the eighty-percent crossing** counts that crossing's own turn and the drift back to
+   the most-hated afterwards. Distinct targets appeared with or without the last phase, and both
+   mutations that delete it survived. The fix is to let the crossing settle and take the target he is
+   left on as the baseline.
+2. **A decoy with one hate point** measured nothing at all. A random turn onto it is real, and the next
+   think puts him back on the most-hated before a one-second sample can see it. **The turn happened and
+   the observation could not.**
+
+**Rule: when a pin watches a target, it is watching two mechanisms — the branch that switches and the
+hate list that pulls back.** Every earlier target pin in this log got away with ignoring the second
+because the switch was to a *stable* choice, most-hated or lowest-HP. A random switch against a stable
+hate list is visible only if you know what it was before, and only for as long as the AI leaves it
+alone.
+
+### Not translated
+
+Twenty-two skill indices, four shouts, three `random_move`s, and `set_condition_spawn_variable
+ITEMNAMED_SUM` — the phase-three subordinate wave, which retail hands to the instance rather than to
+the pattern.
+
+### Verification
+
+Full suite **1,952 passing** and 1 skipped; five new pins run five times over; **ten mutations, all
+caught**. Missing-AI 680 → **678**; translatable 336/1,110 → **334/1,108**; dead-timer payload
+13 patterns / 26 actions → **14 / 28**, the extra being Ovanuka's four stranded timers.

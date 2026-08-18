@@ -20,8 +20,8 @@ third on the worth-doing list.
 
 The method is a reachability fixpoint over timer indices:
 
-  * every handler except `on_arrived_at_waypoint` can run, so the timers its branches arm
-    are reachable;
+  * every handler except the two in `UNREACHABLE_HANDLERS` can run, so the timers its branches
+    arm are reachable;
   * an `on_battle_timer` branch runs only if the timer it is guarded on is reachable, and
     then the timers *it* arms become reachable too;
   * repeat until nothing changes.
@@ -47,9 +47,11 @@ import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 import audit_translatable as T  # noqa: E402
 
-# The one handler our runtime can never fire. Kept as a set so a second dead event -- if one
-# is ever proven -- is a one-line change rather than a rewrite.
-UNREACHABLE_HANDLERS = {"on_arrived_at_waypoint"}
+# Handlers our runtime can never fire, because the action that raises them is one we cannot
+# perform. Both are movement: an NPC that never walks a route never arrives at a waypoint, and an
+# NPC that never wanders never stops wandering. Darkblade Ovanuka is the case that added the second
+# -- two whole phases of his fight hang off timers that only `on_stop_to_random_move` arms.
+UNREACHABLE_HANDLERS = {"on_arrived_at_waypoint", "on_stop_to_random_move"}
 
 TIMER_RE = re.compile(r"BTIMERI_INDEX_(\d+)")
 
