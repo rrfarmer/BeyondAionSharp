@@ -14734,3 +14734,83 @@ measurement can have.
 
 Engine reverted to `d680dddf5`'s `PatternAi` apart from `IsFlagSet`. Full suite **2,022 passing**,
 1 skipped.
+
+## The kaidan casters: one cry asking for two different things
+
+`1005` off the reachable list — **the kaidan shamans, chieftains and soothsayers of Beshmundir and the
+smackstoppers they call, 49 npcs.**
+
+A hurt kaidan caster shouts **twice in the same breath**: `1004` naming *itself* and `1005` naming
+*whoever it is fighting*. One asks for a heal, the other asks for a kill, and the camp splits its answer
+between them. **Only the second half lands here** — the `1004` answer is a heal cast on the caller and
+needs a skill index — but the `1004` call is still sent, so a listener costs nothing the day skills
+arrive.
+
+| pattern | live | band | what it does |
+|---|---|---|---|
+| `NKrall_WeA` — kaidan shaman | 13 | **41–75** | calls once, on a 9s clock that then runs at 6 |
+| `NKrall_WeB` — kaidan chieftain | 14 | **36–75** | the widest band in the camp |
+| `NKrall_WeC` — crack kaidan soothsayer | 8 | **46–75** | the narrowest, **and the cry stops its own clock** |
+| `NKrall_KeC` — kaidan smackstopper | 14 | — | switches to the named target with **100** behind it, once |
+
+### The call is a band, not a threshold
+
+Retail guards it with `is_hp_in_boundary`, not `is_hp_lower_than`. **A caster burned straight past the
+bottom of its band never calls at all** — a burst that takes a shaman from full to a fifth in one go
+silences it, where a slower fight brings the smackstoppers. Three different bands across three patterns
+standing side by side in the same camp means a raid at forty percent has the chieftains shouting and the
+soothsayers already quiet.
+
+### The soothsayer's cry kills its own clock
+
+`NKrall_WeC`'s call branch is the only one on `BTIMERI_INDEX_0` that **does not re-arm it**, and branches
+are first-match-wins. So the tick that carries the cry is the last tick that timer ever gets: the
+soothsayer calls once and then runs on its other clocks only. Reproduced exactly, and pinned through the
+switch timer so a dead timer zero cannot be mistaken for a dead pattern.
+
+### `HateMessageTarget` conflates two retail ops — and it is not only this encounter
+
+The `1005` answer is `switch_target target=OBJI_MESSAGE_PARAM points_to_add=100`. Writing that as
+`Do.HateMessageTarget(100)` followed by `Do.TargetMessageParam()` **looks like two steps and is one**:
+`PatternAi.HateMessageTarget` already calls `SetTarget`. The second action was removed as a no-op.
+
+**But that cuts the other way.** Retail has both `add_hate_point target=OBJI_MESSAGE_PARAM` — which adds
+hate and *leaves the target alone* — and `switch_target`, which moves it. **This port has only the
+switching form.** Every branch in this log that translated a plain `add_hate_point` on a message
+parameter is therefore switching a target retail would have left where it was:
+
+- the klaw gatherers and spies (`Do.HateMessageTarget` twice, modelling point-then-switch);
+- the gray mane stalkers and the kuriuta;
+- the esoterrace drakan, where the `attack_most_hating` that follows happens to correct it;
+- and any future answerer written the same way.
+
+**None of those is wrong about the hate; all of them may be wrong about the facing.** The fix is a
+non-switching variant and a pass over the answering branches to sort which retail op each one is. It is
+recorded here rather than done now because sorting them means re-reading sixteen patterns, and doing
+half of it would leave the log less trustworthy than doing none.
+
+### Not built
+
+- **`NKrall_PeA`, the kaidan healers — 9 live npcs, and the largest single group on this number.** Their
+  `1004`/`1005` call sits on a branch guarded by `is_skill_count_left`, which this port cannot read.
+  Building it without that guard would make them call on **every** tick below 35 percent instead of
+  while a particular skill has charges left. Left out rather than approximated.
+- The `1004` answer, a heal — a skill index. The flag slot is reserved so the two answers stay
+  independent when it lands.
+- `1399`, broadcast by every caster on entering the fight: no live listener anywhere on this server.
+- `percent_to_add=10` on the smackstopper's switch and on the soothsayer's, which this port has no
+  equivalent for. Recorded on every switch in this log.
+- Every `use_skill`, and the `say_to_all` lines.
+- `is_user_class` on the chieftain's four `on_attacked`/`on_spelled` bands.
+
+### Verification
+
+Fourteen pins and an **eight-mutation sweep, all caught** — but two of them only after the pins were
+strengthened. "Callers lose their flag" passed at first because **the answerer's flag hides it**: a
+smackstopper that has answered will not answer again whatever the caller does, so one listener cannot
+tell a caller that cries once from one that cries every six seconds. It took a listener arriving *after*
+the first cry. **Third time in this log that two guards protected one observable**, after the Tiamat
+insurgents and the nunu farmers.
+
+The support-aggro drift bit for the fourth time — every assertion here is a band rather than an equality
+for that reason. Full suite **2,036 passing**, 1 skipped.
