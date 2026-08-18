@@ -45,6 +45,11 @@ KEEP = {
     # A SPAWN_LOCATION_ABSOLUTE placement carries its coordinates here, and an HP-boundary
     # guard its bounds; both are the whole content of the branch they appear in.
     "x", "y", "z", "dir", "larger_than", "less_than",
+    # `flee_from` carries its duration in `seconds`, and the summariser dropped it -- so every flee
+    # printed as a bare `from=`. The klaw sentinels flee for three seconds when hit and four when cast
+    # at, and the black claw tamers for three; none of that was visible until the raw XML was read by
+    # hand. `seconds` is the whole content of the action it appears in, exactly like `delay`.
+    "seconds", "push_state",
     # `is_race` was read as an argumentless guard for months and treated as unusable because of it.
     # Every one of the 2,879 `is_race` conditions in the 5.8 files carries a `race_type`, and the
     # value is the whole content of the guard: `gchief_light` and `gchief_dark` are what makes a

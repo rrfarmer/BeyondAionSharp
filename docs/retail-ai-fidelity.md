@@ -12779,3 +12779,108 @@ shared flag. The flee is built and unpinnable for the drakies' reason, which the
 
 Full suite **2,130 passing**, 3 skipped. `audit_missed_siblings.py --classes klaw_call,klaw_sentinel,klaw_escort`
 reports **0**.
+
+## A claim in this log was wrong, and it cost forty-one branches
+
+The klaw commit ended with a question worth asking again: which other listeners are waiting on a call
+nobody makes? `audit_message_senders.py` answers it, and with the klaws repointed the largest group
+left was the **black claw lycans of Morheim and the taygas they keep** — `Lycan_HeA`, `Lycan_HnA`,
+`Lycan_HeB` and `D2_FnM`, twelve live npcs including Jahama the Ruthless.
+
+Reading them turned up something more useful than the encounter.
+
+### The correction
+
+`FriendDeathNotice` was shipped with this in its remarks:
+
+> The fallen NPC is not the message parameter — retail's handler takes no object and **its branches
+> never name one**.
+
+**That is false.** `OBJI_KILLER` appears in **41 of the 129** `on_see_friend_killed_by_user` handlers
+in the 5.8 files, and **15 of the 67** `on_sense_` ones. A third of every branch on the largest event
+retail has and aionemu does not, unreachable because of a sentence.
+
+It was not a guess written under pressure — it was written to justify *not* plumbing the killer
+through, and the justification made the check feel unnecessary. **A claim that makes work go away is
+the one to verify first.** The count above took one query.
+
+The killer now reaches the watcher: `PatternAi.FriendsKiller`, set by `FriendDeathNotice` immediately
+before it raises the event and cleared in a `finally` after the branches run, exactly as `LastAttacker`
+and `LastCaster` are. `Do.HateFriendsKiller` is the first user.
+
+### The bug the correction immediately caused
+
+`HateFriendsKiller` was written by copying `HateAttacker`, which adds hate **and turns to face**.
+Retail's action is a bare `add_hate_point`, and the branches that use it follow with
+`switch_target target=OBJI_CUR_TARGET points_to_add=100`. Turning first hands that second action the
+killer instead of whoever the npc was already facing, and both payloads land on one player.
+
+The consequence in play: **killing one tayga would have pulled the next one off the person tanking
+it**, which is the opposite of what retail wrote. Caught by a pin, not by reading.
+
+### Two pins that passed for broken code
+
+The first version of the friend-killed pins engaged the lycan before the kill — which put a hundred and
+one points on the raider through the `2301` call, so the killer was *already* the watcher's most-hated
+and the assertions held whether or not `OBJI_KILLER` reached it at all. **Two mutations survived.** The
+fix is to leave the watcher out of the fight, so the only thing that can have put hate on the killer is
+the branch under test.
+
+Same shape as the once-only guard and the survey excerpt: **a setup that pre-satisfies the assertion is
+not a weaker pin, it is not a pin.**
+
+### And a tribe question, left open rather than guessed
+
+The notice reaches a watcher only where `TribeRelationService.IsFriend` says so — and `LYCAN_PET` and
+`LYCAN_HUNTER` are related by **`support`**, not by `friend`. **A tayga does not hear its own tamer
+fall.** Taygas share a tribe with each other, so the branch is reachable and pinned; whether retail's
+"friend" means the wider word is not something this pattern can settle.
+
+Broadening `IsFriend` to `IsFriend || IsSupport` would change every consumer of the event on evidence
+nobody has, so it is **not** done here. **What would settle it:** a pattern carrying a friend-killed
+handler whose npcs have *no* same-tribe companion placed anywhere near them — there the branch is dead
+under the narrow reading and alive under the wide one, and retail would not have written it dead.
+
+### The encounter itself
+
+| pattern | live | what it does |
+|---|---|---|
+| `Lycan_HeA`, `Lycan_HnA` | 4 | on engaging, names its target at fifteen metres |
+| `Lycan_HeB` | 4 | the same, and **runs from whoever killed its tayga** |
+| `D2_FnM` | 4 | answers the call with **101**; answers a friend's death with a point on the killer and a hundred on its own target; **names its killer as it dies** |
+
+**The hundred and one is retail's**, not a rounding: `add_hate_point` of one followed by
+`switch_target` carrying a hundred, both landing. And the friend-killed branch's two payloads split or
+merge depending on whether the tayga was busy — an idle one has no target until the killer's point
+gives it one, so both land on the killer; a fighting one pays the killer a point and its tank the
+hundred. That asymmetry falls straight out of writing the actions in retail's order.
+
+### Not built
+
+- **`2302` and `2304`** — listened for by `D2_FnM` and both lycan patterns, and **broadcast by nothing
+  in either the 2.7 or the 5.8 files**. Dead wire in NCSoft's own data, checked in both dumps.
+- **`2303`** — the reverse: broadcast by `Lycan_HeA` and `Lycan_HeB` on a six-second timer below half
+  health, and **listened for by nothing**. The reason that timer is absent rather than built.
+- **`2305`/`2306`** — a tamer's cleanse when its tayga is crowd-controlled and its heal when one drops
+  below half. Both skill indices, the heal also gated on `is_skill_count_left`. **These are the answers
+  a tamer is supposed to give**, and what is left without them is the one it gives when there is
+  nothing left to save.
+- **`on_enter_abnormal_state`** — no handler in this port. It is what sends `2305`.
+- **`1019`** — sent by `Lycan_HeB` when it stops fleeing, to the `Lycan` pattern, **none of whose npcs
+  our data places**.
+- `Lycan_HeA` and `Lycan_HnA` collapse to one class because every difference between them is a skill
+  index. Recorded so they can be split when that lifts.
+
+### And a tool fix, from the same root as the last one
+
+`summarize_pattern.py` dropped `seconds`, so **every `flee_from` in every summary printed as a bare
+`from=`**. The klaw sentinels flee for three seconds when hit and four when cast at; the tamers for
+three. None of that was visible until the raw XML was read by hand — and the klaw entry's "retail's own
+asymmetry, kept" was written from a hand read that the tool should have supplied. Third time the KEEP
+list has hidden the content of an action, after `race_type` and `point_to_add`.
+
+### Verification
+
+Nine pins, and an **eight-mutation sweep with one survivor**: clearing `FriendsKiller` in the `finally`
+cannot be falsified, because every path that raises the event also sets the field. Reported rather than
+covered, as the rule says. Full suite **2,139 passing**, 4 skipped.

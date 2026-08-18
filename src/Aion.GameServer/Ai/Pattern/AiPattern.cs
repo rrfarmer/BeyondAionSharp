@@ -435,6 +435,10 @@ public static class Do
     /// <summary><c>flee_from from=OBJI_SEEN</c> — run from what just came into view.</summary>
     public static PatternAction FleeFromSeen(int seconds) => ai => ai.FleeFromSeen(seconds);
 
+    /// <summary><c>flee_from from=OBJI_MESSAGE_PARAM</c>.</summary>
+    public static PatternAction FleeFromMessageParam(int seconds)
+        => ai => ai.FleeFromMessageParam(seconds);
+
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
 
@@ -511,6 +515,13 @@ public static class Do
 
     /// <summary><c>switch_target target=OBJI_CASTER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateCaster(int hate) => ai => ai.HateCaster(hate);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_KILLER</c>.</summary>
+    public static PatternAction BroadcastAboutKiller(int messageType, float range)
+        => ai => ai.BroadcastAboutKiller(messageType, range);
+
+    /// <summary><c>add_hate_point target=OBJI_KILLER</c> inside a friend-killed branch.</summary>
+    public static PatternAction HateFriendsKiller(int hate) => ai => ai.HateFriendsKiller(hate);
 
     /// <summary>Anything with no pattern op behind it — an encounter-specific hook the table needs.</summary>
     public static PatternAction Custom(Action<PatternAi> body) => ai => body(ai);

@@ -64,6 +64,11 @@ public static class FriendDeathNotice
             if (sight <= 0 || !Aion.GameServer.Utils.PositionUtil.IsInRange(watcher, dead, sight))
                 continue;
 
+            // Retail's OBJI_KILLER: named by a third of the branches on this handler, so it has to
+            // reach the watcher. Cleared again by PatternAi once the branches have run.
+            if (watcher.GetAi() is Pattern.PatternAi pattern)
+                pattern.NoteFriendsKiller(killer);
+
             watcher.GetAi().OnCreatureEvent(AiEventType.FriendKilled, dead);
         }
     }

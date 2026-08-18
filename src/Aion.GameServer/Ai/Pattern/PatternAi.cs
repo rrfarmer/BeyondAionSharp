@@ -196,13 +196,38 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     /// <summary>Retail's <c>on_see_friend_killed_by_user</c>.</summary>
     /// <remarks>
-    /// The fallen NPC is not the message parameter -- retail's handler takes no object and its
-    /// branches never name one. See <see cref="FriendDeathNotice"/> for who hears it and how far.
+    /// The fallen NPC is not the message parameter -- retail's handler takes no object. It does name
+    /// the killer, in a third of its branches: see <see cref="FriendsKiller"/>, which corrects a
+    /// claim this remark used to make. See <see cref="FriendDeathNotice"/> for who hears it.
     /// </remarks>
     protected override void HandleFriendKilled(Creature dead)
     {
-        Evaluate(Pattern.OnFriendKilled);
+        try
+        {
+            Evaluate(Pattern.OnFriendKilled);
+        }
+        finally
+        {
+            FriendsKiller = null;
+        }
+
         base.HandleFriendKilled(dead);
+    }
+
+    /// <summary>Puts hate on whoever felled a friend.</summary>
+    /// <remarks>
+    /// <b>It does not turn to face them</b>, unlike <see cref="HateAttacker"/> and
+    /// <see cref="HateCaster"/>. Retail's action here is a bare <c>add_hate_point</c>, and the branches
+    /// that use it follow with <c>switch_target target=OBJI_CUR_TARGET</c> — so turning first would
+    /// hand that second action the killer instead of whoever the NPC was already facing, and the two
+    /// hundred-point payloads would land on the same player. The taygas' pins measure exactly that.
+    /// </remarks>
+    public void HateFriendsKiller(int hate)
+    {
+        if (FriendsKiller is not Creature killer || killer.IsDead())
+            return;
+
+        GetAggroList().AddHate(killer, hate);
     }
 
     protected override void HandleDespawned()
@@ -373,6 +398,14 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     public void Broadcast(int messageType, float range, bool aboutTarget, bool includeOwnSpawns = false)
         => BroadcastAbout(messageType, range, aboutTarget ? CurrentTarget : null, includeOwnSpawns);
 
+    /// <summary><c>broadcast_message param_obj=OBJI_KILLER</c> — used from an <c>on_die</c> branch.</summary>
+    /// <remarks>
+    /// <see cref="Killer"/> is whoever did the most player damage, which is the closest this port has
+    /// to the killing blow and is what every other <c>OBJI_KILLER</c> action here already uses.
+    /// </remarks>
+    public void BroadcastAboutKiller(int messageType, float range)
+        => BroadcastAbout(messageType, range, Killer, includeOwnSpawns: false);
+
     /// <summary><c>broadcast_message param_obj=OBJI_ATTACKER</c>.</summary>
     /// <remarks>
     /// Distinct from naming the target, and retail uses both in the same pattern: the trained beasts
@@ -454,6 +487,21 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     /// <summary>Whoever cast the skill being handled, or null outside an <c>on_spelled</c> branch.</summary>
     public Creature? LastCaster { get; private set; }
+
+    /// <summary>
+    /// Retail's <c>OBJI_KILLER</c> inside a friend-killed branch: whoever felled the friend, or null
+    /// outside one.
+    /// </summary>
+    /// <remarks>
+    /// <b>This exists because a claim in this file was wrong.</b> The handler was shipped noting that
+    /// retail's branches "never name" the killer. They do: <c>OBJI_KILLER</c> appears in <b>41 of the
+    /// 129</b> <c>on_see_friend_killed_by_user</c> handlers in the 5.8 files and <b>15 of the 67</b>
+    /// <c>on_sense_</c> ones. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public Creature? FriendsKiller { get; private set; }
+
+    /// <summary>Set by <see cref="FriendDeathNotice"/> immediately before it raises the event.</summary>
+    internal void NoteFriendsKiller(Creature? killer) => FriendsKiller = killer;
 
     /// <summary>Retail's <c>on_spelled</c>.</summary>
     /// <remarks>
@@ -852,6 +900,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// the first run of the drake-mark pins measured.
     /// </remarks>
     public void FleeFromSeen(int seconds) => FleeFrom(seconds, SeenCreature);
+
+    /// <summary>
+    /// <c>flee_from from=OBJI_MESSAGE_PARAM</c> — run from whoever a message named.
+    /// </summary>
+    /// <remarks>
+    /// The black claw tamers' use of it is the clearest: their tayga names its killer as it dies, and
+    /// the tamer runs from that player rather than from whatever it was fighting.
+    /// </remarks>
+    public void FleeFromMessageParam(int seconds) => FleeFrom(seconds, MessageParam as Creature);
 
     private void FleeFrom(int seconds, Creature? fleeFrom)
     {
