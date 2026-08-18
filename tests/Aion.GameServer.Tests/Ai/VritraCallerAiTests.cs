@@ -24,8 +24,15 @@ public sealed class VritraCallerAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(InfinityShard).WithWorldSize(2048)
-			.WithAi(typeof(VritraCallerAI), typeof(AggressiveNpcAI)).Build();
+			.WithAi(typeof(VritraCallerAI), typeof(HyperionDefenceAI), typeof(AggressiveNpcAI)).Build();
 
+	/// <remarks>
+	/// <see cref="HyperionDefenceAI"/> is registered because the troopers these callers place are
+	/// Hyperion's defence force, and they carry that class since retail's <c>21101</c> dismissal was
+	/// built. A harness only knows the AI classes it is handed, so a template repointed anywhere else
+	/// in the project silently stops spawning here — which is exactly what happened, and cost five
+	/// pins until the reason was found.
+	/// </remarks>
 	private static int Troopers(BossAiHarness harness, int caller) =>
 		harness.LiveNpcs().Count(n => n.GetNpcId() != caller);
 

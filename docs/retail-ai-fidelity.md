@@ -10603,3 +10603,40 @@ scoring one: these are the patterns to build *after* their senders, not the patt
 
 Full suite **1,990 passing** and 1 skipped, unchanged — this commit adds an audit and touches no server
 code.
+
+## Hyperion's defence force, found by the audit rather than by reading
+
+`audit_message_senders.py` earned itself in one commit. Its largest "ported class, not mentioned"
+group was twelve listener patterns — the `IDRuneWP_Main_*` family — waiting on message `21101`, whose
+only sender is `IDRuneWp_AncientArm_N_65_Al`: **Hyperion** (231073), who runs a Java-parity class that
+never mentioned the number.
+
+He broadcasts it at fifty metres **when he dies and when he leaves the fight**, and twenty-two npcs
+answer with `despawn_self` — combatants, assaulters, medics, healers, snipers, marksmen, scouts,
+assassins, sorcerers, mages, a turret and a summoned tyrhund. **When Hyperion goes, the whole defence
+goes with him.**
+
+Three lines in `HyperionAI` and one branch in a new class. Third gap of exactly this shape after
+Modor's obscura and the Sauro guards, and **the first the audit caught before a human did** — which is
+what the audit was written for one commit earlier.
+
+### Repointing a template can silently unspawn an NPC in someone else's pins
+
+Giving those twenty-two npcs a class broke five pins in `VritraCallerAiTests`, which had nothing to do
+with this change: the Vritra callers place exactly these troopers, and that harness registers only the
+classes it names. A template repointed anywhere in the project stops spawning in any pin whose
+`WithAi(...)` does not list the new class — and the failure looks like "the caller called nobody"
+rather than "the AI is not registered".
+
+**Rule: repointing a template is a change to every pin that spawns it.** The harness knows only the AI
+classes it is handed, so the blast radius of an `ai="…"` edit is the set of test classes that spawn that
+npc — which no tool reports and only a full-suite run reveals. It is one line to fix and half an hour to
+find, and this is the second time in this project a harness registration has cost that; the first is
+already in the log as "the harness registration trap".
+
+### Verification
+
+Full suite **1,995 passing** and 1 skipped; four new pins run three times over; **six mutations, all
+caught**. Missing-AI unchanged at **662** — these twenty-two are adds rather than fights, so the
+missing-AI audit never counted them — and the stranded-listener audit falls from 116 patterns / 191 npcs
+to **104 / 169**.

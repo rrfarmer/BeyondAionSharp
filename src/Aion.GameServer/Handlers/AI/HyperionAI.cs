@@ -263,9 +263,19 @@ public class HyperionAI : AggressiveNpcAI, HpPhases.PhaseHandler
         return 0;
     }
 
+    /// <summary>
+    /// Retail's <c>IDRuneWp_AncientArm_N_65_Al</c> broadcasts <c>21101</c> at fifty metres when he dies
+    /// and when he leaves the fight, and every one of his twenty-two defenders answers it by removing
+    /// itself. Added to this class rather than translated into one, because everything else here is a
+    /// Java port. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private void DismissTheDefence() =>
+        NpcMessageBus.Broadcast(GetOwner(), HyperionDefenceAI.StandDown, null, 50f);
+
     protected override void HandleBackHome()
     {
         CancelSpawnTask();
+        DismissTheDefence();
         base.HandleBackHome();
     }
 
@@ -278,6 +288,7 @@ public class HyperionAI : AggressiveNpcAI, HpPhases.PhaseHandler
     protected override void HandleDied()
     {
         CancelSpawnTask();
+        DismissTheDefence();
         base.HandleDied();
     }
 }
