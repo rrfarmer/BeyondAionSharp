@@ -22427,3 +22427,51 @@ found**, and every entry has to be re-checked against the code before it can be 
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,117 passing**, 1 skipped.
+
+## Two searches of the server tree, both negative
+
+The walk paths and Modor's spawn condition both came out of `Server/Map/Worlds`, so the same tree was
+searched for the two remaining data gaps. **Neither is there.**
+
+### `sematariux` and `king_consierd` have no spawn entry anywhere
+
+Both fixes have stood unpinned for eight passes for want of a map to put the npc in — 216520 and 217595.
+**The world files do not carry npc spawns at all**: `world.xml` holds waypoints and conditional spawn
+groups, `world_M.xml` holds zones, areas and portals, and neither mentions an npc id. Retail's spawn
+placement lives somewhere this tree does not expose.
+
+**So those two stay unpinnable**, and the reason is now specific rather than "no map": the map data exists
+and does not contain spawns.
+
+### The alias table is declared but empty
+
+`world_M.xml` carries `castledoor_in_alias_list`, `enemy_out_alias_list` and `direct_portals` — **exactly
+the shape `teleport_target_alias` would need**, and the gap recorded when `Do.TeleportTalker` was built to
+take coordinates instead. In `idldf5_under_rune` all three are empty.
+
+**Worth recording as a location rather than a result.** The structure is real and named; whether any world
+populates it was not established, and the only consumer this port has — the Raksha door — turned out to be
+built in the instance layer anyway.
+
+### What this pass is
+
+**An exploratory pass with two negative results.** Both are recorded because the alternative is that the
+next pass runs the same searches: the server tree has been productive twice, which makes it exactly the
+kind of place that gets re-searched hopefully.
+
+**The queue's remaining data items are now each attached to a specific absence**, rather than to "not
+extracted yet".
+
+### Still to do
+
+- **Whether any world populates the alias lists**, one grep across all 258 worlds, if a consumer ever
+  needs it.
+- Convert `TiamatDragonAI` to a pattern table, for the rush cadence; Modor's trigger, if judged worth
+  closing.
+- The 12,000 unbound templates; the empyrean lords' skill indices; the `drakanmedic` harness question.
+- **Delete the dropped-guard report**, which has produced thirteen rows and no true finding across seven
+  readings.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,117 passing**, 1 skipped.
