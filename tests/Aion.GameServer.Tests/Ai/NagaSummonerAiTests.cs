@@ -181,11 +181,12 @@ public sealed class NagaSummonerAiTests
 		// retail's add_hate_point on a message parameter adds hate and leaves the target alone, so the
 		// turn this used to assert was ours rather than retail's.
 		//
-		// AND THE HATE DOES NOT LAND EITHER. AggroList.IsAware refuses hate aimed at a creature the
-		// owner is not hostile to, and this answerer is tribe NNAGA, which is not hostile to a player
-		// race -- so the answer adds nothing at all and the listener never joins the fight. The forced
-		// target was the only thing that ever made this encounter look alive. Asserted as zero and
-		// null deliberately: both go red the day the tribe is sorted out. See
+		// AND THE HATE DOES NOT SURVIVE. The named player is seventy metres away, and an NPC handed
+		// hate for somebody it cannot reach gives up and clears its aggro list -- measured: with the
+		// witness two metres from the quarry the same order leaves hate on it and a target set, and
+		// at seventy it leaves nothing at all. On a live server the witness would run at the player;
+		// this harness does not move NPCs, so it never closes the distance and always gives up.
+		// Asserted as zero because that is what happens here, with the cause named. See
 		// docs/retail-ai-fidelity.md.
 		Assert.Equal(0, witness.GetAggroList().GetHate(quarry));
 		Assert.Null(witness.GetTarget());
@@ -220,11 +221,12 @@ public sealed class NagaSummonerAiTests
 		// retail's add_hate_point on a message parameter adds hate and leaves the target alone, so the
 		// turn this used to assert was ours rather than retail's.
 		//
-		// AND THE HATE DOES NOT LAND EITHER. AggroList.IsAware refuses hate aimed at a creature the
-		// owner is not hostile to, and this answerer is tribe NNAGA, which is not hostile to a player
-		// race -- so the answer adds nothing at all and the listener never joins the fight. The forced
-		// target was the only thing that ever made this encounter look alive. Asserted as zero and
-		// null deliberately: both go red the day the tribe is sorted out. See
+		// AND THE HATE DOES NOT SURVIVE. The named player is seventy metres away, and an NPC handed
+		// hate for somebody it cannot reach gives up and clears its aggro list -- measured: with the
+		// witness two metres from the quarry the same order leaves hate on it and a target set, and
+		// at seventy it leaves nothing at all. On a live server the witness would run at the player;
+		// this harness does not move NPCs, so it never closes the distance and always gives up.
+		// Asserted as zero because that is what happens here, with the cause named. See
 		// docs/retail-ai-fidelity.md.
 		Assert.Equal(0, latecomer.GetAggroList().GetHate(quarry));
 		Assert.Null(latecomer.GetTarget());

@@ -14953,3 +14953,78 @@ blocking.**
 
 Two new engine pins, 14 classes corrected, three encounter pins restated with their causes. Full suite
 **2,038 passing**, 1 skipped.
+
+## Correction: the naga answers are not blocked by their tribe
+
+**The previous entry blamed `NNAGA`, and that was wrong.** It claimed `AggroList.IsAware` refuses hate
+aimed at a creature the owner is not hostile to, that the faithful subordinates are a tribe not hostile
+to a player race, and that two shipped encounters therefore do nothing at all. The symptom was real. The
+cause was invented, and it is corrected here.
+
+### What the data actually says
+
+`NNAGA` in `tribe_relations.xml` reads `<aggro>PC GUARD PC_DARK GUARD_DARK</aggro>`, and **our file
+matches the Java reference byte for byte**. `AggroList.IsAware` and `Player.isEnemyFrom(Npc)` are both
+faithful ports — checked line by line against the Java. There was no divergence to find.
+
+Measured on the actual pair:
+
+```
+knows=True  enemy=True  tribe=NNAGA  type=AGGRESSIVE  hateAfterAdd=5
+```
+
+**The naga takes hate perfectly well.** Every step of the chain the previous entry accused was working.
+
+### What is actually happening
+
+The same probe inside the encounter's own arrangement:
+
+| witness distance from the named player | result |
+|---|---|
+| **70 metres** (the pin's layout) | `hate=0  target=null` |
+| **2 metres** | `hate=11  target=set` |
+
+**An NPC handed hate for somebody it cannot reach gives up and clears its aggro list.** The order lands,
+the witness joins, it finds nothing within reach, and `LoseAggro` empties the list before anything can
+observe it. Nothing to do with tribes.
+
+And on a live server the witness would **run at the player** — retail's fifty-metre order exists
+precisely to pull distant subordinates in. **This harness does not move NPCs**, so the witness can never
+close the gap and always gives up. So this is a third harness artifact, after the pure-broadcaster
+events and the forced-target chain.
+
+The pins now assert zero with that cause written beside them, and they go red the day movement is
+simulated — which is the correct trigger, unlike the tribe check, which would never have fired.
+
+### Withdrawn
+
+- **"Fix the `NNAGA` answerers"** as an open item. There is nothing wrong with them.
+- **"An encounter whose answer `IsAware` drops is not shipped, it only looks shipped."** True as a
+  sentence, false about these two.
+
+### What replaces it
+
+**The harness cannot observe any call whose listener has to travel.** That is a much larger caveat than
+one tribe, and it touches every pin in this log where a listener stands outside its own aggro range of
+the named player — which is the *normal* shape for the long-range orders in the retail data, since a
+fifty-metre broadcast exists to reach NPCs that are not already in the fight.
+
+Recorded rather than fixed, and it wants a decision rather than a patch: either the harness gains enough
+of the move controller to close a gap, or these pins are written with the listener already in reach and
+say so. **The second is cheaper and weaker**; the first is the only one that would have caught this
+without a probe.
+
+### The rule, for the third time this session
+
+**A mechanism that explains the symptom is not the same as the mechanism causing it.** The tribe check
+was a real thing that really does drop hate — it had bitten five times in this log — and it fit the
+evidence. It was also not what was happening. Five prior sightings made it the first thing reached for
+and the last thing checked.
+
+The check that settled it took one probe and four lines: ask the pair directly whether hate lands.
+**That probe should have been written before the explanation was committed, not after.**
+
+### Verification
+
+Two test files corrected, one wrong claim withdrawn from this log. Full suite **2,038 passing**,
+1 skipped.
