@@ -246,6 +246,55 @@ public sealed class SilikorOfMemoryAiTests
 	}
 
 	/// <summary>
+	/// <b>A guard that falls next to the akaimum is not stood back up.</b> Retail answers a marker within
+	/// ten metres from a pair of branches above the re-placement pair, so first-match-wins decides it.
+	/// </summary>
+	/// <remarks>
+	/// This is the half of the hall that was missing. The re-placement was ported and the exception to it
+	/// was not, which made the akaimum strictly stronger than retail's: <b>every guard came back,
+	/// wherever it died.</b> Pulling one into the akaimum's lap is a real tactic and it did nothing.
+	/// </remarks>
+	[Fact]
+	public void AGuardThatFallsBesideTheAkaimumIsNotReplaced()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc akaimum = harness.Spawn(Akaimum, 392f, 727f, 188f);
+
+		// Five metres away, inside retail's ten.
+		Npc melee = harness.Spawn(MeleeGuard, 396f, 730f, 188f);
+		BossAiHarness.MakeMutuallyKnown(akaimum, melee);
+
+		melee.GetAi().OnGeneralEvent(AiEventType.Died);
+		Npc marker = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == MeleeMarker);
+		BossAiHarness.MakeMutuallyKnown(akaimum, marker);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		// Counted as guards other than the one that died: the harness leaves a killed npc in the list,
+		// so a plain count sees the corpse and reports a re-placement that never happened.
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == MeleeGuard && n != melee);
+	}
+
+	/// <summary>
+	/// <b>And a distant one still is.</b> The mirror, so the pin above is shown to be about distance
+	/// rather than about the near branches swallowing every marker.
+	/// </summary>
+	[Fact]
+	public void AGuardThatFallsAcrossTheHallStillComesBack()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc akaimum = harness.Spawn(Akaimum, 392f, 727f, 188f);
+		Npc melee = harness.Spawn(MeleeGuard, 377f, 762f, 189f);
+		BossAiHarness.MakeMutuallyKnown(akaimum, melee);
+
+		melee.GetAi().OnGeneralEvent(AiEventType.Died);
+		Npc marker = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == MeleeMarker);
+		BossAiHarness.MakeMutuallyKnown(akaimum, marker);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == MeleeGuard && n != melee);
+	}
+
+	/// <summary>
 	/// <b>And 6621 sends it away, guards and all.</b> Retail's dismissal branch sits above both
 	/// re-placement branches, so an akaimum that has just stood a guard back up still leaves with it.
 	/// </summary>

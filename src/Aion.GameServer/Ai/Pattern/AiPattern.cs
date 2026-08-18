@@ -414,6 +414,19 @@ public static class When
     /// </summary>
     public static PatternCondition SenderIs(int npcId) => ai => ai.MessageSender?.GetNpcId() == npcId;
 
+    /// <summary>
+    /// <c>is_distance_shorter_than who=OBJI_MESSAGE_PARAM</c> — the npc a message names is this close.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail uses this to split one message into a near answer and a far one</b>, and the near answer
+    /// is usually the quieter of the two. The silikor akaimum is the clearest case: a guard that falls
+    /// within ten metres of it gets walked to and <i>not</i> stood back up, while a distant one is
+    /// re-placed — so where a guard dies changes whether killing it accomplishes anything.
+    /// </remarks>
+    public static PatternCondition SenderWithin(int metres) => ai =>
+        ai.MessageSender is Aion.GameServer.Model.GameObjects.Creature sender
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), sender, metres);
+
     /// <summary>No guard at all, for branches that run whenever their event fires.</summary>
     public static PatternCondition[] Always => Array.Empty<PatternCondition>();
 }

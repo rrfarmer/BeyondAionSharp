@@ -19123,3 +19123,67 @@ handler that touches the same flag.
 ### Verification
 
 Build clean. Five new pins, including instance isolation. Full suite **2,060 passing**, 1 skipped.
+
+## Correction: p3 is reachable, and the akaimum was strictly stronger than retail's
+
+The previous entry said `ND2_WhG3`'s p3 "can never run" and left the silikor dismissal unwired on that
+basis. **That was wrong, and wrong in the way the entry above it had just named as a rule.**
+
+`ALPHA_1` is cleared in a **different handler**: `on_arrived_at_waypoint` carries `unset_flag_var
+ALPHA_1`. So the sequence works — first nearby marker takes p4 and sets `ALPHA_1`; the roamer walks; on
+arrival `ALPHA_1` clears; the next nearby marker takes p3 and sets world `ALPHA_2`, which is what the
+silikor consumes. **The rule was "read a flag against every branch that touches it", and reading every
+branch in one handler is not the same thing.**
+
+### And reading it properly found the real mechanic
+
+p4 and p3 are guarded on `is_distance_shorter_than who=OBJI_MESSAGE_PARAM distance=10`, and they sit
+**above** the two re-placement branches. First-match-wins does the rest:
+
+**A silikor guard that falls within ten metres of the akaimum is not stood back up.** A distant one is.
+
+Our port had the re-placement and not the exception, which made this akaimum **strictly stronger than
+retail's** — every guard came back, wherever it died. Pulling a guard into the akaimum's lap is a real
+tactic and it did nothing at all.
+
+### Built
+
+`When.SenderWithin`, and the two near branches above the re-placement pair. Both arm their world flags,
+so the dismissal chain is now half-wired: `FirstNearby` is set the first time, and `SecondNearby` — the
+one the silikor consumes — is set the second time.
+
+### The remaining blocker is waypoints, not flags
+
+**`ALPHA_1` is cleared on waypoint arrival, and this port has no `goto_waypoint` or
+`on_arrived_at_waypoint` in the pattern engine at all.** So in practice the first nearby marker sets the
+per-npc flag and nothing ever clears it, p3 never runs a second time, and world `SecondNearby` is never
+set — **the dismissal remains unarmed for a new and better-understood reason.**
+
+The near/far split works today regardless, which is the part players would notice.
+
+### The pin failed for a fourth reason, and it was mine again
+
+The near pin failed against correct code. The AI was rewritten twice and the guard tested with a
+thousand-metre radius before the cause turned up: **`Count(harness, MeleeGuard)` counts the corpse.** The
+harness leaves a killed npc in its list, and the existing far pin had always excluded it explicitly —
+`n != melee` — which is exactly the detail a new pin copies over without understanding.
+
+**Same lesson as the flaky Kingspin pin, from the other direction**: that one measured an effect two steps
+from the cause, this one measured a population that included the thing it was asking about. Both times the
+code was right.
+
+### Still to do
+
+- **Waypoints in the pattern engine** — `goto_waypoint`, `goto_next_waypoint`, `on_arrived_at_waypoint`,
+  `is_waypoint_index`. This now blocks the silikor dismissal specifically, and it is the third named
+  engine gap after world flags and `is_skill_count_left`.
+- The other 17 world-flag patterns we serve — Tiamat and Modor's clone are the substantial ones.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses.
+- The four Ophidan controllers, blocked on npc templates for 856057-856060.
+- Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the remaining
+  ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The near pin fails with its branches removed and its mirror still passes. Full suite
+**2,062 passing**, 1 skipped.

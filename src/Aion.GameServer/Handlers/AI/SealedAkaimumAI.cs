@@ -53,6 +53,24 @@ public class SealedAkaimumAI : PatternAi
     /// </remarks>
     public const int Dismissed = 6621;
 
+    /// <summary>Retail <c>is_distance_shorter_than distance=10</c> on the marker.</summary>
+    private const int NearMetres = 10;
+
+    /// <summary>Per-npc <c>FLAGVARI_ALPHA_2</c> and <c>ALPHA_1</c>.</summary>
+    private const int NearOnce = 2;
+    private const int Walking = 1;
+
+    /// <summary>
+    /// World <c>FLAGVARI_ALPHA_1</c> and <c>ALPHA_2</c>. The second is what the silikor consumes to send
+    /// this akaimum away, which is why these are world flags and not per-npc ones.
+    /// </summary>
+    private const int FirstNearby = 1;
+    private const int SecondNearby = 2;
+
+    /// <summary>Retail <c>..._AIPattern_3</c> and <c>_4</c>.</summary>
+    private const int FirstNearbyLine = 1500670;
+    private const int SecondNearbyLine = 1500671;
+
     /// <summary>Retail <c>STR_CHAT_BIDLF2A_HolyServantSum_Roamer_50_n_AIPattern_6</c>.</summary>
     private const int Farewell = 1500673;
 
@@ -81,6 +99,23 @@ public class SealedAkaimumAI : PatternAi
                 Do.Despawn(CasterPlace),
                 Do.Despawn(MeleePlace),
                 Do.DespawnSelf()),
+
+            // Retail p4 and p3: a marker within ten metres gets a spoken answer instead of a guard. They
+            // sit above the re-placement pair, so first-match-wins means a guard that falls next to this
+            // akaimum is NOT stood back up -- where a guard dies decides whether killing it achieved
+            // anything, and none of that was here.
+            //
+            // Both also arm a world flag, which is the only reason the silikor can ever dismiss this
+            // akaimum. p4 arms the first, p3 the second, and the second is the one the silikor consumes.
+            Branch(4, "a guard fell close by, the first time", [When.Message(GuardDown),
+                    When.SenderWithin(NearMetres), When.FirstTime(NearOnce), When.FirstTime(Walking),
+                    When.FirstTimeInWorld(FirstNearby)],
+                Do.Say(FirstNearbyLine)),
+
+            Branch(3, "a guard fell close by again", [When.Message(GuardDown),
+                    When.SenderWithin(NearMetres), When.FirstTime(Walking),
+                    When.FirstTimeInWorld(SecondNearby)],
+                Do.Say(SecondNearbyLine)),
 
             Branch(2, "a melee guard fell", [When.Message(GuardDown), When.SenderIs(SilikorGuardMarkerAI.MeleeMarker)],
                 Do.SpawnAt(MeleeGuard, MeleePlace, 0, MeleePost)),
