@@ -91,11 +91,11 @@ public class FortressGuardAnswerAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(2, "a call, and I am already fighting",
-				[When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
+				[When.MessageParamIsEnemy, When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
 				Do.HateMessageTarget(Claim)),
 
 			Branch(1, "a call, and I am not",
-				[When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy],
+				[When.MessageParamIsEnemy, When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy],
 				Do.HateMessageTarget(Glance))),
 	};
 
@@ -171,11 +171,11 @@ public class GarrisonGuardAnswerAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(2, "a call, and I am already fighting",
-				[When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
+				[When.MessageParamIsEnemy, When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
 				Do.HateMessageTarget(Claim)),
 
 			Branch(1, "a call, and I am not",
-				[When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy],
+				[When.MessageParamIsEnemy, When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy],
 				Do.HateMessageTarget(Glance))),
 	};
 

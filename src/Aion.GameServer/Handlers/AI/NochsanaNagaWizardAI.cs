@@ -113,10 +113,10 @@ public class NochsanaNagaTeleporterAI : PatternAi
 		OnMessage = Of(
 			// Already fighting: he turns, and nothing else. Retail's own split, and the runtime can
 			// finally say it.
-			Branch(3, "", [When.Message(NochsanaNagaProtectorAI.Call), When.Fighting],
+			Branch(3, "", [When.MessageParamIsEnemy, When.Message(NochsanaNagaProtectorAI.Call), When.Fighting],
 				Do.TargetMessageParam()),
 
-			Branch(2, "", [When.Message(NochsanaNagaProtectorAI.Call)],
+			Branch(2, "", [When.MessageParamIsEnemy, When.Message(NochsanaNagaProtectorAI.Call)],
 				Do.HateMessageTarget(SummonOrder.OnePoint))),
 
 		OnBattleTimer = Of(

@@ -88,10 +88,10 @@ public class AbyssGuardCallAI : PatternAi
 				? Of()
 				: Of(
 					// Already fighting: it turns, and its own attacker keeps its hate.
-					Branch(2, "", [When.Message(CallForHelp), When.Fighting],
+					Branch(2, "", [When.MessageParamIsEnemy, When.Message(CallForHelp), When.Fighting],
 						Do.TargetMessageParam()),
 
-					Branch(1, "", [When.Message(CallForHelp)],
+					Branch(1, "", [When.MessageParamIsEnemy, When.Message(CallForHelp)],
 						Do.HateMessageTarget(JustEnoughToJoin))),
 		};
 	}

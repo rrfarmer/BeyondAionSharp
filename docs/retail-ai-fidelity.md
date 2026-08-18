@@ -15771,3 +15771,50 @@ is not.
 
 Seventeen guards, four pins rewritten around the band they are actually in, two guards reverted. Dropped
 guards **51 → 34**. Full suite **2,041 passing**, 1 skipped.
+
+## Nine enemy checks, and two shapes the report gets wrong
+
+Nine `enemy` rows applied and kept — every one of them
+`is_enemy(OBJI_MESSAGE_PARAM)` on a message answer:
+
+| class | branches |
+|---|---|
+| `FortressGuardCallAI` — fortress and garrison answers | 4 |
+| `AbyssGuardCallAI` | 2 |
+| `NochsanaNagaWizardAI` — the teleporter | 2 |
+| `PanesterraGuardAI` — the slayer | 1 |
+
+**A guard answering a call now checks that what it was pointed at is an enemy.** Without it a cry naming
+anything at all — a friendly npc, an object — sent the answerer at it.
+
+### Two false-positive shapes, both found by applying and watching
+
+**A guard wrapped in a local helper is invisible.** `SuspiciousCoffinAI` guards its five wave branches
+with `Hears(slot)`, which tests `ai.CurrentMessage` and *is* the message guard. The scan looks for
+`When.*`, so it reported five dropped `message` guards on a class that has them. Any file with its own
+condition helper will do the same, and there is no way to see that from the report alone.
+
+**A retail handler with both an idle branch and an attack branch collapses onto one branch of ours.** The
+four `state` rows — the Anuhart pet, its two subordinates, the Vritra rearguard — asked for
+`is_npc_state(NPC_STATE_ATTACK)` or `(NPC_STATE_IDLE)`. Applied, they silenced the encounters: six pins
+red, because the pets are idle when the order arrives and the guard demanded they be fighting. Retail has
+a branch for each state and this port folded them into one; **the alignment check cannot tell them apart,
+because both carry `hate` and so both look like the same step.**
+
+Both shapes are now in the tool's docstring. **Neither is fixable by the tool as built** — the first needs
+the scan to follow local helpers, the second needs branch matching finer than "do they share an action
+kind".
+
+### Still to do
+
+- **The four `state` rows**, which need our folded branch split in two, one per npc state.
+- **The five coffin `message` rows**, which need the scan taught about local condition helpers before they
+  can even be judged.
+- The 14 remaining ready rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Nine guards kept, four reverted. Full suite **2,041 passing**, 1 skipped.

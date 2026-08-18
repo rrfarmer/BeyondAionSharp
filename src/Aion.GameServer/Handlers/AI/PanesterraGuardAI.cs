@@ -228,7 +228,7 @@ public class PanesterraSlayerAI : PatternAi
 
 			// The is_enemy that only this pattern carries.
 			Branch(1, "a guard is calling, and it is my enemy",
-				[When.Message(PanesterraCalls.LightGuard), When.MessageParamIsEnemy],
+				[When.MessageParamIsEnemy, When.Message(PanesterraCalls.LightGuard), When.MessageParamIsEnemy],
 				Do.HateMessageTarget(PanesterraCalls.GuardAnswer))),
 	};
 

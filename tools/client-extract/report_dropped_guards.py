@@ -23,6 +23,17 @@ the one it would be applied to. **Check that our branch and retail's branch at t
 step before touching anything.** A whole batch of nineteen was applied and reverted for want of that
 check.
 
+**Two known false-positive shapes**, both found by applying rows and watching pins go red:
+
+  * **a guard wrapped in a local helper is invisible.** The scan looks for `When.*`, so
+    `SuspiciousCoffinAI`'s `Hears(slot)` -- which tests `ai.CurrentMessage` and is exactly the message
+    guard -- reads as five dropped `message` guards. Any file with its own condition helper will do the
+    same.
+  * **a retail handler with an idle branch and an attack branch** collapses onto one branch of ours. The
+    alignment check cannot separate them: both carry `hate`, so both look like the same step. Four
+    `state` rows on the Anuhart pets and subordinates were applied, silenced the encounter, and were
+    reverted.
+
 Usage:
     python report_dropped_guards.py <patterns_dir> <binding_tsv> [--repo ..] [--kind flag]
 """
