@@ -17959,3 +17959,50 @@ worth reading for mechanics that were never firing rather than for cadences that
 ### Verification
 
 Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Masto's band cadence resists a pin, for a reason this log already knew
+
+The previous entry made "pin Masto's four band cadences" the next step, on the grounds that a repair
+nothing measures is a repair that can regress silently. Started, and stopped at the observable.
+
+**Each band's action is `Do.SwitchTarget(AggroTarget.RANDOM)`.** The band fires and Masto picks a random
+one of his attackers — which is the same wall this log hit when the encounter was first built: *"SwitchTarget(RANDOM) can re-pick the current target, so 'the target changed' is a coin flip"*. The original
+pins were built on absences, determinisms and stated exponents precisely because of it.
+
+A cadence pin needs to count **fires**, and a fire is only visible when the random pick happens to land on
+somebody else. Over a sixty-second watch at twenty-second cadence that is three fires and, with two
+players, roughly a one-in-eight chance of seeing no change at all — **a flaky pin, which this log has been
+clear is worse than none.**
+
+### What would work
+
+The harness now has `SeedRolls`, added for the probability guards. **`SwitchTarget(RANDOM)` does not go
+through `RollPercent`** — it goes through the aggro list's own target selection — so the seam does not
+reach it. Giving that selection the same treatment is a small, contained change and it would make every
+`RANDOM` switch in the port observable, not just Masto's.
+
+**That is the actual next step**, and it is a harness change rather than an encounter one.
+
+### Where the timer thread stands
+
+- The operator is fixed and matches the data.
+- **Two bosses repaired** — Chunapa's phase two, Masto's four dead bands.
+- Nineteen encounters remain on the list, now expected to be repairs rather than regressions.
+- **None of the repairs is pinned**, because all of them are timing and the suite counts occurrences.
+
+That last line is the honest summary of the whole thread: **the fix is real and the evidence for it lives
+in this log rather than in the suite.**
+
+### Still to do
+
+- **A seam for `SwitchTarget(RANDOM)`**, then Masto's cadence pin.
+- The remaining ~19 encounters, read for mechanics that were never firing.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+No code changed. Full suite **2,050 passing**, 1 skipped.
