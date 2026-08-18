@@ -21880,3 +21880,61 @@ Two entries stated "the mapping is not in this repository in any form" and "the 
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,114 passing**, 1 skipped.
+
+## The routes are in, and named the way the patterns name them
+
+`extract_walker_routes.py` reads the 5.8 server's `Server/Map/Worlds/<world>/world.xml` and writes
+`npc_walker/retail_pattern_paths.xml`.
+
+```
+named waypoints in world data : 11,053
+path names used by patterns   :    467
+written                       :    344
+still missing                 :    123
+```
+
+**Keyed by retail's own path name**, not by a hash. A pattern class can now call
+`GetSpawn().SetWalkerId("path_tiamatdrakan_1_1")` and `WalkManager.StartRouteWalking` resolves it — which
+is why this port could already walk adds it had no routes for. **The walking was never the gap.**
+
+### Pinned at boot, not in the harness
+
+The AI harness deliberately carries an **empty** walker holder, so it cannot see this. The pin went into
+`RealStaticDataLoadIntegrationTests`, which boots the real static data: `path_tiamatdrakan_1_1` resolves,
+has steps, and its last step is flagged. **Removing the file turns it red**, which is the check that
+matters — a data file that is present but not loaded looks identical to one that works.
+
+### One thing the extractor reports rather than hides
+
+**376 names are defined more than once with different points.** The first is kept and the count is printed
+to stderr on every run. That is a real ambiguity in the source data — two worlds using one name for
+different paths — and it is left visible rather than resolved by file order in silence. **None of the five
+blocked encounters' paths is among them**, so it does not affect what this unblocks today.
+
+### What is now unblocked, and what still is not
+
+| encounter | path | state |
+|---|---|---|
+| Tiamat's rush wave | `path_tiamatdrakan_*` | **routes present** |
+| Bergrisar's blood wheels | `Path_IDTemple_Low_AI01_*` | **routes present** |
+| silikor akaimum's patrol | its arrival clears `ALPHA_1` | **routes present** |
+| Padmarashka's four adds | `DF4_MobPath_DF4_Dramata1` | **still missing** |
+| Kaliga's statues | waypoint-armed timers | **still missing** |
+
+**The 123 missing are the next question**, and Padmarashka's and Kaliga's are among them — likely variant
+spellings, other worlds, or paths this dump does not carry.
+
+### Still to do
+
+- **Tiamat's rush wave**, the largest of the three now unblocked: twenty drakan on six named paths.
+- **Bergrisar** — and with it the decision recorded against spawning his wheels unwalked, which this log
+  said to revisit exactly when routes arrived.
+- **The silikor dismissal**, whose last missing piece was the patrol arrival.
+- **The 123 missing names**, Padmarashka's and Kaliga's first.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  guard report's unverified rows; the `drakanmedic` harness question.
+
+### Verification
+
+344 routes written and loading. The boot pin fails with the file removed. Full suite **2,114 passing**,
+1 skipped.

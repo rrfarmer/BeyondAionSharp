@@ -194,6 +194,16 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(walker);
 		Assert.True(walker!.GetRouteSteps()[walker.GetRouteSteps().Count - 1].IsLastStep());
 
+		// And retail's own path names resolve, not only the hashed ids. The AI patterns name their paths
+		// -- pathname=path_tiamatdrakan_1_1 -- and until retail_pattern_paths.xml was extracted from the
+		// 5.8 server's world data, nothing in this port could turn that name into points. Five encounters
+		// were blocked on it, and two entries in the fidelity log recorded the mapping as absent because
+		// every search used a byte-level grep against UTF-16 files.
+		var byName = sd.WalkerDataDh.GetWalkerTemplate("path_tiamatdrakan_1_1");
+		Assert.NotNull(byName);
+		Assert.True(byName!.GetRouteSteps().Count >= 2, "retail-named route has no steps");
+		Assert.True(byName.GetRouteSteps()[byName.GetRouteSteps().Count - 1].IsLastStep());
+
 		var absStats1 = sd.AbsoluteStatsDataDh.GetTemplate(1);
 		Assert.NotNull(absStats1);
 		Assert.True(absStats1!.GetModifiers().Count > 1, "AbsoluteStats modifiers dropped at boot");
