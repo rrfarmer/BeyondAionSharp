@@ -21,9 +21,11 @@ namespace Aion.GameServer.Handlers.AI;
 /// of its own making.
 /// </para>
 /// <para>
-/// <b>This is the encounter that found the pure-broadcaster bug.</b> Its bands answer a blow with
-/// nothing but a broadcast, so the feeder takes no hate, never reaches <c>FIGHT</c>, and was sent home
-/// after every blow — clearing the flags the whole ladder rests on. See <c>PatternAi.HandleBackHome</c>.
+/// <b>Its bands answer a blow with nothing but a broadcast</b>, which makes it the first encounter here
+/// that takes no hate of its own from its own pattern. That shape is a trap for tests rather than for
+/// the server: an <c>Attack</c> event carrying no damage leaves the NPC out of combat and its pattern
+/// is reset between blows, so a pin driven that way sees every band re-fire. A real blow lands damage
+/// and hate. See docs/retail-ai-fidelity.md.
 /// </para>
 /// </remarks>
 public static class EsoterraceAlarm

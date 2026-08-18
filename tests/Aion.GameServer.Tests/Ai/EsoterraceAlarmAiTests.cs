@@ -41,6 +41,11 @@ public sealed class EsoterraceAlarmAiTests
 		Player raider = harness.SpawnPlayer(302f, 300f, 200f, race: Race.ELYOS);
 		BossAiHarness.MakeMutuallyKnown(feeder, drakan);
 		BossAiHarness.MakeMutuallyKnown(drakan, raider);
+		// Engage rather than a bare Attack event: a real blow lands damage, which puts the feeder on its
+		// own aggro list and into FIGHT. A bare event does neither, and an NPC that never enters combat
+		// is sent home after every blow with its flags cleared -- a harness artifact that reads exactly
+		// like the ladder misbehaving. See docs/retail-ai-fidelity.md.
+		harness.Engage(feeder, raider);
 		return (harness, feeder, drakan, raider);
 	}
 
@@ -54,10 +59,7 @@ public sealed class EsoterraceAlarmAiTests
 		var (harness, feeder, drakan, raider) = Lab();
 		using BossAiHarness _h = harness;
 
-		Assert.Equal(0, drakan.GetAggroList().GetHate(raider));
-
-		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
-
+		// Engage lands a genuine blow, so the bare band has already fired.
 		Assert.Equal(EsoterraceAlarm.Notice, drakan.GetAggroList().GetHate(raider));
 	}
 
@@ -66,8 +68,10 @@ public sealed class EsoterraceAlarmAiTests
 	/// so a raider beating the feeder without moving its health bar gets one answer, not one per blow.
 	/// </summary>
 	/// <remarks>
-	/// This is the pin the whole encounter turned on. A pure broadcaster takes no hate and so never
-	/// enters combat, and the engine used to send it home — and clear its flags — after every blow.
+	/// <b>This is the pin the whole encounter turned on, and it turned the wrong way twice.</b> Driven
+	/// with bare <c>Attack</c> events the feeder answers every blow, which reads exactly like the flags
+	/// failing; driven with <see cref="BossAiHarness.Engage"/>, which lands hate the way a real blow
+	/// does, it answers once. The difference is the harness, not the ladder.
 	/// </remarks>
 	[Fact]
 	public void AndAtFullHealthOnlyOnce()
@@ -75,7 +79,6 @@ public sealed class EsoterraceAlarmAiTests
 		var (harness, feeder, drakan, raider) = Lab();
 		using BossAiHarness _h = harness;
 
-		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
 		int afterFirst = drakan.GetAggroList().GetHate(raider);
 		Assert.Equal(EsoterraceAlarm.Notice, afterFirst);
 
@@ -95,8 +98,7 @@ public sealed class EsoterraceAlarmAiTests
 		var (harness, feeder, drakan, raider) = Lab();
 		using BossAiHarness _h = harness;
 
-		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);   // the bare band
-		int bands = 1;
+		int bands = 1;   // the bare band, spent by Engage
 
 		foreach (int percent in InsideEachBand)
 		{
@@ -126,7 +128,6 @@ public sealed class EsoterraceAlarmAiTests
 		var (harness, feeder, drakan, raider) = Lab();
 		using BossAiHarness _h = harness;
 
-		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
 		foreach (int percent in InsideEachBand)
 		{
 			BossAiHarness.SetExactPercent(feeder, percent);
@@ -154,13 +155,13 @@ public sealed class EsoterraceAlarmAiTests
 		var (harness, feeder, drakan, raider) = Lab();
 		using BossAiHarness _h = harness;
 
+		// Engage spent the bare band on the melee side; the cast must not spend it again.
+		int afterEngage = drakan.GetAggroList().GetHate(raider);
+		Assert.Equal(EsoterraceAlarm.Notice, afterEngage);
+
 		feeder.GetAi().OnCreatureEvent(AiEventType.Spelled, raider);
-		int afterCast = drakan.GetAggroList().GetHate(raider);
-		Assert.Equal(EsoterraceAlarm.Notice, afterCast);
 
-		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
-
-		Assert.Equal(afterCast, drakan.GetAggroList().GetHate(raider));
+		Assert.Equal(afterEngage, drakan.GetAggroList().GetHate(raider));
 	}
 
 	/// <summary>
@@ -177,9 +178,10 @@ public sealed class EsoterraceAlarmAiTests
 		BossAiHarness.MakeMutuallyKnown(feeder, distant);
 		BossAiHarness.MakeMutuallyKnown(distant, raider);
 
+		BossAiHarness.SetExactPercent(feeder, 76);
 		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
 
-		Assert.Equal(EsoterraceAlarm.Notice, near.GetAggroList().GetHate(raider));
+		Assert.Equal(2 * EsoterraceAlarm.Notice, near.GetAggroList().GetHate(raider));
 		Assert.Equal(0, distant.GetAggroList().GetHate(raider));
 	}
 
@@ -197,9 +199,12 @@ public sealed class EsoterraceAlarmAiTests
 		BossAiHarness.MakeMutuallyKnown(feeder, wizard);
 		BossAiHarness.MakeMutuallyKnown(wizard, raider);
 
+		// The wizard arrived after Engage, so compare on a band it can hear from the start.
+		BossAiHarness.SetExactPercent(feeder, 76);
 		feeder.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
 
-		Assert.Equal(villager.GetAggroList().GetHate(raider), wizard.GetAggroList().GetHate(raider));
+		Assert.Equal(EsoterraceAlarm.Notice, wizard.GetAggroList().GetHate(raider));
+		Assert.Equal(2 * EsoterraceAlarm.Notice, villager.GetAggroList().GetHate(raider));
 	}
 
 	/// <summary><b>The number, reach and payload come from the pattern, not from us.</b></summary>

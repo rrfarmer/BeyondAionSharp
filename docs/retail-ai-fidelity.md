@@ -14669,3 +14669,68 @@ papered over.**
 
 Eight pins, a seven-mutation sweep with the one exception above stated, and 21 npcs repointed. Full
 suite **2,022 passing**, 1 skipped.
+
+## Correction: there was no pure-broadcaster bug
+
+**The previous entry is wrong, and the engine change it shipped has been reverted.**
+
+It claimed that a `set_flag_var` on an NPC that never enters combat cannot hold, that this broke every
+pure broadcaster in the retail data as a class, and that `HandleBackHome` had to stop resetting when the
+owner's aggro list is empty. The measurements behind it were real. **The conclusion drawn from them was
+not.**
+
+### What the measurements actually showed
+
+The probe drove the feeder with bare `OnCreatureEvent(AiEventType.Attack, …)`. **That event carries no
+damage and no hate.** A real blow goes through `AddDamage`, which puts the attacker on the NPC's aggro
+list and takes it into `FIGHT` — which is precisely what `BossAiHarness.Engage` reproduces, and why
+`FirstTimeFlagTests` passed on the same NPC all along.
+
+So the comparison that looked like the smoking gun —
+
+```
+broadcast only ..................  7 14 21   state=IDLE
+broadcast + one hate action .....  7  7  7   state=FIGHT
+```
+
+— was **two different harness paths, not two different production behaviours.** The second action was
+standing in for the damage the first path never delivered. Driven the way the server drives it, the
+feeder's ladder was correct before any engine change: eight pins, green, with `PatternAi` untouched.
+
+### Why the fix was also unsafe
+
+Guarding the reset on a non-empty aggro list would have **stopped patterns resetting after real
+fights**, because `AttackEventHandler.OnFinishAttack` calls `LoseAggro`, which empties the list *before*
+the NPC goes home. The guard would have been true exactly when it should have been false. It was caught
+by a pin written to check the fix did not break the ordinary case — `ButARealFightStillResetsOnTheWayHome`
+— which failed on its first run.
+
+**Both halves of that are worth keeping.** A pin on the case a fix is *not* about is what caught this;
+without it the revert would have been a second wrong turn instead of the first right one.
+
+### What survives
+
+- **`PatternAi.IsFlagSet`.** Reading a flag used to mean test-and-setting it, so a probe changed the
+  answer by asking. That was a genuine gap and the reader stays.
+- **The encounter.** `10000` ships unchanged — the surkana feeder's five bands and the twenty esoterrace
+  drakan that answer them — now pinned through `Engage` rather than through bare events.
+- **The harness lesson**, which is the real finding: **an `Attack` event is not a blow.** It skips
+  damage, aggro and the combat-state transition, and for any NPC whose own pattern adds no hate that
+  difference decides whether its flags survive to the next event. Every pin in this log that drives a
+  no-hate pattern with bare events is measuring the harness. The Esoterrace pins now say so in place.
+
+### The rule
+
+**Three commits went into an engine bug that was a test artifact.** The tell was there from the first
+entry and misread twice: `FirstTimeFlagTests` passed on this very NPC, and the difference between the
+passing probe and the failing one was never the flag — it was `HateAttacker`, sitting in plain sight in
+the passing probe and read as incidental.
+
+**When a new probe contradicts a passing pin, the probe is the suspect.** The pin has already survived a
+suite run; the probe was written five minutes ago to prove a hypothesis, which is the worst provenance a
+measurement can have.
+
+### Verification
+
+Engine reverted to `d680dddf5`'s `PatternAi` apart from `IsFlagSet`. Full suite **2,022 passing**,
+1 skipped.

@@ -180,30 +180,11 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// Running only one of the two silently dropped whichever half a pattern happened to use — which is
     /// what happened before this was wired: <c>OnLeaveAttack</c> was declared and never evaluated.
     /// </remarks>
-    /// <remarks>
-    /// <b>An NPC that never had a fight has no fight to reset.</b> The reset exists so the next fight
-    /// starts clean, and <see cref="EnterCombat"/> latches on the attack event itself — so an NPC that
-    /// is struck but acquires no hate counts as having fought, is sent home immediately, and has its
-    /// flags cleared before the next blow arrives.
-    /// <para>
-    /// That is retail's pure-broadcaster shape, and it was silently broken: the Esoterrace surkana
-    /// feeder answers a blow with nothing but a <c>broadcast_message</c>, so it takes no hate, and its
-    /// five once-only alarm bands re-fired on every single blow. Measured with a listener whose payload
-    /// was moved from ten to seven: <c>7 14 21</c> across three blows, tracking the payload exactly, so
-    /// the message really was sent three times. The flag reads <em>set</em> between blows because the
-    /// branch had just set it again — which is why this took three attempts to find.
-    /// </para>
-    /// <para>
-    /// Guarding on <c>inCombat</c> does not work; it is already true. <b>The question is whether the
-    /// NPC ever hated anything</b>, and an empty aggro list answers it.
-    /// </para>
-    /// </remarks>
     protected override void HandleBackHome()
     {
         Evaluate(Pattern.OnLeaveAttack);
         Evaluate(Pattern.OnEnterIdle);
-        if (GetOwner().GetAggroList().Stream().Any())
-            ResetPattern();
+        ResetPattern();
         base.HandleBackHome();
     }
 
