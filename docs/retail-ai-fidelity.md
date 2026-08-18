@@ -13968,3 +13968,59 @@ nobody would notice was dead.
    audience against the same call made synchronously.
 3. The reading above is complete — patterns, ranges, payloads, the flag, and the typo — so only the
    engine question is open.
+
+## Ruling the engine out of the shulack relay
+
+The previous entry reverted the shulack mercenaries with the second hop of their relay undemonstrated,
+and wrote down three steps. This is step one, and it produced a permanent test rather than an answer to
+the encounter.
+
+### What the probes established
+
+`MessageRelayTests` builds the relay shape out of three throwaway pattern classes — a caller that
+broadcasts, a relay that hears it and re-broadcasts from a one-second battle timer, and a listener that
+answers the second number — and runs it across every axis the failure could have turned on:
+
+| tried | result |
+|---|---|
+| listener 6m from the relay | **relays** |
+| 20m, 30m, 40m, 45m | **relays** |
+| relay range widened to 500m | (the original failure was unaffected) |
+| Altgard and Danuar Sanctuary | **relays on both** |
+| npc ids from the tursin camp and from the shulack camp | **relays with both** |
+
+**So the engine relays messages correctly**, and every hypothesis in the previous entry's list is dead:
+not range, not the timer, not broadcasting from a timer callback, not the map, not the npc identity,
+and not the tribe.
+
+### Which means the fault was mine
+
+**A relay that fails in one class, when the primitive works everywhere else, is that class's problem.**
+The last entry hedged between "harness limitation" and "engine bug" and it was neither.
+
+Running the real classes in the probe's own geometry narrowed it further, and turned up something the
+original test never showed: **in that run the watcher did not take the alarm's hundred points at all**
+— it ended on the single point support aggro gives, where the original failing test had it at 1100.
+The same two classes, the same message, two different outcomes depending on the surrounding setup. That
+is where the next session starts, and it is a much smaller question than the one this began with.
+
+### Why this is a test and not a note
+
+The probe is kept as `MessageRelayTests` rather than deleted. **Without a pin on the primitive there is
+no way to tell an engine limitation from a mistake in a translation** — which is exactly the position
+the previous entry was stuck in, and it cost a shipped encounter. The next relay pattern will want the
+same reassurance, and anybody reading the shulack entry will want to know the difference between "this
+does not work" and "this did not work for me".
+
+**The rule: when an encounter fails on a primitive this port has never pinned, pin the primitive
+first.** It is cheaper than debugging the encounter and it survives the encounter.
+
+### Still open
+
+- **The shulack family remains unshipped** — eleven patterns, twenty-six npcs, the full reading in the
+  previous entry. The engine is exonerated; the translation needs re-testing against the geometry above.
+- The `21153` typo finding stands and is worth keeping whatever happens to the rest.
+
+### Verification
+
+Five pins, all green. Full suite **2,226 passing**, 5 skipped.
