@@ -16793,3 +16793,62 @@ here in one run because the failure mode is now familiar. The registration is ad
 
 Two classes changed, nothing wired. Full suite **2,049 passing**, 1 skipped — green because the mechanic is
 inert, which is stated rather than implied.
+
+## The repoint is blocked on what a web is for, not on a pin
+
+The previous entry left three steps. The first two collide, and the collision is a question about the
+encounter rather than about the tests.
+
+### Why the player cannot simply be moved
+
+The obvious fix — place the raid outside a web's one-metre `srange` and step in — **cannot be done without
+changing the mechanic.** `WebOn` is `SpawnOnEachTarget`: retail throws the webs *onto* the players. A web
+therefore has somebody inside its range at the instant it lands, always.
+
+And `NpcController.See` raises `CreatureSee` when the known list admits an object, which includes everyone
+already standing there when the npc spawns. That is faithful to Java, where `See` is the known-list
+callback, so it is not a divergence to patch away.
+
+**So a web thrown at a player sees that player immediately, calls, and despawns — on the tick it lands.**
+
+### Which is probably right
+
+Read that way the mechanic is coherent: **a web is not a hazard that lingers, it is a snare that fires.**
+It lands on you, holds you, tells Kingspin, and is gone; its eight-second fuse exists for the webs that
+land where nobody is standing. The `live_time` on the spawn and the fuse branch both only matter for webs
+that miss.
+
+If that reading is right, the six pins in `KingspinAiTests` are wrong about retail. They count four webs
+persisting after a throw, which can only happen when all four land away from players — and retail aims
+them at players.
+
+**It is a reading, not a measurement**, which is why the repoint is still out. What would settle it is the
+snare skill: if `SKILLI_INDEX_0` on that branch is a root or a stun, the web is a snare and the pins are
+wrong; if it is damage-over-time, the web may be meant to sit. **That skill is not in this port's
+`npc_skills`**, so the question cannot be closed from inside the repo.
+
+### What finishing it takes now
+
+1. Establish what the web's skill does — from the client skill data, not from the pattern.
+2. If it is a snare: repoint, and rewrite the six pins around webs consumed on landing, counting *calls*
+   rather than *webs*.
+3. If it lingers: the instant-`See` at spawn is the thing to look at after all.
+4. Either way, the accelerator pin from the previous entry.
+
+### The shape of this
+
+**Four entries in, the blocker moved from the code to the data and then to a design question**, which is
+the right direction but worth naming: the remaining uncertainty is not "does this work" but "what is this
+for", and no amount of probing the port answers that. The client skill table does.
+
+### Still to do
+
+- The four steps above.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+No code changed this pass. Full suite **2,049 passing**, 1 skipped, with the web mechanic still inert.
