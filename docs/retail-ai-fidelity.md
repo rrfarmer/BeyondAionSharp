@@ -9407,3 +9407,104 @@ cast that is blocked anyway.
 Full suite **1,893 passing** and 1 skipped; thirteen new pins run five times over; nineteen mutations,
 all caught. Adds 361/280 → **359/278**; missing-AI 698 → **696**; translatable 461/1,564 →
 **459/1,562** — each delta exactly the two patterns translated.
+
+## A fourth blocker: payload on a timer nothing can arm
+
+The third blocked bucket — spawns whose only trigger is a waypoint arrival — was found by tracking
+which handler each spawn action sits under. That is not enough, and Kaliga the Unjust is the proof.
+
+`Cromede_Named_Angry` (217006) ranked **third on the entire worth-doing list** at nineteen payload
+actions. Every one of the branches that made it rank sits under `on_battle_timer`, an ordinary handler
+no audit had reason to distrust:
+
+```
+on_enter_attack_state    goto_waypoint 2
+on_arrived_at_waypoint   index 2 -> goto_waypoint 4
+on_arrived_at_waypoint   index 4 -> add_battle_timer 0, add_battle_timer 1
+on_battle_timer          timer 0, below 80 -> spawn two statues
+on_battle_timer          timer 0, below 50 -> spawn two more
+on_battle_timer          timer 1, below 50 -> a hazard on his target
+```
+
+Timers 0 and 1 are armed **nowhere but the waypoint arrival**, at the end of a two-hop scripted walk
+he takes on entering combat. We have no waypoint-arrival event, and `KromedesTrialInstance` gives him a
+single static spot. The whole ladder is dead, and no branch of it looks it.
+
+`audit_timer_reach.py` finds this shape. It runs a reachability fixpoint over timer indices: every
+handler except `on_arrived_at_waypoint` can run, so the timers its branches arm are reachable; an
+`on_battle_timer` branch runs only if the timer it is guarded on is reachable, and then the timers *it*
+arms become reachable too; repeat until nothing changes. Payload in a branch guarded on a timer outside
+that set is dead. An unguarded battle-timer branch answers whichever timer fired, so it is dead only
+when no timer is reachable at all.
+
+Fourteen patterns carried dead payload — thirty-one actions across forty-seven npcs. `audit_translatable.py`
+now subtracts it, and Kaliga falls from third to fifth.
+
+**Rule: a branch is only as reachable as the timer that carries it.** Every audit before this one
+asked "can this action run", one action at a time. The question that matters is "can this action ever
+be reached", and the answer lives in a different branch — sometimes two hops away, in a handler that
+looks perfectly ordinary until you ask who arms it.
+
+## Kromede's Trial — the dismissal, and the chain that has to land in one piece
+
+What is built is one branch: **when the Angry Judge falls, three markers go out across the manor and
+call his servants away.** Retail places them absolutely, and the three coordinates land within three
+metres of our own spawn points for Hamam the Torturer (216982), Lady Angerr (217000) and Justicetaker
+Wyr (217002) — which is what identifies them as one-per-servant rather than scenery.
+
+| marker at | our spawn for | apart |
+|---|---|---|
+| 749.80, 628.18, 198.37 | 216982 hamam the torturer | 3.1 m |
+| 512.55, 574.35, 217.60 | 217000 lady angerr | 2.9 m |
+| 568.19, 833.13, 226.33 | 217002 justicetaker wyr | 2.6 m |
+
+The marker (282115, `Cromede_Kkt_Noshow`) is two actions: broadcast `6406` within fifty metres, and
+`despawn_self`. It is invisible and it exists for one reason — **retail addresses a specific NPC by
+putting a speaker next to it**, because a pattern has no way to name one. That idiom is worth
+recognising; it is the same trick as the anuhart casters' pet order, done with geography instead of a
+parameter.
+
+### The rest of the trial is specified here and deliberately not built
+
+The chain the log should carry, because it is fully resolved and only the landing is left:
+
+1. Each servant, **at thirty percent or on death**, drops its own marker at the judge's dais
+   (662.28, 774.4, 216.85) and — at thirty percent — **removes itself instead of dying**.
+2. That marker (282112 `Cromede_Torture_Spawn`, 282113 `Cromede_Wife_Spawn`, 282114
+   `Cromede_Assijudge_Spawn`) seats a **wounded copy** of that servant beside the judge — 217004 at
+   (663.07, 769.54), 217001 at (663.07, 779.08), 217003 at (661.07, 774.43) — then broadcasts `6403`
+   and `6404` and goes.
+3. `6404` turns the Angry Judge into **Shadow Judge Kaliga (217005)** at his own spot and removes him.
+4. `6403` removes the two relics (`Cromede_Relic1`, `Cromede_Relic2`).
+
+`KromedesTrialInstance` already produces the **end state** of that chain — scared judge plus the same
+three wounded servants, at coordinates within two metres of retail's — from a single `IsDead` check on
+all three servants at treasury entry. So aionemu reimplemented the outcome and dropped the mechanism,
+and the two cannot be mixed:
+
+- land the wounded-servant spawns alone and a player who clears all three before entering the treasury
+  gets **six** wounded servants, three from the markers and three from the handler;
+- land the thirty-percent vanish alone and the servants stop dying, so the handler's `IsDead` gate
+  never opens and the Shadow Judge never appears at all;
+- land the `6404` conversion alone and the judge turns scared with no wounded servants beside him.
+
+**Rule: when an instance handler has reimplemented a pattern's outcome, the pattern lands whole or not
+at all.** Half of a reimplemented chain is not half-right, it is a duplicate or a dead end. This is the
+first entry to hold work back on that ground rather than on a missing vocabulary.
+
+Lady Angerr is the fourth piece: she is on our `summoner` AI with a tuned `spawn_helpers.xml` ladder
+for her six bats, and her retail pattern `Cromede_Wife` carries that same wave, so she wants the whole
+hand-over at once — pattern class in, helper rows out — not a fourth branch bolted on.
+
+### Not translated
+
+Kaliga's health ladder (dead, above); his `on_leave_attack_state`, which spawns two relic carriers
+whose entire patterns are one blocked cast and `despawn_self`; his `on_message 6513` from the manor
+door; eight skill indices and five shouts. The servants' casts, their `random_move` loops, and Hamam's
+`on_stop_to_random_move` probability split.
+
+### Verification
+
+Full suite **1,897 passing** and 1 skipped; four new pins; eight mutations, all caught. Missing-AI 696
+→ **693**; translatable 456/1,556 → **453/1,553**; dead-timer payload 14 patterns / 31 actions →
+**13 / 26** — every delta exactly the three patterns translated.

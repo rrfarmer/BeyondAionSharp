@@ -68,6 +68,23 @@ GENERIC_AI = {
 ACTION_RE = re.compile(r"<(\w+)>")
 
 
+def dead_payload(block: str) -> int:
+    """How many payload actions in this pattern sit on a timer nothing can arm.
+
+    Imported inside the function because `audit_timer_reach` needs this module's PAYLOAD and
+    GENERIC_AI sets, and a module-level import here would close the cycle.
+    """
+    import xml.etree.ElementTree as ET
+
+    import audit_timer_reach as R
+
+    try:
+        root = ET.fromstring(f"<ai_pattern>{S.lowercase_tags(block)}</ai_pattern>")
+    except ET.ParseError:
+        return 0
+    return R.analyse(root)[1]
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("patterns_dir", type=pathlib.Path)
@@ -113,6 +130,11 @@ def main() -> None:
             counts = collections.Counter(ACTION_RE.findall(block))
             good = sum(v for k, v in counts.items() if k in PAYLOAD)
             scaffold = sum(v for k, v in counts.items() if k in SCAFFOLDING)
+
+            # Payload on a battle timer that nothing reachable ever arms cannot run, so it is
+            # not work we could do. Kaliga the Unjust ranked third on this list with five of
+            # his nineteen actions behind timers armed only by a waypoint arrival.
+            good -= dead_payload(block)
             blocked = collections.Counter()
             for tag, why in BLOCKED.items():
                 if counts.get(tag):
