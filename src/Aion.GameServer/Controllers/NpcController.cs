@@ -129,6 +129,11 @@ public class NpcController : CreatureController<Npc>
                 DoReward();
             owner.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnDie(owner);
             owner.GetAi().OnGeneralEvent(AiEventType.Died);
+
+            // Retail's on_see_friend_killed_by_user, which aionemu has no event for. Raised after
+            // the owner's own Died so a handler that reacts to a friend falling never runs before
+            // the fallen NPC has finished dying. See Ai/FriendDeathNotice.
+            Aion.GameServer.Ai.FriendDeathNotice.Raise(owner, lastAttacker);
         }
         catch (Exception e)
         {

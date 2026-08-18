@@ -171,6 +171,17 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         base.HandleDied();
     }
 
+    /// <summary>Retail's <c>on_see_friend_killed_by_user</c>.</summary>
+    /// <remarks>
+    /// The fallen NPC is not the message parameter -- retail's handler takes no object and its
+    /// branches never name one. See <see cref="FriendDeathNotice"/> for who hears it and how far.
+    /// </remarks>
+    protected override void HandleFriendKilled(Creature dead)
+    {
+        Evaluate(Pattern.OnFriendKilled);
+        base.HandleFriendKilled(dead);
+    }
+
     protected override void HandleDespawned()
     {
         // Before the reset, so a branch here still sees its timers, flags and spawn groups.

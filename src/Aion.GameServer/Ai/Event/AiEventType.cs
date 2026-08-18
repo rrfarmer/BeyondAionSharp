@@ -41,6 +41,16 @@ public enum AiEventType
     DialogFinish,
     DropRegistered,
 
+    /// <summary>
+    /// Retail's <c>on_see_friend_killed_by_user</c>: a friendly NPC in sight was killed by a player.
+    /// </summary>
+    /// <remarks>
+    /// Has no aionemu counterpart, so it has no SCREAMING_SNAKE alias below -- nothing ported from
+    /// Java calls it. Raised by <see cref="Aion.GameServer.Ai.FriendDeathNotice"/>; 129 retail
+    /// patterns carry the handler. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    FriendKilled,
+
     // Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values, additive).
     NONE = None,
     ACTIVATE = Activate,

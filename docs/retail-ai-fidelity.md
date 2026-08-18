@@ -11211,3 +11211,65 @@ is worse than no pin — it teaches the next session to re-run instead of read.
 
 Full suite **2,031 passing** and 1 skipped; six new pins, one hardened; **eleven mutations, all
 caught**. Mute adds 60 rows / 46 live → **58 / 44**.
+
+## The event aionemu never had: `on_see_friend_killed_by_user`
+
+The Bakarma commit shipped a promotion ladder without its counter-play, and named the reason: retail's
+"one of us went down" event has **no equivalent anywhere in our AI layer**. It was the largest single
+structural gap this log has measured that is neither a skill index nor an anchor — **129 patterns in
+the 5.8 files carry the handler, with 377 npcs bound to them** — and what hangs off it is nearly always
+one action: the survivors leave.
+
+It exists now. `AiEventType.FriendKilled`, raised by `Ai/FriendDeathNotice`, dispatched through
+`AbstractAI` as a virtual that does nothing by default, and surfaced to tables as
+`AiPattern.OnFriendKilled`.
+
+### Three decisions, and the point is that none of them is a number I chose
+
+Last commit refused to build this because the obvious implementations all needed a made-up constant.
+Each one turned out to have an answer already in the data:
+
+| question | answer | why it is not an invention |
+|---|---|---|
+| who hears it | the dead NPC's **known list** | how every other broadcast on this server finds its audience |
+| how far | **each watcher's own `srange`** | retail's event is a *seeing* event, so the range belongs to the eye, not the corpse |
+| who is a friend | `TribeRelationService.IsFriend` | retail's word is `friend`, and that is what the word already means here |
+
+**The range one is the interesting answer.** The instinct is a single radius around the body, and that
+is exactly the made-up constant that blocked this. Retail's handler is `on_see_...`, which says the
+question belongs to the observer — so a bigfoot kerubar with forty metres of sight really does notice a
+death a klaw with eight would miss, and no constant is needed because every npc already ships its own.
+
+**And `killed_by_user` is load-bearing.** The notice fires only for a player kill. An add finished off
+by its own `live_time`, by another npc, or by a boss sweeping the board is not what the handler is
+about — and a ladder that emptied itself on those would be a very different fight. Pinned from both
+sides.
+
+### What it unlocks immediately
+
+Commander Bakarma's three rungs — legionary, vanguard and relic guardian — all answer it, so **killing
+one in front of the others empties the ladder**. That is the raid's whole counter-play to a fight whose
+adds otherwise promote twice and never shrink, and it shipped missing two commits ago.
+
+The remaining 126 patterns are now a table-writing job rather than an engine job.
+
+### An open flake, reported rather than fixed
+
+`AnuhartGuardAiTests.TheGuardianAnswersFromItsOwnClass` failed in **one full-suite run out of seven**
+and passed in three isolated runs and in the six full runs either side. Its assertions are
+`Assert.Same(raider, guardian.GetTarget())` and a hate of 300, delivered by one message with no random
+branch anywhere on the path.
+
+**I could not reproduce it on demand and I have not fixed it.** Recording the measurement rather than
+tightening the pin until it stops failing, because the honest reading is "something outside this test
+occasionally moves that guardian's target", and the two candidates — a scheduled task surviving from an
+earlier test on a shared pool, or an aggro tick the virtual clock does not own — are both worth finding
+properly. Contrast the Sayahum flake in the previous entry, which *was* diagnosable: its claim was
+openly probabilistic and widening the window was the right fix. This one has no such explanation yet,
+and inventing one would be worse than the flake.
+
+### Verification
+
+Full suite **2,034 passing** and 1 skipped (with the intermittent above); three new pins on the event
+itself; **six mutations, all caught** — including the two that matter most, "anything's death raises
+the notice" and "enemies hear it too".

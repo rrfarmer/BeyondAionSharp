@@ -108,6 +108,18 @@ public sealed class AiPattern
     /// </remarks>
     public PatternBranch[] OnIdleTimer { get; init; } = None;
 
+    /// <summary>
+    /// <c>on_see_friend_killed_by_user</c> — one of its own went down in front of it, to a player.
+    /// </summary>
+    /// <remarks>
+    /// Retail has 129 patterns with this handler and aionemu has no event for it at all; see
+    /// <see cref="FriendDeathNotice"/> for the event this server raises instead. What hangs off it is
+    /// almost always <c>despawn_self</c>: retail uses it to make a group of adds leave together when
+    /// the raid kills one of them in front of the rest, which is the counter-play to more than one
+    /// escalating add ladder.
+    /// </remarks>
+    public PatternBranch[] OnFriendKilled { get; init; } = None;
+
     /// <summary>Builds a branch, sorting its conditions and actions as written.</summary>
     public static PatternBranch Branch(int priority, string comment, PatternCondition[] conditions, params PatternAction[] actions)
         => new PatternBranch(priority, comment, conditions, actions);

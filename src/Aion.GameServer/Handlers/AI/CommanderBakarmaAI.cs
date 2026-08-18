@@ -38,10 +38,10 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>tools/client-extract/audit_message_senders.py</c> keeps listing it as work.
 /// </para>
 /// <para>
-/// <b>Not built: <c>on_see_friend_killed_by_user</c></b>, which all three ladder patterns carry and
-/// which is the raid's answer to the ladder — kill one in front of the others and the rest leave. Our
-/// AI event set has no equivalent event at all; see docs/retail-ai-fidelity.md for what it would
-/// unlock.
+/// <b>The counter-play is built now.</b> All three ladder patterns carry
+/// <c>on_see_friend_killed_by_user</c> — kill one in front of the others and the rest leave — and our
+/// AI layer had no such event when the ladder first shipped. It has one now
+/// (<see cref="FriendDeathNotice"/>), and the two rungs answer it.
 /// </para>
 /// <para>
 /// <b>Not translated:</b> every skill on his timer chain, his shouts, and the treasure box on his
@@ -122,6 +122,8 @@ public class BakarmaLegionaryAI : PatternAi
 			[When.Message(CommanderBakarmaAI.TakeTheNextRank)],
 			Do.SpawnNear(Vanguard, Replacement, count: 1, liveSeconds: TwentyMinutes),
 			Do.DespawnSelf())),
+
+		OnFriendKilled = Of(Branch(6, "one of us went down", [], Do.DespawnSelf())),
 	};
 
 	public BakarmaLegionaryAI(Npc owner)
@@ -167,9 +169,40 @@ public class BakarmaVanguardAI : PatternAi
 		OnBattleTimer = Of(Branch(7, "and take the last rank", [When.Timer(Countdown)],
 			Do.SpawnNear(RelicGuardian, Replacement, count: 1, liveSeconds: TwentyMinutes),
 			Do.DespawnSelf())),
+
+		OnFriendKilled = Of(Branch(6, "one of us went down", [], Do.DespawnSelf())),
 	};
 
 	public BakarmaVanguardAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// Bakarma's relic guardians (280687), the top of the ladder. Retail pattern <c>NDrakan_ChSlave3</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. Nothing promotes it further — this is where the
+/// ladder ends — and the one thing it does that is not a skill index is leave when it watches one of
+/// its own fall to a player.
+/// <para>
+/// <b>Not translated:</b> its self-cast on entering combat and the three-second timer that repeats it,
+/// and its half of message <c>6001</c>, which has no sender here for the reason
+/// <see cref="CommanderBakarmaAI"/> gives.
+/// </para>
+/// </remarks>
+[AIName("bakarma_relic_guardian")]
+public class BakarmaRelicGuardianAI : PatternAi
+{
+	private static readonly AiPattern Pattern_ = new AiPattern
+	{
+		OnFriendKilled = Of(Branch(5, "one of us went down", [], Do.DespawnSelf())),
+	};
+
+	public BakarmaRelicGuardianAI(Npc owner)
 		: base(owner)
 	{
 	}

@@ -26,7 +26,8 @@ public sealed class CommanderBakarmaAiTests
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(DraupnirCave).WithWorldSize(2048)
 			.WithAi(typeof(CommanderBakarmaAI), typeof(BakarmaLegionaryAI), typeof(BakarmaVanguardAI),
-				typeof(SummonerAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+				typeof(BakarmaRelicGuardianAI), typeof(SummonerAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
 			.Build();
 
 	private static List<Npc> Live(BossAiHarness harness, int npcId) =>
@@ -188,5 +189,68 @@ public sealed class CommanderBakarmaAiTests
 	{
 		Assert.Equal(5001, CommanderBakarmaAI.TakeTheNextRank);
 		Assert.Equal(5002, CommanderBakarmaAI.TakeTheLast);
+	}
+
+	/// <summary>
+	/// <b>Kill one legionary in front of the others and the rest leave.</b> Retail's
+	/// <c>on_see_friend_killed_by_user</c>, which our AI layer had no event for until now — and which
+	/// is the raid's whole answer to the promotion ladder.
+	/// </summary>
+	[Fact]
+	public void KillOneInFrontOfTheOthersAndTheRestLeave()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+
+		Npc doomed = harness.Spawn(Legionary, 815f, 435f, 318f);
+		Npc watcher = harness.Spawn(Legionary, 816f, 436f, 318f);
+		BossAiHarness.MakeMutuallyKnown(doomed, watcher);
+
+		// The notice rather than the whole controller death path: NpcController.OnDie reaches
+		// SiegeService, which a harness has no world for. The one line that calls this from OnDie is
+		// in NpcController; what it calls is what these pins measure.
+		Aion.GameServer.Ai.FriendDeathNotice.Raise(doomed, raider);
+
+		Assert.False(watcher.IsSpawned());
+	}
+
+	/// <summary>
+	/// <b>Killed by anything but a player and nobody moves.</b> Retail's handler is
+	/// <c>..._killed_by_user</c>, so an add finished off by its own live time, by another NPC, or by a
+	/// boss clearing the board is not what it is about — and a ladder that emptied itself on those
+	/// would be a very different fight.
+	/// </summary>
+	[Fact]
+	public void KilledByAnythingButAPlayerAndNobodyMoves()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+
+		Npc doomed = harness.Spawn(Legionary, 815f, 435f, 318f);
+		Npc watcher = harness.Spawn(Legionary, 816f, 436f, 318f);
+		BossAiHarness.MakeMutuallyKnown(doomed, watcher);
+
+		Aion.GameServer.Ai.FriendDeathNotice.Raise(doomed, boss);
+
+		Assert.True(watcher.IsSpawned());
+	}
+
+	/// <summary>
+	/// <b>An enemy dying in front of it means nothing.</b> Retail's word is <c>friend</c>, and this is
+	/// the tribe test the aggro layer already uses.
+	/// </summary>
+	[Fact]
+	public void AnEnemyDyingInFrontOfItMeansNothing()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+
+		Npc watcher = harness.Spawn(Legionary, 816f, 436f, 318f);
+		Npc stranger = harness.Spawn(Bakarma, 815f, 435f, 318f);
+		BossAiHarness.MakeMutuallyKnown(stranger, watcher);
+
+		Aion.GameServer.Ai.FriendDeathNotice.Raise(stranger, raider);
+
+		Assert.True(watcher.IsSpawned());
 	}
 }
