@@ -14589,3 +14589,83 @@ cleared four times, and the next probe has to tell those apart before anything i
 
 Nothing shipped. The encounter, its pins and the engine change were all reverted; the measurement is
 the deliverable. Full suite **2,263 passing**, 1 skipped.
+
+## Pure broadcasters could not keep a flag, and now they can
+
+The previous entry left one question: **what clears — or fails to set — a flag on an NPC in `IDLE`?**
+It is answered, the engine is fixed, and the Esoterrace alarm ships.
+
+### Telling the two apart
+
+`TestAndSetFlag` returning true four times running is indistinguishable from the flag being cleared four
+times, because **every way into the flags was a test-and-something** — a probe that asked whether a flag
+was set changed the answer by asking. `PatternAi.IsFlagSet` now reads one without touching it. Same
+rationale as `FleeingTo`: the state was always there and only the reading of it was missing.
+
+The probe then read, on the surkana feeder with one flag-guarded broadcast branch:
+
+```
+start=False  after1=True  after2=True  after3=True     hate 10 -> 20 -> 30
+```
+
+**The flag was set the whole time and the listener still answered three times.** That looked impossible
+until the listener's payload was moved from ten to seven and the hate came back `7 14 21`, tracking the
+payload exactly. So the message really was sent three times — and the flag reads *set* between blows
+**because the branch had just set it again**. The clear happens inside the next event, before the
+branch is evaluated. That is why this took three attempts.
+
+### The cause, and the fix that does not work
+
+`ResetPattern` runs from `HandleBackHome`. A pure broadcaster answers a blow with nothing but a
+`broadcast_message`, so it takes no hate, never reaches `FIGHT`, and is sent straight home — clearing
+its flags — after every single blow.
+
+**Guarding the reset on `inCombat` does nothing**, which the previous entry recorded and reverted:
+`EnterCombat()` latches on the attack event itself, so the guard is already true. The question is not
+whether the NPC was attacked but **whether it ever hated anything**, and an empty aggro list answers it.
+`HandleBackHome` now resets only when the owner's aggro list has an entry. Measured after: `7 7 7`.
+
+**This is not one encounter's bug.** Retail uses the pure-broadcaster shape for field objects and alarms
+as a class, and every one of them was losing its flags. Any once-only branch on an NPC that answers with
+a shout and nothing else was firing every time.
+
+### The encounter
+
+`10000` off the reachable list — **the surkana feeder and the twenty esoterrace drakan that hear it**,
+across sixteen answering patterns plus the senior researcher and the lab supervisor.
+
+| priority | guard | flag | action |
+|---|---|---|---|
+| 10 | below 20% | 1 | `broadcast 10000 range=30 param_obj=OBJI_ATTACKER` |
+| 9 | below 40% | 2 | same |
+| 8 | below 60% | 3 | same |
+| 7 | below 80% | 4 | same |
+| 6 | **none** | 5 | same |
+
+The answer is uniform across all sixteen: **ten points on whoever the feeder named, then
+`attack_most_hating`.** Ten is nothing on its own; twenty of them at once is the mechanic. The spell
+ladder shares the same five flags, so a caster cannot spend a band the melee already spent.
+
+**The lowest band has no health guard**, so touching the feeder at all raises the lab and the four
+thresholds raise it again as the object falls. That works only because evaluation is priority-ordered
+and stops at the first match.
+
+### Not built
+
+- **`on_die`:** `set_condition_spawn_variable condition_type=2` drives the instance's spawn progression
+  and has no equivalent here; the `display_system_message` beside it needs `STR_MSG_IDF4Re_Drana_08`.
+- **The feeder's `on_message` answer to `1001`**, a `despawn_self` whose live callers are all in other
+  instances — one of the thirteen cross-wired numbers the audit now quarantines.
+
+### The mutation that cannot be caught
+
+Seven mutations, **six caught**. The seventh — promoting the bare band above the four thresholds — is
+**not observable through this encounter and no pin was invented for it**. All five bands carry the same
+payload and the same message, so any ordering still produces five calls over a full descent; the
+priority only becomes visible if the bands differ, and here they do not. **Recorded rather than
+papered over.**
+
+### Verification
+
+Eight pins, a seven-mutation sweep with the one exception above stated, and 21 npcs repointed. Full
+suite **2,022 passing**, 1 skipped.

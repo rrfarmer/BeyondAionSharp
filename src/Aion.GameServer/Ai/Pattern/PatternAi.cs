@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai.Event;
@@ -179,11 +180,30 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// Running only one of the two silently dropped whichever half a pattern happened to use — which is
     /// what happened before this was wired: <c>OnLeaveAttack</c> was declared and never evaluated.
     /// </remarks>
+    /// <remarks>
+    /// <b>An NPC that never had a fight has no fight to reset.</b> The reset exists so the next fight
+    /// starts clean, and <see cref="EnterCombat"/> latches on the attack event itself — so an NPC that
+    /// is struck but acquires no hate counts as having fought, is sent home immediately, and has its
+    /// flags cleared before the next blow arrives.
+    /// <para>
+    /// That is retail's pure-broadcaster shape, and it was silently broken: the Esoterrace surkana
+    /// feeder answers a blow with nothing but a <c>broadcast_message</c>, so it takes no hate, and its
+    /// five once-only alarm bands re-fired on every single blow. Measured with a listener whose payload
+    /// was moved from ten to seven: <c>7 14 21</c> across three blows, tracking the payload exactly, so
+    /// the message really was sent three times. The flag reads <em>set</em> between blows because the
+    /// branch had just set it again — which is why this took three attempts to find.
+    /// </para>
+    /// <para>
+    /// Guarding on <c>inCombat</c> does not work; it is already true. <b>The question is whether the
+    /// NPC ever hated anything</b>, and an empty aggro list answers it.
+    /// </para>
+    /// </remarks>
     protected override void HandleBackHome()
     {
         Evaluate(Pattern.OnLeaveAttack);
         Evaluate(Pattern.OnEnterIdle);
-        ResetPattern();
+        if (GetOwner().GetAggroList().Stream().Any())
+            ResetPattern();
         base.HandleBackHome();
     }
 
@@ -747,6 +767,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             flags[flag] = true;
             return true;
         }
+    }
+
+    /// <summary>Reads a flag without touching it. For tests and diagnostics only.</summary>
+    /// <remarks>
+    /// Every other way in is a test-and-<em>something</em>, so a probe that asked whether a flag was set
+    /// changed the answer by asking. That made two failure modes indistinguishable from outside: a flag
+    /// that is never set and a flag that is set and then cleared both show up as a one-shot branch
+    /// firing every time. <b>Same rationale as <see cref="FleeingTo"/></b> — the state was always there,
+    /// and only the reading of it was missing.
+    /// </remarks>
+    public bool IsFlagSet(int flag)
+    {
+        lock (gate)
+            return flags[flag];
     }
 
     /// <summary>Test-and-unset: true only while the flag is set, clearing it.</summary>
