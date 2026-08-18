@@ -16077,3 +16077,59 @@ has three ladders in that shape — Padmarashka's middle band, Kingspin's, the s
 ### Verification
 
 Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
+
+## The acid bomb: what the middle band actually carries, and why it is still not built
+
+The previous entry named Padmarashka's timers 10, 11 and 12 as the missing work. They are read now, so the
+next attempt starts from content rather than from a question.
+
+| timer | branch | content | translatable |
+|---|---|---|---|
+| **11** | p36 | `spawn BDF4_Dramata_AcidBombControl_n` ×1 at the waypoint start, `live_time=60`, re-arm 11 at 90s | **the only one** |
+| 12 | p37, p38, p39 | three branches of pure `use_skill`, re-arming 12 at 20s | no — skills |
+| 10 | p35 | a skill, `goto_waypoint 1`, and `STR_MSG_DF4_DRAMATA_LAY_EGG` | no — walk and message |
+
+**The band's one portable mechanic is the acid bomb**, npc `281944`, every ninety seconds. The rest is her
+egg-laying walk and a skill rotation, and both are blocked for reasons this log has recorded many times.
+
+### It was built, and it did not fire
+
+The band branch was given `Do.ArmTimer(11, 30_000)` and a new branch on `When.Timer(11)` spawning the
+controller. **Sixty seconds at forty-five percent produced nothing** — not a wrong count, not a late
+arrival, nothing at all. The npc template exists (`281944`, level 57), the timer slot is otherwise unused
+in that class, and the band branch is the one that was already firing to re-arm the heartbeat.
+
+**So the arming or the new branch is not doing what it reads as doing, and there was not room left in this
+pass to find out which.** The change was reverted rather than committed with a pin that passes by asserting
+zero — that would have recorded "the band is silent" as a fact twice, once truthfully and once as a
+mechanic that exists and does not work.
+
+### What the next attempt should check first
+
+1. Whether `Branch(40, …)`'s `When.FirstTime(Gamma4)` has already been spent by the time a raid is inside
+   the band — the branch is once-only, so if anything consumes that flag earlier, the arming never happens.
+2. Whether the harness advances battle timers for a boss whose branch armed them outside the first
+   heartbeat — the other two bands arm theirs from the same place, so this is unlikely but cheap to rule
+   out.
+3. Whether `Do.SpawnNear` with `range: 0f` silently declines.
+
+**Each is a five-line probe** and one of them is the answer.
+
+### The rule
+
+**Reverting is cheap; a pin that passes for the wrong reason is not.** The temptation here was to keep the
+code and assert the zero, because the assertion would have been true. It would also have buried a
+non-working mechanic under a green pin, which is the exact failure this log spent three commits digging out
+of the state folds.
+
+### Still to do
+
+- **Padmarashka's timer 11**, now down to three specific checks.
+- The five coffin `message` rows, the 14 remaining ready rows, Kingspin and the silikor guard ladders and
+  whatever their rungs arm, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Nothing shipped; the attempt was reverted. Full suite **2,049 passing**, 1 skipped.
