@@ -15028,3 +15028,80 @@ The check that settled it took one probe and four lines: ask the pair directly w
 
 Two test files corrected, one wrong claim withdrawn from this log. Full suite **2,038 passing**,
 1 skipped.
+
+## The mixed answers, resolved by message number
+
+Nineteen classes were parked as **`mixed`** — the audit could not say whether their answers should
+switch a target or only note the call. Most of that was the audit's fault, and the rest is now fixed.
+
+### Two wrong ways to ask the question
+
+**First version keyed on the pattern.** It called almost everything mixed, because a single retail
+pattern routinely answers several numbers in different ways: `Gab1_Gaurd_An` obeys one call and merely
+notes another. The union over a pattern says nothing about the branch we wrote.
+
+**Second version fell back to every pattern on the number** when a file's own patterns had nothing to
+say. That reported almost everything mixed again, for the opposite reason: a message number is reused
+across unrelated encounters, so the union over the game is noise. **When a file names no pattern that
+answers its number, the honest verdict is `absent`** — the file has not documented where its branch came
+from — and that is what it reports now.
+
+Keyed on `(pattern, message number)` and scoped to the patterns each class documents, the board reads
+clean.
+
+### `add/switch` on one number is not ambiguity
+
+It is **retail's two-action idiom**, and reading one branch settled it:
+
+```
+? is_message message_type=1007
+> add_hate_point  target=OBJI_MESSAGE_PARAM point_to_add=1
+> use_skill       target=OBJI_MESSAGE_PARAM skill=SKILLI_INDEX_0
+> switch_target   target=OBJI_MESSAGE_PARAM points_to_add=100
+```
+
+**A point first, then the switch with the hundred behind it.** This log has been calling that pair
+"Glance then Commit" since the klaw pack, and translating both halves as `Do.HateMessageTarget` — so the
+first one switched too.
+
+**That one is cosmetic**: the second action switches anyway, so the end state was already right. Seven
+such pairs are now written as `Do.HateMessageParam` then `Do.HateMessageTarget`, and the suite did not
+move, which is the expected result and the reason it was safe to do mechanically.
+
+### Three that were not cosmetic
+
+| class | number | retail | was |
+|---|---|---|---|
+| `LepharistBastionAI` | `1017` whisper | `add_hate_point` | switching |
+| `PanesterraGuardAI` | `41100` guard call | `add_hate_point` | switching |
+| `DarkbladeOvanukaAI` | `22251` base alarm | `add_hate_point` | switching (3 branches) |
+
+**A captain is obeyed and a peer is only noted.** Panesterra answers `41101` with `switch_target` and
+`41100` with `add_hate_point`, so a guard already busy keeps its own quarry when a guard calls and drops
+it when its captain does. The whole point of two numbers, and this port had them doing the same thing.
+
+The same shape in Lepharist: **the whisper is noted and the shout is obeyed.**
+
+**Nothing in the suite caught any of this** — the change is invisible while the answerer is idle, and
+every pin in those files had it idle. `ACaptainIsObeyedAndAGuardIsOnlyNoted` gives the answerer a fight
+of its own first, and it fails if the guard answer switches again.
+
+### What is left
+
+- **Twelve classes still `mixed`**, all of them the two-action idiom on a single `Do.HateMessageTarget`
+  where the branch needs reading to say whether our one call is standing for the point or the switch:
+  `FortressGuardCallAI`, `KerubielCampAI`, `RatmanCampAI`, `TursinLoudmouthAI`, `BlackClawLycanAI`,
+  `BrigadeGeneralAnuhartAI`, `NochsanaNagaWizardAI`, `PetDrakeCallAI`, `AnuhartCasterAI`,
+  `DrakeMarkAI`, `LichSoulCallAI`, `StoneskinStoffuAI`, `TrainedBeastAI`, `VanukaLizardAI`.
+  **These are low-risk** — a single call standing for the pair lands in the same place either way — but
+  they are not verified.
+- **Six classes `absent`**: `AnuhartGuardAI`, `HeironWatcherAI`, `SilikorGuardAI`, `AbyssGuardCallAI`,
+  `DefencePostFlagAI`, `IllusionOfMelancholyAI`. Each needs the retail pattern its answer came from
+  named in the file before anything can be checked. **That is a documentation gap, not a code one**, and
+  it is the cheapest item on this list.
+- The Ophidan chain's second hop, unchanged from the previous entry.
+
+### Verification
+
+Seven cosmetic pairs, five behavioural branches, one new pin with its mutation checked. Full suite
+**2,039 passing**, 1 skipped.

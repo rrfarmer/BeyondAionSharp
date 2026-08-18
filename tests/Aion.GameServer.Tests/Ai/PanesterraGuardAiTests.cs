@@ -38,6 +38,44 @@ public sealed class PanesterraGuardAiTests
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
+	/// <summary>
+	/// <b>A captain is obeyed and a guard is only noted.</b> Retail answers <c>41101</c> with
+	/// <c>switch_target</c> and <c>41100</c> with <c>add_hate_point</c>, so a guard already busy keeps
+	/// its own quarry when a peer calls and drops it when its captain does.
+	/// </summary>
+	/// <remarks>
+	/// Both answers used to switch, because this port had only the switching action. Nothing in this
+	/// file caught the difference — the two calls were indistinguishable once the answerer was idle,
+	/// and every pin here had it idle. This one gives it something to hold on to first.
+	/// </remarks>
+	[Fact]
+	public void ACaptainIsObeyedAndAGuardIsOnlyNoted()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.SpawnWithAi(Cutthroat, "panesterra_cutthroat", 300f, 300f, 200f);
+		Npc captain = harness.SpawnWithAi(Dreadcaptain, "panesterra_dreadcaptain", 303f, 300f, 200f);
+		Npc answerer = harness.SpawnWithAi(Grunt, "panesterra_soldier", 305f, 300f, 200f);
+		Player called = harness.SpawnPlayer(302f, 300f, 200f, race: Race.ASMODIANS);
+		Player busy = harness.SpawnPlayer(306f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(guard, answerer);
+		BossAiHarness.MakeMutuallyKnown(captain, answerer);
+		BossAiHarness.MakeMutuallyKnown(answerer, called);
+		BossAiHarness.MakeMutuallyKnown(answerer, busy);
+
+		// The answerer already has a fight of its own.
+		harness.Engage(answerer, busy);
+		Assert.Same(busy, answerer.GetTarget());
+
+		// A peer calls: noted, not obeyed.
+		harness.Engage(guard, called);
+		Assert.True(answerer.GetAggroList().GetHate(called) > 0, "the guard call never landed");
+		Assert.Same(busy, answerer.GetTarget());
+
+		// The captain calls: obeyed.
+		harness.Engage(captain, called);
+		Assert.Same(called, answerer.GetTarget());
+	}
+
 	/// <summary>A caller, an answerer beside it, and the raider who pulls the caller.</summary>
 	private static (BossAiHarness, Npc, Npc, Player) Base(
 		int callerId, int answererId, float apart = 10f, Race race = Race.ASMODIANS)

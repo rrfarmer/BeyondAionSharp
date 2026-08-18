@@ -94,7 +94,7 @@ public class GrayManeStalkerAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(1, "one of the farmers is calling", [When.Message(RatmanCalls.Farmers)],
-			Do.HateMessageTarget(RatmanCalls.Glance),
+			Do.HateMessageParam(RatmanCalls.Glance),
 			Do.HateMessageTarget(RatmanCalls.Commit))),
 	};
 
@@ -227,7 +227,7 @@ public class KuriutaAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(1, "the camp is calling", [When.Message(RatmanCalls.Camp)],
-			Do.HateMessageTarget(RatmanCalls.Notice),
+			Do.HateMessageParam(RatmanCalls.Notice),
 			Do.HateMessageTarget(RatmanCalls.Commit))),
 	};
 

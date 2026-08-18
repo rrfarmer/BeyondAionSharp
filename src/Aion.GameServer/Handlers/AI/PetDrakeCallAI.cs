@@ -36,7 +36,7 @@ public class PetDrakeAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(8, "my handler has named one", [When.Message(GetThatOne)],
-			Do.HateMessageTarget(Glance),
+			Do.HateMessageParam(Glance),
 			Do.HateMessageTarget(Commit))),
 	};
 

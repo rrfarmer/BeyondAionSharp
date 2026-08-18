@@ -178,7 +178,7 @@ public class DukakiMinerAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(1, "somebody named one", [When.Message(TursinLoudmouthAI.GetHim)],
-			Do.HateMessageTarget(Glance),
+			Do.HateMessageParam(Glance),
 			Do.HateMessageTarget(Commit))),
 	};
 

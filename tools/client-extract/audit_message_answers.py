@@ -40,9 +40,15 @@ import summarize_pattern as S  # noqa: E402
 NAME_RE = re.compile(r"<c>([A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+)</c>")
 
 
-def answer_kinds(patterns_dir: pathlib.Path) -> dict[str, set[str]]:
-    """Pattern name -> {"add", "switch"} for its on_message branches."""
-    kinds: dict[str, set[str]] = collections.defaultdict(set)
+def answer_kinds(patterns_dir: pathlib.Path) -> dict[tuple[str, str], set[str]]:
+    """(pattern name, message number) -> {"add", "switch"}.
+
+    **Keyed on the message number, not the pattern.** Keying on the pattern alone was the first
+    version and it called almost everything "mixed": a single retail pattern routinely answers several
+    numbers in different ways -- `Gab1_Gaurd_An` switches for one call and only notes another -- so the
+    union over a pattern says nothing about the branch we actually wrote.
+    """
+    kinds: dict[tuple[str, str], set[str]] = collections.defaultdict(set)
     for path in sorted(patterns_dir.rglob("*.xml")):
         try:
             text = S.read_text(path)
@@ -56,13 +62,40 @@ def answer_kinds(patterns_dir: pathlib.Path) -> dict[str, set[str]]:
             for handler in re.finditer(r"<on_message>(.*?)</on_message>", body, re.S):
                 for branch in re.finditer(r"<pattern>(.*?)</pattern>", handler.group(1), re.S):
                     flat = re.sub(r"\s+", "", branch.group(1))
-                    if "<is_message>" not in flat or "MESSAGE_PARAM" not in flat:
+                    listened = re.search(r"<is_message><message_type>(\d+)<", flat)
+                    if not listened or "MESSAGE_PARAM" not in flat:
                         continue
+                    key = (name.group(1), listened.group(1))
                     if "<add_hate_point>" in flat:
-                        kinds[name.group(1)].add("add")
+                        kinds[key].add("add")
                     if "<switch_target>" in flat:
-                        kinds[name.group(1)].add("switch")
+                        kinds[key].add("switch")
     return kinds
+
+
+#: `Do.HateMessageTarget` sitting in a branch, with the `When.Message(...)` that guards it.
+BRANCH_RE = re.compile(
+    r"When\.Message\(([A-Za-z0-9_.]+)\)(.{0,600}?)Do\.HateMessageTarget\(", re.S)
+
+CONST_RE = re.compile(r"const\s+int\s+(\w+)\s*=\s*(\d+)\s*;")
+
+
+def constants(handlers: pathlib.Path) -> dict[str, str]:
+    """Every `const int NAME = VALUE` in the AI folder, by bare name and by Class.NAME."""
+    out: dict[str, str] = {}
+    for path in sorted(handlers.glob("*.cs")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        owner = None
+        for line in text.splitlines():
+            owner_hit = re.search(r"(?:class|struct)\s+(\w+)", line)
+            if owner_hit:
+                owner = owner_hit.group(1)
+            hit = CONST_RE.search(line)
+            if hit:
+                out.setdefault(hit.group(1), hit.group(2))
+                if owner:
+                    out[f"{owner}.{hit.group(1)}"] = hit.group(2)
+    return out
 
 
 def main() -> int:
@@ -71,8 +104,13 @@ def main() -> int:
     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parents[2]))
     args = ap.parse_args()
 
-    kinds = answer_kinds(pathlib.Path(args.patterns_dir))
     handlers = pathlib.Path(args.repo) / "src/Aion.GameServer/Handlers/AI"
+    kinds = answer_kinds(pathlib.Path(args.patterns_dir))
+    consts = constants(handlers)
+    #: message number -> the kinds any retail pattern uses for it.
+    by_number: dict[str, set[str]] = collections.defaultdict(set)
+    for (pattern, number), kind in kinds.items():
+        by_number[number] |= kind
 
     rows: list[tuple[str, str, int, list[str]]] = []
     for path in sorted(handlers.glob("*.cs")):
@@ -80,24 +118,48 @@ def main() -> int:
         uses = text.count("Do.HateMessageTarget(")
         if not uses:
             continue
-        named = {n for n in NAME_RE.findall(text) if n in kinds}
-        if not named:
+        named = {n for n in NAME_RE.findall(text)}
+        detail: list[str] = []
+        seen: set[str] = set()
+        for token, _between in BRANCH_RE.findall(text):
+            number = consts.get(token) or consts.get(token.split(".")[-1])
+            if number is None and token.isdigit():
+                number = token
+            if number is None:
+                detail.append(f"{token}=?")
+                seen.add("unknown")
+                continue
+            # ONLY the patterns this file documents. Falling back to every pattern on the number was
+            # the second version, and it reported almost everything "mixed" again: a message number is
+            # reused across unrelated encounters, so the union over the game says nothing about ours.
+            # When a file names no pattern that answers this number, the honest answer is "absent" --
+            # the file has not documented the pattern its branch came from.
+            here: set[str] = set()
+            for n in named:
+                here |= kinds.get((n, number), set())
+            if not here:
+                detail.append(f"{number}=absent")
+                seen.add("unknown")
+                continue
+            label = "/".join(sorted(here))
+            detail.append(f"{number}={label}")
+            seen.add("switch" if here == {"switch"} else ("add" if here == {"add"} else "mixed"))
+        if not detail:
             rows.append((path.name, "unknown", uses, []))
             continue
-        seen: set[str] = set()
-        for n in named:
-            seen |= kinds[n]
-        verdict = "mixed" if len(seen) != 1 else seen.pop()
-        rows.append((path.name, verdict, uses, sorted(named)))
+        verdict = ("mixed" if len(seen) != 1 else seen.pop())
+        rows.append((path.name, verdict, uses, sorted(set(detail))))
 
     order = {"add": 0, "mixed": 1, "unknown": 2, "switch": 3}
+    for r in rows:
+        order.setdefault(r[1], 4)
     rows.sort(key=lambda r: (order[r[1]], -r[2]))
 
     totals = collections.Counter(r[1] for r in rows)
     print(f"{sum(r[2] for r in rows)} uses of Do.HateMessageTarget across {len(rows)} classes\n")
     print(f"{'file':<34} {'verdict':<8} {'uses':>4}  patterns")
     for name, verdict, uses, named in rows:
-        print(f"{name:<34} {verdict:<8} {uses:>4}  {', '.join(named[:3])}")
+        print(f"{name:<34} {verdict:<8} {uses:>4}  {', '.join(named)}")
     print()
     for k in ("add", "mixed", "unknown", "switch"):
         if totals[k]:

@@ -120,8 +120,10 @@ public class BastionDrudgeAI : PatternAi
 			Branch(2, "the shout", [When.Message(LepharistCalls.Shout)],
 				Do.HateMessageTarget(LepharistCalls.Commit)),
 
+			// 1017 is add_hate_point in retail and 1018 is switch_target, so the whisper is noted and
+			// the shout is obeyed -- which is the difference between the two calls.
 			Branch(2, "the whisper", [When.Message(LepharistCalls.Whisper)],
-				Do.HateMessageTarget(LepharistCalls.Glance))),
+				Do.HateMessageParam(LepharistCalls.Glance))),
 
 		OnAttacked = Of(Branch(1, "hit, and it is still worth running from",
 			[When.HpBelow(30), When.TargetHpBetween(40, 100), When.FirstTime(Fled)],

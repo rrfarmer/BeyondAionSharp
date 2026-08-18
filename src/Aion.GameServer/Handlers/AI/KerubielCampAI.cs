@@ -78,7 +78,7 @@ public class KerubielFighterAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(1, "a bandit is calling", [When.Message(KerubielBanditAI.GetHim)],
-			Do.HateMessageTarget(Glance),
+			Do.HateMessageParam(Glance),
 			Do.HateMessageTarget(Commit))),
 	};
 
@@ -156,7 +156,7 @@ public class KerubianGarkAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(1, "a hunter is calling", [When.Message(KerubianHunterAI.GetHim)],
-			Do.HateMessageTarget(Notice),
+			Do.HateMessageParam(Notice),
 			Do.HateMessageTarget(Commit))),
 	};
 

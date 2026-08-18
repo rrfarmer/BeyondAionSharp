@@ -143,7 +143,7 @@ public class TamedTaygaAI : PatternAi
 	{
 		// One point and then a hundred, in that order, because that is how retail writes it.
 		OnMessage = Of(Branch(4, "my lycan has picked one", [When.Message(BlackClawHunterAI.ThatOneIsMine)],
-			Do.HateMessageTarget(Glance),
+			Do.HateMessageParam(Glance),
 			Do.HateMessageTarget(Commit))),
 
 		OnFriendKilled = Of(Branch(3, "they killed my lycan", [],

@@ -151,10 +151,10 @@ public class ShebanBladesmanAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(11, "the base alarm", [When.Message(BaseAlarm)],
-				Do.HateMessageTarget(Ordered)),
+				Do.HateMessageParam(Ordered)),
 
 			Branch(2, "", [When.Message(GoForThisOne)],
-				Do.HateMessageTarget(Ordered))),
+				Do.HateMessageParam(Ordered))),
 	};
 
 	public ShebanBladesmanAI(Npc owner)
@@ -188,7 +188,7 @@ public class ShebanAmbusherAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(2, "", [When.Message(ShebanBladesmanAI.BaseAlarm)],
-				Do.HateMessageTarget(Ordered))),
+				Do.HateMessageParam(Ordered))),
 	};
 
 	public ShebanAmbusherAI(Npc owner)

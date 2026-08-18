@@ -58,8 +58,10 @@ public static class PanesterraCalls
 		Branch(99, "the captain is calling", [When.Message(captainCall)],
 			Do.HateMessageTarget(CaptainAnswer)),
 
+		// A captain is obeyed and a guard is only noted: 41101 is switch_target in retail and 41100 is
+		// add_hate_point, so a guard already fighting keeps its own quarry when a peer calls.
 		Branch(1, "a guard is calling", [When.Message(guardCall)],
-			Do.HateMessageTarget(GuardAnswer)));
+			Do.HateMessageParam(GuardAnswer)));
 }
 
 /// <summary>
