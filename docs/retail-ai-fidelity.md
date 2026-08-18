@@ -21607,3 +21607,64 @@ whose subject genuinely is the cry.
 
 Build clean. Kingspin's pins pass four runs in a row after the change. Full suite **2,112 passing**,
 1 skipped.
+
+## Kaliga's statues are walker-blocked, and that is five encounters
+
+The previous entry called Kaliga's statues and his `p97` marker "the only verified-buildable encounter
+content left in the ranking". **Reading their trigger chain closes that too.**
+
+The branches themselves are clean and need nothing:
+
+```
+p98  hp<80,  timer 0, set_flag ALPHA_2  -> two statues at (633.67, 756.79) and (633.67, 791.59)
+p99  hp<50,  timer 0, set_flag ALPHA_3  -> the same two marks again
+p97  hp<50,  timer 1, 50 percent        -> one invisible marker, re-armed every 20s
+```
+
+Absolute coordinates, a health floor, a test-and-set, a roll — every part expressible today. **But timers
+0 and 1 are armed in exactly one place: `on_arrived_at_waypoint`.** Nothing else in the pattern arms
+either. So the whole chain hangs off a waypoint arrival, and the statues can no more be reached than
+Padmarashka's egg.
+
+### Same shape, second time
+
+**Padmarashka's egg was blocked by its trigger while its placement needed nothing.** This is that again,
+one level further out: not the spawn's own trigger but the timer that eventually reaches it. **A branch
+can look completely unblocked and be unreachable**, and the only way to tell is to trace what arms its
+timer — which the branch itself does not say.
+
+### Walker routes now block five encounters
+
+The silikor dismissal, Tiamat's rush wave, the Bergrisar decision, Padmarashka's four adds, and now
+Kaliga's statues and marker.
+
+**Every encounter-level item this log has examined in the last six passes has ended at the same place.**
+That is no longer a queue item among others: **it is the single thing standing between this port and its
+remaining boss content**, and it is not AI work — it is recovering the mapping from retail's path names to
+our hashed route ids, which lives with the `.pak` extraction.
+
+### What is left that is genuinely unblocked
+
+After six passes of checking, the honest list of encounter work not behind routes or skill indices is
+**empty**. What remains is:
+
+- `on_talked_by_user` and `teleport_target_alias` — engine work, verified, unblocks the Raksha door.
+- The empyrean lords' skill indices — resolves one cadence.
+- Modor's clone — blocked on client spawn tables.
+- `sematariux` and `king_consierd` spawn entries — data.
+- The `drakanmedic` harness question — test-only.
+
+**Three of those five are also extraction or data problems.** The ratio is the finding: **the AI port has
+run ahead of the data it needs.**
+
+### Still to do
+
+- **Walker route ids** — five encounters, and the highest-value item in the project by a wide margin.
+- Then Kaliga's statues, Padmarashka's four adds, the silikor dismissal, Tiamat's rush wave, and a
+  revisit of the Bergrisar decision, all of which fall out immediately.
+- `on_talked_by_user` and `teleport_target_alias`, the only unblocked engine work left.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
