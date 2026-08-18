@@ -30,8 +30,6 @@ namespace Aion.GameServer.Tests.Ai;
 public sealed class RetailHpThresholdTests
 {
 	private const int Gelkmaros = 220070000;
-	private const int GelkmarosPadmarashka = 216580;
-	private const int PadmarashkaRockSlide = 281936;
 
 	private const int DragonLordsRefuge = 300520000;
 	private const int CalindiFlamelord = 219359;

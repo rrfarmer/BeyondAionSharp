@@ -16394,3 +16394,49 @@ that `SpawnWithAi` exists.
 ### Verification
 
 No code changed. Full suite **2,049 passing**, 1 skipped.
+
+## The last candidate closes: two dead constants
+
+`RetailHpThresholdTests` declares `GelkmarosPadmarashka` (216580) and `PadmarashkaRockSlide` (281936) and
+**uses neither**. The grep the previous entry owed took one line: two declarations, no references. Dead
+code, not a missing registration.
+
+So the registration sweep's board is genuinely clean, and the one real defect it ever found remains the
+Icaronix trap.
+
+Both constants are removed, and `audit_test_ai_registration.py` now skips ids spawned through
+`SpawnWithAi` — the refinement the widening identified — so the by-test form no longer reports every probe
+file in the suite.
+
+### What the whole registration thread was worth
+
+Six entries, end to end:
+
+| | |
+|---|---|
+| defects found | **2** — Padmarashka's acid bomb, Icaronix's trap |
+| wrong diagnoses committed and withdrawn | **2** — "the arming is missing", "the id is suspect" |
+| tools left behind | 1, plus a refinement |
+| dead constants removed | 2 |
+
+**The second defect took a minute because the first took four entries.** That is the honest summary: the
+expensive part was not finding the bug, it was learning that the failure has no symptom — a swallowed
+`No AI found for name X` inside a spawn, which looks exactly like a mechanic that is correctly absent.
+
+**The cheap probe was available from the first entry**: spawn the npc directly and print the exception.
+Every probe before it asked whether a path produced the npc; none asked what happened when it tried.
+
+### Still to do
+
+- Padmarashka's timers 10 and 12, blocked on skills, a waypoint walk and a system message.
+- The five coffin `message` rows, blocked on the guard scan following local condition helpers.
+- The 14 remaining ready guard rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders, **and whatever their rungs arm** — both are collapsed in the
+  shape Padmarashka's middle band was, so expect missing timers under them rather than a missing guard.
+- The 4 mixed and 3 misaligned guard rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Two dead constants removed, one tool refined, sweep clean. Full suite **2,049 passing**, 1 skipped.
