@@ -19055,3 +19055,71 @@ does not rediscover them as a finding.
 ### Verification
 
 Build clean. The new pin fails with its branch removed. Full suite **2,055 passing**, 1 skipped.
+
+## World flags, and why the first thing they unblock still is not built
+
+The previous entry named world flags an engine gap. Sizing it first was worth doing: **583
+`set_world_flag_var`, 50 `unset_world_flag_var` and 19 `is_world_flag_var` across 160 patterns**, of which
+**18 are patterns classes we have already ported serve** — Tiamat in both difficulties, Modor's clone,
+Rukril, Ebonsoul, the awakened chamber lord, the silikor and its akaimum.
+
+### What was built
+
+`WorldFlags` plus three guards: `When.FirstTimeInWorld`, `When.ConsumingWorld`, `When.WorldFlagSet`.
+
+**Scope is the map instance, not the server.** Retail calls them world flags, but the content using them
+is instanced, and one group's progress arming another group's mechanic is the one failure that matters.
+Keyed on the instance object rather than its id, so an instance torn down and rebuilt under the same id
+does not inherit the old group's progress — a `ConditionalWeakTable`, so nothing keeps a dead instance
+alive and no cleanup hook is needed.
+
+**A separate flag space from the per-npc flags**, matching retail: several patterns use the same
+`FLAGVARI_ALPHA_1` name in both scopes inside one handler, and they are different variables.
+
+### The pin that matters
+
+Five pins, and the useful one is **isolation**. A server-wide store would pass every sharing test and
+still be wrong in the only way that counts, and **no encounter pin written inside a single instance can
+see it** — which is why it is pinned directly against the store rather than waiting for an encounter.
+
+### And the silikor pair is still not wired, for a new reason
+
+The obvious first use was the akaimum setting the flag the silikor consumes. Reading `ND2_WhG3`'s two
+message branches to wire it turned up something else:
+
+```
+[p4] ? is_message 6620  ? is_distance_shorter_than
+     ! set_flag_var ALPHA_2   ! set_flag_var ALPHA_1
+     ? set_world_flag_var ALPHA_1
+[p3] ? is_message 6620  ? is_distance_shorter_than
+     ! set_flag_var ALPHA_1
+     ? set_world_flag_var ALPHA_2
+```
+
+Both are test-and-sets on the same per-npc `ALPHA_1`. The first `6620` matches p4, which sets `ALPHA_1`;
+every later `6620` fails p4 on `ALPHA_2` **and fails p3 on `ALPHA_1`**. So on a plain reading **p3 can
+never run, and `ALPHA_2` — the flag the silikor consumes — is never set by this branch at all.**
+
+Either the reading is wrong, or retail's own dismissal is unreachable by this route and the flag is set
+somewhere else entirely. **Not guessed at.** Our port's two branches are keyed on the marker's npc id
+rather than on retail's distance test, so the mapping is a judgement call on top of an unresolved
+reading, and the engine capability is worth having on its own.
+
+**This is the third time in this log that reading one branch at a time gave the wrong answer** — after
+the Ophidan twin and the `do_nothing` absorber. The pattern is consistent enough to state as a rule:
+**a `set_flag_var` is never local information.** It has to be read against every other branch in its
+handler that touches the same flag.
+
+### Still to do
+
+- **Resolve the `ND2_WhG3` p3/p4 reading**, then wire the silikor dismissal.
+- **The other 17 world-flag patterns we already serve**, now unblocked at the engine level — Tiamat and
+  Modor's clone are the substantial ones.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses.
+- The four Ophidan controllers, blocked on npc templates for 856057-856060.
+- Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the remaining
+  ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Five new pins, including instance isolation. Full suite **2,060 passing**, 1 skipped.

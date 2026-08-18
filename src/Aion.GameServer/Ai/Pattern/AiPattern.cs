@@ -198,6 +198,26 @@ public static class When
     /// <summary><c>unset_flag_var</c> in conditions: the mirror of <see cref="FirstTime"/>.</summary>
     public static PatternCondition Consuming(int flag) => ai => ai.TestAndUnsetFlag(flag);
 
+    /// <summary>
+    /// <c>set_world_flag_var</c>: <see cref="FirstTime"/> shared by every npc in the map instance.
+    /// </summary>
+    /// <remarks>
+    /// <b>A separate flag space from the per-npc one</b>, matching retail — several patterns use the
+    /// same <c>FLAGVARI_</c> name in both scopes within one handler, and they are different variables.
+    /// See <see cref="WorldFlags"/> for why the scope is the instance rather than the server.
+    /// </remarks>
+    public static PatternCondition FirstTimeInWorld(int flag)
+        => ai => WorldFlags.TestAndSet(ai.GetOwner().GetWorldMapInstance(), flag);
+
+    /// <summary><c>unset_world_flag_var</c>: the mirror, and the half that lets one npc arm another.</summary>
+    public static PatternCondition ConsumingWorld(int flag)
+        => ai => WorldFlags.TestAndUnset(ai.GetOwner().GetWorldMapInstance(), flag);
+
+    /// <summary><c>is_world_flag_var</c>: reads the shared flag without touching it.</summary>
+    public static PatternCondition WorldFlagSet(int flag)
+        => ai => WorldFlags.IsSet(ai.GetOwner().GetWorldMapInstance(), flag);
+
+
     /// <summary><c>test_probability</c>.</summary>
     public static PatternCondition Chance(int percent) => ai => ai.RollPercent(percent);
 
