@@ -10149,3 +10149,49 @@ the pattern.
 Full suite **1,952 passing** and 1 skipped; five new pins run five times over; **ten mutations, all
 caught**. Missing-AI 680 → **678**; translatable 336/1,110 → **334/1,108**; dead-timer payload
 13 patterns / 26 actions → **14 / 28**, the extra being Ovanuka's four stranded timers.
+
+## The Sauro Supply Base alarm, and a broadcast added to a Java-parity class
+
+The entry before this one called `22251` "one broadcast from being real". It is now real.
+
+| | |
+|---|---|
+| Brigade General Sheba (230858) and Guard Captain Ahuradim (230857) | raise the alarm at fifty metres as they engage, naming the player they are fighting |
+| sheban bladesmen (233286) | answer with **three thousand** hate on that player |
+| sheban legion ambushers (233277) | answer with **one thousand** |
+
+**The weights are the only thing separating the two guard kinds** in retail's data — same message, same
+two actions, a third of the commitment. A raid that peels a bladesman off the named player needs three
+times what an ambusher takes, and the pin measures exactly that: two thousand hate from somebody else
+moves the ambusher and not the bladesman.
+
+### `CombatAlarm`: what a Java-parity class is missing
+
+`PatternAi` gets `on_enter_attack_state` for nothing, because it latches the transition itself and
+evaluates a whole handler there. A Java-parity class has neither: it sees `HandleAttack` on every
+swing, so a broadcast written there would go out several times a second.
+
+`CombatAlarm` is the smallest thing that closes that gap — one field, a `Raise` on attack and a
+`Rearm` on the two handlers that end a fight. Both bosses keep every line of their Java behaviour
+beside it.
+
+**Rule: an addition to a Java-parity class is allowed, and it has to be shaped so the Java is still
+legible.** The golden rule says the Java tree is the spec; the sanctioned exception says retail AI
+behaviour outranks aionemu's approximation of it. Between them sits this case — a class that is a
+faithful port of something aionemu simply never had — and the answer is to add the missing mechanic in
+a form that reads as an addition rather than a rewrite. Three lines each, both pointing at the log.
+
+The latch is pinned from both sides: a guard arriving after the pull hears nothing, and a guard
+arriving after a reset hears the second pull.
+
+### Verification
+
+Full suite **1,961 passing** and 1 skipped; five new pins run three times over; **ten mutations, all
+caught**. Missing-AI 678 → **677**; translatable and adds unchanged, the ambusher's pattern being one
+branch below the ranking's threshold.
+
+**One flake seen and not caused here.** `GuardReinforcementAiTests.AWaveLivesForItsOwnPatternsLifetime`
+failed once in three full-suite runs and passed five times in isolation and twice more in the full
+suite afterwards. It has nothing to do with this change — different instance, different classes — and
+it is recorded here rather than left in a scrollback: **a test that fails one run in three under load
+is a defect in the pin, not noise**, and it wants a look.

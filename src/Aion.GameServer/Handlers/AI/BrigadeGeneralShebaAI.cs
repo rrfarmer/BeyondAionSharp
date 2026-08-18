@@ -18,6 +18,19 @@ public class BrigadeGeneralShebaAI : AggressiveNpcAI
     private float multiplier = 1f;
     private bool spawnCenter = true;
 
+    /// <summary>
+    /// Retail's <c>IDVritra_Base_Boss1</c> raises the base alarm at fifty metres as it engages, and the
+    /// supply base's guards answer by taking whoever he is fighting. Added to this class rather than
+    /// translated into one, because everything else here is a Java port. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly CombatAlarm alarm = new CombatAlarm(ShebanBladesmanAI.BaseAlarm, 50f);
+
+    protected override void HandleAttack(Creature creature)
+    {
+        base.HandleAttack(creature);
+        alarm.Raise(GetOwner());
+    }
+
     public override float ModifyOwnerDamage(float damage, Creature effected, Effect effect)
     {
         return damage * multiplier;
@@ -90,12 +103,14 @@ public class BrigadeGeneralShebaAI : AggressiveNpcAI
 
     protected override void HandleBackHome()
     {
+        alarm.Rearm();
         RemoveAdds();
         base.HandleBackHome();
     }
 
     protected override void HandleDied()
     {
+        alarm.Rearm();
         RemoveAdds();
         base.HandleDied();
     }

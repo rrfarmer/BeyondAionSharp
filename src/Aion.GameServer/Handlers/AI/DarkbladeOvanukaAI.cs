@@ -121,15 +121,14 @@ public class DarkbladeOvanukaAI : PatternAi
 /// Retail-sourced; see docs/retail-ai-fidelity.md. One branch is built: <b>when Ovanuka crosses
 /// eighty and names a player, they take that player and go.</b>
 /// <para>
-/// <b>Retail gives them two more answers, and neither has anybody to answer.</b> <c>22271</c> is
-/// Ovanuka's soft call, which they take one time in three and which nothing can reach — see
-/// <see cref="DarkbladeOvanukaAI"/>. And <c>22251</c> is the base alarm: retail has
-/// <c>IDVritra_Base_Boss1</c> and <c>Boss2</c> — Brigade General Sheba (230858) and Guard Captain
-/// Ahuradim (230857) — broadcast it as they engage, and both the bladesmen and the <b>sheban legion
-/// ambushers</b> (233277) answer by taking whoever the boss is fighting. Neither boss sends it here:
-/// both run Java-parity classes rather than patterns, so the alarm would have to be added to those
-/// rather than translated. It is the largest unbuilt thing left in this instance and it is one
-/// broadcast from being real.
+/// <b>And the base alarm.</b> <c>22251</c> goes out from Brigade General Sheba (230858) and Guard
+/// Captain Ahuradim (230857) as they engage, and the bladesmen answer it exactly as they answer
+/// Ovanuka — three thousand hate on the player the boss named. See <see cref="Ai.CombatAlarm"/> for how
+/// two Java-parity boss classes came to send it.
+/// </para>
+/// <para>
+/// <b>Not built:</b> <c>22271</c>, Ovanuka's soft call, which they take one time in three and which
+/// nothing can reach — see <see cref="DarkbladeOvanukaAI"/>.
 /// </para>
 /// <para>
 /// <b>Not translated:</b> the casts on all three branches, the self-buffs on waking, and the
@@ -142,14 +141,57 @@ public class ShebanBladesmanAI : PatternAi
 	/// <summary>Retail's <c>22270</c>: Ovanuka naming a player at the eighty-percent crossing.</summary>
 	public const int GoForThisOne = 22270;
 
+	/// <summary>Retail's <c>22251</c>: a Sauro Supply Base boss being pulled.</summary>
+	public const int BaseAlarm = 22251;
+
+	/// <summary>Retail's <c>point_to_add</c> on both of the bladesman's orders.</summary>
+	private const int Ordered = 3000;
+
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(
+			Branch(11, "the base alarm", [When.Message(BaseAlarm)],
+				Do.HateMessageTarget(Ordered)),
+
 			Branch(2, "", [When.Message(GoForThisOne)],
-				Do.HateMessageTarget(SummonOrder.OnePoint))),
+				Do.HateMessageTarget(Ordered))),
 	};
 
 	public ShebanBladesmanAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The sheban legion ambushers (233277). Retail pattern <c>IDVritra_Base_Drakan_As_Hide</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. One branch: they answer the base alarm and take
+/// whoever the boss named. They put <b>a thousand</b> hate on that player where the bladesmen put three
+/// — the same order, weighted differently, which is the only thing separating the two guard kinds in
+/// retail's data.
+/// <para>
+/// <b>Not translated:</b> six skill indices, and the <c>goto_waypoint</c> they walk on waking and on
+/// leaving a fight, which is how retail returns them to their post.
+/// </para>
+/// </remarks>
+[AIName("sheban_ambusher")]
+public class ShebanAmbusherAI : PatternAi
+{
+	/// <summary>Retail's <c>point_to_add</c>, a third of what a bladesman brings.</summary>
+	private const int Ordered = 1000;
+
+	private static readonly AiPattern Pattern_ = new AiPattern
+	{
+		OnMessage = Of(
+			Branch(2, "", [When.Message(ShebanBladesmanAI.BaseAlarm)],
+				Do.HateMessageTarget(Ordered))),
+	};
+
+	public ShebanAmbusherAI(Npc owner)
 		: base(owner)
 	{
 	}
