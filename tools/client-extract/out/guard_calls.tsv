@@ -1,0 +1,391 @@
+npc_id	pattern	send_range	receives	name
+209415	DirectPortal_LGuard_Defend_PM_Ke2	0	1	theobomos elite templar
+209416	DirectPortal_LGuard_Charge_PM_Fe2	0	1	theobomos elite gladiator
+209417	DirectPortal_LGuard_Watch_PR_Re2	25	1	theobomos elite ranger
+209418	DirectPortal_LGuard_Strike_MRArea_We2	0	1	theobomos elite sorcerer
+209419	DirectPortal_LGuard_Support_HBuff_Pe2	0	1	theobomos elite cleric
+209420	DirectPortal_LGuard_Defend_PM_Ke2	0	1	jamanok elite templar
+209421	DirectPortal_LGuard_Charge_PM_Fe2	0	1	jamanok elite gladiator
+209422	DirectPortal_LGuard_Watch_PR_Re2	25	1	jamanok elite ranger
+209423	DirectPortal_LGuard_Strike_MRArea_We2	0	1	jamanok elite sorcerer
+209424	DirectPortal_LGuard_Support_HBuff_Pe2	0	1	jamanok elite cleric
+209425	DirectPortal_DGuard_Defend_PM_Ke2	0	1	pandemonium hq elite templar
+209426	DirectPortal_DGuard_Charge_PM_Fe2	0	1	pandemonium hq elite gladiator
+209427	DirectPortal_DGuard_Watch_PR_Re2	25	1	pandemonium hq elite ranger
+209428	DirectPortal_DGuard_Strike_MRArea_We2	0	1	pandemonium hq elite sorcerer
+209429	DirectPortal_DGuard_Support_HBuff_Pe2	0	1	pandemonium hq elite cleric
+209430	DirectPortal_DGuard_Defend_PM_Ke2	0	1	hq supply templar
+209431	DirectPortal_DGuard_Charge_PM_Fe2	0	1	hq supply gladiator
+209432	DirectPortal_DGuard_Watch_PR_Re2	25	1	hq supply ranger
+209433	DirectPortal_DGuard_Strike_MRArea_We2	0	1	hq supply sorcerer
+209434	DirectPortal_DGuard_Support_HBuff_Pe2	0	1	hq supply cleric
+209435	DirectPortal_LGuard_Defend_PM_Ke2	0	1	griffon's claw elite templar
+209436	DirectPortal_LGuard_Charge_PM_Fe2	0	1	griffon's claw elite gladiator
+209437	DirectPortal_LGuard_Watch_PR_Re2	25	1	griffon's claw elite ranger
+209438	DirectPortal_LGuard_Strike_MRArea_We2	0	1	griffon's claw elite sorcerer
+209439	DirectPortal_LGuard_Support_HBuff_Pe2	0	1	griffon's claw elite cleric
+209440	DirectPortal_LGuard_Defend_PM_Ke2	0	1	provisioneers elite templar
+209441	DirectPortal_LGuard_Charge_PM_Fe2	0	1	provisioneers elite gladiator
+209442	DirectPortal_LGuard_Watch_PR_Re2	25	1	provisioneers elite ranger
+209443	DirectPortal_LGuard_Strike_MRArea_We2	0	1	provisioneers elite sorcerer
+209444	DirectPortal_LGuard_Support_HBuff_Pe2	0	1	provisioneers elite cleric
+209445	DirectPortal_DGuard_Defend_PM_Ke2	0	1	brusthonin reapers elite templar
+209446	DirectPortal_DGuard_Charge_PM_Fe2	0	1	brusthonin reapers elite gladiator
+209447	DirectPortal_DGuard_Watch_PR_Re2	25	1	brusthonin reapers elite ranger
+209448	DirectPortal_DGuard_Strike_MRArea_We2	0	1	brusthonin reapers elite sorcerer
+209449	DirectPortal_DGuard_Support_HBuff_Pe2	0	1	brusthonin reapers elite cleric
+209450	DirectPortal_DGuard_Defend_PM_Ke2	0	1	baltasar elite templar
+209451	DirectPortal_DGuard_Charge_PM_Fe2	0	1	baltasar elite gladiator
+209452	DirectPortal_DGuard_Watch_PR_Re2	25	1	baltasar elite ranger
+209453	DirectPortal_DGuard_Strike_MRArea_We2	0	1	baltasar elite sorcerer
+209454	DirectPortal_DGuard_Support_HBuff_Pe2	0	1	baltasar elite cleric
+209458	LDF5_LGuard_DisputeRvRLight_Support_Deform_Ee	0	1	jamanok siege supplier
+209470	LDF5_DGuard_DisputeRvRLight_Support_Deform_Ee	0	1	baltasar cannon controller
+209473	LDF5_LGuard_DisputeRvRLight_Support_Deform_Ee	0	1	jamanok
+209475	LDF5_DGuard_DisputeRvR_Support_Heal_Pe	0	1	abunka
+209476	LDF5_LGuard_DisputeRvRLight_Defend_PM_Ke	0	1	surt
+209480	DirectPortal_LGuard_Charge_PM_Fe	0	1	jamanok protectorate gladiator
+209483	DirectPortal_DGuard_Charge_PM_Fe	0	1	brusthonin gladiator
+209534	DirectPortal_LGuard_Defend_PM_Ke2	0	1	inggison elite templar
+209537	DirectPortal_LGuard_Strike_MRArea_We2	0	1	inggison elite sorcerer
+209549	DirectPortal_DGuard_Defend_PM_Ke2	0	1	gelkmaros elite templar
+209552	DirectPortal_DGuard_Strike_MRArea_We2	0	1	gelkmaros elite sorcerer
+219829	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra pursuit fangblade
+219830	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra pursuit fangblade
+219831	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra pursuit fangblade
+219832	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra pursuit fangblade
+219833	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra pursuit reserve
+219834	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra pursuit reserve
+219835	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra pursuit reserve
+219836	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra pursuit reserve
+219837	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra pursuit deathfang
+219838	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra pursuit deathfang
+219839	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra pursuit deathfang
+219840	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra pursuit deathfang
+219841	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra pursuit reinforcement
+219842	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra pursuit reinforcement
+219843	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra pursuit reinforcement
+219844	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra pursuit reinforcement
+219845	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra pursuit dracotongue
+219846	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra pursuit dracotongue
+219847	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra pursuit dracotongue
+219848	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra pursuit dracotongue
+219849	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra pursuit clawrunner
+219850	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra pursuit clawrunner
+219851	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra pursuit clawrunner
+220063	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra prectaz scaleblade
+220064	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra prectaz swiftalon
+220065	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra prectaz scalemage
+220066	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	beritra prectaz fleshmender
+220067	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra prectaz caudamark
+220068	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra prectaz commander
+220069	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra prectaz informant
+220070	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra prectaz drakencaster
+220071	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	beritra prectaz scalesage
+220072	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra prectaz wyrmward
+232846	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	varga raider trooper
+232852	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	varga raider captain
+234044	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	stonereach force defender
+234047	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	stonereach force grunt
+234050	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	stonereach force lookout
+234059	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	flamecrest force defender
+234062	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	flamecrest force grunt
+234068	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	flamecrest force sorcerer
+234074	LDF5_LGuard_DisputePvP_Defend_PM_Ke	0	1	stonereach force protector
+234077	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	stonereach force lieutenant
+234080	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	stonereach force watchguard
+234083	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	stonereach force sorcerer
+234086	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	stonereach force fleshbinder
+234089	LDF5_LGuard_DisputePvP_Defend_PM_Ke	0	1	flamecrest force protector
+234092	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	flamecrest force lieutenant
+234095	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	flamecrest force watchguard
+234098	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	flamecrest force sorcerer
+234101	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	flamecrest force fleshbinder
+234136	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	stonereach force aegis
+234139	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	flamecrest force aegis
+234966	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	pashid destruction unit combatant
+234967	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	pashid defender
+235187	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	guardian enforcer
+235193	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	guardian elite enforcer
+235921	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra invasion legionary
+235922	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra invasion longeye
+235923	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra invasion ironscale
+235924	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra invasion triggerclaw
+235925	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra invasion cursecaster
+235926	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra invasion raider
+235927	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra invasion legionary
+235928	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra invasion longeye
+235929	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra invasion ironscale
+235930	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra invasion triggerclaw
+235931	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra invasion cursecaster
+235932	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra invasion raider
+235933	LDF5_LGuard_Safety_Chase_Fn	0	1	beritra invasion legionary
+235934	LDF5_LGuard_Safety_Hold_Rn	25	1	beritra invasion longeye
+235935	LDF5_LGuard_DisputePvP_Defend_PM_Kn	0	1	beritra invasion ironscale
+235936	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra invasion triggerclaw
+235937	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	beritra invasion cursecaster
+235938	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra invasion raider
+236250	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra raider
+236253	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra trooper
+236254	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra sentinel
+236256	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	beritra trooper magus
+236257	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	beritra trooper medic
+236261	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra invasion scaleblade
+236262	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	beritra invasion gunner
+236264	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	beritra trailblazer assassin
+236265	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	beritra trailblazer spelltongue
+236701	LDF5_LGuard_Safety_Chase_Fn	0	1	raksang ruins guard
+236702	LDF5_LGuard_Safety_Hold_Rn	25	1	raksang ruins ranger
+236703	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	raksang ruins gunner
+251086	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	krotan bodyguard
+251094	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	krotan mystic
+251097	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	krotan deadeye
+251099	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	krotan steel sentinel
+251102	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	miren blade sergeant
+251107	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	miren flesh binder
+251110	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	miren aether master
+251113	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	miren  visionary captain
+251115	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	miren sentinel
+251118	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	kysis wardship officer
+251123	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	kysis master apothecary
+251126	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	kysis stormbinder
+251129	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	kysis stalksman officer
+251151	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251152	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251153	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251154	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	dread mender
+251160	AB1_DrGuard_Artifact_Killer	25	1	dread captain
+251179	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251180	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251181	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251182	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	dread mender
+251206	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251207	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251208	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251209	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	dread mender
+251233	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251234	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251235	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251260	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251261	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251262	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251263	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	dread mender
+251287	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251288	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251289	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251314	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	dread defender
+251315	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread castwarden
+251316	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	dread sentinel
+251317	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	dread mender
+251455	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	dread remnant defender
+251456	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	dread remnant scout
+251457	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	dread remnant magus
+251461	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread remnant firebreather
+251498	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	dread remnant defender
+251499	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	dread remnant scout
+251500	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	dread remnant magus
+251504	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread remnant firebreather
+251541	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	dread remnant defender
+251542	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	dread remnant scout
+251543	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	dread remnant magus
+251547	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	dread remnant firebreather
+252003	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	pashid prime dragoon
+252008	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	pashid prime dragonknight
+252013	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid prime patrol
+252018	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid prime patrol
+252028	LDF5_LGuard_DisputeRvR_Support_Heal_Pe	0	1	pashid prime fleshmender
+252033	LDF5_LGuard_DisputeRvR_Support_Mez_We	0	1	pashid prime wizard
+252038	LDF5_LGuard_DisputeRvR_Support_Deform_Ee	0	1	pashid prime conjurer
+252043	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	pashid prime dragoon
+252048	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	pashid prime dragonknight
+252053	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid prime patrol
+252058	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid prime patrol
+252063	LDF5_LGuard_DisputeRvR_Strike_PR_Ge	0	1	pashid prime grunt
+252068	LDF5_LGuard_DisputeRvR_Support_Heal_Pe	0	1	pashid prime fleshmender
+252073	LDF5_LGuard_DisputeRvR_Support_Mez_We	0	1	pashid prime wizard
+252078	LDF5_LGuard_DisputeRvR_Support_Deform_Ee	0	1	pashid prime conjurer
+252083	LDF5_LGuard_DisputeRvR_Strike_PR_Ge	0	1	pashid defender elite reserve
+252088	LDF5_LGuard_DisputeRvR_Strike_PR_Ge	0	1	pashid force elite reserve
+252231	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	pashid artifact savant defender
+252232	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid artifact savant master tracker
+252233	LDF5_LGuard_DisputeRvR_Support_Heal_Pe	0	1	pashid artifact savant master healer
+252234	LDF5_LGuard_DisputeRvR_Support_Mez_We	0	1	pashid artifact savant warmage
+252243	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	pashid artifact savant defender
+252244	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid artifact savant master tracker
+252245	LDF5_LGuard_DisputeRvR_Support_Heal_Pe	0	1	pashid artifact savant master healer
+252246	LDF5_LGuard_DisputeRvR_Support_Mez_We	0	1	pashid artifact savant warmage
+252255	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	pashid artifact savant defender
+252256	LDF5_DisputeRvR_Watch_NoBroad_Ra	0	1	pashid artifact savant master tracker
+252257	LDF5_LGuard_DisputeRvR_Support_Heal_Pe	0	1	pashid artifact savant master healer
+252258	LDF5_LGuard_DisputeRvR_Support_Mez_We	0	1	pashid artifact savant warmage
+252272	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	pashid prime grunt
+252287	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	pashid prime grunt
+252431	LDF5_Fortress_DrGuard_Artifact_Killer	25	1	pashid assault leader
+252432	LDF5_Fortress_DrGuard_Artifact_Killer	25	1	pashid assault leader
+252433	LDF5_Fortress_DrGuard_Artifact_Killer	25	1	pashid assault leader
+256697	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	veteran assassin
+256700	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	veteran crusader
+256703	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	veteran curate
+256706	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	veteran magus
+256709	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	veteran assassin
+256712	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	veteran crusader
+256715	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	veteran curate
+256718	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	veteran magus
+256721	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	veteran assassin
+256724	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	veteran crusader
+256727	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	veteran curate
+256730	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	veteran magus
+256733	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	veteran assassin
+256736	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	veteran crusader
+256739	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	veteran curate
+256742	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	veteran magus
+257038	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	veteran magus
+257044	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	seasoned crusader
+257047	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	balaur experienced assassin
+257056	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	seasoned curate
+257059	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	cadet fighter
+257062	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	balaur novice assassin
+257065	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	cadet archer
+257068	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	cadet mage
+257071	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	cadet priest
+257119	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+257122	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+257128	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+257131	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+257164	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+257167	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+257173	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+257176	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+257332	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	veteran assassin
+257341	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	veteran curate
+257344	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	seasoned crusader
+257347	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	balaur experienced assassin
+257353	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	seasoned magus
+257356	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	seasoned curate
+257359	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	cadet fighter
+257362	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	balaur novice assassin
+257365	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	cadet archer
+257368	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	cadet mage
+257371	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	cadet priest
+257419	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+257422	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+257428	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+257431	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+257464	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+257467	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+257473	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+257476	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+257529	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	soul healer
+257530	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	quartermaster
+257659	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	cadet fighter
+257662	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	balaur novice assassin
+257668	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	cadet mage
+257671	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	cadet priest
+257674	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	fortress warrior
+257677	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	fortress trigger
+257683	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	fortress high magus
+257686	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	fortress medic
+257689	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	fortress gallowglass
+257692	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	fortress assassin
+257695	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	fortress sniper
+257698	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	fortress mage
+257701	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	fortress priest
+257719	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+257722	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+257728	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+257731	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+257764	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+257767	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+257773	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+257776	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+257830	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	quartermaster
+257959	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	cadet fighter
+257962	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	balaur novice assassin
+257968	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	cadet mage
+257971	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	cadet priest
+257974	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	fortress warrior
+257977	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	fortress trigger
+257983	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	fortress high magus
+257986	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	fortress medic
+257989	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	fortress gallowglass
+257992	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	fortress assassin
+257995	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	fortress sniper
+257998	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	fortress mage
+258001	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	fortress priest
+258019	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+258022	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+258028	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+258031	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+258064	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	artifact champion
+258067	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	artifact assassin
+258073	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	artifact high magus
+258076	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	artifact archduke
+258129	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	soul healer
+258130	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	quartermaster
+277187	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	ahserion reserve defender captain
+277188	LDF5_DisputeRvR_Hide_As	0	1	ahserion reserve assault leader
+277193	LDF5_DisputeRvR_Debuff_Ba	0	1	ahserion reserve drummer
+277195	LDF5_LGuard_DisputePvP_Hide_PM_Ae	0	1	ahserion reserve elite ambusher
+277196	LDF5_DisputePvP_Strike_Gu	0	1	ahserion reserve elite striker
+277198	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	ahserion reserve magus
+277199	LDF5_DisputePvP_Debuff_Ba	0	1	ahserion reserve drumcaptain
+277200	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	ahserion army defender captain
+277209	LDF5_DisputePvP_Strike_Gu	0	1	ahserion army elite striker
+277210	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	ahserion army medic
+277211	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	ahserion army magus
+277212	LDF5_DisputePvP_Debuff_Ba	0	1	ahserion army drumcaptain
+277242	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	ahserion reserve adjutant fighter
+277771	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	belani aegis
+277775	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	aspamon aegis
+277779	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	atasin aegis
+277783	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	disilgot aegis
+279660	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	master krotan bodyguard
+279685	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	master krotan medical officer
+279700	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	krotan sirenstorm
+279715	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	master krotan deadeye
+279725	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	krotan steel sentinel
+279732	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	krotan officer
+279754	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	miren blade sergeant
+279779	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	miren flesh binder
+279794	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	miren aether master
+279809	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	miren visionary
+279819	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	miren lookout
+279829	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	miren contending officer
+279858	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	kysis wardship lieutenant
+279883	LDF5_LGuard_DisputePvP_Support_HBuff_Pe	0	1	kysis voltaic maven
+279898	LDF5_LGuard_DisputePvP_Strike_MRArea_We	0	1	kysis azureflame maven
+279913	LDF5_LGuard_DisputePvP_Watch_PR_Re	25	1	kysis stalksman lieutenant
+279923	LDF5_LGuard_DisputePvP_Strike_PR_Ge	0	1	elite kysis sapphire sentinel
+279926	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	kysis warden
+297115	LDF5_LGuard_DisputeRvR_Charge_PM_Fe	0	1	veteran warguard
+297116	LDF5_LGuard_DisputeRvR_Support_Deform_Ee	0	1	veteran aetherguard
+297184	Gab1_Sub_Portal_Breaker_Officer	50	0	ahserion troopers commander
+297185	Gab1_Sub_Tank_Destroyer	20	0	ahserion reserve assault leader
+297190	Gab1_Sub_Pod_Sum_Vri_Fi	0	1	ahserion troopers defender captain
+297191	Gab1_Sub_Pod_Sum_Vri_As	0	1	ahserion troopers assassin
+297192	Gab1_Sub_Pod_Sum_Vri_Wi	0	1	ahserion troopers sorcerer
+800511	LDF5_DGuard_DisputeRvR_Defend_PM_Ke	0	1	nohrn
+800512	LDF5_LGuard_DisputeRvR_Defend_PM_Ke	0	1	ionia
+880751	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	belfarth aegis
+880755	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	aspatyr aegis
+880759	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	atair aegis
+880763	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	disilveir aegis
+880767	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	beling aegis
+880771	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	aspar aegis
+880775	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	atangal aegis
+880779	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	disiltroll aegis
+880783	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	belsal aegis
+880787	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	aspal aegis
+880791	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	ataj aegis
+880795	LDF5_LGuard_DisputePvP_Charge_PM_Fn	0	1	disilheim aegis
+881599	LDF5_Fortress_VGuardBoss_Fi	50	0	pashid bind point commander
+881600	LDF5_Fortress_VGuardBoss_Ra	50	0	pashid bind point search captain
+881601	LDF5_Fortress_VGuardBoss_Wi	50	0	pashid bind point prime sorceress
+881738	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	baranath elite war subjugator
+881753	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	baranath elite sentry subjugator
+881768	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	baranath elite battlemage
+881783	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	0	1	baranath elite healing subjugator
+881798	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	baranath elite warcaptain
+881858	LDF5_LGuard_DisputePvP_Charge_PM_Fe	0	1	balaur savant soldier
+881873	LDF5_LGuard_DisputePvP_Watch_PR_Rn	25	1	balaur savant shooter
+881888	LDF5_LGuard_DisputePvP_Strike_MRArea_Wn	0	1	balaur savant mage

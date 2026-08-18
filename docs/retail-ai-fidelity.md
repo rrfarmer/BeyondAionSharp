@@ -10276,3 +10276,91 @@ Full suite **1,967 passing** and 1 skipped; six new pins run three times over; *
 caught** — one of which had to be rewritten because deleting the last branch of a handler leaves a
 dangling comma and a mutation that does not build is not a survivor. Missing-AI 677 → **676**;
 translatable 334/1,108 → **333/1,107**; adds unchanged, the illusions already being spawned elsewhere.
+
+## The abyss guards' call for help — the largest mechanic in the dump by npc count
+
+Retail message `23000`. **Three hundred and ninety live guards**, of whom fifty cry out as they are
+pulled and three hundred and eighty-five answer, across fifty-two pattern variants — the `[DL]Guard_*`,
+`DirectPortal_*` and `*_Artifact_Killer` families among them.
+
+| | |
+|---|---|
+| on being pulled | broadcast at the guard's own range — twenty, twenty-five or fifty metres — naming the player that pulled it |
+| on hearing it, already fighting | **turn** to that player, and nothing else |
+| on hearing it, standing about | one hate point on that player, and go |
+
+**The answer is uniform to a degree nothing else in this project has been.** Forty-seven patterns carry
+the fighting half and forty-seven the idle half; there is no third shape anywhere, and the hate value is
+`1` in every one. The send half is not uniform, which is why the range is a table column: ten patterns
+at fifty metres, seven at twenty-five, one at twenty.
+
+**Most guards only listen.** Fifty criers against three hundred and eighty-five answerers is a fortress
+with a few voices and a great many ears, and it is why pulling one guard in the abyss has never felt
+like pulling one monster.
+
+Built the way the reinforcement table was: `extract_guard_calls.py` writes a TSV a human can read
+against the patterns, `emit_guard_calls_table.py` transcribes it, and `AbyssGuardCallAI` builds one
+pattern per guard from it. **368 templates repointed**; twenty-two were left alone because they already
+had a bespoke class — the ahserion guards among them — and those keep their own behaviour and lose the
+call, which is recorded rather than silently accepted.
+
+### The pins were passing for the wrong reason, and the reason was an introduction
+
+Every early version of these pins called `MakeMutuallyKnown(listener, player)` in its setup. That is
+enough for an aggressive guard to find the player by itself, so the pins passed whether or not the call
+was ever sent. **The same mistake as the decoy that aggroed, in a new place**, and the fix is the same
+shape: the player is now kept out of the listener's known list entirely, so hate on somebody it has
+never seen is the only way it can arrive. The Sauro alarm pins from two entries ago had the same flaw
+and are corrected here too.
+
+**Rule: a listener must not be introduced to the thing it is supposed to be told about.** Visibility is
+the mechanism a broadcast exists to bypass, so putting it in the setup removes the mechanic from the
+measurement.
+
+### Three things the aggro layer does that a pattern cannot see
+
+Chasing one assertion turned up three behaviours worth writing down, none of which any pattern class
+can observe:
+
+1. **`AddHate` is gated on awareness *and* enmity.** `AggroList.IsAware` wants the owner to know the
+   creature, not be in sanctuary, and either have it on the list already or be its enemy. A pin written
+   with the default Elyos player against an Elyos guard measures a guard declining to attack its own
+   side — which is correct, and is retail's `is_enemy` guard arriving from underneath rather than from
+   the branch. The pins here use Asmodian players.
+2. **A guard given a nudge and nothing else goes home, and the list clears on the way.** One hate point
+   is not a reason to fight, so the guard returns and `AggroList` empties itself — which is why retail's
+   `1` cannot be pinned as a number. It is arguably the intent expressed exactly: a nudge to join, not
+   a claim on the player.
+3. **A target set by a branch is sticky.** Nothing re-evaluates it until the AI has a reason to, so
+   `GetTarget` answers "who was it last told about" and never "who would it fight".
+
+### A fix written, measured, and thrown away
+
+Believing (1) was the blocker, a `Notice` helper was added to `PatternAi` so a listener would be made
+aware of whoever a message named before taking hate on them. It was then measured: **the whole suite
+passes without it**, and the direct experiment that motivated it turned out to be showing (2) rather
+than (1). It is removed.
+
+**Rule: a fix you cannot demonstrate is a fix you do not keep.** The finding is worth more than the code
+was, and the finding is written down here instead.
+
+### Not translated
+
+The rest of these fifty-two patterns, which is a great deal: every guard's cast ladder, the
+`goto_waypoint` that walks it back to its post, and three further `23000` broadcasts that sit on battle
+timers inside cast chains rather than on the pull. Retail's `is_enemy` guard on both halves is not
+written into the branches, because the aggro layer enforces it — see (1) — and it would matter only the
+day a guard broadcasts about another NPC.
+
+**Message `30002`** is the same pair again but about the *sender* rather than its target, so one guard
+sets another on the thing attacking it. Fifty-three patterns send it and four answer, covering eight of
+our npcs. Left for its own pass, with the count recorded so it is not mistaken for this one's size.
+
+### Verification
+
+Full suite **1,973 passing** and 1 skipped; six new pins; eight mutations, **six caught** — and the two
+survivors are recorded rather than papered over. One is a claim (that a listener-only guard never cries)
+for which no mutation both changes behaviour and builds: the guard's own send range is zero, so forcing
+the branch on still broadcasts to nobody. The other tested the `Notice` helper that is no longer there.
+Missing-AI 676 → **665**; translatable 333/1,107 → **306/992**, the largest single move that list has
+made.

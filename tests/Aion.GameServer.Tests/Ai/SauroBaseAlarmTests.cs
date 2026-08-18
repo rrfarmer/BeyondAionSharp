@@ -44,10 +44,12 @@ public sealed class SauroBaseAlarmTests
 		Npc ambusher = harness.Spawn(Ambusher, 316f, 300f, 200f);
 		Player player = harness.SpawnPlayer(300f, 260f, 200f);
 
+		// The boss knows its guards and the guards do not know the player. A guard introduced to the
+		// player would find it without the alarm, and the pins would pass whether or not one was
+		// raised — the same mistake the abyss guard pins made. Hate on a player a listener has never
+		// seen is exactly what the alarm is for, and what PatternAi.Notice makes possible.
 		BossAiHarness.MakeMutuallyKnown(boss, bladesman);
 		BossAiHarness.MakeMutuallyKnown(boss, ambusher);
-		BossAiHarness.MakeMutuallyKnown(bladesman, player);
-		BossAiHarness.MakeMutuallyKnown(ambusher, player);
 
 		return (harness, boss, bladesman, ambusher, player);
 	}
@@ -93,7 +95,6 @@ public sealed class SauroBaseAlarmTests
 		harness.Engage(boss, player);
 
 		Npc latecomer = harness.Spawn(Bladesman, 317f, 300f, 200f);
-		BossAiHarness.MakeMutuallyKnown(latecomer, player);
 		for (int i = 0; i < 20; i++)
 		{
 			BossAiHarness.Rehate(boss, player);
@@ -115,7 +116,6 @@ public sealed class SauroBaseAlarmTests
 		boss.GetAi().OnGeneralEvent(AiEventType.BackHome);
 
 		Npc latecomer = harness.Spawn(Bladesman, 317f, 300f, 200f);
-		BossAiHarness.MakeMutuallyKnown(latecomer, player);
 		harness.Engage(boss, player);
 
 		Assert.Same(player, latecomer.GetTarget());

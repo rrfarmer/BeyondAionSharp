@@ -343,10 +343,10 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary>Turns to whoever a message named, without touching the hate list.</summary>
     /// <remarks>
     /// Retail's bare <c>switch_target target=OBJI_MESSAGE_PARAM</c>, which is a different action from
-    /// <see cref="HateMessageTarget"/> and means a different thing: the Nochsana Teleporter takes hate
-    /// when a call finds him idle and only turns when it finds him already fighting. Without hate the
-    /// turn lasts until the aggro list is consulted again, which is retail's own weakness in the
-    /// action rather than ours in porting it.
+    /// <see cref="HateMessageTarget"/> and means a different thing: an abyss guard already in a fight
+    /// turns towards the player a call names and keeps its own attacker's hate, while one standing
+    /// about takes hate and commits. Without hate the turn lasts until the aggro list is consulted
+    /// again, which is retail's own weakness in the action rather than ours in porting it.
     /// </remarks>
     public void TargetMessageParam()
     {
