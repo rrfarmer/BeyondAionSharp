@@ -16736,3 +16736,60 @@ happens when a mechanic ships without its pin.
 ### Verification
 
 Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
+
+## The web's voice and Kingspin's accelerators, built but not wired
+
+Three of the four pieces the previous entry specified are in. **The fourth — repointing the web — is out,
+and the reason is worth more than the piece.**
+
+### What landed
+
+`KingspinWebAI` (`IDTP_Web`): a web is a one-shot trap. It settles with an eight-second fuse, and on seeing
+somebody it calls `6952` at fifty metres and despawns; if nobody comes, the fuse takes it anyway. **Not
+translated:** the snare skill itself and the two-timer idle bookkeeping.
+
+`KingspinAI` gains the far end: an `on_message` branch arming timers 3 and 4 at five seconds, and two
+accelerator branches — timer 3 in **30–37**, timer 4 in **45–53** — each re-arming his throw clock at
+**eight seconds against the eighteen** branch 10 gives it. Inside a window the webs come more than twice as
+fast.
+
+### Why the repoint is out
+
+Pointing 281391 at the new class turned **six Kingspin pins red**, and correctly. Every one counts webs, and
+a web that sees a player now despawns on sight — which is what retail writes and what the harness makes
+instant, because the player is already standing in range when the web spawns.
+
+So the pins are not wrong about Kingspin; they are written against webs that never leave. **Re-deriving six
+counting pins around a trap that is consumed the moment it lands is the remaining work**, and it is more
+than there was room for.
+
+The class and the branches ship inert: nothing carries `ai="kingspin_web"`, so no npc runs it and the
+accelerators can never be armed. **That is a deliberate half-state** — the alternative was six red pins or
+six pins loosened to fit, and this log has been clear about which of those is worse.
+
+### What finishing it takes
+
+1. Repoint 281391 to `kingspin_web`.
+2. Re-derive the six pins in `KingspinAiTests` around webs that despawn on sight — most likely by placing
+   the player out of a web's `srange` (it is 1 metre) and stepping in deliberately.
+3. A pin that shows the accelerator: a web's cry inside 30–37 shortening the throw cycle, and the same cry
+   outside the window doing nothing.
+
+### One thing this confirmed
+
+**The registration sweep earns its keep.** The moment the web got a real AI, the Kingspin tests failed for
+want of `typeof(KingspinWebAI)` — the exact bug that cost four commits on Padmarashka's acid bomb, caught
+here in one run because the failure mode is now familiar. The registration is added.
+
+### Still to do
+
+- **The three steps above.**
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Two classes changed, nothing wired. Full suite **2,049 passing**, 1 skipped — green because the mechanic is
+inert, which is stated rather than implied.

@@ -52,6 +52,15 @@ public class KingspinAI : PatternAi
     private const int Web = 281391;
 
     /// <summary>Retail's <c>SPAWN_ID_1</c> — every web he throws is in the one group.</summary>
+    /// <summary>Retail's <c>6952</c>: a web reporting that it caught someone.</summary>
+    public const int WebCaught = 6952;
+
+    /// <summary>Retail's delay on both timers armed by that call.</summary>
+    private const int WindowArmMillis = 5_000;
+
+    /// <summary>The throw clock inside a window, against the eighteen seconds outside one.</summary>
+    private const int AcceleratedThrowMillis = 8_000;
+
     private const int Webs = 1;
 
     /// <summary>Retail's <c>valid_distance</c> on every multi-target throw.</summary>
@@ -110,8 +119,25 @@ public class KingspinAI : PatternAi
                 Do.ArmTimer(1, 18000),
                 WebOn(4, MultiTargetOrder.Random, LaterLife)),
 
+            // The two accelerator windows. Retail arms timers 3 and 4 from on_message and each re-arms
+            // his throw clock at eight seconds instead of the eighteen branch 10 gives it -- so inside
+            // 30-37 and 45-53 the webs come more than twice as fast, and outside them the pressure
+            // drops back. Armed by a web's cry; see WebAI and the on_message branches below.
+            Branch(9, "the deep window", [When.Timer(3), When.HpBetween(30, 37)],
+                Do.ArmTimer(1, AcceleratedThrowMillis)),
+
+            Branch(8, "the middle window", [When.Timer(4), When.HpBetween(45, 53)],
+                Do.ArmTimer(1, AcceleratedThrowMillis)),
+
             Branch(1, "", [When.Timer(0)],
                 Do.ArmTimer(0, IdleHeartbeatMillis))),
+
+        // A web caught somebody and said so. Retail writes this twice, at priorities 25 and 24, arming
+        // one timer each; one branch arming both is the same thing on a first-match-wins list.
+        OnMessage = Of(
+            Branch(25, "a web caught somebody", [When.Message(WebCaught)],
+                Do.ArmTimer(3, WindowArmMillis),
+                Do.ArmTimer(4, WindowArmMillis))),
     };
 
     public KingspinAI(Npc owner)
@@ -120,4 +146,54 @@ public class KingspinAI : PatternAi
     }
 
     protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// Kingspin's webs. Retail pattern <c>IDTP_Web</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>A web is a one-shot trap that reports in.</b>
+/// Somebody walks into it, it holds them, it tells Kingspin, and it is gone — and eight seconds after it
+/// lands it goes anyway, caught or not.
+/// <para>
+/// <b>Its cry is what gives Kingspin his accelerators.</b> The webs were spawned here long before
+/// anything was known to listen, and this file used to describe 281391 as "reachable by nobody"; the
+/// listener turned out to be the boss that spawns them. See <see cref="KingspinAI.WebCaught"/>.
+/// </para>
+/// <para>
+/// <b>Not translated:</b> the snare itself, a <c>use_skill</c> on whoever is seen, and the
+/// <c>BTIMERI_INDEX_0</c>/<c>_1</c> pair that drives its idle bookkeeping. The call and both despawns
+/// are the parts that carry the mechanic.
+/// </para>
+/// </remarks>
+[AIName("kingspin_web")]
+public class KingspinWebAI : PatternAi
+{
+	/// <summary>Retail's <c>range_as_meter</c> on the cry: wide enough to reach him anywhere in the room.</summary>
+	private const float CryReach = 50f;
+
+	/// <summary>Retail's <c>BTIMERI_INDEX_5</c>: a web that catches nobody still goes.</summary>
+	private const int Lifetime = 5;
+
+	private const int Caught = 1;
+
+	private static readonly AiPattern Pattern_ = new AiPattern
+	{
+		OnWakeUp = Of(Branch(15, "settle, and start the fuse", [When.FirstTime(Caught)],
+			Do.ArmTimer(Lifetime, 8_000))),
+
+		OnSeeUser = Of(Branch(10, "caught one", [],
+			Do.Broadcast(KingspinAI.WebCaught, CryReach),
+			Do.DespawnSelf())),
+
+		OnBattleTimer = Of(Branch(8, "nobody came", [When.Timer(Lifetime)],
+			Do.DespawnSelf())),
+	};
+
+	public KingspinWebAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => Pattern_;
 }

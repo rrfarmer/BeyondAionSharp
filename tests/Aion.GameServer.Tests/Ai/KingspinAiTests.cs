@@ -28,7 +28,7 @@ public sealed class KingspinAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(LowerUdasTemple).WithWorldSize(2048)
-			.WithAi(typeof(KingspinAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(KingspinAI), typeof(KingspinWebAI), typeof(AggressiveNpcAI))
 			.Build();
 
 	private static (BossAiHarness, Npc, List<Player>) Engaged(int raidSize)
