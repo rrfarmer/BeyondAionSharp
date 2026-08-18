@@ -16187,3 +16187,63 @@ suspect and so is the table it came from" — which is a bigger finding than the
 ### Verification
 
 Probes only; every change reverted. Full suite **2,049 passing**, 1 skipped.
+
+## Correction: the binding is not wrong, and the id is not suspect
+
+The previous entry ended by suspecting `ai_binding.tsv`, on the grounds that it maps
+`BDF4_Dramata_AcidBombControl_n` to **281944** while the template at that id is named
+`blf4_dramataguardiandeath_57_n`. It called that a disagreement worth a sweep, because every encounter in
+this log takes its npc ids from that table.
+
+**The sweep was run and the premise was false.**
+
+`npc_templates.xml`'s `name` is the **display** name, not a devname. Of 49,134 binding rows, 46,875
+"disagree" — because the two fields are different things. The comparison could not have found anything.
+
+The proof is in Padmarashka's own working spawns:
+
+| id | binding devname | template name |
+|---|---|---|
+| 281936 | `BDF4_DramataRock_57_An` | `padmarashka` |
+| 282140 | `BDF4_DramataRock_B_57_An` | `padmarashka` |
+| 281944 | `BDF4_Dramata_AcidBombControl_n` | `blf4_dramataguardiandeath_57_n` |
+
+**The two rocks that spawn correctly disagree with their template names exactly as hard as the acid bomb
+does.** 281944 merely has an untranslated display name, which made it *look* like a devname and made the
+mismatch look meaningful. Nothing about the id is wrong.
+
+So: **the binding is not under suspicion, no sweep is needed, and the previous entry's closing paragraph is
+withdrawn.**
+
+### Where that leaves the acid bomb
+
+Unexplained, and now with one fewer explanation. Established across two entries:
+
+- the band branch fires, on the heartbeat, at second 5;
+- the timer chain works — a rockfall on `When.Timer(11)` lands at second 35;
+- `Do.SpawnNear` produces nothing at radius 0 **or** 3;
+- the id is correct.
+
+**What differs between 281944 and the rocks is the template, not the plumbing.** The rocks spawn; this one
+does not. Its template reads `ai="general" rating="NORMAL" srange="5"` where the rocks are field objects,
+so the next thing to compare is what `Do.SpawnNear` requires of a template that the rocks satisfy and this
+npc does not — spawn state, walker route, or something the spawn engine rejects silently.
+
+### The rule, for the second time this session
+
+**A mismatch between two fields is only evidence if the fields mean the same thing.** The devname/display
+name comparison looked like a check and was a category error, and it took the two working ids side by side
+to see it. The earlier version of this mistake was reading a truncated summariser block and concluding the
+branch numbering had diverged; both times the fix was to put a known-good case next to the suspect one.
+
+### Still to do
+
+- **The acid bomb spawn**, narrowed to a template difference.
+- The five coffin `message` rows, the 14 remaining ready rows, Kingspin and the silikor guard ladders and
+  whatever their rungs arm, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Correction only; no code changed. Full suite **2,049 passing**, 1 skipped.
