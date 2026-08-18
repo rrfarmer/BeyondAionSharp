@@ -38,6 +38,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import summarize_pattern as S  # noqa: E402
 import audit_handler_guards as G  # noqa: E402
 import audit_handler_actions as H  # noqa: E402
+from audit_invented_actions import OUR_KIND, RETAIL_KIND  # noqa: E402
 
 #: The verbs that make up each kind, so a row can show what retail actually wrote.
 KIND_VERBS = collections.defaultdict(set)
@@ -70,6 +71,69 @@ def branch_conditions(patterns_dir: pathlib.Path) -> dict[tuple[str, str, str], 
     return out
 
 
+def branch_actions(patterns_dir: pathlib.Path) -> dict[tuple[str, str, str], set[str]]:
+    """(pattern, handler, priority) -> kinds of action THAT BRANCH carries."""
+    out: dict[tuple[str, str, str], set[str]] = {}
+    for path in sorted(patterns_dir.rglob("*.xml")):
+        try:
+            text = S.read_text(path)
+        except Exception:
+            continue
+        for match in re.finditer(r"<npc_ai_pattern>(.*?)</npc_ai_pattern>", text, re.S):
+            body = match.group(1)
+            name = re.search(r"<name>(.*?)</name>", body)
+            if not name:
+                continue
+            for handler in re.finditer(r"<(on_\w+)>(.*?)</\1>", body, re.S):
+                for branch in re.finditer(r"<pattern>(.*?)</pattern>", handler.group(2), re.S):
+                    flat = re.sub(r"\s+", "", branch.group(1))
+                    priority = re.search(r"<priority>(\d+)<", flat)
+                    if not priority:
+                        continue
+                    kinds = {kind for verb, kind in RETAIL_KIND.items() if f"<{verb}>" in flat}
+                    out[(name.group(1), handler.group(1), priority.group(1))] = kinds
+    return out
+
+
+def our_branch_actions(text: str) -> dict[str, dict[tuple[str, str], set[str]]]:
+    """AI name -> (handler, priority) -> kinds of action, mirroring `our_guard_kinds`."""
+    out: dict[str, dict[tuple[str, str], set[str]]] = {}
+    parts = re.split(r'\[AIName\("([^"]+)"\)\]', text)
+    for i in range(1, len(parts), 2):
+        name, body = parts[i], parts[i + 1]
+        per: dict[tuple[str, str], set[str]] = {}
+        for handler in G.HANDLERS:
+            hit = re.search(rf"\b{handler}\s*=\s*(.*?)(?:\n\s*On[A-Z]\w*\s*=|\n\s*\}};)", body, re.S)
+            if not hit:
+                continue
+            for branch in re.finditer(r"Branch\(\s*(\d+)\s*,(.*?)(?=Branch\(|\Z)", hit.group(1), re.S):
+                kinds: set[str] = set()
+                for action in re.findall(r"Do\.(\w+)", branch.group(2)):
+                    for prefix, kind in OUR_KIND:
+                        if action.startswith(prefix):
+                            kinds.add(kind)
+                            break
+                per[(handler, branch.group(1))] = kinds
+        if per:
+            out[name] = per
+    return out
+
+
+def aligned(ours: set[str], theirs: set[str]) -> bool:
+    """Whether our branch and retail's at the same priority are plausibly the same step.
+
+    Permissive on the two known substitutions -- a `spawn` or `despawn` of ours standing in for a
+    retail `skill` -- and on retail actions we drop entirely, which is nearly always a skill. What it
+    refuses is the case that bit: **no overlap at all**, which is how a branch numbered 2 here and a
+    different branch numbered 2 there show up.
+    """
+    if not ours or not theirs:
+        return True
+    if ours & theirs:
+        return True
+    return bool(ours & {"spawn", "despawn"} and "skill" in theirs)
+
+
 def describe(conditions: str, kind: str) -> str:
     """The retail text for one kind, verbs and values, short enough to read in a table."""
     bits: list[str] = []
@@ -94,13 +158,15 @@ def main() -> int:
     patterns_dir = pathlib.Path(args.patterns_dir)
     retail = G.retail_guard_kinds(patterns_dir)
     conditions = branch_conditions(patterns_dir)
+    retail_actions = branch_actions(patterns_dir)
     serves = H.served_patterns(repo, pathlib.Path(args.binding_tsv))
     blocked = {"skillcount", "flying", "class", "race", "tribe", "waypoint", "eventskill",
                "abnormal", "level", "gender", "hyperlink", "quest", "damageflag", "time", "user"}
 
-    rows: list[tuple[str, str, str, str, str, str, int, int]] = []
+    rows: list[tuple[str, str, str, str, str, str, int, int, bool]] = []
     for path in sorted((repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs")):
         text = path.read_text(encoding="utf-8", errors="replace")
+        our_actions = our_branch_actions(text)
         for ai_name, per_branch in G.our_guard_kinds(text).items():
             patterns = serves.get(ai_name, set())
             if not patterns:
@@ -129,22 +195,30 @@ def main() -> int:
                                 break
                         if detail != "?":
                             break
+                    ours_do = our_actions.get(ai_name, {}).get((handler, priority), set())
+                    ok = all(aligned(ours_do,
+                                     retail_actions.get((pattern, rh, priority), set()))
+                             for pattern in present.get(kind, [])
+                             for rh in G.HANDLERS[handler]
+                             if (pattern, rh, priority) in retail_actions)
                     rows.append((path.name, ai_name, handler, priority, kind, detail,
-                                 len(present.get(kind, [])), len(absent.get(kind, []))))
+                                 len(present.get(kind, [])), len(absent.get(kind, [])), ok))
 
-    rows.sort(key=lambda r: (r[7] > 0, r[4], r[0]))
+    rows.sort(key=lambda r: (r[7] > 0 or not r[8], r[4], r[0]))
     print(f"{len(rows)} dropped guards with a readable retail condition\n")
     print(f"{'file':<28} {'ai name':<24} {'branch':<18} {'kind':<9} {'safe':<7} retail")
-    for name, ai_name, handler, priority, kind, detail, has, hasnt in rows:
-        verdict = "UNIFORM" if hasnt == 0 else f"MIXED{has}/{has + hasnt}"
-        print(f"{name:<28} {ai_name:<24} {handler + '#' + priority:<18} {kind:<9} {verdict:<7} {detail}")
-    mixed = sum(1 for r in rows if r[7])
+    for name, ai_name, handler, priority, kind, detail, has, hasnt, ok in rows:
+        verdict = ("MISALIGNED" if not ok
+                   else "UNIFORM" if hasnt == 0 else f"MIXED{has}/{has + hasnt}")
+        print(f"{name:<26} {ai_name:<22} {handler + '#' + priority:<17} {kind:<8} {verdict:<10} {detail}")
+    mixed = sum(1 for r in rows if r[7] and r[8])
+    bad = sum(1 for r in rows if not r[8])
     print()
-    print(f"  {len(rows) - mixed} uniform, {mixed} mixed and blocked on splitting the class")
+    print(f"  {len(rows) - mixed - bad} ready, {mixed} mixed and blocked on splitting the class, "
+          f"{bad} misaligned")
     print()
-    print("UNIFORM means every served pattern agrees, NOT that the row can be applied unread: the key is")
-    print("branch priority, and it only lines up where this port kept retail's numbering. Confirm our")
-    print("branch and retail's branch at that priority are the same step first -- see the docstring.")
+    print("MISALIGNED means our branch at that priority and retail's do different things, so the number")
+    print("is a coincidence and the guard belongs to some other branch. Those need reading by hand.")
     return 0
 
 

@@ -15636,3 +15636,77 @@ only a pin caught it.
 ### Verification
 
 Tool only; nineteen edits reverted. Full suite **2,041 passing**, 1 skipped.
+
+## The alignment check, and a correction to the entry above
+
+The previous entry named the missing half of `report_dropped_guards.py`: **compare our branch's actions
+against retail's at the same priority, and refuse the row when they are different steps.** That is built.
+
+It also blamed the nineteen-edit revert on `RatmanCampAI` being misaligned. **That was wrong**, and the
+check that exists now says so.
+
+### The correction
+
+`Ratman_FnR_LWaSu11` priority 2 does this:
+
+```
+? is_hp_in_boundary who=OBJI_SELF less_than=45
+? is_skill_count_left skill=SKILLI_INDEX_0
+> use_skill ...
+> broadcast_message message_type=1007 range_as_meter=12 param_obj=OBJI_CUR_TARGET
+```
+
+**It broadcasts.** Our branch 2 broadcasts. They are the same step, and the row was aligned all along. The
+previous entry read a truncated summariser block, saw the `use_skill` and not the broadcast two lines
+further down, and concluded the numbering had diverged.
+
+So the nineteen-edit revert was **over-cautious rather than necessary** — the batch was probably fine and
+the thirteen red pins were pins that needed rewriting for the new bands, not evidence of misalignment.
+The caution still produced the check, and the check found three rows that really are misaligned, so the
+outcome is right for a reason that was not.
+
+**What survives from that entry unchanged is the substantive finding**: this log's claim that the Altgard
+farmers call "on every blow, with no flag and no health guard" is wrong. Retail guards that broadcast with
+a 50 percent roll, a health boundary below 45, and `is_skill_count_left`. That correction stands, and
+`is_skill_count_left` still blocks building it faithfully.
+
+### What the check does
+
+For each dropped guard it now compares the kinds of action in our branch at that priority against retail's
+at the same priority, and marks the row **MISALIGNED** when they share nothing. It is deliberately
+permissive about the two known substitutions — our `spawn` or `despawn` standing in for a retail `skill` —
+and about actions we drop entirely, which are nearly always skills. **What it refuses is no overlap at
+all.**
+
+```
+44 ready, 4 mixed and blocked on splitting the class, 3 misaligned
+```
+
+The three:
+
+| class | branch | guard | why it is suspect |
+|---|---|---|---|
+| `AbyssGuardCallAI` | `OnEnterAttack#7` | `test_probability(25)` | also `MIXED` at 1-of-36 |
+| `VritraCallerAI` | `OnIdleTimer#1` | `set_flag_var` | our idle branch is a different step |
+| `XDrakanTrapperAI` | `OnBattleTimer#4` | `is_hp_in_boundary(76,100)` | ours spawns where retail's #4 does not |
+
+### Still to do
+
+- **The 44 ready rows**, `hp` first — now with both checks behind them. The nineteen from last time are in
+  that set and can go back in, with their pins rewritten around the bands rather than reverted.
+- The 4 mixed, blocked on splitting classes per npc.
+- The 3 misaligned, which need their real branch found by hand.
+- The ratman farmers, blocked on `is_skill_count_left`.
+- The 14 two-action-idiom classes, the silikor skill, the illusion's most-hated claim, the Ophidan chain's
+  second hop, and counts/arguments/ordering.
+
+### The rule
+
+**A tool built to check a claim should be run against the claim that prompted it.** The alignment check was
+written because `RatmanCampAI` looked misaligned; the first thing it said was that `RatmanCampAI` is not.
+Had it been pointed at that row before the entry was written, the entry would have been shorter and the
+nineteen edits would probably have shipped.
+
+### Verification
+
+Tool only, no server code. Full suite **2,041 passing**, 1 skipped.
