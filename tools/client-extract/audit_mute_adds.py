@@ -39,6 +39,20 @@ PAYLOAD = re.compile(
     r"|add_battle_timer|set_idle_timer|add_hate_point|switch_target|say_to_all|despawn"
     r"|use_skill_by_attacker_indicator|switch_target_by_attacker_indicator)[ >]")
 
+#: Payload we can actually translate today.
+#:
+#: The first version of this audit ranked on total payload, and the top three rows -- the laksyaka
+#: magus twice and the ambusher, at 28, 28 and 25 -- turned out to be almost entirely
+#: `use_skill SKILLI_INDEX_n`. Every skill index in the dump is still unresolved, so those rows are
+#: the least actionable in the report while sitting at the top of it. That is the caveat the first
+#: version wrote down and then did not act on.
+#:
+#: `say_to_all` is out for the same reason: shouts are blocked on their own string-id work.
+BUILDABLE = re.compile(
+    r"<(spawn|spawn_on_target|spawn_on_multi_target|broadcast_message|despawn_self"
+    r"|add_battle_timer|set_idle_timer|add_hate_point|switch_target|despawn"
+    r"|switch_target_by_attacker_indicator)[ >]")
+
 
 def summoned_ids(repo: pathlib.Path) -> dict[str, set[str]]:
     """npc id -> the bosses whose summon tables name it."""
@@ -128,19 +142,20 @@ def main() -> int:
             continue
         body = bodies[pattern]
         payload = len(PAYLOAD.findall(body))
+        buildable = len(BUILDABLE.findall(body))
         handlers = sorted(set(re.findall(r"<(on_[a-z_]+)>", body)))
         # A boss our spawn data never places cannot show anybody its adds, so its row is a
         # different job -- a spawn gap -- and mixing the two would put unreachable work at the top.
         live = any(b in placed for b in bosses)
-        findings.append((live, payload, add, name_of.get(add, ""), pattern, sorted(bosses), handlers))
+        findings.append((live, buildable, payload, add, name_of.get(add, ""), pattern, sorted(bosses), handlers))
 
     findings.sort(reverse=True)
     reachable = sum(1 for f in findings if f[0])
     print(f"{len(findings)} adds our bosses summon that carry a retail pattern and sit on a stock AI; "
           f"{reachable} of them behind a boss something on this server places\n")
-    for live, payload, add, name, pattern, bosses, handlers in findings:
-        print(f"{'LIVE' if live else '  --'} {payload:3} payload  {add}  {name[:32]:32} "
-              f"{pattern:30} boss {','.join(bosses)}")
+    for live, buildable, payload, add, name, pattern, bosses, handlers in findings:
+        print(f"{'LIVE' if live else '  --'} {buildable:3} buildable of {payload:3}  {add}  "
+              f"{name[:30]:30} {pattern:30} boss {','.join(bosses)}")
         print(f"                {' '.join(h[3:] for h in handlers)}")
     return 0
 

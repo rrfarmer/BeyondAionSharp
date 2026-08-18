@@ -11436,3 +11436,57 @@ nothing.
 
 **Twenty consecutive full-suite runs, all green** — 2,035 passing, 1 skipped. Per-pin: 0 in 50, 0 in
 50, 0 in 60, 0 in 40, 0 in 40.
+
+## Ranking the mute adds by what we can actually build, and three dead ends worth recording
+
+`audit_mute_adds.py` shipped with a caveat in its own entry — *"the payload count ranks, it does not
+decide"* — and then the very next session went to the top of its report and found the caveat was the
+whole story. That is now fixed in the tool rather than repeated in prose.
+
+### The top three rows were the least actionable in the report
+
+`IDCT_DrakanWi` (the laksyaka magus, twice) and `IDCT_DrakanAs` (the ambusher) sat at **28, 28 and 25
+payload** — the top of the list by a wide margin. Reading them: almost every action is
+`use_skill SKILLI_INDEX_n`. Every skill index in the dump is still unresolved, so the three highest
+rows were the three least buildable.
+
+The audit now counts **buildable payload** — spawns, broadcasts, despawns, timers, hate and target
+switches — and excludes `use_skill` and `say_to_all`, both of which are blocked on work of their own.
+The laksyaka rows drop from 28 to 14, and the report reads honestly for the first time.
+
+**Rule: a ranking that includes work you cannot do is a ranking of the wrong list.** Worth applying to
+the other audits — `audit_translatable.py`'s "at least 4 payload actions" has the same shape and has
+never been checked against it.
+
+### Where that leaves the backlog
+
+Forty-four live rows, and the buildable counts run 3 to 14 with most of the mass low. Nothing in the
+list is another Queen Serusia — a whole mechanic missing behind a correct summon table — and that is
+itself the finding: **the two big wins were the two big wins.** What is left is mostly adds whose
+patterns are skill rotations with a timer skeleton around them, and those will not move until skill
+indices do.
+
+### Three dead ends, recorded so they are not re-walked
+
+**The fire spirit** (296347, `DrGuard_WhAPet`, summoned by 214163 at 75% and 20%) looked promising:
+`on_killed_by_user` and `on_killed_by_npc` both broadcast `10018` at fifty metres, which reads like
+"the pet dies and tells its master". It does not. The only listeners for `10018` anywhere in the dump
+are `DrGuard_WhA_Reward`, `_Reward_L50` and `DGuard_Kistenian` — **other encounters entirely** — and
+the master's own pattern, `DrGuard_PhB_L48`, does not listen for it. The pet's death call has no
+recipient in its own fight.
+
+**The four summoned udas** (281501–281504, boss 215793) carry twenty-odd handlers each and rank high on
+raw payload for that reason. The handler list is a stock drakan template — `see_npc`, `see_user_move`,
+`most_hating_updated` and so on — shared by most drakans in the game; the encounter-specific content is
+thin.
+
+**`10011`**, which the fire spirit answers by casting on the message parameter, is one of the low
+generic numbers (`5001`, `6001`, `10011`) used by unrelated patterns across the dump — doors, Dramata
+guards, Kistenian. Anything built against those numbers has to be bound to npcs that only exist in one
+encounter, which the Bakarma commit already had to reason about.
+
+### Not done, and why
+
+No behaviour changed this session. The backlog it was working from turned out to be ranked by the
+wrong number, and re-ranking it was worth more than translating the first row of a bad ordering — but
+it does mean the honest report is that this was a tooling session.
