@@ -17304,3 +17304,51 @@ way**, which is the right trigger.
 ### Verification
 
 One pin, measuring what happens rather than what was hoped. Full suite **2,050 passing**, 1 skipped.
+
+## Evidence on the timer question: retail cannot mean "restart"
+
+The previous entry opened the largest engine question in this log — **does `add_battle_timer` restart a
+timer that is already counting?** — and said it needed enough retail patterns read to answer. Counted
+instead.
+
+Across the 5.8 files, **13,049 timers are both armed and waited on**. Of those, **7,781 — sixty percent —
+are armed from a branch that waits on a *different* timer.**
+
+That is the shape Kingspin's accelerator has, and the shape that starves under this port's semantics: a
+branch on one clock re-arms another, and if re-arming restarts the countdown, the second clock never fires
+whenever the first runs faster than its delay. **Sixty percent of retail's timer usage is that pattern.**
+
+Under "restart", a large fraction of every boss in the game would have timers that can never reach zero.
+**That cannot be what the data means.**
+
+### What this is and is not
+
+**It is not proof.** Arming from another branch is not the same as arming *repeatedly and faster than the
+delay*; a heartbeat that arms a 20-second timer every 5 seconds starves, one that arms it once does not.
+The count does not separate those.
+
+**It is enough to make "ignore if pending" the working assumption** and to make the change worth costing
+out properly, which is more than the question had before.
+
+### What changing it touches
+
+`PatternAi.ArmTimer` and every pattern in the port. The failure mode is silent in both directions: under
+the current semantics a timer starves and a mechanic goes quiet; under the other, a timer that was meant
+to be pushed back fires early. **Neither shows up as an exception**, and this log has spent a dozen entries
+on exactly that class of bug.
+
+The suite would be the instrument — 2,050 pins, many of them counting arrivals on a clock — and a change
+this broad is worth making precisely because the suite is large enough to say something about it.
+
+### Still to do
+
+- **Cost out `ArmTimer` ignoring a pending timer**, then make it and let the suite report.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped.
