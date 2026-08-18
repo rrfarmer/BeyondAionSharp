@@ -54,6 +54,13 @@ public class KaluvaSpawnAI : NpcAI
         }, System.TimeSpan.FromMilliseconds(22000)); // schedule hatch when debuff ends(20s)
     }
 
+    /// <summary>
+    /// Retail <c>IDAbRe_Core_Egg</c> gives the small spiders five minutes. <b>Only these.</b> The other
+    /// two hatchlings this class can produce carry no <c>live_time</c> in the pattern and are permanent
+    /// in retail too, so they are deliberately left alone.
+    /// </summary>
+    private const int SmallSpiderLife = 300;
+
     private void HatchAdds() // 4 different spawn-formations; See Powerwiki for more information
     {
         WorldPosition p = GetPosition();
@@ -66,7 +73,7 @@ public class KaluvaSpawnAI : NpcAI
             case 2:
                 for (int i = 0; i < 12; i++)
                 {
-                    Spawn(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
+                    SpawnFor(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading(), SmallSpiderLife);
                 }
                 break;
             case 3:
@@ -74,9 +81,9 @@ public class KaluvaSpawnAI : NpcAI
                 break;
             case 4:
                 Spawn(281911, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
-                Spawn(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
-                Spawn(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
-                Spawn(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
+                SpawnFor(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading(), SmallSpiderLife);
+                SpawnFor(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading(), SmallSpiderLife);
+                SpawnFor(281912, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading(), SmallSpiderLife);
                 break;
         }
     }

@@ -19594,3 +19594,66 @@ after bare attack events, unregistered AI, and sight range.
 
 Build clean. Twelve new pins; the four expiry pins fail with the lifetimes removed. Full suite **2,086
 passing**, 1 skipped.
+
+## The lifetime list reaches zero, and one class that cannot be pinned
+
+The last seven `NO LIFETIME` rows, all mapped by npc id so none needed judgement:
+
+| class | npc | life | what it fixes |
+|---|---|---|---|
+| `celestius` | helper | 30s | **three walkers joined his patrol every 25 seconds and none ever left** |
+| `isbariya` | skeleton | 30s | skeletons stood for the rest of the fight |
+| `hugeegg` | condor | 180s | the hatched condor never left |
+| `kaluvaspawn` | small spider | 300s | **only these** — its other two hatchlings carry no `live_time` and are permanent in retail too |
+| `dracusbox` | three chest mobs | 9600s | a bound, not a mechanic |
+| `unfaithfulntuamu`, `betrayericaronix` | named summon | 3600s | a bound, not a mechanic |
+
+**`NO LIFETIME` is now zero**, from 62 at the first run: 62 → 29 (match the npc, not the pattern) → 11
+(detect self-timed classes) → 0.
+
+**Two-thirds of that reduction came from correcting the tool, not from fixing code.** Worth stating
+plainly: of the 62 rows the first version reported, roughly 51 were either false positives or already
+correct, and 11 were real.
+
+### Celestius is the one that mattered
+
+Three helpers, every twenty-five seconds, for the whole fight, **each one joining a walk path**. Five
+minutes in, thirty-six of them were pathing and broadcasting. Retail's thirty seconds caps it at two
+overlapping sets.
+
+**It is also the one that could not be pinned.** `WalkManager.StartRouteWalking` throws a
+`NullReferenceException` in the harness because the walker routes are not loaded, so any pin that lets
+this class spawn its helpers dies before it can assert anything. **The pin was written, run, and deleted
+rather than left red** — a fifth harness-artifact shape, and the first that blocks a pin outright instead
+of distorting one.
+
+**So the largest behavioural fix in this batch ships unpinned**, and that is recorded here rather than
+softened: the change is one retail number applied to three call sites and is verifiable by reading, but
+nothing in the suite would catch its removal.
+
+### What the report says now
+
+```
+no spawns=12  partial=6  self-timed=11  timed=15
+```
+
+**None of the three surviving categories is verified.** `partial` means some spawns in the class are timed
+and some are not — six classes where the untimed ones still need reading. `self-timed` proves a schedule
+exists somewhere in the class, not that it covers every spawn. `no spawns` means retail's timed spawn sits
+in a branch we never ported at all.
+
+### Still to do
+
+- **Walker routes in the harness**, which would unblock a Celestius pin and any other walking-add class.
+- **The 6 `partial` rows** — the most likely place for a remaining real gap, since something in each of
+  those classes is already timed and something is not.
+- The 11 `self-timed` rows, unverified; the 12 `no spawns` rows.
+- Yamennes' golem cadence; `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints,
+  blocking the silikor dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Full suite **2,086 passing**, 1 skipped — unchanged, because none of this batch is pinned.

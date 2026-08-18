@@ -24,12 +24,15 @@ public class HugeEggAI : GeneralNpcAI
         return 1;
     }
 
+    /// <summary>Retail <c>LF4_CondorEgg</c> gives the condor three minutes before it leaves.</summary>
+    private const int CondorLife = 180;
+
     protected override void HandleDied()
     {
         base.HandleDied();
         if (Rnd.NextBoolean())
         {
-            Spawn(217097, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0);
+            SpawnFor(217097, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0, CondorLife);
             AIActions.DeleteOwner(this);
         }
     }

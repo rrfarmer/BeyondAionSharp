@@ -15,6 +15,12 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("celestius")]
 public class CelestiusAI : AggressiveNpcAI
 {
+    /// <summary>
+    /// Retail <c>Elim_ComadAe</c> gives all three summons thirty seconds. They walk a path, so without
+    /// it three more joined the patrol every time the branch fired and none ever left it.
+    /// </summary>
+    private const int SummonLife = 30;
+
     private const int SUMMONS_ID = 281514;
     private readonly AtomicBoolean isSpawnTaskStarted = new AtomicBoolean();
     private ScheduledTask? helpersTask;
@@ -37,9 +43,9 @@ public class CelestiusAI : AggressiveNpcAI
             if (!IsDead())
             {
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 18981, 44, GetOwner()).UseNoAnimationSkill();
-                StartWalker((Npc)Spawn(SUMMONS_ID, 518, 813, 1378, (sbyte)0), "3001900001");
-                StartWalker((Npc)Spawn(SUMMONS_ID, 551, 795, 1376, (sbyte)0), "3001900002");
-                StartWalker((Npc)Spawn(SUMMONS_ID, 574, 854, 1375, (sbyte)0), "3001900003");
+                StartWalker((Npc)SpawnFor(SUMMONS_ID, 518, 813, 1378, (sbyte)0, SummonLife), "3001900001");
+                StartWalker((Npc)SpawnFor(SUMMONS_ID, 551, 795, 1376, (sbyte)0, SummonLife), "3001900002");
+                StartWalker((Npc)SpawnFor(SUMMONS_ID, 574, 854, 1375, (sbyte)0, SummonLife), "3001900003");
             }
             return ValueTask.CompletedTask;
         }, System.TimeSpan.FromMilliseconds(1000), System.TimeSpan.FromMilliseconds(25000));

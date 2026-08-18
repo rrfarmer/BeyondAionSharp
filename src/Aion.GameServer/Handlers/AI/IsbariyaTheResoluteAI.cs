@@ -127,6 +127,9 @@ public class IsbariyaTheResoluteAI : AggressiveNpcAI, HpPhases.PhaseHandler
         ScheduleSpecial(delay);
     }
 
+    /// <summary>Retail <c>IDCT_Boss_ArchPriest</c> gives the skeletons thirty seconds.</summary>
+    private const int SkeletonLife = 30;
+
     private void RndSpawn(int npcId, int count)
     {
         for (int i = 0; i < count; i++)
@@ -144,7 +147,7 @@ public class IsbariyaTheResoluteAI : AggressiveNpcAI, HpPhases.PhaseHandler
                 int idx = Rnd.NextInt(points.Count);
                 Point3D spawn = points[idx];
                 points.RemoveAt(idx);
-                Spawn(281645, spawn.GetX(), spawn.GetY(), spawn.GetZ(), (sbyte)18);
+                SpawnFor(281645, spawn.GetX(), spawn.GetY(), spawn.GetZ(), (sbyte)18, SkeletonLife);
             }
         }
     }

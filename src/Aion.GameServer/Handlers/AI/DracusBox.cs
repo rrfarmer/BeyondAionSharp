@@ -20,6 +20,13 @@ public class DracusBox : OneDmgNoActionAI
     {
     }
 
+    /// <summary>
+    /// Retail's <c>live_time</c> on this spawn. <b>An hour is not a mechanic</b> - it is retail bounding
+    /// an npc that would otherwise outlive the reason it was summoned. Ported for the same reason: the
+    /// bound is cheap, and its absence is only visible on a server that has been up a long time.
+    /// </summary>
+    private const int SummonLife = 9600;
+
     protected override void HandleDied()
     {
         int spawnId;
@@ -37,7 +44,7 @@ public class DracusBox : OneDmgNoActionAI
         }
 
         Npc mysteriousCrate = GetOwner();
-        Npc spawn = (Npc)Spawn(spawnId, mysteriousCrate.GetX(), mysteriousCrate.GetY(), mysteriousCrate.GetZ(), (sbyte)mysteriousCrate.GetHeading());
+        Npc spawn = (Npc)SpawnFor(spawnId, mysteriousCrate.GetX(), mysteriousCrate.GetY(), mysteriousCrate.GetZ(), (sbyte)mysteriousCrate.GetHeading(), SummonLife);
         AIActions.DeleteOwner(this); // delete the huge box instantly so we can see the spawned mob
         if (spawn.GetNpcId() == DRACUS_ID)
         {

@@ -19,6 +19,13 @@ public class BetrayerIcaronixAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
     }
 
+    /// <summary>
+    /// Retail's <c>live_time</c> on this spawn. <b>An hour is not a mechanic</b> - it is retail bounding
+    /// an npc that would otherwise outlive the reason it was summoned. Ported for the same reason: the
+    /// bound is cheap, and its absence is only visible on a server that has been up a long time.
+    /// </summary>
+    private const int SummonLife = 3600;
+
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
@@ -27,7 +34,7 @@ public class BetrayerIcaronixAI : AggressiveNpcAI, HpPhases.PhaseHandler
 
     public void HandleHpPhase(int phaseHpPercent)
     {
-        Npc icaronixTheBetrayer = (Npc)Spawn(214599, GetPosition().GetX(), GetPosition().GetY(), GetPosition().GetZ(), (sbyte)GetPosition().GetHeading());
+        Npc icaronixTheBetrayer = (Npc)SpawnFor(214599, GetPosition().GetX(), GetPosition().GetY(), GetPosition().GetZ(), (sbyte)GetPosition().GetHeading(), SummonLife);
         // Carried over from the swap threshold so the successor picks up where this form left
         // off, as it did when both were 50. Retail's pattern sets no HP on the spawn at all,
         // so this figure is ours, not the spec's.
