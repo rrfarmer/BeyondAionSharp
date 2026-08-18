@@ -22117,3 +22117,58 @@ here now carries a comment saying why the silikor stands four metres from the ak
 
 Build clean. The chain pin fails with the world flag slot changed and with the arrival handler removed.
 Full suite **2,116 passing**, 1 skipped.
+
+## The 123 missing paths, and why Padmarashka's is not among the recoverable
+
+The route extraction found 344 of 467. **The remaining 123 are not one problem.**
+
+| count | family | reading |
+|---|---|---|
+| 51 | `Path*` | scattered, no common map |
+| 40 | `NPCPathSupport*` | one family, likely a later addition |
+| 32 | the rest | `Center_*`, `Pillar_*`, `SPLF*`, one-offs |
+
+### Padmarashka's is a mismatch between two dumps, not a search failure
+
+Her pattern names `DF4_MobPath_DF4_Dramata1` on all four blocked spawns. The `df4` world carries **369
+named waypoints, nine of them Dramata paths**:
+
+```
+DF4_MobPath_DramataEnterance
+DF4_MobPath_DramataGuardianA / B / C / D
+DF4_MobPath_DramataPetA / B / C / D
+```
+
+**The family is there and the specific name is not** — and `DF4_MobPath_DramataGuardianC` is close enough
+to her *guardian control* spawn to be tempting. **It is not the same name**, and picking it would be
+inventing the mapping this log spent six passes refusing to invent.
+
+The likeliest reading is that the AI pattern dump and the world dump are **not from the same build**. The
+worlds also disagree with themselves — 376 names carry different points in different files — which is the
+same kind of drift.
+
+### What that settles
+
+- **Padmarashka's four adds stay blocked**, and now for a reason that will not be resolved by looking
+  harder in this dump. Another world dump, or the client's own path table for the matching build, would
+  settle it.
+- **Kaliga's statues are the same case**: his timers arm on a waypoint arrival, and his `NPCPathIDCromede_*`
+  family exists in `idcromede` while the pattern's specific names do not match.
+
+### What the extraction did settle
+
+**Three encounters, from a standing start of zero.** Bergrisar's wheels walk, the silikor's akaimum
+patrols and its dismissal closes, and Tiamat's rush routes are in place waiting only on npc templates.
+Before this the answer to all five was "the mapping does not exist".
+
+### Still to do
+
+- **The eight Tiamat rush drakan** — npc templates, the last thing between the routes and that wave.
+- **The 40 `NPCPathSupport*`**, the one coherent family among the missing; worth one look for a source.
+- Padmarashka and Kaliga, pending a world dump matching the pattern build.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  guard report's unverified rows; the `drakanmedic` harness question.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,116 passing**, 1 skipped.
