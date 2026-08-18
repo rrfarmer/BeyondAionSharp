@@ -267,11 +267,16 @@ public sealed class KingspinAiTests
 			Advance(harness, boss, raid, 20);
 			int before = Cries(cries);
 
-			if (cry)
-				((Aion.GameServer.Ai.INpcMessageListener)boss.GetAi())
-					.OnNpcMessage(boss, KingspinAI.WebCaught, null);
-
-			Advance(harness, boss, raid, 30);
+			// Sustained, the way a fight supplies them: webs keep landing, so the cry keeps arriving and
+			// the eight-second clock keeps being re-armed. One cry only shortens one cycle, which over a
+			// thirty-second watch lands in the same place as not shortening it at all.
+			for (int i = 0; i < 12; i++)
+			{
+				if (cry)
+					((Aion.GameServer.Ai.INpcMessageListener)boss.GetAi())
+						.OnNpcMessage(boss, KingspinAI.WebCaught, null);
+				Advance(harness, boss, raid, 5);
+			}
 			return Cries(cries) - before;
 		}
 
@@ -287,7 +292,17 @@ public sealed class KingspinAiTests
 		// throws, so the shortened cycle is overwritten on the next throw and thirty seconds produce the
 		// same count either way. Whether retail avoids that by ordering, by a separate clock, or because
 		// the cries arrive faster than the throws has not been read. See docs/retail-ai-fidelity.md.
-		Assert.Equal(without, withCry);
+		// THE ACCELERATOR STARVES THE CLOCK, and this pins the defect so it turns red when fixed.
+		// Every cry re-arms timer 1 at eight seconds, and Do.ArmTimer restarts a pending timer -- so a
+		// cry arriving every five seconds resets the countdown before it can ever reach eight, and he
+		// throws NOTHING. Measured: twenty cries without the calls, zero with them.
+		//
+		// Retail's add_battle_timer may simply not restart a timer already running, which would make the
+		// same branches accelerate rather than starve. That is an engine semantic this port has never
+		// had to decide, and deciding it touches every timer in every pattern -- see
+		// docs/retail-ai-fidelity.md.
+		Assert.True(without > 0, "he should throw when nothing is calling him");
+		Assert.Equal(0, withCry);
 	}
 
 }

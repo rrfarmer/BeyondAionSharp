@@ -17256,3 +17256,51 @@ a single pass and was caught inside it too.
 ### Verification
 
 One guard, two branches, four pins re-derived, one mutation caught. Full suite **2,050 passing**, 1 skipped.
+
+## The accelerator starves the clock, and that is an engine question
+
+The previous entry left the accelerator unmeasured with the throw band finally correct. Measured, and the
+answer is worse than "does nothing".
+
+**One cry: 8 throws against 8.** A single cry shortens one cycle from eighteen seconds to eight, which over
+a thirty-second watch lands in the same place as not shortening it.
+
+**Sustained cries, the way a fight supplies them: 0 against 20.** With a cry every five seconds he throws
+**nothing at all**.
+
+### Why
+
+`Do.ArmTimer` restarts a pending timer. Every cry re-arms timer 1 at eight seconds, so a cry arriving every
+five seconds resets the countdown before it can reach eight, forever. **The accelerator does not accelerate
+the clock, it prevents it from ever firing.**
+
+And a real fight supplies cries continuously — Kingspin throws four webs at a time and each one that lands
+on somebody calls. **The mechanic as ported turns his most dangerous windows into his safest.**
+
+### The decision this needs
+
+Retail's `add_battle_timer` may simply **not restart a timer already running**. That reading makes the same
+branches accelerate rather than starve: a cry sets eight seconds only when nothing is pending, so the clock
+shortens once and then runs.
+
+**This port has never had to decide that**, because until now nothing re-armed a timer that was already
+counting. Deciding it touches **every timer in every pattern** — the ladders, the heartbeats, the summon
+chains — and is not a change to make at the end of a pass.
+
+`ACryInsideAWindowShortensHisThrowCycle` pins the starvation with the cause written beside it: zero throws
+with sustained cries, and more than zero without. **It turns red the day the semantics are decided either
+way**, which is the right trigger.
+
+### Still to do
+
+- **Decide `ArmTimer` on a pending timer** — restart or ignore — and read enough retail patterns to say
+  which. This is the largest engine question this log has opened.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One pin, measuring what happens rather than what was hoped. Full suite **2,050 passing**, 1 skipped.
