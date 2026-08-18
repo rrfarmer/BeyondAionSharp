@@ -18160,3 +18160,54 @@ groping toward one encounter at a time.
 ### Verification
 
 Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Correction: nothing was starved, including Masto
+
+The previous entry found thirty starvation candidates and said the scan does not read guards, so thirty is
+an upper bound. Guards read: **all thirty are `FirstTime`-guarded. Every one fires once. None of them ever
+starved.**
+
+**And that includes Masto.** `MastoTheAncientAI`'s four band openers each carry `When.FirstTime`, so an
+opener arms its band timer at twenty seconds **once**, and the band's own twenty-five or thirty second
+re-arm carries it from there. The opener cannot re-arm anything repeatedly because it never runs twice.
+
+**So "all four bands were dead" is withdrawn.** That entry read `Do.ArmTimer(BandOpener, 8_000)` beside the
+band arm and concluded the opener repeats every eight seconds. It re-arms the opener clock, yes — but its
+own `FirstTime` stops the branch from firing again, so the eight-second clock reaches an opener that no
+longer matches. **The re-arm is vestigial and the reading was wrong.**
+
+### What the operator change actually bought
+
+**One confirmed repair: Chunapa's phase two, starting at three seconds instead of eight.** Traced, measured
+and pinned.
+
+Everything else claimed for it across the last several entries — Masto's bands, thirty starved mechanics,
+"the list is a repair list" — **rests on a reading of `ArmTimer` repetition that the guards contradict.**
+
+The operator itself is still right: it matches the retail idiom count, it fixed Chunapa, and no pin
+disputes it. **Its blast radius was small because almost nothing in the port has the shape that would feel
+it.**
+
+### How this went wrong
+
+Three entries in a row escalated a claim without re-reading the branch it rested on:
+
+1. "Masto's opener repeats every eight seconds" — read from an `ArmTimer` call, not from the branch's guards.
+2. "So his four bands were dead" — inference from 1.
+3. "The contention list is a repair list" — generalisation from 2, applied to thirty rows.
+
+**Each step was cheap and none of them cost a re-read.** The guard was four characters away in the same
+`Branch(...)` call, and it took a scan built for something else to surface it.
+
+### Still to do
+
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+- **Masto's cadence pin is no longer urgent** — there is no repair to protect, only the ordinary cadence.
+
+### Verification
+
+Correction only; no code changed. Full suite **2,050 passing**, 1 skipped.
