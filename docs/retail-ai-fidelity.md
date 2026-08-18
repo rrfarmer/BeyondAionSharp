@@ -17148,3 +17148,67 @@ a skill. The webs are unusual only in that the skeleton took nine entries to fin
 ### Verification
 
 One pin added, asserting a defect. Full suite **2,050 passing**, 1 skipped.
+
+## The accelerator needs the guard this log reverted eleven entries ago
+
+The reading job is done, and it closes a loop opened long before the webs.
+
+`IDTP_OctaNm`'s timer-1 branches, in priority order:
+
+| priority | health | arms | throws |
+|---|---|---|---|
+| 20 | 30–37 (timer 3) | 1 at **8s** | — |
+| 19 | 45–53 (timer 4) | 1 at **8s** | — |
+| 10 | **0–51** | 1 at 18s | **yes** |
+| 8 | 51–70 | 1 at 15s | no |
+| 7 | 71–100 | 1 at 15s | no |
+| 1 | — | 1 at 1s | no |
+
+**Kingspin only throws below fifty-one.** Above that the clock still runs — two branches re-arm it at
+fifteen seconds — but nothing is thrown. The accelerators then shorten the *next evaluation* to eight
+seconds, which inside 30–37 means a faster throw and inside 45–53 means arriving at the throwing band
+sooner.
+
+**Our branch 10 carries no health guard and throws every time it fires.** So he throws at every health, the
+15-second no-throw branches do not exist, and an accelerator that shortens the clock changes nothing
+because the clock was already producing a throw on every tick.
+
+### The guard was in hand and was put back
+
+`Kingspin#10`'s `is_hp_in_boundary(0,51)` is one of the nineteen `hp` rows applied in the health-band pass
+and one of the two reverted, because three pins went red and re-deriving a ladder was more than that pass
+had room for. The entry said so and predicted the ladder would need reading.
+
+**It did, and this is the reading.** The row was correct, the revert was correct, and the missing piece was
+never the guard alone — it is the guard plus the two branches that keep the clock alive above fifty-one.
+
+### What building it takes
+
+1. `HpBetween(0, 51)` on branch 10, which is the reverted row.
+2. Two new branches at 51–70 and 71–100, each re-arming timer 1 at fifteen seconds and throwing nothing.
+3. Re-derive the three Kingspin pins that step him down through health — they now count cries, so they
+   measure the right thing and only their expected numbers change.
+4. Flip `ACryInsideAWindowShortensHisThrowCycle` from asserting the defect to asserting the acceleration.
+
+**Not built here.** Four pieces and four pins is more than remains, and this thread has been clear about
+what happens when a mechanic ships without its pin.
+
+### The lesson
+
+**A reverted row is not a closed question.** This one sat for eleven entries as "blocked on re-deriving a
+ladder" while an unrelated thread — webs, cries, accelerators — walked back to it from the other side. The
+guard audit had it right the first time; what was missing was the two branches nobody had looked for,
+because nothing in a *dropped guard* report says "and this branch has siblings".
+
+### Still to do
+
+- **The four steps above.**
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
