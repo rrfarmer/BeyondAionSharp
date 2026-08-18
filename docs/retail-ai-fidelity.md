@@ -20184,3 +20184,65 @@ unregistered-AI harness artifact, and it took the mage pin down with it, because
 
 Build clean. Two of the three new pins fail with the arrival effects removed. Full suite **2,097
 passing**, 1 skipped.
+
+## Queue hygiene, and a pin that stopped me reversing a decision
+
+The previous entry queued "retire stale entries" after finding the hard Tiamat already built. **Acting on
+it immediately found the opposite failure mode**, which is worse.
+
+### `IDTP_Keeper1`'s spawn was not "ready". It was decided against.
+
+The queue has carried it for six passes as a ready row. Reading retail confirmed a real mechanic —
+**Bergrisar summons a blood wheel at each of five health bands, each at its own mark, each once**, the
+last behind a *world* flag — and our `BergrisarAI` carries only its death step. So I wrote all five
+branches, and they built.
+
+**The suite already contained `BergrisarPlacesNoChakrasHimself`**, asserting he places none, with the
+reason recorded in the class: every wheel carries a `pathname` this port cannot resolve.
+
+I had weighed exactly that and come down the other way — five distinct marks are not Tiamat's twenty at
+one point, and a wheel standing on its mark is a worse add than one that walks but better than no add at
+all. **That is a real argument, and it is not new information.** A previous pass had the same facts and
+made the opposite call, deliberately, and pinned it. **Reverted.**
+
+**The pin is what caught it**, not the reading — I had the class open and did not notice the decision
+until searching the tests for the npc id.
+
+### So the queue is append-only in both directions
+
+It carries items that are **already done** (the hard Tiamat, found last pass) and items that are
+**already decided against** (this one). Both were discovered by starting the work, which is the expensive
+way to find out.
+
+**The queue records intentions and never records verdicts.** Everything this log has settled lives in the
+entry that settled it, hundreds of lines up, while the queue at the bottom of every entry says only what
+was once wanted.
+
+### What that changes
+
+`IDRaksha_Re_A_KJS`'s despawn, checked while here, is a genuine carry-forward: it appears in four queue
+lists and **has never been investigated once**. That is the third kind of entry, and the only one the
+queue is actually good for.
+
+**No mechanism is proposed for fixing this here**, deliberately — a queue that carries verdicts is a
+different document, and inventing one at the end of a pass is how the nineteen-edit batch happened. What
+is recorded is the shape: **three kinds of entry, one useful.**
+
+### Still to do
+
+- **The queue's own accuracy.** Before building anything from it, search the tests for the npc id and the
+  log for the pattern name. Both checks are one command and both would have saved this pass.
+- `IDRaksha_Re_A_KJS`'s despawn — a true unexamined item.
+- Walker route ids, the one blocker behind both the Bergrisar decision and Tiamat's rush wave. **If that
+  mapping is recovered, the Bergrisar decision should be revisited** — it is the only thing holding it.
+- The four lords' staged spawns against our `empyrean_lord`.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+**No net code change** — five branches written, built, and reverted. Full suite unchanged at **2,097
+passing**, 1 skipped.
