@@ -9897,3 +9897,65 @@ patterns where it mattered most.
 Full suite **1,921 passing** and 1 skipped; six new pins run three times over; **ten mutations, all
 caught**. Translatable 347/1,125 → **343/1,121**, exactly the four patterns and their four npcs;
 missing-AI 685 and adds 359/278 unchanged, as expected for four invisible spawners.
+
+## Two of the four DF5 named field bosses, and the escalation written as loop geometry
+
+`NpcAIPatterns_DF5_Named_SSH.xml` holds four field bosses, all HEROes on plain `aggressive`. Two of
+them are cast chains and two are mechanics.
+
+### Tidalsail Spirit (219929) lays eight mines and sets them off together
+
+| | |
+|---|---|
+| six seconds in | the summoning motion |
+| then four times, six seconds apart | **two mines, each on its own randomly chosen attacker** |
+| six seconds after the last pair | **they all go off at once** |
+| eleven seconds later | the cycle starts again |
+
+**Every mine picks its player independently.** Retail writes the spawn twice rather than asking for
+two, and each carries its own `ATTACKERI_RANDOM_ONE`, so a raid ends up with mines scattered across it
+instead of eight under one person — the difference between a mechanic and an execution. Pinned by
+spread rather than by count, and by a mutation that replaces the pair with a single two-count spawn on
+one target.
+
+**The detonation is a `despawn_self` behind a cast**, for the third time in this log — after the naga
+summons' dismissal and Kaliga's markers. The mine's whole pattern is one branch: on hearing `1001`,
+cast and go. We have the going.
+
+**Retail's own clean-up here does nothing.** Both death branches and the leash branch despawn
+`SPAWN_ID_1`; every mine is laid with `SPAWN_ID_NONE`, so that group is always empty. Kept as written —
+the forty-second lifetime is what actually clears them, and porting a despawn that clears an empty
+group is porting the quirk rather than correcting it.
+
+### Infernomane Vortile (219930) escalates by changing the shape of his loop
+
+| | |
+|---|---|
+| above fifty | five steps of ten seconds; on the third and fifth he turns to a random attacker and drops **two** blazes on them |
+| below fifty | **four** steps; the two drops become **three** blazes each |
+
+**There is no enrage branch.** The rung below fifty is a second copy of the same loop with one step
+taken out and one blaze added, so the cycle shortens from fifty seconds to forty while each drop grows
+by half — the rate nearly doubles and retail never writes a word about it. That is worth naming,
+because a reader looking for the enrage in this pattern will not find one: **the escalation is in the
+geometry of the loop, not in a branch.**
+
+### Not translated
+
+- **`DF5_ItemNamed_6_Fi_01_SSH`** (219926 rootrage rotron) is a cast chain whose only payload is one
+  `switch_target` at the end of its upper loop, and **`_As_01`** (219927 chromascale dreadclaw) has no
+  payload at all. Both stay on `aggressive`, recorded so the family is not re-opened as three-quarters
+  missing.
+- The blazes (282390) walk and lay a trail of standing fire every two seconds in retail — an encounter
+  of its own in another file, left on the stock AI, so the trail is missing rather than the drop.
+- Eight and seven skill indices; the self-buff on waking; and `on_enter_return_sp`, an event our
+  runtime does not raise, which both bosses use to re-buff on leashing.
+- The four `B…` twins (855914, 855915, 855918, 855919) share these patterns and are spawned by nothing
+  in our data.
+
+### Verification
+
+Full suite **1,931 passing** and 1 skipped; ten new pins run five times over; **fourteen mutations, all
+caught**. Missing-AI 685 → **683**; translatable 343/1,121 → **341/1,119**; adds 359/278 → **358/277**,
+the one being the mine — the blazes were already spawned by another encounter, which is why the delta
+is one rather than two.
