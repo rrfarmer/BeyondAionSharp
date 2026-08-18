@@ -17458,3 +17458,61 @@ the question.
 ### Verification
 
 Third variant tried and reverted. Full suite **2,050 passing**, 1 skipped.
+
+## The timer question resolves: the semantics were never wrong, the test was
+
+The one command the previous entry owed reads Chunapa's two arming branches:
+
+| priority | waits on | guard | arms |
+|---|---|---|---|
+| 40 | timer **0** | `is_hp_lower_than` | timer 1 at **3s** |
+| 24 | timer **1** | `is_hp_in_boundary` | timer 1 at **45s**, and burrows |
+
+**Priority 40 fires on every timer-0 tick while he is below its threshold.** It is a phase opener: drop
+below the line and the first burrow is three seconds away. It keeps re-arming because timer 0 keeps
+ticking.
+
+Under take-the-shorter that three-second arm drags the burrow forward forever — which is exactly what the
+suite reported. **So retail is not take-the-shorter**, and the reading that survives is the one this port
+already has: **restart the pending timer.**
+
+### Which makes the Kingspin measurement an artifact
+
+The starvation was measured by sending a cry **every five seconds for a minute**. Retail supplies cries
+from webs, and Kingspin throws four webs every eighteen seconds — so cries arrive in bursts eighteen
+seconds apart, not on a five-second metronome. **A cry that arrives while the eight-second clock has
+already fired does not starve anything; it shortens the next cycle, which is the mechanic.**
+
+The pin drove the mechanism far harder than the encounter can, found a degenerate case, and I read it as
+the encounter being broken. **It is the harness trap again, in its fourth costume this session** — bare
+`Attack` events, missing AI registration, sight range, and now an unrealistic message rate.
+
+### What is actually true
+
+- `ArmTimer` restarting a pending timer is **correct**, and matches both encounters.
+- Kingspin's accelerator **works** at any realistic cry rate; the pin asserting it starves is asserting an
+  artifact.
+- Three engine variants were written, measured and reverted to establish something the data already said.
+
+**The pin is left as it is, and that is deliberate**: it documents a real degenerate case, and rewriting it
+around an eighteen-second cry burst is the next change rather than a footnote. Its comment now overstates
+the case, which is worth fixing when it is rewritten.
+
+### The rule
+
+**A stress test is not a measurement of the mechanic.** Driving an input far outside its natural rate finds
+degeneracies, and a degeneracy is not a defect unless the game can reach it. Four entries went into a
+starvation the encounter cannot produce.
+
+### Still to do
+
+- **Rewrite the accelerator pin** around a realistic cry rate, and correct its comment.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; the engine was already correct. Full suite **2,050 passing**, 1 skipped.
