@@ -14359,3 +14359,63 @@ the thing that connects them.
 ### Verification
 
 Full suite **2,259 passing**, 1 skipped.
+
+## The citadel overseers, and a flag that does not hold
+
+Two rows this time. One shipped, one stopped at the door, and one that was never a row at all.
+
+### Shipped: the Lepharist citadel
+
+`9003` — **eight citadel overseers and five labourers, 13 npcs.** An overseer calls its labourers when
+it is pulled, at twenty metres, and they commit a hundred. When it stops running away it calls again on
+two numbers at once: `9003` at fifteen metres for the labourers, and `9001` at ten — **the same pair of
+lepharist protectors the bastion drudges fetch**, and the only live listeners that number has.
+
+### Stopped: the Esoterrace alarm, and why
+
+`10000` looked like the find of the day. **One npc — the surkana feeder — with five alarm bands, and
+nineteen esoterrace drakan listening.** Retail writes the bands in descending priority with the tightest
+guard first and gives each its own flag, so the feeder announces once when first touched and again the
+first time it passes eighty, sixty, forty and twenty percent: **the facility arrives in five instalments
+and the laddering is entirely branch order plus five flags.** No counter, no timer.
+
+It is translated, and it was **taken back out**, because the flags do not hold.
+
+A probe: feeder at exactly a hundred percent, attacked six times without its health changing.
+
+```
+pct0=100  1=10  2=20  3=30  4=40  5=50  6=60
+```
+
+**The unguarded band fires on every blow.** `When.FirstTime` is `TestAndSetFlag`, which returns false
+once set; `ResetPattern` clears the flags but is only called from back-home, died and despawned, none of
+which happens between two attack events. So a branch whose *only* guard is a flag re-fires, and the
+five-instalment ladder collapses into "ten points per hit, for ever" — an alarm that never stops
+ringing.
+
+**Every once-only branch in this log has a health or timer guard in front of its flag**, and every one
+of them is pinned and passing. That is either a coincidence across a dozen encounters or the shape of
+the bug, and finding out which is the next step:
+
+1. Pin `FirstTime` on its own, in a throwaway pattern with no other guard — the primitive first, which
+   is the rule the shulack relay earned.
+2. If it holds there, the difference is in this pattern; if it does not, a dozen shipped encounters
+   have a guard that only looks like it works because something else fires first.
+
+**The second possibility is why this was not shipped with a note.** An alarm that rings for ever is
+visible; a once-only branch that quietly becomes an every-time branch is not.
+
+### Never a row: `6512`
+
+The baby cellatu, six callers and ten answerers, marked reachable by the audit. **Its only caller branch
+broadcasts on `on_stop_to_flee` naming `OBJI_FLEE_FROM`** — the param recorded two entries ago as the
+first with no equivalent in this port at all. The answer is buildable and nothing can ever send it.
+
+**The classifier checks what the answer does and never asks whether the caller can fire.** That is its
+third blind spot, after skill-only answers and self-named ones, and the fix is the same shape: ask the
+same question of the sending branch. Recorded rather than built, because the next person deserves to
+know the count is still soft.
+
+### Verification
+
+Two pins, and the citadel half of the work is green. Full suite **2,261 passing**, 1 skipped.
