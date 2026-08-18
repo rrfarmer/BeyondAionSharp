@@ -13455,3 +13455,67 @@ answering it the same way.
 
 Eight pins and a **nine-mutation sweep with one survivor** — the re-entrancy guard, for the reason
 above. Full suite **2,190 passing**, 5 skipped, with the new per-hit event live in the damage path.
+
+## The biggest handler left, measured and not built — and Panesterra's castles
+
+With the friend-attacked events in, the obvious question was which handler blocks the most now. **Every
+handler above `on_enter_abnormal_state` in the dump is already supported**; that one is not, and it is
+in **272 patterns with 1,168 live stock-AI npcs behind it** — larger than the friend-attacked pair.
+
+Reading it, the shape is almost uniform: **245 of its ~270 branches are a single `broadcast_message`**
+guarded by `is_abnormal_state`. It is the "I have been crowd-controlled — somebody help" handler, and
+the guards of every fortress carry it.
+
+**It is not built, and the reason is the guard rather than the event.** The states the branches name
+are:
+
+| retail state | live npcs | maps to |
+|---|---|---|
+| `ABNSTATEI_MENTAL_GROUP` | **919** | *nothing* |
+| `ABNSTATEI_CANNOT_ACT_GROUP` | **206** | *nothing* |
+| `ABNSTATEI_PHYSICAL_GROUP` | 3 | *nothing* |
+| `ROOT`, `POISON`, `BLEED`, `SANCTUARY`, `SLEEP`, `STUN_LIKE_GROUP` | 38 total | exactly |
+
+**Those three group names are defined nowhere we can read.** They are not in the Java tree, and a scan
+of every `.pak` in the client for `MENTAL_GROUP` returns nothing. Our `AbnormalState` enum has
+composites of its own — `CANT_ATTACK_STATE`, `ANY_STUN` — but no member of it is retail's
+`MENTAL_GROUP`, and picking a plausible union of bits would be **inventing a number in the one place a
+guess is invisible**: nothing would fail, the guards would fire on roughly the right crowd control, and
+nobody would ever find out it was wrong.
+
+**1,128 of the 1,166 live npcs sit behind those three names.** Building the event for the other 38
+would be scaffolding with almost no user, which this log has criticised before. So:
+
+- **What is needed:** a definition of `ABNSTATEI_MENTAL_GROUP`, `ABNSTATEI_CANNOT_ACT_GROUP` and
+  `ABNSTATEI_PHYSICAL_GROUP` as sets of concrete states. A retail client build with an unstripped
+  string table, an NCSoft tools dump, or a private-server writeup that lists them would all do.
+- **What is already known:** the event itself is a two-line hook in `EffectController.SetAbnormal`,
+  which already has the before-and-after bitmask needed to tell *entering* a state from refreshing it.
+  The work is the table, not the plumbing.
+
+**This is the first time in this log that measuring a handler has argued against building it**, and the
+measurement took one query against the numbers that were already to hand.
+
+### And what was buildable: Panesterra's castles
+
+`40000` and `40100` came off the silent-conversations list, and they are the base guards' mechanic one
+tier up — the siegemake and siegebreak companies, **93 live npcs**.
+
+**A castle answers harder than a base and is fussier about who it answers for.** Its guards take a
+hundred where a base's take ten, and **every one of the fifteen answering patterns carries `is_enemy` on
+the player named**, where among the ten base patterns exactly one did. Both read like a later pass over
+the same design, which the numbering suggests too.
+
+**The third `is_user_flying` reading in three commits, and the third to come out differently.** The
+fortress guards' two halves broadcast identically, so the condition did not matter. Panesterra's base
+patrols broadcast at different ranges, so it changed a number. Here it decides whether the branch
+broadcasts *at all*: `Gab1_CastGaurd_Hide_PM_Ae_02` announces a puller who is in the air and says
+nothing about one on the ground — so under the ground reading **six ambushers never call**, which is
+retail's behaviour for every ground pull and wrong for an air pull. Recorded; they are bound as
+answerers only.
+
+### Verification
+
+Fourteen pins on the Panesterra family now, and a **five-mutation sweep on the castle half, all
+caught**: the payload dropped to a base's ten, the `is_enemy` deleted, the two companies sharing a
+number, a caller that never calls, and the reach shortened. Full suite **2,195 passing**, 5 skipped.

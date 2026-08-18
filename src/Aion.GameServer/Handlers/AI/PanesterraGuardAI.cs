@@ -326,3 +326,151 @@ public class PanesterraBossKillerAI : PatternAi
 
 	protected override AiPattern Pattern => Pattern_;
 }
+
+/// <summary>
+/// Panesterra's castle guards — the siegemake and siegebreak companies. Ten retail patterns across two
+/// numbers, <c>40000</c> and <c>40100</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>The same call-and-answer the base guards use, one
+/// tier up and with two differences.</b> Every answerer here carries <c>is_enemy</c> on the player
+/// named — where among the base guards exactly one did — and the answer is a bare
+/// <c>switch_target</c> carrying a hundred rather than an <c>add_hate_point</c> of ten.
+/// <para>
+/// <b>So a castle answers harder than a base and is fussier about who it answers for.</b> Both of those
+/// read like a later pass over the same design, which is what the numbering suggests too.
+/// </para>
+/// </remarks>
+public static class PanesterraCastleCalls
+{
+    /// <summary>Retail's <c>40000</c>: the siegemake company's call.</summary>
+    public const int Siegemake = 40000;
+
+    /// <summary>Retail's <c>40100</c>: the other company's.</summary>
+    public const int Siegebreak = 40100;
+
+    /// <summary>Retail's <c>range_as_meter</c> on every caller in both companies.</summary>
+    public const float CallReach = 25f;
+
+    /// <summary>Retail's <c>points_to_add</c> on every answer in both companies.</summary>
+    public const int Claim = 100;
+
+    /// <summary>The one answer branch, which is the same on all fifteen answering patterns.</summary>
+    public static PatternBranch[] Answer(int call) => Of(
+        Branch(1, "a call, and the player named is my enemy",
+            [When.Message(call), When.MessageParamIsEnemy],
+            Do.HateMessageTarget(Claim)));
+}
+
+/// <summary>
+/// The siegemake marksmen, who call for the company. Retail pattern <c>Gab1_CastGaurd_Watch_PR_Re</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. Calls at twenty-five metres on being pulled, and
+/// answers the same call itself.
+/// </remarks>
+[AIName("castle_guard_call")]
+public class PanesterraCastleWatchAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        OnEnterAttack = Of(Branch(7, "pulled", [],
+            Do.Broadcast(PanesterraCastleCalls.Siegemake, PanesterraCastleCalls.CallReach,
+                aboutTarget: true))),
+
+        OnMessage = PanesterraCastleCalls.Answer(PanesterraCastleCalls.Siegemake),
+    };
+
+    public PanesterraCastleWatchAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The rest of the siegemake company, who answer. Retail patterns <c>Gab1_CastGaurd_Charge_PM_Fe</c>,
+/// <c>_Defend_PM_Ke</c>, <c>_Hide_PM_Ae_02</c>, <c>_Strike_PR_Ge</c>, <c>_Support_Heal_Pe</c> and
+/// <c>_Support_Mez_We</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. Six patterns, one answer, no differences.
+/// <para>
+/// <b>The ambushers belong here rather than with the callers, and that is a blocker rather than a
+/// reading.</b> <c>Gab1_CastGaurd_Hide_PM_Ae_02</c> has a call branch, and its only call branch is
+/// guarded on <c>is_user_flying</c> — it announces a puller who is in the air and says nothing about
+/// one on the ground. This port takes the ground reading, so <b>six ambushers never call at all</b>.
+/// That is retail's behaviour for every ground pull and the wrong behaviour for an air pull, and there
+/// is no way to tell which from here.
+/// </para>
+/// </remarks>
+[AIName("castle_guard_answer")]
+public class PanesterraCastleGuardAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        OnMessage = PanesterraCastleCalls.Answer(PanesterraCastleCalls.Siegemake),
+    };
+
+    public PanesterraCastleGuardAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The siegemake rangers and backstabbers of the other company. Retail patterns
+/// <c>Gab1_CastGaurd_Light_Ra_Ae_Broad</c> and <c>Gab1_CastGaurd_Light_As_Ae_HideBroad</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>Both halves of their flying split broadcast the
+/// same message at the same range</b>, so unlike the ambushers of the other company these call whoever
+/// pulls them. The third <c>is_user_flying</c> reading in three commits, and the third to come out
+/// differently.
+/// </remarks>
+[AIName("castle_guard_light_call")]
+public class PanesterraCastleRangerAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        OnEnterAttack = Of(Branch(7, "pulled", [],
+            Do.Broadcast(PanesterraCastleCalls.Siegebreak, PanesterraCastleCalls.CallReach,
+                aboutTarget: true))),
+
+        OnMessage = PanesterraCastleCalls.Answer(PanesterraCastleCalls.Siegebreak),
+    };
+
+    public PanesterraCastleRangerAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The rest of that company. Retail patterns <c>Gab1_CastGaurd_Kn_Ae</c>,
+/// <c>_Light_El_Ae</c>, <c>_Light_Fi_Ae</c>, <c>_Light_Gu_Ae</c>, <c>_Light_Pr_Ae</c>,
+/// <c>_Light_Wi_Ae</c> and <c>_Dark_Pr_Ae</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. Seven patterns, one answer, no differences.
+/// </remarks>
+[AIName("castle_guard_light_answer")]
+public class PanesterraCastleDefenderAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ = new AiPattern
+    {
+        OnMessage = PanesterraCastleCalls.Answer(PanesterraCastleCalls.Siegebreak),
+    };
+
+    public PanesterraCastleDefenderAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}

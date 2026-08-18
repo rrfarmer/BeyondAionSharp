@@ -175,4 +175,88 @@ public sealed class PanesterraGuardAiTests
 		Assert.Equal(13f, PanesterraCalls.Near);
 		Assert.Equal(25f, PanesterraCalls.Far);
 	}
+
+	// The castle companies, one tier up from the bases.
+	private const int SiegemakeMarksman = 880817;   // calls on 40000
+	private const int SiegemakeGuard = 880814;      // answers 40000
+	private const int SiegemakeRanger = 880808;     // calls on 40100
+	private const int SiegemakeDefender = 880804;   // answers 40100
+
+	private static BossAiHarness CastleHarness() =>
+		BossAiHarness.For(Panesterra).WithWorldSize(2048)
+			.WithAi(typeof(PanesterraCastleWatchAI), typeof(PanesterraCastleGuardAI),
+				typeof(PanesterraCastleRangerAI), typeof(PanesterraCastleDefenderAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+
+	/// <summary>
+	/// <b>A castle answers harder than a base.</b> Its guards take a hundred where a base's take ten,
+	/// which is the whole difference in payload between the two tiers.
+	/// </summary>
+	[Theory]
+	[InlineData(SiegemakeMarksman, SiegemakeGuard)]
+	[InlineData(SiegemakeRanger, SiegemakeDefender)]
+	public void ACastleAnswersHarderThanABase(int callerId, int answererId)
+	{
+		using BossAiHarness harness = CastleHarness();
+		Npc caller = harness.Spawn(callerId, 300f, 300f, 200f);
+		Npc answerer = harness.Spawn(answererId, 310f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(caller, answerer);
+
+		harness.Engage(caller, raider);
+
+		Assert.Equal(100, answerer.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary>
+	/// <b>And it is fussier about who it answers for.</b> Every castle answerer carries
+	/// <c>is_enemy</c> on the player named, where among the base guards exactly one did — so a castle
+	/// guard hearing its own company name a member of its own faction does nothing.
+	/// </summary>
+	/// <remarks>
+	/// Measured on the turn, as the base slayers' equivalent is: <c>AddHate</c> refuses a non-enemy
+	/// either way and only the facing separates the two.
+	/// </remarks>
+	[Fact]
+	public void AndItIsFussierAboutWhoItAnswersFor()
+	{
+		using BossAiHarness harness = CastleHarness();
+		Npc caller = harness.Spawn(SiegemakeRanger, 300f, 300f, 200f);
+		Npc answerer = harness.Spawn(SiegemakeDefender, 310f, 300f, 200f);
+		Player friendly = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(caller, answerer);
+
+		friendly.SetPanesterraFaction(PanesterraFaction.BELUS);
+		harness.Engage(caller, friendly);
+
+		Assert.NotSame(friendly, answerer.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>The two companies do not hear each other</b>, exactly as the two bases do not.
+	/// </summary>
+	[Fact]
+	public void TheTwoCompaniesDoNotHearEachOther()
+	{
+		using BossAiHarness harness = CastleHarness();
+		Npc caller = harness.Spawn(SiegemakeMarksman, 300f, 300f, 200f);
+		Npc otherCompany = harness.Spawn(SiegemakeDefender, 310f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(caller, otherCompany);
+
+		harness.Engage(caller, raider);
+
+		Assert.Equal(0, otherCompany.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary><b>And the castle numbers are retail's too.</b></summary>
+	[Fact]
+	public void TheCastleNumbersAreRetails()
+	{
+		Assert.Equal(40000, PanesterraCastleCalls.Siegemake);
+		Assert.Equal(40100, PanesterraCastleCalls.Siegebreak);
+		Assert.Equal(25f, PanesterraCastleCalls.CallReach);
+		Assert.Equal(100, PanesterraCastleCalls.Claim);
+	}
 }
