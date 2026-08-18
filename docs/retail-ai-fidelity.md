@@ -14307,3 +14307,55 @@ it now blocks exactly one assertion rather than four pins.
 Four skipped pins replaced by four real ones, and a **three-mutation sweep, all caught**. Full suite
 **2,258 passing**, 2 skipped — down from 6, and the two that remain are the scatter-with-one-attacker
 coin flip and Preceptor's trio, neither of which is a flee.
+
+## One signature, and the last two skips
+
+The previous entry ended with one named gap — **a way to hurt a test player** — and one skip it had not
+looked at. Both are closed.
+
+### `SetExactPercent` takes a `Creature`
+
+That is the whole change. It took an `Npc`, and **the negative half of every guard that reads the
+player's health was therefore unpinnable**. The bastion drudges are the only such guard in this log so
+far: they flee below thirty percent, *but only from an attacker still above forty*, so a drudge that has
+nearly killed the player stays and finishes the job.
+
+Both halves are now pinned, and both mutations bite — deleting the guard, and inverting its band. **One
+parameter type was the difference between a condition nobody could test and a condition with complete
+coverage.** The stand-in player is invulnerable to *damage*, which is what stops a fight ending a test;
+setting its health directly was never damage and was never blocked.
+
+### Vingeveu's scatter, skipped for a reason that had already been solved
+
+> a random target switch with one attacker is not an observation
+
+True — of the setup it was written for. With three players it is a one-in-half-a-million coincidence to
+hold the same one twelve fights running. **That is the stated-exponent technique Masto's opening scatter
+already used, in a file written earlier in this same log**, and it was not applied here.
+
+**And the pin failed twice before it worked, on something worth keeping:** the scatter picks from the
+aggro list's **attackers**, not from everything on the hate list. Adding hate to a bystander does not
+put it in the pool — so the first version, which gave two players hate and engaged only the third,
+watched the boss hold its tank every single time and looked exactly like a scatter that did not work.
+**Each of the three has to have actually attacked.**
+
+### Where the skips stand
+
+Two remain, from six at the start of the previous entry:
+
+- **The Preceptor's trio** — an NRE inside `Effect.ApplyEffect` applying skill 8217 to the stand-in
+  player. A specific, reproduced, one-layer-deeper blocker with its own note; not a claim that needs
+  re-testing.
+- …and that is all. The other is now zero: **every "cannot be pinned" in the AI suite has been either
+  proved or replaced.**
+
+### The rule, now twice earned
+
+**A technique that solved a problem once is not automatically applied the next time the problem
+appears.** Masto's file knew how to pin a coin flip; Vingeveu's file, written days earlier in the same
+run, said it could not be done. Nothing connected them but a person remembering — and the log is now
+the thing that connects them.
+
+### Verification
+
+Full suite **2,259 passing**, 1 skipped.

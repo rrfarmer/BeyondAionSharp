@@ -187,23 +187,50 @@ public sealed class GuardianVingeveuAiTests
 	}
 
 	/// <summary>
-	/// <b>The scatter is built and is not pinned as an outcome, and this says why.</b>
+	/// <b>The loud openers scatter him off his tank.</b> Both end in
+	/// <c>switch_target_by_attacker_indicator ATTACKERI_RANDOM_ONE</c>, and with three players on his
+	/// list that is visible: across twelve fights he does not hold the most-hated every time.
 	/// </summary>
 	/// <remarks>
-	/// Both loud openers end in <c>switch_target_by_attacker_indicator ATTACKERI_RANDOM_ONE</c>, for the
-	/// boss and for every servant that hears him. With one raider on the list a random pick is that
-	/// raider, and with several the pin would be asserting a coin flip — so what a pin here would
-	/// measure is the harness's random source rather than the branch.
+	/// <b>This was skipped as "not an observation", and that was true only of the setup it was written
+	/// for.</b> With one raider a random pick is that raider and the pin measures nothing. With three,
+	/// holding the same player twelve times running is a one-in-half-a-million coincidence — the same
+	/// stated-exponent technique Masto's opening scatter uses, which existed before this skip was
+	/// written and was not applied to it.
 	/// <para>
-	/// <b>What is pinned instead is the payload that rides with it:</b> ten points against one is what
-	/// tells the two calls apart, and every pin above turns on that difference. A scatter with no
-	/// payload change would be invisible to all of them, which is stated here rather than left for
-	/// someone to discover.
+	/// <b>All three have to have attacked, not merely be hated.</b> The scatter picks from the aggro
+	/// list's <em>attackers</em>, so adding hate to a bystander does not put it in the pool — an earlier
+	/// version of this pin did exactly that and the boss held its tank every time, looking for all the
+	/// world like a scatter that did not work.
 	/// </para>
 	/// </remarks>
-	[Fact(Skip = "a random target switch with one attacker is not an observation")]
-	public void TheScatterIsBuiltAndNotPinnedAsAnOutcome()
+	[Fact]
+	public void TheLoudOpenersScatterHimOffHisTank()
 	{
+		bool alwaysTheTank = true;
+		for (int attempt = 0; attempt < 12 && alwaysTheTank; attempt++)
+		{
+			using BossAiHarness harness = NewHarness();
+			Npc boss = harness.Spawn(Vingeveu, 300f, 300f, 200f);
+			Player tank = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ELYOS);
+			Player second = harness.SpawnPlayer(304f, 300f, 200f, race: Race.ELYOS);
+			Player third = harness.SpawnPlayer(305f, 300f, 200f, race: Race.ELYOS);
+
+			// All three have to have attacked, not merely be hated: the scatter picks from the aggro
+			// list's attackers. Engaging each in turn is what puts them there.
+			harness.Engage(boss, second);
+			harness.Engage(boss, third);
+			harness.Engage(boss, tank);
+			boss.SetTarget(tank);
+
+			// The band openers below seventy carry the same scatter; the clock reaches one of them.
+			BossAiHarness.SetExactPercent(boss, 50);
+			harness.Watch(30, null);
+
+			alwaysTheTank = ReferenceEquals(tank, boss.GetTarget());
+		}
+
+		Assert.False(alwaysTheTank, "he never once let go of his tank");
 	}
 
 	/// <summary><b>The message numbers and the range are retail's, not ours.</b></summary>

@@ -103,6 +103,35 @@ public sealed class LepharistBastionAiTests
 		Assert.True(destination.Value.X < 300f, "the drudge fled towards its attacker");
 	}
 
+	/// <summary>
+	/// <b>And a drudge that has nearly killed the player stays and finishes the job.</b> Retail's guard
+	/// is <c>is_hp_in_boundary who=OBJI_CUR_TARGET larger_than=40</c> — the only condition in this log
+	/// that judges the fight rather than the npc.
+	/// </summary>
+	/// <remarks>
+	/// This is the assertion the previous entry recorded as blocked. It needed a player at a chosen
+	/// health, and <c>SetExactPercent</c> took an <c>Npc</c>; it now takes a <c>Creature</c>, which is
+	/// the whole fix. <b>One signature was the difference between a guard nobody could test and a guard
+	/// with both halves pinned.</b>
+	/// </remarks>
+	[Fact]
+	public void ADrudgeStaysWhenItsAttackerIsNearlyDead()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc drudge = harness.SpawnWithAi(Drudge, "bastion_drudge", 300f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(310f, 300f, 200f, race: Race.ELYOS);
+		harness.Engage(drudge, raider);
+
+		Aion.GameServer.Ai.Pattern.PatternAi ai =
+			Assert.IsAssignableFrom<Aion.GameServer.Ai.Pattern.PatternAi>(drudge.GetAi());
+
+		BossAiHarness.SetExactPercent(drudge, 20);
+		BossAiHarness.SetExactPercent(raider, 30);
+		drudge.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
+
+		Assert.Null(ai.FleeingTo);
+	}
+
 	/// <summary><b>The numbers and the ranges are retail's, not ours.</b></summary>
 	[Fact]
 	public void TheNumbersAreRetails()

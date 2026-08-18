@@ -214,7 +214,7 @@ public sealed class BossAiHarness : IDisposable
 	public static void SetHpPercent(Npc npc, int percent) => npc.GetLifeStats().SetCurrentHpPercent(percent);
 
 	/// <summary>
-	/// Sets HP so the NPC's own <c>GetHpPercentage()</c> reads exactly <paramref name="percent"/>.
+	/// Sets HP so the creature's own <c>GetHpPercentage()</c> reads exactly <paramref name="percent"/>.
 	/// </summary>
 	/// <remarks>
 	/// <see cref="SetHpPercent"/> truncates on the way in and the reader truncates again on the way
@@ -222,7 +222,14 @@ public sealed class BossAiHarness : IDisposable
 	/// a band and fatal when it needs to be on a boundary — retail bands leave gaps at exactly the
 	/// values a boundary test cares about. This nudges upwards until the reader agrees.
 	/// </remarks>
-	public static void SetExactPercent(Npc npc, int percent)
+	/// <remarks>
+	/// <b>Takes a <see cref="Creature"/> rather than an <see cref="Npc"/>, and that is the point of the
+	/// change.</b> Retail guards that read the <em>player's</em> health exist — the bastion drudges flee
+	/// only from an attacker still above forty percent — and until this took a player, the negative half
+	/// of every such guard was unpinnable. The stand-in player is invulnerable to damage, which stops a
+	/// fight from ending a test; setting its health directly is not damage and is unaffected.
+	/// </remarks>
+	public static void SetExactPercent(Creature npc, int percent)
 	{
 		var stats = npc.GetLifeStats();
 		stats.SetCurrentHpPercent(percent);
