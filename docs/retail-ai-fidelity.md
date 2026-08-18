@@ -20536,3 +20536,49 @@ reading its output, only by reading the rows it dismissed.
 
 Tool only, no server code. The self-test lights the row and clears again. Full suite **2,097 passing**,
 1 skipped.
+
+## "No harness setup" was never tested
+
+Eight lifetime fixes shipped unpinned, and every entry gave the same reason: **arena, siege or instance
+npcs with no harness setup.** That reason had not been checked once.
+
+**Laksyaka took twenty minutes.** Spawn him in Tiamat Stronghold at his own coordinates, register three
+AIs, land blows until a wave appears, advance twenty-one seconds. Two pins, and the expiry one fails with
+the lifetime removed.
+
+### The one genuine difficulty, and how it was handled rather than avoided
+
+He summons on a **three-percent roll per blow**, and `BossAiHarness`'s roll helpers reach
+`PatternAi.RollPercent` — this is a Java-parity class calling `Rnd.Chance()` directly, so the roll cannot
+be forced.
+
+The pin lands blows until a wave appears, capped at five hundred. **At three percent that misses about
+three times in ten million**, and the docstring says so rather than presenting a retry loop as
+deterministic. **Five consecutive runs pass**; the last four flaky pins in this log all looked
+deterministic and were not, so a stated small risk is the better trade.
+
+### What actually blocks the rest
+
+Checking the second one immediately found a **different** obstacle: `rm_1337` has **no spawn entry
+anywhere in our data**, so there is no map to put him in. That is not "no harness setup" — it is not
+knowing where the npc belongs, and it would have to be invented.
+
+**So the blanket reason was covering at least two unrelated situations**, one of which was nothing at all.
+The remaining seven have not been sorted between them.
+
+### Still to do
+
+- **Sort the seven remaining unpinned fixes** into "pinnable now" and "no known map": `drakanmedic`,
+  `rm_1337`, `sematariux`, `king_consierd`, `brigadegeneralterath`, `vasharti_assassin`, and the two
+  Ahserion classes. **On this evidence some are pinnable and the reason given was untested.**
+- **`on_talked_by_user` and `teleport_target_alias`**, the one verified engine gap.
+- Resolve the empyrean lords' skill indices; walker route ids, and if recovered revisit Bergrisar.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Build clean. The expiry pin fails with the lifetime removed and passes five runs in a row. Full suite
+**2,099 passing**, 1 skipped.
