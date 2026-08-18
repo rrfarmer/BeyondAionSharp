@@ -12947,3 +12947,73 @@ is at least wrong in a way that is now written down with its numbers.
 **What I will not do again:** write down an experiment and count the writing as the work. The
 experiment cost one script and half an hour, and it changed the shape of the question — the previous
 entry's confident framing of what would settle it was itself a guess.
+
+## Guardian Vingeveu, and a boss whose skills are all blocked and is worth building anyway
+
+`audit_translatable.py` ranks `ND2_KeB` at nine translatable actions with **skill** as its only blocker
+— eight of them. On the face of it that is a boss with nothing left. It is not, and the reason is worth
+recording: **what the skills are is blocked; when they happen is not**, and when they happen is the
+part a raid reads.
+
+### The shape
+
+One heartbeat timer, and a ladder of health guards hanging off it.
+
+| band | opener fires once on | re-arms heartbeat | arms | announces |
+|---|---|---|---|---|
+| 71–100 | `ALPHA_1` | 7s | its own timer at 25s | **`6193`** — help me |
+| 36–70 | `ALPHA_2` | 5s | a handover timer at 15s | **`6194`** — and scatters |
+| below 35 | `ALPHA_3` | 5s | its own timer at 15s | **`6194`** — and scatters |
+| — | (fallback) | 6s | — | — |
+
+Timer zero runs all fight. Each band's opener is a branch on that *same* timer carrying its own flag,
+so entering a band announces it once and never again however long the raid stays there. The bottom
+branch — timer zero, no guard — is the six-second heartbeat that keeps the ladder turning.
+
+**What separates the bands is which call they open with, not the pace.** The first band asks for help
+and does not move him. The second and third open on `6194`, which carries a scatter — for him and for
+every servant inside fifty metres, in the same instant. So the fight changes character twice, at
+seventy and at thirty-five, and both times the whole room re-picks its targets.
+
+His servant (`ND2_Ksum1`, vinsev's servant) has nothing but the two answers: **one point** on `6193`,
+and **ten points, a self-buff and a scatter** on `6194`. Ten and then throwing it away reads oddly on
+the page and obviously in the room — the ten is the boss saying who matters and the scatter is the
+servant losing its head anyway.
+
+### Two things kept because retail wrote them
+
+**Health of exactly thirty-five belongs to no band.** The third guard is `is_hp_lower_than 35` and the
+second is `is_hp_in_boundary larger_than=36`. At that one integer neither passes and only the heartbeat
+runs. Kept: health does not linger on an integer, and closing the hole would mean inventing a number.
+Pinned, so nobody closes it later by accident.
+
+**A band change is worth eleven, not ten** — the loud call, and then the quiet one fifteen seconds later
+when the timer the opener armed comes round. The first version of the crossing pin read that as an
+off-by-one and it is not.
+
+### The pin that had to be reconciled rather than fixed
+
+Two pins disagreed about the same branch: one saw a band open for ten, the other for eleven. Neither
+was wrong. In the first the fight *starts* inside the band, so the opener lands on the engage branch's
+fifteen-second heartbeat and the timer it arms falls outside the window; in the second the heartbeat has
+already been sped up by the band above, so the opener lands earlier and its timer lands inside.
+
+**The instinct was to pick a number and make both pins use it.** That would have been a pin asserting
+an arbitrary window. Both are now written with the window they measure and a note saying why they
+differ — the difference is the fight's, not the harness's.
+
+### Not built
+
+- **Eight skills**, which is every `use_skill` in the pattern, on the boss and on the servant.
+- The **scatter** is built and not pinned as an outcome: with one raider on the list a random pick is
+  that raider, and with several the pin asserts a coin flip. What the pins turn on instead is the
+  payload riding with it — ten against one. Stated in the skipped pin rather than left to be found.
+- `OBJI_EVENT_TARGET` on the engage branch is translated as the current target, which on entering
+  combat is the same creature.
+
+### Verification
+
+Eight pins and an **eight-mutation sweep, all caught, none unapplied** — shared band flags, a flagless
+opener, the first band opening loudly, the thirty-five hole closed, the reach, the heartbeat's re-arm,
+the engage call, and a servant that cannot tell the two calls apart. Full suite **2,148 passing**, 5
+skipped.
