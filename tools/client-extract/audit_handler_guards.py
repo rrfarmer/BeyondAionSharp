@@ -115,6 +115,10 @@ OUR_GUARD = [
     ("Enemy", "enemy"),
     ("MessageParamFartherThan", "distance"),
     ("TargetWithin", "distance"),
+    # Added to the engine for the silikor akaimum's near answer and never added here, so the two branches
+    # that use it kept reporting retail's distance guard as dropped. A vocabulary that lags the engine
+    # produces exactly the same false positive as one that is wrong.
+    ("SenderWithin", "distance"),
     ("Idle", "state"),
     ("Fighting", "state"),
     ("Decrement", "counter"),
@@ -180,7 +184,12 @@ def our_guard_kinds(text: str) -> dict[str, dict[tuple[str, str], set[str]]]:
                                       hit.group(1), re.S):
                 kinds: set[str] = set()
                 for guard in re.findall(r"When\.(\w+)", branch.group(2)):
-                    for prefix, kind in OUR_GUARD:
+                    # Longest prefix wins. OUR_GUARD is written in reading order, which put ("Message",
+                    # "message") ahead of ("MessageParamIsEnemy", "enemy") -- so every
+                    # When.MessageParamIsEnemy was classified as a message guard and its enemy guard
+                    # reported as dropped. That was eight of the twenty-three "ready" rows, all of them
+                    # already applied in the source.
+                    for prefix, kind in sorted(OUR_GUARD, key=lambda pk: -len(pk[0])):
                         if guard.startswith(prefix):
                             kinds.add(kind)
                             break

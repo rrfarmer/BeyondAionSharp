@@ -21125,3 +21125,53 @@ command and it has been right every time.
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## The dropped-guard backlog was half prefix matching
+
+The previous entry localised the false positives to `our_guard_kinds` and left the parser unread. **The
+parser was fine. The table it reads was ordered wrong.**
+
+`OUR_GUARD` is a list of `(prefix, kind)` pairs matched with `startswith`, in the order written — and
+`("Message", "message")` sits at line 109 while `("MessageParamIsEnemy", "enemy")` sits at 111. So
+`"MessageParamIsEnemy".startswith("Message")` matched first, `break` stopped the loop, and **every
+`When.MessageParamIsEnemy` in the port was classified as a message guard while its enemy guard was
+reported dropped.**
+
+**Longest prefix wins** is the whole fix.
+
+### And a second cause: a vocabulary that lagged the engine
+
+`When.SenderWithin` was added to the engine for the silikor akaimum's near answer three passes ago and
+**never added to the tool's table**, so the two branches using it kept reporting retail's distance guard as
+missing. **A vocabulary that lags the engine produces exactly the same false positive as one that is
+wrong**, and it will do so again every time a `When.*` is added — which this log has done five times.
+
+### What the backlog actually is
+
+**23 ready becomes 11**, and those eleven are not a work queue either:
+
+| rows | kind | what they are |
+|---|---|---|
+| 6 | `flag COSMETIC` | flags nothing reads — the "write with no reader" this log struck from the engine-gap list twice |
+| 5 | `message UNIFORM` | the suspicious coffin's five rows, already a known item |
+| 1 | `flag UNIFORM` | Padmarashka's `EPSILON_2`, recorded as deliberately not applied |
+| 1 | `hp UNIFORM` | the one genuinely unexamined row |
+
+**So the entire dropped-guard backlog reduces to one unexamined row plus one known encounter.** The
+report has been carrying twelve phantom rows across every entry that quoted it.
+
+### Still to do
+
+- **The one `hp UNIFORM` row**, the only unexamined guard left in that report.
+- **The coffin's five message rows**, a known item now confirmed as the backlog's real remainder.
+- The 4 mixed and 3 misaligned rows, both needing hand reading.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12.
+- `sematariux` and `king_consierd` need spawn entries; the `drakanmedic` harness question, behind all of
+  the above.
+
+### Verification
+
+Tool only, no server code. Full suite unchanged at **2,112 passing**, 1 skipped.
