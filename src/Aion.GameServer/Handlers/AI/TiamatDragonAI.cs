@@ -57,6 +57,12 @@ public class TiamatDragonAI : AggressiveNpcAI
         // Retail hangs this off on_enter_attack_state behind a test-and-set, so it runs once per fight.
         if (magesCalled.CompareAndSet(false, true))
             mageTask = ThreadPoolManager.GetInstance().Schedule(() => SpawnMages(), MagesDelayMillis);
+
+        // Retail hangs the rush off on_idle_timer, which this port has no equivalent of on a Java-parity
+        // class. Sent on the same once-per-fight latch as the mages instead, so the wave arrives rather
+        // than never -- the cadence is approximated and the wave is retail's.
+        if (rushCalled.CompareAndSet(false, true))
+            ThreadPoolManager.GetInstance().Schedule(() => SpawnRushWave(), MagesDelayMillis);
     }
 
     /// <summary>
@@ -135,6 +141,69 @@ public class TiamatDragonAI : AggressiveNpcAI
             (sbyte)owner.GetHeading(), SpiritLife);
         SpawnFor(BurrowingArrival, owner.GetX(), owner.GetY(), owner.GetZ(),
             (sbyte)owner.GetHeading(), ArrivalLife);
+    }
+
+    /// <summary>
+    /// Retail's rush wave: nineteen drakan from the platform's four corners, each walking its own path.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail-sourced; see docs/retail-ai-fidelity.md.</b> This is the half of
+    /// <c>IDTiamat_Tiamat_Dragon_Named_60_Al</c> that seven passes recorded as blocked, and it needed
+    /// three separate things that arrived separately: the <b>routes</b>, extracted from the 5.8 server's
+    /// own world data; the <b>npc ids</b>, which turned out to be in this port already and were reported
+    /// missing because an earlier pass searched the binding table rather than the templates; and nothing
+    /// else at all.
+    /// <para>
+    /// <b>Five kinds from each of four corners.</b> Noble and sardha, fighter, scout, wizard and cleric,
+    /// on twelve paths — <c>path_tiamatdrakan_&lt;corner&gt;_&lt;lane&gt;</c>. A drakan that cannot resolve
+    /// its path still spawns and stands, which is the behaviour this log refused to ship on its own and
+    /// is now only the fallback.
+    /// </para>
+    /// </remarks>
+    private static readonly (int NpcId, float X, float Y, string Path)[] RushWave =
+    [
+        (219532, 464f, 463f, "path_tiamatdrakan_1_1"),
+        (219536, 464f, 463f, "path_tiamatdrakan_1_2"),
+        (219535, 464f, 463f, "path_tiamatdrakan_1_3"),
+        (219534, 464f, 463f, "path_tiamatdrakan_1_1"),
+        (219533, 464f, 463f, "path_tiamatdrakan_1_2"),
+
+        (219532, 461f, 570f, "path_tiamatdrakan_2_1"),
+        (219536, 461f, 570f, "path_tiamatdrakan_2_2"),
+        (219539, 461f, 570f, "path_tiamatdrakan_2_3"),
+        (219538, 461f, 570f, "path_tiamatdrakan_2_1"),
+        (219537, 461f, 570f, "path_tiamatdrakan_2_2"),
+
+        (219532, 543f, 463f, "path_tiamatdrakan_3_1"),
+        (219536, 543f, 463f, "path_tiamatdrakan_3_2"),
+        (219535, 543f, 463f, "path_tiamatdrakan_3_3"),
+        (219534, 543f, 463f, "path_tiamatdrakan_3_1"),
+        (219533, 543f, 463f, "path_tiamatdrakan_3_2"),
+
+        (219532, 542f, 564f, "path_tiamatdrakan_4_1"),
+        (219536, 542f, 564f, "path_tiamatdrakan_4_2"),
+        (219534, 542f, 564f, "path_tiamatdrakan_4_3"),
+        (219533, 542f, 564f, "path_tiamatdrakan_4_3"),
+    ];
+
+    private const float RushZ = 417.4f;
+
+    private readonly AtomicBoolean rushCalled = new AtomicBoolean();
+
+    /// <summary>Sends the wave, once, each drakan onto the path retail gives it.</summary>
+    private void SpawnRushWave()
+    {
+        if (!GetOwner().IsSpawned())
+            return;
+
+        foreach ((int npcId, float x, float y, string path) in RushWave)
+        {
+            if (Spawn(npcId, x, y, RushZ, 0) is not Npc drakan)
+                continue;
+
+            drakan.GetSpawn().SetWalkerId(path);
+            Aion.GameServer.Ai.Manager.WalkManager.StartWalking((NpcAI)drakan.GetAi());
+        }
     }
 
     protected override void HandleSpawned()

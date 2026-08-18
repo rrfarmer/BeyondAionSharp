@@ -33,7 +33,7 @@ public sealed class TiamatDragonAiTests
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048)
-			.WithAi(typeof(TiamatDragonAI), typeof(ThickDustAI), typeof(AggressiveNpcAI),
+			.WithAi(typeof(TiamatDragonAI), typeof(ThickDustAI), typeof(IDTiamat_2_DrakanNpcAI), typeof(AggressiveNpcAI),
 				typeof(AggressiveNoLootNpcAI), typeof(GeneralNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(Dragon, 504f, 514f, 417.5f);
@@ -109,7 +109,7 @@ public sealed class TiamatDragonAiTests
 	public void HeArrivesWithFlashSpiritAndBurrowing()
 	{
 		using BossAiHarness harness = BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048)
-			.WithAi(typeof(TiamatDragonAI), typeof(ThickDustAI), typeof(AggressiveNpcAI),
+			.WithAi(typeof(TiamatDragonAI), typeof(ThickDustAI), typeof(IDTiamat_2_DrakanNpcAI), typeof(AggressiveNpcAI),
 				typeof(AggressiveNoLootNpcAI), typeof(GeneralNpcAI))
 			.Build();
 		harness.Spawn(Dragon, 504f, 514f, 417.5f);
@@ -173,5 +173,27 @@ public sealed class TiamatDragonAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 		Assert.DoesNotContain(harness.LiveNpcs(), n => dust.Contains(n));
+	}
+	/// <summary>
+	/// <b>Nineteen drakan rush the platform from its four corners.</b>
+	/// </summary>
+	/// <remarks>
+	/// Seven passes recorded this as blocked. It needed the routes, extracted from the 5.8 server''s own
+	/// world data, and the npc ids -- which were in this port all along, and were reported missing because
+	/// a pass searched the binding table instead of the templates.
+	/// </remarks>
+	[Fact]
+	public void NineteenDrakanRushFromFourCorners()
+	{
+		var (harness, _, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(20));
+
+		var rush = harness.LiveNpcs().Where(n => n.GetNpcId() is >= 219532 and <= 219539).ToList();
+		Assert.Equal(19, rush.Count);
+
+		// Four corners, not nineteen in one place.
+		Assert.Equal(4, rush.Select(n => (n.GetX(), n.GetY())).Distinct().Count());
 	}
 }

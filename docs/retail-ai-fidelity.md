@@ -22224,3 +22224,50 @@ reading them is a different kind of work than this log has done, and guessing fr
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,116 passing**, 1 skipped.
+
+## Tiamat's rush wave, and the npcs that were here all along
+
+Seven passes recorded this as blocked. **It needed two things, and one of them was already in the port.**
+
+- **The routes** arrived three passes ago, from the 5.8 server's world data.
+- **The npc ids** were reported missing by an earlier pass, which searched `ai_binding.tsv` for the eight
+  devnames and found nothing. **All eight are in `npc_templates.xml`**, ids 219532-219539, with a working
+  `IDTiamat_2_Drakan_NPC` AI. **The binding table lacks them; the templates never did.**
+
+**Eleventh instance of the same error class in this log** — searching one table and reading its silence as
+absence. The correction cost four commands; the claim cost seven passes.
+
+### Confirming the ids rather than guessing them
+
+The names are close enough to guess wrong from — *protectorate elite fighter*, *officer*, *scout*,
+*magistrate*, *surgeon* — and the mapping matters, because each corner sends a different five. So they came
+from retail's own npc table, extracted from `5.8static_data.7z` (a 457 MB UTF-16 file, streamed rather than
+loaded) and matched on devname:
+
+```
+219532 NobleDrakanFi   219536 SardhaDrakanFi
+219533 NobleDrakanWi   219537 SardhaDrakanWi
+219534 NobleDrakanSc   219538 SardhaDrakanSc
+219535 NobleDrakanCl   219539 SardhaDrakanCl
+```
+
+### What shipped
+
+Nineteen drakan, five kinds from each of four corners, **each onto the path retail gives it** — twelve
+distinct `path_tiamatdrakan_*` routes, all present since the extraction.
+
+**The cadence is approximated and recorded as such.** Retail hangs the rush off `on_idle_timer`, which a
+Java-parity class has no equivalent of; it rides the same once-per-fight latch as the mages instead. **The
+wave is retail's, the trigger is ours.**
+
+### Still to do
+
+- **`on_idle_timer` for Java-parity classes**, which would make the rush's cadence retail's too.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question.
+- **Padmarashka and Kaliga remain closed** — their paths are undefined in retail's own data.
+
+### Verification
+
+Build clean. The wave pin fails with the latch disabled, and asserts four distinct corners rather than a
+count alone. Full suite **2,117 passing**, 1 skipped.
