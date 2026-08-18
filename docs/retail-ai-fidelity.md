@@ -15334,3 +15334,79 @@ would reach the half this cannot.
 
 No server code changed. Full suite **2,040 passing**, 1 skipped. The audit's own output is the result:
 442 handlers, 2 expected rows, 0 unexplained.
+
+## The guard audit: 65 branches can fire where retail would not have let them
+
+`audit_handler_actions.py` compares what our branches *do*. This compares what lets them run, which is
+the larger half — **every "band, not a threshold" and "once, ever" finding in this log was about a guard,
+not an action.** A branch with retail's actions and a missing guard fires at the wrong time, as often as
+it likes, and no audit of actions can see it.
+
+**And the alarming column inverts.** For actions, a `dropped` kind is usually a skill we cannot cast and
+already recorded, so the danger is what we *added*. For guards, a dropped kind is a branch retail would
+have held back: a dropped `flag` is a once-only step firing every tick, a dropped `chance` is a coin-toss
+that always lands, a dropped `hp` is a phase with no floor.
+
+### The key: branch priority
+
+The first version compared whole handlers and reported **92 dropped guards, most of them an artifact**.
+This port deliberately leaves out retail's skill-only branches, and once a handler is compared as one bag
+their guards look dropped.
+
+Retail numbers every branch with an explicit `<priority>`, and **this log has preserved those numbers in
+`Branch(priority, …)` from the very first encounter.** So the branches line up one to one, and a dropped
+guard now means a guard missing from *the same branch*. That took the comparison from 272 handlers to
+**793 branches** and the noise with it.
+
+### Third hand-written table, third set of lost findings
+
+The guard table omitted the bare `When.Enemy`, and the audit duly reported the zombie trap as having
+dropped retail's `is_enemy` — from a class whose own remarks say *"Not translated: nothing. This pattern
+is complete"*, and which was right.
+
+That is **the third table in this directory to lose findings by being written from memory**, after the
+action audit's missing `spawn_on_target` and the message audit's pattern-keying. Both tables here are now
+derived: the 41 retail condition verbs from `<conditions>` in the data, and our 29 guards from
+`AiPattern.When`. **The rule is now explicit in the source: derive every table.**
+
+### The result
+
+**793 branches compared: 724 clean, 65 dropped guards, 4 invented.** Set aside separately: 14 guards this
+port cannot express at all (`race`, `skillcount`, `user`), already recorded throughout this log.
+
+The dropped column is dominated by **`chance`** — retail's `test_probability`, which appears 7,747 times
+in the 5.8 data and which this port has been quietly omitting. A branch that retail rolls for fires every
+time here.
+
+### Why the obvious fix is not in this commit
+
+Unstable Triroan is the largest single cluster — five branches, verified by hand against
+`IDLF2A_ElementalKingNmd`: `test_probability 50` on the three summon bands and the deep band, `33` on the
+target peel. **Restoring all five was tried, and reverted.**
+
+Two of its pins asserted certainties the pattern never had — "the step calls one straight away", "exactly
+six in the first minute" — and rewriting them around rates instead left the file **flaky**: one to two
+failures varying run to run, because a 50% roll on a twenty-second poke is genuinely noisy over a
+three-minute watch.
+
+**Trading a deterministic suite for a partially-restored guard is a bad trade**, and it is the same call
+the pure-broadcaster and answer-action reverts made: the change is right, the verification is not ready.
+
+What it needs is a decision rather than a patch: **either the harness gets a seedable RNG** — so a rolled
+guard is deterministic under test and the existing pins keep their exact counts — **or every pin over a
+rolled branch is rewritten around rates** and this file loses the precision that made it useful. The
+first is better and is the reason this is recorded rather than done.
+
+### Still to do
+
+- **A seedable RNG in `BossAiHarness`**, then the 65 dropped guards, `chance` first.
+- The 14 two-action-idiom classes, the silikor skill, the illusion's most-hated claim, the Ophidan chain's
+  second hop.
+- **What no audit here still covers: counts, arguments and ordering.** A guard at 50 where retail writes
+  35, a boundary where retail writes a threshold, a spawn of three where retail spawns two. The mutation
+  sweeps have found most of their bugs exactly there, and they are still found by hand.
+
+### Verification
+
+No server code changed — the Triroan fix was reverted and the suite re-run twice to confirm the flakiness
+went with it. Full suite **2,040 passing**, 1 skipped, twice.
