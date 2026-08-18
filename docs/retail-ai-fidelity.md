@@ -13685,3 +13685,88 @@ siege. **Should they be carrying the Java-parity siege class rather than a retai
 had them on stock AI, so this commit does not change what they were; but an artifact protector whose
 death does not end a siege is worth someone checking against the Java tree. **Recorded, not decided** —
 it is a Java-parity question rather than a retail-AI one, and this log is the wrong place to settle it.
+
+## Teaching the backlog to stop lying, and the tursin loudmouths
+
+The last two entries each spent their reading on a row that turned out to be worth nothing —
+`23005` at 41 npcs, whose live answerers answer Captain Wigthor with a skill index. That is the third
+time, after `3302` at 157 and `10001` at 1,030. **The audit was ranking by npc count and saying nothing
+about whether the answer could be built**, so it kept sending me at the biggest unreachable thing on
+the list.
+
+`audit_silent_conversations.py` now classifies every row by what its **live** answerers actually do:
+
+```
+     msg  call  ans  answer     who
+   10001   884  146  skill-only ranx channeler, ranx arcanist
+    9001   208    2  hate       lepharist protector, sentinel
+    3302   118   42  skill-only baranath priest, baranath fleshmender
+   60001     4   61  self-named tejhi coralblade, black fin surveyor
+    1002    28   29  hate       mamaki worker, mamaki peon
+   23005     2   39  skill-only captain wigthor, defense corps shaderanger
+```
+
+**49 of 116 are reachable.** The other sixty-seven were the top of the list.
+
+### Two ways a row lies, and both are now named
+
+**`skill-only`** is the obvious one: every answering branch is a `use_skill`, so the row is unbuildable
+however many npcs sit on it.
+
+**`self-named`** is the one that took a second pass. `60001` — sixty-one tejhi answering four callers —
+*is* a hate action: `add_hate_point` of a thousand. But every caller broadcasts with
+`param_obj=OBJI_SELF`, so the object being hated is **the caller**, a friend, and `AggroList.AddHate`
+drops hate aimed at a non-enemy. Retail's own comment on the branch reads *"join combat when broadcast
+60001 is sent"*, so retail evidently treats hating a friend as a way to enter a fight. **This port reads
+it as nothing at all.** A hate action is not the same as a reachable one.
+
+**And the classifier had to be told to look only at the live answerers.** Its first version marked
+`23005` buildable on the strength of `LDF5_*_DisputePvP_Support_Ele_Ee`, a pattern with the right shape
+and **no npc anywhere in our spawn data** — reproducing, inside the fix, exactly the over-promise the
+fix was for.
+
+### `1002`: the loudmouths
+
+The top reachable row, and the low-level ancestor of every guard call in this log — **36 npcs in
+Altgard**.
+
+| pattern | live | what it does |
+|---|---|---|
+| `Krall_KnA`, `Krall_KnC` — tursin big boss, loudmouth | 3 | **below forty health, once**, names its target at 15m |
+| `NKrall_KeA` — kaidan bigmouth | 7 | **fifteen seconds into any fight, once**, at 20m |
+| `NBrownie_FnC` — mamaki worker | 17 | answers with **100**, and calls when it stops fleeing |
+| `Brownie_FnQ`, `Brownie_FnR` — dukaki miner, digger | 9 | answers with **101** |
+
+**The bigmouth calls on a clock and not on its health**, which is the only caller in this log that
+does. One killed inside fifteen seconds never calls; one that survives always does, at full health or
+at one percent. And it calls once — the timer carrying the call is never re-armed, while a second timer
+runs forever carrying a number nothing listens to.
+
+**The workers answer with a hundred and the miners with a hundred and one**, because retail gives the
+miners an `add_hate_point` before the switch and the workers only the switch. One point of difference
+between two npcs standing in the same camp, and it is retail's.
+
+### A pin that failed twice for the same reason
+
+The bigmouth's clock pin asserted the miner had **zero** hate before the call. It had one. Not from the
+pattern: **a fight running near a friendly npc puts a point on the attacker through the engine's own
+support aggro** — and not at engage either, but on the first attack tick, which is why taking the
+baseline immediately after `Engage` failed the same way.
+
+**What separates "called" from "did not" is the size of the step, not the total.** The pin now measures
+the jump: under 101 before, exactly +101 after. Worth recording because every pin in this file counts
+hate, and any of them could have been written against a baseline that was never zero.
+
+### Not built
+
+- **`1398`**, the kaidan bigmouth's other call, on the timer that does repeat. Nothing our data places
+  listens to it.
+- `percent_to_add` on both answers — **including a `percent_to_add=0`** the miners carry, which does
+  nothing under any reading and is left out rather than translated to a no-op.
+- The shouts and the skills throughout.
+
+### Verification
+
+Seven pins and a **seven-mutation sweep, all caught**: the miners' extra point, the workers answering
+like miners, the health threshold, the shared flag, the tursin's reach, the bigmouth's call repeating,
+and the bigmouth never calling. Full suite **2,207 passing**, 5 skipped.
