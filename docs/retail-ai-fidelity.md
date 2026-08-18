@@ -12142,3 +12142,50 @@ pins written to kill them.
 
 Full suite **2,090 passing** and 1 skipped; four new pins across two encounters; **five mutations, three
 caught and two unpinned call sites**.
+
+## The stoneskin stoffu splits, and the first row worked off the `on_spelled` seam
+
+`on_spelled` unlocked 1,170 patterns; **fifty of them have buildable payload on that handler and sit on
+live stock-AI npcs.** The stoffu is the first, and it needed the new event to be worth doing at all —
+half its pattern lives there.
+
+**It sheds a piece of itself twice and points it three seconds later.** Once between 65% and 35% and
+once below 35%, it drops an angolem fragment at its feet and arms a timer; when the timer runs out it
+calls at forty metres naming its current target, and the fragment takes a hundred hate and goes.
+
+**The delay is the mechanic.** A fragment that arrived already fighting would be an add; three seconds
+of it standing inert is a window to kill it in, and the call is what closes the window.
+
+**Each band pays out once however the stoffu was provoked** — retail writes the band twice, on
+`on_attacked` and on `on_spelled`, with the same flag var across both. The caster half is additionally
+guarded on `is_enemy` and the melee half is not; that asymmetry is retail's and is kept.
+
+### A retail quirk kept rather than tidied
+
+The melee branch for the **upper** band arms `BTIMERI_INDEX_1` while every other branch arms `INDEX_0`,
+and only `INDEX_0` has a handler. So a stoffu first provoked into the upper band **by a melee blow**
+drops its fragment and never calls it — the piece stands there until the fight ends.
+
+Translated as written. A tidied version would quietly make the upper band work and would be a different
+fight; this is the third time this log has kept a retail branch that plainly does nothing, after the
+dead flag on Dark Poeta's switches and the self-naming shout in the vasharti watch.
+
+### One survivor, and what it says about the two bands
+
+The mutation raising the lower band's floor from 35 to 65 **survives**. Both bands then match inside
+the upper one, but the upper branch wins on priority and spends its own flag first, so the second
+provocation reaches the lower branch in either version and the totals agree. A pin added specifically
+for it — four provocations at 40%, expecting one piece — did not separate them either.
+
+**Two bands that overlap are indistinguishable by counting.** Telling them apart needs the timer slot
+each one arms, and the upper band's slot is the one retail leaves unhandled — so the observable
+difference is precisely the quirk above. Reported rather than covered.
+
+### And a number read rather than assumed, again
+
+The fragment's arrival hate reads **101** against retail's 100 — one more lands when it actually starts
+swinging, exactly as the corask clodworms read. Pinned as read.
+
+### Verification
+
+Full suite **2,096 passing** and 1 skipped; six pins; **seven mutations, six caught**.
