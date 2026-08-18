@@ -16678,3 +16678,61 @@ still leave the wiring unexercised.
 ### Verification
 
 Self-test passes, both mutations caught. Full suite **2,049 passing**, 1 skipped.
+
+## Kingspin's accelerators close a loop through his own adds
+
+The previous entry left `6952`'s callers as the next question. There is exactly one, and it is **his own
+web**.
+
+```
+Kingspin spawns webs (281391)
+        -> a web broadcasts 6952            (retail pattern IDTP_Web)
+        -> Kingspin arms timers 3 and 4     (on_message p25, p24, 5s each)
+        -> in 30-37% and 45-53% he throws on an 8s clock instead of his usual one
+```
+
+**Every piece of that is already in this repo except the web's voice.** `KingspinAI` spawns the web and
+even carries a remark calling it *"the web (281391) — reachable by nobody"*, written when nothing was known
+to listen. It turns out Kingspin listens; the web simply cannot speak, because 281391 runs stock
+`ai="aggressive"` and `IDTP_Web` was never ported.
+
+So this is not a missing timer, a missing guard, or a missing add. **It is one npc that needs a voice**, and
+the two accelerator branches on the boss that already spawns it.
+
+### Why this took five entries to see
+
+Each step looked like a different kind of problem:
+
+| what it looked like | what it was |
+|---|---|
+| a collapsed ladder missing a band guard | not that |
+| missing timers under the ladder, like Padmarashka's | timers 3 and 4, yes — but not armed by the ladder |
+| a health-driven phase | armed by `on_message`, not by health |
+| a silent conversation with absent callers | one caller, and Kingspin spawns it himself |
+
+**The loop is closed and internal**, which is why every audit that looks outward — for callers, for
+listeners, for live npcs on stock AI — reported it as reachable by nobody. The caller was inside the
+encounter the whole time.
+
+### What building it needs
+
+1. An AI for `IDTP_Web` — read its pattern for what else it does, then broadcast `6952`.
+2. Kingspin's two `on_message` branches: `6952` arms timer 3 and timer 4 at five seconds.
+3. The two accelerator branches: timer 3 at 30–37 and timer 4 at 45–53, each re-arming his throw clock at
+   eight seconds.
+4. A pin that shows a web's call shortening his throw cycle inside a window and not outside it.
+
+**Not started here** — there was no room left to do four pieces and pin them, and this log has learned what
+happens when a mechanic ships without its pin.
+
+### Still to do
+
+- **The web's voice and Kingspin's accelerators**, now fully specified above.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
