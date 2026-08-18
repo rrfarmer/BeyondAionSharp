@@ -17098,3 +17098,53 @@ count what is standing.
 
 One npc repointed, one probe added, four pins rewritten, two of them saying something new. Full suite
 **2,049 passing**, 1 skipped.
+
+## The accelerator is wired and does nothing, and now the suite says so
+
+The previous entry left the accelerators "wired but unpinned". Pinned now, and **the pin found they do not
+work.**
+
+### What the pin had to get right first
+
+The obvious comparison — cries at 35 percent against cries at 60 — reads **8 against 24**, which looks like
+the accelerator running backwards. It is not: **a different health is a different rung of the ladder**, and
+the rungs throw on their own schedules. Comparing across health measures the ladder, not the cry.
+
+Held at one health and varying only whether a cry arrives, the answer is **8 against 8.**
+
+### Why it does nothing
+
+Kingspin's `on_message` branch arms timers 3 and 4; the accelerator branches re-arm his throw clock at
+eight seconds. **But branch 10 re-arms that same clock at eighteen every time it throws**, so the shortened
+cycle survives exactly one throw and is then overwritten. Across thirty seconds the count is identical
+either way.
+
+Whether retail avoids that by branch ordering, by a separate clock, or simply because cries arrive faster
+than throws in a real fight, **has not been read**. The pattern is on disk; this is a reading job, not a
+mystery.
+
+`ACryInsideAWindowShortensHisThrowCycle` asserts the equality — the defect — with the cause written beside
+it, so it turns red the day the accelerator works.
+
+### The shape of this thread, now that it is at rest
+
+Nine entries. **The mechanic is live and one third of it is inert**: the webs are thrown, they call, and
+Kingspin hears them; the root and the blast are `use_skill` and unported; the acceleration is wired and
+overwritten.
+
+**That is a fair description of most of this log's encounters**, and it is worth saying once plainly: what
+ships is the skeleton — who spawns, who calls, who answers, who moves — and what does not is nearly always
+a skill. The webs are unusual only in that the skeleton took nine entries to find.
+
+### Still to do
+
+- **Read how retail keeps the accelerated clock**, then fix and flip the pin.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One pin added, asserting a defect. Full suite **2,050 passing**, 1 skipped.

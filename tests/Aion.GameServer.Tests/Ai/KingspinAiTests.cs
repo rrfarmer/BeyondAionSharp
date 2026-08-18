@@ -232,6 +232,53 @@ public sealed class KingspinAiTests
 		Advance(harness, boss, raid, 6);
 		Assert.True(Cries(cries) > atEighty, "crossing seventy-one added nothing");
 	}
+
+	/// <summary>
+	/// <b>A web's cry makes him throw faster, and only inside his two windows.</b> Retail arms timers 3
+	/// and 4 from <c>on_message</c> and each re-arms his throw clock at eight seconds against the
+	/// eighteen it otherwise gets — so between 30 and 37, and between 45 and 53, the webs come more than
+	/// twice as fast.
+	/// </summary>
+	/// <remarks>
+	/// The loop is closed and internal: he throws the webs that call him. This pin drives it from the
+	/// outside instead, sending the cry directly, so the acceleration is measured on its own rather than
+	/// through however many webs happened to land.
+	/// </remarks>
+	[Fact]
+	public void ACryInsideAWindowShortensHisThrowCycle()
+	{
+		int Thrown(int percent, bool cry)
+		{
+			var (harness, boss, raid, cries) = Engaged(4);
+			using BossAiHarness _h = harness;
+
+			BossAiHarness.SetExactPercent(boss, percent);
+			Advance(harness, boss, raid, 20);
+			int before = Cries(cries);
+
+			if (cry)
+				((Aion.GameServer.Ai.INpcMessageListener)boss.GetAi())
+					.OnNpcMessage(boss, KingspinAI.WebCaught, null);
+
+			Advance(harness, boss, raid, 30);
+			return Cries(cries) - before;
+		}
+
+		// Same health both times, so the ladder is held constant and only the cry differs. Comparing 35
+		// against 60 was the first attempt and measured the rungs instead: a different health means a
+		// different step of the ladder, which throws on its own schedule.
+		int withCry = Thrown(35, cry: true);
+		int without = Thrown(35, cry: false);
+
+		// THE ACCELERATOR DOES NOT WORK YET, and this asserts the defect so it turns red when it does.
+		// Kingspin's on_message branch arms timers 3 and 4, and the accelerator branches re-arm his
+		// throw clock at eight seconds -- but branch 10 re-arms the same clock at eighteen every time it
+		// throws, so the shortened cycle is overwritten on the next throw and thirty seconds produce the
+		// same count either way. Whether retail avoids that by ordering, by a separate clock, or because
+		// the cries arrive faster than the throws has not been read. See docs/retail-ai-fidelity.md.
+		Assert.Equal(without, withCry);
+	}
+
 }
 
 /// <summary>Counts Kingspin's webs by what they say, since a web that lands on somebody does not last.</summary>
