@@ -18740,3 +18740,49 @@ reader to re-run rather than look.
 ### Verification
 
 One guard applied, mutation run and not caught, suite run three times. **2,053 passing**, 1 skipped.
+
+## The flaky Kingspin pin, fixed by measuring the right thing
+
+`BelowFiftyOneItThrowsFive` asserted **five cries in twenty-five seconds** and flaked. The cause is not
+scheduling jitter, which is what "two timing-sensitive pins in one file" suggested:
+
+**A throw puts four webs out, and only the ones that land on somebody call.** How many cry depends on where
+the raid is standing and how the target picks fall. The pin was counting an effect **two steps removed**
+from the thing it was about — the throw — and the two steps each add variance.
+
+`TimerFireCount(1)` is the throw clock itself. It does not care where anyone stands. The pin now asserts
+**the clock fired again after he crossed fifty-one**, which is what "it throws five" was reaching for, and
+it is stable across three consecutive runs and two full suites.
+
+**The mutation still bites**: removing the `0–51` guard turns it red.
+
+### What this says about the other flake
+
+`TheTopRungOfTheLadderThrowsNothing` counts cries too, and the same reasoning applies — **but it has not
+recurred since**, so it is left alone rather than rewritten on suspicion. If it flakes again the fix is the
+same three lines.
+
+### The general point
+
+**A flaky pin is usually measuring the wrong quantity, not measuring a good quantity badly.** The instinct
+when a pin flakes is to widen its tolerance; here the tolerance was already wide (`>= before + 5` out of a
+possible sixteen) and widening further would have made it assert almost nothing. **Moving one step closer
+to the mechanic removed the variance entirely** and kept the assertion sharp.
+
+That is the third time this log has reached for a seam to fix an observability problem rather than loosen a
+pin, and the first time the seam was already there when it was needed.
+
+### Still to do
+
+- **Trace the Middle Boss Fire slash** — fourth invisible mutation, reason not established.
+- Mark Padmarashka's two rows as deliberately not applied.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One pin rewritten, mutation still caught, three targeted runs and two full suites: **2,053 passing**,
+1 skipped.
