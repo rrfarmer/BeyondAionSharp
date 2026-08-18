@@ -21765,3 +21765,54 @@ it with a kill counter in the instance handler. Same rule, different mechanism, 
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,114 passing**, 1 skipped.
+
+## The layer rule, applied, and a second confirmation on routes
+
+The previous entry added a rule — **search the instance handlers before declaring an AI gap** — after the
+Raksha door turned out to be built there. **Applied it to the five walker-blocked encounters first.**
+
+Padmarashka's egg, guardian control, acid rain summoner and death marker; Kaliga's statues and his
+invisible marker; Tiamat's burrow FX. **None of the seven npc ids appears anywhere in
+`Handlers/Instance`.** The five-encounter claim survives its own new rule, which is the outcome worth
+having: the rule was written because it had just caught something, and the first thing it was pointed at
+came back clean.
+
+### And a second, independent check on the route mapping
+
+The route gap was previously established one way: retail's 467 `pathname` values against our 6,449
+`route_id`s, zero matching, and a SHA-1-of-the-name hypothesis tested and rejected.
+
+**Spawn data turned out to carry a second, separate id set** — `walker_id` attributes, 4,478 of them,
+which no earlier pass had compared. A handful are readable (`gab1_sub_potal_1`), which looked promising.
+
+**Zero matches**, case-insensitive, and by substring on the distinctive families (`dramata`,
+`tiamatdrakan`, `idtemple`, `cromede`). The readable ones are a minority; **the rest are the same
+forty-character hashes**.
+
+So two independent id sources have now been checked against retail's path names and neither carries them.
+**The mapping is not in this repository in any form**, which is a stronger statement than the previous
+entry could make.
+
+### What would actually resolve it
+
+The client's own path table — the artefact that holds a path's **name and its points together**. Everything
+in the repo holds one or the other:
+
+| we have | we lack |
+|---|---|
+| points, under hashed ids (`npc_walker`) | the name for each |
+| names, in the AI patterns (`pathname`) | the points for each |
+
+**One extraction closes five encounters.** That is the entire remaining large item in this project, and it
+is `.pak` work rather than AI work — the same conclusion as before, now with the search exhausted rather
+than merely unsuccessful.
+
+### Still to do
+
+- **Extract the client path table.** Five encounters, one artefact.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,114 passing**, 1 skipped.
