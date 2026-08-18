@@ -10017,3 +10017,65 @@ death our runtime does not distinguish.
 Full suite **1,938 passing** and 1 skipped; seven new pins run three times over; **twelve mutations,
 all caught**. Missing-AI 683 → **681**; adds 358/277 → **357/276**, the one being the reservist;
 translatable 341/1,119 → **337/1,111**.
+
+## Chief Gunner Kurmata: a laser designator built out of two NPCs and a message
+
+`IDVritra_Base_Drakan_Gi_Nmd` binds to Chief Gunner Kurmata (230851) of the Sauro Supply Base, a HERO
+on plain `aggressive`. The whole fight is a targeting mechanic in three parts: **he paints a player,
+the paint calls, and the cannon fires at the paint.**
+
+| | |
+|---|---|
+| on engaging | a mark on a **random** attacker, and a call that puts the flame cannon on whoever he is fighting |
+| above sixty | a four-step loop of about thirty-nine seconds; one step marks **whoever he is fighting**, another turns him onto somebody else |
+| below sixty, once | a shorter loop that marks **two players at a time**, twice round, with ten times the hate on each mark |
+
+**The marks do their work by hating.** Each is spawned with `attack_target_after_spawn` and a hundred
+thousand hate points — a million below sixty — so a mark is not scenery: it lands on a player and stays
+there. That is why the fight reads as a gunnery drill rather than a boss with adds.
+
+**Below sixty he marks two, not everyone.** `spawn_on_multi_target` carries `total_set_to_spawn=2` over
+a forty-metre reach, which is easy to misread — the element's name says multi and only the count says
+two. A mutation that raises it to eight is caught.
+
+### `OBJI_MESSAGE_SENDER` is not `OBJI_MESSAGE_PARAM`
+
+The cannon's second branch hates **the thing that spoke** rather than the thing the message named. That
+is the whole designator: the mark announces itself, and the cannon turns on the mark standing on a
+player rather than on the player. It called for a new action, `Do.HateMessageSender`.
+
+The outcome would have matched either way here — the mark broadcasts with `param_obj=OBJI_SELF`, so
+sender and parameter are the same object — and **the mechanism would not have**. Ported as retail wrote
+it, with a mutation that swaps the two, which the pins catch. **Rule: where two retail objects happen
+to coincide, port the one the data names.** The coincidence is a property of this pattern, not of the
+verb, and the next pattern that uses `OBJI_MESSAGE_SENDER` will not have it.
+
+### Three pins that measured the wrong thing first
+
+- **"a second mark twenty-two seconds in"** was written as a head count. Marks live twenty seconds, so
+  the first is already gone when the second lands and the count reads one either way. Rewritten as
+  arrivals.
+- **"the gunner's call sends the cannon at his quarry"** put the cannon six metres away, where the
+  mark's own call — which comes second and carries the same ten thousand — took the cannon off the
+  player again. It now stands forty metres out: inside the gunner's fifty-metre call, outside the
+  mark's. **The chain has to be taken apart by geometry to pin its first step.**
+- **"ten thousand hate keeps the cannon on the mark"** ran the whole chain, in which the gunner's call
+  gives the *player* ten thousand too, so a thousand more on top puts the player ahead fairly.
+  Narrowed to the mark's call alone.
+
+All three are the same mistake in different clothes: **a pin on one step of a chain has to exclude the
+rest of the chain**, and in a message web the way to exclude it is range.
+
+### Not translated
+
+Eleven skill indices — every 탄환발사 and 산탄 in the branch comments is one — and five shouts. The
+mark's own `on_spelled` branch, guarded on `is_event_skill_id`, which leaves a puff of smoke and removes
+the mark: that is the **player's answer to the mechanic**, and it needs a skill id we cannot resolve, so
+today a raid cannot shoot a mark off. Its counter-driven battle timer ends the same way. Our marks are
+cleared only by their twenty-second lifetime and by the gunner's own despawns.
+
+### Verification
+
+Full suite **1,947 passing** and 1 skipped; nine new pins run three times over; **sixteen mutations, all
+caught**. Missing-AI 681 → **680**; adds 357/276 → **356/275**, the one being the mark; translatable
+337/1,111 → **336/1,110**.

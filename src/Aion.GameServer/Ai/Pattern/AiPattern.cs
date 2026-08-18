@@ -367,6 +367,10 @@ public static class Do
     public static PatternAction SkillOnSelfNow(int skillId) => ai => ai.CastSkillNow(skillId);
 
     /// <summary><c>add_hate_point</c> at the object a message carried, then attack it.</summary>
+    /// <summary><c>add_hate_point target=OBJI_MESSAGE_SENDER</c> — hate whoever spoke.</summary>
+    public static PatternAction HateMessageSender(int hate)
+        => ai => ai.HateMessageSender(hate);
+
     /// <summary><c>switch_target target=OBJI_MESSAGE_PARAM</c> — turn, without taking hate.</summary>
     public static PatternAction TargetMessageParam()
         => ai => ai.TargetMessageParam();

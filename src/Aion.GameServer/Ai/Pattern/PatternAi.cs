@@ -324,6 +324,22 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range,
             spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
 
+    /// <summary>Puts hate on the NPC that sent a message, and turns to face it.</summary>
+    /// <remarks>
+    /// Retail's <c>add_hate_point target=OBJI_MESSAGE_SENDER</c>, which is a different object from
+    /// <c>OBJI_MESSAGE_PARAM</c> and is how one NPC asks another to shoot <em>it</em>. The Sauro
+    /// supply base's flame cannon is aimed this way: the mark the gunner plants on a player announces
+    /// itself, and the cannon takes the mark rather than the player standing under it.
+    /// </remarks>
+    public void HateMessageSender(int hate)
+    {
+        if (MessageSender is not Npc sender || sender.IsDead())
+            return;
+
+        GetAggroList().AddHate(sender, hate);
+        GetOwner().SetTarget(sender);
+    }
+
     /// <summary>Turns to whoever a message named, without touching the hate list.</summary>
     /// <remarks>
     /// Retail's bare <c>switch_target target=OBJI_MESSAGE_PARAM</c>, which is a different action from
