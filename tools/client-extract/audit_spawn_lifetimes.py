@@ -73,7 +73,11 @@ def our_classes(repo: pathlib.Path) -> dict[str, tuple[bool, int, int]]:
         parts = re.split(r'\[AIName\("([^"]+)"\)\]', text)
         for i in range(1, len(parts), 2):
             name, body = parts[i], parts[i + 1]
-            pattern_class = "AiPattern" in body[:3000]
+            # Whole body, not the first 3000 characters. The truncated version misread every pattern
+            # class whose documentation runs longer than that -- Tahabata, Calindi and rm_56c are all
+            # fully-built PatternAi tables that this audit reported as making no spawns at all, because
+            # their remarks push the class declaration past the cut.
+            pattern_class = "AiPattern" in body or ": PatternAi" in body
             # Do.SpawnAt / SpawnNear on the pattern side already carry liveSeconds; on the Java side the
             # bare Spawn( overloads do not.
             plain = len(re.findall(r"(?<![A-Za-z])Spawn\(", body))

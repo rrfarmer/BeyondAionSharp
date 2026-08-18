@@ -74,12 +74,36 @@ public class DrakanPriestAI : AggressiveNpcAI
         return servants;
     }
 
+    /// <summary>
+    /// Retail'''s <c>live_time</c> on a summoned servant, by npc id.
+    /// </summary>
+    /// <remarks>
+    /// <b>Only 281839 carries one</b> — <c>XDrakan_PeB_ver40</c> gives <c>BXDrakan_ESer_55_An</c> twenty
+    /// seconds. The other servant this hierarchy summons, 281621, appears in no timed spawn in the
+    /// pattern data and stays permanent, as retail leaves it.
+    /// <para>
+    /// <b>Without it the summon happened once.</b> <see cref=SpawnServants/> is guarded on finding no
+    /// servants already standing, and the only cleanup was <c>HandleBackHome</c> and
+    /// <c>HandleDespawned</c> — so a servant that never expired meant the guard never passed again and
+    /// the priest summoned nothing for the rest of the fight. <b>Death cleanup is not a lifetime</b>, for
+    /// the ninth time in this log.
+    /// </para>
+    /// <para>
+    /// The 240-second naga servants in the same audit row belong to <c>Naga_PeA*</c> and are different
+    /// npcs (280638-280640, 281301) that this hierarchy does not spawn. <b>Deliberately not applied.</b>
+    /// </para>
+    /// </remarks>
+    private static int LifeOf(int npcId) => npcId == 281839 ? 20 : 0;
+
     private void RndSpawn(int npcId, int count)
     {
         for (int i = 0; i < count; i++)
         {
             SpawnTemplate template = RndSpawnInRange(npcId);
-            VisibleObjectSpawner.SpawnEnemyServant(template, GetOwner().GetInstanceId(), GetOwner(), (byte)GetOwner().GetLevel());
+            Expire(
+                VisibleObjectSpawner.SpawnEnemyServant(
+                    template, GetOwner().GetInstanceId(), GetOwner(), (byte)GetOwner().GetLevel()),
+                LifeOf(npcId));
         }
     }
 

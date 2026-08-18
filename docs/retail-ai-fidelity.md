@@ -20377,3 +20377,51 @@ the four led somewhere worth going, and two produced findings — but it is a re
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,097 passing**, 1 skipped.
+
+## The last unexamined block was mostly an audit bug
+
+The `no spawns` rows were called the largest genuinely unexamined block left. **Three of the seven were
+the audit misreading its own input.**
+
+`tahabata_pyrelord` reported 56 timed spawns and none of ours. That class is a **fully rebuilt `PatternAi`
+table** whose own remarks describe placing the flame centers — "*the third thing on those timers and
+spawned by nothing at all*" — because a previous pass built exactly that.
+
+The cause: `pattern_class = "AiPattern" in body[:3000]`. **Tahabata's documentation runs past three
+thousand characters**, so the class declaration fell outside the window and a pattern class was read as
+Java-parity, then reported as spawning nothing. `calindi_flamelord` and `rm_56c` failed the same way.
+
+**Sixth correction to this tool**, and the second to hide real work by misclassifying rather than by
+over-reporting. **The most-documented classes were the ones it got wrong** — which is exactly backwards,
+since documentation is what a heavily-worked encounter accumulates.
+
+### The one real row
+
+`drakanmedic` also read as spawning nothing, for a different and smaller reason: it summons through an
+inherited `SpawnServants` helper, and the audit counts `Spawn(` in the class body. **That miss was
+lucky** — the helper had a real gap.
+
+`SpawnServants` is guarded on finding **no servants already standing**, and its only cleanup is
+`HandleBackHome` and `HandleDespawned`. **With no lifetime the guard never passes twice**, so the priest
+summoned once and then nothing for the rest of the fight — the Pazuzu shape, for the fifth time.
+
+Retail gives `BXDrakan_ESer_55_An` (281839) **twenty seconds**. Applied. **The 240-second naga servants in
+the same audit row are different npcs** (280638-280640, 281301) belonging to `Naga_PeA*`, which this
+hierarchy does not spawn — deliberately not applied, and the reason is in the source.
+
+### Still to do
+
+- **Pin the medic's summon.** Not done here: `DrakanPriestAI` has no harness setup and the spawn goes
+  through `VisibleObjectSpawner.SpawnEnemyServant` rather than the AI spawn path.
+- The remaining three `no spawns` rows — `alukina_emp`, `brigadegenerallaksyaka`, `rm_1337` — one spawn
+  each, unexamined.
+- **`on_talked_by_user` and `teleport_target_alias`**, the one gap named and verified.
+- Resolve the empyrean lords' skill indices; walker route ids, and if recovered revisit Bergrisar.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Build clean. Full suite **2,097 passing**, 1 skipped — unchanged, because the one change is unpinned.
