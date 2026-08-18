@@ -949,9 +949,29 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         CastSkillNow(skills.GetNpcSkills()[0].GetSkillId());
     }
 
+    /// <summary>
+    /// Replaces this NPC's target selection. **For tests only**, and per instance like
+    /// <see cref="RollOverride"/>.
+    /// </summary>
+    /// <remarks>
+    /// <c>AggroTarget.RANDOM</c> can re-pick the creature already targeted, so "the target changed" is a
+    /// coin flip and a pin that counts switches is flaky. Masto's four band cadences are unpinnable for
+    /// exactly that reason: each band fires a random switch, and a fire is only visible when the pick
+    /// happens to land elsewhere.
+    /// <para>
+    /// <see cref="RollOverride"/> does not reach this, because a random switch never goes through
+    /// <see cref="RollPercent"/> — it goes through the aggro list. This is the same seam for the other
+    /// source of randomness, so a pin can make a fire observable without making the encounter
+    /// deterministic in production.
+    /// </para>
+    /// </remarks>
+    public Func<AggroTarget, Creature?>? TargetPickOverride { get; set; }
+
     public void SwitchTarget(AggroTarget which)
     {
-        Creature? next = GetAggroList().GetTarget(which);
+        Creature? next = TargetPickOverride is { } pick
+            ? pick(which)
+            : GetAggroList().GetTarget(which);
         if (next != null)
             GetOwner().SetTarget(next);
     }

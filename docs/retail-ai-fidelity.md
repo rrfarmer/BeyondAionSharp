@@ -18006,3 +18006,52 @@ in this log rather than in the suite.**
 ### Verification
 
 No code changed. Full suite **2,050 passing**, 1 skipped.
+
+## The random-switch seam is in, and the pin it was built for still does not work
+
+The previous entry named the blocker — a cadence pin cannot count fires when the action is
+`SwitchTarget(RANDOM)`, because a random pick can land on the creature already targeted — and named the
+fix: a seam for target selection, the way `RollOverride` is a seam for probability.
+
+**`PatternAi.TargetPickOverride` is in**, with `BossAiHarness.CountSwitches` on top of it: it counts every
+switch an NPC makes and lets the real selection run underneath, so the encounter behaves normally and a
+pin can read the number.
+
+**The pin it was built for was written, and removed.** It passed — and it passed under the **old** timer
+operator too, when all four of Masto's bands were dead. **It proved nothing.**
+
+### Why
+
+`CountSwitches` counts switches from **every branch**. Masto switches from several, so the total moves
+whether or not a band fires. The seam made a random switch countable; it did not make one branch's switches
+distinguishable from another's.
+
+**That is a real limitation of the instrument and not of the encounter.** A working pin needs the count
+attributed to a branch — by giving each band an aggro shape only it can produce, or by measuring inside a
+window when the other switching branches are quiet.
+
+### What was gained anyway
+
+The seam is worth having on its own: **every `RANDOM` switch in the port is now observable**, which is a
+class of action this log has repeatedly failed to pin — Vingeveu's scatter, Masto's original build, the
+soothsayer's peel all worked around it. The next pin that needs it will not have to build it.
+
+### And the discipline held
+
+The pin was removed rather than kept green. It was written to protect a repair, it did not, and a pin that
+passes under the bug it is meant to catch is worse than an empty file — this log has said so about four
+other pins and the rule cost something to keep this time.
+
+### Still to do
+
+- **Attribute the switch count to a branch**, then Masto's cadence pin.
+- The remaining ~19 encounters, read for mechanics that were never firing.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One engine seam, one harness helper, one pin written and removed. Full suite **2,050 passing**, 1 skipped.

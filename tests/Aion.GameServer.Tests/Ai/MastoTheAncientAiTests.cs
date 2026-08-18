@@ -261,4 +261,12 @@ public sealed class MastoTheAncientAiTests
 
 		Assert.False(alwaysTheOffTank, "twenty was claimed by the bottom band");
 	}
+
+	// NOT PINNED: the band cadence. BossAiHarness.CountSwitches makes a random switch countable, which
+	// was the blocker, but Masto switches from several branches and a count over the whole encounter
+	// cannot say which one fired. A pin here needs the count attributed to a branch -- by giving each
+	// band its own aggro shape, or by counting only switches that occur inside a band's window with the
+	// others quiet. Removed rather than left green: it passed under the OLD timer operator too, when all
+	// four bands were dead, so it proved nothing. See docs/retail-ai-fidelity.md.
+
 }

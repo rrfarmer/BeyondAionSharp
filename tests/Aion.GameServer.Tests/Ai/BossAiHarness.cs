@@ -266,6 +266,27 @@ public sealed class BossAiHarness : IDisposable
 	public static void RandomRolls(Npc npc)
 		=> Pattern(npc).RollOverride = null;
 
+	/// <summary>
+	/// Counts every <c>SwitchTarget</c> an NPC makes, and reports how many, so a pin can measure a
+	/// cadence whose only action is a random switch.
+	/// </summary>
+	/// <remarks>
+	/// <c>AggroTarget.RANDOM</c> can re-pick the creature already targeted, so counting target
+	/// <em>changes</em> misses a fire whenever the dice repeat. This counts the calls instead, which is
+	/// what the branch actually did. The selection still runs, so the NPC ends up where it would have.
+	/// </remarks>
+	public static Func<int> CountSwitches(Npc npc)
+	{
+		var ai = Pattern(npc);
+		int seen = 0;
+		ai.TargetPickOverride = which =>
+		{
+			seen++;
+			return npc.GetAggroList().GetTarget(which);
+		};
+		return () => seen;
+	}
+
 	/// <summary>The mirror: every roll fails, which is how a pin shows the guard is really there.</summary>
 	public static void NeverRolls(Npc npc)
 		=> Pattern(npc).RollOverride = _ => false;
