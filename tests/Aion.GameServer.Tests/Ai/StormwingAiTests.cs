@@ -135,20 +135,22 @@ public sealed class StormwingAiTests
 		boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
 
 		// Four waves, 30s apart: sharp twice, then root twice. Hard mode sends eight per wave.
+		//
+		// Counted as who is standing after each wave rather than as a delta from the wave before. The
+		// elites live fifteen seconds and the waves are thirty apart, so each wave has buried the last
+		// one before the next arrives -- a delta would read the second sharp wave as zero.
 		var waves = new List<(int Sharp, int Root)>();
 		for (int i = 0; i < 4; i++)
 		{
-			int sharp = Count(harness, SharpTwisterElite);
-			int root = Count(harness, RootTwisterElite);
 			harness.Clock.Advance(TimeSpan.FromSeconds(30));
-			waves.Add((Count(harness, SharpTwisterElite) - sharp, Count(harness, RootTwisterElite) - root));
+			waves.Add((Count(harness, SharpTwisterElite), Count(harness, RootTwisterElite)));
 		}
 		Assert.Equal([(8, 0), (8, 0), (0, 8), (0, 8)], waves);
 
-		// The escalation is four waves and then stops.
-		int total = Count(harness, SharpTwisterElite) + Count(harness, RootTwisterElite);
-		harness.Clock.Advance(TimeSpan.FromMinutes(2));
-		Assert.Equal(total, Count(harness, SharpTwisterElite) + Count(harness, RootTwisterElite));
+		// The escalation is four waves and then stops: a fifth would be standing here.
+		harness.Clock.Advance(TimeSpan.FromSeconds(30));
+		Assert.Equal(0, Count(harness, SharpTwisterElite));
+		Assert.Equal(0, Count(harness, RootTwisterElite));
 	}
 
 	[Fact]
@@ -167,13 +169,24 @@ public sealed class StormwingAiTests
 		// Asserting on the timers themselves, not on their effects. Both timer bodies already bail on
 		// IsDead(), so a leaked repeating task looks identical from the outside while still running
 		// forever — an earlier version of this test passed with the cancellation removed entirely.
-		Assert.Equal(0, harness.Clock.ArmedTimerCount);
+		//
+		// Checked after the wait below rather than here, because the twisters standing at his death keep
+		// their own despawn timers and those are meant to outlive him. A leaked repeating task re-arms
+		// itself across that wait, so asking afterwards is the stronger question, not the weaker one.
 
 		BossAiHarness.DrainQueuedSkills(boss);
-		int twisters = harness.LiveNpcs().Count(n => n.GetNpcId() is SharpTwister or RootTwister);
+
+		// Held as the twisters themselves rather than as a count. They now expire on retail's own
+		// timers, so a count taken two minutes later drops whether or not anything new was summoned --
+		// the question this pin asks is whether a dead boss summons, and only identity answers it.
+		var standing = harness.LiveNpcs()
+			.Where(n => n.GetNpcId() is SharpTwister or RootTwister)
+			.ToHashSet();
 		harness.Clock.Advance(TimeSpan.FromMinutes(2));
 
+		Assert.Equal(0, harness.Clock.ArmedTimerCount);
 		Assert.Empty(BossAiHarness.DrainQueuedSkills(boss));
-		Assert.Equal(twisters, harness.LiveNpcs().Count(n => n.GetNpcId() is SharpTwister or RootTwister));
+		Assert.DoesNotContain(harness.LiveNpcs(),
+			n => n.GetNpcId() is SharpTwister or RootTwister && !standing.Contains(n));
 	}
 }

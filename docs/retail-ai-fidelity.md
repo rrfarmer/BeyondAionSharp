@@ -19308,3 +19308,60 @@ was just the first thing to need it.
 
 Build clean. Five new pins; the wave fails with the wave removed and the timeout fails with the lifetime
 disabled. Full suite **2,067 passing**, 1 skipped.
+
+## Stormwing's twisters were permanent, and two pins said that was correct
+
+`SpawnFor` was built for the fortress duke. The survey it made possible — **which Java-parity classes
+serve retail patterns carrying `live_time`** — returns **120 classes**, and the largest is Stormwing.
+
+**The survey's first answer was misleading and had to be narrowed.** "Retail has `live_time` spawns" is not
+"we are missing them"; Stormwing is thoroughly ported and spawns every twister retail does. The real
+question is whether we ever take them away. **We did not.** Every twister was spawned with no lifetime and
+stood for the rest of the fight, so a long pull ended surrounded by dozens: **the mechanic was strictly
+harsher than retail's, and got harsher the longer the fight ran.**
+
+### The mapping is exact, not a guess
+
+`IDCTH_Rudra` writes **seven** twister branches at p40 down to p34 carrying **80, 45, 45, 30, 30, 30, 30**
+seconds, and **four** elite branches at p10 down to p7 all carrying **15**.
+
+Our class has **seven HP bands and four escalation waves.** Seven against seven and four against four, in
+retail's own priority order — which is what makes this a mapping rather than a modal guess. The first
+reading of this data was a bare histogram of lifetimes per npc kind, which would have produced "30 seconds,
+mostly" and been wrong for three of the seven bands.
+
+### Both failing pins were asserting the bug
+
+`EscalatesBelowHalfHealthSharpThenRoot` measured each wave as a **delta from the wave before**. The elites
+live fifteen seconds and the waves are thirty apart, so every wave has buried the last before the next
+arrives, and a delta reads the second sharp wave as zero. Rewritten to count **who is standing after each
+wave**, which is both correct and a better description of the fight.
+
+`StopsEveryTimerWhenItDies` asserted the twister count was **unchanged two minutes after his death**. That
+is only true if twisters are permanent. Rewritten to hold the twisters themselves and ask whether any
+**new** one appeared — the question the pin was always trying to ask, which only identity can answer.
+
+Its `ArmedTimerCount == 0` check also had to move. **The twisters standing at his death keep their own
+despawn timers, and those are meant to outlive him.** Asking after the two-minute wait rather than before
+is the stronger question, not the weaker one: a leaked repeating task re-arms itself across that wait. The
+mutation confirms it — removing the cancellation still turns the pin red.
+
+**Two pins, written against a real encounter, both encoding the same absent mechanic.** They passed for
+years because they described what the code did.
+
+### Still to do
+
+- **The other 119 Java-parity classes** on the `live_time` list, now surveyable — `artifact_protector`
+  (85), `summoner` (66), `conquest_offering_spawner` (48) and `empowered_agent` (48) are the next largest,
+  and each needs the same narrowing: does the class spawn these at all, and if so does it expire them?
+- `set_condition_spawn_variable` — blocking Tiamat and Modor's clone.
+- Waypoints, blocking the silikor dismissal.
+- `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn, both ready.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses.
+- The four Ophidan controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five
+  coffin rows; the remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The band and escalation lifetimes fail with the lifetimes removed; the death pin fails with
+the cancellation removed. Full suite **2,067 passing**, 1 skipped.

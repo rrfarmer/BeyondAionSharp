@@ -48,6 +48,22 @@ public class StormwingAI : AggressiveNpcAI
     /// <summary>HP bands, each firing once. Alternating bands scatter the twisters.</summary>
     private static readonly int[] Bands = { 95, 80, 65, 50, 35, 20, 5 };
 
+    /// <summary>
+    /// How long each band'''s twisters stand, in retail'''s own order: <c>IDCTH_Rudra</c> writes seven
+    /// twister branches at p40 down to p34 carrying 80, 45, 45, 30, 30, 30 and 30 seconds.
+    /// </summary>
+    /// <remarks>
+    /// <b>Seven branches against our seven bands, and four elite branches against our four escalation
+    /// waves</b>, which is what makes this a mapping rather than a guess. Until now every twister was
+    /// spawned with no lifetime at all and stood for the rest of the fight, so a long pull ended with
+    /// dozens of them: <b>the mechanic was strictly harsher than retail'''s and got harsher the longer
+    /// the fight ran.</b>
+    /// </remarks>
+    private static readonly int[] BandLives = { 80, 45, 45, 30, 30, 30, 30 };
+
+    /// <summary>Retail p10 to p7, all fifteen seconds.</summary>
+    private const int EscalationLife = 15;
+
     /// <summary>Diagonal offsets used on the scattering bands.</summary>
     private static readonly (float X, float Y)[] Diagonals =
     {
@@ -107,7 +123,7 @@ public class StormwingAI : AggressiveNpcAI
         {
             int npcId = i % 2 == 0 ? SharpTwister : RootTwister;
             (float dx, float dy) = scatter ? Diagonals[i] : (0f, 0f);
-            SpawnNear(npcId, dx, dy);
+            SpawnNear(npcId, dx, dy, BandLives[band]);
         }
     }
 
@@ -147,13 +163,14 @@ public class StormwingAI : AggressiveNpcAI
         int count = IsHardMode ? 8 : 4;
         NpcSkillCasting.QueueAtDataLevel(GetOwner(), ThreshingWind, NpcSkillTargetAttribute.ME);
         for (int i = 0; i < count; i++)
-            SpawnNear(npcId, 0f, 0f);
+            SpawnNear(npcId, 0f, 0f, EscalationLife);
     }
 
-    private void SpawnNear(int npcId, float dx, float dy)
+    private void SpawnNear(int npcId, float dx, float dy, int liveSeconds)
     {
         Npc owner = GetOwner();
-        Spawn(npcId, owner.GetX() + dx, owner.GetY() + dy, owner.GetZ(), (sbyte)owner.GetHeading());
+        SpawnFor(npcId, owner.GetX() + dx, owner.GetY() + dy, owner.GetZ(),
+            (sbyte)owner.GetHeading(), liveSeconds);
     }
 
     protected override void HandleDied()
