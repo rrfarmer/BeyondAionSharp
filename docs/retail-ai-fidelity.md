@@ -12362,3 +12362,67 @@ all?* One `IsHostileRelation` lookup, before the table, not after the pins.
 ### Verification
 
 Full suite **2,096 passing** and 1 skipped, unchanged. No behaviour shipped.
+
+## Withdrawing the fortress-killer conclusion: `IsEnemy` reads aggro after all
+
+The previous entry closed the fortress killers as "settled" — the translation right, the gate Java's,
+the aggro relation not on `AddHate`'s path. **The last of those is false**, and the entry should not be
+relied on.
+
+`AggroList.IsAware` has three terms, and that entry read only the third:
+
+```
+aggroList.contains(creature) || creature.IsEnemy(owner) || IsHostileRelation(owner, creature)
+```
+
+`Npc.IsEnemyFrom` is:
+
+```csharp
+TribeRelationService.IsAggressive(creature, this) || TribeRelationService.IsHostile(creature, this)
+```
+
+**The aggro relation is on the path — through the second term.** `LDF5_V_KILLER_D` and
+`LDF5_V_CHIEF_L` relate by `<aggro>`, so `IsEnemy` should be true and `IsAware` should pass. The
+conclusion that "a fortress killer cannot take hate on a garrison chief at all" is withdrawn.
+
+### What the zero probably was, and why that is not a new conclusion
+
+The likeliest explanation is the one this log has already been caught by **three times**: the pins put
+their reading after a setup that had already spent a once-per-fight branch. `OnEnterAttack` fires on
+`EnterCombat()`'s latch, and `MakeMutuallyKnown` engages the pair — the same shape as the village
+killers' `on_attacked`, the Catacombs recursion, and the illusion's despawn.
+
+**That is a hypothesis and is labelled one.** It is not being written up as settled, because writing up
+the last one as settled is what produced this correction.
+
+### The tool that was going to prevent this, and why it was deleted
+
+An `audit_hate_reachable.py` was written this session to answer "can these two npcs put hate on each
+other?" from the tribe table. It reported `NLIZARDMAN vs PC` as **refused** — monsters cannot hate
+players — which is obviously wrong, and wrong for exactly the reason above: it modelled one of the
+three terms.
+
+Deleted rather than shipped. A tool that answers a question confidently and wrongly is worse than no
+tool, and this one would have been consulted precisely when someone was least able to check it. The
+`audit_generic_messages` entry made the same point about verdicts two entries ago and this is the case
+it was warning about.
+
+### The rule, corrected
+
+The previous entry's rule — *ask whether these two npcs can put hate on each other, before writing the
+table* — still stands. What is wrong is the method it recommended. **Reading one branch of a
+three-branch condition and reporting the result as the condition is how both the false conclusion and
+the false tool happened.** The check has to run the real code path, not a paraphrase of part of it.
+
+### State
+
+The fortress killers are **unbuilt and open**, not blocked. The next attempt should:
+
+1. take a baseline *before* `MakeMutuallyKnown`, per the once-per-fight lesson;
+2. if hate still does not land, instrument `IsAware` rather than reasoning about it — the flake entry's
+   rule about printing the whole failure applies to conditions as much as to exceptions.
+
+### Verification
+
+Full suite **2,096 passing** and 1 skipped, unchanged. Nothing shipped; one tool deleted and one
+published conclusion withdrawn.
