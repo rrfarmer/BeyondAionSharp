@@ -24,10 +24,14 @@ public sealed class PadmarashkaRockfallTests
 	/// <summary>The heavy rock of the two low-health bursts, and the B rock of every earlier chain.</summary>
 	private const int Rock = 281936;
 	private const int RockB = 282140;
+	private const int AcidBomb = 281944;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Gelkmaros).WithWorldSize(4096)
-			.WithAi(typeof(GelkmarosPadmarashkaAI), typeof(AggressiveNpcAI), typeof(RockSlideAI))
+			.WithAi(typeof(GelkmarosPadmarashkaAI), typeof(AggressiveNpcAI), typeof(RockSlideAI),
+				// the acid bomb's template names ai="general"; without this the spawn throws inside the
+				// AI path and the mechanic looks absent rather than unregistered.
+				typeof(GeneralNpcAI))
 			.Build();
 
 	/// <summary>Her four shield NPCs sit around 2906..2963 / 859..878, so she is spawned where she stands.</summary>
@@ -348,15 +352,17 @@ public sealed class PadmarashkaRockfallTests
 	/// </para>
 	/// </remarks>
 	[Fact]
-	public void TheMiddleBandIsSilentAndShouldNotBe()
+	public void TheMiddleBandDropsHerAcidBomb()
 	{
 		var (harness, boss, raid) = Engaged(6);
 		using BossAiHarness _h = harness;
 
 		BossAiHarness.SetExactPercent(boss, 45);
 
-		Advance(harness, boss, raid, 120);
+		Advance(harness, boss, raid, 34);
+		Assert.Equal(0, Count(harness, AcidBomb));
 
-		Assert.Equal(0, Count(harness, RockB));
+		Advance(harness, boss, raid, 2);
+		Assert.Equal(1, Count(harness, AcidBomb));
 	}
 }

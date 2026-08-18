@@ -65,6 +65,23 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
     private readonly AtomicInteger deadProtectors = new AtomicInteger();
 
     /// <summary><c>BDF4_DramataRock_57_An</c>, the heavy rock of the two low-health bursts.</summary>
+    /// <summary>
+    /// 281944, <c>BDF4_Dramata_AcidBombControl_n</c> — the middle band's mechanic, living a minute.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not translated on that band:</b> retail's timers 10 and 12. Timer 12 is three branches of pure
+    /// <c>use_skill</c>; timer 10 is a skill plus a <c>goto_waypoint</c> and the
+    /// <c>STR_MSG_DF4_DRAMATA_LAY_EGG</c> message — her egg-laying walk. So the band is opened, not
+    /// finished.
+    /// </remarks>
+    private const int AcidBomb = 281944;
+
+    /// <summary>Retail's <c>SPAWN_ID_2</c>.</summary>
+    private const int AcidBombGroup = 2;
+
+    /// <summary>Retail's <c>live_time</c>, in seconds.</summary>
+    private const int AcidBombLife = 60;
+
     private const int Rock = 281936;
 
     /// <summary><c>BDF4_DramataRock_B_57_An</c>, the one every earlier chain drops.</summary>
@@ -130,8 +147,18 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
 
             // Second tick: a step that is all casts. Kept because it consumes a heartbeat, which is why
             // the opening rockfall lands on the third tick rather than the second.
+            // The middle band. Retail arms three timers here -- 10 at 180s, 11 at 30s, 12 at 60s -- and
+            // this port had none, so a raid between thirty-one and sixty percent met nothing while the
+            // bands above and below both worked. Timer 11 is the one whose content translates.
             AiPattern.Branch(40, "", [When.HpBetween(31, 60), When.Timer(0), When.FirstTime(Gamma4)],
-                Do.ArmTimer(0, HeartbeatMillis)),
+                Do.ArmTimer(0, HeartbeatMillis),
+                Do.ArmTimer(11, 30_000)),
+
+            // Timer 11: her acid bomb, thirty seconds into the band and every ninety after. Retail spawns
+            // it at the waypoint start; this port has no waypoint spawn, so it arrives beside her.
+            AiPattern.Branch(11, "acid bomb", [When.Timer(11)],
+                Do.ArmTimer(11, 90_000),
+                Do.SpawnNear(AcidBomb, AcidBombGroup, count: 1, range: 3f, liveSeconds: AcidBombLife)),
 
             // Third tick: the opening rockfall, and the timer-17 chain that repeats it.
             AiPattern.Branch(20, "kcast13", [When.HpBetween(61, 90), When.Chance(50), When.Timer(0), When.FirstTime(Epsilon1)],

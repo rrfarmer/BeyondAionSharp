@@ -16247,3 +16247,55 @@ branch numbering had diverged; both times the fix was to put a known-good case n
 ### Verification
 
 Correction only; no code changed. Full suite **2,049 passing**, 1 skipped.
+
+## The acid bomb ships, and the fault was the harness all along
+
+Four entries went into why Padmarashka's middle band produced nothing. **The mechanic was correct on the
+second attempt; the harness could not spawn the npc.**
+
+`281944` is declared `ai="general"` in `npc_templates.xml`. `PadmarashkaRockfallTests` registered
+`GelkmarosPadmarashkaAI`, `AggressiveNpcAI` and `RockSlideAI` — **not `GeneralNpcAI`** — so
+`AIEngine.NewAI` threw `No AI found for name general` inside the spawn, and the exception was swallowed
+somewhere in the AI path. The npc simply never appeared, with no error and no clue.
+
+With `GeneralNpcAI` registered the band works: **the acid bomb lands thirty-four seconds in and every
+ninety after**, and the pin fails when the band stops arming timer 11.
+
+### The probe that found it, and the three that did not
+
+The three probes of two entries ago all came back negative — branch fires, timer chain works, radius
+irrelevant — and the entry after them suspected the npc id, wrongly. **The probe that worked was spawning
+the npc directly and printing the exception**, which took four lines and had been available the whole
+time.
+
+Every earlier probe asked *does this path produce the npc*. None asked *what happens when it tries*. A
+swallowed exception is invisible to the first question and obvious to the second.
+
+### The sequence, worth recording as one thing
+
+| entry | conclusion | status |
+|---|---|---|
+| the band is silent | the arming is missing | wrong — the timers were never ported |
+| the timers were never ported | correct | **stands** |
+| built it, did not fire | three candidates | all three wrong |
+| ran the probes | the id is suspect | withdrawn — display name is not a devname |
+| here | the harness lacked the AI registration | **stands** |
+
+**Two of five entries were corrections of the entry before.** The thing that shortened it each time was
+putting a known-good case beside the suspect one — the rocks against the bomb, `SpawnNear` with a rock
+against `SpawnNear` with the bomb — and the thing that lengthened it was inferring a cause from an absence.
+
+### Still to do
+
+- **Padmarashka's timers 10 and 12**, blocked on skills, a waypoint walk and a system message.
+- **Other test harnesses may have the same gap.** Any encounter whose adds are declared `ai="general"` and
+  whose test does not register `GeneralNpcAI` will show the same silent nothing. That is a checkable
+  sweep and it is not done.
+- The five coffin `message` rows, the 14 remaining ready rows, Kingspin and the silikor guard ladders and
+  whatever their rungs arm, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One mechanic shipped, one pin with its mutation checked. Full suite **2,049 passing**, 1 skipped.
