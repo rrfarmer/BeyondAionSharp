@@ -14518,3 +14518,74 @@ Fifth blind spot found in this tool, and the first that was inventing rows rathe
 
 Full suite **2,263 passing**, 1 skipped — no server code changed. The audit's own output is the result:
 85 numbers, 31 reachable, 13 quarantined.
+
+## A flag on an NPC that never fights does not hold — measured
+
+The Esoterrace alarm is **still not shipped**, and this entry is why. It is the third attempt, and the
+first one that knows what is wrong.
+
+### What retail actually writes
+
+`IDF4Re_FOBJ_1`, the surkana feeder, read properly this time:
+
+| priority | guard | flag | action |
+|---|---|---|---|
+| 10 | `is_hp_lower_than 20` | `ALPHA_1` | `broadcast_message 10000 range=30 param_obj=OBJI_ATTACKER` |
+| 9 | `is_hp_lower_than 40` | `ALPHA_2` | same |
+| 8 | `is_hp_lower_than 60` | `ALPHA_3` | same |
+| 7 | `is_hp_lower_than 80` | `ALPHA_4` | same |
+| 6 | **none** | `ALPHA_5` | same |
+
+Twenty esoterrace drakan answer, across sixteen patterns, with one uniform branch:
+`add_hate_point target=OBJI_MESSAGE_PARAM point_to_add=10` then `attack_most_hating`.
+
+**The earlier attempt had the thresholds wrong** — it read 10/20/30/40/50/60 where retail writes
+20/40/60/80/none — because it was built from a row the audit had assembled out of two unrelated
+families. The previous entry fixed the audit; this one fixes the reading.
+
+**And the lowest band has no health guard at all**, so the very first blow raises the lab and the four
+thresholds below it raise it again as the object falls. That only works because evaluation is
+priority-ordered and stops at the first match, which was confirmed by reading `Evaluate`.
+
+### Why it still cannot ship
+
+The pins failed, and the probe that chased them found something bigger than the encounter:
+
+```
+broadcast only ..................  10 20 30 40   state=IDLE
+broadcast + one hate action .....  10 10 10 10   state=FIGHT
+```
+
+**Same branch. Same flag. Same broadcast.** The only difference is one extra action that puts hate on
+the feeder and drags it into combat. **A `set_flag_var` on an NPC that never enters combat does not
+hold.**
+
+That is not a property of this encounter. It is a property of **every pure broadcaster in the retail
+data** — a pattern whose answer to being hit is to shout and nothing else takes no hate, never reaches
+`FIGHT`, and loses its flags between blows. Retail uses that shape for field objects and alarms
+specifically, which is exactly the class of mechanic this log has been working through.
+
+**The obvious fix is wrong.** `ResetPattern` runs from `HandleBackHome`, so the first guess was that a
+hate-less NPC is sent home after every blow and cleared on the way. Guarding the reset on `inCombat`
+changed nothing — `EnterCombat()` latches `inCombat` on the attack itself, so the guard is already true
+by the time back-home runs. **The change was reverted rather than kept as a plausible-looking no-op.**
+
+So the question is narrower and still open: **what clears — or fails to set — a flag on an NPC in
+`IDLE`?** `TestAndSetFlag` returning true four times running is indistinguishable from the flag being
+cleared four times, and the next probe has to tell those apart before anything is changed.
+
+### Two smaller things the probe found
+
+- **The surkana feeder has fifty maximum HP.** `BossAiHarness.SetExactPercent` cannot express 75% of it
+  and throws its own assertion — `Expected: 75, Actual: 100`. Several of the failures in the third
+  attempt were that, not the ladder. **A harness helper that fails is not a measurement, and its
+  failure looks exactly like the encounter's.**
+- **`on_die` is not translatable:** `set_condition_spawn_variable condition_type=2` drives the
+  instance's spawn progression and has no equivalent here, and the system message with it needs
+  `display_system_message`. The feeder's `on_message` answer to `1001` — a `despawn_self` — has a
+  caller in a different instance entirely, which is one of the thirteen cross-wired numbers.
+
+### Verification
+
+Nothing shipped. The encounter, its pins and the engine change were all reverted; the measurement is
+the deliverable. Full suite **2,263 passing**, 1 skipped.
