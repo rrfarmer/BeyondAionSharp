@@ -20474,3 +20474,65 @@ caught four times by hand and never by the tool.
 ### Verification
 
 Build clean. Full suite **2,097 passing**, 1 skipped — unchanged, because none of this batch is pinned.
+
+## Closing the lifetime audit, and what its last two corrections found
+
+The previous entry named one correction the tool still needed and said the final count could not be
+trusted without it. **Both remaining corrections are made, and neither surfaced new work.**
+
+### Counting the helpers
+
+`Spawn(` alone missed every class that summons through `RndSpawnInRange`, `SpawnServants` or
+`SpawnEnemyServant`. Counting all of them clears the `no spawns` category to **zero** — and confirms the
+four rows it had been hiding were the same four already found by hand.
+
+**That is the useful result.** The blind spot cost nothing in the end, because reading the rows one at a
+time caught what the tool could not. **It would have cost everything if the rows had been read by trusting
+the verdict instead**, which is what the first eleven passes of this audit did.
+
+### Following the base class
+
+`drakanmedic` survived as the last `NO LIFETIME` row after its gap was fixed, because the fix lives in
+`DrakanPriestAI` — the subclass summons through an inherited helper and inherits the `Expire` that bounds
+it. Read alone it looks exactly like a class that spawns and never expires. **The audit flagged a gap that
+had been closed one file up**, which is the failure mode that wastes a future pass rather than the current
+one.
+
+Folding each class's bases into it clears that row.
+
+### Where it ends
+
+```
+partial=15  timed=17     (NO LIFETIME and no spawns both empty)
+```
+
+All fifteen `partial` rows have been read individually, and each is a class mixing timed spawns with ones
+that **carry no `live_time` in the pattern and are permanent in retail too.**
+
+**The zero is self-tested**: reverting Pazuzu's worms to a plain `Spawn` puts the row back as
+`NO LIFETIME` immediately, and restoring it clears again.
+
+### The audit, end to end
+
+**62 rows at the first run, 15 real findings, eight corrections to the tool.** Four of the eight removed
+false positives; four exposed work the tool was hiding. **A first-cut audit is a hypothesis, and half of
+what it takes to make one honest is finding the things it silently omits** — which cannot be done by
+reading its output, only by reading the rows it dismissed.
+
+### Still to do
+
+- **`on_talked_by_user` and `teleport_target_alias`** — the one engine gap named and verified this week,
+  blocking the Raksha door.
+- **Pins for the eight unpinned lifetime fixes**: `drakanmedic`, `rm_1337`, `brigadegenerallaksyaka`,
+  `sematariux`, `king_consierd`, `brigadegeneralterath`, `vasharti_assassin`, and the two Ahserion
+  classes. All are arena, siege or instance npcs with no harness setup.
+- Resolve the empyrean lords' skill indices; walker route ids, and if recovered revisit Bergrisar.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Tool only, no server code. The self-test lights the row and clears again. Full suite **2,097 passing**,
+1 skipped.

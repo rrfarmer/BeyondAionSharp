@@ -80,7 +80,13 @@ def our_classes(repo: pathlib.Path) -> dict[str, tuple[bool, int, int]]:
             pattern_class = "AiPattern" in body or ": PatternAi" in body
             # Do.SpawnAt / SpawnNear on the pattern side already carry liveSeconds; on the Java side the
             # bare Spawn( overloads do not.
-            plain = len(re.findall(r"(?<![A-Za-z])Spawn\(", body))
+            # Every way a class puts an npc in the world, not just Spawn(. Counting the bare call alone
+            # hid four of this audit's real findings -- drakanmedic, rm_1337, brigadegenerallaksyaka and
+            # alukina_emp all summon through a helper and read as spawning nothing at all, and each was
+            # caught by hand rather than by this tool.
+            plain = len(re.findall(
+                r"(?<![A-Za-z])(?:Spawn|RndSpawnInRange|RndSpawn|SpawnServants|SpawnEnemyServant)\(",
+                body))
             # A class that schedules its own deletes is already expiring its adds by another route.
             # Two passes running, the largest rows on this report were exactly that -- balaurbarricade
             # and unstableyamennes both wrote the schedule by hand before SpawnFor existed -- and each
@@ -97,6 +103,41 @@ def our_classes(repo: pathlib.Path) -> dict[str, tuple[bool, int, int]]:
             # one of the other helpers rather than from Spawn directly.
             timed = len(re.findall(r"SpawnFor\(|Expire\(", body))
             out[name] = (pattern_class, plain, timed, self_timed)
+    # Fold each class's base into it. DrakanMedicAI summons through SpawnServants, which lives in
+    # DrakanPriestAI along with the Expire that bounds it, so read on its own the subclass looks like a
+    # class that spawns and never expires -- the exact shape this audit exists to flag. It was flagged,
+    # after the gap had already been fixed one file up.
+    bodies: dict[str, str] = {}
+    bases: dict[str, str] = {}
+    for path in sorted((repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        parts = re.split(r'\[AIName\("([^"]+)"\)\]', text)
+        for i in range(1, len(parts), 2):
+            bodies[parts[i]] = parts[i + 1]
+            hit = re.search(r"class\s+(\w+)\s*:\s*(\w+)", parts[i + 1])
+            if hit:
+                bases[parts[i]] = hit.group(2)
+
+    by_class = {}
+    for name, body in bodies.items():
+        hit = re.search(r"class\s+(\w+)", body)
+        if hit:
+            by_class[hit.group(1)] = body
+
+    for name in list(out):
+        base = bases.get(name)
+        seen = set()
+        while base and base in by_class and base not in seen:
+            seen.add(base)
+            extra = by_class[base]
+            pattern_class, plain, timed, self_timed = out[name]
+            plain += len(re.findall(
+                r"(?<![A-Za-z])(?:Spawn|RndSpawnInRange|RndSpawn|SpawnServants|SpawnEnemyServant)\(",
+                extra))
+            timed += len(re.findall(r"SpawnFor\(|Expire\(", extra))
+            out[name] = (pattern_class, plain, timed, self_timed)
+            hit = re.search(r"class\s+\w+\s*:\s*(\w+)", extra)
+            base = hit.group(1) if hit else None
     return out
 
 
