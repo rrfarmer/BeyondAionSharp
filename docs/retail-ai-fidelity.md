@@ -16906,3 +16906,50 @@ the search did not try. A grep that finds nothing has told you about your grep.
 ### Verification
 
 No code changed. Full suite **2,049 passing**, 1 skipped, the web mechanic still inert.
+
+## Correction: the web does snare, and the conclusion survives anyway
+
+The entry above says **"the web does not snare, it blasts"** and rests the reading on skill **18597**,
+"Earth Smash", `skillsubtype="ATTACK"`. That is one of two skills on `npc_ids="281391"`. The other is
+**18607, "Coiling Web"**, `skillsubtype="DEBUFF"`, stacking **`BNWI_ROOT_SPIDER`**.
+
+**It is a root.** The web snares and blasts. The sentence quoted above is wrong and is withdrawn.
+
+### What the correction does not change
+
+Nothing that follows from it. The pattern still reads:
+
+```
+on_see_user  ! set_flag_var
+             > use_skill target=OBJI_SEEN
+             > broadcast_message 6952 range=50
+             > despawn_self
+```
+
+**The despawn is on the same branch as the cast**, whatever the cast does. So the web is a one-shot trap
+either way, `KingspinAiTests`' six pins still count a state retail only reaches when every web misses, and
+the repoint is still correct. The conclusion was right for a reason that was half wrong.
+
+### Why it is worth an entry anyway
+
+**The first skill answered the question and the second was not read.** Two skills were listed on the npc,
+one was looked up, and the lookup happened to support a reading already formed. That is the same shape as
+the truncated summariser block four entries ago: **stopping at the first piece of evidence that agrees.**
+
+It cost nothing here only because the conclusion did not depend on which skill it was. The next time it
+will not be free.
+
+### Still to do
+
+- **An observer for the web's call**, then repoint and rewrite the six pins around calls rather than
+  standing webs, then the accelerator pin.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+- **Neither of the web's two skills is translated** — the root and the blast are both `use_skill`, and this
+  port casts neither. The mechanic ships as a call and a despawn, which is the part that reaches Kingspin.
+
+### Verification
+
+Correction only. Full suite **2,049 passing**, 1 skipped.
