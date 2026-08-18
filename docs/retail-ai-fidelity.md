@@ -18916,3 +18916,70 @@ had.
 
 Build clean. The pin fails at 1 lap with the twin removed and passes at 2 with it. Full suite **2,054
 passing**, 1 skipped.
+
+## Every flagged branch, checked for the twin below it
+
+The previous entry ended by queueing the obvious follow-up: **re-read every `set_flag_var` guard this log
+has applied, looking for an unflagged twin below it.** There are 218 of them across 78 files, which is
+too many to eyeball, so `audit_flag_twins.py` does it.
+
+For every retail branch with a flag in its conditions, it finds a lower-priority branch **in the same
+pattern and handler whose non-flag conditions are identical**, then reports whether our class carries both
+priorities.
+
+### The answer
+
+**Zero missing twins. Middle Boss Fire was the only one, and it is fixed.**
+
+That is the result the previous entry could not have guessed. The idiom looked common enough to expect
+several more; across every pattern this port serves there are **eight** exact-twin pairs, seven of which
+were already ported correctly.
+
+### Why the zero is worth believing
+
+The tool was wrong twice before it was right, and both times it was wrong in the direction of **silence**:
+
+- **First run: zero pairs found anywhere**, because retail's branch element is `<pattern>` and the tool
+  looked for `<pattern_priority>`. A tool that finds nothing looks like good news.
+- **Then one finding, which was false.** It pooled every priority in a source file, so a `p100` written in
+  one handler vouched for a `p100` in another — and it reported a missing twin in our silikor's
+  `on_spelled`, a handler that class does not implement at all.
+- **Then zero again, for a third reason**: the handler slice was line-anchored, and our tables close
+  `Of(` on the same line as their last branch. It matched nothing, so everything read as unported.
+
+**So the zero is only meaningful with a self-test.** Removing the Middle Boss Fire twin makes the tool
+report exactly that pair and nothing else; restoring it returns the count to zero. The zero is sensitive
+to the thing it measures, which is the same standard the flaky-pin entry arrived at from the other side.
+
+### What the run does surface: 426 unported flagged branches
+
+These are flagged retail branches whose priority our class does not carry in that handler — **not missing
+twins, but missing branches**, and a different backlog:
+
+| class | rows | what it is |
+|---|---|---|
+| `aggressive` | 195 | npcs with a bespoke retail pattern that we bind to the generic AI |
+| `general` | 35 | same |
+| `golden_eye_mantutu`, `siege_raceprotector`, `xdrakanpriest`, `sematariux`, `padmarashka_world_boss` | 78 | classes we did port, missing these branches |
+
+**The first 230 are the already-known generic-binding backlog** and should not be counted twice. The
+remainder — 40 distinct classes, minus the two generics — is the real list.
+
+One of them is concrete and small: our silikor has **no `on_spelled` handler at all**, where retail's
+`ND2_WhG` broadcasts `6621` at 30 metres the first time a neutral caster spells it, and then absorbs every
+later neutral spell with a `do_nothing` twin so it cannot fall through to the branch below. **The
+`do_nothing` twin is a load-bearing branch**, not padding — an idiom this log had not seen before.
+
+### Still to do
+
+- **The 40-class unported list**, generics excluded — flagged branches we never ported.
+- **The silikor's `on_spelled`**, including its `do_nothing` absorber.
+- **A twin check that tolerates near-misses.** This one matches conditions exactly, so a twin retail wrote
+  with a slightly wider band is a false negative and would not appear in the zero above.
+- The four Ophidan controllers, blocked on npc templates for 856057-856060.
+- Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the remaining
+  ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Tool only, no server code. Self-test passes in both directions. Full suite **2,054 passing**, 1 skipped.
