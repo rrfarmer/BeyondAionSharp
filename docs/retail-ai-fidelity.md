@@ -12480,3 +12480,51 @@ cheaper than a fourth guess.
 ### Verification
 
 Full suite **2,096 passing** and 1 skipped, unchanged. Nothing shipped; the class reverted a third time.
+
+## The lich soul call, and a default that was wrong for it
+
+Second row off the `on_spelled` seam, and it reuses last entry's listener idiom exactly: **below half
+health, once, a lich puts a faithful servant at its feet and tells it who to go for** — spawn and call
+in one branch, at ten metres, naming whoever the lich is holding. Fourteen npcs carry the pattern and
+four are live on our server.
+
+**The same shape as the stoneskin stoffu, without the delay.** The stoffu arms a three-second timer and
+calls when it runs out, which is a window a group can act in; the lich calls immediately, which is not.
+One idiom, two fights, and retail expresses the whole difference by moving one action between two
+branches. Both use message `2006`, and a pin now asserts the two constants are the same number so a
+change to either moves both visibly.
+
+### A default that was right until it wasn't
+
+`PatternAi.Broadcast` excludes whatever the current branch has already spawned. That exists for RM-56c,
+which lays traps and immediately tells traps to leave, and the exclusion's own remarks call it what it
+is. **Spawn-then-point is the counter-example**: the lich's servant landed and stood there, which is
+what the first run of these pins measured.
+
+`Do.Broadcast(..., includeOwnSpawns: true)` is an **opt-in** rather than a flip. The exclusion is right
+for every pattern already relying on it, and a table that needs the other behaviour can say so in one
+word. A mutation flipping it back is caught.
+
+**Rule: a heuristic named after the case that motivated it will meet its counter-example.** This one
+survived a dozen encounters before the lich, and the fix is a parameter rather than a rewrite because
+both behaviours are real.
+
+### Numbers read rather than assumed, twice more
+
+The servant arrives holding **100** — not the corask clodworms' **101**. Those come through
+`AttackAfterSpawn` and gain one when they start swinging; a servant is pointed by a message and takes
+retail's `points_to_add` exactly. Both are pinned, and the comment on each says why it differs from the
+other.
+
+### Not translated
+
+The lich's self-cast, the servant's skill on engaging, and `percent_to_add` — retail's `switch_target`
+carries *a hundred points and a hundred percent*, and this port has no equivalent for the percentage.
+Recorded rather than approximated: on a fresh servant with an empty aggro list a percentage of nothing
+is nothing, so the two agree today and would diverge for a servant that had already been fighting.
+
+### Verification
+
+Full suite **2,102 passing** and 1 skipped; seven pins; **eight mutations, all caught** — after one that
+reported "not found" three times running turned out to be a broken anchor rather than a survivor, which
+is worth naming: **a mutation that cannot be applied is not evidence of anything.**

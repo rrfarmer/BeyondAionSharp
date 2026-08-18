@@ -355,11 +355,24 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     /// <summary>Broadcasts to the rest of the encounter, optionally naming who this NPC is fighting.</summary>
     /// <remarks>
-    /// Skips whatever the branch now running has already spawned. See <see cref="spawnedThisBranch"/>.
+    /// Skips whatever the branch now running has already spawned, by default. See
+    /// <see cref="spawnedThisBranch"/> for why, and <paramref name="includeOwnSpawns"/> for when that
+    /// default is wrong.
     /// </remarks>
-    public void Broadcast(int messageType, float range, bool aboutTarget)
+    /// <param name="includeOwnSpawns">
+    /// <b>Let the branch's own spawns hear it.</b> The default exclusion was written for RM-56c, which
+    /// lays traps and immediately tells traps to leave — there the message is plainly not meant for
+    /// what was just made. <b>It is a heuristic, and spawn-then-point is the counter-example</b>: a
+    /// lich that calls a servant and names its target in the same branch means that servant, and so
+    /// does a corask that drops clodworms and sets them on somebody.
+    /// <para>
+    /// Kept as an opt-in rather than flipped, because the exclusion is right for every pattern already
+    /// relying on it and the tables that need the other behaviour can say so in one word.
+    /// </para>
+    /// </param>
+    public void Broadcast(int messageType, float range, bool aboutTarget, bool includeOwnSpawns = false)
         => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range,
-            spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
+            includeOwnSpawns || spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
 
     /// <summary>Puts hate on the NPC that sent a message, and turns to face it.</summary>
     /// <remarks>

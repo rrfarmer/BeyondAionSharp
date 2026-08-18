@@ -453,8 +453,9 @@ public static class Do
     public static PatternAction Say(int messageId, int delayMillis = 0) => ai => ai.Say(messageId, delayMillis);
 
     /// <summary><c>broadcast_message</c> — tells nearby NPCs of this encounter something happened.</summary>
-    public static PatternAction Broadcast(int messageType, float range, bool aboutTarget = false)
-        => ai => ai.Broadcast(messageType, range, aboutTarget);
+    public static PatternAction Broadcast(int messageType, float range, bool aboutTarget = false,
+        bool includeOwnSpawns = false)
+        => ai => ai.Broadcast(messageType, range, aboutTarget, includeOwnSpawns);
 
     /// <summary>
     /// <c>use_skill(OBJI_SELF, SKILLI_INDEX_0)</c> where the NPC's list holds exactly one skill.
