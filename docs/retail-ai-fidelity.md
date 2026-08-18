@@ -20982,3 +20982,51 @@ and it should not be treated as evidence that the approach is sound.
 
 **Diagnosis only; the diagnostic test was written, read, and removed.** Full suite **2,110 passing**,
 1 skipped.
+
+## A fourth candidate eliminated, and the search space named
+
+The previous entry called instrumenting `SpawnEnemyServant` "one diagnostic, and the likeliest answer".
+**It took two, and both came back negative.**
+
+- **`SpawnEnemyServant` does nothing unusual.** It constructs a `Servant`, sets its object type, and calls
+  `SpawnEngine.BringIntoWorld` — the same route every other spawn takes at the end.
+- **The instance ids match.** `LiveNpcs()` reads the map's *main* instance while the servant is placed into
+  the *owner's* instance id, which looked like a real mismatch — the harness could have been spawning into
+  one instance and counting another. Measured: **owner instance 1, main instance 1.** Same place.
+
+### What the search space is now
+
+Four candidates eliminated across two passes: state gating, unconditional dispatch, the roll's range, and
+instance mismatch. **What remains is inside `new Servant(...)` or `BringIntoWorld` failing silently for
+this npc**, and the intermittency — one run in three placing a servant — is not explained by any of them.
+
+**That last fact is the one worth carrying forward.** Every candidate so far has been deterministic: if it
+were the cause, the pin would fail three times in three. **A cause that fires two times in three is a
+different kind of thing**, and looking for it among deterministic explanations is why two passes have come
+back empty.
+
+### Why this is being stopped for good rather than continued
+
+**The fix is shipped and correct**; only its pin is missing. Two passes and six commands have gone into a
+test-harness question while the encounter work queued behind it has not moved. **The cost is now clearly
+higher than the thing being bought**, and continuing would be sunk-cost reasoning dressed as thoroughness.
+
+Recorded as a known limitation: **`drakanmedic`'s summon cannot currently be driven through the harness,
+cause unknown, four candidates ruled out.**
+
+### Still to do
+
+- **Everything behind this**, which is where the next pass should go: `on_talked_by_user` and
+  `teleport_target_alias`; the empyrean lords' skill indices; walker route ids; Modor's clone; Yamennes'
+  golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+- `sematariux` and `king_consierd` need spawn entries — a data gap.
+- **The `drakanmedic` pin and the unexplained Laksyaka one**, if the harness question is ever picked up
+  again — but not before the list above.
+
+### Verification
+
+**Diagnosis only; both diagnostic tests were written, read, and removed.** Full suite **2,110 passing**,
+1 skipped.
