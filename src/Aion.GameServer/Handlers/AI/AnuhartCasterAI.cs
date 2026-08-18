@@ -151,11 +151,24 @@ public class AnuhartPetAI : PatternAi
     /// <summary>Retail's order: whoever my master named.</summary>
     public const int GoForThisOne = 3406;
 
+    /// <summary>Retail's <c>point_to_add</c> and <c>points_to_add</c> on both branches.</summary>
+    private const int Commit = 100;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
+        // TWO BRANCHES, one per npc state, which is how retail writes it -- see XD_EPet priorities 2
+        // and 1. This port had them folded into one, so a pet already fighting and a pet standing idle
+        // answered identically, and both answered with a single point where retail spends a hundred.
         OnMessage = Of(
-            Branch(2, "", [When.Message(GoForThisOne)],
-                Do.HateMessageTarget(SummonOrder.OnePoint))),
+            // Already in a fight: drop what it is doing and go.
+            Branch(2, "already fighting, so switch", [When.Message(GoForThisOne), When.Fighting],
+                Do.HateMessageTarget(Commit)),
+
+            // Standing idle: take the hate and pick its most hated, which with an empty list is the
+            // one just named. Retail's add_hate_point plus attack_most_hating, not a forced switch.
+            Branch(1, "idle, so join", [When.Message(GoForThisOne), When.Idle],
+                Do.HateMessageParam(Commit),
+                Do.SwitchTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED))),
     };
 
     public AnuhartPetAI(Npc owner)

@@ -15818,3 +15818,55 @@ kind".
 ### Verification
 
 Nine guards kept, four reverted. Full suite **2,041 passing**, 1 skipped.
+
+## The Anuhart pet answers twice, one branch per state
+
+The previous entry reverted four `state` rows and named what they needed: **our folded branch split in
+two, one per npc state.** Done for the first of them.
+
+`XD_EPet` answers `3406` from **two** branches:
+
+| priority | guard | action |
+|---|---|---|
+| 2 | `is_npc_state(NPC_STATE_ATTACK)` | cast, then `switch_target points_to_add=100` |
+| 1 | `is_npc_state(NPC_STATE_IDLE)` | `add_hate_point 100`, then `attack_most_hating` |
+
+**A pet already fighting is yanked off its target. A pet standing idle joins the fight of its own accord.**
+Retail spends a hundred points either way, and the two differ in whether the switch is forced.
+
+This port had one branch, no state guard, and **`SummonOrder.OnePoint` — a single point where retail
+spends a hundred.** So a pet mid-fight and a pet at rest behaved identically, and neither answer carried
+enough hate to hold.
+
+Both branches are now written as retail has them, and the fold is recorded in a comment above them so the
+next reader does not helpfully collapse them again.
+
+### Why the previous entry's revert was right
+
+Applying `When.Fighting` to the single folded branch silenced the encounter — the pets are idle when the
+order arrives, so the guard demanded a state they were not in. **The guard was correct and the branch was
+wrong**, which is a distinction the report cannot draw and the alignment check cannot see: both retail
+branches carry `hate`, so either one matches ours on actions alone.
+
+### Still to do
+
+- **The three remaining `state` rows** — the two Anuhart subordinates and the Vritra rearguard — each
+  needing the same treatment, and each needing its retail pair read rather than assumed to match this one.
+  The subordinates' rows asked for `IDLE`, so their pair is likely the mirror of the pet's, but that is a
+  guess until read.
+- The five coffin `message` rows, still unjudgeable until the scan follows local condition helpers.
+- The 14 remaining ready rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Noted, not fixed
+
+`LoginServerHostedServiceTests.StartAsync_LoadsRegistryAndBanListsBeforeOpeningSocketListeners` failed once
+in a full run and passes on its own, twice, and in the next full run. **It opens socket listeners**, so
+port contention against a parallel collection is the obvious suspect. Nothing to do with this change, and
+recorded here because a flake that is not written down gets rediscovered.
+
+### Verification
+
+One class split faithfully; payload corrected from 1 to 100. Full suite **2,041 passing**, 1 skipped.
