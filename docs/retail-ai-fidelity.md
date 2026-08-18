@@ -13897,3 +13897,74 @@ rejected before any code was written:
 
 Six pins and a **six-mutation sweep, all caught** after the symmetry was broken. Full suite **2,221
 passing**, 5 skipped.
+
+## The shulack relay: built, reverted, and written down
+
+The shulack mercenaries of the Danuar Sanctuary were the best-shaped thing left on the reachable list —
+**three numbers, eleven patterns, twenty-six npcs**, one instance. They were translated in full, and
+then **reverted unshipped**, because one pin would not go green and I did not understand why.
+
+Recording it because the reading is worth keeping and the blocker is worth naming.
+
+### What the family is
+
+**The first relay in this log.** Every other call here goes out once and is answered by whatever stood
+in the circle. A shulack watcher that hears `21253` takes its hundred points, **arms a one-second
+timer, and re-broadcasts the alarm itself** — so the alarm walks outward through the camp a second at
+a time. Retail flags that branch, so each watcher relays once, which is what stops the camp ringing
+forever.
+
+| rank | number | payload |
+|---|---|---|
+| officers (Sachirunerk, the two bodyguards) | `21251` | **1000** |
+| the alarm, which relays | `21253` | 100 |
+| rank and file (the cannon chief's) | `21271` | 100 |
+
+**The slaves answer the alarm too** — the dukaki peons and seized miners, tribe `IDF5U2_SHULACK_SLAVE`,
+the very thing the mercenaries are guarding, take a hundred points on whoever the alarm names.
+
+### The typo
+
+`IDF5_U2_ShulackM_Fi_party_65_Ae` is the watcher with one digit changed. Where the watcher relays
+`21253`, the assaulter relays **`21153`** — and `21153`'s only listener anywhere in the 5.8 files is
+`IDRuneWP_A3_Protection_65_n`, **a rune-weapon pattern from a different instance entirely**.
+
+So half the assaulter's relay goes nowhere: two npcs in the same camp, one passing the alarm on and one
+not, because somebody typed a 1 for a 2. **That is retail's behaviour and would have been kept**, not
+corrected — a typo is a quirk with a cause rather than a different kind of thing.
+
+### Why it was reverted
+
+The second hop could not be demonstrated. A caller's alarm reaches a watcher forty metres away
+(1000 → 1100 hate, confirmed); the relay branch **does** run a second later — proved by giving it a
+second, visible action, which landed; and the slave forty metres beyond the watcher takes **nothing**.
+
+What was ruled out:
+
+- **Not range.** Widening the relay to five hundred metres changed nothing.
+- **Not the timer.** The branch executes; its other action lands.
+- **Not broadcasting from a timer callback in general.** Guardian Vingeveu broadcasts from
+  `OnBattleTimer` and its pins measure the answer.
+- **Not the recipient's ignorance of the caller**, nor of the player: both were made mutually known.
+
+**What is left is the difference between this setup and Vingeveu's**, which is that the answering npc is
+seventy-seven metres from the player it is being told to hate rather than twenty. That is a guess, and
+guessing is how the last several entries' worst mistakes started.
+
+### The rule
+
+**A correct translation whose central mechanic cannot be observed is not shippable.** The flee actions
+in this log are built and unpinned, and that is fine, because *why* they cannot be pinned is understood
+and written down. Here it is not. Shipping twenty-six npcs whose relay might silently do nothing is the
+same failure as the thirty-seven missed siblings — correct-looking code, passing pins, and a mechanic
+nobody would notice was dead.
+
+### What the next person should do
+
+1. Reproduce with two npcs and no distance: caller, watcher and listener within ten metres of each
+   other and of the player. If the second hop lands, the blocker is distance and the question becomes
+   which layer imposes it.
+2. If it still does not land, instrument `NpcMessageBus.Nearby` inside a timer callback and compare its
+   audience against the same call made synchronously.
+3. The reading above is complete — patterns, ranges, payloads, the flag, and the typo — so only the
+   engine question is open.
