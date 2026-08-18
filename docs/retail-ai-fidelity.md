@@ -14084,3 +14084,61 @@ inert timer re-arm.
 Seven pins and a **six-mutation sweep, five caught**: the officers' payload, the relay deleted, the
 typo corrected, the cannon chief's reach, and the slaves listening on the wrong number. Full suite
 **2,233 passing**, 5 skipped.
+
+## The ice claw camp: two grades of the same animal
+
+`7006` and `7007` off the reachable list — **the brutal ice claw and mist mane camp of Beluslan, 22
+npcs.** It is the black claw lycans of Morheim, built early in this log, tuned up: the same hunters and
+tamers keeping the same taygas, with three differences worth the reading.
+
+| pattern | live | what it does |
+|---|---|---|
+| `nlycan_HeA` — ice claw hunter | 9 | calls `7006` on engaging; calls `7007` **below half, once** |
+| `NLycan_HeB` — brutal ice claw tamer | 4 | calls `7006` on engaging; again **below a third, once** |
+| `NLycan_Pet_A` — ruthless tayga | 4 | answers **both** calls with **500** |
+| `NLycan_Pet_B` — ruthless tayga | 5 | answers **only the first**, with **100** |
+
+### Two grades of the same creature
+
+**The two taygas carry the same name on the nameplate and answer five times apart.** One commits five
+hundred to either call; the other commits a hundred to the opening call and does not hear the second at
+all. Nothing a player can see distinguishes them, so which tayga a pull happens to bring decides whether
+the handler is reinforced or merely accompanied.
+
+**Five hundred is the largest answer to a field call outside Panesterra** — five times what the black
+claw taygas of Morheim give to the same shape of call.
+
+**And the thresholds differ by five points between the two callers**: the hunter's second call is below
+a half, the tamer's below a third. Pinned as its own fight, because a tamer at forty-five percent must
+be shown *not* calling.
+
+### The loop that is not built
+
+A ruthless tayga below half health broadcasts `7008` at ten metres **naming itself**, and its handler
+answers with a skill on it — a heal. So the camp's conversation runs both ways in retail and only one
+way here: **the handler's calls are translatable and the tayga's cry for help is not**, being a skill
+aimed by a self-named message whose payload would land on a friend and be dropped. The
+silent-conversations audit flags exactly this shape. The constant is kept so the hunter's listener still
+names the right number.
+
+**Also unbuilt: the tamer's timer-zero fallback.** Retail gives it a low-priority branch that re-arms
+the timer when the health guard fails; this port has only the guarded branch, so a tamer whose timer
+comes round above a third loses it. **The pin had to be written around that** — health set before the
+timer fires rather than after — and saying so in the pin is what stops the next person reading the
+workaround as a preference.
+
+### Verification
+
+Nine pins and a **seven-mutation sweep, all caught** once the tamer's threshold got its own fight: the
+two grades equalised, the lesser grade listening on the wrong number, the hunter's second call deleted
+and then made to repeat, the tamer's threshold, the reach, and the taygas ignoring a friend's killer.
+Full suite **2,242 passing**, 5 skipped.
+
+### And a third instance of one small thing
+
+Three pins in this file needed `InRange` rather than `Equal`, because **a fight running beside a
+friendly npc adds a support-aggro point of its own on the first attack tick**. That is the third entry
+in a row to trip on it — the tursin bigmouth, the Tiamat insurgents, and now here. It is written into
+each pin's comment rather than abstracted, because the number that matters is different every time:
+what a call is worth is five hundred, or three hundred, or one hundred and one, and one point is never
+any of them.
