@@ -16,6 +16,9 @@ different reasons and only one of them is ever going to be fixable in bulk:
            spawn data already carries walker routes for the npcs that need them.
   script   `set_condition_spawn_variable` and the instance-progression verbs, which belong to an
            instance handler rather than to an AI pattern.
+  charges  `is_skill_count_left`, a guard asking whether a skill has uses left. Ignoring it makes a
+           branch fire oftener than retail rather than never, so it is a fidelity caveat and not a
+           blocker -- reported, never subtracted.
 
 Payload that cannot run, cannot reach anybody, or does nothing at all is subtracted before ranking -- see
 `audit_timer_reach.py` for branches on a timer nothing arms, and `audit_message_reach.py` for
@@ -65,6 +68,11 @@ BLOCKED = {
     # "nothing blocked" until this was counted, and a third of what they do is the walk.
     "pathname": "path",
     "set_condition_spawn_variable": "script",
+    # A condition rather than an action, and one we cannot express: "this skill still has charges
+    # left". A branch guarded on it is not dead -- ignoring the guard makes it fire more often than
+    # retail rather than never -- so it is reported and not subtracted, exactly like `pathname`.
+    # 832 uses across 431 patterns, which is the largest guard-shaped gap in the dump.
+    "is_skill_count_left": "charges",
 }
 
 # An npc whose template names one of these has no bespoke class -- it is running a stock behaviour.

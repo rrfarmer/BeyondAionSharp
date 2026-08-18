@@ -10418,3 +10418,75 @@ of this fight; what is ported is its shape.
 
 Full suite **1,978 passing** and 1 skipped; five new pins run three times over; nine mutations, **eight
 caught** and the ninth explained above. Missing-AI 665 → **664**; translatable 306/992 → **305/991**.
+
+## Grand Chieftain Saendukal, and relays that look like they stack and do not
+
+`ND2_RnI` binds to Grand Chieftain Saendukal (211040) and his Beluslan twin (280338), both on plain
+`aggressive`. The fight is a **peel ladder and nothing else**: four health bands, each opening a relay,
+each relay peeling by a different rule.
+
+| | |
+|---|---|
+| crossing eighty | the **weakest** player, and again every forty seconds |
+| crossing sixty-five | the weakest again, on a **second** relay at thirty-five |
+| crossing fifty | the **second**-most-hated, on a third at thirty-six |
+| below twenty | the **third**-most-hated, on a fourth at thirty-five |
+
+**They look as though they stack and they do not.** Every relay but the last carries its band's own
+`is_hp_in_boundary` as well as its timer, so dropping out of a band silences its relay even though the
+clock is still going round. The Akairun of Medeus is the boss that genuinely stacks, and **one guard per
+relay branch is the whole difference between the two**. The first version of this class said "stack",
+and the first version of the pin was written to prove it; the guards said otherwise.
+
+**The last relay is the exception**: no health guard at all, so it runs to the end — and since the rung
+that opens it does not re-arm the heartbeat, it is also the only relay left by then.
+
+**Two bands peel the same way and are still two bands.** Eighty and sixty-five both take the weakest, on
+separate timers at forty and thirty-five seconds, so crossing sixty-five does not change what he does —
+it doubles how often he does it. A class that noticed the repetition and merged them would halve the
+pressure of the fight's second half.
+
+### Three survivors, all of them mutations that cannot change anything
+
+- **The turn on the pull.** Retail's `on_enter_attack_state` switches to a random attacker, and at that
+  moment the hate list holds only the player who pulled him — one candidate, so the switch picks it.
+  The same no-op recorded for Anuhart's enter-attack switch. Ported because retail wrote it, unpinned
+  because there is nothing to assert.
+- **Banding the last relay.** The pin runs entirely below twenty, so adding the band guard the mutation
+  proposes passes anyway. Showing otherwise needs him healed above the band with the relay still
+  running, which the harness cannot do — `SetExactPercent` is not a heal the fight knows about.
+- **Unbanding the eighty relay.** Once he is out of the band the relay's own branch never runs, so its
+  timer is never re-armed and there is nothing left to fire whether the guard is there or not.
+
+**Rule: a mutation that cannot change behaviour is not a gap in the pins.** Three of them here, each for
+a different reason, and each worth a line — the alternative is a reader assuming the pins are weak.
+
+### Two harness facts this fight made explicit
+
+- **A target set by a branch is sticky.** The relay below twenty re-selects the same player every turn,
+  and with nothing moving him in between every firing after the first is invisible. The pin nudges him
+  back onto the tank between firings and counts arrivals; without that it read zero and the relay looked
+  dead.
+- **`SetExactPercent` upwards is not a heal.** Healing him back over a band boundary stopped his relays,
+  which is the harness rather than the mechanic. Recorded so the next pin does not build on it.
+
+### Not translated
+
+Thirty-one skill indices and five shouts — he casts a great deal and none of it can be said. The `1001`
+broadcast on engaging is sent; his `on_enter_idle_state` flag housekeeping does nothing observable.
+
+### And a new blocked bucket: `is_skill_count_left`
+
+Reading the mumu farmer patterns alongside this one turned up a guard we cannot express: **"does this
+skill still have charges", 832 uses across 431 patterns, with 2,767 live unported npcs behind them.**
+It is now reported in the ranking as `charges`.
+
+It is a *caveat* rather than a blocker, and the distinction matters: ignoring the guard makes a branch
+fire **more** often than retail rather than never, so the payload behind it is not dead and is not
+subtracted. That is the same treatment `pathname` gets, and for the same reason — one is an attribute
+and one is a condition, and neither stops the branch.
+
+### Verification
+
+Full suite **1,984 passing** and 1 skipped; six new pins run three times over; nine mutations, six
+caught and three explained above. Missing-AI 664 → **663**; translatable 305/991 → **304/990**.
