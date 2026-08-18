@@ -35,6 +35,43 @@ public sealed class ResearcherTeselikAiTests
 	/// <summary>The first branch point of the healthy chain: 6s + 8 + 8 + 8, with a second of slack.</summary>
 	private const int FirstBranchPoint = 31;
 
+	/// <summary>
+	/// <b>A hand that self-destructs still reports in.</b> Retail ends that branch with a suicide
+	/// skill, which kills the hand and runs its <c>on_die</c> — so the boss hears <c>HandDied</c>
+	/// whether the players killed it or it blew itself up.
+	/// </summary>
+	/// <remarks>
+	/// <b>It did not, and no audit of missing pieces could have found that.</b> Our npc_skills does not
+	/// carry the suicide skill, so the branch was written as a despawn — and a despawn is not a death,
+	/// so the notice was silently lost on that path. Only a hand killed by players ever reported in.
+	/// Found by asking the reverse question: what do we do that retail does not.
+	/// <para>
+	/// Observed through a throwaway listener rather than the boss, whose own answer is a counter
+	/// decrement that clamps at zero and shows nothing until its hands have been counted up first.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AHandThatSelfDestructsStillReportsIn()
+	{
+		BossAiHarness harness = BossAiHarness.For(SauroSupplyBase).WithWorldSize(2048)
+			.WithAi(typeof(ResearcherTeselikAI), typeof(ShebanMysticalTyrhundAI),
+				typeof(HandDeathListenerProbeAI), typeof(AggressiveNpcAI))
+			.Build();
+		using BossAiHarness _h = harness;
+
+		Npc boss = harness.Spawn(Teselik, 300f, 300f, 200f);
+		Npc hand = harness.SpawnWithAi(Hand, "sheban_mystical_tyrhund", 303f, 300f, 200f);
+		Npc listener = harness.SpawnWithAi(Hand, "hand_death_probe", 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(hand, listener);
+
+		Assert.Contains(listener, harness.LiveNpcs());
+
+		((Aion.GameServer.Ai.INpcMessageListener)hand.GetAi())
+			.OnNpcMessage(boss, ResearcherTeselikAI.SelfDestructOrder, null);
+
+		Assert.DoesNotContain(listener, harness.LiveNpcs());
+	}
+
 	private static (BossAiHarness, Npc, Player) Engaged(int hpPercent = 100)
 	{
 		BossAiHarness harness = BossAiHarness.For(SauroSupplyBase).WithWorldSize(2048)
@@ -319,4 +356,25 @@ public sealed class ResearcherTeselikAiTests
 		Assert.NotEmpty(cast);
 		Assert.All(cast, c => Assert.Equal(16791, c));
 	}
+}
+
+/// <summary>Despawns when it hears a hand report in, so the notice is observable.</summary>
+[Aion.GameServer.Ai.AIName("hand_death_probe")]
+public class HandDeathListenerProbeAI : Aion.GameServer.Ai.Pattern.PatternAi
+{
+	private static readonly Aion.GameServer.Ai.Pattern.AiPattern Pattern_ =
+		new Aion.GameServer.Ai.Pattern.AiPattern
+		{
+			OnMessage = Aion.GameServer.Ai.Pattern.AiPattern.Of(
+				Aion.GameServer.Ai.Pattern.AiPattern.Branch(1, "a hand died",
+					[Aion.GameServer.Ai.Pattern.When.Message(ResearcherTeselikAI.HandDied)],
+					Aion.GameServer.Ai.Pattern.Do.DespawnSelf())),
+		};
+
+	public HandDeathListenerProbeAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override Aion.GameServer.Ai.Pattern.AiPattern Pattern => Pattern_;
 }

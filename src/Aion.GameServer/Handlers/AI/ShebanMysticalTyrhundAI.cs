@@ -61,8 +61,16 @@ public class ShebanMysticalTyrhundAI : PatternAi
 
         // The boss's order. The zone stays where the hand was standing; the hand goes.
         OnMessage = Of(
+            // Retail is a spawn and then a suicide SKILL, which kills the hand -- so its on_die branch
+            // runs and the boss is told. Our npc_skills does not carry that skill, and DespawnSelf
+            // removes the hand without killing it, so the death notice was silently lost: a
+            // self-destructing hand never reported in, and only a hand killed by players did. The
+            // broadcast is repeated here to put the chain back. It is a substitute for the skill,
+            // not a translation of an action retail writes on this branch -- see
+            // docs/retail-ai-fidelity.md.
             Branch(5, "self-destruct", [When.Message(ResearcherTeselikAI.SelfDestructOrder)],
                 Do.SpawnNear(BurnZone, Untracked, count: 1, range: 0f),
+                Do.Broadcast(ResearcherTeselikAI.HandDied, MessageRange),
                 Do.DespawnSelf())),
 
         OnDie = Of(

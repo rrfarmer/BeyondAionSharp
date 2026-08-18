@@ -15179,3 +15179,76 @@ premise for as long as nobody read the pattern it claimed to translate.
 
 Three branches corrected, two pins restated, one claim withdrawn as unstageable. Full suite
 **2,039 passing**, 1 skipped.
+
+## The audit that asks the other question
+
+Every tool in `tools/client-extract` asks some version of **"what does retail have that we do not"** —
+missing adds, missing patterns, dead shouts, silent conversations, unreachable skills. The previous entry
+found two bugs that no version of that question can reach, both by accident, and wrote down why:
+**an invented behaviour arrives with a pin that agrees with it.**
+
+`audit_invented_actions.py` asks the reverse. For every `on_message` branch this port wrote, it compares
+the *kinds* of action in our branch against the kinds in the retail branches answering the same number,
+scoped to the patterns the class documents.
+
+### What it found, and what it taught about itself
+
+**First run: five "invented".** Four were the tool's fault. Our `Do.SwitchTarget` translates retail's
+`switch_target_by_attacker_indicator` — pick a new target by indicator — and the mapping had filed that
+retail op with `switch_target`, which names an object instead. Two ops with similar names and different
+jobs, and every class using one looked like it had invented the other.
+
+**Corrected: one.** Which is the right kind of number for this question — the tool exists to find rare
+things, and a tool that reports five when one is real trains you to ignore it.
+
+### The one that was real
+
+`ShebanMysticalTyrhundAI` answers Teselik's self-destruct order at `22261`. Retail:
+
+```
+> spawn      SPAWN_ID_NONE  BIDVritra_Base_Suicide_Mon  at my point
+> use_skill  target=OBJI_SELF  skill=SKILLI_INDEX_2
+```
+
+A spawn, then **a suicide skill — which kills the hand**, and a killed hand runs its `on_die`, whose one
+branch tells the boss `HandDied`. Our `npc_skills` does not carry that skill, so the branch was written
+as `Do.DespawnSelf()`.
+
+**A despawn is not a death.** `HandleDespawned` does not evaluate `OnDie`, so a hand that blew itself up
+never reported in, and the boss's live-hand count only ever came down for hands the players killed. The
+encounter had two ways to lose a hand and only counted one of them.
+
+The branch now sends `HandDied` itself before despawning, labelled in the source as **a substitute for
+the skill rather than a translation of an action retail writes on that branch** — because that is what it
+is, and the next reader deserves to know which of the two they are looking at. Pinned through a throwaway
+listener that despawns on hearing the notice; the boss's own answer is a counter decrement that clamps at
+zero and shows nothing until its hands have been counted up first. **The pin fails when the notice is
+removed.**
+
+### The `dropped` column, for contrast
+
+82 answers drop a kind retail has. Almost all are `skill`, already recorded throughout this log, and
+`attack` — retail's `attack_most_hating` following a hate action, where our hate action already sets the
+target. **Neither is news, and that is the point**: the tool's value is entirely in the short column.
+
+### Still to do
+
+- **Extend it past `on_message`.** Message numbers give a reliable key between our branches and retail's;
+  `on_attacked`, `on_battle_timer` and the rest do not, so 15 branches were skipped here and every
+  non-message handler in the port is unchecked. **That is the large majority of what we have written.**
+- **The 14 two-action-idiom classes**, unchanged: a reading job now that their patterns are named.
+- **The silikor skill**, and the other answers that are really skills.
+- **The illusion's most-hated claim**, which needs a harness that can hold an illusion in a fight.
+- The Ophidan chain's second hop.
+
+### The rule
+
+**A tool that finds nothing is not the same as a tool that is not needed.** This one found a single bug
+across 99 branches, and it is a bug that had a passing pin, a plausible remark, and no chance of turning
+up in any other audit here. The first version's four false positives were worth fixing precisely so the
+one true positive is legible.
+
+### Verification
+
+One branch corrected, one pin with its mutation checked, one new audit. Full suite **2,040 passing**,
+1 skipped.
