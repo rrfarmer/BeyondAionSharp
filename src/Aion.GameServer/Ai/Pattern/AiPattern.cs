@@ -322,6 +322,10 @@ public static class When
     public static PatternCondition AttackerClass(params PlayerClass[] classes)
         => ai => ai.LastAttacker is Player hitter && classes.Contains(hitter.GetPlayerClass());
 
+    /// <summary><c>is_race from=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternCondition TargetRace(params Race[] races)
+        => ai => ai.CurrentTarget is Creature target && races.Contains(target.GetRace());
+
     /// <summary><c>is_race from=OBJI_CASTER</c>.</summary>
     public static PatternCondition CasterRace(params Race[] races)
         => ai => ai.LastCaster is Creature caster && races.Contains(caster.GetRace());
@@ -485,6 +489,9 @@ public static class Do
 
     /// <summary><c>switch_target target=OBJI_ATTACKER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateAttacker(int hate) => ai => ai.HateAttacker(hate);
+
+    /// <summary><c>add_hate_point target=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternAction HateTarget(int hate) => ai => ai.HateTarget(hate);
 
     /// <summary><c>switch_target target=OBJI_CASTER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateCaster(int hate) => ai => ai.HateCaster(hate);

@@ -12242,3 +12242,55 @@ removing one.
 
 Tooling and documentation only; no behaviour changed. Full suite **2,096 passing** and 1 skipped,
 unchanged.
+
+## The fortress killers: built, unverifiable, reverted
+
+Worked the stranded-sender backlog now that the previous entry established it is almost entirely real.
+The best row was `25307` — the fortress killers of Cygnea and Enshar (234106, 234108), the siege
+siblings of the village killers, both live and both on stock `aggressive`.
+
+The mechanic reads cleanly and is worth writing down for whoever picks it up:
+
+* **`on_enter_attack_state`** — if the current target is a garrison chief of either faction, **a hundred
+  million** hate points on it. Five million said "nothing a player does will peel this off"; a hundred
+  million says the same thing about a siege.
+* **`on_message 25307`** — the same hundred million on the **message sender**. A guard boss shouting
+  "me, here" and pulling its killers onto *itself* rather than onto a player. **That is the opposite
+  direction from every call this log has translated**, and it is what makes a fortress fight a convoy
+  rather than a mob.
+
+Both were built, and the class is **reverted** rather than shipped.
+
+### Why it could not be verified
+
+Four of six pins read zero. The tribes explain it: **234106 is `LDF5_V_KILLER_D` and race ASMODIANS;
+234108 is `LDF5_V_KILLER_L` and race ELYOS** — the fortress killers are faction-sided npcs, and the
+garrison npc the pins reached for was `219641 furious dux`, tribe `PROTECTGUARD_LIGHT`, a **Beluslan**
+guard rather than a fortress garrison. Whether `AddHate` refused because the tribe table has no hostile
+relation for that pair, or because the pair is genuinely the wrong one, cannot be told apart without
+the right npc.
+
+**Picking a garrison on a guess is exactly what the zombie-trap entry warned against** — a pin that
+measures the tribe table instead of the mechanic. So the class went back rather than shipping four
+unverified branches behind two passing ones.
+
+### The next step, precisely
+
+Find the npcs the fortress guard bosses actually protect — the `LDF5_Fortress_*GuardBoss_*` patterns
+name them, and none of those six npcs is in our spawn data either — and check
+`TRIBE_RELATIONS_DATA.IsHostileRelation` for `LDF5_V_KILLER_D` against that garrison's tribe. If it is
+hostile, the class as written is correct and the pins simply had the wrong prop. If it is not, the
+question is the same one the village killers raised and answered: **suspect the translation first, then
+the table.**
+
+Recorded with the class's full reading above so the next attempt starts from the mechanic rather than
+from the pattern file.
+
+### Kept from the turn
+
+`When.TargetRace` and `Do.HateTarget`, which are correct, general, and cost nothing to leave in place —
+the fortress killers are not the only pattern that guards on the current target's race.
+
+### Verification
+
+Full suite **2,096 passing** and 1 skipped, unchanged. No behaviour shipped.

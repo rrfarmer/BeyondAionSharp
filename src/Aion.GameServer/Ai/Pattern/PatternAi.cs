@@ -452,6 +452,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private bool inOnSpelled;
 
+    /// <summary>Puts hate on whoever this NPC is already holding.</summary>
+    public void HateTarget(int hate)
+    {
+        if (CurrentTarget is not Creature target || target.IsDead())
+            return;
+
+        GetAggroList().AddHate(target, hate);
+    }
+
     /// <summary>Puts hate on whoever just cast on this NPC and turns to face them.</summary>
     public void HateCaster(int hate)
     {
