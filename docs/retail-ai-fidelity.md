@@ -21491,3 +21491,64 @@ end of a pass is what produced the nineteen-edit batch this log had to revert.
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## The largest buildable gap does not exist
+
+The previous entry called Tiamat's dying rotation "the largest unblocked gap in the port", said
+`TiamatDyingRotationAI` had four branches against retail's 53, and that **none of the telegraphs exist**.
+It planned to start this pass by porting 205 burrow markers.
+
+**They were already there.** Every one of them.
+
+```
+retail  IDTiamat_BurrowingWorm_BurrowFX   205        ours  new Placement(283057   205
+retail  IDTiamat_Tiamat_CyclopsCrack       16        ours  new Placement(283139    16
+```
+
+The coordinates match to the decimal — the three sweep lines I extracted as evidence of what was missing
+(459.4/510.2, 459.5/514.5, 461.6/517.5) are the first three entries of `Thorn_L`, `Thorn_M` and `Thorn_R`
+in `TiamatRotation.cs`, which holds **90 steps**.
+
+### Why the count said four
+
+`TiamatDyingRotationAI` **builds its branches in a loop** from that table:
+
+```csharp
+branches.Add(Branch(priority--, step.Label, guards, actions.ToArray()));
+```
+
+So a text search for `Branch(` finds one call site and reports four branches for a class that generates
+ninety. **Eighth instance of the same error in this log** — a text measure reading one of the several ways
+this codebase expresses things, after the six false-positive modes in the guard report and the
+Java-parity miscount in the very scan that produced this ranking.
+
+### What it nearly cost
+
+**This was one pass away from re-porting 205 coordinates that already existed**, into a class that already
+had them, guided by a table of "gaps" that has now been wrong twice in three entries — `sematariux` at the
+top of the first version, this at the top of the second.
+
+The saving grace was the rule this log wrote after the guard report: **before working a row, open the file
+and look.** It was followed here and it caught this in four commands. **It has now been right nine times
+out of nine.**
+
+### The ranked table should be treated as retired
+
+`gatekeeper_flox`, `hyperion_defence`, `kaliga_the_unjust`, `prectaz`, `idean_obscura`,
+`debilkarim_the_maker` — the rest of that ranking — are **all measured the same way and all unverified.**
+Any of them may be a loop-built class too. **The number is not evidence of anything until the file is
+open.**
+
+### Still to do
+
+- **Verify the remaining six ranked classes by reading**, not by counting — expect some to be already
+  built.
+- **Walker route ids**, still blocking four encounters, and still the only item whose blocker has been
+  demonstrated rather than inferred.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; Modor's clone.
+- The guard report's mixed and misaligned rows, unverified; `sematariux` and `king_consierd` need spawn
+  entries; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
