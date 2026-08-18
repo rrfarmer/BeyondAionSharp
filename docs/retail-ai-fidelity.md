@@ -14024,3 +14024,63 @@ first.** It is cheaper than debugging the encounter and it survives the encounte
 ### Verification
 
 Five pins, all green. Full suite **2,226 passing**, 5 skipped.
+
+## The shulack relay, shipped — and the bug was in the test all along
+
+Two entries ago the shulack mercenaries were reverted with their relay undemonstrated. The last entry
+pinned the relay primitive and ruled the engine out. This entry finishes it: **eleven patterns,
+twenty-six npcs, shipped**, and the cause of the original failure found.
+
+### The cause
+
+**A probe used `Spawn` instead of `SpawnWithAi`.** `Spawn` reads the AI name off the npc template —
+and by the time that probe ran, the template repoint had been rolled back with the rest of the revert.
+So the "watcher" under test was a **stock aggressive npc that had never heard of the pattern**, and it
+sat there not relaying, exactly as a broken class would.
+
+**Two entries of investigation, and the class was right the whole time.** The engine was exonerated
+correctly, the reading was correct, the ranges and payloads were correct — and the thing under test was
+not the thing I thought I was testing.
+
+**The rule: when a pin's subject is chosen by data rather than by name, the data is part of the pin.**
+Every npc in the new tests is spawned with its class named explicitly, which cannot go wrong that way.
+Cheap, and it would have saved two entries.
+
+### What shipped
+
+| rank | number | payload |
+|---|---|---|
+| officers — Sachirunerk and the two bodyguards | `21251` | **1000** |
+| the alarm, which **relays** | `21253` | 100 |
+| rank and file — the cannon chief's | `21271` | 100 |
+
+**The first relay in this log.** A watcher that hears the alarm takes its hundred, arms a one-second
+timer, and re-broadcasts — so the alarm walks outward through the camp a second at a time and reaches
+npcs the caller has never seen. Pinned directly: a slave outside the caller's known list is pulled in
+three seconds later.
+
+**And the slaves answer the alarm** — the dukaki peons and seized miners the mercenaries are guarding
+take a hundred points on whoever the alarm names.
+
+### The typo, kept
+
+`IDF5_U2_ShulackM_Fi_party_65_Ae` is the watcher with one digit changed: it relays **`21153`** where the
+watcher relays `21253`, and `21153`'s only listener anywhere in the 5.8 files is
+`IDRuneWP_A3_Protection_65_n` — a rune-weapon pattern from a different instance. **Half the assaulter's
+relay goes nowhere.** Two npcs in the same camp, one passing the alarm on and one not, because somebody
+typed a 1 for a 2. Kept exactly as written and pinned as such: the assaulter takes its hundred like the
+watcher, and nothing beyond it hears a thing.
+
+### One guard reported rather than covered
+
+**Deleting the relay's `FirstTime` fails nothing.** A second caller engaging beside a watcher already
+in combat does not produce a second relay even unflagged, in every arrangement tried — so the guard has
+nothing to refuse and no pin can falsify it. The pin holds the observable claim (one alarm, one relay)
+and the flag stays because retail wrote it. Same treatment as the friend-killed `finally` and Masto's
+inert timer re-arm.
+
+### Verification
+
+Seven pins and a **six-mutation sweep, five caught**: the officers' payload, the relay deleted, the
+typo corrected, the cannon chief's reach, and the slaves listening on the wrong number. Full suite
+**2,233 passing**, 5 skipped.
