@@ -10640,3 +10640,62 @@ Full suite **1,995 passing** and 1 skipped; four new pins run three times over; 
 caught**. Missing-AI unchanged at **662** — these twenty-two are adds rather than fights, so the
 missing-AI audit never counted them — and the stranded-listener audit falls from 116 patterns / 191 npcs
 to **104 / 169**.
+
+## Ophidan Bridge's defence posts: two calls, two weights
+
+The second group the sender audit turned up. Four **defence post generators** (230413–230416) — flags
+that take one point of damage a hit and never fight back — shout twice while they are being taken, and
+eight guards across five patterns answer:
+
+| | |
+|---|---|
+| as the fight starts | `21212` at **thirty-five** metres: a hundred hate on the player, and go |
+| on every blow after | `21215` at **fifty** metres: **turn** towards whoever landed it, and nothing more |
+
+**Two calls with two weights, and the difference is the mechanic.** The first commits the post to
+whoever pulled the flag; the second only points. A raid splitting damage between the flag and its
+guards is being redirected by the second and held by the first, and one number for both would lose it.
+
+**The flag keeps the Java class it had.** `onedmg_passive` is shared by a hundred and twelve npcs, so
+the calls could not go there; `DefencePostFlagAI` extends it and adds nothing but the broadcasts, so the
+one-damage rule and the stat suppression beside it are untouched.
+
+**`CombatAlarm` was the wrong shape here and that is worth saying**, because it has been the right one
+three times running. It names the owner's *target* as the message parameter, and a flag that never
+fights has none — retail names the attacker on both calls. The latch is a bool and the parameter is the
+creature that landed the blow.
+
+### A pin that measured the aggro list's reach instead of retail's range
+
+The pin for "the two calls carry different distances" put its far guard forty-five metres from the flag
+on the far side — and forty-five metres from the flag is **fifty-four from the player**. A guard that
+far from a player cannot take hate on them at all: `AggroList.IsAware` wants the owner to know the
+creature, and knowing is a matter of distance. So the guard read zero hate whether the commitment
+reached it or not, and the mutation that widens the commitment to fifty metres survived.
+
+Moved to forty-two metres from the flag and **two** from the player, it measures what it says.
+
+**Rule: a pin on a broadcast's range must put its listener where the listener can act.** Range decides
+delivery; the aggro list decides whether anything happens. Two mechanisms, and a pin that conflates
+them reads the smaller of the two — which is the fourth distinct way this log has now recorded a pin
+measuring something other than the mechanic.
+
+This is the same wall the withdrawn `Notice` helper ran into two entries ago, seen from the other side:
+there it looked like an awareness bug worth fixing, and here it is plainly the aggro list working as
+designed. The fix then was to delete the helper; the fix now is to place the pin properly.
+
+### Not translated
+
+Everything else the five guard patterns do; the flag's five `set_condition_spawn_variable` — the
+bridge's own progression, which belongs to an instance handler; and message `21214`, a bridge watcher
+that sees a player and points the posts at them, whose npc our data never spawns.
+
+**Two of the ten listeners keep their own class.** The defence post and guard post rearguards (233477,
+233487) run `vritra_rearguard` and answer neither call — recorded rather than overwritten, the same
+call made for the twenty-two abyss guards that already had classes.
+
+### Verification
+
+Full suite **2,001 passing** and 1 skipped; six new pins run three times over; **nine mutations, all
+caught**. Missing-AI 662 → **654**; translatable 303/987 → **299/979**; stranded listeners 104 patterns
+/ 169 npcs → **92 / 143**.
