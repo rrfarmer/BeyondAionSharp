@@ -13770,3 +13770,61 @@ hate, and any of them could have been written against a baseline that was never 
 Seven pins and a **seven-mutation sweep, all caught**: the miners' extra point, the workers answering
 like miners, the health threshold, the shared flag, the tursin's reach, the bigmouth's call repeating,
 and the bigmouth never calling. Full suite **2,207 passing**, 5 skipped.
+
+## The camps that never stop calling
+
+Two rows off the reachable list, both the same shape and both new in one respect: **`2001`, the
+kerubiel bandits and their fighters, and `2005`, the kerubian hunters and their garks. Sixty-six
+npcs in Verteron and Eltnen.**
+
+| pattern | live | what it does |
+|---|---|---|
+| `ND2_AnE` — kerubiel bandit | 9 | below half health, **on every blow**, names its target at 15m |
+| `ND2_AnL` — kerubiel fighter | 20 | answers with **101** |
+| `ND2_AnJ` — kerubian hunter | 12 | below half health, **on every blow**, at 20m |
+| `ND2_AnJ_BR` — gark | 25 | answers with **200** |
+
+### The first callers in this log that do not call once
+
+**Retail puts no flag var on either branch of either caller.** Everything before this — the klaws, the
+lycans, the tursin loudmouths, the fortress guards — announces once and then goes quiet. A kerubiel
+bandit under half health keeps naming the same player for as long as the fight lasts.
+
+**That is the mechanic, not an oversight.** A camp with a once-only caller answers a call; a camp with
+these answers *continuously*, so every fighter that wanders into earshot is pulled in as it arrives
+rather than only those standing there when the threshold was crossed. Pinned directly: three blows
+below half health put three payloads on the raider.
+
+**And the garks hit twice as hard as the fighters** — retail gives a gark an `add_hate_point` of a
+hundred where a kerubiel fighter gets one, so 200 against 101. Two camps, the same call shape, the pets
+committed twice as far as the soldiers. Twenty-five garks to twelve hunters makes that arithmetic
+matter.
+
+### The third time the tribe table has decided a pin
+
+Every hunter-side assertion read **zero** on the first run. Not the branch: `ND2_AnJ_BR`'s membership is
+mixed — fourteen `TAURIC`, seven `MONSTER`, three aggressive and **one `GENERAL_DARK`** — and the
+`GENERAL_DARK` one sorts first, so it was what the pin picked to stand for the pattern. An
+Asmodian-side npc is not the enemy of an Elyos raider by that tribe, and `AggroList.AddHate` drops hate
+aimed at a non-enemy.
+
+After the fortress guards and the Panesterra slayers, that is three. **Stated as a habit rather than an
+anecdote: when a pin over a broadcast reads zero, check the answerer's tribe before checking the
+branch.** The npc chosen to stand for a pattern has to be one whose tribe can hate a player, and the
+first id in a pattern's membership is not chosen for that.
+
+**It is also a fact about the pattern**, not only about the pin: one npc in twenty-five on `ND2_AnJ_BR`
+will never answer anything, because its tribe cannot hold the hate. Retail presumably has other rules;
+here it is simply inert, and worth knowing before somebody reports it as a bug.
+
+### Not built
+
+- The skills on all four patterns — two per branch on the bandits, one on the hunters, one on each
+  answer.
+- `percent_to_add=0` on both answers, which does nothing under any reading.
+
+### Verification
+
+Eight pins and a **six-mutation sweep, all caught**: a flag added to the bandit's call, the two payloads
+swapped in both directions, the camps sharing a number, the hunter's reach shortened, and the
+half-health guard dropped. Full suite **2,215 passing**, 5 skipped.
