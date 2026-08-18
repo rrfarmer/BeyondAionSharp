@@ -18444,3 +18444,45 @@ visibility. **A timer seam is the third**, and it would settle this row and Mast
 ### Verification
 
 One guard applied, mutation run and **not caught**. Full suite **2,050 passing**, 1 skipped.
+
+## The third seam: timer arms and fires are countable
+
+`PatternAi.TimerArmCount(slot)` and `TimerFireCount(slot)` count how often a battle-timer slot has been
+armed and how often it has fired. **Diagnostics only**, on the same footing as `RollOverride` and
+`TargetPickOverride`.
+
+Two questions needed it, and neither could be answered any other way:
+
+- **Kingspin's accelerator windows.** Retail's `set_flag_var` makes them open once per fight; without it
+  every cry re-arms timers 3 and 4. The difference is **one arming against three** — one shortened cycle
+  against three — which a throw count over any realistic watch cannot separate.
+- **Masto's band cadence.** The band's only action is a random target switch, so a fire is invisible
+  whenever the dice repeat. **`TimerFireCount` sees the fire regardless of what it does.**
+
+That is three seams now, each added because a thread stalled on visibility rather than on behaviour:
+randomness in a guard, randomness in a target pick, and now the timer itself. **The pattern is that this
+port's mechanics are observable through their effects and its bugs are usually in their timing**, and
+effects are what the suite was built to watch.
+
+### The pin is not in
+
+Written, and the file it went into was mangled by brace surgery: the method landed outside the test class,
+the build broke, and the test file was reverted. **The seam is committed and the pin is not.**
+
+That is a poor trade for a pass and it is worth being plain about: the instrument that two entries called
+for exists, and the two pins it was built for still do not. **Writing them is now mechanical** — arm the
+message, count `TimerArmCount(3)`, expect one — and it is the first thing to do.
+
+### Still to do
+
+- **The two pins**, now unblocked: Kingspin's window count, Masto's band fires.
+- Padmarashka's two `unset_flag_var` rows; Middle Boss Fire's timer flag.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One engine seam, no pins. Full suite **2,050 passing**, 1 skipped.

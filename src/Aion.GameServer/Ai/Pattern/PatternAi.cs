@@ -44,6 +44,31 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     private readonly bool[] flags = new bool[FlagSlots];
     private readonly long[] timerDue = new long[TimerSlots];
 
+    /// <summary>How many times each slot has been armed and has fired. **Diagnostics only.**</summary>
+    /// <remarks>
+    /// Two encounters could not be pinned for want of this: Kingspin's accelerator windows, which open
+    /// once per fight in retail and once per cry without their guard, and Masto's band cadence, whose
+    /// only action is a random target switch. <b>Both are questions about a timer rather than about what
+    /// the timer did</b>, so neither the roll seam nor the target seam reaches them.
+    /// </remarks>
+    private readonly int[] timerArms = new int[TimerSlots];
+
+    private readonly int[] timerFires = new int[TimerSlots];
+
+    /// <summary>How many times a slot has been armed. For tests.</summary>
+    public int TimerArmCount(int index)
+    {
+        lock (gate)
+            return timerArms[index];
+    }
+
+    /// <summary>How many times a slot has fired. For tests.</summary>
+    public int TimerFireCount(int index)
+    {
+        lock (gate)
+            return timerFires[index];
+    }
+
     /// <summary>Retail names four: <c>INTVARI_FIRST</c> through <c>INTVARI_FOURTH</c>.</summary>
     private const int CounterSlots = 4;
 
@@ -737,6 +762,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             if (timers[index] != null && !timers[index]!.IsDone() && timerDue[index] <= dueAt)
                 return;
             timerDue[index] = dueAt;
+            timerArms[index]++;
             CancelSlot(index);
             timers[index] = ThreadPoolManager.GetInstance().Schedule(_ =>
             {
@@ -750,6 +776,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         lock (gate)
         {
+            timerFires[index]++;
             timers[index] = null;
             if (IsDead() || !IsInState(AIState.FIGHT))
                 return;
