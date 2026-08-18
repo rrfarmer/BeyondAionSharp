@@ -22329,3 +22329,51 @@ report has produced six kinds of false positive and no true one.
 ### Verification
 
 Tool and data only. Both audits re-run and agree; full suite **2,117 passing**, 1 skipped.
+
+## The two new guard rows, read: no new work
+
+The merged binding moved the dropped-guard report from 11 ready to 13. **Read before trusted, per this
+log's own rule, and both are more instances of a known artifact.**
+
+The thirteen are the same four families as the eleven:
+
+| rows | what they are |
+|---|---|
+| 6 | `flag COSMETIC` — flags nothing reads |
+| 5 | the suspicious coffin, guarded through its `Hears(slot)` helper |
+| 1 | Padmarashka's `EPSILON_2`, recorded as deliberately not applied |
+| 1 | `silikor_guard`, whose class holds two pattern tables the parser cannot both see |
+
+**What changed is only which coffins appear.** The rows now quote message ids `6602/6603/6604` where they
+previously quoted `6605/6606/6607` — the merge bound more coffin npcs, so a different half of the set
+surfaces. **Same false positive, different instances.**
+
+### And the coffins are complete
+
+Worth checking rather than assuming, since a new binding could have surfaced a coffin the class does not
+know: **six npcs carry `suspicious_coffin`, and `ByCoffin` holds exactly those six**, three on each message
+triple. Nothing missing.
+
+### The queued engine item is smaller than it looked
+
+`on_idle_timer` was queued as needed for Tiamat's rush cadence. **The pattern engine already has it** —
+`AiPattern.OnIdleTimer`, evaluated in `PatternAi`. The gap is only that `TiamatDragonAI` is a Java-parity
+class, so the item is not "build an idle timer" but "convert that class to a pattern table", which is a
+different and larger job with its own risk.
+
+**Recorded rather than started.** The rush ships on an approximated trigger with that stated in the source,
+and converting a working class to change one cadence is the kind of trade this log has twice got wrong by
+starting it late in a pass.
+
+### Still to do
+
+- **Convert `TiamatDragonAI` to a pattern table**, if the rush cadence is worth it — the only remaining
+  item on that encounter.
+- The 12,000 templates still unbound; the empyrean lords' skill indices; Modor's clone; `sematariux` and
+  `king_consierd` spawn entries; the `drakanmedic` harness question.
+- **The dropped-guard report has now produced 13 rows and no true finding across seven readings.** It is
+  worth deleting rather than re-reading.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,117 passing**, 1 skipped.
