@@ -20822,3 +20822,58 @@ whole lifetime pass where the bug was an add that was *too short-lived* rather t
 
 Build clean. All three pins fail against the original two-line bug; one fails with the lifetime removed.
 Full suite **2,108 passing**, 1 skipped.
+
+## The exception to "one add, one clock"
+
+Three passes ago this log concluded that a lifetime belongs in the add, after four summoner-side numbers
+turned out to be dead code duplicating the add's own. **Ahserion's troopers are where that rule breaks.**
+
+Retail gives the same npc — `BGab1_Sub_Pod_Sum_Vri_As` — **two different lifetimes depending on who
+summoned it**:
+
+```
+Gab1_Sub_AssultPod_Strike   7200s
+Gab1_Sub_AssultTBM_Strike   7200s
+Gab1_Sub_Tank_Destroyer      180s
+```
+
+**No clock in the add can express that**, because the add does not know who called it. The destroyer's
+three minutes has to live in the destroyer — and does.
+
+So the rule refines rather than holds: **the add's clock is the default; a summoner-side lifetime is
+correct exactly when retail gives one npc different lifetimes per summoner.** Checking which case you are
+in costs one query over the pattern data, and this log applied the wrong one four times before asking.
+
+### The pin, and the thing it nearly missed
+
+Two pins. The three-minute one fails with the summoner-side number removed, because the add's own
+eight-minute backstop then takes over — **the same "smaller wins" arrangement that made four other fixes
+inert.** Here it is correct, and correct for a stated reason rather than by luck, which is the only
+difference between this case and those.
+
+The pins failed first because `harness.Engage` does not raise the aggro event these troopers land on.
+**Seventh harness-artifact shape**, after bare attack events, unregistered AI, sight range, HP-phase
+triggers, missing holders and walker routes.
+
+### Where the unpinned list ends
+
+| fix | state |
+|---|---|
+| arena spark, Tiamat dust, `vasharti_assassin`, **`ahserion_construct_destroyer`** | pinned |
+| `ahserion_sky_assaulter` | **nothing to pin** — its lifetime was dead code and was reverted |
+| `drakanmedic` | pinnable; summoner has a map |
+| `sematariux`, `king_consierd` | blocked: no map, and no clock in the add |
+
+### Still to do
+
+- **Pin `drakanmedic`**, the last pinnable one.
+- **`sematariux` and `king_consierd` need spawn entries** — a data gap, not a test one.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The three-minute pin fails with the summoner-side lifetime removed. Full suite **2,110
+passing**, 1 skipped.
