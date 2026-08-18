@@ -13017,3 +13017,87 @@ Eight pins and an **eight-mutation sweep, all caught, none unapplied** — share
 opener, the first band opening loudly, the thirty-five hole closed, the reach, the heartbeat's re-arm,
 the engage call, and a servant that cannot tell the two calls apart. Full suite **2,148 passing**, 5
 skipped.
+
+## Chaoslord Kalabar, and the ceiling on what these dumps can give us
+
+`NKrall_WhA` — Chaoslord Kalabar of Eltnen and Visionmaster Omutata of Morheim. **He builds one thing
+at ninety, trades it for a different thing at sixty, and detonates that at thirty-five.** Three bands,
+one add each, and the add *is* the band.
+
+| band | opens once on | what happens |
+|---|---|---|
+| 61–90 | `DELTA_3` | spawns a **wheel of death**, scatters |
+| 36–60 | `DELTA_2` | spawns a **stone guard** and **despawns the wheel in the same branch**, scatters |
+| below 35 | `DELTA_1` | calls `3008` — and the stone guard answers with `despawn_self` |
+
+**The wheel and the guard are never both up**, because retail writes the spawn and the previous
+group's despawn as two actions of one branch. A raid that leaves the wheel alone finds it gone; one
+that killed it early has changed nothing. And the guard exists to be spent: its only branch worth
+anything is the one that ends it, so a raid that kills the guard and a raid that ignores it reach the
+same board at thirty-five.
+
+**Both groups are cleared when he dies and when he leaves the fight**, written as its own two handlers
+rather than left to `despawn_at_attack_state` — so the adds cannot be pulled away and kept. That is
+unusually explicit for a field boss and it is pinned.
+
+Two gaps kept because they are retail's: **above ninety there is no band at all**, and **health of
+exactly thirty-five belongs to no band** — the same off-by-one Guardian Vingeveu carries, one entry
+earlier. Twice in two bosses is no longer an oddity; it is how NCSoft writes a three-band ladder.
+
+**One dead action, not built:** `on_enter_idle_state` sets `FLAGVARI_ZETA_5`, which no branch in the
+pattern reads.
+
+### The wheel's own pattern does not exist
+
+The spawn action names `BLF2_NM2_RollingWheel_40_An`, a devname — the client resolves it to **280357,
+wheel of death**, whose `ai_name` is **`ND2_RnJ`**. That pattern is in **neither the 2.7 nor the 5.8
+dump.** Not mis-grepped, not renamed: absent from both.
+
+So the wheel spawns on schedule and behaves as an ordinary monster, and no amount of reading will fix
+that. **This is the first gap in this log that is in the source rather than in the port**, and the
+obvious question was how often it happens.
+
+### `audit_missing_patterns.py`, and the number nobody had
+
+```
+client npcs naming a pattern: 63,244; present in a dump: 49,134 (77.7%)
+1,571 pattern-shaped names the client uses that neither dump carries;
+3,858 npcs behind them, of which 760 are placed here.
+```
+
+**Roughly one client AI reference in five points at behavior no dump we have describes.** That is a
+ceiling on what this port can ever reach from these files, and it was not written down anywhere.
+
+**The head of the raw list is not the interesting part**, which is why the tool filters it: `NPC`,
+`NoAction`, `Resurrect`, `ReturnToEntrance`, `FOBJ_NormalDrop` are the client's built-in AI types, and
+an npc on `NoAction` is not missing a pattern — it has none. Counting those would have turned 760 into
+5,021 and made the gap look four times worse than it is. **The fourth audit in this log to need a
+"this number is not what it looks like" filter**, after the mute adds, the aggro relations, and the
+missed siblings.
+
+What is left — `D2_RnB` at sixteen live npcs, `D2_AnF` at fifteen, `Brownie_FnA`, `Ratman_FnA` — is the
+honest list. **Nothing on it is actionable**; the point is to answer "is this really absent, or did I
+mis-grep?" in one command, and to stop a future reader concluding that a silent npc is a porting
+oversight when it is a missing file.
+
+### Verification
+
+Eight pins and a **nine-mutation sweep, all caught, none unapplied**: the high band's upper bound, the
+guard failing to replace the wheel, shared band flags, a flagless opener, the call, a guard that
+ignores it, the thirty-five hole, the death handler, and the wrong add id. Full suite **2,156
+passing**, 5 skipped.
+
+### And a flake caught in the same run, whose arithmetic was always visible
+
+The full-suite run for this commit failed once on `SilikorOfMemoryAiTests.TheCasterGuardDropsSummonsOnAttackers`,
+in a file this commit does not touch. Twenty repeats of that pin alone were clean, which is exactly the
+evidence that would have got it filed as unexplained.
+
+**It is a one-in-four roll asserted over twenty windows.** `0.75^20` is about **one run in three
+hundred** — invisible in a single run and inevitable across a suite that is run all day. Raised to
+sixty windows: `0.75^60`, one in a hundred million.
+
+**The sibling pin two hundred lines above needed no change**, and the same arithmetic says why: a coin
+flip over twenty rolls fails at `2 × 0.5^20`, one in five hundred thousand. **Window length is not the
+thing to standardise — the per-window odds are**, and a probabilistic pin should carry the exponent it
+is betting on. This one now does.

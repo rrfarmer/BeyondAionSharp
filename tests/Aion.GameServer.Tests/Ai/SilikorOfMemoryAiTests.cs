@@ -286,6 +286,18 @@ public sealed class SilikorOfMemoryAiTests
 	/// Watched rather than counted at the end, for the fifth time in this suite: thirty seconds of life
 	/// against a fifteen-second window means the field is usually empty when the clock stops, and a pin
 	/// that counts then reads "nothing happened" however well the mechanic works.
+	/// <para>
+	/// <b>Sixty windows rather than twenty, because twenty was a flake and the arithmetic says so.</b>
+	/// A one-in-four roll misses twenty times running with probability <c>0.75^20</c> — about one run in
+	/// three hundred, which is invisible in a single run and inevitable across a suite that is run all
+	/// day. It surfaced once, was clean over twenty repeats of the pin alone, and would have been filed
+	/// as unexplained. <c>0.75^60</c> is one in a hundred million.
+	/// </para>
+	/// <para>
+	/// <b>The sibling pin above needed no change</b>, and the same arithmetic is why: a coin flip over
+	/// twenty rolls fails at <c>2 × 0.5^20</c>, which is already one in five hundred thousand. Window
+	/// length is not the thing to standardise — the per-window odds are.
+	/// </para>
 	/// </remarks>
 	[Fact]
 	public void TheCasterGuardDropsSummonsOnAttackers()
@@ -295,13 +307,13 @@ public sealed class SilikorOfMemoryAiTests
 		Player quarry = harness.SpawnPlayer(409f, 762f, 189f);
 		harness.Engage(caster, quarry);
 
-		BossAiHarness.Watched seen = harness.Watch(300, () =>
+		BossAiHarness.Watched seen = harness.Watch(900, () =>
 		{
 			BossAiHarness.Rehate(caster, quarry);
 			BossAiHarness.KeepAlive(quarry);
 		}, CasterSummon);
 
-		Assert.True(seen.Total > 0, "the caster guard dropped nothing in twenty windows");
+		Assert.True(seen.Total > 0, "the caster guard dropped nothing in sixty windows");
 	}
 
 	/// <summary>
