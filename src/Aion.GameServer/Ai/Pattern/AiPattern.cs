@@ -317,6 +317,14 @@ public static class Do
     /// <summary><c>set_idle_timer</c> — arm the single idle slot, replacing whatever was in it.</summary>
     public static PatternAction SetIdleTimer(int delayMillis) => ai => ai.SetIdleTimer(delayMillis);
 
+    /// <summary>
+    /// <c>despawn_by_nameid</c> — clear up to <paramref name="maxCount"/> NPCs of one kind within
+    /// <paramref name="radius"/> metres. The kind is retail's client devname, resolved to an npc id
+    /// at porting time.
+    /// </summary>
+    public static PatternAction DespawnKind(int npcId, float radius, int maxCount)
+        => ai => ai.DespawnKind(npcId, radius, maxCount);
+
     /// <summary><c>despawn_self</c>.</summary>
     public static PatternAction DespawnSelf() => ai => ai.DespawnSelf();
 

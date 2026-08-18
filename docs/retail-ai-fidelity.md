@@ -9587,3 +9587,89 @@ biggest single unblocked verb left in the dump.**
 Full suite **1,902 passing** and 1 skipped; five new pins run three times over; seven mutations, all
 caught. Missing-AI 693 → **686**; translatable 453/1,553 → **438/1,537** — the npc delta is exactly the
 sixteen, and the pattern delta exactly the fifteen.
+
+## `despawn_by_nameid`, and a correction to the entry before this one
+
+The runtime can now say `despawn_by_nameid`: `Do.DespawnKind(npcId, radius, maxCount)`, backed by
+`PatternAi.DespawnKind`. Retail's element carries exactly three arguments and all three are bounded —
+across the 5.8 dump the radius runs 2 to 100 metres (640 of 849 at fifty) and the count 1 to 100 (556
+of 849 at ten) — so this is a local sweep and never the map-wide wipe the name suggests.
+
+**The owner is not excluded, and that is measured rather than assumed.** Of 849 uses, **none** names
+the devname of the NPC running it, so the "clear yourself" case retail never wrote is not guarded
+against here either. It shares `NpcMessageBus.Nearby` with the broadcast path — same question, same
+known-list-then-region fallback, and now the fallback's one caveat is inherited too (see below).
+
+### The correction: 849 uses, and one encounter behind them
+
+The previous entry called this "the biggest single unblocked verb left in the dump" on the strength of
+849 uses across 171 patterns. That was a count of the *sending* end, which is the exact mistake this
+log already has a rule against. Counted at the receiving end:
+
+| | patterns | sweeps | |
+|---|---|---|---|
+| no binding row at all | 132 | 641 | no client npc names the pattern; unreachable |
+| bound, but we spawn none of them | 27 | 183 | |
+| live and already ported | 12 | 25 | **the real work** |
+| live and unported | **0** | **0** | |
+
+So the verb unblocks **zero new encounters** and **twenty-five sweeps inside twelve encounters we had
+already translated without them** — which is worth having, and is a twentieth of what the raw count
+implied.
+
+**Rule: a verb's worth is the payload behind it, not its frequency.** The "count the receiving end"
+rule was written for broadcasts and applies unchanged to vocabulary. A verb used 849 times in patterns
+nothing runs is worth exactly as much as a message with no listener.
+
+It was still worth building — 25 sweeps we were silently dropping, and three genuinely different uses
+of it inside one file, below — but the ranking claim is withdrawn.
+
+### Three uses of one verb, all in Ophidan Bridge
+
+Eight of those twenty-five are now built, and they are not the same mechanic wearing three hats:
+
+1. **The bridge sweep.** A boss engaging drops four triggers at four fixed points; each trigger's whole
+   pattern is nine sweeps — up to ten of each fugitive grade within fifty metres. Engaging the boss
+   empties the approach the raid picked through on the way in.
+2. **The mode switch.** Each hard-mode velkur clears **Spirited Velkur**, the normal-mode boss, the
+   moment it appears. That is retail saying "the two modes are the same fight and only one is running",
+   in AI rather than in an instance handler — and `OphidanBridgeInstance` says the same thing in its
+   own comment ("instance starts always in hardmode").
+3. **Bookkeeping.** A fugitive reaching its *second* grade clears the invisible check marker (856062)
+   at its post. Not a fight mechanic at all, and the reason the audit should never have scored the verb
+   as payload-by-frequency.
+
+The class became a three-flag builder because none of its mechanics is universal: the normal boss
+sweeps without calling, the fugitives call without sweeping, the second-grade fugitives clear a marker
+the first and third do not, and only the three hard-mode velkurs do everything.
+
+### The wake-up bound is the region, not the radius
+
+`on_wake_up` runs before the NPC has a known list, so `Nearby` falls back to scanning the sender's map
+region — a limit already recorded for wake-up broadcasts, and now shared by wake-up clears. A pin that
+puts the target seventy metres away therefore bounds the clear from above without saying *which* bound
+stopped it. The decisive test is from the other side: dropping the range to five metres leaves a target
+at ten standing, and that mutation is caught. The seventy-metre pin says so in its own remarks rather
+than implying more than it measures.
+
+### The other seventeen sweeps, specified
+
+Everything left is inside an already-ported encounter, so each is a small edit to an existing class
+rather than a new one:
+
+| pattern | npcs | sweeps | targets |
+|---|---|---|---|
+| `Legion_01_Boss_03` | 855776 vision of kaliga | 4 | 856129, 856130, 856131, 856132 |
+| `BIDF5_U01_Middle_Boss_Fire` | 235772 hakara, 235773 zubala | 3 | 231185 ×3 |
+| `IDVritra_Base_Boss1` | 230858 brigade general sheba | 1 | 284436 |
+| the six `Runaway_*_P2_*_P3` | six fugitive grades | 6 | 856062 — **built** |
+| `BIDF5_U01_Boss_Wi`, `_Monster_01` | three velkurs | 2 | 235768 — **built** |
+| `BIDF5_U01_Middle_Boss_Ice` | 857437 | 9 | the nine grades — **built** |
+
+### Verification
+
+Full suite **1,908 passing** and 1 skipped; fifteen pins on this encounter run three times over;
+**twenty-two mutations, all caught**. Missing-AI 686 → **685**; translatable 438/1,537 → **437/1,536**
+with `despawn_by_nameid` now counted as vocabulary — the delta is exactly the normal-mode boss, and
+counting the verb moved no pattern into or out of the list, which is the same finding as the table
+above arriving by a second route.

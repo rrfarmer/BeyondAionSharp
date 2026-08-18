@@ -892,6 +892,49 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         Delete(npc);
     }
 
+    /// <summary>
+    /// <c>despawn_by_nameid</c> — remove up to <paramref name="maxCount"/> NPCs of one kind within
+    /// <paramref name="radius"/> metres.
+    /// </summary>
+    /// <remarks>
+    /// Retail's verb names its target by client devname; a ported class resolves that to an npc id at
+    /// porting time, exactly as it already does for every <c>npc_nameid</c> on a spawn. All three
+    /// arguments are retail's own and all three are bounded — across the 5.8 dump the radius runs 2 to
+    /// 100 metres and the count 1 to 100 — so this is a local sweep and never a map-wide wipe.
+    /// <para>
+    /// <b>The owner is not excluded.</b> Retail's element carries no such exemption, and it never
+    /// needs one: of 849 uses in the dump, <b>none</b> names the devname of the NPC running it. Left
+    /// faithful rather than guarded, with the measurement recorded so the choice is not mistaken for
+    /// an oversight.
+    /// </para>
+    /// <para>
+    /// Matches are collected before any are removed. Deleting mid-enumeration would mutate the known
+    /// list this is walking.
+    /// </para>
+    /// </remarks>
+    public void DespawnKind(int npcId, float radius, int maxCount)
+    {
+        if (maxCount <= 0)
+            return;
+
+        Npc owner = GetOwner();
+        var doomed = new List<Npc>();
+        foreach (VisibleObject candidate in NpcMessageBus.Nearby(owner))
+        {
+            if (doomed.Count >= maxCount)
+                break;
+            if (candidate is not Npc npc || npc.IsDead() || npc.GetNpcId() != npcId)
+                continue;
+            if (!PositionUtil.IsInRange(owner, npc, radius))
+                continue;
+
+            doomed.Add(npc);
+        }
+
+        foreach (Npc npc in doomed)
+            Delete(npc);
+    }
+
     private static void Delete(Npc npc)
     {
         if (npc.IsSpawned())

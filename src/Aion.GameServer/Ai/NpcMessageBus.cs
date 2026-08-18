@@ -67,6 +67,11 @@ public static class NpcMessageBus
     /// The sender's known list, or its map region when that list is still empty.
     /// </summary>
     /// <remarks>
+    /// Shared with <see cref="Pattern.PatternAi.DespawnKind"/>, which needs the same answer to the
+    /// same question — what is around this NPC right now — and would otherwise repeat the fallback
+    /// and its caveats below.
+    /// </remarks>
+    /// <remarks>
     /// <c>World.Spawn</c> raises the AI's spawned event from <c>OnAfterSpawn</c> and only builds the
     /// known list afterwards, so an NPC that broadcasts from <c>on_wake_up</c> has nothing to talk to.
     /// The Java reference has the same ordering, so the fix is here rather than in the spawn path:
@@ -84,7 +89,7 @@ public static class NpcMessageBus
     /// that is the known limit of this fallback.
     /// </para>
     /// </remarks>
-    private static IEnumerable<VisibleObject> Nearby(Npc sender)
+    internal static IEnumerable<VisibleObject> Nearby(Npc sender)
     {
         IEnumerable<KnownObject> known = sender.GetKnownList().Stream();
         if (known.Any())

@@ -33,7 +33,7 @@ import audit_missing_adds as A  # noqa: E402
 # Actions that *do* something a player can see. These are what a translation is worth.
 PAYLOAD = {
     "spawn", "spawn_on_target", "spawn_on_target_by_attacker_indicator", "spawn_on_multi_target",
-    "despawn", "despawn_self",
+    "despawn", "despawn_self", "despawn_by_nameid",
     "broadcast_message",
     "switch_target", "switch_target_by_attacker_indicator",
     "add_hate_point", "attack_most_hating",

@@ -26,6 +26,10 @@ public sealed class OphidanBridgeCallAiTests
 	private const int Aetherknife = 235771;
 	private const int Mazikin = 235756;
 	private const int SpiritedVelkur = 235768;
+	private const int Hirakiki = 235760;
+	private const int Sweeper = 857437;
+	private const int MazikinGradeTwo = 235757;
+	private const int CheckMarker = 856062;
 
 	private const float CallerX = 323f;
 	private const float CallerY = 489f;
@@ -181,5 +185,210 @@ public sealed class OphidanBridgeCallAiTests
 		Advance(harness, caller, player, 10);
 
 		Assert.Null(neighbour.GetTarget());
+	}
+
+	// Retail's first quarter, and a corner of the bridge a hundred metres from every one of the four.
+	private const float QuarterX = 674.2f;
+	private const float QuarterY = 471.7f;
+	private const float QuarterZ = 599.4f;
+
+	private static BossAiHarness Sweeping(int bossId, out Npc boss, out Player player)
+	{
+		BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
+			.WithAi(typeof(OphidanBridgeCallAI), typeof(OphidanBridgeSweeperAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		boss = harness.Spawn(bossId, CallerX, CallerY, Floor);
+		player = harness.SpawnPlayer(CallerX, CallerY - 40f, Floor);
+		return harness;
+	}
+
+	private static int Standing(BossAiHarness harness, int npcId) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
+
+	/// <summary>
+	/// <b>Pulling a boss sweeps the bridge.</b> Four triggers land at four fixed points and each
+	/// clears the fugitives around it — the first thing built on <c>despawn_by_nameid</c>.
+	/// </summary>
+	[Fact]
+	public void PullingABossSweepsTheBridge()
+	{
+		using BossAiHarness harness = Sweeping(Aethercaster, out Npc boss, out Player player);
+
+		for (int i = 0; i < 3; i++)
+			harness.Spawn(Mazikin, QuarterX + i, QuarterY, QuarterZ);
+		Assert.Equal(3, Standing(harness, Mazikin));
+
+		harness.Engage(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(0, Standing(harness, Mazikin));
+	}
+
+	/// <summary>
+	/// <b>And only within fifty metres of a trigger.</b> Retail's <c>bound_radius</c> is what makes
+	/// this a sweep of the approach rather than a wipe of the instance.
+	/// </summary>
+	[Fact]
+	public void TheSweepReachesFiftyMetresAndNoFurther()
+	{
+		using BossAiHarness harness = Sweeping(Aethercaster, out Npc boss, out Player player);
+
+		Npc near = harness.Spawn(Mazikin, QuarterX + 10f, QuarterY, QuarterZ);
+		Npc far = harness.Spawn(Mazikin, QuarterX + 70f, QuarterY, QuarterZ);
+
+		harness.Engage(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), n => ReferenceEquals(n, near));
+		Assert.Contains(harness.LiveNpcs(), n => ReferenceEquals(n, far));
+	}
+
+	/// <summary>
+	/// <b>And ten of a kind at a time.</b> Retail's <c>max_count</c> is ten on every one of the nine
+	/// sweeps, so a twelfth fugitive of the same grade under one trigger survives it.
+	/// </summary>
+	[Fact]
+	public void TheSweepTakesTenOfEachGrade()
+	{
+		using BossAiHarness harness = Sweeping(Aethercaster, out Npc boss, out Player player);
+
+		for (int i = 0; i < 12; i++)
+			harness.Spawn(Mazikin, QuarterX + (i * 0.5f), QuarterY, QuarterZ);
+
+		harness.Engage(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(2, Standing(harness, Mazikin));
+	}
+
+	/// <summary>
+	/// <b>Normal mode sweeps even though it does not call.</b> The two mechanics are separate in
+	/// retail's own file, and Spirited Velkur has exactly one of them.
+	/// </summary>
+	[Fact]
+	public void NormalModeSweepsWithoutCalling()
+	{
+		using BossAiHarness harness = Sweeping(SpiritedVelkur, out Npc boss, out Player player);
+
+		harness.Spawn(Mazikin, QuarterX, QuarterY, QuarterZ);
+		Npc neighbour = harness.Spawn(Mazikin, CallerX + 25f, CallerY, Floor);
+		BossAiHarness.MakeMutuallyKnown(boss, neighbour);
+		BossAiHarness.MakeMutuallyKnown(neighbour, player);
+
+		harness.Engage(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		// The one by the trigger is gone; the one beside him was never called, only left alone.
+		Assert.Equal(1, Standing(harness, Mazikin));
+		Assert.Null(neighbour.GetTarget());
+	}
+
+	/// <summary>And a fugitive calls without sweeping: the other half of the same split.</summary>
+	/// <remarks>
+	/// The witness has to be something the sweep would actually take. Written first with a velkur
+	/// standing at the trigger point, which proved nothing at all — the nine grades retail names are
+	/// all fugitives, so a boss survives a sweep whether one happened or not.
+	/// </remarks>
+	[Fact]
+	public void AFugitiveCallsWithoutSweeping()
+	{
+		using BossAiHarness harness = Sweeping(Mazikin, out Npc caller, out Player player);
+
+		harness.Spawn(Hirakiki, QuarterX, QuarterY, QuarterZ);
+
+		harness.Engage(caller, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(1, Standing(harness, Hirakiki));
+	}
+
+	/// <summary>
+	/// <b>And the triggers do not stand around afterwards.</b> Retail gives them
+	/// <c>despawn_at_attack_state</c> and no <c>live_time</c>; the five seconds is ours, so it is
+	/// pinned as ours rather than left for someone to discover.
+	/// </summary>
+	[Fact]
+	public void TheTriggersDoNotOutstayTheSweep()
+	{
+		using BossAiHarness harness = Sweeping(Aethercaster, out Npc boss, out Player player);
+
+		harness.Engage(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.Equal(4, Standing(harness, Sweeper));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(10));
+		Assert.Equal(0, Standing(harness, Sweeper));
+	}
+
+	/// <summary>
+	/// <b>A hard-mode velkur clears the normal-mode boss as it appears.</b> Retail says "the two modes
+	/// are the same fight and only one of them is running" with one <c>despawn_by_nameid</c> on
+	/// <c>on_wake_up</c>, which is a use of the verb entirely separate from the bridge sweep.
+	/// </summary>
+	[Fact]
+	public void AHardModeVelkurClearsTheNormalModeBoss()
+	{
+		using BossAiHarness harness = Sweeping(Mazikin, out Npc _unused, out Player _p);
+
+		Npc normal = harness.Spawn(SpiritedVelkur, CallerX + 10f, CallerY, Floor);
+		Assert.Equal(1, Standing(harness, SpiritedVelkur));
+
+		harness.Spawn(Aethercaster, CallerX, CallerY, Floor);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), n => ReferenceEquals(n, normal));
+	}
+
+	/// <summary>And not one standing well away from him.</summary>
+	/// <remarks>
+	/// This pin bounds the clear from above but cannot say <em>which</em> bound stopped it. A wake-up
+	/// action runs before the NPC has a known list, so it falls back to scanning its own map region —
+	/// the same limit already recorded for wake-up broadcasts — and at seventy metres the region edge
+	/// may be doing the work rather than retail's fifty. What is decisive is the mutation from the
+	/// other side: dropping the range to five metres leaves the boss at ten standing, and is caught.
+	/// </remarks>
+	[Fact]
+	public void ButNotOneStandingSeventyMetresOff()
+	{
+		using BossAiHarness harness = Sweeping(Mazikin, out Npc _unused, out Player _p);
+
+		Npc normal = harness.Spawn(SpiritedVelkur, CallerX + 70f, CallerY, Floor);
+
+		harness.Spawn(Aethercaster, CallerX, CallerY, Floor);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Contains(harness.LiveNpcs(), n => ReferenceEquals(n, normal));
+	}
+
+	/// <summary>
+	/// <b>And a fugitive reaching its second grade clears the check marker at its post.</b> The third
+	/// use of the verb in one file, and the one that shows it is bookkeeping as often as it is a sweep.
+	/// </summary>
+	[Fact]
+	public void ASecondGradeFugitiveClearsItsCheckMarker()
+	{
+		using BossAiHarness harness = Sweeping(Mazikin, out Npc _unused, out Player _p);
+
+		Npc marker = harness.Spawn(CheckMarker, CallerX + 5f, CallerY, Floor);
+
+		harness.Spawn(MazikinGradeTwo, CallerX, CallerY, Floor);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), n => ReferenceEquals(n, marker));
+	}
+
+	/// <summary>The first grade leaves it: retail hangs the clear on the second and third only.</summary>
+	[Fact]
+	public void TheFirstGradeLeavesTheMarkerStanding()
+	{
+		using BossAiHarness harness = Sweeping(Mazikin, out Npc _unused, out Player _p);
+
+		Npc marker = harness.Spawn(CheckMarker, CallerX + 5f, CallerY, Floor);
+
+		harness.Spawn(Mazikin, CallerX, CallerY, Floor);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Contains(harness.LiveNpcs(), n => ReferenceEquals(n, marker));
 	}
 }
