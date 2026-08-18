@@ -7151,11 +7151,11 @@ trace" is right; the corollary is that when the effect *does* leave a trace, pin
 is not enough. Both are pinned now, and the phase ladder's split — correct all along, and guarded by
 nothing, so flattening it also survived — has a pin of its own.
 
-### Not spawned by anything
+### Not spawned by anything — **wrong, and corrected below**
 
-`BIDSeal_Twin_P_Sum_Crater` (855623) has a template and a pattern and **no branch in the 5.8 files
-names it**. The same shape as Watchman Hokuruki's gunners: a template that exists for the room rather
-than for a summon. Recorded so it is not read as a gap.
+> This section claimed `BIDSeal_Twin_P_Sum_Crater` (855623) had "no branch in the 5.8 files naming
+> it". It does: the magma glutten spawns it when it answers `22710`. See *The crater the twins log said
+> nobody spawned* further down for the chain and for how the mistake was made.
 
 ### What is still not translated here, and why
 
@@ -7169,7 +7169,8 @@ eleven separate jobs:
 | 22713 | a heatvent Sum heals the protector and despawns | the heal is an index; the despawn is not |
 | 22697 / 22698 | every Sum despawns when the protector leaves the fight | ours clears its own tracked list instead, which covers the same ground by a different route |
 | 22704 / 22705 | **time over**: the protector summons three PC guards onto itself that attack it, Elyos or Asmodian by `is_race` | the sender is a `_Source` / `_Change_Failed` NPC neither of which is translated |
-| 22710 / 22718 / 22719 | instance sequencing between the protector and its spawn markers | nothing on our side listens |
+| 22718 / 22719 | instance sequencing between the protector and its spawn markers | nothing on our side listens |
+| 22710 | **wrong above**: not sequencing. The lava protector's shield branch; every magma glutten in fifty metres casts, drops a **crater**, and despawns | the anchor — our port has no shield branch to hang it on |
 
 The one worth naming for later is **22705**. It is a real mechanic and an unusual one — fail the
 timer and allied NPC guards arrive and finish the protector for you, with a million hate so nothing
@@ -10822,3 +10823,70 @@ half.
 Full suite **2,011 passing** and 1 skipped; six new pins; **nine mutations, all caught**. Missing-AI
 unchanged at **654** — the guards had classes, they simply had no ears — and stranded listeners 89
 patterns / 136 npcs → **82 / 129**.
+
+## The crater the twins log said nobody spawned
+
+Returning to the Seal of Destruction twins for the message rows the sender audit still lists, and the
+first thing found was a **wrong fact in this log**. The twins entry says of
+`BIDSeal_Twin_P_Sum_Crater` (855623): *"no branch in the 5.8 files names it"*, and files it beside
+Hokuruki's gunners as a template that exists for the room. That is false. It is spawned, it heads a
+three-step chain, and the chain is one of the better mechanics in the fight:
+
+```
+lava protector  --22710 (50 m)-->  magma glutten 855621
+                                     casts, spawns a CRATER on its own spot, despawns
+crater 855623   on wake          -->  spawns CRATER SKILL 855624 on its spot, arms a 6 s idle timer
+crater          every 6 s        -->  broadcast 22711 (50 m)   [erupt]
+crater          on the third     -->  broadcast 22711, then despawns the skill npc and itself
+crater skill    --22711-->            casts SKILLI_INDEX_0 on itself   [the lava column]
+```
+
+**Erupt, erupt, erupt-and-go**, and the counter that says so is retail's `increase_intvar` used as a
+*condition*: `lower_bound=3 upper_bound=4 be_true_only_when_hit_the_bound=TRUE` on the despawn branch,
+and the same counter unbounded-true on the erupt branch below it.
+
+### How the mistake was made, which is the part worth keeping
+
+The earlier pass searched for the **npc id**. Retail's spawn actions do not carry npc ids — they carry
+`npc_nameid=BIDSeal_Twin_P_Sum_Crater`, a devname — and the id only appears in the client binding
+table. So a grep for `855623` across the dump correctly returns nothing, and the conclusion "nobody
+spawns it" follows from a search that could not have found it.
+
+**Rule: a "nothing spawns this" claim has to be made against devnames, never against npc ids.** The
+id-side search is still worth running — it is what catches spawn-data gaps — but it can only ever say
+"no *spawn data* places it", which is a different sentence. Both previous uses of this claim in the log
+should be read with that in mind; Hokuruki's gunners are worth re-checking on the same grounds.
+
+### What blocks the chain, precisely
+
+Two things, and only one of them is the usual one.
+
+**The anchor.** Retail sends `22710` from the lava protector's `BTIMERI_INDEX_11` branch — the shield
+(`보호막`) cast, on a first-time `FLAGVARI_ALPHA_4` guard, so it happens once per fight the first time
+the shield goes up. Our `TwinProtectorAI` is an HP-phase ladder inherited from aionemu and has no
+shield branch at all; there is no honest place to hang the broadcast. Choosing one of our existing
+phase steps would be inventing an anchor, which is the thing this project's own rule forbids.
+
+**The two skill indices**, as everywhere: the glutten's `SKILLI_INDEX_1` and the crater skill's
+`SKILLI_INDEX_0` (the lava column, and the whole visible point of the mechanic).
+
+So the chain is **reachable in shape and unresolvable in placement**, and it stays out until the
+protector's timer chain is translated rather than approximated. That is a bigger job than a message
+wire — it means replacing an aionemu HP ladder with retail's timer graph for a fight that currently
+works — and it is recorded here as one job rather than four message rows.
+
+### An open question about `set_idle_timer` that this raised
+
+The crater arms its idle timer **once**, on wake, and no branch re-arms it — yet its counter has to
+reach three. Under our `PatternAi.SetIdleTimer`, which is a one-shot `Schedule`, the crater would erupt
+once and then stand forever, because the branch that despawns it is the one that never fires.
+
+Either retail's idle timer repeats on its own, or the crater is a leak in retail's own data. Measured
+across the dump: **2,369 patterns have an `on_idle_timer` handler, and 1,276 of them re-arm inside it**
+— leaving 1,093 that do not. If the timer repeated, those 1,276 would be doubling their own beat, which
+argues one-shot; if it did not, the crater never dies, which argues repeating. **The two readings
+cannot both be right and the data does not settle it.**
+
+Recorded rather than guessed, because the answer changes 1,093 patterns rather than this one. Anything
+we port that leans on a self-repeating idle timer should re-arm explicitly until this is settled — and
+nothing currently does.

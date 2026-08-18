@@ -42,9 +42,11 @@ namespace Aion.GameServer.Handlers.AI;
 /// into them.
 /// </para>
 /// <para>
-/// <b>Not spawned by anything, on either side:</b> <c>BIDSeal_Twin_P_Sum_Crater</c> (855623). It has a
-/// pattern and a template and no branch in the 5.8 files names it — the same shape as Hokuruki's
-/// gunners, and worth stating so it is not read as a gap here.
+/// <b>Correction.</b> This comment used to say <c>BIDSeal_Twin_P_Sum_Crater</c> (855623) was "not
+/// spawned by anything". It is: the magma glutten (855621) spawns it on its own spot when it answers
+/// <c>22710</c>, and the crater in turn spawns <c>_Crater_Skill</c> (855624) and erupts three times on
+/// a six-second beat. Neither step is built here — see docs/retail-ai-fidelity.md, "The crater the
+/// twins log said nobody spawned", for the chain and for what blocks it.
 /// </para>
 /// <para>
 /// <b>Not translated:</b> the <c>Source</c> NPC each pattern leaves behind on dying, its condition
