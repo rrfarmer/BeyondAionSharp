@@ -19476,3 +19476,60 @@ it. Doing it when the flake next appeared cost less than the run that surfaced i
 
 Build clean. The unstable pin fails with its lifetime removed; the reworked ladder pin still fails with
 its band guard widened, and passes five runs in a row. Full suite **2,071 passing**, 1 skipped.
+
+## Yamennes' portals, and two of the three largest rows turning out to be false positives
+
+Continuing down the narrowed list. **`unstableyamennes` was the second-largest row and there was nothing
+wrong with it** — it already timed both its gates and its golems through schedules written by hand before
+`SpawnFor` existed, and an earlier pass had already worked out the right treatment for it. Moved onto the
+shared helper, which is behaviour-neutral and retires the row.
+
+**That is two of the three largest rows retired rather than fixed** — `balaurbarricade` last pass, this
+one now. The tool's docstring predicted exactly this failure mode; what it did not predict is how much of
+the list it would account for. **The audit's real output is a reading order, not a work list.**
+
+### The one that was real
+
+`yamennes` — the stable variant — **still had the shape its unstable sibling was corrected out of.**
+Retail gives the portals `live_time` 70 on a timer re-armed at 70 seconds and spawns unconditionally;
+ours gave them no lifetime, waited a flat 60, and spawned **only when none of the three were still
+standing.** So a group that ignored the portals rather than killing them **saw the first wave and never
+another.**
+
+The golems get retail's 180 seconds too, with a caveat recorded in the source: **our golem cadence is
+driven by the healing-debuff chain rather than by retail's independent timer**, and they are cleared
+explicitly at the start of each debuff, so the lifetime rarely fires. It is set as a floor, not a fix, and
+**the cadence divergence is left standing and named.**
+
+### A pin that claimed more than it proved
+
+`AFreshSetArrivesEvenIfTheFirstIsIgnored` was written as the pin for removing the guard. **Putting the
+guard back leaves it green** — because with the portals expiring at seventy seconds the guard finds an
+empty room every time it looks and never blocks anything.
+
+So the guard removal is **not independently observable** in the fixed configuration, which is the same
+conclusion Pazuzu reached about its own guard. The removal is kept — retail spawns unconditionally, and
+the guard is what turned a missing lifetime into a dead mechanic — but **the pin's docstring now says it
+measures the lifetime**, because a pin that names the wrong cause is how the last three wrong-reason
+passes happened.
+
+A third pin, `ThePortalsExpireOnRetailsSeventySeconds`, **passed vacuously on the first run**: with the
+portal AIs unregistered nothing spawned, and `Assert.All` over an empty set is green. Caught only because
+its two siblings failed loudly on the same run.
+
+### Still to do
+
+- **22 `NO LIFETIME` rows remain**, and on this evidence a substantial share are false positives:
+  `ahserion_sky_assaulter`, `brigade_general_vasharti`, `celestius`, `dracusbox` are the largest.
+- Yamennes' golem cadence — retail drives it from its own 180-second timer, ours from the debuff chain.
+- The 12 `no spawns` rows.
+- `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints, blocking the silikor
+  dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Two of the three pins fail with the portal lifetime removed. Full suite **2,074 passing**,
+1 skipped.

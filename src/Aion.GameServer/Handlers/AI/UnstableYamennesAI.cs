@@ -148,17 +148,11 @@ public class UnstableYamennesAI : AggressiveNpcAI
     /// <summary>Hard mode's timer 5: three ametgolems on their marks, three minutes each.</summary>
     private void SpawnGolems()
     {
+        // Written by hand before SpawnFor existed, and behaviourally identical to it. On the shared
+        // helper so this class stops reading as a missing lifetime in audit_spawn_lifetimes.py, where
+        // it was the second-largest row and entirely a false positive.
         foreach ((float x, float y, float z, int dir) in GolemMarks)
-        {
-            if (Spawn(SummonedAmetgolem, x, y, z, Facing(dir)) is not Npc golem)
-                continue;
-
-            ThreadPoolManager.GetInstance().Schedule(_ =>
-            {
-                golem.GetController().DeleteIfAliveOrCancelRespawn();
-                return ValueTask.CompletedTask;
-            }, GolemLifeMillis);
-        }
+            SpawnFor(SummonedAmetgolem, x, y, z, Facing(dir), (int)(GolemLifeMillis / 1000L));
     }
 
     /// <summary>
@@ -249,14 +243,7 @@ public class UnstableYamennesAI : AggressiveNpcAI
     /// </remarks>
     private void SpawnGate(int npcId, float x, float y, float z, sbyte heading)
     {
-        if (Spawn(npcId, x, y, z, heading) is not Npc gate)
-            return;
-
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            gate.GetController().DeleteIfAliveOrCancelRespawn();
-            return ValueTask.CompletedTask;
-        }, GateLifeMillis);
+        SpawnFor(npcId, x, y, z, heading, (int)(GateLifeMillis / 1000L));
     }
 
     private void DeleteNpcs(List<Npc> npcs)

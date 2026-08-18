@@ -41,41 +41,58 @@ public class YamennesAI : AggressiveNpcAI
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, 60000L);
     }
 
+    /// <summary>
+    /// Retail <c>IDAbRe_Core_NamedD_Hard</c>: the portals carry <c>live_time</c> 70 on a timer re-armed
+    /// at 70 seconds, so a set expires exactly as the next arrives. Ours waited a flat 60.
+    /// </summary>
+    private const int PortalLife = 70;
+    private const int PortalCycleMillis = 70000;
+
+    /// <summary>
+    /// Retail gives the ametgolems three minutes on a timer of their own.
+    /// </summary>
+    /// <remarks>
+    /// <b>Ours are still driven by the healing-debuff chain rather than by retail's independent
+    /// 180-second timer</b>, and are cleared explicitly at the start of each debuff, so this lifetime
+    /// rarely fires. It is set anyway because the explicit clear is not a lifetime -- if the chain ever
+    /// stops, the golems standing at that moment would otherwise stay forever. <b>The cadence itself is
+    /// a known structural divergence and is not fixed here.</b>
+    /// </remarks>
+    private const int GolemLife = 180;
+
     private void OnHealingDebuff()
     {
         WorldMapInstance instance = GetPosition().GetWorldMapInstance();
         DeleteNpcs(instance.GetNpcs(282107));
         GetOwner().QueueSkill(19282, 55);
-        Spawn(282107, GetOwner().GetX() + 10, GetOwner().GetY() - 10, GetOwner().GetZ(), (sbyte)0);
-        Spawn(282107, GetOwner().GetX() - 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0);
-        Spawn(282107, GetOwner().GetX() + 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0);
+        SpawnFor(282107, GetOwner().GetX() + 10, GetOwner().GetY() - 10, GetOwner().GetZ(), (sbyte)0, GolemLife);
+        SpawnFor(282107, GetOwner().GetX() - 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0, GolemLife);
+        SpawnFor(282107, GetOwner().GetX() + 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0, GolemLife);
         GetOwner().ClearAttackedCount();
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_ResetAggro());
     }
 
     private void SpawnPortals(bool isTopSpawn)
     {
-        Npc portalA = GetPosition().GetWorldMapInstance().GetNpc(282014);
-        Npc portalB = GetPosition().GetWorldMapInstance().GetNpc(282015);
-        Npc portalC = GetPosition().GetWorldMapInstance().GetNpc(282131);
-        if (portalA == null && portalB == null && portalC == null)
+        // Retail spawns unconditionally and lets the portals time out. This used to spawn only when
+        // none of the three were still standing and gave them no lifetime at all, so a group that
+        // ignored the portals rather than killing them saw the first wave and never another -- the same
+        // shape the unstable variant was corrected for, and this class kept.
+        PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_SummonStart());
+        if (isTopSpawn)
         {
-            PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_SummonStart());
-            if (isTopSpawn)
-            {
-                Spawn(282014, 288.10f, 741.95f, 216.81f, (sbyte)3);
-                Spawn(282015, 375.05f, 750.67f, 216.82f, (sbyte)59);
-                Spawn(282131, 341.33f, 699.38f, 216.86f, (sbyte)59);
-            }
-            else
-            {
-                Spawn(282014, 303.69f, 736.35f, 198.7f, (sbyte)0);
-                Spawn(282015, 335.19f, 708.92f, 198.9f, (sbyte)35);
-                Spawn(282131, 360.23f, 741.07f, 198.7f, (sbyte)0);
-            }
+            SpawnFor(282014, 288.10f, 741.95f, 216.81f, (sbyte)3, PortalLife);
+            SpawnFor(282015, 375.05f, 750.67f, 216.82f, (sbyte)59, PortalLife);
+            SpawnFor(282131, 341.33f, 699.38f, 216.86f, (sbyte)59, PortalLife);
+        }
+        else
+        {
+            SpawnFor(282014, 303.69f, 736.35f, 198.7f, (sbyte)0, PortalLife);
+            SpawnFor(282015, 335.19f, 708.92f, 198.9f, (sbyte)35, PortalLife);
+            SpawnFor(282131, 360.23f, 741.07f, 198.7f, (sbyte)0, PortalLife);
         }
         ThreadPoolManager.GetInstance().Schedule(_ => { OnHealingDebuff(); return ValueTask.CompletedTask; }, 3000L);
-        portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(!isTopSpawn); return ValueTask.CompletedTask; }, 60000L);
+        portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(!isTopSpawn); return ValueTask.CompletedTask; }, PortalCycleMillis);
     }
 
     private void DeleteNpcs(List<Npc> npcs)
