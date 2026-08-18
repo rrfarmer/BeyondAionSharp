@@ -11878,3 +11878,52 @@ branches whose payload is casting.
 ### Verification
 
 Full suite **2,070 passing** and 1 skipped; fourteen pins, up from ten; **eight mutations, all caught**.
+
+## The vasharti watch: a pack that drifts rather than snaps
+
+Third row off the no-blocker list, and the most interesting thing about it is a number that looks like
+a mistake and is not.
+
+A watch post that engages **broadcasts every three seconds for as long as the fight lasts**, naming its
+current target at twenty-five metres, and every watcher in earshot puts **one** hate point on that
+player and goes.
+
+**One point is the whole design.** It is nowhere near enough to take a player off whoever they are
+already fighting — the klaw nest's *"a hundred is a claim and one is a glance"* — so what this builds
+is not a snap-aggro but a **drift**: every three seconds the post edges further onto one target, and a
+group that stays too long ends up fighting all of it. A hundred would make the post collapse onto the
+first player instantly, which is a cruder fight and a much easier one to write by accident.
+
+### The pin had to change shape, and the reason is the mechanic
+
+The first pin asserted one point per three seconds and read three, then six. That is not a defect: **a
+neighbour that takes a point engages, and an engaged watcher starts calling too**, so a post feeds
+itself and the rate depends on how many of them are within earshot of each other. Pinning an exact
+schedule would have pinned the harness's geometry.
+
+What is pinned instead is the shape — it grows, it keeps growing, and every step is glance-sized (a
+mutation that makes the glance a claim is caught by the last of those). The same emergence broke the
+"beat stops with the fight" pin, which was sending only the caller home while the neighbour it had
+recruited kept calling; that too is correct, and the pin now retires both.
+
+**Rule: when a pin on a pack mechanic reads the wrong number, check whether the pack is the reason
+before changing the class.** Two pins here, and both times the surprising number was the feature.
+
+### Faithful where retail is odd
+
+Retail's opening shout carries `param_obj=OBJI_SELF`, so a neighbour answering it tries to put hate on
+a friend and the aggro list refuses. The opening call is effectively "I am fighting" with no payload,
+and the timer that follows does all the work. **Translated exactly as written rather than tidied into a
+second target call** — the difference is one wasted broadcast in retail and would be one extra player
+pulled here.
+
+### Not translated
+
+Message `900`, which a dying watcher broadcasts at twenty-five metres. **Nothing in the entire 5.8 dump
+listens for it** — this pattern is its own only sender and its own only listener, and `900` appears on
+neither side of anything else. Left out rather than given an invented meaning.
+
+### Verification
+
+Full suite **2,075 passing** and 1 skipped; five new pins; **seven mutations, all caught**. Translatable
+288 patterns / 966 npcs → **287 / 962**, and the no-blocker list 10 → **9**.
