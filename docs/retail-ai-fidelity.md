@@ -18486,3 +18486,52 @@ message, count `TimerArmCount(3)`, expect one — and it is the first thing to d
 ### Verification
 
 One engine seam, no pins. Full suite **2,050 passing**, 1 skipped.
+
+## The three seam pins are in, and the fifth "already enforced" turns up
+
+`TimerSeamTests` pins what the timer seam was built for: **Kingspin's accelerator windows open once per
+fight**, the arm counter tracks a slot that really does re-arm, and **Masto's band timers fire** inside a
+minute at band health.
+
+Written into a new file rather than edited into an existing one — the previous pass lost a pin to brace
+surgery, and a new file has no braces to get wrong.
+
+### And the mutation is not caught, for a good reason
+
+Removing Kingspin's `set_flag_var` leaves the arm count at one. **The operator already enforces it.**
+
+`ArmTimer` increments its counter only on an *effective* arm, and take-the-shorter ignores a repeat at the
+same delay while the timer is pending. Four cries five seconds apart all ask for five seconds; the first
+arms, the rest are no-ops. **The windows open once with or without the guard.**
+
+So Kingspin's flag joins the Lepharist whisper and the Silikor ward: **faithful, and cosmetic in this
+engine.** That is the fifth guard this log has applied and then found already enforced elsewhere — twice by
+`EnterCombat`, three times now by the timer operator.
+
+**The pins are still worth having.** They assert the behaviour rather than the mechanism, so they hold
+whichever of the two enforces it, and they would catch an operator change that stopped enforcing it.
+
+### What that says about the `COSMETIC` verdict
+
+The report marks a `flag` row cosmetic when its handler is latched. **It cannot mark this one**, because
+the enforcement comes from the timer operator rather than from the handler — a different mechanism with
+the same consequence.
+
+**Generalising it properly means asking "would this guard change any observable?"**, which is what a
+mutation run answers and static analysis does not. The honest form of the rule is: **apply the guard for
+fidelity, run the mutation, and record what it says.** Three of five so far have said "nothing".
+
+### Still to do
+
+- Padmarashka's two `unset_flag_var` rows; Middle Boss Fire's timer flag — **and a mutation run on each**,
+  since the base rate for "already enforced" is now three in five.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Three pins added, one mutation run and not caught for a documented reason. Full suite **2,053 passing**,
+1 skipped.
