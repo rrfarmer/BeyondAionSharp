@@ -12665,3 +12665,54 @@ files**.
 ### Verification
 
 Full suite **2,120 passing** and 2 skipped; seven pins; **seven mutations, all caught**.
+
+## Thirty-seven npcs I left behind
+
+Re-running the `on_spelled` survey to pick the next row turned up `ND2_Callsoulst` still listing live
+stock-AI npcs — a pattern I translated two entries ago. **The lich commit repointed four of fourteen
+bound npcs and left three live ones doing nothing**, because the ids came from the first page of a
+survey's output rather than from the pattern's membership.
+
+Checking the rest of the fortnight's work found the same shape in **seven classes and thirty-seven
+npcs**:
+
+| pattern | class | missed |
+|---|---|---|
+| `ND2_PnC` | faithful servant | **9** — griffos, fungies, fungen |
+| `Lizardman_BeastKA` | bakarma breeder | **11** — indratu tamers, petmasters, beastlords |
+| `D2_FnG_D1` | angolem fragment | **10** — shardlings, mosbears, frightcorns |
+| `ND2_Callsoulst` | lich soul call | 3 |
+| `Lizardman_BeastB` | trained beast | 2 |
+| `ND2_Bst_38` / `_41` | drake / drakie | 1 each |
+
+All repointed. The suite is unchanged at 2,120 passing, which is the uncomfortable part: **nothing
+measured the gap, and nothing would have.** The classes were correct, their pins passed, and each
+encounter worked for the npc it was written against while its siblings stood silent.
+
+### The mistake, and the rule
+
+Every one of these came from reading a survey that prints `[(n, name) for n in live[:2]]` and treating
+the two ids it showed as the population. The survey was doing its job — it ranks patterns, it does not
+enumerate them.
+
+**Rule: repoint by enumerating the pattern's members, not by copying ids out of a survey's output.**
+One `grep -P "\tPATTERN\t" out/ai_binding.tsv` gives the whole membership; that is the list to filter
+for liveness, and it takes a second longer than trusting the excerpt.
+
+### The audit, and why its unfiltered output is not a backlog
+
+`audit_missed_siblings.py` asks the question directly, and **`--classes` is the mode that matters**:
+"did *my* recent work miss anything". Unfiltered it reports ninety-nine patterns, and most are not gaps
+at all — `LMerchant` binds five hundred npcs of which one is a named quest-giver, `D2_FnA` is retail's
+generic monster pattern with a thousand members. A pattern whose bespoke class was written *for that
+pattern* is the actionable case, and only the person who wrote it can say which those are. The tool
+says so in its output rather than leaving the number to be quoted.
+
+That is the third audit in this log to need "this number is not a backlog" printed next to it, after
+the mute adds and the aggro-relation counts. **A count that looks like work and is not will be treated
+as work.**
+
+### Verification
+
+Full suite **2,120 passing** and 2 skipped, unchanged — as expected, and as noted above, that is the
+point rather than a reassurance. The audit reports **0** for every class shipped this fortnight.
