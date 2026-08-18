@@ -13176,3 +13176,69 @@ purpose. Worth one query to stop anyone asking again.
 Nine pins. **Eight-mutation sweep, five caught on the first pass**; the three survivors produced a
 corrected class doc, a new band-crossing pin and a new opening-scatter pin, and all three then failed
 as they should. Full suite **2,165 passing**, 5 skipped.
+
+## The fortress guards, and the number that carries both factions
+
+`audit_message_senders.py` has been pointing at this all along and I had been reading past it: **`23200`
+has twenty-two sender patterns and sixteen listeners.** It is the fortress guard call, and this server
+had none of it — **137 live npcs**, across every 5.x fortress and both factions, standing next to each
+other and never speaking.
+
+| role | patterns | live |
+|---|---|---|
+| **callers** — ranged patrols and watchguards | `F5_PvP_DGuard_Ra_Ae_Broad`, `F5_PvPLight_DGuard_Ra_An_Broad` | **38** |
+| **answerers** — knights and defenders | `F5_PvP_DGuard_Kn_Ae`, `F5_PvPLight_DGuard_Kn_An`, `F5_RvR_DGuard_Kn_Ae` | **99** |
+
+**Pull one guard and every guard within twenty-five metres comes.** Idle, an answerer takes a single
+point on the player named and goes; already fighting, it turns on that player and takes a hundred.
+Without it a raid picks a fortress apart one guard at a time, which is what has been happening.
+
+### The design worth stealing
+
+**The answerer never checks who spoke.** Retail's guard is `is_enemy who=OBJI_MESSAGE_PARAM` — is the
+*player named* my enemy — and that one condition is what lets a single message number serve both
+factions. An Elyos guard standing in earshot of an Asmodian call hears it and does nothing, because the
+player it names is not its enemy. **Written the obvious way, checking the sender, the family would have
+needed a number per faction.**
+
+### A blocker that turned out not to block
+
+Every branch of the caller's `on_enter_attack_state` is split on `is_user_flying`, which is one of this
+port's standing structural blockers. **Both halves broadcast the same message at the same range.** The
+flying test picks which skill it opens with and nothing else, so the blocker does not touch the call at
+all. Worth checking before writing off a pattern for a condition we cannot evaluate: **the guard may not
+be guarding the part you want.**
+
+### The mutation that could not fail, and why that was worth an experiment
+
+Deleting `is_enemy` from the idle answer changed no hate at all. Not a weak pin — **this port's
+`AggroList.AddHate` already drops hate aimed at a creature that is not an enemy**, so retail's condition
+is enforced a second time one layer down. Measured rather than assumed: a probe adding fifty points to a
+friendly and a hostile player read back **zero and fifty**.
+
+**But the turn is not protected.** `HateMessageTarget` faces its target whether or not the hate landed,
+so a guard with the condition deleted swings round to a friendly player and stands there. That is the
+observable difference, and the pin now measures it.
+
+Same shape as the village killers, where the aggro list's refusal was the tribe table catching a bug of
+mine. **The rule is holding: when a pin cannot fail, ask what the engine is doing before rewriting the
+pin.**
+
+### Not built
+
+- **`percent_to_add=10`** riding with the busy answer's hundred. No way to add a percentage of existing
+  hate here — recorded, as for the faithful servants and the drakies.
+- **`23201`**, "protect the sender" (retail's own comment, in Korean). Its three listeners disagree about
+  whether to cast on the sender or on what the message named, and its only sender in the 5.8 files is
+  `F5_PvPLight_DGuard_Fi_An`. A skill index either way.
+- Every battle timer on both roles, and the opening skills the flying test chooses between.
+- **`F5_AbyssTower_DGuard`** (6 live) also broadcasts `23200`, at ten metres rather than twenty-five, and
+  its branch is guarded on `is_race from=OBJI_SELF race_type=pc_dark` — which for the Elyos "sacred image
+  of marchutan" reads as a branch that can never fire. **Left alone rather than guessed at**; it wants
+  its own reading.
+- The `23204`–`23209` elemental-guard conversation, whose npcs our data does not place.
+
+### Verification
+
+Five pins and a **six-mutation sweep, all caught** once the enemy guard was pinned on the turn rather
+than the hate. Full suite **2,170 passing**, 5 skipped.

@@ -303,6 +303,18 @@ public static class When
     public static PatternCondition CasterIsEnemy
         => ai => ai.LastCaster is Creature caster && caster.IsEnemy(ai.GetOwner());
 
+    /// <summary>
+    /// <c>is_enemy who=OBJI_MESSAGE_PARAM</c> — whoever a message named is hostile to this NPC.
+    /// </summary>
+    /// <remarks>
+    /// The fortress guards' whole answer hangs on this. Their call goes out on a shared number that
+    /// both factions' guards use, so an Elyos guard hears an Asmodian guard's cry and this guard is
+    /// what stops it answering — it does not check who spoke, it checks whether the player named is
+    /// its enemy.
+    /// </remarks>
+    public static PatternCondition MessageParamIsEnemy
+        => ai => ai.MessageParam is Creature named && named.IsEnemy(ai.GetOwner());
+
     public static PatternCondition SeenRace(params Race[] races)
         => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
 
