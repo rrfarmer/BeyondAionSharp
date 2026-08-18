@@ -20246,3 +20246,70 @@ is recorded is the shape: **three kinds of entry, one useful.**
 
 **No net code change** — five branches written, built, and reverted. Full suite unchanged at **2,097
 passing**, 1 skipped.
+
+## The last "ready" queue item, checked properly, and what it actually is
+
+Applying the previous entry's own rule — **search the tests and the log before building** — to
+`IDRaksha_Re_A_KJS`'s despawn, the one queue item established as never investigated.
+
+### Half of it was already built
+
+Retail's branch is `on_leave_attack_state` → `despawn SPAWN_ID_1`, behind a world flag. **`SummonerAI`
+already despawns its helpers in `HandleBackHome`**, which is that despawn. Nothing to do.
+
+### The other half is a door
+
+The world flag is not incidental. Reading the file rather than the branch:
+
+```
+IDRaksha_Re_A_KJS               set_world_flag_var ALPHA_1   (on leaving combat)
+IDRaksha_Re_Boss_KJS            set_world_flag_var ALPHA_1
+IDRaksha_Solo_SensoryArea_Else_A set_world_flag_var ALPHA_1
+IDRaksha_Solo_A_Door_Open_Trigger_05
+                                unset_world_flag_var ALPHA_1 -> teleport_target_alias OBJI_TALKER
+```
+
+**Three writers, one reader.** The mechanic is *"the shortcut does not work until you have cleared the
+room"* — talking to the trigger teleports you only if the flag is set, and consumes it.
+
+This is the **first world-flag mechanic found with a real reader**, which is what the flag engine was
+built for four passes ago. It is also the reason that entry's caution was right: the previous two
+"blocked on a flag" claims turned out to be writes nobody read.
+
+### And it is still not buildable
+
+The reader needs three things this port does not have:
+
+- an **`on_talked_by_user` handler** in the pattern engine — there is none,
+- a **`teleport_target_alias` action** — there is none,
+- the **alias data** naming the destination.
+
+**The setter alone must not be built.** A flag with no reader is exactly what this log struck from the
+engine-gap list two passes ago, and writing one here to "prepare" would be the same mistake with better
+intentions.
+
+### Three for three
+
+**Every concrete queue item examined in the last three passes was mischaracterised**: the hard Tiamat was
+already done, `IDTP_Keeper1` was already decided against, and this one is half-built and half-blocked on
+machinery the queue never mentioned. The queue said "ready" for all three.
+
+**The rule from last entry worked** — both checks were one command, and they turned a build into a
+reading. What they cannot do is tell you an item is *partly* done, which is what this one was.
+
+### Still to do
+
+- **`on_talked_by_user` and `teleport_target_alias`** in the pattern engine, which together unblock the
+  Raksha door and any other talk-gated shortcut. **This is a genuine engine gap** — verified against the
+  engine before being named, unlike two of the previous four.
+- Walker route ids; if recovered, revisit the Bergrisar decision.
+- The four lords' staged spawns against our `empyrean_lord`.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,097 passing**, 1 skipped.
