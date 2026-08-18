@@ -15929,3 +15929,47 @@ is recorded plainly rather than left to be inferred from a green suite.
 
 Two classes split, three payloads corrected. Full suite **2,041 passing**, 1 skipped — and green here means
 "nothing broke", not "the new behaviour is covered".
+
+## The four unfolded answers, pinned
+
+The previous entry shipped three state splits and said plainly that **none of them was covered**: the suite
+was green because the idle path is what the existing pins exercise and the idle path still worked. It named
+four pins as the first thing to do. They are done.
+
+`StateFoldedAnswersTests` gives each answerer **a fight of its own first**, which is the only arrangement
+in which the two branches are distinguishable:
+
+| pin | claim |
+|---|---|
+| `AFightingPetIsYankedOffItsTarget` | the pet drops its own quarry for the one named |
+| `AnIdlePetGoesWhereItIsPointed` | and an idle pet still arrives, by the other branch |
+| `AFightingSubordinateIsYankedOnEitherOrder` | both `6833` and `6834`, since retail writes each twice |
+| `AFightingRearguardNotesTheCallAndKeepsItsTarget` | **it takes the hate and does not move** |
+| `AnIdleRearguardJoins` | falling past the guarded branch to the unguarded fallback |
+
+Six pins across five methods, all passing, and **the mutation sweep is the part that matters**:
+
+- rearguard "tidied" into a symmetric pair — a forced switch on the fighting branch instead of a bare hate
+  point — **caught**. That is precisely the tidy-up the previous entry warned would be invisible.
+- the fighting pet no longer switching — **caught**.
+
+### What this closes
+
+The largest unpinned surface this log had shipped in one go. Worth naming the sequence, because it is a
+pattern rather than an accident: three commits landed behavioural changes with a green suite, and the green
+came from the pins all exercising the same half of a two-branch answer. **A suite can be green because the
+code is right or because nobody looked; those are different states and only the mutation sweep tells them
+apart.**
+
+### Still to do
+
+- The five coffin `message` rows, blocked on the scan following local condition helpers.
+- The 14 remaining ready rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+- **Padmarashka's lower two bands and the other banded cadences**, still unmeasured from the `hp` pass.
+
+### Verification
+
+Six pins, two mutations, both caught. Full suite **2,047 passing**, 1 skipped.
