@@ -28,6 +28,9 @@ public class QueenAlukinaAI : AggressiveNpcAI, HpPhases.PhaseHandler
     private readonly HpPhases hpPhases = new HpPhases(80, 55, 25);
 
     private const int AzureBlobble = 280713;
+
+    /// <summary>Retail <c>IDArena_S8_Named_3</c> gives the blobbles thirty seconds.</summary>
+    private const int BlobbleLife = 30;
     private const int BlobblesOnDeath = 7;
 
     private ScheduledTask? task;
@@ -58,14 +61,9 @@ public class QueenAlukinaAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         for (int i = 0; i < BlobblesOnDeath; i++)
         {
-            if (RndSpawnInRange(AzureBlobble, 2f) is not Npc blobble)
-                continue;
-
-            ThreadPoolManager.GetInstance().Schedule(_ =>
-            {
-                blobble.GetController().DeleteIfAliveOrCancelRespawn();
-                return ValueTask.CompletedTask;
-            }, 30000L);
+            // Behaviourally identical to the hand-written schedule it replaces, which predated
+            // SpawnFor. Retail's own thirty seconds, now expressed the same way as everywhere else.
+            Expire(RndSpawnInRange(AzureBlobble, 2f), BlobbleLife);
         }
     }
 

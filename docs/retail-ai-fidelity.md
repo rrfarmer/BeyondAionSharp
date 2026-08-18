@@ -20425,3 +20425,52 @@ hierarchy does not spawn — deliberately not applied, and the reason is in the 
 ### Verification
 
 Build clean. Full suite **2,097 passing**, 1 skipped — unchanged, because the one change is unpinned.
+
+## The last three rows, and the fastest-accumulating add in the audit
+
+All three remaining `no spawns` rows spawn through helpers the audit does not count — `RndSpawnInRange`
+rather than `Spawn(` — so all three were the same false negative as the medic. **Two of them had real
+gaps behind it.**
+
+| class | npc | retail | what it was |
+|---|---|---|---|
+| `rm_1337` | arena spark | 5s | **eight to twelve at a time**, none expiring |
+| `brigadegenerallaksyaka` | Rakshaka skeleton | 20s | four per wave, none expiring |
+| `alukina_emp` | azure blobble | 30s | **already correct**, hand-written schedule at exactly 30000L |
+
+**`rm_1337` is the fastest-accumulating add found in this whole audit.** Its branch places eight to twelve
+sparks per cast and none of them ever left, so a single arena round finished with the floor covered.
+Retail gives each five seconds.
+
+`alukina_emp` was right already and is moved onto the shared helper — the fourth class to be, after the
+barricade, unstable Yamennes and kistenian.
+
+### What the audit's own history now looks like
+
+Started at 62 rows. **Ended at one.** Along the way it needed six corrections, and they split evenly:
+
+- **three that removed false positives** — matching the npc rather than the pattern, counting `Expire`,
+  detecting self-timed classes;
+- **three that exposed work it had been hiding** — requiring the delete inside a scheduled body, reading
+  the whole class body rather than the first 3,000 characters, and (unfixed) counting only `Spawn(`.
+
+**The last one is still unfixed and is what found the last four rows.** Every class that summons through a
+helper — `RndSpawnInRange`, `SpawnServants`, `SpawnEnemyServant` — reads as spawning nothing. It was
+caught four times by hand and never by the tool.
+
+### Still to do
+
+- **Teach the audit about spawn helpers**, which is the one correction it still needs and the only reason
+  the final count can be trusted at all — four rows were found despite it, not because of it.
+- **None of this batch is pinned.** All three are arena or instance npcs with no harness setup; the
+  changes are single retail numbers applied to single call sites and are verifiable by reading.
+- **`on_talked_by_user` and `teleport_target_alias`**, the one gap named and verified.
+- Resolve the empyrean lords' skill indices; walker route ids, and if recovered revisit Bergrisar.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Build clean. Full suite **2,097 passing**, 1 skipped — unchanged, because none of this batch is pinned.

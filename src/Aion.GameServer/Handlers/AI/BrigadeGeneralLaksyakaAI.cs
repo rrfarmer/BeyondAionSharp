@@ -73,6 +73,14 @@ public class BrigadeGeneralLaksyakaAI : AggressiveNpcAI
         }
     }
 
+    /// <summary>
+    /// Retail <c>IDTiamat_Rakshaka</c> gives <c>IDTiamat_Rakshaka_Skeleton</c> twenty seconds.
+    /// </summary>
+    /// <remarks>
+    /// They had none, so every wave of four stayed for the whole fight.
+    /// </remarks>
+    private const int SkeletonLife = 20;
+
     private void SpawnSummon()
     {
         if (GetPosition().GetWorldMapInstance().GetNpc(283115) == null) // 4.0
@@ -85,7 +93,7 @@ public class BrigadeGeneralLaksyakaAI : AggressiveNpcAI
     {
         for (int i = 0; i < count; i++)
         {
-            RndSpawnInRange(npcId, 10);
+            Expire(RndSpawnInRange(npcId, 10), SkeletonLife);
         }
     }
 
