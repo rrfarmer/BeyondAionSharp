@@ -12091,3 +12091,54 @@ commit` commits on the grep's exit code.**
 Full suite **2,086 passing** and 1 skipped, over three consecutive runs; five pins; **five mutations,
 four caught**. One LoginServer test failed once in the run that produced the bad commit and has not
 reproduced since — recorded, not chased.
+
+## `on_spelled`: the largest handler gap the port had
+
+The previous entry said two encounters had now wanted this and that twice was enough to name it as
+work. Measured, it is much more than two: **1,170 patterns in the 5.8 files carry `on_spelled`, with
+5,300 npcs bound to them** — the biggest single handler gap this port has had, and aionemu has no
+counterpart for it.
+
+It exists now: `AiEventType.Spelled`, raised from `CreatureController.OnAttack`, dispatched through
+`AbstractAI` as a virtual no-op, and surfaced to tables as `AiPattern.OnSpelled` with
+`PatternAi.LastCaster` alongside.
+
+### The one decision, and the data made it
+
+**An `Effect` is what distinguishes a skill from a swing.** The damage path already carries one — it is
+null for an auto-attack and set for a skill — so the event goes exactly there and needs no new
+plumbing, no guess about what counts as "spelled", and no second call site to keep in step.
+
+It is guarded against re-entrancy the same way `on_attacked` is, for the reason the Catacombs bosses
+found: a branch that adds hate notifies the controller, and the controller can come straight back
+through the handler.
+
+### Two encounters closed with it
+
+**Vallakhan's illusions** now pop for a caster exactly as they do for a melee player, and retail's
+`is_hp_lower_than 99` guard is translated with them — a spell that does no damage leaves the illusion
+standing, so a buff is not a way to clear the room. Both halves pinned.
+
+**The village killers** get the half deferred twice for want of this event. Retail carries the identical
+body on both handlers **and one flag var across them**, so a raiding party commits once however it was
+provoked; the pin asserts that a later cast adds nothing rather than a second five million, because
+asserting five million would be asserting two flags.
+
+New vocabulary: `When.CasterIsEnemy`, `When.CasterRace`, `Do.HateCaster`.
+
+### Two honest survivors
+
+* **"the event is never raised"** — the pins fire `AiEventType.Spelled` directly, so removing the line
+  in `CreatureController` changes nothing they can see. **The call site is unpinned**, exactly as
+  `FriendDeathNotice`'s was, and for the same reason: a harness that reaches the AI layer directly does
+  not exercise the engine path into it.
+* **"the re-entrancy guard is removed"** — nothing in these pins produces a nested spelled event, so the
+  guard is carried on the `on_attacked` precedent rather than on evidence of its own.
+
+Both are gaps in coverage rather than defects, and are reported as survivors rather than covered with
+pins written to kill them.
+
+### Verification
+
+Full suite **2,090 passing** and 1 skipped; four new pins across two encounters; **five mutations, three
+caught and two unpinned call sites**.

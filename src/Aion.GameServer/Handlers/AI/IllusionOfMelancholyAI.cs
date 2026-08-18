@@ -78,10 +78,9 @@ public class VallakhanAI : SummonerAI
 /// do. An illusion built with any health at all would be a different fight.
 /// </para>
 /// <para>
-/// <b>Not translated:</b> retail's <c>on_spelled</c> branch, which pops the illusion for a caster the
-/// same way — guarded on <c>is_hp_lower_than 99</c>, so a spell that does no damage leaves it standing.
-/// Our engine has no <c>on_spelled</c> pattern handler; a caster who never lands a melee blow does not
-/// pop one here. The gap is the same one recorded for the village killers.
+/// <b>The caster's half is built now.</b> Retail's <c>on_spelled</c> pops the illusion the same way,
+/// guarded on <c>is_hp_lower_than 99</c> so a spell doing no damage leaves it standing. Our engine had
+/// no such handler when this first shipped; it has one now.
 /// </para>
 /// </remarks>
 [AIName("illusion_of_melancholy")]
@@ -97,6 +96,11 @@ public class IllusionOfMelancholyAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnAttacked = Of(Branch(18, "touched, and gone", [], Do.DespawnSelf())),
+
+		// Retail guards this one on is_enemy and hp<99, so a spell that does no damage leaves the
+		// illusion standing while one that lands pops it exactly as a blow does.
+		OnSpelled = Of(Branch(19, "cast at, and gone",
+			[When.CasterIsEnemy, When.HpBelow(99)], Do.DespawnSelf())),
 
 		OnMessage = Of(Branch(20, "that one, go",
 			[When.Message(VallakhanAI.SetThemOn)],

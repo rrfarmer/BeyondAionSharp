@@ -56,6 +56,44 @@ public sealed class IllusionOfMelancholyAiTests
 	}
 
 	/// <summary>
+	/// <b>A spell pops it too.</b> Retail carries the same body on <c>on_spelled</c>, so a caster who
+	/// never lands a melee blow removes an illusion exactly as a melee player does — the half this
+	/// class shipped without, for want of an engine event.
+	/// </summary>
+	[Fact]
+	public void ASpellPopsItToo()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc illusion = harness.Spawn(Illusion, 300f, 300f, 200f);
+		Player caster = harness.SpawnPlayer(360f, 300f, 200f, race: Race.ASMODIANS);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(10));
+		Assert.True(illusion.IsSpawned(), "the illusion left before anyone cast at it");
+
+		BossAiHarness.SetExactPercent(illusion, 98);
+		illusion.GetAi().OnCreatureEvent(AiEventType.Spelled, caster);
+
+		Assert.False(illusion.IsSpawned(), "the illusion survived a spell");
+	}
+
+	/// <summary>
+	/// <b>And a spell that does no damage leaves it standing.</b> Retail guards the branch on
+	/// <c>is_hp_lower_than 99</c>, so a buff or a miss is not a way to clear the room.
+	/// </summary>
+	[Fact]
+	public void AndASpellThatDoesNoDamageLeavesItStanding()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc illusion = harness.Spawn(Illusion, 300f, 300f, 200f);
+		Player caster = harness.SpawnPlayer(360f, 300f, 200f, race: Race.ASMODIANS);
+
+		BossAiHarness.SetExactPercent(illusion, 100);
+		illusion.GetAi().OnCreatureEvent(AiEventType.Spelled, caster);
+
+		Assert.True(illusion.IsSpawned(), "an undamaging spell popped the illusion");
+	}
+
+	/// <summary>
 	/// <b>And it leaves when the fight ends</b>, so a group that walks away is not followed by two of
 	/// them.
 	/// </summary>

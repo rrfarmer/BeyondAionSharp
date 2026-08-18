@@ -59,6 +59,18 @@ public sealed class AiPattern
     /// and gates the once-only ones with a flag var of their own rather than by the event.
     /// </remarks>
     public PatternBranch[] OnAttacked { get; init; } = None;
+    /// <summary>
+    /// <c>on_spelled</c> — a skill landed on this NPC.
+    /// </summary>
+    /// <remarks>
+    /// Retail's most-used handler after <c>on_attacked</c>: 1,170 patterns carry it. Almost every use
+    /// pairs it with the same body as <c>on_attacked</c>, because a caster who never lands a melee blow
+    /// would otherwise miss the reaction entirely — Vallakhan's illusions and the village killers both
+    /// wanted it before the event existed. The caster is <see cref="PatternAi.LastCaster"/> for the
+    /// duration of the branch.
+    /// </remarks>
+    public PatternBranch[] OnSpelled { get; init; } = None;
+
     public PatternBranch[] OnBattleTimer { get; init; } = None;
     public PatternBranch[] OnLeaveAttack { get; init; } = None;
     public PatternBranch[] OnEnterIdle { get; init; } = None;
@@ -283,6 +295,10 @@ public static class When
     public static PatternCondition Enemy
         => ai => ai.SeenCreature is Creature seen && seen.IsEnemy(ai.GetOwner());
 
+    /// <summary><c>is_enemy who=OBJI_CASTER</c> — whoever just cast on this NPC is hostile to it.</summary>
+    public static PatternCondition CasterIsEnemy
+        => ai => ai.LastCaster is Creature caster && caster.IsEnemy(ai.GetOwner());
+
     public static PatternCondition SeenRace(params Race[] races)
         => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
 
@@ -305,6 +321,10 @@ public static class When
     /// </remarks>
     public static PatternCondition AttackerClass(params PlayerClass[] classes)
         => ai => ai.LastAttacker is Player hitter && classes.Contains(hitter.GetPlayerClass());
+
+    /// <summary><c>is_race from=OBJI_CASTER</c>.</summary>
+    public static PatternCondition CasterRace(params Race[] races)
+        => ai => ai.LastCaster is Creature caster && races.Contains(caster.GetRace());
 
     /// <summary><c>is_race from=OBJI_ATTACKER</c>.</summary>
     public static PatternCondition AttackerRace(params Race[] races)
@@ -465,6 +485,9 @@ public static class Do
 
     /// <summary><c>switch_target target=OBJI_ATTACKER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateAttacker(int hate) => ai => ai.HateAttacker(hate);
+
+    /// <summary><c>switch_target target=OBJI_CASTER</c> with its <c>points_to_add</c>.</summary>
+    public static PatternAction HateCaster(int hate) => ai => ai.HateCaster(hate);
 
     /// <summary>Anything with no pattern op behind it — an encounter-specific hook the table needs.</summary>
     public static PatternAction Custom(Action<PatternAi> body) => ai => body(ai);

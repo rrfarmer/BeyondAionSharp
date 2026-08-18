@@ -188,4 +188,47 @@ public sealed class VillageKillerAiTests
 
 		Assert.Equal(afterSetup, party.GetAggroList().GetHate(chief));
 	}
+
+	/// <summary>
+	/// <b>The two halves share one flag, so a raiding party commits once however it was provoked.</b>
+	/// Retail puts <c>FLAGVARI_EPSILON_5</c> on both the attacked and the spelled branch, and this pin
+	/// is what says the shared flag was translated rather than one flag each.
+	/// </summary>
+	/// <remarks>
+	/// The engagement during setup already spends it — see the sibling pin — so what a later cast adds
+	/// is nothing, and that is the claim. A pin asserting a second five million would be asserting two
+	/// flags.
+	/// </remarks>
+	[Fact]
+	public void TheTwoHalvesShareOneFlag()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc party = harness.Spawn(BalaurRaider, 300f, 300f, 200f);
+		Npc chief = harness.Spawn(AnyNpcOfRace(Race.GCHIEF_LIGHT), 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(party, chief);
+
+		int committed = party.GetAggroList().GetHate(chief);
+		Assert.True(committed >= 5_000_000, "the raiding party never committed: " + committed);
+
+		party.GetAi().OnCreatureEvent(AiEventType.Spelled, chief);
+
+		Assert.Equal(committed, party.GetAggroList().GetHate(chief));
+	}
+
+	/// <summary>
+	/// <b>And a caster of its own faction is ignored</b>, exactly as one hitting it is.
+	/// </summary>
+	[Fact]
+	public void AndACasterOfItsOwnFactionIsIgnored()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc party = harness.Spawn(BalaurRaider, 300f, 300f, 200f);
+		Npc ally = harness.Spawn(AnyNpcOfRace(Race.GCHIEF_DRAGON), 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(party, ally);
+
+		int before = party.GetAggroList().GetHate(ally);
+		party.GetAi().OnCreatureEvent(AiEventType.Spelled, ally);
+
+		Assert.Equal(before, party.GetAggroList().GetHate(ally));
+	}
 }

@@ -253,6 +253,11 @@ public abstract class AbstractAI : AI
     protected virtual void HandleFriendKilled(Creature dead)
     {
     }
+
+    /// <summary>Retail's <c>on_spelled</c>: a skill landed on this NPC.</summary>
+    protected virtual void HandleSpelled(Creature caster)
+    {
+    }
     protected abstract void HandleCreatureNotSee(Creature creature);
     protected abstract void HandleCreatureMoved(Creature creature);
     protected abstract void HandleCreatureAggro(Creature creature);
@@ -378,6 +383,9 @@ public abstract class AbstractAI : AI
                 break;
             case AiEventType.FriendKilled:
                 HandleFriendKilled(creature);
+                break;
+            case AiEventType.Spelled:
+                HandleSpelled(creature);
                 break;
             case AiEventType.CreatureNotSee:
                 HandleCreatureNotSee(creature);

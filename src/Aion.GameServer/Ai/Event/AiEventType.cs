@@ -51,6 +51,17 @@ public enum AiEventType
     /// </remarks>
     FriendKilled,
 
+    /// <summary>
+    /// Retail's <c>on_spelled</c>: a skill landed on this NPC.
+    /// </summary>
+    /// <remarks>
+    /// The largest handler gap this port had — <b>1,170 patterns in the 5.8 files carry it, with 5,300
+    /// npcs bound to them</b> — and aionemu has no counterpart, so it has no SCREAMING_SNAKE alias.
+    /// Raised from <c>CreatureController.OnAttack</c> when the blow carried an <c>Effect</c>, which is
+    /// what distinguishes a skill from a swing. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    Spelled,
+
     // Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values, additive).
     NONE = None,
     ACTIVATE = Activate,

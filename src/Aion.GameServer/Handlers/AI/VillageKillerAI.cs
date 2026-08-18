@@ -36,9 +36,8 @@ namespace Aion.GameServer.Handlers.AI;
 /// once-a-fight branch whose flag the test setup had already spent. See the pins for the experiment
 /// that showed it.
 /// <para>
-/// <b>Not translated:</b> <c>on_spelled</c>, which retail carries with the same body. Our engine has no
-/// pattern handler for it, so a caster garrison that never lands a melee blow is not committed to.
-/// Recorded rather than approximated with <c>on_attacked</c>, which fires on a different event.
+/// <b>Not translated:</b> nothing. The <c>on_spelled</c> half, deferred twice for want of an engine
+/// event, is built — see <see cref="Ai.Pattern.AiPattern.OnSpelled"/>.
 /// </para>
 /// </para>
 /// </remarks>
@@ -60,6 +59,13 @@ public abstract class VillageKillerAI : PatternAi
 		OnAttacked = Of(Branch(6, "and it is the one hitting me",
 			[When.AttackerRace(hunted), When.FirstTime(Committed)],
 			Do.HateAttacker(Unpeelable))),
+
+		// Retail carries the identical body on on_spelled, so a garrison caster that never lands a
+		// melee blow commits the raiding party just as hard. The flag is shared, so whichever event
+		// arrives first spends it -- which is retail's arrangement, not a simplification.
+		OnSpelled = Of(Branch(6, "or the one casting at me",
+			[When.CasterRace(hunted), When.FirstTime(Committed)],
+			Do.HateCaster(Unpeelable))),
 	};
 
 	protected VillageKillerAI(Npc owner)

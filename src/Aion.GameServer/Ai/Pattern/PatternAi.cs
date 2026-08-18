@@ -423,6 +423,45 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary>Whoever landed the blow being handled, or null outside an <c>on_attacked</c> branch.</summary>
     public Creature? LastAttacker { get; private set; }
 
+    /// <summary>Whoever cast the skill being handled, or null outside an <c>on_spelled</c> branch.</summary>
+    public Creature? LastCaster { get; private set; }
+
+    /// <summary>Retail's <c>on_spelled</c>.</summary>
+    /// <remarks>
+    /// Guarded against re-entrancy for the same reason <c>on_attacked</c> is: a branch that adds hate
+    /// notifies the controller, and the controller can come straight back through here.
+    /// </remarks>
+    protected override void HandleSpelled(Creature caster)
+    {
+        base.HandleSpelled(caster);
+        if (inOnSpelled || Pattern.OnSpelled.Length == 0)
+            return;
+
+        inOnSpelled = true;
+        LastCaster = caster;
+        try
+        {
+            Evaluate(Pattern.OnSpelled);
+        }
+        finally
+        {
+            LastCaster = null;
+            inOnSpelled = false;
+        }
+    }
+
+    private bool inOnSpelled;
+
+    /// <summary>Puts hate on whoever just cast on this NPC and turns to face them.</summary>
+    public void HateCaster(int hate)
+    {
+        if (LastCaster is not Creature caster || caster.IsDead())
+            return;
+
+        GetAggroList().AddHate(caster, hate);
+        GetOwner().SetTarget(caster);
+    }
+
     /// <summary>Puts hate on whoever just hit this NPC and turns to face them.</summary>
     public void HateAttacker(int hate)
     {
