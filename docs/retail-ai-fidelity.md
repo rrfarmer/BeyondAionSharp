@@ -19837,3 +19837,49 @@ the harness gap was every walking-add class in the port.
 
 Build clean. Two of the three restored pins fail with Celestius' lifetime removed. Full suite **2,090
 passing**, 1 skipped.
+
+## Filling every null holder, and why that was wrong
+
+The previous entry ended by noting that nothing enumerates which of `StaticData`'s holders the AI fixture
+provides. The obvious fix — **give every null holder an empty instance** — was written, run, and
+**turned 2,090 passing tests into 1,267 failures.**
+
+**Empty is not automatically safer than null.** Many holders are unusable until their `AfterUnmarshal` has
+run: the constructor leaves their lookup maps unbuilt, so a blank instance throws inside a *different*
+call than the null one did. It fails differently, not more gently.
+
+That is why the four holders this fixture does construct empty — walker, material, zone, world-map — each
+carry their own comment and, in two cases, an explicit `AfterUnmarshal(null!)`. **Empty is only safe for a
+holder whose empty state is meaningful, and that has to be decided one at a time.** The blanket version
+assumed the opposite.
+
+### What was kept instead
+
+A **lookup, not a rule**. `HarnessHolderInventoryTests` records the ten holders the fixture provides and
+fails only when that list changes — and its failure message names **all 112 holders that are null**.
+
+It asserts nothing about which holders *should* be provided: the fixture provides what the AI tests need
+and should not carry the rest. Its whole value is that the next mystery `NullReferenceException` can be
+checked against that list in one step, instead of the four sound-but-inapplicable explanations that the
+walker holder cost.
+
+**The count is the useful part.** 112 null holders against 10 provided means an unexplained NRE inside
+server code called from an AI test is far more likely to be a missing holder than a bug in the class
+under test — which is the reverse of the assumption made last time, and the reason that diagnosis took a
+whole pass.
+
+### Still to do
+
+- **The three remaining `self-timed` rows** and the 7 `no spawns` rows.
+- **Holders worth constructing empty**, decided individually — the blanket approach is ruled out, but any
+  specific holder that blocks a pin can be added the way the walker was.
+- Yamennes' golem cadence; `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints,
+  blocking the silikor dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The inventory fails, with the null list in its message, when the provided set is altered.
+Full suite **2,091 passing**, 1 skipped.
