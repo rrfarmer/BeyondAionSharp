@@ -143,6 +143,19 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         // on_attacked runs on every hit. A branch that should only fire once carries its own flag
         // var, which is how retail writes them -- gating on the event instead would be a different
         // mechanic.
+        // Re-entrancy guard. Adding hate notifies the controller, which raises another attack event,
+        // which runs this handler again -- so a branch that adds hate on every blow recurses until the
+        // engine's recursion cut-off fires. The Catacombs bosses are exactly that shape: retail puts no
+        // flag var on their templar rule, because it is meant to accrue for as long as the tank swings.
+        //
+        // Retail fires on_attacked once per attack, not once per change to the hate list, so ignoring
+        // the nested events is the faithful reading as well as the safe one. The village killers hid
+        // this for two commits: their branch is once-only, so its flag stopped the recursion after a
+        // single pass and the bug looked like correct behaviour.
+        if (inOnAttacked)
+            return;
+
+        inOnAttacked = true;
         LastAttacker = creature;
         try
         {
@@ -151,6 +164,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         finally
         {
             LastAttacker = null;
+            inOnAttacked = false;
         }
     }
 
@@ -216,6 +230,9 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     private bool inCombat;
+
+    /// <summary>True while <c>on_attacked</c> is being evaluated. See <see cref="HandleAttack"/>.</summary>
+    private bool inOnAttacked;
 
     /// <summary>
     /// Retail's <c>is_npc_state(NPCI_SELF, NPC_STATE_ATTACK)</c> against <c>NPC_STATE_IDLE</c>.

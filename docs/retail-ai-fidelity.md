@@ -11764,3 +11764,72 @@ that changes what you can see over one that narrows what you suspect.**
 
 Full suite **2,056 passing** and 1 skipped — the skip is gone. Twelve pins on this class; **six
 mutations, all caught**.
+
+## Retail's threat assistance for tanks, and the recursion that was hiding under it
+
+The `on_attacked` seam the last entry unblocked turned out to hold one coherent mechanic, and building
+it surfaced a genuine engine defect.
+
+### The mechanic: a templar's blow counts for thousands more
+
+Five Catacombs bosses carry `is_user_class user=USERI_ATTACKER class=CLASSI_KNIGHT` on `on_attacked`,
+with nothing but an `add_hate_point` behind it. **Nothing is cast and nothing is said** — a templar
+attacking one of these bosses simply counts for far more on the aggro list than anyone else. It is how
+a tank holds a Catacombs boss, and without it the boss is held by whoever does the most damage. That is
+a materially different fight and one nobody would think to file as a bug.
+
+**One rule, four weights, and they are not ordered the way the difficulty is:**
+
+| | |
+|---|---|
+| Taros Lifebane, normal | **35,000** |
+| Captain Lakhara, both modes | **22,000** |
+| Flarestorm, hard | **5,000** |
+| Taros Lifebane, **hard** | **5,000** |
+
+Taros's hard mode helps a templar **seven times less** than his normal one. Both are read out of the
+dump, and it is exactly the asymmetry a single per-instance constant would erase — so the weight is per
+class and a mutation pins each one.
+
+`CLASSI_KNIGHT` is `PlayerClass.TEMPLAR`, and that is not an inference: the enum already carries the
+client's own naming in its comments — `TEMPLAR, // knight`, beside `GLADIATOR, // fighter` and
+`SORCERER, // wizard`.
+
+### The defect it surfaced
+
+The first run of these pins died with **`StackOverflowException: Aborted abnormal AI event recursion`**.
+Adding hate notifies the controller, the controller raises another attack event, and that runs
+`on_attacked` again — so **any branch that adds hate on every blow recurses** until the engine's
+cut-off fires.
+
+Retail fires `on_attacked` once per attack, not once per change to the hate list, so ignoring the
+nested events is the faithful reading as well as the safe one. `PatternAi.HandleAttack` now holds a
+re-entrancy flag, and a mutation that removes it is caught.
+
+**The village killers hid this for two commits.** Their branch is guarded by `FirstTime`, so its flag
+stopped the recursion after a single pass and the bug looked like correct behaviour — and the same flag
+is what made every measurement of that branch read zero. **One once-only guard produced two different
+false readings of the same code.**
+
+### The rule
+
+**A once-only guard is a silencer.** It suppressed a crash here and a measurement there, and in both
+cases the code underneath was doing something other than what it appeared to. Worth reaching for the
+*unguarded* case first when a branch behaves oddly: the Catacombs rule, which retail deliberately leaves
+unflagged, exposed in one run what the village killers hid across three entries.
+
+### What is left on this seam
+
+139 retail patterns put `add_hate_point` or `switch_target` on `on_attacked`; **nine** of them are on
+live npcs still running a stock AI, and five are these. The other four — `CKrall_FeA`, `CKrall_ReA`,
+`IDRuneWP_A1_VriIU_Wi_SN_65_Ah` and `Britra_Party_Wi_MpDrain_LowNmd` — carry one to three skill indices
+each alongside the reaction, so their hate half is buildable and their timers are not.
+
+### Verification
+
+Full suite **2,066 passing** and 1 skipped; ten new pins; **seven mutations, all caught**, including one
+that removes the re-entrancy guard.
+
+One mutation first read as a survivor and was not: replacing `PlayerClass.TEMPLAR` hit the XML doc
+comment above the code rather than the guard. **A mutation that edits a comment is not a survivor, it
+is a bad mutation** — retargeted at the guard expression, it is caught.

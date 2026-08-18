@@ -4,6 +4,7 @@ using System.Linq;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Ai.Pattern;
@@ -268,6 +269,26 @@ public static class When
     /// </remarks>
     public static PatternCondition SeenRace(params Race[] races)
         => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
+
+    /// <summary>
+    /// <c>is_user_class user=USERI_ATTACKER</c> — the player who just hit this NPC is one of these
+    /// classes.
+    /// </summary>
+    /// <remarks>
+    /// Retail's threat assistance for tanks. The Catacombs bosses give a <c>CLASSI_KNIGHT</c> attacker
+    /// thousands of extra hate points on every blow, which is how a templar holds a boss without the
+    /// player noticing anything happened.
+    /// <para>
+    /// <c>CLASSI_KNIGHT</c> is <see cref="PlayerClass.TEMPLAR"/> — not a guess, the enum already
+    /// carries the client's own naming in its comments (<c>TEMPLAR, // knight</c>, beside
+    /// <c>GLADIATOR, // fighter</c> and <c>SORCERER, // wizard</c>).
+    /// </para>
+    /// <para>
+    /// Only a player has a class, so an NPC attacker fails this guard rather than matching a default.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition AttackerClass(params PlayerClass[] classes)
+        => ai => ai.LastAttacker is Player hitter && classes.Contains(hitter.GetPlayerClass());
 
     /// <summary><c>is_race from=OBJI_ATTACKER</c>.</summary>
     public static PatternCondition AttackerRace(params Race[] races)
