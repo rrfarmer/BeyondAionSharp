@@ -125,8 +125,11 @@ public class DefencePostGuardAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(
+			// Retail patterns <c>IDF5_U1_War_Vri_Def01_Re_Fi_65_Ae</c> and its six siblings. All seven
+			// answer 21212 with <c>add_hate_point</c> and none of them switches, so a guard already
+			// engaged notes the post and finishes what it is doing.
 			Branch(2, "the post is under attack", [When.Message(DefencePostFlagAI.PostUnderAttack)],
-				Do.HateMessageTarget(Commit)),
+				Do.HateMessageParam(Commit)),
 
 			Branch(1, "that one, there", [When.Message(DefencePostFlagAI.ThatOneThere)],
 				Do.TargetMessageParam())),

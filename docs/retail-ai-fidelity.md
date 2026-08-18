@@ -15105,3 +15105,77 @@ of its own first, and it fails if the guard answer switches again.
 
 Seven cosmetic pairs, five behavioural branches, one new pin with its mutation checked. Full suite
 **2,039 passing**, 1 skipped.
+
+## The six undocumented answers, and two inventions found under them
+
+The `absent` list was described last entry as "a documentation gap, not a code one, and the cheapest
+item on the list." **It was neither.** Naming the retail pattern behind each answer turned up two
+branches this port made up.
+
+### What each of the six answers
+
+| class | number | retail answerers | what they do |
+|---|---|---|---|
+| `DefencePostFlagAI` | `21212` | `IDF5_U1_War_Vri_Def01_Re_Fi_65_Ae` + 6 siblings | **`add_hate_point`, all seven** |
+| `AnuhartGuardAI` | `6821` | 8 `Lizardman_*_IDLF1` | the two-action idiom |
+| `HeironWatcherAI`, `BrigadeGeneralAnuhartAI`, `AnuhartCasterAI` | `3406` | `XD_EPet` | the two-action idiom |
+| `BrigadeGeneralAnuhartAI`, `HeironWatcherAI` | `6833` | `LastBoss_Su` | the two-action idiom |
+| `SilikorGuardAI` | `6655`, `6656` | `ND2_WhG1`, `ND2_WhG2` | **`use_skill` and nothing else** |
+| `IllusionOfMelancholyAI` | `6915` | `IDTP_Fanatic_Elementalearth2` | **`attack_most_hating` and nothing else** |
+
+`21212` is unambiguous and now uses `Do.HateMessageParam`: **all seven answerers note the post and
+finish what they are doing.** A guard already engaged does not drop its fight because a flag went up.
+
+### The illusion was never told who to attack
+
+`6915`'s only listener answers with a bare `attack_most_hating`. Our branch was
+`Do.HateMessageTarget(0)` — a zero-point hate on the message parameter — with a remark that reasoned:
+
+> "attack_most_hating on a freshly-placed illusion with an empty aggro list means the one it was just
+> named, and a zero-point entry is how our aggro list says that."
+
+**It does not.** An empty aggro list has no most-hated, and the translation manufactured a target retail
+never gives. The pin agreed with the code, down to its name —
+`AnIllusionToldToGoGoesForTheOneItWasToldAbout` — so the invention was pinned as if it were the
+mechanic. The branch is now `Do.SwitchTarget(MOST_HATED)`, and the pin says what actually happens: **the
+call names nobody, and an illusion with nothing to hate has nowhere to go.**
+
+**Not pinned:** that it goes for its own most hated rather than the one named. The illusion despawns
+itself on any blow or damaging spell — that is its entire mechanic — so it cannot be put in a fight, and
+a bare `AddHate` on an idle one is refused. **The claim is real, the action is retail's, and there is no
+arrangement in this harness that shows it.** Recorded rather than approximated with a pin that would
+pass for a different reason.
+
+### And the silikor guards answer with hate retail never gives
+
+`6655` and `6656` have four and two listeners respectively, and **every one of them answers with a
+single `use_skill`.** No hate action anywhere on the number. Our point is standing in for a skill this
+port cannot cast — it is the only way the order has any effect here, so it stays, but it is now labelled
+in the source as **ours rather than retail's**, and it should *become* the skill rather than survive
+beside it.
+
+**That distinction matters more than it looks.** Everything else in this log marked "not translated" is
+absent. This is the first case found of the opposite: a branch that does something retail does not,
+which no audit of missing pieces would ever surface.
+
+### Still to do
+
+- **Fourteen classes on the two-action idiom**, where a single `Do.HateMessageTarget` needs reading to
+  say whether it stands for the point or the switch. Low risk — a single call lands in the same place
+  either way — and now the retail pattern behind each is named, so it is a reading job rather than a
+  hunt.
+- **The silikor skill**, and every other answer that is really a skill.
+- **The illusion's most-hated claim**, which needs a harness that can hold an illusion in a fight.
+- The Ophidan chain's second hop.
+
+### The rule
+
+**An audit of what is missing cannot find what is invented.** Every tool in `tools/client-extract` asks
+some version of "what does retail have that we do not". Nothing asks the reverse, and the reverse is
+where a pin agreeing with its own bug hides. The illusion's remark reasoned carefully from a false
+premise for as long as nobody read the pattern it claimed to translate.
+
+### Verification
+
+Three branches corrected, two pins restated, one claim withdrawn as unstageable. Full suite
+**2,039 passing**, 1 skipped.

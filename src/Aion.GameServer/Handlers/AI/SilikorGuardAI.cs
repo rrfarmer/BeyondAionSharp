@@ -90,8 +90,13 @@ public class SilikorGuardAI : PatternAi
             Branch(8, "", [When.Message(AnotherMelee)],
                 Do.DespawnSelf()),
 
+            // Retail patterns <c>ND2_WhG1</c> and <c>ND2_WhG2</c>. THIS HATE IS OURS, NOT RETAIL'S:
+            // every listener on 6655 and 6656 answers with a single <c>use_skill</c> and no hate action
+            // at all. The point here stands in for a skill this port cannot cast, and it is the only
+            // way the order has any effect -- but it is an invention, and it should become the skill
+            // rather than survive alongside it. See docs/retail-ai-fidelity.md.
             Branch(7, "", [When.Message(TakeThisOne)],
-                Do.HateMessageTarget(SummonOrder.OnePoint))),
+                Do.HateMessageParam(SummonOrder.OnePoint))),
 
         OnEnterAttack = Of(
             Branch(7, "", When.Always,

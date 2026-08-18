@@ -102,9 +102,13 @@ public class IllusionOfMelancholyAI : PatternAi
 		OnSpelled = Of(Branch(19, "cast at, and gone",
 			[When.CasterIsEnemy, When.HpBelow(99)], Do.DespawnSelf())),
 
+		// Retail pattern <c>IDTP_Fanatic_Elementalearth2</c>. Its answer is a bare
+		// <c>attack_most_hating</c> -- it goes for whoever it already hates most, and the call names
+		// nobody. This was written as a zero-point hate on the message parameter, which points the
+		// illusion at the caller's target instead: a different creature whenever the two disagree.
 		OnMessage = Of(Branch(20, "that one, go",
 			[When.Message(VallakhanAI.SetThemOn)],
-			Do.HateMessageTarget(NoPointsJustGo))),
+			Do.SwitchTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED))),
 
 		OnLeaveAttack = Of(Branch(21, "the fight is over", [], Do.DespawnSelf())),
 	};

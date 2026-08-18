@@ -109,19 +109,22 @@ public sealed class IllusionOfMelancholyAiTests
 	}
 
 	/// <summary>
-	/// <b>An illusion told to go, goes for the one it was told about.</b> Retail's
-	/// <c>attack_most_hating</c> on a freshly-placed illusion with an empty aggro list means the one it
-	/// was just named, and a zero-point entry is how our aggro list says that.
+	/// <b>The call names nobody.</b> Retail answers it with a bare <c>attack_most_hating</c>, so a
+	/// freshly-placed illusion with an empty aggro list is told to go and has nowhere to go.
 	/// </summary>
 	/// <remarks>
-	/// Told directly rather than driven through Vallakhan's health. His summon table fires the spirit
-	/// at 99% and the illusions at 75%, and in the harness only the spirit arrives however the descent
-	/// is staged — <c>SummonerAI</c>'s scheduling, not this class. The sender side is three lines and is
-	/// recorded as unpinned in docs/retail-ai-fidelity.md rather than covered by a pin that drives
-	/// something else.
+	/// <b>This pin used to claim the opposite</b>, and reasoned its way there: "attack_most_hating on a
+	/// freshly-placed illusion with an empty aggro list means the one it was just named". It does not.
+	/// An empty aggro list has no most-hated, and the answer was written as a zero-point hate on the
+	/// message parameter, which manufactured a target retail never gives it.
+	/// <para>
+	/// Told directly rather than driven through Vallakhan's health — his summon table fires the spirit
+	/// at 99% and the illusions at 75%, and in this harness only the spirit arrives however the descent
+	/// is staged.
+	/// </para>
 	/// </remarks>
 	[Fact]
-	public void AnIllusionToldToGoGoesForTheOneItWasToldAbout()
+	public void AnIllusionToldToGoWithNothingToHateStaysPut()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc boss = harness.Spawn(Vallakhan, 300f, 300f, 200f);
@@ -132,8 +135,14 @@ public sealed class IllusionOfMelancholyAiTests
 		((Aion.GameServer.Ai.INpcMessageListener)illusion.GetAi())
 			.OnNpcMessage(boss, VallakhanAI.SetThemOn, raider);
 
-		Assert.Same(raider, illusion.GetTarget());
+		Assert.Null(illusion.GetTarget());
 	}
+
+	// NOT PINNED: that it goes for its own most hated rather than the one named. The illusion despawns
+	// itself on any blow or damaging spell -- that is its whole mechanic -- so it cannot be given a
+	// fight to be in, and a bare AddHate on an idle illusion is refused. The claim is real and the
+	// action is retail's; there is no arrangement in this harness that shows it. Recorded in
+	// docs/retail-ai-fidelity.md.
 
 	/// <summary>
 	/// <b>And it ignores anything that is not its own call.</b>
