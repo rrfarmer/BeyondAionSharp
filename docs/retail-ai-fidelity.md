@@ -10855,7 +10855,9 @@ spawns it" follows from a search that could not have found it.
 **Rule: a "nothing spawns this" claim has to be made against devnames, never against npc ids.** The
 id-side search is still worth running — it is what catches spawn-data gaps — but it can only ever say
 "no *spawn data* places it", which is a different sentence. Both previous uses of this claim in the log
-should be read with that in mind; Hokuruki's gunners are worth re-checking on the same grounds.
+should be read with that in mind. **Both have since been re-checked with
+`tools/client-extract/audit_unnamed_templates.py`, and Hokuruki's gunners hold** — see the next
+entry.
 
 ### What blocks the chain, precisely
 
@@ -10890,3 +10892,57 @@ cannot both be right and the data does not settle it.**
 Recorded rather than guessed, because the answer changes 1,093 patterns rather than this one. Anything
 we port that leans on a self-repeating idle timer should re-arm explicitly until this is settled — and
 nothing currently does.
+
+## Acting on the last entry's rule: `audit_unnamed_templates.py`
+
+The crater correction ended with a rule and a homework item — *a "nothing spawns this" claim has to be
+made against devnames, and Hokuruki's gunners are worth re-checking on the same grounds.* Both are now
+a tool rather than a note.
+
+**Hokuruki's gunners survive the re-check.** `idsweep_s1_shulack_gu_65_an_01` (235649) and `_02`
+(236083): no retail spawn branch anywhere in the dump names either devname. That entry was right, and
+was right for a reason the search it used could not have supplied — which is exactly why it needed
+checking.
+
+### The claim splits in two, and the old wording conflated them
+
+| | what it means | what to do with it |
+|---|---|---|
+| **unnamed** | no retail spawn branch names the devname | if we do not place it, it does not exist — scenery, or an encounter nobody wired up |
+| **unplaced** | retail branches *do* name it, our spawn data has no spot | a **summon**, not scenery — `audit_missing_adds.py`'s question |
+
+Only the first justifies the sentence "nothing spawns this". The crater was the second and was written
+up as the first.
+
+### What the sweep says, including the part that is not actionable
+
+Of the pattern-carrying npcs we ship a template for and never place:
+
+```
+32,654 unnamed      NORMAL 15,986   ELITE 10,183   HERO 4,894   LEGENDARY 1,273   JUNK 318
+ 2,478 unplaced
+```
+
+**The big number is not a backlog and should not be read as one.** The client ships an AI pattern for
+essentially every npc in the game, and our world uses a fraction of the maps; fifteen thousand unplaced
+NORMAL npcs are villages and hillsides we have not populated, not missing mechanics. The ratings split
+is in the output precisely so nobody quotes the total. The 4,894 HERO and 1,273 LEGENDARY rows are the
+part with encounters behind them, and even those are mostly other regions rather than gaps in the
+instances we run.
+
+**The 2,478 is the honest one**, and it is deliberately a larger number than `audit_missing_adds.py`'s
+275: that audit asks the narrower question of whether the *caller* is something we can put in the
+world, which is the right filter for work and the wrong one for a factual claim about the data.
+
+### Why `--check` is the point of this tool
+
+The sweep exists to keep the two populations separate on the page. The mode that will actually get
+used is `--check`, which settles one npc:
+
+```
+python audit_unnamed_templates.py <client> <patterns> out/ai_binding.tsv --check 855623
+```
+
+and answers all three questions at once — named by retail, placed by us, template on our server. Every
+future "nothing spawns this" line in this log should be a paste of that output rather than a grep, and
+the two claims already in it have now been run through it.
