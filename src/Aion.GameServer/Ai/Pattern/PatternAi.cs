@@ -456,6 +456,25 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         }
     }
 
+    /// <summary>Reads a counter without touching it.</summary>
+    /// <remarks>
+    /// Every other counter op here mutates, which is right for retail's test-and-set guards and wrong
+    /// for a pattern that has to look at the same counter from five branches in one event. See
+    /// <see cref="AiPattern.When.CountEquals"/> for why that shape needs a read-only test.
+    /// </remarks>
+    public bool CounterEquals(int counter, int value)
+    {
+        lock (gate)
+            return counters[counter] == value;
+    }
+
+    /// <summary><c>increase_intvar</c> as an action: adds one and holds the result in range.</summary>
+    public void IncrementCounter(int counter, int low, int high)
+    {
+        lock (gate)
+            counters[counter] = Math.Clamp(counters[counter] + 1, low, high);
+    }
+
     /// <summary>Test-and-set while above: the mirror, for the branch that answers "some are alive".</summary>
     public bool TestAndSetCounterIfAbove(int counter, int comparand, int setTo)
     {

@@ -60,6 +60,10 @@ BLOCKED = {
     "goto_waypoint": "path",
     "goto_next_waypoint": "path",
     "random_move": "path",
+    # Not an action but an attribute of one: a spawn that names a walker route places the npc fine and
+    # then leaves it standing where retail marches it in. Ophidan Bridge's reinforcement posts read as
+    # "nothing blocked" until this was counted, and a third of what they do is the walk.
+    "pathname": "path",
     "set_condition_spawn_variable": "script",
 }
 

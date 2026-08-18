@@ -9834,3 +9834,66 @@ in the log — Sheba's, because ours is broader, and these four.
 Full suite **1,915 passing** and 1 skipped, unchanged — this commit adds an audit and changes no server
 code. Missing-AI 685 and adds 359/278 unchanged; dead-timer payload 13 patterns / 26 actions unchanged;
 translatable 437/1,536 → **347/1,125**.
+
+## Ophidan Bridge's reinforcement posts, and the first guard we could not port as written
+
+Four invisible NPCs (284708–284711), one at each corner of the bridge, and between them the reason the
+instance is a race: **a pair of beritran arrives every sixty seconds, five times, and then the post is
+spent.** Each post has its own two marks and its own two kinds — the third sends a wind beritran
+alongside an ordinary one, the fourth sends two shadows — which is what makes it a table rather than
+one pattern. When a post goes, everything it called goes with it.
+
+### `increase_intvar` as a condition, and why it is an action here
+
+Retail guards each wave with `increase_intvar be_true_only_when_hit_the_bound="TRUE"` over bounds 0–2,
+2–4, 4–6, 6–8 and 8–10. That element is written as a **condition**, and our evaluator — like retail's,
+by every other piece of evidence in this log — tries branches in priority order until one passes. So
+all five would advance the counter as the event walked past them, and the first tick would land
+somewhere in the middle of the ladder. Every reading of it that was tried produces something other
+than five evenly spaced waves, and the designer's own comments say precisely what it should be: 1차
+through 5차 스폰, each 60s 후.
+
+Split, therefore: the branches test with a new read-only `When.CountEquals`, and the counter is
+advanced by a new `Do.Increment` action inside whichever branch runs, including the do-nothing tick
+between waves. The counter is seeded to one on waking, because retail's guard advances as a side
+effect of being *evaluated* and an action-driven counter is otherwise a step behind. Waves then land
+at 60, 120, 180, 240 and 300 seconds.
+
+**Rule: where a retail guard cannot mean what it says, port the outcome and say so in the class.** This
+is the first entry in this log to write that about a *condition* rather than an action; the earlier
+divergences were all about what we could not express, and this one is about what retail's own element
+cannot have meant. The bounds in the code are retail's own numbers so the two can be compared, and the
+comment carries the whole argument.
+
+`Do.Increment` also fills in half of what the counter section of `AiPattern` had explicitly deferred:
+"the `TRUE` variant is deliberately not implemented; no ported pattern uses it, and it would ship
+untested." One does now, and it ships with ten mutations behind it.
+
+### They arrive, and they do not march
+
+Every one of retail's sixteen spawns carries a `pathname` — twenty-four distinct routes across the four
+posts, `NPCPathSupport_Path01` through `_Path24` — so in retail each pair walks its own line in from
+the corner. Ours appear at the post and hold it. Half the mechanic, and the half that matters for
+pacing is the half we have.
+
+### The audit was calling that "nothing blocked"
+
+These four ranked joint-tenth at eleven payload actions with an empty blocked column, because
+`audit_translatable.py` keys its blocked set on **action tags** and `pathname` is an *attribute* of one.
+A spawn that names a walker route places the npc perfectly well and then leaves it standing where
+retail marches it in — a third of what these posts do, invisible to the ranking.
+
+Now counted. Totals do not move, because a route is not payload and the spawn still happens, but the
+blocked column tells the truth: Ahserion picks up `path:13`, the cowardly tutu goes from `path:31` to
+`path:62`, and `BIDF5_U01_Ctrl_01` — which read as clean apart from three script verbs — turns out to
+be `path:9` as well.
+
+**Rule: a blocker can be an attribute.** Every blocked bucket in this audit so far has been a verb,
+and the habit of looking only at verbs hid the single largest missing piece in the project on the four
+patterns where it mattered most.
+
+### Verification
+
+Full suite **1,921 passing** and 1 skipped; six new pins run three times over; **ten mutations, all
+caught**. Translatable 347/1,125 → **343/1,121**, exactly the four patterns and their four npcs;
+missing-AI 685 and adds 359/278 unchanged, as expected for four invisible spawners.

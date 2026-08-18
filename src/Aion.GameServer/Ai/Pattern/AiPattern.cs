@@ -170,6 +170,21 @@ public static class When
         => ai => ai.TestAndSetCounterIfAbove(counter, comparand, setTo);
 
     /// <summary>
+    /// Reads a counter without changing it: passes when it equals <paramref name="value"/>.
+    /// </summary>
+    /// <remarks>
+    /// This is how <c>increase_intvar</c> with <c>be_true_only_when_hit_the_bound=TRUE</c> is
+    /// expressed. Retail writes that element as a <em>condition</em>, so the same event's five branches
+    /// would each increment the counter as they were tried — which cannot be what a five-wave ladder
+    /// spaced two apart means, and no reading of it produces the five evenly spaced waves the
+    /// designer's own comments describe. Split instead: the branches test with this, and the counter is
+    /// advanced by <see cref="Do.Increment"/> as an action inside whichever branch runs. See
+    /// docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public static PatternCondition CountEquals(int counter, int value)
+        => ai => ai.CounterEquals(counter, value);
+
+    /// <summary>
     /// <c>decrease_intvar</c> with <c>be_true_only_when_hit_the_bound=FALSE</c>: takes one off the
     /// counter, holds it inside <paramref name="low"/>..<paramref name="high"/>, and always passes.
     /// </summary>
@@ -324,6 +339,10 @@ public static class Do
     /// </summary>
     public static PatternAction DespawnKind(int npcId, float radius, int maxCount)
         => ai => ai.DespawnKind(npcId, radius, maxCount);
+
+    /// <summary><c>increase_intvar</c> — one on the counter, held inside the bounds.</summary>
+    public static PatternAction Increment(int counter, int low, int high)
+        => ai => ai.IncrementCounter(counter, low, high);
 
     /// <summary><c>despawn_self</c>.</summary>
     public static PatternAction DespawnSelf() => ai => ai.DespawnSelf();
