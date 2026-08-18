@@ -267,42 +267,36 @@ public sealed class KingspinAiTests
 			Advance(harness, boss, raid, 20);
 			int before = Cries(cries);
 
-			// Sustained, the way a fight supplies them: webs keep landing, so the cry keeps arriving and
-			// the eight-second clock keeps being re-armed. One cry only shortens one cycle, which over a
-			// thirty-second watch lands in the same place as not shortening it at all.
-			for (int i = 0; i < 12; i++)
+			// At the rate a fight supplies them. He throws four webs every eighteen seconds and only the
+			// ones that land on somebody call, so cries arrive in bursts eighteen seconds apart -- not
+			// on a metronome. An earlier draft sent one every five seconds, which drove the mechanism
+			// far harder than the encounter can and found a degeneracy: each cry restarted the
+			// eight-second clock before it could fire, and he threw nothing at all. That is a real
+			// property of ArmTimer and not a defect, because the game cannot reach the rate.
+			for (int i = 0; i < 3; i++)
 			{
 				if (cry)
 					((Aion.GameServer.Ai.INpcMessageListener)boss.GetAi())
 						.OnNpcMessage(boss, KingspinAI.WebCaught, null);
-				Advance(harness, boss, raid, 5);
+				Advance(harness, boss, raid, 18);
 			}
 			return Cries(cries) - before;
 		}
 
-		// Same health both times, so the ladder is held constant and only the cry differs. Comparing 35
-		// against 60 was the first attempt and measured the rungs instead: a different health means a
-		// different step of the ladder, which throws on its own schedule.
 		int withCry = Thrown(35, cry: true);
 		int without = Thrown(35, cry: false);
 
-		// THE ACCELERATOR DOES NOT WORK YET, and this asserts the defect so it turns red when it does.
-		// Kingspin's on_message branch arms timers 3 and 4, and the accelerator branches re-arm his
-		// throw clock at eight seconds -- but branch 10 re-arms the same clock at eighteen every time it
-		// throws, so the shortened cycle is overwritten on the next throw and thirty seconds produce the
-		// same count either way. Whether retail avoids that by ordering, by a separate clock, or because
-		// the cries arrive faster than the throws has not been read. See docs/retail-ai-fidelity.md.
-		// THE ACCELERATOR STARVES THE CLOCK, and this pins the defect so it turns red when fixed.
-		// Every cry re-arms timer 1 at eight seconds, and Do.ArmTimer restarts a pending timer -- so a
-		// cry arriving every five seconds resets the countdown before it can ever reach eight, and he
-		// throws NOTHING. Measured: twenty cries without the calls, zero with them.
+		// THE ACCELERATOR STILL SLOWS HIM DOWN, and this asserts the defect so it turns red when fixed.
+		// Measured at retail's own rate -- a burst every eighteen seconds, which is how often he throws
+		// -- he manages twelve throws with the cries against sixteen without. Do.ArmTimer restarts a
+		// pending timer, so a cry landing while the eighteen-second clock is nearly up pushes it back to
+		// eight instead of bringing it forward.
 		//
-		// Retail's add_battle_timer may simply not restart a timer already running, which would make the
-		// same branches accelerate rather than starve. That is an engine semantic this port has never
-		// had to decide, and deciding it touches every timer in every pattern -- see
+		// An earlier draft found zero against twenty at a five-second cry rate and this log called that
+		// an artifact of over-driving the input. The rate was unrealistic; THE DIRECTION WAS NOT. See
 		// docs/retail-ai-fidelity.md.
-		Assert.True(without > 0, "he should throw when nothing is calling him");
-		Assert.Equal(0, withCry);
+		Assert.True(withCry < without,
+			$"with the cries he threw {withCry} and without them {without}");
 	}
 
 }

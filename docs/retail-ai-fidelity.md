@@ -17516,3 +17516,64 @@ starvation the encounter cannot produce.
 ### Verification
 
 Reading only; the engine was already correct. Full suite **2,050 passing**, 1 skipped.
+
+## Correction: the rate was unrealistic, the direction was not
+
+The entry above resolved the timer thread by calling the starvation an artifact of over-driving the input,
+and left "rewrite the pin at a realistic rate" as a footnote. **Rewritten, and the footnote was the real
+finding.**
+
+At a cry burst every **eighteen seconds** — which is how often Kingspin throws, so it is exactly the rate
+his own webs can supply — he manages **12 throws with the cries against 16 without.**
+
+**The cries still slow him down.** `Do.ArmTimer` restarts a pending timer, so a cry landing while the
+eighteen-second clock is nearly up pushes it back to eight instead of bringing it forward. Less extreme
+than the 0-against-20 the five-second rate produced, same direction.
+
+So the previous entry was right that the rate was unrealistic and **wrong to conclude the mechanism was
+fine.** The degeneracy was exaggerated; it was not invented.
+
+### Where that leaves the timer question
+
+Back open, and better posed than before:
+
+| semantic | Kingspin at retail's rate | Chunapa |
+|---|---|---|
+| restart pending (today) | **12 against 16 — slows him** | correct |
+| ignore pending | no effect | broken |
+| take the shorter | works | broken by a 3s phase opener |
+
+**No global rule fits.** What has not been tried is the one the Chunapa reading actually suggests: that a
+*phase opener* — a branch that arms a timer it does not wait on, guarded by health — is a different
+operation from a *re-arm*, and only the latter should be subject to whatever rule wins.
+
+That is a bigger change than a comparison operator, and it is the first hypothesis in this thread that
+explains both encounters rather than one.
+
+### The pin
+
+`ACryInsideAWindowShortensHisThrowCycle` now asserts `withCry < without` — the defect, at the honest rate,
+with the correction written into it. **It turns red the day the accelerator accelerates.**
+
+Its name is now wrong. Left as it is on purpose: renaming it would lose the thread from the log to the
+test, and the comment says plainly what it measures.
+
+### The rule
+
+**Correcting an over-claim is not the same as clearing the finding.** The previous entry corrected "the
+mechanism is broken" to "the test was unrealistic" and stopped, which felt like closure and skipped the
+five minutes that would have shown the direction survives. **A correction deserves the same measurement
+the original claim needed.**
+
+### Still to do
+
+- **Try treating phase openers as distinct from re-arms** — the first hypothesis that fits both encounters.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One pin rewritten at retail's own rate. Full suite **2,050 passing**, 1 skipped.
