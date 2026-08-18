@@ -16299,3 +16299,50 @@ against `SpawnNear` with the bomb — and the thing that lengthened it was infer
 ### Verification
 
 One mechanic shipped, one pin with its mutation checked. Full suite **2,049 passing**, 1 skipped.
+
+## The registration sweep: one more encounter was quietly missing an add
+
+The previous entry named a sweep and did not run it: **any test whose adds declare an AI name the harness
+never registers will show the same silent nothing** the acid bomb showed for four commits.
+
+`audit_test_ai_registration.py` runs it. For every handler it resolves the npc ids it spawns, looks up the
+AI name each id declares, finds the matching test, and reports any name the test does not register.
+
+**Sixty-seven handlers spawn adds with a declared AI name. One test was missing one.**
+
+`IcaronixTheBetrayerAiTests` registered `IcaronixTheBetrayerAI` and `AggressiveNpcAI`. One of his servants
+is declared `ai="ntrap"`, so `NTrapAI` was never registered and that add could not spawn in any of his
+five pins — silently, exactly as before. Both `NTrapAI` and `GeneralNpcAI` are registered now and the
+board is clean.
+
+### What the tool cannot see
+
+Stated in its docstring, because a clean run here is weaker than it looks:
+
+- **ids that are not `const int` literals in the same file** — a table, a computed id, an id passed in.
+- **tests whose filename stem does not match the handler's**, which is a convention this repo mostly keeps
+  and does not enforce.
+- **any spawn that is not `Do.Spawn*`** — anything the encounter reaches by another route.
+
+So "0 missing" means *no missing registration among the spawns this tool can resolve*, and it is worth
+re-running whenever a handler gains an add rather than trusted once.
+
+### Why this class of bug is worth its own tool
+
+**The failure has no symptom.** No exception reaches the test, no add appears, and a pin that counts the
+add reads zero — which is indistinguishable from a mechanic that is correctly absent. Two encounters in
+this log had it; one cost four commits and one was found in a minute by asking every encounter the same
+question at once.
+
+### Still to do
+
+- Padmarashka's timers 10 and 12, blocked on skills, a waypoint walk and a system message.
+- The five coffin `message` rows, the 14 remaining ready rows, Kingspin and the silikor guard ladders and
+  whatever their rungs arm, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+- **Widening this sweep past `const int` ids**, which is where its blind spot is.
+
+### Verification
+
+One registration fixed, one tool added. Full suite **2,049 passing**, 1 skipped.

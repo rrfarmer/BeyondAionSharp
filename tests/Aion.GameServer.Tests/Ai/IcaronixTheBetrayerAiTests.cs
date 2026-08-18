@@ -31,7 +31,12 @@ public sealed class IcaronixTheBetrayerAiTests
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(AzoturanFortress)
-			.WithAi(typeof(IcaronixTheBetrayerAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(IcaronixTheBetrayerAI), typeof(AggressiveNpcAI),
+				// One of his servants is declared ai="ntrap" in npc_templates. Without the class
+				// registered, AIEngine throws inside the spawn, the exception is swallowed in the AI
+				// path, and the add is simply absent -- no error, no clue. Same shape as Padmarashka's
+				// acid bomb; found by sweeping every handler's spawned ids against its test's WithAi.
+				typeof(NTrapAI), typeof(GeneralNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(IcaronixTheBetrayer, 461.07f, 439.876f, 993.046f);
 		Player player = harness.SpawnPlayer(461.07f, 439.876f, 993.046f);
