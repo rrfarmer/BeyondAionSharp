@@ -12716,3 +12716,66 @@ as work.**
 
 Full suite **2,120 passing** and 2 skipped, unchanged — as expected, and as noted above, that is the
 point rather than a reassurance. The audit reports **0** for every class shipped this fortnight.
+
+## The klaw pack, and the number that decides who comes
+
+`ND2_CnD_BR3` came off the `on_spelled` survey as an unexamined row. Reading it turned up a
+**broadcast number shared by four patterns**, which is the first family in this log where the mechanic
+lives between patterns rather than inside one.
+
+Retail's `2003` is sent by the klaws that fight and heard by the klaws that stand around them. What a
+listener does with it is decided by two things and nothing else — which pattern it is on, and whether
+it was busy:
+
+| pattern | live | when hurt | when it hears `2003` |
+|---|---|---|---|
+| `ND2_CnD_BR1` — wardens, patrols, king klawtan, queen taran | **17** | below **half**, once, names its target at 20m | **1 point, busy or not** |
+| `ND2_CnD_BR3` — sentinels, king klawtun, nanny nuk | **11** | at a **third**, once, buffs, names, **and flees** | 1 point, **only if idle** |
+| `ND2_CnD_RE1` — gatherers, peons, spies, scouters | **26** | never calls; has no `on_attacked` at all | **1000 points if idle**, scatter if busy |
+
+**Fifty-four npcs across Beluslan, Morheim, Brusthonin and Reshanta**, every one of them previously
+`aggressive`.
+
+### What the numbers mean when they are put together
+
+**A thousand against one is the whole pack.** The klaws that answer hardest are the peons and the
+gatherers — the ones with no attack pattern of their own. Pulling a warden to half health does not
+bring the other wardens in any meaningful sense; they take a single point and carry on. It brings the
+gatherers, at a dead run, from twenty metres.
+
+**And the sentinel's flight is only sensible because of the call.** It is the one member of the family
+that leaves, at a third health, for three seconds when it is hit and four when it is cast at — retail's
+own asymmetry, kept. A sentinel breaking off mid-fight would otherwise be a reset; naming the player on
+the way out means the camp it runs through picks the fight up, and the player chasing it is the one
+they are already hating.
+
+**The two state guards are opposite on purpose.** BR1's answer has no guard at all and BR3's requires
+idle, so one cry into a camp already fighting pulls the wardens and leaves the sentinels. RE1 answers
+either way but does something different each time — commit if idle, switch to a random one of its own
+attackers if not. **A single cry therefore converges the camp's idle klaws and scatters its busy ones
+in the same instant.** No one pattern says that; it is what the three do together.
+
+### Not built, and why
+
+- **`ND2_CnD_BR2`** — the fourth member, and **our data places none of its npcs**. Not translated.
+- **RE1's `2004` pair.** Retail gives RE1 the same two branches again on a second message number.
+  `2004`'s only sender anywhere in the 5.8 files is BR2's relay branch — which is itself gated on
+  `is_skill_count_left`, and belongs to a pattern with no live npcs. The branches would be unreachable
+  duplicates of the `2003` pair they sit beside. **Recorded rather than written**; if a BR2 klaw is ever
+  placed, this is what needs restoring.
+- **BR3's "already fighting" answer** is retail's `attack_most_hating`, which for an npc already
+  attacking its most hated is a no-op. Deliberately absent rather than untranslated — the distinction
+  matters, because the *absence* of that branch is what the idle guard's pin measures.
+- **Skill indices**, as ever: the sentinel's self-buff, the callers' opening skill, every listener's
+  answering skill, and `on_stop_to_flee` — a skill on whoever the sentinel stops in front of.
+- **`points_to_add=100`** on RE1's switch, which `SwitchTarget` does not carry. The established
+  translation since the Anuhart casters.
+
+### Verification
+
+Ten pins, and **a seven-mutation sweep in which every mutation was caught and none failed to apply** —
+the idle guard, the thousand, the busy-escort branch, both thresholds, the twenty metres, and the
+shared flag. The flee is built and unpinnable for the drakies' reason, which the skipped pin states.
+
+Full suite **2,130 passing**, 3 skipped. `audit_missed_siblings.py --classes klaw_call,klaw_sentinel,klaw_escort`
+reports **0**.
