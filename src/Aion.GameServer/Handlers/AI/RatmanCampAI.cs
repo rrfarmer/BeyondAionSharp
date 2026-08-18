@@ -66,10 +66,10 @@ public class RatmanFarmerAI : PatternAi
 {
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
-		OnAttacked = Of(Branch(2, "hit", [],
+		OnAttacked = Of(Branch(2, "hit", [When.HpBetween(0, 45), ],
 			Do.Broadcast(RatmanCalls.Farmers, RatmanCalls.FarmerReach, aboutTarget: true))),
 
-		OnSpelled = Of(Branch(1, "cast at", [When.CasterIsEnemy],
+		OnSpelled = Of(Branch(1, "cast at", [When.HpBelow(45), When.CasterIsEnemy],
 			Do.Broadcast(RatmanCalls.Farmers, RatmanCalls.FarmerReach, aboutTarget: true))),
 	};
 

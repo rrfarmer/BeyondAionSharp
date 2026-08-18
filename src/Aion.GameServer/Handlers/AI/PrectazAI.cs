@@ -93,7 +93,7 @@ public class PrectazAI : PatternAi
             // --- below 35: the tentacles ---------------------------------------------------------------
             // Retail's second copy of this branch, with the distances swapped, carries the same guards
             // and so can never match. Only this arrangement exists.
-            Branch(20, "summon", [When.Timer(0), Low],
+            Branch(20, "summon", [When.HpBelow(35), When.Timer(0), Low],
                 Do.ArmTimer(1, 25000),
                 Cardinal(18f, 0f),
                 Cardinal(0f, 18f),

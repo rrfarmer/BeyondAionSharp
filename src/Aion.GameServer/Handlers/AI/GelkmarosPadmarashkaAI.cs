@@ -119,7 +119,7 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
             AiPattern.Branch(78, "", [When.Timer(3)], Do.ArmTimer(2, 45000)),
 
             // First heartbeat tick: opens the timer-6 chain.
-            AiPattern.Branch(60, "", [When.Chance(50), When.Timer(0), When.FirstTime(Gamma1)],
+            AiPattern.Branch(60, "", [When.HpBetween(11, 30), When.Chance(50), When.Timer(0), When.FirstTime(Gamma1)],
                 Do.ArmTimer(0, HeartbeatMillis),
                 Do.ArmTimer(6, 45000)),
 
@@ -130,11 +130,11 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
 
             // Second tick: a step that is all casts. Kept because it consumes a heartbeat, which is why
             // the opening rockfall lands on the third tick rather than the second.
-            AiPattern.Branch(40, "", [When.Timer(0), When.FirstTime(Gamma4)],
+            AiPattern.Branch(40, "", [When.HpBetween(31, 60), When.Timer(0), When.FirstTime(Gamma4)],
                 Do.ArmTimer(0, HeartbeatMillis)),
 
             // Third tick: the opening rockfall, and the timer-17 chain that repeats it.
-            AiPattern.Branch(20, "kcast13", [When.Chance(50), When.Timer(0), When.FirstTime(Epsilon1)],
+            AiPattern.Branch(20, "kcast13", [When.HpBetween(61, 90), When.Chance(50), When.Timer(0), When.FirstTime(Epsilon1)],
                 Do.ArmTimer(0, HeartbeatMillis),
                 Do.ArmTimer(17, 90000),
                 Fall(RockB, 3)),

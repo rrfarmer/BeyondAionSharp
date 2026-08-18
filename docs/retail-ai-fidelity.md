@@ -15710,3 +15710,64 @@ nineteen edits would probably have shipped.
 ### Verification
 
 Tool only, no server code. Full suite **2,041 passing**, 1 skipped.
+
+## Seventeen health bands, and the branches they stop from winning
+
+The 44 ready rows, `hp` first, with the uniformity and alignment checks behind them. **Nineteen applied,
+seventeen kept**, and the two set aside are set aside for a reason worth the entry on its own.
+
+| class | branches | retail |
+|---|---|---|
+| `FrostNamedAI` | 8 | `is_hp_in_boundary(80,100)` ×4, `(40,80)` ×4 |
+| `GelkmarosPadmarashkaAI` | 3 | `(61,90)`, `(31,60)`, `(11,30)` |
+| `NagaCaptainAI` | 2 | `(41,60)` ×2 |
+| `RatmanCampAI` | 2 | `(0,45)`, `is_hp_lower_than(45)` |
+| `GeneralChunapaAI` | 1 | `(51,75)` |
+| `PrectazAI` | 1 | `is_hp_lower_than(35)` |
+
+### An ungated branch does not just fire early — it wins
+
+Padmarashka has **three rockfall chains**, one per health band, at priorities 60, 40 and 20. With none of
+the three guards, evaluation is first-match-wins on a priority-sorted list, so **branch 60 won every
+single evaluation** and the other two never ran at all. The deepest band's cadence was the only cadence
+the encounter had, at every health.
+
+Three pins in `PadmarashkaRockfallTests` described that cadence — "four rocks every ninety seconds,
+landing on the fiftieth second" — and they were right about branch 60 and wrong about the fight. Measured
+in the top band, it is **three rocks on the fifth second, twelve seconds of life, ninety seconds apart**.
+The pins now say that, and one of them says in its remarks why it used to say something else.
+
+**That is the shape of the whole `hp` cluster**: a missing band guard is not a branch firing slightly too
+often, it is a ladder collapsed onto one rung.
+
+### The two set aside
+
+`KingspinAI#10` (`0-51`) and `SilikorGuardAI#4` (`31-100`) are the same collapse, and their pins are built
+on the collapsed behaviour — Kingspin's three ladder pins step the boss down through health and count
+throws at each stop, all of them measured against a branch that was winning when it should not have been.
+
+**Re-deriving those two ladders means reading every rung off retail and rewriting three pins around it**,
+which is the work Padmarashka needed and got. Both guards were reverted rather than left in with red pins
+or with pins loosened to fit. **A ladder half-gated is worse than a ladder not gated**: the pins would
+still pass and would now be measuring a third thing.
+
+### Not pinned
+
+**Padmarashka's other two bands.** Their cadences have not been read off retail, so a raid at forty percent
+or fifteen meets behaviour nothing covers. The guards are right; only the top band is measured. Same for
+the Frost Named's two bands, the naga captains' and Chunapa's — the guard is verified, the banded cadence
+is not.
+
+### Still to do
+
+- **Kingspin and the silikor guard**, blocked on re-deriving their ladders.
+- **The 27 remaining ready rows** — `flag`, `state`, `message`, `distance`, `enemy`.
+- The 4 mixed and 3 misaligned rows.
+- The ratman farmers' roll and `is_skill_count_left`.
+- The 14 two-action-idiom classes, the silikor skill, the illusion's most-hated claim, the Ophidan chain's
+  second hop, and counts/arguments/ordering.
+
+### Verification
+
+Seventeen guards, four pins rewritten around the band they are actually in, two guards reverted. Dropped
+guards **51 → 34**. Full suite **2,041 passing**, 1 skipped.

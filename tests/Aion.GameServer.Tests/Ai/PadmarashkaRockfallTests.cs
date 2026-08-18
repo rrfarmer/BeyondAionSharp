@@ -35,6 +35,10 @@ public sealed class PadmarashkaRockfallTests
 	{
 		BossAiHarness harness = NewHarness();
 		Npc boss = harness.Spawn(Padmarashka, 2940.20f, 851.29f, 35.89f);
+		// Her rockfall timers are banded in retail -- 61-90, 31-60 and 11-30 -- so a boss at full health
+		// is outside all three and drops nothing. Seventy-five puts her in the first band, which is the
+		// one every pin here is about.
+		BossAiHarness.SetExactPercent(boss, 75);
 		var raid = new List<Player>();
 		for (int i = 0; i < raidSize; i++)
 			raid.Add(harness.SpawnPlayer(2945f + i, 855f, 35.89f));
@@ -84,12 +88,12 @@ public sealed class PadmarashkaRockfallTests
 	/// and the rocks arrive five seconds early.
 	/// </remarks>
 	[Fact]
-	public void TheOpeningRockfallLandsOnTheThirdTick()
+	public void TheOpeningRockfallLandsOnTheFifthSecond()
 	{
 		var (harness, boss, raid) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		Advance(harness, boss, raid, 14);
+		Advance(harness, boss, raid, 4);
 		Assert.Equal(0, Count(harness, RockB));
 
 		Advance(harness, boss, raid, 1);
@@ -115,7 +119,9 @@ public sealed class PadmarashkaRockfallTests
 		var (harness, boss, raid) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		Advance(harness, boss, raid, 15);
+		// The top band's set lands on the fifth second, not the fifteenth -- see
+		// TheTopBandDropsThreeEveryNinetySeconds for why this file used to think otherwise.
+		Advance(harness, boss, raid, 5);
 		Assert.Equal(3, Count(harness, RockB));
 
 		Advance(harness, boss, raid, 11);
@@ -126,28 +132,37 @@ public sealed class PadmarashkaRockfallTests
 	}
 
 	/// <summary>
-	/// The timer-6 chain: four B rocks fifty seconds in — five for the first heartbeat tick, forty-five
-	/// for the timer it arms — and again every ninety after that, because timers 6 and 7 hand off to
-	/// each other at forty-five apiece.
+	/// <b>The top band drops three every ninety seconds.</b> One at five seconds, gone by seventeen,
+	/// and the next set ninety seconds after the first.
 	/// </summary>
+	/// <remarks>
+	/// <b>This pin used to describe a different band.</b> Retail gates her three rockfall chains on
+	/// health — 61-90, 31-60 and 11-30 — and this port had none of the three guards, so the
+	/// highest-priority branch won every evaluation and the deepest band's cadence was the only one that
+	/// ever ran. It claimed four rocks every ninety seconds at the fiftieth second, which is that
+	/// branch's timing and not this one's.
+	/// <para>
+	/// <b>The other two bands are unpinned.</b> Their cadences have not been read off retail, and a raid
+	/// at forty percent or fifteen is meeting behaviour nothing here covers. Recorded in
+	/// docs/retail-ai-fidelity.md.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void TheLongChainDropsFourEveryNinetySeconds()
+	public void TheTopBandDropsThreeEveryNinetySeconds()
 	{
 		var (harness, boss, raid) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		Advance(harness, boss, raid, 49);
+		Advance(harness, boss, raid, 5);
+		Assert.Equal(3, Count(harness, RockB));
+
+		// Twelve seconds of life, then a long quiet stretch.
+		Advance(harness, boss, raid, 30);
 		Assert.Equal(0, Count(harness, RockB));
 
-		Advance(harness, boss, raid, 1);
-		Assert.Equal(4, Count(harness, RockB));
-
-		// Gone by 62, and nothing until the pair comes back around at 140.
-		Advance(harness, boss, raid, 88);
-		Assert.Equal(0, Count(harness, RockB));
-
-		Advance(harness, boss, raid, 2);
-		Assert.Equal(4, Count(harness, RockB));
+		// And back around ninety seconds after the first set.
+		Advance(harness, boss, raid, 60);
+		Assert.Equal(3, Count(harness, RockB));
 	}
 
 	/// <summary>

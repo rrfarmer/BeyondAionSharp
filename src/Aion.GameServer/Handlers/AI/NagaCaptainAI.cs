@@ -78,12 +78,12 @@ public class NagaCaptainAI : PatternAi
                 Do.ArmTimer(1, 7000)),
 
             // The repeating call, once the band has been entered.
-            Branch(9, "summon", [When.Timer(4), SummonBand],
+            Branch(9, "summon", [When.HpBetween(41, 60), When.Timer(4), SummonBand],
                 Do.ArmTimer(4, 90000),
                 Slaves4()),
 
             // Entering 41-60 for the first time: light the ninety-second timer and call at once.
-            Branch(8, "summon", [When.Timer(1), SummonBand, When.FirstTime(EnteredSummonBand)],
+            Branch(8, "summon", [When.HpBetween(41, 60), When.Timer(1), SummonBand, When.FirstTime(EnteredSummonBand)],
                 Do.ArmTimer(1, 6000),
                 Do.ArmTimer(4, 90000),
                 Slaves4()),

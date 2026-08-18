@@ -66,7 +66,7 @@ public class GeneralChunapaAI : PatternAi
             Branch(40, "into phase two", [When.Timer(0), When.HpBelow(75)],
                 Do.ArmTimer(1, 3000)),
 
-            Branch(24, "burrows", [When.Timer(1), BurrowBand],
+            Branch(24, "burrows", [When.HpBetween(51, 75), When.Timer(1), BurrowBand],
                 Do.SpawnOnEachTarget(ShirikBurrow, Burrows, validDistance: 75f, maxTargets: 2,
                     MultiTargetOrder.Descending, range: 2f, liveSeconds: BurrowLife),
                 Do.ArmTimer(1, 45000)),

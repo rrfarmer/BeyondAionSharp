@@ -37,8 +37,8 @@ public sealed class RatmanCampAiTests
 			.Build();
 
 	/// <summary>
-	/// <b>The farmer is not the fight — the lycan that owns it is.</b> A dundun under attack names its
-	/// attacker, and a gray mane stalker commits a hundred and one.
+	/// <b>The farmer is not the fight — the lycan that owns it is.</b> A dundun beaten below forty-five
+	/// names its attacker, and a gray mane stalker commits a hundred and one.
 	/// </summary>
 	[Fact]
 	public void AFarmerUnderAttackCallsItsOwner()
@@ -51,6 +51,9 @@ public sealed class RatmanCampAiTests
 
 		Assert.Equal(0, stalker.GetAggroList().GetHate(raider));
 
+		// Retail gates the farmers' 1007 call on is_hp_in_boundary less_than 45, so a farmer at full
+		// health never calls. Thirty puts it inside the band this file is about.
+		BossAiHarness.SetExactPercent(farmer, 30);
 		harness.Engage(farmer, raider);
 
 		// A multiple of 101: this farmer calls on every blow and Engage lands one of its own.
@@ -59,8 +62,8 @@ public sealed class RatmanCampAiTests
 	}
 
 	/// <summary>
-	/// <b>And it calls on every blow.</b> Retail puts no flag and no health guard on either branch, so
-	/// a farmer being beaten keeps naming its attacker for as long as the beating lasts.
+	/// <b>And below forty-five it calls on every blow.</b> Retail puts no flag on either branch, so a
+	/// farmer inside its band keeps naming its attacker for as long as the beating lasts.
 	/// </summary>
 	[Fact]
 	public void AndItCallsOnEveryBlow()
@@ -71,6 +74,9 @@ public sealed class RatmanCampAiTests
 		Player raider = harness.SpawnPlayer(302f, 300f, 200f, race: Race.ELYOS);
 		BossAiHarness.MakeMutuallyKnown(farmer, stalker);
 
+		// Retail gates the farmers' 1007 call on is_hp_in_boundary less_than 45, so a farmer at full
+		// health never calls. Thirty puts it inside the band this file is about.
+		BossAiHarness.SetExactPercent(farmer, 30);
 		harness.Engage(farmer, raider);
 		int afterOne = stalker.GetAggroList().GetHate(raider);
 
@@ -215,6 +221,9 @@ public sealed class RatmanCampAiTests
 		BossAiHarness.MakeMutuallyKnown(farmer, near);
 		BossAiHarness.MakeMutuallyKnown(farmer, far);
 
+		// Retail gates the farmers' 1007 call on is_hp_in_boundary less_than 45, so a farmer at full
+		// health never calls. Thirty puts it inside the band this file is about.
+		BossAiHarness.SetExactPercent(farmer, 30);
 		harness.Engage(farmer, raider);
 
 		Assert.True(near.GetAggroList().GetHate(raider) >= 101);
