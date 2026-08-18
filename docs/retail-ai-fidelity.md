@@ -18290,3 +18290,52 @@ disengage, re-engage, assert one call — but it is a new shape of setup and the
 ### Verification
 
 Two guards applied, one mutation run and **not caught**. Full suite **2,050 passing**, 1 skipped.
+
+## The once-only entry guards cannot be exercised, because the engine already enforces them
+
+The previous entry called a re-pull pin the highest-leverage next step: it would cover the two guards just
+shipped and every future once-only guard on an entry branch. **Written, and it cannot be made to work — for
+a reason that also settles the two guards.**
+
+`OnEnterAttack` is reached from exactly one place: `PatternAi.HandleAttack`, behind
+`if (EnterCombat())`. **`EnterCombat()` latches for the fight.** So the handler runs once per fight whether
+or not the branch carries a flag.
+
+Which means:
+
+- **The Lepharist whisper and the Silikor ward were already once-only**, before the flags were added.
+- **The flags are faithful and redundant.** Retail writes them; this port keeps them; they change nothing
+  here.
+- **No pin can distinguish their presence from their absence**, because defeating the latch would be
+  testing the harness rather than the encounter.
+
+The mutation that "was not caught" in the previous entry was not a gap in the suite. **It was the engine
+being right**, and the entry read it as a missing pin.
+
+### What this says about the remaining flag rows
+
+Three of the five translatable rows were `set_flag_var` on entry-style handlers. **If the others sit behind
+a latch too, they are the same: worth applying for fidelity, impossible to pin, and not defects.**
+
+`report_dropped_guards.py` cannot see this — it compares guards, and a guard the engine supplies elsewhere
+looks identical to a guard that is missing. **A row being "ready" means the guard is absent from the
+branch, not that its absence has an effect.**
+
+That is a fourth caveat for that tool, and the first that makes some of its rows cosmetic rather than
+behavioural.
+
+### Still to do
+
+- **Check whether the remaining `set_flag_var` rows sit behind latches**, and mark the cosmetic ones in the
+  report rather than queueing them as work.
+- Padmarashka's two `unset_flag_var` rows — `OnBattleTimer` has no latch, so those are real.
+- The three `OnDie` flags, once their readers are found; world flags, if the chamber lord justifies one.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One pin written and removed; no code changed. Full suite **2,050 passing**, 1 skipped.

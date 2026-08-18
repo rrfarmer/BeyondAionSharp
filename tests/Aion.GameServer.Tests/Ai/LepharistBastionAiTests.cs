@@ -142,4 +142,11 @@ public sealed class LepharistBastionAiTests
 		Assert.Equal(5f, LepharistCalls.WhisperReach);
 		Assert.Equal(10f, LepharistCalls.RallyReach);
 	}
+
+	// NOT PINNED, and not pinnable: the whisper's once-only guard cannot be exercised. OnEnterAttack is
+	// reached only through PatternAi.EnterCombat(), which latches for the fight, so the handler already
+	// fires once whether or not the branch carries a flag. Retail writes the flag and this port keeps it
+	// -- faithful, harmless, and redundant here. A pin would have to defeat the latch, which would be
+	// testing the harness rather than the encounter. See docs/retail-ai-fidelity.md.
+
 }
