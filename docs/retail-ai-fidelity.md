@@ -19944,3 +19944,62 @@ a branch this port never ported, which belongs to the unported-branch backlog ra
 ### Verification
 
 Build clean. Full suite **2,091 passing**, 1 skipped — unchanged, because none of this batch is pinned.
+
+## `set_condition_spawn_variable` is not an engine gap
+
+It has sat on this log's queue for six passes as "the fourth engine gap, blocking Tiamat and Modor's
+clone". **Scoping it says otherwise, and the queue entry was wrong.**
+
+### What the data says
+
+**2,122 distinct variables across 12,446 uses** — far too large to be a boss mechanic. And the decisive
+fact: **nothing reads them.** There is no `is_condition_spawn` condition anywhere in the pattern data.
+The AI system only ever *writes* these; every reader is outside it, in the client's own conditional spawn
+tables.
+
+Our spawn model has no condition attribute either — `npc_id`, `pool`, `respawn_time`, `handler`,
+`difficult_id`, `custom`. **So implementing the setter would gate nothing at all**: a variable store that
+nothing consults.
+
+### What the variables actually do
+
+The names Tiamat and Modor set are plain:
+
+```
+TIAMAT_SPAWN, TIAMAT_GROUND_SPAWN, KAISINEL_SPAWN, MARCHUTAN_SPAWN,
+KAHRUN_SPAWN, KALYNDI_SPAWN, WongiokOn
+```
+
+**They toggle whether staged npcs exist in the world.** That is a thing this port already does directly,
+by spawning and despawning — `empyrean_lord` summons Kaisinel and Marchutan today. Retail routes it
+through a named variable because the client owns the spawn tables; a server that owns them has no need of
+the indirection.
+
+### So the real question is a different one
+
+Not *"can we store spawn variables"* but **"do the right npcs appear at the right points in Tiamat's
+fight?"** — a question about our Tiamat classes' spawn steps, answerable by reading them against
+`IDTiamat_Tiamat_Drakan_Named_60_Al` and its hard variant, and **not blocked on anything.**
+
+**Six passes of queue entries said "blocked on an engine gap" when the work was available the whole time.**
+The gap was named from a single branch — Modor's clone setting `WongiokOn` — without asking what read it.
+That is the same failure as reading a `set_flag_var` branch without its siblings, one level up: **a write
+with no reader is not a mechanic.**
+
+### Still to do
+
+- **Read our Tiamat classes' staged spawns against retail's**, which is what the removed queue entry was
+  standing in front of. Both difficulties, plus the four lords.
+- Modor's clone: `WongiokOn` is set by the first clone to enter combat and read by nothing in the pattern
+  data — **what it gates has to come from the client spawn tables**, and until that is extracted this one
+  genuinely is blocked, unlike the rest.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- Waypoints, blocking the silikor dismissal; Yamennes' golem cadence; `IDRaksha_Re_A_KJS`'s despawn and
+  `IDTP_Keeper1`'s spawn.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+**Scoping only, no code.** Full suite unchanged at **2,091 passing**, 1 skipped.
