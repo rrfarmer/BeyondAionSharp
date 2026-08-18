@@ -104,11 +104,16 @@ public sealed class GeneralChunapaAiTests
 	{
 		var (harness, boss, raid) = Engaged(60);
 		using BossAiHarness _h = harness;
-		Advance(harness, boss, raid, 8);
+		// Three seconds, not eight: retail's phase-two opener arms the burrow clock at 3s and does not
+		// re-arm the heartbeat, so it fires once and starts the cycle immediately. This pin expected
+		// eight and two-forever, which was the shape when ArmTimer restarted a pending timer and the
+		// opener's short arm was swallowed by the burrow branch's own forty-five.
+		Advance(harness, boss, raid, 3);
 		Assert.Equal(2, Burrows(harness));
 
-		Advance(harness, boss, raid, 40);
-		Assert.Equal(2, Burrows(harness));
+		// And again forty-five seconds after the first pair.
+		Advance(harness, boss, raid, 45);
+		Assert.Equal(4, Burrows(harness));
 
 		Advance(harness, boss, raid, 8);
 		Assert.Equal(4, Burrows(harness));

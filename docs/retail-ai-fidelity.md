@@ -17636,3 +17636,56 @@ fire once? — was the same command this entry ran to test a different idea enti
 ### Verification
 
 Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## `ArmTimer` now takes the shorter, and Chunapa's phase two starts on time
+
+The previous entry said take-the-shorter had probably been rejected on a misreading, and that the way to
+tell was to read Chunapa's burrow **times** rather than his count. Read:
+
+```
+BURROWS  3:2   48:4
+```
+
+**Two burrows at three seconds, two more at forty-eight.** That is retail's cadence exactly — the phase-two
+opener arms the burrow clock at three seconds and does not re-arm the heartbeat, so it fires once and
+starts the cycle immediately, and the burrow branch then repeats every forty-five.
+
+Under the old semantics the opener's three-second arm was swallowed: the burrow branch's own forty-five
+overwrote it, phase two began at eight seconds instead of three, and the second pair never arrived inside
+the watch. **The pin encoded that as "two, and two forever".**
+
+So `PatternAi.ArmTimer` now **arms only when it brings the timer forward**, and the pin says three and
+forty-eight.
+
+### Kingspin, honestly
+
+At retail's own burst rate the accelerator now reads **sixteen against sixteen** — level. Under the old
+semantics the same watch read **twelve against sixteen**, so the fix is real: **the cries can no longer
+punish him.** Whether they help depends on the watch, because a cry landing just after a throw shortens the
+next cycle while the one after it lands as that cycle fires.
+
+The pin asserts **"not worse"**, which is what has been measured. Claiming a gain this watch does not show
+would be the over-claim this thread has already made twice.
+
+### What the whole thread cost and bought
+
+Six entries on one operator. **Three semantics written and measured, two of them reverted, one rejected
+wrongly and recovered.** The recovery came from reading a branch nobody had read — does Chunapa's opener
+fire once? — which was available from the start and was eventually run to test an unrelated idea.
+
+Bought: a timer operator that matches the data, one boss's phase two starting on time, and another's
+accelerator no longer inverted.
+
+### Still to do
+
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+- **Re-check encounters whose pins were calibrated against the old operator.** Two were found by the suite;
+  a timer that now fires earlier is silent everywhere a pin does not count it.
+
+### Verification
+
+One engine change, two pins re-derived, full suite run twice: **2,050 passing**, 1 skipped, both times.

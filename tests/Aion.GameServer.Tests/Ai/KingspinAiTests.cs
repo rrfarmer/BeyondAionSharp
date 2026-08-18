@@ -286,16 +286,16 @@ public sealed class KingspinAiTests
 		int withCry = Thrown(35, cry: true);
 		int without = Thrown(35, cry: false);
 
-		// THE ACCELERATOR STILL SLOWS HIM DOWN, and this asserts the defect so it turns red when fixed.
-		// Measured at retail's own rate -- a burst every eighteen seconds, which is how often he throws
-		// -- he manages twelve throws with the cries against sixteen without. Do.ArmTimer restarts a
-		// pending timer, so a cry landing while the eighteen-second clock is nearly up pushes it back to
-		// eight instead of bringing it forward.
+		// THE CRIES NO LONGER SLOW HIM DOWN, which is the fix; whether they speed him up depends on the
+		// watch. Arming now only ever shortens a pending timer, so a cry can bring the clock forward and
+		// can never push it back. At retail's own burst rate over this watch the two come out level --
+		// sixteen and sixteen -- because a cry that lands just after a throw shortens the next cycle and
+		// the one after it lands just as that cycle fires. Under the old semantics the same watch read
+		// twelve against sixteen, and the cries were a penalty.
 		//
-		// An earlier draft found zero against twenty at a five-second cry rate and this log called that
-		// an artifact of over-driving the input. The rate was unrealistic; THE DIRECTION WAS NOT. See
-		// docs/retail-ai-fidelity.md.
-		Assert.True(withCry < without,
+		// Asserted as "not worse" deliberately: that is what has been measured, and claiming a gain this
+		// watch does not show would be the over-claim this thread has already made twice.
+		Assert.True(withCry >= without,
 			$"with the cries he threw {withCry} and without them {without}");
 	}
 

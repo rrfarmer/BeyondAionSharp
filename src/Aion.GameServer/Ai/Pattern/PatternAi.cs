@@ -42,6 +42,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private readonly ScheduledTask?[] timers = new ScheduledTask?[TimerSlots];
     private readonly bool[] flags = new bool[FlagSlots];
+    private readonly long[] timerDue = new long[TimerSlots];
 
     /// <summary>Retail names four: <c>INTVARI_FIRST</c> through <c>INTVARI_FOURTH</c>.</summary>
     private const int CounterSlots = 4;
@@ -732,6 +733,10 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
         lock (gate)
         {
+            long dueAt = System.Environment.TickCount64 + delayMillis;
+            if (timers[index] != null && !timers[index]!.IsDone() && timerDue[index] <= dueAt)
+                return;
+            timerDue[index] = dueAt;
             CancelSlot(index);
             timers[index] = ThreadPoolManager.GetInstance().Schedule(_ =>
             {
