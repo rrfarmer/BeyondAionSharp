@@ -693,6 +693,18 @@ public sealed class BossAiHarness : IDisposable
 			// summons live in ai/spawn_helpers.xml summons nothing at all without it.
 			SetHolder(staticData, nameof(StaticData.AiDataDh), RealAiData.Value);
 
+			// An empty walker holder, not a loaded one. GetUninitializedObject above skips the field
+			// initializers, so any holder left unset is null rather than empty -- and WalkManager reads
+			// WALKER_DATA without a null check, so every class that starts an add walking threw a
+			// NullReferenceException here. That blocked pinning Celestius entirely, and the failure
+			// looked like a bug in the class under test rather than a missing holder.
+			//
+			// Empty is the right fixture: GetWalkerTemplate returns null, StartRouteWalking returns
+			// false, and the add stands still. A pin about how long an add lives does not need it to
+			// walk, and loading the real routes would make every AI test pay for them.
+			SetHolder(staticData, nameof(StaticData.WalkerDataDh),
+				new Aion.GameServer.Dataholders.WalkerData());
+
 			// The skill engine's execution side reads this when resolving target relations, so a boss that
 			// casts through SkillEngine rather than the queue NREs without it. Empty is correct here: no
 			// skill under test is a material skill.

@@ -19777,3 +19777,63 @@ which is exactly backwards from what the add is for.
 ### Verification
 
 Build clean. Full suite **2,087 passing**, 1 skipped — unchanged, because none of this batch is pinned.
+
+## The harness gap that blocked pinning, and what it cost
+
+Two batches in a row shipped unpinned, both blocked on the harness rather than on the work. **Fixing the
+blocker was worth more than a third batch.**
+
+`WalkManager.StartRouteWalking` threw a `NullReferenceException` for any class that started an add
+walking, which is why Celestius — the largest behavioural fix of the last three passes — went in with no
+pin at all.
+
+### The cause, and four wrong guesses before it
+
+`BossAiHarness` builds its `StaticData` through `RuntimeHelpers.GetUninitializedObject`, deliberately, so
+that it does not have to construct every holder. **That also skips the field initializers**, so any holder
+the harness does not explicitly set is `null` rather than empty — and `WalkManager` reads `WALKER_DATA`
+without a null check.
+
+The chase went through four candidates first: `WALKER_DATA` being null was ruled *out* because
+`StaticData` declares it `= new()`; `TryLoadMergedHolder` was read and found correct, since it returns the
+empty fallback on an optional failure; `walkerlistData` was checked and is initialised; and
+`RealStaticDataLoadIntegrationTests` asserts the holder loads after a real boot, which it does.
+
+**Every one of those checks was sound and none of them applied**, because the harness never runs the
+constructor any of them describe. The comment saying so was four lines above the code that sets the
+holders, and it took a diagnostic that printed each accessor separately to get there.
+
+### The fix, and why empty rather than loaded
+
+One line: an **empty** `WalkerData`. `GetWalkerTemplate` then returns null, `StartRouteWalking` returns
+false cleanly, and the add stands where it was put.
+
+**A pin about how long an add lives does not need it to walk**, and loading the real routes would make
+every AI test in the suite pay for them. **Empty is the fixture; loaded would be a different tool.**
+
+### And the pin it unblocks
+
+The Celestius file was written, run, and deleted two passes ago. **Restored unchanged** — three pins, and
+two of them fail with the lifetime removed. His helpers arrive three at a time every twenty-five seconds
+and now leave at thirty, instead of standing thirty-six deep five minutes into a fight.
+
+**This is the first time this log has gone back for something it recorded as blocked.** The entry that
+deleted the file said the fix shipped unpinned and left it; the cost of that was one pass, and the cost of
+the harness gap was every walking-add class in the port.
+
+### Still to do
+
+- **The three remaining `self-timed` rows** and the 7 `no spawns` rows.
+- **Other holders the harness leaves null.** This was found by hitting it; nothing enumerates which of
+  `StaticData`'s holders the fixture sets and which it does not, and the next one will be found the same
+  way.
+- Yamennes' golem cadence; `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints,
+  blocking the silikor dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Two of the three restored pins fail with Celestius' lifetime removed. Full suite **2,090
+passing**, 1 skipped.
