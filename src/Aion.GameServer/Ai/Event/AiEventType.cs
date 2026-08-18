@@ -51,6 +51,12 @@ public enum AiEventType
     /// </remarks>
     FriendKilled,
 
+    /// <summary>Retail's <c>on_see_friend_attacked</c>. See <see cref="Aion.GameServer.Ai.FriendCombatNotice"/>.</summary>
+    FriendAttacked,
+
+    /// <summary>Retail's <c>on_friend_spelled</c>.</summary>
+    FriendSpelled,
+
     /// <summary>
     /// Retail's <c>on_spelled</c>: a skill landed on this NPC.
     /// </summary>

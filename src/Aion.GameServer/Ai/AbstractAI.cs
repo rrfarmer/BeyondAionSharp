@@ -250,6 +250,16 @@ public abstract class AbstractAI : AI
     /// Retail's <c>on_see_friend_killed_by_user</c>. Virtual rather than abstract: almost nothing
     /// reacts to it, and the 129 patterns that do nearly all answer the same way -- by leaving.
     /// </summary>
+    /// <summary>Retail's <c>on_see_friend_attacked</c>.</summary>
+    protected virtual void HandleFriendAttacked(Creature hurt)
+    {
+    }
+
+    /// <summary>Retail's <c>on_friend_spelled</c>.</summary>
+    protected virtual void HandleFriendSpelled(Creature hurt)
+    {
+    }
+
     protected virtual void HandleFriendKilled(Creature dead)
     {
     }
@@ -383,6 +393,12 @@ public abstract class AbstractAI : AI
                 break;
             case AiEventType.FriendKilled:
                 HandleFriendKilled(creature);
+                break;
+            case AiEventType.FriendAttacked:
+                HandleFriendAttacked(creature);
+                break;
+            case AiEventType.FriendSpelled:
+                HandleFriendSpelled(creature);
                 break;
             case AiEventType.Spelled:
                 HandleSpelled(creature);

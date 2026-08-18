@@ -13380,3 +13380,78 @@ Nine pins and a **seven-mutation sweep, all caught**: the two payloads equalised
 shortened, the two bases sharing a number, the bosskillers listening to the wrong captain, the slayer's
 `is_enemy`, a captain that never calls, and a soldier that never answers. Full suite **2,182 passing**,
 5 skipped.
+
+## The two largest handlers in the dump, and the first thing that uses them
+
+`on_see_friend_attacked` appears in **397** patterns of the 5.8 files and `on_friend_spelled` in
+**344**. The friend-*killed* handler this port already had is in 129. **These two are the biggest events
+retail has and aionemu does not**, and nearly everything a camp does when one of its members is jumped
+hangs off them.
+
+`FriendCombatNotice` raises both. **Its audience is decided exactly as `FriendDeathNotice` decides
+its** — the victim's own known list, each observer's own `srange` because the range belongs to the eye,
+and `TribeRelationService.IsFriend` for what "friend" means. **Sharing those three decisions matters
+more than the decisions do:** two notices with different audiences would be a bug nobody could see, and
+there is now a pin on each rule in each notice.
+
+### The one thing it does that the death notice does not
+
+**It fires on every blow**, so it carries a re-entrancy guard. A watcher's answer is nearly always to
+take hate on the attacker, that hate raises an attack event of its own, and without the guard a camp of
+mutually-watching npcs would notify itself until the engine's recursion cut-off fired.
+
+**That guard is reported rather than covered.** Removing it fails nothing, because these pins call
+`Raise` directly and only the live damage path can recurse. Retail hides the same problem in its data —
+its branches are nearly always flagged to fire once — which is not a reason to leave the engine
+unguarded.
+
+**Cost:** the damage path already walks the victim's known list on every hit to raise
+`CreatureNeedsSupport`. This walks the same list beside it.
+
+### And 126 npcs to use it
+
+`3201` came third on the silent-conversations list: **forty-two patterns broadcast it and exactly one
+listens** — `Lizardman_BeastA`, thirteen pet drakes across the Abyss camps. A hundred and thirty callers,
+one answerer.
+
+The callers sort into three shapes and nothing else:
+
+| shape | patterns | live | what it does |
+|---|---|---|---|
+| `*_ABRwd*` reward officers | 33 | **78** | pulled → call at **30m** |
+| plain `*_Reward` named officers | 12 | **5** | pulled → call at **50m** |
+| bakarma lookouts and fangsnares | 3 | **30** | **a friend below three-quarters** → call at 13m |
+
+**The lookouts are the interesting third.** They do not call when *they* are pulled — they call when
+they see somebody else pulled, which is the whole of `on_see_friend_attacked` and the reason the event
+had to exist first. The spell branch checks the caster is an enemy and the melee branch checks nothing:
+**seventh encounter in this log to carry that asymmetry, seventh to keep it.**
+
+The drakes answer with a point and then a hundred, so what lands is **101** — retail's usual order, the
+same shape the tamed taygas use.
+
+### Two pins that measured nothing, and what fixed them
+
+**The sight-range pin put the victim eighty metres away.** That is outside the known list entirely, so
+the notice never reached the range check and the pin passed with the check deleted. Twelve metres —
+inside the known list, outside a lookout's eight-metre eyes — is the only gap that measures anything.
+
+**The tribe pin did not exist.** Added: a lookout watching a *pet drake* take a beating says nothing,
+because `NLIZARDMAN` and `NLIZARDPET` are related by `support` and not `friend`. That is the same
+distinction the taygas exposed on the death notice, and this pin is now what keeps the two notices
+answering it the same way.
+
+### Not built
+
+- **`3302`**, which ranked fifth on the silent-conversations list at 157 npcs and **is worth nothing**:
+  the naga casters broadcast it naming *themselves*, and `Naga_KeA`'s answer is a single
+  `use_skill` on the caller. Every action on both ends is a skill index. **Recorded because the audit
+  will keep offering it** — a big number with nothing behind it.
+- The ten remaining `3201` patterns that carry the number outside the handlers read here; one live npc
+  between them.
+- The lookouts' shouts, the drakes' own `3298` call at a quarter health, and every skill.
+
+### Verification
+
+Eight pins and a **nine-mutation sweep with one survivor** — the re-entrancy guard, for the reason
+above. Full suite **2,190 passing**, 5 skipped, with the new per-hit event live in the damage path.

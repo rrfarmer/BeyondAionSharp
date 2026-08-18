@@ -200,6 +200,67 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// the killer, in a third of its branches: see <see cref="FriendsKiller"/>, which corrects a
     /// claim this remark used to make. See <see cref="FriendDeathNotice"/> for who hears it.
     /// </remarks>
+    /// <summary>
+    /// Retail's <c>OBJI_FRIEND</c> inside a friend-attacked branch: the one taking the hit.
+    /// </summary>
+    public Creature? Friend { get; private set; }
+
+    /// <summary>Retail's <c>OBJI_ATTACKER</c> / <c>OBJI_CASTER</c> in the same branches.</summary>
+    public Creature? FriendsAttacker { get; private set; }
+
+    /// <summary>Set by <see cref="FriendCombatNotice"/> immediately before it raises the event.</summary>
+    internal void NoteFriendInTrouble(Creature friend, Creature attacker)
+    {
+        Friend = friend;
+        FriendsAttacker = attacker;
+    }
+
+    /// <summary>Retail's <c>on_see_friend_attacked</c>.</summary>
+    protected override void HandleFriendAttacked(Creature hurt)
+    {
+        try
+        {
+            Evaluate(Pattern.OnFriendAttacked);
+        }
+        finally
+        {
+            Friend = null;
+            FriendsAttacker = null;
+        }
+
+        base.HandleFriendAttacked(hurt);
+    }
+
+    /// <summary>Retail's <c>on_friend_spelled</c>.</summary>
+    protected override void HandleFriendSpelled(Creature hurt)
+    {
+        try
+        {
+            Evaluate(Pattern.OnFriendSpelled);
+        }
+        finally
+        {
+            Friend = null;
+            FriendsAttacker = null;
+        }
+
+        base.HandleFriendSpelled(hurt);
+    }
+
+    /// <summary><c>broadcast_message param_obj=OBJI_ATTACKER</c> from a friend-attacked branch.</summary>
+    public void BroadcastAboutFriendsAttacker(int messageType, float range)
+        => BroadcastAbout(messageType, range, FriendsAttacker, includeOwnSpawns: false);
+
+    /// <summary>Puts hate on whoever is hitting a friend, and turns to face them.</summary>
+    public void HateFriendsAttacker(int hate)
+    {
+        if (FriendsAttacker is not Creature attacker || attacker.IsDead())
+            return;
+
+        GetAggroList().AddHate(attacker, hate);
+        GetOwner().SetTarget(attacker);
+    }
+
     protected override void HandleFriendKilled(Creature dead)
     {
         try

@@ -202,6 +202,10 @@ public abstract class CreatureController : VisibleObjectController
 
         // notify all NPC's around that creature is attacking me
         GetOwner().GetKnownList().ForEachNpc(npc => npc.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsSupport, GetOwner()));
+
+        // Retail's on_see_friend_attacked and on_friend_spelled, which aionemu has no events for.
+        // Beside the fan-out above because it walks the same list; see Ai/FriendCombatNotice.
+        Aion.GameServer.Ai.FriendCombatNotice.Raise(GetOwner(), attacker, effect != null);
         GetOwner().GetLifeStats().ReduceHp(type, damage, effect == null ? 0 : effect.GetSkillId(), logId, attacker);
         GetOwner().IncrementAttackedCount();
 

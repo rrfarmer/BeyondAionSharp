@@ -155,6 +155,15 @@ public sealed class AiPattern
     /// </remarks>
     public PatternBranch[] OnFriendKilled { get; init; } = None;
 
+    /// <summary>
+    /// Retail's <c>on_see_friend_attacked</c> — 397 patterns in the 5.8 files, the largest handler
+    /// this port had no event for. See <see cref="FriendCombatNotice"/>.
+    /// </summary>
+    public PatternBranch[] OnFriendAttacked { get; init; } = None;
+
+    /// <summary>Retail's <c>on_friend_spelled</c> — 344 patterns, and nearly always the same body.</summary>
+    public PatternBranch[] OnFriendSpelled { get; init; } = None;
+
     /// <summary>Builds a branch, sorting its conditions and actions as written.</summary>
     public static PatternBranch Branch(int priority, string comment, PatternCondition[] conditions, params PatternAction[] actions)
         => new PatternBranch(priority, comment, conditions, actions);
@@ -302,6 +311,18 @@ public static class When
     /// <summary><c>is_enemy who=OBJI_CASTER</c> — whoever just cast on this NPC is hostile to it.</summary>
     public static PatternCondition CasterIsEnemy
         => ai => ai.LastCaster is Creature caster && caster.IsEnemy(ai.GetOwner());
+
+    /// <summary><c>is_hp_lower_than who=OBJI_FRIEND</c> — the friend taking the hit is below this.</summary>
+    public static PatternCondition FriendHpBelow(int percent)
+        => ai => ai.Friend is Creature friend
+            && friend.GetLifeStats().GetHpPercentage() < percent;
+
+    /// <summary>
+    /// <c>is_enemy who=OBJI_CASTER</c> inside a friend-spelled branch — the caster hitting a friend is
+    /// hostile to this NPC.
+    /// </summary>
+    public static PatternCondition FriendsAttackerIsEnemy
+        => ai => ai.FriendsAttacker is Creature attacker && attacker.IsEnemy(ai.GetOwner());
 
     /// <summary>
     /// <c>is_enemy who=OBJI_MESSAGE_PARAM</c> — whoever a message named is hostile to this NPC.
@@ -531,6 +552,13 @@ public static class Do
     /// <summary><c>broadcast_message param_obj=OBJI_KILLER</c>.</summary>
     public static PatternAction BroadcastAboutKiller(int messageType, float range)
         => ai => ai.BroadcastAboutKiller(messageType, range);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_ATTACKER</c> from a friend-attacked branch.</summary>
+    public static PatternAction BroadcastAboutFriendsAttacker(int messageType, float range)
+        => ai => ai.BroadcastAboutFriendsAttacker(messageType, range);
+
+    /// <summary><c>add_hate_point</c> on whoever is hitting a friend.</summary>
+    public static PatternAction HateFriendsAttacker(int hate) => ai => ai.HateFriendsAttacker(hate);
 
     /// <summary><c>add_hate_point target=OBJI_KILLER</c> inside a friend-killed branch.</summary>
     public static PatternAction HateFriendsKiller(int hate) => ai => ai.HateFriendsKiller(hate);
