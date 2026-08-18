@@ -19365,3 +19365,57 @@ years because they described what the code did.
 
 Build clean. The band and escalation lifetimes fail with the lifetimes removed; the death pin fails with
 the cancellation removed. Full suite **2,067 passing**, 1 skipped.
+
+## The lifetime audit, narrowed twice, and Pazuzu's worms
+
+`audit_spawn_lifetimes.py` turns the Stormwing reading into a tool: for every Java-parity class serving a
+pattern with a timed spawn, does the class expire anything?
+
+**Its first answer was 62 classes and it was wrong.** The second row read by hand — `macunbello` — was a
+false positive: its ten-second spawns are all `BIDTP_NoShowNPC` markers, an invisible npc we never port,
+while the soul reapers it really summons carry `live_time` 0 and **are permanent in retail too**. The
+audit was counting every timed spawn in the pattern rather than the ones the class spawns.
+
+Matching each retail spawn's devname to an npc id and looking for that id in the class's own source cuts
+**62 to 29**, and drops `macunbello`, `summoner`, `conquest_offering_spawner` and `empowered_agent` —
+every one of the four largest rows in the first run.
+
+**The tool was also silently broken for one run.** A `\b` in its regex came through the shell as byte
+`0x08`, so every class's id set was empty and the report was blank. `inspect.getsource` renders that byte
+invisibly, so the source looked correct while matching nothing — **found only because Stormwing, which
+must match, did not.** Same shape as the twin audit's three wrong runs, and the same fix: keep a row whose
+answer is known.
+
+### Pazuzu, and the guard that a missing lifetime forced
+
+Retail `IDAbRe_Core_NamedC` gives the water worms `live_time` 71 and re-arms the summoning branch at
+**72 seconds**. This class had neither — and used an **"only if none are standing" guard** instead.
+
+**With worms that never die, that guard never passes again.** So the whole cycle ran exactly once per
+fight: five worms at the pull, standing in the room until the boss died, and never another batch. The
+guard was not a bug on its own; **it was the only thing preventing infinite accumulation, and it paid for
+that by killing the mechanic.**
+
+Applying both of retail's numbers makes the guard harmless rather than fatal — the batch dies at 71 and
+the check at 72 finds an empty room — so **the rhythm matches without removing the guard.**
+
+**Retail also rolls 30 percent and splits the branch across HP bands.** This class models neither, and
+that is recorded rather than invented.
+
+### Still to do
+
+- **The other 28 `NO LIFETIME` rows**, now genuinely narrowed: `unstableyamennes`, `balaurbarricade`,
+  `traitorkumbanda`, `kuhara_the_volatile`, `yamennes`, `ahserion_sky_assaulter` are the largest.
+- **The 12 `no spawns` rows** — retail's timed spawn is in a branch we never ported, which is the other
+  backlog.
+- `set_condition_spawn_variable`, blocking Tiamat and Modor's clone.
+- Waypoints, blocking the silikor dismissal.
+- `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Three new pins; the lifetime pin fails with the lifetime removed. Full suite **2,070
+passing**, 1 skipped.
