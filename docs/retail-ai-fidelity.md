@@ -14142,3 +14142,64 @@ in a row to trip on it — the tursin bigmouth, the Tiamat insurgents, and now h
 each pin's comment rather than abstracted, because the number that matters is different every time:
 what a call is worth is five hundred, or three hundred, or one hundred and one, and one point is never
 any of them.
+
+## The ratman camps: the farmer is not the fight
+
+`1007` and `8001` off the reachable list — **the mumu, dundun, munmun and nunu camps of Altgard and
+Beluslan, 30 npcs**, and one arrangement repeated at two levels: **a worker that is attacked names its
+attacker, and what answers is a lycan.**
+
+| pattern | live | what it does |
+|---|---|---|
+| `Ratman_FnR`, `Ratman_FnR_LWaSu11`–`13` — dundun and mumu farmers | 10 | call `1007` at 12m, **on every blow** |
+| `Lycan_KnA` — gray mane stalker | 3 | answers with **101** |
+| `NRatman_FnA`, `NRatman_RnA` — munmun warriors and sentinels | 7 | call `8001` at 15m **when pulled** |
+| `NRatman_FnC` — nunu farmer | 4 | calls below a third, **and again for a friend's killer** |
+| `NRatman_RnC` — munmun patrol | 1 | calls when pulled **and** below a third |
+| `NLycan_KeA` — kuriuta and ice claw guards | 5 | answers with **200** |
+
+**Beluslan answers twice as hard as Altgard** — two hundred against a hundred and one, for the same
+arrangement one zone north. And the two ends of the camp announce differently: **the warriors announce
+a fight and the farmers complain about one.**
+
+### The nunu names the killer
+
+`NRatman_FnC`'s friend-killed branch broadcasts with `param_obj=OBJI_KILLER` — so a nunu watching a
+neighbour die calls the lycans down on **whoever did it**, not on whatever it was fighting itself.
+That needed `Do.BroadcastAboutFriendsKiller`, which is new: the friend-killed handler already carried
+the killer for *hating*, and this is the first branch that wants to *name* them.
+
+**Two flags, one per call**, so a nunu beaten low that then sees a neighbour fall calls twice.
+
+### The mutation that needed one npc to do both things
+
+A shared flag between those two calls **survived every pin in the file**, because the pins used two
+different nunu — one for the hurt call and one for the friend's death. Neither can show a flag being
+spent by the other. It took one nunu doing both in one fight.
+
+**Same symmetry as the Tiamat insurgents' pair of "once" claims**, two entries ago, and the same fix:
+when two guards protect the same observable, the pin has to put both on the same npc.
+
+### The tribe rule, for the fourth time
+
+The kuriuta that heads `NLycan_KeA`'s membership is `GENERAL_DARK` — an Asmodian-side npc whose aggro
+list refuses hate aimed at an Elyos raider — so every Beluslan assertion read zero until the pin picked
+a `LYCAN`-tribe member instead. **Fourth time**, after the kerubiel garks, the fortress guards and the
+Panesterra slayers. The rule is written into the constant itself now rather than the remarks.
+
+### Not built
+
+- **`OBJI_FLEE_FROM`.** `NRatman_FnA` has a second call, sent when it stops fleeing, naming **the thing
+  it ran away from**. This port does not retain that object. Every other blocked param in this log is a
+  skill index or a self-name; **this is the first that has no equivalent at all**, and it is worth its
+  own line because the fix is an engine field rather than a table.
+- **`1017`**, the farmers' second call: the same event broadcast again *naming themselves*, whose only
+  live listeners belong to an unrelated Lepharist conversation that happens to use the same number.
+  Self-named and cross-wired. The Lepharist half of `1017` — eleven defenders calling eight bastion
+  drudges for a single point — is genuinely buildable and is the next thing on this shelf.
+- The skills throughout.
+
+### Verification
+
+Nine pins and a **seven-mutation sweep, all caught** once the shared flag got its own fight. Full suite
+**2,251 passing**, 5 skipped.

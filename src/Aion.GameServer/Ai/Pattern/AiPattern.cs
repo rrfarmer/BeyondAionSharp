@@ -560,6 +560,10 @@ public static class Do
     /// <summary><c>add_hate_point</c> on whoever is hitting a friend.</summary>
     public static PatternAction HateFriendsAttacker(int hate) => ai => ai.HateFriendsAttacker(hate);
 
+    /// <summary><c>broadcast_message param_obj=OBJI_KILLER</c> inside a friend-killed branch.</summary>
+    public static PatternAction BroadcastAboutFriendsKiller(int messageType, float range)
+        => ai => ai.BroadcastAboutFriendsKiller(messageType, range);
+
     /// <summary><c>add_hate_point target=OBJI_KILLER</c> inside a friend-killed branch.</summary>
     public static PatternAction HateFriendsKiller(int hate) => ai => ai.HateFriendsKiller(hate);
 

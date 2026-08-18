@@ -275,6 +275,13 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         base.HandleFriendKilled(dead);
     }
 
+    /// <summary>
+    /// <c>broadcast_message param_obj=OBJI_KILLER</c> from a friend-killed branch -- naming whoever
+    /// felled the friend rather than whoever felled this NPC.
+    /// </summary>
+    public void BroadcastAboutFriendsKiller(int messageType, float range)
+        => BroadcastAbout(messageType, range, FriendsKiller, includeOwnSpawns: false);
+
     /// <summary>Puts hate on whoever felled a friend.</summary>
     /// <remarks>
     /// <b>It does not turn to face them</b>, unlike <see cref="HateAttacker"/> and
