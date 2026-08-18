@@ -14257,3 +14257,53 @@ the three hundred callers those numbers otherwise want.
 Three pins and one skipped, and a **five-mutation sweep, all caught**: the whisper's reach, both
 payloads swapped, a defender that never whispers, and drudges listening on the wrong number. Full suite
 **2,254 passing**, 6 skipped.
+
+## Four pins that said "impossible" and were wrong
+
+Every flee in this log has been shipped with the same note, in four files:
+
+> Flee computes a destination and hands it to the move controller, and this harness advances a virtual
+> clock without simulating movement — so a pin asserting it had moved would fail for correct code and
+> one asserting it had not would pass for broken code.
+
+**All of that is true, and none of it is the point.** `PatternAi.FleeingTo` records the destination the
+flee computed, and it has been `public` since the action was written. **The movement is unobservable;
+the decision to flee, and its direction, never were.**
+
+Four skipped pins are now four real ones, and each measures something the note said could not be
+measured:
+
+- **The klaw sentinel** runs from the player it is fighting at a third health, *away* from it.
+- **The drakie** runs from **what it saw** rather than what it was fighting — and it has no target when
+  it runs, so a target-based flee would have done nothing at all. **That is the distinction the whole
+  `Do.FleeFromSeen` action exists for, and it went unpinned for the entire session.**
+- **The black claw tamer** runs from **whoever killed its tayga**, not from its own attacker.
+- **The bastion drudge** runs from a healthy attacker below thirty percent.
+
+A three-mutation sweep confirms it: replacing `FleeFromSeen` with `Flee`, or `FleeFromMessageParam` with
+`Flee`, now fails. **Those two actions were added specifically to fix a bug, and until today nothing
+would have caught the bug coming back.**
+
+### The rule
+
+**"The harness cannot observe X" is a claim about the harness, and claims about the harness need
+checking too.** This one was written once, honestly, from a real failed attempt at asserting position —
+and then copied into three more files as though it had been established. It had been established about
+*position*. Nobody looked for another observable.
+
+That is the same shape as the friend-killed handler's "its branches never name one", which was also
+written to justify not doing something and was also false. **A claim that closes a door is worth one
+more minute than a claim that opens one**, and this log has now produced two of them.
+
+### What is still genuinely out of reach
+
+**The drudge's negative case.** Retail flees only from an attacker still above forty percent — a drudge
+that has nearly killed the player stays. Showing that needs a player at a chosen health, and the
+harness's `SetExactPercent` takes an NPC. **A way to hurt a test player** is the one real gap here, and
+it now blocks exactly one assertion rather than four pins.
+
+### Verification
+
+Four skipped pins replaced by four real ones, and a **three-mutation sweep, all caught**. Full suite
+**2,258 passing**, 2 skipped — down from 6, and the two that remain are the scatter-with-one-attacker
+coin flip and Preceptor's trio, neither of which is a flee.

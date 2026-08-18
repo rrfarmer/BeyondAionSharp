@@ -102,28 +102,43 @@ public sealed class DrakeMarkAiTests
 	}
 
 	/// <summary>
-	/// <b>The flee half is built and is not pinned, and this says why.</b>
+	/// <b>A drakie that sees a player runs from it.</b> Retail's <c>flee_from</c> with
+	/// <c>from=OBJI_SEEN</c> — from what came into view, not from whatever it was fighting.
 	/// </summary>
 	/// <remarks>
-	/// A drakie that sees a player runs from it for three seconds — retail's <c>flee_from</c>, which
-	/// this class translates through the new <see cref="Ai.Pattern.AiPattern.Do.FleeFromSeen"/>.
+	/// <b>The distinction this pin exists for.</b> <c>Do.Flee</c> reads <c>CurrentTarget</c>, so it is a
+	/// no-op for an npc that has never fought — which is exactly the creature a flee action exists for.
+	/// <c>Do.FleeFromSeen</c> reads what came into view instead. A drakie has no target when it runs,
+	/// so only one of those two can be right, and this pin is what says which.
 	/// <para>
-	/// It cannot be pinned here. <c>Flee</c> computes a destination and hands it to the move
-	/// controller, and this harness advances a virtual clock without simulating movement — so the
-	/// drakie's position does not change however long the clock runs, whether the branch fired or not.
-	/// A pin asserting it had moved would fail for correct code, and one asserting it had not would
-	/// pass for broken code.
-	/// </para>
-	/// <para>
-	/// <b>What the attempt did find is worth more than the pin.</b> <c>Do.Flee</c> reads
-	/// <c>CurrentTarget</c>, so it is a no-op for an npc that has never fought — which is exactly the
-	/// creature a flee action exists for. <c>Do.FleeFromSeen</c> reads what came into view instead, and
-	/// is the faithful translation of <c>from=OBJI_SEEN</c>.
+	/// It was skipped as impossible in four files. <c>PatternAi.FleeingTo</c> records the destination
+	/// the flee computed and is public: the movement is unobservable, the decision never was.
 	/// </para>
 	/// </remarks>
-	[Fact(Skip = "flee moves the npc through the move controller, which this harness does not simulate")]
-	public void TheFleeHalfIsBuiltAndNotPinned()
+	[Fact]
+	public void ADrakieThatSeesAPlayerRunsFromIt()
 	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+
+		Npc drakie = harness.Spawn(LonghornDrakie, 300f, 300f, 200f);
+		Player passer = harness.SpawnPlayer(310f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(drakie, passer);
+
+		Aion.GameServer.Ai.Pattern.PatternAi ai =
+			Assert.IsAssignableFrom<Aion.GameServer.Ai.Pattern.PatternAi>(drakie.GetAi());
+
+		// No explicit sighting is needed: MakeMutuallyKnown is itself what a drakie reacts to, which is
+		// the mechanic working rather than the pin cheating. Raised again anyway, so the assertion below
+		// is about the branch and not about the setup.
+		Assert.Null(drakie.GetTarget());
+		drakie.GetAi().OnCreatureEvent(AiEventType.CreatureSee, passer);
+
+		(float X, float Y)? destination = ai.FleeingTo;
+		Assert.NotNull(destination);
+
+		// It has no target, so a target-based flee would have done nothing at all.
+		Assert.True(destination.Value.X < 300f, "the drakie ran towards the player it saw");
 	}
 
 	/// <summary><b>The message number is retail's, not ours.</b></summary>

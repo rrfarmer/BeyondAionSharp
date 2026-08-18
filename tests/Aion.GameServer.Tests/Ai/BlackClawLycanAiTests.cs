@@ -180,22 +180,38 @@ public sealed class BlackClawLycanAiTests
 	}
 
 	/// <summary>
-	/// <b>The tamer's flight is built and is not pinned, and this says why.</b>
+	/// <b>A tamer whose tayga names its killer runs from that player.</b> Retail's <c>flee_from</c> with
+	/// <c>from=OBJI_MESSAGE_PARAM</c> — not from whatever the tamer was fighting, from whoever did it.
 	/// </summary>
 	/// <remarks>
-	/// A tayga names its killer as it dies (<c>2307</c>) and its tamer runs from that player for three
-	/// seconds. As with the drakies and the klaw sentinels, <c>Flee</c> hands a destination to the move
-	/// controller and this harness advances a virtual clock without simulating movement.
-	/// <para>
-	/// <b>What the wiring costs is pinned elsewhere:</b> the flee reads
-	/// <see cref="Ai.Pattern.AiPattern.Do.FleeFromMessageParam"/>, which is new here, and a tamer that
-	/// heard nothing has no message param and so does not move — the same no-op that made
-	/// <c>Do.Flee</c> wrong for the drakies.
-	/// </para>
+	/// <b>This pin used to be skipped as impossible.</b> The movement is indeed unobservable here, but
+	/// <c>PatternAi.FleeingTo</c> records the destination the flee computed and is public — so the
+	/// decision, and which player it was made about, were always in reach. See the klaw sentinels' pin.
 	/// </remarks>
-	[Fact(Skip = "flee moves the npc through the move controller, which this harness does not simulate")]
-	public void TheTamersFlightIsBuiltAndNotPinned()
+	[Fact]
+	public void ATamerRunsFromWhoeverKilledItsTayga()
 	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+
+		Npc tamer = harness.Spawn(BrutalTamer, 300f, 300f, 200f);
+		Npc tayga = harness.Spawn(FierceTayga, 302f, 300f, 200f);
+		Player killer = harness.SpawnPlayer(310f, 300f, 200f, race: Race.ELYOS);
+		BossAiHarness.MakeMutuallyKnown(tamer, tayga);
+		BossAiHarness.MakeMutuallyKnown(tamer, killer);
+
+		Aion.GameServer.Ai.Pattern.PatternAi ai =
+			Assert.IsAssignableFrom<Aion.GameServer.Ai.Pattern.PatternAi>(tamer.GetAi());
+		Assert.Null(ai.FleeingTo);
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(tayga, TamedTaygaAI.ItWasThem, killer, 20f);
+
+		(float X, float Y)? destination = ai.FleeingTo;
+		Assert.NotNull(destination);
+
+		// The killer stands at 310 and the tamer at 300: away from it is the negative direction.
+		Assert.True(destination.Value.X < 300f,
+			"the tamer fled towards the killer rather than away from it");
 	}
 
 	/// <summary><b>The message numbers are retail's, not ours.</b></summary>

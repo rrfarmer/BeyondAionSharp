@@ -72,23 +72,35 @@ public sealed class LepharistBastionAiTests
 	}
 
 	/// <summary>
-	/// <b>The drudges' flee is built and is not pinned, and this says why — twice over.</b>
+	/// <b>A drudge below thirty percent runs from a healthy attacker.</b> Retail's <c>flee_from</c>,
+	/// five seconds, once.
 	/// </summary>
 	/// <remarks>
-	/// <c>Flee</c> hands a destination to the move controller and this harness advances a clock without
-	/// simulating movement, which is the reason every flee in this port is unpinned.
-	/// <para>
-	/// <b>Its guard is the more interesting loss.</b> Retail flees only when the drudge is below thirty
-	/// percent <em>and its attacker is above forty</em> — so <b>a drudge that has nearly killed the
-	/// player stays and finishes the job</b>. That is the only guard in this log that judges the fight
-	/// rather than the npc, and pinning it needs a player at a chosen health, which this harness has no
-	/// helper for: <c>SetExactPercent</c> takes an NPC. The condition is built and kept because retail
-	/// wrote it; what is missing is a way to hurt a test player.
-	/// </para>
+	/// <b>The half of this that is still unpinned is the interesting half.</b> The flee itself is
+	/// observable through <c>PatternAi.FleeingTo</c>; what cannot be shown here is the negative case —
+	/// that a drudge whose attacker is <em>below</em> forty percent stays and finishes the job — because
+	/// that needs a player at a chosen health and the harness's <c>SetExactPercent</c> takes an NPC.
+	/// <b>A way to hurt a test player is the missing piece</b>, and it is the only thing between this
+	/// file and a complete pin on the one guard in this log that judges the fight rather than the npc.
 	/// </remarks>
-	[Fact(Skip = "flee needs the move controller, and its guard needs a player at a chosen health")]
-	public void TheDrudgesFleeIsBuiltAndNotPinned()
+	[Fact]
+	public void ADrudgeBelowThirtyRunsFromAHealthyAttacker()
 	{
+		using BossAiHarness harness = NewHarness();
+		Npc drudge = harness.SpawnWithAi(Drudge, "bastion_drudge", 300f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(310f, 300f, 200f, race: Race.ELYOS);
+		harness.Engage(drudge, raider);
+
+		Aion.GameServer.Ai.Pattern.PatternAi ai =
+			Assert.IsAssignableFrom<Aion.GameServer.Ai.Pattern.PatternAi>(drudge.GetAi());
+		Assert.Null(ai.FleeingTo);
+
+		BossAiHarness.SetExactPercent(drudge, 20);
+		drudge.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
+
+		(float X, float Y)? destination = ai.FleeingTo;
+		Assert.NotNull(destination);
+		Assert.True(destination.Value.X < 300f, "the drudge fled towards its attacker");
 	}
 
 	/// <summary><b>The numbers and the ranges are retail's, not ours.</b></summary>

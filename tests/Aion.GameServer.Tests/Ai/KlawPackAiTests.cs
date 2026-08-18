@@ -192,21 +192,36 @@ public sealed class KlawPackAiTests
 	}
 
 	/// <summary>
-	/// <b>The sentinel's flight is built and is not pinned, and this says why.</b>
+	/// <b>At a third the sentinel runs, and it runs away from the player.</b> Retail's <c>flee_from</c>
+	/// with <c>from=OBJI_CUR_TARGET</c> — three seconds when it is hit, four when it is cast at.
 	/// </summary>
 	/// <remarks>
-	/// Retail's <c>flee_from</c> at three seconds when it is hit and four when it is cast at. As with the
-	/// drakies, <c>Flee</c> computes a destination and hands it to the move controller, and this harness
-	/// advances a virtual clock without simulating movement — so a pin asserting the sentinel moved
-	/// would fail for correct code and one asserting it had not would pass for broken code.
-	/// <para>
-	/// Unlike the drakies, <c>Do.Flee</c> is the right action here: retail's <c>from</c> is
-	/// <c>OBJI_CUR_TARGET</c> and the sentinel is by definition in a fight when the branch fires.
-	/// </para>
+	/// <b>This pin says the opposite of what it used to.</b> It was skipped here and in three other
+	/// files with the note that a flee "moves the npc through the move controller, which this harness
+	/// does not simulate" — true, and beside the point: <c>PatternAi.FleeingTo</c> records the
+	/// destination the flee computed, and it is public. <b>The movement is unobservable; the decision to
+	/// flee, and its direction, never were.</b>
 	/// </remarks>
-	[Fact(Skip = "flee moves the npc through the move controller, which this harness does not simulate")]
-	public void TheSentinelsFlightIsBuiltAndNotPinned()
+	[Fact]
+	public void AtAThirdTheSentinelRunsFromThePlayer()
 	{
+		var (harness, sentinel, escort, raider) = Camp(KlawSentinel);
+		using BossAiHarness _h = harness;
+
+		Aion.GameServer.Ai.Pattern.PatternAi ai =
+			Assert.IsAssignableFrom<Aion.GameServer.Ai.Pattern.PatternAi>(sentinel.GetAi());
+		Assert.Null(ai.FleeingTo);
+
+		float startedAt = sentinel.GetPosition().GetX();
+		BossAiHarness.SetExactPercent(sentinel, 30);
+		sentinel.GetAi().OnCreatureEvent(AiEventType.Attack, raider);
+
+		(float X, float Y)? destination = ai.FleeingTo;
+		Assert.NotNull(destination);
+
+		// The sentinel stands at 300 and the raider at 303: away is the negative direction.
+		Assert.True(destination.Value.X < startedAt,
+			"the sentinel fled towards the player rather than away from it");
 	}
 
 	/// <summary><b>The message number is retail's, not ours, and the family shares it.</b></summary>
