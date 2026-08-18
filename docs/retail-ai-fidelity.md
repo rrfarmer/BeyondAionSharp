@@ -11091,3 +11091,55 @@ caught** — after the first sweep turned up two that were not defects (arming o
 the same as arming it once, and a message number shared by sender and listener changes on both sides),
 replaced by a mutation that turns the split into a beat and a pin on the number itself. Stranded
 listeners 78 patterns / 125 npcs → **75 / 122**.
+
+## The seam behind the last two commits: `audit_mute_adds.py`
+
+Queen Serusia's eggs and Ashunatal's shadows were found one at a time, and they were the same finding
+twice: **a boss whose summon table was already correct, whose adds already arrived in the world, and
+whose adds did nothing**, because everything that made them a mechanic lived in a retail pattern nobody
+had translated. The eggs never hatched; the three shadows were all the same shadow.
+
+Twice is a seam, so it is now a tool. It takes every npc our own `ai/spawn_helpers.xml` and `bombs.xml`
+summon, keeps the ones carrying a retail pattern, drops the ones already on a bespoke class, and
+reports what is left with a payload count and its handler list.
+
+**Sixty rows. Forty-six of them behind a boss something on this server actually places.**
+
+This is a nastier category than a missing add. A missing add is visibly absent; a **mute** add arrives,
+stands in the room, and looks like the mechanic working.
+
+### The liveness filter, and why it is not just the spawn xml
+
+The first row the filter was tried on was Commander Bakarma, and reading `spawns/` alone called him
+unreachable — **he is placed by `DraupnirCaveInstance` in C#, not by spawn data.** A boss-liveness test
+that only reads the xml would have buried a live Draupnir Cave mechanic at the bottom of the report
+and sent the next session to a fight nobody can walk into.
+
+So `placed_ids` reads both, and the C# half is a grep for `Spawn(<id>,`. That is a proxy in both
+directions — it over-reports an id that merely appears as a literal, and under-reports one built from a
+variable — and the column says **placed** rather than *spawned* for that reason. **Rule: on this
+server, "is it in the world" is two questions, and the xml is only one of them.** The devname/id lesson
+from the crater entry has a sibling here: the right search depends on which side of the port you are
+standing on.
+
+### What is at the top, and what each row costs
+
+| payload | add | boss | what makes it interesting |
+|---|---|---|---|
+| 28, 28, 25 | laksyaka magus ×2, ambusher | 286933 / 219609 | `friend_spelled` and `see_friend_attacked` — a support pair that reacts to each other |
+| 18, 17 | anuhart lookout, fighter | 214843 | `stop_to_flee` — retail's "runs, then comes back shouting" |
+| 17, 13, 11, 10 | the four **summoned udas** | 215793 | full stock handler sets; most of the payload is generic |
+| 10, 9 | the two Bakarma **legionaries** | 213780 | a transformation ladder, and `see_friend_killed_by_user` |
+| 9 | fire spirit | 214163 | `killed_by_npc` / `killed_by_user` |
+
+**The payload count ranks, it does not decide.** The udas rows carry twenty-odd handlers each because
+their patterns are built on a stock template, and most of that is the same idle behaviour every drakan
+in the game has; the Bakarma legionaries carry ten and every one of them is the encounter. Reading the
+pattern is still the job — this only says which ones are worth opening.
+
+### What this does not cover, and should not be read as covering
+
+Only adds **our own summon tables** name. An add a retail pattern summons and our data does not is
+`audit_missing_adds.py`'s question, and an npc nothing anywhere summons is
+`audit_unnamed_templates.py`'s. Three tools, three different sentences, and the crater correction is
+what taught this log to keep them apart.
