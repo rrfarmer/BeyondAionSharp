@@ -235,7 +235,7 @@ public class NagaSubordinateAI : PatternAi
 				Do.ArmTimer(Fuse, 2000)),
 
 			Branch(1, "", [When.Message(GoForThisOne)],
-				Do.HateMessageTarget(OrderHate))),
+				Do.HateMessageParam(OrderHate))),
 
 		OnBattleTimer = Of(
 			Branch(3, "", [When.Timer(Fuse)],

@@ -65,7 +65,7 @@ public class VashartiWatchAI : PatternAi
 
 		OnMessage = Of(Branch(3, "onto the one they named",
 			[When.Message(OntoThisOne)],
-			Do.HateMessageTarget(Glance))),
+			Do.HateMessageParam(Glance))),
 	};
 
 	public VashartiWatchAI(Npc owner)

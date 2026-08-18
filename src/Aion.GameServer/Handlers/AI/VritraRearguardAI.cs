@@ -147,7 +147,7 @@ public class VritraRearguardAI : PatternAi
                 Do.DespawnSelf()),
 
             Branch(99, "fight that one", [When.Message(Target)],
-                Do.HateMessageTarget(100))),
+                Do.HateMessageParam(100))),
 
         OnLeaveAttack = Of(
             Branch(90, "", When.Always, Do.Despawn(Nets))),

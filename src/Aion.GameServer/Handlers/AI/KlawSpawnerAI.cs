@@ -93,7 +93,7 @@ public class BroadAttAnswerAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(1, "", [When.Message(KlawSpawnerAI.BeingAttacked)],
-				Do.HateMessageTarget(hate))),
+				Do.HateMessageParam(hate))),
 	};
 
 	private readonly AiPattern pattern;

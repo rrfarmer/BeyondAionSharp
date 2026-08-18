@@ -14889,3 +14889,67 @@ entries ago.
 
 Engine addition and audit tool only. Full suite **2,036 passing**, 1 skipped, with the 14-class change
 reverted.
+
+## Fourteen answers corrected, and the step they rest on pinned
+
+The previous entry measured the damage and reverted the fix, because four pins went red and none of the
+failures was the mechanical kind. **The blocker was one unverified claim**, and pinning it turned three
+of the four failures into things with names.
+
+### Hate alone brings an NPC into the fight
+
+`AggroList.AddHate` ends in `CreatureController.OnAddHate`, which raises an `Attack` event on the owner.
+So an NPC given hate by somebody else's call is meant to join the fight without ever being targeted —
+which is what every chained call in the retail data depends on, since it is *entering combat* that fires
+the branch that calls in turn.
+
+**That had never been pinned.** `CallChainTests` pins it now, on throwaway patterns using the faithful
+`Do.HateMessageParam`: a caller shouts, a relay answers with hate and nothing else, the relay's own
+entry branch shouts again, and a third NPC out of the caller's reach hears it. **The chain carries.**
+A second pin shows the relay keeps facing whoever it was already fighting while all this happens.
+
+**So the engine step is not missing** — the previous entry's fifth open item was wrong, and is withdrawn.
+
+### The fix, this time kept
+
+`Do.HateMessageParam` applied to the **14 classes the audit calls unambiguous**. Three pins had to be
+restated, and each restatement is a finding rather than a patch:
+
+1. **`OphidanBridgeCallAI` — the chain stops at the first listener.** The middle listener takes the call
+   and joins the fight; its onward cry does not reach the far one. Whether that is the reach, a guard on
+   its entry branch, or the moment its current target is set **has not been established**. The pin
+   asserts zero so it goes red when it is, rather than claiming a chain that no longer happens.
+
+2. **`NagaSummonerAI` and `MiddleBossFireAI` — the answer does nothing at all.** `IsAware` refuses hate
+   aimed at a creature the owner is not hostile to, and the faithful subordinates are tribe **`NNAGA`**,
+   which is not hostile to a player race. No hate, so no entry into combat, so nothing. **The forced
+   target was the only thing that ever made these two look alive**, and it bypassed the aggro list
+   entirely. Sixth time the tribe check has decided a result here, and the first time it was hiding
+   under another bug.
+
+Both pins now assert zero and null with the cause written beside them, so they turn red the day the
+tribe is sorted out.
+
+### Still to do
+
+- **The 19 `mixed` classes**, branch by branch, using the audit's per-pattern verdicts.
+- **The 4 `unknown` classes** — name a retail pattern in each file so it can be checked at all.
+- **The `NNAGA` answerers.** An encounter whose answer `IsAware` drops is not shipped, it only looks
+  shipped. This needs the tribe relations checked against retail rather than an npc swapped in a pin.
+- **The Ophidan chain's second hop**, now narrowed to three candidates.
+
+### The rule
+
+**A wide change blocked by one unverified claim is a pin away from being safe.** The previous entry
+reverted 14 correct edits because three pins disagreed, and all three disagreements came from the same
+unpinned property. Pinning it cost one small test file and turned "revert and document" into "ship and
+document what is left".
+
+That is not an argument against the revert — the revert was right *at the time*, with the property
+unknown. It is an argument for asking, when a change is blocked, **which single claim is doing the
+blocking.**
+
+### Verification
+
+Two new engine pins, 14 classes corrected, three encounter pins restated with their causes. Full suite
+**2,038 passing**, 1 skipped.

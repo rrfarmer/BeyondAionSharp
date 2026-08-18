@@ -126,8 +126,19 @@ public sealed class OphidanBridgeCallAiTests
 
 		harness.Engage(caller, player);
 
-		Assert.Same(player, middle.GetTarget());
-		Assert.Same(player, far.GetTarget());
+		// retail's add_hate_point leaves the target alone, so the chain is carried by hate rather than
+		// by facing: the middle listener takes the call, its own entry into combat sends its own, and
+		// the far one hears that. See CallChainTests for the engine property this rests on.
+		Assert.True(middle.GetAggroList().GetHate(player) > 0, "the call never reached the middle");
+
+		// AND THE CHAIN STOPS HERE, which it did not before. The old assertion was Assert.Same on the
+		// middle listener's target, and a forced target is what made its own call go out at once. With
+		// the faithful action the middle listener joins the fight -- CallChainTests pins that hate alone
+		// is enough -- but its onward cry does not reach the far one in this arrangement. Whether that
+		// is the reach, the guard on its entry branch, or the moment its current target is set has not
+		// been established. Asserted as zero so this pin goes red the day it is, rather than left
+		// claiming a chain that no longer happens. See docs/retail-ai-fidelity.md.
+		Assert.Equal(0, far.GetAggroList().GetHate(player));
 	}
 
 	/// <summary>

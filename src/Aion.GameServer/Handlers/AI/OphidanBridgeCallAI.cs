@@ -167,12 +167,12 @@ public class OphidanBridgeCallAI : PatternAi
 			OnMessage = calls && !sweeps
 				? Of(
 					Branch(1300, "", [When.Message(Call)],
-						Do.HateMessageTarget(Decisive)),
+						Do.HateMessageParam(Decisive)),
 					Branch(1250, "a stronghold fell", [When.Message(Escape)],
 						Do.DespawnSelf()))
 				: calls
 					? Of(Branch(1300, "", [When.Message(Call)],
-						Do.HateMessageTarget(Decisive)))
+						Do.HateMessageParam(Decisive)))
 					: Of(),
 		};
 	}

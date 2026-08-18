@@ -173,11 +173,11 @@ public class VingeveuServantAI : PatternAi
 		OnMessage = Of(
 			Branch(2, "he wants help with that one",
 				[When.Message(GuardianVingeveuAI.HelpMe)],
-				Do.HateMessageTarget(Glance)),
+				Do.HateMessageParam(Glance)),
 
 			Branch(1, "he has changed, and so have I",
 				[When.Message(GuardianVingeveuAI.Again)],
-				Do.HateMessageTarget(Notice),
+				Do.HateMessageParam(Notice),
 				Do.SwitchTarget(AggroTarget.RANDOM))),
 	};
 

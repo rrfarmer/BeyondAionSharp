@@ -54,7 +54,7 @@ public class IdeanObscuraAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(7, "", [When.Message(CallToArms)],
-				Do.HateMessageTarget(SummonOrder.OnePoint))),
+				Do.HateMessageParam(SummonOrder.OnePoint))),
 
 		OnAttacked = Of(
 			Branch(55, "two in five turn", [When.Chance(40), When.HpBelow(50), When.FirstTime(Turned)],

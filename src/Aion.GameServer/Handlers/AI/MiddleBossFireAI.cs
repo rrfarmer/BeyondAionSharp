@@ -104,7 +104,7 @@ public class MiddleBossFireAI : PatternAi
 
         OnMessage = Of(
             Branch(900, "", [When.Message(OphidanBridgeCallAI.Call)],
-                Do.HateMessageTarget(Absolute))),
+                Do.HateMessageParam(Absolute))),
 
         // Retail writes this twice, on on_killed_by_user and on_die, behind one test-and-set flag so
         // that only whichever fires first runs. Our runtime raises one death event, which is that flag.

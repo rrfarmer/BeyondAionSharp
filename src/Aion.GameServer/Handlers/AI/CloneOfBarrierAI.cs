@@ -84,7 +84,7 @@ public class CloneOfBarrierAI : PatternAi
         // the tank instead of wandering to whoever happens to hit it first.
         OnMessage = Of(
             Branch(1, "", [When.Message(RallyMessage)],
-                Do.HateMessageTarget(RallyHate))),
+                Do.HateMessageParam(RallyHate))),
     };
 
     public CloneOfBarrierAI(Npc owner)

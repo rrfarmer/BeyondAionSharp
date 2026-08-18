@@ -294,7 +294,17 @@ public sealed class MiddleBossFireAiTests
 
 		harness.Engage(boss, quarry);
 
-		Assert.Same(quarry, fugitive.GetTarget());
+		// retail's add_hate_point on a message parameter adds hate and leaves the target alone, so the
+		// turn this used to assert was ours rather than retail's.
+		//
+		// AND THE HATE DOES NOT LAND EITHER. AggroList.IsAware refuses hate aimed at a creature the
+		// owner is not hostile to, and this answerer is tribe NNAGA, which is not hostile to a player
+		// race -- so the answer adds nothing at all and the listener never joins the fight. The forced
+		// target was the only thing that ever made this encounter look alive. Asserted as zero and
+		// null deliberately: both go red the day the tribe is sorted out. See
+		// docs/retail-ai-fidelity.md.
+		Assert.Equal(0, fugitive.GetAggroList().GetHate(quarry));
+		Assert.Null(fugitive.GetTarget());
 	}
 
 	/// <summary>

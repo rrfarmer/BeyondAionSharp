@@ -55,7 +55,7 @@ public class KlawCallerAI : PatternAi
 
 		// No state guard, unlike every other answer in the family -- see the class remarks.
 		OnMessage = Of(Branch(2, "a klaw is calling", [When.Message(HurtingMe)],
-			Do.HateMessageTarget(Glance))),
+			Do.HateMessageParam(Glance))),
 	};
 
 	public KlawCallerAI(Npc owner)
@@ -123,7 +123,7 @@ public class KlawSentinelAI : PatternAi
 
 		OnMessage = Of(Branch(1, "a klaw is calling, and I am not busy",
 			[When.Message(KlawCallerAI.HurtingMe), When.Idle],
-			Do.HateMessageTarget(Glance))),
+			Do.HateMessageParam(Glance))),
 	};
 
 	public KlawSentinelAI(Npc owner)
@@ -180,7 +180,7 @@ public class KlawEscortAI : PatternAi
 
 			Branch(1, "a klaw is calling, and I am not",
 				[When.Message(KlawCallerAI.HurtingMe), When.Idle],
-				Do.HateMessageTarget(Commit))),
+				Do.HateMessageParam(Commit))),
 	};
 
 	public KlawEscortAI(Npc owner)

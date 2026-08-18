@@ -83,7 +83,7 @@ public class LordLannokAI : PatternAi
 
         OnMessage = Of(
             Branch(1, "", [When.Message(AlarmMessage)],
-                Do.HateMessageTarget(AlarmHate))),
+                Do.HateMessageParam(AlarmHate))),
 
         OnDie = Of(
             Branch(7, "", When.Always,

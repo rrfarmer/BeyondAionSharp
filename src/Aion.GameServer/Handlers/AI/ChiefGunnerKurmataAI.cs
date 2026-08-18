@@ -173,7 +173,7 @@ public class SupplyBaseFlameCannonAI : PatternAi
 	{
 		OnMessage = Of(
 			Branch(2, "", [When.Message(OpenFire)],
-				Do.HateMessageTarget(Decisive)),
+				Do.HateMessageParam(Decisive)),
 
 			Branch(1, "fire at the mark", [When.Message(MarkLanded)],
 				Do.HateMessageSender(Decisive))),

@@ -69,7 +69,7 @@ public class ShulackSoldierAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(99, "the chief is calling", [When.Message(ShulackCalls.RankAndFile)],
-			Do.HateMessageTarget(ShulackCalls.Ordinary))),
+			Do.HateMessageParam(ShulackCalls.Ordinary))),
 	};
 
 	public ShulackSoldierAI(Npc owner)
@@ -95,7 +95,7 @@ public class ShulackSlaveAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(99, "the alarm", [When.Message(ShulackCalls.Alarm)],
-			Do.HateMessageTarget(ShulackCalls.Ordinary))),
+			Do.HateMessageParam(ShulackCalls.Ordinary))),
 	};
 
 	public ShulackSlaveAI(Npc owner)
@@ -130,11 +130,11 @@ public class ShulackWatcherAI : PatternAi
 		OnMessage = Of(
 			Branch(100, "the alarm, and I have not passed it on",
 				[When.Message(ShulackCalls.Alarm), When.FirstTime(1)],
-				Do.HateMessageTarget(ShulackCalls.Ordinary),
+				Do.HateMessageParam(ShulackCalls.Ordinary),
 				Do.ArmTimer(ShulackCalls.RelayTimer, ShulackCalls.RelayMillis)),
 
 			Branch(99, "the chief is calling", [When.Message(ShulackCalls.RankAndFile)],
-				Do.HateMessageTarget(ShulackCalls.Ordinary))),
+				Do.HateMessageParam(ShulackCalls.Ordinary))),
 
 		OnBattleTimer = Of(Branch(90, "passing it on", [When.Timer(ShulackCalls.RelayTimer)],
 			Do.Broadcast(ShulackCalls.Alarm, ShulackCalls.Far, aboutTarget: true),
@@ -179,11 +179,11 @@ public class ShulackAssaulterAI : PatternAi
 		OnMessage = Of(
 			Branch(100, "the alarm, and I have not passed it on",
 				[When.Message(ShulackCalls.Alarm), When.FirstTime(1)],
-				Do.HateMessageTarget(ShulackCalls.Ordinary),
+				Do.HateMessageParam(ShulackCalls.Ordinary),
 				Do.ArmTimer(ShulackCalls.RelayTimer, ShulackCalls.RelayMillis)),
 
 			Branch(99, "the chief is calling", [When.Message(ShulackCalls.RankAndFile)],
-				Do.HateMessageTarget(ShulackCalls.Ordinary))),
+				Do.HateMessageParam(ShulackCalls.Ordinary))),
 
 		// 21153, not 21253. See the class remarks -- this is retail's typo and it is kept.
 		OnBattleTimer = Of(Branch(90, "passing it on, into nothing", [When.Timer(ShulackCalls.RelayTimer)],
@@ -217,7 +217,7 @@ public class ShulackCannonChiefAI : PatternAi
 			Do.Broadcast(ShulackCalls.RankAndFile, ShulackCalls.Near, aboutTarget: true))),
 
 		OnMessage = Of(Branch(99, "another chief is calling", [When.Message(ShulackCalls.RankAndFile)],
-			Do.HateMessageTarget(ShulackCalls.Ordinary))),
+			Do.HateMessageParam(ShulackCalls.Ordinary))),
 	};
 
 	public ShulackCannonChiefAI(Npc owner)
@@ -248,7 +248,7 @@ public class ShulackChiefAI : PatternAi
 			Do.Broadcast(ShulackCalls.Alarm, ShulackCalls.Far, aboutTarget: true))),
 
 		OnMessage = Of(Branch(99, "an officer is calling", [When.Message(ShulackCalls.Officers)],
-			Do.HateMessageTarget(ShulackCalls.Officer))),
+			Do.HateMessageParam(ShulackCalls.Officer))),
 	};
 
 	public ShulackChiefAI(Npc owner)
@@ -277,7 +277,7 @@ public class ShulackBodyguardAlarmAI : PatternAi
 			Do.Broadcast(ShulackCalls.Alarm, ShulackCalls.Far, aboutTarget: true))),
 
 		OnMessage = Of(Branch(99, "an officer is calling", [When.Message(ShulackCalls.Officers)],
-			Do.HateMessageTarget(ShulackCalls.Officer))),
+			Do.HateMessageParam(ShulackCalls.Officer))),
 	};
 
 	public ShulackBodyguardAlarmAI(Npc owner)
@@ -308,7 +308,7 @@ public class ShulackBodyguardBothAI : PatternAi
 			Do.Broadcast(ShulackCalls.Alarm, ShulackCalls.Far, aboutTarget: true))),
 
 		OnMessage = Of(Branch(99, "an officer is calling", [When.Message(ShulackCalls.Officers)],
-			Do.HateMessageTarget(ShulackCalls.Officer))),
+			Do.HateMessageParam(ShulackCalls.Officer))),
 	};
 
 	public ShulackBodyguardBothAI(Npc owner)

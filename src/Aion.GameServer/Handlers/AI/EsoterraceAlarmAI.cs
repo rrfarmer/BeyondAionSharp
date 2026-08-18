@@ -107,7 +107,7 @@ public class EsoterraceDrakanAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(Branch(1, "the feeder is calling", [When.Message(EsoterraceAlarm.Alarm)],
-			Do.HateMessageTarget(EsoterraceAlarm.Notice),
+			Do.HateMessageParam(EsoterraceAlarm.Notice),
 			Do.SwitchTarget(AggroTarget.MOST_HATED))),
 	};
 
