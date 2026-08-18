@@ -17745,3 +17745,54 @@ pin counted burrows and passed for months while the burrows were late; it took r
 ### Verification
 
 Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped, run three times.
+
+## First of the 41 checked, and it sharpens the other 40
+
+`FrostNamedAI` was the widest gap after Chunapa — timer 0 armed at **3s** and **14s**. Read:
+
+| where | delay |
+|---|---|
+| `on_enter_attack_state` p7 | **3s**, once |
+| three `on_battle_timer` branches waiting on timer **4** | **14s** |
+
+**The 3s arm is an opener and the 14s arms come later.** Timer 0 has no branch that re-arms itself, so it
+fires once three seconds into the fight and is idle by the time any timer-4 branch arms it at fourteen.
+**The two are never pending at the same moment, so no rule about contention can separate them.**
+
+`FrostNamedAI` is unaffected. **One of the 41 cleared in two commands.**
+
+### The criterion that makes the rest cheap
+
+Two delays on one timer only matter if **both can be live at once**. That needs the shorter arm to land
+while the longer is still counting, which needs the arming branch to fire *during* the long wait.
+
+So the triage is not "how far apart are the delays" — the metric the previous entry reached for — but:
+
+**does anything arm the timer while it is already pending?**
+
+Chunapa qualified: his opener arms timer 1 at 3s while the burrow branch's 45s is the standing cadence, and
+the opener fires from a *different* clock that is still ticking. Frost Named does not: its short arm comes
+from entering the fight, which happens once, before anything else exists.
+
+**That is a much cheaper question than tracing each encounter**, and it can be asked of the source directly:
+a timer armed only from `OnEnterAttack` or `OnWakeUp` plus its own branches cannot contend. **A first pass
+over the 40 on that rule would likely clear most of them without a single trace.**
+
+### What this does not settle
+
+Frost Named is clear on *contention*; it is not evidence about the other forty. And the previous entry's
+worry stands unchanged for any class where a heartbeat arms a slower clock — which is the Chunapa shape and
+the one that was wrong.
+
+### Still to do
+
+- **Apply the contention rule to the remaining 40** — source-only, no traces — and trace only what survives.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
