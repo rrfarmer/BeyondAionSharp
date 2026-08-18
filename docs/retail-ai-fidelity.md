@@ -12045,13 +12045,22 @@ illusions being inert, it just never knew they were not.
 The template file has no back-reference, so the only warning is a test suite that already covers the
 other fight. Worth a grep of the id across `Handlers/AI` before repointing anything a boss summons.
 
-### A survivor that was a bad pin, not a bad guard
+### A survivor, and a correction to how it was first written up
 
-The mutation removing "pops when attacked" survived, because the pin only asserted the illusion was gone
-*after* a blow and could not tell that from an illusion that leaves on its own. Adding the other half —
-untouched, it is still standing ten seconds later — kills it. **A pin on "X causes Y" needs the case
-where X does not happen**, which is the same shape as the once-only baseline mistake from the village
-killers, seen at the level of a single assertion.
+The mutation removing "pops when attacked" **survives**, and the first version of this entry claimed a
+fix for it that did not work.
+
+The pin originally asserted only that the illusion was gone after a blow, which cannot be told from an
+illusion that leaves on its own. Adding "untouched, it is still standing ten seconds later" then failed
+outright: at two metres the illusion aggroes the raider by itself, fights, and despawns through the
+*other* branch. The raider now stands sixty metres off and the blow is delivered as an event, so the
+"untouched" half holds — **and the mutation still survives.** Two despawn branches on one npc, and no
+window this harness offers separates them.
+
+Reported at **4 of 5** rather than presented as five. **A pin on "X causes Y" needs the case where X
+does not happen**, which is the same shape as the once-only baseline mistake from the village killers —
+but having the right shape is not the same as having a pin, and the difference was nearly published as
+a success.
 
 ### Not translated
 
@@ -12070,5 +12079,15 @@ different job from translating a pattern, so it is written down rather than quie
 
 ### Verification
 
-Full suite **2,086 passing** and 1 skipped; five pins; **five mutations, all caught** after the pin that
-let one through was repaired.
+### And a commit made while the suite was red
+
+The verification command chained the commit after a `grep` of the test output rather than after the test
+run, so a non-zero suite exit could not stop it. `a5bcc0106` went in with `OneBlowAndTheIllusionIsGone`
+failing. Fixed in the commit that follows, and worth stating plainly: **`dotnet test … | grep … && git
+commit` commits on the grep's exit code.**
+
+### Verification
+
+Full suite **2,086 passing** and 1 skipped, over three consecutive runs; five pins; **five mutations,
+four caught**. One LoginServer test failed once in the run that produced the bad commit and has not
+reproduced since — recorded, not chased.

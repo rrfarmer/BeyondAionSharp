@@ -40,10 +40,13 @@ public sealed class IllusionOfMelancholyAiTests
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc illusion = harness.Spawn(Illusion, 300f, 300f, 200f);
-		Player raider = harness.SpawnPlayer(302f, 300f, 200f);
 
-		// Untouched, it stays: without this the pin cannot tell "pops on a blow" from "pops on its own"
-		// and a mutation removing the branch survives.
+		// The raider stands well outside the illusion's sight. Two metres away it aggroes on its own,
+		// fights, leaves combat and despawns through the other branch -- which is correct behaviour and
+		// makes the pin unable to tell "pops on a blow" from "pops on its own". The blow is delivered as
+		// an event, which needs no proximity.
+		Player raider = harness.SpawnPlayer(360f, 300f, 200f);
+
 		harness.Clock.Advance(TimeSpan.FromSeconds(10));
 		Assert.True(illusion.IsSpawned(), "the illusion left before anyone touched it");
 
