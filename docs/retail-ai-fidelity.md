@@ -11490,3 +11490,64 @@ encounter, which the Bakarma commit already had to reason about.
 No behaviour changed this session. The backlog it was working from turned out to be ranked by the
 wrong number, and re-ranking it was worth more than translating the first row of a bad ordering — but
 it does mean the honest report is that this was a tooling session.
+
+## The corasks that burst, and the eighteen-row list that found them
+
+The previous entry flagged `audit_translatable.py` as possibly mis-ranked in the same way
+`audit_mute_adds.py` had been. **It is not, and the flag was wrong.** That audit already separates
+payload from scaffolding, already excludes `use_skill` entirely by counting it as *blocked*, and
+already subtracts payload sitting behind timers nothing arms. Its own entry records the Belsagos
+lesson that caused all three. Correcting the flag is worth more than repeating it.
+
+What it *was* missing is a way to read it. The report sorts by payload, so the useful rows — the ones
+with **nothing in the blocked column at all** — sit scattered down the list. There are **eighteen** of
+them out of two hundred and ninety-nine, and one `awk '$3=="-"'` brings them up.
+
+### What the first of them turned out to be
+
+Six live field mobs of Cygnea and Enshar — ebon, black, lurking and burrowing corask, wily and swamp
+gnarl — all on stock `aggressive`, each carrying a complete four-branch retail pattern:
+
+**Once, below half health, three clodworms appear on the attacker.** Not on the corask: retail's
+`spawn_on_target target_obj=OBJI_ATTACKER`, three metres apart, arriving with a hundred hate and
+already swinging. They go when it dies, when it leaves the fight, when it goes idle, and when it
+returns to its spawn point — four separate despawn branches, so a swarm never outlives what made it.
+
+**Four patterns rather than one, because the swarm is level-matched**: 284155 at sixty-one, 284157 at
+sixty-three, 283903 at sixty-five, and the sulphur gnarl its own 283904. One shared id would have put
+a level-61 swarm on a level-65 fight, and the four classes exist only to carry those four numbers. Two
+mutations pin exactly that.
+
+**Not translated: nothing.** These four patterns are complete, which is the first time this log has
+been able to write that line, and it is the whole argument for the eighteen-row list.
+
+### A number read rather than assumed
+
+The arrival hate reads **101**, not the hundred retail writes. `AttackAfterSpawn` adds one more when
+the summon actually starts swinging. Pinned as 101 with that noted, rather than rounded to retail's
+figure or loosened to "greater than zero" — either would hide a change in one of the two numbers.
+
+This is the second time in two sessions that reading the actual value beat assuming it. The flake
+entry's rule — *print the whole failure before theorising* — generalises: **print the actual number
+before asserting one.**
+
+### Two dead ends from the same list
+
+**The mumu farmers and workers** (`Ratman_FnR_LWaSu11`/`12`/`13`, five live npcs at levels 11–15) look
+like the best find in the game: below forty-five percent they call for help at twelve metres *and*
+summon a lycan warrior. Both blocked. Every branch is gated on `is_skill_count_left SKILLI_INDEX_0`,
+which is the largest condition blocker in the dump — 832 uses across 431 patterns and 2,767 npcs — and
+without the skill there is no way to know how many uses bound it. Building it ungated would have a
+mumu summon on *every* blow below half. Left out.
+
+Worth recording separately: the call itself would be silent anyway. `1007`'s only listener patterns are
+`Ratman`, which is bound to **zero** npcs, and `Lycan_KnA`, bound to five that do not stand near mumus.
+
+**The Tiamat beacons** (four patterns, 11 payload each) are blocked purely on `path` — the walker-route
+work — and are the strongest argument for doing that job: nothing else stands between them and being
+built.
+
+### Verification
+
+Full suite **2,044 passing** and 1 skipped; nine new pins; **eight mutations, all caught**. Translatable
+299 patterns / 979 npcs → **292 / 970**, and the no-blocker list 18 → **14**.
