@@ -34,13 +34,60 @@ public sealed class UnstableTriroanAiTests
 				typeof(TriroansSummonAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
-	/// <summary>The king, his controller three metres away, and a raid.</summary>
+	/// <summary>
+	/// <b>The repeat pokes are rolled for.</b> Retail guards the three band timers and the deep one with
+	/// <c>test_probability 50</c> and the target peel with <c>33</c> — so the king's calls come in a
+	/// cadence with gaps in it rather than on a metronome.
+	/// </summary>
+	/// <remarks>
+	/// <b>This port omitted all five, so every poke landed.</b> Found by <c>audit_handler_guards.py</c>,
+	/// which compares our guards branch by branch against the retail pattern the npc actually runs; a
+	/// dropped guard is the dangerous direction, because it lets a branch fire where retail would have
+	/// held it back.
+	/// <para>
+	/// <b>The opener is not rolled and must not be.</b> Branch 20 arms the summon slot and calls the
+	/// first elementals with no probability guard at all — retail writes it that way — so a raid always
+	/// gets the opening call however the dice land. What the rolls gate is the <em>repeat</em>, which is
+	/// why this pin compares two runs rather than asserting nobody arrives. A first draft asserted zero
+	/// and read seven: the opener, doing exactly what it should.
+	/// </para>
+	/// <para>
+	/// Every other pin in this file forces the rolls to pass so its counts stay exact.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheRepeatPokesAreRolledFor()
+	{
+		int WithRolls(bool passing)
+		{
+			var (harness, king, raid) = Engaged();
+			using BossAiHarness _h = harness;
+			if (passing)
+				BossAiHarness.AlwaysRolls(king);
+			else
+				BossAiHarness.NeverRolls(king);
+			BossAiHarness.SetExactPercent(king, 70);
+			return Arrived(harness, king, raid, 190);
+		}
+
+		int rolled = WithRolls(false);
+		int always = WithRolls(true);
+
+		Assert.True(rolled > 0, "the opener is not rolled for and should have called anyway");
+		Assert.True(always > rolled,
+			$"{always} with the rolls passing against {rolled} without — the guards are not there");
+	}
+
 	private static (BossAiHarness, Npc, List<Player>) Engaged()
 	{
 		BossAiHarness harness = NewHarness();
 		Npc king = harness.Spawn(Triroan, 616f, 488f, 196f);
 		Npc controller = harness.Spawn(Controller, 602f, 488f, 196f);
 		BossAiHarness.MakeMutuallyKnown(king, controller);
+		// Retail rolls for every band here -- fifty percent on the three summon bands and the deep one,
+		// a third on the target peel. The rolls are forced to pass so the counts below stay exact; the
+		// guard itself is pinned by TheBandsAreRolledFor, which forces them to fail instead.
+		BossAiHarness.AlwaysRolls(king);
 
 		var raid = new List<Player>();
 		for (int i = 0; i < 3; i++)

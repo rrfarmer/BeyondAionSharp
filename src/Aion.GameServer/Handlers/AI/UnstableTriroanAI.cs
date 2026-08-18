@@ -88,6 +88,12 @@ public class UnstableTriroanAI : PatternAi
     private const int Below60 = 3;
     private const int Below80 = 4;
 
+    /// <summary>Retail's <c>test_probability</c> on the three summon bands and the deep band.</summary>
+    private const int HalfTheTime = 50;
+
+    /// <summary>And on the target peel, which retail rolls a third of the time.</summary>
+    private const int AThirdOfTheTime = 33;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -120,22 +126,23 @@ public class UnstableTriroanAI : PatternAi
                 Do.Broadcast(BabyElementalControllerAI.CallOne, CallReach)),
 
             // ---- the band timers, which exist to keep the summon slot poked ----------------------
-            Branch(19, "below 20 turns on somebody", [When.Timer(Deep), When.HpBelow(20)],
+            Branch(19, "below 20 turns on somebody, half the time",
+                [When.Chance(HalfTheTime), When.Timer(Deep), When.HpBelow(20)],
                 Do.ArmTimer(Peel, 1000),
                 Do.ArmTimer(Summon, 3000)),
 
-            Branch(18, "", [When.Timer(Peel)],
+            Branch(18, "a third of the time", [When.Chance(AThirdOfTheTime), When.Timer(Peel)],
                 Do.SwitchTarget(AggroTarget.RANDOM)),
 
-            Branch(13, "", [When.Timer(Band21), When.HpBetween(21, 40)],
+            Branch(13, "half the time", [When.Chance(HalfTheTime), When.Timer(Band21), When.HpBetween(21, 40)],
                 Do.ArmTimer(Band21, 20000),
                 Do.ArmTimer(Summon, 3000)),
 
-            Branch(11, "", [When.Timer(Band41), When.HpBetween(41, 60)],
+            Branch(11, "half the time", [When.Chance(HalfTheTime), When.Timer(Band41), When.HpBetween(41, 60)],
                 Do.ArmTimer(Band41, 20000),
                 Do.ArmTimer(Summon, 3000)),
 
-            Branch(9, "", [When.Timer(Band61), When.HpBetween(61, 80)],
+            Branch(9, "half the time", [When.Chance(HalfTheTime), When.Timer(Band61), When.HpBetween(61, 80)],
                 Do.ArmTimer(Band61, 20000),
                 Do.ArmTimer(Summon, 3000)),
 
@@ -167,3 +174,5 @@ public class UnstableTriroanAI : PatternAi
 
     protected override AiPattern Pattern => Pattern_;
 }
+
+

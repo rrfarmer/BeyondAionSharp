@@ -863,7 +863,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             return counters[counter];
     }
 
-    public virtual bool RollPercent(int percent) => Rnd.Chance() < percent;
+    /// <summary>
+    /// Replaces this NPC's percent roll. **For tests only**, and per instance rather than global.
+    /// </summary>
+    /// <remarks>
+    /// Retail's <c>test_probability</c> appears 7,747 times in the 5.8 data, and this port had been
+    /// omitting it: a branch retail rolls for fired every time. Restoring the guards is right and was
+    /// blocked on verification rather than on the code -- a rolled branch makes a pin that counts
+    /// occurrences flaky, and rewriting those pins around rates costs the precision that made them
+    /// useful.
+    /// <para>
+    /// So the roll gets a seam. A pin can force it to pass, force it to fail, or seed it, and keep its
+    /// exact counts either way. <b>Per instance and not static</b>: xUnit runs collections in parallel,
+    /// and a static hook would leak between them.
+    /// </para>
+    /// </remarks>
+    public Func<int, bool>? RollOverride { get; set; }
+
+    /// <summary><c>test_probability</c>: true on a percent roll.</summary>
+    public virtual bool RollPercent(int percent)
+        => RollOverride is { } roll ? roll(percent) : Rnd.Chance() < percent;
 
     // ---- actions -----------------------------------------------------------------------------
 

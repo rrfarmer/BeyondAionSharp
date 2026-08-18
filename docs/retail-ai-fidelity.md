@@ -15410,3 +15410,71 @@ first is better and is the reason this is recorded rather than done.
 
 No server code changed — the Triroan fix was reverted and the suite re-run twice to confirm the flakiness
 went with it. Full suite **2,040 passing**, 1 skipped, twice.
+
+## The rolls come back, starting with Triroan
+
+The previous entry found 65 branches firing where retail would have held them back, named
+`test_probability` as the biggest group, and stopped — because restoring the guards made the pins flaky
+and it called for **a decision rather than a patch: a seedable RNG, or pins rewritten around rates.**
+
+The decision is the first one, and it took eleven lines.
+
+### The seam
+
+`PatternAi.RollOverride` — a `Func<int, bool>?` consulted by `RollPercent` before `Rnd`. **Per instance,
+not static**, because xUnit runs collections in parallel and a static hook would leak between them.
+
+`BossAiHarness` gets three helpers: `AlwaysRolls`, `NeverRolls`, `SeedRolls(npc, seed)`.
+
+**The roll is a property of the pattern and the determinism is a property of the test**, so the seam
+belongs in the harness rather than in the guard. Production keeps the dice; a pin that counts occurrences
+keeps its arithmetic.
+
+### Triroan, restored
+
+Five guards, read off `IDLF2A_ElementalKingNmd` branch by branch:
+
+| branch | retail |
+|---|---|
+| 19 — the deep band's poke | `test_probability 50` |
+| 18 — the target peel | `test_probability 33` |
+| 13, 11, 9 — the three band pokes | `test_probability 50` |
+
+Every existing pin in the file keeps its exact counts, because `Engaged()` now forces the rolls to pass.
+Three consecutive runs, twelve pins, no variation.
+
+### The pin that shows the guards exist, and what it got wrong first
+
+A forced-failure pin is the only way to prove a guard is present: with the guard absent, forcing the roll
+to fail changes nothing.
+
+**The first draft asserted nobody arrives, and read seven.** Branch 20 — "61-80 opens the whole thing" —
+arms the summon slot and calls the first elementals **with no probability guard at all**, and retail
+writes it that way. So a raid always gets the opening call however the dice land; what the rolls gate is
+the *repeat*.
+
+The pin now runs the same watch twice, once with the rolls failing and once passing, and asserts both
+halves: **the opener fires regardless**, and **the repeat brings more when the rolls pass.** It fails when
+all five guards are removed.
+
+That mistake is worth keeping in the record because it is the same shape as three others this session: a
+plausible claim about a mechanism, asserted before it was measured. **The seven was not a bug, it was the
+encounter working.**
+
+### What is left of the 65
+
+Sixty, minus whatever the next class turns out to share. They are not interchangeable: each needs its
+retail branch read for the actual percentage, and each needs its own pins deciding between forced rolls
+and a seed. **The tooling is no longer the blocker; the reading is.**
+
+Ordered by cluster size from the audit: `chance` on the Tiamat incarnation, the shulack watchers and
+assaulters, Princess Karemiwen, Ragnarok, the silikor guard, RM-56c and the Vritra caller; then the
+`flag`, `hp`, `state`, `message` and `distance` rows, which are one-offs and want reading individually.
+
+Still open and unchanged: the 14 two-action-idiom classes, the silikor skill, the illusion's most-hated
+claim, the Ophidan chain's second hop, and **counts, arguments and ordering**, which no audit here reaches.
+
+### Verification
+
+One engine seam, three harness helpers, five guards restored, one new pin whose mutation was checked, and
+the full suite run twice for flakiness: **2,041 passing**, 1 skipped, both times.

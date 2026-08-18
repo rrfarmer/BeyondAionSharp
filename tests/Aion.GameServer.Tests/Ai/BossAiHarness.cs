@@ -214,6 +214,38 @@ public sealed class BossAiHarness : IDisposable
 	public static void SetHpPercent(Npc npc, int percent) => npc.GetLifeStats().SetCurrentHpPercent(percent);
 
 	/// <summary>
+	/// Makes an NPC's <c>test_probability</c> guards always pass, so a pin over a rolled branch can keep
+	/// counting exact occurrences.
+	/// </summary>
+	/// <remarks>
+	/// Retail rolls for thousands of branches and this port had been omitting those guards, because a
+	/// rolled branch makes an occurrence-counting pin flaky. <b>The roll is a property of the pattern and
+	/// the determinism is a property of the test</b>, so the seam belongs here rather than in the guard:
+	/// production keeps the roll and the pin keeps its arithmetic.
+	/// </remarks>
+	public static void AlwaysRolls(Npc npc)
+		=> Pattern(npc).RollOverride = _ => true;
+
+	/// <summary>The mirror: every roll fails, which is how a pin shows the guard is really there.</summary>
+	public static void NeverRolls(Npc npc)
+		=> Pattern(npc).RollOverride = _ => false;
+
+	/// <summary>
+	/// Seeds an NPC's rolls, for a pin that wants a rolled branch to behave like a rolled branch and
+	/// still be reproducible.
+	/// </summary>
+	public static void SeedRolls(Npc npc, int seed)
+	{
+		var random = new System.Random(seed);
+		Pattern(npc).RollOverride = percent => random.Next(100) < percent;
+	}
+
+	private static Aion.GameServer.Ai.Pattern.PatternAi Pattern(Npc npc)
+		=> npc.GetAi() as Aion.GameServer.Ai.Pattern.PatternAi
+			?? throw new System.InvalidOperationException(
+				$"npc {npc.GetNpcId()} does not run a PatternAi, so it has no rolls to fix");
+
+	/// <summary>
 	/// Sets HP so the creature's own <c>GetHpPercentage()</c> reads exactly <paramref name="percent"/>.
 	/// </summary>
 	/// <remarks>
