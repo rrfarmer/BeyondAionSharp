@@ -371,7 +371,23 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </para>
     /// </param>
     public void Broadcast(int messageType, float range, bool aboutTarget, bool includeOwnSpawns = false)
-        => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range,
+        => BroadcastAbout(messageType, range, aboutTarget ? CurrentTarget : null, includeOwnSpawns);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_ATTACKER</c>.</summary>
+    /// <remarks>
+    /// Distinct from naming the target, and retail uses both in the same pattern: the trained beasts
+    /// name their <em>attacker</em> on the melee branch and their <em>caster</em> on the spell branch,
+    /// which for a beast being focused by two players is two different names.
+    /// </remarks>
+    public void BroadcastAboutAttacker(int messageType, float range)
+        => BroadcastAbout(messageType, range, LastAttacker, includeOwnSpawns: false);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_CASTER</c>.</summary>
+    public void BroadcastAboutCaster(int messageType, float range)
+        => BroadcastAbout(messageType, range, LastCaster, includeOwnSpawns: false);
+
+    private void BroadcastAbout(int messageType, float range, VisibleObject? about, bool includeOwnSpawns)
+        => NpcMessageBus.Broadcast(GetOwner(), messageType, about, range,
             includeOwnSpawns || spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
 
     /// <summary>Puts hate on the NPC that sent a message, and turns to face it.</summary>

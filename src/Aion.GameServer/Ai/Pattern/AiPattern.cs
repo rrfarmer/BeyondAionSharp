@@ -295,6 +295,10 @@ public static class When
     public static PatternCondition Enemy
         => ai => ai.SeenCreature is Creature seen && seen.IsEnemy(ai.GetOwner());
 
+    /// <summary><c>is_enemy who=OBJI_CUR_TARGET</c> — this NPC's current target is hostile to it.</summary>
+    public static PatternCondition TargetIsEnemy
+        => ai => ai.CurrentTarget is Creature target && target.IsEnemy(ai.GetOwner());
+
     /// <summary><c>is_enemy who=OBJI_CASTER</c> — whoever just cast on this NPC is hostile to it.</summary>
     public static PatternCondition CasterIsEnemy
         => ai => ai.LastCaster is Creature caster && caster.IsEnemy(ai.GetOwner());
@@ -459,6 +463,14 @@ public static class Do
     public static PatternAction Broadcast(int messageType, float range, bool aboutTarget = false,
         bool includeOwnSpawns = false)
         => ai => ai.Broadcast(messageType, range, aboutTarget, includeOwnSpawns);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_ATTACKER</c>.</summary>
+    public static PatternAction BroadcastAboutAttacker(int messageType, float range)
+        => ai => ai.BroadcastAboutAttacker(messageType, range);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_CASTER</c>.</summary>
+    public static PatternAction BroadcastAboutCaster(int messageType, float range)
+        => ai => ai.BroadcastAboutCaster(messageType, range);
 
     /// <summary>
     /// <c>use_skill(OBJI_SELF, SKILLI_INDEX_0)</c> where the NPC's list holds exactly one skill.

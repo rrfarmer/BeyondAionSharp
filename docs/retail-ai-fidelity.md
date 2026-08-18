@@ -12618,3 +12618,50 @@ rather than re-deriving.
 
 Full suite **2,113 passing** and 2 skipped; five pins and one documented skip; **seven mutations, all
 caught**.
+
+## The trained beasts, and the first call that names two different people
+
+Fifth row off the `on_spelled` seam, and the last of the four this seam's survey named. **At a quarter
+health a lizardman's trained beast calls its breeder, once, at ten metres** — a trained animal that is
+losing shouts for whoever trained it, and the breeder comes with one hate point on the player it names.
+
+Five beasts and two breeders, all live: trained monitors, trained tipolids, and the anuhart sergeant's
+mount.
+
+### The two branches name two different people
+
+**The melee branch names `OBJI_ATTACKER` and the spell branch names `OBJI_CASTER`.** For a beast being
+focused by a melee player and a caster at once those are two different players, and whichever landed
+the blow that took it under a quarter is the one the breeder is sent after. A single "name my target"
+would have picked whoever the beast happened to be holding — and that is what every previous call in
+this log did, because until now no pattern needed the distinction.
+
+New vocabulary: `Do.BroadcastAboutAttacker` and `Do.BroadcastAboutCaster`, alongside the existing
+self/target forms. A mutation swapping the caster form for the target form is caught.
+
+### A guard that reads oddly and is kept
+
+The spell branch's `is_enemy` tests **`OBJI_CUR_TARGET`**, not the caster it is about to name — so a
+beast whose current target is friendly does not call, however hostile the caster. That is retail's own
+wording, translated as written; `When.TargetIsEnemy` exists for it.
+
+The melee branch has no such guard at all, which is the **fifth encounter in five entries** to carry
+that asymmetry: stoffu, lich, lobsek, drake, beast. Melee unguarded, caster guarded, every time.
+
+### One point, again
+
+The breeder answers with a single hate point — the vasharti watch's glance rather than the klaw nest's
+claim. Retail follows it with `switch_target OBJI_CUR_TARGET` carrying a hundred, which on a breeder
+whose only hate point is the one just added means switching to the player it was named: the same one.
+Translated as the single point it amounts to rather than as two actions whose second re-selects the
+first's result, and pinned by a test that puts the breeder in a fight of its own first.
+
+### Not translated
+
+The shouts on both calls; the `3201` branch, whose senders are `DrGuard_*_Reward` patterns our data
+never places; and the breeders' `3298` branch, a second call with **no sender anywhere in the 5.8
+files**.
+
+### Verification
+
+Full suite **2,120 passing** and 2 skipped; seven pins; **seven mutations, all caught**.
