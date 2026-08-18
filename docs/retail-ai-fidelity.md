@@ -17689,3 +17689,59 @@ accelerator no longer inverted.
 ### Verification
 
 One engine change, two pins re-derived, full suite run twice: **2,050 passing**, 1 skipped, both times.
+
+## The operator change touched 43 classes and the suite noticed two
+
+The previous entry ended by saying a timer that now fires earlier is silent wherever a pin does not count
+it, and that the encounters calibrated against the old operator were worth re-checking. Counted.
+
+**43 AI classes arm a timer at more than one delay** — 90 timers in total. That is the shape the change
+affects: where one delay is shorter than another, the short one now wins whenever it lands on a pending
+clock, and before it was either swallowed or it restarted the countdown.
+
+**The suite caught two of the 43** — General Chunapa and Kingspin. The other 41 changed behaviour, or did
+not, without a pin able to tell.
+
+Some of the exposure, by how far apart the two delays are:
+
+| class | timer | delays |
+|---|---|---|
+| `GeneralChunapaAI` | 1 | 3s / 45s — **caught, and it was wrong before** |
+| `GelkmarosPadmarashkaAI` | 11 | 30s / 90s |
+| `FrostNamedAI` | 0 | 3s / 14s |
+| `DeputyHanumanAI` | `LowAlarm` | 22s / 30s |
+| `GrandChieftainSaendukalAI` | 0 | 6s / 10s / 11s / 13s |
+| `BollvigBlackheartAI` | 0 | 8s / 15s / 20s |
+
+**Chunapa is the reason to take this seriously.** His phase two was starting five seconds late — a real
+defect, present since the encounter shipped, invisible until an unrelated thread changed the operator
+underneath it. **There is no reason to think he was the only one.**
+
+### What checking them costs
+
+Each is the measurement Chunapa needed: read the retail pattern's delays, trace when the mechanic actually
+fires, compare. **Roughly one command and one trace per class**, and 41 of them. It is the largest
+mechanical follow-up this log has queued, and it is queued rather than started because it is a day's work
+and not a pass's.
+
+**The cheap first cut** is the six above — the classes where the two delays differ by more than a factor of
+two, since those are where a swallowed short arm shifts a mechanic by a visible margin rather than a tick.
+
+### The rule
+
+**A change that only two pins can see is a change 41 encounters absorbed silently.** The suite is large and
+still measured almost none of this, because most pins count *what* happens rather than *when*. Chunapa's
+pin counted burrows and passed for months while the burrows were late; it took reading the times to see it.
+
+### Still to do
+
+- **The 41 unchecked classes**, six of them first.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped, run three times.
