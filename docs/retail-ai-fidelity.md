@@ -12884,3 +12884,66 @@ list has hidden the content of an action, after `race_type` and `point_to_add`.
 Nine pins, and an **eight-mutation sweep with one survivor**: clearing `FriendsKiller` in the `finally`
 cannot be falsified, because every path that raises the event also sets the field. Reported rather than
 covered, as the rule says. Full suite **2,139 passing**, 4 skipped.
+
+## The experiment I wrote down, run — and what it actually found
+
+The last entry left the friend-killed tribe question open and wrote down the experiment that would
+settle it:
+
+> A pattern carrying a friend-killed handler whose npcs have **no** friend-reachable companion placed
+> anywhere near them is dead under the narrow reading and alive under the wide one — and retail would
+> not have written it dead.
+
+`audit_friend_reach.py` runs it, over every live npc on a friend-killed pattern, using the spawn
+coordinates and each npc's own `srange` — the same eye `FriendDeathNotice` uses.
+
+```
+     29  friend-reachable
+     28  support-only
+    185  alone
+```
+
+**It does not settle it.** The support-only group — the deciding cases, where widening `IsFriend` would
+bring a dead branch to life — is 28 npcs, about one in nine. Real, but nothing like the landslide the
+experiment was designed to detect.
+
+### What it found instead
+
+**Three quarters of these npcs have no companion of any relation inside their own sight.** The median
+nearest one is **twenty metres** away against a median `srange` of **eight**; among those out of range
+the median is thirty. So the question the experiment was asking — narrow `friend` or wide? — is
+answered "neither" for most of the population: the branch is unreachable from static placement either
+way.
+
+That reframes the handler rather than the tribe table. **`FriendDeathNotice` is, by its ranging, an
+event for grouped and instance-spawned adds** — which is exactly where it already works and where it
+was first built, for Commander Bakarma's legionaries. A field mob carrying the handler because its
+pattern is shared with instance content is not a gap.
+
+**The srange choice is therefore not disproved, but it is now measured**, which it was not when it was
+argued for. The argument was "the range belongs to the eye, not the corpse"; the number that argument
+implies is that three in four placed npcs never hear anything, and that number is now written down
+where the next person can weigh it.
+
+### The variant hint, and why it is only a hint
+
+Retail has two handlers and this port collapses them into one event: `on_see_friend_killed_by_user`
+(129 patterns) and `on_sense_friend_killed_by_user` (67, with 35 carrying both). If *sense* reached
+further than sight, sense patterns' npcs should be placed further apart. **They are — 27m against 15m
+median — but the share within sight barely moves, 20% against 27%.**
+
+The two pattern sets cover different content, so the placement difference may be entirely about what
+kind of npc uses which. **Recorded as a hint, not a result.** What would make it a result: a pattern
+carrying *both* handlers whose branches differ in what they assume about range. There are 35 such
+patterns and none has been read.
+
+### The decision
+
+**`IsFriend` is not widened.** Twenty-eight npcs is not enough to change an event's audience for every
+consumer, and the population those 28 sit in says the question is smaller than it looked. The taygas
+stay as they are: a tayga hears another tayga fall and not its own tamer, which may well be wrong and
+is at least wrong in a way that is now written down with its numbers.
+
+**What I will not do again:** write down an experiment and count the writing as the work. The
+experiment cost one script and half an hour, and it changed the shape of the question — the previous
+entry's confident framing of what would settle it was itself a guess.
