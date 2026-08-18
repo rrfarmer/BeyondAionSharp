@@ -10195,3 +10195,35 @@ failed once in three full-suite runs and passed five times in isolation and twic
 suite afterwards. It has nothing to do with this change — different instance, different classes — and
 it is recorded here rather than left in a scrollback: **a test that fails one run in three under load
 is a defect in the pin, not noise**, and it wants a look.
+
+## The flake, and ten runs to prove there is not another
+
+The entry before this recorded a test that failed once in three full-suite runs and passed everywhere
+else: `GuardReinforcementAiTests.AWaveLivesForItsOwnPatternsLifetime`. It was not load, and it was not
+the change beside it. It was arithmetic.
+
+The garrison patrol calls its reinforcements on a **fifty-percent roll, once per twenty-second
+heartbeat**. The pin waited two minutes for the first wave before asserting one had arrived — six coin
+flips, so it fails about **one run in sixty**. Rare enough to look like noise; frequent enough to be
+seen. The wait is now ten minutes: thirty flips, which puts the setup's failure below one in a billion,
+and it costs nothing because the loop stops the moment a wave lands.
+
+**Rule: a pin's setup must not be able to fail.** Everything after the setup is the measurement, and a
+measurement that sometimes never starts teaches the reader to discount the pin — which is worse than
+not having it, because the run where it fails for a real reason looks the same. Where the setup waits
+on a probability, budget enough attempts that failure is not a number anyone will ever see.
+
+This is the fourth kind of "the pin measured something other than the mechanic" in this log, after the
+lifetime counts, the decoy that aggroed on its own, and the target watch that saw drift. The first
+three were about *what* was measured. This one is about whether the measurement happens at all.
+
+### And a sweep, because one flake is evidence of a habit
+
+Ten consecutive full-suite runs after the fix: **no failures at all**. That is the whole suite, not the
+one test — the point was to find out whether the same arithmetic was hiding in the other bounded waits,
+of which there are nine across the pins, several of them behind probabilities. None of them surfaced in
+ten runs, which is not proof but is the strongest statement available without reading every one against
+its pattern's cadence.
+
+Recorded so the next flake is measured before it is explained: **ten runs, then look at the numbers,
+then change the test.**

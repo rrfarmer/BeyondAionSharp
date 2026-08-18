@@ -310,6 +310,12 @@ public sealed class GuardReinforcementAiTests
 	/// hundred. A constant taken from a uniform subset is a constant that will be wrong as soon as the
 	/// subset grows.
 	/// <para>
+	/// <b>The wait for the first wave is thirty coin flips, not six.</b> The call is a fifty-percent
+	/// roll on a twenty-second heartbeat, so the two-minute window this pin started with failed about
+	/// one run in sixty — rare enough to look like noise and frequent enough to be seen. A pin whose
+	/// setup can fail is a pin that will be disbelieved when it fails for a real reason.
+	/// </para>
+	/// <para>
 	/// <b>What is watched is the wave itself, by object id</b>, rather than the size of the standing
 	/// population. An earlier version of this pin compared how many were standing against how many had
 	/// ever arrived, which is a ratio between two numbers that both depend on coin flips — the patrol
@@ -330,8 +336,12 @@ public sealed class GuardReinforcementAiTests
 		BossAiHarness.SetHpPercent(guard, 20);
 		harness.Engage(guard, quarry);
 
+		// Ten minutes of waiting rather than two. The patrol rolls once per twenty-second heartbeat at
+		// fifty percent, so a two-minute window is six coin flips and fails about one run in sixty --
+		// which it duly did, once, in a full-suite run. Thirty flips puts that below one in a billion,
+		// and the wait costs nothing because the loop stops the moment a wave lands.
 		int[] firstWave = [];
-		for (int i = 0; i < 120 && firstWave.Length == 0; i++)
+		for (int i = 0; i < 600 && firstWave.Length == 0; i++)
 		{
 			Advance(harness, guard, quarry, 1);
 			firstWave = harness.LiveNpcs()
