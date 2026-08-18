@@ -25,7 +25,11 @@ public sealed class PriestZitanAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Inggison).WithWorldSize(2048)
-			.WithAi(typeof(PriestZitanAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			// IllusionOfMelancholyAI because 281524 is shared: Zitan calls it and so does Vallakhan, and
+			// retail binds the npc to IDTP_Fanatic_Elementalearth2 whoever summoned it. A test must
+			// register what the fight can spawn, and what the npc runs is the npc's business.
+			.WithAi(typeof(PriestZitanAI), typeof(IllusionOfMelancholyAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
 	/// <summary>He stands at three hundred; his quarry forty metres off, so placement is readable.</summary>

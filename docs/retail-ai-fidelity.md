@@ -12020,3 +12020,55 @@ do have — three markers and one Macunbello — happen to be the live pair.
 
 Full suite **2,081 passing** and 1 skipped; three pins; **seven mutations, six caught and one an
 alternative branch that cannot be isolated**. The no-blocker list 8 → **5**, three patterns at once.
+
+## Vallakhan's illusions, and an npc two bosses share
+
+Sixth row off the no-blocker list. Vallakhan's illusions were already in `ai/spawn_helpers.xml` and
+already arriving; what was missing was everything that made them *illusions*.
+
+**One blow and an illusion is gone.** Its whole pattern is three ways of leaving and one way of
+engaging: it pops when attacked, it leaves when the fight ends, and it answers Vallakhan's call by going
+for whoever he named. **They are not adds, they are a distraction with a cost** — two land on the
+player he is holding and immediately attack, and each takes exactly one blow to remove, so the question
+they ask a group is whether the two seconds are worth more than the damage. An illusion with any real
+health would be a different fight.
+
+### The collision, and what it says
+
+Repointing 281524 broke six pins in an encounter that has nothing to do with Vallakhan: **Priest Zitan
+summons the same npc**. Retail binds 281524 to `IDTP_Fanatic_Elementalearth2` regardless of who called
+it, so giving it the retail class is the right answer and Zitan's harness simply had to be told about
+it — his six pins pass unchanged, which is the useful part: Zitan's mechanic never depended on his
+illusions being inert, it just never knew they were not.
+
+**Rule: a repoint is a change to every encounter that summons the npc, not to the one you are reading.**
+The template file has no back-reference, so the only warning is a test suite that already covers the
+other fight. Worth a grep of the id across `Handlers/AI` before repointing anything a boss summons.
+
+### A survivor that was a bad pin, not a bad guard
+
+The mutation removing "pops when attacked" survived, because the pin only asserted the illusion was gone
+*after* a blow and could not tell that from an illusion that leaves on its own. Adding the other half —
+untouched, it is still standing ten seconds later — kills it. **A pin on "X causes Y" needs the case
+where X does not happen**, which is the same shape as the once-only baseline mistake from the village
+killers, seen at the level of a single assertion.
+
+### Not translated
+
+Retail's `on_spelled` branch, which pops the illusion for a caster the same way, guarded on
+`is_hp_lower_than 99` so a spell doing no damage leaves it standing. Our engine has **no `on_spelled`
+pattern handler**; a caster who never lands a melee blow does not pop one here. Same gap recorded for
+the village killers, and now twice is enough to name it as work: `on_spelled` is a handler slot the
+port does not have.
+
+**Vallakhan's own call is built and not pinned.** His summon table fires the spirit at 99% and the
+illusions at 75%, and in the harness only the spirit arrives however the descent is staged — that is
+`SummonerAI`'s scheduling, not this class. The listener half is pinned against a directly delivered
+message instead. Also recorded: **our thresholds are not retail's** — retail summons at 75/40/20 for
+two, two and three illusions where our table has 75/30/10 for two each. Changing encounter data is a
+different job from translating a pattern, so it is written down rather than quietly corrected.
+
+### Verification
+
+Full suite **2,086 passing** and 1 skipped; five pins; **five mutations, all caught** after the pin that
+let one through was repaired.
