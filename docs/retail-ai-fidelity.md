@@ -15870,3 +15870,62 @@ recorded here because a flake that is not written down gets rediscovered.
 ### Verification
 
 One class split faithfully; payload corrected from 1 to 100. Full suite **2,041 passing**, 1 skipped.
+
+## The last two state folds, and neither mirrors the pet
+
+The previous entry split the Anuhart pet and warned that the remaining three rows needed their retail pairs
+**read rather than assumed to mirror it**. Both turned out different, in different ways.
+
+### The Anuhart subordinates: four branches, and the payload changes with the state
+
+`LastBoss_Su` writes two orders across two states:
+
+| priority | message | state | action |
+|---|---|---|---|
+| 4 | `6833` | IDLE | `add_hate_point` **1**, `attack_most_hating` |
+| 3 | `6834` | IDLE | `add_hate_point` **1**, `attack_most_hating` |
+| 2 | `6833` | ATTACK | `switch_target` **100** |
+| 1 | `6834` | ATTACK | `switch_target` **100** |
+
+**One point when idle, a hundred when fighting** — where the pet spends a hundred either way. One point is
+enough to pick a target off an empty aggro list and not enough to pull anyone off anything, which is
+exactly the difference between drifting over and being yanked. This port had two branches, no state guard,
+and one point on both.
+
+### The Vritra rearguard: separated by order, not by a pair of guards
+
+`IDF5_U1_War_Vri_Def01_Ra_SN_65_Ae` answers `21212` twice:
+
+| priority | guard | action |
+|---|---|---|
+| 99 | `is_npc_state(ATTACK)` | `add_hate_point 100` **and nothing else** |
+| 98 | *none* | `add_hate_point 100`, `attack_most_hating` |
+
+**Only one branch carries a state guard.** A rearguard already fighting matches 99 and merely notes the
+call; an idle one falls through to 98 and joins. Retail gets the same two-way behaviour the pet gets from a
+matched pair, using first-match-wins and an unguarded fallback instead — so **a translation that "tidied"
+this into two symmetric guards would be wrong in a way no audit would flag.**
+
+### Not pinned, and this is the gap to close first
+
+**Nothing in the suite distinguishes any of the three.** The suite is green because the idle path is what
+the existing pins exercise, and the idle path still works. A pin needs the answerer given a fight of its
+own first — the shape `PanesterraGuardAiTests.ACaptainIsObeyedAndAGuardIsOnlyNoted` uses — and there is one
+for each of the three folds now unfolded, plus the pet from the previous entry.
+
+**Four unpinned behavioural changes is the largest unpinned surface this log has shipped in one go**, and it
+is recorded plainly rather than left to be inferred from a green suite.
+
+### Still to do
+
+- **Four pins**, one per unfolded class: the pet, the two subordinate orders, the rearguard.
+- The five coffin `message` rows, blocked on the scan following local condition helpers.
+- The 14 remaining ready rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Two classes split, three payloads corrected. Full suite **2,041 passing**, 1 skipped — and green here means
+"nothing broke", not "the new behaviour is covered".

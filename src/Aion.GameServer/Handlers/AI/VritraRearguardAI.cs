@@ -84,6 +84,9 @@ public class VritraRearguardAI : PatternAi
         => Branch(priority, $"BT{on}", [When.Timer(on), When.HpBetween(51, 100)],
             Do.ArmTimer(next, delay));
 
+    /// <summary>Retail's <c>point_to_add</c> on both 21212 branches.</summary>
+    private const int Commit = 100;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
@@ -146,8 +149,16 @@ public class VritraRearguardAI : PatternAi
             Branch(100, "stand down", [When.Message(Dismiss)],
                 Do.DespawnSelf()),
 
-            Branch(99, "fight that one", [When.Message(Target)],
-                Do.HateMessageParam(100))),
+            // TWO BRANCHES for one number, and retail separates them by ORDER rather than by a pair of
+            // state guards: 99 carries is_npc_state ATTACK and only notes the call, and 98 has no state
+            // guard at all, so an idle rearguard falls through to it and joins the fight. A rearguard
+            // already busy keeps its own target.
+            Branch(99, "already fighting, so just note it", [When.Message(Target), When.Fighting],
+                Do.HateMessageParam(Commit)),
+
+            Branch(98, "otherwise join", [When.Message(Target)],
+                Do.HateMessageParam(Commit),
+                Do.SwitchTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED))),
 
         OnLeaveAttack = Of(
             Branch(90, "", When.Always, Do.Despawn(Nets))),

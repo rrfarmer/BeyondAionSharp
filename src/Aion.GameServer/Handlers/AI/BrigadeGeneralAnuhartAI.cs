@@ -173,14 +173,33 @@ public class AnuhartSubordinateAI : PatternAi
     public const int TakeThisOne = 6833;
     public const int GoForThisOne = 6834;
 
+    /// <summary>Retail's <c>points_to_add</c> on the two fighting branches.</summary>
+    private const int Commit = 100;
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
+        // FOUR BRANCHES: two orders by two npc states, which is how LastBoss_Su writes it. This port had
+        // two, no state guard, and one point on each. Retail spends ONE point when idle -- enough to pick
+        // a target off an empty list -- and A HUNDRED with a forced switch when already fighting. So a
+        // subordinate at rest drifts over and one mid-fight is yanked.
         OnMessage = Of(
-            Branch(4, "", [When.Message(TakeThisOne)],
-                Do.HateMessageTarget(SummonOrder.OnePoint)),
+            Branch(4, "take this one, and I am idle",
+                [When.Message(TakeThisOne), When.Idle],
+                Do.HateMessageParam(SummonOrder.OnePoint),
+                Do.SwitchTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED)),
 
-            Branch(3, "", [When.Message(GoForThisOne)],
-                Do.HateMessageTarget(SummonOrder.OnePoint))),
+            Branch(3, "go for this one, and I am idle",
+                [When.Message(GoForThisOne), When.Idle],
+                Do.HateMessageParam(SummonOrder.OnePoint),
+                Do.SwitchTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED)),
+
+            Branch(2, "take this one, and I am fighting",
+                [When.Message(TakeThisOne), When.Fighting],
+                Do.HateMessageTarget(Commit)),
+
+            Branch(1, "go for this one, and I am fighting",
+                [When.Message(GoForThisOne), When.Fighting],
+                Do.HateMessageTarget(Commit))),
     };
 
     public AnuhartSubordinateAI(Npc owner)
