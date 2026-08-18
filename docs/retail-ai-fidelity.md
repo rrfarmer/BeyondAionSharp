@@ -13101,3 +13101,78 @@ sixty windows: `0.75^60`, one in a hundred million.
 flip over twenty rolls fails at `2 × 0.5^20`, one in five hundred thousand. **Window length is not the
 thing to standardise — the per-window odds are**, and a probabilistic pin should carry the exponent it
 is betting on. This one now does.
+
+## Masto the Ancient, and pins built on coin flips
+
+`ND2_EhA` ranks eight translatable actions against **thirty-one blocked skills** — the worst ratio of
+anything shipped here. It is worth building anyway, for the reason Guardian Vingeveu was: *what* the
+skills are is blocked, *when* they happen is not, and here the "when" is not even the point. **What
+changes across the bands is how often he throws his target away.**
+
+| band | opener (once) | repeat | scatters? |
+|---|---|---|---|
+| 81–100 | — none — | skill on 15s | **no** — a tank holds him |
+| 61–80 | `ALPHA_2` | 25s | yes, both |
+| 41–60 | `ALPHA_3` | 30s | yes, both |
+| 21–40 | `ALPHA_4` | 25s | yes, both |
+| below 20 | `ALPHA_5` → **second-most-hated** | 30s, **no switch** | opener only |
+
+So: **held at the top, unholdable through the middle, and at the bottom he picks the off-tank once and
+stays there.** Five bands and a single mechanic.
+
+**Health of exactly twenty belongs to no band.** Third boss in three entries — after Guardian Vingeveu
+at thirty-five and Chaoslord Kalabar at thirty-five. It is not a slip in one pattern; **it is how
+NCSoft writes a banded ladder**, and it is kept every time.
+
+**One dead action, not built:** `on_enter_idle_state` sets `FLAGVARI_ZETA_5`, which no branch reads —
+the same dead flag in the same slot as Kalabar's.
+
+### The pins were wrong first, in a way worth writing down
+
+**`SwitchTarget(RANDOM)` can land on the player it already had.** So "the target changed" is a
+one-in-three coin, not an observation. The first draft asserted it three times and **failed three
+different ways on the first run** — which is the good outcome; the same file with two players instead of
+three would have failed one run in eight and been called a flake.
+
+Every pin was rebuilt on something that is not a coin:
+
+- **an absence** — the top band has no switching branch, so *any* switch over two minutes is a failure;
+- **a determinism** — the bottom band's `SECOND_HATING` pick is the same player every time, so twelve
+  identical fights are twelve real observations;
+- **a stated exponent** — where a count was unavoidable, the window is long enough that the odds
+  against are arithmetic rather than hope.
+
+That last one is the rule from the previous entry's flake, applied before the flake rather than after.
+
+### Three mutations survived, and one of them corrected the class doc
+
+The sweep caught five of eight. The three survivors were each worth more than the five:
+
+**A claim I had written up as the mechanism turned out to be inert.** The bottom band's opener is the
+only one that does not re-arm the opener timer, and I described that as what stops the scattering. It is
+not — that timer's fallback branch has no switch either, so whether it keeps running or dies, nothing
+moves him. **The band's own flag is what ends it.** A mutation restoring the re-arm changes no pin, and
+that is correct rather than a gap. The class doc now says so; it used to say the opposite, in bold.
+
+**A shared flag between two middle bands was invisible.** Those bands' openers only scatter at random,
+so the target tells you nothing. The failure is visible one step further out: a band that never opens
+never arms its own repeat timer either, so the scattering stops. The band-crossing pin now measures
+that, and the target only for the bottom band. **One pin, two halves, because the middle and the bottom
+fail differently.**
+
+**The opening scatter was unpinned** precisely because it is a coin flip — so it is pinned as one:
+twelve fights at a health with no band to claim him, and landing on the tank all twelve times is one in
+half a million.
+
+### Also settled, cheaply: the 2.7 dump adds nothing
+
+The wheel of death's missing pattern raised the question of whether the older dump carries anything the
+newer one lost. **It carries three patterns 5.8 does not, and no npc our data places runs any of
+them.** 2.7 has 3,030 patterns against 5.8's 12,798, and is a strict subset for every practical
+purpose. Worth one query to stop anyone asking again.
+
+### Verification
+
+Nine pins. **Eight-mutation sweep, five caught on the first pass**; the three survivors produced a
+corrected class doc, a new band-crossing pin and a new opening-scatter pin, and all three then failed
+as they should. Full suite **2,165 passing**, 5 skipped.
