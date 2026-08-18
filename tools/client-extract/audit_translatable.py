@@ -17,7 +17,7 @@ different reasons and only one of them is ever going to be fixable in bulk:
   script   `set_condition_spawn_variable` and the instance-progression verbs, which belong to an
            instance handler rather than to an AI pattern.
 
-Payload that cannot run or cannot reach anybody is subtracted before ranking -- see
+Payload that cannot run, cannot reach anybody, or does nothing at all is subtracted before ranking -- see
 `audit_timer_reach.py` for branches on a timer nothing arms, and `audit_message_reach.py` for
 broadcasts nobody answers and message handlers nobody triggers.
 
@@ -95,7 +95,18 @@ def dead_payload(block: str, repo, patterns_dir, binding_tsv) -> int:
         return 0
 
     unheard, unasked = M.dead_message_payload(root, M.cached_index(repo, patterns_dir, binding_tsv))
-    return R.analyse(root)[1] + unheard + unasked
+    return R.analyse(root)[1] + unheard + unasked + no_op_switches(root)
+
+
+def no_op_switches(root) -> int:
+    """`switch_target target=OBJI_CUR_TARGET` — turn to the object you are already on.
+
+    Seventy of them across fifty-seven patterns, and every one is a no-op that the ranking was
+    counting as a target switch. Found while reading the Nochsana naga wizards, who have five between
+    them.
+    """
+    return sum(1 for node in root.iter("switch_target")
+               if (node.findtext("target") or "").strip() == "OBJI_CUR_TARGET")
 
 
 def main() -> None:

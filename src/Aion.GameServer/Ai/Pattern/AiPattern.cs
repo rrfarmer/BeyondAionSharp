@@ -367,6 +367,10 @@ public static class Do
     public static PatternAction SkillOnSelfNow(int skillId) => ai => ai.CastSkillNow(skillId);
 
     /// <summary><c>add_hate_point</c> at the object a message carried, then attack it.</summary>
+    /// <summary><c>switch_target target=OBJI_MESSAGE_PARAM</c> — turn, without taking hate.</summary>
+    public static PatternAction TargetMessageParam()
+        => ai => ai.TargetMessageParam();
+
     public static PatternAction HateMessageTarget(int hate) => ai => ai.HateMessageTarget(hate);
 
     /// <summary>Anything with no pattern op behind it — an encounter-specific hook the table needs.</summary>

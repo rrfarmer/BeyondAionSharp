@@ -324,6 +324,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         => NpcMessageBus.Broadcast(GetOwner(), messageType, aboutTarget ? CurrentTarget : null, range,
             spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
 
+    /// <summary>Turns to whoever a message named, without touching the hate list.</summary>
+    /// <remarks>
+    /// Retail's bare <c>switch_target target=OBJI_MESSAGE_PARAM</c>, which is a different action from
+    /// <see cref="HateMessageTarget"/> and means a different thing: the Nochsana Teleporter takes hate
+    /// when a call finds him idle and only turns when it finds him already fighting. Without hate the
+    /// turn lasts until the aggro list is consulted again, which is retail's own weakness in the
+    /// action rather than ours in porting it.
+    /// </remarks>
+    public void TargetMessageParam()
+    {
+        if (MessageParam is Creature named && !named.IsDead())
+            GetOwner().SetTarget(named);
+    }
+
     /// <summary>Puts hate on whoever a message named and turns to face them.</summary>
     public void HateMessageTarget(int hate)
     {

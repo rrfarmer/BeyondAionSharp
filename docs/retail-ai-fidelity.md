@@ -9959,3 +9959,61 @@ Full suite **1,931 passing** and 1 skipped; ten new pins run five times over; **
 caught**. Missing-AI 685 → **683**; translatable 343/1,121 → **341/1,119**; adds 359/278 → **358/277**,
 the one being the mine — the blazes were already spawned by another encounter, which is why the delta
 is one rather than two.
+
+## Nochsana's two naga wizards, and the first branch split on npc state we could port
+
+`MiNaga_WeA` binds to the Nochsana Protector (256690) and `MiNaga_WeB` to the Nochsana Teleporter
+(256691). Both were ELITEs on plain `aggressive`, and between them they hold the training camp's one
+piece of teamwork.
+
+| | |
+|---|---|
+| on engaging | each calls — the Protector to twenty-five metres, the Teleporter to twenty — naming whoever pulled |
+| on hearing the call | go for that player |
+| the Teleporter only | a **nochsana reservist** lands on his quarry as he engages, and a second thirty seconds later while he is above seventy |
+
+### The Teleporter answers the same call two different ways
+
+Retail splits his `10004` handler on whether he is already fighting: if he is, he **only turns** to the
+player named; if he is not, he takes hate and starts. That distinction survives here, and it is the
+**first time in this log a retail branch split on npc state has been ported rather than collapsed** —
+the anuhart casters' pet and Anuhart's subordinates were both flattened for want of exactly this guard,
+which `When.Fighting` has since supplied.
+
+The turn without hate needed a new action. `switch_target target=OBJI_MESSAGE_PARAM` is not
+`add_hate_point` plus a turn; it is the turn on its own, and `Do.TargetMessageParam` says it. Its
+weakness — the turn lasts only until the aggro list is consulted again — is retail's own, in the
+action rather than in the porting.
+
+### The Protector answers one call a fight
+
+His branch carries a test-and-set flag, so the second call he hears does nothing. That is what stops
+two wizards bouncing each other between players for the length of a fight, and it is pinned by handing
+him two calls naming two players and asserting he holds the first.
+
+### 70 no-op target switches, and the ranking was counting all of them
+
+Reading these two turned up `switch_target target=OBJI_CUR_TARGET` — turn to the object you are already
+on. The Protector has three and the Teleporter two, and across the dump there are **70 of them in 57
+patterns**. Every one was scoring as a target switch in the worth-doing ranking.
+
+Now subtracted, along with the dead timers and the unheard messages. The list moves 341/1,119 →
+**337/1,111**, of which two patterns and two npcs are these wizards and the rest is the no-op.
+
+**Rule: an action that names the thing it is already pointed at is not an action.** Third variety of
+"payload that is not payload" this log has had to name — after scaffolding timers and messages nobody
+hears — and the same lesson each time: *the audit was reading the data rather than asking what the
+server would do.*
+
+### Not translated
+
+`param_obj=OBJI_EVENT_TARGET` on both calls, which we send as the current target — the same player at
+the moment of engaging, and there is no other moment these calls are made. Five shouts, fourteen skill
+indices, and the Teleporter's `on_killed_by_npc` branch, which duplicates his death clean-up for a
+death our runtime does not distinguish.
+
+### Verification
+
+Full suite **1,938 passing** and 1 skipped; seven new pins run three times over; **twelve mutations,
+all caught**. Missing-AI 683 → **681**; adds 358/277 → **357/276**, the one being the reservist;
+translatable 341/1,119 → **337/1,111**.
