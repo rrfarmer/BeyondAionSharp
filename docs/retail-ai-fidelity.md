@@ -20782,3 +20782,43 @@ excuse: **the add does not bound itself and we do not know where the summoner st
 
 Build clean. The spark pin fails with its clock back at Java's six and a half. Full suite **2,105
 passing**, 1 skipped.
+
+## The assassin's smoke, pinned against the bug it actually had
+
+Three pins on `vasharti_assassin`: the smoke appears, hangs for six seconds, and is placed once per pull.
+
+**The mutation that matters is the original bug**, not a zeroed constant. Restoring the two lines this
+class used to have — spawn the smoke, delete it on the next line — turns **all three** red. The
+lifetime-removed mutation turns one red. **Both were run**, because a pin that only catches a tidied
+constant does not prove it would have caught the thing that was there.
+
+### Why no audit found this one
+
+Every check built in this sweep asks whether a spawn is **bounded**. This one was — **bounded to zero**.
+It came out only when the row was read by hand in order to dismiss it, and it is the single case in the
+whole lifetime pass where the bug was an add that was *too short-lived* rather than too long.
+
+**Fifteen findings, and the audit's own question would have missed this one however it was refined.**
+
+### Where the unpinned list stands
+
+| fix | state |
+|---|---|
+| arena spark, Tiamat dust | pinned on the add |
+| **`vasharti_assassin`** | **pinned here** |
+| `drakanmedic`, both Ahserion classes | pinnable — summoner has a map |
+| `sematariux`, `king_consierd` | blocked: no map, and no clock in the add |
+
+### Still to do
+
+- Pin `drakanmedic` and the two Ahserion classes.
+- **`sematariux` and `king_consierd` need spawn entries** before either end can be pinned — a data gap.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. All three pins fail against the original two-line bug; one fails with the lifetime removed.
+Full suite **2,108 passing**, 1 skipped.
