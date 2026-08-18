@@ -20736,3 +20736,49 @@ tested existence where the change was about duration.
 ### Verification
 
 Build clean. The dust pin fails with the add's clock back at ten. Full suite **2,103 passing**, 1 skipped.
+
+## Pinning the add instead of the encounter
+
+The spark was the last known-unpinned lifetime, and its encounter — `rm_1337` — **has no spawn entry
+anywhere in our data**, which is why two entries running said it could not be pinned.
+
+**That was the wrong place to look.** The clock lives in `SparkOfDarknessAI`, not in the summoner, and an
+add with its own clock does not need its summoner at all: **drop it into any map and ask when it leaves.**
+
+### What this makes visible
+
+Four summoner-side lifetimes in this log were dead code because the add already had a clock, and two more
+took effect only by being the smaller of two numbers. **Pinning the add is what catches that**: if the
+number moves back, the file goes red regardless of which class the duplicate lived in. Reverting the spark
+to Java's six and a half turns it red immediately.
+
+**Two pins, and one of them could have been written eight passes ago.** The reason it was not is that
+every entry framed these as encounter mechanics — "Terath's black hole", "Tiamat's dust", "the arena
+spark" — when the thing being changed was a property of the npc, not of the fight. **The framing chose
+the harness, and the harness was the blocker.**
+
+### The remaining unpinned fixes, re-sorted
+
+| fix | can be pinned |
+|---|---|
+| arena spark, Tiamat dust | **done here** |
+| `drakanmedic`, `vasharti_assassin`, both Ahserion classes | yes — the summoner has a map |
+| `sematariux`, `king_consierd` | **no** — no map, and the add has no clock of its own, so there is nothing to pin from either end |
+
+That last row is the only genuinely blocked pair, and the reason is now precise rather than a blanket
+excuse: **the add does not bound itself and we do not know where the summoner stands.**
+
+### Still to do
+
+- Pin `drakanmedic`, `vasharti_assassin` and the two Ahserion classes.
+- **`sematariux` and `king_consierd` need a map before anything can be pinned** — their spawn entries are
+  missing from our data, which is a data gap rather than a test one.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The spark pin fails with its clock back at Java's six and a half. Full suite **2,105
+passing**, 1 skipped.
