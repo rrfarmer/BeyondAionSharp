@@ -22271,3 +22271,61 @@ wave is retail's, the trigger is ours.**
 
 Build clean. The wave pin fails with the latch disabled, and asserts four distinct corners rather than a
 count alone. Full suite **2,117 passing**, 1 skipped.
+
+## The binding table had a hole, and rebuilding it made things worse before better
+
+Last pass, Tiamat's rush drakan were "not in our data at all" for seven passes because one pass looked
+them up in `ai_binding.tsv` and found nothing. **They were in `npc_templates.xml` the whole time.** That
+made the binding table itself worth examining.
+
+**It covered 49,134 npc ids against 63,287 templates — 14,153 invisible to every audit that reads it.**
+Roughly ten do. And it arrived in this repository fully formed, with **no generator**, so nothing could
+say it was incomplete.
+
+### The rebuild, and why it was not adopted
+
+`build_ai_binding.py` streams retail's own npc tables — `<id>`, `<name>`, `<ai_name>`, `<quest_ai_name>`,
+every column this table needs — out of the 5.8 static-data archive.
+
+**The first run read one table and found 29,805 npcs**, well under the shipped 49,134. Reading all three
+gave **56,787**, which looks like a clear win.
+
+**It is not.** Measured against what actually matters — how many of *our* templates it covers — the rebuild
+scores **38,800 against the shipped table's 49,134**, and drops 12,487 rows the old one had. Retail's China
+tables and this port's npc data cover different id ranges.
+
+**A bigger number in the wrong denominator.** Swapping it in would have looked like a 15 percent
+improvement and cost a quarter of the coverage.
+
+### What shipped instead
+
+**A merge, shipped rows first.** Every original row is kept byte-identical, so no conclusion any audit has
+already drawn can shift underneath it, and the rebuild only adds ids the old table lacked.
+
+```
+rows                69,274   (was 49,134)
+our templates covered 51,287   (was 49,134)
+still missing         12,000
+```
+
+**The rush drakan resolve now**, which is the case that started this.
+
+### And the audits were re-run rather than assumed
+
+The lifetime audit still ends at two rows, both annotated `adds bound themselves` — correctly needing
+nothing. The dropped-guard report moved from 11 ready to **13**: two new rows surfaced by the new bindings.
+**Not investigated here**, and by this log's own rule they are unverified until the file is opened — that
+report has produced six kinds of false positive and no true one.
+
+### Still to do
+
+- **The two new guard rows**, read before trusted.
+- **The 12,000 templates still unbound** — a smaller hole than 14,153, and the remaining gap is npcs
+  retail's monster tables do not carry.
+- `on_idle_timer` for Java-parity classes, which would make Tiamat's rush cadence retail's.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  `drakanmedic` harness question.
+
+### Verification
+
+Tool and data only. Both audits re-run and agree; full suite **2,117 passing**, 1 skipped.
