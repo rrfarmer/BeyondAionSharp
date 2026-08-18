@@ -16852,3 +16852,57 @@ for", and no amount of probing the port answers that. The client skill table doe
 ### Verification
 
 No code changed this pass. Full suite **2,049 passing**, 1 skipped, with the web mechanic still inert.
+
+## The web's skill settles it: a one-shot trap, and the pins are wrong
+
+The previous entry said the question could not be closed from inside the repo, because the web's snare
+skill was not in this port's `npc_skills`. **It is.** `npc_ids="281391"` carries **18597** and **18607**,
+and `skill_templates.xml` names 18597 **"Earth Smash"**, `skillsubtype="ATTACK"`, stacking
+`FANATIC_EARTHQUAKE_AREA`.
+
+So the web does not snare. **It blasts.** And the pattern despawns it in the same breath:
+
+```
+on_see_user  ! set_flag_var
+             > use_skill target=OBJI_SEEN
+             > broadcast_message 6952 range=50
+             > despawn_self
+```
+
+Lands, hits whoever it sees, tells Kingspin, gone. **A one-shot trap either way** — the reading in the
+previous entry was right about the shape and wrong about the mechanism, and the mechanism did not change
+the answer.
+
+**The previous entry's claim that the repo could not settle this was itself wrong**, and worth correcting
+plainly: `npc_skills.xml` had the entry the whole time. The search that missed it looked for
+`npcid="281391"`; the file uses `npc_ids`.
+
+### What follows
+
+`KingspinAiTests`' six pins count **four webs persisting after a throw**. Retail throws them onto players,
+each one fires and vanishes on landing, so four persisting webs is a state retail only reaches when every
+web misses. **The pins encode our un-ported behaviour**, and the repoint is correct.
+
+Re-deriving them means counting what the webs *do* rather than how many stand: a throw produces four
+blasts and four cries, not four objects. The harness has no observer for either, which is the real
+remaining work and is bigger than the repoint.
+
+### Still to do
+
+- **An observable for the web's effect** — its call is the easier half, since a listener can be pinned the
+  way `CallChainTests` pins one. Then repoint, rewrite the six pins around calls, and add the accelerator
+  pin.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### The rule
+
+**"The repo cannot answer this" is a claim about a search, not about the repo.** Two entries this session
+have ended on it — this one and the npc-id suspicion — and both times the data was present under a name
+the search did not try. A grep that finds nothing has told you about your grep.
+
+### Verification
+
+No code changed. Full suite **2,049 passing**, 1 skipped, the web mechanic still inert.
