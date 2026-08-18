@@ -22570,3 +22570,49 @@ with the lifetime removed and with the opener removed.
 
 Build clean. Three pins; the placement pin distinguishes the mechanic from its approximation, and both the
 lifetime and the opener fail when removed. Full suite **2,120 passing**, 1 skipped.
+
+## The normal Yamennes, and a gate that nearly took the portals with it
+
+Second from the 575. **Yamennes Blindsight (216952) ran `aggressive`** — a scripted fight served as a plain
+melee npc — while 216960, the same fight in hard mode, has had a class for many passes.
+
+### Almost the same pattern, and the "almost" is the whole job
+
+`IDAbRe_Core_NamedD` and `IDAbRe_Core_NamedD_Hard` summon the same things with one exception:
+
+```
+both : Teleport2, Teleport2_03, Teleport2_06, Teleport2_Low x3, NamedD_onDie, Hard_Buff
+hard : + IDAbRe_Core_Sum_Golem x3
+```
+
+**The ametgolems are hard mode only.** Binding both npcs to one class is right — they are one fight — and
+doing it without gating the golems would have handed the normal version a hard-mode mechanic.
+
+### The gate's first version was wrong in the other direction
+
+It returned early when the npc was not the hard one — **and the portal clock is armed after the golem
+clock**, so the normal Yamennes would have got neither golems nor portals: a fight even emptier than
+before the change.
+
+**Caught by reading the method, not by a pin**, because no pin covered 216952 at the time — the class had
+been correct for one npc and the new one had no coverage until this commit added it. **The pin now fails
+if the gate is removed**, and it asserts three portals *and* zero golems, so it is sensitive in both
+directions.
+
+### The shape of this work
+
+Two of the 575 are now built, and both were **one npc away from an existing class or pattern** rather than
+new encounters: Miladi needed a class written, this needed a binding plus a two-line gate. **That is likely
+true of a good share of the rest** — the list is npcs with a retail fight and no AI class, not npcs whose
+fight nobody has ported.
+
+### Still to do
+
+- **The other 573.** Wrathclaw (8 spawns), Dark Poeta's three generators (7 each), Captain Xasta (6),
+  Kexkra (5) next by spawn count — several with instance handlers that must be read first.
+- Convert `TiamatDragonAI` to a pattern table, for the rush cadence.
+- The 12,000 unbound templates; the empyrean lords' skill indices; the `drakanmedic` harness question.
+
+### Verification
+
+Build clean. The pin fails with the gate removed. Full suite **2,121 passing**, 1 skipped.

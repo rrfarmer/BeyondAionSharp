@@ -39,10 +39,17 @@ public class YamennesAI : AggressiveNpcAI
     private void StartTasks()
     {
         enrageTask = ThreadPoolManager.GetInstance().Schedule(_ => { GetOwner().QueueSkill(19098, 55); return ValueTask.CompletedTask; }, 600000L);
-        golemTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
-            _ => { SpawnGolems(); return ValueTask.CompletedTask; },
-            System.TimeSpan.FromMilliseconds(GolemCycleMillis),
-            System.TimeSpan.FromMilliseconds(GolemCycleMillis));
+        // Hard mode only. IDAbRe_Core_NamedD_Hard carries the three ametgolems; IDAbRe_Core_NamedD, the
+        // normal Yamennes at 216952, has the same portals and no golems at all, so both npcs can share
+        // this class only if the golems are gated. The portals below are not: they are in both patterns.
+        if (GetNpcId() == HardYamennes)
+        {
+            golemTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+                _ => { SpawnGolems(); return ValueTask.CompletedTask; },
+                System.TimeSpan.FromMilliseconds(GolemCycleMillis),
+                System.TimeSpan.FromMilliseconds(GolemCycleMillis));
+        }
+
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, 60000L);
     }
 
@@ -67,6 +74,9 @@ public class YamennesAI : AggressiveNpcAI
 
     /// <summary>Retail re-arms the golem branch's own timer at three minutes.</summary>
     private const long GolemCycleMillis = 180_000L;
+
+    /// <summary>The hard variant, and the only one retail gives golems.</summary>
+    private const int HardYamennes = 216960;
 
     /// <summary>
     /// Retail's three marks for the ametgolems, from <c>IDAbRe_Core_NamedD_Hard</c>.

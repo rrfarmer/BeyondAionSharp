@@ -29,6 +29,9 @@ public sealed class YamennesAiTests
 
 	private const int Golem = 282107;
 
+	/// <summary>The normal-mode Yamennes, IDAbRe_Core_NamedD.</summary>
+	private const int NormalYamennes = 216952;
+
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(AbyssalSplinter).WithWorldSize(2048)
@@ -152,5 +155,35 @@ public sealed class YamennesAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(181));
 
 		Assert.DoesNotContain(harness.LiveNpcs(), n => first.Contains(n));
+	}
+	/// <summary>
+	/// <b>The normal Yamennes gets the portals and not the golems.</b>
+	/// </summary>
+	/// <remarks>
+	/// 216952 ran <c>aggressive</c> -- a scripted fight served as a plain melee npc -- and shares almost
+	/// all of 216960''s pattern. <b>Almost.</b> <c>IDAbRe_Core_NamedD</c> has the same three portals and no
+	/// ametgolems at all; the golems are hard mode only.
+	/// <para>
+	/// Binding the two npcs to one class is right, and doing it without gating the golems would have
+	/// handed the normal fight a hard-mode mechanic. <b>The first version of that gate returned early and
+	/// skipped the portal clock as well</b>, which would have left the normal fight with neither -- caught
+	/// by reading the method rather than by a pin, because no pin covered 216952 at the time.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheNormalYamennesHasPortalsButNoGolems()
+	{
+		using BossAiHarness harness = BossAiHarness.For(AbyssalSplinter).WithWorldSize(2048)
+			.WithAi(typeof(YamennesAI), typeof(YamennesSpawnGateAI), typeof(GatesSummonedAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc normal = harness.Spawn(NormalYamennes, 330f, 730f, 216f);
+		Player player = harness.SpawnPlayer(332f, 732f, 216f);
+		harness.Engage(normal, player);
+		normal.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(181));
+
+		Assert.Equal(3, harness.LiveNpcs().Count(n => Portals.Contains(n.GetNpcId())));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Golem));
 	}
 }
