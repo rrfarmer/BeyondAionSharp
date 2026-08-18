@@ -12528,3 +12528,45 @@ is nothing, so the two agree today and would diverge for a servant that had alre
 Full suite **2,102 passing** and 1 skipped; seven pins; **eight mutations, all caught** — after one that
 reported "not found" three times running turned out to be a broken anchor rather than a survivor, which
 is worth naming: **a mutation that cannot be applied is not evidence of anything.**
+
+## The lobseks, and the "sheds a piece when hurt" idiom seen three times
+
+Third row off the `on_spelled` seam, and the smallest: **below half health, once, a coastal or sea
+lobsek drops a strange object beside it, and the object lasts a minute.**
+
+That is the same idiom as the stoneskin stoffu and the lich soul call, and having three of them makes
+the shape legible:
+
+| | shed | lifetime | pointed at anyone? |
+|---|---|---|---|
+| stoneskin stoffu | angolem fragment | 6 minutes | yes, after a 3-second timer |
+| lich | faithful servant | 50 minutes | yes, immediately |
+| lobsek | strange object | **1 minute** | no |
+
+**A lobsek's object outlives the fight only if the fight is quick.** No call, no hate, no timer — it is
+a nuisance with a clock rather than an add, and the sixty seconds is what says so.
+
+**Both provocations, one flag, and the melee branch has no `is_enemy` guard while the caster branch
+does.** Three encounters now carry that asymmetry unchanged, which makes it the idiom rather than an
+accident of one pattern — worth expecting rather than re-deriving next time.
+
+### A branch retail does not have, and the pin that says so
+
+The stoffu clears its group on leaving the fight; **the lobsek does not**. Retail gives it
+`on_killed_by_user` and `on_killed_by_npc` and nothing else, so a lobsek that disengages leaves its
+object standing for the rest of its minute. Translated as written and **pinned**, so a later tidy-up has
+to argue with retail rather than with nothing.
+
+### Not built, from the same seam
+
+Three neighbours on the `on_spelled` list reduce to nothing once their broadcasts are followed:
+
+* **`Naga_SubEle`** (bloodlock's minions) — its `3313` has **no listener anywhere in the dump**, and its
+  two `on_message` branches are skill-only.
+* **`Naga_Servant`** — `3306`, likewise no listener.
+* **`ND2_Bst_38`** and **`Lizardman_BeastB`** have listeners for `6511` and `3297`, and are worth a look
+  when someone next works this seam; they were skipped only because the lobsek was complete.
+
+### Verification
+
+Full suite **2,108 passing** and 1 skipped; six pins; **six mutations, all caught**.
