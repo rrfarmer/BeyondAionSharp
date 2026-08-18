@@ -312,6 +312,21 @@ public static class When
     public static PatternCondition CasterIsEnemy
         => ai => ai.LastCaster is Creature caster && caster.IsEnemy(ai.GetOwner());
 
+    /// <summary>
+    /// <c>is_hp_in_boundary who=OBJI_CUR_TARGET</c> — the player this NPC is fighting is inside this
+    /// health band.
+    /// </summary>
+    /// <remarks>
+    /// The bastion drudges are the clearest use: they run only from an attacker still above forty
+    /// percent. <b>A drudge that has nearly killed its attacker stays and finishes the job</b>, which
+    /// is a judgement about the fight rather than about itself, and the only guard in this log that
+    /// reads the player's health rather than the npc's.
+    /// </remarks>
+    public static PatternCondition TargetHpBetween(int low, int high)
+        => ai => ai.CurrentTarget is Creature target
+            && target.GetLifeStats().GetHpPercentage() >= low
+            && target.GetLifeStats().GetHpPercentage() <= high;
+
     /// <summary><c>is_hp_lower_than who=OBJI_FRIEND</c> — the friend taking the hit is below this.</summary>
     public static PatternCondition FriendHpBelow(int percent)
         => ai => ai.Friend is Creature friend

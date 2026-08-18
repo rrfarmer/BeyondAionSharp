@@ -14203,3 +14203,57 @@ Panesterra slayers. The rule is written into the constant itself now rather than
 
 Nine pins and a **seven-mutation sweep, all caught** once the shared flag got its own fight. Full suite
 **2,251 passing**, 5 skipped.
+
+## The Lepharist bastion: a whisper and a shout
+
+`1017` and `1018` — **the lepharist defenders and their bastion drudges, 19 npcs**, and the sharpest
+contrast in this log between two calls from the same npc.
+
+| call | reach | payload | when |
+|---|---|---|---|
+| `1017` — **the whisper** | **5m** | **1** | on being pulled |
+| `1018` — **the shout** | 15m | **100** | on a combat timer, in a health band |
+
+**Three times the reach and a hundred times the payload**, decided by which branch fires. Five metres is
+the shortest call anywhere in this log: a defender being pulled tells whoever is standing on top of it
+and nobody else, and buys a single point of hate for it.
+
+### The shout is not built, and the answer to it is
+
+`1018`'s sender rides a battle-timer branch guarded by **`is_skill_count_left`** — it fires only while a
+particular skill still has charges, and this port has no notion of a skill's remaining uses.
+
+**Building it without the guard would make a defender shout in a health band where retail may have
+fallen silent**, which is inventing behaviour rather than translating it. So the sender stays unbuilt —
+but **the drudges' answer is built and pinned**, by sending the message directly. The day the charge
+guard becomes expressible, the half that answers is already known to work.
+
+That is a better shape than the usual "recorded as blocked": **half a conversation is worth building
+when the half you can build is the half that will still be right.**
+
+### The guard that judges the fight rather than the npc
+
+A drudge below thirty percent flees — **but only from an attacker still above forty.** A drudge that has
+nearly killed the player stays and finishes the job.
+
+Every other health guard in this log reads the npc's own health. This one reads the player's, and it
+needed a new condition (`When.TargetHpBetween`) to say at all.
+
+**It is built and unpinned, for two reasons rather than the usual one.** The flee needs the move
+controller, as every flee here does; and the guard needs a player at a chosen health, which the harness
+has no helper for — `SetExactPercent` takes an NPC. **The missing piece is a way to hurt a test
+player**, and that is worth more than this one pin: it is the first time a guard has been unpinnable
+because of what the harness cannot do to a *player*.
+
+### And the drudges are what fetch the protectors
+
+Both the defenders and the drudges broadcast `1016` when they stop fleeing — the number the two
+lepharist protectors listen for, and the only thing in our data that answers it. **A drudge that runs
+and turns is what brings them.** That closes the small end of the `9001`/`1016` pair without binding
+the three hundred callers those numbers otherwise want.
+
+### Verification
+
+Three pins and one skipped, and a **five-mutation sweep, all caught**: the whisper's reach, both
+payloads swapped, a defender that never whispers, and drudges listening on the wrong number. Full suite
+**2,254 passing**, 6 skipped.
