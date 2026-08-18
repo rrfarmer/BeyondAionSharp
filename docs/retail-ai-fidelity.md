@@ -21175,3 +21175,44 @@ report has been carrying twelve phantom rows across every entry that quoted it.
 ### Verification
 
 Tool only, no server code. Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## The last unexamined guard row is a false positive too
+
+`silikor_guard OnBattleTimer#4` was the one row in the dropped-guard report that no pass had looked at.
+**It is already applied.**
+
+`SilikorGuardAI` carries **one `AIName` and two `AiPattern` tables** — `Melee` and `Caster`, picked per
+npc. The parser's handler regex captures the **first** `OnBattleTimer = ...` block it finds, which is the
+melee one, so the caster's branches are invisible to it. Retail's `is_hp_in_boundary(31,100)` belongs to
+the caster branch, and that branch has carried `When.HpBetween(31, 100)` all along.
+
+**Fifth distinct false-positive mode in this one report**, after the prefix collision, the lagging
+vocabulary, branch misalignment and the mixed-class rows. **Six AI names in the port hold more than one
+pattern table**, so this mode is not a one-off.
+
+### What the dropped-guard backlog is, finally
+
+**The suspicious coffin's five message rows, and nothing else.** Everything else in it is a flag nothing
+reads, a row recorded as deliberately not applied, or a parser artifact.
+
+That is worth stating plainly because of how it was quoted: entries in this log have carried "44 ready",
+then "23 ready", then "14", then "11", as though a queue were being worked down. **It was never 44. Each
+reduction was a correction to the tool, not progress on the port**, and the real number was one encounter
+the whole time.
+
+### Still to do
+
+- **The coffin's five message rows** — the entire remaining dropped-guard backlog.
+- **Teach the parser about classes with several pattern tables**, or it will keep hiding branches in six
+  classes.
+- The 4 mixed and 3 misaligned rows, both needing hand reading.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12.
+- `sematariux` and `king_consierd` need spawn entries; the `drakanmedic` harness question, behind all of
+  the above.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
