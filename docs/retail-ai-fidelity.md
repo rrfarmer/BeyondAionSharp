@@ -9751,3 +9751,86 @@ the twenty-five that is neither built nor argued away.
 Full suite **1,915 passing** and 1 skipped; seven new pins, thirty-seven across the two classes run
 three times over; **ten mutations, all caught**. The three audits are unchanged, which is the expected
 result for a commit that only extends classes we had already written.
+
+## Payload that talks to nobody: 411 npcs leave the worth-doing list
+
+`audit_timer_reach.py` asks whether a branch can ever run. `audit_message_reach.py` asks the next
+question — whether its effect can reach anybody — and finds two shapes the ranking had been paying
+full price for:
+
+- **a broadcast nobody answers.** `broadcast_message` is payload, and it is worth nothing if no
+  pattern we can spawn receives that number and does something visible with it. The cast-only rule in
+  this log is exactly this rule applied one message at a time; this is it applied to all of them.
+- **a receive nobody sends.** An `on_message` branch full of hate points and target switches is worth
+  nothing if no pattern we can spawn ever broadcasts that number.
+
+"Alive" means the pattern has at least one owner our spawn data actually places, because a listener
+that exists only in the dump is the same dead end as a listener that answers with a cast.
+
+Across the unported patterns: **377 of them talk to nobody somewhere — 510 broadcasts nobody answers
+and 84 actions nobody triggers.** Subtracting that from the ranking moves it more than any earlier
+correction has:
+
+| | patterns | npcs |
+|---|---|---|
+| before | 437 | 1,536 |
+| after | **347** | **1,125** |
+
+Ninety patterns and **411 npcs** were on the list on the strength of messages that reach an empty room.
+The whole DirectPortal guard family, the anuhart camp guards, the fortress guard captains and the
+tayga pack drop out or fall a long way down.
+
+**Rule: an audit that counts a message must know who is at the other end of it.** This is the third
+correction of the same kind in this log — the scaffolding one, the dead-timer one, and now this — and
+they share a shape worth naming: *every one was the audit counting what the data says instead of what
+the server would do.* The data is the same either way; the question is always "and then what happens".
+
+**One level only, deliberately.** A broadcast counts as answered if some live pattern replies with a
+payload action, even where that reply is itself a broadcast into a dead end. A fixpoint would be more
+correct and would need the cycle care `audit_timer_reach.py` takes; the one-level answer already stops
+the ranking paying for an empty room, and the gap is recorded rather than hidden.
+
+## Two encounters closed out rather than built
+
+### The taygas: fourteen payload actions, six of them real
+
+`D2_FnM` (four taygas) ranked joint-third at fourteen. Measured message by message, **eight of the
+fourteen are dead**: it answers `2302` and `2304`, which nothing alive sends; and it broadcasts `1019`,
+`2305` and `2306`, whose only listeners either have no live owner or answer with a cast.
+
+What is left is real and small: on death it broadcasts `2307`, which `Lycan_HeB` — four live lycans —
+answers with `flee_from`, so killing a tayga scatters the lycans beside it. Plus a hate-and-switch on
+sensing a friend killed, and the `2301` order. Six actions, four npcs, and worth doing on its own terms
+rather than as a top-of-the-list item.
+
+### `D2_FnA` is empty, and 3,315 npcs bind to it
+
+The single most-bound pattern in the 5.8 dump is `<event_handlers></event_handlers>` and nothing else.
+995 of its owners are live and on generic AI. `audit_missing_ai.py` already excludes it — checked
+rather than assumed — so no headline number was ever inflated by it, but it is worth writing down that
+"this npc has a retail pattern" and "this npc has retail behaviour" are three thousand npcs apart.
+
+### Vision of Kaliga: the last of the twenty-five sweeps, and it cannot be built
+
+`Legion_01_Boss_03` carries four `despawn_by_nameid` on death, clearing the four summons its own health
+ladder places. Three facts close it:
+
+1. **855776 spawns in Stonespear Reach** (301500000), not in a legion dungeon — the pattern comes from
+   retail's `NpcAIPatterns_F5_Legion_JSM.xml` and the npc id is reused.
+2. It runs `StonespearAggressiveNpcAI`, a Java-parity class whose whole job is to send it at the
+   guardian stone, deny it loot and delete it on death. That is what Stonespear Reach needs.
+3. Nothing in our data spawns its four summons — no `spawn_helpers.xml` row, and the ladder that would
+   place them is the one we are not running.
+
+So the sweeps would clear a room that is already empty, and running the ladder that fills it would mean
+replacing an instance's working AI with a boss fight from a different instance.
+
+That closes the twenty-five sweeps `despawn_by_nameid` unblocked: **nineteen built**, one collapsed
+into another (retail writes the middle boss's death branch twice behind one flag), and five argued away
+in the log — Sheba's, because ours is broader, and these four.
+
+### Verification
+
+Full suite **1,915 passing** and 1 skipped, unchanged — this commit adds an audit and changes no server
+code. Missing-AI 685 and adds 359/278 unchanged; dead-timer payload 13 patterns / 26 actions unchanged;
+translatable 437/1,536 → **347/1,125**.

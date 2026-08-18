@@ -17,6 +17,10 @@ different reasons and only one of them is ever going to be fixable in bulk:
   script   `set_condition_spawn_variable` and the instance-progression verbs, which belong to an
            instance handler rather than to an AI pattern.
 
+Payload that cannot run or cannot reach anybody is subtracted before ranking -- see
+`audit_timer_reach.py` for branches on a timer nothing arms, and `audit_message_reach.py` for
+broadcasts nobody answers and message handlers nobody triggers.
+
 Usage:
     python audit_translatable.py <patterns_dir> <binding_tsv> [--repo ..] [--min 4]
 """
@@ -68,21 +72,26 @@ GENERIC_AI = {
 ACTION_RE = re.compile(r"<(\w+)>")
 
 
-def dead_payload(block: str) -> int:
-    """How many payload actions in this pattern sit on a timer nothing can arm.
+def dead_payload(block: str, repo, patterns_dir, binding_tsv) -> int:
+    """How many payload actions in this pattern could never matter.
 
-    Imported inside the function because `audit_timer_reach` needs this module's PAYLOAD and
-    GENERIC_AI sets, and a module-level import here would close the cycle.
+    Three ways, each measured by its own module: the timer that carries the branch is never armed,
+    the broadcast is answered by nobody we can spawn, or the message the branch listens for is sent
+    by nobody we can spawn. Imported inside the function because both modules need this one's
+    PAYLOAD and GENERIC_AI sets, and a module-level import would close the cycle.
     """
     import xml.etree.ElementTree as ET
 
+    import audit_message_reach as M
     import audit_timer_reach as R
 
     try:
         root = ET.fromstring(f"<ai_pattern>{S.lowercase_tags(block)}</ai_pattern>")
     except ET.ParseError:
         return 0
-    return R.analyse(root)[1]
+
+    unheard, unasked = M.dead_message_payload(root, M.cached_index(repo, patterns_dir, binding_tsv))
+    return R.analyse(root)[1] + unheard + unasked
 
 
 def main() -> None:
@@ -134,7 +143,7 @@ def main() -> None:
             # Payload on a battle timer that nothing reachable ever arms cannot run, so it is
             # not work we could do. Kaliga the Unjust ranked third on this list with five of
             # his nineteen actions behind timers armed only by a waypoint arrival.
-            good -= dead_payload(block)
+            good -= dead_payload(block, args.repo, args.patterns_dir, args.binding_tsv)
             blocked = collections.Counter()
             for tag, why in BLOCKED.items():
                 if counts.get(tag):
