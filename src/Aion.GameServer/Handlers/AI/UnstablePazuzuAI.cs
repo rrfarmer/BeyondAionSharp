@@ -41,6 +41,18 @@ public class UnstablePazuzuAI : AggressiveNpcAI
         PacketSendUtility.BroadcastMessage(GetOwner(), 1500003);
     }
 
+    /// <summary>
+    /// Retail <c>bidabre_core_02</c>: the same worms as <see cref="PazuzuAI"/>, and the same numbers --
+    /// <c>live_time</c> 71 against a 72-second branch timer.
+    /// </summary>
+    /// <remarks>
+    /// <b>The unstable variant carried the identical bug</b>, down to the "only if none are standing"
+    /// guard that a missing lifetime turns into a one-shot. Fixed alongside rather than left for the next
+    /// pass, because a pair of classes that diverge on a fix is worse than either bug.
+    /// </remarks>
+    private const int WormLife = 71;
+    private const int WormCycleMillis = 72000;
+
     private void StartTask()
     {
         task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
@@ -48,13 +60,13 @@ public class UnstablePazuzuAI : AggressiveNpcAI
             SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19145, 55, GetOwner()).UseNoAnimationSkill();
             if (GetPosition().GetWorldMapInstance().GetNpc(283206) == null)
             {
-                Spawn(283206, 651.351990f, 326.425995f, 465.523987f, (sbyte)8);
-                Spawn(283206, 666.604980f, 314.497009f, 465.394012f, (sbyte)27);
-                Spawn(283206, 685.588989f, 342.955994f, 465.908997f, (sbyte)68);
-                Spawn(283206, 651.322021f, 346.554993f, 465.563995f, (sbyte)111);
+                SpawnFor(283206, 651.351990f, 326.425995f, 465.523987f, (sbyte)8, WormLife);
+                SpawnFor(283206, 666.604980f, 314.497009f, 465.394012f, (sbyte)27, WormLife);
+                SpawnFor(283206, 685.588989f, 342.955994f, 465.908997f, (sbyte)68, WormLife);
+                SpawnFor(283206, 651.322021f, 346.554993f, 465.563995f, (sbyte)111, WormLife);
             }
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(5000), System.TimeSpan.FromMilliseconds(70000));
+        }, System.TimeSpan.FromMilliseconds(5000), System.TimeSpan.FromMilliseconds(WormCycleMillis));
     }
 
     private void CancelTask()

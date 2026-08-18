@@ -25,6 +25,9 @@ public sealed class PazuzuAiTests
 	private const int Pazuzu = 216951;
 	private const int WaterWorm = 281909;
 
+	private const int UnstablePazuzu = 219554;
+	private const int UnstableWorm = 283206;
+
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(AbyssalSplinter).WithWorldSize(2048)
@@ -84,5 +87,28 @@ public sealed class PazuzuAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(72));
 
 		Assert.Equal(5, Worms(harness));
+	}
+	/// <summary>
+	/// <b>The unstable variant behaves the same way.</b> It is a separate class carrying a separate copy
+	/// of the same bug, which is exactly the pair that drifts if only one is fixed.
+	/// </summary>
+	[Fact]
+	public void TheUnstableVariantsWormsAlsoLeave()
+	{
+		using BossAiHarness harness = BossAiHarness.For(AbyssalSplinter).WithWorldSize(2048)
+			.WithAi(typeof(UnstablePazuzuAI), typeof(UnstablePazuzuWormAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI)).Build();
+		Npc boss = harness.Spawn(UnstablePazuzu, 669.5757f, 335.1355f, 467.42245f);
+		Player player = harness.SpawnPlayer(671f, 337f, 467.4f);
+		harness.Engage(boss, player);
+		boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+
+		// His clock waits five seconds before the first batch, where Pazuzu'''s does not.
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		int worms = harness.LiveNpcs().Count(n => n.GetNpcId() == UnstableWorm);
+		Assert.Equal(4, worms);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(71));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == UnstableWorm));
 	}
 }

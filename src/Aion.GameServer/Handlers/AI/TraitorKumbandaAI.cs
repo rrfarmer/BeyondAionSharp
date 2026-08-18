@@ -38,8 +38,8 @@ public class TraitorKumbandaAI : AggressiveNpcAI
         if (GetPosition().GetWorldMapInstance().GetNpc(283086) == null)
         {
             SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20726, 55, GetOwner()).UseNoAnimationSkill();
-            Spawn(283086, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0);
-            RndSpawn(283086, 6);
+            SpawnFor(283086, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0, CircleLife);
+            RndSpawn(283086, 6, CircleLife);
         }
     }
 
@@ -76,9 +76,16 @@ public class TraitorKumbandaAI : AggressiveNpcAI
         isFinalBuff = false;
     }
 
-    private void RndSpawn(int npcId, int count)
+    /// <summary>
+    /// Retail <c>IDTiamat_Kumbanda</c> gives the circle effect <c>live_time</c> 15 on all twelve of its
+    /// spawns. Ours had none, so the "only if none are standing" guard above never passed a second time
+    /// and the accelerator ran once per fight.
+    /// </summary>
+    private const int CircleLife = 15;
+
+    private void RndSpawn(int npcId, int count, int liveSeconds)
     {
         for (int i = 0; i < count; i++)
-            RndSpawnInRange(npcId, 10, 20);
+            Expire(RndSpawnInRange(npcId, 10, 20), liveSeconds);
     }
 }

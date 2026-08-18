@@ -166,26 +166,25 @@ public sealed class KingspinAiTests
 		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
-		// the tick it lands, so the tally is the only record a throw leaves.
+		// Counted as throws off his own clock, not as cries. A throw puts four webs out and only the
+		// ones that land on somebody speak, so the cry tally depends on where the raid is standing --
+		// which is what made this pin fail roughly one run in twenty while the code was correct. Same
+		// correction as BelowFiftyOneItThrowsFive, which was the sibling of this one.
+		//
 		// He opens on entering the fight whatever his health; after that, above fifty-one, the clock
 		// runs empty. So the first thirty seconds are the opening and nothing else.
 		Advance(harness, boss, raid, 30);
-		int opened = Cries(cries);
-		// One cry, not four: the opening throws some webs at players and four behind him, and only the
-		// ones that land on somebody speak. The four behind now stand instead, which is the sight gate
-		// working.
-		Assert.True(opened >= 1, $"only {opened} cries in the first thirty seconds");
+		int opened = Throws(boss);
 
 		BossAiHarness.SetExactPercent(boss, 45);
 		Advance(harness, boss, raid, 20);
-		Assert.True(Cries(cries) > opened, "dropping into the throwing band added no throw");
+		Assert.True(Throws(boss) > opened, "dropping into the throwing band added no throw");
 
 		// And again on the next heartbeat, which a one-shot step would not do.
-		int afterFirst = Cries(cries);
+		int afterFirst = Throws(boss);
 		Advance(harness, boss, raid, 13);
-		Assert.True(Cries(cries) > afterFirst,
-			$"the ladder should have thrown again: {Cries(cries)} against {afterFirst}");
+		Assert.True(Throws(boss) > afterFirst,
+			$"the ladder should have thrown again: {Throws(boss)} against {afterFirst}");
 	}
 
 	/// <summary>

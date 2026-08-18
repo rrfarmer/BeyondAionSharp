@@ -19419,3 +19419,60 @@ that is recorded rather than invented.
 
 Build clean. Three new pins; the lifetime pin fails with the lifetime removed. Full suite **2,070
 passing**, 1 skipped.
+
+## Four more lifetimes, one false positive retired, and the last flaky pin
+
+Working down the narrowed `NO LIFETIME` list. **The per-class detail is what makes these safe**: every
+lifetime in this batch keys to a distinct npc id, so the mapping needs no judgement at all.
+
+| class | npc | retail life | what was wrong |
+|---|---|---|---|
+| `traitorkumbanda` | circle effect | 15s | never expired, so its "only if none are standing" guard ran once per fight |
+| `kuhara_the_volatile` | barrels / bombs | 15s / 120s | **two lifetimes on one call site**, keyed by id as retail keys them |
+| `unstablepazuzu` | water worm | 71s + 72s cycle | the identical bug to `pazuzu`, in a separate class |
+| `balaurbarricade` | three drakan | 300s | **nothing was wrong** — see below |
+
+### The audit's own caveat, retired rather than repeated
+
+`balaurbarricade` **already gave retail's five minutes**, through a scheduled despawn written by hand
+before `SpawnFor` existed. It is precisely the false positive the tool's docstring warns about. Moving it
+onto the shared helper is behaviour-neutral and takes the row off the report permanently — **a caveat that
+can be retired by a one-line change is better retired than repeated.**
+
+That refactor also needed `Expire` split out of `SpawnFor`, so a spawn that comes from one of the other
+helpers can be given a lifetime too. `traitorkumbanda` needed exactly that for its `RndSpawnInRange`
+call, and **the audit had to be taught to count `Expire` as well** — it briefly reported Kuhara as
+unfixed after Kuhara was fixed.
+
+### The unstable variant
+
+`unstablepazuzu` carried a byte-identical copy of the bug, down to the guard. **Fixed alongside rather
+than queued**, because a pair of classes that diverge on a fix is worse than either bug — and the audit
+listed them adjacently, which is the only reason it was noticed.
+
+### The last flaky pin
+
+`BelowSeventyOneTheLadderKeepsThrowing` failed once in a full-suite run and passed five times in
+isolation. It was the sibling of the Kingspin pin fixed earlier and had the same fault: **counting cries,
+which depend on where the raid is standing, rather than throws off his own clock.** The fix was the three
+lines already written for its sibling.
+
+**This is the second time that exact diagnosis applied**, and the log had already named the fix and left
+it. Doing it when the flake next appeared cost less than the run that surfaced it.
+
+### Still to do
+
+- **24 `NO LIFETIME` rows remain**: `unstableyamennes` and `yamennes` (teleport pads 70s, golems 180s,
+  both keyed by id and ready), `ahserion_sky_assaulter`, `brigade_general_vasharti`.
+- The 12 `no spawns` rows — retail's timed spawn is in a branch we never ported.
+- `set_condition_spawn_variable`, blocking Tiamat and Modor's clone.
+- Waypoints, blocking the silikor dismissal.
+- `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The unstable pin fails with its lifetime removed; the reworked ladder pin still fails with
+its band guard widened, and passes five runs in a row. Full suite **2,071 passing**, 1 skipped.

@@ -152,13 +152,25 @@ public class KuharaTheVolatileAI : AggressiveNpcAI
         }
     }
 
+    /// <summary>
+    /// Retail <c>IDYun_Nmd4</c>: the barrels stand fifteen seconds and the bombs two minutes. <b>Keyed by
+    /// npc id rather than by call site</b>, because retail keys it that way and every one of its four
+    /// barrel spawns and four bomb spawns agrees.
+    /// </summary>
+    private static int LifeOf(int npcId) => npcId switch
+    {
+        282394 => 15,
+        282396 => 120,
+        _ => 0,
+    };
+
     private Npc RndSpawn(int npcId, float x, float y, float z)
     {
         double angleRadians = Math.PI / 180 * Rnd.NextFloat(360f);
         float distance = Rnd.Get(0, 4);
         float x1 = (float)(Math.Cos(angleRadians) * distance) + x;
         float y1 = (float)(Math.Sin(angleRadians) * distance) + y;
-        return (Npc)Spawn(npcId, x1, y1, z, (sbyte)0);
+        return (Npc)Expire(Spawn(npcId, x1, y1, z, (sbyte)0), LifeOf(npcId));
     }
 
     private void StartActiveEvent()

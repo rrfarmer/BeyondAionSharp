@@ -229,16 +229,12 @@ public class BalaurBarricadeAI : OneDmgNoActionAI
     }
 
     /// <summary>Places one guard and gives it retail's five minutes.</summary>
+    /// <remarks>
+    /// Written by hand here before <c>SpawnFor</c> existed, and behaviourally identical to it. Moved onto
+    /// the shared helper so this class stops reading as a missing lifetime in
+    /// <c>audit_spawn_lifetimes.py</c> -- it was that audit's own documented false positive, and a
+    /// caveat that can be retired by a one-line change is better retired than repeated.
+    /// </remarks>
     private void SpawnGuard(int npcId, SpawnSpot spot)
-    {
-        if (Spawn(npcId, spot.X, spot.Y, spot.Z, spot.Heading) is not Npc guard)
-            return;
-
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            if (guard.IsSpawned())
-                guard.GetController().DeleteIfAliveOrCancelRespawn();
-            return ValueTask.CompletedTask;
-        }, GuardLifeSeconds * 1000L);
-    }
+        => SpawnFor(npcId, spot.X, spot.Y, spot.Z, spot.Heading, GuardLifeSeconds);
 }

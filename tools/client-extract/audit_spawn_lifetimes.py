@@ -74,7 +74,9 @@ def our_classes(repo: pathlib.Path) -> dict[str, tuple[bool, int, int]]:
             # Do.SpawnAt / SpawnNear on the pattern side already carry liveSeconds; on the Java side the
             # bare Spawn( overloads do not.
             plain = len(re.findall(r"(?<![A-Za-z])Spawn\(", body))
-            timed = len(re.findall(r"SpawnFor\(", body))
+            # Expire( counts too: it is SpawnFor's other half, used where the spawn comes from
+            # one of the other helpers rather than from Spawn directly.
+            timed = len(re.findall(r"SpawnFor\(|Expire\(", body))
             out[name] = (pattern_class, plain, timed)
     return out
 

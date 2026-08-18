@@ -478,8 +478,19 @@ public abstract class AbstractAI : AI
     /// </remarks>
     protected VisibleObject SpawnFor(int npcId, float x, float y, float z, sbyte heading, int liveSeconds)
     {
-        VisibleObject spawned = Spawn(npcId, x, y, z, heading);
+        return Expire(Spawn(npcId, x, y, z, heading), liveSeconds);
+    }
 
+    /// <summary>
+    /// Gives something already spawned retail'''s <c>live_time</c>. Split out of
+    /// <see cref="SpawnFor"/> so the other spawn helpers can be given a lifetime too.
+    /// </summary>
+    /// <remarks>
+    /// <c>RndSpawnInRange</c> and the bespoke schedules a few classes wrote by hand both need this, and
+    /// writing the same five lines a third time is how the two of them drifted apart in the first place.
+    /// </remarks>
+    protected VisibleObject Expire(VisibleObject spawned, int liveSeconds)
+    {
         if (liveSeconds > 0 && spawned is Npc npc)
         {
             Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(_ =>
