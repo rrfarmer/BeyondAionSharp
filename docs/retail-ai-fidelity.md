@@ -20686,3 +20686,53 @@ missing bound from a bound somewhere else.**
 ### Verification
 
 Build clean. Full suite **2,102 passing**, 1 skipped.
+
+## Teaching the audit to read the add, and a flag instead of a number
+
+Four of this audit's findings were wrong because it reads the summoner and never the add. That correction
+is now made, and **the shape it took is the interesting part.**
+
+### The number was tried first, and got half of them wrong
+
+The obvious version reports **how long** each add gives itself, read back out of its class. Built, run
+against the six known cases, and **three were wrong**: it followed the wrong `Schedule` in a class with
+several, missed named constants entirely, and turned `TimeSpan.FromMinutes(8)` into 100.
+
+**A flag that is right is worth more than a number that is nearly right** — and this tool has already
+shipped four findings that were nearly right. So it reports only **that** an add bounds itself, and leaves
+**how long** to be read by hand. Correct on all seven cases, including the two that do *not* self-bound.
+
+### What it says now
+
+```
+NO LIFETIME  brigadegeneralterath  ...  [2/2 adds bound themselves]
+NO LIFETIME  rm_1337               ...  [1/1 adds bound themselves]
+```
+
+Both rows returned to `NO LIFETIME` when the dead summoner-side lifetimes were reverted last pass, and
+**both are correct as they stand.** The annotation is the difference between a row that needs work and a
+row that needs none — which is exactly the distinction the tool could not make before.
+
+### The dust pin
+
+The previous entry noted the dust lifetime was unpinned and that changing its clock back to ten left the
+suite green. **Now pinned**: five seconds against seven is the window separating retail's six from Java's
+ten, and the pin fails when the clock is put back.
+
+**The only dust pin before this asserted that dust appeared.** That is the third pin in this log to have
+tested existence where the change was about duration.
+
+### Still to do
+
+- **Pin the spark lifetime**, the remaining known-unpinned one from last pass.
+- Pin `drakanmedic`, `vasharti_assassin` and the two Ahserion classes — all have a map.
+- `sematariux` and `king_consierd` have no map, and neither add self-bounds, so those fixes stand and
+  cannot be pinned.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The dust pin fails with the add's clock back at ten. Full suite **2,103 passing**, 1 skipped.

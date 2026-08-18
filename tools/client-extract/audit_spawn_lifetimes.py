@@ -176,6 +176,41 @@ def spawned_ids(repo: pathlib.Path) -> dict[str, set[str]]:
     return out
 
 
+def adds_with_own_clock(repo: pathlib.Path) -> set[str]:
+    """Npc ids whose own AI class removes them on a schedule.
+
+    **The correction this tool needed longest.** It reads the summoner and never the add, and four of its
+    findings were wrong because of it: Terath's black hole and gravity field were flagged as unbounded
+    when both kill themselves; the thick dust and the arena spark were "fixed" by a summoner-side number
+    that took effect only because it happened to be smaller than the add's own; and Ahserion's troopers
+    got a lifetime that never ran at all. **A bound somewhere else is not a missing bound.**
+
+    Deliberately a set and not a table of seconds. Reading the delay back out of the source was tried and
+    got three of six wrong -- it followed the wrong `Schedule` inside a class with several, and missed
+    named constants -- so this reports only **that** an add bounds itself and leaves **how long** to be
+    read by hand. A flag that is right is worth more than a number that is nearly right, and this tool has
+    already shipped four findings that were nearly right.
+    """
+    templates = (repo / "game-server/data/static_data/npcs/npc_templates.xml").read_text(
+        encoding="utf-8", errors="replace")
+    ai_of = collections.defaultdict(list)
+    for npc_id, attrs in re.findall(r'<npc_template npc_id="(\d+)"([^>]*)>', templates):
+        hit = re.search(r'ai="([^"]*)"', attrs)
+        if hit:
+            ai_of[hit.group(1)].append(npc_id)
+
+    out: set[str] = set()
+    for path in sorted((repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        parts = re.split(r'\[AIName\("([^"]+)"\)\]', text)
+        for i in range(1, len(parts), 2):
+            body = parts[i + 1]
+            if re.search(r"Schedule\w*\(", body) and re.search(
+                    r"DeleteOwner|GetController\(\)\.Die\(\)|DeleteIfAliveOrCancelRespawn", body):
+                out.update(ai_of.get(parts[i], ()))
+    return out
+
+
 def served(repo: pathlib.Path, binding_tsv: pathlib.Path) -> dict[str, set[str]]:
     templates = (repo / "game-server/data/static_data/npcs/npc_templates.xml").read_text(
         encoding="utf-8", errors="replace")
@@ -208,6 +243,7 @@ def main() -> int:
     timed = retail_timed_spawns(args.patterns_dir)
     devname_ids = devnames(args.binding_tsv)
     body_ids = spawned_ids(args.repo)
+    self_bounding = adds_with_own_clock(args.repo)
     classes = our_classes(args.repo)
     serves = served(args.repo, args.binding_tsv)
 
@@ -222,10 +258,15 @@ def main() -> int:
         # timed spawn in the pattern, and the first row read by hand -- macunbello -- was a false
         # positive of exactly that shape: its ten-second spawns are all BIDTP_NoShowNPC markers, while
         # the soul reapers it really summons carry live_time 0 and are permanent in retail too.
-        lives = [life for p in patterns for who, life in timed.get(p, ())
-                 if devname_ids.get(who) and devname_ids[who] in body_ids.get(name, set())]
+        matched = [(devname_ids[who], life) for p in patterns for who, life in timed.get(p, ())
+                   if devname_ids.get(who) and devname_ids[who] in body_ids.get(name, set())]
+        lives = [life for _, life in matched]
         if not lives:
             continue
+        # How many of those adds remove themselves. A row where all of them do needs no summoner-side
+        # lifetime at all, and four of this tool's findings were wrong for want of asking.
+        bounded = len({npc for npc, _ in matched if npc in self_bounding})
+        distinct = len({npc for npc, _ in matched})
         if plain == 0 and spawn_for == 0:
             verdict = "no spawns"
         elif plain == 0:
@@ -237,17 +278,19 @@ def main() -> int:
         else:
             verdict = "NO LIFETIME"
         counts[verdict] += 1
-        rows.append((verdict, name, len(lives), sorted(set(lives)), plain, spawn_for))
+        rows.append((verdict, name, len(lives), sorted(set(lives)), plain, spawn_for,
+                     bounded, distinct))
 
     print(__doc__.splitlines()[0])
     print()
     order = {"NO LIFETIME": 0, "partial": 1, "self-timed": 2, "timed": 3, "no spawns": 4}
-    for verdict, name, n, lives, plain, spawn_for in sorted(
+    for verdict, name, n, lives, plain, spawn_for, bounded, distinct in sorted(
             rows, key=lambda r: (order[r[0]], -r[2])):
         if args.verdict and args.verdict.lower() not in verdict.lower():
             continue
+        note = f"  [{bounded}/{distinct} adds bound themselves]" if bounded else ""
         print(f"{verdict:<12} {name:<34} retail timed spawns={n:<4} "
-              f"lives={lives[:6]} ours: Spawn={plain} SpawnFor={spawn_for}")
+              f"lives={lives[:6]} ours: Spawn={plain} SpawnFor={spawn_for}{note}")
     print()
     print("  ".join(f"{k}={v}" for k, v in sorted(counts.items())))
     print()

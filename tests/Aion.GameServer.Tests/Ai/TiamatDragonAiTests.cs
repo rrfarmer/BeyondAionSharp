@@ -148,4 +148,30 @@ public sealed class TiamatDragonAiTests
 
 		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == ThickDust);
 	}
+
+	/// <summary>
+	/// <b>And the dust clears at six seconds, not ten.</b> Retail writes six; Java left it at ten.
+	/// </summary>
+	/// <remarks>
+	/// <b>The clock lives in <c>ThickDustAI</c>, not here.</b> An earlier pass gave this spawn call a
+	/// six-second lifetime, which took effect only because it was shorter than the add's own ten and so
+	/// won the race — and no pin noticed, because the only dust pin asserted that dust appeared. Five
+	/// seconds against seven is the window that separates the two numbers.
+	/// </remarks>
+	[Fact]
+	public void TheDustClearsAtSixSeconds()
+	{
+		var (harness, boss, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+		var dust = harness.LiveNpcs().Where(n => n.GetNpcId() == ThickDust).ToHashSet();
+		Assert.NotEmpty(dust);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		Assert.All(dust, d => Assert.Contains(d, harness.LiveNpcs()));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => dust.Contains(n));
+	}
 }
