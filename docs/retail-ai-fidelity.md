@@ -21668,3 +21668,48 @@ run ahead of the data it needs.**
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## The talk handler, the last unblocked engine gap
+
+Six passes of encounter checking ended with one item not behind routes, skill indices or missing data:
+**`on_talked_by_user` and `teleport_target_alias`.** Built.
+
+### The handler
+
+`AiPattern.OnTalk`, evaluated from `PatternAi.HandleDialogStart`, with the talking player exposed as
+`PatternAi.Talker` for the duration and **cleared afterwards** — a stale talker is how a later branch
+would teleport the wrong player.
+
+It **falls through to the base handler whatever the pattern does**, so a talk branch never suppresses a
+dialogue the npc would otherwise open. Retail's gate branches sit above a `do_nothing` fallback and the
+dialogue itself is the client's business, not the pattern's.
+
+### The action, and the half still missing
+
+`Do.TeleportTalker(worldId, x, y, z, heading)`. **Retail names a destination alias; this takes
+coordinates**, because the alias table is client data this port has not extracted.
+
+**The capability is separable from the data**, and it was the capability that was missing. The Raksha
+shortcut — *"the shortcut does not work until you have cleared the room"* — needs three things: a world
+flag, a talk branch, and a destination. **Two of the three now exist**; the world flag has since world
+flags were built, and the talk branch since this commit. Only the destination is outstanding, and it is
+one coordinate triple.
+
+### Pinned on a probe
+
+Two pins, on a probe AI rather than through the encounter, because the encounter still needs its alias.
+**The capability is what is pinned**: a talk event reaches the pattern, and the talker is readable while
+branches run and null before and after. Both fail with the evaluation removed.
+
+### Still to do
+
+- **The Raksha door's destination** — one alias to resolve, and the mechanic closes. It is the smallest
+  remaining item in the project and the only encounter not blocked behind walker routes.
+- **Walker route ids** — five encounters, still the largest item by a wide margin, still extraction work.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question, last.
+
+### Verification
+
+Build clean. Both pins fail with `Evaluate(Pattern.OnTalk)` removed. Full suite **2,114 passing**,
+1 skipped.

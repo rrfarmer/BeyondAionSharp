@@ -206,6 +206,32 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// Running only one of the two silently dropped whichever half a pattern happened to use — which is
     /// what happened before this was wired: <c>OnLeaveAttack</c> was declared and never evaluated.
     /// </remarks>
+    /// <summary>The player who opened this dialogue, for the duration of an <c>OnTalk</c> evaluation.</summary>
+    public Aion.GameServer.Model.GameObjects.Players.Player? Talker { get; private set; }
+
+    /// <summary>
+    /// <c>on_talked_by_user</c>. Cleared afterwards so a later branch cannot read a stale talker.
+    /// </summary>
+    /// <remarks>
+    /// Falls through to the base handler whatever the pattern does, so a talk branch never suppresses a
+    /// dialogue this npc would otherwise open — retail's gate branches sit above a <c>do_nothing</c>
+    /// fallback and the dialogue itself is the client's business, not the pattern's.
+    /// </remarks>
+    protected override void HandleDialogStart(Aion.GameServer.Model.GameObjects.Players.Player player)
+    {
+        Talker = player;
+        try
+        {
+            Evaluate(Pattern.OnTalk);
+        }
+        finally
+        {
+            Talker = null;
+        }
+
+        base.HandleDialogStart(player);
+    }
+
     protected override void HandleBackHome()
     {
         Evaluate(Pattern.OnLeaveAttack);

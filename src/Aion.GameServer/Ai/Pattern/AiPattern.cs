@@ -73,6 +73,20 @@ public sealed class AiPattern
 
     public PatternBranch[] OnBattleTimer { get; init; } = None;
     public PatternBranch[] OnLeaveAttack { get; init; } = None;
+
+    /// <summary>
+    /// <c>on_talked_by_user</c> — a player opened a dialogue with this npc.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail uses this for gates rather than for conversation.</b> The Raksha shortcut is the clearest
+    /// case: talking to the trigger teleports you only when a world flag is set, and the flag is set by
+    /// clearing the room. That mechanic is a talk branch guarded on a flag, and this port could express
+    /// the flag for four passes without being able to express the talk.
+    /// <para>
+    /// The talking player is available to guards and actions as <see cref="PatternAi.Talker"/>.
+    /// </para>
+    /// </remarks>
+    public PatternBranch[] OnTalk { get; init; } = None;
     public PatternBranch[] OnEnterIdle { get; init; } = None;
     public PatternBranch[] OnDie { get; init; } = None;
 
@@ -540,6 +554,27 @@ public static class Do
 
     /// <summary><c>despawn_self</c>.</summary>
     public static PatternAction DespawnSelf() => ai => ai.DespawnSelf();
+
+    /// <summary>
+    /// <c>teleport_target_alias</c> — send the player who is talking to this npc somewhere.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail names a destination alias; this takes coordinates.</b> The alias table is client data
+    /// this port has not extracted, so every use has to resolve its own destination by hand until it is.
+    /// The capability is separable from the data, and it is the capability that was missing: the Raksha
+    /// shortcut has been recorded as blocked for four passes on a talk handler and a teleport, and the
+    /// flag it is gated on has been expressible since world flags were built.
+    /// <para>
+    /// Does nothing outside an <c>OnTalk</c> branch, because nothing else sets
+    /// <see cref="PatternAi.Talker"/>.
+    /// </para>
+    /// </remarks>
+    public static PatternAction TeleportTalker(int worldId, float x, float y, float z, byte heading)
+        => ai =>
+        {
+            if (ai.Talker is Aion.GameServer.Model.GameObjects.Players.Player talker)
+                Aion.GameServer.Services.Teleport.TeleportService.TeleportTo(talker, worldId, x, y, z, heading);
+        };
 
     /// <summary><c>say_to_all</c> / <c>broadcast_message</c>, by our own message id.</summary>
     public static PatternAction Say(int messageId, int delayMillis = 0) => ai => ai.Say(messageId, delayMillis);
