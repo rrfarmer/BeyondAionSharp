@@ -13828,3 +13828,72 @@ here it is simply inert, and worth knowing before somebody reports it as a bug.
 Eight pins and a **six-mutation sweep, all caught**: a flag added to the bandit's call, the two payloads
 swapped in both directions, the camps sharing a number, the hunter's reach shortened, and the
 half-health guard dropped. Full suite **2,215 passing**, 5 skipped.
+
+## Two mutations that hid behind each other
+
+`22001` — the Tiamat Remnant insurgents, **15 npcs**. Four scouts and eleven infantry, and the smallest
+family in this log by some way, but it produced the sharpest lesson.
+
+**Twelve seconds into a fight the scout names its target, and the infantry commit three hundred** —
+the largest answer to a field call anywhere in this log. Twelve is not a number retail writes down: it
+is a chain of timers, five seconds then seven, and the seven-second one carries the call. After it
+fires the chain hands over to a pair that swap every fifteen seconds forever, carrying skills.
+
+**Each side does its thing exactly once** — the scout's call timer is never re-armed, and retail flags
+the infantry's answer.
+
+### The lesson
+
+The sweep found **two survivors, and each was hidden by the other's mechanism.**
+
+- Re-arming the scout's call timer changed nothing, **because the infantry's flag refused the second
+  call.**
+- Deleting the infantry's flag changed nothing, **because the scout never made a second call.**
+
+One pin covered "each side does it once" and it could not fail, because the two halves of that sentence
+protect each other. **Two guards enforcing the same observable are indistinguishable from one**, and a
+sweep is the only thing that shows it — reading the code, both look pinned.
+
+The fix is two pins that break the symmetry:
+
+- the infantry's flag, measured against **two scouts**, so a second call exists to refuse;
+- the scout's single call, measured against **an infantryman that arrives after the first**, so a
+  listener with an unspent flag exists to receive one.
+
+**Neither observation is available in the setup the other one needs**, which is why one pin could never
+have done it.
+
+### And the support-aggro baseline, again
+
+The late-arriving infantryman was asserted at zero hate and had one — **the same support-aggro point
+the tursin bigmouth's pin ran into**, from a fight running beside a friendly npc. Second time in two
+entries. The pin now asserts under three hundred rather than zero, which is what the claim actually is:
+a call is worth three hundred, and one point is not a call.
+
+### Not built
+
+- Four skills on the scout and the shout that goes with the call.
+- The rotation timers are built and carry nothing, for the reason Masto's spare timer was: **a pattern
+  missing a timer is a different pattern.**
+- **The infantry's answer has no blocked action at all** — a `switch_target` and its payload, both
+  translated. The first answer in this log that is complete.
+
+### What the reachable list looks like now
+
+`audit_silent_conversations.py` marks **49 of 116** rows buildable. Two more were read this turn and
+rejected before any code was written:
+
+- **`7004`** — the brutal lycan camp, 24 callers and 5 answerers. **Self-named**: every caller
+  broadcasts `OBJI_SELF`, so the sentries' hundred points land on the caller, a friend, and are dropped.
+  The classifier added last entry caught it, which is the first time that check has paid for itself.
+- **`9001` and `1016`** — the Lepharist camps, **208 and 113 callers against two answerers each**.
+  Genuinely buildable and genuinely lopsided: binding three hundred npcs to a caller class so that four
+  protectors respond. Worth doing, worth doing knowingly, and worth doing after the balanced rows.
+- **The shulack mercenaries** (`21251`, `21253`, `21271`) are the best-shaped thing left: three numbers,
+  about thirty npcs, one instance. **Ten patterns whose send/answer combinations all differ**, so it is
+  ten small classes rather than four — the reason it was not taken this turn rather than a blocker.
+
+### Verification
+
+Six pins and a **six-mutation sweep, all caught** after the symmetry was broken. Full suite **2,221
+passing**, 5 skipped.
