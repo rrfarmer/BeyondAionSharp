@@ -16999,3 +16999,50 @@ still out, and checking it is the first thing to do next.
 ### Verification
 
 One engine gate, one pin moved onto it. Full suite **2,049 passing**, 1 skipped.
+
+## The sight gate fixed a third of the web pins, and the rest are asking the wrong question
+
+The previous entry predicted the gate would probably unblock the repoint. **Measured: six red pins became
+four.**
+
+| pins | webs placed | outcome |
+|---|---|---|
+| 2 | `SpawnOffset`, fifteen metres behind the boss | **now pass** — the webs no longer see a raid twenty metres away, so they stand for their fuse |
+| 4 | `SpawnOnEachTarget`, one metre from a player | **still fail** — a web landing on somebody sees them, fires and despawns, correctly |
+
+**The gate was right and the prediction was half right.** Webs thrown *at the room* survive; webs thrown
+*at people* are consumed the instant they land, which is what the pattern says and now what the port does.
+
+### The four remaining pins are counting the wrong thing
+
+`TheSecondTimerThrowsFourEveryEighteenSeconds` and its three siblings count **four webs standing** after a
+throw. With the mechanic correct, a throw aimed at four players produces **four blasts, four roots, four
+cries and zero standing webs.** There is no arrangement of the raid that changes this: `WebOn` places each
+web one metre from its target, and one metre is inside any sight range.
+
+So the count is not recoverable by moving anyone. **The pins have to count the call instead** — and the
+harness has no observer for a broadcast, which is the piece that has been missing since this thread began.
+
+### What that observer looks like
+
+`CallChainTests` already shows the shape: a throwaway listener class registered in the test, answering the
+message with something countable. For `6952` that is a listener whose `OnMessage` adds hate, spawned beside
+the boss, counted after a throw. **Four cries, one per web**, is the pin — and it is a better pin than the
+one it replaces, because it measures the mechanic rather than the debris.
+
+**Not built here.** The repoint is reverted for the third time, and the reason is unchanged: four red pins
+or four pins loosened to fit are both worse than an inert class.
+
+### Still to do
+
+- **A message observer in `KingspinAiTests`**, then repoint and rewrite the four pins around cries.
+- Then the accelerator pin.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+No code changed this pass; the gate from the previous entry stands and the repoint is out. Full suite
+**2,049 passing**, 1 skipped.
