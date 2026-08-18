@@ -14463,3 +14463,58 @@ things depend on is worth pinning the first time you doubt it, not the second.**
 ### Verification
 
 Two new pins. Full suite **2,263 passing**, 1 skipped.
+
+## The backlog was ranking encounters that do not exist
+
+`1001` sat near the top of the reachable list at **34 live callers and 21 live answerers**, with a
+`hate` answer and Grand Chieftain Saendukal's name on it. It looked like the best hour's work on the
+board. It is not an encounter at all.
+
+Its callers are krall camps, dukaki runners, two unrelated slimes, an arena controller and a Reian
+warrior. Its answerers are arena togs, lava floors and a surkana feeder. **They share a number and
+nothing else.** The only pair that could actually talk is the arena's invisible controller and its four
+red sand togs — one caller, and the row's other thirty-three are noise.
+
+**`audit_silent_conversations.py` now groups both ends by encounter family** — the leading token of the
+retail pattern name, which is the instance or the mob family — and ranks each number by *the largest
+pair that share one*, not by the total. Numbers whose two ends never share a family are quarantined in
+their own list as **cross-wired rather than silent**.
+
+The re-ranked board:
+
+- **`1001` collapses from 34/21 to 1/16** and leaves the top.
+- **13 numbers move out of the buildable list entirely**, including `10` and `1002`.
+- The reachable count falls from 34 to **31**, which is the honest figure.
+
+### And it found the Esoterrace bug
+
+The first version of the family rule kept **two** tokens for `ID`-prefixed instance patterns, on the
+theory that an arena stage is its own encounter. That split the Esoterrace alarm down the middle —
+`IDF4Re_FOBJ` calling and `IDF4Re_Drana` answering, reported as cross-wired — when they are one surkana
+feeder and the lab that hears it. **The second token is a role inside the instance, not a separate
+encounter.** One token, always.
+
+Which is also the answer to two commits' worth of confusion about that alarm: **the pairing was never
+verified.** The ladder was built from a caller and a set of listeners that the audit had put on one row
+by adding unrelated families together, and no amount of pinning the flag primitive was going to explain
+a mechanic assembled from two halves that were never checked to belong together. `When.FirstTime` was
+sound the whole time, and so was `Evaluate` — it returns after the first matching branch, confirmed by
+reading it. **The fault was in the row, not the runtime.**
+
+`10000` now reads as what it is: **one surkana feeder, twenty esoterrace drakan, a `hate` answer**, and
+a family that matches at both ends. That is the next thing to build, and this time the pairing is
+checked.
+
+### The rule
+
+**A backlog row is a claim, and rows built by counting are the weakest claims on the board.** Two
+entries were spent debugging an encounter whose existence the tool had asserted and nothing had tested.
+The audit's job is to rank work; ranking work that cannot be done is worse than ranking none, because
+it is indistinguishable from the real rows until an hour is gone.
+
+Fifth blind spot found in this tool, and the first that was inventing rows rather than missing them.
+
+### Verification
+
+Full suite **2,263 passing**, 1 skipped — no server code changed. The audit's own output is the result:
+85 numbers, 31 reachable, 13 quarantined.

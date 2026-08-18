@@ -67,6 +67,23 @@ REACHABLE = ("add_hate_point", "switch_target", "attack_most_hating", "despawn",
              "flee_from", "broadcast_message")
 
 
+def family(pattern: str) -> str:
+    """The encounter a pattern belongs to, as far as its name reveals one.
+
+    Retail names patterns `<Family>_<role><variant>` -- `NKrall_FeB`, `Krall_AeB`,
+    `IDArena_pvp02_S3_Tog_01`. The leading token is the family: a krall camp, an arena stage, a
+    Drakenspire floor. **Two patterns in different families that share a message number are not
+    having a conversation**, they are colliding on a number, and a row built by adding them up is a
+    row that cannot be built.
+
+    **One token, always.** Grouping `ID` patterns by two tokens was the first version and it split the
+    Esoterrace alarm in half -- `IDF4Re_FOBJ` calling and `IDF4Re_Drana` answering, reported as
+    cross-wired when they are one surkana feeder and the lab that hears it. The second token is a
+    *role* inside the instance, not a separate encounter; the instance is the boundary.
+    """
+    return pattern.split("_")[0] if pattern else pattern
+
+
 def scan(patterns_dir: pathlib.Path):
     """(senders, listeners, answer kinds) as message number -> set of pattern names / kind."""
     senders: dict[str, set[str]] = collections.defaultdict(set)
@@ -155,6 +172,8 @@ def main() -> int:
     senders, listeners, answers, params = scan(pathlib.Path(args.patterns_dir))
 
     found = []
+    #: Numbers whose two ends exist but never in the same family -- cross-wired, not silent.
+    split: list = []
     for number in set(senders) & set(listeners):
         callers = silent(senders[number])
         answerers = silent(listeners[number])
@@ -172,16 +191,37 @@ def main() -> int:
         # A hate answer that can only ever name the caller cannot land -- see the module docstring.
         if kind == "hate" and params.get(number) == {"OBJI_SELF"}:
             kind = "self-named"
-        found.append((len(callers) + len(answerers), number, callers, answerers, kind))
+        # **Rank by the largest pair that share a family, not by the total.** 1001 has 34 live
+        # callers and 21 live answerers and looked like the best row on the board; they belong to
+        # five unrelated families -- krall camps, dukaki, two slimes, an arena -- that happen to
+        # share a number, and the only pair that can actually talk is the arena's controller and its
+        # four togs. Adding the families together invents encounters.
+        by_family: dict[str, list[int]] = collections.defaultdict(lambda: [0, 0])
+        for pattern in live_patterns(senders[number]):
+            by_family[family(pattern)][0] += len(silent({pattern}))
+        for pattern in live_patterns(listeners[number]):
+            by_family[family(pattern)][1] += len(silent({pattern}))
+        paired = {f: c for f, c in by_family.items() if c[0] and c[1]}
+        if not paired:
+            split.append((number, len(callers), len(answerers), sorted(by_family)[:4]))
+            continue
+        best = max(paired, key=lambda f: paired[f][0] + paired[f][1])
+        callers, answerers = paired[best]
+        if callers + answerers < args.min:
+            continue
+        found.append((callers + answerers, number, callers, answerers, kind, best))
 
     found.sort(reverse=True)
     print(f"{len(found)} message numbers have live stock-AI npcs on BOTH ends -- a mechanic that exists")
     print("in the data and nowhere on this server.")
     print()
-    print(f"{'msg':>8}  {'call':>4} {'ans':>4}  {'answer':<10} who")
-    for total, number, callers, answerers, kind in found[:args.limit]:
-        who = ", ".join(dict.fromkeys(name_of.get(i, i) for i in (callers + answerers)[:3]))
-        print(f"{number:>8}  {len(callers):>4} {len(answerers):>4}  {kind:<10} {who}")
+    print(f"{'msg':>8}  {'call':>4} {'ans':>4}  {'answer':<10} {'family':<22} who")
+    for total, number, callers, answerers, kind, fam in found[:args.limit]:
+        who = ", ".join(dict.fromkeys(
+            name_of.get(i, i) for i in
+            (silent({p for p in live_patterns(senders[number]) if family(p) == fam}) +
+             silent({p for p in live_patterns(listeners[number]) if family(p) == fam}))[:3]))
+        print(f"{number:>8}  {callers:>4} {answerers:>4}  {kind:<10} {fam:<22} {who}")
     if len(found) > args.limit:
         print(f"  ... and {len(found) - args.limit} more")
     print()
@@ -189,6 +229,12 @@ def main() -> int:
     print(f"{reachable} of them have an answer this port can translate; the rest answer with a skill")
     print("index and are unreachable however many npcs sit on them.")
     print()
+    if split:
+        print(f"{len(split)} further numbers have live npcs on both ends that never share a family --")
+        print("cross-wired rather than silent, and not buildable as one encounter:")
+        for number, nc, na, fams in sorted(split, key=lambda r: -(r[1] + r[2]))[:8]:
+            print(f"  {number:>8}  {nc:>3} call / {na:>3} ans across {', '.join(fams)}")
+        print()
     print("The count is npcs, not importance -- a number binding four hundred generic monsters ranks")
     print("above a named boss and his two adds, and the boss is usually the better hour's work.")
     return 0
