@@ -11551,3 +11551,65 @@ built.
 
 Full suite **2,044 passing** and 1 skipped; nine new pins; **eight mutations, all caught**. Translatable
 299 patterns / 979 npcs → **292 / 970**, and the no-blocker list 18 → **14**.
+
+## `is_race` was readable all along, and the village killers prove it
+
+Second row off the no-blocker list, and it turned up something bigger than the encounter.
+
+### The guard this log recorded as unusable
+
+A comment in `PatternAi` said `is_race` "is not readable from the pattern dump, where the element
+appears with no argument at all", and the sealed akaimum was discriminated by npc id because of it.
+**That was wrong.** All **2,879** `is_race` conditions in the 5.8 files carry a `race_type`;
+`summarize_pattern.py`'s `KEEP` list simply did not name the field, so every summary printed a bare
+`is_race`.
+
+**Third time a dropped value has produced a wrong conclusion**, after `point_to_add` (read out of raw
+XML by hand three times before anyone noticed) and the devname/npc-id confusion that made the twins'
+crater "spawned by nothing". `KEEP` now carries `race_type`, `from`, `point_to_add`, `points_to_add`
+and `percent_to_add`.
+
+**Rule: a summariser that hides a value will eventually be quoted as evidence that the value does not
+exist.** The three tools that drop fields should be read as lossy, and a claim about what retail *does
+not* say has to be made against the raw XML.
+
+### What the thrashers do
+
+Four stonereach and flamecrest thrashers of Cygnea and Enshar, all on stock `aggressive`. **The moment
+one sees a garrison chief it commits to it with five million hate points** — not a weight, a statement:
+nothing a player does will peel it off the garrison it came for. A player walking past fails the race
+guard and is ignored, which is what keeps this from being "attacks the nearest thing".
+
+**The squads hunt different factions.** The `01` patterns watch `gchief_light` and `gchief_dark`; the
+`02` patterns watch `gchief_light` and `gchief_dragon`. One class with one race list would send
+flamecrest thrashers after Asmodian chiefs they ignore in retail.
+
+New vocabulary: `AiPattern.OnSeeNpc`, `When.SeenRace`, `When.AttackerRace`, `Do.HateSeen`,
+`Do.HateAttacker`, and `PatternAi.SeenCreature` / `LastAttacker`.
+
+### Two halves not shipped, and one reason for both
+
+`AggroList.AddHate` refuses hate on a creature the owner is not an enemy of, and **our tribe table
+makes a thrasher and a Balaur garrison friends**. So retail's `02` patterns hunting `gchief_dragon`
+translate into a call that lands and a hate that does not — measured as **zero** against five million
+for the Elyos and Asmodian garrisons, same guard, same action, same npcs.
+
+It is **pinned as zero rather than forced past the aggro list**. The choice is between retail's pattern
+and our tribe table, and routing around either to make a test green would bury the question. The
+`on_attacked` and `on_spelled` halves are deferred on the same measurement; `When.AttackerRace` and
+`Do.HateAttacker` are built and wired, and what they run into is this gate.
+
+### A harness rule, seen from the other side
+
+The pins spawn real garrison templates, and the first dragon one runs `base_protector` — so the harness
+threw *"No AI found for name base_protector"*. That is the rule the flake commit recorded for `WithAi`
+turned around: **a test must not spawn an npc whose class the harness was not told about**, and it
+applies to the props as much as to the encounter.
+
+### Verification
+
+Full suite **2,048 passing** and 1 skipped; four new pins. The no-blocker list 14 → **10**.
+
+**Not mutation-swept.** The turn ran out on the aggro-list investigation, and a sweep of a class whose
+second half is deliberately absent would mostly measure the absence. Worth doing when the tribe
+question is settled.

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Ai.Pattern;
@@ -107,6 +109,16 @@ public sealed class AiPattern
     /// calling out on a heartbeat, a boss counting down.
     /// </remarks>
     public PatternBranch[] OnIdleTimer { get; init; } = None;
+
+    /// <summary>
+    /// <c>on_see_npc</c> — another NPC came into view.
+    /// </summary>
+    /// <remarks>
+    /// Almost every use is guarded by <see cref="When.SeenRace"/>: retail's village killers watch for
+    /// a garrison chief and go for it rather than for whatever player is in front of them. The seen
+    /// creature is <see cref="PatternAi.SeenCreature"/> for the duration of the branch.
+    /// </remarks>
+    public PatternBranch[] OnSeeNpc { get; init; } = None;
 
     /// <summary>
     /// <c>on_see_friend_killed_by_user</c> — one of its own went down in front of it, to a player.
@@ -243,6 +255,23 @@ public static class When
     public static PatternCondition TargetWithin(int metres) => ai =>
         ai.CurrentTarget is Aion.GameServer.Model.GameObjects.Creature target
         && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), target, metres);
+
+    /// <summary>
+    /// <c>is_race from=OBJI_SEEN</c> — the NPC that just came into view is one of these races.
+    /// </summary>
+    /// <remarks>
+    /// <b>This guard was read as unusable for months.</b> `is_race` appeared in summaries with no
+    /// argument, so a comment in <see cref="PatternAi"/> recorded it as carrying nothing readable and
+    /// the akaimum was discriminated by npc id instead. Every one of the <b>2,879</b> `is_race`
+    /// conditions in the 5.8 files carries a `race_type`; the summariser was dropping it. See
+    /// docs/retail-ai-fidelity.md.
+    /// </remarks>
+    public static PatternCondition SeenRace(params Race[] races)
+        => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
+
+    /// <summary><c>is_race from=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerRace(params Race[] races)
+        => ai => ai.LastAttacker is Creature hitter && races.Contains(hitter.GetRace());
 
     public static PatternCondition Message(int messageType) => ai => ai.CurrentMessage == messageType;
 
@@ -388,6 +417,12 @@ public static class Do
         => ai => ai.TargetMessageParam();
 
     public static PatternAction HateMessageTarget(int hate) => ai => ai.HateMessageTarget(hate);
+
+    /// <summary><c>switch_target target=OBJI_SEEN</c> with its <c>points_to_add</c>.</summary>
+    public static PatternAction HateSeen(int hate) => ai => ai.HateSeen(hate);
+
+    /// <summary><c>switch_target target=OBJI_ATTACKER</c> with its <c>points_to_add</c>.</summary>
+    public static PatternAction HateAttacker(int hate) => ai => ai.HateAttacker(hate);
 
     /// <summary>Anything with no pattern op behind it — an encounter-specific hook the table needs.</summary>
     public static PatternAction Custom(Action<PatternAi> body) => ai => body(ai);

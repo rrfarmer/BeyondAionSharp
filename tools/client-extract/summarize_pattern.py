@@ -45,6 +45,16 @@ KEEP = {
     # A SPAWN_LOCATION_ABSOLUTE placement carries its coordinates here, and an HP-boundary
     # guard its bounds; both are the whole content of the branch they appear in.
     "x", "y", "z", "dir", "larger_than", "less_than",
+    # `is_race` was read as an argumentless guard for months and treated as unusable because of it.
+    # Every one of the 2,879 `is_race` conditions in the 5.8 files carries a `race_type`, and the
+    # value is the whole content of the guard: `gchief_light` and `gchief_dark` are what makes a
+    # village killer hunt a garrison rather than a player. It was invisible only because this list
+    # did not name it. Third time a dropped value has produced a wrong conclusion -- see
+    # docs/retail-ai-fidelity.md.
+    "race_type", "from",
+    # `point_to_add` on add_hate_point and `points_to_add` on switch_target: the weight of a call is
+    # the mechanic, not decoration. Read out of the raw XML by hand three times before this.
+    "point_to_add", "points_to_add", "percent_to_add",
 }
 DROP_VALUES = {"", "0", "FALSE", "OBJI_NONE", "NPCI_NONE"}
 

@@ -94,10 +94,11 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </summary>
     /// <remarks>
     /// Retail has no condition for this — where two senders share a message number it discriminates
-    /// with <c>is_race</c>. That is fine in the client, which carries a race on every npc; it is not
-    /// readable from the pattern dump, where the element appears with no argument at all. The sealed
-    /// akaimum needs to tell a melee guard's marker from a caster's, and the npc id says it exactly.
-    /// See docs/retail-ai-fidelity.md.
+    /// with <c>is_race</c>. <b>This comment used to say that was unreadable from the dump.</b> It is
+    /// not: all 2,879 <c>is_race</c> conditions carry a <c>race_type</c>, and the summariser was
+    /// dropping the value. The akaimum still discriminates by npc id, which is exact and needs no
+    /// race table, but the reason given here was wrong. See <see cref="AiPattern.When.SeenRace"/> and
+    /// docs/retail-ai-fidelity.md.
     /// </remarks>
     public Npc? MessageSender { get; private set; }
 
@@ -142,7 +143,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         // on_attacked runs on every hit. A branch that should only fire once carries its own flag
         // var, which is how retail writes them -- gating on the event instead would be a different
         // mechanic.
-        Evaluate(Pattern.OnAttacked);
+        LastAttacker = creature;
+        try
+        {
+            Evaluate(Pattern.OnAttacked);
+        }
+        finally
+        {
+            LastAttacker = null;
+        }
     }
 
     /// <summary>
@@ -363,6 +372,55 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         if (MessageParam is Creature named && !named.IsDead())
             GetOwner().SetTarget(named);
+    }
+
+    /// <summary>The NPC that just came into view, or null outside an <c>on_see_npc</c> branch.</summary>
+    public Creature? SeenCreature { get; private set; }
+
+    /// <summary>Retail's <c>on_see_npc</c>.</summary>
+    /// <remarks>
+    /// Players arrive through the same engine event, and retail's handler is <c>on_see_npc</c>: the
+    /// guard is always a race test, so a player simply fails it. Passing them through anyway keeps the
+    /// one event doing one job.
+    /// </remarks>
+    protected override void HandleCreatureSee(Creature creature)
+    {
+        base.HandleCreatureSee(creature);
+        if (Pattern.OnSeeNpc.Length == 0)
+            return;
+
+        SeenCreature = creature;
+        try
+        {
+            Evaluate(Pattern.OnSeeNpc);
+        }
+        finally
+        {
+            SeenCreature = null;
+        }
+    }
+
+    /// <summary>Whoever landed the blow being handled, or null outside an <c>on_attacked</c> branch.</summary>
+    public Creature? LastAttacker { get; private set; }
+
+    /// <summary>Puts hate on whoever just hit this NPC and turns to face them.</summary>
+    public void HateAttacker(int hate)
+    {
+        if (LastAttacker is not Creature hitter || hitter.IsDead())
+            return;
+
+        GetAggroList().AddHate(hitter, hate);
+        GetOwner().SetTarget(hitter);
+    }
+
+    /// <summary>Puts hate on the NPC just seen and turns to face it.</summary>
+    public void HateSeen(int hate)
+    {
+        if (SeenCreature is not Creature seen || seen.IsDead())
+            return;
+
+        GetAggroList().AddHate(seen, hate);
+        GetOwner().SetTarget(seen);
     }
 
     /// <summary>Puts hate on whoever a message named and turns to face them.</summary>
