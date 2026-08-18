@@ -10551,3 +10551,55 @@ and message `104`, a fifteen-minute timer whose only action here is an idle time
 
 Full suite **1,990 passing** and 1 skipped; six new pins run five times over; **seven mutations, all
 caught**. Missing-AI 663 → **662**; translatable 304/990 → **303/987**.
+
+## Who would actually say it? — an audit for listeners with no speaker
+
+Two encounters in a row turned out to be listening for a message nobody on this server sends: Vengeful
+Modor's obscura waiting on `444`, and the Sauro Supply Base guards waiting on `22251`. Both senders
+exist in the dump and both run Java-parity classes here, so `audit_message_reach.py` — which asks
+whether any *live pattern* contains the broadcast — scored them as connected. Both were found by
+reading.
+
+`audit_message_senders.py` finds the rest. For every message number it asks whether anybody on this
+server would actually say it, and separates the three reasons the answer can be no:
+
+| verdict | patterns | what it means |
+|---|---|---|
+| ported class, not mentioned | 60 | the sender runs a bespoke class of ours whose source never mentions the number |
+| sender is never spawned | 40 | the sender's npcs exist as templates and nothing places them |
+| no sender at all | 16 | nothing anywhere in the dump broadcasts it |
+
+**116 listener patterns wait on 57 messages, with 191 live npcs behind them.**
+
+The three verdicts want three different fixes, which is the point of separating them: the first is a
+`CombatAlarm`-shaped addition to a class we already have, the second is a line of spawn data, and the
+third is nothing at all.
+
+**The grep is a proxy and says so.** "Mentioned in a class" is decided by looking for the number in
+`Handlers/AI/*.cs`, which misses a class that sends through a constant named elsewhere and counts one
+that only has the number in a comment. It is used to *exclude* rows, never to claim one is fine — and
+the two buckets the audit is actually for need no proxy at all.
+
+### The largest stranded group is a spawn gap
+
+**Twenty-six klaw gatherers and defenders** answer `2004` with hate and an attack. Its only sender is
+`ND2_CnD_BR2`, which binds to 255126, 255127 and 255131 — three klaw templates, level 33 and 34, that
+our spawn data never places. The message is a relay: something tells the brood, and the brood tells the
+gatherers. So the largest single stranded listener group in the dump is waiting on three NPCs that were
+never put in the world, and the fix is spawn data rather than AI.
+
+**Rule: a listener with nobody to listen to is a finding about the sender.** Every earlier audit in this
+project asked what an NPC does; this one asks who it is waiting for, and the answer has pointed at
+spawn data, at Java-parity classes and at genuinely dead numbers in roughly equal measure.
+
+### What this does not do
+
+It does not subtract anything from the worth-doing ranking. A listener with no sender is still
+translatable — the branch is correct and would work the moment somebody spoke — and unlike a dead timer
+or an unheard broadcast, building it is not wasted effort. It is a **sequencing** signal rather than a
+scoring one: these are the patterns to build *after* their senders, not the patterns to skip.
+
+### Verification
+
+Full suite **1,990 passing** and 1 skipped, unchanged — this commit adds an audit and touches no server
+code.
