@@ -76,7 +76,9 @@ public sealed class RetailSummonTests
 	public void AshunatalSplitsOffADifferentShadowAtEachStep()
 	{
 		using var harness = BossAiHarness.For(AturamSkyFortress)
-			.WithAi(typeof(SummonerAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(AshunatalShadowslipAI), typeof(ExplosionShadowAI), typeof(DecayShadowAI),
+				typeof(DisruptionShadowAI), typeof(DisruptionShadowSpawnAI),
+				typeof(SummonerAI), typeof(AggressiveNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(AshunatalShadowslip);
 		Player player = harness.SpawnPlayer();
@@ -97,10 +99,14 @@ public sealed class RetailSummonTests
 		DriveTo(harness, boss, player, 49);
 		Assert.Equal(2, Count(DisruptionShadows));
 
-		// Each step fires once; the counts do not grow on further hits.
-		DriveTo(harness, boss, player, 40);
+		// Each step fires once; the counts do not grow on further hits. Stopping at 45 rather than 40
+		// keeps this above his clear-the-board step, which AshunatalShadowslipAiTests measures.
+		DriveTo(harness, boss, player, 45);
 		Assert.Equal(1, Count(DecayShadows));
-		Assert.Equal(3, Count(ExplosionShadows));
 		Assert.Equal(2, Count(DisruptionShadows));
+
+		// The explosion shadows are gone rather than still standing, and that is the point of them:
+		// twelve seconds after engaging, each one goes off and leaves. See ExplosionShadowAI.
+		Assert.Equal(0, Count(ExplosionShadows));
 	}
 }

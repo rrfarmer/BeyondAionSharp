@@ -11023,3 +11023,71 @@ and on leaving combat — skill indices, as everywhere.
 
 Full suite **2,018 passing** and 1 skipped; seven new pins and one repaired; **nine mutations, eight
 caught and one unpinnable by construction**. Stranded listeners 82 patterns / 129 npcs → **78 / 125**.
+
+## Ashunatal Shadowslip's shadows were all the same shadow
+
+Aturam Sky Fortress, and the same shape as Queen Serusia one entry ago: his three waves were already
+right in `ai/spawn_helpers.xml` — one decay shadow at 90%, three explosion shadows at 70%, two
+disruption shadows at 50% — and everything that made them *different* was missing. All three arrived
+and stood there and fought until killed.
+
+Retail gives each of the three its own pattern, and they are three genuinely different things:
+
+| | | |
+|---|---|---|
+| **explosion** (217379) | `Station_Shadow1` | a **bomb on a twelve-second fuse** — engages, waits, shouts, casts once, gone |
+| **decay** (217380) | `Station_Shadow2` | the one that is **not** a bomb: casts on engaging and every twelve seconds after, forever |
+| **disruption** (217381) | `Station_Shadow3_1` | **splits** fifteen seconds in — one more of a different npc, or **two on a thirty percent roll** — then stops |
+
+The explosion shadow arms its timer on entering combat and never re-arms it, which is exactly what
+makes it a fuse rather than a beat; the disruption shadow does the same, which is what makes its split
+a one-shot. **Both of those "never re-arms" are load-bearing** and both are pinned, because a class
+that re-armed either would look right for the first fifteen seconds of a fight.
+
+### And then he sweeps the board
+
+**At forty percent** retail despawns his own spawn group *and* broadcasts `7063` at a hundred metres,
+and all four shadow patterns — including the children — answer it by leaving. That step did not exist
+here at all.
+
+### Retail's belt-and-braces is the point, not redundancy
+
+Why both a group despawn and a broadcast? Because **the disruption shadow's children belong to its
+spawn group, not his**. `despawn SPAWN_ID_1` cannot reach them; the broadcast can.
+
+This is retail confirming, in its own data, the rule the Queen Serusia entry reached from the other
+side one commit ago — *when a summon summons, the outer boss's cleanup does not reach the inner one*.
+There it was a bug we had to avoid; here it is a problem NCSoft's own designers hit and solved, and the
+solution was to stop relying on the group and shout instead. **Two independent arrivals at the same
+rule in two commits is about as strong as this log gets**, and it is worth applying forward: any ported
+two-step chain wants a broadcast rather than a group despawn as its cleanup.
+
+Our class therefore sends only the broadcast. `SummonerAI`'s tracked-spawn cleanup is private, and
+duplicating it would clear strictly less than the call already clears.
+
+### Not translated
+
+Every skill on all four patterns — the blast at the end of the fuse, the decay shadow's entire content,
+the disruption shadow's cast, and his own self-casts on each wave and at forty percent. **The explosion
+shadow's fuse therefore runs out and the shadow simply leaves**, which is the honest half: the timing,
+the one-shot and the sweep are real, and the damage is not. Also out: his four shouts, `control_door`
+on his death, and messages `7061`/`7062`, whose only listeners are the two `Station_NinjaCTRL` npcs —
+instance furniture our data never places.
+
+### Two pins repaired, and one of them for a good reason
+
+`RetailSummonTests.AshunatalSplitsOffADifferentShadowAtEachStep` registered only `SummonerAI` and drove
+to 40% for its "counts do not grow" step — which is now the sweep. It stops at 45 instead.
+
+Its explosion-shadow assertion also had to change, and that change *is* the feature: after four steps
+of five seconds the three explosion shadows are **gone**, because they engaged and their fuses ran out.
+The pin now says so and cites the class. A test that had to be edited because the fight got a mechanic
+is the right kind of breakage.
+
+### Verification
+
+Full suite **2,025 passing** and 1 skipped; seven new pins, two repaired; **eleven mutations, all
+caught** — after the first sweep turned up two that were not defects (arming one timer slot twice is
+the same as arming it once, and a message number shared by sender and listener changes on both sides),
+replaced by a mutation that turns the split into a beat and a pin on the number itself. Stranded
+listeners 78 patterns / 125 npcs → **75 / 122**.
