@@ -38,8 +38,8 @@ public class AhserionConstructDestroyerAI : AhserionAggressiveNpcAI
         if (isActivated.CompareAndSet(false, true))
         {
             WorldPosition p = GetPosition();
-            Spawn(297191, p.GetX() + 5, p.GetY() - 5, p.GetZ() + 0.5f, (sbyte)0); // Ahserion Troopers Assassin
-            Spawn(297191, p.GetX() - 5, p.GetY() + 5, p.GetZ() + 0.5f, (sbyte)0); // Ahserion Troopers Assassin
+            SpawnFor(297191, p.GetX() + 5, p.GetY() - 5, p.GetZ() + 0.5f, (sbyte)0, TrooperLife); // Ahserion Troopers Assassin
+            SpawnFor(297191, p.GetX() - 5, p.GetY() + 5, p.GetZ() + 0.5f, (sbyte)0, TrooperLife); // Ahserion Troopers Assassin
         }
     }
 
@@ -48,6 +48,13 @@ public class AhserionConstructDestroyerAI : AhserionAggressiveNpcAI
         if (skillTemplate.GetSkillId() == 17446 && skillLevel == 57)
             AddHateToRndTarget();
     }
+
+    /// <summary>
+    /// Retail gives these troopers three minutes. <b>The nine-minute schedule in this class deletes the
+    /// destroyer itself, not them</b> — a bound on the summoner is not a bound on the summoned, which is
+    /// the same distinction that hid four other rows behind a self-timed verdict.
+    /// </summary>
+    private const int TrooperLife = 180;
 
     private void DespawnAssassins()
     {

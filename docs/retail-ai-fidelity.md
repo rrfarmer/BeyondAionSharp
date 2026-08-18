@@ -19883,3 +19883,64 @@ whole pass.
 
 Build clean. The inventory fails, with the null list in its message, when the provided set is altered.
 Full suite **2,091 passing**, 1 skipped.
+
+## The last three rows, and a bound that was one second wrong
+
+`self-timed` is now empty, alongside `NO LIFETIME`. The three:
+
+**`kistenian`** was already correct — a hand-written schedule predating `SpawnFor`, with the retail
+`live_time` recorded in its own constant. Moved onto the shared helper, behaviour unchanged. **The last
+row of that kind.**
+
+**`ahserion_construct_destroyer`** gives its troopers retail's three minutes. The nine-minute schedule
+already in that class **deletes the destroyer itself, not them** — a bound on the summoner is not a bound
+on the summoned, which is the same distinction that hid four rows behind a `self-timed` verdict two passes
+ago and has now decided eight.
+
+**`ahserion_sky_assaulter`** is the interesting one. Its assault pod **was already bounded — at six
+seconds, where retail writes five.** Close enough to look right and not be, and no audit built here would
+ever have found it: every one of them asks whether a bound exists, and this had one. It surfaced only
+because the row had to be read to be dismissed.
+
+Its troopers had no bound at all; two hours is not a mechanic, but a siege that runs long should not end
+with every wave still standing.
+
+### What the whole thread found
+
+Across nine passes the lifetime audit reported, at its first run, 62 classes with missing lifetimes.
+**Eleven were real by that definition.** Reading the remainder found:
+
+- **four** more hiding behind a `self-timed` verdict that only proved a `Schedule` existed somewhere,
+- **one** hiding behind a `partial` verdict,
+- **one** — the assassin's smoke — that was bounded to *zero* seconds by an immediate delete, so the
+  effect never appeared,
+- **one** — this pod — bounded to the wrong number,
+- and roughly **fifty** that were already correct.
+
+**Every category the tool invented to reduce false positives went on to hide a real row.** That is the
+finding worth keeping from the whole thread: a verdict that means "probably nothing" is read as "nothing".
+
+### Where the report stands
+
+```
+no spawns=7  partial=9  timed=18
+```
+
+`partial` rose from seven to nine because the two Ahserion classes now mix `SpawnFor` with spawns that
+correctly have no lifetime. **`no spawns` is the only untouched category** — retail's timed spawn sits in
+a branch this port never ported, which belongs to the unported-branch backlog rather than this one.
+
+### Still to do
+
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- **None of this batch is pinned**: the Ahserion classes are siege npcs with no harness setup, and
+  `kistenian`'s change is behaviour-neutral.
+- Yamennes' golem cadence; `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints,
+  blocking the silikor dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Build clean. Full suite **2,091 passing**, 1 skipped — unchanged, because none of this batch is pinned.

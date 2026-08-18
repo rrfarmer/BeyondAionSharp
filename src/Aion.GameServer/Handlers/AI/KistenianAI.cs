@@ -154,14 +154,11 @@ public class KistenianAI : AbyssGuardSimpleAI, INpcMessageListener
         ClearFlame();
 
         WorldPosition at = GetPosition();
-        if (Spawn(DespawnEffect, at.GetX(), at.GetY(), at.GetZ(), (sbyte)at.GetHeading()) is Npc effect)
-        {
-            ThreadPoolManager.GetInstance().Schedule(_ =>
-            {
-                effect.GetController().DeleteIfAliveOrCancelRespawn();
-                return ValueTask.CompletedTask;
-            }, EffectLifeMillis);
-        }
+        // Behaviourally identical to the hand-written schedule this replaces, which predated SpawnFor.
+        // Moved onto the shared helper so this class stops reading as unbounded in
+        // audit_spawn_lifetimes.py -- it was already correct, and was the last such row.
+        SpawnFor(DespawnEffect, at.GetX(), at.GetY(), at.GetZ(), (sbyte)at.GetHeading(),
+            (int)(EffectLifeMillis / 1000L));
 
         base.HandleDied();
     }
