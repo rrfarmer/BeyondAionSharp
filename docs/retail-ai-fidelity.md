@@ -18211,3 +18211,43 @@ Three entries in a row escalated a claim without re-reading the branch it rested
 ### Verification
 
 Correction only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Back to the guard queue: the web's catch flag, and what the flag rows are
+
+With the timer thread closed, the eleven ready `flag` rows are the next tractable work. One of them is
+mine: `kingspin_web` `OnSeeUser#10`, where retail writes `set_flag_var(FLAGVARI_ALPHA_1)` and the branch
+this log shipped four entries ago has no guard at all.
+
+**Applied.** A web catches once. The despawn on the same branch makes that moot in practice — but only in
+practice, and a branch that fires twice before the despawn lands would cry twice. The fuse branch that was
+borrowing the same flag slot now has its own.
+
+### What the other ten are
+
+Reading the list rather than applying it, because the shapes differ and most are not one-line:
+
+| shape | rows | note |
+|---|---|---|
+| `set_world_flag_var` | 2 | `awakened_chamber_lord`. **A world flag is not a pattern flag** — it is shared across npcs and this port has no equivalent. Not a missing guard; a missing feature. |
+| `unset_flag_var` | 2 | `padmarashka_world_boss`. The mirror of `FirstTime` — `When.Consuming` exists, so these are translatable. |
+| `set_flag_var` on `OnDie` | 3 | Icaronix, MiddleBossFire. A flag set as an npc dies, read by something else — needs the reader found before the writer means anything. |
+| `set_flag_var` elsewhere | 3 | Lepharist defender, MiddleBossFire, Silikor. Ordinary once-only guards. |
+
+**Two of the eleven are a feature this port does not have**, which is worth knowing before the row is
+counted as work. The `unset_flag_var` pair and the three ordinary ones are the real queue.
+
+### Still to do
+
+- **The two `unset_flag_var` rows and the three ordinary `set_flag_var` rows** — five genuinely
+  translatable guards.
+- **World flags**, if `awakened_chamber_lord`'s two rows matter enough to build one.
+- The three `OnDie` flags, blocked on finding what reads them.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One guard applied. Full suite **2,050 passing**, 1 skipped.

@@ -188,14 +188,21 @@ public class KingspinWebAI : PatternAi
 	/// <summary>Retail's <c>BTIMERI_INDEX_5</c>: a web that catches nobody still goes.</summary>
 	private const int Lifetime = 5;
 
+	/// <summary>Retail's <c>FLAGVARI_ALPHA_1</c> on the catch.</summary>
 	private const int Caught = 1;
+
+	/// <summary>A slot of our own for the fuse, which retail arms without a flag.</summary>
+	private const int Settled = 2;
 
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
-		OnWakeUp = Of(Branch(15, "settle, and start the fuse", [When.FirstTime(Caught)],
+		OnWakeUp = Of(Branch(15, "settle, and start the fuse", [When.FirstTime(Settled)],
 			Do.ArmTimer(Lifetime, 8_000))),
 
-		OnSeeUser = Of(Branch(10, "caught one", [],
+		// Retail guards this with set_flag_var, so a web catches once. The despawn makes that moot in
+		// practice -- but only in practice, and a branch that fires twice before the despawn lands would
+		// cry twice. The flag is retail's and costs nothing.
+		OnSeeUser = Of(Branch(10, "caught one", [When.FirstTime(Caught)],
 			Do.Broadcast(KingspinAI.WebCaught, CryReach),
 			Do.DespawnSelf())),
 
