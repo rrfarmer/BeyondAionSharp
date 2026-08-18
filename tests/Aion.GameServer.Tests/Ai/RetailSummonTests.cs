@@ -29,20 +29,27 @@ public sealed class RetailSummonTests
 	private const int DisruptionShadows = 217381;
 
 	/// <summary>Drops HP to a point and lets the summoner's scheduled spawns land.</summary>
-	private static void DriveTo(BossAiHarness harness, Npc boss, Player player, int hpPercent)
+	/// <param name="settle">
+	/// How long to let the clock run afterwards. Five seconds by default, which is enough for the
+	/// scheduled spawn; Queen Serusia needs a shorter one, because her eggs hatch on a fifteen-second
+	/// timer and three five-second steps would reach it mid-test.
+	/// </param>
+	private static void DriveTo(BossAiHarness harness, Npc boss, Player player, int hpPercent,
+		TimeSpan? settle = null)
 	{
 		BossAiHarness.SetHpPercent(boss, hpPercent);
 		BossAiHarness.Rehate(boss, player);
 		boss.SetTarget(player);
 		boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
-		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		harness.Clock.Advance(settle ?? TimeSpan.FromSeconds(5));
 	}
 
 	[Fact]
 	public void QueenSerusiaLaysMoreEggsAsSheWeakens()
 	{
 		using var harness = BossAiHarness.For(IdianDepths)
-			.WithAi(typeof(SummonerAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(QueenSerusiaAI), typeof(SerusiaEggAI), typeof(SerusiaLarvaAI),
+				typeof(SummonerAI), typeof(AggressiveNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(QueenSerusia);
 		Player player = harness.SpawnPlayer();
@@ -51,14 +58,17 @@ public sealed class RetailSummonTests
 		int Eggs() => harness.LiveNpcs().Count(n => n.GetNpcId() == SerusiaEgg);
 		Assert.Equal(0, Eggs());
 
-		// Retail pattern NeutQueen_N_65_Ah: one egg at 75%, two at 50%, three at 25%.
-		DriveTo(harness, boss, player, 74);
+		// Retail pattern NeutQueen_N_65_Ah: one egg at 75%, two at 50%, three at 25%. The two-second
+		// steps keep the whole run inside the first clutch's fifteen-second incubation, so this pin
+		// still measures the laying rather than the hatching -- QueenSerusiaAiTests measures that.
+		TimeSpan brief = TimeSpan.FromSeconds(2);
+		DriveTo(harness, boss, player, 74, brief);
 		Assert.Equal(1, Eggs());
 
-		DriveTo(harness, boss, player, 49);
+		DriveTo(harness, boss, player, 49, brief);
 		Assert.Equal(3, Eggs());
 
-		DriveTo(harness, boss, player, 24);
+		DriveTo(harness, boss, player, 24, brief);
 		Assert.Equal(6, Eggs());
 	}
 

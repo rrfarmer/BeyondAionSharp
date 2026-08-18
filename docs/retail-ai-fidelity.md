@@ -10946,3 +10946,80 @@ python audit_unnamed_templates.py <client> <patterns> out/ai_binding.tsv --check
 and answers all three questions at once — named by retail, placed by us, template on our server. Every
 future "nothing spawns this" line in this log should be a paste of that output rather than a grep, and
 the two claims already in it have now been run through it.
+
+## Queen Serusia's eggs never hatched
+
+An Idian Depths field named, spawned twice in our world — Light and Dark — on a three-and-a-half-hour
+respawn, so this is content players reach. Her egg-laying was already right: 75%, 50% and 25% for one,
+two and three eggs, in `ai/spawn_helpers.xml`, against the correct npc. **What was missing was the
+other half of the mechanic**, and without it the eggs were scenery the queen tidied away on dying.
+
+```
+queen  75% / 50% / 25%   lay 1 / 2 / 3 eggs, and arm a fifteen-second timer with each
+queen  fifteen seconds later   broadcast 402000 / 402001 / 402002 at fifty metres
+egg    on any of the three     put a larva on its own spot, and go
+larva  when the fight ends     go
+```
+
+**Fifteen seconds is the mechanic.** An egg that lives out its timer is a larva; an egg killed first is
+nothing. That is the whole decision the fight offers a raid, and this server has never offered it.
+
+### Retail's three numbers are decoration, and that is a mechanic too
+
+Three timers, three message numbers — and **one listener that answers all three identically**. So
+whichever call comes due first hatches every egg standing, including eggs laid at a later threshold
+whose own timer has ten seconds left. A raid that pushes her from 75 to 50 quickly gets all three at
+once and a raid that takes its time gets them in clutches.
+
+That is retail's arithmetic rather than an approximation of it, and it is pinned, because writing three
+listeners each answering "its own" number would look tidier and be wrong.
+
+### A divergence in shared aionemu code, recorded rather than fixed
+
+**One blow that crosses all three thresholds lays all six eggs at once.** `SummonerAI.CheckPercentage`
+walks every threshold in a single pass, so a burst from full to a quarter fires 75, 50 and 25 together.
+Retail spreads them across three blows: its three branches are separate priorities in one
+`on_attacked`, retail's handlers are **first-match-wins**, and the 75% branch answers the first blow
+alone before its `increase_intvar` guard steps aside for the next.
+
+Left as it is. `CheckPercentage` is aionemu's and **fifty-one npcs share `summoner`** — the same count
+argument as the klaw spawner's 112 and the anuhart guardian's 79, and here it lands on "not without a
+reason bigger than one boss". The difference only shows when a single hit crosses more than one
+threshold; a fight that descends normally lays 1, 2 and 3 on separate blows either way. **Both
+behaviours are pinned**, so if `CheckPercentage` is ever made first-match-wins the pin that says six
+will fail and point here.
+
+### The larva gets its own class, for a reason worth stating
+
+`GhostRun_Sum_As_N_65_Ae` is one branch — leave when the fight is over — and it would have been easy to
+leave the larvae on `aggressive` and let the queen tidy them. **She cannot.** `SummonerAI` tracks what
+*it* spawned, and a larva was spawned by an egg. Without the class, a hatched larva whose target walks
+away stands in the Idian Depths until it decays.
+
+**Rule: when a summon summons, the outer boss's cleanup does not reach the inner one.** Worth checking
+wherever a two-step chain is ported — the crater chain in the twins entry is exactly this shape and
+would need the same care.
+
+### One mutation survives on purpose
+
+The `IsDead` check inside the scheduled hatch call cannot be pinned: by the time it could matter the
+queen's death has already taken the eggs, so no test can tell a guarded call from an unguarded one.
+Reported as a survivor rather than papered over with a pin that would pass either way — the check is
+there because ours is a scheduled task where retail's is a battle timer that stops with the fight.
+
+### Also repaired
+
+`RetailSummonTests.QueenSerusiaLaysMoreEggsAsSheWeakens` registered only `SummonerAI` and advanced five
+seconds per step. Both would now break it — the queen has her own class, and three five-second steps
+reach the first clutch's incubation mid-test. It registers the real classes and steps two seconds, so
+it still measures the laying while the new file measures the hatching.
+
+### Not translated
+
+Her two combat skills on their alternating fifteen-second loop and the self-buff she casts on waking
+and on leaving combat — skill indices, as everywhere.
+
+### Verification
+
+Full suite **2,018 passing** and 1 skipped; seven new pins and one repaired; **nine mutations, eight
+caught and one unpinnable by construction**. Stranded listeners 82 patterns / 129 npcs → **78 / 125**.
