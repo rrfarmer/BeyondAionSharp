@@ -71,6 +71,9 @@ public class TiamatDragonAI : AggressiveNpcAI
     protected override void HandleDied()
     {
         CancelMageTask();
+        Npc owner = GetOwner();
+        SpawnFor(ThickDust, owner.GetX(), owner.GetY(), owner.GetZ(),
+            (sbyte)owner.GetHeading(), DustLife);
         base.HandleDied();
     }
 
@@ -96,9 +99,49 @@ public class TiamatDragonAI : AggressiveNpcAI
             Spawn(npcId, x, y, z, (sbyte)heading);
     }
 
+    /// <summary>
+    /// Retail's arrival and death effects, all of which this class was missing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail-sourced; see docs/retail-ai-fidelity.md.</b> The hard variant already places every one of
+    /// these from its pattern table, using the same npc ids — <b>the two forms differ only in their
+    /// drakan, not in their effects</b> — so the normal form arriving in silence was a gap between our two
+    /// classes rather than between us and retail generally.
+    /// <para>
+    /// The flash is at a fixed point on the platform in <c>on_wake_up</c>; the inferno elemental and the
+    /// burrowing arrival are at his own feet; the dust is at his own feet on death. All four carry
+    /// retail's <c>live_time</c>.
+    /// </para>
+    /// </remarks>
+    private const int ShapeChangeFlash = 283174;
+    private const int InfernoSpirit = 283067;
+    private const int BurrowingArrival = 283062;
+    private const int ThickDust = 283134;
+
+    private const int FlashLife = 10;
+    private const int SpiritLife = 6;
+    private const int ArrivalLife = 8;
+    private const int DustLife = 6;
+
+    /// <summary>Retail's absolute mark for the shape-change flash.</summary>
+    private const float FlashX = 457.9f;
+    private const float FlashY = 514.5f;
+    private const float FlashZ = 417.6f;
+
+    private void SpawnArrivalEffects()
+    {
+        Npc owner = GetOwner();
+        SpawnFor(ShapeChangeFlash, FlashX, FlashY, FlashZ, 0, FlashLife);
+        SpawnFor(InfernoSpirit, owner.GetX(), owner.GetY(), owner.GetZ(),
+            (sbyte)owner.GetHeading(), SpiritLife);
+        SpawnFor(BurrowingArrival, owner.GetX(), owner.GetY(), owner.GetZ(),
+            (sbyte)owner.GetHeading(), ArrivalLife);
+    }
+
     protected override void HandleSpawned()
     {
         base.HandleSpawned();
+        SpawnArrivalEffects();
         ThreadPoolManager.GetInstance().Schedule(() => AIActions.UseSkill(this, 20920), 4000L);
         ThreadPoolManager.GetInstance().Schedule(() => GetOwner().QueueSkill(20984, 1), 300000L);
     }

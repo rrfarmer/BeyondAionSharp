@@ -20129,3 +20129,58 @@ being named.** The difference is whether the claim was checked or inferred.
 ### Verification
 
 **Scoping only, no code.** Full suite unchanged at **2,094 passing**, 1 skipped.
+
+## The hard Tiamat was already done, and the normal one was missing its whole arrival
+
+The queue said "the hard variant, not yet read against `tiamat_dragon_hard`". **It was read and built
+already** — mages, coordinates, npc ids, the portal timer chain, the Surkana step, the flash, the dust.
+The entry was stale, and reading it cost the pass nothing but is worth recording: **this log's queue is
+append-only, and nothing removes an item when the work turns out to be done.**
+
+### What the comparison did find
+
+The two variants' patterns are **near-identical apart from npc ids**, and our two classes are not: the
+hard one is a full `PatternAi` table, the normal one a Java-parity class that made **no spawns at all**
+until last pass.
+
+So everything the hard class places, the normal class was missing:
+
+| effect | where | retail life |
+|---|---|---|
+| shape-change flash | a fixed mark on the platform, `on_wake_up` | 10s |
+| inferno elemental | at his own feet, `on_wake_up` | 6s |
+| burrowing arrival | at his own feet, `on_wake_up` | 8s |
+| thick dust | at his own feet, `on_die` | 6s |
+
+**All four use the same npc ids as the hard class** — 283174, 283067, 283062, 283134 — so this was a gap
+between our two classes rather than between the port and retail. **The normal Tiamat arrived in silence
+and died without a mark.**
+
+### Three more pins
+
+Arrival, expiry on retail's own seconds, and the dust. The expiry pin is ordered so the flash outlasts the
+other two, which is the only arrangement that distinguishes three lifetimes from one.
+
+**The dust pin failed first** on `No AI found for name thick_dust` — the sixth appearance of the
+unregistered-AI harness artifact, and it took the mage pin down with it, because the throw happened inside
+`HandleDied` before the mage assertion ran. **A missing registration does not fail where it is missing.**
+
+### Still to do
+
+- **Walker route ids**, still the one real blocker here: Tiamat's rush wave of twenty drakan needs
+  `path_tiamatdrakan_*`, and the mapping from retail's path names to our hashed route ids does not exist
+  in the repo.
+- **Retire stale queue entries.** This log carries roughly twenty, several of which may already be done;
+  the Tiamat one was found only by starting the work.
+- The four lords' staged spawns against our `empyrean_lord`.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence; `IDRaksha_Re_A_KJS`'s despawn
+  and `IDTP_Keeper1`'s spawn.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+Build clean. Two of the three new pins fail with the arrival effects removed. Full suite **2,097
+passing**, 1 skipped.

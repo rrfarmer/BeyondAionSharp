@@ -25,11 +25,16 @@ public sealed class TiamatDragonAiTests
 
 	private static readonly int[] Mages = [283163, 283164, 283165, 283166];
 
+	private const int ShapeChangeFlash = 283174;
+	private const int InfernoSpirit = 283067;
+	private const int BurrowingArrival = 283062;
+	private const int ThickDust = 283134;
+
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048)
-			.WithAi(typeof(TiamatDragonAI), typeof(AggressiveNpcAI), typeof(AggressiveNoLootNpcAI),
-				typeof(GeneralNpcAI))
+			.WithAi(typeof(TiamatDragonAI), typeof(ThickDustAI), typeof(AggressiveNpcAI),
+				typeof(AggressiveNoLootNpcAI), typeof(GeneralNpcAI))
 			.Build();
 		Npc boss = harness.Spawn(Dragon, 504f, 514f, 417.5f);
 		Player player = harness.SpawnPlayer(506f, 516f, 417.5f);
@@ -94,5 +99,53 @@ public sealed class TiamatDragonAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(20));
 
 		Assert.Equal(0, MagesUp(harness));
+	}
+	/// <summary>
+	/// <b>He arrives with retail's three effects.</b> The flash on its fixed mark, the inferno elemental
+	/// and the burrowing arrival at his own feet — all of which the hard variant already placed and this
+	/// one did not, so the normal form arrived in silence.
+	/// </summary>
+	[Fact]
+	public void HeArrivesWithFlashSpiritAndBurrowing()
+	{
+		using BossAiHarness harness = BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048)
+			.WithAi(typeof(TiamatDragonAI), typeof(ThickDustAI), typeof(AggressiveNpcAI),
+				typeof(AggressiveNoLootNpcAI), typeof(GeneralNpcAI))
+			.Build();
+		harness.Spawn(Dragon, 504f, 514f, 417.5f);
+
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == ShapeChangeFlash);
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == InfernoSpirit);
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == BurrowingArrival);
+	}
+
+	/// <summary>
+	/// <b>And the effects expire on retail's own seconds</b> — six, eight and ten — rather than standing
+	/// in the room. The flash outlasts the other two, which is what orders this pin.
+	/// </summary>
+	[Fact]
+	public void TheArrivalEffectsExpireOnTheirOwnClocks()
+	{
+		var (harness, _, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(7));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == InfernoSpirit);
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == ShapeChangeFlash);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == ShapeChangeFlash);
+	}
+
+	/// <summary><b>And he leaves a dust cloud.</b> Retail's <c>on_die</c>, six seconds at his feet.</summary>
+	[Fact]
+	public void HeLeavesDustBehind()
+	{
+		var (harness, boss, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == ThickDust);
 	}
 }
