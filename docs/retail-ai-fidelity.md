@@ -13307,3 +13307,76 @@ an enemy leaves that guard standing.
 Eight pins on the family now, and a **three-mutation sweep on the new half, all caught**: the two
 families sharing a number, the Light answerer listening on the Dark one, and a Light caller that never
 calls. Full suite **2,173 passing**, 5 skipped.
+
+## Panesterra's bases, 275 npcs, off the top of the new list
+
+`audit_silent_conversations.py` was written last commit and the second and fourth rows on it were
+`41000` and `41100` — Panesterra. **Fifteen retail patterns, two bases, 275 live npcs**, every one of
+them `aggressive` and silent.
+
+Each base runs the **same two-tier conversation on its own pair of numbers**:
+
+| | ordinary guard's call | captain's call |
+|---|---|---|
+| Vritra side | `41000` | `41001` |
+| the other | `41100` | `41101` |
+| **answered with** | **10 hate** | **100 hate** |
+
+**That ten-to-one is the whole tiering of a base.** Pulling a guard is a nuisance; pulling the captain
+brings the room. And the captains have no answer branch of their own — **pulling the captain pulls the
+base, pulling the base does not pull the captain.**
+
+**What differs pattern by pattern is only how far a call carries** — thirteen metres for most and
+twenty-five for the lookouts and patrols, which is what a lookout is posted for. Everything else — the
+payloads, the actions, the absent state guards — is identical across all ten guard patterns, so the
+family collapses into nine classes without losing a thing.
+
+**And a warcaptain is heard by the rival bases.** Twelve cutthroats across Aspamon, Atasin and Disilgot
+listen for `41101` and nothing else, which is Panesterra's design in one line: four factions in one
+map, each with a standing interest in the others' captains.
+
+### Two things retail wrote once
+
+**`Gab1_LGuard_05` is the only pattern of the ten that checks whether the player named is its enemy.**
+Nine others answer whoever is named. Kept — the sixth encounter in this log to carry that kind of
+one-off asymmetry, and the sixth to keep it.
+
+**`Gab1_Gaurd_Ra_An_Broad` is the one pattern in the family where `is_user_flying` changes something
+real:** thirteen metres if the puller is airborne, twenty-five from the ground. This port cannot
+evaluate the condition, so it takes **the ground branch — retail's own lower-priority fallback**, which
+is the overwhelmingly common case. **A flying puller should get the shorter call and does not.**
+Recorded rather than averaged.
+
+That is the second `is_user_flying` reading in two commits and they came out opposite ways: on the
+fortress guards both halves broadcast identically and the blocker was irrelevant, here it is the only
+difference between the halves. **The condition is not a reason to skip a pattern and not a reason to
+ignore it — it has to be read each time.**
+
+### A pin that failed for the right reason
+
+The slayers' `is_enemy` pin first used an Elyos raider against Elyos-race guards, and failed. Correctly:
+**in Panesterra a player's race makes them nobody's friend.** The guards' tribes *are* the four base
+factions, and both races are enemies of all of them until a player is assigned one — so there is no
+friendly player here without `SetPanesterraFaction`. Belani's `GAB1_01_POINT_01` is `BELUS`, and with
+that set the guard bites.
+
+Worth keeping because it is a fact about this map that will trip the next person the same way: the
+faction layer, not the race, is what the guards read.
+
+### Not built
+
+- **The warcaptain's death.** `on_killed_by_user` fans out six broadcasts behind `is_tribe` guards on
+  the killer — `10101`, `20101`, `30101`, `40101`, `10103`, `4440444`, one per faction. **That is the
+  base-capture announcement, not an AI mechanic**, and it belongs with the siege code. Listed here so
+  nobody translates it into an aggro action.
+- **`percent_to_add`** on every captain answer — eleven across the family and **ten on the slayers**,
+  which is the sort of difference that exists only because a person typed it. Neither is translatable.
+- The skills on every answer, and the battle timers on every guard.
+- **`41200`/`41201`**, the third base's pair. The patterns exist; our data places none of their npcs.
+
+### Verification
+
+Nine pins and a **seven-mutation sweep, all caught**: the two payloads equalised, the lookout's range
+shortened, the two bases sharing a number, the bosskillers listening to the wrong captain, the slayer's
+`is_enemy`, a captain that never calls, and a soldier that never answers. Full suite **2,182 passing**,
+5 skipped.
