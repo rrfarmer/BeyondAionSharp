@@ -18,6 +18,7 @@ public class YamennesAI : AggressiveNpcAI
 {
     private ScheduledTask? portalTask;
     private ScheduledTask? enrageTask;
+    private ScheduledTask? golemTask;
     private readonly AtomicBoolean isStart = new AtomicBoolean();
 
     public YamennesAI(Npc owner)
@@ -38,6 +39,10 @@ public class YamennesAI : AggressiveNpcAI
     private void StartTasks()
     {
         enrageTask = ThreadPoolManager.GetInstance().Schedule(_ => { GetOwner().QueueSkill(19098, 55); return ValueTask.CompletedTask; }, 600000L);
+        golemTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+            _ => { SpawnGolems(); return ValueTask.CompletedTask; },
+            System.TimeSpan.FromMilliseconds(GolemCycleMillis),
+            System.TimeSpan.FromMilliseconds(GolemCycleMillis));
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, 60000L);
     }
 
@@ -60,14 +65,47 @@ public class YamennesAI : AggressiveNpcAI
     /// </remarks>
     private const int GolemLife = 180;
 
+    /// <summary>Retail re-arms the golem branch's own timer at three minutes.</summary>
+    private const long GolemCycleMillis = 180_000L;
+
+    /// <summary>
+    /// Retail's three marks for the ametgolems, from <c>IDAbRe_Core_NamedD_Hard</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>They are absolute in retail and were relative here</b> — this class placed them at ten metres
+    /// diagonally off Yamennes, so they followed him around the room instead of standing where the fight
+    /// expects them.
+    /// </remarks>
+    private static readonly (float X, float Y, float Z)[] GolemMarks =
+    [
+        (361.53f, 741.54f, 198.31f),
+        (302.85f, 735.30f, 198.15f),
+        (334.30f, 709.31f, 198.81f),
+    ];
+
+    /// <summary>
+    /// Retail hangs the golems off a timer of their own, re-armed at three minutes, and lets each expire
+    /// on its own three-minute <c>live_time</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>This class drove them from the healing-debuff chain instead</b>, clearing the previous three at
+    /// the start of every debuff — so their cadence was the debuff's, not theirs, and the lifetime added
+    /// in an earlier pass almost never fired because the explicit clear got there first. That divergence
+    /// was recorded at the time and left standing; this is it corrected.
+    /// </remarks>
+    private void SpawnGolems()
+    {
+        if (IsDead() || !GetOwner().IsSpawned())
+            return;
+
+        foreach ((float x, float y, float z) in GolemMarks)
+            SpawnFor(282107, x, y, z, 0, GolemLife);
+    }
+
     private void OnHealingDebuff()
     {
         WorldMapInstance instance = GetPosition().GetWorldMapInstance();
-        DeleteNpcs(instance.GetNpcs(282107));
         GetOwner().QueueSkill(19282, 55);
-        SpawnFor(282107, GetOwner().GetX() + 10, GetOwner().GetY() - 10, GetOwner().GetZ(), (sbyte)0, GolemLife);
-        SpawnFor(282107, GetOwner().GetX() - 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0, GolemLife);
-        SpawnFor(282107, GetOwner().GetX() + 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0, GolemLife);
         GetOwner().ClearAttackedCount();
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_ResetAggro());
     }
@@ -106,6 +144,11 @@ public class YamennesAI : AggressiveNpcAI
             portalTask.Cancel(true);
         if (enrageTask != null && !enrageTask.IsDone())
             enrageTask.Cancel(true);
+        // The golem clock repeats, so it has to be cancelled and not merely guarded: a repeating task
+        // that only checks IsDead() keeps running forever, which is what StopsEveryTimerWhenItDies was
+        // written for on Stormwing.
+        if (golemTask != null && !golemTask.IsDone())
+            golemTask.Cancel(true);
     }
 
     protected override void HandleBackHome()

@@ -27,6 +27,8 @@ public sealed class YamennesAiTests
 
 	private static readonly int[] Portals = [282014, 282015, 282131];
 
+	private const int Golem = 282107;
+
 	private static (BossAiHarness, Npc, Player) Engaged()
 	{
 		BossAiHarness harness = BossAiHarness.For(AbyssalSplinter).WithWorldSize(2048)
@@ -108,5 +110,47 @@ public sealed class YamennesAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 		Assert.DoesNotContain(Standing(harness), n => first.Contains(n));
+	}
+	/// <summary>
+	/// <b>The golems stand on their own three marks, on their own three-minute clock.</b>
+	/// </summary>
+	/// <remarks>
+	/// They used to ride the healing-debuff chain and be placed ten metres diagonally off Yamennes, so
+	/// they followed him around the room and arrived on the debuff's cadence rather than their own. Retail
+	/// gives them absolute marks and a timer of their own.
+	/// </remarks>
+	[Fact]
+	public void ThreeGolemsStandOnRetailsMarks()
+	{
+		var (harness, _, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(181));
+
+		var golems = harness.LiveNpcs().Where(n => n.GetNpcId() == Golem).ToList();
+		Assert.Equal(3, golems.Count);
+
+		// Retail's marks, not the boss's position: he stands at 330,730 and none of these is near him.
+		Assert.Contains(golems, g => Math.Abs(g.GetX() - 361.53f) < 1f);
+		Assert.Contains(golems, g => Math.Abs(g.GetX() - 302.85f) < 1f);
+		Assert.Contains(golems, g => Math.Abs(g.GetX() - 334.30f) < 1f);
+	}
+
+	/// <summary>
+	/// <b>And they expire on their own three minutes rather than being cleared by the next debuff.</b>
+	/// </summary>
+	[Fact]
+	public void TheGolemsExpireOnTheirOwnClock()
+	{
+		var (harness, _, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(181));
+		var first = harness.LiveNpcs().Where(n => n.GetNpcId() == Golem).ToHashSet();
+		Assert.Equal(3, first.Count);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(181));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), n => first.Contains(n));
 	}
 }

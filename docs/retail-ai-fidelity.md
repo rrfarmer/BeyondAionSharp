@@ -21030,3 +21030,50 @@ cause unknown, four candidates ruled out.**
 
 **Diagnosis only; both diagnostic tests were written, read, and removed.** Full suite **2,110 passing**,
 1 skipped.
+
+## Yamennes' golems get their own clock and their own marks
+
+Back to encounter work, and the first queued item was one this log recorded as a divergence and left
+standing three passes ago: **our golem cadence came from the healing-debuff chain, retail's from a timer
+of its own.**
+
+Two things were wrong, not one:
+
+- **The cadence.** Retail hangs the ametgolems off a timer re-armed at **three minutes**; ours fired
+  whenever the healing debuff did, and cleared the previous three at the start of every debuff. **The
+  lifetime added in an earlier pass almost never ran**, because the explicit clear got there first — the
+  same "two clocks, smaller wins" shape as the dust and the spark, in a third form.
+- **The marks.** Retail places them at three **absolute** points; this class placed them **ten metres
+  diagonally off Yamennes**, so they followed him around the room instead of standing where the fight
+  expects them. **That was never recorded as a divergence at all** — the entry that noted the cadence did
+  not look at the coordinates.
+
+### Pinned on the marks, not the count
+
+Three golems appear either way, so a count proves nothing. The pin asserts each stands on one of retail's
+three x-coordinates, **none of which is near where the boss stands**, and it fails when the golems are put
+back on his shoulder.
+
+The second pin watches them expire on their own three minutes rather than being cleared by the next
+debuff.
+
+### And the repeating task is cancelled
+
+`CancelTasks` covered the portal and enrage clocks and now covers this one. **A repeating task that only
+checks `IsDead()` runs forever** — the lesson Stormwing's `StopsEveryTimerWhenItDies` was written for, and
+the reason that pin asserts on armed timers rather than on their effects.
+
+### Still to do
+
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+- `sematariux` and `king_consierd` need spawn entries — a data gap.
+- The `drakanmedic` harness question, explicitly behind all of the above.
+
+### Verification
+
+Build clean. The marks pin fails with the golems back on relative positions. Full suite **2,112 passing**,
+1 skipped.
