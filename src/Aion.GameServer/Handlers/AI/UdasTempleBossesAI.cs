@@ -195,8 +195,72 @@ public class DebilkarimTheMakerAI : PatternAi
 [AIName("bergrisar")]
 public class BergrisarAI : PatternAi
 {
+    /// <summary>Retail <c>BIDTP_BloodWheel_Summoned_55_n</c>.</summary>
+    private const int BloodWheel = 281417;
+
+    /// <summary>Retail's <c>SPAWN_ID_NONE</c> for the wheels; ours needs a group to track them.</summary>
+    private const int WheelGroup = 3;
+
+    private const float WheelZ = 154f;
+
+    /// <summary>Retail's <c>FLAGVARI_ALPHA_3</c> on the last band — a <i>world</i> flag, not a per-npc one.</summary>
+    private const int LastWheelInWorld = 3;
+
+    /// <summary>
+    /// Retail's five <c>on_attacked</c> bands, each placing one blood wheel on its own mark and its own
+    /// walk path, each firing once.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail-sourced; see docs/retail-ai-fidelity.md.</b> This class had only its death step, so the
+    /// gatekeeper summoned nothing across a whole fight.
+    /// <para>
+    /// <b>Written once before and reverted.</b> An earlier pass built these bands, and the suite's own
+    /// <c>BergrisarPlacesNoChakrasHimself</c> caught it: a deliberate decision, recorded in this class,
+    /// not to place wheels that could not walk their <c>Path_IDTemple_Low_AI01_*</c> routes. That entry
+    /// said the decision should be revisited if the routes were ever recovered. <b>They have been</b> —
+    /// all five are in <c>npc_walker/retail_pattern_paths.xml</c> — so the wheels walk and the decision
+    /// no longer applies.
+    /// </para>
+    /// <para>
+    /// <b>Not translated:</b> the three skill indices on these branches, for the reason this class's
+    /// remarks already give, and the <c>say_to_all</c> each band carries, whose string id is unresolved.
+    /// </para>
+    /// </remarks>
+    private static PatternAction PlaceWheel(float x, float y, string path) => ai =>
+    {
+        ai.SpawnAt(BloodWheel, WheelGroup, 0, new SpawnSpot(x, y, WheelZ, 0));
+
+        // The wheel walks the route retail gives it. Taking the newest of the group is safe because the
+        // bands fire once each and a band places exactly one.
+        IReadOnlyList<Npc> placed = ai.Spawned(WheelGroup);
+        if (placed.Count == 0)
+            return;
+
+        Npc wheel = placed[placed.Count - 1];
+        wheel.GetSpawn().SetWalkerId(path);
+        Aion.GameServer.Ai.Manager.WalkManager.StartWalking((NpcAI)wheel.GetAi());
+    };
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
+        OnAttacked = Of(
+            Branch(9, "80-61", [When.HpBetween(61, 80), When.FirstTime(1)],
+                PlaceWheel(1050f, 1647f, "Path_IDTemple_Low_AI01_2")),
+
+            Branch(8, "60-41", [When.HpBetween(41, 60), When.FirstTime(2)],
+                PlaceWheel(1066f, 1642f, "Path_IDTemple_Low_AI01_5")),
+
+            Branch(7, "40-21", [When.HpBetween(21, 40), When.FirstTime(3)],
+                PlaceWheel(1055f, 1617f, "Path_IDTemple_Low_AI01_3")),
+
+            Branch(6, "20-11", [When.HpBetween(11, 20), When.FirstTime(4)],
+                PlaceWheel(1047f, 1647f, "Path_IDTemple_Low_AI01_6")),
+
+            // Retail guards the last one with a world flag rather than a per-npc one, so it fires once
+            // for the instance rather than once for this gatekeeper.
+            Branch(5, "below 10", [When.HpBelow(10), When.FirstTimeInWorld(LastWheelInWorld)],
+                PlaceWheel(1071f, 1645f, "Path_IDTemple_Low_AI01_4"))),
+
         OnDie = Of(AnvilfaceAI.DropTheClearControllers(11)),
     };
 

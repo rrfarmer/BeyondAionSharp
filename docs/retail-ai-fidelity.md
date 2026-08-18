@@ -21938,3 +21938,46 @@ spellings, other worlds, or paths this dump does not carry.
 
 344 routes written and loading. The boot pin fails with the file removed. Full suite **2,114 passing**,
 1 skipped.
+
+## Bergrisar's wheels, and a pin inverted on the condition it named
+
+The routes landed last pass. **Three encounters were said to be unblocked by them; checking each first
+found that only one is.**
+
+- **Tiamat's rush wave — still blocked, for a new reason.** All twelve `path_tiamatdrakan_*` routes are
+  present, but **none of the eight `IDTiamat_TiamatRush_*` drakan exists in our npc data at all.** The
+  routes arrived and the mobs are missing — the same shape as the four Ophidan controllers.
+- **Bergrisar's blood wheels — buildable, and built.** Five routes present, and `BIDTP_BloodWheel_Summoned`
+  (281417) exists with a working AI.
+
+### The decision that was waiting for exactly this
+
+An earlier pass wrote these five bands and reverted them, because the suite's own
+`BergrisarPlacesNoChakrasHimself` recorded a deliberate choice **not** to place wheels that could not walk
+their routes. **That entry said the decision should be revisited if the routes were ever recovered.**
+
+They have been. So the bands are back, each wheel now calling `SetWalkerId` with retail's own path name and
+`WalkManager.StartWalking` — and **the pin is inverted rather than deleted**, keeping the record of why it
+changed. Its remarks carry the old assertion, the reason it was right, and the condition that retired it.
+
+**This is the first time in this log that a recorded decision has been reversed by its own stated
+condition being met.** Every other reversal was a correction; this one is the mechanism working.
+
+### What is in
+
+Five bands: 80-61, 60-41, 40-21, 20-11 on per-npc flags, and below 10 on a **world** flag — retail guards
+the last one for the instance rather than for this gatekeeper, which is why world flags had to exist first.
+
+**Not translated**: the three skill indices, and the `say_to_all` each band carries.
+
+### Still to do
+
+- **The eight Tiamat rush drakan need npc templates.** Routes are ready and waiting for them.
+- **The silikor akaimum's patrol arrival**, the third of the three, not yet checked against its routes.
+- **The 123 missing path names**, Padmarashka's and Kaliga's among them.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  guard report's unverified rows; the `drakanmedic` harness question.
+
+### Verification
+
+Build clean. The band pin fails with the spawn removed. Full suite **2,114 passing**, 1 skipped.

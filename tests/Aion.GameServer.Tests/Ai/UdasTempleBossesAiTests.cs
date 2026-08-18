@@ -286,9 +286,22 @@ public sealed class UdasTempleBossesAiTests
 		Assert.Equal(0, Count(harness, PunishmentChakra));
 	}
 
-	/// <summary>He does not place his chakras: every one of the six walks a route we do not have.</summary>
+	/// <summary>
+	/// <b>He places a blood wheel at each health band, and it walks.</b>
+	/// </summary>
+	/// <remarks>
+	/// <b>This pin used to assert the opposite.</b> It read "he does not place his chakras: every one of
+	/// the six walks a route we do not have", and it was right — an earlier pass built these bands and
+	/// this pin caught it, because placing a wheel that cannot walk its route is not the mechanic.
+	/// <para>
+	/// That entry said the decision should be revisited if the routes were ever recovered. <b>All five
+	/// <c>Path_IDTemple_Low_AI01_*</c> routes are now in <c>retail_pattern_paths.xml</c></b>, extracted
+	/// from the 5.8 server''s own map data, so the condition it named is met and the pin is inverted
+	/// rather than deleted — the record of why it changed is worth more than the assertion itself.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void BergrisarPlacesNoChakrasHimself()
+	public void BergrisarPlacesAWheelAtEachBand()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc boss = harness.Spawn(Bergrisar, 300f, 300f, 200f);
@@ -296,10 +309,16 @@ public sealed class UdasTempleBossesAiTests
 		BossAiHarness.MakeMutuallyKnown(boss, player);
 		harness.Engage(boss, player);
 
-		BossAiHarness.SetExactPercent(boss, 15);
-		for (int i = 0; i < 10; i++)
+		BossAiHarness.SetExactPercent(boss, 70);
+		for (int i = 0; i < 4; i++)
 			Hit(boss, player);
 
-		Assert.Equal(0, Count(harness, PunishmentChakra));
+		Assert.Equal(1, Count(harness, PunishmentChakra));
+
+		BossAiHarness.SetExactPercent(boss, 50);
+		for (int i = 0; i < 4; i++)
+			Hit(boss, player);
+
+		Assert.Equal(2, Count(harness, PunishmentChakra));
 	}
 }
