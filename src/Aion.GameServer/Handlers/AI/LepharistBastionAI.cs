@@ -63,9 +63,14 @@ public class LepharistDefenderAI : PatternAi
 {
 	private const int Heartbeat = 0;
 
+	/// <summary>Retail's <c>FLAGVARI_ALPHA_2</c> on the pull.</summary>
+	private const int Whispered = 2;
+
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
-		OnEnterAttack = Of(Branch(5, "pulled", [],
+		// Retail guards this with set_flag_var: the whisper goes once per fight, not on every entry into
+		// combat. A defender pulled, dropped and pulled again does not call twice.
+		OnEnterAttack = Of(Branch(5, "pulled", [When.FirstTime(Whispered)],
 			Do.ArmTimer(Heartbeat, 4_000),
 			Do.Broadcast(LepharistCalls.Whisper, LepharistCalls.WhisperReach, aboutTarget: true))),
 

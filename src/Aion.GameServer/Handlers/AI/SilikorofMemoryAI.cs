@@ -85,10 +85,17 @@ public class SilikorofMemoryAI : PatternAi
     /// </summary>
     private const int WakingWard = 18481;
 
+    /// <summary>Retail's <c>FLAGVARI_ALPHA_1</c> on the waking ward.</summary>
+
+    private const int Warded = 9;
+
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnWakeUp = Of(
-            Branch(7, "", When.Always,
+            // Retail guards the waking ward with set_flag_var, so it goes up once and not on every
+            // wake-up event.
+            Branch(7, "", [When.FirstTime(Warded)],
                 Do.SkillOnSelf(WakingWard))),
 
         OnEnterAttack = Of(

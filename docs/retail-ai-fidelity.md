@@ -18251,3 +18251,42 @@ counted as work. The `unset_flag_var` pair and the three ordinary ones are the r
 ### Verification
 
 One guard applied. Full suite **2,050 passing**, 1 skipped.
+
+## Two once-only guards, applied and unpinned
+
+Two of the five translatable `flag` rows:
+
+- **`LepharistBastionAI`, the defender's pull.** Retail guards it with `set_flag_var`, so the whisper goes
+  **once per fight** rather than on every entry into combat. A defender pulled, dropped and pulled again
+  does not call twice.
+- **`SilikorofMemoryAI`, the waking ward.** Same shape: the ward goes up once, not on every wake-up.
+
+Report down from 25 ready rows to 22.
+
+### Neither is pinned, and the mutation says so
+
+Removing the whisper flag again leaves all five Lepharist pins green. **None of them pulls a defender
+twice**, so a guard that only matters on the second pull is invisible to them.
+
+That is the same gap as Masto's cadence and the state folds before it: **the suite exercises each encounter
+once, and a once-only guard is by definition about the second time.** Writing the pin is not hard — engage,
+disengage, re-engage, assert one call — but it is a new shape of setup and there was not room for it here.
+
+**Recorded rather than left implied**: two guards shipped this pass and neither is protected.
+
+### Still to do
+
+- **A re-pull pin** for the whisper, which would cover the ward and every future once-only guard on an
+  entry branch.
+- Padmarashka's two `unset_flag_var` rows, the third ordinary `set_flag_var`, and the three `OnDie` flags
+  once their readers are found.
+- World flags, if the chamber lord's two rows justify one.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Two guards applied, one mutation run and **not caught**. Full suite **2,050 passing**, 1 skipped.
