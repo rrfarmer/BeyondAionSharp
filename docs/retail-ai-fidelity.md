@@ -17902,3 +17902,60 @@ needs a timing pin** — the encounter has four band cadences and nothing measur
 
 Reading only; no code changed. Full suite **2,050 passing**, 1 skipped — and passing says nothing about
 Masto's cadence, which is the point.
+
+## Masto's four bands never fired, and the operator change fixed them
+
+The previous entry left Masto as an open risk: had the operator change dragged his bands from twenty-five
+or thirty seconds down to twenty? Read `ND2_EhA`, and the answer is the other way round.
+
+| branch | waits on | health | arms |
+|---|---|---|---|
+| 10 | timer 1 | 21–40 | timer 1 at **8s**, band timer 6 at **20s** |
+| 11 | timer 6 | 21–40 | timer 6 at **25s** |
+| 7 | timer 1 | 41–60 | timer 1 at **8s**, band timer 5 at **20s** |
+| 9 | timer 5 | 41–60 | timer 5 at **30s** |
+| 4 | timer 1 | 61–80 | timer 1 at **8s**, band timer 3 at **20s** |
+| 6 | timer 3 | 61–80 | timer 3 at **25s** |
+
+**Each opener repeats every eight seconds while its band holds**, and arms the band timer at twenty.
+
+**Eight is less than twenty.** Under the old operator — restart a pending timer — the opener re-armed the
+band timer every eight seconds and it could never reach twenty. **All four bands were starved. None of them
+ever fired.**
+
+Under take-the-shorter the opener's twenty is only taken when it shortens, the band timer counts down, and
+each band fires on a twenty-second cadence. The band's own 25/30 re-arm is what holds once the opener stops
+— which happens when he leaves that health band.
+
+### So the change fixed a second boss, not just Chunapa
+
+Two encounters found so far, both broken since they shipped, both invisible: Chunapa's phase two five
+seconds late, **and every one of Masto's four band mechanics dead.**
+
+**Masto's pins passed throughout.** Four bands that never fired, in an encounter with pins, for as long as
+the encounter has existed — because the pins count what happens and the bands happening was never among
+what they counted.
+
+### What that says about the remaining nineteen
+
+The previous entry framed the contention list as **risk** — things the change might have broken. Masto and
+Chunapa are both the reverse: **things the change repaired.** Under restart, any opener that repeats faster
+than the delay it arms starves its own mechanic, and that shape is exactly what the contention scan
+selects for.
+
+**So the list is better read as a repair list than a regression list**, and the nineteen remaining are
+worth reading for mechanics that were never firing rather than for cadences that shifted.
+
+### Still to do
+
+- **Pin Masto's four band cadences**, which nothing measures.
+- The remaining ~19 encounters, now read as likely repairs.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
