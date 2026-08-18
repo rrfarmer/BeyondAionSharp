@@ -22523,3 +22523,50 @@ corresponded to work**, which is the point the docstring now makes at the top.
 ### Verification
 
 Tool docstring only, no server code. The report still runs. Full suite **2,117 passing**, 1 skipped.
+
+## 575 unported fights, and the first of them built
+
+With the queue exhausted and its items twelve times found already-built, the useful question changed from
+*"what is on the list"* to *"what does retail have that we do not"*. `audit_missing_ai.py`, re-run against
+the merged binding, answers it:
+
+**575 npcs this port spawns that have a retail fight and no AI class at all.**
+
+Sorted by what this port can actually express — spawns, since skill indices remain unresolved — the top of
+that list is a body of real encounters: Yamennes Blindsight, Wrathclaw, Dark Poeta's three generators,
+Captain Xasta, Kexkra.
+
+### Chief maid Miladi
+
+Sixteen timer branches and six summons, running `aggressive` — **a scripted fight served as a plain melee
+npc.** No instance handler names her either, so nothing was implemented elsewhere; the checks that caught
+twelve false alarms were run first and came back clean.
+
+**Her mechanic is that the adds do not come to her.** Every succubus is placed *on a player* — the current
+target when she engages, then the second and third most hated — so the raid's back line gets one each
+rather than the tank. That is `spawn_on_target_by_attacker_indicator`, and it is why the fight cannot be
+approximated by spawning adds at her feet.
+
+- **on engaging** — one succubus on whoever she is fighting, and two clocks start
+- **75-31** — one on the second most hated, once, then a fifteen-second clock
+- **below 30** — one on the *second and third* at once, she turns on the third, and a ten-second clock
+  keeps placing them there
+
+**Pinned on where the add lands**, not on how many: the pin fails if the succubus stands closer to Miladi
+than to the player she was summoned onto, which is exactly the mistake a naive port makes. It also fails
+with the lifetime removed and with the opener removed.
+
+**Not translated**: two skill indices and the `say_to_all` each branch carries.
+
+### Still to do
+
+- **The other 574.** Yamennes Blindsight (8 spawns), Wrathclaw (8), Dark Poeta's three generators (7
+  each), Captain Xasta (6) are the next by spawn count, and several already have instance handlers that
+  must be read first.
+- Convert `TiamatDragonAI` to a pattern table, for the rush cadence.
+- The 12,000 unbound templates; the empyrean lords' skill indices; the `drakanmedic` harness question.
+
+### Verification
+
+Build clean. Three pins; the placement pin distinguishes the mechanic from its approximation, and both the
+lifetime and the opener fail when removed. Full suite **2,120 passing**, 1 skipped.
