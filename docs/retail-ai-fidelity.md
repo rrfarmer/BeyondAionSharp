@@ -9508,3 +9508,82 @@ door; eight skill indices and five shouts. The servants' casts, their `random_mo
 Full suite **1,897 passing** and 1 skipped; four new pins; eight mutations, all caught. Missing-AI 696
 → **693**; translatable 456/1,556 → **453/1,553**; dead-timer payload 14 patterns / 31 actions →
 **13 / 26** — every delta exactly the three patterns translated.
+
+## Ophidan Bridge links, and sixteen npcs were doing it alone
+
+`NpcAIPatterns_IDLDF5_Under_01_JSM.xml` is Ophidan Bridge (300590000). Fifteen of its patterns — the
+three hard-mode velkurs and the twelve `BIDF5_U01_Runaway_*` grades — carry the same branch pair, which
+retail's own comment calls `애드 수신`, "add receive":
+
+| | |
+|---|---|
+| on engaging | broadcast `10500` at **thirty metres**, naming whoever you are fighting |
+| on hearing `10500` | **ten thousand** hate on the player named, and attack |
+
+Sixteen live npcs, every one a HERO, every one on plain `aggressive`. They now share one class.
+
+**It chains, and the chain is the mechanic.** Answering the call is an entry into combat, and entering
+combat is what makes an NPC call in turn, so one careless pull walks from group to group across the
+bridge. It terminates rather than running away: an NPC already fighting does not re-enter combat, so it
+does not call twice.
+
+**Ten thousand is not decoration.** It is far above anything a player accumulates in a pull, so the
+called NPC goes to the named target and stays. This is retail saying "hand-off", not "nudge", in the
+only vocabulary a pattern has for it — and it is pinned by a mutation that drops the value to one.
+
+**Normal mode does not link.** Spirited Velkur (235768, `BIDF5_U01_Boss_Wi_Nor`) has neither half of
+the pair: the same fight with one mechanic taken out. He keeps the stock AI, and a mutation that gives
+him the class is caught.
+
+### The decoy pin that measured its own contamination
+
+The pin for "the call outweighs whoever is standing nearer" was written the obvious way: a decoy player
+beside the listener, hated before the pull, and the listener should still take the caller's target.
+It failed, and the reason is the mechanic itself. Hating the decoy **put the listener into combat**,
+which fired the listener's own call, which named the decoy, which the caller heard — so the caller took
+the decoy too, and named it in its own call. The setup had quietly inverted the thing being measured.
+
+Rewritten as an ordering: pull first, then bring the second player in afterwards and let it land a
+thousand hate against the call's ten thousand.
+
+**Rule: in a web where every listener is also a sender, a decoy is a message.** Every earlier decoy in
+this log was inert — a player standing somewhere, a summon parked out of reach. Against a linked pull
+there is no such thing as an inert participant, and the setup has to be ordered in time rather than
+laid out in space.
+
+### `despawn_by_nameid` — a new blocked verb, and a large one
+
+All three velkurs, on entering combat, place four triggers at fixed points across the bridge
+(674.2/471.7, 604.3/555.5, 528.8/437.2, 468.6/516.8). Each trigger's whole pattern is **nine
+`despawn_by_nameid` calls** — clear every NPC of nine named kinds from the map. That is a room reset on
+pull, and we have no vocabulary for it: the verb addresses NPCs by client devname across the whole
+instance, not by a spawn group.
+
+It is not a one-off. `despawn_by_nameid` appears **849 times across 171 patterns** in the 5.8 dump,
+which puts it in the same class as `pathname` as a missing verb rather than a missing mechanic. Unlike
+`pathname` it has no data blocker at all — the devname-to-id table is the one `audit_missing_adds.py`
+already builds. What it needs is a runtime op that walks the map's npc list and removes matches, and a
+decision about whether "the whole instance" or "the caller's known list" is the right scope. **The
+biggest single unblocked verb left in the dump.**
+
+### Not translated, with the reason for each
+
+- **The six-timer round-robin** (BT0→BT1→…→BT5→BT0, nine to eleven seconds a step) is a cast chain.
+  Its only non-cast content is three broadcasts, and each fails the cast-only test in its own way:
+  `10200`'s listeners answer with a cast; `10600` and `10700` have one listener that answers with
+  spawns — `BIDF5_U01_Runaway_Pr`, which binds to **235763 runaway hirakiki leader, an npc our server
+  never spawns**. So the loop is scaffolding for us today and becomes worth building the moment that
+  leader is placed. Recorded rather than dropped, because the trigger for revisiting it is concrete.
+- **235763 and 235767** (runaway hirakiki leader, escapee asachin leader) are HERO templates with full
+  retail patterns that nothing in our data spawns, while their own rank-and-file are all live. Their
+  live sibling 235759 is spawned by `OphidanBridgeInstance` through a `235759 + Rnd.Get(0,2) * 4`
+  rotation, so the other two are reachable by the same handler and simply never chosen.
+- `set_condition_spawn_variable under_01_out` on every death — instance progression, not AI.
+- `10900` (a fugitive died) and `10100` (a request for the finisher) — both answered only with casts.
+- Fifteen skill indices and one shout.
+
+### Verification
+
+Full suite **1,902 passing** and 1 skipped; five new pins run three times over; seven mutations, all
+caught. Missing-AI 693 → **686**; translatable 453/1,553 → **438/1,537** — the npc delta is exactly the
+sixteen, and the pattern delta exactly the fifteen.
