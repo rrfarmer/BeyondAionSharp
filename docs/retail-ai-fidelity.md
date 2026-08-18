@@ -22377,3 +22377,53 @@ starting it late in a pass.
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,117 passing**, 1 skipped.
+
+## Modor's clone: the conditional spawn found, and the mechanic already built
+
+`set_condition_spawn_variable` was struck from the engine-gap list six passes ago, leaving Modor's clone
+recorded as "blocked on client spawn tables". **Those tables are in the 5.8 server tree**, in the same
+world files the walk paths came from:
+
+```xml
+<condition_info despawnAtOther="true">
+  <condition><extcondition>WongiokOn == 1</extcondition></condition>
+  <spawn_group_list><name>GB1</name><count>1</count> ...
+```
+
+Three such blocks in `idldf5_under_rune`, each placing one `BLDF5_Under_Rune_FrostNmd_MagCircle_NoShow2`
+(**284387**) at one point, stacked at three heights. So the mechanic is: **the first clone to enter combat
+sets the variable, and three markers appear.**
+
+### And it is already built, by a different route
+
+`ModorsCloneAI` spawns 284387 at (255.99, 259.01, 242.74) — within a metre of the world data's
+(256.55, 257.82) — **but hangs it off a skill cast** (21177, by the real Modor) rather than off a clone
+entering combat.
+
+**Same marker, same place, different trigger.** In retail it appears when the fight starts; here when a
+particular skill is cast. That is a real behavioural difference and it is recorded rather than corrected,
+because the alternative is rewriting a working mechanic to change *when* it fires, on the strength of a
+spawn-condition system this port does not otherwise model.
+
+### Twelfth already-built finding
+
+The count is now worth stating as a property of the work rather than a run of luck: **twelve times a
+queued item has turned out to exist**, in a different layer, a different form, a different table, or under
+a different trigger. The queue records what was once noticed; **nothing in it records what was later
+found**, and every entry has to be re-checked against the code before it can be worked.
+
+**The three checks that have caught these** — open the file, search the other layer, search the other table
+— are cheap, and each has now paid for itself several times.
+
+### Still to do
+
+- **Modor's trigger**, if the difference is judged worth closing: it needs the clone's enter-combat step to
+  place the markers, and the existing skill hook removed rather than duplicated.
+- Convert `TiamatDragonAI` to a pattern table, for the rush cadence.
+- The 12,000 unbound templates; the empyrean lords' skill indices; `sematariux` and `king_consierd` spawn
+  entries; the `drakanmedic` harness question.
+- **Delete the dropped-guard report**, which has produced thirteen rows and no true finding.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,117 passing**, 1 skipped.
