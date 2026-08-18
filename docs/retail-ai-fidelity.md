@@ -15558,3 +15558,81 @@ reaches.
 Eleven guards restored, two refused with a check that will refuse them again, one new harness default and
 three opt-outs, seven pins rewritten around what they were actually measuring. Full suite **2,041
 passing**, 1 skipped, run three times.
+
+## The dropped-guard report, and the batch it stopped
+
+The previous entry left 51 dropped guards and said each needed its retail branch read and a uniformity
+check. `report_dropped_guards.py` does both in one pass: **the retail condition verbs with their values**,
+and **how many served patterns carry that guard against how many have the same branch without it.**
+
+Fifty-one rows come back as **46 uniform, 5 mixed**. The mixed five are blocked on splitting a class per
+npc, exactly as the `chance` refusals were.
+
+### The batch that was applied and reverted
+
+Nineteen `hp` guards were the obvious first cluster — `is_hp_in_boundary(OBJI_SELF,80,100)` on eight Frost
+Named branches, three Padmarashka bands, Kingspin, the naga captains, Prectaz, the silikor guard, the
+xdrakan trapper. All nineteen applied cleanly and built. **Thirteen pins went red, and one of them was
+telling the truth about something else.**
+
+`RatmanCampAI` numbers its two `on_attacked` branches **2 and 1**. Retail's `Ratman_FnR_LWaSu11` puts the
+broadcast at **priority 4** and a skill-only step at 2. So the row reading *"OnAttacked#2 wants an hp
+guard"* describes retail's skill branch, and the guard would have been applied to our broadcast branch —
+a different step that happens to share a number.
+
+**The whole comparison keys on branch priority, and that key holds only where this port preserved retail's
+numbering.** Most of the log did — the kaidan casters, Triroan and Padmarashka all carry retail's numbers
+— and some did not. Nothing recorded which.
+
+Nineteen could not be verified one by one within this pass, so **all nineteen were reverted.** The caveat
+is now in the tool's docstring and printed under every run, because a report that says `UNIFORM` next to a
+misaligned row is worse than no report.
+
+### And the ratman farmers are not what this log says they are
+
+Chasing that row turned up a shipped claim that is wrong. `docs/retail-ai-fidelity.md` says of the Altgard
+farmers:
+
+> "Ten Altgard farmers call at twelve metres on every blow, with no flag and no health guard"
+
+Retail's `Ratman_FnR_LWaSu11`, priority 4:
+
+```
+? test_probability percent=50
+? is_hp_in_boundary who=OBJI_SELF less_than=45
+? is_skill_count_left skill=SKILLI_INDEX_0
+> use_skill ...
+> broadcast_message message_type=1007 range_as_meter=12 param_obj=OBJI_CUR_TARGET
+```
+
+**Three guards, not none.** The call needs the farmer below 45 percent, a coin flip, and a skill charge
+left. A farmer at full health does not call at all, and the "on every blow" pin in
+`RatmanCampAiTests` passes because the branch it pins has no guard rather than because retail has none.
+
+**`is_skill_count_left` is the blocker** — this port cannot read a skill's remaining charges, so the branch
+cannot be translated faithfully even now. Building the other two guards without it would leave the call
+firing on a coin flip below 45 rather than on a coin flip below 45 *while a charge remains*, which is
+closer than today but still wrong, and would silently contradict a pin that currently claims the opposite.
+**Recorded rather than half-built**, and the doc entry above it is corrected by this one.
+
+### Still to do
+
+- **A branch-alignment check**, so `UNIFORM` can be trusted: compare our branch's *actions* against
+  retail's at that priority, and refuse the row when they are different steps. That is the missing half of
+  this tool and it would unblock the 46.
+- The 46 uniform guards behind it, `hp` first.
+- The 5 mixed ones, blocked on splitting classes per npc.
+- The ratman farmers' three guards, blocked on `is_skill_count_left`.
+- The 14 two-action-idiom classes, the silikor skill, the illusion's most-hated claim, the Ophidan chain's
+  second hop, and counts/arguments/ordering.
+
+### The rule
+
+**A key that works most of the time is a key that has to be checked every time.** Branch priority lined up
+for every encounter this session touched, which is exactly why it looked safe enough to batch nineteen
+edits on. The first row where it did not line up was the nineteenth thing to go wrong, not the first, and
+only a pin caught it.
+
+### Verification
+
+Tool only; nineteen edits reverted. Full suite **2,041 passing**, 1 skipped.
