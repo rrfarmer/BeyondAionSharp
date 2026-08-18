@@ -197,12 +197,13 @@ public sealed class KingspinAiTests
 		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
-		// the tick it lands, so the tally is the only record a throw leaves.
+		// Counted as throws off his own clock, not as cries. This opening assertion was the last cry
+		// count left in the file: a throw puts four webs out and only the ones landing on somebody
+		// speak, so the tally depends on where the raid stands. Third time this diagnosis has applied,
+		// and the third pin to be moved onto the clock the change is actually about.
 		Advance(harness, boss, raid, 30);
-		int before = Cries(cries);
 		int throwsBefore = Throws(boss);
-		Assert.True(before >= 1, $"only {before} cries in the first thirty seconds");
+		Assert.True(throwsBefore >= 1, $"only {throwsBefore} throws in the first thirty seconds");
 
 		BossAiHarness.SetExactPercent(boss, 50);
 		Advance(harness, boss, raid, 25);

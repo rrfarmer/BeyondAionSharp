@@ -60,11 +60,29 @@ public class KaligaTheUnjustAI : PatternAi
 		new SpawnSpot(568.19f, 833.13f, 226.33f),
 	};
 
+	/// <summary>
+	/// Retail <c>Cromede_Named_Angry</c> <c>on_leave_attack_state</c>: two invisible markers at his own
+	/// point, ten seconds each.
+	/// </summary>
+	/// <remarks>
+	/// <b>Retail-sourced; see docs/retail-ai-fidelity.md.</b> He placed nothing at all on going home,
+	/// where retail leaves this pair behind — the going-home counterpart to the dismissal he already
+	/// drops on death.
+	/// </remarks>
+	private const int LeavingMarkerA = 282084;
+	private const int LeavingMarkerB = 282085;
+	private const int LeavingMarkerLife = 10;
+
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnDie = Of(
 			Branch(7, "", When.Always,
 				Do.SpawnAt(Dismissal, Loose, Life, Posts))),
+
+		OnLeaveAttack = Of(
+			Branch(7, "", When.Always,
+				Do.SpawnNear(LeavingMarkerA, Loose, count: 1, range: 0f, liveSeconds: LeavingMarkerLife),
+				Do.SpawnNear(LeavingMarkerB, Loose, count: 1, range: 0f, liveSeconds: LeavingMarkerLife))),
 	};
 
 	public KaligaTheUnjustAI(Npc owner)

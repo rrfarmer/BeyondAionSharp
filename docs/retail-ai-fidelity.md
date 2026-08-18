@@ -21552,3 +21552,58 @@ open.**
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## The ranked six, verified by reading, and one real add
+
+The previous entry retired the branch-count ranking as unverified and said to read the remaining six.
+**Read. Five of the six have every retail spawn already referenced.**
+
+| class | retail spawn npcs | not referenced |
+|---|---|---|
+| `gatekeeper_flox` | 1 | 0 |
+| `hyperion_defence` | 0 | 0 |
+| `prectaz` | 2 | 0 |
+| `idean_obscura` | 1 | 0 |
+| `debilkarim_the_maker` | 3 | 0 |
+| **`kaliga_the_unjust`** | 6 | **4** |
+
+**`hyperion_defence` is the clearest case against the ranking.** It showed a gap of 23 branches — and its
+ten retail patterns contain **zero spawns**. Every branch is `use_skill` or `do_nothing`, so the entire
+"gap" is blocked on skill indices and there was never anything to build.
+
+`gatekeeper_flox` looked the most promising at eight spawn branches; all eight place **one** npc, and our
+class already references it.
+
+### What was built
+
+Kaliga's going-home pair: retail's `on_leave_attack_state` leaves two invisible markers at his own point
+for ten seconds each, and this class placed nothing at all on going home — the counterpart to the
+dismissal it already drops on death. Both are `MY_POINT`, so nothing is blocked.
+
+**Two of his four remain**: the statues on `p99`/`p98`, behind a health floor and a test-and-set, at
+absolute marks; and `Invisible_NPC20` on `p97` behind a roll. Both are buildable and neither was started
+here.
+
+### And the last cry count is gone
+
+A full-suite run failed on `BelowFiftyOneItThrowsFive` — "only 0 cries in the first thirty seconds" —
+while passing three times in isolation. Its main assertion was moved onto `Throws` two entries ago; **its
+opening assertion was still counting cries** and was the last one in the file that could flake.
+
+**Third time this diagnosis has applied.** A throw puts four webs out and only the ones landing on somebody
+speak, so the tally depends on where the raid stands. Ten `Cries(` calls remain in that file, all in pins
+whose subject genuinely is the cry.
+
+### Still to do
+
+- **Kaliga's statues and his `p97` marker** — the only verified-buildable encounter content left in the
+  ranking.
+- **Walker route ids**, blocking four encounters; the only blocker demonstrated rather than inferred.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; Modor's clone.
+- The guard report's mixed and misaligned rows, unverified; `sematariux` and `king_consierd` need spawn
+  entries; the `drakanmedic` harness question, last.
+
+### Verification
+
+Build clean. Kingspin's pins pass four runs in a row after the change. Full suite **2,112 passing**,
+1 skipped.
