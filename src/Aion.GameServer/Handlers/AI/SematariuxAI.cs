@@ -97,7 +97,7 @@ public class SematariuxAI : AggressiveNpcAI, HpPhases.PhaseHandler
         {
             if (PositionUtil.IsInRange(GetOwner(), 141.77f, 2142.31f, 440.0f, 4f) && isEggEventActive.CompareAndSet(false, true))
             {
-                Npc egg = (Npc)Spawn(281451, 141.77f, 2142.31f, 440.0f, (sbyte)0);
+                Npc egg = (Npc)SpawnFor(281451, 141.77f, 2142.31f, 440.0f, (sbyte)0, EggLife);
                 ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 18726, 1, egg).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 2500L);
             }
         }
@@ -151,6 +151,9 @@ public class SematariuxAI : AggressiveNpcAI, HpPhases.PhaseHandler
         hpPhases.Reset();
         DespawnNpcs(281453, 281451, 281931, 281932, 281933);
     }
+
+    /// <summary>Retail <c>BLF4_DramataEgg_57_l</c> stands ten minutes; ours was never removed at all.</summary>
+    private const int EggLife = 600;
 
     protected override void HandleDied()
     {

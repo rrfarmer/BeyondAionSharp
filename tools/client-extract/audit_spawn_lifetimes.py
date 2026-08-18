@@ -81,8 +81,14 @@ def our_classes(repo: pathlib.Path) -> dict[str, tuple[bool, int, int]]:
             # Two passes running, the largest rows on this report were exactly that -- balaurbarricade
             # and unstableyamennes both wrote the schedule by hand before SpawnFor existed -- and each
             # cost a pass to read before turning out to be nothing. Detected rather than re-discovered.
-            self_timed = bool(re.search(r"Schedule\(", body)) and bool(
-                re.search(r"DeleteIfAliveOrCancelRespawn|GetController\(\)\.Delete\(", body))
+            # The delete has to be INSIDE a scheduled body, not merely somewhere in the same file.
+            # The first version asked only that both tokens appeared, and passed four classes whose
+            # only cleanup ran in HandleDied or HandleBackHome -- death cleanup bounds an add after the
+            # fight and does nothing during it, which is the distinction that has now decided seven rows.
+            self_timed = any(
+                re.search(r"DeleteIfAliveOrCancelRespawn|GetController\(\)\.Delete\(",
+                          body[m.end():m.end() + 400])
+                for m in re.finditer(r"Schedule\w*\(", body))
             # Expire( counts too: it is SpawnFor's other half, used where the spawn comes from
             # one of the other helpers rather than from Spawn directly.
             timed = len(re.findall(r"SpawnFor\(|Expire\(", body))
@@ -108,7 +114,20 @@ def spawned_ids(repo: pathlib.Path) -> dict[str, set[str]]:
         text = path.read_text(encoding="utf-8", errors="replace")
         parts = re.split(r'\[AIName\("([^"]+)"\)\]', text)
         for i in range(1, len(parts), 2):
-            out[parts[i]] = set(re.findall(r"\b(\d{6})\b", parts[i + 1]))
+            body = parts[i + 1]
+            # Only ids the class actually spawns. An id that appears solely in a DeleteNpcs call is not
+            # spawned here -- brigade_general_vasharti deletes three glove controllers defensively and
+            # deliberately never summons them, and matching bare ids reported that as a missing lifetime.
+            ids = set()
+            for line in body.split("\n"):
+                if "Spawn" not in line:
+                    continue
+                ids |= set(re.findall(r"\b(\d{6})\b", line))
+                for word in re.findall(r"\b([A-Za-z_]\w*)\b", line):
+                    hit = re.search(r"\b" + word + r"\s*=\s*(\d{6})\b", body)
+                    if hit:
+                        ids.add(hit.group(1))
+            out[parts[i]] = ids
     return out
 
 

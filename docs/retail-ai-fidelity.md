@@ -19715,3 +19715,65 @@ retail's timed spawn is in a branch we never ported — which is the unported-br
 ### Verification
 
 Build clean. The gate pin fails with its lifetime removed. Full suite **2,087 passing**, 1 skipped.
+
+## `self-timed` was the wrong question, and four more adds that never left
+
+The previous entry warned that `self-timed` proves a schedule exists, not that it covers every spawn.
+**It was weaker than that.** The heuristic asked only whether a `Schedule(` and a `Delete` both appeared
+somewhere in the same file, so **a class whose only cleanup ran in `HandleDied` passed it.**
+
+Reading the eleven rows found four real gaps hiding behind that verdict:
+
+| class | npc | retail | what it was |
+|---|---|---|---|
+| `sematariux` | dramata egg | 600s | **never removed at all** |
+| `king_consierd` | condors | 600s | despawned on death and on going home only |
+| `brigadegeneralterath` | gravity field | 24s | cleaned only by its death/back-home `Despawn()` |
+| `brigadegeneralterath` | black hole | 10s | not cleaned at all |
+| `vasharti_assassin` | smoke | 6s | **spawned and deleted on the next line** |
+
+**The assassin's smoke is the interesting one.** It was bounded — deleted immediately — so it passed every
+audit and would pass any review of that method. Only retail's six seconds shows the effect was meant to be
+*seen*: this assassin vanishes into a puff of smoke that never appeared.
+
+### Two more corrections to the tool
+
+**The delete must sit inside a scheduled body**, not merely in the same file. That is the fifth correction
+this audit has needed, and **the second one that moved rows back onto the work list** rather than off it.
+
+Then `brigade_general_vasharti` appeared as a new `NO LIFETIME` row and **was a false positive of a new
+kind**: it deletes three glove controllers defensively and, by a decision recorded in the class itself,
+deliberately never spawns them. Matching bare npc ids anywhere in the source counted a `DeleteNpcs` call
+as evidence of a spawn. Now only ids appearing on a spawning line count.
+
+### Where it stands
+
+```
+no spawns=7  partial=7  self-timed=3  timed=17
+```
+
+**`NO LIFETIME` is empty and `self-timed` is down to three**, which is small enough to read rather than
+trust. The counts shift between runs because the tool keeps changing — **the numbers are only comparable
+within one version of it**, which is worth saying since this log has quoted them across five.
+
+### The distinction that keeps deciding rows
+
+**Death cleanup is not a lifetime.** Seven rows have now turned on it — Yamennes' golems, the barricade's
+guards, the duke's gate, and these four. It bounds an add *after* the fight and does nothing *during* it,
+which is exactly backwards from what the add is for.
+
+### Still to do
+
+- **The 3 remaining `self-timed` rows**, now few enough to read individually.
+- The 7 `no spawns` rows, which belong to the unported-branch backlog.
+- **None of this batch is pinned** — walker routes still block a Celestius pin, and these four are effect
+  npcs in classes with no existing harness setup.
+- Yamennes' golem cadence; `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints,
+  blocking the silikor dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Full suite **2,087 passing**, 1 skipped — unchanged, because none of this batch is pinned.

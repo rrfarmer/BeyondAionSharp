@@ -18,13 +18,22 @@ public class VashartiAssassinAI : AggressiveNpcAI
     {
     }
 
+    /// <summary>
+    /// Retail <c>IDElemental_Smoke</c> stands for six seconds.
+    /// </summary>
+    /// <remarks>
+    /// <b>It was spawned and deleted on the following line</b>, so the smoke this assassin vanishes into
+    /// never appeared at all. That reads as a bounded spawn to any audit and to any reviewer; only
+    /// retail's own six seconds shows it was meant to be seen.
+    /// </remarks>
+    private const int SmokeLife = 6;
+
     protected override void HandleCreatureAggro(Creature creature)
     {
         if (isHome.CompareAndSet(true, false))
         {
             WorldPosition p = GetPosition();
-            Npc smoke = (Npc)Spawn(282465, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
-            smoke.GetController().Delete();
+            SpawnFor(282465, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading(), SmokeLife);
         }
         base.HandleCreatureAggro(creature);
     }

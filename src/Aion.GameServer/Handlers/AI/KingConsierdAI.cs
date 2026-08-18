@@ -31,6 +31,12 @@ public class KingConsierdAI : AggressiveNpcAI, HpPhases.PhaseHandler
         base.HandleDespawned();
     }
 
+    /// <summary>Retail <c>IDArena_Summon_Condor_55_An</c> stands ten minutes.</summary>
+    /// <remarks>
+    /// Despawned here on death and on going home, which bounds them after the fight and not during it.
+    /// </remarks>
+    private const int CondorLife = 600;
+
     protected override void HandleDied()
     {
         CancelTasks();
@@ -104,8 +110,8 @@ public class KingConsierdAI : AggressiveNpcAI, HpPhases.PhaseHandler
                 if (GetLifeStats().GetHpPercentage() <= 50)
                 {
                     WorldPosition p = GetPosition();
-                    Spawn(282378, p.GetX(), p.GetY(), p.GetZ(), unchecked((sbyte)p.GetHeading()));
-                    Spawn(282378, p.GetX(), p.GetY(), p.GetZ(), unchecked((sbyte)p.GetHeading()));
+                    SpawnFor(282378, p.GetX(), p.GetY(), p.GetZ(), unchecked((sbyte)p.GetHeading()), CondorLife);
+                    SpawnFor(282378, p.GetX(), p.GetY(), p.GetZ(), unchecked((sbyte)p.GetHeading()), CondorLife);
                 }
                 ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 17952, 29, GetTarget()).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 2000L);
                 return ValueTask.CompletedTask;
