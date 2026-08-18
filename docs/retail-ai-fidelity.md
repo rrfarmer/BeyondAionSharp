@@ -18398,3 +18398,49 @@ Worth listing together, since each cost a pass to find:
 ### Verification
 
 Tool only; no server code. Full suite **2,050 passing**, 1 skipped.
+
+## Kingspin's windows open once, which reframes the whole timer thread
+
+The last behavioural `flag` row on a repeating handler: `OnMessage#25`, guarded in retail with
+`set_flag_var`. Applied.
+
+**The first web to catch somebody opens the accelerator windows, and no later cry re-opens them.**
+
+### Which means the timer thread was arguing about a case retail does not reach
+
+Six entries went into whether a repeated arm should restart a pending timer, ignore it, or take the
+shorter. The whole question **only arises if the arming repeats** — and on this branch, the one that
+prompted it, **retail says it does not.**
+
+The measurements stand: sustained cries starved his clock under restart, did nothing under ignore, and
+accelerated under take-the-shorter. **But sustained cries were never retail's mechanic here.** One cry, one
+arming, one shortened cycle per window.
+
+That does not undo the operator change — it was justified by Chunapa, whose opener genuinely repeats via a
+heartbeat, and by the idiom count across 13,049 timers. **It does mean the encounter that drove six entries
+of engine argument was the wrong witness**, and a four-character guard on its calling branch would have
+said so.
+
+### And it is unpinned
+
+Removing the flag again leaves the accelerator pin green: it asserts "with the cries, not worse than
+without", which holds whether the windows open once or every time. **A pin that distinguishes them has to
+count arms, not throws** — the difference is one shortened cycle against three, and the throw counts are
+close enough that a watch cannot separate them reliably.
+
+`TargetPickOverride` and `RollOverride` exist because two earlier threads needed exactly this kind of
+visibility. **A timer seam is the third**, and it would settle this row and Masto's cadence together.
+
+### Still to do
+
+- **A timer seam** — count arms and fires per slot — then pin this flag and Masto's bands.
+- Padmarashka's two `unset_flag_var` rows; Middle Boss Fire's timer flag.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One guard applied, mutation run and **not caught**. Full suite **2,050 passing**, 1 skipped.

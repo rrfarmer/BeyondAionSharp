@@ -58,6 +58,9 @@ public class KingspinAI : PatternAi
     /// <summary>Retail's delay on both timers armed by that call.</summary>
     private const int WindowArmMillis = 5_000;
 
+    /// <summary>Retail's <c>FLAGVARI_BETA_1</c>: the windows open once.</summary>
+    private const int WindowsOpened = 4;
+
     /// <summary>The throw clock inside a window, against the eighteen seconds outside one.</summary>
     private const int AcceleratedThrowMillis = 8_000;
 
@@ -148,7 +151,12 @@ public class KingspinAI : PatternAi
         // A web caught somebody and said so. Retail writes this twice, at priorities 25 and 24, arming
         // one timer each; one branch arming both is the same thing on a first-match-wins list.
         OnMessage = Of(
-            Branch(25, "a web caught somebody", [When.Message(WebCaught)],
+            // ONCE PER FIGHT, not once per cry. Retail guards this with set_flag_var, so the first web
+            // to catch somebody opens the accelerator windows and the rest do not re-open them. Without
+            // the flag every cry re-armed timers 3 and 4, which is what made the whole "does a cry
+            // shorten or starve his clock" thread so hard to read -- the question only arises if the
+            // arming repeats, and retail says it does not.
+            Branch(25, "a web caught somebody", [When.Message(WebCaught), When.FirstTime(WindowsOpened)],
                 Do.ArmTimer(3, WindowArmMillis),
                 Do.ArmTimer(4, WindowArmMillis))),
     };
