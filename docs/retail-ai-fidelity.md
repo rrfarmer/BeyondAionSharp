@@ -17577,3 +17577,62 @@ the original claim needed.**
 ### Verification
 
 One pin rewritten at retail's own rate. Full suite **2,050 passing**, 1 skipped.
+
+## Chunapa's opener fires once, and take-the-shorter may have been right
+
+The previous entry proposed distinguishing phase openers from re-arms. Reading Chunapa's timer-0 branches
+first, because the hypothesis rests on how his opener behaves:
+
+| priority | guard | arms |
+|---|---|---|
+| 40 | `is_hp_lower_than 75` | timer **1** at 3s |
+| 10 | — | timer **0** at 3s |
+
+**Branch 40 does not re-arm timer 0.** Branches are first-match-wins, so the tick that opens phase two is
+the last tick the heartbeat ever gets: **the opener fires exactly once and the three-second arm happens
+once.** Same shape as the kaidan soothsayer's cry killing its own clock, found much earlier in this log.
+
+**Our translation is faithful** — `GeneralChunapaAI` branch 40 arms timer 1 and nothing else.
+
+### Which undermines the reason take-the-shorter was rejected
+
+That semantic was rejected because Chunapa burrowed **four times where two belong**. But his opener cannot
+drag the burrow forward repeatedly; it only fires once. **A single three-second arm cannot produce a
+runaway** — it can only move the first burrow earlier, and an earlier first burrow fits one more into a
+fixed watch.
+
+So the four is most likely **a timing shift, not a defect**, and the pin's expectation of two was
+calibrated against restart semantics. **Take-the-shorter was rejected on a misreading of its own failure.**
+
+**Not verified.** Confirming it means re-running that variant and reading Chunapa's burrow *times* rather
+than his count, which is a measurement this pass had no room for. It is the first thing to do.
+
+### Where the thread actually stands
+
+| semantic | Kingspin at retail's rate | Chunapa |
+|---|---|---|
+| restart pending (today) | 12 against 16 — slows him | correct, or correct-looking |
+| ignore pending | no effect | broken |
+| take the shorter | **works** | **4 burrows — possibly just earlier ones** |
+
+**The phase-opener hypothesis is no longer needed** if that holds: one global rule fits both, and the
+Chunapa pin is what changes.
+
+### The rule
+
+**A rejected option deserves the same scrutiny as an accepted one.** Take-the-shorter was discarded two
+entries ago on a count that nobody read twice, and the reading that would have saved it — does the opener
+fire once? — was the same command this entry ran to test a different idea entirely.
+
+### Still to do
+
+- **Re-run take-the-shorter and read Chunapa's burrow times**, not his count.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
