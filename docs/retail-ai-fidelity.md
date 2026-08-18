@@ -12570,3 +12570,51 @@ Three neighbours on the `on_spelled` list reduce to nothing once their broadcast
 ### Verification
 
 Full suite **2,108 passing** and 1 skipped; six pins; **six mutations, all caught**.
+
+## The marked drakes and the drakies that run from everybody
+
+Fourth row off the `on_spelled` seam, and the first where the mechanic is a **pair**: neither half is
+anything on its own.
+
+* The **drake** is an ordinary monster until half health, when it calls once at twelve metres naming
+  whoever it is fighting.
+* The **drakies** around it run from any player they see, for three seconds, while idle or walking a
+  route — and answer that call by committing to the player it names.
+
+**The call is what turns a field of fleeing hatchlings into a fight.** A player who pulls a drake
+without noticing the drakies finds that out at half health, and until now the drakies on this server
+neither fled nor came.
+
+Eight npcs across three live pairs: longhorn, naduka and blackhorn.
+
+### `Do.Flee` was a no-op for exactly the creature flee exists for
+
+`Flee` reads `CurrentTarget`. A drakie that has never fought does not have one, so the target-based
+flee did nothing at all for a skittish npc — the case the action exists to serve. Retail's is
+`flee_from from=OBJI_SEEN`, and `Do.FleeFromSeen` is that: run from what came into view, not from what
+you are fighting.
+
+**Found by writing the pin, which is the argument for writing it.** The class looked right and read
+right; the first run of the flee pin is what showed the action underneath it was inert.
+
+### And the pin itself could not be kept
+
+The flee half is **built and unpinned**. `Flee` computes a destination and hands it to the move
+controller, and this harness advances a virtual clock without simulating movement — so the drakie's
+position is unchanged however long the clock runs, whether the branch fired or not. A pin asserting it
+moved would fail for correct code; one asserting it had not would pass for broken code. **Neither
+direction is a test**, so it is a skip carrying the reason.
+
+That is the second unpinnable-by-construction half this log has recorded, after Queen Serusia's
+`IsDead` guard, and both were reported rather than covered.
+
+### The fourth sighting of the same asymmetry
+
+Both provocations share one flag, the melee branch has no `is_enemy` guard and the caster branch does.
+Four encounters in four entries now — stoffu, lich, lobsek, drake. It is the idiom, and worth expecting
+rather than re-deriving.
+
+### Verification
+
+Full suite **2,113 passing** and 2 skipped; five pins and one documented skip; **seven mutations, all
+caught**.

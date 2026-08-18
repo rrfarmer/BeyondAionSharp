@@ -428,6 +428,9 @@ public static class Do
     /// </remarks>
     public static PatternAction Flee(int seconds) => ai => ai.Flee(seconds);
 
+    /// <summary><c>flee_from from=OBJI_SEEN</c> — run from what just came into view.</summary>
+    public static PatternAction FleeFromSeen(int seconds) => ai => ai.FleeFromSeen(seconds);
+
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
 

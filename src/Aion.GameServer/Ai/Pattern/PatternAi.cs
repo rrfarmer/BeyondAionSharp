@@ -824,9 +824,22 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// move controller is simply told to stop when the clock runs out.
     /// </para>
     /// </remarks>
-    public void Flee(int seconds)
+    public void Flee(int seconds) => FleeFrom(seconds, CurrentTarget);
+
+    /// <summary>
+    /// <c>flee_from from=OBJI_SEEN</c> — run from what just came into view rather than from whatever
+    /// this NPC is fighting.
+    /// </summary>
+    /// <remarks>
+    /// The distinction is the whole of a skittish npc. A drakie that has never fought has no target, so
+    /// the target-based flee is a no-op for exactly the creature the action exists for — which is what
+    /// the first run of the drake-mark pins measured.
+    /// </remarks>
+    public void FleeFromSeen(int seconds) => FleeFrom(seconds, SeenCreature);
+
+    private void FleeFrom(int seconds, Creature? fleeFrom)
     {
-        if (seconds <= 0 || IsDead() || CurrentTarget is not Creature from)
+        if (seconds <= 0 || IsDead() || fleeFrom is not Creature from)
             return;
 
         lock (gate)
