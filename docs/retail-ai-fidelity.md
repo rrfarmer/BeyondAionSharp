@@ -16021,3 +16021,59 @@ audit has not reached: a missing rung is invisible until the rung above it stops
 ### Verification
 
 Two pins added, both measured rather than assumed. Full suite **2,049 passing**, 1 skipped.
+
+## Padmarashka's middle band: the timers were never ported
+
+The previous entry left "whatever arms that branch's timer" as the next question. It is answered, and the
+answer is that **the whole middle chain is missing, not one arming**.
+
+`DF4_Dramata` runs all three bands off one polling timer:
+
+| branch | health | waits on | arms |
+|---|---|---|---|
+| p20 | 61–90 | timer 0 | 0 (5s), **15** (30s), **16** (120s), **17** (90s) |
+| p40 | 31–60 | timer 0 | 0 (5s), **10** (180s), **11** (30s), **12** (60s) |
+| p60 | 11–30 | timer 0 | 0 (5s), **5** (25s), **6** (45s), **9** (120s), 26 (20s) |
+
+Timer 0 is armed on entering the fight and re-armed by every band branch, so the ladder polls every five
+seconds and the matching band arms its own set. **Each band's actual content lives on the timers it arms.**
+
+Ours arms and waits on `0, 2, 3, 6, 7, 17`. So:
+
+- the **top** band works because 17 is ported — that is its ninety-second rockfall;
+- the **deep** band works because 6 is ported — its forty-five-second one, which with the five-second
+  poll is the fifty seconds measured;
+- the **middle** band arms nothing we listen for and listens for nothing we arm. **10, 11 and 12 do not
+  exist in this port at all.**
+
+So a raid between thirty-one and sixty percent is not missing a rockfall. It is missing everything that
+band does — three timers' worth of content, of which the rockfall is one.
+
+### What building it needs
+
+The three branches that wait on 10, 11 and 12 read off `DF4_Dramata`, and whatever they carry translated
+or recorded as blocked. **That is a genuine encounter-sized piece of work**, not the one-line arming the
+previous entry expected, which is why it is being handed over rather than started at the end of a pass.
+
+`TheMiddleBandIsSilentAndShouldNotBe` still asserts the zero, and now names the three timers.
+
+### The lesson, stated once
+
+**"The branch is there and its guard is right, so the defect is in the arming"** was a reasonable
+inference and it was wrong. The branch was there because the *ladder step* had been ported; everything the
+step exists to start had not. A ported branch is not evidence that what it arms is ported, and this log
+has three ladders in that shape — Padmarashka's middle band, Kingspin's, the silikor guard's.
+
+### Still to do
+
+- **Padmarashka's timers 10, 11 and 12**, now a named piece of work.
+- The five coffin `message` rows, blocked on the scan following local condition helpers.
+- The 14 remaining ready rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders — **and now, explicitly, whatever their rungs arm**.
+- The 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.

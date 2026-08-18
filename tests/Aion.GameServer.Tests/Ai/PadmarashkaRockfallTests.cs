@@ -335,9 +335,13 @@ public sealed class PadmarashkaRockfallTests
 	/// produce no rocks.
 	/// </summary>
 	/// <remarks>
+	/// <b>Retail's middle band arms timers 10, 11 and 12, and none of the three exists in this port</b> —
+	/// so the band is not missing a rockfall, it is missing everything it does.
+	/// <para>
 	/// <b>The health guards did not cause this, they revealed it.</b> With no bands every evaluation went
 	/// to the highest-priority branch, so the middle chain never ran then either — it simply could not be
-	/// seen. Whatever arms its timer is missing or is armed with a delay longer than any fight.
+	/// seen.
+	/// </para>
 	/// <para>
 	/// Asserted as zero deliberately, so it turns red the day the arming is found. See
 	/// docs/retail-ai-fidelity.md.
