@@ -12189,3 +12189,56 @@ swinging, exactly as the corask clodworms read. Pinned as read.
 ### Verification
 
 Full suite **2,096 passing** and 1 skipped; six pins; **seven mutations, six caught**.
+
+## Message numbers are not all encounter-scoped, and three investigations paid to learn it
+
+This log has assumed throughout that a `broadcast_message` number belongs to one encounter. Mostly it
+does. The exceptions have cost a wasted investigation each:
+
+* **`1007`** — the mumu farmers' call for help. Its only listener patterns are one bound to **zero**
+  npcs and one bound to five that do not stand near mumus.
+* **`10018`** — a pet's death cry. Its listeners are two `Reward` patterns and Kistenian, all other
+  encounters.
+* **`10000`** — the surkana feeder's five HP-banded broadcasts, found this session. Every listener is a
+  `BIDF5_U01_Runaway_*` pattern from a different instance.
+* **`5001`, `6001`, `10011`** — low numbers used by doors, Dramata guards and unrelated bosses, which
+  the Bakarma commit had to reason about before binding classes to them.
+
+Three wasted investigations and one near-miss is enough to make it a check rather than a habit.
+`audit_generic_messages.py` counts **how many pattern files each number appears in**: the dump is split
+by area and designer, so a number confined to one file is confined to one encounter and a number spread
+across a dozen is a shared vocabulary meaning "somebody hit me" or "come here".
+
+**1,329 distinct numbers; 77 span four files or more.** The head of the list is exactly what one would
+hope — `1001` in 34 files, `1002` in 21, `1003` in 15, `10` in 13 — small numbers that are plainly a
+common language.
+
+### The tool is a prompt, and the false alarm is worth naming
+
+**`6981` spans five files and was built successfully two entries ago.** The Beshmundir decoy-lich call
+looked shared and was not: every sender turned out to be the same mechanic, which reading them showed.
+The list says *read the senders before binding a class to this*; it does not say the number is unusable,
+and a tool that had been trusted as a verdict would have talked this session out of a correct build.
+
+The threshold is three files rather than four because `1007` and `10011` — two of the four cases that
+prompted it — span exactly three. That choice buys the two cases and costs more false alarms, which is
+the right trade for something that only ever says "go and read".
+
+### What it says about the stranded-listener backlog
+
+Cross-referenced against `audit_message_senders.py`: of the **47** messages that 75 listener patterns
+wait on, only **three** are on the shared list — `11103`, `11111`, `21300`. **The stranded backlog is
+almost entirely real.** That is the useful negative result: the remaining gaps are genuine missing
+senders rather than an artefact of numbers being reused, so the backlog can be worked as written.
+
+### The surkana feeder, recorded rather than built
+
+282291, live, `general`, five HP-banded broadcasts on `on_attacked` and five more on `on_spelled` —
+the top skill-free row of the `on_spelled` seam. Left alone: its `10000` has no listener in its own
+fight, and building a sender whose call nothing hears adds a row to the stranded backlog instead of
+removing one.
+
+### Verification
+
+Tooling and documentation only; no behaviour changed. Full suite **2,096 passing** and 1 skipped,
+unchanged.
