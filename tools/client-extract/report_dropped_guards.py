@@ -1,4 +1,23 @@
-"""What each dropped guard actually says in retail, and whether it is safe to apply.
+"""What each dropped guard actually says in retail -- READ THE FILE BEFORE BELIEVING ANY ROW.
+
+**This report has produced thirteen rows and no true finding across seven readings.** Every row examined
+turned out to be a guard already applied in a form the parser cannot see, a flag nothing reads, or a
+decision recorded elsewhere. The six ways it has been wrong:
+
+  1. a prefix collision classified `When.MessageParamIsEnemy` as a message guard (8 rows),
+  2. a vocabulary that lagged the engine missed `When.SenderWithin` (2 rows),
+  3. a class holding two `AiPattern` tables hid the second (1 row),
+  4. a local condition helper -- the coffin's `Hears(slot)` -- is invisible to a `When.` name search
+     (5 rows),
+  5. branch priorities that do not line up between our class and retail (the MISALIGNED column),
+  6. one AI class serving npcs whose patterns disagree (the MIXED column).
+
+**It is kept for 5 and 6**, which no other tool checks and which caught a real misalignment once. It is
+NOT a work queue: the port expresses guards in at least four ways and this asks about one of them.
+
+Original purpose follows.
+
+What each dropped guard actually says in retail, and whether it is safe to apply.
 
 `audit_handler_guards.py` says *that* a guard is missing. Acting on it needs two more things, and the
 `chance` pass learned both the hard way:

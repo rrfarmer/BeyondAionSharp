@@ -22475,3 +22475,51 @@ extracted yet".
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,117 passing**, 1 skipped.
+
+## Disarming the guard report instead of deleting it, and refusing the Modor rewrite
+
+Two items this pass, and both ended in **not** doing the thing the queue asked for.
+
+### Modor's trigger: looked again, still refused
+
+The queue carried "Modor's trigger, if the difference is judged worth closing". Reading the class properly
+changes the description: ours is not the same mechanic under a different trigger.
+
+**Ours is a cast-scoped orb** — spawned when the real Modor starts skill 21177, and **explicitly cancelled
+and deleted** by `CancelVengefulOrb`. **Retail's is a combat-scoped marker set** — three stacked markers
+activated by a spawn condition when the first clone engages, with `despawnAtOther="true"` doing the
+cleanup.
+
+The previous entry called them "same marker, same place, different trigger". **Same npc id and place; not
+the same lifecycle.** Rewriting would replace a coherent, working, cancel-managed mechanic with a
+half-modelled one, on a spawn-condition system this port does not otherwise implement. **Refused again,
+and the description corrected.**
+
+### The guard report: disarmed, not deleted
+
+This log recommended deleting it twice — thirteen rows, no true finding, seven readings. **Deleting it
+would also delete the only check for two things nothing else does**: branch priorities that do not line up
+between our class and retail (`MISALIGNED`), and one AI class serving npcs whose patterns disagree
+(`MIXED`). The first caught a real misalignment once.
+
+So its docstring now opens by saying it has produced no true finding, lists **the six distinct ways it has
+been wrong**, and states plainly that it is kept for the misalignment and mixed columns and is **not a work
+queue**. The next reader meets that before the rows.
+
+**A tool that is right about two things and wrong about four should say so in itself**, not in a log entry
+hundreds of lines away that the reader of the tool will never see.
+
+### And the row count moved again
+
+Twelve ready now, not thirteen — the merged binding shifted it a second time. **The number has never once
+corresponded to work**, which is the point the docstring now makes at the top.
+
+### Still to do
+
+- Convert `TiamatDragonAI` to a pattern table, for the rush cadence — the last item on that encounter.
+- The 12,000 unbound templates; the empyrean lords' skill indices; the `drakanmedic` harness question.
+- `sematariux` and `king_consierd`, unpinnable: retail's map data carries no npc spawns.
+
+### Verification
+
+Tool docstring only, no server code. The report still runs. Full suite **2,117 passing**, 1 skipped.
