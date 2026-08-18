@@ -169,8 +169,14 @@ public sealed class ArchmagusSayahumAiTests
 		TargetsOver(harness, boss, raid, 20);
 
 		// Healed to full: retail's own ladder has no way back, because timer 0 is no longer armed.
+		//
+		// Six hundred seconds rather than a hundred and twenty. The switch picks a random attacker, so
+		// "more than one distinct player" is a probabilistic claim, and at four players and a twelve-
+		// second beat the old window could land on one player throughout -- which it did, once, in one
+		// full-suite run. Widening the window is the same fix this log recorded for the guard
+		// reinforcement flake: a pin's setup must not be able to fail.
 		BossAiHarness.SetExactPercent(boss, 100);
-		Assert.True(TargetsOver(harness, boss, raid, 120).Count > 1,
+		Assert.True(TargetsOver(harness, boss, raid, 600).Count > 1,
 			"the last phase stopped when his health went back up");
 	}
 }

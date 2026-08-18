@@ -11143,3 +11143,71 @@ Only adds **our own summon tables** name. An add a retail pattern summons and ou
 `audit_missing_adds.py`'s question, and an npc nothing anywhere summons is
 `audit_unnamed_templates.py`'s. Three tools, three different sentences, and the crater correction is
 what taught this log to keep them apart.
+
+## Commander Bakarma promotes his legionaries twice, and ours never grew up
+
+The first row worked off `audit_mute_adds.py`, and the tool earned itself immediately: Bakarma is the
+boss whose liveness only the C# side knows about — `DraupnirCaveInstance` places him, the spawn xml does
+not — so a report built on the xml alone would have skipped him.
+
+His two legionary ranks arrived from a summon table that was already right, and then stood there being
+the same legionary all fight. Retail promotes them, on his own health:
+
+| | |
+|---|---|
+| between **26% and 50%** | `5001` — every legionary within fifty metres becomes a **vanguard** where it stands |
+| below **25%** | `5002` — every vanguard starts a **six-second** countdown and becomes a **relic guardian** |
+
+**The ladder is a promotion, not a wave.** Neither call summons anything new: each add replaces itself
+on the spot it occupies, so the count does not grow and the fight does. A raid that leaves adds alive
+through a band is fighting something else by the end of it — and this server has been letting it.
+
+### The asymmetry is the mechanic
+
+**The first rung is instant and the second takes six seconds.** A class that made both instant would be
+simpler, and would throw away the only window in the ladder a raid can act inside: kill a vanguard
+inside its countdown and no relic guardian appears. Both halves are pinned, the second one from both
+sides.
+
+### Both steps are HP-anchored in retail, which is why they could be built at all
+
+Retail fires them from a battle-timer branch that also casts four skills, and this log has twice now
+had to leave a mechanic out for want of an anchor — the twins' crater, whose `22710` hangs off a shield
+branch we do not have. Here the guards are `is_hp_in_boundary 26..50` and `is_hp_lower_than 25`, each
+with a once-only flag var, which is exactly what `HpPhases` already is. **When* in the band is a timer
+we cannot reproduce; *which* band is data.**
+
+### Two things deliberately left out, and both are countable
+
+**Message `6001`**, retail's "everyone onto my target" call. He sends it on a repeating timer whose
+period changes with the band — thirty seconds above twenty-five percent, forty below — from branches
+that are otherwise all skill indices, and the ladder has gaps at 80–100 and 50–56 that only the timer
+chain produces. A plain beat would fire in those gaps. **It is absent from the classes rather than
+approximated, deliberately**, so that `audit_message_senders.py` keeps listing it as work: a class that
+merely mentions a number counts as a sender to that audit, so building a half-right `6001` would have
+hidden it.
+
+**`on_see_friend_killed_by_user`**, which all three ladder patterns carry and which is the raid's answer
+to the ladder — kill one in front of the others and the rest leave. **Our AI event set has no
+equivalent event at all.** It is not a skill index and not an anchor; it is a missing event, and it is
+worth a number: **129 retail patterns carry that handler, with 377 npcs bound to them.** Building it
+means adding the event to the AI layer, and the alternative — a death broadcast on an invented message
+number, or a hand-picked "sight" radius — would put a made-up constant into the retail number space.
+Left out on those grounds.
+
+### A flake caught in passing, and hardened
+
+`ArchmagusSayahumAiTests.TheLadderStopsBelowFortyFive` failed once in one full-suite run and passed in
+the two after it and in five runs on its own. Its claim — more than one distinct target over the
+window — is **probabilistic**: the switch picks a random attacker, and with four players on a
+twelve-second beat a hundred and twenty seconds can land on one player throughout. The window is now six
+hundred seconds.
+
+Same fix as the guard-reinforcement flake several entries back, and the same rule: **a pin's setup must
+not be able to fail.** Recorded rather than quietly widened, because a pin that fails one run in three
+is worse than no pin — it teaches the next session to re-run instead of read.
+
+### Verification
+
+Full suite **2,031 passing** and 1 skipped; six new pins, one hardened; **eleven mutations, all
+caught**. Mute adds 60 rows / 46 live → **58 / 44**.
