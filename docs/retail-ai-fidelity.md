@@ -18983,3 +18983,75 @@ later neutral spell with a `do_nothing` twin so it cannot fall through to the br
 ### Verification
 
 Tool only, no server code. Self-test passes in both directions. Full suite **2,054 passing**, 1 skipped.
+
+## The silikor's dismissal, and the world flag that blocks its other half
+
+The twin audit surfaced one concrete class: our silikor has **no `on_spelled` handler at all**. Reading
+`ND2_WhG` for it turned up a whole mechanic rather than a branch.
+
+### What the mechanic is
+
+The Theobomos Lab hall holds a **sealed akaimum** that walks a patrol and stands fallen silikor guards
+back up — already ported, and the reason clearing the hall means killing the akaimum rather than the
+guards. Retail can also **send it away**:
+
+```
+ND2_WhG on_spelled
+  [p100] ? is_race from=OBJI_CASTER race_type=neut
+         ? unset_world_flag_var FLAGVARI_ALPHA_2
+         > broadcast_message 6621 range=30 param_obj=OBJI_SELF
+  [p 99] ? is_race from=OBJI_CASTER race_type=neut
+         > do_nothing
+  [p 98] ...the combat opener...
+
+ND2_WhG3 on_message
+  [p  5] ? is_message 6621
+         > say_to_all ..._AIPattern_6
+         > despawn SPAWN_ID_1  > despawn SPAWN_ID_2  > despawn_self
+```
+
+**A neutral-race caster spelling the silikor makes the akaimum say its line, drop both guards and leave.**
+None of it was here.
+
+### The half that is now built
+
+The akaimum's `6621` branch, **above** both re-placement branches, so an akaimum that stood a guard up a
+moment earlier still leaves with it. Pinned, and the pin fails with the branch removed.
+
+### The half that is blocked, and why it is not approximated
+
+The sending side needs `unset_world_flag_var` on `FLAGVARI_ALPHA_2` — and **the akaimum is what sets that
+flag**, when it re-places a guard. It is shared state between two npcs. This port's flags are per-npc, so
+there is no way to write it.
+
+**The tempting shortcut is `When.FirstTime`**, which would fire the dismissal on the first neutral spell
+ever. That is not the same mechanic: retail requires a guard to have fallen and been re-placed *first*,
+so the dismissal is a reward for having fought the hall, and `FirstTime` would hand it out at the door.
+**Not built**, and recorded here instead — the same call as the ratman farmers' `is_skill_count_left`.
+
+**This is the second mechanic in this log blocked on missing engine state**, and the first one where the
+missing state is a *shared* flag rather than a missing query. Worth naming as an engine gap in its own
+right: `set_world_flag_var` / `unset_world_flag_var` / `is_world_flag_var` appear across the pattern data
+and this port implements none of them.
+
+### A binding check that came to nothing, usefully
+
+Two npcs looked mis-bound — `214713` (a roamer on `ND2_WhG3`) and `280970` (a silikor on `ND2_WhG`), both
+carrying the generic `aggressive` AI. **Neither has a spawn anywhere in our data**, so repointing them
+would change nothing observable, and the akaimum's guard posts are absolute coordinates in the Lab that a
+differently-placed npc would spawn guards into. **Left alone deliberately** — recorded so the next pass
+does not rediscover them as a finding.
+
+### Still to do
+
+- **World flags in the pattern engine**, which unblocks the silikor's sending half and an unknown number
+  of others.
+- The 38-class unported-flag-branch list from the twin audit.
+- A twin check that tolerates near-misses.
+- The four Ophidan controllers, blocked on npc templates for 856057-856060.
+- Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the remaining
+  ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The new pin fails with its branch removed. Full suite **2,055 passing**, 1 skipped.

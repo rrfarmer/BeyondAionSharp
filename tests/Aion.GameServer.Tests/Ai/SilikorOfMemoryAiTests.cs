@@ -246,6 +246,40 @@ public sealed class SilikorOfMemoryAiTests
 	}
 
 	/// <summary>
+	/// <b>And 6621 sends it away, guards and all.</b> Retail's dismissal branch sits above both
+	/// re-placement branches, so an akaimum that has just stood a guard back up still leaves with it.
+	/// </summary>
+	/// <remarks>
+	/// <b>Nothing in this port sends 6621 yet.</b> Retail sends it from the silikor's <c>on_spelled</c>,
+	/// behind a neutral-race caster and a consumed <i>world</i> flag that this akaimum sets when it
+	/// re-places a guard — shared state between two npcs, which our per-npc flags cannot express. The
+	/// branch is pinned anyway: it is unambiguous on its own, and it is the half that will be hard to
+	/// verify later once the sender exists.
+	/// </remarks>
+	[Fact]
+	public void SixSixTwoOneSendsTheAkaimumAndItsGuardsAway()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc akaimum = harness.Spawn(Akaimum, 392f, 727f, 188f);
+		Npc melee = harness.Spawn(MeleeGuard, 377f, 762f, 189f);
+		BossAiHarness.MakeMutuallyKnown(akaimum, melee);
+
+		// Kill and re-place a guard first, so the despawn has one of the akaimum's own spawns to take.
+		melee.GetAi().OnGeneralEvent(AiEventType.Died);
+		Npc marker = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == MeleeMarker);
+		BossAiHarness.MakeMutuallyKnown(akaimum, marker);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.Equal(1, Count(harness, MeleeGuard));
+
+		((Aion.GameServer.Ai.INpcMessageListener)akaimum.GetAi())
+			.OnNpcMessage(akaimum, SealedAkaimumAI.Dismissed, null);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n == akaimum);
+		Assert.Equal(0, Count(harness, MeleeGuard));
+	}
+
+	/// <summary>
 	/// And it reads which guard fell from the marker, not from the message: a caster's marker brings
 	/// back a caster.
 	/// </summary>

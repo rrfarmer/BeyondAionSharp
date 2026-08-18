@@ -41,6 +41,21 @@ public class SealedAkaimumAI : PatternAi
     /// <summary>Retail's message: a guard has fallen, and where.</summary>
     public const int GuardDown = 6620;
 
+    /// <summary>
+    /// Retail <c>6621</c> — the silikor telling this akaimum to leave, and take its guards with it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Nothing sends it yet.</b> Retail sends it from the silikor <c>on_spelled</c>, guarded on a
+    /// neutral-race caster and on consuming the <i>world</i> flag this akaimum sets when it re-places a
+    /// guard. This port has no world flags, so the sending half cannot be built; the branch is written
+    /// because it is unambiguous on its own and because a listener without a sender is the harmless
+    /// half of the pair.
+    /// </remarks>
+    public const int Dismissed = 6621;
+
+    /// <summary>Retail <c>STR_CHAT_BIDLF2A_HolyServantSum_Roamer_50_n_AIPattern_6</c>.</summary>
+    private const int Farewell = 1500673;
+
     /// <summary>Retail's <c>range_as_meter</c> on the marker's shout.</summary>
     public const float Reach = 100f;
 
@@ -58,6 +73,15 @@ public class SealedAkaimumAI : PatternAi
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnMessage = Of(
+            // Retail p5, above both guard branches: the silikor dismisses this akaimum and everything it
+            // has standing. Its own spawn ids are used, so a guard re-placed a moment earlier goes with
+            // it rather than being left behind with nothing to guard.
+            Branch(5, "the silikor sends it away", [When.Message(Dismissed)],
+                Do.Say(Farewell),
+                Do.Despawn(CasterPlace),
+                Do.Despawn(MeleePlace),
+                Do.DespawnSelf()),
+
             Branch(2, "a melee guard fell", [When.Message(GuardDown), When.SenderIs(SilikorGuardMarkerAI.MeleeMarker)],
                 Do.SpawnAt(MeleeGuard, MeleePlace, 0, MeleePost)),
 
