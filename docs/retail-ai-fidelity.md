@@ -11927,3 +11927,50 @@ neither side of anything else. Left out rather than given an invented meaning.
 
 Full suite **2,075 passing** and 1 skipped; five new pins; **seven mutations, all caught**. Translatable
 288 patterns / 966 npcs → **287 / 962**, and the no-blocker list 10 → **9**.
+
+## Adma's zombie traps, and the coin flip that is a reprieve
+
+Fourth row off the no-blocker list. A trap in the Adma Stronghold corridor that has been a harmless
+prop since the instance was ported: it goes off when a player walks past, puts suspicious zombies on
+them three metres apart, and is gone in the same branch.
+
+### The unlucky roll gives you fewer zombies, not more
+
+Retail writes two branches, and the one carrying `test_probability 50` spawns **two** while the
+fall-through spawns **three**. Half the time the coin flip is a **reprieve**, not a punishment.
+
+Reading the priorities the other way round produces the opposite fight, and it is invisible unless both
+counts are pinned separately — which four mutations now do, one per direction of getting it wrong.
+
+### `on_see_user` is its own handler slot
+
+Retail keeps `on_see_user` and `on_see_npc` apart and the split is load-bearing: a trap that fired when
+the guard beside it wandered into view would be spent before anyone arrived. `AiPattern.OnSeeUser`
+exists as its own slot for that reason, and `HandleCreatureSee` routes on what was seen.
+
+New vocabulary alongside it: `When.Enemy` (`is_enemy who=OBJI_SEEN`) and `Do.SpawnOnSeen`
+(`spawn_on_target target_obj=OBJI_SEEN`).
+
+### Two guards this npc cannot falsify, reported as survivors
+
+The mutation sweep caught five of seven and **the two survivors are honest ones**:
+
+* **`is_enemy`** — a monster is hostile to every player, so no player exists that fails the guard.
+  Removing it changes nothing that can be observed with this trap.
+* **the user/npc split** — the natural pin has the trap see *another trap*, which `is_enemy` would
+  reject anyway, so a mutation routing NPCs through the user handler also survives. Catching it needs
+  an NPC hostile to the trap, and picking one on a guess is how a pin ends up measuring the tribe table
+  instead of the split.
+
+**A pin written to kill one of those mutations would have passed for the wrong reason**, which is the
+failure mode this log has now recorded four times. The pin that would have been written was deleted and
+the reasoning put in its remarks instead.
+
+**Rule: a guard that nothing available can falsify is reported, not covered.** The alternative —
+inventing a fixture until the mutation dies — buys a green sweep and loses the information that the
+guard is untested.
+
+### Verification
+
+Full suite **2,078 passing** and 1 skipped; three pins; **seven mutations, five caught and two
+unfalsifiable with this npc**. The no-blocker list 9 → **8**.

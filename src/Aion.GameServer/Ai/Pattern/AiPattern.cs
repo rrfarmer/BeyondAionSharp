@@ -122,6 +122,16 @@ public sealed class AiPattern
     public PatternBranch[] OnSeeNpc { get; init; } = None;
 
     /// <summary>
+    /// <c>on_see_user</c> — a <em>player</em> came into view.
+    /// </summary>
+    /// <remarks>
+    /// Retail keeps this separate from <see cref="OnSeeNpc"/> and the split matters: a trap that fires
+    /// on seeing a player must not fire on seeing the guard standing next to it. The seen player is
+    /// <see cref="PatternAi.SeenCreature"/> for the duration of the branch, as it is there.
+    /// </remarks>
+    public PatternBranch[] OnSeeUser { get; init; } = None;
+
+    /// <summary>
     /// <c>on_see_friend_killed_by_user</c> — one of its own went down in front of it, to a player.
     /// </summary>
     /// <remarks>
@@ -267,6 +277,12 @@ public static class When
     /// conditions in the 5.8 files carries a `race_type`; the summariser was dropping it. See
     /// docs/retail-ai-fidelity.md.
     /// </remarks>
+    /// <summary>
+    /// <c>is_enemy who=OBJI_SEEN</c> — the creature that just came into view is hostile to this NPC.
+    /// </summary>
+    public static PatternCondition Enemy
+        => ai => ai.SeenCreature is Creature seen && seen.IsEnemy(ai.GetOwner());
+
     public static PatternCondition SeenRace(params Race[] races)
         => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
 
@@ -438,6 +454,11 @@ public static class Do
         => ai => ai.TargetMessageParam();
 
     public static PatternAction HateMessageTarget(int hate) => ai => ai.HateMessageTarget(hate);
+
+    /// <summary><c>spawn_on_target target_obj=OBJI_SEEN</c>.</summary>
+    public static PatternAction SpawnOnSeen(int npcId, int spawnId, int count = 1, float range = 0f,
+        int liveSeconds = 0)
+        => ai => ai.SpawnOnSeen(npcId, spawnId, count, range, liveSeconds);
 
     /// <summary><c>switch_target target=OBJI_SEEN</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateSeen(int hate) => ai => ai.HateSeen(hate);

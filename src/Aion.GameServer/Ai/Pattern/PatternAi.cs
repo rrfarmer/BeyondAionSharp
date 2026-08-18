@@ -403,13 +403,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     protected override void HandleCreatureSee(Creature creature)
     {
         base.HandleCreatureSee(creature);
-        if (Pattern.OnSeeNpc.Length == 0)
+        // Retail splits the event by what was seen, and the split is load-bearing: a trap that fires on
+        // seeing a player must not fire on seeing the guard beside it.
+        PatternBranch[] branches = creature is Player ? Pattern.OnSeeUser : Pattern.OnSeeNpc;
+        if (branches.Length == 0)
             return;
 
         SeenCreature = creature;
         try
         {
-            Evaluate(Pattern.OnSeeNpc);
+            Evaluate(branches);
         }
         finally
         {
@@ -428,6 +431,13 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
         GetAggroList().AddHate(hitter, hate);
         GetOwner().SetTarget(hitter);
+    }
+
+    /// <summary><c>spawn_on_target target_obj=OBJI_SEEN</c> — on whoever just came into view.</summary>
+    public void SpawnOnSeen(int npcId, int spawnId, int count, float range, int liveSeconds)
+    {
+        if (SeenCreature is Creature seen && !seen.IsDead())
+            SpawnAround(seen.GetPosition(), npcId, spawnId, count, range, liveSeconds);
     }
 
     /// <summary>Puts hate on the NPC just seen and turns to face it.</summary>
