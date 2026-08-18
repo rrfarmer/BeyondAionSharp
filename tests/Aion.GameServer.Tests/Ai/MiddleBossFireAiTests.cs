@@ -54,6 +54,38 @@ public sealed class MiddleBossFireAiTests
 		return cast;
 	}
 
+	/// <summary>
+	/// <b>The top band keeps slashing after its first lap.</b> Retail writes that slash twice — one branch
+	/// flagged, carrying the reinforcement call, and an unflagged twin below it — and only the flagged one
+	/// was ported.
+	/// </summary>
+	/// <remarks>
+	/// The rotation is a ring: timer 0 arms 1, timer 1 arms 2, timer 2 arms 0. With the flagged branch
+	/// alone, the second lap's timer 1 matched nothing, so timer 2 was never armed and <b>the band went
+	/// silent for the rest of the fight</b>.
+	/// <para>
+	/// Counted as timer arms rather than as slashes, because a slash is queued through the skill engine and
+	/// a silent ring is indistinguishable from a boss that simply missed its cast. The ring's own laps are
+	/// the quantity that broke.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheTopBandKeepsItsRotationAfterTheFlagIsSpent()
+	{
+		var (harness, boss, player) = Engaged(Zubala);
+		using BossAiHarness _h = harness;
+		BossAiHarness.SetExactPercent(boss, 85);
+
+		// A lap is 6s then 9s then 9s — twenty-four seconds — after a five-second opening tick, so sixty
+		// seconds holds two full laps. Without the unflagged twin it holds exactly one and then stops,
+		// which is the difference this pin is measuring.
+		CastsOver(harness, boss, player, 60);
+
+		var pattern = (Aion.GameServer.Ai.Pattern.PatternAi)boss.GetAi();
+		Assert.True(pattern.TimerFireCount(2) >= 2,
+			$"the top band stalled after the flag was spent: timer 2 fired {pattern.TimerFireCount(2)} times");
+	}
+
 	[Theory]
 	[MemberData(nameof(Bosses))]
 	public void EachRobesItselfOnWaking(int npcId, int trait1, int trait2)

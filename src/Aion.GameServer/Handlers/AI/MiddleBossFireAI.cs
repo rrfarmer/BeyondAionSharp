@@ -96,6 +96,18 @@ public class MiddleBossFireAI : PatternAi
 
     private const int TopSlash = 12;
 
+    /// <summary>
+    /// Retail's <c>message_type 10300</c> — the reinforcement call, commented in the pattern data as
+    /// "지원병 스폰 브로드" (support-troop spawn broadcast).
+    /// </summary>
+    /// <remarks>
+    /// Four controller npcs answer it, each spawning one supporter once. <b>None of the four exists in
+    /// this port's data</b>, so the call currently reaches nobody; it is broadcast anyway so that the
+    /// controllers work the day they are added, and because this boss already despawns that supporter on
+    /// death and on leaving the fight.
+    /// </remarks>
+    public const int SupportCall = 10300;
+
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {
@@ -127,7 +139,12 @@ public class MiddleBossFireAI : PatternAi
                 Do.ArmTimer(1, 6000), Do.Custom(ai => Cast(ai, t => t.Trait1))),
             // Retail guards this with set_flag_var, so the top band's opening slash lands once and the
             // pair below it carries the rotation from there.
-            Branch(995, "71-100 slash", [When.Timer(1), When.HpBetween(71, 100), When.FirstTime(TopSlash)],
+            Branch(995, "71-100 slash, and the call for support", [When.Timer(1), When.HpBetween(71, 100), When.FirstTime(TopSlash)],
+                Do.ArmTimer(2, 9000), Do.Broadcast(SupportCall, Reach), Do.SkillOnTarget(SwiftEdge)),
+            // Retail writes the same step twice: p995 carries the flag and the call, p990 carries neither.
+            // Without this fallback the flag would end the top band's rotation on its second lap, because
+            // timer 1 would fire into a branch that no longer matches and nothing would re-arm timer 2.
+            Branch(990, "71-100 slash, every lap after the first", [When.Timer(1), When.HpBetween(71, 100)],
                 Do.ArmTimer(2, 9000), Do.SkillOnTarget(SwiftEdge)),
             Branch(980, "71-100 slash at random", [When.Timer(2), When.HpBetween(71, 100)],
                 Do.ArmTimer(0, 9000), Do.SkillOn(NpcSkillTargetAttribute.RANDOM, SwiftEdge)),
@@ -144,7 +161,8 @@ public class MiddleBossFireAI : PatternAi
             Branch(795, "0-40 trait 2", [When.Timer(0), When.HpBelow(40)],
                 Do.ArmTimer(1, 6000), Do.Custom(ai => Cast(ai, t => t.Trait2))),
             Branch(790, "0-40 slash twice", [When.Timer(1), When.HpBelow(40)],
-                Do.ArmTimer(2, 13000), Do.SkillOnTarget(SwiftEdge), Do.SkillOnTarget(SwiftEdge)),
+                Do.ArmTimer(2, 13000), Do.SkillOnTarget(SwiftEdge),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, SwiftEdge)),
             Branch(780, "0-40 disease", [When.Timer(2), When.HpBelow(40)],
                 Do.ArmTimer(0, 11500), Do.SkillOnTarget(BoostDeadlyVirulency)),
 

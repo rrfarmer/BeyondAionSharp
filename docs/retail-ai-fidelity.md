@@ -18833,3 +18833,86 @@ built three seams and used them for four pins.**
 ### Verification
 
 Reading only; the guard from the previous entry stands. Full suite **2,053 passing**, 1 skipped.
+
+## The Middle Boss Fire slash: the guard I shipped was breaking the fight
+
+The previous entry concluded that the invisible mutation was a coverage gap, and said the fix was a pin.
+**Writing that pin found something worse.** The guard itself was wrong.
+
+Retail writes the top band's slash **twice**:
+
+```
+[p995] ? btimer=1  ? hp 71~100  ! set_flag_var FLAGVARI_DELTA_4
+       > add_battle_timer 2 delay=9000
+       > broadcast_message 10300 range=50 param_obj=OBJI_SELF
+       > use_skill CUR_TARGET SKILLI_INDEX_2
+[p990] ? btimer=1  ? hp 71~100
+       > add_battle_timer 2 delay=9000
+       > use_skill CUR_TARGET SKILLI_INDEX_2
+```
+
+**p995 carries the flag and the call; p990 carries neither.** Only p995 was ported.
+
+The band's rotation is a ring — timer 0 arms 1, timer 1 arms 2, timer 2 arms 0. With the flagged branch
+alone, the second lap's timer 1 matched nothing, **timer 2 was never re-armed, and the top band went
+silent for the rest of the fight.** A boss above 71 percent stopped acting entirely after roughly twenty
+seconds.
+
+That is not a coverage gap. **It is a regression this log shipped**, in the commit that "applied retail's
+guard", and the previous entry looked straight at the branch and did not see it.
+
+### Why neither pass caught it
+
+The first pass read the guard and asked *"does this flag change behaviour?"* — it does. The second read
+the same branch to write a pin and asked the same question again. **Neither asked what happens on the
+next lap**, which is the only question that exposes it, and the answer needed nothing but the branch
+already on screen.
+
+The flag was applied because the summariser showed `set_flag_var` on p995. **It did not show that p990
+exists**, because the row was read one branch at a time. A `set_flag_var` on a branch is a strong hint
+that an unflagged twin sits below it — retail's idiom for "do this every time, plus something extra the
+first time" — and this log has now seen that idiom without recognising it.
+
+### Three repairs, all in one file
+
+- **The missing p990 twin.** The rotation survives its first lap again.
+- **The reinforcement call.** p995 broadcasts `10300`, commented in the pattern data as
+  "지원병 스폰 브로드" — support-troop spawn broadcast. It was dropped with the twin.
+- **The 0-40 double slash.** Retail's p790 is `use_skill CUR_TARGET` then
+  `use_skill_by_attacker_indicator RANDOM_ONE`; ours hit the current target twice. Found while reading the
+  same table.
+
+### The pin
+
+`TimerFireCount(2)` counts the ring's laps. A lap is 24 seconds, so a minute holds two — and **exactly one
+without the twin**, which is the discriminating number. Counted as laps rather than as slashes because a
+slash goes through the skill engine and a silent ring is indistinguishable from a missed cast.
+
+Its first threshold was wrong (three laps, from bad arithmetic) and it failed against correct code. **The
+failure was mine, not the fix's**, and the arithmetic was checked before the threshold was moved rather
+than after — a threshold loosened until green is how the last three flaky pins were made.
+
+### What is still missing
+
+**The four controllers that answer 10300.** `BIDF5_U01_Ctrl_02` through `_05` — npc ids **856057-856060**
+— each display `STR_MSG_IDLDF5_U_01_Supporter_Spawn_01` and spawn one
+`IDF5_U1_Vri_Support_Fi_65_Ae1` (231185) at a waypoint start, once, behind `FLAGVARI_ALPHA_1`.
+
+**None of the four exists in this port's npc data**, so the AI cannot be written and the call currently
+reaches nobody. It is broadcast anyway, so the controllers work the day they are added — and this boss
+already despawns 231185 on death and on leaving the fight, which is the despawn half of a spawn we never
+had.
+
+### Still to do
+
+- **The four Ophidan controllers**, blocked on npc templates for 856057-856060.
+- **Re-read every `set_flag_var` guard this log has applied, looking for an unflagged twin below it.**
+  This is the first one checked and it was wrong; the idiom is common enough that others are likely.
+- Mark Padmarashka's two rows as deliberately not applied.
+- The web's two skills; Padmarashka's timers 10 and 12; the five coffin rows; the remaining ready guard
+  rows; the mixed and misaligned rows; the older list.
+
+### Verification
+
+Build clean. The pin fails at 1 lap with the twin removed and passes at 2 with it. Full suite **2,054
+passing**, 1 skipped.
