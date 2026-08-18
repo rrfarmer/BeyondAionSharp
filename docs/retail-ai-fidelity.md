@@ -20059,3 +20059,73 @@ the largest remaining named gap.
 
 Build clean. The latch pin fails with the latch removed and the death pin with the cancellation removed.
 Full suite **2,094 passing**, 1 skipped.
+
+## "Waypoints" is not an engine gap either
+
+This log has called waypoints an engine gap for four passes, and last entry promoted it to **the largest
+remaining one**, blocking both Tiamat's rush wave and the silikor dismissal. **That framing is wrong, the
+same way `set_condition_spawn_variable` was.**
+
+### The engine already walks adds
+
+`CelestiusAI` does it today: `Spawn`, then `npc.GetSpawn().SetWalkerId(routeId)`, then
+`WalkManager.StartWalking`. Three lines, in a Java-parity class, shipping. **Nothing needs to be built in
+either AI layer.**
+
+### The gap is the route id
+
+Retail's patterns name their paths — `pathname=path_tiamatdrakan_1_1`. Our walker data holds **6,449
+route ids**, and the patterns reference **467 distinct pathnames**, of which **zero match by name.**
+
+Because the ids are mostly not names:
+
+```
+sha-like (40 hex chars) : 5,990
+<mapid>_<name>          :   120
+other                   :   339
+```
+
+**The routes are very likely present** — 6,449 of them — under identifiers that carry no pathname. What is
+missing is the mapping from retail's path name to our route id.
+
+### A hypothesis, tested and rejected
+
+The obvious guess is that the hash is derived from the path name. **Tested across 200 pathnames in three
+encodings (UTF-8, UTF-16LE, ASCII) and both casings: zero hits.** So the id is not a SHA-1 of the name,
+and the mapping cannot be reconstructed from what is in the repo.
+
+**Recording the negative result matters more than the guess would have.** Without it the next pass would
+try the same thing, and "waypoints are missing" would stay on the queue for another four.
+
+### What this actually blocks, and what it does not
+
+- **Blocked**: Tiamat's rush wave (~20 drakan on `path_tiamatdrakan_*`), the silikor akaimum's patrol
+  arrival that clears its `ALPHA_1`, and any other add retail sends along a named path.
+- **Not blocked**: anything that walks a route we can already name. There is **no walker file for Dragon
+  Lord's Refuge at all**, so that instance has no routes under any id.
+
+### Still to do
+
+- **Extract the client's path table**, which is the one artefact that carries both the path name and its
+  points. That is the whole of this gap, and it belongs with the `.pak` extraction work rather than with
+  the AI port.
+- **The hard Tiamat variant**, `IDTiamat_Hard_Tiamat_Dragon`, not yet read against `tiamat_dragon_hard`.
+- The four lords' staged spawns against our `empyrean_lord`.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence; `IDRaksha_Re_A_KJS`'s despawn
+  and `IDTP_Keeper1`'s spawn.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### A pattern worth naming
+
+**Two of this log's four "engine gaps" were not engine gaps.** Both were named from a single blocked
+encounter without checking whether the mechanism already existed elsewhere in the port — spawn variables
+had no reader, and waypoints had a working caller three files away. **The remaining two —
+`is_skill_count_left` and world flags, the latter now built — were both verified against the engine before
+being named.** The difference is whether the claim was checked or inferred.
+
+### Verification
+
+**Scoping only, no code.** Full suite unchanged at **2,094 passing**, 1 skipped.
