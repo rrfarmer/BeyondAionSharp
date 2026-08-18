@@ -18633,3 +18633,64 @@ the data implies at scale before changing anything.
 ### Verification
 
 No code changed. Full suite **2,053 passing**, 1 skipped.
+
+## Flag lifetime: the question is real and it affects nine branches
+
+The previous entry called flag lifetime across a reset a bigger question than the timer operator, on the
+grounds that it governs every `FirstTime` and `Consuming` in the port. **Counted, and it does not.**
+
+Across the whole 5.8 data, **nine** flags are set in `on_wake_up` and consumed elsewhere:
+
+| consumed in | count |
+|---|---|
+| `on_battle_timer` | 5 |
+| `on_enter_attack_state` | 2 |
+| `on_idle_timer` | 1 |
+| `on_message` | 1 |
+
+**That is the entire population of branches whose behaviour depends on whether a flag survives a reset.**
+Every other `FirstTime` and `Consuming` is set and consumed inside one fight, where our reset-on-home and
+any other reading agree.
+
+**And most of the nine cannot tell the difference either.** `IDAbRe_Core_NamedB`, `IDEternity_02_Snake_
+Phase_Two_Ctrl_01`, `IDInfinity_Named_40_Ctrl` are instance controllers — spawned once, never sent home,
+never reset. The question simply does not arise for them.
+
+**`DF4_Dramata` is the outlier**: a field boss with this shape, and field bosses reset constantly.
+
+### So the question shrinks
+
+Not "flag lifetime governs the port" but: **one world boss has a heartbeat that arms once per spawn, and
+this port would make her inert after her first reset if the guard were applied faithfully.**
+
+That is a much smaller problem, and it has a much smaller answer: **either she is genuinely meant to be
+armed once per spawn** — in which case retail's own reset behaviour matters and can be settled by finding
+whether her `on_wake_up` re-runs — **or the port should keep the branch unguarded**, which is what it does
+today and which fails open.
+
+**Today's behaviour is the safe reading**, and the row should be marked as deliberately not applied rather
+than left in the report as pending work.
+
+### The general lesson
+
+**A question that "governs everything" is worth counting before it is worth answering.** The previous
+entry escalated flag lifetime to a port-wide concern from a single row; nine branches share the shape and
+eight of them cannot observe it. **The count took one command and would have been worth running before the
+escalation, not after.**
+
+That is the same shape as the starvation scan, which promised thirty repairs and delivered none once the
+guards were read — twice now, an escalation has outrun its evidence by exactly one measurement.
+
+### Still to do
+
+- **Mark Padmarashka's two rows as deliberately not applied** in the report, with the reason.
+- Middle Boss Fire's `set_flag_var` — fails open, so apply and mutate.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Measurement only; no code changed. Full suite **2,053 passing**, 1 skipped.
