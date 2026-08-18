@@ -135,4 +135,66 @@ public sealed class FortressGuardCallAiTests
 		Assert.Equal(23200, FortressGuardCallAI.ThisOne);
 		Assert.Equal(25f, FortressGuardCallAI.CallReach);
 	}
+
+	// The Light-side twins, on 23100. Elyos guards, so an Asmodian raider is their enemy.
+	private const int GarrisonWatchguard = 234081;
+	private const int GuardianVeteranPatrol = 209669;
+
+	private static BossAiHarness LightHarness() =>
+		BossAiHarness.For(Reshanta).WithWorldSize(2048)
+			.WithAi(typeof(GarrisonGuardCallAI), typeof(GarrisonGuardAnswerAI),
+				typeof(FortressGuardCallAI), typeof(FortressGuardAnswerAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+
+	/// <summary>
+	/// <b>The Light-side guards do the same thing on their own number.</b> Same range, same one point
+	/// idle and hundred while fighting, same <c>is_enemy</c> on the player named.
+	/// </summary>
+	[Fact]
+	public void TheLightSideGuardsCallTheSameWay()
+	{
+		using BossAiHarness harness = LightHarness();
+		Npc caller = harness.Spawn(GarrisonWatchguard, 300f, 300f, 200f);
+		Npc answerer = harness.Spawn(GuardianVeteranPatrol, 310f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(caller, answerer);
+
+		harness.Engage(caller, raider);
+
+		Assert.Equal(1, answerer.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary>
+	/// <b>And the two families do not hear each other, which is what the second number is for.</b> A
+	/// Dark-side caller pulling a player its Light-side neighbour also counts as an enemy leaves that
+	/// neighbour standing — because it is listening on <c>23100</c> and the call went out on
+	/// <c>23200</c>.
+	/// </summary>
+	/// <remarks>
+	/// This is why these are two classes rather than one listening to both numbers. The
+	/// <c>is_enemy</c> guard would not have separated them: both families' Elyos-side guards have the
+	/// same enemies, so a merged class would have had them answering each other's calls.
+	/// </remarks>
+	[Fact]
+	public void AndTheTwoFamiliesDoNotHearEachOther()
+	{
+		using BossAiHarness harness = LightHarness();
+		Npc darkCaller = harness.Spawn(ArchonPatrol, 300f, 300f, 200f);
+		Npc lightAnswerer = harness.Spawn(GuardianVeteranPatrol, 310f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ELYOS);
+		BossAiHarness.MakeMutuallyKnown(darkCaller, lightAnswerer);
+
+		harness.Engage(darkCaller, raider);
+
+		Assert.Equal(0, lightAnswerer.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary><b>And the Light-side number is retail's too.</b></summary>
+	[Fact]
+	public void TheLightSideNumberIsRetails()
+	{
+		Assert.Equal(23100, GarrisonGuardCallAI.ThisOne);
+		Assert.NotEqual(FortressGuardCallAI.ThisOne, GarrisonGuardCallAI.ThisOne);
+	}
 }

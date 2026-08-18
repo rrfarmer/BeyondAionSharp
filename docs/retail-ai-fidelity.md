@@ -13242,3 +13242,68 @@ pin.**
 
 Five pins and a **six-mutation sweep, all caught** once the enemy guard was pinned on the turn rather
 than the hate. Full suite **2,170 passing**, 5 skipped.
+
+## The audit that should have come five commits ago
+
+The klaw pack, the black claw lycans, Guardian Vingeveu, Chaoslord Kalabar and the fortress guard call
+were all found the same way: reading a survey, following a hunch, reading a pattern. **They are all the
+same shape** — a retail message number whose senders *and* listeners are both still on stock AI, so the
+call is never made and would not be heard if it were.
+
+`audit_silent_conversations.py` ranks them. There are **135**.
+
+```
+     msg  call  ans   who
+   10001   884  146   mist, jecasti, ricaldo
+   41000    79  135   belani lookout, aspamon lookout, atasin lookout
+    9001   208    2   vaelath, citadel fencer, lab warrior
+   41100    60  120   belani slayer
+    3302   118   42   navigator nevikah, assistant malakun, kind saraswati
+    3201   132   13   bakarma lookout, bakarma scaleguard
+   23100    33   47   stonereach garrison watchguard, upright sentinel
+    ... and 128 more
+```
+
+**Five commits of hand-picking, and the thing that finds them is forty lines.** The audits I already had
+asked adjacent questions — listeners waiting on a sender nobody has, adds that are never spawned — and
+none of them asked about the conversations absent at *both* ends, which is where nearly all of the
+remaining work turns out to be.
+
+**The count is npcs, not importance**, and the tool says so in its own output: `10001` at a thousand
+npcs is retail's generic chatter, while a named boss and his two adds sit near the bottom and are the
+better hour's work. Fifth audit in this log to need that caveat printed next to its number.
+
+### And the first thing it found was the other half of the last commit
+
+**`23100` is `23200` with a different number.** Byte for byte the same mechanic — twenty-five metres,
+the event target named, one point idle and a hundred while fighting, the same `is_enemy` on the player
+named — for the Light-side guard family instead of the Dark. **Seventy-four more npcs**: 27 callers and
+47 answerers.
+
+I shipped the Dark side yesterday without noticing the Light side existed. The audit put it third from
+the top of a list I could have had first.
+
+### Two classes, not one, and the reason is not obvious
+
+The tempting version is one answerer listening for both numbers. **That would be wrong, and the
+`is_enemy` guard would not save it:** the two families stand in the same fortresses and both have
+Elyos-side and Asmodian-side members, so a Light guard and a Dark guard on the same side have *the same
+enemies*. A merged class would have them answering each other's calls, which is precisely what retail's
+second number exists to prevent. Pinned: a Dark caller pulling a player the Light guard also counts as
+an enemy leaves that guard standing.
+
+### Not built
+
+- **`23101`**, the Light-side "protect the sender", whose listeners include the Kamar generals and whose
+  only sender is `F5_PvPLight_LGuard_Fi_An`. A skill index, as its Dark twin is.
+- The same **`percent_to_add=10`** on the busy answer.
+- **`F5_AbyssTower_LGuard`** (6 live, "sacred image of kaisinel") — the Light twin of the abyss tower
+  guard left alone last commit, and left alone for the same reason: its branch is guarded on
+  `is_race from=OBJI_SELF`, which appears never to pass for its own npcs. **Both twins now wait on one
+  reading of that guard**, which is a better place to leave it than one.
+
+### Verification
+
+Eight pins on the family now, and a **three-mutation sweep on the new half, all caught**: the two
+families sharing a number, the Light answerer listening on the Dark one, and a Light caller that never
+calls. Full suite **2,173 passing**, 5 skipped.

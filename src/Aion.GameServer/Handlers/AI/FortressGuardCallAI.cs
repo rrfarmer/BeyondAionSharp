@@ -106,3 +106,83 @@ public class FortressGuardAnswerAI : PatternAi
 
 	protected override AiPattern Pattern => Pattern_;
 }
+
+/// <summary>
+/// The same call on the other guard number: the Light-side ranged patrols and watchguards. Retail
+/// patterns <c>F5_PvP_LGuard_Ra_Ae_Broad</c>, <c>F5_PvPLight_LGuard_Ra_An_Broad</c>,
+/// <c>F5_RvR_LGuard_Ra_Ae_Broad</c>, <c>F5_Safety_LGuard_Ra_An_Broad</c> and
+/// <c>F5_RvR_LGuard_As_Ae_HideBroad</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>Byte for byte the same mechanic as
+/// <see cref="FortressGuardCallAI"/> on a different number</b> — twenty-five metres, the event target
+/// named, and the same split on <c>is_user_flying</c> that changes only which skill it opens with.
+/// <para>
+/// <b>It is a separate class rather than one class listening to both numbers, and that is deliberate.</b>
+/// The two guard families stand in the same fortresses and several are the same faction, so an answerer
+/// hearing both would answer the other family's call — which retail's numbering exists to prevent. The
+/// <c>is_enemy</c> guard would not catch it: both families' Elyos-side guards have the same enemies.
+/// </para>
+/// </remarks>
+[AIName("garrison_guard_call")]
+public class GarrisonGuardCallAI : PatternAi
+{
+	/// <summary>Retail's <c>23100</c>, the Light-side twin of <see cref="FortressGuardCallAI.ThisOne"/>.</summary>
+	public const int ThisOne = 23100;
+
+	private static readonly AiPattern Pattern_ = new AiPattern
+	{
+		OnEnterAttack = Of(Branch(7, "pulled, and naming the puller", [],
+			Do.Broadcast(ThisOne, FortressGuardCallAI.CallReach, aboutTarget: true))),
+	};
+
+	public GarrisonGuardCallAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The Light-side knights and defenders who answer it. Retail patterns <c>F5_PvP_LGuard_Kn_Ae</c>,
+/// <c>F5_PvPLight_LGuard_Kn_An</c> and <c>F5_RvR_LGuard_Kn_Ae</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>Identical to
+/// <see cref="FortressGuardAnswerAI"/> in every action, guard and payload</b> — one point idle, a
+/// hundred while fighting, and the same <c>is_enemy</c> on the player named rather than on the caller.
+/// The three retail patterns behind it differ from the three behind the other family only in the
+/// number they listen for.
+/// <para>
+/// <b>Not translated:</b> the same <c>percent_to_add=10</c>, and <c>23101</c> — the Light-side "protect
+/// the sender", whose listeners include the Kamar generals and whose only sender is
+/// <c>F5_PvPLight_LGuard_Fi_An</c>. A skill index, as its twin is.
+/// </para>
+/// </remarks>
+[AIName("garrison_guard_answer")]
+public class GarrisonGuardAnswerAI : PatternAi
+{
+	private const int Glance = 1;
+
+	private const int Claim = 100;
+
+	private static readonly AiPattern Pattern_ = new AiPattern
+	{
+		OnMessage = Of(
+			Branch(2, "a call, and I am already fighting",
+				[When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
+				Do.HateMessageTarget(Claim)),
+
+			Branch(1, "a call, and I am not",
+				[When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy],
+				Do.HateMessageTarget(Glance))),
+	};
+
+	public GarrisonGuardAnswerAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => Pattern_;
+}
