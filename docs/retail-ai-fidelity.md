@@ -18580,3 +18580,56 @@ heartbeat is the one thing her whole pattern hangs off.
 ### Verification
 
 No code changed. Full suite **2,053 passing**, 1 skipped.
+
+## `ZETA_1` answered, and it opens a bigger question than the row
+
+**`on_wake_up` p7 sets `ZETA_1`; `on_enter_attack_state` p11 consumes it.** So Padmarashka's heartbeat is
+armed **once per spawn, on the first pull** — not on every entry into combat.
+
+Our class has **no `OnWakeUp` handler at all**, so the setter half was never ported and the consumer half is
+the row the report has been offering. Applying it alone would silence her; applying both halves is the
+complete change.
+
+**And it cannot be made safely, for a reason neither half shows.**
+
+### `ResetPattern` clears flags on going home
+
+`PatternAi.HandleBackHome` clears every flag. So with both halves in place:
+
+1. she spawns, `OnWakeUp` sets `ZETA_1`;
+2. first pull consumes it and arms the heartbeat — correct;
+3. the raid wipes or resets, she goes home, **the reset clears `ZETA_1`**;
+4. second pull finds it clear, the branch does not run, **and her heartbeat never starts again.**
+
+A boss that is inert after the first reset is worse than one whose heartbeat re-arms slightly too often.
+**The change fails closed on exactly the path a real raid takes most.**
+
+### Which makes the real question a general one
+
+**Does retail clear pattern flags when an npc goes home?** This port does, and has since before this log
+started. If retail does not:
+
+- `ZETA_1` survives the reset, the second pull finds it clear anyway (it was consumed on the first), and
+  **retail's boss is inert too** — which cannot be right, so something else must re-set it;
+- or flags survive *and* `on_wake_up` re-runs on some event this port does not model.
+
+Either way **the flag lifetime is the thing to establish**, and it governs every `FirstTime` and
+`Consuming` in the port — dozens of branches — not just this row.
+
+**That is a bigger question than the timer operator was**, and it deserves the same treatment: read what
+the data implies at scale before changing anything.
+
+### Still to do
+
+- **Establish flag lifetime across a reset**, by finding retail patterns whose behaviour distinguishes the
+  two readings. This blocks both Padmarashka rows and is worth more than they are.
+- Middle Boss Fire's `set_flag_var` — fails open, so apply and mutate.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+No code changed. Full suite **2,053 passing**, 1 skipped.
