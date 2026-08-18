@@ -16493,3 +16493,46 @@ waits on, diff against the class.
 ### Verification
 
 Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
+
+## Kingspin's accelerators are triggered by a call, and the silikor guard is fine
+
+Two reads, two answers, and **the prediction only half held.**
+
+### Kingspin: the accelerators are not his to start
+
+Timers 3 and 4 are armed from **`on_message`, priorities 25 and 24, both on message `6952`** — at five
+seconds each. Not from his health ladder, not from entering the fight. **Somebody calls, and Kingspin
+starts throwing faster in the two narrow windows.**
+
+`KingspinAI` does not mention `6952` anywhere. So the missing piece is not a timer he forgot to arm; it is
+**a conversation he is not part of**, and the accelerators are the far end of it.
+
+That reframes the work: this is not "add two timers" but the ordinary shape this log has built two dozen
+times — find the callers of `6952`, check they are live and on stock AI, and build both ends. It belongs
+with the silent-conversation backlog rather than with the ladder repairs, and it is the first item that
+has arrived there from the other direction.
+
+### The silikor guard: prediction wrong, and that is the useful part
+
+`ND2_WhG1` and `ND2_WhG2` arm and wait on timers **0, 1, 2 and 3**. `SilikorGuardAI` has four —
+`Heartbeat`, `High`, `Mid`, `Low`. **Nothing is missing.**
+
+So its reverted `hp` guard at `31–100` is not blocked on absent rungs after all, and can go back in as soon
+as its three pins are re-derived — which is a smaller job than Kingspin's and is now the cheaper of the two.
+
+**The prediction was that both collapsed ladders would have missing timers beneath them. One did, one did
+not**, and checking cost two commands each. Recorded because a prediction that holds twice starts getting
+applied without checking, and this one would have been wrong half the time.
+
+### Still to do
+
+- **`6952`'s callers**, then Kingspin's accelerators as a conversation.
+- **The silikor guard's `31–100` band**, blocked only on re-deriving three pins.
+- Padmarashka's timers 10 and 12, blocked on skills, a waypoint walk and a system message.
+- The five coffin `message` rows; the 14 remaining ready guard rows; the 4 mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
