@@ -11974,3 +11974,49 @@ guard is untested.
 
 Full suite **2,078 passing** and 1 skipped; three pins; **seven mutations, five caught and two
 unfalsifiable with this npc**. The no-blocker list 9 → **8**.
+
+## Beshmundir's decoy liches, and a wire whose two ends were in different places
+
+Fifth row off the no-blocker list, and the first where the two halves had to be found separately: the
+**senders** are live and were stock, and the **listener** was a bespoke class that already existed.
+
+Three invisible markers (281696, 281759, 281760) sit in the Beshmundir room, spawned by our data and
+running `general` — doing nothing. Retail has each of them broadcast at fifty metres the instant it
+wakes and then delete itself, and **every lich in range removes itself in answer**. That is how the room
+is left holding a single Macunbello instead of a row of identical ones.
+
+`MacunbelloAI` already implemented `INpcMessageListener` for the soul reapers' curse report, so the
+answer is four lines inside it — the klawspawn shape again. **Retail puts the decoy branch at priority
+100 DIRECT, ahead of the curse report**, so a lich that is about to vanish does not first stop to devour
+somebody; the ported handler checks it first for the same reason.
+
+### The marker exists for exactly one broadcast
+
+Call and self-delete are in the same branch. Retail writes that body **twice** — on `on_wake_up` and on
+`on_see_npc` — the second for a marker placed before its liches are, firing on the first one that comes
+into view rather than on a player.
+
+### An honest survivor: the two branches are alternatives
+
+The mutation that removes the wake branch **survives**, and it should. Any setup with a lich present
+makes the marker see it, so `on_see_npc` fires the identical body and the outcome is the same. Catching
+it needs a marker that wakes with a lich in range but not in its known list — which is a state the
+world does not produce.
+
+**Retail wrote belt and braces and the belt cannot be tested while the braces are on.** Reported rather
+than covered, per the rule the zombie traps set one entry ago: a guard nothing available can falsify is
+reported, not papered over with a fixture invented until the mutation dies.
+
+### Not translated
+
+The `display_system_message` beside each call (`STR_MSG_IDCatacombs_NmdLich_weakness1`), blocked on the
+same string-id work as every shout.
+
+Also worth recording: `IDCT_DespawnLich` (281697) sends the same `6981` and **our data never places
+it**, and the six other lich-king ids (216733–216738) are unspawned. The wire works because the ends we
+do have — three markers and one Macunbello — happen to be the live pair.
+
+### Verification
+
+Full suite **2,081 passing** and 1 skipped; three pins; **seven mutations, six caught and one an
+alternative branch that cannot be isolated**. The no-blocker list 8 → **5**, three patterns at once.

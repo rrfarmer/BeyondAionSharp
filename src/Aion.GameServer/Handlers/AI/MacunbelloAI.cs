@@ -230,6 +230,15 @@ public class MacunbelloAI : AggressiveNpcAI, INpcMessageListener
     /// </summary>
     public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
+        // Retail's on_message p100 DIRECT, ahead of everything else in the handler: the decoy call
+        // takes precedence over the curse report, and a lich that is about to vanish does not first
+        // devour somebody. See DecoyLichMarkerAI.
+        if (messageType == DecoyLichMarkerAI.TheRealOneIsHere)
+        {
+            AIActions.DeleteOwner(this);
+            return;
+        }
+
         if (messageType != MacunbelloSoulReaperAI.CursedMessage || IsDead() || !IsInState(AIState.FIGHT))
             return;
         if (param is not Creature cursed || cursed.IsDead())
