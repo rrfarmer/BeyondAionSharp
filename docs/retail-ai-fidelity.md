@@ -16440,3 +16440,56 @@ Every probe before it asked whether a path produced the npc; none asked what hap
 ### Verification
 
 Two dead constants removed, one tool refined, sweep clean. Full suite **2,049 passing**, 1 skipped.
+
+## Kingspin: the prediction held, and the missing rungs are accelerators
+
+The previous entry predicted that Kingspin and the silikor guard, both collapsed in the shape Padmarashka's
+middle band was, would turn out to have **missing timers under them rather than a missing guard**. Checked
+for Kingspin, and it holds.
+
+`IDTP_OctaNm` arms and waits on battle timers **0, 1, 2, 3 and 4**. This port has **0, 1 and 2**.
+
+### What 3 and 4 carry
+
+Both branches do the same thing, in two narrow health windows:
+
+| priority | waits | health | action |
+|---|---|---|---|
+| 20 | timer 3 | **30–37** | re-arm timer 1 at **8s** |
+| 19 | timer 4 | **45–53** | re-arm timer 1 at **8s** |
+
+Timer 1 is his throw clock. So **these are accelerators**: for two narrow bands on the way down, Kingspin
+throws on an eight-second cycle instead of his usual one, and outside those bands the pressure drops back.
+Two windows of about seven points each, in a fight that runs from a hundred to zero.
+
+That is a real mechanic and this port does not have it — not a guard that fires too often, **a phase that
+never happens.**
+
+### What is still needed to build it
+
+**Where 3 and 4 are armed.** The branches that wait on them are read; the branches that start them are not.
+Padmarashka's middle band taught that a ladder rung and the timers it arms are separate pieces and either
+can be the missing one, so this is one more read rather than an assumption.
+
+The two ladder guards reverted in the `hp` pass — `Kingspin#10` at `0–51` — are still out, and should stay
+out until the accelerators are in: putting the band guard back without them would gate a ladder whose
+lower rungs do not exist, which is the state Padmarashka's middle band was in and which reads as an
+encounter going quiet.
+
+### The silikor guard, unchecked
+
+Same prediction, not yet tested. It is the same two commands: list the timers its retail pattern arms and
+waits on, diff against the class.
+
+### Still to do
+
+- **Kingspin's timers 3 and 4** — where they are armed, then build.
+- **The silikor guard's timer diff**, then the same.
+- Padmarashka's timers 10 and 12, blocked on skills, a waypoint walk and a system message.
+- The five coffin `message` rows; the 14 remaining ready guard rows; the 4 mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Diagnosis only; no code changed. Full suite **2,049 passing**, 1 skipped.
