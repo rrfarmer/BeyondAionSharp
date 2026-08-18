@@ -12294,3 +12294,71 @@ the fortress killers are not the only pattern that guards on the current target'
 ### Verification
 
 Full suite **2,096 passing** and 1 skipped, unchanged. No behaviour shipped.
+
+## The fortress killers, settled: the translation is right and the gate is Java's
+
+The previous entry left this open with a named next step — find the garrison the guard bosses protect
+and check the tribe relation. Both done, and the answer is not the one either candidate predicted.
+
+### The tribe table is right, and it independently confirms shipped work
+
+```
+LDF5_V_KILLER_D   aggro  LDF5_V_CHIEF_L   LDF5_V_CHIEF_DR
+LDF5_V_KILLER_DR  aggro  LDF5_V_CHIEF_L   LDF5_V_CHIEF_D
+LDF5_V_KILLER_L   aggro  LDF5_V_CHIEF_D   LDF5_V_CHIEF_DR
+```
+
+**Everyone but its own, exactly as retail's three race lists say.** Cross-checked against the four
+village killers shipped two entries ago: 234104 and 234107 are `_KILLER_DR` and run
+`village_killer_balaur`, 234105 is `_KILLER_L` and runs `village_killer_elyos`, 234109 is `_KILLER_D`
+and runs `village_killer_asmodian`. **Four for four.** The faction fix stands on two independent
+sources now.
+
+The garrisons are `LDF5_V_CHIEF_L/D/DR` — 231630, 231631, 231632 — not the `PROTECTGUARD_LIGHT`
+Beluslan dux the first pins reached for. That was the wrong prop, as suspected.
+
+### And with the right props it still reads zero, for a reason that ends the investigation
+
+`AggroList.IsAware` gates every `AddHate` on
+
+```
+aggroList.contains(creature) || creature.IsEnemy(owner) || IsHostileRelation(owner.tribe, creature.tribe)
+```
+
+and these tribes relate by **`<aggro>`**, not `<hostile>`. `IsAggressiveRelation` exists and
+`TribeRelationService` uses it — but it is not on this path.
+
+**Our `IsAware` is character-for-character Java's**, including that omission:
+
+> `owner.getKnownList().knows(creature) && … && (aggroList.containsKey(…) || creature.isEnemy(owner)
+> || DataManager.TRIBE_RELATIONS_DATA.isHostileRelation(owner.getTribe(), creature.getTribe()))`
+> — `AggroList.java:198`
+
+So this is **not a porting gap**. It is aionemu behaving as written, and widening it would be diverging
+from Java in exactly the infrastructure the golden rule protects — on a path every npc pair in the game
+runs through.
+
+### What that means for the encounter, and it is bigger than the pattern
+
+On this server a fortress killer cannot take hate on a garrison chief **at all**, with or without an AI
+class. The pattern is not what is missing; **the whole fortress-raid behaviour is absent one level
+lower**, and none of the six guard-boss npcs is placed either. Translating `LDF5_Fortress_Killer` today
+buys nothing a player could see.
+
+**Reverted a second time**, and this time the question is closed rather than open: it is a decision
+about `IsAware` and the fortress spawn data, not an investigation.
+
+### The rule this cost twice
+
+**A class is not shippable because it is a correct translation.** Both reverts were of correct code —
+the first for a wrong prop, the second for a gate that is right to be there. The check that would have
+caught both before the class was written is one question: *can these two npcs put hate on each other at
+all?* One `IsHostileRelation` lookup, before the table, not after the pins.
+
+### Kept
+
+`When.TargetRace` and `Do.HateTarget` — correct, general, and used by patterns beyond this one.
+
+### Verification
+
+Full suite **2,096 passing** and 1 skipped, unchanged. No behaviour shipped.
