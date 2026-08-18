@@ -121,26 +121,33 @@ public sealed class VillageKillerAiTests
 	}
 
 	/// <summary>
-	/// <b>The <c>on_attacked</c> half is built and is not pinned, and this says why.</b>
+	/// <b>The <c>on_attacked</c> half is built, is not pinned, and the fault is now located.</b>
 	/// </summary>
 	/// <remarks>
-	/// Retail carries the same rule on <c>on_attacked</c>, and <see cref="VillageKillerAI"/> translates
-	/// it. It could not be exercised here: <c>BossAiHarness.Engage</c> adds its own thousand hate
-	/// without raising the AI attack event, and raising <c>AiEventType.Attack</c> by hand — before or
-	/// after engaging, with the faction bug fixed and the aggro pair correct — added nothing at all.
+	/// Retail carries the same rule on <c>on_attacked</c> and <see cref="VillageKillerAI"/> translates
+	/// it. Three experiments narrow where it stops:
+	/// <list type="number">
+	/// <item><description>With the race guard removed, a plain strike still adds nothing — so it is not
+	/// <see cref="Ai.Pattern.AiPattern.When.AttackerRace"/>.</description></item>
+	/// <item><description>With the action replaced by <c>Do.DespawnSelf</c>, the NPC despawns — so the
+	/// <b>branch does run</b>, and <c>Evaluate(Pattern.OnAttacked)</c> is not the problem
+	/// either.</description></item>
+	/// <item><description>Holding <c>LastAttacker</c> past the branch instead of clearing it in a
+	/// <c>finally</c> changed nothing, so the attacker reference is not being lost.</description></item>
+	/// </list>
 	/// <para>
-	/// Measured, in order: 0 with the wrong faction, 0 with the right one, and 1000 through
-	/// <c>Engage</c>, which is <c>Engage</c>'s own figure and not the branch's five million. So the
-	/// branch does not run on that path, and the reason is in the harness or in <c>HandleAttack</c>
-	/// rather than in the table — <c>When.AttackerRace</c> and <c>Do.HateAttacker</c> are the same
-	/// guard and action shape that the sighting half proves working.
+	/// That leaves <c>Do.HateAttacker</c>'s <c>AggroList.AddHate</c> call, from inside
+	/// <c>HandleAttack</c>, against a creature the <em>same</em> call reaches happily from
+	/// <c>HandleCreatureSee</c> — five million there, nothing here, same pair, same value. The likely
+	/// shape is re-entrancy: <c>base.HandleAttack</c> runs first and is itself working the aggro list.
 	/// </para>
 	/// <para>
-	/// Recorded as an empty pin rather than a passing one, because a pin that asserted 1000 would be
-	/// pinning <c>Engage</c>.
+	/// Left as a skip carrying that trail rather than a pin, and rather than a speculative engine
+	/// change: the one tried above fixed nothing and was reverted, because shipping a behaviour change
+	/// to every <c>PatternAi</c> on a guess is worse than a documented gap.
 	/// </para>
 	/// </remarks>
-	[Fact(Skip = "on_attacked path not reachable through the harness; see remarks")]
+	[Fact(Skip = "AddHate from inside HandleAttack adds nothing; see remarks for the three experiments")]
 	public void TheOnAttackedHalfIsBuiltAndNotPinned()
 	{
 	}

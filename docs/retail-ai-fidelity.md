@@ -11665,3 +11665,49 @@ that never lands a melee blow is not committed to.
 
 Full suite **2,055 passing**, 2 skipped; eleven pins, up from four; **six mutations, all caught** —
 the sweep the previous entry owed, including one per faction that pins "never its own".
+
+## Locating the `on_attacked` fault, and sizing what it blocks
+
+The village killers shipped with their `on_attacked` half translated and unpinned, and the previous
+entry could only say "0, 0, 1000". This turn narrows it to one call, and measures what it costs.
+
+### Three experiments, each ruling out one suspect
+
+| experiment | result | rules out |
+|---|---|---|
+| remove the race guard, plain strike | still nothing | `When.AttackerRace` |
+| replace the action with `Do.DespawnSelf` | **the NPC despawns** | `Evaluate(Pattern.OnAttacked)` — the branch runs |
+| hold `LastAttacker` past the branch instead of clearing it in a `finally` | no change | the attacker reference being lost |
+
+**The branch runs and the action does nothing.** What is left is `Do.HateAttacker`'s
+`AggroList.AddHate`, called from inside `HandleAttack` — against a creature the *same call* reaches
+happily from `HandleCreatureSee`: five million there, nothing here, same pair, same value, same guard
+shape.
+
+The likely shape is **re-entrancy**: `base.HandleAttack` runs first and is itself working the aggro
+list, so an `AddHate` issued from a branch underneath it is dropped. That is a hypothesis and is
+labelled as one — the last time this log adopted a hypothesis without a decisive test it spent three
+commits on the wrong four.
+
+### The speculative fix was reverted
+
+Holding `LastAttacker` past the branch is arguably better naming and it changed nothing, so it went
+back. **Shipping a behaviour change to every `PatternAi` on a guess is worse than a documented gap**,
+and a diff that fixes nothing while claiming to is exactly what the parallelism experiment already
+taught this log to revert.
+
+### What it blocks, counted
+
+**Nothing already shipped.** Exactly one class in the tree has an `OnAttacked` branch that adds hate —
+`VillageKillerAI`, whose half is the skipped pin — so no existing mechanic is silently dead. That was
+worth checking before writing this up as an emergency.
+
+**139 retail patterns, 198 npcs**, put `add_hate_point` or `switch_target` on `on_attacked`. That is
+the size of what stays unbuildable until this is settled: every "rounds on whoever just hit it" reaction
+in the dump.
+
+### The next step, precisely
+
+Instrument `AggroList.AddHate` for a refusal reason and call it once from each of the two paths on the
+same pair. Two calls, one difference. Whoever does it should start from the fact that the branch runs —
+that is the expensive half of the search and it is already done.
