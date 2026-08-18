@@ -10227,3 +10227,52 @@ its pattern's cadence.
 
 Recorded so the next flake is measured before it is explained: **ten runs, then look at the numbers,
 then change the test.**
+
+## Priest Zitan, and a broadcast we decided not to send
+
+`IDTP_Fanatic_Boss_EL_ve40` binds to Priest Zitan (216512), who was on plain `aggressive`. His fight is
+one thing done three times — **seven illusions of melancholy, and where they land is the mechanic.**
+
+| | |
+|---|---|
+| on engaging | **three** at his own feet |
+| the first blow under fifty | **two more, on the player he is fighting** |
+| the first blow under twenty-five | **two more**, the same way |
+
+**The opening wave guards him and the later two chase.** Retail changes the placement rather than the
+count — `SPAWN_LOCATION_MY_POINT` for the three that come with him, `spawn_on_target` for the four that
+come after. A class that put all seven in one place would pass a head count and lose the fight, so the
+pins read positions rather than totals and a mutation that moves either wave is caught.
+
+**Both crossings are written twice and fire once.** Retail carries identical branches under
+`on_attacked` and `on_spelled`, both behind the same flag var, so whichever kind of blow lands first
+pays and the other finds the flag gone. Our runtime raises the first of those two events, and the flag
+makes the pair equivalent to it — this is the cheapest of the "retail wrote it twice" cases in this log,
+because the duplication is already a no-op in retail.
+
+### The broadcast with a listener that cannot act
+
+Each crossing also broadcasts `6915` at fifteen metres naming his target. Its only listener is the
+illusions themselves, and their branch is a bare `attack_most_hating` with **no `add_hate_point`**.
+
+That cannot redirect anything. An illusion with an empty hate list has nobody to attack most; one
+already fighting is already doing it. The message is a kick into combat for NPCs that are `aggressive`
+and do not need kicking — in either engine. Not sent.
+
+**Rule: `attack_most_hating` without `add_hate_point` is not an order, it is a nudge into combat.** The
+message-reach audit counts it as payload because it is in the PAYLOAD set, and for a summon that starts
+passive it genuinely is one. For an aggressive summon it is nothing at all, and the difference is the
+spawn's own template rather than anything in the message. Worth knowing before the next `6915`-shaped
+broadcast is built on the strength of a listener that only has that one action.
+
+### Not translated
+
+Three skill indices on three cast timers that carry nothing else; seven shouts; the death message; and
+`set_condition_spawn_variable FanaticElNBoss`, the instance's own bookkeeping.
+
+### Verification
+
+Full suite **1,967 passing** and 1 skipped; six new pins run three times over; **ten mutations, all
+caught** — one of which had to be rewritten because deleting the last branch of a handler leaves a
+dangling comma and a mutation that does not build is not a survivor. Missing-AI 677 → **676**;
+translatable 334/1,108 → **333/1,107**; adds unchanged, the illusions already being spawned elsewhere.
