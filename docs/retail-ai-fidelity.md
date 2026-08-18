@@ -12426,3 +12426,57 @@ The fortress killers are **unbuilt and open**, not blocked. The next attempt sho
 
 Full suite **2,096 passing** and 1 skipped, unchanged. Nothing shipped; one tool deleted and one
 published conclusion withdrawn.
+
+## Stopping on the fortress killers, after three turns and three reverts
+
+The mechanism works. A probe calling the real code path, in the real harness, with the real npcs:
+
+```
+ai=FortressKillerAI  targetAfterKnown=2  chief=2  hate=100000000
+```
+
+`IsAware` passes, `IsEnemy` is true, the class binds, the target survives the introduction, and a
+hundred million lands. **The previous entry's correction was right and this entry confirms it by
+measurement rather than by reading.**
+
+And the pins still fail. `TheGuardBossesCallNamesTheSender` reads **200,000,000** against an expected
+hundred million — the branch fires twice, once from the engagement that `MakeMutuallyKnown` causes and
+once from the message — while `AKillerHoldingAGarrisonChiefCannotBeMovedOffIt` reads *less* than a
+hundred million in the same setup the probe read exactly a hundred million in.
+
+Those two facts do not fit together, and I have not found what separates them.
+
+### Stopping, and why that is the right call
+
+This encounter has now taken three turns and three reverts of code that is, as far as every direct
+measurement shows, correct. Each turn produced a confident explanation and each was wrong:
+
+1. the aggro list refuses these tribes — **wrong**, `IsEnemy` reads aggro;
+2. the props were Beluslan guards — **true but not sufficient**;
+3. the target was unset when the branch fired — **not sufficient either**.
+
+**A third wrong explanation is a signal to stop explaining.** Continuing costs more than the encounter
+is worth: two npcs, in an instance whose six guard bosses our data does not place, whose `25307`
+senders therefore never speak.
+
+### What is genuinely known, for whoever picks it up
+
+* The mechanic, in full, is in the previous two entries and is not in doubt.
+* `FortressKillerAI` binds, and `Do.HateTarget` / `Do.HateMessageSender` both land a hundred million on
+  a `LDF5_V_CHIEF_*` npc — probe output above.
+* The disagreement is between the probe and the pins, **not** between the class and the engine. Start
+  by diffing those two setups line by line rather than by re-reading `IsAware`.
+* `on_enter_attack_state` fires on the `EnterCombat` latch, and `MakeMutuallyKnown` trips it. Any pin on
+  this class has to account for a branch that has already run before the test's first line of intent.
+
+### The rule
+
+**When three explanations in a row have been wrong, the next thing to write down is not a fourth
+explanation.** The flake took four wrong hypotheses before an experiment settled it; that experiment
+was cheap and was available from the start. Here the experiment was run — the probe — and it *disagrees
+with the tests*, which is a different and harder situation than a bug. Recognising that and stopping is
+cheaper than a fourth guess.
+
+### Verification
+
+Full suite **2,096 passing** and 1 skipped, unchanged. Nothing shipped; the class reverted a third time.
