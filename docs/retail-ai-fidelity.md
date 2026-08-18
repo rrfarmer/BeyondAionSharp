@@ -10699,3 +10699,45 @@ call made for the twenty-two abyss guards that already had classes.
 Full suite **2,001 passing** and 1 skipped; six new pins run three times over; **nine mutations, all
 caught**. Missing-AI 662 → **654**; translatable 303/987 → **299/979**; stranded listeners 104 patterns
 / 169 npcs → **92 / 143**.
+
+## `BroadAtt`: retail's standard cry for an object that cannot fight
+
+The third group from the sender audit, and the first that is a *family* rather than an encounter.
+`BroadAtt_LR`, `_MR` and `_SR` are three patterns whose entire content is one call — **somebody is
+hitting me** — naming the attacker, on every blow and every spell, at fifty, twenty-five and fifteen
+metres respectively. It is how retail makes a barrel, an egg or a spawner shout for the things that can
+fight.
+
+The klaw spawner (700169) and the klawspawn (700209) carry the middle one, and what answers is a nest:
+
+| | |
+|---|---|
+| klaw workers, gatherer, seeker, spriggan fighter | **a hundred** hate on whoever struck it |
+| smallhorn kerub, bigfoot kerubar | **one** |
+
+**A hundred is a claim and one is a glance.** The klaws commit to whoever struck the spawner and hold
+that player against ordinary threat; the kerubs join and are moved by the next thing that happens.
+Retail says all of that with nothing but `point_to_add`, and one value for both would make a field of
+kerubs behave like a nest.
+
+**Both senders keep the classes they had**, and the two are different: the spawner is `onedmg_passive`
+(a hundred and twelve npcs share it) so `KlawSpawnerAI` extends it, while the klawspawn already has a
+Java-parity class of its own and the call is three lines inside it. **The same retail pattern reached
+two different C# base classes, and neither could be the shared one.**
+
+### Not built, and the reason is a shared class both times
+
+`BroadAtt_SR`'s arachna egg and the whole `BroadTalk_*` half of the family — the same call raised by
+being *talked to* rather than struck — are live only on `quest_use_item`, which **six hundred and ten**
+npcs share. Adding a broadcast there would give every quest object in the game a voice.
+
+**Rule: a stock AI name is a shared class, and how shared decides whether a retail call can go in it.**
+The number is the whole argument: 112 for `onedmg_passive` meant a subclass, 610 for `quest_use_item`
+means not at all until those npcs are separated. Worth checking before reaching for a base class, and
+it is one `grep -c` away.
+
+### Verification
+
+Full suite **2,006 passing** and 1 skipped; five new pins; **seven mutations, all caught**. Missing-AI
+unchanged at **654** — these are objects and nest-dwellers rather than fights — and stranded listeners
+92 patterns / 143 npcs → **89 / 136**.

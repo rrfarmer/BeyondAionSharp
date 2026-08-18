@@ -22,6 +22,12 @@ public class KlawspawnAI : GeneralNpcAI
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
+
+        // Retail's BroadAtt_MR, which this npc shares with the klaw spawner: every blow tells the nest
+        // within twenty-five metres who struck it. Added to this class rather than translated into one,
+        // because everything else here is a Java port. See docs/retail-ai-fidelity.md.
+        NpcMessageBus.Broadcast(GetOwner(), KlawSpawnerAI.BeingAttacked, creature, KlawSpawnerAI.MiddleReach);
+
         Npc npc = GetOwner().GetPosition().GetWorldMapInstance().GetNpc(212120);
         if (npc == null)
         {
