@@ -17796,3 +17796,57 @@ the one that was wrong.
 ### Verification
 
 Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## The contention scan: 51 of 90, and it flags the one I cleared
+
+The previous entry proposed a source-only rule — **does anything arm the timer while it is already
+pending?** — and predicted it would clear most of the forty without a trace. Run over all 90 multi-delay
+timers:
+
+**51 can contend. 39 cannot.**
+
+Not "most cleared". And the first name worth reading is `FrostNamedAI` timer 0, **which the previous entry
+declared unaffected.**
+
+### The correction
+
+That entry was right about the timing and wrong to call it settled by the rule. Frost Named's 3s arm is an
+opener and its 14s arms come from branches waiting on timer 4 — so the shape *is* contention: something
+arms timer 0 while timer 0 could be pending. The reason it does not matter is that timer 0 has **fired and
+gone idle** by the time any timer-4 branch runs.
+
+**That is a timing argument, and a static rule cannot make it.** The scan can only say the shape is
+present; whether the short arm actually lands on a live clock depends on when the two branches run.
+
+So "one of the 41 cleared in two commands" was an over-claim. It is cleared — by a hand reading — and the
+rule that was supposed to make it cheap does not reproduce the clearing.
+
+### What the scan is still worth
+
+**39 timers are genuinely out of scope**, which is a real reduction, and the 51 are ranked work rather than
+an undifferentiated list. Several are clusters in one encounter — Masto's five band timers, Triroan's four,
+Deputy Hanuman's four, Vingeveu's three — so **51 timers is nearer twenty encounters**, and an encounter
+read once settles all of its timers together.
+
+The ones already known good are in the list and can come straight out: Chunapa (fixed and pinned), Kingspin
+(pinned), Padmarashka's 11 (mine, pinned), Frost Named (hand-cleared above).
+
+### The rule
+
+**A static rule that cannot express "by then it has already fired" will over-report on any timer question.**
+This one was proposed as a cheap substitute for tracing and is better read as a filter: it removes 39
+timers from consideration and orders the rest, and every survivor still needs the trace the previous entry
+was trying to avoid.
+
+### Still to do
+
+- **The ~20 encounters behind the 51 timers**, minus the four already settled.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped.
