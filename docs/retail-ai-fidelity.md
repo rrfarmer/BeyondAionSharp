@@ -21816,3 +21816,67 @@ than merely unsuccessful.
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,114 passing**, 1 skipped.
+
+## The walker routes exist, and they were never in the places that were searched
+
+Five encounters have been blocked on one missing mapping for six passes. **The data exists.**
+
+`D:/Aion58ServerTesting/Server/Map/Worlds/<world>/world.xml` — the retail 5.8 server's own map data —
+carries **11,050 named waypoints** in exactly the shape needed:
+
+```xml
+<way_point><name>DF4_MobPath_DramataGuardianC</name>
+  <points><data><x>2949.363037</x><y>884.005066</y><z>40.957985</z></data> ... </points>
+</way_point>
+```
+
+**Name and points together**, which is the join this log established twice as absent.
+
+### Coverage
+
+**344 of the 467 path names the AI patterns reference — 73 percent.** Including two of the five blocked
+encounters outright:
+
+| path | points | encounter |
+|---|---|---|
+| `path_tiamatdrakan_1_1` | 7 | **Tiamat's rush wave** |
+| `Path_IDTemple_Low_AI01_2` | 11 | **Bergrisar's blood wheels** |
+| `DF4_MobPath_DF4_Dramata1` | missing | Padmarashka — still absent, or under a variant name |
+
+### Why six passes missed it
+
+Two reasons, and both are process rather than luck.
+
+**The search was scoped to the wrong trees.** Every earlier check looked in this repository and, this
+pass, in a 2026 client. The 5.8 *server* tree was never searched — even though the AI patterns it is being
+matched against are 5.8, and the log has known since the first entry that the Java reference is 5.8.
+
+**And when it was finally searched, grep found nothing.** `world.xml` is UTF-16, so byte-level greps for
+UTF-8 strings return zero — the same trap the pattern files posed, which this repo has a helper for
+(`summarize_pattern.read_text`) that was not used here until the fourth attempt. **A negative result from
+the wrong decoder looks exactly like a negative result.**
+
+Two entries stated "the mapping is not in this repository in any form" and "the search is now exhausted".
+**The first was true and irrelevant; the second was false.**
+
+### What this unblocks
+
+- **Tiamat's rush wave** — twenty drakan on `path_tiamatdrakan_*`.
+- **Bergrisar's blood wheels** — and with them the decision recorded against spawning them unwalked, which
+  this log said should be revisited if routes were ever recovered.
+- **The silikor akaimum's patrol arrival**, which clears the flag its dismissal needs.
+- Padmarashka and Kaliga remain, pending their specific names.
+
+### Still to do
+
+- **Extract the 344 into `npc_walker`**, keyed so `SetWalkerId` can find them by retail's name. That is the
+  next pass, and it is a data job with a clear shape.
+- **Find the missing 123**, Padmarashka's and Kaliga's among them — likely other worlds, variant spellings,
+  or genuinely later additions.
+- Then the four encounters, in the order the routes land.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  guard report's unverified rows; the `drakanmedic` harness question.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,114 passing**, 1 skipped.
