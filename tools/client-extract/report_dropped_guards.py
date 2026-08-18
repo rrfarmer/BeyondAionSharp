@@ -251,6 +251,15 @@ def selftest() -> int:
     return 1 if failures else 0
 
 
+#: Handlers this engine already runs at most once, so a `flag` guard on them changes nothing here.
+#:
+#: `OnEnterAttack` sits behind `PatternAi.EnterCombat()`, which latches for the fight; `OnWakeUp`,
+#: `OnDie` and `OnDespawn` fire on events that happen once per life. Retail still writes `set_flag_var`
+#: on such branches and this port still keeps it -- **faithful, and cosmetic**. A row here is worth
+#: applying for fidelity and is not a defect, and no pin can tell it from its absence.
+LATCHED = {"OnEnterAttack", "OnWakeUp", "OnDie", "OnDespawn"}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("patterns_dir", nargs="?")
@@ -322,7 +331,8 @@ def main() -> int:
     print(f"{len(rows)} dropped guards with a readable retail condition\n")
     print(f"{'file':<28} {'ai name':<24} {'branch':<18} {'kind':<9} {'safe':<7} retail")
     for name, ai_name, handler, priority, kind, detail, has, hasnt, ok in rows:
-        verdict = ("MISALIGNED" if not ok
+        verdict = ("COSMETIC" if kind == "flag" and handler in LATCHED
+                   else "MISALIGNED" if not ok
                    else "UNIFORM" if hasnt == 0 else f"MIXED{has}/{has + hasnt}")
         print(f"{name:<26} {ai_name:<22} {handler + '#' + priority:<17} {kind:<8} {verdict:<10} {detail}")
     mixed = sum(1 for r in rows if r[7] and r[8])

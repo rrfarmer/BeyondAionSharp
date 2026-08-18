@@ -18339,3 +18339,62 @@ behavioural.
 ### Verification
 
 One pin written and removed; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## The report now marks cosmetic flag rows
+
+The previous entry found that a `set_flag_var` on `OnEnterAttack` changes nothing here, because
+`EnterCombat()` latches for the fight — and that the report cannot see it, since a guard the engine
+supplies elsewhere looks identical to one that is missing.
+
+Four handlers run at most once by construction:
+
+| handler | why |
+|---|---|
+| `OnEnterAttack` | behind `EnterCombat()`, which latches |
+| `OnWakeUp` | fires on spawn |
+| `OnDie` | fires on death |
+| `OnDespawn` | fires on despawn |
+
+`report_dropped_guards.py` now reports a `flag` row on any of them as **`COSMETIC`** rather than `UNIFORM`.
+Three surface immediately — Icaronix's `OnDie`, Middle Boss Fire's `OnDie`, the Ophidan caller's `OnWakeUp`
+— and the two guards applied last pass would have been marked the same way had the verdict existed.
+
+**Cosmetic is not "skip".** Retail writes the flag and keeping it is faithful; what changes is that such a
+row is not a defect, cannot be pinned, and should not be queued as behavioural work.
+
+### What is left in the flag column
+
+Three rows that are genuinely behavioural, all on handlers that repeat:
+
+- **Padmarashka**, two `unset_flag_var` on `OnBattleTimer` — the mirror of `FirstTime`, and `When.Consuming`
+  exists.
+- **Kingspin**, `set_flag_var` on `OnMessage#25` — the branch that arms his accelerator timers, which
+  currently re-arms them on every cry.
+- **Middle Boss Fire**, `set_flag_var` on `OnBattleTimer#995`.
+
+**Kingspin's is the interesting one**: a flag there would make the accelerator arm once per fight rather
+than once per cry, which is a different mechanic from the one measured across the timer thread and may be
+what retail actually means.
+
+### The tool's caveats, all four
+
+Worth listing together, since each cost a pass to find:
+
+1. **`MIXED`** — the class serves patterns that disagree; needs splitting per npc.
+2. **`MISALIGNED`** — our branch and retail's at that priority do different things.
+3. **Guards in local helpers are invisible** — the scan reads `When.*` only.
+4. **`COSMETIC`** — the engine already enforces it elsewhere.
+
+### Still to do
+
+- **Kingspin's `OnMessage` flag**, which may change what his accelerator means.
+- Padmarashka's two `unset_flag_var` rows; Middle Boss Fire's timer flag.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Tool only; no server code. Full suite **2,050 passing**, 1 skipped.
