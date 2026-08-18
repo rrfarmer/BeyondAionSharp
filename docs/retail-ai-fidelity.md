@@ -20313,3 +20313,67 @@ reading. What they cannot do is tell you an item is *partly* done, which is what
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,097 passing**, 1 skipped.
+
+## The four lords, and four out of four
+
+"The four lords' staged spawns against our `empyrean_lord`" has been on the queue since the
+spawn-variable entry. Checked under the same rule.
+
+**It is done.** `EmpyreanLordAI` already carries:
+
+- the **spawn-heal** each avatar arrives with, on retail's seven-second delay for retail's twenty seconds,
+- the **teleport effect** the second avatars leave on, for retail's six,
+- a **hate lock onto Tiamat** — `AddHate(tiamat, int.MaxValue / 4)` — which is retail's
+  `add_hate_point 1000000` with the target named rather than inferred,
+- the **per-avatar skill** at 8.5 seconds, one id per lord.
+
+Retail's `Kaisinel_Avatar1` and its three siblings hold six battle-timer branches; the substance of the
+one that matters, `PowerAtk`, is here.
+
+### The one real difference, and why it is not built
+
+**Retail's `PowerAtk` re-arms itself every ten seconds.** Ours fires once at 8.5. So retail's avatar keeps
+attacking on a cadence where ours attacks once and then holds aggro.
+
+Not built, for two reasons worth separating:
+
+- retail names the skill by **index** (`SKILLI_INDEX_1`) and this class uses four different concrete ids
+  chosen per avatar; **which index maps to which is not established**, and the existing ids came from
+  somewhere this log did not record;
+- these are **friendly** npcs fighting Tiamat on the raid's behalf. Turning a single cast into a
+  ten-second loop changes how much of the boss's health the gods take off, which is a **balance change
+  dressed as a fidelity fix** unless the skill mapping is certain.
+
+**The remaining four branches** are `display_system_message` and `say_to_all` steps whose string ids have
+not been resolved to message numbers, plus a three-second heartbeat that exists only to carry them.
+
+### Four out of four
+
+Every concrete queue item examined in the last four passes was mischaracterised:
+
+| item | queue said | actually |
+|---|---|---|
+| hard Tiamat variant | not yet read | fully built |
+| `IDTP_Keeper1`'s spawn | ready | decided against, and pinned |
+| `IDRaksha_Re_A_KJS`'s despawn | ready | half built, half blocked on a talk handler |
+| the four lords | not yet read | built but for one cadence |
+
+**The queue's error rate on concrete items is total.** That is not a reason to discard it — every one of
+the four led somewhere worth going, and two produced findings — but it is a reason to stop treating
+"still to do" as a work list. **It is a list of things once noticed.**
+
+### Still to do
+
+- **`on_talked_by_user` and `teleport_target_alias`**, the one gap named and verified this week.
+- **Resolve the empyrean lords' skill indices**, which is what gates their attack cadence.
+- Walker route ids; if recovered, revisit the Bergrisar decision.
+- The 7 `no spawns` rows, as part of the 38-class unported-flag-branch list. **These have never been
+  examined** and are the largest genuinely unexamined block left.
+- Modor's clone, blocked on client spawn tables; Yamennes' golem cadence.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the remaining ready guard rows; the mixed and misaligned
+  rows.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,097 passing**, 1 skipped.
