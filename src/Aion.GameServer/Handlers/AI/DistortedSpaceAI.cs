@@ -24,6 +24,17 @@ public class DistortedSpaceAI : NpcAI
         UseSkill();
     }
 
+    /// <summary>
+    /// Retail <c>IDTiamat_Sardha</c> gives this ten seconds; Java closed it at eight.
+    /// </summary>
+    /// <remarks>
+    /// <b>The bound was never missing, only short.</b> An audit pass added a ten-second lifetime to
+    /// Terath's spawn call to fix an add that "never expired" — but this add has always killed itself,
+    /// two seconds early, and the summoner-side lifetime was dead code because the shorter clock always
+    /// won. Corrected here, where the clock actually is.
+    /// </remarks>
+    private const long BlackHoleLifeMillis = 10000L;
+
     private void UseSkill()
     {
         task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
@@ -40,7 +51,7 @@ public class DistortedSpaceAI : NpcAI
                 AIActions.UseSkill(this, 20742);
             GetOwner().GetController().Die();
             return ValueTask.CompletedTask;
-        }, 8000L);
+        }, BlackHoleLifeMillis);
     }
 
     private void CancelTask()

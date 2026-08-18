@@ -20582,3 +20582,55 @@ The remaining seven have not been sorted between them.
 
 Build clean. The expiry pin fails with the lifetime removed and passes five runs in a row. Full suite
 **2,099 passing**, 1 skipped.
+
+## Pinning Terath found that the Terath fix was wrong
+
+Sorting the eight unpinned fixes: **five have a spawn entry naming their map and are pinnable now**
+(`drakanmedic`, `brigadegeneralterath`, `vasharti_assassin`, and the two Ahserion classes); **three have
+no spawn anywhere in our data** (`rm_1337`, `sematariux`, `king_consierd`) and would need their map
+invented.
+
+So the blanket reason covered five cases where it was simply untrue.
+
+### The pin failed its mutation, and the code was the problem
+
+Three Terath pins written and passing. **Zeroing both lifetimes left all three green**, which meant they
+tested nothing.
+
+The cause: **the black hole kills itself after eight seconds** in `DistortedSpaceAI`, and the gravity
+field after twenty in `GravityAI`. Both adds have always bounded themselves. **The lifetime this log added
+to Terath's spawn call two passes ago was dead code**, because the shorter clock always won.
+
+That entry described "an add cleaned only by death and one not cleaned at all" and was wrong on both
+counts. **The audit reads the summoner's class and never the spawned npc's** — `self-timed` detection asks
+whether the summoner schedules a delete, not whether the add deletes itself. **Nine rows have turned on
+"death cleanup is not a lifetime"; this is the first to turn on "the add has its own".**
+
+### The real finding underneath
+
+The bound was never missing. **It was short.** Java closes the hole at eight seconds where retail writes
+ten, and the field at twenty where retail writes twenty-four. Corrected **in the adds, where the clock
+actually is**, and the summoner-side lifetime reverted.
+
+**The pin had to be rewritten too.** Its first version asserted the hole was gone by eleven seconds, which
+is true under both numbers. **Nine seconds is the only window that separates them**, and the pin now fails
+when the add's clock is put back to eight.
+
+### Still to do
+
+- **Pin the other four pinnable fixes**: `drakanmedic`, `vasharti_assassin`, and the two Ahserion classes.
+  **And check each one's spawned npc for a clock of its own first** — this pass shows the summoner-side
+  lifetime can be redundant.
+- **Re-check `sematariux` and `king_consierd`** the same way, even though they cannot be pinned: their
+  adds may self-bound too, which would make those fixes redundant as well.
+- **Teach the audit to read the spawned npc's class**, which is the correction that would have caught
+  this one.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The rewritten pin fails with the add's clock at Java's eight seconds. Full suite **2,102
+passing**, 1 skipped.

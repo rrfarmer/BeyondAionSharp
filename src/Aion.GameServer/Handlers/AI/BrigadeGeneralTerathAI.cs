@@ -72,7 +72,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     private void GravityDistortionEvent()
     {
         SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20739, 55, GetOwner()).UseNoAnimationSkill();
-        SpawnFor(283096, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0, BlackHoleLife);
+        Spawn(283096, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0); // 4.0
         Spawn(283097, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0); // 4.0
         Spawn(283098, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0); // 4.0
         ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20741, 55, GetOwner()).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 5000L);
@@ -100,7 +100,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
         }, 4000L);
         ThreadPoolManager.GetInstance().Schedule(_ =>
         {
-            SpawnFor(283109, 1029.9f, 297.26f, 409.08f, (sbyte)0, GravityLife);
+            Spawn(283109, 1029.9f, 297.26f, 409.08f, (sbyte)0); // 4.0
             Spawn(283110, 1029.93f, 297.31f, 409.08f, (sbyte)0); // 4.0
             return ValueTask.CompletedTask;
         }, 10000L);
@@ -154,18 +154,6 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
         GetPosition().GetWorldMapInstance().SetDoorState(706, true);
         Despawn();
     }
-
-    /// <summary>
-    /// Retail <c>IDTiamat_Sardha</c>: the black hole stands ten seconds and the gravity field
-    /// twenty-four.
-    /// </summary>
-    /// <remarks>
-    /// <b>The gravity field was cleaned only by <see cref="Despawn"/></b>, which runs on death and on
-    /// going home, and the black hole was not cleaned at all. Death cleanup is not a lifetime, so both
-    /// accumulated for as long as the fight lasted.
-    /// </remarks>
-    private const int BlackHoleLife = 10;
-    private const int GravityLife = 24;
 
     private void Despawn()
     {

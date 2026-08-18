@@ -9,6 +9,9 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("gravity")]
 public class GravityAI : NpcAI
 {
+    /// <summary>Retail <c>IDTiamat_Sardha</c> gives the field twenty-four seconds; Java used twenty.</summary>
+    private const long FieldLifeMillis = 24000L;
+
     private ScheduledTask? task;
 
     public GravityAI(Npc owner)
@@ -28,7 +31,7 @@ public class GravityAI : NpcAI
         {
             AIActions.DeleteOwner(this);
             return System.Threading.Tasks.ValueTask.CompletedTask;
-        }, 20000L);
+        }, FieldLifeMillis);
     }
 
     protected override void HandleDespawned()
