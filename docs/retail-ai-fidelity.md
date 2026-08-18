@@ -20927,3 +20927,58 @@ log cannot say why it passes where its twin does not.
 ### Verification
 
 Three pins written, run, and deleted. Full suite **2,110 passing**, 1 skipped — unchanged.
+
+## Chasing the medic's missing summon, and stopping short
+
+The previous entry left one question: why `OnCreatureEvent(Attack)` drives Laksyaka's summon reliably and
+the drakan medic's not at all. **Three candidates were tested and eliminated. The cause is still unknown.**
+
+### What is now established
+
+- **The event is not state-gated.** `OnCreatureEvent` guards on `currentState.CanHandle(@event)`, which
+  looked like the answer — but a diagnostic shows the medic sits in **FIGHT** after `Engage` with
+  `CanHandle(Attack) == true`. The gate is open.
+- **The dispatch is unconditional.** `HandleCreatureEvent` calls `HandleAttack(creature)` with no further
+  test.
+- **The roll is a true three percent.** `Rnd.Chance()` returns 0-100, so five hundred blows should miss
+  about three times in ten million.
+- **Neither servant kind appears.** A diagnostic run finished with `281839=0`, `281621=0` and two objects
+  alive, so nothing was placed at all.
+
+### What is not
+
+Why the summon does not happen. The strongest remaining candidate is that
+`VisibleObjectSpawner.SpawnEnemyServant` — the path `RndSpawn` uses, and the only spawn route in this
+hierarchy that is not `AbstractAI.Spawn` — **does not produce anything in the harness.** That would
+explain the empty room. **It does not explain the one run in three that passed**, and no candidate does.
+
+### Why this is being left here
+
+Four commands were spent narrowing this and the remaining candidates each need a diagnostic of their own.
+**The fix it blocks is already shipped and correct** — the servant's twenty seconds is retail's, verifiable
+by reading — and what is missing is only its pin.
+
+**Stopping short is recorded rather than dressed up as a conclusion.** This log has twice written a
+confident cause that later turned out wrong (the timer semantics, the starving mechanics), and both times
+the confidence came from stopping at the first plausible explanation. **FIGHT-state gating was that
+explanation here**, and it was wrong.
+
+### And the pin that works is still unexplained
+
+Laksyaka passes six of six with the identical construction. **That remains unexplained, not validated**,
+and it should not be treated as evidence that the approach is sound.
+
+### Still to do
+
+- **Instrument `SpawnEnemyServant` under the harness** — one diagnostic, and the likeliest answer.
+- Then the `drakanmedic` pin, and a re-examination of the Laksyaka one.
+- `sematariux` and `king_consierd` need spawn entries — a data gap.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+**Diagnosis only; the diagnostic test was written, read, and removed.** Full suite **2,110 passing**,
+1 skipped.
