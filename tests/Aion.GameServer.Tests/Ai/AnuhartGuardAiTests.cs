@@ -12,8 +12,14 @@ namespace Aion.GameServer.Tests.Ai;
 /// <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
 /// <remarks>
-/// The guards are kept out of the player's known list so the call is the only way they can reach them,
-/// and the player is Asmodian because the aggro list refuses hate between friends.
+/// The player is Asmodian because the aggro list refuses hate between friends.
+/// <para>
+/// <b>These pins measure the hate the call adds, not the hate a guard has.</b> A guard standing seven
+/// metres from a player is an aggressive npc next to an enemy, and it will find them on its own
+/// eventually — which is right, and is not what any of this is about. An absolute figure here is a
+/// race between the call and the guard's own aggro scan, and it lost that race about one full-suite
+/// run in seven before the assertions became deltas. See docs/retail-ai-fidelity.md.
+/// </para>
 /// </remarks>
 [Collection("GoldenDataManager")]
 public sealed class AnuhartGuardAiTests
@@ -54,10 +60,11 @@ public sealed class AnuhartGuardAiTests
 		using BossAiHarness _h = harness;
 		Assert.Null(guard.GetTarget());
 
+		int before = guard.GetAggroList().GetHate(raider);
 		Strike(booster, raider);
 
 		Assert.Same(raider, guard.GetTarget());
-		Assert.Equal(300, guard.GetAggroList().GetHate(raider));
+		Assert.Equal(300, guard.GetAggroList().GetHate(raider) - before);
 	}
 
 	/// <summary>
@@ -93,12 +100,13 @@ public sealed class AnuhartGuardAiTests
 		var (harness, booster, guard, raider) = Chamber();
 		using BossAiHarness _h = harness;
 
+		int before = guard.GetAggroList().GetHate(raider);
 		Strike(booster, raider);
-		Assert.Equal(300, guard.GetAggroList().GetHate(raider));
+		Assert.Equal(300, guard.GetAggroList().GetHate(raider) - before);
 
 		Strike(booster, raider);
 
-		Assert.Equal(800, guard.GetAggroList().GetHate(raider));
+		Assert.Equal(800, guard.GetAggroList().GetHate(raider) - before);
 	}
 
 	/// <summary>
@@ -122,9 +130,10 @@ public sealed class AnuhartGuardAiTests
 		BossAiHarness.MakeMutuallyKnown(booster, middling);
 		BossAiHarness.MakeMutuallyKnown(booster, distant);
 
+		int before = middling.GetAggroList().GetHate(raider);
 		Strike(booster, raider);
 
-		Assert.Equal(300, middling.GetAggroList().GetHate(raider));
+		Assert.Equal(300, middling.GetAggroList().GetHate(raider) - before);
 		Assert.Equal(0, distant.GetAggroList().GetHate(raider));
 		Assert.Null(distant.GetTarget());
 	}
@@ -154,9 +163,10 @@ public sealed class AnuhartGuardAiTests
 		Player raider = harness.SpawnPlayer(663f, 370f, 99f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(booster, guardian);
 
+		int before = guardian.GetAggroList().GetHate(raider);
 		Strike(booster, raider);
 
 		Assert.Same(raider, guardian.GetTarget());
-		Assert.Equal(300, guardian.GetAggroList().GetHate(raider));
+		Assert.Equal(300, guardian.GetAggroList().GetHate(raider) - before);
 	}
 }

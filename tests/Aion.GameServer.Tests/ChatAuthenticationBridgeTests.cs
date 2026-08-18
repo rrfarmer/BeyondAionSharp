@@ -27,12 +27,12 @@ using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
-[CollectionDefinition("Chat authentication bridge", DisableParallelization = true)]
-public sealed class ChatAuthenticationBridgeCollectionDefinition
-{
-}
-
-[Collection("Chat authentication bridge")]
+// Was its own collection with DisableParallelization, which serialises a class against itself and
+// against nothing else. This class swaps the global GameWorld and DataManager, so a private
+// collection let it run beside every AI test in the suite and pull the world out from under one --
+// which is exactly what it did, roughly one full run in seven, for three commits.
+// SingletonIsolationTests now enforces the rule this violated.
+[Collection("GoldenDataManager")]
 public sealed class ChatAuthenticationBridgeTests
 {
 	[Fact]

@@ -11273,3 +11273,84 @@ and inventing one would be worse than the flake.
 Full suite **2,034 passing** and 1 skipped (with the intermittent above); three new pins on the event
 itself; **six mutations, all caught** — including the two that matter most, "anything's death raises
 the notice" and "enemies hear it too".
+
+## The flake that took four attempts, and is still open
+
+The previous entry recorded an intermittent failure and said the candidates were "worth finding
+properly". This is that work. **It is not fixed.** Four hypotheses, three real bugs found along the
+way, and one decisive experiment that ruled out the explanation all three of them assumed.
+
+### The symptom, measured
+
+An AI pin fails in roughly **one full-suite run in seven** and passes every time it is run alone. It is
+not always the same pin: `AnuhartGuardAiTests.TheGuardianAnswersFromItsOwnClass` three times,
+`KlawSpawnerAiTests.TheKlawspawnSharesTheCall` twice, `ArchmagusSayahumAiTests` twice — and in two of
+those runs `GameServerBootstrapTests` fell over in the same pass, which is the most useful single
+observation here: **whatever this is, it is not confined to the AI tests.**
+
+### Four hypotheses
+
+**1. A probabilistic window.** `ArchmagusSayahumAiTests.TheLadderStopsBelowFortyFive` asserts more than
+one distinct random target over a window. That claim really is probabilistic and the window really was
+too short, so it was widened from 120 to 600 seconds. **A real improvement. Not the cause** — other
+pins with no random branch anywhere kept failing.
+
+**2. A race against the guard's own aggro scan.** The Anuhart pins asserted an *absolute* hate of 300
+on a guard standing seven metres from an enemy player — which is an aggressive npc next to something it
+will find on its own eventually. Those assertions are deltas now, which is a better statement of the
+mechanic regardless. **A real improvement. Not the cause** — it failed again.
+
+**3. A class outside the serialising collection.** `QueenSerusiaAiTests` had been added three commits
+earlier without `[Collection("GoldenDataManager")]`, and `ChatAuthenticationBridgeTests` had a
+**private** collection with `DisableParallelization` — which serialises a class against itself and
+against nothing else, so it ran beside every AI test while swapping the global `GameWorld` and
+`DataManager`. Both fixed, and `SingletonIsolationTests` now enforces the rule so neither can recur.
+**Two real bugs. Still not the cause.**
+
+**4. Parallelism at all.** The decisive test: `[assembly: CollectionBehavior(DisableTestParallelization
+= true)]`, so nothing in the assembly can run beside anything else. **Twelve full runs. Two still
+failed.** The attribute was reverted rather than kept, because a change that costs five seconds a run
+and does not do what its comment claims is worse than no change.
+
+### What that leaves, and it is worth writing down precisely
+
+With parallelism excluded, the remaining explanation is **state surviving one test into the next**, and
+the harness's `Dispose` is the place to look:
+
+* It restores `ThreadPoolManager` to `_previousThreadPool ?? new ThreadPoolManager(...)` — a **real**
+  pool. Any task a harness scheduled on its `VirtualThreadPool` and never advanced far enough to run is
+  abandoned, but anything that captured the manager rather than looking it up each time is not.
+* It restores `GameWorld` the same way. NPCs spawned during a test are not individually removed; the
+  world object is swapped. An AI still holding a reference to an NPC from the previous world will act
+  on it.
+* `GeoDataConfig`, `AIConfig` and `InstanceConfig` statics are saved and restored, so an exception
+  thrown between construction and `Dispose` leaves them set.
+
+**The most testable of those is the abandoned-task path**, because it predicts exactly the observed
+shape: a stale scheduled action firing during a later test and moving a target or deleting an npc that
+the later test is asserting about.
+
+### The rule this cost, and it is not the rule I expected
+
+Three of the four hypotheses were reasonable, two of them found genuine bugs, and **none of them was
+right**. Each was adopted because it explained the last failure seen. The thing that finally moved the
+investigation forward was not another hypothesis but the observation that a *non-AI* test failed in the
+same pass — evidence that had been sitting in the output for two commits.
+
+**Rule: when a flake survives a fix, the next move is a decisive experiment, not a better hypothesis.**
+Disabling parallelism outright answered in twelve runs what four rounds of reasoning could not.
+
+### Kept from this work
+
+* `SingletonIsolationTests` — every test file that calls `RegisterInstance`/`RestoreInstance` on
+  `DataManager`, `GameWorld` or `ThreadPoolManager` must be in the one serialising collection.
+  Source-scanning, because the thing to look for is a call and reflection cannot read method bodies. It
+  found two offenders on its first run.
+* `QueenSerusiaAiTests` and `ChatAuthenticationBridgeTests` in that collection.
+* The Anuhart pins as deltas, with the reasoning in the class remarks.
+
+### Still open
+
+The flake. **Roughly one full-suite run in seven, cause unknown, parallelism ruled out.** Anyone
+picking this up should start at `BossAiHarness.Dispose` and the abandoned-task path above, and should
+treat a green run as meaning nothing — the failure needs seven or more full runs to show itself.

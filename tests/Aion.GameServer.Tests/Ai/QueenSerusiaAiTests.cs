@@ -14,6 +14,7 @@ namespace Aion.GameServer.Tests.Ai;
 /// <c>NeutQueenSumEgg_N_65_e</c> and <c>GhostRun_Sum_As_N_65_Ae</c> (see
 /// <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
+[Collection("GoldenDataManager")]
 public sealed class QueenSerusiaAiTests
 {
 	private const int IdianDepths = 210090000;
