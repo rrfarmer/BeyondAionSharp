@@ -21216,3 +21216,62 @@ the whole time.
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## The dropped-guard report has no real rows left at all
+
+The coffin's five `is_message` rows were the last of the backlog. **All five are already applied.**
+
+`SuspiciousCoffinAI` writes them through a local helper:
+
+```csharp
+private static PatternCondition Hears(int slot) => ai =>
+    ByCoffin.TryGetValue(ai.GetOwner().GetNpcId(), out Coffin c)
+    && ai.CurrentMessage == (slot == 1 ? c.First : slot == 2 ? c.Second : c.Third);
+```
+
+**That is `is_message`**, written per-npc because each coffin listens for different ids — which is exactly
+why it could not be a bare `When.Message(6605)` and exactly why the parser, which looks for `When.\w+`,
+cannot see it.
+
+**Sixth false-positive mode**, after the prefix collision, the lagging vocabulary, branch misalignment,
+mixed classes, and classes with several pattern tables.
+
+### So the report is empty
+
+Every "ready" row in the dropped-guard report is now accounted for:
+
+| | |
+|---|---|
+| 8 | already applied, hidden by a prefix collision |
+| 2 | already applied, hidden by a lagging vocabulary |
+| 1 | already applied, hidden by a class with two pattern tables |
+| 5 | already applied, hidden by a local condition helper |
+| 6 | flags nothing reads |
+| 1 | recorded as deliberately not applied |
+
+**Not one row was work.** The log quoted this report as "44 ready", "23", "14", "11" across many entries;
+the true count was **zero** throughout, and every apparent reduction was a correction to the tool.
+
+### What that says
+
+**A report whose false-positive rate is 100% is not a slightly noisy report** — it is measuring something
+other than what it claims. This one asks "does the branch text contain a `When.` naming this guard kind",
+and the port expresses guards six different ways, only one of which that question matches.
+
+**The right conclusion is not to fix the sixth mode.** It is that a text-matching guard audit cannot answer
+this question for this codebase, and the three passes spent reducing 44 to zero should have been spent on
+the encounters. **The mixed and misaligned rows are the same tool and should be treated as unverified.**
+
+### Still to do
+
+- **The 4 mixed and 3 misaligned rows** — same tool, same caveat; read the file first, expect them applied.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12.
+- `sematariux` and `king_consierd` need spawn entries; the `drakanmedic` harness question, behind all of
+  the above.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
