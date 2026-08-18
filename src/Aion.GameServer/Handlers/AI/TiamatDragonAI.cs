@@ -72,8 +72,8 @@ public class TiamatDragonAI : AggressiveNpcAI
     {
         CancelMageTask();
         Npc owner = GetOwner();
-        SpawnFor(ThickDust, owner.GetX(), owner.GetY(), owner.GetZ(),
-            (sbyte)owner.GetHeading(), DustLife);
+        // No lifetime here: ThickDustAI carries retail's own six seconds.
+        Spawn(ThickDust, owner.GetX(), owner.GetY(), owner.GetZ(), (sbyte)owner.GetHeading());
         base.HandleDied();
     }
 
@@ -121,7 +121,6 @@ public class TiamatDragonAI : AggressiveNpcAI
     private const int FlashLife = 10;
     private const int SpiritLife = 6;
     private const int ArrivalLife = 8;
-    private const int DustLife = 6;
 
     /// <summary>Retail's absolute mark for the shape-change flash.</summary>
     private const float FlashX = 457.9f;

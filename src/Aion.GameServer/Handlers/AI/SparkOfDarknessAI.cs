@@ -8,6 +8,9 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("spark_of_darkness")]
 public class SparkOfDarknessAI : GeneralNpcAI
 {
+    /// <summary>Retail <c>S8_Summon_Fire_55_Ae</c> gives this five seconds; Java used six and a half.</summary>
+    private const long SparkLifeMillis = 5000L;
+
     public SparkOfDarknessAI(Npc owner)
         : base(owner)
     {
@@ -36,6 +39,6 @@ public class SparkOfDarknessAI : GeneralNpcAI
         {
             AIActions.DeleteOwner(this);
             return System.Threading.Tasks.ValueTask.CompletedTask;
-        }, 6500L);
+        }, SparkLifeMillis);
     }
 }

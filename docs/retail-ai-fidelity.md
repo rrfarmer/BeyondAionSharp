@@ -20634,3 +20634,55 @@ when the add's clock is put back to eight.
 
 Build clean. The rewritten pin fails with the add's clock at Java's eight seconds. Full suite **2,102
 passing**, 1 skipped.
+
+## Sweeping for adds with clocks of their own
+
+The previous entry found one summoner-side lifetime that was dead code because the add killed itself.
+**Checking all thirty npcs this log has given a lifetime found three more.**
+
+| add | its own clock | retail | what the summoner-side number did |
+|---|---|---|---|
+| Tiamat's thick dust | 10s | 6s | **won the race** — the fix worked, by accident |
+| the arena spark | 6.5s | 5s | **won the race** — same |
+| Ahserion's troopers | 8 minutes | 7,200s | **nothing** — the shorter clock won |
+
+**Two of the three "worked" only because the number happened to be smaller.** Had retail's value been the
+larger one — as it is for the troopers — the fix would have been silently inert, which is exactly what
+happened to Terath.
+
+### All four resolved the same way
+
+**The number belongs in the add.** Both duplicated clocks are gone: `ThickDustAI` and `SparkOfDarknessAI`
+now carry retail's own seconds and their summoners spawn plainly. **One add, one clock.**
+
+### The trooper case is a judgement, not a correction
+
+Retail gives Ahserion's troopers **two hours**; `AhserionAggressiveNpcAI` removes them after **eight
+minutes**. Two hours on a siege map is retail's backstop against leaks, not a mechanic; eight minutes is a
+real bound on how long a landed wave lives.
+
+**Loosening it fifteenfold in the name of fidelity would make the encounter measurably worse.** The
+divergence is recorded in the class, with the retail number kept beside it, and the dead lifetime removed.
+
+### What this says about the audit
+
+`audit_spawn_lifetimes.py` reads the summoner and never the add. **Four of its findings were wrong for
+that reason** — one inert, two right by coincidence, one a judgement it could not make. That is the
+correction it still needs, and the count is now large enough to state plainly: **the tool cannot tell a
+missing bound from a bound somewhere else.**
+
+### Still to do
+
+- **Teach the audit to read the spawned npc's class.** Four wrong findings is the case for it.
+- **Pin the dust and spark lifetimes.** Neither is covered: the dust pin asserts only that dust appears,
+  and changing its clock back to ten leaves it green.
+- Pin `drakanmedic`, `vasharti_assassin` and the two Ahserion classes — all have a map.
+- `sematariux` and `king_consierd` have no map and no self-clock, so their fixes stand unpinned.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Full suite **2,102 passing**, 1 skipped.

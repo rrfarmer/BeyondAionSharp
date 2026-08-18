@@ -30,7 +30,17 @@ public class AhserionSkyAssaulterAI : GeneralNpcAI
     /// that runs long should not end with every wave still standing.
     /// </remarks>
     private const long PodLifeMillis = 5000L;
-    private const int TrooperLife = 7200;
+    /// <summary>
+    /// <b>Deliberately not applied.</b> Retail gives these troopers 7,200 seconds and
+    /// <c>AhserionAggressiveNpcAI</c> already removes them after eight minutes.
+    /// </summary>
+    /// <remarks>
+    /// Two hours on a siege map is retail's backstop against leaks, not a mechanic; eight minutes is a
+    /// real bound on how long a landed wave lives. <b>Loosening it fifteenfold in the name of fidelity
+    /// would make the encounter measurably worse</b>, and the number this log first applied here was dead
+    /// code anyway, since the shorter clock always won. The divergence is recorded rather than removed.
+    /// </remarks>
+    private const int TrooperLifeNotApplied = 7200;
 
     private void Activate()
     {
@@ -55,12 +65,12 @@ public class AhserionSkyAssaulterAI : GeneralNpcAI
         switch (GetNpcId())
         {
             case 297352:
-                SpawnFor(297191, p.GetX() + 3, p.GetY() - 3, p.GetZ(), (sbyte)p.GetHeading(), TrooperLife); // Ahserion Troopers Assassin
-                SpawnFor(297192, p.GetX(), p.GetY(), p.GetZ() + 0.1f, (sbyte)p.GetHeading(), TrooperLife); // Ahserion Troopers Sorcerer
-                SpawnFor(297191, p.GetX() + 3, p.GetY() + 3, p.GetZ(), (sbyte)p.GetHeading(), TrooperLife); // Ahserion Troopers Assassin
+                Spawn(297191, p.GetX() + 3, p.GetY() - 3, p.GetZ(), (sbyte)p.GetHeading()); // Ahserion Troopers Assassin
+                Spawn(297192, p.GetX(), p.GetY(), p.GetZ() + 0.1f, (sbyte)p.GetHeading()); // Ahserion Troopers Sorcerer
+                Spawn(297191, p.GetX() + 3, p.GetY() + 3, p.GetZ(), (sbyte)p.GetHeading()); // Ahserion Troopers Assassin
                 break;
             case 297353:
-                SpawnFor(297190, p.GetX() - 2, p.GetY() + 2, p.GetZ(), (sbyte)p.GetHeading(), TrooperLife); // Ahserion Troopers Defender Captain
+                Spawn(297190, p.GetX() - 2, p.GetY() + 2, p.GetZ(), (sbyte)p.GetHeading()); // Ahserion Troopers Defender Captain
                 Spawn(297191, p.GetX() + 2, p.GetY() - 2, p.GetZ(), (sbyte)p.GetHeading()); // Ahserion Troopers Assassin
                 Spawn(297191, p.GetX() - 2, p.GetY() - 2, p.GetZ() + 2, (sbyte)p.GetHeading()); // Ahserion Troopers Assassin
                 break;

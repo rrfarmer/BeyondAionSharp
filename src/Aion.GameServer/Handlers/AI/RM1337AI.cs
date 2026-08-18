@@ -22,15 +22,6 @@ public class RM1337AI : AggressiveNpcAI
     {
     }
 
-    /// <summary>
-    /// Retail <c>IDArena_S8_Named_6</c> gives <c>S8_Summon_Fire_55_Ae</c> five seconds.
-    /// </summary>
-    /// <remarks>
-    /// <b>This places eight to twelve at once</b>, so an unbounded spark was the fastest-accumulating
-    /// add found in this whole audit — a single arena round left the floor covered in them.
-    /// </remarks>
-    private const int SparkLife = 5;
-
     protected override void HandleSpawned()
     {
         base.HandleSpawned();
@@ -151,7 +142,7 @@ public class RM1337AI : AggressiveNpcAI
                 int count = Rnd.Get(8, 12);
                 for (int i = 0; i < count; i++)
                 {
-                    Expire(RndSpawnInRange(282373, 3, 12), SparkLife);
+                    RndSpawnInRange(282373, 3, 12); // SparkOfDarknessAI carries retail's five seconds
                 }
             }
             return ValueTask.CompletedTask;
