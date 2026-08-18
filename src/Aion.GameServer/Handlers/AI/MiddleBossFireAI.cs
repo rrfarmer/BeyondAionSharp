@@ -92,6 +92,11 @@ public class MiddleBossFireAI : PatternAi
         [235775] = (16923, 17250),  // bahapa  — Cold Attack, Cold Air Emission
     };
 
+    /// <summary>Retail's <c>FLAGVARI_DELTA_4</c> on the top band's opening slash.</summary>
+
+    private const int TopSlash = 12;
+
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnWakeUp = Of(
@@ -120,7 +125,9 @@ public class MiddleBossFireAI : PatternAi
         OnBattleTimer = Of(
             Branch(1000, "71-100 trait 1", [When.Timer(0), When.HpBetween(71, 100)],
                 Do.ArmTimer(1, 6000), Do.Custom(ai => Cast(ai, t => t.Trait1))),
-            Branch(995, "71-100 slash", [When.Timer(1), When.HpBetween(71, 100)],
+            // Retail guards this with set_flag_var, so the top band's opening slash lands once and the
+            // pair below it carries the rotation from there.
+            Branch(995, "71-100 slash", [When.Timer(1), When.HpBetween(71, 100), When.FirstTime(TopSlash)],
                 Do.ArmTimer(2, 9000), Do.SkillOnTarget(SwiftEdge)),
             Branch(980, "71-100 slash at random", [When.Timer(2), When.HpBetween(71, 100)],
                 Do.ArmTimer(0, 9000), Do.SkillOn(NpcSkillTargetAttribute.RANDOM, SwiftEdge)),

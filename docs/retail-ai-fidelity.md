@@ -18694,3 +18694,49 @@ guards were read — twice now, an escalation has outrun its evidence by exactly
 ### Verification
 
 Measurement only; no code changed. Full suite **2,053 passing**, 1 skipped.
+
+## The last fails-open flag row, and a fourth "not caught"
+
+`MiddleBossFireAI`'s top band opening slash now carries retail's `set_flag_var`: it lands once, and the
+pair below it carries the rotation from there. **Fails open, so applying it blind was safe** — the
+distinction the `unset_flag_var` entry drew two passes ago.
+
+**The mutation is not caught.** Removing the flag leaves all 22 Middle Boss Fire pins green. That is the
+fourth guard in a row where the suite cannot see the difference, and the reasons have all been different:
+
+| guard | why the mutation was invisible |
+|---|---|
+| Lepharist whisper | `EnterCombat()` latches the handler |
+| Silikor ward | `OnWakeUp` fires once by construction |
+| Kingspin windows | the timer operator ignores a repeat at the same delay |
+| **Middle Boss Fire slash** | **not established** |
+
+The fourth is the one worth noting: **it may be another already-enforced case, or it may be a genuine gap
+in that file's pins**, and telling those apart needs the branch traced rather than assumed. Three
+precedents make "already enforced" the likely answer and that is exactly why it should not be assumed.
+
+### A flake, recorded again
+
+`KingspinAiTests.BelowFiftyOneItThrowsFive` failed once in a full run and passed in the two that followed.
+That is the second Kingspin cry-counting pin to flake — `TheTopRungOfTheLadderThrowsNothing` did the same
+several entries ago. **Both count cries over a watch driven by real scheduling**, which is the common
+factor, and two flakes in one file is now a pattern rather than a coincidence.
+
+**Worth fixing before it costs a real diagnosis**: a run that goes red for timing reasons trains the next
+reader to re-run rather than look.
+
+### Still to do
+
+- **Trace the Middle Boss Fire slash** to find whether its mutation is invisible for a fifth reason or a
+  real one.
+- **The two flaky Kingspin pins**, which drive real scheduling in a counting loop.
+- Mark Padmarashka's two rows as deliberately not applied.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One guard applied, mutation run and not caught, suite run three times. **2,053 passing**, 1 skipped.
