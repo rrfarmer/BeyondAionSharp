@@ -505,4 +505,50 @@ public sealed class SilikorOfMemoryAiTests
 
 		Assert.False(pattern.IsFlagSet(1), "arriving did not clear the walking flag");
 	}
+	/// <summary>
+	/// <b>Two close guards with a walk between them arm the dismissal.</b> The world flag the silikor
+	/// consumes is only set on the second answer, which is only reachable after the akaimum has walked.
+	/// </summary>
+	/// <remarks>
+	/// <b>Four passes built this in four pieces</b> — the akaimum'''s 6621 listener, the world-flag engine,
+	/// the near answers, and the arrival that clears the flag between them — and each pass could only pin
+	/// its own piece. This is the first pin that runs the chain.
+	/// <para>
+	/// The step that makes it a mechanic rather than a trick is the <b>second</b> marker: one close guard
+	/// is not enough, because the flag the silikor consumes is only set on the second answer, which is
+	/// only reachable after the akaimum has finished walking.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TwoCloseGuardsWithAWalkBetweenThemArmTheDismissal()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc silikor = harness.Spawn(Silikor, 300f, 300f, 200f);
+		Npc akaimum = harness.Spawn(Akaimum, 392f, 727f, 188f);
+
+		for (int round = 0; round < 2; round++)
+		{
+			Npc guard = harness.Spawn(MeleeGuard, 396f, 730f, 188f);
+			BossAiHarness.MakeMutuallyKnown(akaimum, guard);
+			guard.GetAi().OnGeneralEvent(AiEventType.Died);
+
+			Npc marker = harness.LiveNpcs().Last(n => n.GetNpcId() == MeleeMarker);
+			BossAiHarness.MakeMutuallyKnown(akaimum, marker);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+			// The walk between the two answers is what clears the flag gating the second.
+			akaimum.GetAi().OnGeneralEvent(AiEventType.MoveArrived);
+		}
+
+		bool armed = Aion.GameServer.Ai.Pattern.WorldFlags.IsSet(akaimum.GetWorldMapInstance(), 2);
+		Assert.True(armed, "the world flag was never armed by two close markers");
+
+		// A neutral-race caster spelling him consumes the world flag and broadcasts the dismissal.
+		// A servant: retail's race_type=neut, which in our data is an npc with no race attribute.
+		// The spell that consumes it is NOT asserted here. The sender is built -- OnSpelled p100, guarded
+		// on a NEUT caster and ConsumingWorld -- but it does not fire through the harness'''s Spelled event,
+		// and whether that is the event not carrying a caster or the race guard not matching is not
+		// established. Pinning the arming rather than the whole chain keeps this honest: what four passes
+		// of work made reachable is the flag, and that is what is verified.
+	}
 }

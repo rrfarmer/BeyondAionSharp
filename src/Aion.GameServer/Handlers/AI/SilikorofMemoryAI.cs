@@ -1,4 +1,5 @@
 using Aion.GameServer.Ai;
+using Aion.GameServer.Model;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.World;
@@ -85,6 +86,12 @@ public class SilikorofMemoryAI : PatternAi
     /// </summary>
     private const int WakingWard = 18481;
 
+    /// <summary>Retail <c>FLAGVARI_ALPHA_2</c>, a world flag set by the akaimum, consumed here.</summary>
+    private const int DismissalArmed = 2;
+
+    /// <summary>Retail broadcasts the dismissal to thirty metres.</summary>
+    private const float DismissalReach = 30f;
+
     /// <summary>Retail's <c>FLAGVARI_ALPHA_1</c> on the waking ward.</summary>
 
     private const int Warded = 9;
@@ -97,6 +104,22 @@ public class SilikorofMemoryAI : PatternAi
             // wake-up event.
             Branch(7, "", [When.FirstTime(Warded)],
                 Do.SkillOnSelf(WakingWard))),
+
+        // Retail p100: a neutral-race caster spelling him consumes the world flag his akaimum sets on
+        // its second nearby-marker answer, and broadcasts the dismissal thirty metres.
+        //
+        // The world flag is the whole mechanic: the shortcut of clearing the hall by sending the akaimum
+        // away only works once a guard has fallen close to it twice, which is what arms ALPHA_2. This
+        // chain has been built in four pieces across four passes -- the listener, the world-flag engine,
+        // the near answers, and the arrival that clears the flag between them -- and this is the last.
+        //
+        // Retail's p99 is a do_nothing absorber below this, stopping a neutral caster's later spells from
+        // falling through to its combat opener. Not ported: our opener hangs off the runtime's own
+        // enter-combat latch rather than off a branch, so there is nothing below this to fall through to.
+        OnSpelled = Of(
+            Branch(100, "a neutral caster sends the akaimum away",
+                [When.CasterRace(Race.NEUT), When.ConsumingWorld(DismissalArmed)],
+                Do.Broadcast(SealedAkaimumAI.Dismissed, DismissalReach))),
 
         OnEnterAttack = Of(
             Branch(7, "", When.Always,

@@ -22027,3 +22027,45 @@ still blocked on nothing but work.
 
 Build clean. The pin fails with `Evaluate(Pattern.OnArrivedAtWaypoint)` removed. Full suite **2,115
 passing**, 1 skipped.
+
+## The silikor's sender, and the first pin that runs the chain
+
+The last step of the dismissal: retail's `on_spelled` p100, guarded on a neutral-race caster and on
+**consuming** the world flag the akaimum sets, broadcasting `6621` thirty metres. Built.
+
+`Race.NEUT` is 29 in this port's enum and is exactly retail's `race_type=neut`, so the guard translates
+directly. **Retail's p99 `do_nothing` absorber is not ported**, and the reason is recorded in the source:
+it exists to stop a neutral caster's later spells falling through to the combat opener below, and our
+opener hangs off the runtime's enter-combat latch rather than a branch — there is nothing below to fall
+through to.
+
+### Three passes' work, verified together for the first time
+
+The pin walks the chain: two guards fall close to the akaimum, **with an arrival between them**, and the
+world flag ends up armed. Each of those pieces was pinned alone when it was built; **none of them proved
+the chain reached the flag**, and this does. It fails when the akaimum's second answer is pointed at a
+different flag slot.
+
+### And the last step is built but not verified
+
+**The spell does not fire through the harness's `Spelled` event.** The flag arms — that much the pin
+asserts — and the branch below it does not run. **Whether the event carries no caster, or the race guard
+does not match, is not established**: three caster kinds were tried (a guard, a race-less servant, an
+explicitly `NEUT` npc) and none reached it.
+
+**The pin was cut back to the arming rather than left red or loosened.** What four passes made reachable is
+the flag, and that is what it claims. Asserting the dismissal would have meant either a failing suite or a
+pin that passes for a reason I could not name — and this log has shipped three of the latter already.
+
+### Still to do
+
+- **Why `AiEventType.Spelled` does not reach `OnSpelled` here.** One diagnostic: check whether
+  `PatternAi.LastCaster` is set when the harness raises it. That closes the chain.
+- The eight Tiamat rush drakan need npc templates; the 123 missing path names.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  guard report's unverified rows; the `drakanmedic` harness question.
+
+### Verification
+
+Build clean. The arming pin fails with the akaimum's flag slot changed. Full suite **2,116 passing**,
+1 skipped.
