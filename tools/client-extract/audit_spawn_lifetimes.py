@@ -15,6 +15,9 @@ not spawn that npc at all, or may already remove it some other way. Three verdic
   * **NO LIFETIME** -- the class spawns and never expires anything. **Read these first.**
   * **partial** -- the class uses `SpawnFor` somewhere but also plain `Spawn`, so some adds are timed and
     some are not. Usually a real gap, occasionally deliberate.
+  * **self-timed** -- the class schedules its own deletes, so its adds already expire by another route.
+    **Almost always nothing to do.** This verdict exists because two consecutive passes spent their
+    reading budget on rows of exactly this kind before discovering they were already correct.
   * **timed** -- every spawn in the class carries a lifetime.
   * **no spawns** -- the class does not spawn at all, so retail's timed spawn lives in a branch we never
     ported. That is a different backlog (see the unported-flag-branch list) and is reported separately.
@@ -74,10 +77,16 @@ def our_classes(repo: pathlib.Path) -> dict[str, tuple[bool, int, int]]:
             # Do.SpawnAt / SpawnNear on the pattern side already carry liveSeconds; on the Java side the
             # bare Spawn( overloads do not.
             plain = len(re.findall(r"(?<![A-Za-z])Spawn\(", body))
+            # A class that schedules its own deletes is already expiring its adds by another route.
+            # Two passes running, the largest rows on this report were exactly that -- balaurbarricade
+            # and unstableyamennes both wrote the schedule by hand before SpawnFor existed -- and each
+            # cost a pass to read before turning out to be nothing. Detected rather than re-discovered.
+            self_timed = bool(re.search(r"Schedule\(", body)) and bool(
+                re.search(r"DeleteIfAliveOrCancelRespawn|GetController\(\)\.Delete\(", body))
             # Expire( counts too: it is SpawnFor's other half, used where the spawn comes from
             # one of the other helpers rather than from Spawn directly.
             timed = len(re.findall(r"SpawnFor\(|Expire\(", body))
-            out[name] = (pattern_class, plain, timed)
+            out[name] = (pattern_class, plain, timed, self_timed)
     return out
 
 
@@ -142,7 +151,7 @@ def main() -> int:
     for name, patterns in sorted(serves.items()):
         if name in ("aggressive", "general") or name not in classes:
             continue
-        pattern_class, plain, spawn_for = classes[name]
+        pattern_class, plain, spawn_for, self_timed = classes[name]
         if pattern_class:
             continue
         # Only lifetimes on npcs this class actually spawns. Without this the audit reports every
@@ -159,6 +168,8 @@ def main() -> int:
             verdict = "timed"
         elif spawn_for:
             verdict = "partial"
+        elif self_timed:
+            verdict = "self-timed"
         else:
             verdict = "NO LIFETIME"
         counts[verdict] += 1
@@ -166,7 +177,7 @@ def main() -> int:
 
     print(__doc__.splitlines()[0])
     print()
-    order = {"NO LIFETIME": 0, "partial": 1, "timed": 2, "no spawns": 3}
+    order = {"NO LIFETIME": 0, "partial": 1, "self-timed": 2, "timed": 3, "no spawns": 4}
     for verdict, name, n, lives, plain, spawn_for in sorted(
             rows, key=lambda r: (order[r[0]], -r[2])):
         if args.verdict and args.verdict.lower() not in verdict.lower():

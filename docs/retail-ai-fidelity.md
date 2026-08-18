@@ -19533,3 +19533,64 @@ its two siblings failed loudly on the same run.
 
 Build clean. Two of the three pins fail with the portal lifetime removed. Full suite **2,074 passing**,
 1 skipped.
+
+## Teaching the audit to spot the false positives, and the four Splinter cores
+
+Two passes running, the largest rows on the lifetime report were classes that **already expired their
+adds** through schedules written by hand before `SpawnFor` existed. Each cost a pass to read. So the tool
+now detects that shape — a `Schedule(` alongside a `DeleteIfAliveOrCancelRespawn` — and reports it as
+**`self-timed`** rather than `NO LIFETIME`.
+
+**29 rows become 11.** `ahserion_sky_assaulter`, `brigade_general_vasharti`, `vasharti_assassin` and
+`ahserion_construct_destroyer` all move to `self-timed` without anyone reading them.
+
+**That is the third correction this tool has needed**, after the devname narrowing and the `Expire` count.
+Every one of the three moved rows *out* of the work list. **A first-cut audit over-reports; the useful
+version is the one that has been wrong three times.**
+
+### The four cores
+
+Rukril and Ebonsoul, stable and unstable — one family, one omission, and **opposite failures from it**:
+
+- **Where the class guarded on "only if none are standing"**, the guard never passed twice, so the summon
+  arrived once and the mechanic was **over for the rest of the fight.**
+- **Where it did not** — the unstable pair each summon *for their partner*, with no guard at all — a fresh
+  pair arrived **every seventy seconds for the whole fight and none ever left.**
+
+Both lines sit within four lines of each other in the same method. **One missing lifetime, two opposite
+bugs, adjacent.**
+
+### Why the guards were dropped here and kept at Pazuzu
+
+Pazuzu's guard is harmless once its adds expire: its life is 71 against a 72-second cycle, so the check
+always lands on an empty room. **Here retail writes both as 70**, so a check landing on the same tick as
+the expiry could still see the summons standing and skip. The guards are removed, and retail spawns
+unconditionally anyway.
+
+**That distinction is the reason the previous entry's "not independently observable" finding mattered** —
+it is observable here, and only reading both numbers shows which case you are in.
+
+### A pin that needed the right trigger
+
+The first version started the clock with a blow, as Pazuzu's does. These four start on **crossing 95
+percent health**; the blow is only what makes the phase check run. Twelve pins failed identically until
+the setup dropped the boss's health first — the fourth distinct "harness artifact" shape this log has hit,
+after bare attack events, unregistered AI, and sight range.
+
+### Still to do
+
+- **11 `NO LIFETIME` rows remain**: `celestius` (30s), `dracusbox`, `unfaithfulntuamu`, `betrayericaronix`,
+  `hugeegg`, `isbariya` (30s), `kaluvaspawn`.
+- The `self-timed` rows are **not verified**, only deprioritised — the heuristic proves a schedule exists,
+  not that it covers every spawn.
+- Yamennes' golem cadence; the 12 `no spawns` rows.
+- `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints, blocking the silikor
+  dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Twelve new pins; the four expiry pins fail with the lifetimes removed. Full suite **2,086
+passing**, 1 skipped.

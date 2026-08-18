@@ -32,6 +32,17 @@ public class UnstableEbonsoulAI : AggressiveNpcAI, HpPhases.PhaseHandler
         StartSkillTask();
     }
 
+    /// <summary>
+    /// Retail <c>bidabre_core_02</c>: both summons carry <c>live_time</c> 70 against a branch timer of
+    /// the same seventy seconds.
+    /// </summary>
+    /// <remarks>
+    /// <b>The partner's summon below had no guard at all</b>, so where this class's own summon ran once
+    /// per fight and stopped, the partner's accumulated a fresh pair every seventy seconds for the whole
+    /// fight. One missing lifetime produced opposite failures on two adjacent lines.
+    /// </remarks>
+    private const int SummonLife = 70;
+
     private void StartSkillTask()
     {
         Npc rukril = GetPosition().GetWorldMapInstance().GetNpc(219551);
@@ -41,15 +52,12 @@ public class UnstableEbonsoulAI : AggressiveNpcAI, HpPhases.PhaseHandler
                 CancelTask();
             else
             {
-                if (GetPosition().GetWorldMapInstance().GetNpc(283205) == null)
-                {
-                    SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19159, 55, GetOwner()).UseNoAnimationSkill();
-                    Spawn(283205, GetOwner().GetX() + 2, GetOwner().GetY() - 2, GetOwner().GetZ(), (sbyte)0);
-                }
+                SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19159, 55, GetOwner()).UseNoAnimationSkill();
+                SpawnFor(283205, GetOwner().GetX() + 2, GetOwner().GetY() - 2, GetOwner().GetZ(), (sbyte)0, SummonLife);
                 if (rukril != null && !rukril.IsDead())
                 {
                     SkillEngine.SkillEngine.GetInstance().GetSkill(rukril, 19266, 55, rukril).UseNoAnimationSkill();
-                    Spawn(283204, rukril.GetX() + 2, rukril.GetY() - 2, rukril.GetZ(), (sbyte)0);
+                    SpawnFor(283204, rukril.GetX() + 2, rukril.GetY() - 2, rukril.GetZ(), (sbyte)0, SummonLife);
                 }
             }
             return ValueTask.CompletedTask;
