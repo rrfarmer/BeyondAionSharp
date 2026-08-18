@@ -61,6 +61,9 @@ public class KingspinAI : PatternAi
     /// <summary>The throw clock inside a window, against the eighteen seconds outside one.</summary>
     private const int AcceleratedThrowMillis = 8_000;
 
+    /// <summary>Retail's re-arm on the two branches above fifty-one, which throw nothing.</summary>
+    private const int QuietThrowMillis = 15_000;
+
     private const int Webs = 1;
 
     /// <summary>Retail's <c>valid_distance</c> on every multi-target throw.</summary>
@@ -115,9 +118,19 @@ public class KingspinAI : PatternAi
             Branch(11, "below 86", [When.Timer(0), When.HpBelow(86)],
                 Do.ArmTimer(0, HeartbeatMillis)),
 
-            Branch(10, "", [When.Timer(1)],
+            // HE ONLY THROWS BELOW FIFTY-ONE. Above that the clock still runs -- branches 8 and 7 keep
+            // it alive at fifteen seconds -- and nothing is thrown. Without those two and this guard he
+            // threw at every health, which also made the accelerators pointless: shortening a clock that
+            // already produces a throw on every tick changes nothing.
+            Branch(10, "the throw itself", [When.Timer(1), When.HpBetween(0, 51)],
                 Do.ArmTimer(1, 18000),
                 WebOn(4, MultiTargetOrder.Random, LaterLife)),
+
+            Branch(8, "above fifty-one the clock runs empty", [When.Timer(1), When.HpBetween(51, 70)],
+                Do.ArmTimer(1, QuietThrowMillis)),
+
+            Branch(7, "and above seventy too", [When.Timer(1), When.HpBetween(71, 100)],
+                Do.ArmTimer(1, QuietThrowMillis)),
 
             // The two accelerator windows. Retail arms timers 3 and 4 from on_message and each re-arms
             // his throw clock at eight seconds instead of the eighteen branch 10 gives it -- so inside

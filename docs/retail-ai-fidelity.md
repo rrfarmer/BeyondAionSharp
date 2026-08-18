@@ -17212,3 +17212,47 @@ because nothing in a *dropped guard* report says "and this branch has siblings".
 ### Verification
 
 Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Kingspin only throws below fifty-one, and the first four pins did not prove it
+
+Three of the four steps the previous entry listed are done. **Branch 10 is guarded `0–51`**, and the two
+siblings that keep the clock alive above it — 51–70 and 71–100, re-arming at fifteen seconds and throwing
+nothing — are in.
+
+### The pins passed and meant nothing
+
+Re-deriving the four cry-counting pins against the new rule took two passes, and after the second the suite
+was green. **Removing the guard again left all eight pins green.**
+
+They had been loosened until they passed: floors dropped from four cries to one, comparisons made across
+health steps that the ladder explains on its own. Every one still described something true, and **not one
+of them could tell a Kingspin who throws below fifty-one from a Kingspin who throws always.**
+
+The assertion that pins it is the one that was missing: **at eighty percent, nineteen seconds after the
+opening, the tally has not moved.** Without the guard the clock throws every eighteen seconds at any
+health and it climbs. With the guard the opening is all a raid at that health ever sees.
+
+**Caught the mutation on the next run.** This log has said "a suite can be green because the code is right
+or because nobody looked" before; this is the first time in the thread that the loosening happened inside
+a single pass and was caught inside it too.
+
+### Where the encounter stands
+
+- Webs thrown, cries heard, sight respected, throw band correct.
+- **The accelerator still does nothing measurable** — its pin still asserts the defect. The clock is now
+  guarded, which was the missing precondition, but whether eight seconds against fifteen produces a
+  countable difference over a thirty-second watch has not been re-measured.
+- Neither web skill is cast; that is the usual `use_skill` wall.
+
+### Still to do
+
+- **Re-measure the accelerator** now the clock is guarded, and flip its pin if it moves.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One guard, two branches, four pins re-derived, one mutation caught. Full suite **2,050 passing**, 1 skipped.

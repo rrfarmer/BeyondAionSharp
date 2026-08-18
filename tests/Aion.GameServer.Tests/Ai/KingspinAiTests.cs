@@ -137,7 +137,9 @@ public sealed class KingspinAiTests
 		using BossAiHarness _h = harness;
 
 		// Counted by what the webs say, not by how many stand: each one thrown at a player fires and
-		// vanishes on the tick it lands. Retail's second timer throws four every eighteen seconds.
+		// vanishes on the tick it lands. Retail's second timer throws four every eighteen seconds --
+		// and only below fifty-one, which is where he has to be for this to be about the timer.
+		BossAiHarness.SetExactPercent(boss, 40);
 		Advance(harness, boss, raid, 25);
 		int afterFirst = Cries(cries);
 		Assert.True(afterFirst >= 4, $"only {afterFirst} cries by twenty-five seconds");
@@ -162,13 +164,18 @@ public sealed class KingspinAiTests
 
 		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
 		// the tick it lands, so the tally is the only record a throw leaves.
+		// He opens on entering the fight whatever his health; after that, above fifty-one, the clock
+		// runs empty. So the first thirty seconds are the opening and nothing else.
 		Advance(harness, boss, raid, 30);
 		int opened = Cries(cries);
-		Assert.True(opened >= 4, $"only {opened} cries in the first thirty seconds");
+		// One cry, not four: the opening throws some webs at players and four behind him, and only the
+		// ones that land on somebody speak. The four behind now stand instead, which is the sight gate
+		// working.
+		Assert.True(opened >= 1, $"only {opened} cries in the first thirty seconds");
 
-		BossAiHarness.SetExactPercent(boss, 70);
-		Advance(harness, boss, raid, 5);
-		Assert.True(Cries(cries) > opened, "crossing seventy-one added no throw");
+		BossAiHarness.SetExactPercent(boss, 45);
+		Advance(harness, boss, raid, 20);
+		Assert.True(Cries(cries) > opened, "dropping into the throwing band added no throw");
 
 		// And again on the next heartbeat, which a one-shot step would not do.
 		int afterFirst = Cries(cries);
@@ -191,10 +198,10 @@ public sealed class KingspinAiTests
 		// the tick it lands, so the tally is the only record a throw leaves.
 		Advance(harness, boss, raid, 30);
 		int before = Cries(cries);
-		Assert.True(before >= 4, $"only {before} cries in the first thirty seconds");
+		Assert.True(before >= 1, $"only {before} cries in the first thirty seconds");
 
 		BossAiHarness.SetExactPercent(boss, 50);
-		Advance(harness, boss, raid, 5);
+		Advance(harness, boss, raid, 25);
 
 		Assert.True(Cries(cries) >= before + 5, $"crossing fifty-one added {Cries(cries) - before} cries, not five");
 	}
@@ -218,19 +225,23 @@ public sealed class KingspinAiTests
 
 		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
 		// the tick it lands, so the tally is the only record a throw leaves.
-		// COUNTED AS CRIES, THIS PIN SAYS THE OPPOSITE OF WHAT IT USED TO. Standing webs read as one at
-		// twenty-five seconds and it looked like the top of the ladder was quiet; the cries read nine,
-		// because his plain throw timer carries no health guard and keeps going at any health. What the
-		// top rung actually means is that the LADDER's steps do not fire -- every one of them sits below
-		// eighty -- while the timer underneath them does.
-		Advance(harness, boss, raid, 25);
-		int atEighty = Cries(cries);
-		Assert.True(atEighty >= 4, $"the plain throw timer should still run: {atEighty}");
-
-		// Drop him a rung and the ladder adds to it, which is the difference the rung makes.
-		BossAiHarness.SetExactPercent(boss, 70);
+		// At eighty he is above the throwing band entirely: retail's throw branch is guarded 0-51, and
+		// the two branches above it keep the clock running and throw nothing. So the opening is all a
+		// raid at this health ever sees.
 		Advance(harness, boss, raid, 6);
-		Assert.True(Cries(cries) > atEighty, "crossing seventy-one added nothing");
+		int opening = Cries(cries);
+
+		// THIS IS THE ASSERTION THAT PINS THE GUARD: nineteen more seconds above fifty-one add nothing.
+		// Without the 0-51 guard the clock throws every eighteen seconds at any health and this climbs.
+		Advance(harness, boss, raid, 19);
+		int atEighty = Cries(cries);
+		Assert.Equal(opening, atEighty);
+
+		// Drop him into the band and the throws start, which is what the guard is for.
+		BossAiHarness.SetExactPercent(boss, 40);
+		Advance(harness, boss, raid, 20);
+		Assert.True(Cries(cries) > atEighty,
+			$"below fifty-one he should throw: {Cries(cries)} against {atEighty}");
 	}
 
 	/// <summary>
