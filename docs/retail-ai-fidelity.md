@@ -10364,3 +10364,57 @@ for which no mutation both changes behaviour and builds: the guard's own send ra
 the branch on still broadcasts to nobody. The other tested the `Notice` helper that is no longer there.
 Missing-AI 676 → **665**; translatable 333/1,107 → **306/992**, the largest single move that list has
 made.
+
+## Archmagus Sayahum, and an escalation written into who he looks at
+
+`IDVritra_Base_Drakan_Wi_IU_Nmd` binds to Archmagus Sayahum (233257), the third of the Sauro Supply
+Base's named drakan and the only one of the three whose whole fight is about **who he is looking at**.
+No summons, no marks, no messages: three phases of a cast ring with a turn at set points in each.
+
+| | |
+|---|---|
+| above eighty | a four-step ring of about thirty-two seconds, and he turns on **every other lap** |
+| crossing eighty | a turn onto somebody **other than** his current target, and a new four-step ring |
+| below forty-five | a five-step ring, and the turn is now on **every** lap |
+
+**The escalation is in how often he turns, not in what he casts.** Retail writes the alternation as one
+flag toggled between two branches on a single timer: the lap that finds the flag set turns and clears
+it, the lap that finds it clear sets it and does not. Below forty-five that pair is gone and a single
+unconditional branch replaces it, so the turn rate doubles without a word about enraging — the same
+trick as the Infernomane Vortile's shrinking loop, applied to the target instead of the count. That is
+now twice in this log that a boss's "enrage" is a change of loop geometry, and it is worth expecting
+rather than discovering.
+
+**Both crossings move him and the in-ring turns may not.** Retail uses
+`ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET` at the two phase changes and plain `RANDOM_ONE` inside the
+rings — the difference between "he is off you now" and "he might turn". Pinned with **two players**, so
+"anybody but the one he is on" has exactly one answer and the assertion is an equality rather than a
+probability, and read over eight fights because the mutation it exists to catch leaves him in place only
+half the time.
+
+**Rule: to pin a choice that excludes something, shrink the field until the exclusion has one answer.**
+With four players, swapping the exception for a plain random still moves him three times in four, and
+the mutation survives. With two, the correct behaviour is deterministic and the wrong one is a coin
+flip — eight of which is proof.
+
+**The ladder stops below forty-five.** That opener does not re-arm the heartbeat, so nothing looks at
+his health again; a boss healed back above eighty stays in the last phase, which is retail's way of
+saying the last phase is the last one.
+
+### One deliberate survivor
+
+Adding an `ArmTimer(0)` back to the phase-three opener changes nothing and is recorded rather than
+chased: every branch on timer 0 is behind a flag the crossings have already consumed, so the heartbeat
+would fire into the fallback for ever. The claim it appears to test — that the ladder stops — is
+actually held by the branch that never re-arms *timer 1*, and the pin that reads it heals him to full
+and watches him keep turning.
+
+### Not translated
+
+Nineteen skill indices and four shouts. Every branch carries one or two casts that are the visible half
+of this fight; what is ported is its shape.
+
+### Verification
+
+Full suite **1,978 passing** and 1 skipped; five new pins run three times over; nine mutations, **eight
+caught** and the ninth explained above. Missing-AI 665 → **664**; translatable 306/992 → **305/991**.
