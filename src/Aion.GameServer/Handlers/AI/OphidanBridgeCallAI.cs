@@ -43,12 +43,24 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>set_condition_spawn_variable under_01_out</c>; messages <c>10900</c> and <c>10100</c>; fifteen
 /// skill indices and a shout. Each with its reason in the log.
 /// </para>
+/// <para>
+/// <b>The escape is half a mechanic, deliberately.</b> Retail's <c>10000</c> branch runs a system
+/// message, a shout, a cast, a <c>teleport_target</c> and then <c>despawn_self</c>. We have the last of
+/// those and none of the rest, so the fugitives vanish where retail throws them clear first. The
+/// visible outcome is the same and the flight is not, which is recorded rather than dressed up.
+/// </para>
 /// </remarks>
 [AIName("ophidan_bridge_call")]
 public class OphidanBridgeCallAI : PatternAi
 {
 	/// <summary>Retail's <c>10500</c>: "this one is mine, help".</summary>
 	public const int Call = 10500;
+
+	/// <summary>
+	/// Retail's <c>10000</c>: a stronghold has fallen, run. Broadcast by a middle boss as it dies and
+	/// answered by every fugitive grade within fifty metres.
+	/// </summary>
+	public const int Escape = 10000;
 
 	/// <summary>Retail's <c>range_as_meter</c> on the call.</summary>
 	private const float Reach = 30f;
@@ -150,10 +162,18 @@ public class OphidanBridgeCallAI : PatternAi
 			OnEnterAttack = Of(
 				Branch(1000, "", When.Always, opening.ToArray())),
 
-			OnMessage = calls
-				? Of(Branch(1300, "", [When.Message(Call)],
-					Do.HateMessageTarget(Decisive)))
-				: Of(),
+			// Calling without sweeping is what a fugitive does, and fleeing is the other half of it:
+			// the three velkurs and the normal-mode boss hold their ground when a stronghold falls.
+			OnMessage = calls && !sweeps
+				? Of(
+					Branch(1300, "", [When.Message(Call)],
+						Do.HateMessageTarget(Decisive)),
+					Branch(1250, "a stronghold fell", [When.Message(Escape)],
+						Do.DespawnSelf()))
+				: calls
+					? Of(Branch(1300, "", [When.Message(Call)],
+						Do.HateMessageTarget(Decisive)))
+					: Of(),
 		};
 	}
 

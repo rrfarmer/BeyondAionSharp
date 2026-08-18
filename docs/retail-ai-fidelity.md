@@ -9673,3 +9673,81 @@ Full suite **1,908 passing** and 1 skipped; fifteen pins on this encounter run t
 with `despawn_by_nameid` now counted as vocabulary — the delta is exactly the normal-mode boss, and
 counting the verb moved no pattern into or out of the list, which is the same finding as the table
 above arriving by a second route.
+
+## Ophidan Bridge, part two: the escape, and a web that was bigger than measured
+
+### The web is twenty, and the probe that said sixteen was filtering out its own answer
+
+The linked-pull entry two commits ago counted sixteen npcs. The probe that found them required the
+owner to be on a **generic** AI — the same filter every "what is unported" audit uses — and the four
+middle bosses were already on `middle_boss_fire`, so they were dropped before they were counted. They
+carry both halves of the pair, and at **fifty metres** rather than thirty.
+
+**Rule: to measure a web, drop the unported filter.** "What is left to do" and "what is this mechanic"
+are different questions, and the filter that answers the first quietly corrupts the second. The number
+to report was never how many were unported; it was how many are in the web.
+
+### A million hate points
+
+A middle boss answers the call with `point_to_add` of **1,000,000**, a hundred times the fugitives'
+ten thousand. Nothing takes a middle boss off the player it was sent after — pinned by a mutation
+dropping it to one, and by a pin where a second player hits the boss afterwards and does not move it.
+
+### Killing a middle boss is what makes the fugitives run
+
+The death branch broadcasts `10000` at fifty metres, and every fugitive grade answers it with a system
+message, a shout, a cast, a **`teleport_target`** and `despawn_self`. So the instance's premise —
+these are runaways, and clearing a stronghold scatters the ones around it — is written in the AI, not
+in the instance handler.
+
+**We have the last of those five actions and none of the other four**, so our fugitives vanish where
+retail throws them clear first. That is half a mechanic and it is recorded as half: the outcome is
+right and the flight is missing.
+
+`teleport_target` measured at the receiving end before any claim was made for it: **208 uses across 92
+patterns, 174 of them in patterns with no live owner, 34 in patterns we have already ported, and none
+at all in a live unported pattern.** The same shape as `despawn_by_nameid` one entry ago. A verb worth
+building for polish, never for reach.
+
+The same branch clears the **beritran support combatants** (231185) around the post, and walking away
+from the fight clears them without the signal going out — two sweeps that differ by one broadcast, and
+both pinned that way round.
+
+### What is left of this instance, specified
+
+- **`10800`** — the death also broadcasts this, and the check-marker controller `BIDF5_U01_Ctrl_07`
+  (856062) answers it by placing two despawn markers at the **other two strongholds**, with the
+  designer's own comment saying so: 다른 거점 도망자 디스폰, "despawn the fugitives at the other
+  strongholds". Killing one middle boss thins the whole bridge. Blocked on nothing except
+  `BIDF5_U01_T_Runaway_Despawn_NPC`, whose devname resolves to no npc id in our client table.
+- **856398**, the support relay the death branch leaves at the boss's feet: `BIDF5_U01_Monster_09` is
+  an idle timer that re-sends `10000`, `10800` and `11100` **every six seconds** and sweeps. It is how
+  retail catches fugitives that arrive after the boss falls. Unspawned in our data and buildable the
+  moment the spawn is added.
+- **`11100`** — only listener is `BIDF5_U01_Ctrl_10`, which binds to no npc we spawn. Not sent, by the
+  no-audience rule.
+- **The Dark variants** (235776–235778) are HERO templates with a pattern identical to the Fire one
+  plus a `DespawnAll` trigger at 672.9/473/599.3. Nothing spawns them.
+- **`set_condition_spawn_variable mboss_die` / `ra_run_ok`** — instance progression, not AI.
+
+### Brigade General Sheba: left alone, deliberately
+
+`IDVritra_Base_Boss1` carries one sweep — 284436 within fifty metres, at most ten, on
+`on_leave_attack_state`. `BrigadeGeneralShebaAI` is a Java-parity class whose `RemoveAdds()` already
+deletes **both** 284435 and 284436 across the **whole instance**, on death as well as on reset. Retail's
+sweep is a strict subset of that, so porting it would be a regression: adds outside fifty metres, or
+past the tenth, would be left standing.
+
+**Rule: a retail action that is narrower than what we already do is not an upgrade.** The sanctioned
+exception says retail AI outranks aionemu where they disagree about behaviour; it does not say a
+bounded verb should replace an unbounded cleanup that is doing the same job better. Recorded so the
+sweep is not "restored" later as a missing one.
+
+`Legion_01_Boss_03` (855776 vision of kaliga, four sweeps on death) is still to do and is the last of
+the twenty-five that is neither built nor argued away.
+
+### Verification
+
+Full suite **1,915 passing** and 1 skipped; seven new pins, thirty-seven across the two classes run
+three times over; **ten mutations, all caught**. The three audits are unchanged, which is the expected
+result for a commit that only extends classes we had already written.

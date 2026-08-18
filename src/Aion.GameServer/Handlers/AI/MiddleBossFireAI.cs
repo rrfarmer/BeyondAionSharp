@@ -36,10 +36,47 @@ namespace Aion.GameServer.Handlers.AI;
 /// 41-70 opener, and half the openers below 40%. Everything else about him is faithful, and his
 /// npc_skills probabilities still drive ordinary casting, so he is not silent.
 /// </para>
+/// <para>
+/// <b>They are part of Ophidan Bridge's linked pull, at fifty metres rather than thirty</b>, and they
+/// answer the call with a <b>million</b> hate points where a fugitive uses ten thousand. A middle boss
+/// sent after a player does not come off them for anything.
+/// </para>
+/// <para>
+/// <b>Killing one is what makes the fugitives run.</b> The death branch broadcasts <c>10000</c> — the
+/// signal every fugitive grade answers by fleeing — and clears the beritran support combatants around
+/// the post. Walking away from the fight clears them too, without the signal.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> <c>set_condition_spawn_variable mboss_die</c>; the <c>10800</c> broadcast,
+/// which the check-marker controller answers by placing despawn markers at the <em>other two</em>
+/// strongholds; the <c>11100</c> broadcast, whose only listener binds to no npc we spawn; and the
+/// support relay (856398) the death branch leaves behind, which re-sends all three messages every six
+/// seconds. Each is in the log with what it would take.
+/// </para>
 /// </remarks>
 [AIName("middle_boss_fire")]
 public class MiddleBossFireAI : PatternAi
 {
+    /// <summary>
+    /// Retail's <c>range_as_meter</c> on every message these four send — fifty, where the fugitives
+    /// and the velkurs call at thirty.
+    /// </summary>
+    private const float Reach = 50f;
+
+    /// <summary>
+    /// Retail's <c>point_to_add</c> when a middle boss answers the call: <b>a million</b>, a hundred
+    /// times what a fugitive puts on the same order. Nothing takes a middle boss off the player it was
+    /// sent after.
+    /// </summary>
+    private const int Absolute = 1000000;
+
+    /// <summary><c>IDF5_U1_Vri_Support_Fi_65_Ae1</c> — a beritran support combatant.</summary>
+    private const int Support = 231185;
+
+    /// <summary>Retail's <c>bound_radius</c> and <c>max_count</c> on all three sweeps.</summary>
+    private const float SupportSweep = 50f;
+    private const int SupportEach = 10;
+
     // Shared by all four, at the same list positions.
     private const int FatalDisease = 21286;          // index 0
     private const int BoostDeadlyVirulency = 17005;  // index 1
@@ -61,7 +98,24 @@ public class MiddleBossFireAI : PatternAi
             Branch(1000, "", When.Always, Do.SkillOnSelf(MidnightRobe))),
 
         OnEnterAttack = Of(
-            Branch(1000, "", When.Always, Do.ArmTimer(0, 5000))),
+            Branch(1000, "", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.Broadcast(OphidanBridgeCallAI.Call, Reach, aboutTarget: true))),
+
+        OnMessage = Of(
+            Branch(900, "", [When.Message(OphidanBridgeCallAI.Call)],
+                Do.HateMessageTarget(Absolute))),
+
+        // Retail writes this twice, on on_killed_by_user and on_die, behind one test-and-set flag so
+        // that only whichever fires first runs. Our runtime raises one death event, which is that flag.
+        OnDie = Of(
+            Branch(1000, "a stronghold falls", When.Always,
+                Do.Broadcast(OphidanBridgeCallAI.Escape, Reach),
+                Do.DespawnKind(Support, SupportSweep, SupportEach))),
+
+        OnLeaveAttack = Of(
+            Branch(1000, "", When.Always,
+                Do.DespawnKind(Support, SupportSweep, SupportEach))),
 
         OnBattleTimer = Of(
             Branch(1000, "71-100 trait 1", [When.Timer(0), When.HpBetween(71, 100)],

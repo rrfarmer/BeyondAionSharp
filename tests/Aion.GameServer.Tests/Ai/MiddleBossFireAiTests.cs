@@ -157,4 +157,173 @@ public sealed class MiddleBossFireAiTests
 			Assert.Contains(FatalDisease, cast);
 		}
 	}
+
+	private const int Zubala = 235773;
+	private const int Mazikin = 235756;
+	private const int Aethercaster = 235769;
+	private const int SupportCombatant = 231185;
+
+	/// <summary>Everything Ophidan Bridge's web needs registered, at one post.</summary>
+	private static BossAiHarness Post(out Npc boss, out Player player)
+	{
+		BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
+			.WithAi(typeof(MiddleBossFireAI), typeof(OphidanBridgeCallAI), typeof(OphidanBridgeSweeperAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+		boss = harness.Spawn(Zubala, 300f, 300f, 200f);
+		player = harness.SpawnPlayer(302f, 302f, 200f);
+		harness.Engage(boss, player);
+		return harness;
+	}
+
+	private static int Standing(BossAiHarness harness, int npcId) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
+
+	/// <summary>
+	/// <b>Killing a middle boss makes the fugitives around the post run.</b> Retail throws them clear
+	/// with a <c>teleport_target</c> first, which we have no vocabulary for; the vanishing is the half
+	/// we can say.
+	/// </summary>
+	[Fact]
+	public void KillingAMiddleBossMakesTheFugitivesRun()
+	{
+		using BossAiHarness harness = Post(out Npc boss, out Player player);
+
+		Npc fugitive = harness.Spawn(Mazikin, 310f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, fugitive);
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(0, Standing(harness, Mazikin));
+	}
+
+	/// <summary><b>A velkur does not run from it</b> — retail hangs the branch on the fugitives only.</summary>
+	[Fact]
+	public void AVelkurHoldsItsGround()
+	{
+		using BossAiHarness harness = Post(out Npc boss, out Player player);
+
+		Npc velkur = harness.Spawn(Aethercaster, 310f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, velkur);
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(1, Standing(harness, Aethercaster));
+	}
+
+	/// <summary><b>And its support combatants are cleared with it.</b></summary>
+	[Fact]
+	public void KillingAMiddleBossClearsItsSupport()
+	{
+		using BossAiHarness harness = Post(out Npc boss, out Player player);
+
+		harness.Spawn(SupportCombatant, 305f, 300f, 200f);
+		harness.Spawn(SupportCombatant, 306f, 300f, 200f);
+		Assert.Equal(2, Standing(harness, SupportCombatant));
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(0, Standing(harness, SupportCombatant));
+	}
+
+	/// <summary>Walking away from the fight clears them too, without the signal going out.</summary>
+	[Fact]
+	public void LeavingTheFightClearsTheSupportButCallsNobody()
+	{
+		using BossAiHarness harness = Post(out Npc boss, out Player player);
+
+		harness.Spawn(SupportCombatant, 305f, 300f, 200f);
+		Npc fugitive = harness.Spawn(Mazikin, 310f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, fugitive);
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.BackHome);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.Equal(0, Standing(harness, SupportCombatant));
+		Assert.Equal(1, Standing(harness, Mazikin));
+	}
+
+	/// <summary>
+	/// <b>A middle boss answers the bridge's call.</b> It is in the same web as the velkurs and the
+	/// fugitives, and takes the named player with a million hate points rather than ten thousand.
+	/// </summary>
+	[Fact]
+	public void AMiddleBossAnswersTheBridgesCall()
+	{
+		BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
+			.WithAi(typeof(MiddleBossFireAI), typeof(OphidanBridgeCallAI), typeof(OphidanBridgeSweeperAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+		using BossAiHarness _h = harness;
+
+		Npc fugitive = harness.Spawn(Mazikin, 300f, 300f, 200f);
+		Npc boss = harness.Spawn(Zubala, 320f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(300f, 260f, 200f);
+		BossAiHarness.MakeMutuallyKnown(fugitive, boss);
+		BossAiHarness.MakeMutuallyKnown(boss, quarry);
+		Assert.Null(boss.GetTarget());
+
+		harness.Engage(fugitive, quarry);
+
+		Assert.Same(quarry, boss.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>And sends one of its own, at fifty metres rather than thirty.</b> The fugitive here is
+	/// forty-five metres off — inside a middle boss's call and outside a fugitive's — and sixty from
+	/// the player, so nothing but the call could have delivered it.
+	/// </summary>
+	[Fact]
+	public void AMiddleBossCallsFurtherThanAFugitiveDoes()
+	{
+		BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
+			.WithAi(typeof(MiddleBossFireAI), typeof(OphidanBridgeCallAI), typeof(OphidanBridgeSweeperAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+		using BossAiHarness _h = harness;
+
+		Npc boss = harness.Spawn(Zubala, 300f, 300f, 200f);
+		Npc fugitive = harness.Spawn(Mazikin, 345f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(300f, 260f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, fugitive);
+		BossAiHarness.MakeMutuallyKnown(fugitive, quarry);
+		Assert.Null(fugitive.GetTarget());
+
+		harness.Engage(boss, quarry);
+
+		Assert.Same(quarry, fugitive.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>A million hate points is not a figure of speech.</b> Once a middle boss has been sent after
+	/// somebody, a player arriving afterwards and hitting it does not take it off them.
+	/// </summary>
+	[Fact]
+	public void NothingTakesAMiddleBossOffTheNamedPlayer()
+	{
+		BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
+			.WithAi(typeof(MiddleBossFireAI), typeof(OphidanBridgeCallAI), typeof(OphidanBridgeSweeperAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+		using BossAiHarness _h = harness;
+
+		Npc fugitive = harness.Spawn(Mazikin, 300f, 300f, 200f);
+		Npc boss = harness.Spawn(Zubala, 320f, 300f, 200f);
+		Player quarry = harness.SpawnPlayer(300f, 260f, 200f);
+		BossAiHarness.MakeMutuallyKnown(fugitive, boss);
+		BossAiHarness.MakeMutuallyKnown(boss, quarry);
+
+		harness.Engage(fugitive, quarry);
+		Assert.Same(quarry, boss.GetTarget());
+
+		Player latecomer = harness.SpawnPlayer(321f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, latecomer);
+		BossAiHarness.Rehate(boss, latecomer);
+
+		Assert.Same(quarry, boss.GetAggroList().GetTarget(
+			Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED));
+	}
 }
