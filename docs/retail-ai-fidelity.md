@@ -18786,3 +18786,50 @@ pin, and the first time the seam was already there when it was needed.
 
 One pin rewritten, mutation still caught, three targeted runs and two full suites: **2,053 passing**,
 1 skipped.
+
+## The fourth invisible mutation is a real gap, not a fifth enforcement
+
+Three guards in a row turned out already enforced by the engine, so the Middle Boss Fire slash was likely
+to be a fourth. **It is not.**
+
+His timer 1 is armed at **six seconds from four branches on timer 0**, and timer 0 is a heartbeat that
+repeats. So timer 1 fires every six seconds, and `Branch(995)` — the top band's slash, guarded only on
+timer and health before this pass — **would fire every six seconds without retail's flag, instead of
+once.**
+
+The flag changes behaviour. The mutation was invisible because **the file's 22 pins do not measure that
+slash's cadence at all.**
+
+### Which is the more useful answer
+
+Three precedents made "already enforced" the likely reading and this log said so, then said that was
+exactly why it should not be assumed. **Checking cost one command and found the opposite**: a genuine
+coverage gap in an encounter with twenty-two pins.
+
+**Twenty-two pins and none of them watches the top band's opening slash.** That is not a criticism of the
+file — it pins what its author could observe — but it is a concrete instance of the pattern this log keeps
+finding: **the suite watches effects, and a cadence is not an effect.**
+
+### The pin that would close it
+
+`TimerFireCount(1)` counts the slash clock, exactly as it now counts Kingspin's throws. **The shape is
+already written twice** — engage at band health, watch, assert the count moves once and not every six
+seconds — and it would catch the mutation.
+
+**Not written here.** That is the third pass in a row to end with "the instrument exists, the pin does
+not", and it is worth naming as the standing shortfall rather than a per-entry apology: **this log has
+built three seams and used them for four pins.**
+
+### Still to do
+
+- **A cadence pin for the Middle Boss Fire slash**, using the seam that is already there.
+- Mark Padmarashka's two rows as deliberately not applied.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; the guard from the previous entry stands. Full suite **2,053 passing**, 1 skipped.
