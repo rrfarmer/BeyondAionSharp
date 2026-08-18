@@ -21329,3 +21329,60 @@ blocked and missing — which no pass has done.
 ### Verification
 
 **Scan only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## Padmarashka's 116 branches, sorted
+
+The previous entry called for sorting Padmarashka's retail pattern into folded, blocked and genuinely
+missing before touching it. **Done, and the "101 missing" is mostly not missing work.**
+
+`DF4_Dramata`, by what its branches carry:
+
+| count | | |
+|---|---|---|
+| 71 | `on_battle_timer` branches | 68 of the 116 only re-arm a timer |
+| 38 | `do_nothing` | pure guards and fall-through absorbers |
+| 40 | `use_skill` | **blocked** — skill indices unresolved, the standing blocker for this class |
+| 30 | `display_system_message` | **blocked** — string ids not resolved to message numbers |
+| 12 | `spawn` | **the actionable part** |
+| 5 | `despawn` | |
+| 2 | `goto_waypoint` | **blocked** — route ids |
+
+**A branch counts once per kind**, so these overlap; the point is the shape. **The gap is not a hundred
+mechanics.** It is one large rotation whose steps are mostly timer bookkeeping, plus forty casts and thirty
+messages this port cannot yet express, around **a small core of spawns that it can.**
+
+### The four adds we never place
+
+Retail spawns seven distinct npcs; we place three.
+
+| npc | id | what it is |
+|---|---|---|
+| `BDF4_DramataEgg_57_l` | **281455** | the egg — this is the `STR_MSG_DF4_DRAMATA_LAY_EGG` item already on the queue, now with an id |
+| `BDF4_DramataGuardianControl_57_n` | **281937** | a controller, spawned once |
+| `BDF4_Dramata_AcidRainSummoner_57_An` | **281457** | the acid rain, which our class has only as a bomb |
+| `BLDF4_DramataDied_n` | **281928** | the death marker, four spawns |
+
+The three we do place — the two rock kinds and the acid bomb control — are the ones earlier passes built.
+
+### What this changes about the queue
+
+**"Padmarashka: timers 10 and 12" has been on this queue for many passes as a vague item.** It is now four
+named npcs with ids, and the two blockers behind the rest are ones this log already tracks. **The vague
+form survived because nobody had counted what was in the pattern**, which is the same reason the guard
+report survived at "44 ready".
+
+### Still to do
+
+- **The four adds**, in id order of confidence: the egg and the death marker are plain spawns; the
+  guardian control and the acid rain summoner need their own branches read first.
+- **Check each against its own AI class** before adding a lifetime — the trap that produced four dead
+  lifetimes.
+- Then `tiamat_dying_rotation` at 4 of 53.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- The guard report's mixed and misaligned rows, unverified; `sematariux` and `king_consierd` need spawn
+  entries; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
