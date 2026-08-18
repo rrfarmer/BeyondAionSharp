@@ -16133,3 +16133,57 @@ of the state folds.
 ### Verification
 
 Nothing shipped; the attempt was reverted. Full suite **2,049 passing**, 1 skipped.
+
+## The three probes, run: it is the npc, not the timer
+
+The previous entry left three candidates for why the acid bomb never appeared. All three are answered, and
+**the answer is none of them.**
+
+| probe | result |
+|---|---|
+| Is `Branch(40)`'s `FirstTime(Gamma4)` already spent? | **No.** Given a rockfall as its payload, the branch fires at second 5, exactly on the heartbeat. |
+| Does the harness advance a timer armed outside the first heartbeat? | **Yes.** With `ArmTimer(11, 30s)` and a rockfall on `When.Timer(11)`, rocks land at second 35 — five plus thirty. |
+| Does `Do.SpawnNear` decline at `range: 0f`? | **No.** At `range: 3f` it produces nothing either. |
+
+So the arming works, the timer chain works, the branch fires, and **the spawn of npc `281944` produces
+nothing at any radius.** The failure is the npc.
+
+### And the npc looks wrong
+
+`ai_binding.tsv` maps `BDF4_Dramata_AcidBombControl_n` to **281944**. The template at that id reads:
+
+```
+npc_id="281944" name="blf4_dramataguardiandeath_57_n" level="57" ai="general" rating="NORMAL"
+```
+
+**That is a guardian-death npc, not an acid bomb control.** The devname in the binding and the name in
+`npc_templates.xml` disagree, so the id is in doubt before the spawn behaviour is. A wrong-but-existing id
+would normally still spawn *something*, which it does not — so there may be two problems stacked, or the
+mapping is wrong in a way that also breaks the spawn.
+
+### What the next attempt does first
+
+**Find the real id for `BDF4_Dramata_AcidBombControl_n`** — by devname in the client npc data rather than
+through `ai_binding.tsv`, since the binding is the thing under suspicion. If the binding is wrong here it
+may be wrong elsewhere, and **every encounter in this log that took an npc id from it is resting on the
+same assumption.** That is worth a sweep of its own: compare binding devnames against template names and
+report the disagreements.
+
+### The rule
+
+**Three probes that all come back negative have still told you something.** They cost about ten minutes
+and moved the question from "which of the timer, the branch and the action is broken" to "the npc id is
+suspect and so is the table it came from" — which is a bigger finding than the acid bomb.
+
+### Still to do
+
+- **Verify `281944`**, then the binding table generally.
+- Padmarashka's timer 11 once the id is right; timers 10 and 12 stay blocked on walks, messages and skills.
+- The five coffin `message` rows, the 14 remaining ready rows, Kingspin and the silikor guard ladders and
+  whatever their rungs arm, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Probes only; every change reverted. Full suite **2,049 passing**, 1 skipped.
