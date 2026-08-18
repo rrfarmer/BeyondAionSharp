@@ -19187,3 +19187,70 @@ code was right.
 
 Build clean. The near pin fails with its branches removed and its mirror still passes. Full suite
 **2,062 passing**, 1 skipped.
+
+## What the world flags actually unblocked, branch by branch
+
+Having built world flags, the obvious next move was "now do the 17 other patterns". **Surveying them first
+changed the answer**: most of those branches are not blocked on flags at all, and the flag was rarely the
+interesting part.
+
+Every world-flag branch across the 18 served patterns, by what it does:
+
+| pattern(s) | handler | actions | verdict |
+|---|---|---|---|
+| `BGuard_ChiefD`, `_Tune405` | `on_die` | 4 spawns | **already ported** for the chamber lord; **missing** for the duke |
+| `BGuard_ChiefD`, `_Tune405` | `on_enter_attack_state` | 2 timers, 2 skills | blocked with every other `use_skill` |
+| Tiamat x4 | `on_idle_timer` | up to 20 spawns, says, `set_condition_spawn_variable` | blocked on spawn variables |
+| `Rune_FrostNmd_RealImitaion` x3 | `on_enter_attack_state` | `set_condition_spawn_variable` only | blocked on spawn variables |
+| `IDAbRe_Core_NamedA1/A2` (+`_02`) | `on_wake_up` | `do_nothing` | **nothing to build** |
+| `IDF5_U1_StartControll_An` | `on_die` | spawn variable, broadcast | partly blocked |
+| `IDRaksha_Re_A_KJS` | `on_leave_attack_state` | 1 despawn | ready |
+| `IDTP_Keeper1` | `on_attacked` | say, spawn, skill | partly ready |
+| `ND2_WhG`, `ND2_WhG3` | — | — | done this session |
+
+### Three things this survey settles
+
+**Modor's clone was never a world-flag problem.** Its only world-flag branch sets a *spawn condition
+variable* — `WongiokOn=1` when the first clone in the instance enters combat. `set_condition_spawn_variable`
+is a **fourth engine gap**, and it is the actual blocker for Modor and for all four Tiamat branches, which
+were the two encounters world flags were supposed to unblock. **Building the flags did not bring them
+closer.**
+
+**Four `do_nothing` world-flag branches exist**, on the Rukril and Ebonsoul cores. After the silikor's
+absorber it was worth checking whether these block a fall-through too — **they do not**; they are the
+top branch of `on_wake_up` and there is nothing below them. **Nothing to build, deliberately.**
+
+**`BGuard_ChiefD`'s p7 and p6 are an exact twin pair with identical actions.** The flagged branch adds
+nothing, so it is a marker for something else to read, and porting only one half — which the chamber lord
+does — is harmless. That is the first twin pair where the flag genuinely does not matter, and it is worth
+recording as a counter-example to this log's own new rule.
+
+### One item is ready and was deliberately not shipped
+
+**The fortress duke has no death wave.** `BGuard_ChiefD_Tune405` spawns seven drakan-departure npcs at
+four points when the chief dies; our `awakened_chamber_lord` does exactly this, and the duke — a
+Java-parity class serving Crotan, Dkisas and Lamiren — does not.
+
+**The coordinates were checked rather than assumed.** The three barracks are the same layout as the three
+chambers, and the duke stands at (526, 845) inside the pattern's box of (496–580, 840–874), so the
+chamber lord's points are valid there.
+
+**What stopped it**: those npcs carry `live_time` 18 and 12 seconds, and the Java-parity path has no timed
+despawn — `AbstractAI.Spawn` takes no lifetime and there is no scheduled-despawn helper. Spawning them
+without it leaves seven cosmetic drakans standing in the barracks forever, which is worse than not having
+the wave. It needs either a helper on that path or the duke converted to a pattern class, and **starting
+either at the end of a pass is how the nineteen-edit batch happened.**
+
+### Still to do
+
+- **`set_condition_spawn_variable`** — the fourth engine gap, and the one blocking Tiamat and Modor.
+- **Timed despawn on the Java-parity path**, then the fortress duke's death wave.
+- Waypoints, which block the silikor dismissal.
+- `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn, both ready.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses.
+- The four Ophidan controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five
+  coffin rows; the remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+**No code this pass** — survey only. Full suite unchanged at **2,062 passing**, 1 skipped.
