@@ -21713,3 +21713,55 @@ branches run and null before and after. Both fail with the evaluation removed.
 
 Build clean. Both pins fail with `Evaluate(Pattern.OnTalk)` removed. Full suite **2,114 passing**,
 1 skipped.
+
+## The Raksha door was already built, in a different layer
+
+The previous entry called the Raksha shortcut "the smallest remaining item in the project" — one
+coordinate triple away from closing. **It was zero away. `RaksangRuinsInstance` has implemented the whole
+mechanic all along:**
+
+```csharp
+case 730438: // Terror' Vault
+    if (isDoorAccessible)
+        TeleportService.TeleportTo(player, instance, 711.10895f, 312.82013f, 910.6781f);
+    else
+        SendMsg(SM_SYSTEM_MESSAGE.STR_MSG_TAMES_SOLO_A_DOOR_CONDITION());
+```
+
+Destination, gate, and the refusal message. **And `isDoorAccessible` is set after thirty-one wave kills** —
+which is *"the shortcut does not work until you have cleared the room"*, retail's rule exactly, reached by
+a counter rather than by a world flag.
+
+### Why four passes of searching missed it
+
+**Every check this log ran looked in the AI layer.** The pattern data says `on_talked_by_user` and
+`teleport_target_alias`, so the search was for a talk handler and a teleport action in `AiPattern` — and
+both were genuinely absent. **The mechanic was never in that layer.** It is instance-handler work here,
+and the instance handlers were never searched, because the question was always framed as "what is missing
+from the AI port".
+
+**Tenth time this family of passes has found something already present**, and the first where the thing
+was in a layer the search did not cover rather than a form it did not recognise.
+
+### What that means for last pass's work
+
+The talk handler and `Do.TeleportTalker` are **real engine capabilities and they stay** — `on_talked_by_user`
+appears elsewhere in the pattern data and the gap was correctly identified as absent. **But the encounter
+that justified them did not need them**, and the entry that ranked it as the last unblocked item was
+measuring a hole that had already been filled from the other side.
+
+**Recorded as a sanctioned divergence**: retail gates this door with world flags set by three npcs, we gate
+it with a kill counter in the instance handler. Same rule, different mechanism, and no reason to change it.
+
+### Still to do
+
+- **Walker route ids** — five encounters, and now unambiguously the only large item left.
+- **Search the instance handlers before declaring AI gaps.** This log has a rule for opening the file
+  before working a row; it needs the same for layers — a mechanic absent from the pattern engine may be
+  present in `Handlers/Instance`.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,114 passing**, 1 skipped.
