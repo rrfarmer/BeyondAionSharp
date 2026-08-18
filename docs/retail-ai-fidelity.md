@@ -18535,3 +18535,48 @@ fidelity, run the mutation, and record what it says.** Three of five so far have
 
 Three pins added, one mutation run and not caught for a documented reason. Full suite **2,053 passing**,
 1 skipped.
+
+## The `unset_flag_var` rows need their setter found first
+
+Padmarashka's two remaining behavioural `flag` rows are `unset_flag_var`, and they are not the same shape
+as the five before them.
+
+`unset_flag_var` in a condition is **test-and-unset**: the branch runs only while the flag is *set*, and
+clears it on the way through. `When.Consuming` is the translation and it exists.
+
+But `OnEnterAttack#11` is Padmarashka's heartbeat arm — `Branch(11, "SetTimer", When.Always, ArmTimer(0))`.
+**Guarding it with `Consuming(ZETA_1)` would stop it firing unless something has set `ZETA_1` first**, and
+if nothing does, her heartbeat never starts and the encounter goes silent.
+
+So the row cannot be applied without finding the setter. **Three possibilities, none checked:**
+
+- something else in `DF4_Dramata` sets `ZETA_1`, making this branch "only on re-entry";
+- it is set by another npc through a world flag, which this port does not have;
+- retail's flags do not all start clear, which would change how every `Consuming` in the log reads.
+
+**The third would be the significant one**, and it is cheap to rule out by reading any pattern that uses
+`unset_flag_var` on a branch that must run first.
+
+### Why this stopped here
+
+The previous entry set the rule: apply for fidelity, run the mutation, record what it says. **That rule
+assumes applying is safe.** For `set_flag_var` it is — a guard that turns out redundant costs nothing. For
+`unset_flag_var` it is not: the guard can silence a branch that has no other trigger, and Padmarashka's
+heartbeat is the one thing her whole pattern hangs off.
+
+**A row is only safe to apply blind if failing open is the worst case.** `set_flag_var` fails open;
+`unset_flag_var` fails closed. That distinction was not in the rule and is now.
+
+### Still to do
+
+- **Find what sets `ZETA_1`** in `DF4_Dramata`, then apply both rows or record them as blocked.
+- Middle Boss Fire's `set_flag_var` on `OnBattleTimer#995` — fails open, so apply and mutate.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the remaining ready guard rows; the
+  mixed and misaligned rows.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+No code changed. Full suite **2,053 passing**, 1 skipped.
