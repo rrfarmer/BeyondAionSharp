@@ -21275,3 +21275,57 @@ the encounters. **The mixed and misaligned rows are the same tool and should be 
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## A work queue measured against retail rather than against a tool
+
+The previous entry closed the dropped-guard backlog at zero real rows and said the passes spent on it
+should have gone to the encounters. **This is that queue, built the other way round**: not "what does a
+report flag", but **"how much of retail's pattern did we port".**
+
+Branches in retail's pattern against `Branch(` in ours, for classes where both are countable:
+
+| gap | class | ours | retail |
+|---|---|---|---|
+| 101 | `padmarashka_world_boss` | 15 | 116 |
+| 49 | `tiamat_dying_rotation` | 4 | 53 |
+| 24 | `gatekeeper_flox` | 6 | 30 |
+| 23 | `hyperion_defence` | 1 | 24 |
+| 22 | `kaliga_the_unjust` | 1 | 23 |
+| 21 | `prectaz` | 5 | 26 |
+| 20 | `idean_obscura` | 2 | 22 |
+| 20 | `debilkarim_the_maker` | 2 | 22 |
+
+### The first version of this scan was wrong, in the way this log keeps repeating
+
+It counted every ported class and put `sematariux` at the top with **112 branches missing and none
+ported**. `sematariux` is a **Java-parity class**: it has no `Branch(` at all, so the metric read a
+different implementation style as an empty one. Six of the top ten were that mistake.
+
+**Restricted to classes that use the pattern table**, the comparison means something — and it is the same
+correction, for the seventh time: **a text measure over this codebase sees one of the several ways it
+expresses things.**
+
+### What the numbers are and are not
+
+**They are a reading order, not a debt.** Retail branches include steps this port deliberately folds —
+the two-branch flag idiom collapses to one `When.FirstTime`, and `use_skill` branches are untranslatable
+until skill indices resolve. A class at 15 of 116 is not 13 percent finished.
+
+**But 15 of 116 is still the largest gap in the port**, and Padmarashka is already carrying two known
+unfinished items (timers 10 and 12, and two `unset_flag_var` rows recorded as not applied). **It is the
+right place to go next**, and the first thing to do there is read the 116 and sort them into folded,
+blocked and missing — which no pass has done.
+
+### Still to do
+
+- **Padmarashka, read end to end**: sort its 116 retail branches into folded, blocked and genuinely
+  missing. Everything else in this table waits behind that.
+- Then `tiamat_dying_rotation` at 4 of 53.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- The guard report's mixed and misaligned rows — same tool, treat as unverified.
+- `sematariux` and `king_consierd` need spawn entries; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Scan only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
