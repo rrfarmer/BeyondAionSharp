@@ -17352,3 +17352,55 @@ this broad is worth making precisely because the suite is large enough to say so
 ### Verification
 
 Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Both timer semantics were tried, and neither produces the acceleration
+
+The previous entry made "ignore a pending timer" the working assumption and said the suite would report.
+It did, twice, and **the answer is that the question was wrong.**
+
+| `ArmTimer` on a pending timer | Kingspin's accelerator, sustained cries |
+|---|---|
+| **restart** (today) | **0 throws** against 20 — the countdown never reaches zero |
+| **ignore** | **12 against 12** — the eight-second arm is dropped, so the cry does nothing |
+
+Neither is the mechanic. Restarting starves the clock; ignoring discards the acceleration. **The two
+readings this log has been arguing between are both wrong for this branch.**
+
+### The third reading
+
+`add_battle_timer` may **take the shorter of the two** — arm at eight seconds if the pending timer has
+longer than eight to run, and otherwise leave it. That accelerates (8 beats a pending 18) and cannot starve
+(a cry every five seconds meets a pending timer with less than eight left and is ignored).
+
+**It is the only one of the three that produces the behaviour the pattern describes**, and it was not
+considered until both simpler readings had been measured and failed.
+
+### What the wide change cost, and what it showed
+
+Switching to "ignore" broke **four pins out of 2,051** — Kingspin's accelerator plus General Chunapa's
+forty-five-second reopen and two of Triroan's band pokes. **That is a small blast radius for a change to
+every timer in the port**, and it is the useful part of the experiment: whichever semantic is chosen, three
+encounters have to be re-derived and no more.
+
+Both changes are reverted. The engine is as it was, the starvation pin still asserts the defect, and
+**"take the shorter" is the next thing to try** — with the same three encounters as the expected cost.
+
+### A flake to watch
+
+`KingspinAiTests.TheTopRungOfTheLadderThrowsNothing` failed once in a full run and passed three times
+alone and in the next full run. The cry-counting pins drive real scheduling, so they are more
+timing-sensitive than the ones they replaced. **Recorded rather than chased**, because an unrecorded flake
+gets rediscovered — and if it recurs, the counter probe is where to look.
+
+### Still to do
+
+- **Try "take the shorter"**, expecting the same three encounters to need re-deriving.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Two engine variants tried and both reverted. Full suite **2,050 passing**, 1 skipped.
