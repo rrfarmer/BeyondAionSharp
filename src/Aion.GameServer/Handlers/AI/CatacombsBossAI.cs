@@ -24,15 +24,22 @@ namespace Aion.GameServer.Handlers.AI;
 /// </para>
 /// <list type="table">
 /// <item><term>Taros Lifebane, normal</term><description><b>35,000</b></description></item>
+/// <item><term>Ahbana the Wicked, normal</term><description><b>30,000</b></description></item>
 /// <item><term>Captain Lakhara, both modes</term><description><b>22,000</b></description></item>
 /// <item><term>Flarestorm, hard</term><description><b>5,000</b></description></item>
 /// <item><term>Taros Lifebane, <em>hard</em></term><description><b>5,000</b></description></item>
+/// <item><term>Ahbana the Wicked, <em>hard</em></term><description><b>5,000</b></description></item>
+/// <item><term>The Soulcaller</term><description><b>5,000</b></description></item>
 /// </list>
 /// <para>
-/// <b>Taros Lifebane's hard mode gives a templar seven times less help than his normal one</b>, and
-/// Captain Lakhara's two modes give the same. Both are retail's numbers, read from the dump, and the
-/// first is the kind of asymmetry a shared constant would quietly erase — which is why this is a
-/// weight per class rather than one figure for the instance.
+/// <b>Every boss with two modes helps a templar less on hard.</b> Taros Lifebane drops 35,000 → 5,000
+/// and Ahbana 30,000 → 5,000, while Captain Lakhara keeps 22,000 in both. All retail's numbers, read
+/// from the dump, and exactly the asymmetry a shared constant would quietly erase — which is why this
+/// is a weight per class rather than one figure for the instance.
+/// <para>
+/// The pattern prefix is <c>IDCT_</c> and the instance our server puts them in is Beshmundir Temple;
+/// the class is named for the retail patterns, as everything else here is.
+/// </para>
 /// </para>
 /// <para>
 /// <c>CLASSI_KNIGHT</c> is <see cref="PlayerClass.TEMPLAR"/>: the enum carries the client's own naming
@@ -58,6 +65,20 @@ public abstract class CatacombsBossAI : PatternAi
 		: base(owner)
 	{
 	}
+}
+
+/// <summary>Ahbana the Wicked (216239). Retail <c>IDCT_Boss_Spectre</c>.</summary>
+[AIName("catacombs_boss_30k")]
+public class CatacombsBoss30kAI : CatacombsBossAI
+{
+	private static readonly AiPattern Pattern_ = Build(30_000);
+
+	public CatacombsBoss30kAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => Pattern_;
 }
 
 /// <summary>Taros Lifebane (216248). Retail <c>IDCT_Boss_DeathKnight</c>.</summary>
@@ -89,8 +110,9 @@ public class CatacombsBoss22kAI : CatacombsBossAI
 }
 
 /// <summary>
-/// Flarestorm (216168) and Taros Lifebane's hard mode (216167). Retail
-/// <c>IDCT_Boss_ElementalFire_Hard</c> and <c>IDCT_Boss_DeathKnight_Hard</c>.
+/// The five-thousand bosses: Flarestorm (216168), Taros Lifebane's hard mode (216167), Ahbana's hard
+/// mode (216158) and The Soulcaller (216159). Retail <c>IDCT_Boss_ElementalFire_Hard</c>,
+/// <c>IDCT_Boss_DeathKnight_Hard</c>, <c>IDCT_Boss_Spectre_Hard</c> and <c>IDCT_Boss_Summoner</c>.
 /// </summary>
 [AIName("catacombs_boss_5k")]
 public class CatacombsBoss5kAI : CatacombsBossAI

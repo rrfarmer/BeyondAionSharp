@@ -20,10 +20,14 @@ public sealed class CatacombsBossAiTests
 	private const int TarosLifebaneHard = 216167;
 	private const int CaptainLakhara = 216238;
 	private const int Flarestorm = 216168;
+	private const int Ahbana = 216239;
+	private const int AhbanaHard = 216158;
+	private const int Soulcaller = 216159;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Catacombs).WithWorldSize(2048)
-			.WithAi(typeof(CatacombsBoss35kAI), typeof(CatacombsBoss22kAI), typeof(CatacombsBoss5kAI),
+			.WithAi(typeof(CatacombsBoss35kAI), typeof(CatacombsBoss30kAI), typeof(CatacombsBoss22kAI),
+				typeof(CatacombsBoss5kAI),
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
@@ -55,9 +59,12 @@ public sealed class CatacombsBossAiTests
 	/// </summary>
 	[Theory]
 	[InlineData(TarosLifebane, 35_000)]
+	[InlineData(Ahbana, 30_000)]
 	[InlineData(CaptainLakhara, 22_000)]
 	[InlineData(Flarestorm, 5_000)]
 	[InlineData(TarosLifebaneHard, 5_000)]
+	[InlineData(AhbanaHard, 5_000)]
+	[InlineData(Soulcaller, 5_000)]
 	public void ATemplarsBlowCountsForThousandsMore(int bossId, int expected)
 	{
 		using BossAiHarness harness = NewHarness();
@@ -69,22 +76,25 @@ public sealed class CatacombsBossAiTests
 	}
 
 	/// <summary>
-	/// <b>Taros Lifebane's hard mode helps a templar seven times less than his normal one.</b> Retail's
-	/// numbers, not a slip: the weights are not ordered the way the difficulty is, and one shared
-	/// constant for the instance would erase exactly this.
+	/// <b>Every boss with two modes helps a templar less on hard.</b> Retail's numbers, not a slip: the
+	/// weights are not ordered the way the difficulty is, and one shared constant for the instance
+	/// would erase exactly this.
 	/// </summary>
-	[Fact]
-	public void HardModeHelpsTheTemplarLess()
+	[Theory]
+	[InlineData(TarosLifebane, 35_000, TarosLifebaneHard, 5_000)]
+	[InlineData(Ahbana, 30_000, AhbanaHard, 5_000)]
+	public void HardModeHelpsTheTemplarLess(int normalId, int normalHate, int hardId, int hardHate)
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc normal = harness.Spawn(TarosLifebane, 300f, 300f, 200f);
-		Npc hard = harness.Spawn(TarosLifebaneHard, 320f, 300f, 200f);
+		Npc normal = harness.Spawn(normalId, 300f, 300f, 200f);
+		Npc hard = harness.Spawn(hardId, 320f, 300f, 200f);
 		Player templar = Templar(harness);
 		BossAiHarness.MakeMutuallyKnown(normal, templar);
 		BossAiHarness.MakeMutuallyKnown(hard, templar);
 
-		Assert.Equal(35_000, OneBlowAdds(harness, normal, templar));
-		Assert.Equal(5_000, OneBlowAdds(harness, hard, templar));
+		Assert.Equal(normalHate, OneBlowAdds(harness, normal, templar));
+		Assert.Equal(hardHate, OneBlowAdds(harness, hard, templar));
+		Assert.True(hardHate < normalHate, "hard mode did not help less");
 	}
 
 	/// <summary>

@@ -11833,3 +11833,48 @@ that removes the re-entrancy guard.
 One mutation first read as a survivor and was not: replacing `PlayerClass.TEMPLAR` hit the XML doc
 comment above the code rather than the guard. **A mutation that edits a comment is not a survivor, it
 is a bad mutation** — retargeted at the guard expression, it is caught.
+
+## The threat rule is eight bosses, and every two-mode boss helps less on hard
+
+Following `is_user_class` as a seam rather than stopping at the five bosses that carried it on a
+skill-free branch. **74 patterns in the dump use the guard; 14 are on live npcs still running a stock
+AI.** Three more of those turned out to be the same Catacombs rule:
+
+| | |
+|---|---|
+| Ahbana the Wicked, normal | **30,000** |
+| Ahbana the Wicked, **hard** | **5,000** |
+| The Soulcaller | **5,000** |
+
+That makes eight bosses on one rule, and it exposes a pattern the first five only hinted at: **every
+boss with two modes helps a templar less on hard.** Taros Lifebane 35,000 → 5,000, Ahbana 30,000 →
+5,000, and Captain Lakhara alone keeps 22,000 in both. The theory pin now asserts the *direction* as
+well as the figures, so a future boss added with the two backwards fails on the relationship rather
+than only on the number.
+
+They are Beshmundir Temple npcs on our server — `BeshmundirInstance` places all three, none is in the
+spawn xml — and the retail prefix is `IDCT_`. The classes stay named for the patterns, as everything
+else here is.
+
+### Left on the seam, and why
+
+**`IDAbRe_Core_Giant` and `_Golem`** (enos grappler and watcher, plus their unstable variants) carry the
+same guard on a **battle timer** rather than on being hit: every four seconds, if the attacker is a
+knight, a hundred thousand hate points go onto `OBJI_CUR_TARGET` and the timer re-arms.
+
+That is not translatable as written. Retail's `USERI_ATTACKER` on a *timer* branch means "the most
+recent attacker", and our `LastAttacker` is deliberately scoped to the `on_attacked` event and null
+everywhere else — a decision the recursion guard in the previous entry depends on. Widening it to a
+persistent "last attacker" is a real change to `PatternAi` with its own consequences, and it is not
+worth making for two npcs without measuring what else reads it.
+
+**Recorded rather than approximated**, because the obvious approximation — hate on the current target
+regardless of class — turns a tank-assist into a flat 100,000 every four seconds on whoever the boss is
+already holding, which is not the same mechanic at all.
+
+The remaining nine live rows carry six to twenty-six skill indices each; their class guards sit on
+branches whose payload is casting.
+
+### Verification
+
+Full suite **2,070 passing** and 1 skipped; fourteen pins, up from ten; **eight mutations, all caught**.
