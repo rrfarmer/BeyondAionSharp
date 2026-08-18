@@ -22069,3 +22069,51 @@ pin that passes for a reason I could not name — and this log has shipped three
 
 Build clean. The arming pin fails with the akaimum's flag slot changed. Full suite **2,116 passing**,
 1 skipped.
+
+## The silikor dismissal closes, and the blocker was the pin again
+
+The previous entry built the sender, could not make it fire, and cut the pin back to the flag rather than
+claim more than it had verified. **The diagnostic named there took three steps and none of them was the
+code.**
+
+1. **State?** No — the silikor handles `Spelled` whether idle or engaged; engaging it changed nothing.
+2. **Geometry.** The pin put the silikor at (300, 300) and the akaimum at (392, 727) — **four hundred
+   metres apart, across a thirty-metre broadcast.** Retail puts both in one hall.
+3. **Awareness.** Even at four metres it stayed: the rewrite that moved them had dropped
+   `MakeMutuallyKnown(silikor, akaimum)`, so the broadcast had nobody to reach.
+
+The decisive measurement was **asking whether the world flag had been consumed.** It had — which proved the
+branch ran and the broadcast was sent, and moved the search from "why doesn't the sender fire" to "why
+doesn't the listener hear", which is where both faults were. **One question split the chain in half.**
+
+### The chain, end to end
+
+Two guards fall close to the akaimum with an **arrival between them**; the second answer sets the world
+flag; a neutral-race caster spelling the silikor consumes it and broadcasts `6621`; the akaimum says its
+line, drops both guards and leaves.
+
+**Built across five passes** — the listener, the world-flag engine, the near answers, the arrival handler,
+the sender — and **every one of those passes pinned only its own piece.** This is the pin that runs all of
+it, and it fails if the silikor consumes a different flag slot **or** if the arrival handler is removed:
+two independent links, each provably load-bearing.
+
+### The rule this cost
+
+**Four of the last six failing pins in this log were the pin, not the code**, and this one took three
+separate faults in a single test before it ran. Two of them — distance and mutual awareness — are
+properties of the *fixture*, not of the mechanic, and neither is visible in the assertion that fails.
+
+**A pin that spans several npcs has a geometry**, and that geometry has to be stated deliberately. The one
+here now carries a comment saying why the silikor stands four metres from the akaimum.
+
+### Still to do
+
+- The eight Tiamat rush drakan need npc templates; the 123 missing path names, Padmarashka's and Kaliga's
+  among them.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question, last.
+
+### Verification
+
+Build clean. The chain pin fails with the world flag slot changed and with the arrival handler removed.
+Full suite **2,116 passing**, 1 skipped.

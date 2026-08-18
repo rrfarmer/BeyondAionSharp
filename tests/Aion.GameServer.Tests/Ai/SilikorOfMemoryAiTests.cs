@@ -506,8 +506,8 @@ public sealed class SilikorOfMemoryAiTests
 		Assert.False(pattern.IsFlagSet(1), "arriving did not clear the walking flag");
 	}
 	/// <summary>
-	/// <b>Two close guards with a walk between them arm the dismissal.</b> The world flag the silikor
-	/// consumes is only set on the second answer, which is only reachable after the akaimum has walked.
+	/// <b>The whole dismissal, end to end.</b> Two guards fall close to the akaimum with a walk between
+	/// them, and a neutral caster spelling the silikor then sends it away with its guards.
 	/// </summary>
 	/// <remarks>
 	/// <b>Four passes built this in four pieces</b> — the akaimum'''s 6621 listener, the world-flag engine,
@@ -520,10 +520,12 @@ public sealed class SilikorOfMemoryAiTests
 	/// </para>
 	/// </remarks>
 	[Fact]
-	public void TwoCloseGuardsWithAWalkBetweenThemArmTheDismissal()
+	public void TwoCloseGuardsAndANeutralSpellSendTheAkaimumAway()
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc silikor = harness.Spawn(Silikor, 300f, 300f, 200f);
+		// Within the dismissal broadcast's thirty metres of the akaimum: retail puts both in one hall,
+		// and a pin that separates them tests the reach rather than the mechanic.
+		Npc silikor = harness.Spawn(Silikor, 396f, 727f, 188f);
 		Npc akaimum = harness.Spawn(Akaimum, 392f, 727f, 188f);
 
 		for (int round = 0; round < 2; round++)
@@ -545,10 +547,18 @@ public sealed class SilikorOfMemoryAiTests
 
 		// A neutral-race caster spelling him consumes the world flag and broadcasts the dismissal.
 		// A servant: retail's race_type=neut, which in our data is an npc with no race attribute.
-		// The spell that consumes it is NOT asserted here. The sender is built -- OnSpelled p100, guarded
-		// on a NEUT caster and ConsumingWorld -- but it does not fire through the harness'''s Spelled event,
-		// and whether that is the event not carrying a caster or the race guard not matching is not
-		// established. Pinning the arming rather than the whole chain keeps this honest: what four passes
-		// of work made reachable is the flag, and that is what is verified.
+		Player raider = harness.SpawnPlayer(398f, 729f, 188f);
+		BossAiHarness.MakeMutuallyKnown(silikor, raider);
+		harness.Engage(silikor, raider);
+		Npc neutral = harness.Spawn(217848, 400f, 727f, 188f);
+		BossAiHarness.MakeMutuallyKnown(silikor, neutral);
+		BossAiHarness.MakeMutuallyKnown(silikor, akaimum);
+		silikor.GetAi().OnCreatureEvent(AiEventType.Spelled, neutral);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n == akaimum);
+
+		// The previous version of this pin stopped at the flag, because the dismissal would not fire and
+		// the cause was not established. It was the pin: the silikor sat four hundred metres from the
+		// akaimum, outside a thirty-metre broadcast, and the two were never made known to each other.
 	}
 }
