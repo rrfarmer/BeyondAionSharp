@@ -14419,3 +14419,47 @@ know the count is still soft.
 ### Verification
 
 Two pins, and the citadel half of the work is green. Full suite **2,261 passing**, 1 skipped.
+
+## The flag is sound, and a dozen encounters are now positively verified
+
+The previous entry stopped the Esoterrace alarm with two possibilities open: either its five once-only
+bands fail for a reason peculiar to that pattern, or **`When.FirstTime` has never worked and a dozen
+shipped encounters only look correct because something else fires first.**
+
+**It is the first.** `FirstTimeFlagTests` pins the primitive two ways:
+
+- a branch whose **only** guard is a flag fires once and never again;
+- a branch with a **health guard in front of** the flag — the shape every shipped encounter uses —
+  does the same.
+
+And a probe on the surkana feeder itself, with an action that needs no prior target, reads **7, 7, 7**
+across three blows. **The flag holds, on that npc, in that harness.**
+
+So the dozen once-only branches in this log — the klaw sentinels, the drake calls, the tursin
+loudmouths, Vingeveu's bands, Kalabar's, Masto's, the insurgents', the nunu's two, the ice claw
+hunters' — are verified rather than assumed. That was worth an entry on its own.
+
+### What is still unexplained
+
+The Esoterrace ladder's own failure. With the feeder pinned at a hundred percent and its five bands in
+place, the drakan's hate climbed ten per blow; with one bare-flag branch on the same npc, it does not.
+**The difference is the five branches, and nothing in the primitive explains it.** Left open, narrowly:
+
+1. Does `Evaluate` stop at the first matching branch, or run every branch whose guards pass? A
+   five-band ladder and a one-branch pattern differ in exactly that.
+2. If it runs them all, the ladder is not the only pattern in this log with several branches on one
+   handler, and the others should be re-read.
+
+**That is a much better question than the one this started with**, and it is the last thing between the
+Esoterrace alarm and shipping: one npc, five bands, nineteen listeners, and a mechanic where beating a
+facility object brings the facility in instalments.
+
+### The rule, earned twice now
+
+**Pin the primitive before diagnosing the encounter.** The shulack relay earned it; this entry spent it
+and got a dozen encounters' worth of assurance for one small test file. **A primitive that a dozen
+things depend on is worth pinning the first time you doubt it, not the second.**
+
+### Verification
+
+Two new pins. Full suite **2,263 passing**, 1 skipped.
