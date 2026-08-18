@@ -16584,3 +16584,50 @@ the branch that arms it. That is a real check and it is not written.
 
 No code changed — the guard stays out, for a better reason than before. Full suite **2,049 passing**,
 1 skipped.
+
+## The contradiction check, written — and unverified
+
+The previous entry named it: `report_dropped_guards.py` should refuse a row when **the proposed guard
+cannot be true at the same time as one already on our branch.** It is written.
+
+`contradicts()` compares the proposed health window against ours and refuses disjoint pairs.
+`our_branch_text()` reads our branch **plus any branch that arms the timer it waits on**, because that is
+where the silikor guard's conflict lives: the peel repeat carries no health guard of its own and waits on
+a timer armed by a step gated `HpBelow(30)`. Reading the branch alone would have missed it entirely.
+
+### And it cannot be shown to work
+
+**The silikor row no longer reaches the check.** It now reports `MIXED1/2` — of the two patterns
+`silikor_guard` serves, only `ND2_WhG1` carries that guard — so it is blocked one step earlier, for a
+reason that is independent and also correct.
+
+So the row that motivated the check is refused whether or not the check exists, and **no row in the current
+board exercises it.** That is stated rather than glossed: the code is there, the reasoning behind it is
+sound and written down, and it has never fired.
+
+**A check that has never fired is a hypothesis.** The honest next step is a unit test over
+`contradicts()` and `our_branch_text()` with the silikor shape as fixture data — the branch, its arming
+step, and the proposed window — so the logic is pinned even though no live row currently reaches it.
+
+### What the board reads now
+
+```
+24 ready, 4 mixed and blocked on splitting the class, 3 misaligned
+```
+
+The `hp` rows are down to three, because seventeen shipped earlier: Kingspin's `0–51`, still held pending
+his accelerators; the silikor guard's, now `MIXED`; and the xdrakan trapper's, `MISALIGNED`.
+
+### Still to do
+
+- **A unit test for the contradiction check**, since nothing live exercises it.
+- `6952`'s callers, then Kingspin's accelerators as a conversation.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Tool only. Full suite **2,049 passing**, 1 skipped — which says nothing about the new check, since no test
+covers it yet.

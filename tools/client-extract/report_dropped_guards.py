@@ -157,6 +157,47 @@ def describe(conditions: str, kind: str) -> str:
     return "; ".join(dict.fromkeys(bits)) or "?"
 
 
+def hp_range(text: str):
+    """The health window a snippet of our source allows, or None if it names no health guard."""
+    between = re.search(r"When\.HpBetween\((\d+),\s*(\d+)\)", text)
+    if between:
+        return int(between.group(1)), int(between.group(2))
+    below = re.search(r"When\.HpBelow\((\d+)\)", text)
+    if below:
+        return 0, int(below.group(1)) - 1
+    return None
+
+
+def contradicts(proposed, ours):
+    """True when the two windows cannot both hold, so the branches cannot be the same step."""
+    if proposed is None or ours is None:
+        return False
+    return proposed[1] < ours[0] or ours[1] < proposed[0]
+
+
+def our_branch_text(source: str, ai_name: str, handler: str, priority: str) -> str:
+    """The source of one Branch, plus any branch that arms the timer it waits on.
+
+    **The arming branch matters as much as the branch itself.** The silikor guard's peel repeat carries no
+    health guard of its own; it waits on a timer armed by a step gated `HpBelow(30)`, so a proposed
+    `HpBetween(31,100)` on the repeat can never hold. Reading the branch alone misses that entirely.
+    """
+    start = source.find(f'[AIName("{ai_name}")]')
+    if start < 0:
+        return ""
+    end = source.find("[AIName(", start + 1)
+    scope = source[start:end if end > 0 else len(source)]
+    hit = re.search(rf"Branch\(\s*{priority}\s*,(.*?)(?=Branch\(|\Z)", scope, re.S)
+    if not hit:
+        return ""
+    text = hit.group(1)
+    waits = re.search(r"When\.Timer\((\w+)\)", text)
+    if waits:
+        for arming in re.finditer(rf"Branch\(.*?Do\.ArmTimer\(\s*{waits.group(1)}\s*,", scope, re.S):
+            text += scope[max(0, arming.start()):arming.end()]
+    return text
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("patterns_dir")
@@ -207,7 +248,11 @@ def main() -> int:
                         if detail != "?":
                             break
                     ours_do = our_actions.get(ai_name, {}).get((handler, priority), set())
-                    ok = all(aligned(ours_do,
+                    clash = kind == "hp" and contradicts(
+                        hp_range(detail.replace("is_hp_in_boundary(OBJI_SELF,", "When.HpBetween(")
+                                      .replace("is_hp_lower_than(OBJI_SELF,", "When.HpBelow(")),
+                        hp_range(our_branch_text(text, ai_name, handler, priority)))
+                    ok = not clash and all(aligned(ours_do,
                                      retail_actions.get((pattern, rh, priority), set()))
                              for pattern in present.get(kind, [])
                              for rh in G.HANDLERS[handler]
