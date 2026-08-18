@@ -42,9 +42,17 @@ public class CursedQueenModorAI : AggressiveNpcAI, HpPhases.PhaseHandler
         return Rnd.Get((AttackHandAnimation[])Enum.GetValues(typeof(AttackHandAnimation)));
     }
 
+    /// <summary>
+    /// Retail's <c>Rune_FrostNmd_N_65_Ah</c> calls her idean obscura at fifty metres as she engages,
+    /// and they answer by taking whoever she is fighting. Added to this class rather than translated
+    /// into one, because everything else here is a Java port. See docs/retail-ai-fidelity.md.
+    /// </summary>
+    private readonly CombatAlarm call = new CombatAlarm(IdeanObscuraAI.CallToArms, 50f);
+
     protected override void HandleAttack(Creature creature)
     {
         hpPhases.TryEnterNextPhase(this);
+        call.Raise(GetOwner());
         base.HandleAttack(creature);
     }
 
@@ -328,6 +336,7 @@ public class CursedQueenModorAI : AggressiveNpcAI, HpPhases.PhaseHandler
     protected override void HandleBackHome()
     {
         base.HandleBackHome();
+        call.Rearm();
         stage.Set(0);
         hpPhases.Reset();
         AddPlatformLocations();

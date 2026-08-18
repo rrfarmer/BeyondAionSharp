@@ -10490,3 +10490,64 @@ and one is a condition, and neither stops the branch.
 
 Full suite **1,984 passing** and 1 skipped; six new pins run three times over; nine mutations, six
 caught and three explained above. Missing-AI 664 → **663**; translatable 305/991 → **304/990**.
+
+## Vengeful Modor's obscura, and a message written on both ends of a wire nobody held
+
+`Rune_FrostNmd_MezSum_65_Ae` binds to the idean obscura (284379) and its two weakened kinds (284661,
+856495), all ELITEs on plain `aggressive`, standing beside a boss they had no way of hearing.
+
+| | |
+|---|---|
+| on Modor's call | take whoever she is fighting |
+| below half, once | two blows in five turn it onto a **random** attacker instead |
+
+**The call had no sender.** Retail's `444` comes from `Rune_FrostNmd_N_65_Ah`, which binds to Vengeful
+Modor (234690) — and Modor runs `CursedQueenModorAI`, a Java-parity class rather than a pattern. So the
+message existed on both ends and nobody was holding the wire. `CombatAlarm` holds it now, the second
+time that helper has closed a gap of exactly this shape after the Sauro Supply Base alarm, and three
+lines in a class that is otherwise a faithful Java port.
+
+### The message audit cannot see this, and that is worth knowing
+
+`audit_message_reach.py` counts a message as *sent* when a live pattern contains the broadcast. It has
+no way to know that the npc bound to that pattern is running a **different class**, so a listener whose
+only sender is a ported-elsewhere boss reads as connected and scores full marks.
+
+**Rule: "a live pattern sends it" is not "the server sends it".** Fixing this properly would mean the
+audit knowing what every C# class implements, which is a different kind of tool; recorded instead, with
+the reminder that a listener ranked highly may be waiting on a sender that exists only in the dump. Two
+encounters have now turned out this way — this one and the Sauro alarm — and both were found by reading
+rather than by measuring.
+
+### Two pins that had to be repeated to mean anything
+
+- **Above half it never turns.** Written as one fight of forty blows, which the mutation that removes
+  the health guard survives a quarter of the time — the single turn it then makes is a random pick over
+  four players and can land back on the tank. Eight fights makes that one in sixty thousand.
+- **Below half it turns once.** Written as `Equal(1)`, which fails one run in four for the same reason.
+  It is `<= 1` now, which still catches the mutation that removes the flag var — that one turns on
+  nearly every blow — and never fails for a reason nobody would want to read about.
+
+**Rule: when the behaviour is one random pick, a pin can assert how many picks happened but not where
+they landed.** Both of these were trying to observe a pick by its outcome; counting the picks is the
+observation that survives.
+
+### One pin deliberately not written
+
+An earlier version asserted that an obscura arriving after the pull hears nothing. It failed:
+introducing a new NPC to a boss that is already fighting is enough for our engine's own
+see-a-friend-attacked to bring it in, with no message involved. `CombatAlarm`'s once-a-fight latch is
+pinned where it belongs — in the Sauro alarm tests, against guards known to their boss before the pull.
+
+### Not translated
+
+Eleven skill indices; the `goto_waypoint` they walk on waking; retail's `on_spelled` copy of the
+below-half branch, which shares its flag with `on_attacked` and is therefore the same one payment; the
+marker each drops at Modor's own spot when killed — an invisible NPC (284528) our data already spawns
+as Witch Queen Modor, whose sanctuary-release meaning belongs to the instance rather than the pattern;
+and message `104`, a fifteen-minute timer whose only action here is an idle timer.
+
+### Verification
+
+Full suite **1,990 passing** and 1 skipped; six new pins run five times over; **seven mutations, all
+caught**. Missing-AI 663 → **662**; translatable 304/990 → **303/987**.
