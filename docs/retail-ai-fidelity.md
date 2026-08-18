@@ -21434,3 +21434,60 @@ ids. There is nothing in that class buildable today.
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## Tiamat's dying rotation is the largest buildable gap, and it is not blocked
+
+The previous entry ended by saying to check `tiamat_dying_rotation`'s blockers before anything else.
+**Checked, and unlike Padmarashka it is blocked by nothing.**
+
+`IDTiamat_Tiamat_Dragon_Dying_Named_60_Al`, and its hard twin, by placement:
+
+```
+SPAWN_LOCATION_ABSOLUTE   250
+SPAWN_LOCATION_MY_POINT     3
+SPAWN_LOCATION_WAY_POINT_*  0
+```
+
+**No waypoints anywhere.** Every one of its 47 spawn branches places its npcs at fixed coordinates, on 46
+battle timers — the two things this port expresses best.
+
+### What it places
+
+| count | npc |
+|---|---|
+| 205 | `IDTiamat_BurrowingWorm_BurrowFX` |
+| 16 | `IDTiamat_Tiamat_CyclopsCrack` |
+| 4 | `IDTiamat_Tiamat_GravityBomb` |
+| 4 / 3 / 3 | `IDTiamat_Breath_Beacon1/2/3` |
+
+**This is the telegraph layer of the dying phase** — the markers that show where the worm surfaces, where
+the ground cracks, and where her breath will land. `TiamatDyingRotationAI` has **four branches** and
+references exactly one npc id: the boss herself. **None of the telegraphs exist.**
+
+### Why this is the right next thing
+
+- **Not blocked.** No routes, no skill indices needed for the markers, no string ids.
+- **Largest unblocked gap in the port** — 47 spawn branches against our four.
+- **It is the part players actually see**: a dying-phase AoE with no telegraph is an unavoidable AoE.
+
+The 28 `use_skill` branches in the same pattern remain blocked on skill indices, so the buildable half is
+the markers and their timers — **which is the half that matters for whether the fight is readable.**
+
+### Not started here, deliberately
+
+**205 spawn coordinates is not a job to begin with a pass mostly spent.** The previous entry's Padmarashka
+sort took two passes to go from a vague queue item to a ranked blocker, and starting a large port at the
+end of a pass is what produced the nineteen-edit batch this log had to revert.
+
+### Still to do
+
+- **Port `tiamat_dying_rotation`'s telegraph layer**, beginning with a fresh pass: the burrow markers
+  first, since they are 205 of the 250 placements and one npc id.
+- **Walker route ids**, still blocking four other encounters, and still not AI work.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; Modor's clone.
+- The guard report's mixed and misaligned rows, unverified; `sematariux` and `king_consierd` need spawn
+  entries; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
