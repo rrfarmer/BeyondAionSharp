@@ -21077,3 +21077,51 @@ the reason that pin asserts on armed timers rather than on their effects.
 
 Build clean. The marks pin fails with the golems back on relative positions. Full suite **2,112 passing**,
 1 skipped.
+
+## Eight of the dropped-guard report's "ready" rows are already done
+
+Turning to the dropped-guard backlog — **23 ready, 3 mixed, 3 misaligned** — the largest single cluster is
+`is_enemy(OBJI_MESSAGE_PARAM)` on **eight message branches across five classes**: the abyss guard call, the
+fortress and garrison guard answers, the Nochsana naga teleporter, and the Panesterra slayer.
+
+One guard, one meaning: **answer a call only about someone you are hostile to.** Without it a guard turns
+on a friendly creature the caller happened to name.
+
+**All eight are already applied.** `When.MessageParamIsEnemy` exists in the engine and appears ten times
+across those five files — every branch the report lists.
+
+### Where the false positive comes from
+
+`report_dropped_guards.py` shares its C#-side vocabulary with `audit_handler_guards.py`, and that table
+**does** contain `MessageParamIsEnemy`. The break is one level down: `our_guard_kinds` returns
+`{message, state}` for `abyss_guard_call OnMessage#2` — it sees `When.Message` and `When.Fighting` on that
+branch and misses `When.MessageParamIsEnemy`, which sits first in the same guard list.
+
+So the vocabulary is right and the branch-text extraction is wrong. **Not fixed here** — the parser needs
+reading properly, and this pass has already spent its budget confirming the rows.
+
+### What that means for the backlog
+
+**The ready count of 23 is inflated by at least eight**, and those eight are the largest cluster in it. The
+remaining fifteen have not been checked the same way.
+
+**This is the fourth tool in this log whose output needed verifying against the code before use**, after
+the lifetime audit, the twin audit and the flag-branch list. The pattern is consistent enough to state as
+a standing rule: **before working a row from any of these reports, open the file and look.** It costs one
+command and it has been right every time.
+
+### Still to do
+
+- **Fix `our_guard_kinds`' branch extraction**, then re-run the report for a true count.
+- **Check the remaining fifteen ready rows by hand** in the meantime — the two `SealedAkaimumAI` distance
+  rows are the same story, since `When.SenderWithin(10)` was applied there three passes ago.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids;
+  Modor's clone.
+- A twin check tolerating near-misses; the four Ophidan controllers; Padmarashka's two rows; the web's two
+  skills; timers 10 and 12; the five coffin rows; the mixed and misaligned rows.
+- `sematariux` and `king_consierd` need spawn entries; the `drakanmedic` harness question, behind all of
+  the above.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
