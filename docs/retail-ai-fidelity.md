@@ -20877,3 +20877,53 @@ triggers, missing holders and walker routes.
 
 Build clean. The three-minute pin fails with the summoner-side lifetime removed. Full suite **2,110
 passing**, 1 skipped.
+
+## The last pinnable fix would not pin, and the reason is not what it looked like
+
+`drakanmedic` was the last fix on the pinnable list. Three pins written; **two passed and one failed two
+runs in three, in isolation.**
+
+The obvious reading is the roll. The medic summons on `Rnd.Chance() < 3` and the pin lands blows until a
+servant appears, capped at five hundred — the same construction as the Laksyaka pin. **`Rnd.Chance()`
+returns 0-100**, so that is a genuine three percent and five hundred blows should miss about three times
+in ten million.
+
+**It missed twice in three.** So the blows are not reaching the handler: a diagnostic run finished with
+**neither** servant kind placed and only two objects alive, meaning `HandleAttack` ran far fewer than five
+hundred times, or the summon bailed before rolling.
+
+**Deleted rather than shipped.** A pin that fails two runs in three is worse than no pin, and the third
+run passing is exactly what would have made it look like flake to be loosened away.
+
+### What this says about the pin that did work
+
+**Laksyaka uses the identical construction and passes six runs out of six**, re-checked after this. So the
+harness's attack event reaches `HandleAttack` for one Java-parity class and not for another, and **nothing
+in either class explains which.** That is the seventh harness-artifact shape in a different guise: not a
+missing registration or a missing holder, but an event whose delivery depends on the class receiving it.
+
+**The Laksyaka pin should be treated as unexplained rather than sound.** It passes, repeatedly, and this
+log cannot say why it passes where its twin does not.
+
+### Where the lifetime work ends
+
+| fix | state |
+|---|---|
+| arena spark, Tiamat dust, `vasharti_assassin`, `ahserion_construct_destroyer`, Laksyaka | pinned |
+| `ahserion_sky_assaulter` | nothing to pin — its lifetime was dead code, reverted |
+| **`drakanmedic`** | **unpinnable until the attack-event difference is understood** |
+| `sematariux`, `king_consierd` | blocked: no spawn entry, and no clock in the add |
+
+### Still to do
+
+- **Find why `OnCreatureEvent(Attack)` reaches one Java-parity class and not another.** It blocks the
+  medic pin and it undermines the Laksyaka one.
+- `sematariux` and `king_consierd` need spawn entries — a data gap.
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; walker route ids.
+- Modor's clone; Yamennes' golem cadence; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Three pins written, run, and deleted. Full suite **2,110 passing**, 1 skipped — unchanged.
