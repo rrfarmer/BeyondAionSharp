@@ -18055,3 +18055,53 @@ other pins and the rule cost something to keep this time.
 ### Verification
 
 One engine seam, one harness helper, one pin written and removed. Full suite **2,050 passing**, 1 skipped.
+
+## Attributing the switch count: the obvious key does not separate them
+
+The previous entry left "attribute the switch count to a branch" as the step that would make Masto's
+cadence pinnable. The obvious key is the target kind — count only the switches a band would make.
+
+`MastoTheAncientAI` uses **seven `SwitchTarget(RANDOM)` and one `SECOND_MOST_HATED`.** Four of the seven
+are the bands; the other three are elsewhere in the encounter. **Filtering by kind separates one switch out
+of eight and leaves the four bands mixed with three others.**
+
+So that key fails, and the two that remain are both more work than they look:
+
+- **A window when the others are quiet.** Needs Masto's three non-band `RANDOM` branches traced to their
+  timers, and a stretch found where none of them can fire — which may not exist, since the band cadence is
+  twenty seconds and the encounter is busy.
+- **An aggro shape only a band can produce.** Every `RANDOM` switch reads the same aggro list, so shaping it
+  cannot distinguish callers. **This one is a dead end**, and worth writing down so it is not tried twice.
+
+### What that means for the repair
+
+Masto's four bands are repaired and **remain unpinned**, with two entries now spent trying. The evidence
+that they were dead and are now alive is the arithmetic in this log — the opener re-arms every eight
+seconds and arms the band at twenty — not anything the suite checks.
+
+**That is the honest state**, and the third attempt should start from the window approach with the three
+non-band branches read first, rather than from another instrument.
+
+### Worth stepping back on
+
+Three entries have gone into pinning one cadence, after the repair itself took one reading. **The
+instrument problem is now larger than the fix was**, which is a signal about where the effort belongs: the
+remaining nineteen encounters are likely repairs of the same kind, and each will be as hard to pin as this
+one if its action is a random switch.
+
+**Reading them is cheap and pinning them is not.** A reasonable next pass reads several and records what it
+finds, rather than stopping at the first one it cannot pin.
+
+### Still to do
+
+- **Read the remaining ~19 encounters** for starved mechanics, accepting that pins may lag.
+- Masto's cadence, third attempt: trace his three other `RANDOM` branches, then find a quiet window.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
