@@ -34,12 +34,22 @@ public sealed class KlawSpawnerAiTests
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
+	/// <remarks>
+	/// <b>The player stands outside the listeners' own sight</b> — their <c>srange</c> is seven and
+	/// eight metres and the raider is eleven away — so the call, which reaches twenty-five and fifty,
+	/// is doing all the work rather than sharing it with an aggro scan.
+	/// <para>
+	/// Worth having, and <em>not</em> the fix for the flake it was first written for: the seven-in-fifty
+	/// failures measured here turned out to be a poisoned <c>SiegeService</c> type initialiser, not this
+	/// geometry. See <c>SiegeServiceTestInit</c> and docs/retail-ai-fidelity.md.
+	/// </para>
+	/// </remarks>
 	private static (BossAiHarness, Npc, Npc, Player) Nest()
 	{
 		BossAiHarness harness = NewHarness();
 		Npc spawner = harness.Spawn(Spawner, 300f, 300f, 200f);
 		Npc worker = harness.Spawn(Worker, 310f, 300f, 200f);
-		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		Player raider = harness.SpawnPlayer(299f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(spawner, worker);
 		return (harness, spawner, worker, raider);
 	}
@@ -125,7 +135,7 @@ public sealed class KlawSpawnerAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc klawspawn = harness.Spawn(Klawspawn, 300f, 300f, 200f);
 		Npc worker = harness.Spawn(Worker, 310f, 300f, 200f);
-		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		Player raider = harness.SpawnPlayer(299f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(klawspawn, worker);
 
 		Strike(klawspawn, raider);

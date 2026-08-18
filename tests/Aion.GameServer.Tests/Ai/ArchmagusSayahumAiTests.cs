@@ -71,7 +71,11 @@ public sealed class ArchmagusSayahumAiTests
 		using BossAiHarness _h = harness;
 		BossAiHarness.SetExactPercent(boss, 90);
 
-		Assert.True(TargetsOver(harness, boss, raid, 200).Count > 1,
+		// Six hundred seconds rather than two hundred, for the same reason as the sister pin below:
+		// the switch picks a random attacker out of four, so "more than one distinct player" is a
+		// probabilistic claim and the window has to be long enough that it cannot come up monotone.
+		// At two hundred this failed about one full-suite run in fifteen.
+		Assert.True(TargetsOver(harness, boss, raid, 600).Count > 1,
 			"he never came off the player he started on");
 	}
 

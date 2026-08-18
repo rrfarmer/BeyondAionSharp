@@ -11354,3 +11354,85 @@ Disabling parallelism outright answered in twelve runs what four rounds of reaso
 The flake. **Roughly one full-suite run in seven, cause unknown, parallelism ruled out.** Anyone
 picking this up should start at `BossAiHarness.Dispose` and the abandoned-task path above, and should
 treat a green run as meaning nothing — the failure needs seven or more full runs to show itself.
+
+## The flake, found: it was four different bugs wearing one costume
+
+The previous entry left this open after four wrong hypotheses. It is closed. **Twenty consecutive
+clean full runs**, against a baseline of roughly one failure in seven.
+
+The reason four hypotheses failed is that there was never one bug. There were **four**, each rare
+enough on its own to hide behind the others, and each producing the same outward shape: a different
+pin failing, no random branch on its own path, green when run alone.
+
+### 1. A poisoned static initialiser — the big one
+
+`SiegeService` is a singleton built in a **static field initialiser**, and its constructor takes the
+live path whenever `SiegeConfig.SIEGE_ENABLED` is true — which is the default. That path reads
+`DataManager.SIEGE_LOCATION_DATA` and calls `SiegeDAO`, so whether it succeeds depends on which
+`DataManager` happened to be registered the first time anything touched the type.
+
+**A static type initialiser runs once per process, and if it throws the type is poisoned for the rest
+of it.** One unlucky ordering therefore breaks every later test that reaches
+`NpcAI.Ask(ALLOW_RESPAWN)` — which is most AI tests, and the bootstrap tests too. Measured on one pin:
+**7 solo failures in 50 before, 0 in 50 after.**
+
+Fixed with a `[ModuleInitializer]` that turns sieges off, touches the type so it initialises on the
+harmless branch, and puts the flag back. **Not a production fix** — a real server touches it after the
+data and database are up — but a type that one bad early access can poison permanently is a sharp edge
+worth revisiting on its own terms.
+
+### 2. A harness that did not know what the fight could spawn
+
+`AnuhartMedicAI` extends the Java-parity `drakanmedic`, which rolls **three percent on every blow** to
+call a servant. The pins never registered `DrakanHealingServantAI` or `EnemyServantAI`, so about one
+run in twenty the harness threw *"No AI found for name drakanhealingservant"*. **3 in 50 before, 0 in
+50 after.**
+
+**Rule: `WithAi` must list what the fight can spawn, not what the test spawns.**
+
+### 3. and 4. Two under-powered probabilistic pins
+
+`SilikorOfMemoryAiTests.BothKindsOfServantAppear` counted **survivors at the end** of a ten-minute
+window. A servant lives three minutes, so it was really sampling the last six coin flips and failing
+whenever those came up the same way — `2 × 0.5⁶ ≈ 3%`, measured at **1 solo run in 40**. It now watches
+the whole window through a new `BossAiHarness.WatchEach`, which is `Watch` kept apart per npc id.
+
+That helper's own remarks say it exists "because the same mistake has been made four times". **This was
+the fifth**, and it happened because `Watch` could not express *how many of each* — a helper that
+almost fits gets bypassed.
+
+`UnstableTriroanAiTests.OverManyCallsEveryElementTurnsUp` gave itself forty attempts to see four
+elements; one is roughly a one-in-ten call, so `0.9⁴⁰ ≈ 1.5%`. Two hundred now, and the loop still
+stops the moment all four appear. `ArchmagusSayahumAiTests.AboveEightyHeTurnsOnEveryOtherLap` had the
+same shape at two hundred seconds; six hundred now.
+
+### What actually cracked it, and the rule that follows
+
+Not another hypothesis. **Reading the exception text instead of the assertion.** Every earlier run had
+been filtered with `grep -E "Assert|Expected|Actual"`, and the failure had been printing
+`TypeInitializationException` the whole time — the bug was reporting its own cause into a pipe that
+threw it away.
+
+**Rule: when a test fails intermittently, print the whole failure before theorising about it.** Four
+rounds of reasoning, two reverted changes and one abandoned experiment cost more than one unfiltered
+run would have.
+
+The second-order lesson is about the shape: *one symptom, four causes* is why each fix "did not work".
+Each one really did remove a slice of the failure rate; none removed enough to notice. **A flake that
+survives a correct fix is evidence of a second cause, not of a wrong fix** — the opposite of what was
+assumed here for three commits running.
+
+### Kept from the two commits of chasing
+
+`SingletonIsolationTests`, and the two classes it caught outside the serialising collection — real
+bugs, just not this one. The Anuhart pins as deltas and their geometry, worth having and now correctly
+labelled as *not* the fix. The `SiegeService` module initialiser, `WatchEach`, three widened pins, and
+two servant classes registered.
+
+Reverted: the assembly-wide `DisableTestParallelization`, which cost five seconds a run and fixed
+nothing.
+
+### Verification
+
+**Twenty consecutive full-suite runs, all green** — 2,035 passing, 1 skipped. Per-pin: 0 in 50, 0 in
+50, 0 in 60, 0 in 40, 0 in 40.

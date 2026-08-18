@@ -32,16 +32,33 @@ public sealed class AnuhartGuardAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(DarkPoeta).WithWorldSize(2048)
+			// DrakanHealingServantAI and EnemyServantAI are here because the guardian can make them:
+			// AnuhartMedicAI extends the Java-parity drakanmedic, which rolls three percent on every
+			// blow to call a servant. Without them registered the harness threw "No AI found for name
+			// drakanhealingservant" about one run in twenty -- a class the encounter can produce and
+			// the harness did not know about. Rule: WithAi must list what the fight can spawn, not
+			// just what the test spawns.
 			.WithAi(typeof(MarabataControllerAI), typeof(AnuhartGuardAI), typeof(AnuhartMedicAI),
+				typeof(DrakanHealingServantAI), typeof(EnemyServantAI),
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
+	/// <remarks>
+	/// <b>The player stands outside the listeners' own sight</b> — their <c>srange</c> is seven and
+	/// eight metres and the raider is eleven away — so the call, which reaches twenty-five and fifty,
+	/// is doing all the work rather than sharing it with an aggro scan.
+	/// <para>
+	/// Worth having, and <em>not</em> the fix for the flake it was first written for: the seven-in-fifty
+	/// failures measured here turned out to be a poisoned <c>SiegeService</c> type initialiser, not this
+	/// geometry. See <c>SiegeServiceTestInit</c> and docs/retail-ai-fidelity.md.
+	/// </para>
+	/// </remarks>
 	private static (BossAiHarness, Npc, Npc, Player) Chamber()
 	{
 		BossAiHarness harness = NewHarness();
 		Npc booster = harness.Spawn(Booster, 660f, 370f, 99f);
 		Npc guard = harness.Spawn(Scalewatch, 670f, 370f, 99f);
-		Player raider = harness.SpawnPlayer(663f, 370f, 99f, race: Race.ASMODIANS);
+		Player raider = harness.SpawnPlayer(659f, 370f, 99f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(booster, guard);
 		return (harness, booster, guard, raider);
 	}
@@ -160,7 +177,7 @@ public sealed class AnuhartGuardAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc booster = harness.Spawn(Booster, 660f, 370f, 99f);
 		Npc guardian = harness.Spawn(Guardian, 670f, 370f, 99f);
-		Player raider = harness.SpawnPlayer(663f, 370f, 99f, race: Race.ASMODIANS);
+		Player raider = harness.SpawnPlayer(659f, 370f, 99f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(booster, guardian);
 
 		int before = guardian.GetAggroList().GetHate(raider);

@@ -213,7 +213,11 @@ public sealed class UnstableTriroanAiTests
 	{
 		var seen = new HashSet<int>();
 
-		for (int i = 0; i < 40 && seen.Count < 4; i++)
+		// Two hundred attempts rather than forty. The loop stops the moment all four have been seen,
+		// so the extra cap costs nothing on the common path and buys the rare one: at forty this
+		// failed about one full-suite run in seventy, which is what an element appearing roughly one
+		// call in ten predicts.
+		for (int i = 0; i < 200 && seen.Count < 4; i++)
 		{
 			using BossAiHarness harness = NewHarness();
 			Npc controller = harness.Spawn(Controller, 602f, 488f, 196f);

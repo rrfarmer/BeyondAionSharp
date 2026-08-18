@@ -282,6 +282,53 @@ public sealed class BossAiHarness : IDisposable
 	public Watched WatchNew(int seconds, Action? perSecond, params int[] npcIds) =>
 		Watch(seconds, perSecond, countExisting: false, npcIds);
 
+	/// <summary>
+	/// <see cref="Watch(int, Action?, int[])"/>, kept apart per npc id.
+	/// </summary>
+	/// <remarks>
+	/// <b>For pins about which of several kinds appeared</b>, where a single total cannot answer the
+	/// question. Silikor of Memory calls a fragment or an essence on a coin flip, and the pin that said
+	/// "both kinds appear" counted the survivors at the end of a ten-minute window — but a servant
+	/// lives three minutes, so it was really sampling the last six calls and failing whenever those six
+	/// came up the same way. Measured at one run in forty, which is what two-in-two-to-the-sixth
+	/// predicts.
+	/// <para>
+	/// That is the same mistake <see cref="Watch(int, Action?, int[])"/> was written for, made a fifth
+	/// time because the helper could not express "how many of each".
+	/// </para>
+	/// </remarks>
+	public Dictionary<int, Watched> WatchEach(int seconds, Action? perSecond, params int[] npcIds)
+	{
+		var everSeen = new Dictionary<int, HashSet<int>>();
+		var peak = new Dictionary<int, int>();
+		foreach (int id in npcIds)
+		{
+			everSeen[id] = new HashSet<int>();
+			peak[id] = 0;
+		}
+
+		for (int i = 0; i < seconds; i++)
+		{
+			perSecond?.Invoke();
+			Clock.Advance(TimeSpan.FromSeconds(1));
+
+			var alive = new Dictionary<int, int>();
+			foreach (Npc npc in LiveNpcs())
+			{
+				int id = npc.GetNpcId();
+				if (!everSeen.ContainsKey(id))
+					continue;
+				alive[id] = alive.GetValueOrDefault(id) + 1;
+				everSeen[id].Add(npc.GetObjectId());
+			}
+
+			foreach (int id in npcIds)
+				peak[id] = Math.Max(peak[id], alive.GetValueOrDefault(id));
+		}
+
+		return npcIds.ToDictionary(id => id, id => new Watched(peak[id], everSeen[id].Count));
+	}
+
 	private Watched Watch(int seconds, Action? perSecond, bool countExisting, int[] npcIds)
 	{
 		var wanted = new HashSet<int>(npcIds);

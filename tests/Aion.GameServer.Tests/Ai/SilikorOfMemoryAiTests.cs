@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Ai.Event;
@@ -128,10 +129,24 @@ public sealed class SilikorOfMemoryAiTests
 		var (harness, boss, raid) = Engaged();
 		using BossAiHarness _h = harness;
 
-		Advance(harness, raid, boss, 20 * 30);
+		// Watched across the window rather than counted at the end of it. A servant lives three
+		// minutes against a ten-minute window, so counting survivors sampled only the last handful of
+		// calls and failed whenever those came up the same way -- measured at one solo run in forty,
+		// which is what a coin flip over about six survivors predicts.
+		Dictionary<int, BossAiHarness.Watched> seen = harness.WatchEach(
+			20 * 30,
+			() =>
+			{
+				foreach (Player member in raid)
+				{
+					BossAiHarness.Rehate(boss, member);
+					BossAiHarness.KeepAlive(member);
+				}
+			},
+			Fragment, Essence);
 
-		Assert.True(Count(harness, Fragment) > 0, "no fragment in twenty rolls");
-		Assert.True(Count(harness, Essence) > 0, "no essence in twenty rolls");
+		Assert.True(seen[Fragment].Total > 0, "no fragment in twenty rolls");
+		Assert.True(seen[Essence].Total > 0, "no essence in twenty rolls");
 	}
 
 	/// <summary>
