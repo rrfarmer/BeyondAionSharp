@@ -21386,3 +21386,51 @@ report survived at "44 ready".
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
+
+## All four of Padmarashka's missing adds are walker-route blocked
+
+The previous entry named four adds with ids and called them the actionable core. **Reading their spawn
+blocks, none of them is buildable, and all four are blocked by the same thing.**
+
+| add | placement | trigger | blocked by |
+|---|---|---|---|
+| guardian control (281937) | `WAY_POINT_START`, path `DF4_MobPath_DF4_Dramata1` | `on_wake_up` | placement |
+| death marker (281928) | `WAY_POINT_START`, same path, life 12 | `on_die`, 33% | placement |
+| acid rain summoner (281457) | `WAY_POINT_START`, same path, life 60 | battle timer 27 | placement |
+| egg (281455) | **`MY_POINT`, life 600** | `on_arrived_at_waypoint` | **trigger** |
+
+**The egg is the interesting one.** Its placement is at her own feet and needs nothing — but it fires when
+she reaches a waypoint, so it is blocked from the other end. **Both halves of the walker gap, one add
+each.**
+
+### Which makes walker routes the blocker for a fourth encounter
+
+The silikor dismissal, Tiamat's rush wave, the Bergrisar decision, and now all of Padmarashka's remaining
+adds. **That is four encounters behind one missing mapping** — retail's path names to our hashed route
+ids, which is not derivable from the repo and was tested and rejected as a SHA-1 of the name.
+
+**It is now clearly the highest-value unblocked-by-nothing item in the port**, and it is not AI work at
+all: it belongs with the client extraction.
+
+### And the sort was worth doing anyway
+
+The previous entry turned "Padmarashka: timers 10 and 12" into four named ids. **This one turns four named
+ids into zero buildable adds and one clearly-ranked blocker.** Both steps were reading, and neither could
+have been skipped — the vague item hid the ids, and the ids hid the fact that they share a blocker.
+
+**The remaining Padmarashka work is exactly the 40 casts and 30 messages**, behind skill indices and string
+ids. There is nothing in that class buildable today.
+
+### Still to do
+
+- **Walker route ids** — now blocking four encounters, and the clearest single win left. Belongs with the
+  `.pak` extraction, not the AI port.
+- Then Padmarashka's four adds, all of which fall out immediately once routes resolve.
+- `tiamat_dying_rotation` at 4 of 53 — **check first whether its gap is the same blockers.**
+- `on_talked_by_user` and `teleport_target_alias`; the empyrean lords' skill indices; Modor's clone.
+- The guard report's mixed and misaligned rows, unverified; `sematariux` and `king_consierd` need spawn
+  entries; the `drakanmedic` harness question, last.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,112 passing**, 1 skipped.
