@@ -15478,3 +15478,83 @@ claim, the Ophidan chain's second hop, and **counts, arguments and ordering**, w
 
 One engine seam, three harness helpers, five guards restored, one new pin whose mutation was checked, and
 the full suite run twice for flakiness: **2,041 passing**, 1 skipped, both times.
+
+## Eleven rolls restored, and two correctly refused
+
+With the seam in place the previous entry said the blocker was no longer tooling but reading. Thirteen
+branches had a `chance` guard in retail and none here, each with a percentage readable straight off the
+pattern. **Eleven are restored. Two are not, and the two are the interesting half.**
+
+| class | branch | retail |
+|---|---|---|
+| `GelkmarosPadmarashkaAI` | 7 battle-timer branches | `50` each |
+| `DrakanHighPriestAI` | `OnBattleTimer#4` | `50` |
+| `PrincessKaremiwenAI` | `OnEnterAttack#15` | `50` |
+| `KerubielCampAI` — kerubian hunter | `OnSpelled#1` | **`80`** |
+| `KerubielCampAI` — kerubiel bandit | `OnSpelled#1` | `50` |
+
+The two kerubiel numbers differ, which is the sort of thing a class-level guess would have flattened.
+
+### The two refusals, and why they matter more
+
+`tiamats_incarnation` and `abyss_guard_call` were patched, then reverted, because **one AI class serves
+many npcs and the guard belongs to only some of them**:
+
+- `tiamats_incarnation` serves seven incarnation patterns. **Exactly one** — the Rage Key, Wrathclaw —
+  carries `test_probability 34` on priority 4. The other six have no probability guard at all.
+- `abyss_guard_call` serves forty-three. **One** has the `25`.
+
+The audit unions across served patterns, so a guard present on one shows up as dropped for the class.
+That caveat was written into the tool's own docstring from the start, and it still took a broken pin to
+notice it applied here. **A uniformity check now runs before any guard is applied**: for each candidate,
+how many served patterns carry it and how many do not. Eleven came back `UNIFORM` (one served pattern
+each); the two refusals came back `MIXED` at 1-of-7 and 1-of-43.
+
+**Fixing those two properly needs the class split per npc**, which is a different job from adding a
+guard, and is recorded rather than bodged.
+
+### The harness is deterministic by default now
+
+Restoring rolls broke twenty-two pins that count arrivals. Rather than annotate twenty-two setups,
+`BossAiHarness.Spawn` and `SpawnWithAi` now force every rolled guard to pass, and three helpers opt out:
+`AlwaysRolls`, `NeverRolls`, `RandomRolls`.
+
+**The cost is stated in the source**: a rolled guard is invisible to an ordinary pin, so removing one
+would not turn the suite red. That is covered from the other side by `audit_handler_guards.py`, and by an
+explicit forced-failure pin where the roll is the mechanic.
+
+### Seeding is the wrong tool, and that took a run to learn
+
+Seven pins exist *because* a rolled branch varies — "both counts appear", "sometimes two", "half of the
+deaths leave a fear", "over many calls every element turns up". Forcing the rolls to pass makes all of
+them fail, correctly.
+
+The first attempt gave them `SeedRolls(npc, 1)`. **That is worse than random**: each of those pins spawns
+a fresh npc per attempt, so a fixed seed per npc makes every attempt identical — forty identical trials
+instead of forty varied ones. They take `RandomRolls` instead, and `SeedRolls` stays for the case it
+actually fits, a single long-lived npc whose sequence should be reproducible.
+
+**And one of the seven was rolling on the wrong npc.** Triroan's element variety comes from the
+*controller* choosing which element to send, not from the caller. Handing the caller its dice back
+changed nothing; the pin needed the controller.
+
+### Where the board stands
+
+**793 branches: 738 clean, 51 dropped guards, 4 invented** — down from 65 dropped, with `chance` now at
+just the two refusals.
+
+The remaining 49 are `flag`, `hp`, `state`, `message` and `distance` one-offs. Each needs its retail
+branch read and, on the evidence of this entry, **a uniformity check before anything is applied** — the
+two refusals here were 15% of the candidates.
+
+### Still open
+
+The 14 two-action-idiom classes, the silikor skill, the illusion's most-hated claim, the Ophidan chain's
+second hop, splitting the two mixed classes per npc, and counts/arguments/ordering, which no audit here
+reaches.
+
+### Verification
+
+Eleven guards restored, two refused with a check that will refuse them again, one new harness default and
+three opt-outs, seven pins rewritten around what they were actually measuring. Full suite **2,041
+passing**, 1 skipped, run three times.

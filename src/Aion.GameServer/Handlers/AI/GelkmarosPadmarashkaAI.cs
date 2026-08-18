@@ -103,27 +103,27 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
 
         OnBattleTimer = AiPattern.Of(
             // Below five: fifteen rocks in one breath, once.
-            AiPattern.Branch(90, "kcast13", [When.Timer(0), When.HpBelow(5), When.FirstTime(Alpha1)],
+            AiPattern.Branch(90, "kcast13", [When.Chance(50), When.Timer(0), When.HpBelow(5), When.FirstTime(Alpha1)],
                 Do.ArmTimer(0, HeartbeatMillis),
                 Fall(Rock, 5), Fall(Rock, 5), Fall(Rock, 5)),
 
             // Below ten: the same burst, and it opens the timer-2 chain that keeps going afterwards.
-            AiPattern.Branch(88, "kcast13", [When.Timer(0), When.HpBelow(10), When.FirstTime(Beta1)],
+            AiPattern.Branch(88, "kcast13", [When.Chance(50), When.Timer(0), When.HpBelow(10), When.FirstTime(Beta1)],
                 Do.ArmTimer(0, HeartbeatMillis),
                 Do.ArmTimer(2, 30000),
                 Fall(Rock, 5), Fall(Rock, 5), Fall(Rock, 5)),
 
-            AiPattern.Branch(80, "", [When.Timer(2)],
+            AiPattern.Branch(80, "", [When.Chance(50), When.Timer(2)],
                 Do.ArmTimer(3, 45000),
                 Fall(Rock, 4)),
             AiPattern.Branch(78, "", [When.Timer(3)], Do.ArmTimer(2, 45000)),
 
             // First heartbeat tick: opens the timer-6 chain.
-            AiPattern.Branch(60, "", [When.Timer(0), When.FirstTime(Gamma1)],
+            AiPattern.Branch(60, "", [When.Chance(50), When.Timer(0), When.FirstTime(Gamma1)],
                 Do.ArmTimer(0, HeartbeatMillis),
                 Do.ArmTimer(6, 45000)),
 
-            AiPattern.Branch(55, "", [When.Timer(6)],
+            AiPattern.Branch(55, "", [When.Chance(50), When.Timer(6)],
                 Do.ArmTimer(7, 45000),
                 Fall(RockB, 4)),
             AiPattern.Branch(53, "", [When.Timer(7)], Do.ArmTimer(6, 45000)),
@@ -134,12 +134,12 @@ public class GelkmarosPadmarashkaAI : PatternAi, HpPhases.PhaseHandler
                 Do.ArmTimer(0, HeartbeatMillis)),
 
             // Third tick: the opening rockfall, and the timer-17 chain that repeats it.
-            AiPattern.Branch(20, "kcast13", [When.Timer(0), When.FirstTime(Epsilon1)],
+            AiPattern.Branch(20, "kcast13", [When.Chance(50), When.Timer(0), When.FirstTime(Epsilon1)],
                 Do.ArmTimer(0, HeartbeatMillis),
                 Do.ArmTimer(17, 90000),
                 Fall(RockB, 3)),
 
-            AiPattern.Branch(13, "kcast13", [When.Timer(17)],
+            AiPattern.Branch(13, "kcast13", [When.Chance(50), When.Timer(17)],
                 Do.ArmTimer(17, 90000),
                 Fall(RockB, 3)),
 

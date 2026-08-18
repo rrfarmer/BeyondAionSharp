@@ -184,6 +184,11 @@ public sealed class UdasTempleBossesAiTests
 	public void ThePyreSoulsComeInThreesBelowNineteen()
 	{
 		var (harness, boss, raid) = Engaged(Debilkarim);
+		// This pin is about the variety a rolled guard produces, so it hands back the production dice.
+		// The harness forces rolled guards to pass by default, which makes counts exact and makes a
+		// coin-toss branch look certain. A fixed seed would not help: a fresh npc per attempt with the
+		// same seed makes every attempt identical.
+		BossAiHarness.RandomRolls(boss);
 		using BossAiHarness _h = harness;
 
 		BossAiHarness.SetExactPercent(boss, 18);

@@ -28,9 +28,17 @@ public sealed class ZombieTrapAiTests
 		harness.LiveNpcs().Where(n => n.GetNpcId() == npcId).ToList();
 
 	/// <summary>Springs one trap on a passing player and reports how many zombies it left.</summary>
-	private static (int zombies, bool trapGone) Spring(BossAiHarness harness, Race race = Race.ELYOS)
+	/// <param name="rolling">
+	/// Hands the trap the production dice. The harness forces rolled guards to pass by default, which
+	/// makes the two-zombie branch certain -- right for every pin that counts, wrong for the one whose
+	/// subject is that both counts occur.
+	/// </param>
+	private static (int zombies, bool trapGone) Spring(BossAiHarness harness, Race race = Race.ELYOS,
+		bool rolling = false)
 	{
 		Npc trap = harness.Spawn(Trap, 300f, 300f, 200f);
+		if (rolling)
+			BossAiHarness.RandomRolls(trap);
 		Player passer = harness.SpawnPlayer(302f, 300f, 200f, race: race);
 		trap.GetAi().OnCreatureEvent(AiEventType.CreatureSee, passer);
 		return (Live(harness, Zombie).Count, !trap.IsSpawned());
@@ -66,7 +74,7 @@ public sealed class ZombieTrapAiTests
 		for (int i = 0; i < 60 && !(sawTwo && sawThree); i++)
 		{
 			using BossAiHarness harness = NewHarness();
-			var (zombies, _) = Spring(harness);
+			var (zombies, _) = Spring(harness, rolling: true);
 			sawTwo |= zombies == 2;
 			sawThree |= zombies == 3;
 			Assert.InRange(zombies, 2, 3);

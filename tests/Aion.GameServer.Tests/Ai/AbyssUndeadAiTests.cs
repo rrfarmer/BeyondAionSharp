@@ -44,6 +44,9 @@ public sealed class AbyssUndeadAiTests
 		{
 			using BossAiHarness harness = NewHarness();
 			Npc undead = harness.Spawn(npcId, 300f, 300f, 200f);
+			// This pin is about the coin flip itself, so the undead gets the production dice back: the
+			// harness forces rolled guards to pass by default, which would put every death at one end.
+			BossAiHarness.RandomRolls(undead);
 			Player killer = harness.SpawnPlayer(303f, 300f, 200f);
 			harness.Engage(undead, killer);
 			BossAiHarness.Wound(undead, killer);

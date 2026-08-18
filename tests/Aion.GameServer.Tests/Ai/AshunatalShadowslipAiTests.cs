@@ -83,6 +83,10 @@ public sealed class AshunatalShadowslipAiTests
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc shadow = harness.Spawn(DisruptionShadow, 300f, 300f, 200f);
+			// This pin is about variety, so it opts back into rolling: the harness forces rolled guards to
+			// pass by default, which makes counts exact and makes a coin-toss branch look certain. A seed
+			// pin hands back the production dice: a fixed seed per npc would make every attempt identical.
+			BossAiHarness.RandomRolls(shadow);
 		Player raider = harness.SpawnPlayer(302f, 300f, 200f);
 		harness.Engage(shadow, raider);
 
@@ -114,6 +118,11 @@ public sealed class AshunatalShadowslipAiTests
 		{
 			using BossAiHarness harness = NewHarness();
 			Npc shadow = harness.Spawn(DisruptionShadow, 300f, 300f, 200f);
+			// This pin is about the variety a rolled guard produces, so it hands back the production
+			// dice: the harness forces rolled guards to pass by default, which makes a coin-toss branch
+			// look certain. A fixed seed would not do -- a fresh npc per attempt with the same seed
+			// makes every attempt identical.
+			BossAiHarness.RandomRolls(shadow);
 			Player raider = harness.SpawnPlayer(302f, 300f, 200f);
 			harness.Engage(shadow, raider);
 			harness.Clock.Advance(TimeSpan.FromMilliseconds(16000));

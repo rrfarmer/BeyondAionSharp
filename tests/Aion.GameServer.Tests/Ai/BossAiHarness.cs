@@ -85,12 +85,39 @@ public sealed class BossAiHarness : IDisposable
 	public static Builder For(int mapId = DefaultMapId) => new Builder(mapId);
 
 	/// <summary>Spawns an NPC through the production spawn path, so it is genuinely live in the world.</summary>
+	/// <remarks>
+	/// <b>Its <c>test_probability</c> guards are forced to pass.</b> See <see cref="Deterministic"/>.
+	/// </remarks>
 	public Npc Spawn(int npcId, float x = 980f, float y = 135f, float z = 242f, sbyte heading = 0)
 	{
 		var spawn = Spawner.NewSingleTimeSpawn(_mapId, npcId, x, y, z, (byte)heading);
 		var spawned = Spawner.SpawnObject(spawn, 1);
 		Assert.NotNull(spawned);
-		return Assert.IsType<Npc>(spawned);
+		return Deterministic(Assert.IsType<Npc>(spawned));
+	}
+
+	/// <summary>
+	/// Forces every rolled guard on a freshly spawned NPC to pass, so a pin can count occurrences.
+	/// </summary>
+	/// <remarks>
+	/// <b>Deterministic by default, and that is a deliberate trade.</b> Retail's
+	/// <c>test_probability</c> appears 7,747 times in the 5.8 data; restoring those guards makes any pin
+	/// that counts arrivals flaky, and there are dozens of such pins already written under no-roll
+	/// semantics. Forcing the roll here keeps every one of them exact while the patterns carry the guard
+	/// retail wrote.
+	/// <para>
+	/// <b>The cost is that a rolled guard is invisible to an ordinary pin</b>, so removing one would not
+	/// turn the suite red. That is covered from the other side: <c>audit_handler_guards.py</c> compares
+	/// our guards branch by branch against the retail pattern each npc actually runs, and an encounter
+	/// whose roll matters gets an explicit pin using <see cref="NeverRolls"/> — see
+	/// <c>UnstableTriroanAiTests.TheRepeatPokesAreRolledFor</c> for the shape.
+	/// </para>
+	/// </remarks>
+	private static Npc Deterministic(Npc npc)
+	{
+		if (npc.GetAi() is Aion.GameServer.Ai.Pattern.PatternAi pattern)
+			pattern.RollOverride = _ => true;
+		return npc;
 	}
 
 	/// <summary>
@@ -107,7 +134,7 @@ public sealed class BossAiHarness : IDisposable
 		var spawn = Spawner.NewSingleTimeSpawn(_mapId, npcId, x, y, z, (byte)heading, null, aiName);
 		var spawned = Spawner.SpawnObject(spawn, 1);
 		Assert.NotNull(spawned);
-		return Assert.IsType<Npc>(spawned);
+		return Deterministic(Assert.IsType<Npc>(spawned));
 	}
 
 	/// <summary>
@@ -225,6 +252,19 @@ public sealed class BossAiHarness : IDisposable
 	/// </remarks>
 	public static void AlwaysRolls(Npc npc)
 		=> Pattern(npc).RollOverride = _ => true;
+
+	/// <summary>
+	/// Hands an NPC back the production dice, for a pin whose whole subject is the variety a rolled
+	/// guard produces.
+	/// </summary>
+	/// <remarks>
+	/// The harness forces rolled guards to pass by default, which makes counts exact and makes a
+	/// coin-toss branch look certain — wrong for a pin like "both counts appear" or "sometimes two".
+	/// <b>Seeding is not the answer for those</b>: such pins spawn a fresh NPC per attempt, and a fixed
+	/// seed per NPC makes every attempt identical, which is less varied than random rather than more.
+	/// </remarks>
+	public static void RandomRolls(Npc npc)
+		=> Pattern(npc).RollOverride = null;
 
 	/// <summary>The mirror: every roll fails, which is how a pin shows the guard is really there.</summary>
 	public static void NeverRolls(Npc npc)

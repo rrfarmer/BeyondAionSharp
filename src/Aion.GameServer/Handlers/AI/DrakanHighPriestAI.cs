@@ -108,7 +108,7 @@ public class DrakanHighPriestAI : PatternAi
                 Do.ArmTimer(MiddleOut, 15000),
                 Do.SpawnNear(Lesser, Wave, count: 3, range: Ring, liveSeconds: Life)),
 
-            Branch(4, "", [When.Timer(BaseOut)],
+            Branch(4, "", [When.Chance(50), When.Timer(BaseOut)],
                 Do.ArmTimer(BaseBack, 20000)),
 
             Branch(2, "", [When.Timer(BaseBack)],

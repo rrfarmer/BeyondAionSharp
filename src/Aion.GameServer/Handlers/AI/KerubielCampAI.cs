@@ -43,7 +43,7 @@ public class KerubielBanditAI : PatternAi
 		OnAttacked = Of(Branch(2, "hit, below half", [When.HpBelow(Half)],
 			Do.Broadcast(GetHim, CallReach, aboutTarget: true))),
 
-		OnSpelled = Of(Branch(1, "cast at, below half", [When.HpBelow(Half), When.CasterIsEnemy],
+		OnSpelled = Of(Branch(1, "cast at, below half", [When.Chance(50), When.HpBelow(Half), When.CasterIsEnemy],
 			Do.Broadcast(GetHim, CallReach, aboutTarget: true))),
 	};
 
@@ -119,7 +119,7 @@ public class KerubianHunterAI : PatternAi
 		OnAttacked = Of(Branch(2, "hit, below half", [When.HpBelow(Half)],
 			Do.Broadcast(GetHim, CallReach, aboutTarget: true))),
 
-		OnSpelled = Of(Branch(1, "cast at, below half", [When.HpBelow(Half), When.CasterIsEnemy],
+		OnSpelled = Of(Branch(1, "cast at, below half", [When.Chance(80), When.HpBelow(Half), When.CasterIsEnemy],
 			Do.Broadcast(GetHim, CallReach, aboutTarget: true))),
 	};
 

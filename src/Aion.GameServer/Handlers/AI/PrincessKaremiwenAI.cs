@@ -61,7 +61,7 @@ public class PrincessKaremiwenAI : PatternAi
     private static readonly AiPattern Pattern_ = new AiPattern
     {
         OnEnterAttack = Of(
-            Branch(15, "", When.Always,
+            Branch(15, "", [When.Chance(50)],
                 Do.ArmTimer(8, Minute))),
 
         OnBattleTimer = Of(

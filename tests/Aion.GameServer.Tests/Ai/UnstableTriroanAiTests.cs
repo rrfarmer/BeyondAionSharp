@@ -269,6 +269,12 @@ public sealed class UnstableTriroanAiTests
 			using BossAiHarness harness = NewHarness();
 			Npc controller = harness.Spawn(Controller, 602f, 488f, 196f);
 			Npc caller = harness.Spawn(Triroan, 604f, 488f, 196f);
+			// This pin is about the variety a rolled guard produces, so it hands back the production dice.
+			// The harness forces rolled guards to pass by default, which makes counts exact and makes a
+			// coin-toss branch look certain. A fixed seed would not help: a fresh npc per attempt with the
+			// same seed makes every attempt identical. It is the CONTROLLER that rolls here -- it picks
+			// which element to send -- so the caller's dice are beside the point.
+			BossAiHarness.RandomRolls(controller);
 			BossAiHarness.MakeMutuallyKnown(caller, controller);
 
 			NpcMessageBus.Broadcast(caller, BabyElementalControllerAI.CallOne, null, 100f);
