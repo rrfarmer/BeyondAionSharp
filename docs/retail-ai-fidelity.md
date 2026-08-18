@@ -17850,3 +17850,55 @@ was trying to avoid.
 ### Verification
 
 Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Masto is the Chunapa shape, four times over, and nothing pins it
+
+First of the ~20 encounters behind the contention list, chosen because it is the biggest cluster: five
+timers.
+
+`MastoTheAncientAI`'s structure, per band:
+
+| branch | waits on | arms |
+|---|---|---|
+| 13, 10, 7, 4 | `BandOpener` | `BandOpener` at **8s**, the band timer at **20s** |
+| 14, 11, 9, 6 | that band timer | itself at **25s** or **30s** |
+
+**The opener re-arms itself every eight seconds and arms the band timer at twenty.** The band's own branch
+re-arms at twenty-five or thirty. So the opener lands on a pending band timer, repeatedly, with a shorter
+delay — **exactly Chunapa's shape, four times in one encounter.**
+
+Under the new operator the opener now wins: **every band fires on a twenty-second cadence instead of its
+own twenty-five or thirty.** Under the old one the band's longer re-arm overwrote the opener and the bands
+ran at 25/30.
+
+### Which is right is not established
+
+Chunapa's case was settled by tracing burrow times against the retail pattern's intent — his opener fires
+once, so twenty-five seconds was plainly wrong. **Masto's opener fires every eight seconds**, so the
+question is different: does retail mean the band to be dragged to twenty, or does its own re-arm hold?
+
+That needs `MastoTheAncient`'s retail pattern read the way Chunapa's was, and it was not read here.
+
+### And the suite is silent either way
+
+**Masto's pins passed before the operator change and pass after it.** A cadence moving from thirty seconds
+to twenty across four bands is invisible to them, which is the exposure the whole thread has been about:
+**most pins count what happens, not when.**
+
+That is now a concrete instance rather than a worry. Whatever the retail reading turns out to be, **Masto
+needs a timing pin** — the encounter has four band cadences and nothing measures any of them.
+
+### Still to do
+
+- **Read `MastoTheAncient`'s retail timers**, decide 20 against 25/30, and pin the cadence either way.
+- The remaining ~19 encounters behind the contention list.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Reading only; no code changed. Full suite **2,050 passing**, 1 skipped — and passing says nothing about
+Masto's cadence, which is the point.
