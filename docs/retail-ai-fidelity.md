@@ -15252,3 +15252,85 @@ one true positive is legible.
 
 One branch corrected, one pin with its mutation checked, one new audit. Full suite **2,040 passing**,
 1 skipped.
+
+## Every handler in the port, checked for inventions
+
+The previous entry built the audit that asks **"what do we do that retail does not"** and could only ask
+it about `on_message`, because a message number was the only key it could match on both sides. It closed
+by naming the gap: every other handler unchecked, which is the large majority of what has been written.
+
+**There was a better key all along, and it does not depend on documentation.** A class declares
+`[AIName]`; `npc_templates.xml` says which npcs carry it; `ai_binding.tsv` says which retail pattern each
+of those npcs runs. So **the patterns a class actually serves are derivable**, for every handler.
+
+That also fixes a quieter problem. `audit_invented_actions.py` reads the `<c>Pattern_Name</c>` mentions in
+a file's remarks — the patterns somebody chose to write down, which is not the same set as the ones the
+class serves, and is exactly the set that goes stale.
+
+`audit_handler_actions.py` compares **442 handlers** this way, against seventeen of our handlers mapped
+onto the retail handlers they stand for.
+
+### Three rounds of the tool being wrong before it was right
+
+**25 invented, first run.** Almost all `spawn`. The verb table was hand-written and did not contain
+`spawn_on_target` — which is how most retail summons actually arrive — so every class that spawns adds
+looked like it had invented spawning. **The fix was to stop writing the table from memory**: enumerating
+the sixty distinct verbs that appear as direct children of `<actions>` cleared eight findings at once and
+is now what the table is built from.
+
+**8 invented, second run.** The rest were this port's two standing substitutions, and the tool did not
+know about either:
+
+- **a `spawn` where retail casts a skill** — we cannot cast a summon, so the adds are spawned. Every case
+  is documented somewhere in this log.
+- **a `despawn` where retail's spawn carries `despawn_at_attack_state=TRUE`** — retail's adds clean
+  themselves up on the state change and our engine has no such flag, so the pattern despawns them in
+  `OnLeaveAttack` or `OnDie` instead. Silikor and the dying Tiamat both looked invented for this reason.
+
+Those now report as **`substituted`**, which is a third verdict and the honest one: not a match, not a
+bug, a known trade recorded in the source.
+
+### What is left, and it is two rows
+
+```
+captain_xasta            OnEnterAttack  invented  say
+sheban_mystical_tyrhund  OnMessage      invented  broadcast
+```
+
+**Both are explained, and neither is a defect.**
+
+- Xasta's shout is `1500388`, and it comes from **Java's `CaptainXastaAI`**:
+  `PacketSendUtility.broadcastMessage(getOwner(), 1500388)`. Java is the spec except where retail AI data
+  explicitly outranks it, so a line Java has and the pattern does not is Java-sourced and stays.
+- The Sheban hand's broadcast is the substitute added earlier in this session for retail's suicide skill,
+  and is labelled as such in its own source.
+
+Both are printed by the tool as expected rows with their reasons, so **a third row appearing is news.**
+
+**Across 442 handlers this port has no unexplained invented action.** That is worth stating plainly,
+because it is the first time the question has been asked of the whole port rather than of one corner of
+it.
+
+### What this does not cover
+
+- **Counts and arguments.** A branch that adds 100 where retail adds 10, or spawns three where retail
+  spawns two, is invisible here. `audit_message_answers.py` knows about hate-versus-switch; nothing knows
+  about numbers, and the numbers are where the mutation sweeps have found most of their bugs.
+- **Conditions.** A branch guarded on health where retail guards on a flag has the same actions and
+  different behaviour. **This is the larger uncovered half** — every "band, not a threshold" and "once,
+  ever" finding in this log was about a guard, not an action.
+- **Ordering.** Retail's action order matters (`spawn` then `broadcast` excludes the new spawn from the
+  broadcast); a set comparison cannot see it.
+- **The 313 `dropped` rows**, almost all skills already recorded as untranslatable, and
+  `attack_most_hating` following a hate action that already sets the target.
+
+### Still open
+
+The 14 two-action-idiom classes, the silikor skill, the illusion's most-hated claim, the Ophidan chain's
+second hop — all unchanged — and now **a guard audit**, which is the natural next tool and the one that
+would reach the half this cannot.
+
+### Verification
+
+No server code changed. Full suite **2,040 passing**, 1 skipped. The audit's own output is the result:
+442 handlers, 2 expected rows, 0 unexplained.

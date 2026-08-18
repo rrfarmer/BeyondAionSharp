@@ -42,23 +42,44 @@ import summarize_pattern as S  # noqa: E402
 import audit_message_answers as M  # noqa: E402
 
 #: Retail op -> the kind this tool reasons about.
+#
+#: **Derived from the data, not written from memory.** The first version was hand-listed and missed
+#: `spawn_on_target`, which is how most retail summons actually arrive -- so every class that spawned
+#: adds looked like it had invented spawning. Enumerating the sixty distinct verbs that appear as direct
+#: children of `<actions>` fixed eight false findings at once. Verbs with no equivalent here (waypoints,
+#: doors, portals, scores, cutscenes) are deliberately absent: this tool compares what both sides can
+#: express.
 RETAIL_KIND = {
     "add_hate_point": "hate",
     "switch_target": "hate",
+    "reset_hatepoints": "hate",
     # Picks a NEW target by indicator, which is what our Do.SwitchTarget does -- so it belongs with
     # attack_most_hating rather than with switch_target, which names an object instead.
     "switch_target_by_attacker_indicator": "attack",
+    "switch_target_by_class_indicator": "attack",
     "attack_most_hating": "attack",
     "use_skill": "skill",
+    "use_skill_by_attacker_indicator": "skill",
+    "activate_skillarea": "skill",
     "spawn": "spawn",
+    "spawn_on_target": "spawn",
+    "spawn_on_multi_target": "spawn",
+    "spawn_on_target_by_attacker_indicator": "spawn",
     "despawn": "despawn",
     "despawn_self": "despawn",
+    "despawn_by_nameid": "despawn",
     "flee_from": "flee",
     "broadcast_message": "broadcast",
+    "broadcast_message_to_party": "broadcast",
     "add_battle_timer": "timer",
+    "set_idle_timer": "timer",
     "say": "say",
     "say_to_all": "say",
+    "say_to_all_str": "say",
+    "shout_to_all": "say",
     "display_system_message": "say",
+    "send_system_msg": "say",
+    "send_message": "say",
 }
 
 #: Our action -> the same kinds. Ordered longest-first so `HateMessageParam` beats `Hate`.
