@@ -198,13 +198,71 @@ def our_branch_text(source: str, ai_name: str, handler: str, priority: str) -> s
     return text
 
 
+#: The silikor guard's shape, kept as fixture data because no live row exercises the contradiction check.
+#:
+#: Its peel repeat carries no health guard of its own: it waits on a timer armed by an opening step gated
+#: `HpBelow(30)`. Retail's branch at that priority wants `is_hp_in_boundary(31,100)`, which can never hold
+#: at the same time -- so the two are not the same step and the row must be refused. The live row is now
+#: blocked one stage earlier as `MIXED`, which is why this fixture exists at all.
+SELFTEST_SOURCE = '''
+[AIName("silikor_guard")]
+public class SilikorGuardAI : PatternAi
+{
+    OnBattleTimer = Of(
+        Branch(6, "below 30 opens the peel", [When.Timer(Heartbeat), When.HpBelow(30), When.FirstTime(Below30)],
+            Do.ArmTimer(Heartbeat, 5000),
+            Do.ArmTimer(Low, 23000),
+            Do.SwitchTarget(AggroTarget.SECOND_MOST_HATED)),
+
+        Branch(4, "and keeps peeling", [When.Timer(Low)],
+            Do.ArmTimer(Low, 15000),
+            Do.SwitchTarget(AggroTarget.SECOND_MOST_HATED)));
+}
+'''
+
+
+def selftest() -> int:
+    """Pins `contradicts` and `our_branch_text`, which nothing on the live board reaches."""
+    failures = []
+
+    def check(name, got, want):
+        if got != want:
+            failures.append(f"{name}: got {got!r}, wanted {want!r}")
+
+    check("hp_range reads a boundary", hp_range("When.HpBetween(31, 100)"), (31, 100))
+    check("hp_range reads a threshold", hp_range("When.HpBelow(30)"), (0, 29))
+    check("hp_range on no guard", hp_range("When.Timer(Low)"), None)
+
+    check("disjoint windows contradict", contradicts((31, 100), (0, 29)), True)
+    check("overlapping windows do not", contradicts((31, 100), (20, 40)), False)
+    check("an absent guard never contradicts", contradicts((31, 100), None), False)
+
+    # The branch itself carries no health guard; the step that arms its timer does.
+    branch = our_branch_text(SELFTEST_SOURCE, "silikor_guard", "OnBattleTimer", "4")
+    check("the arming step is pulled in", hp_range(branch), (0, 29))
+    check("so the row is refused", contradicts((31, 100), hp_range(branch)), True)
+
+    # And a branch whose arming step agrees is not refused.
+    check("an agreeing pair survives", contradicts((0, 51), hp_range(branch)), False)
+
+    for line in failures:
+        print("  FAIL", line)
+    print(f"selftest: {'FAILED' if failures else 'ok'}, {len(failures)} failure(s)")
+    return 1 if failures else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("patterns_dir")
-    ap.add_argument("binding_tsv")
+    ap.add_argument("patterns_dir", nargs="?")
+    ap.add_argument("binding_tsv", nargs="?")
     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parents[2]))
     ap.add_argument("--kind", default=None, help="only this guard kind")
+    ap.add_argument("--selftest", action="store_true",
+                    help="pin the contradiction check, which no live row exercises")
     args = ap.parse_args()
+
+    if args.selftest:
+        return selftest()
 
     repo = pathlib.Path(args.repo)
     patterns_dir = pathlib.Path(args.patterns_dir)

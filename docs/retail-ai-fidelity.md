@@ -16631,3 +16631,50 @@ his accelerators; the silikor guard's, now `MIXED`; and the xdrakan trapper's, `
 
 Tool only. Full suite **2,049 passing**, 1 skipped — which says nothing about the new check, since no test
 covers it yet.
+
+## The contradiction check is pinned, on fixture data
+
+The previous entry shipped the check and said plainly that **nothing on the live board reaches it** — the
+silikor row that motivated it is now refused one stage earlier as `MIXED`. A check that has never fired is
+a hypothesis, and the entry named a unit test as the fix.
+
+`report_dropped_guards.py --selftest` is that test. It keeps the silikor guard's shape as **fixture data**
+— the opening step gated `HpBelow(30)` that arms the timer, and the peel repeat that waits on it — and
+pins seven claims:
+
+- `hp_range` reads a boundary, a threshold, and the absence of either;
+- disjoint windows contradict, overlapping ones do not, and a missing guard never does;
+- **the arming step is pulled in**, so the repeat's window is read as `0–29` despite carrying no guard;
+- and the proposed `31–100` is therefore refused, while an agreeing `0–51` is not.
+
+### The mutations
+
+Two, both caught:
+
+| mutation | result |
+|---|---|
+| stop following the arming branch | **caught** — the repeat reads as having no window, and the row stops being refused |
+| `contradicts` always returns false | **caught** |
+
+The first is the one worth having. The whole reason this check needed writing is that the conflict lives on
+a *different branch* from the one being judged; a version that only reads the branch itself would pass every
+test that did not involve an arming hop, and there is exactly one such case on record.
+
+### What this is and is not
+
+**It pins the logic, not the integration.** No live row reaches `contradicts()`, so nothing here proves the
+check fires on real data — only that it would decide correctly if it did. That distinction is the same one
+the state-fold pins turned on, and it is worth keeping visible: a green self-test and a green suite together
+still leave the wiring unexercised.
+
+### Still to do
+
+- `6952`'s callers, then Kingspin's accelerators as a conversation.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Self-test passes, both mutations caught. Full suite **2,049 passing**, 1 skipped.
