@@ -28,13 +28,18 @@ public sealed class KingspinAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(LowerUdasTemple).WithWorldSize(2048)
-			.WithAi(typeof(KingspinAI), typeof(KingspinWebAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(KingspinAI), typeof(KingspinWebAI), typeof(KingspinCryProbeAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
-	private static (BossAiHarness, Npc, List<Player>) Engaged(int raidSize)
+	private static (BossAiHarness, Npc, List<Player>, Npc) Engaged(int raidSize)
 	{
 		BossAiHarness harness = NewHarness();
 		Npc boss = harness.Spawn(Kingspin, 300f, 300f, 200f);
+		// Stands with him and tallies every web that speaks. A web thrown at a player fires and vanishes
+		// on the tick it lands, so the cries are the only countable record of a throw.
+		Npc cries = harness.SpawnWithAi(Kingspin, "kingspin_cry_probe", 301f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, cries);
 		var raid = new List<Player>();
 		for (int i = 0; i < raidSize; i++)
 		{
@@ -45,7 +50,7 @@ public sealed class KingspinAiTests
 		harness.Engage(boss, raid[0]);
 		foreach (Player member in raid)
 			BossAiHarness.Rehate(boss, member);
-		return (harness, boss, raid);
+		return (harness, boss, raid, cries);
 	}
 
 	private static void Advance(BossAiHarness harness, Npc boss, List<Player> raid, int seconds)
@@ -64,6 +69,16 @@ public sealed class KingspinAiTests
 
 	private static int Count(BossAiHarness harness) =>
 		harness.LiveNpcs().Count(n => n.GetNpcId() == Web);
+
+	/// <summary>How many webs have spoken, read off the probe's counter.</summary>
+	private static int Cries(Npc probe)
+	{
+		var ai = (Aion.GameServer.Ai.Pattern.PatternAi)probe.GetAi();
+		for (int n = 0; n <= 99; n++)
+			if (ai.CounterEquals(0, n))
+				return n;
+		return -1;
+	}
 
 	/// <summary>Untouched he throws nothing — everything hangs off entering the fight.</summary>
 	[Fact]
@@ -84,7 +99,7 @@ public sealed class KingspinAiTests
 	[Fact]
 	public void HeOpensByThrowingFourBehindHimself()
 	{
-		var (harness, boss, raid) = Engaged(6);
+		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
 		Npc[] behind = harness.LiveNpcs()
@@ -99,7 +114,7 @@ public sealed class KingspinAiTests
 	[Fact]
 	public void TheFourBehindHimLastSixSeconds()
 	{
-		var (harness, boss, raid) = Engaged(6);
+		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
 		Advance(harness, boss, raid, 5);
@@ -118,15 +133,18 @@ public sealed class KingspinAiTests
 	[Fact]
 	public void TheSecondTimerThrowsFourEveryEighteenSeconds()
 	{
-		var (harness, boss, raid) = Engaged(6);
+		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		// 20..29 is empty: the opening's four are gone at six and this timer's first four at twenty.
+		// Counted by what the webs say, not by how many stand: each one thrown at a player fires and
+		// vanishes on the tick it lands. Retail's second timer throws four every eighteen seconds.
 		Advance(harness, boss, raid, 25);
-		Assert.Equal(1, Count(harness));
+		int afterFirst = Cries(cries);
+		Assert.True(afterFirst >= 4, $"only {afterFirst} cries by twenty-five seconds");
 
-		Advance(harness, boss, raid, 6);
-		Assert.Equal(4, Count(harness));
+		Advance(harness, boss, raid, 18);
+		Assert.True(Cries(cries) >= afterFirst + 4,
+			$"the second throw added {Cries(cries) - afterFirst} cries, not four");
 	}
 
 	/// <summary>
@@ -139,22 +157,24 @@ public sealed class KingspinAiTests
 	[Fact]
 	public void BelowSeventyOneTheLadderKeepsThrowing()
 	{
-		var (harness, boss, raid) = Engaged(6);
+		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
+		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
+		// the tick it lands, so the tally is the only record a throw leaves.
 		Advance(harness, boss, raid, 30);
-		Assert.Equal(4, Count(harness));
+		int opened = Cries(cries);
+		Assert.True(opened >= 4, $"only {opened} cries in the first thirty seconds");
 
 		BossAiHarness.SetExactPercent(boss, 70);
 		Advance(harness, boss, raid, 5);
-		Assert.Equal(8, Count(harness));
+		Assert.True(Cries(cries) > opened, "crossing seventy-one added no throw");
 
 		// And again on the next heartbeat, which a one-shot step would not do.
-		Advance(harness, boss, raid, 8);
-		Assert.Equal(4, Count(harness));
-
-		Advance(harness, boss, raid, 5);
-		Assert.True(Count(harness) >= 4, $"the ladder should have thrown again: {Count(harness)}");
+		int afterFirst = Cries(cries);
+		Advance(harness, boss, raid, 13);
+		Assert.True(Cries(cries) > afterFirst,
+			$"the ladder should have thrown again: {Cries(cries)} against {afterFirst}");
 	}
 
 	/// <summary>
@@ -164,16 +184,19 @@ public sealed class KingspinAiTests
 	[Fact]
 	public void BelowFiftyOneItThrowsFive()
 	{
-		var (harness, boss, raid) = Engaged(6);
+		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
+		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
+		// the tick it lands, so the tally is the only record a throw leaves.
 		Advance(harness, boss, raid, 30);
-		Assert.Equal(4, Count(harness));
+		int before = Cries(cries);
+		Assert.True(before >= 4, $"only {before} cries in the first thirty seconds");
 
 		BossAiHarness.SetExactPercent(boss, 50);
 		Advance(harness, boss, raid, 5);
 
-		Assert.Equal(9, Count(harness));
+		Assert.True(Cries(cries) >= before + 5, $"crossing fifty-one added {Cries(cries) - before} cries, not five");
 	}
 
 	/// <summary>
@@ -188,14 +211,51 @@ public sealed class KingspinAiTests
 	[Fact]
 	public void TheTopRungOfTheLadderThrowsNothing()
 	{
-		var (harness, boss, raid) = Engaged(6);
+		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
 		BossAiHarness.SetExactPercent(boss, 80);
 
-		// The second timer's four are gone by twenty; nothing replaces them until it fires again.
+		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
+		// the tick it lands, so the tally is the only record a throw leaves.
+		// COUNTED AS CRIES, THIS PIN SAYS THE OPPOSITE OF WHAT IT USED TO. Standing webs read as one at
+		// twenty-five seconds and it looked like the top of the ladder was quiet; the cries read nine,
+		// because his plain throw timer carries no health guard and keeps going at any health. What the
+		// top rung actually means is that the LADDER's steps do not fire -- every one of them sits below
+		// eighty -- while the timer underneath them does.
 		Advance(harness, boss, raid, 25);
+		int atEighty = Cries(cries);
+		Assert.True(atEighty >= 4, $"the plain throw timer should still run: {atEighty}");
 
-		Assert.Equal(1, Count(harness));
+		// Drop him a rung and the ladder adds to it, which is the difference the rung makes.
+		BossAiHarness.SetExactPercent(boss, 70);
+		Advance(harness, boss, raid, 6);
+		Assert.True(Cries(cries) > atEighty, "crossing seventy-one added nothing");
 	}
+}
+
+/// <summary>Counts Kingspin's webs by what they say, since a web that lands on somebody does not last.</summary>
+/// <remarks>
+/// A throw aimed at four players produces four blasts, four roots, four cries and <b>zero standing
+/// webs</b> — so counting objects measures the debris and counting cries measures the mechanic. The
+/// tally lives in counter slot 0 and is read back through <c>CounterEquals</c>.
+/// </remarks>
+[Aion.GameServer.Ai.AIName("kingspin_cry_probe")]
+public class KingspinCryProbeAI : Aion.GameServer.Ai.Pattern.PatternAi
+{
+	private static readonly Aion.GameServer.Ai.Pattern.AiPattern Pattern_ =
+		new Aion.GameServer.Ai.Pattern.AiPattern
+		{
+			OnMessage = Aion.GameServer.Ai.Pattern.AiPattern.Of(
+				Aion.GameServer.Ai.Pattern.AiPattern.Branch(1, "a web spoke",
+					[Aion.GameServer.Ai.Pattern.When.Message(KingspinAI.WebCaught)],
+					Aion.GameServer.Ai.Pattern.Do.Increment(0, 0, 99))),
+		};
+
+	public KingspinCryProbeAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override Aion.GameServer.Ai.Pattern.AiPattern Pattern => Pattern_;
 }

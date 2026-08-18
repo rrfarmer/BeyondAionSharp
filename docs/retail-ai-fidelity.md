@@ -17046,3 +17046,55 @@ or four pins loosened to fit are both worse than an inert class.
 
 No code changed this pass; the gate from the previous entry stands and the repoint is out. Full suite
 **2,049 passing**, 1 skipped.
+
+## The web is wired, and counting cries changed what two pins say
+
+`281391` now runs `kingspin_web`. The mechanic that took eight entries to trace is live: **Kingspin throws
+webs, a web that catches somebody blasts and roots them, tells him at fifty metres, and vanishes.**
+
+### The observer
+
+`KingspinCryProbeAI` stands beside him and increments a counter on every `6952`. A throw aimed at four
+players leaves **four cries and zero standing webs**, so the tally is the only record a throw leaves.
+`Cries()` reads it back through `CounterEquals`.
+
+**That is a better instrument than the one it replaces.** Counting objects measured the debris; counting
+cries measures the mechanic.
+
+### Two pins now say the opposite of what they said
+
+`TheTopRungOfTheLadderThrowsNothing` asserted **one** standing web at eighty percent and read it as the top
+of the ladder being quiet. Counted as cries it reads **nine**: his plain throw timer carries no health
+guard and runs at any health. The webs were despawning before the old count could see them.
+
+What the top rung actually means is that the **ladder's steps** do not fire — every one sits below eighty —
+while the timer underneath them does. The pin says that now, and adds the rung below to show the
+difference.
+
+`BelowSeventyOneTheLadderKeepsThrowing` had the same shape and is rewritten the same way.
+
+**Both pins passed for eight entries while describing behaviour the port did not have.** They were green
+because a web that despawned on landing and a web that was never thrown are indistinguishable when you
+count what is standing.
+
+### What is still not built
+
+- **Neither of the web's skills.** The root (`18607`, `BNWI_ROOT_SPIDER`) and the blast (`18597`) are both
+  `use_skill`, and this port casts neither. A web currently reaches a player, says so, and leaves without
+  touching them — **the call is ported and the effect is not.**
+- **The accelerators are wired but unpinned.** Kingspin arms timers 3 and 4 on hearing a cry and throws on
+  an eight-second clock inside 30–37 and 45–53. Nothing yet shows the shortened cycle.
+
+### Still to do
+
+- **A pin for the accelerator** — cries arriving faster inside a window than outside it.
+- The web's two skills, blocked with every other `use_skill` in this log.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+One npc repointed, one probe added, four pins rewritten, two of them saying something new. Full suite
+**2,049 passing**, 1 skipped.
