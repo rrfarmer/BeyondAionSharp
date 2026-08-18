@@ -18105,3 +18105,58 @@ finds, rather than stopping at the first one it cannot pin.
 ### Verification
 
 Reading only; no code changed. Full suite **2,050 passing**, 1 skipped.
+
+## Thirty mechanics were starved, across sixteen encounters
+
+The previous entry said reading is cheap and pinning is not, and that a pass should read several
+encounters rather than stop at the first it cannot pin. The starvation signature turns out to be
+computable, so all of them were read at once.
+
+**The signature:** a branch on clock `S` that repeats every `R`, arming a different timer at `D`, with
+`R < D`. Under the old operator each repeat restarted the target clock before it could reach `D`, so the
+mechanic on `D` **never fired**.
+
+**Thirty matches, across sixteen encounters.** The worst gaps:
+
+| encounter | clock | starved mechanic |
+|---|---|---|
+| `NagaCaptainAI` | 1 repeats **6s** | timer 4 at **90s** |
+| `NagaSummonerAI` | Ladder repeats **6s** | Peel21 at 45s, and three more at 25–30s |
+| `DeputyHanumanAI` | Ladder repeats **7s** | four alarms at 18–30s |
+| `GuardianVingeveuAI` | Heartbeat repeats **5s** | three band skills at 15–25s |
+| `BrigadeGeneralAnuhartAI` | Ladder repeats **6s** | EnrageOut at 22s, OrderOut at 18s |
+
+**Naga Captain's timer 4 had a fifteen-to-one ratio.** It cannot have fired once since the encounter
+shipped.
+
+### The caveat, and it is a real one
+
+**The scan does not read guards.** A ladder branch that is `FirstTime`-guarded, or that stops re-arming its
+own clock, fires once and starves nothing — which is exactly Chunapa's shape, where the opener kills the
+heartbeat and the starvation came from a different direction. Masto's openers *do* repeat, so his four
+bands were genuinely dead.
+
+**So thirty is an upper bound**, and each row needs its guard read before it counts as a repair. What the
+scan gives is the list worth reading and the order to read it in, which is what the previous entries were
+groping toward one encounter at a time.
+
+### What the thread has actually produced
+
+- An `ArmTimer` operator that matches the data, replacing one that starved a common idiom.
+- **Two repairs confirmed by hand** — Chunapa's phase two, Masto's four bands.
+- **Thirty candidates identified**, sixteen encounters, ranked by ratio.
+- None of it pinned, because every one of these is a timing property and the suite counts occurrences.
+
+### Still to do
+
+- **Read the guards on the thirty**, cheapest ratios last.
+- Masto's cadence pin, third attempt.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Measurement only; no code changed. Full suite **2,050 passing**, 1 skipped.
