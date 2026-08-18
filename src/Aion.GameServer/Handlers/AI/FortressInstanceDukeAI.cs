@@ -19,6 +19,47 @@ public class FortressInstanceDukeAI : AggressiveNpcAI
             Spawn(284978, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)GetOwner().GetHeading());
     }
 
+    /// <summary>
+    /// Retail <c>BGuard_ChiefD_Tune405</c> <c>on_die</c>: seven drakan-departure npcs at four points,
+    /// two of them leaving by teleporter and one group by barrier.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail-sourced; see docs/retail-ai-fidelity.md.</b> This is the same wave
+    /// <see cref="AwakenedChamberLordAI"/> already runs from its own pattern — the three barracks share
+    /// the three chambers' layout, and this duke stands at (526, 845), inside the pattern's box. Java has
+    /// no equivalent, so this is a sanctioned divergence rather than a parity fix.
+    /// <para>
+    /// Retail writes the branch twice, flagged and unflagged, with <b>identical</b> actions, so only one
+    /// is needed here — unlike the Ophidan pair, where the flagged half carried an extra step.
+    /// </para>
+    /// </remarks>
+    private const int DrakanByTeleporter = 296339;
+    private const int DrakanByBarrier = 296338;
+
+    private const int TeleportedLife = 18;
+    private const int BarrierLife = 12;
+
+    private static readonly (float X, float Y)[] TeleportPoints =
+        [(496f, 847f), (529f, 874f), (554f, 850f)];
+
+    private static readonly (float X, float Y) BarrierPoint = (580f, 840f);
+
+    /// <summary>Placed at the duke's own height, as the chamber lord's wave is.</summary>
+    private void DeathWave()
+    {
+        float z = GetOwner().GetZ();
+        sbyte heading = (sbyte)GetOwner().GetHeading();
+
+        foreach ((float x, float y) in TeleportPoints)
+        {
+            SpawnFor(DrakanByTeleporter, x, y, z, heading, TeleportedLife);
+            SpawnFor(DrakanByTeleporter, x, y, z, heading, TeleportedLife);
+        }
+
+        for (int i = 0; i < 3; i++)
+            SpawnFor(DrakanByBarrier, BarrierPoint.X, BarrierPoint.Y, z, heading, BarrierLife);
+    }
+
     private void DeleteSummons()
     {
         GetPosition().GetWorldMapInstance().ForEachNpc(npc =>
@@ -32,6 +73,7 @@ public class FortressInstanceDukeAI : AggressiveNpcAI
     {
         base.HandleDied();
         DeleteSummons();
+        DeathWave();
     }
 
     protected override void HandleDespawned()

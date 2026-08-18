@@ -461,6 +461,38 @@ public abstract class AbstractAI : AI
         return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, owner.GetInstanceId());
     }
 
+    /// <summary>
+    /// Spawn something that removes itself after <paramref name="liveSeconds"/>, which is retail's
+    /// <c>live_time</c> on a spawn.
+    /// </summary>
+    /// <remarks>
+    /// <b>The pattern classes have had this since they were written</b> and the Java-parity classes never
+    /// did, so any retail spawn carrying a lifetime could only be ported by one half of this codebase.
+    /// The fortress duke's death wave is the case that forced it: seven drakan-departure npcs with
+    /// <c>live_time</c> 18 and 12, which without a lifetime would stand in the barracks forever — a
+    /// cosmetic effect turned into permanent scenery, which is worse than not having the effect.
+    /// <para>
+    /// Deletes on the same terms <see cref="Aion.GameServer.Ai.Pattern.PatternAi"/> uses, so a spawn that
+    /// has already died or been cleaned up is left alone rather than double-removed.
+    /// </para>
+    /// </remarks>
+    protected VisibleObject SpawnFor(int npcId, float x, float y, float z, sbyte heading, int liveSeconds)
+    {
+        VisibleObject spawned = Spawn(npcId, x, y, z, heading);
+
+        if (liveSeconds > 0 && spawned is Npc npc)
+        {
+            Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                if (npc.IsSpawned())
+                    npc.GetController().DeleteIfAliveOrCancelRespawn();
+                return ValueTask.CompletedTask;
+            }, liveSeconds * 1000L);
+        }
+
+        return spawned;
+    }
+
     protected VisibleObject RndSpawnInRange(int npcId, float distance)
     {
         double angleRadians = Rnd.NextFloat(360f) * System.Math.PI / 180.0;

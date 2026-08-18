@@ -19254,3 +19254,57 @@ either at the end of a pass is how the nineteen-edit batch happened.**
 ### Verification
 
 **No code this pass** — survey only. Full suite unchanged at **2,062 passing**, 1 skipped.
+
+## The fortress dukes get their parting shot, and the Java path gets a lifetime
+
+The previous entry named this ready and deliberately left it, on the grounds that starting engine work at
+the end of a pass is how the nineteen-edit batch happened. **Started at the beginning of one instead**,
+and it took two small pieces.
+
+### `SpawnFor`, on the Java-parity path
+
+`AbstractAI.Spawn` takes no lifetime, and there was no scheduled-despawn helper anywhere on that side. So
+**any retail spawn carrying `live_time` could only be ported by half of this codebase** — the pattern
+classes have had it since they were written.
+
+`SpawnFor(npcId, x, y, z, heading, liveSeconds)` closes it, deleting on the same terms `PatternAi` uses so
+a spawn that already died is left alone rather than double-removed.
+
+### The wave
+
+`BGuard_ChiefD_Tune405` `on_die` puts **seven drakan-departure npcs at four points** — two by teleporter
+at each of three, three by barrier at the fourth, at 18 and 12 seconds. `AwakenedChamberLordAI` already
+runs exactly this from its own pattern. The dukes — Crotan, Dkisas and Lamiren, one per barracks — are a
+Java-parity class, and **Java has no death wave at all**, so this is a sanctioned retail divergence rather
+than a parity fix.
+
+**The coordinates were checked rather than assumed**, before any of it was written: the three barracks
+share the three chambers' layout, and each duke stands at (526, 845), inside the box the four spawn points
+describe.
+
+### The pin that the whole change waited on
+
+Five pins, and the one that mattered is the **timeout**. Without a lifetime those seven would have stood
+in the barracks forever — **a cosmetic effect turned into permanent scenery, which is worse than not
+having the effect** — and every count-only pin would have called that a success. It fails with the
+lifetime disabled, and the wave pins fail with the wave removed.
+
+**This is the first change this session where the reason for waiting a pass was itself the finding.** The
+blocker was not the wave; it was that half the codebase could not express a spawn's lifetime, and the wave
+was just the first thing to need it.
+
+### Still to do
+
+- **`set_condition_spawn_variable`** — the fourth engine gap, blocking Tiamat and Modor's clone.
+- **Waypoints**, blocking the silikor dismissal.
+- `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn, both ready.
+- **Other Java-parity classes with retail `live_time` spawns**, now unblocked by `SpawnFor` — not yet
+  surveyed, and worth a pass of its own.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses.
+- The four Ophidan controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five
+  coffin rows; the remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. Five new pins; the wave fails with the wave removed and the timeout fails with the lifetime
+disabled. Full suite **2,067 passing**, 1 skipped.
