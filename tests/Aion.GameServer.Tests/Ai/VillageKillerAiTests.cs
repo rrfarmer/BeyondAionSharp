@@ -147,8 +147,45 @@ public sealed class VillageKillerAiTests
 	/// to every <c>PatternAi</c> on a guess is worse than a documented gap.
 	/// </para>
 	/// </remarks>
-	[Fact(Skip = "AddHate from inside HandleAttack adds nothing; see remarks for the three experiments")]
-	public void TheOnAttackedHalfIsBuiltAndNotPinned()
+	/// <summary>
+	/// <b>The <c>on_attacked</c> half works, and the two commits that called it broken were measuring
+	/// a flag that had already been spent.</b>
+	/// </summary>
+	/// <remarks>
+	/// Bringing the two NPCs into each other's view runs <em>both</em> handlers during setup — the
+	/// sighting branch and, through the engine's own attack path, the <c>on_attacked</c> one. Every
+	/// earlier reading took its baseline <em>after</em> that, so it measured a once-a-fight branch that
+	/// had already fired and reported zero.
+	/// <para>
+	/// What finally showed it was giving the branch a second, visible action: with
+	/// <c>Do.DespawnSelf</c> beside <c>Do.HateAttacker</c> the raider vanished <b>during setup</b>, and
+	/// the pin's own direct <c>AddHate</c> afterwards read zero because it was adding hate to a
+	/// despawned NPC. That is what "the branch runs but the action does nothing" had really been.
+	/// </para>
+	/// <para>
+	/// <b>Rule: when a once-only branch reads zero, check whether the setup already spent it.</b> Three
+	/// experiments in the previous entry ruled out the guard, the evaluation and the attacker
+	/// reference, and all three were right — the fault was in where the baseline was taken.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheOnAttackedHalfFiresDuringTheFirstEngagement()
 	{
+		using BossAiHarness harness = NewHarness();
+		Npc party = harness.Spawn(BalaurRaider, 300f, 300f, 200f);
+		Npc chief = harness.Spawn(AnyNpcOfRace(Race.GCHIEF_LIGHT), 305f, 300f, 200f);
+
+		BossAiHarness.MakeMutuallyKnown(party, chief);
+		int afterSetup = party.GetAggroList().GetHate(chief);
+
+		// Both halves have fired by now, so the total is a multiple of retail's figure rather than one
+		// of it -- what is pinned is that it is retail's figure and that nothing keeps adding.
+		Assert.True(afterSetup >= 5_000_000, "the garrison was not committed to at all: " + afterSetup);
+		Assert.Equal(0, afterSetup % 5_000_000);
+
+		for (int i = 0; i < 4; i++)
+			party.GetAi().OnCreatureEvent(AiEventType.Attack, chief);
+
+		Assert.Equal(afterSetup, party.GetAggroList().GetHate(chief));
 	}
 }

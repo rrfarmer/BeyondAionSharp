@@ -11711,3 +11711,56 @@ in the dump.
 Instrument `AggroList.AddHate` for a refusal reason and call it once from each of the two paths on the
 same pair. Two calls, one difference. Whoever does it should start from the fact that the branch runs —
 that is the expensive half of the search and it is already done.
+
+## `on_attacked` was never broken: the setup had already spent the flag
+
+The previous entry located a fault to one call — `AggroList.AddHate` from inside `HandleAttack` — and
+sized what it blocked at 139 patterns and 198 npcs. **There is no fault.** The branch works, and every
+reading of zero was measuring a once-a-fight branch whose flag the test setup had already used.
+
+### What the earlier experiments actually proved
+
+All three were correct and all three pointed away from the real answer:
+
+* the race guard was not at fault — **true**;
+* the branch runs — **true**;
+* the attacker reference was not being lost — **true**.
+
+Each ruled out a suspect, and the suspect that was never on the list was **the baseline**. Bringing two
+NPCs into each other's view runs the sighting branch *and*, through the engine's own attack path, the
+`on_attacked` one. Every measurement took its "before" reading after that, so a branch guarded by
+`FirstTime` had already fired and correctly added nothing the second time.
+
+### The experiment that showed it
+
+Giving the branch a second, visible action — `Do.DespawnSelf` beside `Do.HateAttacker` — made the
+raider **vanish during setup**. The pin's own direct `AddHate` afterwards then read zero, because it was
+adding hate to a despawned NPC. That single reading, `despawned=True direct=0`, is what turned "the
+action does nothing" into "the action already ran".
+
+Measured after: **ten million** on the aggro list straight out of setup — two applications of retail's
+five million, one per handler.
+
+### The rule, and it is not the one the last entry expected
+
+**When a once-only branch reads zero, check whether the setup already spent it.** A `FirstTime` flag
+makes a branch invisible to any measurement that starts after the first firing, and the symptom is
+identical to a broken action. The instinct — instrument the action — is why two commits went past it:
+the action was working every time it was asked.
+
+This is the second time in this log that a careful elimination pointed at the wrong thing because the
+*measurement* was the fault rather than the code, after the flake that turned out to be four bugs. Both
+were found by making the mechanism visible rather than by reasoning further. **Prefer an experiment
+that changes what you can see over one that narrows what you suspect.**
+
+### Corrections to the previous entry
+
+* "139 retail patterns and 198 npcs stay unbuildable" — **withdrawn**. Nothing was blocked. That number
+  is now simply the size of the `on_attacked` reaction work that is available.
+* The re-entrancy hypothesis — **withdrawn**. `AddHate` from inside `HandleAttack` works.
+* The skipped pin is a passing one, and the class's "deferred half" note is gone.
+
+### Verification
+
+Full suite **2,056 passing** and 1 skipped — the skip is gone. Twelve pins on this class; **six
+mutations, all caught**.

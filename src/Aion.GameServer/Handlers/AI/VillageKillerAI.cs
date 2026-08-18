@@ -32,9 +32,14 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>on_attacked</c> half that was deferred over it was deferred for a bug rather than a gap.
 /// </para>
 /// <para>
+/// <b>The <c>on_attacked</c> half works.</b> Two commits called it broken; both were measuring a
+/// once-a-fight branch whose flag the test setup had already spent. See the pins for the experiment
+/// that showed it.
+/// <para>
 /// <b>Not translated:</b> <c>on_spelled</c>, which retail carries with the same body. Our engine has no
 /// pattern handler for it, so a caster garrison that never lands a melee blow is not committed to.
 /// Recorded rather than approximated with <c>on_attacked</c>, which fires on a different event.
+/// </para>
 /// </para>
 /// </remarks>
 public abstract class VillageKillerAI : PatternAi
