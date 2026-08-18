@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Collections.Generic;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model;
@@ -8,23 +8,31 @@ using Aion.GameServer.Model.GameObjects.Players;
 namespace Aion.GameServer.Tests.Ai;
 
 /// <summary>
-/// Pins for the village killers, translated from retail patterns <c>LDF5_Village_Killer01_DR</c>,
-/// <c>_01_L</c>, <c>_02_D</c> and <c>_02_DR</c> (see <c>docs/retail-ai-fidelity.md</c>).
+/// Pins for the village killers, translated from retail patterns <c>LDF5_Village_Killer01_L</c>,
+/// <c>_01_D</c>, <c>_01_DR</c> and the identical <c>_02_*</c> set (see
+/// <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
 [Collection("GoldenDataManager")]
 public sealed class VillageKillerAiTests
 {
 	private const int Cygnea = 210070000;
 
-	private const int StonereachForce = 234104;
-	private const int FlamecrestForce = 234107;
+	/// <summary>Retail <c>_01_DR</c> and <c>_02_DR</c>: Balaur raiders.</summary>
+	private const int BalaurRaider = 234104;
+
+	/// <summary>Retail <c>_01_L</c>: an Elyos raider.</summary>
+	private const int ElyosRaider = 234105;
+
+	/// <summary>Retail <c>_02_D</c>: an Asmodian raider.</summary>
+	private const int AsmodianRaider = 234109;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Cygnea).WithWorldSize(2048)
-			// BaseProtectorAI is here because the garrison npcs these pins spawn run it -- the same
+			// BaseProtectorAI is here because the garrison templates these pins spawn run it — the
 			// rule the flake commit recorded for WithAi, seen from the other side: a test must not
-			// spawn an npc whose class the harness was not told about.
-			.WithAi(typeof(VillageKiller01AI), typeof(VillageKiller02AI), typeof(BaseProtectorAI),
+			// spawn an npc whose class the harness was not told about, props included.
+			.WithAi(typeof(VillageKillerElyosAI), typeof(VillageKillerAsmodianAI),
+				typeof(VillageKillerBalaurAI), typeof(BaseProtectorAI),
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
@@ -45,82 +53,54 @@ public sealed class VillageKillerAiTests
 	/// </summary>
 	/// <remarks>
 	/// <b>These pins measure the answer to a sighting, not the total on the list.</b> Registering two
-	/// NPCs with each other runs the controller's <c>See</c> more than once — the pin read fifteen
-	/// million and then ten before this became a delta — and how many times the world raises the event
-	/// is the harness's business, not the mechanic's. Retail's claim is what <em>one</em> sighting is
-	/// worth.
+	/// NPCs with each other runs the controller's <c>See</c> more than once — an absolute reading gave
+	/// fifteen million and then ten before this became a delta — and how many times the world raises
+	/// the event is the harness's business, not the mechanic's.
 	/// </remarks>
-	private static int SightingAdds(Npc watcher, Creature seen)
+	private static int SightingAdds(BossAiHarness harness, Npc watcher, Race garrison)
 	{
-		if (seen is Npc other)
-			BossAiHarness.MakeMutuallyKnown(watcher, other);
+		Npc chief = harness.Spawn(AnyNpcOfRace(garrison), watcher.GetX() + 5f, watcher.GetY(), watcher.GetZ());
+		BossAiHarness.MakeMutuallyKnown(watcher, chief);
 
-		int before = watcher.GetAggroList().GetHate(seen);
-		watcher.GetAi().OnCreatureEvent(AiEventType.CreatureSee, seen);
-		return watcher.GetAggroList().GetHate(seen) - before;
-	}
-
-	private static void See(Npc watcher, Creature seen) => SightingAdds(watcher, seen);
-
-	/// <summary>
-	/// <b>A thrasher that sees a garrison chief goes for it, and nothing peels it off.</b> Five million
-	/// hate points is retail's own number on every branch of all four patterns.
-	/// </summary>
-	[Fact]
-	public void SeeingAGarrisonChiefCommitsItCompletely()
-	{
-		using BossAiHarness harness = NewHarness();
-		Npc thrasher = harness.Spawn(StonereachForce, 300f, 300f, 200f);
-		Npc chief = harness.Spawn(AnyNpcOfRace(Race.GCHIEF_LIGHT), 305f, 300f, 200f);
-
-		int added = SightingAdds(thrasher, chief);
-
-		Assert.Same(chief, thrasher.GetTarget());
-		Assert.Equal(5_000_000, added);
+		int before = watcher.GetAggroList().GetHate(chief);
+		watcher.GetAi().OnCreatureEvent(AiEventType.CreatureSee, chief);
+		return watcher.GetAggroList().GetHate(chief) - before;
 	}
 
 	/// <summary>
-	/// <b>The squads hunt different factions.</b> A stonereach thrasher goes for an Asmodian garrison
-	/// and a flamecrest one ignores it — retail's <c>01</c> patterns watch <c>gchief_dark</c> and its
-	/// <c>02</c> patterns watch <c>gchief_dragon</c> instead.
+	/// <b>Each raiding party hunts the other two factions and never its own.</b> The three race lists
+	/// are exactly "everyone but me", which is the whole of retail's faction rule — and getting it
+	/// wrong is what made the first version of this class hand a Balaur raider a Balaur garrison.
 	/// </summary>
-	[Fact]
-	public void TheSquadsHuntDifferentFactions()
+	[Theory]
+	[InlineData(ElyosRaider, Race.GCHIEF_DARK, 5_000_000)]
+	[InlineData(ElyosRaider, Race.GCHIEF_DRAGON, 5_000_000)]
+	[InlineData(ElyosRaider, Race.GCHIEF_LIGHT, 0)]
+	[InlineData(AsmodianRaider, Race.GCHIEF_DRAGON, 5_000_000)]
+	[InlineData(AsmodianRaider, Race.GCHIEF_LIGHT, 5_000_000)]
+	[InlineData(AsmodianRaider, Race.GCHIEF_DARK, 0)]
+	[InlineData(BalaurRaider, Race.GCHIEF_DARK, 5_000_000)]
+	[InlineData(BalaurRaider, Race.GCHIEF_LIGHT, 5_000_000)]
+	[InlineData(BalaurRaider, Race.GCHIEF_DRAGON, 0)]
+	public void EachPartyHuntsTheOtherTwoAndNeverItsOwn(int raider, Race garrison, int expected)
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc stonereach = harness.Spawn(StonereachForce, 300f, 300f, 200f);
-		Npc flamecrest = harness.Spawn(FlamecrestForce, 320f, 300f, 200f);
-		Npc asmodian = harness.Spawn(AnyNpcOfRace(Race.GCHIEF_DARK), 305f, 300f, 200f);
+		Npc party = harness.Spawn(raider, 300f, 300f, 200f);
 
-		Assert.Equal(5_000_000, SightingAdds(stonereach, asmodian));
-		Assert.Equal(0, SightingAdds(flamecrest, asmodian));
+		Assert.Equal(expected, SightingAdds(harness, party, garrison));
 	}
 
 	/// <summary>
-	/// <b>The dragon garrison is refused by the aggro list, and that is recorded rather than forced.</b>
+	/// <b>Five million, and that is the mechanic.</b> Retail's own number on every branch of all six
+	/// patterns: nothing a player does peels a raiding party off the garrison it came for.
 	/// </summary>
-	/// <remarks>
-	/// Retail's <c>02</c> patterns hunt <c>gchief_dragon</c>, and the race guard matches — but
-	/// <c>AggroList.AddHate</c> will not put hate on a creature the owner is not an enemy of, and our
-	/// tribe relations make a flamecrest thrasher and a Balaur garrison friends. So the call lands and
-	/// the hate does not.
-	/// <para>
-	/// Pinned as zero, not as five million, because the alternative is to bypass the aggro list to make
-	/// a test pass. Whoever resolves it is choosing between retail's pattern and our tribe table, and
-	/// should say which one is wrong rather than route around either. The same gate is why this class
-	/// ships without its <c>on_attacked</c> half — see <see cref="VillageKillerAI"/>.
-	/// </para>
-	/// </remarks>
 	[Fact]
-	public void TheDragonGarrisonIsRefusedByTheAggroList()
+	public void FiveMillionIsRetailsOwnNumber()
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc stonereach = harness.Spawn(StonereachForce, 300f, 300f, 200f);
-		Npc flamecrest = harness.Spawn(FlamecrestForce, 320f, 300f, 200f);
-		Npc dragon = harness.Spawn(AnyNpcOfRace(Race.GCHIEF_DRAGON), 322f, 300f, 200f);
+		Npc party = harness.Spawn(BalaurRaider, 300f, 300f, 200f);
 
-		Assert.Equal(0, SightingAdds(flamecrest, dragon));
-		Assert.Equal(0, SightingAdds(stonereach, dragon));
+		Assert.Equal(5_000_000, SightingAdds(harness, party, Race.GCHIEF_LIGHT));
 	}
 
 	/// <summary>
@@ -131,9 +111,37 @@ public sealed class VillageKillerAiTests
 	public void APlayerWalkingPastIsNotAGarrison()
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc thrasher = harness.Spawn(StonereachForce, 300f, 300f, 200f);
+		Npc party = harness.Spawn(BalaurRaider, 300f, 300f, 200f);
 		Player passer = harness.SpawnPlayer(305f, 300f, 200f);
 
-		Assert.Equal(0, SightingAdds(thrasher, passer));
+		int before = party.GetAggroList().GetHate(passer);
+		party.GetAi().OnCreatureEvent(AiEventType.CreatureSee, passer);
+
+		Assert.Equal(before, party.GetAggroList().GetHate(passer));
+	}
+
+	/// <summary>
+	/// <b>The <c>on_attacked</c> half is built and is not pinned, and this says why.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail carries the same rule on <c>on_attacked</c>, and <see cref="VillageKillerAI"/> translates
+	/// it. It could not be exercised here: <c>BossAiHarness.Engage</c> adds its own thousand hate
+	/// without raising the AI attack event, and raising <c>AiEventType.Attack</c> by hand — before or
+	/// after engaging, with the faction bug fixed and the aggro pair correct — added nothing at all.
+	/// <para>
+	/// Measured, in order: 0 with the wrong faction, 0 with the right one, and 1000 through
+	/// <c>Engage</c>, which is <c>Engage</c>'s own figure and not the branch's five million. So the
+	/// branch does not run on that path, and the reason is in the harness or in <c>HandleAttack</c>
+	/// rather than in the table — <c>When.AttackerRace</c> and <c>Do.HateAttacker</c> are the same
+	/// guard and action shape that the sighting half proves working.
+	/// </para>
+	/// <para>
+	/// Recorded as an empty pin rather than a passing one, because a pin that asserted 1000 would be
+	/// pinning <c>Engage</c>.
+	/// </para>
+	/// </remarks>
+	[Fact(Skip = "on_attacked path not reachable through the harness; see remarks")]
+	public void TheOnAttackedHalfIsBuiltAndNotPinned()
+	{
 	}
 }

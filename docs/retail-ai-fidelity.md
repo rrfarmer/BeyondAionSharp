@@ -11613,3 +11613,55 @@ Full suite **2,048 passing** and 1 skipped; four new pins. The no-blocker list 1
 **Not mutation-swept.** The turn ran out on the aggro-list investigation, and a sweep of a class whose
 second half is deliberately absent would mostly measure the absence. Worth doing when the tribe
 question is settled.
+
+## The tribe table was right and the class was wrong
+
+The previous entry left the village killers with a deferred half and an open question: retail's `02`
+patterns hunt `gchief_dragon`, our aggro list refused the hate, and that was written up as a possible
+disagreement between retail's data and our tribe table, to be settled by someone choosing a side.
+
+**There was no disagreement.** Reading all six patterns instead of two:
+
+| pattern | hunts |
+|---|---|
+| `_L` | `gchief_dark`, `gchief_dragon` |
+| `_D` | `gchief_dragon`, `gchief_light` |
+| `_DR` | `gchief_dark`, `gchief_light` |
+
+**The suffix is the killer's own side, and each hunts exactly the other two.** The three lists are
+"everyone but me", and `01` and `02` are two village sets with identical rules. No raiding party ever
+hunts its own faction's garrison.
+
+The first version of this class read `01` and `02` as the axis and shipped two classes instead of
+three — which handed a **Balaur** raider a **Balaur** garrison to hunt. The aggro list refused, entirely
+correctly, because they are friends. **The refusal was the tribe table catching a bug in the class**,
+and it was written up as evidence against the tribe table.
+
+**Rule: when our engine refuses to do what a translation asks, suspect the translation first.** The
+aggro list, the known list and the tribe relations have now each been suspected of being wrong at some
+point in this log; every time, they were right. That is three for three, and it is enough to be a
+prior.
+
+The class is three now, keyed on faction, and the nine-case theory pins every cell of the table —
+including the three "never its own" zeroes that would have caught the original bug.
+
+### The deferred half, and what it actually is
+
+`on_attacked` is translated and is **not** pinned, and the reason is recorded rather than glossed:
+`BossAiHarness.Engage` adds its own thousand hate without raising the AI attack event, and raising
+`AiEventType.Attack` by hand adds nothing at all. Measured in order: **0** with the wrong faction, **0**
+with the right one, **1000** through `Engage` — which is `Engage`'s figure, not the branch's five
+million.
+
+So the branch does not run on that path, and the cause is in the harness or in `HandleAttack` rather
+than in the table: `When.AttackerRace` and `Do.HateAttacker` are the same guard and action shape the
+sighting half proves working. It is a skipped test carrying that measurement, **not a passing one** —
+a pin asserting 1000 would be pinning `Engage`.
+
+`on_spelled` is not translated at all: our engine has no pattern handler for it, so a caster garrison
+that never lands a melee blow is not committed to.
+
+### Verification
+
+Full suite **2,055 passing**, 2 skipped; eleven pins, up from four; **six mutations, all caught** —
+the sweep the previous entry owed, including one per faction that pins "never its own".
