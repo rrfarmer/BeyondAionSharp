@@ -87,6 +87,17 @@ public sealed class AiPattern
     /// </para>
     /// </remarks>
     public PatternBranch[] OnTalk { get; init; } = None;
+
+    /// <summary>
+    /// <c>on_arrived_at_waypoint</c> — this npc reached a point on its walk path.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail uses arrivals to advance state, not just to walk.</b> The silikor's roaming akaimum
+    /// clears a per-npc flag here, and that clearing is what lets its <i>second</i> nearby-marker branch
+    /// run and set the world flag the silikor consumes to dismiss it. Without an arrival hook the chain
+    /// stops after one step, which is what this port did.
+    /// </remarks>
+    public PatternBranch[] OnArrivedAtWaypoint { get; init; } = None;
     public PatternBranch[] OnEnterIdle { get; init; } = None;
     public PatternBranch[] OnDie { get; init; } = None;
 

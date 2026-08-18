@@ -21981,3 +21981,49 @@ the last one for the instance rather than for this gatekeeper, which is why worl
 ### Verification
 
 Build clean. The band pin fails with the spawn removed. Full suite **2,114 passing**, 1 skipped.
+
+## The arrival handler, and the middle step of the silikor chain
+
+The third of the three route-unblocked encounters. **Its route is present** —
+`BIDLF2A_HolyServantSum_Roamer_Mobpath_50_An` is in `retail_pattern_paths.xml` — **but the engine had no
+way to hear an arrival.**
+
+`AiPattern.OnArrivedAtWaypoint`, evaluated from `PatternAi.HandleMoveArrived`, before the base handler so a
+branch sees the arrival ahead of the shout system. The event already existed — `AiEventType.MoveArrived`,
+raised by the walk system and handled by `NpcAI` — so this is a hook, not new machinery.
+
+### What it completes
+
+Retail's chain, which this log recorded as unreachable four passes ago:
+
+1. a guard marker falls within ten metres — the akaimum sets a per-npc flag and walks,
+2. **the walk ends and clears that flag**,
+3. a second close marker can now match, and sets the **world** flag,
+4. the silikor consumes that flag to send the akaimum away.
+
+**Step two had no handler.** Steps one, three and four were all built — one and three when the near
+answers went in, four when the world-flag engine did — and the chain stopped in the middle for want of a
+hook the event system already supported.
+
+### Pinned on the flag, not the dismissal
+
+Nothing in this port sends the silikor's `6621` yet, so the pin asserts what actually changed: the
+walking flag is set by the first close marker and **cleared by an arrival**. It fails with the evaluation
+removed.
+
+**Three of the four steps now verified; the fourth needs the silikor's `on_spelled` sender**, which is
+still blocked on nothing but work.
+
+### Still to do
+
+- **The silikor's `on_spelled` broadcast** — the last step of this chain, and now genuinely unblocked:
+  world flag, arrival and listener all exist.
+- The eight Tiamat rush drakan need npc templates.
+- The 123 missing path names, Padmarashka's and Kaliga's among them.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries; the
+  guard report's unverified rows; the `drakanmedic` harness question.
+
+### Verification
+
+Build clean. The pin fails with `Evaluate(Pattern.OnArrivedAtWaypoint)` removed. Full suite **2,115
+passing**, 1 skipped.

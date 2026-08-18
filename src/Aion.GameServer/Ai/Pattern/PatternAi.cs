@@ -232,6 +232,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         base.HandleDialogStart(player);
     }
 
+    /// <summary>
+    /// <c>on_arrived_at_waypoint</c>. Runs before the base handler so a branch sees the arrival before
+    /// the shout system does.
+    /// </summary>
+    protected override void HandleMoveArrived()
+    {
+        Evaluate(Pattern.OnArrivedAtWaypoint);
+        base.HandleMoveArrived();
+    }
+
     protected override void HandleBackHome()
     {
         Evaluate(Pattern.OnLeaveAttack);

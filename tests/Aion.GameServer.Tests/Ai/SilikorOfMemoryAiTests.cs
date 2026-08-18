@@ -472,4 +472,37 @@ public sealed class SilikorOfMemoryAiTests
 
 		Assert.Same(raid[1], melee.GetTarget());
 	}
+	/// <summary>
+	/// <b>A second nearby marker arms the dismissal, once the akaimum has finished its walk.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's chain: the first close marker sets a per-npc flag and sends the akaimum walking, the walk
+	/// ends and clears that flag, and only then can the second close marker match and set the <i>world</i>
+	/// flag the silikor consumes to dismiss it. <b>This log recorded the dismissal as unreachable</b>
+	/// because the middle step -- the arrival -- had no handler in the pattern engine.
+	/// <para>
+	/// Pinned on the flag rather than on the dismissal itself, because nothing in this port yet sends the
+	/// silikor'''s 6621: what changed is that the world flag can now be reached at all.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ArrivingClearsTheFlagThatGatesTheSecondAnswer()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc akaimum = harness.Spawn(Akaimum, 392f, 727f, 188f);
+		Npc melee = harness.Spawn(MeleeGuard, 396f, 730f, 188f);
+		BossAiHarness.MakeMutuallyKnown(akaimum, melee);
+
+		melee.GetAi().OnGeneralEvent(AiEventType.Died);
+		Npc marker = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == MeleeMarker);
+		BossAiHarness.MakeMutuallyKnown(akaimum, marker);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		var pattern = (Aion.GameServer.Ai.Pattern.PatternAi)akaimum.GetAi();
+		Assert.True(pattern.IsFlagSet(1), "the first close marker did not set the walking flag");
+
+		akaimum.GetAi().OnGeneralEvent(AiEventType.MoveArrived);
+
+		Assert.False(pattern.IsFlagSet(1), "arriving did not clear the walking flag");
+	}
 }

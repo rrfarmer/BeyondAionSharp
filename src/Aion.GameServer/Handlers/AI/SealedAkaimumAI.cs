@@ -90,6 +90,14 @@ public class SealedAkaimumAI : PatternAi
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {
+        // Retail's on_arrived_at_waypoint clears ALPHA_1 on every arrival. That clearing is the whole
+        // mechanism behind the second nearby-marker answer: the first sets the flag and walks, the walk
+        // ends here and clears it, and only then can the second branch match and set the world flag the
+        // silikor consumes to send this akaimum away. Without it the chain stopped after one step, and
+        // this log recorded the dismissal as unreachable for that reason.
+        OnArrivedAtWaypoint = Of(
+            Branch(100, "the walk ends", [When.Consuming(Walking)])),
+
         OnMessage = Of(
             // Retail p5, above both guard branches: the silikor dismisses this akaimum and everything it
             // has standing. Its own spawn ids are used, so a guard re-placed a moment earlier goes with
