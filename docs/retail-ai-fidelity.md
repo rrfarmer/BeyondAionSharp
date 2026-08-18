@@ -17404,3 +17404,57 @@ gets rediscovered — and if it recurs, the counter probe is where to look.
 ### Verification
 
 Two engine variants tried and both reverted. Full suite **2,050 passing**, 1 skipped.
+
+## Three timer semantics, three failures, and the reason they all fail
+
+"Take the shorter" was the reading the previous entry expected to work. **It works for Kingspin and breaks
+General Chunapa**, and the way it breaks explains why none of the three can be right.
+
+| semantic | Kingspin's accelerator | Chunapa's burrows |
+|---|---|---|
+| restart pending | **0 throws** (starves) | correct |
+| ignore pending | 12 against 12 (no effect) | broken |
+| **take the shorter** | **24 against 20 — works** | **4 where 2 belong** |
+
+### Why the third one breaks Chunapa
+
+`LDF4a_SandWarm_General` arms **timer 1 from two places**: its own burrow branch re-arms it at **45
+seconds**, and a branch on timer 0 arms it at **3 seconds**. Under take-the-shorter the three-second arm
+keeps dragging the burrow forward, and he surfaces every few seconds instead of every forty-five.
+
+**So the same rule that rescues one encounter wrecks the other**, and both are ordinary retail patterns.
+
+### What that means
+
+A single global rule for `add_battle_timer` cannot satisfy both, which says the difference is **not in the
+op**. Candidates, none tested:
+
+- **The two arms differ in retail** in a way this port has flattened — a `set_idle_timer` against an
+  `add_battle_timer`, or a delay this log read off the wrong branch.
+- **Chunapa's three-second arm is guarded** by something unported, so in retail it fires once and not on
+  every heartbeat.
+- **Ordering matters**: retail evaluates first-match-wins, so if the 3s branch and the burrow branch cannot
+  both run on one tick, the interleaving differs from ours.
+
+**The third is the most likely and the cheapest to check** — it needs the two branches' priorities and
+guards read side by side, which is one command and was not run because there was no room left.
+
+### The state of it
+
+The engine is unchanged, at "restart pending". Kingspin's accelerator still starves and its pin still
+asserts that defect. **Three readings have now been measured and written down**, which is worth more than
+another guess: the next person starts from a table of what each does to two encounters rather than from
+the question.
+
+### Still to do
+
+- **Read Chunapa's two arming branches** — priorities and guards — before trying a fourth semantic.
+- The web's two skills, blocked with every other `use_skill`.
+- Padmarashka's timers 10 and 12; the five coffin `message` rows; the 24 remaining ready guard rows; the 4
+  mixed; the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Third variant tried and reverted. Full suite **2,050 passing**, 1 skipped.
