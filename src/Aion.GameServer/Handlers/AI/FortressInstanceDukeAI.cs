@@ -13,10 +13,22 @@ public class FortressInstanceDukeAI : AggressiveNpcAI
     {
     }
 
+    /// <summary>
+    /// Retail <c>ABRwd_DrGuardianChiefGate_65_Ae</c> stands for ten minutes.
+    /// </summary>
+    /// <remarks>
+    /// <b>This gate is spawned once per cast of 18003 and had no bound at all.</b> The class deletes
+    /// 284978-284981 when the duke dies or despawns, which cleans up after the fight but does nothing
+    /// during it, so a long fight accumulated one gate per cast. <b>Death cleanup is not a lifetime</b> --
+    /// the same distinction Yamennes' golems needed.
+    /// </remarks>
+    private const int GateLife = 600;
+
     public override void OnEndUseSkill(SkillTemplate skillTemplate, int skillLevel)
     {
         if (skillTemplate.GetSkillId() == 18003)
-            Spawn(284978, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)GetOwner().GetHeading());
+            SpawnFor(284978, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(),
+                (sbyte)GetOwner().GetHeading(), GateLife);
     }
 
     /// <summary>

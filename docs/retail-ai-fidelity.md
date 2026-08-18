@@ -19657,3 +19657,61 @@ in a branch we never ported at all.
 ### Verification
 
 Build clean. Full suite **2,086 passing**, 1 skipped — unchanged, because none of this batch is pinned.
+
+## The `partial` rows: five deliberate, one real
+
+`partial` was named last entry as the likeliest place for a remaining gap, on the reasoning that a class
+which times *some* of its spawns has already had the question asked of it. **Six rows; one was real.**
+
+Resolved as deliberate, each because the untimed npc carries **no `live_time` in the pattern and is
+permanent in retail too**:
+
+- `kaluvaspawn` — its other two hatchlings
+- `traitorkumbanda` — the Kumbanda ghost
+- `kuhara_the_volatile` — the remaining `Spawn(` is the one inside the funnel `Expire` already wraps
+- `unstableyamennes` — the protector's fury, the sliver, and 219586
+- `empyrean_lord` — already timed through its own seconds constant
+
+### The one that was real
+
+**`fortress_instance_duke` spawns a guardian-chief gate on every cast of 18003, with no bound at all.**
+Retail gives `ABRwd_DrGuardianChiefGate_65_Ae` ten minutes.
+
+The class deletes 284978-284981 when the duke dies or despawns, which is why it never looked wrong: **it
+cleans up after the fight and does nothing during it**, so a long fight accumulated one gate per cast.
+
+**Death cleanup is not a lifetime.** That is the third time this distinction has decided a row — Yamennes'
+golems, the barricade's guards, and now this — and it is the reason the `self-timed` heuristic is a
+reading order rather than a verdict.
+
+It is also **the same class the death wave went into two passes ago**, and the gate was sitting four lines
+away. Reading a class for one thing does not audit it for another.
+
+### Where the audit stands
+
+```
+no spawns=12  partial=5  self-timed=11  timed=16
+```
+
+`NO LIFETIME` is empty and `partial` is now fully accounted for — five deliberate with the reason recorded
+in each, one fixed and pinned.
+
+**The remaining two categories are still unverified**, and neither is a lifetime question any more:
+`self-timed` needs each class's own schedule checked against *every* spawn it makes, and `no spawns` means
+retail's timed spawn is in a branch we never ported — which is the unported-branch backlog, not this one.
+
+### Still to do
+
+- **The 11 `self-timed` rows**, unverified: the heuristic proves a schedule exists, not that it covers
+  every spawn, and this entry found a class whose cleanup ran only on death.
+- The 12 `no spawns` rows, which belong to the unported-branch backlog.
+- **Walker routes in the harness**, which still block a Celestius pin.
+- Yamennes' golem cadence; `set_condition_spawn_variable`, blocking Tiamat and Modor's clone; waypoints,
+  blocking the silikor dismissal; `IDRaksha_Re_A_KJS`'s despawn and `IDTP_Keeper1`'s spawn.
+- The 38-class unported-flag-branch list; a twin check tolerating near-misses; the four Ophidan
+  controllers; Padmarashka's two rows; the web's two skills; timers 10 and 12; the five coffin rows; the
+  remaining ready guard rows; the mixed and misaligned rows.
+
+### Verification
+
+Build clean. The gate pin fails with its lifetime removed. Full suite **2,087 passing**, 1 skipped.

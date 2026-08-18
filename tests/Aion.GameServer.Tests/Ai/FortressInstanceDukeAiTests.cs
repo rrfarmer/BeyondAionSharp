@@ -22,6 +22,7 @@ public sealed class FortressInstanceDukeAiTests
 {
 	private const int DrakanByTeleporter = 296339;
 	private const int DrakanByBarrier = 296338;
+	private const int GuardianChiefGate = 284978;
 
 	public static TheoryData<int, int, float, float, float> Dukes => new()
 	{
@@ -98,5 +99,32 @@ public sealed class FortressInstanceDukeAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(6));
 		Assert.Equal(0, Count(harness, DrakanByTeleporter));
+	}
+	/// <summary>
+	/// <b>The guardian-chief gate is bounded at ten minutes.</b> One is spawned per cast of 18003, and it
+	/// had no bound at all — the class deletes them when the duke dies, which cleans up after the fight
+	/// but does nothing during it.
+	/// </summary>
+	/// <remarks>
+	/// <b>Death cleanup is not a lifetime.</b> This was the last row on the lifetime audit's <c>partial</c>
+	/// list and the only one of six that turned out to be real, the other five being deliberate — npcs
+	/// that carry no <c>live_time</c> in the pattern and are permanent in retail too.
+	/// </remarks>
+	[Fact]
+	public void TheGuardianChiefGateExpires()
+	{
+		using BossAiHarness harness = BossAiHarness.For(301260000).WithWorldSize(2048)
+			.WithAi(typeof(FortressInstanceDukeAI), typeof(IllusionGateAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		Npc duke = harness.Spawn(233633, 526.401f, 845.38f, 199.395f);
+
+		duke.GetAi().OnEndUseSkill(
+			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(18003), 1);
+		Assert.Equal(1, Count(harness, GuardianChiefGate));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(601));
+
+		Assert.Equal(0, Count(harness, GuardianChiefGate));
 	}
 }
