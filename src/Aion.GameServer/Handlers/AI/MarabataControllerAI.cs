@@ -60,6 +60,35 @@ public class MarabataControllerAI : NpcAI
         }
     }
 
+    /// <summary>
+    /// Retail's <c>6821</c>: this booster is being attacked, and the Anuhart guards should come.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. Patterns <c>ND2_WhHS1</c>–<c>_3</c> carry
+    /// nothing else on <c>on_attacked</c> — a booster that is hit shouts, on every blow, at fifty
+    /// metres, and the eight Anuhart patterns of <see cref="AnuhartGuardAI"/> answer.
+    /// </remarks>
+    public const int BoosterUnderAttack = 6821;
+
+    private const float CallReach = 50f;
+
+    /// <summary>
+    /// Retail's <c>on_attacked</c>, unlatched: the call goes out on every blow, so a raid that moves
+    /// between the three boosters keeps pulling.
+    /// </summary>
+    /// <remarks>
+    /// <b>Retail names <c>OBJI_CUR_TARGET</c> and we name the attacker</b>, because a booster's current
+    /// target is <em>itself</em> — <see cref="HandleSpawned"/> calls <c>TargetSelf</c> so it can cast
+    /// its buff on its marabata, and nothing ever moves it off. Sending that would have eight guard
+    /// types put three hundred hate on a golem switch. The attacker is what retail's branch plainly
+    /// means; the divergence is recorded rather than hidden.
+    /// </remarks>
+    protected override void HandleAttack(Creature creature)
+    {
+        base.HandleAttack(creature);
+        NpcMessageBus.Broadcast(GetOwner(), BoosterUnderAttack, creature, CallReach);
+    }
+
     protected override void HandleDied()
     {
         base.HandleDied();

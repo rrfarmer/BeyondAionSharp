@@ -10741,3 +10741,84 @@ it is one `grep -c` away.
 Full suite **2,006 passing** and 1 skipped; five new pins; **seven mutations, all caught**. Missing-AI
 unchanged at **654** — these are objects and nest-dwellers rather than fights — and stranded listeners
 92 patterns / 143 npcs → **89 / 136**.
+
+## Dark Poeta's marabata boosters call the room, and the room answers in two weights
+
+The fourth group from the sender audit, and the first where the **sender was already ported and the
+mechanic was missing anyway**. `MarabataControllerAI` is a faithful port of aionemu's booster: it casts
+its buff on its marabata, the marabata respawns it every thirty seconds, and killing it strips the
+effect. Retail's `ND2_WhHS1`–`_3` agree with all of that and add one thing aionemu never had — the
+booster **shouts when it is hit**, at fifty metres, and eight Anuhart patterns answer:
+
+| | |
+|---|---|
+| a guard standing idle | **three hundred** hate on whoever struck the booster, and go |
+| a guard already in a fight | **five hundred**, and switch |
+
+**The larger number is for the guard that is already busy**, which is the whole point of the split.
+Three hundred on an empty aggro list is already the top of it; a guard mid-fight has to be *outbid*.
+Retail writes the first as `add_hate_point` + `attack_most_hating` and the second as `switch_target`
+with `points_to_add`, and `HateMessageTarget` is both — for an idle guard, "most hating" and "the one
+just named" are the same creature.
+
+**Sixteen of the eight npcs' sixty-four Dark Poeta spawn spots stand inside the fifty metres**, so this
+is not decoration: pulling a booster in the marabata chamber can drag most of a room that until now
+stood and watched. Two of the eight (214848 anuhart spotter, 215230 anuhart breeder) have no spot in
+reach at all, and retail gives them the pattern anyway — recorded, and left as retail has it.
+
+### The call escalates itself, and the pins say so
+
+Retail wrote the idle/attack split for a guard some *other* fight had already claimed. Because the
+answer itself commits the guard, it also applies to the **second blow on the same booster**: three
+hundred, then five hundred, then five hundred. That was found by a pin asserting 600 and reading 800,
+and the pin now says 300-then-800 because that is what retail's two branches do when they meet.
+
+### Two divergences, both recorded rather than hidden
+
+**Retail names `OBJI_CUR_TARGET` and we name the attacker.** A booster's current target is *itself* —
+the Java-parity class calls `TargetSelf` so it can cast its buff, and nothing ever moves it off.
+Sending that would have eight guard types put three hundred hate on a golem switch. This is the same
+shape as the Ophidan Bridge flag two entries ago, where `CombatAlarm` named a target a flag did not
+have; **the third time now that a retail call on a non-combatant names something the non-combatant has
+no meaningful value for.** Worth treating as the default suspicion rather than a surprise.
+
+**The eighth listener could not be a `PatternAi`.** 214847, the anuhart guardian, runs `drakanmedic` —
+seventy-nine npcs share it, so the answer went into neither the shared class nor a pattern table
+without throwing the healing away. `AnuhartMedicAI` is a subclass that implements the single call by
+hand, reading `AIState.FIGHT` instead of `PatternAi`'s own latch. **It is the guard you least want to
+leave standing**, which is why it was worth the extra class: a call that pulls seven and leaves the
+priest would be a quieter fight than retail's.
+
+That makes three sharing outcomes in two commits — 112 npcs meant a subclass, 610 meant not at all,
+79 meant a subclass again — and the rule from the klaw entry holds: **the count is the whole argument.**
+
+### Not translated, and worth a look later
+
+The rest of the water-golem chamber is a **complete retail mechanic our data does not have at all**:
+
+* Two **controllers** (700448 `ND2_WhHC1`, 700449 `ND2_WhHC2`), never spawned by us, which cycle the
+  three boosters on a sixteen-second battle timer — and **in opposite directions**. A: switch 2, 1, 3.
+  B: switch 2, 3, 1. Same opening, opposite rotation.
+* Each booster answers its own number (`6810`/`6811`/`6812`), waits six seconds, and broadcasts
+  `6813`/`6815`/`6817` at thirty metres. **Nothing in the entire dump listens to those three**, so what
+  they drive is on the client side or in a system nobody wired up. Switch 3 re-arms its own timer every
+  fifteen seconds and the other two do not — recorded because it looks like a mistake in retail's data,
+  not because we understand it.
+* `on_killed_by_user` spawns `BIDLF1_WaterGolemN_Summoned` (281095–281097, patterns `ND2_WhHS*B`) — an
+  add on booster death that aionemu has no trace of.
+* Three `say_to_all` shouts, `STR_CHAT_IDLF1_ND2_WhHS_01`–`_03`, blocked on the same shout work as
+  everywhere else.
+
+Building the controllers means placing two npcs we have no retail coordinates for and adopting a
+rotation whose visible effect is a client-side signal we cannot see. **Left whole and left out**, the
+same call made for the Kromede chain: half of this would be worse than none of it.
+
+Also unported: retail's `on_attacked` sets `FLAGVARI_ALPHA_1` on all three switch patterns and **no
+branch anywhere reads it**. A dead flag, noted so the next reader does not go looking for the other
+half.
+
+### Verification
+
+Full suite **2,011 passing** and 1 skipped; six new pins; **nine mutations, all caught**. Missing-AI
+unchanged at **654** — the guards had classes, they simply had no ears — and stranded listeners 89
+patterns / 136 npcs → **82 / 129**.
