@@ -309,4 +309,50 @@ public sealed class PadmarashkaRockfallTests
 
 		Assert.Equal(0, Count(harness, RockB));
 	}
+
+	/// <summary>
+	/// <b>The deep band drops four, not three, and takes fifty seconds to do it.</b> Below thirty she is
+	/// on her third chain, which is a slower and heavier one than the band a raid meets first.
+	/// </summary>
+	[Fact]
+	public void TheDeepBandDropsFourAfterFiftySeconds()
+	{
+		var (harness, boss, raid) = Engaged(6);
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 20);
+
+		Advance(harness, boss, raid, 49);
+		Assert.Equal(0, Count(harness, RockB));
+
+		Advance(harness, boss, raid, 1);
+		Assert.Equal(4, Count(harness, RockB));
+	}
+
+	/// <summary>
+	/// <b>And the middle band drops nothing at all, which is a defect.</b> Between thirty-one and sixty
+	/// percent she has a rockfall branch and it never fires: two full minutes at forty-five percent
+	/// produce no rocks.
+	/// </summary>
+	/// <remarks>
+	/// <b>The health guards did not cause this, they revealed it.</b> With no bands every evaluation went
+	/// to the highest-priority branch, so the middle chain never ran then either — it simply could not be
+	/// seen. Whatever arms its timer is missing or is armed with a delay longer than any fight.
+	/// <para>
+	/// Asserted as zero deliberately, so it turns red the day the arming is found. See
+	/// docs/retail-ai-fidelity.md.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheMiddleBandIsSilentAndShouldNotBe()
+	{
+		var (harness, boss, raid) = Engaged(6);
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 45);
+
+		Advance(harness, boss, raid, 120);
+
+		Assert.Equal(0, Count(harness, RockB));
+	}
 }

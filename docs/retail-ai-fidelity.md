@@ -15973,3 +15973,51 @@ apart.**
 ### Verification
 
 Six pins, two mutations, both caught. Full suite **2,047 passing**, 1 skipped.
+
+## Padmarashka's other two bands, measured — and one of them is silent
+
+The `hp` pass left her lower bands unmeasured and said so. Measured now, and the two answers are very
+different.
+
+| band | what actually happens |
+|---|---|
+| 61–90 | **3 rocks on the fifth second**, twelve-second life, ninety seconds apart |
+| 31–60 | **nothing, in two full minutes** |
+| 11–30 | **4 rocks on the fiftieth second** |
+
+So the fight she is meant to have — three chains, getting heavier as she falls — is really two, with a
+gap in the middle where a raid between thirty-one and sixty percent meets no rockfall at all.
+
+### The guards did not cause this, they revealed it
+
+Before the bands, every evaluation went to the highest-priority branch, so the middle chain never ran
+then either. **It could not be seen**: the deep band's rocks were falling at every health, so the
+encounter looked busy the whole way down. Adding the guards did not break the middle band; it stopped
+another band covering for it.
+
+Whatever arms that branch's timer is either missing from this port or armed with a delay longer than any
+fight. **That is the next thing to read off `DF4_Dramata`** — the branch is there and its guard is right,
+so the defect is in the arming, not in the ladder.
+
+`TheMiddleBandIsSilentAndShouldNotBe` asserts the zero deliberately, with the cause named, so it turns red
+the day the arming is found. `TheDeepBandDropsFourAfterFiftySeconds` pins the band below it.
+
+### The general point
+
+**A collapsed ladder hides its own gaps.** Every band this session has restored was hiding behind a
+neighbour that fired unconditionally, and the neighbour made the encounter look complete. The same is
+true of the two ladders still collapsed — Kingspin and the silikor guard — and of any others the guard
+audit has not reached: a missing rung is invisible until the rung above it stops answering for it.
+
+### Still to do
+
+- **Padmarashka's middle band arming**, now a specific question about one timer.
+- The five coffin `message` rows, blocked on the scan following local condition helpers.
+- The 14 remaining ready rows: `flag`, `distance`, `counter`.
+- Kingspin and the silikor guard ladders, the 4 mixed, the 3 misaligned.
+- The ratman farmers' roll behind `is_skill_count_left`, the 14 two-action-idiom classes, the silikor
+  skill, the illusion's most-hated claim, the Ophidan chain's second hop, and counts/arguments/ordering.
+
+### Verification
+
+Two pins added, both measured rather than assumed. Full suite **2,049 passing**, 1 skipped.
