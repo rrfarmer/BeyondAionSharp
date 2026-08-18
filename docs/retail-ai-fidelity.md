@@ -13588,3 +13588,100 @@ tell was the same: **check whether the thing being counted is the thing being as
 believing the counts.**
 
 No code or data change. Full suite unchanged at **2,195 passing**, 5 skipped.
+
+## The top of the ladder: Panesterra's artifacts
+
+`42001` and `42101` came off the silent-conversations list, and with them **the whole of Panesterra is
+one ladder**:
+
+| rung | call | answered with | reach | repeats? |
+|---|---|---|---|---|
+| base guard | `41000` / `41100` | **10** | 13m, 25m for lookouts | no |
+| base captain | `41001` / `41101` | **100** | 13m | no |
+| castle company | `40000` / `40100` | **100** | 25m | no |
+| **artifact protector** | `42001` / `42101` | **1000** | **13m** | **every 7 seconds** |
+
+**108 more npcs** — 72 protectors and 36 guards — and the three rungs are three sets of numbers that
+nobody hears across. A base cutthroat's call leaves an artifact guard standing.
+
+### The two things that make the top rung the top rung
+
+**It repeats.** Every other call in Panesterra is a one-off: pulled, announce, done. The artifact
+protector announces when it is pulled and again every seven seconds for as long as the fight lasts, so
+its guards are re-committed continuously. **An artifact pull cannot be waited out the way a base pull
+can**, and that — rather than the payload — is what actually decides whether a raid can peel anything
+off an artifact.
+
+**And it shouts quietly.** Thirteen metres is the shortest reach on the map, against the lookouts'
+twenty-five. **The relationship between reach and payload is inverted all the way up the ladder:** a
+base lookout shouts across the camp and is barely heeded at ten points; an artifact protector shouts to
+whoever is standing on it and is obeyed absolutely at a thousand. That reads as deliberate — the ladder
+is about who is *near* the thing worth guarding.
+
+The artifact guards also check nothing at all: **no `is_enemy`, no state guard**, where the castles
+check who was named and one base pattern in ten does. The strongest answer in Panesterra is also the
+least discriminating.
+
+### Thirty-six patterns that differ in nothing
+
+`Gab1_DrArtiGuard_Boss_01_01` through `_04_08`, plus the `Gab1_DArtiGuard_Boss_*` set — **thirty-six
+retail patterns for the Vritra side and eight for the other, one npc apiece, identical in every
+action.** Retail gives each artifact and each slot its own pattern name, which is bookkeeping rather
+than behaviour, and they collapse into two classes.
+
+### Not built
+
+- **`42000` / `42100` / `42200`** — the artifact guards' *own* call, as distinct from their
+  protector's. They broadcast it at **one metre**, and one of them at twenty-five. **A one-metre
+  broadcast is a strange enough number to want its own reading before it is translated**; recorded
+  rather than guessed at, and it is the only part of the Panesterra family now left.
+- **`4440444`** and **`909090`**, both broadcast by the artifact protectors at fifty and thirty metres.
+  The first is Panesterra's base-capture announcement, already recorded against the warcaptains as
+  belonging with the siege code rather than the AI layer; the second has no listener anywhere in the
+  5.8 files.
+- `percent_to_add=10` on every artifact answer, as everywhere else in this family.
+- The skills on the guards' answers.
+
+### And what is queued behind it
+
+**`23005`** is the next one of this shape: the Dispute-PvP guards of the 5.x maps, `2` callers and
+**39** answerers, with the fortress guards' exact one-idle/hundred-busy split at fifteen metres.
+Captain Wigthor's call is on a battle timer guarded by an HP boundary, which is a shape none of the
+other guard families use. Read but not built this turn.
+
+### Verification
+
+Twenty pins on the Panesterra family now, and a **six-mutation sweep on the artifact half, all
+caught**: the payload dropped to a castle's, the repeat deleted, the reach widened, the two sides
+sharing a number, the guards listening on the base number, and the repeat slowed. Full suite **2,200
+passing**, 5 skipped.
+
+### The near-miss: a name that was already taken
+
+The first run of the full suite failed on the bootstrap test with
+`Duplicate AIs with name artifact_protector`. **There is already an `ArtifactProtectorAI` in this
+tree** — a Java-parity siege class, with **1,013 npcs bound to it**, whose `HandleDied` calls
+`StopSiege`: it tallies the aggro list into the siege counter, marks the boss killed and ends the
+siege.
+
+**My repoint had bound forty-seven Panesterra protectors to that name.** They were on stock AI before,
+so nothing was lost — but had the class name not also collided, the suite would have gone green and a
+hundred and eight Panesterra npcs would each have been carrying **a siege-ending action on death**.
+Renamed to `panesterra_artifact_*`.
+
+**What caught it was the engine's own duplicate-name check, not anything I did.** The fortress-guard
+commit checked for an existing `fortress_guard` AI name before writing one; this commit did not make
+the same check, and got away with it only because the collision happened to be exact.
+
+**Rule: check the AI name against the existing registry before writing a class, every time — the
+repoint is what makes it dangerous, not the class.** A new class with a colliding name fails loudly. A
+new class with a *free* name, repointing npcs onto a name that already means something else, fails
+silently and in the siege layer.
+
+### An open question this raised
+
+`Gab1_*ArtiGuard_Boss_*` npcs are Panesterra's artifact protectors, and Panesterra is the Ahserion
+siege. **Should they be carrying the Java-parity siege class rather than a retail pattern?** Our data
+had them on stock AI, so this commit does not change what they were; but an artifact protector whose
+death does not end a siege is worth someone checking against the Java tree. **Recorded, not decided** —
+it is a Java-parity question rather than a retail-AI one, and this log is the wrong place to settle it.

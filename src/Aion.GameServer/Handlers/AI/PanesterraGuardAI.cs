@@ -474,3 +474,153 @@ public class PanesterraCastleDefenderAI : PatternAi
 
     protected override AiPattern Pattern => Pattern_;
 }
+
+/// <summary>
+/// Panesterra's artifact guards — the top rung of the ladder. Retail numbers <c>42001</c> and
+/// <c>42101</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>The whole map is one ladder and this is the top
+/// of it.</b> A base guard's call is answered with ten, a castle's with a hundred, and an artifact
+/// protector's with <b>a thousand</b>.
+/// <para>
+/// <b>And it is the only rung that repeats.</b> The protector calls when it is pulled and again every
+/// seven seconds for as long as the fight lasts, so its guards are re-committed continuously rather
+/// than once — there is no waiting out an artifact pull the way a base pull can be waited out.
+/// </para>
+/// <para>
+/// <b>Thirteen metres, which is the shortest reach in Panesterra</b> and the opposite of what the
+/// payload suggests. An artifact protector shouts quietly and is obeyed absolutely; a base lookout
+/// shouts across the camp and is barely heeded.
+/// </para>
+/// </remarks>
+public static class PanesterraArtifactCalls
+{
+    /// <summary>Retail's <c>42001</c>: the Vritra-side artifact protector's call.</summary>
+    public const int VritraProtector = 42001;
+
+    /// <summary>Retail's <c>42101</c>: the other side's.</summary>
+    public const int LightProtector = 42101;
+
+    /// <summary>Retail's <c>range_as_meter</c> on every protector call.</summary>
+    public const float CallReach = 13f;
+
+    /// <summary>Retail's <c>points_to_add</c> — ten times a castle's and a hundred times a base's.</summary>
+    public const int Absolute = 1000;
+
+    /// <summary>Retail's <c>delay</c> on the timer that repeats the call.</summary>
+    public const int RepeatMillis = 7_000;
+
+    private const int Heartbeat = 0;
+
+    /// <summary>A protector's two calls: on being pulled, and every seven seconds after.</summary>
+    public static AiPattern Protector(int call) => new AiPattern
+    {
+        OnEnterAttack = Of(Branch(7, "pulled", [],
+            Do.ArmTimer(Heartbeat, RepeatMillis),
+            Do.Broadcast(call, CallReach, aboutTarget: true))),
+
+        OnBattleTimer = Of(Branch(7, "and again", [When.Timer(Heartbeat)],
+            Do.ArmTimer(Heartbeat, RepeatMillis),
+            Do.Broadcast(call, CallReach, aboutTarget: true))),
+    };
+
+    /// <summary>An artifact guard's answer, which is the same on all eight answering patterns.</summary>
+    public static AiPattern Guard(int call) => new AiPattern
+    {
+        OnMessage = Of(Branch(1, "the protector is calling", [When.Message(call)],
+            Do.HateMessageTarget(Absolute))),
+    };
+}
+
+/// <summary>
+/// The Vritra-side artifact protectors. Thirty-six retail patterns, all of them one npc apiece.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>The AI name carries a <c>panesterra_</c> prefix because <c>artifact_protector</c> was already
+/// taken</b>, by the Java-parity siege class that stops a siege when its owner dies. These npcs were on
+/// stock AI, so nothing was lost — but binding them to that name by accident would have given a
+/// hundred and eight Panesterra npcs a <c>StopSiege</c> on death. See docs/retail-ai-fidelity.md.
+/// </para>
+/// <para>
+/// <b>Thirty-six patterns that differ in nothing but their name</b> — retail gives each artifact and each slot its own, which is bookkeeping rather than
+/// behaviour. See <see cref="PanesterraArtifactCalls"/>.
+/// </remarks>
+[AIName("panesterra_artifact_protector")]
+public class PanesterraArtifactProtectorAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ =
+        PanesterraArtifactCalls.Protector(PanesterraArtifactCalls.VritraProtector);
+
+    public PanesterraArtifactProtectorAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>The other side's artifact protectors. Eight retail patterns.</summary>
+/// <remarks>Retail-sourced; see docs/retail-ai-fidelity.md.</remarks>
+[AIName("panesterra_artifact_protector_light")]
+public class PanesterraArtifactProtectorLightAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ =
+        PanesterraArtifactCalls.Protector(PanesterraArtifactCalls.LightProtector);
+
+    public PanesterraArtifactProtectorLightAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The Vritra-side artifact guard company: dreadcaptain, master medic, augurur and triaris. Retail
+/// patterns <c>Gab1_ArtiGaurd_Charge_PM_Fe</c>, <c>_Support_Heal_Pe</c>, <c>_Support_Mez_We</c> and
+/// <c>_Watch_PR_Re</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. <b>A thousand points, and no <c>is_enemy</c> and no
+/// state guard.</b> The castles check who was named and the bases mostly do not; the artifact guards
+/// check nothing at all and answer with the largest payload on the map.
+/// <para>
+/// <b>Not built:</b> their own <c>42000</c> call, which they broadcast at <b>one metre</b> —
+/// and one of them at twenty-five. A one-metre broadcast is a strange enough number that it wants its
+/// own reading before it is translated; recorded rather than guessed at.
+/// </para>
+/// </remarks>
+[AIName("panesterra_artifact_guard")]
+public class PanesterraArtifactGuardAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ =
+        PanesterraArtifactCalls.Guard(PanesterraArtifactCalls.VritraProtector);
+
+    public PanesterraArtifactGuardAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}
+
+/// <summary>
+/// The other side's artifact company: warcaptain, master physician, master tracker and warmage.
+/// </summary>
+/// <remarks>Retail-sourced; see docs/retail-ai-fidelity.md. Identical to its twin on its own number.</remarks>
+[AIName("panesterra_artifact_guard_light")]
+public class PanesterraArtifactGuardLightAI : PatternAi
+{
+    private static readonly AiPattern Pattern_ =
+        PanesterraArtifactCalls.Guard(PanesterraArtifactCalls.LightProtector);
+
+    public PanesterraArtifactGuardLightAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override AiPattern Pattern => Pattern_;
+}

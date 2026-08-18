@@ -259,4 +259,113 @@ public sealed class PanesterraGuardAiTests
 		Assert.Equal(25f, PanesterraCastleCalls.CallReach);
 		Assert.Equal(100, PanesterraCastleCalls.Claim);
 	}
+
+	// The artifact tier: the top rung of the ladder.
+	private const int ArtifactProtector = 880073;    // calls on 42001, every seven seconds
+	private const int ArtifactDreadcaptain = 277812; // answers 42001
+	private const int ArtifactProtectorLight = 277930;
+	private const int ArtifactWarcaptain = 277784;
+
+	private static BossAiHarness ArtifactHarness() =>
+		BossAiHarness.For(Panesterra).WithWorldSize(2048)
+			.WithAi(typeof(PanesterraArtifactProtectorAI), typeof(PanesterraArtifactGuardAI),
+				typeof(PanesterraArtifactProtectorLightAI), typeof(PanesterraArtifactGuardLightAI),
+				typeof(PanesterraCutthroatAI), typeof(PanesterraSoldierAI),
+				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+
+	/// <summary>
+	/// <b>A thousand: the top of the ladder.</b> A base guard's call is answered with ten, a castle's
+	/// with a hundred, an artifact protector's with a thousand.
+	/// </summary>
+	[Theory]
+	[InlineData(ArtifactProtector, ArtifactDreadcaptain)]
+	[InlineData(ArtifactProtectorLight, ArtifactWarcaptain)]
+	public void AnArtifactProtectorIsWorthAThousand(int protectorId, int guardId)
+	{
+		using BossAiHarness harness = ArtifactHarness();
+		Npc protector = harness.Spawn(protectorId, 300f, 300f, 200f);
+		Npc guard = harness.Spawn(guardId, 306f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(protector, guard);
+
+		harness.Engage(protector, raider);
+
+		Assert.Equal(1000, guard.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary>
+	/// <b>And it is the only rung that repeats.</b> The call comes again every seven seconds for as
+	/// long as the fight lasts, so an artifact pull cannot be waited out the way a base pull can.
+	/// </summary>
+	[Fact]
+	public void AndTheArtifactCallRepeatsEverySevenSeconds()
+	{
+		using BossAiHarness harness = ArtifactHarness();
+		Npc protector = harness.Spawn(ArtifactProtector, 300f, 300f, 200f);
+		Npc guard = harness.Spawn(ArtifactDreadcaptain, 306f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(protector, guard);
+
+		harness.Engage(protector, raider);
+		Assert.Equal(1000, guard.GetAggroList().GetHate(raider));
+
+		// Three more calls inside this window, and nothing else on the board adds hate.
+		harness.Watch(25, null);
+
+		Assert.True(guard.GetAggroList().GetHate(raider) >= 4000,
+			"the artifact call did not repeat");
+	}
+
+	/// <summary>
+	/// <b>Thirteen metres, the shortest reach in Panesterra</b> — and the opposite of what the payload
+	/// suggests. An artifact protector shouts quietly and is obeyed absolutely; a base lookout shouts
+	/// across the camp and is barely heeded.
+	/// </summary>
+	[Fact]
+	public void AndItShoutsQuietly()
+	{
+		using BossAiHarness harness = ArtifactHarness();
+		Npc protector = harness.Spawn(ArtifactProtector, 300f, 300f, 200f);
+		Npc guard = harness.Spawn(ArtifactDreadcaptain, 306f, 300f, 200f);
+		Npc distant = harness.Spawn(ArtifactDreadcaptain, 320f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(protector, guard);
+		BossAiHarness.MakeMutuallyKnown(protector, distant);
+
+		harness.Engage(protector, raider);
+
+		Assert.Equal(1000, guard.GetAggroList().GetHate(raider));
+		Assert.Equal(0, distant.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary>
+	/// <b>The three rungs are three numbers, and nobody hears the wrong one.</b> A base cutthroat's
+	/// call leaves an artifact guard standing, and an artifact protector's leaves a base soldier
+	/// standing.
+	/// </summary>
+	[Fact]
+	public void TheThreeRungsDoNotHearEachOther()
+	{
+		using BossAiHarness harness = ArtifactHarness();
+		Npc protector = harness.Spawn(ArtifactProtector, 300f, 300f, 200f);
+		Npc baseSoldier = harness.Spawn(Grunt, 306f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(303f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(protector, baseSoldier);
+
+		harness.Engage(protector, raider);
+
+		Assert.Equal(0, baseSoldier.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary><b>And the artifact numbers are retail's too.</b></summary>
+	[Fact]
+	public void TheArtifactNumbersAreRetails()
+	{
+		Assert.Equal(42001, PanesterraArtifactCalls.VritraProtector);
+		Assert.Equal(42101, PanesterraArtifactCalls.LightProtector);
+		Assert.Equal(13f, PanesterraArtifactCalls.CallReach);
+		Assert.Equal(1000, PanesterraArtifactCalls.Absolute);
+		Assert.Equal(7_000, PanesterraArtifactCalls.RepeatMillis);
+	}
 }
