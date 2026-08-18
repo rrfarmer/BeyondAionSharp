@@ -13519,3 +13519,72 @@ answerers only.
 Fourteen pins on the Panesterra family now, and a **five-mutation sweep on the castle half, all
 caught**: the payload dropped to a base's ten, the `is_enemy` deleted, the two companies sharing a
 number, a caller that never calls, and the reach shortened. Full suite **2,195 passing**, 5 skipped.
+
+## Chasing the abnormal-state groups, and a firm negative
+
+Last entry left `on_enter_abnormal_state` measured and unbuilt: 272 patterns, **1,168 live npcs**, of
+which **1,128 sit behind three names nothing readable defines** — `ABNSTATEI_MENTAL_GROUP`,
+`ABNSTATEI_CANNOT_ACT_GROUP` and `ABNSTATEI_PHYSICAL_GROUP`. This entry is the attempt to define them.
+
+**It did not work, and knowing exactly why is worth more than another guess would have been.**
+
+### The lead, which was a good one
+
+Aion has a real player-facing taxonomy behind these names. The game's own wiki describes **mental
+conditions** as *"abnormal conditions such as sleep, fear or paralyze"*, removed by Cure Mind or
+Cleanse, against **physical conditions** removed by Dispel — *"with the exception of Stun"*, which needs
+Remove Shock. **Three player-facing families, three retail group names.**
+
+And the split is already in our data: `skill_templates.xml` carries `dispel_category` on 2,800 skills —
+**315 `DEBUFF_MENTAL`, 2,011 `DEBUFF_PHYSICAL`, 453 `STUN`**. That is the game categorising its own
+debuffs, which is exactly the kind of source this log prefers to a judgment call.
+
+### Why it fails
+
+`dispel_category` is a property of the **skill**, not of the state it inflicts, and the same state is
+inflicted by skills of different categories. Restricting to skills carrying exactly one state-bearing
+effect — which removes every trace of multi-effect contamination, and still leaves 156, 863 and 407
+skills respectively — the three categories **still overlap**:
+
+```
+   DEBUFF_MENTAL    ^ DEBUFF_PHYSICAL  CURSE, DEFORM, PARALYZE, SILENCE, SNARE
+   DEBUFF_MENTAL    ^ STUN             PARALYZE
+   DEBUFF_PHYSICAL  ^ STUN             OPENAERIAL, PARALYZE, STUN
+```
+
+**`PARALYZE` is in all three.** So no partition of `AbnormalState` bits can be read out of this table,
+and a set built from the dominant members would be **a guess dressed as a derivation** — the worst kind
+available here, because it would look sourced. `derive_abnormal_groups.py` exists to show that, not to
+produce an answer; its closing line says so.
+
+### What the attempt did establish
+
+- **`STUN` is 90% `STUN`**, and its members are exactly `SPIN | STUN | STUMBLE | STAGGER` plus
+  `OPENAERIAL`. Our `AbnormalState.ANY_STUN` is `SPIN | STUN | STUMBLE | STAGGER`. **That corroborates
+  `ABNSTATEI_STUN_LIKE_GROUP` → `ANY_STUN` from a direction independent of the name**, which is the one
+  group mapping that was already safe and is now evidenced.
+- **The dominant mental states are `PARALYZE`, `SLEEP`, `FEAR`, `CONFUSE` and `DEFORM`** — 87% of the
+  unambiguous mental skills, and a superset of the wiki's three examples. Suggestive. Not a definition,
+  and the overlap above is why.
+- **`ABNSTATEI_CANNOT_ACT_GROUP` has no counterpart in the dispel data at all.** It is a functional
+  family rather than a curable one, so this whole line of attack could never have reached it. Our
+  `CANT_ATTACK_STATE` composite is the obvious candidate and remains a judgment nobody has evidence for.
+
+### What is still needed
+
+A source that names members rather than skills: **a client build whose string table still carries the
+group names** (the current one does not — all 3,332 `.pak` files were scanned for `MENTAL_GROUP`), an
+NCSoft tools dump, or a server writeup that lists them. The event itself remains a two-line hook in
+`EffectController.SetAbnormal`, which already has the before-and-after bitmask needed to tell entering a
+state from refreshing it. **The work is still the table, not the plumbing.**
+
+### The rule
+
+**A source that categorises the wrong noun is not a source.** `dispel_category` categorises skills and
+the guard needs states categorised; the two agree often enough to look usable and disagree exactly where
+it matters. This is the second time in this log that a promising table has been the wrong shape rather
+than the wrong content — the first was the tribe table's `support` against `friend` — and both times the
+tell was the same: **check whether the thing being counted is the thing being asked about, before
+believing the counts.**
+
+No code or data change. Full suite unchanged at **2,195 passing**, 5 skipped.
