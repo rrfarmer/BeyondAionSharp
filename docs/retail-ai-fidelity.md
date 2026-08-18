@@ -22172,3 +22172,55 @@ Before this the answer to all five was "the mapping does not exist".
 ### Verification
 
 **Reading only, no code.** Full suite unchanged at **2,116 passing**, 1 skipped.
+
+## The missing 123 are missing in retail's own data
+
+The previous entry guessed that Padmarashka's path was absent because the AI pattern dump and the world
+dump came from different builds, and said another dump would settle it. **They came from the same tree,
+and it settles the other way.**
+
+The 5.8 server tree carries **its own copy of the AI patterns**, in `Server/Map/XML`, beside the world
+data in `Server/Map/Worlds`. Comparing them:
+
+```
+server-tree pattern pathnames : 467   resolved: 344
+the dump used all along       : 467   resolved: 344
+names only in the server tree :   0
+```
+
+**Identical.** The dump this log has read for forty passes is this data. And `NpcAIPatterns_LDF4_PJW.xml`
+in the server's own folder names `DF4_MobPath_DF4_Dramata1` — **the same path its neighbouring world file
+never defines.**
+
+So the 123 are not a dump mismatch, a version skew, or a search failure. **Retail's shipped data
+references 123 path names it does not define**, and no further extraction will produce them.
+
+### Which reframes two encounters
+
+If retail's own server cannot resolve `DF4_MobPath_DF4_Dramata1`, then in retail those Padmarashka spawns
+either fail or arrive without a path. **Our not building them may be closer to retail's behaviour than
+building them would be** — which inverts how this log has described them for six passes.
+
+**Stated as a hypothesis, not a conclusion.** The server binaries are here and could be made to answer it;
+reading them is a different kind of work than this log has done, and guessing from absence is what the
+`is_aerial_spawn` and empyrean-lord entries were careful not to do.
+
+**Kaliga is the same case** — his timers arm on an arrival at a path his own world file does not define.
+
+### What actually remains
+
+- **The eight Tiamat rush drakan need npc templates.** Routes present, pattern present, npcs absent from
+  our data — and unlike the paths, npc templates are something this port can add.
+- **The 40 `NPCPathSupport*`** are the only coherent family left among the 123, and on this evidence they
+  are undefined in retail too.
+
+### Still to do
+
+- **Tiamat's rush drakan templates**, now the only thing between three passes of route work and that wave.
+- The empyrean lords' skill indices; Modor's clone; `sematariux` and `king_consierd` spawn entries.
+- The guard report's mixed and misaligned rows, unverified; the `drakanmedic` harness question, last.
+- **Padmarashka and Kaliga are closed as unbuildable-from-data**, unless the server binaries are read.
+
+### Verification
+
+**Reading only, no code.** Full suite unchanged at **2,116 passing**, 1 skipped.
