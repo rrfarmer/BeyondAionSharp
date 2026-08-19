@@ -23700,3 +23700,58 @@ Five flaky pins now, four of them in this one file, every one the same cause.
 
 Build clean. Swapping a brood fails two pins; dropping the lifetime fails a third. **Four consecutive
 full-suite runs**: 2,200 passing (nine new), 1 skipped.
+
+## Triaging the invented-spawn rows, and writing the triage down
+
+**This pass produced no fix, and that is the finding.** Three rows read carefully, all three correctly
+left alone, one hypothesis swept and exhausted, and one candidate fight ruled out. Recording why costs
+less than re-deriving it a fourth time.
+
+### The prefixed-twin vein is exhausted
+
+Two rows were fixed by noticing that ours summoned `idabre_core_02_X` where retail places
+`bidabre_core_02_X`. Swept across **all 53 remaining rows**: **none has a retail-placed prefixed twin.**
+That heuristic is spent.
+
+### Three rows read and dismissed
+
+- **`IllusionMasterSharikAI` spawning its own npc id** is a reset-to-spawn idiom — on going home it
+  re-places itself at one of two fixed points and deletes the old instance. Not a summon at all.
+- **The Raksha flame sectors.** Retail's design is quite different from ours: four *delivery* npcs walk a
+  path and, on reaching a waypoint, broadcast **12501** at eighty metres and despawn; four pre-placed
+  *sector* markers hear it and each light a flame on themselves for ten seconds. Ours places the sector
+  npcs directly, at a dozen hardcoded points. **Retail's chain is unreachable here** — neither the
+  walkers nor the sectors are in spawn data, and the walkers' pattern names no route — so ours is the
+  only thing that puts flames in that room.
+- **The spider eggs' hatch trigger**, from last commit, for the same reason.
+
+### The taxonomy, now in the tool
+
+Rows fall into five shapes and **only the first is a defect**: invented-and-duplicating (delete),
+invented-but-the-only-path (keep, record), prefixed twin (fix), scenery (ignore), and idioms that are not
+summons. **Shape two looks exactly like shape one** until you check whether retail's trigger is
+reachable, and getting it wrong deletes a working mechanic. That is now the audit's docstring rather than
+something to work out again.
+
+### Empress Muada, ruled out for now
+
+`LDF4a_SandWarm_Monarch` is a substantial fight — a hide-and-teleport mechanic below twenty-five per cent,
+a raid exit on death, a dozen timers. **She is in no spawn file and not in the world-raid roster**, so she
+is reachable only by admin spawn. Same category as the Ophidan mirror set: worth porting when something
+places her, not before.
+
+### And a sixth flaky pin was looked for and not found
+
+The other cry-counting pin in `KingspinAiTests` compares two runs with a `>=` rather than an exact count.
+Stress-run **eight times: stable.** Its framing tolerates the variance the other four did not.
+
+### Still to do
+
+- **50 rows** left, now cheap to triage against the taxonomy.
+- **Real mutation testing** — five flaky pins and four inert ones have all been found by hand.
+- **250 spawns named by no pin**; the eighteen orphan classes; the four remaining unported-placement
+  classes; the other 568 fights.
+
+### Verification
+
+Build clean, no behaviour changed. **Three consecutive full-suite runs**: 2,200 passing, 1 skipped.

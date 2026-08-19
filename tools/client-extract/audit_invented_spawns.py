@@ -13,7 +13,27 @@ patterns places it too. An npc ours summons and retail's never does is one of:
 - **a devname our binding table does not resolve**, since 12,000 templates are still unbound.
 
 So a row here is a question, not a verdict. **Read the class and the pattern before deleting anything.**
-The three categories are told apart by hand, and the second and third are common.
+
+## The triage, derived by hand and worth not deriving again
+
+Rows fall into five shapes, and **only the first is a defect**:
+
+1. **Invented, duplicating a real mechanic.** The class summons something retail does not, *and* retail's
+   own version of that mechanic is already ported or portable. Delete the invention. Two so far:
+   `UnstableYamennesAI`'s third golem, and the spider eggs' random brood.
+2. **Invented, and the only path to a real mechanic.** Retail's version depends on a chain this port
+   cannot reach — an npc nothing spawns, a route with no spawn, a message with no sender. **Keep it and
+   record the divergence**; rewriting trades a mechanic that works for one that never fires. The eggs'
+   hatch trigger and the Raksha flame sectors are both this.
+3. **A prefixed twin.** Ours summons `idabre_core_02_X` where retail places `bidabre_core_02_X`. Two
+   cases, both fixed; **a sweep found no others**, so this vein is exhausted.
+4. **Scenery.** Chests, doors, levers and artifacts, which retail spawns from instance scripts the
+   pattern dump does not cover. `--all-types` includes them; the default does not.
+5. **An idiom that is not a summon.** A boss re-placing itself on reset, or summoning the next phase's
+   boss. `IllusionMasterSharikAI` spawning its own npc id is the clearest.
+
+Shape 2 is the one to be careful about: **it looks exactly like shape 1** until you check whether
+retail's trigger is reachable, and getting it wrong deletes a working mechanic.
 
 Usage:
     python audit_invented_spawns.py [--patterns-dir DIR]
