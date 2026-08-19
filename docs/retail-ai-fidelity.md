@@ -24130,3 +24130,57 @@ code is written.
 ### Verification
 
 No code changed this pass; the suite stands where the previous commit left it at 2,221 passing.
+
+## The conquest cascade, ported
+
+Last pass specified this and stopped, because pinning the class first would have frozen the wrong
+behaviour. Built now.
+
+### Two stages where there was one
+
+| | retail | what stood here |
+|---|---|---|
+| cadence | **eight minutes**, on an idle timer | once, on spawning |
+| outcome | 51% solo spot, 22% party spot, **27% nothing** | always something |
+| intermediate | a **spot npc**, living ten seconds | skipped entirely |
+| monster odds | 19/19/20/20 + 6/7/7, remainder to an eighth | 70/30 with a nested 30 |
+
+`ConquestOfferingSpotAI` is the stage that did not exist. The spawner used to place a monster directly,
+so **the spot, its ten seconds and its own roll all went missing together** — and with them the 27%
+chance that a turn of the clock produces nothing, which is a quarter of all turns.
+
+### The tables are extracted, not transcribed
+
+Twenty-four spawners each name their own pair of spots; forty-eight spots each name their own eight
+monsters. That is seventy-two rows, and hand-copying them is exactly the sort of thing that produced the
+reversed band table earlier in this session. Both were generated from the pattern file and checked for
+shape: **every spawner has exactly two branches, and all forty-eight spots carry identical weights** —
+19, 19, 20, 20, 6, 7, 7, summing to ninety-eight, with an eighth branch carrying no probability at all
+and taking the remaining two per cent.
+
+**Checking that regularity was worth it**: "seven monsters" was the reading from the first sample, and
+the eighth branch is invisible until you count rows rather than percentages.
+
+The forty-eight spot npcs ran `general` and are now bound to the new class.
+
+### The pins
+
+Four, asserting what is not random: the eight minutes of silence, that whatever appears is one of *that*
+spawner's two spots and never a neighbour's, that the clock keeps turning, and that a spot rolls exactly
+one monster from its own table of eight.
+
+The class mutates clean — after `Place` was given a block body, because **the harness cannot blank an
+expression-bodied member** and had reported that spawn as "did not compile", which reads as a pass.
+
+### Still to do
+
+- **`ConquestOfferingAggressiveAI`** — 112 npcs bound, still unread and unpinned. It is the monsters
+  these spots place.
+- **Message `13929`**, which resets a spawner's clock and has no sender in this port.
+- 79 unpinned classes; 250 spawns named by no pin; 50 invented-spawn rows; the eighteen orphan classes;
+  the other 568 fights.
+
+### Verification
+
+Build clean. Both spawns die under mutation. **Three consecutive full-suite runs**: 2,225 passing (four
+new), 1 skipped.
