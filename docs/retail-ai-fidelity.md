@@ -24920,3 +24920,53 @@ should follow him or stay where it opened is not something the pattern answers.
 **Still missing**, unchanged: his `on_die` — four condition spawn variables, a door, a fifteen-second
 gossip npc — and `on_leave_attack_state`, which dispels and heals. Both need machinery this port does
 not have for that instance.
+
+## Chantra's area attack ran once every forty seconds
+
+Retail pattern `IDTiamat_Chantra` (219353), with `IDTiamat_Chantra_AreaA_FX` (283092), `_AreaB_FX`
+(283094), their `_After` twins (283171, 283172) and `_DranaFX` (283173).
+
+Terath's neighbour, and the same shape of defect: a fight driven by hand-picked numbers where retail
+has battle timers.
+
+```
+on_enter_attack_state   timers 0=2000, 1=4000, 2=10000
+timer 1, 36%            AreaAtk_A: two casts, spawn DranaFX + AreaA_FX at one fixed point, live 4,
+                        re-arm at 7000               (guarded is_hp_in_boundary 15-100)
+timer 1, otherwise      AreaAtk_B: the same with AreaB_FX
+timer 0                 PowerAtk on his target, re-arm at 8000
+timer 2                 Rage below 14 per cent, re-arm at 3000
+AreaA_FX on waking      idle timer 3000 -> spawn AreaA_FX_After at the same point, live 4
+```
+
+**What this class had.** The area attack opened at five seconds and repeated **every forty** — about six
+times less often than retail. The A/B choice was an even coin flip rather than **36/64**. The after-ring
+was placed by Chantra himself **five** seconds in rather than by the ring **three** seconds in, the ring
+was then deleted by hand, and the after-ring was given **no lifetime at all**. There was **no health
+guard** on any of it, where retail stops the area attack below fifteen per cent. And the rage sat at
+twenty-five per cent against retail's fourteen — the identical correction made to Terath.
+
+**And nothing in this port had ever placed the drana** (283173) that stands beside every ring.
+
+The after-ring now belongs to the ring, in `ChantraAreaRingAI`, which is where retail keeps it — so it
+lands even if Chantra dies in the three seconds between.
+
+**Pins** — `BrigadeGeneralChantraAiTests`, ten, ten mutations, all caught.
+
+**Two of them only after the sweep found them weak, and both are worth naming.**
+
+1. *"The first ring is at four seconds"* advanced three seconds, then two more. **A ring placed at five
+   is also present at five**, so the pin could not tell retail's four from the five it replaced, and
+   putting five back survived. It now advances to four and a half.
+2. *"The ring leaves its hazard"* waited for Chantra to roll a ring — and his roll is 36/64, so it
+   exercises whichever came up. **Rebinding the A ring away from its handler survived**, because the B
+   ring answered on that run. A theory that places each ring directly now pins both pairings, and it
+   catches the rebinding deterministically.
+
+That is a probabilistic pin, which is worse than a weak one: it would have failed eventually, in some
+unrelated commit, and looked like flakiness rather than a real gap.
+
+**Still missing.** His `PowerAtk` on `BTIMERI_INDEX_0` — a plain `use_skill` on his current target every
+eight seconds — needs a skill index and is not translated, so the eight-second beat of his fight is
+absent. Nor is his `on_die` (two condition variables, two doors, a reward message) or his
+`on_leave_attack_state` dispel-and-heal.
