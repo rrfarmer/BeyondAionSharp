@@ -25737,3 +25737,51 @@ the hatchling lands on the egg's own point rather than within a metre of it, and
 validity check that would stop a hatch across a wall is absent. Of the audit's remaining rows,
 `FireStormAI` (20s against 180) and `StrangeCreatureAI` (6.5s against 120) are unread, and traps still
 have **no standing lifetime at all** where retail expires an untriggered one after 100 or 600 seconds.
+
+## Two of Tahabata's hazards shared a class, and neither cadence was his
+
+Third row out of `audit_lifetime_conflicts.py`: `FireStormAI` deleted its owner after twenty seconds
+against a retail `live_time` of a hundred and eighty. The flagged lifetime was real, and reading the
+class found that it is **two different retail npcs wearing one AI**:
+
+| npc | retail pattern | opening | repeat | lifetime |
+|---|---|---|---|---|
+| 283045 "fire storm" | `IDTiamat_Thor_SumStatue_PhyAtk` | 3000 (`add_battle_timer`) | 2000 | **180** (from the boss's rung) |
+| 283102 "fire tornado" | `IDTiamat_Tahabata_Tornado` | 2000 (`set_idle_timer`) | 2000 | none — permanent |
+
+This class gave both of them **one timer: fire immediately, then every second**. So both hazards ran at
+**twice retail's rate with no opening delay at all** — a player who is put under the statue or walks
+into the tornado is hit on the frame they arrive, and then twice as often as they should be for as long
+as they stay. The opening delay is the part of a hazard that makes it dodgeable.
+
+**And the statue's twenty seconds.** Retail spawns it in the boss's `ConcentratedFire` rung with
+`live_time=180` — it is meant to follow the player it was cast on for three minutes. Twenty seconds
+turns a sustained pressure mechanic into a blip. The tornado, spawned by the rage rung with no
+`live_time` at all, is correctly permanent, and the pins hold that apart from the statue's number
+deliberately: the tempting wrong fix here is to raise one shared constant and hand the tornado a
+lifetime it should not have.
+
+**Pins** — six in `FireStormAiTests`, six mutations, all caught, including the two that swap the
+openings between the npcs and the one that gives the tornado the statue's lifetime.
+
+**A pin that passed on nothing, caught before it was committed.** The first version of the cadence pins
+asserted `BossAiHarness.DrainQueuedSkills`, and the "does not fire on landing" case **passed on an empty
+list** — that queue belongs to a different cast path and was never going to fill for an
+`AIActions.UseSkill` caller. It only surfaced because the *positive* case in the same file then failed
+for the same reason. A pin that can only ever see an empty collection passes forever and asserts
+nothing.
+
+**What is simplified, and stated in the class.** Retail's tornado does not cast: it spawns
+`IDTiamat_Tahabata_TornadoDMGArea` on its own point for three seconds per pulse — the FX/DMG pair this
+port collapses into one casting npc. The collapse is kept. Retail also arms the statue's timer on
+`on_enter_attack_state` rather than on spawning, which makes no difference here because neither npc
+fights.
+
+**Still missing.** The cadence half is pinned **as a table, not through a fight**, because
+`AIActions.UseSkill` leaves nothing observable under the virtual clock. That is the same limitation
+blocking cast-cadence pinning across this whole family, and it is now the second-largest gap after the
+skill index. Separately, retail's rage rung spawns the tornado at `is_hp_lower_than percent=10` where
+this port's phase table fires at **7** — left alone because the table came from Java and moving one
+entry moves the whole phase sequence, but it is a real disagreement worth a look. Of the audit's
+remaining rows, `StrangeCreatureAI` (6.5s against 120) is unread, and traps still have **no standing
+lifetime at all**.
