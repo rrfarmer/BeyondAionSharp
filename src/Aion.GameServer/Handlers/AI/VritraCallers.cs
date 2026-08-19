@@ -18,7 +18,11 @@ namespace Aion.GameServer.Handlers.AI;
 internal static class VritraCallers
 {
     /// <summary>One spawn: who, how many, and where.</summary>
-    internal readonly record struct Placement(int NpcId, int Count, float X, float Y, float Z);
+    /// <param name="Lane">
+    /// Our route id for the client <c>pathname</c> on this spawn action, or null if it carried none.
+    /// The trooper walks it after appearing at the coordinates.
+    /// </param>
+    internal readonly record struct Placement(int NpcId, int Count, float X, float Y, float Z, string? Lane);
 
     /// <summary>One branch of the cascade.</summary>
     /// <param name="Chance">Percent, or 100 for the unguarded fallback.</param>
@@ -27,20 +31,50 @@ internal static class VritraCallers
     internal static readonly IReadOnlyDictionary<int, Option[]> ByCaller = new Dictionary<int, Option[]>
     {
         // BIDRuneWP_Main_CallVritra02
-        [284675] = [new Option(20, [new Placement(231097, 1, 150.03f, 145.5f, 125.2f)]), new Option(20, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f)]), new Option(20, [new Placement(231098, 1, 150.03f, 145.5f, 125.2f)]), new Option(20, [new Placement(233288, 1, 150.03f, 145.5f, 125.2f)]), new Option(50, [new Placement(233289, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233292, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233294, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233295, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233296, 1, 150.03f, 145.5f, 125.2f)]), new Option(100, [new Placement(233293, 1, 150.03f, 145.5f, 125.2f)])],
+        [284675] = [new Option(20, [new Placement(231097, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(20, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(20, [new Placement(231098, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(20, [new Placement(233288, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(50, [new Placement(233289, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233292, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233294, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233295, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233296, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(100, [new Placement(233293, 1, 150.03f, 145.5f, 125.2f, "3008000001")])],
         // BIDRuneWP_Main_CallVritra04
-        [284676] = [new Option(20, [new Placement(231097, 1, 150.03f, 145.5f, 125.2f)]), new Option(20, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f)]), new Option(20, [new Placement(231098, 1, 150.03f, 145.5f, 125.2f)]), new Option(20, [new Placement(233288, 1, 150.03f, 145.5f, 125.2f)]), new Option(50, [new Placement(233289, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233292, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233294, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233295, 1, 150.03f, 145.5f, 125.2f)]), new Option(10, [new Placement(233296, 1, 150.03f, 145.5f, 125.2f)]), new Option(100, [new Placement(233293, 1, 150.03f, 145.5f, 125.2f)])],
+        [284676] = [new Option(20, [new Placement(231097, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(20, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(20, [new Placement(231098, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(20, [new Placement(233288, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(50, [new Placement(233289, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233292, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233294, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233295, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(10, [new Placement(233296, 1, 150.03f, 145.5f, 125.2f, "3008000001")]), new Option(100, [new Placement(233293, 1, 150.03f, 145.5f, 125.2f, "3008000001")])],
         // BIDRuneWP_Main_CallVritra06
-        [284677] = [new Option(100, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f), new Placement(233294, 1, 150.03f, 145.5f, 125.2f), new Placement(233296, 1, 150.03f, 140.5f, 125.2f)])],
+        [284677] = [new Option(100, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f, "3008000001"), new Placement(233294, 1, 150.03f, 145.5f, 125.2f, "3008000001"), new Placement(233296, 1, 150.03f, 140.5f, 125.2f, "3008000001")])],
         // BIDRuneWP_Main_CallVritra10
-        [284678] = [new Option(100, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f), new Placement(233294, 1, 150.03f, 145.5f, 125.2f), new Placement(233295, 1, 150.03f, 140.5f, 125.2f)])],
+        [284678] = [new Option(100, [new Placement(231096, 1, 150.03f, 145.5f, 125.2f, "3008000001"), new Placement(233294, 1, 150.03f, 145.5f, 125.2f, "3008000001"), new Placement(233295, 1, 150.03f, 140.5f, 125.2f, "3008000001")])],
         // BIDRuneWP_Main_CallVritra02B
-        [284679] = [new Option(20, [new Placement(231100, 1, 108.07f, 128.86f, 124.76f)]), new Option(20, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f)]), new Option(20, [new Placement(231101, 1, 108.07f, 128.86f, 124.76f)]), new Option(20, [new Placement(233290, 1, 108.07f, 128.86f, 124.76f)]), new Option(50, [new Placement(233291, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233297, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233299, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233300, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233301, 1, 108.07f, 128.86f, 124.76f)]), new Option(100, [new Placement(233298, 1, 108.07f, 128.86f, 124.76f)])],
+        [284679] = [new Option(20, [new Placement(231100, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(20, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(20, [new Placement(231101, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(20, [new Placement(233290, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(50, [new Placement(233291, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233297, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233299, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233300, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233301, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(100, [new Placement(233298, 1, 108.07f, 128.86f, 124.76f, "3008000002")])],
         // BIDRuneWP_Main_CallVritra04B
-        [284680] = [new Option(20, [new Placement(231100, 1, 108.07f, 128.86f, 124.76f)]), new Option(20, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f)]), new Option(20, [new Placement(231101, 1, 108.07f, 128.86f, 124.76f)]), new Option(20, [new Placement(233290, 1, 108.07f, 128.86f, 124.76f)]), new Option(50, [new Placement(233291, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233297, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233299, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233300, 1, 108.07f, 128.86f, 124.76f)]), new Option(10, [new Placement(233301, 1, 108.07f, 128.86f, 124.76f)]), new Option(100, [new Placement(233298, 1, 108.07f, 128.86f, 124.76f)])],
+        [284680] = [new Option(20, [new Placement(231100, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(20, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(20, [new Placement(231101, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(20, [new Placement(233290, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(50, [new Placement(233291, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233297, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233299, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233300, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(10, [new Placement(233301, 1, 108.07f, 128.86f, 124.76f, "3008000002")]), new Option(100, [new Placement(233298, 1, 108.07f, 128.86f, 124.76f, "3008000002")])],
         // BIDRuneWP_Main_CallVritra06B
-        [284681] = [new Option(100, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f), new Placement(233299, 1, 108.07f, 128.86f, 124.76f), new Placement(233301, 1, 108.07f, 128.86f, 124.76f)])],
+        [284681] = [new Option(100, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f, "3008000002"), new Placement(233299, 1, 108.07f, 128.86f, 124.76f, "3008000002"), new Placement(233301, 1, 108.07f, 128.86f, 124.76f, "3008000002")])],
         // BIDRuneWP_Main_CallVritra10B
-        [284682] = [new Option(100, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f), new Placement(233299, 1, 108.07f, 128.86f, 124.76f), new Placement(233300, 1, 108.07f, 128.86f, 124.76f)])],
+        [284682] = [new Option(100, [new Placement(231099, 1, 108.07f, 128.86f, 124.76f, "3008000002"), new Placement(233299, 1, 108.07f, 128.86f, 124.76f, "3008000002"), new Placement(233300, 1, 108.07f, 128.86f, 124.76f, "3008000002")])],
+    };
+
+    /// <summary>Which lane each trooper marches once it is on the floor.</summary>
+    /// <remarks>
+    /// Derived from the <c>pathname</c> on the spawn actions above. The emitter refuses to write this if
+    /// any npc id appears on two different lanes, because the AI looks its own lane up by npc id and that
+    /// is only sound while each id has exactly one.
+    /// </remarks>
+    internal static readonly IReadOnlyDictionary<int, string> LaneOf = new Dictionary<int, string>
+    {
+        [231096] = "3008000001",
+        [231097] = "3008000001",
+        [231098] = "3008000001",
+        [231099] = "3008000002",
+        [231100] = "3008000002",
+        [231101] = "3008000002",
+        [233288] = "3008000001",
+        [233289] = "3008000001",
+        [233290] = "3008000002",
+        [233291] = "3008000002",
+        [233292] = "3008000001",
+        [233293] = "3008000001",
+        [233294] = "3008000001",
+        [233295] = "3008000001",
+        [233296] = "3008000001",
+        [233297] = "3008000002",
+        [233298] = "3008000002",
+        [233299] = "3008000002",
+        [233300] = "3008000002",
+        [233301] = "3008000002",
     };
 }

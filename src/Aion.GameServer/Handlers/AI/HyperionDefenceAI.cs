@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
@@ -47,25 +46,6 @@ public class HyperionDefenceAI : PatternAi
 	/// <summary>Retail's <c>21101</c>: Hyperion is finished, one way or the other.</summary>
 	public const int StandDown = 21101;
 
-	/// <summary>The two lanes, as imported into <c>300800000_Infinity_Shard.xml</c>.</summary>
-	public const string LaneOne = "3008000001";
-	public const string LaneTwo = "3008000002";
-
-	/// <summary>
-	/// Which lane each trooper marches. Read from the <c>pathname</c> on the callers' spawn actions: the
-	/// plain callers place their troopers on lane one and the <c>B</c> callers on lane two, and no npc id
-	/// appears under both.
-	/// </summary>
-	private static readonly Dictionary<int, string> Lanes = new Dictionary<int, string>
-	{
-		[231096] = LaneOne, [231097] = LaneOne, [231098] = LaneOne,
-		[233288] = LaneOne, [233289] = LaneOne, [233292] = LaneOne,
-		[233293] = LaneOne, [233294] = LaneOne, [233295] = LaneOne, [233296] = LaneOne,
-		[231099] = LaneTwo, [231100] = LaneTwo, [231101] = LaneTwo,
-		[233290] = LaneTwo, [233291] = LaneTwo, [233297] = LaneTwo,
-		[233298] = LaneTwo, [233299] = LaneTwo, [233300] = LaneTwo, [233301] = LaneTwo,
-	};
-
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(
@@ -87,10 +67,15 @@ public class HyperionDefenceAI : PatternAi
 	/// Puts the trooper on its lane. The callers spawn these at runtime, so there is no spawn row to carry
 	/// a <c>walker_id</c> and the route has to be attached here instead.
 	/// </summary>
+	/// <remarks>
+	/// The lane comes from <see cref="VritraCallers.LaneOf"/>, which is generated from the same spawn
+	/// actions as the coordinates beside it. It was a hand-written copy in this class for one commit,
+	/// which is one commit of somebody being able to edit one of the two and not the other.
+	/// </remarks>
 	protected override void HandleSpawned()
 	{
 		base.HandleSpawned();
-		if (Lanes.TryGetValue(GetNpcId(), out string? lane))
+		if (VritraCallers.LaneOf.TryGetValue(GetNpcId(), out string? lane))
 		{
 			GetSpawnTemplate().SetWalkerId(lane);
 			Aion.GameServer.Ai.Manager.WalkManager.StartWalking(this);

@@ -35,6 +35,9 @@ CALLER_RE = re.compile(r"^BIDRuneWP_Main_CallVritra")
 NAMEID_RE = re.compile(r"<npc_nameid>([^<]+)</npc_nameid>")
 COUNT_RE = re.compile(r"<num_to_spawn>(\d+)</num_to_spawn>")
 COORD_RE = {axis: re.compile(rf"<{axis}>(-?[\d.]+)</{axis}>") for axis in ("x", "y", "z")}
+# The lane the trooper marches once it is on the floor. Dropping this was why the wave arrived at the
+# objective instead of walking to it -- the coordinates alone look like a complete spawn and are not.
+PATHNAME_RE = re.compile(r"<pathname>([^<]*)</pathname>")
 PRIORITY_RE = re.compile(r"<priority>(\d+)</priority>")
 
 
@@ -92,10 +95,12 @@ def main() -> None:
                         skipped[f"{name}: spawn without coordinates"] += 1
                         spawns = []
                         break
+                    path = PATHNAME_RE.search(body)
                     spawns.append((
                         npc_id,
                         int(count.group(1)) if count else 1,
                         coords["x"].group(1), coords["y"].group(1), coords["z"].group(1),
+                        path.group(1) if path and path.group(1) else "",
                     ))
                 if not spawns:
                     continue
@@ -114,11 +119,11 @@ def main() -> None:
             for caller_id in caller_ids:
                 for index, source in enumerate(order):
                     _prio, chance, spawns = options[source]
-                    for npc_id, count, x, y, z in spawns:
-                        rows.append((caller_id, name, index, chance, npc_id, count, x, y, z))
+                    for npc_id, count, x, y, z, pathname in spawns:
+                        rows.append((caller_id, name, index, chance, npc_id, count, x, y, z, pathname))
 
     rows.sort(key=lambda r: (int(r[0]), r[2]))
-    header = "caller_npc_id\tpattern\toption\tchance\tnpc_id\tcount\tx\ty\tz"
+    header = "caller_npc_id\tpattern\toption\tchance\tnpc_id\tcount\tx\ty\tz\tpathname"
     body = "\n".join([header] + ["\t".join(str(c) for c in r) for r in rows]) + "\n"
     if args.out:
         pathlib.Path(args.out).write_text(body, encoding="utf-8")

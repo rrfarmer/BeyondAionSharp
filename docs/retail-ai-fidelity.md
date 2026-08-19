@@ -28426,3 +28426,48 @@ compiled and non-compiled separately, and the docstring says so.
   hand-written map because the generated table has nowhere to put it. That is a small emitter change and
   it should be made before the next person edits one of the two and not the other.
 - The two invisible controllers that answer `21101` and which our data never spawns, unchanged.
+
+## Paying off the duplicated lane map before anyone edits half of it
+
+Last commit ended by naming its own debt: the Hyperion lane mapping was written out by hand in
+`HyperionDefenceAI` because `VritraCallers.cs` — generated from the very spawn actions the lanes come
+from — had nowhere to put it. *"That is a small emitter change and it should be made before the next
+person edits one of the two and not the other."* It is made.
+
+**The pathname now travels the whole pipeline.** `extract_vritra_callers.py` emits it as a tenth column,
+`Placement` carries a `Lane`, and the emitter derives a second table, `LaneOf`, keyed by npc id — which is
+what the AI actually needs, because a trooper looks up its own lane rather than being handed one.
+
+**The emitter refuses to write a lane it does not understand.** Two guards, both of which would have
+caught the original loss:
+
+- a `pathname` with no route id in the emitter's `LANES` map stops the run and says to import it first;
+- an npc id appearing on two different lanes stops the run, because the whole npc-id lookup is only sound
+  while that does not happen.
+
+The client path to route id mapping stays in the emitter as a visible literal. **Route ids are ours to
+choose, so that is a decision and not a translation**, and burying it in derived code is how it would stop
+being reviewable.
+
+**The generated table came out identical to the hand-written map** — 20 troopers, same lanes, checked
+after the fact rather than assumed. That agreement is the only real evidence the hand copy was right while
+it existed.
+
+**Pins** — two new, and they pin the *generator* rather than the AI:
+
+> Every trooper any caller can spawn has a lane, and the lane on each placement equals the lane its
+> trooper looks up. **A placement with no lane is the original bug returning**, and it is invisible to
+> every other pin in that file because those name their troopers explicitly.
+
+Three mutations against the generated table, all three caught: a lost trooper, a nulled lane, a trooper
+moved to the wrong lane. Full solution green at 2,771.
+
+**Still missing.**
+
+- **Nine classes** from the waypoint audit, unchanged and unchecked: `captured_drakan_scientist`,
+  `brigade_general_vasharti`, `padmarashka_world_boss`, `sematariux`, `poppyontherun`, the two Eternal
+  Bastion classes, `summoner` and `useitem`.
+- **`LANES` covers two paths because two paths are all that appear here.** The next generator that needs a
+  route will hit the emitter's first guard, by design — it is meant to be a stop, not a surprise.
+- Everything else these twelve Hyperion patterns do, which is still a great deal of casting, and the two
+  invisible `21101` controllers our data never spawns.

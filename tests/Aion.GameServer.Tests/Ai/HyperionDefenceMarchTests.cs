@@ -126,6 +126,52 @@ public sealed class HyperionDefenceMarchTests
 		Assert.True(trooper.GetAi().IsInState(AIState.FIGHT), "the trooper reached the objective and did nothing");
 	}
 
+	/// <summary>
+	/// <b>Every trooper a caller can put on the floor has a lane.</b>
+	/// </summary>
+	/// <remarks>
+	/// This pins the generator rather than the AI. <c>VritraCallers.cs</c> is emitted from the same spawn
+	/// actions as the coordinates beside it, and the first version of that emitter <b>dropped the
+	/// pathname</b> -- which is the whole reason the wave arrived at the objective instead of walking to
+	/// it. A placement with no lane is that bug coming back, and it is invisible in every other pin here
+	/// because those name their troopers explicitly.
+	/// </remarks>
+	[Fact]
+	public void EveryTrooperACallerSpawnsHasALane()
+	{
+		List<int> spawnable = VritraCallers.ByCaller.Values
+			.SelectMany(options => options)
+			.SelectMany(option => option.Spawns)
+			.Select(spawn => spawn.NpcId)
+			.Distinct()
+			.ToList();
+
+		Assert.NotEmpty(spawnable);
+		Assert.All(spawnable, npcId => Assert.True(VritraCallers.LaneOf.ContainsKey(npcId),
+			$"trooper {npcId} can be spawned but has no lane to march"));
+	}
+
+	/// <summary>
+	/// <b>The lane on each placement agrees with the lane the trooper looks up.</b> The AI reads
+	/// <c>LaneOf</c> by npc id; the placement carries the lane its caller actually named. They are two
+	/// views of one fact and nothing keeps them together but the emitter.
+	/// </summary>
+	[Fact]
+	public void ThePlacementLaneAgreesWithTheTrooperLane()
+	{
+		foreach (VritraCallers.Option[] options in VritraCallers.ByCaller.Values)
+		{
+			foreach (VritraCallers.Option option in options)
+			{
+				foreach (VritraCallers.Placement spawn in option.Spawns)
+				{
+					Assert.NotNull(spawn.Lane);
+					Assert.Equal(spawn.Lane, VritraCallers.LaneOf[spawn.NpcId]);
+				}
+			}
+		}
+	}
+
 	private static void ArriveAt(Npc npc, int stepIndex)
 	{
 		npc.GetMoveController().SetRouteStep(
