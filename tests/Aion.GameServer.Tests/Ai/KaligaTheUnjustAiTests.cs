@@ -1,6 +1,7 @@
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -106,5 +107,129 @@ public sealed class KaligaTheUnjustAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(5));
 
 		Assert.Equal(0, Count(harness, Marker));
+	}
+
+	/// <summary>The ladder that was dead: two statues a rung, and a column on his quarry.</summary>
+	private const int Nagolem = 282124;
+	private const int VotaicColumn = 282120;
+
+	private static (BossAiHarness, Npc, Player) Fighting()
+	{
+		BossAiHarness harness = NewHarness();
+		Npc kaliga = harness.Spawn(Kaliga, 669.214f, 774.387f, 216.88f);
+		Player player = harness.SpawnPlayer(671f, 776f, 216.88f);
+		BossAiHarness.MakeMutuallyKnown(kaliga, player);
+		harness.Engage(kaliga, player);
+		return (harness, kaliga, player);
+	}
+
+	/// <summary>
+	/// <b>Below eighty he sets two statues, and below fifty two more.</b>
+	/// </summary>
+	/// <remarks>
+	/// <b>His entire health ladder used to be dead</b>, and not because it was unported: retail arms its
+	/// two clocks only from <c>on_arrived_at_waypoint</c>, at the end of a two-hop walk, and our
+	/// instance handler spawns him on one static spot with no route. So the branches existed in retail,
+	/// the engine could not reach them, and the fight had no mechanics at all.
+	/// <para>
+	/// The engine grew waypoint arrival this session, so retail's own branches are written too — but
+	/// they still cannot fire without a route, which is why the clocks are also armed on entering
+	/// combat. That is the divergence, and it is the difference between a ladder and nothing.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheStatueRungsSetTwoEach()
+	{
+		var (harness, kaliga, _) = Fighting();
+		using BossAiHarness _h = harness;
+
+		Assert.Equal(0, Count(harness, Nagolem));
+
+		BossAiHarness.SetHpPercent(kaliga, 79);
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		Assert.Equal(2, Count(harness, Nagolem));
+
+		BossAiHarness.SetHpPercent(kaliga, 49);
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		Assert.Equal(4, Count(harness, Nagolem));
+	}
+
+	/// <summary><b>And each rung opens once</b>, however long the fight stays in it.</summary>
+	[Fact]
+	public void AStatueRungOpensOnlyOnce()
+	{
+		var (harness, kaliga, _) = Fighting();
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetHpPercent(kaliga, 79);
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		Assert.Equal(2, Count(harness, Nagolem));
+
+		// The ladder clock keeps ticking every five seconds; the flag var is what stops the rung.
+		harness.Clock.Advance(TimeSpan.FromSeconds(30));
+		Assert.Equal(2, Count(harness, Nagolem));
+	}
+
+	/// <summary><b>Above eighty he sets none at all.</b></summary>
+	[Fact]
+	public void AboveEightyThereAreNoStatues()
+	{
+		var (harness, kaliga, _) = Fighting();
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetHpPercent(kaliga, 90);
+		harness.Clock.Advance(TimeSpan.FromSeconds(40));
+
+		Assert.Equal(0, Count(harness, Nagolem));
+		Assert.Equal(0, Count(harness, VotaicColumn));
+	}
+
+	/// <summary>
+	/// <b>And below fifty the columns start</b>, on a coin flip every twenty seconds.
+	/// </summary>
+	/// <remarks>
+	/// Retail guards the column on <c>test_probability 50</c>, so this asserts that some arrive over
+	/// several turns rather than that one arrives on a given turn — the distinction that made five pins
+	/// in this suite flaky before it was learned.
+	/// </remarks>
+	[Fact]
+	public void BelowFiftyTheColumnsStart()
+	{
+		var (harness, kaliga, player) = Fighting();
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetHpPercent(kaliga, 40);
+
+		BossAiHarness.Watched columns = harness.WatchNew(
+			200, () => BossAiHarness.Rehate(kaliga, player), VotaicColumn);
+
+		Assert.True(columns.Total > 0, "no column arrived in ten turns of the twenty-second clock");
+	}
+
+	/// <summary>Retail's going-home pair, ten seconds each at his own point.</summary>
+	private const int LeavingMarkerA = 282084;
+	private const int LeavingMarkerB = 282085;
+
+	/// <summary>
+	/// <b>Going home he leaves two markers behind</b>, which nothing asserted until the mutation
+	/// harness deleted them and the suite stayed green.
+	/// </summary>
+	[Fact]
+	public void GoingHomeLeavesTwoMarkers()
+	{
+		var (harness, kaliga, _) = Fighting();
+		using BossAiHarness _h = harness;
+
+		Assert.Equal(0, Count(harness, LeavingMarkerA));
+
+		kaliga.GetAi().OnGeneralEvent(AiEventType.BACK_HOME);
+
+		Assert.Equal(1, Count(harness, LeavingMarkerA));
+		Assert.Equal(1, Count(harness, LeavingMarkerB));
+
+		// Ten seconds, which is retail's live_time -- they are a going-home effect, not scenery.
+		harness.Clock.Advance(TimeSpan.FromSeconds(11));
+		Assert.Equal(0, Count(harness, LeavingMarkerA));
+		Assert.Equal(0, Count(harness, LeavingMarkerB));
 	}
 }

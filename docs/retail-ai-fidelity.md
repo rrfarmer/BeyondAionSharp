@@ -23860,3 +23860,65 @@ Writing a pin for the second or third kind means inventing an assertion the port
 
 Build clean. Both of Miladi's guards now die under mutation; the Dark Poeta high band does too, once the
 mutation was fixed. **Three consecutive full-suite runs**: 2,208 passing (one new), 1 skipped.
+
+## Kaliga's dead ladder, woken — and two ways the mutation harness misled
+
+### The ladder
+
+`KaligaTheUnjustAI` carried a remark saying his whole health ladder was unreachable: every rung sits
+under `on_battle_timer`, but **its two clocks are armed only by `on_arrived_at_waypoint`**, at the end of
+a two-hop walk he takes on entering combat, and *"our runtime has no waypoint-arrival event"*.
+
+**That remark was stale.** The engine grew `OnArrivedAtWaypoint`, `When.AtWaypoint` and
+`Do.StartWalking` earlier in this session, for Ophidan Bridge's patrols. Retail's branches can now be
+written, and they are — arrive at waypoint 2, walk on; arrive at 4, arm both clocks.
+
+**But that alone would not have woken it.** The instance handler spawns him on one static spot with no
+route, so the arrival still cannot fire. The clocks are therefore armed on entering combat as well: a
+divergence of the few seconds the walk would have taken, against a fight that had **no mechanics at
+all**.
+
+What that buys:
+
+| rung | |
+|---|---|
+| below 80, once | **two ancient temple nagolems** on two fixed posts |
+| below 50, once | **two more** on the same posts |
+| below 50, every 20s, **coin flip** | a **votaic column** on his quarry |
+| below 25, once | the enrage |
+
+Both statue rungs name the same pair of posts, which is retail's own doing and worth not tidying.
+
+### Two ways the harness misled, both now fixed
+
+**It borrowed another class's pins.** `AhserionAI` has no test file, and a prefix match handed it
+`AhserionTrooperAiTests` — reporting **five survivors** where the truthful answer is *"this class has no
+pins at all"*. A borrowed filter turns *no coverage* into *bad coverage*, which is a worse thing to read.
+Exact match only now, and the class list drops from 82 to **79**.
+
+**And it must not run while anything else touches the tree.** It edits sources in place. A full-suite run
+started alongside a batch reported five failures in one class and two in another on separate runs —
+**which read exactly like newly flaky pins and were nothing of the kind.** I nearly recorded them as
+such. The suite was re-run after the batch finished and is clean. It also rewrites line endings on every
+file it touches, so `git status` lists files `git diff` shows nothing for.
+
+### The batch
+
+Twenty classes, 52 mutations: **seventeen fully pinned**, three with survivors —
+`AdjutantAnuhartAI` (1) and `CalindiFlamelordAI` (2), plus Ahserion's five which were the mis-filter.
+
+Kaliga's own six mutations all die, including the two going-home markers that turned out to be unpinned
+when he was mutated.
+
+### Still to do
+
+- **Three real survivors** from the batch, and **59 classes** not yet mutated.
+- **Kaliga's route.** Give him one and retail's own arrival branches take over; the fallback arm is only
+  there because the instance places him statically.
+- Timers, broadcasts and target selection still have no mutation mode.
+- 250 spawns named by no pin; 50 invented-spawn rows; the eighteen orphan classes; the other 568 fights.
+
+### Verification
+
+Build clean. All six of Kaliga's spawns die under mutation. **Three consecutive full-suite runs, after
+the batch finished**: 2,213 passing (five new), 1 skipped.

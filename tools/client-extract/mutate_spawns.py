@@ -35,6 +35,12 @@ run over a few classes at a time rather than the whole tree.
 `git status` will show the damage and `git checkout --` will undo it; nothing is written outside the one
 file under test.
 
+**Do not run anything else against this tree while it works.** It edits sources in place, so a test run
+started alongside it compiles whatever mutation happens to be on disk. A full-suite run during one batch
+reported five failures in one class and two in another on separate runs, which read exactly like newly
+flaky pins and were nothing of the kind. It also rewrites line endings on every file it touches, so
+`git status` will list them even though `git diff` shows nothing.
+
 Usage:
     python mutate_spawns.py YamennesAI StormwingAI
     python mutate_spawns.py --mode thresholds ChiefMaidMiladiAI
@@ -143,12 +149,15 @@ def widen(text: str, index: int) -> str:
 
 
 def test_filter(class_name: str) -> str | None:
-    """The xunit filter for a class's pins, or None when it has no test file."""
-    stem = class_name.removesuffix("AI")
-    for path in TEST_DIR.glob("*.cs"):
-        if path.stem.lower().startswith(stem.lower()):
-            return path.stem
-    return None
+    """The xunit filter for a class's pins, or None when it has no test file of its own.
+
+    **Exact match only.** A prefix match silently borrows a neighbour's pins: `AhserionAI` has no test
+    file, and matching on prefix handed it `AhserionTrooperAiTests`, which reported five survivors when
+    the truthful answer was "this class has no pins at all". A borrowed filter turns a class with no
+    coverage into a class with bad coverage, which is a worse thing to read.
+    """
+    exact = TEST_DIR / f"{class_name.removesuffix('AI')}AiTests.cs"
+    return exact.stem if exact.exists() else None
 
 
 def spawn_lines(text: str) -> list[int]:
