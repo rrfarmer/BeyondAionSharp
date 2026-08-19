@@ -25569,3 +25569,42 @@ it stays. Recorded here rather than changed.
 
 **His 55% rung is already right.** Retail spawns one clone (233162) at his own point within five metres,
 once, flag-guarded, and that is exactly what the class does.
+
+## Shabokan's two mechanics were a coin flip on one clock
+
+Retail pattern `IDTiamat_Shavorkhan` (219352), with `_EarthQuakeFX` (283081), `_EarthQuakeDMG` (283082),
+`_Sink` (283083) and `_SinkDMG` (283084).
+
+The opening check added last pass produced two false positives before this one; **Shabokan is the first
+true hit**, and the openings turned out to be the smallest part of it.
+
+```
+on_enter_attack_state   timers 0=6000, 1=15000, 2=20000, 3=30000, 4=6000
+timer 3 (earthquake)    HP 16-100: spawn EarthQuakeFX at own point, live 8; re-arm 50000
+timer 2 (sink)          HP 16-100: spawn_on_multi_target Sink, live 60, ascending,
+                        total_set_to_spawn 6, valid_distance 100, hate 1; re-arm 22000
+```
+
+**They are two rungs and this class ran one.** A single task from five seconds every thirty tossed a
+coin between them, so each mechanic arrived at random and at the wrong rate — the sink got a turn about
+once a minute against retail's twenty-two seconds, less than half as often.
+
+**The sink took the whole raid.** Retail's `total_set_to_spawn` is **six**, in ascending aggro order,
+within a hundred metres. This class put one on **every** player it could see inside thirty — so a large
+raid took more sinks than a small one, and anybody standing back took none.
+
+**And it placed two npcs per target where retail places one.** Retail spawns only the sink; the sink's
+own pattern puts down its `SinkDMG` twin. Both ids run `SinkingSandAI` here, which casts once and
+removes itself — so the pair meant **two casts per target**.
+
+**Neither rung had a health floor.** Retail guards both with `is_hp_in_boundary larger_than=16`.
+
+**Pins** — `InvincibleShabokanAiTests`, five, five mutations, all caught.
+
+**Still missing.** The earthquake keeps this port's collapse — it spawns the damage npc (283082)
+directly rather than the FX (283081) that would place it — and with it an "only if none is standing"
+guard and no lifetime, which between them let it fire once per fight. Retail gives the FX eight seconds
+and re-arms at fifty. That is the same guard-plus-no-lifetime shape corrected for Ebonsoul and
+Kumbanda, and it is left here because the earthquake npc's own AI was not read this pass. `SinkingSandAI`
+also removes itself after about four seconds where retail's sink stands for sixty, so the hazard is a
+flash rather than a field.
