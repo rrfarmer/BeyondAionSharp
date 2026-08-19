@@ -26467,3 +26467,49 @@ village chiefs broadcast 30002 at **twenty** metres where everything else uses f
 **Also worth carrying forward:** the full-suite runs in this commit were invoked so that a failing test
 name is printed, after last commit's single unexplained failure was captured at quiet verbosity and
 lost. Three runs, all clean, and this time a failure would have named itself.
+
+## Trying to port the protectors' half of the killer call, and putting it back
+
+Having sized the 30001/30002/30003 family last commit, the obvious next step was the biggest coherent
+slice: `AbstractSiegeProtectorAI`, which is 497 of the 807 npcs and covers both the artifact and
+fortress protectors in one class. Retail gives it two reachable rungs — answer **30001** by going for
+the sender with a million hate points, and broadcast **30003** on dying so the killer hunting it can
+stand down. Neither needs a skill index. It was written, it built, and **it was reverted.**
+
+**Two things came out of trying it, and both are why it went back.**
+
+**Nothing in this port sends 30001.** The listener would have been dead code from the moment it landed.
+The senders are 46 npcs across twelve (pattern, AI) pairs, and not one of them is on a class that could
+send it:
+
+| npcs | current AI | retail pattern |
+|---|---|---|
+| 19 | `aggressive` | `LDF4_Advance_Killer_43` |
+| 7 | `aggressive` | `AB1_DrGuard_Artifact_Killer` |
+| 5 | **none at all** | `LDF5_Fortress_Ctrl_01` |
+| 5 | **none at all** | `AB1_DrGuard_Artifact_Killer` |
+| 3 | `abyss_guard_call` | `LDF5_Fortress_DrGuard_Artifact_Killer` |
+| 6 | mixed | the remainder |
+
+Ten of the forty-six have **no AI attribute at all**, so they cannot hear or say anything until they are
+given a name in `npc_templates`. That is a data change on top of the code change, and it is the reason
+this is not one class's worth of work.
+
+**And the half that does fire could not be pinned.** The 30003 broadcast on death is real, but **no npc
+in our data carries an AI that listens for it**, so nothing observes it. The attempt to plant a probe
+listener failed for the same reason the mechanic does: the probe's AI name has to come from the npc's
+own template, and no template names it. A pin that plants its own listener would have been pinning the
+probe, not the port.
+
+**A third thing, which is a genuine finding about the mechanic.** The first two pins failed because the
+"killer" in them was another artifact protector — and retail's rungs are guarded by
+`is_enemy who=OBJI_MESSAGE_SENDER`. Every artifact protector in our data is `race="DRAKAN"`,
+`tribe="GUARD_DRAGON"`; they are never each other's enemies, so a protector correctly ignored the call.
+**The guard is doing real work**, and any port of this family has to keep it rather than treat it as
+boilerplate: without it, one protector waking would set every protector in a fortress on its own side.
+
+**What this leaves.** Nothing changed in `src` this commit. The mechanic is sized, the sender list is
+enumerated with npc ids, the `is_enemy` requirement is understood, and the order of work is now clear:
+**the killers need AI names before anything else is worth writing**, because the protectors' answer is
+inert until something calls. Doing it the other way round — which is what was attempted here — produces
+a listener nobody talks to and a broadcast nobody hears, neither of which can be tested.
