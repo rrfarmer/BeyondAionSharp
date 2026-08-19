@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Ai;
@@ -112,6 +113,21 @@ public class TwinProtectorAI : AggressiveNoLootNpcAI, HpPhases.PhaseHandler
         hpPhases.TryEnterNextPhase(this);
     }
 
+    /// <summary>
+    /// Which of a side's summons answer its master's phase broadcast by leaving.
+    /// </summary>
+    /// <remarks>
+    /// The magical twin sends <c>22715</c> and <c>IDSeal_Twin_M_Sum</c> (855622) despawns on it. The
+    /// physical twin sends <c>22714</c> and <b>nothing this class places answers</b> — only the crater
+    /// skill does, and its magma gluttens have no branch for it. So the lava row is deliberately empty,
+    /// and that emptiness is the mechanic rather than an omission.
+    /// </remarks>
+    private static readonly int[] HeatventDismissed = [855622];
+    private static readonly int[] LavaDismissed = [];
+
+    /// <summary>Retail's <c>range_as_meter</c> on both phase broadcasts.</summary>
+    private const float PhaseEarshot = 50f;
+
     public void HandleHpPhase(int phaseHpPercent)
     {
         switch (phaseHpPercent)
@@ -121,6 +137,13 @@ public class TwinProtectorAI : AggressiveNoLootNpcAI, HpPhases.PhaseHandler
             case 15:
                 GetOwner().ClearQueuedSkills();
                 GetOwner().QueueSkill(21644, 1, 10000); // Raging Hellfire
+
+                // Retail's phase broadcast, and it is not symmetric. The magical twin sends 22715 at
+                // fifty metres and its summons answer by despawning; the physical twin sends 22714, and
+                // the only thing that answers is the crater skill -- its magma gluttens have no branch
+                // for it and stay. So a heatvent phase clears the board and a lava phase does not, which
+                // is the difference between the two fights and was missing from both.
+                DismissSummons();
                 break;
             case 25:
             case 10:
@@ -157,6 +180,28 @@ public class TwinProtectorAI : AggressiveNoLootNpcAI, HpPhases.PhaseHandler
 
             adds.Add(add);
             AttackAfterSpawn.Now(add, target, OnArrival);
+        }
+    }
+
+    /// <summary>
+    /// Retail's answer to the phase broadcast: the magical side's summons leave, the physical side's
+    /// stay.
+    /// </summary>
+    private void DismissSummons()
+    {
+        int[] dismissed = IsHeatvent ? HeatventDismissed : LavaDismissed;
+        if (dismissed.Length == 0)
+            return;
+
+        foreach (Npc add in adds.ToList())
+        {
+            if (add == null || !dismissed.Contains(add.GetNpcId()))
+                continue;
+            if (!PositionUtil.IsInRange(GetOwner(), add, PhaseEarshot))
+                continue;
+
+            add.GetController().Delete();
+            adds.Remove(add);
         }
     }
 

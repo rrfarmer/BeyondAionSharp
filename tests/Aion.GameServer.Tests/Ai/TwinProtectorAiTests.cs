@@ -202,4 +202,73 @@ public sealed class TwinProtectorAiTests
 
 		Assert.Equal(0, Count(harness, LavaField));
 	}
+
+	/// <summary>
+	/// Walks the protector down its HP ladder, one rung per call, because <c>HpPhases</c> enters the
+	/// rungs in order — dropping straight to 24% fires the 65% rung, not the 25% one.
+	/// </summary>
+	private static void StepTo(BossAiHarness harness, Npc protector, Creature player, params int[] rungs)
+	{
+		foreach (int percent in rungs)
+		{
+			BossAiHarness.SetHpPercent(protector, percent);
+			protector.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, player);
+		}
+	}
+
+	/// <summary>The magical side's summon, which its master's phase broadcast dismisses.</summary>
+	private const int HeatventSummon = 855622;
+
+	/// <summary>
+	/// <b>A heatvent protector clears its summons when it changes phase.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's magical twin broadcasts <c>22715</c> at fifty metres as it goes into Raging Hellfire, and
+	/// <c>IDSeal_Twin_M_Sum</c> answers by despawning. Nothing here did: summons stayed until the
+	/// protector died, went home or despawned, so they accumulated across all three hellfire phases.
+	/// </remarks>
+	[Fact]
+	public void AHeatventPhaseDismissesItsSummons()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc protector = harness.Spawn(HeatventProtector, 520f, 200f, 1682f);
+		var player = harness.SpawnPlayer(524f, 200f, 1682f);
+		harness.Engage(protector, player);
+
+		// Down through 65 and 40 to the 25% rung, which is the one that places the summons.
+		StepTo(harness, protector, player, 64, 39, 24);
+		Assert.NotEmpty(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventSummon));
+
+		// And on to the 15% rung, which is a hellfire phase and clears them.
+		StepTo(harness, protector, player, 14);
+
+		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventSummon));
+	}
+
+	/// <summary>
+	/// <b>And a lava protector does not.</b> This asymmetry is retail's, and it is the whole difference
+	/// between the two fights.
+	/// </summary>
+	/// <remarks>
+	/// The physical twin broadcasts <c>22714</c> on the same rung, but the only npc that answers it is
+	/// the crater skill — <c>IDSeal_Twin_P_Sum</c> has no branch for it and stays. Reading the two sides
+	/// as the same thing would have cleared the lava board too.
+	/// </remarks>
+	[Fact]
+	public void ALavaPhaseLeavesItsSummonsStanding()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc protector = harness.Spawn(LavaProtector, 520f, 200f, 1682f);
+		var player = harness.SpawnPlayer(524f, 200f, 1682f);
+		harness.Engage(protector, player);
+
+		StepTo(harness, protector, player, 64, 39, 24);
+		int placed = harness.LiveNpcs().Count(n => n.GetNpcId() == LavaWave);
+		Assert.True(placed > 0, "the lava protector placed no summons at all");
+
+		StepTo(harness, protector, player, 14);
+
+		Assert.True(harness.LiveNpcs().Count(n => n.GetNpcId() == LavaWave) >= placed,
+			"a lava phase dismissed summons that retail leaves standing");
+	}
 }

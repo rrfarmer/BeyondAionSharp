@@ -24739,3 +24739,56 @@ handler by watching the spawn throw without it. Nothing in this suite was doing 
 it is a real loss: a test that means to make that claim now has to assert the behaviour the handler
 produces. The `WithAi` list is documentation from here on, and a passing spawn is no evidence that the
 list is complete.
+
+## The Twin Protectors' summons never left on a phase change
+
+Retail patterns `IDSeal_Twin_P` / `_M` (the twins), `IDSeal_Twin_P_Sum` (855621),
+`IDSeal_Twin_M_Sum` (855622), `_P_Sum_Crater_Skill` (855624), `_M_Sum_Tornado` (855625),
+`_P_HellFire` (855626).
+
+`audit_silent_hazards.py --placed-by-code` put five of these in one class, so the whole message table
+was worth reading. It turns out almost every branch these summons have is a **despawn**:
+
+```
+22708 / 22709   combat over          both sides' summons leave
+22716 / 22717   the source appears   both sides' summons leave
+22697 / 22698   master reset         both sides' summons leave
+22714           physical phase       the crater skill leaves; the hellfire field casts
+22715           magical phase        IDSeal_Twin_M_Sum leaves
+22710           physical, mid-phase  IDSeal_Twin_P_Sum casts on its target
+```
+
+This class already cleared its adds on death, on despawn and on going home — the combat-over and
+master-reset cases. **What it never did was clear them on a phase change**, so summons accumulated
+across all three Raging Hellfire rungs.
+
+**And the two sides are not symmetric.** The magical twin broadcasts 22715 and its summons answer by
+despawning. The physical twin broadcasts 22714 on the same rung, and **nothing this class places
+answers it** — only the crater skill does, and the magma gluttens have no branch for it. So a heatvent
+phase clears the board and a lava phase does not. Reading the two as the same thing would have cleared
+the lava side too, which is the easier fight.
+
+That asymmetry is now **data rather than a branch**: a per-side array of the ids that answer, with the
+lava row deliberately empty.
+
+**Pins** — two more in `TwinProtectorAiTests`, four mutations, three caught.
+
+**Making the asymmetry data is what made it testable.** The first version wrote it as an `IsHeatvent`
+early return plus an id comparison, and deleting the guard **survived** — the id check alone already
+excluded the lava side's summons, so the guard was decoration. As a table, emptying the lava row is a
+change the lava pin sees.
+
+**One mutation survives and cannot be caught here.** Retail's broadcasts carry `range_as_meter=50`, and
+that check is unobservable through this class: every add it tracks is placed on a player inside twenty
+metres, so nothing it holds is ever out of earshot. The check is kept because it is retail's number and
+becomes load-bearing the moment summons are placed further out.
+
+**A pin that had to walk rather than jump.** `HpPhases` enters its rungs in order, so setting a
+protector to 24% fires the **65%** rung, not the 25% one. Both new pins step down the ladder
+(64 → 39 → 24 → 14) through a small helper, and the first drafts failed because they jumped.
+
+**Still missing.** The six despawn messages are modelled by this class's own death/despawn/home hooks
+rather than by messages, so `22716`/`22717` — *the source appears* — have no equivalent: whatever
+spawns `IDSeal_Twin_P_Source` does not exist here, and its summons-clearing effect goes with it.
+`22710`, the physical twin's mid-phase order to its gluttens to cast, is not translated either — that
+one needs a skill index.
