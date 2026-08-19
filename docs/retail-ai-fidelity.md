@@ -31513,3 +31513,45 @@ the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-
 pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four
 owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web;
 Pashid's `npc_skills`.
+
+## The demolisher that never left
+
+First of the four unblocked rows. Retail's `IDSeal_Scene_06_Bomber_*` ends its run with two actions on
+`is_last_waypoint`: a **`Scene_08` bomber on its own mark**, and `despawn_self`. The successor is the npc
+that stands by the ruined door afterwards — it greets the raid on `on_see_user` and answers message
+22774.
+
+**Nothing in this port ever placed it.** So the door was destroyed by a demolisher that then stood
+beside it for the rest of the instance.
+
+The handoff is added **after** the gate attack rather than in place of it, and that ordering is
+deliberate: retail opens the door through scene variables this port does not model, and the Java class
+casts 20840 from the gate npc instead. Retail's order would remove the demolisher before our door
+opened.
+
+### The behaviour is not pinned, and this entry says so plainly
+
+Four attempts to drive the arrival in the harness failed, and what they established is worth more than
+the attempts:
+
+* the handoff runs behind `IsStop()`;
+* the move controller sets that flag **only when it advances onto the last step** of a route whose
+  `loop_type` is `NONE`;
+* `SetRouteStep` does not set it, raising `MoveArrived` does not advance the step, and a route with no
+  `loop_type` attribute defaults to `NORMAL` and never stops at all — which is why the first route tried
+  could never have worked.
+
+> **What is missing is a harness way to make an NPC genuinely finish a walk.** Until then this behaviour
+> is a faithful translation with no behavioural pin, and the speculative pins written for it were
+> removed rather than weakened until they passed — the same call as Teselik's phase-two rung.
+
+What *is* pinned is the successor table: each side hands off to its own, the two do not share one, and
+an unknown demolisher hands off to nothing rather than inheriting the Elyos successor. 2/2 mutations
+caught.
+
+**Still missing.** **A harness seam for finishing a walk**, which blocks this pin and any other
+`is_last_waypoint` behaviour; Surkana's bolstering surkana; Yamennes' spawn gate; Beritra's four;
+Orissan's crystal tiers; the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named
+death-spawn rows; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn;
+the `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded
+guards; Dynatoum's mine web; Pashid's `npc_skills`.
