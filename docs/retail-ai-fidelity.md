@@ -27302,3 +27302,44 @@ on King Consierd's condor floor two weeks of commits ago; this time it was writt
 FX/DMG fold and is recorded in the class. And his jump and distortion are the only two rungs of this
 pattern reachable without the skill index — the rest of `IDTiamat_Sardha` is a cast ladder, and its
 `BTIMERI_INDEX_28` close is now the one message in it this port sends.
+
+## Lahulahu's summon wave: a large mechanic blocked on waypoints, not on the skill index
+
+`audit_hp_phases.py` reads `ours [95, 25]` against `retail [25]` for Engineer Lahulahu. Two findings,
+and no code changed.
+
+**The 95 is not a defect.** Retail has no ninety-five per cent threshold; its `on_enter_attack_state`
+arms two battle timers, adds ten thousand hate to whoever pulled, and shouts. Firing our setup from a
+phase that trips almost immediately reaches the same place. **This is a fourth species of false positive
+in that audit's rows** — a phase used as a stand-in for entering combat — after "casts only", "opening
+measured from an HP phase", and "custom feature". Recorded in the class so the row is not chased again.
+
+**What is genuinely missing is his summon wave.** Below twenty-five per cent retail runs a ladder on
+`BTIMERI_INDEX_9` that spawns one of **nine** `BIDShulack_EngineerSum*` npcs — 281103-281107,
+281293-281295 and 281351, **every one of which exists in our data** — chosen by a probability cascade
+(20, 40, 60, 80, then unguarded) and walked in on `BIDShulack_EngineerSum_NPCPath`. There are three such
+ladders, one per health band. This port summons none of them; its twenty-five per cent branch removes an
+effect and casts.
+
+**And it cannot be written without inventing a trigger.** `INDEX_9` is armed at **3500** from four
+`on_arrived_at_waypoint` rungs and at **1000** from an `on_message`. The wave is started by Lahulahu
+reaching points on his own patrol route — and neither his route nor the summons' path is in our walker
+data. Writing the ladder against any other trigger would be making up when the fight's adds arrive,
+which is a larger lie than leaving them out.
+
+**One detail worth preserving for whenever the trigger exists.** Only the ladder's *first* rung re-arms
+the timer. So in retail the wave continues while the twenty-per-cent roll keeps winning, and otherwise
+delivers one more summon and stops — an average of a summon or two per activation rather than a steady
+stream. That shape is consistent across all three health bands, which is what makes it look deliberate
+rather than a slip in the data. A "sensible" implementation on a steady 6500 beat would be a
+harder fight than retail ships.
+
+**Also blocked:** the `is_aerial_spawn` guard those rungs carry, which this port has no equivalent
+primitive for. That is the second pattern condition found with no counterpart, after
+`set_condition_spawn_variable`.
+
+**Still missing, more widely.** The remaining `audit_hp_phases.py` rows are the big timer-driven
+rotations the tool warns about — `HyperionAI` (fourteen phases against retail's five),
+`EnragedQueenModorAI` (six against one, none shared), `BrigadeGeneralTahabataAI` and `EmpoweredAgent`.
+Each needs its pattern read before any number is moved, and on this evidence a good share of what looks
+like drift in them will be stand-ins rather than mistakes.

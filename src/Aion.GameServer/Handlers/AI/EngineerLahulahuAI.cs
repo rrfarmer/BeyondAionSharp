@@ -10,6 +10,39 @@ namespace Aion.GameServer.Handlers.AI;
 /// <summary>
 /// Java parity: ai/instance/rakes/EngineerLahulahuAI (@author xTz).
 /// </summary>
+/// <summary>
+/// Engineer Lahulahu (215080), Steel Rake. Retail pattern <c>IDSlk_Engineer</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced notes; see docs/retail-ai-fidelity.md. Found by <c>audit_hp_phases.py</c>, whose row
+/// is <c>ours [95, 25]</c> against <c>retail [25]</c>.
+/// <para>
+/// <b>The 95 is this port's stand-in for entering combat and is not a defect.</b> Retail has no
+/// ninety-five per cent threshold; its <c>on_enter_attack_state</c> arms two battle timers, adds ten
+/// thousand hate to whoever pulled, and shouts. Firing our setup from a phase that trips almost
+/// immediately reaches the same place, and the audit row is a false positive of the same family as the
+/// openings measured from an HP phase.
+/// </para>
+/// <para>
+/// <b>What is genuinely missing is his summon wave, and it is blocked on waypoints.</b> Below
+/// twenty-five per cent retail runs a ladder on <c>BTIMERI_INDEX_9</c> that spawns one of nine
+/// <c>BIDShulack_EngineerSum*</c> npcs — 281103-281107, 281293-281295 and 281351, all of which exist in
+/// our data — chosen by a probability cascade (20, 40, 60, 80, then unguarded) and walked in on
+/// <c>BIDShulack_EngineerSum_NPCPath</c>. There are three such ladders, one per health band.
+/// </para>
+/// <para>
+/// <b>It cannot be written without inventing a trigger.</b> <c>INDEX_9</c> is armed at <b>3500</b> from
+/// four <c>on_arrived_at_waypoint</c> rungs and at <b>1000</b> from an <c>on_message</c> — the wave is
+/// started by Lahulahu reaching points on his own route, and neither his route nor the summons' path is
+/// in our walker data. Only the ladder's first rung re-arms the timer, so in retail the wave continues
+/// only while the twenty-per-cent roll keeps winning and otherwise delivers one more summon and stops;
+/// that shape is consistent across all three bands and is worth preserving whenever the trigger exists.
+/// </para>
+/// <para>
+/// <b>Also not translated:</b> the <c>is_aerial_spawn</c> guard those rungs carry, which this port has
+/// no equivalent primitive for.
+/// </para>
+/// </remarks>
 [AIName("engineerlahulahu")]
 public class EngineerLahulahuAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
