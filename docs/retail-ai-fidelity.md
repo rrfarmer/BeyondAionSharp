@@ -24488,3 +24488,53 @@ standing.
   listener has been traced.
 - Retail's controller is a real npc that walks in; this port hangs its ladder off the boss, so
   `on_leave_attack_state`'s dispel and the controller's own `despawn_all` have no equivalent.
+
+## An audit for npcs that are asked to cast and have nothing to cast
+
+Two commits running, a missing `npc_skills` row decided what this port could do — Vasharti's glove
+smashes and the harness's empty instance skill lists. `UseSkillAndDieAI` **deletes an npc whose skill
+list is empty inside its own spawn**, so that gap is not quiet: it removes the npc before anything can
+observe it, and the natural reading is always "the class never placed it".
+
+`tools/client-extract/audit_skilless_casters.py` names them. Of 93 npcs on a cast-and-die AI, **nine
+have no skill row**, and two are placed by something in this port. One is a false positive (a six-digit
+literal matched in unrelated sources). The other is real, and it is a dead hard-mode mechanic.
+
+## Tiamat's hard-mode uplift vanished on arrival
+
+Retail patterns `IDTiamat_Tiamat_Uplift` (283135), `IDTiamat_Hard_Earthquake_01` (856041) and
+`_02` (856124).
+
+A burrowing thorn throws up sand; the sand places a damage npc at its own feet for three seconds; the
+damage npc casts once and despawns. Normal mode does all three. **Hard mode did none of it**: 856041
+was bound to `useSkillAndDie` with no skill row, so it deleted itself the instant the thorn placed it.
+
+Rebound to `tiamat_skill_helper`, which is what its retail pattern actually describes, and 856124
+rebound from `aggressive` to `useSkillAndDie`, which is what *its* pattern describes — cast, then
+despawn. Leaving it `aggressive` would have been worse than the gap: once 856041 works, an `aggressive`
+856124 is a **hostile add retail does not have**, standing in the room.
+
+**And the helper found its damage npc by adding one to its own id.** That is right for the normal pair
+(283135 → 283136) and wrong for the hard one: 856041 pairs with **856124**, not 856042. Same trap as
+`TiamatBurrowingThornAI` documented for the thorns themselves — the two generations do not run parallel
+id blocks — so the pairing is a table now.
+
+**Pins** — `TiamatUpliftAiTests`, four, five mutations, four caught.
+
+**Two things this cannot assert, and both are the same gap.**
+
+1. **856124 has no skill row either**, so it deletes itself on arrival exactly as 856041 used to. The
+   chain is now structurally right and its last link is still invisible. `audit_skilless_casters.py`
+   lists it.
+2. **The table is therefore unpinned on the hard path.** Reverting to `GetNpcId() + 1` survives every
+   pin: right for the normal pair, and on the hard one it reaches 856042, an id nothing answers to —
+   which looks identical to the correct npc self-deleting. Only the missing skill row separates them.
+
+**The skill index is still the blocker, and this pass tried to break it.** `SKILLI_INDEX_0` in the
+pattern dump is an index into the client's own npc skill list, not a skill id. The client at
+`D:/AIonAmerica2026` was probed directly: `Npcs.pak` holds plain (not binary) XML, its `client_npcs_*`
+tables carry **appearance and equipment**, no skill fields at all, and neither 856124 nor 283136
+appears in them — that build predates these npcs. So the index cannot be resolved from this client.
+Normal mode's 283136 casts **Excavation 21896**; there is exactly one other Excavation, **20965**,
+bound to no npc anywhere — a plausible hard-mode twin and **not adopted**, because nothing ties it to
+856124 and inventing that row is precisely what the golden rule forbids.
