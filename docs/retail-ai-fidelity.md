@@ -26811,3 +26811,48 @@ against retail's five), `PadmarashkaCaveAI` (three against six, none shared) and
 against one). Each carries the tool's own warning that these are timer-driven rotations where a phase
 list will not line up — which is exactly what this row turned out to be, and the reason it was worth
 reading rather than renumbering.
+
+## Padmarashka wipes threat three times, and never did
+
+Next row from `audit_hp_phases.py`: `ours [95, 50, 25]` against `retail [71, 51, 41, 31, 21, 19]`, with
+**no threshold in common**. Her rungs are almost all skill indices, but three of them carry an op that
+is not: **`reset_hatepoints`**.
+
+It sits on the death vortex at **51** and again at **31**, and on the enrage at **19**. Every tank in
+the raid loses her at those points and she takes whoever is nearest. **None of it happened here** — she
+held her tank from the pull to the floor, which removes the only thing those three rungs exist for.
+
+**The two upper wipes trail their threshold by about seven seconds.** Retail's sequence is a
+primal-fear rung on `BTIMERI_INDEX_0` that arms `BTIMERI_INDEX_2` at **7000**, and the vortex rung
+carrying the wipe fires on that. Each is flag-guarded, so each happens once. The 19% wipe rides the
+enrage rung directly.
+
+**Zeroed, not emptied.** `reset_hatepoints` clears hate; it does not end the fight or discard damage
+already dealt. `AggroList.Clear()` would do both — and damage decides loot and reward — so each entry's
+hate is set to zero and the list is left standing.
+
+**Pins** — ten in `PadmarashkaThreatWipeTests`, and they are **table pins, which is weaker than this
+work has usually managed.** The behaviour cannot be observed in the harness at all: the stand-in player
+deals no real damage, so she leaves combat within a few seconds of engaging and her aggro list is
+emptied — hate added by hand does not survive to be measured, let alone across a seven-second wipe.
+Three attempts at a behavioural pin were abandoned before that was understood. What is fixed in place
+is which thresholds carry the wipe, how long each waits, and that all three are rungs on her ladder;
+that the wipe zeroes rather than empties is held by review.
+
+**Two mistakes of mine, both instructive.**
+
+`BossAiHarness.Wound` records **damage, not hate** — the first pins measured a quantity that was always
+zero and read it as the wipe having already happened.
+
+And worse: **the mutation script I wrote for the second round omitted its compile check**, so a change
+that did not build was reported as `passes`. Two mutations were declared survivors on that basis before
+the real error surfaced. The first script in this session has checked for `: error CS` since it was
+written; the second was typed fresh and did not. A mutation harness that cannot tell "the pin missed
+it" from "the code did not compile" produces confident nonsense in exactly the direction that hides
+work.
+
+**Still missing on her.** Eight skill indices across her rungs, the `ATTACKERI_RANDOM_ONE` switches
+worth a hundred thousand points that go with the breath casts, and the `Phage` and `Phage3` condition
+variables she sets at 21 and 51. Her other four retail thresholds — 71, 41, 21 — drive casts only and
+are deliberately **not** added: a phase that fires nothing is worse than no phase, because it reads as
+ported.

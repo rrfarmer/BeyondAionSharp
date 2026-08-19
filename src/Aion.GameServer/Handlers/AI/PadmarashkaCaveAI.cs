@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -12,11 +13,72 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/padmarashkasCave/PadmarashkaAI (Ritsu, Luzien).</summary>
+/// <summary>
+/// Padmarashka. Retail pattern <c>IDDramata_Dramata</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/padmarashkasCave/PadmarashkaAI (Ritsu, Luzien). Retail-sourced addition
+/// below; see docs/retail-ai-fidelity.md. Found by <c>audit_hp_phases.py</c>, whose row for this boss
+/// is <c>ours [95, 50, 25]</c> against <c>retail [71, 51, 41, 31, 21, 19]</c> — no threshold in common.
+/// <para>
+/// <b>She wipes threat three times and did not once.</b> Retail's <c>reset_hatepoints</c> sits on three
+/// of her health-guarded rungs: the death vortex at <b>51</b> and again at <b>31</b>, and the enrage at
+/// <b>19</b>. Every tank in the raid loses her at those points and she takes whoever is nearest. None
+/// of it happened here — she held her tank from the pull to the floor, which removes the only thing
+/// those three rungs are for.
+/// </para>
+/// <para>
+/// <b>The two upper wipes land about seven seconds after the threshold</b>, not on it. Retail's
+/// sequence is a primal-fear rung on <c>BTIMERI_INDEX_0</c> that arms <c>BTIMERI_INDEX_2</c> at
+/// <b>7000</b>, and the vortex-plus-wipe rung fires on that. Each is flag-guarded, so each happens
+/// once. The 19% wipe rides her enrage rung directly and is taken as immediate here — retail waits for
+/// the next <c>INDEX_0</c> tick, which is a delay this port has no equivalent clock for.
+/// </para>
+/// <para>
+/// <b>Zeroed, not emptied.</b> <c>reset_hatepoints</c> clears hate; it does not end the fight or
+/// discard the damage already dealt. <c>AggroList.Clear()</c> would do both, so each entry's hate is set
+/// to zero instead and the list is left standing.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> Everything the wipes accompany: eight skill indices across her rungs, the
+/// <c>ATTACKERI_RANDOM_ONE</c> switches worth a hundred thousand points that go with the breath casts,
+/// and the <c>Phage</c> and <c>Phage3</c> condition variables she sets at 21 and 51. Her four upper
+/// thresholds (71, 41, 21) drive casts only and are not added, because a phase that fires nothing is
+/// worse than none: it would read as ported.
+/// </para>
+/// </remarks>
 [AIName("padmarashka")]
 public class PadmarashkaCaveAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(95, 50, 25);
+    /// <summary>Her ladder: this port's staging (95, 50, 25) and retail's three wipe rungs.</summary>
+    /// <remarks>
+    /// Listed as well as passed because <c>HpPhases</c> takes its thresholds positionally, so there is
+    /// no array for a pin to read. The two are kept adjacent deliberately; a pin checks that every wipe
+    /// threshold is a member.
+    /// </remarks>
+    public static readonly int[] PhaseThresholds = [95, 51, 50, 31, 25, 19];
+
+    private readonly HpPhases hpPhases = new HpPhases(95, 51, 50, 31, 25, 19);
+
+    /// <summary>Retail's three <c>reset_hatepoints</c> thresholds, and the delay on the upper two.</summary>
+    public const int FirstWipePercent = 51;
+    public const int SecondWipePercent = 31;
+    public const int EnrageWipePercent = 19;
+    public const long VortexDelayMillis = 7000L;
+
+    /// <summary>Whether a threshold carries retail's <c>reset_hatepoints</c>. Exposed for the pins.</summary>
+    /// <remarks>
+    /// The behavioural half of this cannot be pinned: a stand-in player deals no real damage, so she
+    /// leaves combat and her aggro list is emptied within a few seconds of engaging — long before a
+    /// seven-second wipe could be observed, and indeed before any hate added by hand survives to be
+    /// measured. The table is what is pinned; see PadmarashkaThreatWipeTests.
+    /// </remarks>
+    public static bool WipesThreatAt(int phaseHpPercent) =>
+        phaseHpPercent is FirstWipePercent or SecondWipePercent or EnrageWipePercent;
+
+    /// <summary>How long after the threshold the wipe lands: seven seconds, or none for the enrage.</summary>
+    public static long WipeDelayFor(int phaseHpPercent) =>
+        phaseHpPercent == EnrageWipePercent ? 0L : VortexDelayMillis;
     private bool isStart = false;
     private bool canThinkFlag = false;
     private ScheduledTask mainSkillTask;
@@ -81,7 +143,36 @@ public class PadmarashkaCaveAI : AggressiveNpcAI, HpPhases.PhaseHandler
             case 25:
                 Stage3();
                 break;
+
+            // Retail's vortex rungs: primal fear arms BTIMERI_INDEX_2 at 7000, and the wipe rides the
+            // rung that timer fires. Flag-guarded in retail, and once-only here because HpPhases is.
+            case FirstWipePercent:
+            case SecondWipePercent:
+                ThreadPoolManager.GetInstance().Schedule(_ => { ResetHatePoints(); return ValueTask.CompletedTask; },
+                    VortexDelayMillis);
+                break;
+
+            // Retail's enrage rung carries the wipe directly.
+            case EnrageWipePercent:
+                ResetHatePoints();
+                break;
         }
+    }
+
+    /// <summary>
+    /// Retail's <c>reset_hatepoints</c>: every attacker's hate to zero, the list otherwise untouched.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not <c>AggroList.Clear()</c>, which empties the list — that would drop her out of
+    /// combat and discard the damage the raid has done, neither of which retail's op does.
+    /// </remarks>
+    private void ResetHatePoints()
+    {
+        if (IsDead())
+            return;
+
+        foreach (AggroInfo info in GetAggroList().Stream())
+            info.SetHate(0);
     }
 
     private void ScheduleSpawnEntrance()
