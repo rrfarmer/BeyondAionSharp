@@ -35,7 +35,17 @@ Checked before adopting, not after:
 So it is a strict superset, not a competing opinion. `ai_binding.tsv` is still the source for which
 *pattern* an npc runs; this is only about turning a devname into an id.
 
-Usage:  python client_npc_names.py [--xml DIR] [--check]
+`--fields ID...` prints what the client knows about specific npcs. That exists because
+`audit_summon_ids.py --absent` names seven npcs our `npc_templates.xml` has no row for, and the person
+adding those rows should be reading retail's values rather than choosing their own.
+
+**It does not print everything a template needs**, and that is the point of saying so here: the client
+record gives level, tribe, npc_type, ai_name, race_type, attack_delay and the unattackable flag, but our
+schema also wants `rating`, `rank`, `height`, `hpgauge`, `<stats maxHp>` and `<bound_radius>`. Those are
+not in this record. Anyone completing a row will have to find them elsewhere or copy a comparable npc,
+and should say which they did.
+
+Usage:  python client_npc_names.py [--xml DIR] [--check] [--fields ID ...]
 """
 import argparse
 import pathlib
@@ -70,9 +80,39 @@ def npc_names(xml_dir="D:/Aion58ServerTesting/Server/Map/XML"):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
+    ap.add_argument("--fields", nargs="+", metavar="ID",
+                    help="print the client's own record fields for these npc ids")
     ap.add_argument("--check", action="store_true",
                     help="re-run the two checks that justified preferring this table")
     args = ap.parse_args()
+
+    if args.fields:
+        wanted = set(args.fields)
+        keep = ("id", "name", "level", "tribe", "npc_type", "ai_name", "race_type",
+                "attack_delay", "unattackable", "desc")
+        seen = {}
+        for name in FILES:
+            path = pathlib.Path(args.xml) / name
+            if not path.exists():
+                continue
+            for m in re.finditer(r"<npc>(.*?)</npc>", read_text(path), re.S):
+                body = m.group(1)
+                found = re.search(r"<id>(\d+)</id>", body)
+                if not found or found.group(1) not in wanted or found.group(1) in seen:
+                    continue
+                fields = dict(re.findall(r"<(\w+)>([^<]*)</\1>", body))
+                seen[found.group(1)] = {k: fields[k] for k in keep if k in fields}
+        for npc_id in args.fields:
+            row = seen.get(npc_id)
+            print()
+            print(f"{npc_id}: " + ("not in the client's npc tables" if not row else row.get("name", "")))
+            if row:
+                for k, v in row.items():
+                    if k not in ("id", "name"):
+                        print(f"    {k} = {v}")
+        print()
+        print("NOTE: rating, rank, height, hpgauge, maxHp and bound_radius are NOT in this record.")
+        return 0
 
     table = npc_names(args.xml)
     print(f"{len(table)} devnames in the client's npc tables")

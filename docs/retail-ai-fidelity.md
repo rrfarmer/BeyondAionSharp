@@ -29245,3 +29245,46 @@ not draw until this commit.
   a 4.8 port does not have, and any figure taken across the whole pattern set rather than across this
   port's own classes will be inflated by it. The focused numbers were always the ones to quote; now there
   is a measured example of how far apart the two can be — 57% against seven.
+
+## Seven npc rows: the retail values, and what is still missing from them
+
+`--absent` names seven npcs our `npc_templates.xml` has no row for. The obvious next step is to add them,
+and the obvious way to add them is to make the numbers up. This does neither.
+
+**The client has authoritative values for all seven**, in the same `<npc>` records that gave the devname
+table. `client_npc_names.py --fields ID...` prints them:
+
+| id | devname | level | tribe | npc_type |
+|---|---|---|---|---|
+| 805301 | `IDYun_floor_invisible_circle_a` | 60 | useall | general |
+| 805302 | `IDYun_floor_invisible_circle_b` | 60 | useall | general |
+| 806517 | `LDF5_Fortress_7011_Solis_E` | 65 | general | general |
+| 806524 | `LDF5_Fortress_7011_Sonntag_E` | 65 | general_dark | general |
+| 856503 | `BIDSeal_TrueBoss_Buff_UseCheck` | 80 | IDSeal_Boss_Summon | Monster |
+| 856504 | `BIDSeal_Vritra_Initial_Control_2` | 80 | IDSeal_Boss_Summon | Monster |
+| 857599 | `BIDLDF5_Under_Rune_Reset_NPC_Nor` | 75 | F6_Event_Da | general |
+
+All seven are `unattackable=1`. Solis and Sonntag carry real `desc` strings; the other five are
+`STR_NPC_NO_NAME`, which is what an invisible controller looks like.
+
+**The rows are still not written, and the reason is specific.** Our schema wants `rating`, `rank`,
+`height`, `hpgauge`, `<stats maxHp>` and `<bound_radius>` — **none of which is in the client record**.
+Completing a row means either finding those elsewhere or copying a comparable npc, and both are decisions
+somebody should make deliberately and say they made. Every defect this work has fixed was an earlier
+author filling a gap like that quietly.
+
+**So the contribution is the tool, not the rows.** `--fields` puts retail's values one command away and
+prints, every time, the list of fields it cannot give you. A doc table would have gone stale; this reads
+the client.
+
+**One correction while here.** Anoha's commanders are `general` and `general_dark` tribe, `pc_light` and
+`pc_dark` race — a faction pair, one per side, which is exactly what
+`BerserkAnohaAI.CommanderFor(Race)` selects between. The substituted 804594/804595 are doing the right
+job with the wrong npcs, which makes this a lower-stakes gap than it first read.
+
+**Still missing.**
+
+- **The seven rows**, with their retail values now recorded and the six missing fields named.
+- **The 36 top-band ids**, Pashid's `npc_skills`, Dynatoum's mine web — unchanged.
+- **No generator for `npc_templates.xml` exists in this repo**, only audits. Seven rows is small enough to
+  hand-write; if the number ever grows, that absence is what to fix first.
