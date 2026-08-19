@@ -30423,3 +30423,54 @@ Full solution green at 2,838.
   decision; the 59 stranded guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns;
   the 9 inert `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids;
   Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Teselik's hands walk in
+
+Last entry left his in-combat hands as a known divergence: retail walks every one of them in on a named
+path, and this class placed all of them three metres from his feet. The paths were the thing the stale
+remark said we did not have.
+
+**Every summoning rung names its own paths, and they are not interchangeable:**
+
+| rung | paths |
+|---|---|
+| entering combat | 01, 03 |
+| low chain, three hands | 01, 02, 03 |
+| low chain, two hands | 01, 04 |
+| phase-two handover | *his feet*, 02, 03 |
+| healthy chain, rolled | 02, 04 |
+| healthy chain, plain | 01, 03 |
+
+A count alone loses all of it. `Summon(int count)` became `Summon(params int[] paths)`, and the one rung
+that genuinely places a hand at his feet keeps that asymmetry rather than being tidied onto lines.
+
+### One mutation survived, and it is recorded rather than papered over
+
+Run through `run_mutations.py` — not a bash loop, for the reason the previous entry gives:
+
+| mutation | |
+|---|---|
+| entering combat summons on one path instead of two | caught |
+| in-combat hands go back to arriving at his feet | caught |
+| **the phase-two rung puts all three on paths** | ***SURVIVED*** |
+
+That survivor is the tidier reading — exactly what a translator reaching for consistency would write —
+and nothing catches it. Reaching the rung needs his live-hand counter at zero, which only moves when a
+hand **dies and reports in** (deleting hands leaves it reading two, so the detonate rung fires instead),
+plus the phase flag unspent and timer 0 coming round below 65. Two attempts produced no summon at all.
+
+> The speculative pin was **removed rather than left failing or weakened until it passed.** A pin that
+> asserts something it cannot reach is worse than a recorded gap: the gap is visible, the pin is not.
+
+Full solution green at 2,591 in the game-server assembly.
+
+**Still missing.**
+
+- **The phase-two handover's asymmetry has no pin**, and the mutation proving it is in the doc above.
+  Whoever reaches it will need a harness route to that rung — the pieces are a dead hand that reported
+  in, an unspent phase flag, and timer 0 below 65.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
+  spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

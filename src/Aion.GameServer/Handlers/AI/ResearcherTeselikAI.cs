@@ -53,8 +53,9 @@ namespace Aion.GameServer.Handlers.AI;
 /// <b>Not translated:</b> his three shouts (<c>STR_CHAT_IDVritra_Base_Nmd3_01/02/03</c>), which have
 /// no numeric id in our data. <b>The four bonus hands (284457) are no longer missing</b>: the death tail
 /// places them on <c>NPCPath_Bboss_Hand_01</c>..<c>04</c>, which this repo does have. What is still owed
-/// is the in-combat hands, which retail also puts on those same four paths and which still arrive at his
-/// feet here.
+/// <b>The in-combat hands walk in too now.</b> All six summoning rungs name their own paths — 01+03,
+/// 01+02+03, 01+04, 02+03, 02+04, 01+03 — and one rung genuinely places its first hand at his feet, which
+/// is kept.
 /// </para>
 /// </remarks>
 [AIName("researcher_teselik")]
@@ -112,11 +113,47 @@ public class ResearcherTeselikAI : PatternAi
     /// <summary>Retail's <c>spawn_range</c> on all four: how far off the line each one starts.</summary>
     private const float BonusSpread = 5f;
 
-    /// <summary>Where his in-combat hands arrive. See <see cref="HandPaths"/> — this is a stand-in.</summary>
+    /// <summary>Retail's <c>spawn_range</c> on the walked-in hands: how far off the line each starts.</summary>
+    private const float HandSpread = 0f;
+
+    /// <summary>Where the one hand retail places at his feet arrives.</summary>
     private const float NearHim = 3f;
 
-    private static PatternAction Summon(int count) =>
-        Do.SpawnNear(Tyrhund, Hands, count: count, range: NearHim);
+    /// <summary>
+    /// Summons the hands retail's rung summons, each down the path retail names.
+    /// </summary>
+    /// <remarks>
+    /// <b>Every rung names its own paths and they are not interchangeable.</b> Retail's six summoning
+    /// rungs use, in priority order: 01+03 on entering combat, 01+02+03 and 01+04 on the low chain,
+    /// 02+03 in the phase-two handover, and 02+04 and 01+03 on the healthy chain. A count alone loses
+    /// all of that — which is what this class did, placing every hand three metres from his feet.
+    /// <para>
+    /// One rung is genuinely at his feet: the phase-two handover places its first hand on
+    /// <c>SPAWN_LOCATION_MY_POINT</c> and the other two on paths. That asymmetry is retail's, so
+    /// <see cref="SummonAtFeetThen"/> keeps it rather than tidying all three onto lines.
+    /// </para>
+    /// </remarks>
+    private static PatternAction Summon(params int[] paths) => ai =>
+    {
+        foreach (int index in paths)
+            ai.SpawnOnPath(Tyrhund, Hands, HandPaths[index - 1], HandSpread, 0);
+    };
+
+    /// <summary>The phase-two shape: one at his feet, then the rest walking in.</summary>
+    /// <remarks>
+    /// <b>Not covered by a pin, and the mutation that proves it survives.</b> Putting all three on paths
+    /// instead — the tidier reading, and the one a translator would reach for — is caught by nothing.
+    /// Reaching this rung needs his live-hand counter at zero, which only moves when a hand dies and
+    /// reports in, plus the phase flag unspent and timer 0 coming round below 65; two attempts to set
+    /// that up in the harness produced no summon at all. Recorded rather than left as a green suite that
+    /// implies more than it checks. See docs/retail-ai-fidelity.md.
+    /// </remarks>
+    private static PatternAction SummonAtFeetThen(params int[] paths) => ai =>
+    {
+        ai.SpawnNear(Tyrhund, Hands, 1, NearHim, 0);
+        foreach (int index in paths)
+            ai.SpawnOnPath(Tyrhund, Hands, HandPaths[index - 1], HandSpread, 0);
+    };
 
     /// <summary>The order: cast it, and tell the hands, because the skill cannot tell them itself.</summary>
     private static readonly PatternAction[] Detonate =
@@ -132,7 +169,7 @@ public class ResearcherTeselikAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 6000),
                 Do.SkillOnSelf(SummoningRitual),
-                Summon(2))),
+                Summon(1, 3))),
 
         OnBattleTimer = Of(
             // --- the low chain, below 66: T5 -> T6 -> T7 -> T5 -------------------------------------
@@ -140,13 +177,13 @@ public class ResearcherTeselikAI : PatternAi
                 Do.ArmTimer(5, 8000),
                 Do.SkillOnSelf(SummoningRitual),
                 Do.SwitchTarget(AggroTarget.RANDOM),
-                Summon(3)),
+                Summon(1, 2, 3)),
 
             Branch(17, "8-2. hands all dead > summon two", [When.Timer(7), When.CountBelow(LiveHands, 1, 2)],
                 Do.ArmTimer(5, 8000),
                 Do.SkillOnSelf(SummoningRitual),
                 Do.SwitchTarget(AggroTarget.RANDOM),
-                Summon(2)),
+                Summon(1, 4)),
 
             Branch(16, "8-1. hands alive > self-destruct order", [When.Timer(7), When.CountAbove(LiveHands, 0, 0)],
                 Do.ArmTimer(5, 8000),
@@ -179,20 +216,20 @@ public class ResearcherTeselikAI : PatternAi
                 Do.ArmTimer(5, 10000),
                 Do.SkillOnSelf(BlessingOfBlood),
                 Do.SkillOnSelf(SummoningRitual),
-                Summon(3)),
+                SummonAtFeetThen(2, 3)),
 
             // --- the healthy chain, 66-100: T1 -> T2 -> T3 -> T4 -> T1 ------------------------------
             Branch(11, "8-2. hands all dead > summon two", [When.Chance(50), When.HpBetween(66, 100), When.Timer(4), When.CountBelow(LiveHands, 1, 2)],
                 Do.ArmTimer(1, 8000),
                 Do.SkillOnSelf(SummoningRitual),
                 Do.SwitchTarget(AggroTarget.RANDOM),
-                Summon(2)),
+                Summon(2, 4)),
 
             Branch(10, "8-2. hands all dead > summon two", [When.HpBetween(66, 100), When.Timer(4), When.CountBelow(LiveHands, 1, 2)],
                 Do.ArmTimer(1, 8000),
                 Do.SkillOnSelf(SummoningRitual),
                 Do.SwitchTarget(AggroTarget.RANDOM),
-                Summon(2)),
+                Summon(1, 3)),
 
             Branch(9, "8-1. hands alive > self-destruct order", [When.HpBetween(66, 100), When.Timer(4), When.CountAbove(LiveHands, 0, 0)],
                 Do.ArmTimer(1, 8000),

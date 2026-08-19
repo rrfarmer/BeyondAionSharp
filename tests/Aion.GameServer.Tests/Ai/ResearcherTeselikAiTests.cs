@@ -416,6 +416,34 @@ public sealed class ResearcherTeselikAiTests
 		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == ResearcherTeselikAI.BonusHand));
 	}
 
+	/// <summary>
+	/// <b>The hands he summons in combat walk in too.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail names a path on every one of its six summoning rungs, and they are not interchangeable:
+	/// 01+03 on entering combat, 01+02+03 and 01+04 on the low chain, 02+03 in the phase-two handover,
+	/// 02+04 and 01+03 on the healthy chain. This class placed all of them three metres from his feet,
+	/// under a remark saying the paths were ones we did not have.
+	/// </remarks>
+	[Fact]
+	public void TheHandsHeSummonsOnEnteringCombatWalkInOnTwoPaths()
+	{
+		using BossAiHarness harness = Walking();
+		Npc teselik = harness.Spawn(Teselik, 500f, 500f, 200f);
+		Player raider = harness.SpawnPlayer(504f, 500f, 200f);
+		harness.Engage(teselik, raider);
+
+		List<string?> routes = harness.LiveNpcs()
+			.Where(n => n.GetNpcId() == Hand)
+			.Select(n => n.GetMoveController().GetWalkerTemplate()?.GetRouteId())
+			.ToList();
+
+		Assert.Equal(2, routes.Count);
+		Assert.Equal(
+			new[] { ResearcherTeselikAI.HandPaths[0], ResearcherTeselikAI.HandPaths[2] }.OrderBy(r => r),
+			routes.OrderBy(r => r));
+	}
+
 	/// <summary>A harness with the walker routes loaded, which the bonus hands need.</summary>
 	private static BossAiHarness Walking() =>
 		BossAiHarness.For(SauroSupplyBase).WithWorldSize(2048).WithWalkerRoutes()
