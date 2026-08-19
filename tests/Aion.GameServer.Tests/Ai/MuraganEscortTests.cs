@@ -29,6 +29,7 @@ public sealed class MuraganEscortTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
+			.WithWalkerRoutes()
 			.WithAi(typeof(MuraganAI), typeof(GeneralNpcAI), typeof(AggressiveNpcAI)).Build();
 
 	private static int Alive(BossAiHarness harness, int npcId) =>
@@ -115,20 +116,28 @@ public sealed class MuraganEscortTests
 	}
 
 	/// <summary>
-	/// <b>And he goes when he gets there.</b> Retail's route ends in <c>despawn_self</c>.
+	/// <b>Without the route he still goes when the single move ends.</b>
 	/// </summary>
 	/// <remarks>
-	/// The arrival is raised directly: the harness does not run him down the corridor, so without this
-	/// the despawn-on-arrival is unpinned and only the two-minute backstop is holding him — which is
-	/// ours, not retail's, and would leave him standing well past the point he should be gone.
+	/// This was "arrival despawns him", which held only while the whole walk was one straight move to the
+	/// door. He now walks retail's six points, so arriving is something that happens five times before he
+	/// should go anywhere, and that assertion moved to <see cref="HeGoesAtTheSixthWaypoint"/>.
+	/// <para>
+	/// What is left here is the fallback, which is worth its own pin: on a build whose walker data does not
+	/// carry the route, <c>StartRoute</c> declines and he is sent at the door in a line as before. The
+	/// harness reproduces that exactly by not loading walker routes, and without this the fallback path is
+	/// unpinned and only the two-minute backstop -- ours, not retail's -- would be holding him.
+	/// </para>
 	/// </remarks>
 	[Fact]
-	public void AndHeGoesWhenHeGetsThere()
+	public void WithoutTheRouteHeStillGoesWhenTheMoveEnds()
 	{
-		using BossAiHarness harness = NewHarness();
+		using BossAiHarness harness = BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
+			.WithAi(typeof(MuraganAI), typeof(GeneralNpcAI), typeof(AggressiveNpcAI)).Build();
 		Npc muragan = harness.Spawn(TheLoyal, LoyalX, LoyalY, LoyalZ);
 		Player player = harness.SpawnPlayer(LoyalX + 3f, LoyalY, LoyalZ);
 		muragan.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CREATURE_SEE, player);
+		Assert.Null(muragan.GetMoveController().GetWalkerTemplate());
 		Assert.Equal(1, Alive(harness, TheLoyal));
 
 		muragan.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.MOVE_ARRIVED);
@@ -173,5 +182,78 @@ public sealed class MuraganEscortTests
 		Assert.Equal(838.003113f, MuraganAI.DoorX, 4);
 		Assert.Equal(1319.114136f, MuraganAI.DoorY, 4);
 		Assert.Equal(397.737579f, MuraganAI.DoorZ, 4);
+	}
+
+	/// <summary>Triggers the escort by putting a player inside his fifteen-metre radius.</summary>
+	private static Npc Triggered(BossAiHarness harness)
+	{
+		Npc muragan = harness.Spawn(TheLoyal, LoyalX, LoyalY, LoyalZ);
+		Player player = harness.SpawnPlayer(LoyalX + 3f, LoyalY, LoyalZ);
+		muragan.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CREATURE_SEE, player);
+		return muragan;
+	}
+
+	/// <summary>Puts him at one point of the route, as arriving there would.</summary>
+	private static void ArriveAt(Npc muragan, int stepIndex)
+	{
+		muragan.GetMoveController().SetRouteStep(
+			muragan.GetMoveController().GetWalkerTemplate().GetRouteSteps()[stepIndex]);
+		muragan.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.MoveArrived);
+	}
+
+	/// <summary>
+	/// <b>He is put on retail's own route, not sent at the door in a straight line.</b>
+	/// </summary>
+	/// <remarks>
+	/// The route id is written out rather than read from <c>MuraganAI.RouteId</c>: a pin that takes its
+	/// expectation from the constant it is pinning passes whatever that constant becomes, and that mistake
+	/// has been made three times in this suite.
+	/// <para>
+	/// He cannot get the route from a <c>walker_id</c> on his spawn -- that would have him patrolling from
+	/// the moment the instance opens, where retail has him stand still until somebody comes near -- so the
+	/// route is attached at the trigger instead.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void HeWalksRetailsRouteRatherThanAStraightLine()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc muragan = Triggered(harness);
+
+		Assert.NotNull(muragan.GetMoveController().GetWalkerTemplate());
+		Assert.Equal("3005100001", muragan.GetMoveController().GetWalkerTemplate().GetRouteId());
+	}
+
+	/// <summary>
+	/// <b>He does not vanish at the waypoints along the way.</b> Retail despawns him at the sixth point and
+	/// nowhere earlier, and an escort that disappears at the second corner is the bug this route was
+	/// imported to fix, in a new form.
+	/// </summary>
+	[Fact]
+	public void HeSurvivesTheWaypointsBeforeTheSixth()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc muragan = Triggered(harness);
+
+		for (int step = 1; step <= 4; step++)
+		{
+			ArriveAt(muragan, step);
+			Assert.Equal(1, Alive(harness, TheLoyal));
+		}
+	}
+
+	/// <summary>
+	/// <b>And he goes at the sixth.</b> Retail's <c>despawn_self</c>, on the last point he actually walks;
+	/// the route carries eleven and he never sees points seven to eleven.
+	/// </summary>
+	[Fact]
+	public void HeGoesAtTheSixthWaypoint()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc muragan = Triggered(harness);
+
+		ArriveAt(muragan, 5);
+
+		Assert.Equal(0, Alive(harness, TheLoyal));
 	}
 }

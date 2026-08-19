@@ -1,9 +1,12 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
+using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
@@ -30,17 +33,16 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>despawn_self</c> anywhere in it — he opens the door and stays standing.
 /// </para>
 /// <para>
-/// <b>Half translated: his route.</b> Retail walks him through six waypoints and despawns him at the
-/// last. The six are now in our walker data, taken from the client, and the straight move below ends at
-/// the sixth of them rather than at the approximation it used to carry — but he still walks to it in a
-/// line instead of along the route, because binding a <c>walker_id</c> would set him patrolling from
-/// the moment the instance opens and retail has him stand still until somebody comes near.
+/// <b>He walks the route now.</b> Retail chains six waypoints and despawns him at the last. Those points
+/// are in our walker data, taken from the client, and he is put on them at the trigger rather than by a
+/// <c>walker_id</c> on his spawn — which would set him patrolling the moment the instance opens, where
+/// retail has him stand still until somebody comes within fifteen metres. The straight line to the door
+/// remains only as a fallback for a build whose walker data does not carry the route.
 /// </para>
 /// <para>
 /// <b>Not translated.</b> 800438 shouts twice in retail — <c>STR_CHAT_IDTiamat_Murugan_3_02</c> on
 /// waking and <c>_3_03</c> three seconds later off an idle timer — and only one of the two has an id
-/// we can resolve, so he keeps the single shout he had. Muragan the Loyal's six waypoints are a route
-/// our spawn data does not carry, so the straight move to the door stands in for them. And his rung
+/// we can resolve, so he keeps the single shout he had. And his rung
 /// ends with <c>set_condition_spawn_variable MURUGAN_SPAWN</c>, which is almost certainly how retail
 /// replaces the guard captain with a body — <see cref="KillGuardCaptain"/> does that here directly,
 /// because this port has no conditional-spawn mechanism to hang it on.
@@ -98,7 +100,8 @@ public class MuraganAI : GeneralNpcAI
 
         SetStateIfNot(AIState.WALKING);
         GetOwner().SetState(CreatureState.ACTIVE, true);
-        GetMoveController().MoveToPoint(DoorX, DoorY, DoorZ);
+        if (!StartRoute())
+            GetMoveController().MoveToPoint(DoorX, DoorY, DoorZ);
         PacketSendUtility.BroadcastPacket(GetOwner(), new SM_EMOTION(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetOwner().GetObjectId()));
 
         // Retail despawns him at his last waypoint, not on a clock. The backstop below is ours: if the
@@ -132,11 +135,59 @@ public class MuraganAI : GeneralNpcAI
     /// </summary>
     public const long WalkBackstopMillis = 120_000L;
 
-    /// <summary>Retail's <c>despawn_self</c> on arriving at the end of the route.</summary>
+    /// <summary>Retail's route for Muragan the Loyal, <c>Path_IDTiamat_Murugan_1</c>, taken from the client.</summary>
+    public const string RouteId = "3005100001";
+
+    /// <summary>
+    /// Retail despawns him at the sixth of the route's eleven points; route steps are zero-based, so the
+    /// sixth is index five. Points seven to eleven exist in the data and he never walks them.
+    /// </summary>
+    public const int DespawnStepIndex = 5;
+
+    /// <summary>
+    /// Puts him on the imported route rather than walking him at the door in a straight line.
+    /// </summary>
+    /// <remarks>
+    /// <c>WalkManager.StartRouteWalking</c> cannot be used: it is gated on <c>IsPathWalker</c>, which reads
+    /// the <c>walker_id</c> on the spawn, and binding one would set him patrolling from the moment the
+    /// instance opens. Retail has him stand still until somebody comes within fifteen metres and then
+    /// walk, so the route is attached here instead, at the trigger.
+    /// </remarks>
+    private bool StartRoute()
+    {
+        WalkerTemplate route = DataManager.WALKER_DATA.GetWalkerTemplate(RouteId);
+        if (route == null)
+            return false;
+        List<RouteStep> steps = route.GetRouteSteps();
+        if (steps == null || steps.Count <= DespawnStepIndex)
+            return false;
+
+        // Point zero is where he is standing -- it is his spawn to within half a metre, which is how the
+        // route was confirmed to be his in the first place. So the first leg is toward point one.
+        GetMoveController().SetWalkerTemplate(route, 0);
+        SetSubStateIfNot(AISubState.WALK_PATH);
+        GetMoveController().SetRouteStep(steps[1]);
+        GetMoveController().MoveToNextPoint();
+        return true;
+    }
+
+    /// <summary>Retail's <c>despawn_self</c> at the last waypoint he actually walks.</summary>
+    /// <remarks>
+    /// The step index has to be read <b>before</b> <c>base</c>: the base handler runs
+    /// <c>WalkManager.ChooseNextRouteStep</c>, which advances the move controller to the next step, so
+    /// after it the index is the one he is leaving for and not the one he has reached.
+    /// <para>
+    /// When he is not on the route -- the fallback straight line, or either of the other two npcs --
+    /// there is no step at all, and arrival is the end of the single move he was given.
+    /// </para>
+    /// </remarks>
     protected override void HandleMoveArrived()
     {
+        RouteStep arrived = GetMoveController().GetCurrentStep();
         base.HandleMoveArrived();
-        if (GetNpcId() == 800435)
+        if (GetNpcId() != 800435)
+            return;
+        if (arrived == null || arrived.GetStepIndex() == DespawnStepIndex)
             AIActions.DeleteOwner(this);
     }
 

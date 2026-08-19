@@ -28014,3 +28014,69 @@ pin that passes on an empty set — a mistake made four times in this suite alre
   wave and Muragan's despawn all wait on the walker controller raising arrival at a waypoint index.
   That single engine gap is now the most expensive missing piece in this work.
 - The 8% of spawn devnames that do not resolve — treasure boxes and gate props, by the look of the names.
+
+## `on_arrived_at_waypoint` was never blocked either, and Muragan walks his route
+
+Three entries above call the walker controller's failure to signal arrival at a waypoint index "the most
+expensive missing piece in this work", blocking Muragan's despawn, Lahulahu's wave and Grogget's stigma
+stones. **It is not missing.** That is the second wrong blocker in three commits, and the pattern is now
+clear enough to name: *asserting an engine gap without opening the engine*.
+
+**The chain was there all along.** `MoveTaskManager` raises `MoveArrived` every time a destination is
+reached, and every route step **is** a destination:
+
+```
+MoveTaskManager  ->  OnGeneralEvent(MoveArrived)  ->  HandleMoveArrived()
+                 ->  MoveEventHandler.OnMoveArrived  ->  TargetEventHandler.OnTargetReached
+                 ->  WalkManager.TargetReached  ->  ChooseNextRouteStep
+```
+
+and `GetMoveController().GetCurrentStep().GetStepIndex()` is the index. **Six classes already use it** --
+`GreenfingersAI` and `ReianBomberAI` read exactly that, `ArminosDrakyAI`, `EmpoweredAgent` and
+`ShugoTombAttackerAI` use `IsLastStep()`. `is_waypoint_index` has been expressible since before any of
+this work started.
+
+**But the ordering matters, and it is a trap.** `base.HandleMoveArrived()` is what runs
+`ChooseNextRouteStep`, which **advances the move controller to the next step**. So:
+
+> Read the step index **before** calling base, or you get the point he is leaving for rather than the one
+> he has reached.
+
+This is pinned by a mutation that does nothing but move the read below the `base` call, and it is caught.
+
+### Muragan walks the route now
+
+Everything was in place and unused: the route was imported three commits ago as
+`npc_walker/300510000_Tiamat_Stronghold.xml`, route `3005100001`, eleven points whose first is his spawn
+to within half a metre. He was still being sent at the door in a straight line.
+
+He is now put on the route **at the trigger** rather than by a `walker_id` on his spawn.
+`WalkManager.StartRouteWalking` cannot be used for this: it is gated on `IsPathWalker`, which reads the
+spawn's `walker_id`, and binding one would have him patrolling from the moment the instance opens where
+retail has him stand still until somebody comes within fifteen metres. So the template is attached
+directly and the first leg aimed at point one.
+
+He despawns at **index five, the sixth point** -- retail's `despawn_self` -- and walks past points one to
+four without vanishing. Points seven to eleven stay in the data and he never sees them.
+
+**One existing pin had to be retired, and that is the honest part.** `AndHeGoesWhenHeGetsThere` asserted
+that arrival despawns him, which was true only while the whole walk was a single move. Arriving is now
+something that happens five times before he should go anywhere. Rather than delete it, it became
+`WithoutTheRouteHeStillGoesWhenTheMoveEnds`, pinning the fallback: a build whose walker data lacks the
+route gets the old straight line, and arrival still ends him. The harness reproduces that by simply not
+loading walker routes, and that path had no pin at all before.
+
+**Pins** — three new, one rewritten, five mutations, all five caught. Full solution green at 2,744.
+
+**Still missing.**
+
+- **`GreenfingersAI` and `ReianBomberAI` read the step index *after* `base`**, so they are testing the
+  index of the next point, not the one reached. Whether that is wrong depends on the numbers their data
+  carries -- aionemu may have chosen those numbers to match the off-by-one -- so they are **not** being
+  changed here. They want their patterns read first, and they are the obvious next thing after this.
+- **Lahulahu and Grogget.** Both are now unblocked in principle and neither is written. Grogget is the
+  bigger job: his whole encounter is waypoint-driven, with stigma stones spawned at absolute coordinates
+  at three separate indices, each arming two battle timers.
+- Muragan still walks the route with no rest at the points; the client's `stay_duration` values came
+  across as `rest_time` in the import and `ChooseNextRouteStep` honours them, so this may already be
+  right and has not been checked.
