@@ -23089,3 +23089,70 @@ twenty-five seconds first fixes it without weakening the assertion.
 Build clean. Flattening the fury count fails the hard row; removing the sliver fails both. **Three
 consecutive full-suite runs** rather than one, since two of the last three passes turned up a flaky pin:
 **2,174 passing**, 1 skipped.
+
+## Stormwing's lightning, and twisters that never moved
+
+Second of the six classes with unported placements. Two findings, and a flake sweep that came up clean.
+
+### The lightning chain, which was missing entirely
+
+Retail runs **two battle timers that hand back and forth** — timer 2 casts and arms timer 3, timer 3
+arms timer 2 — and **only the bottom two rungs of the timer-3 ladder summon anything**. Above fifty per
+cent the chain runs and drops nothing, so a reader who checked the top of the ladder would conclude there
+was no add here at all. This class had none of it.
+
+```
+81-100 : cast, hand back at 20s        (no summon)
+51-80  : cast, hand back at 20s        (no summon)
+31-50  : one lightning, lives 15s      then hand back at 30s
+ 0-30  : one lightning, lives  7s      then hand back at 35s
+```
+
+**One lightning, not a wave.** The below-thirty rung reads `spawn_on_multi_target`, which sounds
+raid-wide — and carries **`total_set_to_spawn=1`** with `ORDERI_RANDOM`. The 31-50 rung is
+`spawn_on_target_by_attacker_indicator RANDOM_ONE`. Both are one add on one random player, differing only
+in how long it lives. **Reading the op name and not its cap would have made this fight several times
+harsher than retail.**
+
+### Twisters that stood where they landed
+
+**Every twister spawn in the pattern carries a `pathname`**, and this class started none of them, so all
+four appeared at their offsets and stayed there. The twisters are meant to sweep, and where they sweep is
+what the raid moves around — four stationary hazards is a different room.
+
+All eight routes are in our walker data. They pair with the alternation the class already had:
+scattered bands take the wide `C1..C4`, bands that drop them on top of him take the tight `C1_1..C4_1`.
+
+Retail's op is `SPAWN_LOCATION_RELATIVE` **with** a pathname — appear at the offset, then walk. That
+combination has no engine primitive yet; this class does it by hand, as Tiamat's rush wave did before
+`Do.SpawnOnPath` existed.
+
+### A pin that sampled outside its own window
+
+The first version of the lightning pin used one sample point for both bands. The two land at different
+times *and* live for different spans — forty seconds for fifteen against thirty seconds for seven — so
+forty-five seconds catches the 45% case and **misses the 25% one entirely**. Each band is now sampled
+inside its own lifetime, with the arithmetic written down.
+
+### The flake sweep
+
+Two flaky pins turned up by luck in three passes, so this pass ran the AI suite **six times** looking for
+more before doing anything else. **Clean.** Not proof — a one-in-twenty flake has about a one-in-four
+chance of hiding from six runs — but the two known ones reproduced far more often than that.
+
+### Still to do
+
+- **Stormwing's hard mode still uses the normal routes.** `IDCTH_Rudra` names sixteen
+  `NPCPathPath_RudraWind_N` routes with `SPAWN_LOCATION_MY_POINT`, a different set and a different
+  placement from the normal pattern's eight; this class only distinguishes the two modes by add *count*.
+  All sixteen routes are in our data.
+- **The four remaining classes** with unported placements: `AbyssUndeadAI`, `KaligaTheUnjustAI`,
+  `CalindiFlamelordAI`, `YamennesSpawnGateAI`.
+- `SPAWN_LOCATION_RELATIVE` + `pathname` deserves an engine primitive rather than a second hand-rolled
+  copy.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Summoning at any health fails the above-fifty pin; dropping the routes fails the route pin.
+**Three consecutive full-suite runs**: 2,178 passing (four new), 1 skipped.

@@ -1,4 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Aion.GameServer.Commons.Utils;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Npcskill;
@@ -64,10 +68,52 @@ public class StormwingAI : AggressiveNpcAI
     /// <summary>Retail p10 to p7, all fifteen seconds.</summary>
     private const int EscalationLife = 15;
 
+    /// <summary>
+    /// Retail's <c>BIDCTN_SumLightning_55_Ae</c>, and the chain that decides when it lands.
+    /// </summary>
+    /// <remarks>
+    /// <b>This whole mechanic was missing.</b> Two of retail's battle timers hand back and forth --
+    /// timer 2 casts and arms timer 3, timer 3 arms timer 2 -- and only in the bottom two bands does the
+    /// timer-3 rung also drop a lightning. Above fifty per cent the chain runs and summons nothing, so a
+    /// port that read only the top of the ladder would see no add at all.
+    /// <para>
+    /// <b>One lightning, not a raid-wide wave.</b> The below-thirty rung reads
+    /// <c>spawn_on_multi_target</c>, which sounds like everybody -- and carries
+    /// <c>total_set_to_spawn=1</c> with <c>ORDERI_RANDOM</c>. The 31-50 rung is
+    /// <c>spawn_on_target_by_attacker_indicator RANDOM_ONE</c>. Both are one add on one random player;
+    /// they differ only in how long it lives, seven seconds against fifteen.
+    /// </para>
+    /// </remarks>
+    private const int Lightning = 281798;
+    private const float LightningReach = 50f;
+
     /// <summary>Diagonal offsets used on the scattering bands.</summary>
     private static readonly (float X, float Y)[] Diagonals =
     {
         (10f, 10f), (-10f, 10f), (-10f, -10f), (10f, -10f),
+    };
+
+    /// <summary>
+    /// The four routes each band's twisters take, which this class never started them on.
+    /// </summary>
+    /// <remarks>
+    /// <b>Every twister spawn in the pattern carries a <c>pathname</c>, and all eight routes are in our
+    /// walker data.</b> Without them the four appear at their offsets and stand there, which is a
+    /// different room: the twisters are meant to sweep, and where they sweep is what the raid moves
+    /// around. The two sets pair with the two kinds of band -- scattered spawns take the wide routes,
+    /// spawns on top of him take the tight ones -- which is the same alternation this class already had
+    /// for the offsets.
+    /// </remarks>
+    private static readonly string[] WidePaths =
+    {
+        "NPCPathPath_RudraWindC1", "NPCPathPath_RudraWindC2",
+        "NPCPathPath_RudraWindC3", "NPCPathPath_RudraWindC4",
+    };
+
+    private static readonly string[] TightPaths =
+    {
+        "NPCPathPath_RudraWindC1_1", "NPCPathPath_RudraWindC2_1",
+        "NPCPathPath_RudraWindC3_1", "NPCPathPath_RudraWindC4_1",
     };
 
     private readonly object bandLock = new object();
@@ -76,6 +122,7 @@ public class StormwingAI : AggressiveNpcAI
 
     private ScheduledTask? bandTask;
     private ScheduledTask? escalationTask;
+    private ScheduledTask? lightningTask;
 
     public StormwingAI(Npc owner)
         : base(owner)
@@ -104,6 +151,52 @@ public class StormwingAI : AggressiveNpcAI
         escalationTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
             _ => { OnEscalationTick(); return ValueTask.CompletedTask; },
             System.TimeSpan.FromMilliseconds(30000), System.TimeSpan.FromMilliseconds(30000));
+
+        // Retail arms timer 2 fifteen seconds in, and the two timers hand back and forth from there.
+        lightningTask = ThreadPoolManager.GetInstance().Schedule(
+            _ => { OnCastRung(); return ValueTask.CompletedTask; }, 15000L);
+    }
+
+    /// <summary>Retail's timer-2 rungs: a cast, and timer 3 armed at a delay chosen by band.</summary>
+    private void OnCastRung()
+    {
+        if (IsDead() || !IsInState(AIState.FIGHT))
+            return;
+
+        int hp = GetLifeStats().GetHpPercentage();
+        long toLightning = hp <= 30 ? 15000L : hp <= 50 ? 25000L : 20000L;
+        lightningTask = ThreadPoolManager.GetInstance().Schedule(
+            _ => { OnLightningRung(); return ValueTask.CompletedTask; }, toLightning);
+    }
+
+    /// <summary>
+    /// Retail's timer-3 rungs. Only the bottom two summon; the rest simply hand back to timer 2.
+    /// </summary>
+    private void OnLightningRung()
+    {
+        if (IsDead() || !IsInState(AIState.FIGHT))
+            return;
+
+        int hp = GetLifeStats().GetHpPercentage();
+        if (hp <= 30)
+            SpawnLightning(7);
+        else if (hp <= 50)
+            SpawnLightning(15);
+
+        long backToCast = hp <= 30 ? 35000L : hp <= 50 ? 30000L : 20000L;
+        lightningTask = ThreadPoolManager.GetInstance().Schedule(
+            _ => { OnCastRung(); return ValueTask.CompletedTask; }, backToCast);
+    }
+
+    /// <summary>One lightning, on a random player inside retail's fifty-metre valid distance.</summary>
+    private void SpawnLightning(int liveSeconds)
+    {
+        List<Creature> valid = GetAggroList().StreamValidTargets(LightningReach).ToList();
+        if (valid.Count == 0)
+            return;
+
+        Creature target = valid[Rnd.NextInt(valid.Count)];
+        SpawnFor(Lightning, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0, liveSeconds);
     }
 
     private void OnBandTick()
@@ -119,11 +212,12 @@ public class StormwingAI : AggressiveNpcAI
 
         // Bands alternate between scattering the twisters and dropping them on top of him.
         bool scatter = band % 2 == 0;
+        string[] paths = scatter ? WidePaths : TightPaths;
         for (int i = 0; i < 4; i++)
         {
             int npcId = i % 2 == 0 ? SharpTwister : RootTwister;
             (float dx, float dy) = scatter ? Diagonals[i] : (0f, 0f);
-            SpawnNear(npcId, dx, dy, BandLives[band]);
+            SpawnNear(npcId, dx, dy, BandLives[band], paths[i]);
         }
     }
 
@@ -166,11 +260,19 @@ public class StormwingAI : AggressiveNpcAI
             SpawnNear(npcId, 0f, 0f, EscalationLife);
     }
 
-    private void SpawnNear(int npcId, float dx, float dy, int liveSeconds)
+    private void SpawnNear(int npcId, float dx, float dy, int liveSeconds, string? path = null)
     {
         Npc owner = GetOwner();
-        SpawnFor(npcId, owner.GetX() + dx, owner.GetY() + dy, owner.GetZ(),
-            (sbyte)owner.GetHeading(), liveSeconds);
+        if (SpawnFor(npcId, owner.GetX() + dx, owner.GetY() + dy, owner.GetZ(),
+                (sbyte)owner.GetHeading(), liveSeconds) is not Npc twister || path == null)
+            return;
+
+        // Retail's spawn is RELATIVE *and* names a path: it appears at the offset and then walks. A
+        // twister whose route cannot be resolved still stands where it was put, which is the behaviour
+        // this class had for every one of them.
+        twister.GetSpawn().SetWalkerId(path);
+        if (twister.GetAi() is NpcAI ai)
+            Aion.GameServer.Ai.Manager.WalkManager.StartWalking(ai);
     }
 
     protected override void HandleDied()
@@ -195,6 +297,9 @@ public class StormwingAI : AggressiveNpcAI
     {
         Cancel(ref bandTask);
         Cancel(ref escalationTask);
+        // The lightning chain books its own successor each rung, so cancelling the handle is what ends
+        // it; a guard alone would leave it rescheduling for ever.
+        Cancel(ref lightningTask);
         lock (bandLock)
         {
             bandsCrossed = 0;

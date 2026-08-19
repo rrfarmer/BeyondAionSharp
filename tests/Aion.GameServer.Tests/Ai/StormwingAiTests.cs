@@ -29,6 +29,9 @@ public sealed class StormwingAiTests
 	private const int ThreshingWind = 18613;
 	private const int MidnightWind = 18614;
 
+	/// <summary>Retail's <c>BIDCTN_SumLightning_55_Ae</c>, which this fight never summoned.</summary>
+	private const int Lightning = 281798;
+
 	private static BossAiHarness NewHarness() => BossAiHarness.For(BeshmundirTemple)
 		.WithWorldSize(2048)
 		.WithAi(typeof(StormwingAI), typeof(AggressiveNpcAI))
@@ -188,5 +191,93 @@ public sealed class StormwingAiTests
 		Assert.Empty(BossAiHarness.DrainQueuedSkills(boss));
 		Assert.DoesNotContain(harness.LiveNpcs(),
 			n => n.GetNpcId() is SharpTwister or RootTwister && !standing.Contains(n));
+	}
+
+	/// <summary>
+	/// <b>The lightning, which was missing entirely.</b> It lands only below fifty per cent.
+	/// </summary>
+	/// <remarks>
+	/// Retail runs two battle timers that hand back and forth, and only the bottom two rungs of the
+	/// timer-3 ladder summon anything — above fifty the chain still runs and drops nothing. So a fight
+	/// held at full health should show none however long it goes on, which is the half of the guard a
+	/// "does it ever appear" test would miss.
+	/// <para>
+	/// One add, not a wave: the below-thirty rung reads <c>spawn_on_multi_target</c> and carries
+	/// <c>total_set_to_spawn=1</c>.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void NoLightningAboveFiftyPercent()
+	{
+		using var harness = NewHarness();
+		Npc boss = SpawnBoss(harness);
+		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
+		harness.Engage(boss, player);
+		BossAiHarness.SetHpPercent(boss, 90);
+
+		// Two minutes is four turns of the twenty-second hand-off at this health.
+		harness.Clock.Advance(TimeSpan.FromMinutes(2));
+
+		Assert.Equal(0, Count(harness, Lightning));
+	}
+
+	/// <summary><b>And below fifty it arrives, one at a time.</b></summary>
+	/// <remarks>
+	/// <b>Each band is sampled inside its own lifetime, and the two are not the same.</b> Timer 2 fires
+	/// at fifteen seconds and arms timer 3 at twenty-five in the 31-50 band and fifteen below thirty, so
+	/// the lightning lands at forty and thirty seconds respectively -- and then lives fifteen seconds
+	/// against seven. A single sample point suits neither: forty-five seconds catches the 45%% one and
+	/// misses the 25%% one entirely, which is what the first version of this pin did.
+	/// </remarks>
+	[Theory]
+	[InlineData(45, 45)]
+	[InlineData(25, 33)]
+	public void BelowFiftyPercentOneLightningLands(int hpPercent, int sampleAtSeconds)
+	{
+		using var harness = NewHarness();
+		Npc boss = SpawnBoss(harness);
+		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
+		harness.Engage(boss, player);
+		BossAiHarness.SetHpPercent(boss, hpPercent);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(sampleAtSeconds));
+
+		Assert.Equal(1, Count(harness, Lightning));
+	}
+
+	/// <summary>
+	/// <b>The twisters walk the routes retail names</b>, rather than standing where they appeared.
+	/// </summary>
+	/// <remarks>
+	/// Every twister spawn in the pattern carries a <c>pathname</c> and this class started none of them,
+	/// so all four stood at their offsets. Asserting the walker id rather than a position: the harness
+	/// has no mover, so the route is the only thing that can be observed here — but it is the thing that
+	/// was missing, and a twister with no route cannot sweep whatever the mover does.
+	/// </remarks>
+	[Fact]
+	public void TheTwistersTakeTheirRetailRoutes()
+	{
+		using var harness = BossAiHarness.For(BeshmundirTemple)
+			.WithWorldSize(2048)
+			.WithWalkerRoutes()
+			.WithAi(typeof(StormwingAI), typeof(AggressiveNpcAI))
+			.Build();
+		Npc boss = harness.Spawn(Stormwing, 558.306f, 1369.02f, 224.795f, 70);
+		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
+		harness.Engage(boss, player);
+
+		TickBandAt(harness, boss, player, 94);
+
+		List<Npc> twisters = harness.LiveNpcs()
+			.Where(n => n.GetNpcId() == SharpTwister || n.GetNpcId() == RootTwister)
+			.ToList();
+		Assert.Equal(4, twisters.Count);
+
+		// The ninety-five band scatters, so it takes the wide set — and all four differ, which is what
+		// rules out every twister being handed the same route.
+		var routes = twisters.Select(n => n.GetSpawn().GetWalkerId()).ToList();
+		Assert.All(routes, r => Assert.StartsWith("NPCPathPath_RudraWindC", r));
+		Assert.All(routes, r => Assert.DoesNotContain("_1", r));
+		Assert.Equal(4, routes.Distinct().Count());
 	}
 }
