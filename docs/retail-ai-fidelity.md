@@ -31719,3 +31719,54 @@ dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_
 short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed
 attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's
 `npc_skills`.
+
+## An npc doing someone else's job
+
+Yamennes' gate was a kind of defect this work had not looked for: **not a missing npc and not a missing
+class, but an npc carrying the wrong `ai`.** It spawned perfectly well and behaved like a teleporter.
+That is the hardest of the three to see, because nothing is absent.
+
+`audit_odd_ai.py` looks for it the only way retail allows: an npc whose `ai` disagrees with the other
+npcs bound to the same retail pattern.
+
+### Two filters, both from rows that were noise
+
+* **First run: 1,679 rows**, headed by 3,223 npcs sharing `D2_FnA` — a generic pattern every ordinary
+  drakan runs. A pattern bound to thousands of npcs says nothing about any one of them. Yamennes' gate
+  was findable because its pattern binds **four**. Only small patterns are read now.
+* **Second run: 146 rows**, nearly all of them one specialised npc among generic siblings — a boss among
+  its mooks, which is ordinary. The Yamennes shape has **both sides specialised**, disagreeing about
+  which specialisation.
+
+That leaves **72**, and most of those are guard-family variants this work has already established as
+deliberate — `abyssguard_reinforcement` beside `guard_reinforcement`, `fortress_protector` beside both.
+The audit reports them correctly and they are not defects.
+
+### What it found
+
+Underneath the guards, a different shape: **families split by scene rather than by faction.**
+
+| pattern | npcs with the class | npcs without |
+|---|---|---|
+| `IDSeal_Scene_13_Bomber` | scene 13, both factions | **scenes 14 and 15, both factions** |
+| `IDSeal_Scene_24_PCGuard` | scenes 24, 25 | scenes 05, 12 |
+
+Retail binds one pattern to all of them — one behaviour, six npcs. This port gave the class to scene 13
+and left the rest as ordinary monsters, so **two thirds of the bomber family walked up to a door and did
+nothing.**
+
+The four are fixed. It is safe because the class is position-based: it looks for gate npcs within fifteen
+metres of *itself* rather than naming a scene's door.
+
+> The split reads as deliberate until the devnames are lined up, which is exactly why an audit finds it
+> and a reader does not.
+
+**The PCGuard half is deliberately not touched.** Those eight are the guards the twin fonts spawn *onto a
+player* with a million hate as a punishment; giving four more of them a seal-breaker class changes what
+a failure does to you, and that is a judgement rather than a translation.
+
+**Still missing.** The four scene-05/12 PCGuards, and whether they should share the class; the six
+Yamennes gate coordinates; Beritra's four; Orissan's crystal tiers; the 30009/30010 dismissal family;
+jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_user` pinned one seam short;
+`despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
+258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.

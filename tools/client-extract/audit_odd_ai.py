@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""Npcs whose `ai` disagrees with the other npcs running the same retail pattern.
+
+WHY THIS EXISTS
+---------------
+Yamennes' first spawn gate is the case. Retail binds four npcs to `IDAbRe_Core_Summon4`; three of them
+carry `ai="yamennes_spawn_gate"` here and the fourth, 281906, carried `ai="portal"` -- a teleporter.
+
+> The corrected encounter produced **two gates instead of three**, and the npc that failed to appear had
+> spawned perfectly well. It was simply behaving like something else. An npc with the wrong `ai` is not
+> a missing npc and not a missing class: it is an npc doing someone else's job, which is the hardest of
+> the three to see.
+
+Retail's own binding is the check. If a pattern's npcs mostly agree on one `ai` and a few do not, the few
+are worth reading -- and the majority is evidence rather than proof, which is why this prints both sides.
+
+WHAT IT DOES NOT CLAIM
+----------------------
+**A pattern bound to thousands of npcs says nothing about any one of them.** The first run of this
+reported 1,679 rows, headed by 3,223 npcs sharing `D2_FnA` -- a generic retail pattern that every ordinary
+drakan runs. Any npc with a specialised class looks like a dissenter there, and none of it is a defect.
+
+Yamennes' gate was findable because its pattern binds **four** npcs: the binding is a statement about
+that encounter. So only small patterns are read, and `--max-siblings` is the knob.
+
+**A disagreement is not automatically a defect.** Retail binds one pattern to npcs this port legitimately
+treats differently: a pattern shared by a boss and its statue, or by an attackable npc and its
+unattackable twin, will show up here and should. The audit reports the split and leaves the judgement.
+
+Patterns where every npc agrees are silent, which is most of them.
+
+Usage:  python audit_odd_ai.py [--xml DIR] [--min-majority N]
+"""
+import argparse
+import collections
+import pathlib
+import re
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from client_npc_names import npc_names, unattackable_ids  # noqa: E402
+
+REPO = pathlib.Path(__file__).resolve().parents[2]
+
+
+def our_ai():
+    """npc id -> the `ai` on its template here."""
+    path = REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml"
+    return dict(re.findall(r'npc_id="(\d+)"[^>]*?\bai="([^"]*)"',
+                           path.read_text(encoding="utf-8", errors="replace")))
+
+
+def patterns_by_npc():
+    out = {}
+    tsv = REPO / "tools" / "client-extract" / "out" / "ai_binding.tsv"
+    for line in tsv.read_text(encoding="utf-8").splitlines()[1:]:
+        parts = line.split("\t")
+        if len(parts) > 3 and parts[3]:
+            out[parts[0]] = parts[3]
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
+    ap.add_argument("--min-majority", type=int, default=3,
+                    help="how many npcs must agree before a minority is worth reporting")
+    ap.add_argument("--max-siblings", type=int, default=8,
+                    help="ignore patterns bound to more npcs than this; they are generic and say nothing")
+    args = ap.parse_args()
+
+    ai_of = our_ai()
+    runs = patterns_by_npc()
+    devname = {npc_id: name for name, npc_id in npc_names(args.xml).items()}
+    furniture = unattackable_ids(args.xml)
+
+    # Group our npcs by the retail pattern they run.
+    by_pattern = collections.defaultdict(list)
+    for npc_id, pattern in runs.items():
+        if npc_id in ai_of:
+            by_pattern[pattern].append(npc_id)
+
+    rows = []
+    for pattern, npcs in by_pattern.items():
+        if len(npcs) > args.max_siblings:
+            continue
+        counts = collections.Counter(ai_of[n] for n in npcs)
+        if len(counts) < 2:
+            continue
+        (majority, agreed), = counts.most_common(1)
+        if agreed < args.min_majority:
+            continue
+
+        # The majority must be a real class too. A family whose siblings are all plain `aggressive` and
+        # one of which has a class is the ORDINARY case -- a boss among its mooks -- and it accounted
+        # for nearly every row before this line existed. What Yamennes' gate looked like is different:
+        # both sides specialised, disagreeing about which specialisation.
+        if majority in ("aggressive", "general", "noaction", ""):
+            continue
+
+        # A generic ai is not a competing opinion, it is the absence of one -- those npcs are the
+        # unimplemented-add case that audit_summon_ids already covers, and reporting them here would
+        # bury the real finding under hundreds of rows.
+        odd = [n for n in npcs
+               if ai_of[n] != majority
+               and ai_of[n] not in ("aggressive", "general", "noaction", "")]
+        for npc_id in odd:
+            rows.append((pattern, majority, agreed, npc_id, ai_of[npc_id],
+                         devname.get(npc_id, "?"), npc_id in furniture))
+
+    rows.sort(key=lambda r: (-r[2], r[0]))
+    print(f"{len(by_pattern)} retail patterns have npcs in this port")
+    print(f"{len(rows)} npcs carry a non-generic ai that disagrees with {args.min_majority}+ of their siblings\n")
+    for pattern, majority, agreed, npc_id, ai, name, fx in rows:
+        print(f"  {npc_id}  ai={ai:26s} but {agreed} siblings on {pattern[:28]} use {majority}")
+        print(f"        {name[:60]}{'   [unattackable]' if fx else ''}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
