@@ -29055,3 +29055,48 @@ positive removed, which is the only reason to believe the next one might be real
 - **The 37 top-band ids**, now with three fewer ways to be spurious. Nobody has read one that turned out
   to be owed, and that is the honest state of it.
 - **857599 and 856503**, referenced by patterns and absent from our npc data.
+
+## The fifth row was owed: Pashid's strike was the wrong Pashid
+
+Four rows off the ranked list were explained rather than owed. The fifth is a real defect, and it is one
+digit.
+
+The Eternal Bastion's fifth wave has **two strike npcs, one apart**:
+
+| id | name | devname | who spawns it |
+|---|---|---|---|
+| 284697 | pashid siege dragon | `BIDF5_TD_DragonRiderStrike` | the ordinary `IDF5_TD_DragonRider_N_65_Ae`, and the wave's four summon patterns |
+| **284698** | grand commander pashid | `BIDF5_TD_DragonRiderChiefStrike` | **`IDF5_TD_Wave5_Boss`** — Pashid's own |
+
+`EternalBastionCommanderPashidAI` spawned **284697**. Our Pashid is npc 231130, devname
+`IDF5_TD_DragonRider_Chief_N_65_Al`, and his pattern is `IDF5_TD_Wave5_Boss`: he is the chief and he was
+putting down the rank-and-file rider's strike.
+
+**The correction is currently inert, and saying so is the point.** Both strike npcs run `useSkillAndDie`,
+which reads the npc's skill list and deletes the npc when it is empty — and **neither 284697 nor 284698
+has an `npc_skills` entry in our data**. So both ids appear and immediately remove themselves, and
+nothing observable changes today. The id is still wrong and still worth fixing: it is what retail spawns,
+and it is the half of the problem that lives in code rather than in data. The other half is a missing
+`npc_skills` row, which is a different queue.
+
+**The pin is a constant, not a spawn, and the test says why.** A behavioural pin here would assert that
+nothing appears — which is true, and would keep being true with the wrong id. One mutation, caught.
+
+### What five rows have taught about the list
+
+| row | verdict |
+|---|---|
+| Tiamat hard | route-blocked, note already correct |
+| Lord Beritra | eleven FX collapses, one npc absent from our data, one mechanic missing a spawn row |
+| Isbariya | already placed by our spawn data |
+| Ahserion | named by a `const int` in a sibling file |
+| **Pashid** | **owed — wrong id** |
+
+Three of those five became automated filters. **One in five was real**, and it was found only after the
+filters removed the other four kinds — which is roughly what the filters were built to do.
+
+**Still missing.**
+
+- **`npc_skills` for 284697 and 284698**, without which neither strike does anything at all.
+- **The 36 remaining top-band ids.** One in five is the only rate anyone has measured.
+- Dynatoum's mine web, 857599 and 856503, unchanged.

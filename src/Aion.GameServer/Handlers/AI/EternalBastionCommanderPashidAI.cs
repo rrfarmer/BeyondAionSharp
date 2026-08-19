@@ -12,10 +12,34 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/eternalBastion/EternalBastionCommanderPashidAI (@author Estrayl).</summary>
+/// <summary>
+/// Grand Commander Pashid (231130), the Eternal Bastion's fifth wave. Retail pattern
+/// <c>IDF5_TD_Wave5_Boss</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/eternalBastion/EternalBastionCommanderPashidAI (@author Estrayl).
+/// Retail-sourced correction below; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>He was spawning the ordinary rider's strike, not his own.</b> There are two: <c>284697</c>
+/// "pashid siege dragon" is <c>BIDF5_TD_DragonRiderStrike</c>, spawned by the rank-and-file
+/// <c>IDF5_TD_DragonRider_N_65_Ae</c> and by the wave's four summon patterns; <c>284698</c>
+/// "grand commander pashid" is <c>BIDF5_TD_DragonRiderChiefStrike</c>, and it is the one
+/// <c>IDF5_TD_Wave5_Boss</c> — his pattern — puts down on <c>on_wake_up</c>.
+/// </para>
+/// <para>
+/// <b>The correction is currently inert, and that is worth knowing before anyone tests it.</b> Both
+/// strike npcs run <c>useSkillAndDie</c>, which reads the npc's skill list and deletes the npc when it
+/// is empty — and <b>neither 284697 nor 284698 has an <c>npc_skills</c> entry in our data</b>. So both
+/// ids appear and immediately remove themselves. Fixing the id is still right: it is what retail spawns,
+/// and it is the half of the problem that lives in code rather than in data.
+/// </para>
+/// </remarks>
 [AIName("eternal_bastion_commander_pashid")]
 public class EternalBastionCommanderPashidAI : EternalBastionAggressiveNpcAI
 {
+    /// <summary>Retail's <c>BIDF5_TD_DragonRiderChiefStrike</c>, spawned by his own wake rung.</summary>
+    public const int ChiefStrike = 284698;
+
     private Npc commander;
     private double dist;
 
@@ -26,7 +50,7 @@ public class EternalBastionCommanderPashidAI : EternalBastionAggressiveNpcAI
     protected override void HandleSpawned()
     {
         base.HandleSpawned();
-        Spawn(284697, GetPosition().GetX(), GetPosition().GetY(), GetPosition().GetZ(), (sbyte)0);
+        Spawn(ChiefStrike, GetPosition().GetX(), GetPosition().GetY(), GetPosition().GetZ(), (sbyte)0);
         commander = GetPosition().GetWorldMapInstance().GetNpc(209516);
         if (commander == null)
             commander = GetPosition().GetWorldMapInstance().GetNpc(209517);
