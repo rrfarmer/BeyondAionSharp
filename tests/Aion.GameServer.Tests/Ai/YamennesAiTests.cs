@@ -32,12 +32,14 @@ public sealed class YamennesAiTests
 	/// <summary>The normal-mode Yamennes, IDAbRe_Core_NamedD.</summary>
 	private const int NormalYamennes = 216952;
 
-	private static (BossAiHarness, Npc, Player) Engaged()
+	private static (BossAiHarness, Npc, Player) Engaged() => EngagedAs(Yamennes);
+
+	private static (BossAiHarness, Npc, Player) EngagedAs(int npcId)
 	{
 		BossAiHarness harness = BossAiHarness.For(AbyssalSplinter).WithWorldSize(2048)
 			.WithAi(typeof(YamennesAI), typeof(YamennesSpawnGateAI), typeof(GatesSummonedAI),
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
-		Npc boss = harness.Spawn(Yamennes, 330f, 730f, 216f);
+		Npc boss = harness.Spawn(npcId, 330f, 730f, 216f);
 		Player player = harness.SpawnPlayer(332f, 732f, 216f);
 		harness.Engage(boss, player);
 
@@ -185,5 +187,76 @@ public sealed class YamennesAiTests
 
 		Assert.Equal(3, harness.LiveNpcs().Count(n => Portals.Contains(n.GetNpcId())));
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == Golem));
+	}
+
+	/// <summary>Retail's <c>IDCatacombs_Hard_Buff</c> and <c>..._Sum_NamedD_onDie</c>.</summary>
+	private const int ProtectorsFury = 281819;
+	private const int YamennesSliver = 282065;
+
+	private static int Count(BossAiHarness harness, int npcId) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);
+
+	/// <summary>
+	/// <b>The fury wave, which neither Yamennes had</b> — and the two modes are paced differently.
+	/// </summary>
+	/// <remarks>
+	/// Both patterns carry it and this class ported neither, so the fight's only continuous add stream
+	/// was missing entirely. The hard mode is much the harsher of the two: <b>three every eight seconds
+	/// from fifty-four</b>, against two every twenty from sixty. Asserting the first wave's timing and
+	/// size together is what separates the modes; a count alone would pass on either cadence.
+	/// </remarks>
+	[Theory]
+	[InlineData(Yamennes, 54, 3)]
+	[InlineData(NormalYamennes, 60, 2)]
+	public void EachModeSendsItsOwnFuryWave(int npcId, int firstAt, int perWave)
+	{
+		var (harness, boss, _) = EngagedAs(npcId);
+		using BossAiHarness _h = harness;
+
+		// Five on the hate list, comfortably more than either cap. One player would give one fury
+		// whatever the cap said, so a raid is the only way this pin can tell the two modes apart.
+		for (int i = 0; i < 4; i++)
+			BossAiHarness.Rehate(boss, harness.SpawnPlayer(334f + i, 732f, 216f));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(firstAt - 2));
+		Assert.Equal(0, Count(harness, ProtectorsFury));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		Assert.Equal(perWave, Count(harness, ProtectorsFury));
+	}
+
+	/// <summary><b>And each fury leaves at ten seconds</b>, which is retail's <c>live_time</c>.</summary>
+	[Fact]
+	public void TheFuriesLeaveAtTenSeconds()
+	{
+		var (harness, _, _) = Engaged();
+		using BossAiHarness _h = harness;
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(55));
+		var first = harness.LiveNpcs().Where(n => n.GetNpcId() == ProtectorsFury).ToHashSet();
+		Assert.NotEmpty(first);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(10));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => first.Contains(n));
+	}
+
+	/// <summary>
+	/// <b>One sliver, where he falls.</b> Retail's <c>target_obj=OBJI_SELF</c>, and one and not two
+	/// because the hard pattern's duplicated death branch shares a test-and-set flag var.
+	/// </summary>
+	[Theory]
+	[InlineData(Yamennes)]
+	[InlineData(NormalYamennes)]
+	public void HeLeavesOneSliverWhereHeFalls(int npcId)
+	{
+		var (harness, boss, _) = EngagedAs(npcId);
+		using BossAiHarness _h = harness;
+		Assert.Equal(0, Count(harness, YamennesSliver));
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Npc sliver = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == YamennesSliver);
+		Assert.Equal(boss.GetX(), sliver.GetX(), 1);
+		Assert.Equal(boss.GetY(), sliver.GetY(), 1);
 	}
 }

@@ -105,14 +105,20 @@ public class UnstableYamennesAI : AggressiveNpcAI
     private const float SliverRange = 50f;
 
     /// <summary>
-    /// Painflare is the hard-mode twin and gets one more of each: three furies a wave against two, and
-    /// two slivers on death against one. Both npc ids share this class, as they share the pattern.
+    /// Painflare is the hard-mode twin and gets one more fury a wave, three against two. Both npc ids
+    /// share this class, as they share the pattern.
     /// </summary>
+    /// <remarks>
+    /// <b>He does not get a second sliver, and this class used to give him one.</b> The hard pattern
+    /// writes its <c>on_die</c> branch twice, at priorities 16 and 15, with byte-identical bodies and
+    /// only the shout differing — and <b>both carry the same test-and-set flag var</b>, so the first
+    /// match sets <c>BETA_1</c> and the second can never run. Reading the pair as a doubled count is the
+    /// same misreading Takahan's class already records for a duplicated rung: <b>a branch written twice
+    /// in retail is written twice, not run twice.</b>
+    /// </remarks>
     private const int Painflare = 219563;
 
     private int FuriesPerWave => GetOwner().GetNpcId() == Painflare ? 3 : 2;
-
-    private int SliversOnDeath => GetOwner().GetNpcId() == Painflare ? 2 : 1;
 
     private ScheduledTask? portalTask;
     private ScheduledTask? furyTask;
@@ -189,15 +195,24 @@ public class UnstableYamennesAI : AggressiveNpcAI
         furyTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnFuries(); return ValueTask.CompletedTask; }, FuryIntervalMillis);
     }
 
-    /// <summary>Retail leaves these behind when it falls; they have no lifetime and stay.</summary>
+    /// <summary>
+    /// Retail leaves one behind where he falls; it has no lifetime and stays.
+    /// </summary>
+    /// <remarks>
+    /// <b>It goes at his feet, not the raid's.</b> Retail's op is
+    /// <c>spawn_on_target target_obj=OBJI_SELF</c> — the target <em>is</em> him — and this class read it
+    /// as the most-hated player, so the sliver landed wherever the tank happened to be standing.
+    /// <para>
+    /// That misreading also made the spawn conditional. <c>valid_distance=50</c> measures from the
+    /// caster to the target, and with the target being the caster the distance is always zero, so retail
+    /// always spawns it. Ours skipped it entirely whenever the most-hated was more than fifty metres off
+    /// or the hate list had already been cleared by his death — <b>which is exactly when a boss dies</b>.
+    /// </para>
+    /// </remarks>
     private void SpawnSlivers()
     {
-        Creature? target = GetAggroList().GetTarget(AggroTarget.MOST_HATED);
-        if (target == null || !PositionUtil.IsInRange(GetOwner(), target, SliverRange, false))
-            return;
-
-        for (int i = 0; i < SliversOnDeath; i++)
-            Spawn(YamennesSliver, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0);
+        Spawn(YamennesSliver, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(),
+            (sbyte)GetOwner().GetHeading());
     }
 
     private void OnHealingDebuff()

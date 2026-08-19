@@ -191,13 +191,24 @@ public sealed class UnstableYamennesAiTests
 	}
 
 	/// <summary>
-	/// Yamennes slivers, retail's <c>IDAbRe_Core_Sum_NamedD_onDie</c>: left where the top of the hate
-	/// list stood, one for Durable and two for Painflare, and they have no lifetime.
+	/// Yamennes slivers, retail's <c>IDAbRe_Core_Sum_NamedD_onDie</c>: <b>one, at his own feet</b>, with
+	/// no lifetime — for both npcs.
 	/// </summary>
+	/// <remarks>
+	/// <b>This pin used to assert the two bugs it should have caught.</b> Retail's op is
+	/// <c>spawn_on_target target_obj=OBJI_SELF</c>, so the sliver goes where <i>he</i> falls; the class
+	/// read the target as the most-hated player and this pin asserted that reading. And the hard pattern
+	/// writes its death branch twice, at priorities 16 and 15, <b>both carrying the same test-and-set
+	/// flag var</b> — so the first sets it and the second can never run. One sliver, not two.
+	/// <para>
+	/// The position is what the count could never have caught: asserting only "how many" passes whether
+	/// they land on the boss or on the raid.
+	/// </para>
+	/// </remarks>
 	[Theory]
-	[InlineData(DurableYamennes, 1)]
-	[InlineData(Painflare, 2)]
-	public void ItLeavesSliversBehindWhenItFalls(int npcId, int expected)
+	[InlineData(DurableYamennes)]
+	[InlineData(Painflare)]
+	public void ItLeavesOneSliverWhereItFalls(int npcId)
 	{
 		var (harness, boss, player) = EngagedSingle(npcId);
 		using BossAiHarness _h = harness;
@@ -205,7 +216,12 @@ public sealed class UnstableYamennesAiTests
 
 		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
 
-		Assert.Equal(expected, harness.LiveNpcs().Count(n => n.GetNpcId() == YamennesSliver));
+		Npc sliver = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == YamennesSliver);
+		Assert.Equal(boss.GetX(), sliver.GetX(), 1);
+		Assert.Equal(boss.GetY(), sliver.GetY(), 1);
+
+		// And not on the player, which is where it used to go.
+		Assert.NotEqual(player.GetX(), sliver.GetX(), 1);
 	}
 
 	private const int Orkanimum = 283200;

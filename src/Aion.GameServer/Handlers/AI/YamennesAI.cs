@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Ai.Poll;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -19,6 +21,7 @@ public class YamennesAI : AggressiveNpcAI
     private ScheduledTask? portalTask;
     private ScheduledTask? enrageTask;
     private ScheduledTask? golemTask;
+    private ScheduledTask? furyTask;
     private readonly AtomicBoolean isStart = new AtomicBoolean();
 
     public YamennesAI(Npc owner)
@@ -51,6 +54,50 @@ public class YamennesAI : AggressiveNpcAI
         }
 
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, 60000L);
+        furyTask = ThreadPoolManager.GetInstance().Schedule(
+            _ => { SpawnFuries(); return ValueTask.CompletedTask; }, FirstFuryMillis);
+    }
+
+    /// <summary>Drops a fury on each of the most-hated, then books the next wave.</summary>
+    /// <remarks>
+    /// Taken from the top of the hate list rather than at random — retail's
+    /// <c>order_in_attacker_list=ORDERI_DESCENDING</c> — and capped at <c>total_set_to_spawn</c>. The
+    /// three-hundred-metre <c>valid_distance</c> is the widest in the 5.8 dump and is effectively the
+    /// whole room, which is the point: there is nowhere in it to stand and be skipped.
+    /// </remarks>
+    private void SpawnFuries()
+    {
+        if (IsDead() || !GetOwner().IsSpawned())
+            return;
+
+        AggroList aggro = GetAggroList();
+        List<Creature> targets = aggro.StreamValidTargets(FuryRange)
+            .OrderByDescending(t => aggro.GetHate(t))
+            .Take(FuriesPerWave)
+            .ToList();
+
+        foreach (Creature target in targets)
+        {
+            if (Spawn(ProtectorsFury, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0) is not Npc fury)
+                continue;
+
+            AttackAfterSpawn.NextTick(fury, target, FuryHate);
+            ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                fury.GetController().DeleteIfAliveOrCancelRespawn();
+                return ValueTask.CompletedTask;
+            }, FuryLifeMillis);
+        }
+
+        furyTask = ThreadPoolManager.GetInstance().Schedule(
+            _ => { SpawnFuries(); return ValueTask.CompletedTask; }, FuryIntervalMillis);
+    }
+
+    /// <summary>One sliver, at his own feet, with no lifetime.</summary>
+    private void SpawnSliver()
+    {
+        Spawn(YamennesSliver, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(),
+            (sbyte)GetOwner().GetHeading());
     }
 
     /// <summary>
@@ -77,6 +124,45 @@ public class YamennesAI : AggressiveNpcAI
 
     /// <summary>The hard variant, and the only one retail gives golems.</summary>
     private const int HardYamennes = 216960;
+
+    /// <summary>
+    /// Retail's <c>IDCatacombs_Hard_Buff</c> — protector's fury, dropped on the top of the hate list.
+    /// </summary>
+    /// <remarks>
+    /// <b>Neither Yamennes had this, and both patterns carry it.</b> It is the fight's only continuous
+    /// add stream: a fury arrives <em>already fighting</em> the player it landed on, with two million
+    /// hate, and lives ten seconds. The number is not decoration — it is far past anything a raid
+    /// accumulates, so the fury stays on its own victim rather than peeling to the tank.
+    /// <para>
+    /// <b>The two modes differ in cadence and count, and the hard one is much the harsher</b>: two every
+    /// twenty seconds from the first minute, against three every eight from fifty-four seconds. That is
+    /// a third more adds arriving two and a half times as often.
+    /// </para>
+    /// <para>
+    /// The unstable variant has had this for several passes; only these two npcs were missing it, which
+    /// is the same asymmetry between the two classes that the golems and the portals were.
+    /// </para>
+    /// </remarks>
+    private const int ProtectorsFury = 281819;
+    private const long FuryLifeMillis = 10000L;
+    private const float FuryRange = 300f;
+    private const int FuryHate = 2000000;
+
+    private long FirstFuryMillis => GetNpcId() == HardYamennes ? 54000L : 60000L;
+
+    private long FuryIntervalMillis => GetNpcId() == HardYamennes ? 8000L : 20000L;
+
+    private int FuriesPerWave => GetNpcId() == HardYamennes ? 3 : 2;
+
+    /// <summary>
+    /// Retail's <c>IDAbRe_Core_Sum_NamedD_onDie</c> — a sliver left where he falls.
+    /// </summary>
+    /// <remarks>
+    /// <c>spawn_on_target target_obj=OBJI_SELF</c>, so it goes at his own feet. The hard pattern writes
+    /// the branch twice with the same test-and-set flag var, which means one sliver and not two: the
+    /// first match sets the flag and the second can never run.
+    /// </remarks>
+    private const int YamennesSliver = 282065;
 
     /// <summary>
     /// Retail's three marks for the ametgolems, from <c>IDAbRe_Core_NamedD_Hard</c>.
@@ -159,6 +245,10 @@ public class YamennesAI : AggressiveNpcAI
         // written for on Stormwing.
         if (golemTask != null && !golemTask.IsDone())
             golemTask.Cancel(true);
+        // The fury chain books its own successor, so cancelling the handle is the only thing that ends
+        // it -- the same shape the portal chain has.
+        if (furyTask != null && !furyTask.IsDone())
+            furyTask.Cancel(true);
     }
 
     protected override void HandleBackHome()
@@ -179,6 +269,9 @@ public class YamennesAI : AggressiveNpcAI
     {
         CancelTasks();
         DeleteNpcs(GetPosition().GetWorldMapInstance().GetNpcs(282107));
+        // Before base, which clears his position and hate list: retail's branch runs while he is still
+        // standing where he fell, and the sliver goes there.
+        SpawnSliver();
         base.HandleDied();
     }
 

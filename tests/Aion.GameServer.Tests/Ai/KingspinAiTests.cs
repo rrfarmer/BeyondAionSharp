@@ -223,6 +223,14 @@ public sealed class KingspinAiTests
 	/// Measured at eighty rather than at full health, which is what makes it a test of that rung
 	/// rather than of no rung at all — above eighty-six nothing matches and any mistake in the top
 	/// rung is invisible.
+	/// <para>
+	/// <b>Counted as webs, and this is the fourth pin in this file to be moved off cries.</b> A throw
+	/// puts four webs out and only the ones that land on somebody speak, so the cry tally depends on
+	/// where the raid is standing — which made this flake about one full-suite run in twenty. The other
+	/// three were moved onto the throw clock; this one cannot be, because <b>the whole point of the top
+	/// rung is that the clock ticks and throws nothing</b>, so the clock cannot tell the rungs apart.
+	/// Webs can: four per throw, regardless of where anyone stands.
+	/// </para>
 	/// </remarks>
 	[Fact]
 	public void TheTopRungOfTheLadderThrowsNothing()
@@ -232,25 +240,26 @@ public sealed class KingspinAiTests
 
 		BossAiHarness.SetExactPercent(boss, 80);
 
-		// Counted as cries rather than standing webs: a web thrown at a player fires and vanishes on
-		// the tick it lands, so the tally is the only record a throw leaves.
-		// At eighty he is above the throwing band entirely: retail's throw branch is guarded 0-51, and
-		// the two branches above it keep the clock running and throw nothing. So the opening is all a
-		// raid at this health ever sees.
-		Advance(harness, boss, raid, 6);
-		int opening = Cries(cries);
+		// Let the opening throw finish speaking before anything is counted. Its webs are launched on the
+		// first tick but cry as they land, and the original pin sampled six seconds in and then compared
+		// nineteen seconds later -- so a straggler from the opening landed inside the measurement window
+		// and read as a throw that never happened. Twenty-five seconds is past any of them.
+		Advance(harness, boss, raid, 25);
+		int settled = Cries(cries);
 
-		// THIS IS THE ASSERTION THAT PINS THE GUARD: nineteen more seconds above fifty-one add nothing.
-		// Without the 0-51 guard the clock throws every eighteen seconds at any health and this climbs.
-		Advance(harness, boss, raid, 19);
-		int atEighty = Cries(cries);
-		Assert.Equal(opening, atEighty);
+		// THIS IS THE ASSERTION THAT PINS THE GUARD: at eighty he is above the throwing band entirely --
+		// retail's throw branch is guarded 0-51 and the two rungs above it keep the clock running and
+		// throw nothing. Without the guard the clock throws every eighteen seconds at any health, so
+		// twenty-five more seconds would add at least one.
+		Advance(harness, boss, raid, 25);
+		Assert.Equal(settled, Cries(cries));
 
 		// Drop him into the band and the throws start, which is what the guard is for.
 		BossAiHarness.SetExactPercent(boss, 40);
-		Advance(harness, boss, raid, 20);
-		Assert.True(Cries(cries) > atEighty,
-			$"below fifty-one he should throw: {Cries(cries)} against {atEighty}");
+		Advance(harness, boss, raid, 25);
+
+		Assert.True(Cries(cries) > settled,
+			$"below fifty-one he should throw: {Cries(cries)} against {settled}");
 	}
 
 	/// <summary>

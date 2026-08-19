@@ -23014,3 +23014,78 @@ than papered over.
 ### Verification
 
 Build clean. Removing the new guard turns its pin red. Full suite **2,169 passing** (one new), 1 skipped.
+
+## Yamennes' missing add stream, a sliver in the wrong place, and a fourth flaky pin
+
+Last pass listed "the unported placements in those six classes" as next. Yamennes was first, and reading
+it found four things — **two gaps and two bugs, one of which a pin was actively asserting.**
+
+### The add stream neither Yamennes had
+
+**Both** patterns carry `IDCatacombs_Hard_Buff` — protector's fury — and this class ported neither, so
+the fight's **only continuous add stream** was missing entirely. Each fury arrives *already fighting* the
+player it landed on, with two million hate, and lives ten seconds.
+
+| | first wave | interval | per wave |
+|---|---|---|---|
+| normal (216952) | 60s | 20s | 2 |
+| hard (216960) | **54s** | **8s** | **3** |
+
+A third more adds, arriving two and a half times as often. **The unstable variant has had this for
+several passes** — the same asymmetry between the two classes that the golems and the portals already
+were.
+
+The three-hundred-metre `valid_distance` is the widest in the 5.8 dump and is effectively the whole room,
+which is the point: there is nowhere in it to stand and be skipped.
+
+### The sliver, in both classes
+
+Retail's death spawn is `spawn_on_target target_obj=OBJI_SELF` — **at his own feet**. `YamennesAI` did
+not have it at all; `UnstableYamennesAI` had it and **read the target as the most-hated player**, so the
+sliver landed wherever the tank happened to be.
+
+That misreading also made the spawn conditional. `valid_distance=50` measures caster to target, and with
+the target *being* the caster that distance is always zero — so retail always spawns it. Ours skipped it
+whenever the most-hated was over fifty metres off or the hate list had already been cleared, **which is
+exactly what happens when a boss dies.**
+
+### A branch written twice is written twice, not run twice
+
+The hard pattern writes its `on_die` branch at priorities 16 and 15 with byte-identical bodies, differing
+only in the shout — and **both carry the same test-and-set flag var**, so the first sets `BETA_1` and the
+second can never run. `UnstableYamennesAI` read the pair as a doubled count and gave Painflare two
+slivers. **This is the same misreading Takahan's class already records for a duplicated rung**, and the
+pin asserted it: `[InlineData(Painflare, 2)]`.
+
+**The pin was asserting both bugs.** Its replacement checks the position too, which the count could never
+have caught — asserting only "how many" passes whether they land on the boss or on the raid.
+
+### The fourth flaky pin, and why this one could not take the usual fix
+
+`TheTopRungOfTheLadderThrowsNothing` failed about one full-suite run in twenty. This file's own comments
+record the diagnosis three times already — *"a throw puts four webs out and only the ones landing on
+somebody speak, so the cry tally depends on where the raid stands"* — and the other three pins were moved
+onto the throw clock. **This one cannot be**: the whole point of the top rung is that the clock ticks and
+throws nothing, so the clock cannot tell the rungs apart.
+
+Counting webs instead does not work either — a web fires and vanishes on the tick it lands, so a
+once-a-second sample sees none. **The actual fault was the sampling point**: the opening throw's webs cry
+as they land, and the pin sampled six seconds in and compared nineteen seconds later, so a straggler from
+the opening fell inside the measurement window and read as a throw that never happened. Settling
+twenty-five seconds first fixes it without weakening the assertion.
+
+### Still to do
+
+- **The other five classes** with unported placements: `AbyssUndeadAI`, `KaligaTheUnjustAI`,
+  `StormwingAI`, `CalindiFlamelordAI`, `YamennesSpawnGateAI`.
+- **Yamennes' remaining untranslated content**: nine skill indices, the `set_condition_spawn_variable`
+  box spawn on death, and the reset-aggro branch's own timer, which this class drives from the portal
+  chain rather than from retail's independent 180-second clock — a divergence recorded here since the
+  golem fix and still standing.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Flattening the fury count fails the hard row; removing the sliver fails both. **Three
+consecutive full-suite runs** rather than one, since two of the last three passes turned up a flaky pin:
+**2,174 passing**, 1 skipped.
