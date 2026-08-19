@@ -28,14 +28,22 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>on_die</c> despawns <c>SPAWN_ID_1</c>, which is the group everything here is filed under.</item>
 /// </list>
 /// <para>
-/// <b>The drakan rush is left out, and the reason is the walk routes.</b> Retail's idle timer spawns
-/// <b>nineteen</b> <c>IDTiamat_TiamatRush_*</c> drakan across four corner points. Those eight NPCs do
-/// exist in our client — 236713-236720, the protectorate elites — but every spawn carries
-/// <c>pathname=path_tiamatdrakan_*</c>, a server-side walk route we do not have. Spawning them anyway
-/// would leave nineteen elites standing in the corners instead of charging the raid, which is a
-/// different fight rather than a partial one; the audit puts them in its "walks a server-side path"
-/// bucket for exactly that reason. Since the rush is the whole of the idle timer, the idle chain is
-/// left unarmed rather than ticking on an empty branch. <b>They are the only thing here still owed.</b>
+/// <b>The drakan rush is in, and the routes are the reason it can be.</b> Retail's idle timer spawns
+/// <b>nineteen</b> <c>IDTiamat_TiamatRush_*</c> drakan across four corner points — 236713-236720, the
+/// protectorate elites — every one carrying <c>pathname=path_tiamatdrakan_*</c>.
+/// <para>
+/// This remark used to end "a server-side walk route we do not have ... they are the only thing here
+/// still owed", and that was true when it was written. <b>All twelve routes are now in
+/// <c>npc_walker/retail_pattern_paths.xml</c></b>, added by later route-extraction work that never
+/// came back to this class. Found by <c>audit_stale_claims.py</c>, which exists because the same thing
+/// had happened to Researcher Teselik's four bonus hands.
+/// </para>
+/// <para>
+/// They are placed on retail's own absolute marks and then given their route, rather than at the head
+/// of the route: the heads sit between half a metre and nine metres off the marks, and at the second
+/// corner it is nine every time. Retail says where they appear and separately where they walk, so both
+/// are kept — the same shape <see cref="BergrisarAI"/> uses for its blood wheels.
+/// </para>
 /// </para>
 /// <para>
 /// <b>The dust cloud is deliberately self-cancelling.</b> Retail files it under <c>SPAWN_ID_1</c> and
@@ -107,13 +115,89 @@ public class TiamatDragonHardAI : PatternAi
             ai.SpawnAt(Mages[i], Placed, 0, Corners[i]);
     };
 
+    /// <summary>
+    /// The rush: nineteen drakan, four corners, twelve routes. Written out because retail writes it
+    /// out — the corners repeat npcs and routes in a pattern that is not derivable from an index.
+    /// </summary>
+    /// <remarks>
+    /// Note the fourth corner has four, not five, and reuses <c>path_tiamatdrakan_4_3</c> for two of
+    /// them. Retail does that; a "tidier" four-by-five grid would be an invention.
+    /// </remarks>
+    internal static readonly (int NpcId, float X, float Y, string Path)[] Rush =
+    [
+        (236713, 464f, 463f, "path_tiamatdrakan_1_1"),
+        (236717, 464f, 463f, "path_tiamatdrakan_1_2"),
+        (236716, 464f, 463f, "path_tiamatdrakan_1_3"),
+        (236715, 464f, 463f, "path_tiamatdrakan_1_1"),
+        (236714, 464f, 463f, "path_tiamatdrakan_1_2"),
+
+        (236713, 461f, 570f, "path_tiamatdrakan_2_1"),
+        (236717, 461f, 570f, "path_tiamatdrakan_2_2"),
+        (236720, 461f, 570f, "path_tiamatdrakan_2_3"),
+        (236719, 461f, 570f, "path_tiamatdrakan_2_1"),
+        (236718, 461f, 570f, "path_tiamatdrakan_2_2"),
+
+        (236713, 543f, 463f, "path_tiamatdrakan_3_1"),
+        (236717, 543f, 463f, "path_tiamatdrakan_3_2"),
+        (236716, 543f, 463f, "path_tiamatdrakan_3_3"),
+        (236715, 543f, 463f, "path_tiamatdrakan_3_1"),
+        (236714, 543f, 463f, "path_tiamatdrakan_3_2"),
+
+        (236713, 542f, 564f, "path_tiamatdrakan_4_1"),
+        (236717, 542f, 564f, "path_tiamatdrakan_4_2"),
+        (236715, 542f, 564f, "path_tiamatdrakan_4_3"),
+        (236714, 542f, 564f, "path_tiamatdrakan_4_3"),
+    ];
+
+    /// <summary>Retail's z on every one of the nineteen.</summary>
+    private const float RushZ = 417.4f;
+
+    /// <summary>Retail's <c>FLAGVARI_BETA_1</c> — a world flag, so the rush happens once per instance.</summary>
+    private const int RushCalled = 7;
+
+    /// <summary>Retail re-arms the idle timer at two seconds in the same branch.</summary>
+    private const int IdleRearmMillis = 2000;
+
+    /// <summary>
+    /// Places one of the rush on its mark and starts it down its route.
+    /// </summary>
+    /// <remarks>
+    /// <c>Do.SpawnOnPath</c> would put it at the head of the route instead, which is a different place —
+    /// see the class remarks. This keeps retail's mark and retail's route.
+    /// </remarks>
+    private static readonly PatternAction ChargeTheRaid = ai =>
+    {
+        foreach ((int npcId, float x, float y, string path) in Rush)
+        {
+            ai.SpawnAt(npcId, Placed, 0, new SpawnSpot(x, y, RushZ, 0));
+            IReadOnlyList<Npc> placed = ai.Spawned(Placed);
+            if (placed.Count == 0)
+                continue;
+
+            Npc drakan = placed[placed.Count - 1];
+            drakan.GetSpawn().SetWalkerId(path);
+            Aion.GameServer.Ai.Manager.WalkManager.StartWalking((NpcAI)drakan.GetAi());
+        }
+    };
+
     private static readonly AiPattern Pattern_ = new AiPattern
     {
+        // Retail's on_idle_timer, guarded by a world flag so the rush comes once, and re-arming itself.
+        OnIdleTimer = Of(
+            Branch(8, "the rush", [When.FirstTimeInWorld(RushCalled)],
+                Do.SetIdleTimer(IdleRearmMillis),
+                ChargeTheRaid)),
+
         OnWakeUp = Of(
             Branch(13, "SetIdle", When.Always,
                 Do.SpawnAt(ShapeChangeFlash, Placed, FlashLife, FlashPoint),
                 Do.SpawnNear(InfernoSpirit, Placed, count: 1, range: 0f, liveSeconds: SpiritLife),
-                Do.SpawnNear(BurrowingArrival, Placed, count: 1, range: 0f, liveSeconds: ArrivalLife))),
+                Do.SpawnNear(BurrowingArrival, Placed, count: 1, range: 0f, liveSeconds: ArrivalLife),
+
+                // The step this branch is named after and did not do. Retail's on_wake_up ends with
+                // set_idle_timer 2000, which is the only thing that ever starts the idle chain -- so
+                // without it the rush below could never fire, whatever else was written.
+                Do.SetIdleTimer(IdleRearmMillis))),
 
         OnEnterAttack = Of(
             Branch(9, "SetTimer", When.Always,

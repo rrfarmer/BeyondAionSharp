@@ -30295,3 +30295,69 @@ Full solution green at 2,836.
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
   spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Auditing the claims, and Tiamat's nineteen
+
+Teselik's stale remark was worth generalising, so `audit_stale_claims.py` now reads every absence claim
+in the AI classes' comments and settles the one shape that is decidable without judgement: **a class that
+says it has no route, whose npc's retail pattern names a route this repo now contains.**
+
+38 absence claims, 4 route-shaped, **2 stale**. Both were real, and they were different kinds of real.
+
+### The Udas gatekeeper: a comment left behind by its own fix
+
+Bergrisar's class remark said his six chakras were left out because
+`Path_IDTemple_Low_AI01_1`..`_6` were "server-side walk routes we do not have". Twenty lines further
+down, the class **places all six and starts them walking** — a later pass had done the work and updated
+the branch comments without touching the class-level remark above them.
+
+> A reader would have believed the top of the file. It is the same failure as Teselik's, one level up:
+> the fix landed and the claim did not move.
+
+Documentation-only correction, no behaviour change.
+
+### Dragon Lord's Refuge: nineteen drakan that never charged
+
+`TiamatDragonHardAI` said the rush was **"the only thing here still owed"**, blocked because
+`path_tiamatdrakan_*` was "a server-side walk route we do not have". All twelve are in
+`npc_walker/retail_pattern_paths.xml`.
+
+Retail's `on_idle_timer` places **nineteen** protectorate elites across four corners and sends each down
+its own route. Two details that a tidier translation would have got wrong:
+
+* the fourth corner has **four**, not five, and reuses `path_tiamatdrakan_4_3` twice — a four-by-five
+  grid would be an invention;
+* they are placed on retail's **absolute marks** and then given their route, not at the route's head:
+  the heads sit between half a metre and nine metres off the marks, and at the second corner it is nine
+  every time.
+
+**And the branch that starts the whole chain was named for a step it never did.** Our `on_wake_up` branch
+was called `SetIdle` and did not call `set_idle_timer` — retail's ends with exactly that, and it is the
+only thing that ever arms the idle chain. So the rush could not have fired however well it was written.
+
+### A pin that measured the harness
+
+`TheRushComesOnlyOnce` was written to cover retail's world-flag guard. Deleting the guard left it green.
+Advancing the clock in ten two-second steps instead of one thirty-second jump left it green too:
+
+> **The harness's virtual clock does not re-fire an idle timer that the branch re-arms from inside its
+> own callback.** The branch runs once whatever guards it, so the pin was measuring the harness.
+
+It is renamed to what it actually checks — one firing places nineteen and no more — and the guard is
+recorded here as uncovered rather than left looking tested.
+
+Full solution green at 2,838.
+
+**Still missing.**
+
+- **The world-flag guard on the rush has no behavioural pin**, and neither does any other branch that
+  re-arms its own idle timer, until the virtual clock re-fires them.
+- **34 absence claims remain unchecked** because they are not route-shaped: "no vocabulary for
+  `is_user_flying`", "nothing in our tree sends 6955", "no numeric id in our data". Each needs a
+  different kind of check and some need none — but they are now listed by `--all` instead of being
+  invisible.
+- Teselik's in-combat hands; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
+  spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

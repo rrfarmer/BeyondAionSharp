@@ -180,4 +180,92 @@ public sealed class TiamatDragonHardAiTests
 
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == ThickDust));
 	}
+
+	/// <summary>
+	/// <b>The drakan rush arrives: nineteen elites, four corners.</b>
+	/// </summary>
+	/// <remarks>
+	/// This class said the rush was "the only thing here still owed" because
+	/// <c>path_tiamatdrakan_*</c> was "a server-side walk route we do not have". All twelve are in
+	/// <c>npc_walker/retail_pattern_paths.xml</c> and had been for some time — found by
+	/// <c>audit_stale_claims.py</c>, written after the same thing turned up in Researcher Teselik.
+	/// </remarks>
+	[Fact]
+	public void TheDrakanRushArrives()
+	{
+		using BossAiHarness harness = Rushing();
+		Npc tiamat = harness.Spawn(HardTiamat, 500f, 500f, 417f);
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+
+		int rushers = harness.LiveNpcs().Count(n => TiamatDragonHardAI.Rush.Any(r => r.NpcId == n.GetNpcId()));
+		Assert.Equal(TiamatDragonHardAI.Rush.Length, rushers);
+	}
+
+	/// <summary>
+	/// <b>And every one of them is walking.</b>
+	/// </summary>
+	/// <remarks>
+	/// The whole reason the rush was withheld: nineteen elites standing in the corners is a different
+	/// fight from nineteen charging the raid. A pin that only counted them would pass on the version
+	/// this class deliberately refused to write.
+	/// </remarks>
+	[Fact]
+	public void AndEveryRusherIsWalkingARoute()
+	{
+		using BossAiHarness harness = Rushing();
+		Npc tiamat = harness.Spawn(HardTiamat, 500f, 500f, 417f);
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+
+		List<Npc> rushers = harness.LiveNpcs()
+			.Where(n => TiamatDragonHardAI.Rush.Any(r => r.NpcId == n.GetNpcId()))
+			.ToList();
+
+		Assert.NotEmpty(rushers);
+		Assert.All(rushers, n => Assert.NotNull(n.GetMoveController().GetWalkerTemplate()));
+	}
+
+	/// <summary>
+	/// <b>They come from four corners on twelve routes, not from one.</b>
+	/// </summary>
+	[Fact]
+	public void TheRushUsesTwelveRoutesFromFourCorners()
+	{
+		Assert.Equal(12, TiamatDragonHardAI.Rush.Select(r => r.Path).Distinct().Count());
+		Assert.Equal(4, TiamatDragonHardAI.Rush.Select(r => (r.X, r.Y)).Distinct().Count());
+		Assert.Equal(19, TiamatDragonHardAI.Rush.Length);
+	}
+
+	/// <summary>
+	/// <b>Nineteen arrive, not thirty-eight.</b>
+	/// </summary>
+	/// <remarks>
+	/// <b>This does NOT pin retail's world-flag guard, and two attempts to make it were wrong.</b> The
+	/// first advanced the clock thirty seconds in one jump; the second in ten two-second steps. Deleting
+	/// <c>When.FirstTimeInWorld</c> leaves both green, because the harness's virtual clock does not
+	/// re-fire an idle timer that the branch re-arms from inside its own callback — so the branch runs
+	/// once whatever guards it, and the pin was measuring the harness.
+	/// <para>
+	/// What it does cover is that one firing places nineteen and no more, which is worth having and is
+	/// all it claims. The guard itself is recorded as uncovered in docs/retail-ai-fidelity.md rather
+	/// than left looking tested.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void OneFiringPlacesNineteenAndNoMore()
+	{
+		using BossAiHarness harness = Rushing();
+		Npc tiamat = harness.Spawn(HardTiamat, 500f, 500f, 417f);
+		for (int i = 0; i < 10; i++)
+			harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		int rushers = harness.LiveNpcs().Count(n => TiamatDragonHardAI.Rush.Any(r => r.NpcId == n.GetNpcId()));
+		Assert.Equal(TiamatDragonHardAI.Rush.Length, rushers);
+	}
+
+	/// <summary>A harness with the walker routes loaded, which the rush needs.</summary>
+	private static BossAiHarness Rushing() =>
+		BossAiHarness.For(DragonLordsRefuge).WithWorldSize(2048).WithWalkerRoutes()
+			.WithAi(typeof(TiamatDragonHardAI), typeof(AggressiveNpcAI), typeof(AggressiveNoLootNpcAI),
+				typeof(GeneralNpcAI), typeof(ThickDustAI)).Build();
+
 }

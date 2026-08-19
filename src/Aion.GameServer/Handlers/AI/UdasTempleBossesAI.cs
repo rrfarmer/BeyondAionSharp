@@ -179,14 +179,14 @@ public class DebilkarimTheMakerAI : PatternAi
 /// <b>What he actually does.</b> A punishment chakra on entering the fight and five more as he is
 /// worn down, at 80, 60, 40, 20 and 10 percent, each onto its own absolute mark by the gate. Every
 /// one of the six carries a <c>pathname</c> — <c>Path_IDTemple_Low_AI01_1</c> through <c>_6</c> — and
-/// those are server-side walk routes we do not have. A chakra is a thing that rolls at you; left
-/// standing on its mark it is a different encounter rather than a partial one, which is the call this
-/// work has made for the walk-path bucket since it was measured.
+/// all six routes are in <c>npc_walker/retail_pattern_paths.xml</c>, so the chakras are placed and
+/// they roll. <b>This paragraph used to say the routes were ones we did not have</b>, which was true
+/// when it was written and stopped being true when the routes were extracted; see
+/// <see cref="BergrisarAI.PlaceWheel"/> and docs/retail-ai-fidelity.md.
 /// </para>
 /// <para>
-/// So what is translated is his <c>on_die</c>: the five clear controllers every boss in the temple
-/// drops, which take the room's adds with them. That is the whole of what he has that is not blocked,
-/// and it is worth having on its own — he is the boss whose chakras the clear-up exists to remove.
+/// His <c>on_die</c> is translated too: the five clear controllers every boss in the temple drops,
+/// which take the room's adds with them — he is the boss whose chakras the clear-up exists to remove.
 /// </para>
 /// <para>
 /// <b>Not translated, and worth stating separately from the blocked half:</b> four skill indices on
