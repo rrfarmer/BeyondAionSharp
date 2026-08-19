@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
@@ -9,10 +10,47 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/padmarashkasCave/PadmarashkaEggAI (@author Ritsu).</summary>
+/// <summary>
+/// Padmarashka's eggs (282613, 282614). Retail patterns <c>IDDramata_Egg_01</c> and
+/// <c>IDDramata_H_Egg_01</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/padmarashkasCave/PadmarashkaEggAI (@author Ritsu). Retail-sourced
+/// corrections below; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>Both hatch timers carried a <c>TODO: Need right value</c>, and retail states both.</b> Each egg
+/// sets <c>set_idle_timer delay=60000</c> on waking and despawns itself when it turns — so <b>the huge
+/// egg hatches at sixty seconds, not the hundred and twenty this port guessed</b>. Twice as long is
+/// twice as much time to kill it, which is the whole of that mechanic.
+/// </para>
+/// <para>
+/// <b>Killing an egg stops it hatching</b>, and retail says so structurally rather than by a check: the
+/// hatch lives in <c>on_despawn</c> and both it and <c>on_die</c> share one test-and-set flag var, so
+/// whichever fires first locks the other out. This class leaned on reading <c>IsDead()</c> when the
+/// timer turned, <b>which is a weaker thing</b> — it holds only if the life stats have already been
+/// written by the time the hatch runs. The death now cancels the hatch outright, which is what retail's
+/// shared flag does; the <c>IsDead()</c> guard is kept behind it.
+/// </para>
+/// <para>
+/// <b>A dying egg buffs every nearby protector, not just its own.</b> Retail broadcasts message 105 at
+/// <b>fifty metres</b> and each hatcher in earshot answers by buffing itself. This class buffed only the
+/// protector that egg had spawned, and only if it had spawned one — so an egg killed before it was ever
+/// attacked buffed nothing, and a second hatcher standing beside it was missed.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> The huge egg also broadcasts 106 at thirty metres as it hatches, and the
+/// hatchers answer it with <c>goto_alias</c> — they reposition to a named point. This port has no alias
+/// table, so the hero drakan arrives without the escort shuffling to meet it.
+/// </para>
+/// </remarks>
 [AIName("padmarashkaegg")]
 public class PadmarashkaEggAI : NpcAI
 {
+    /// <summary>Retail's <c>set_idle_timer</c> on both eggs, which is where the hatch comes from.</summary>
+    private const long HatchMillis = 60_000L;
+
+    private ScheduledTask hatchTask;
+
     bool isSmallEggProtectorSpawned = false;
     bool isHugeEggProtectorSpawned = false;
     private Npc protector = null;
@@ -22,12 +60,30 @@ public class PadmarashkaEggAI : NpcAI
     {
     }
 
+    /// <summary><c>IDDramata_SumDrakanFiEgg</c>, <c>_WiEgg</c> and the elite commander.</summary>
+    private static readonly int[] Protectors = [282715, 282716, 282712];
+
+    /// <summary>Retail's <c>range_as_meter</c> on the egg's dying broadcast.</summary>
+    private const float Earshot = 50f;
+
+    /// <summary>Retail's message 105: every hatcher in earshot buffs itself.</summary>
     protected override void HandleDied()
     {
-        if (protector != null && !protector.IsDead())
+        // Retail's flag var: whichever of die and despawn comes first locks the other out.
+        if (hatchTask != null && !hatchTask.IsDone())
+            hatchTask.Cancel(true);
+        hatchTask = null;
+
+        foreach (Npc npc in GetPosition().GetWorldMapInstance().GetNpcs())
         {
-            SkillEngine.SkillEngine.GetInstance().GetSkill(protector, 20176, 55, protector).UseNoAnimationSkill(); // apply wrath buff
+            if (npc == null || npc.IsDead() || !Protectors.Contains(npc.GetNpcId()))
+                continue;
+            if (!PositionUtil.IsInRange(GetOwner(), npc, Earshot))
+                continue;
+
+            SkillEngine.SkillEngine.GetInstance().GetSkill(npc, 20176, 55, npc).UseNoAnimationSkill();
         }
+
         base.HandleDied();
     }
 
@@ -87,7 +143,7 @@ public class PadmarashkaEggAI : NpcAI
 
     private void SmallEggSpawn()
     {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
+        hatchTask = ThreadPoolManager.GetInstance().Schedule(_ =>
         {
             if (!IsDead() && GetOwner().IsSpawned())
             {
@@ -95,12 +151,12 @@ public class PadmarashkaEggAI : NpcAI
                 AttackPlayer((Npc)Spawn(282616, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0));
             }
             return ValueTask.CompletedTask;
-        }, 60000L); // TODO: Need right value
+        }, HatchMillis);
     }
 
     private void HugeEggSpawn()
     {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
+        hatchTask = ThreadPoolManager.GetInstance().Schedule(_ =>
         {
             if (!IsDead() && GetOwner().IsSpawned())
             {
@@ -108,7 +164,8 @@ public class PadmarashkaEggAI : NpcAI
                 AttackPlayer((Npc)Spawn(282620, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0));
             }
             return ValueTask.CompletedTask;
-        }, 120000L); // TODO: Need right value
+            // Retail's set_idle_timer is 60000 on both eggs; the huge egg's 120000 was a guess.
+        }, HatchMillis);
     }
 
     private void AttackPlayer(Npc npc)

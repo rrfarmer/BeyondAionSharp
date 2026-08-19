@@ -24373,3 +24373,50 @@ this pass and wants its own commit.
 **Also unread.** His `on_die` sets four condition spawn variables, controls a door, and places
 `IDTiamat_Tiamat_Sardha_Gossip_OnDie` (283178) for fifteen seconds; `on_leave_attack_state` dispels and
 heals. None of that is in this class.
+
+## Padmarashka's eggs: two guessed timers, both stated by retail
+
+Retail patterns `IDDramata_Egg_01` (282613) and `IDDramata_H_Egg_01` (282614).
+
+Terath's `TODO find Right ID` turned out to be answerable from the pattern dump, so the rest of the
+port's guesses were worth sweeping. `PadmarashkaEggAI` carried two more — `TODO: Need right value` on
+both hatch timers — and retail states both outright:
+
+```
+on_wake_up:    set_idle_timer delay=60000        (identical on both eggs)
+on_idle_timer: set_idle_timer 0; despawn_self
+on_despawn:    ! flag var; spawn the drakan
+on_die:        ! same flag var; broadcast 105 at 50m
+```
+
+**The huge egg was on a hundred and twenty seconds and retail gives it sixty** — twice the window a
+raid has to kill it before it hatches, which is the whole of that mechanic. The small egg's sixty was
+already right.
+
+**The hatch and the death share one flag var**, so whichever fires first locks the other out — killing
+an egg stops it hatching. This class expressed that as an `IsDead()` read at the moment the timer
+turned, **which is a weaker thing**: it holds only if the life stats are already written when the hatch
+runs, and in a harness firing the death event directly they are not. The death now cancels the hatch
+task outright, which is what the shared flag does. That pin failed first against the old guard and is
+the reason the change was made.
+
+**A dying egg buffs every hatcher in earshot, not just its own.** Retail broadcasts message 105 at
+fifty metres; `IDDramata_Drakan_E_Fi` and `_E_Wi` answer it by buffing themselves. This class buffed a
+single remembered protector and only if that egg had spawned one — so **an egg killed before it was
+ever attacked buffed nothing at all**, which is the usual way an egg dies, and a second hatcher
+standing beside it was missed.
+
+**Pins** — `PadmarashkaEggAiTests`, four, five mutations, all caught.
+
+**Still missing.** The huge egg also broadcasts **106 at thirty metres** as it hatches, and the
+hatchers answer with `goto_alias` — they reposition to a named point. This port has no alias table, so
+the hero drakan arrives without the escort shuffling to meet it. Padmarashka herself listens for 100,
+300 and 400 (dispel her protective sleep, the second enrage once `egg_die` passes fifteen, and a heal
+npc when a guard dies near her); none of those three senders has been traced yet.
+
+**The sweep that found this.** Grepping the AI handlers for `TODO`, `FIXME` and unknown-id comments
+turns up about twenty; most are engine work rather than data (`AdvanceCorridorAI`'s matchmaking,
+`PriestPreceptorAI`'s max-hp debuff workaround). The ones that name a value or an npc id are the ones
+the pattern dump can answer, and two of the three found so far were real defects. `RvrBossAI`'s
+"TODO Spawn defensive guards" and `SpeakerAI`'s two "find if Dredgion Ship is spawned" are the next
+candidates of that shape.
