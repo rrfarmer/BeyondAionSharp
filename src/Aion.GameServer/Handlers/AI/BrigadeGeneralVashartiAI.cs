@@ -103,23 +103,129 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
         GetOwner().QueueSkill(19907, 1, 0); // Chastise
     }
 
+    /// <summary>The glove point: where retail’s controller stands and drops its wall.</summary>
+    private const float GloveX = 188.33f;
+    private const float GloveY = 414.61f;
+    private const float GloveZ = 260.61f;
+
+    /// <summary><c>Env_RedWall</c>, <c>Env_BlueWall</c>, <c>Env_BurningGround</c>.</summary>
+    private const int RedWall = 283010;
+    private const int BlueWall = 283011;
+    private const int BurningGround = 283012;
+
+    /// <summary>Retail’s <c>live_time</c> on each: forty on the two walls, forty-five on the ground.</summary>
+    private const int WallLife = 40;
+    private const int BurningGroundLife = 45;
+
+    /// <summary><c>IDYun_Vasharti_Glove_Buffer</c>, and retail’s forty seconds for it.</summary>
+    private const int GloveBuffer = 283007;
+    private const int GloveBufferLife = 40;
+
+    /// <summary><c>Glove_AreaAtk_Red</c> and <c>_Blue</c>, with retail’s six-second life.</summary>
+    private const int SmashRed = 283008;
+    private const int SmashBlue = 283009;
+    private const int SmashLife = 6;
+
+    /// <summary>Retail’s <c>spawn_range</c> on the two kinds of drop, and its <c>valid_distance</c>.</summary>
+    private const float TargetedSpread = 5f;
+    private const float AreaSpread = 35f;
+    private const float TargetReach = 100f;
+
+    /// <summary>
+    /// One rung of retail’s glove ladder: how many players are picked, how many land at the glove
+    /// point, and how long until the next rung.
+    /// </summary>
+    private readonly record struct GloveRung(
+        int TargetedRed, int TargetedBlue, int AreaRed, int AreaBlue, long NextMillis);
+
+    /// <summary>
+    /// Retail’s sixteen rungs, read straight off <c>IDYun_Vasharti_Glove_ControllerA</c>.
+    /// </summary>
+    /// <remarks>
+    /// Every rung carries its own test-and-set flag var, so the ladder runs once through and in order —
+    /// five triples of "pick players, then rain red, then rain blue", with the number of players picked
+    /// climbing from two to three across the five, and a bare rung at the end that dispels and leaves.
+    /// The delays sum to thirty-eight seconds, which is why the controller lives forty.
+    /// <para>
+    /// <b>What stood here was a fixed-rate task</b> dropping fourteen, nineteen or twenty-four smashes
+    /// every 7.1 seconds around the boss, all of them area drops — so the half of the mechanic that
+    /// puts a smash under a named player did not exist, and the escalation across the five triples did
+    /// not either.
+    /// </para>
+    /// </remarks>
+    private static readonly GloveRung[] GloveLadder =
+    [
+        new GloveRung(2, 2, 0, 0, 3000), new GloveRung(0, 0, 3, 0, 1000), new GloveRung(0, 0, 0, 3, 2000),
+        new GloveRung(2, 2, 0, 0, 3000), new GloveRung(0, 0, 3, 0, 1000), new GloveRung(0, 0, 0, 3, 2000),
+        new GloveRung(2, 3, 0, 0, 3000), new GloveRung(0, 0, 3, 0, 1000), new GloveRung(0, 0, 0, 3, 2000),
+        new GloveRung(3, 3, 0, 0, 3000), new GloveRung(0, 0, 3, 0, 1000), new GloveRung(0, 0, 0, 3, 2000),
+        new GloveRung(3, 3, 0, 0, 3000), new GloveRung(0, 0, 3, 0, 1000), new GloveRung(0, 0, 0, 3, 4000),
+    ];
+
+    /// <summary>Retail’s first <c>add_battle_timer</c>, before rung one.</summary>
+    private const long GloveOpeningMillis = 4000L;
+
     private void HandleSeaOfFireEvent()
     {
         int percent = GetLifeStats().GetHpPercentage();
-        int npcId = percent <= 70 ? percent <= 40 ? 283012 : 283011 : 283010;
 
-        Spawn(npcId, 188.33f, 414.61f, 260.61f, unchecked((sbyte)244)); // FX
-        Spawn(283007, 188.33f, 414.61f, 260.61f, (sbyte)0); // de-buff
+        // Retail runs this from three controllers, A at 86, C at 56 and E at 26, and the only thing that
+        // differs between them is which wall they drop. Reading the boss health picks the same one.
+        int wall = percent <= 70 ? percent <= 40 ? BurningGround : BlueWall : RedWall;
+        int wallLife = wall == BurningGround ? BurningGroundLife : WallLife;
 
-        seaOfFireSpawnTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        SpawnFor(wall, GloveX, GloveY, GloveZ, unchecked((sbyte)244), wallLife);
+        SpawnFor(GloveBuffer, GloveX, GloveY, GloveZ, (sbyte)0, GloveBufferLife);
+
+        ClimbGloveLadder(0);
+    }
+
+    /// <summary>Runs one rung of retail’s ladder and arms the next.</summary>
+    private void ClimbGloveLadder(int rung)
+    {
+        seaOfFireSpawnTask = ThreadPoolManager.GetInstance().Schedule(_ =>
         {
-            int smashCount = (npcId - 283007) * 5 + 1; // 15, 20, 25
-            for (int i = 2; i < smashCount; i++)
-            {
-                RndSpawnInRange(i % 2 == 0 ? 283008 : 283009, 0, 29);
-            }
+            if (IsDead() || rung >= GloveLadder.Length)
+                return ValueTask.CompletedTask;
+
+            GloveRung step = GloveLadder[rung];
+            DropOnPlayers(SmashRed, step.TargetedRed);
+            DropOnPlayers(SmashBlue, step.TargetedBlue);
+            DropAtGlove(SmashRed, step.AreaRed);
+            DropAtGlove(SmashBlue, step.AreaBlue);
+
+            ClimbGloveLadder(rung + 1);
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(750), System.TimeSpan.FromMilliseconds(7100));
+        }, rung == 0 ? GloveOpeningMillis : GloveLadder[rung - 1].NextMillis);
+    }
+
+    /// <summary>
+    /// Retail <c>spawn_on_multi_target</c>: pick that many attackers at random inside a hundred metres
+    /// and drop one smash within five metres of each.
+    /// </summary>
+    private void DropOnPlayers(int npcId, int targets)
+    {
+        if (targets <= 0)
+            return;
+
+        List<Creature> picked = GetOwner().GetAggroList().StreamValidTargets(TargetReach).ToList();
+        for (int i = picked.Count - 1; i > 0; i--)
+        {
+            int j = Rnd.Get(0, i);
+            (picked[i], picked[j]) = (picked[j], picked[i]);
+        }
+
+        foreach (Creature target in picked.Take(targets))
+        {
+            SpawnFor(npcId, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0, SmashLife);
+        }
+    }
+
+    /// <summary>Retail plain <c>spawn</c> at the controller own point, spread over thirty-five metres.</summary>
+    private void DropAtGlove(int npcId, int count)
+    {
+        for (int i = 0; i < count; i++)
+            RndSpawnInRange(npcId, 0, AreaSpread);
     }
 
     public override void OnStartUseSkill(SkillTemplate skillTemplate, int skillLevel)
@@ -174,13 +280,17 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
         if (effect != null && effect.GetSkillId() == 20534 && isInFlameShowerEvent.CompareAndSet(true, false))
         {
             CancelTasks(seaOfFireSpawnTask);
+            // Retail on_despawn is a despawn_all, so the wall goes with the controller. Java reads
+            // getNpcId() here -- the BOSS id, which is 217313 or 236300 and matches none of these --
+            // so no wall was ever deleted and each one stood for the rest of the instance. They now
+            // carry retail own live_time as well, so an event that ends abnormally still clears them.
             GetKnownList().ForEachNpc(n =>
             {
-                switch (GetNpcId())
+                switch (n.GetNpcId())
                 {
-                    case 283010:
-                    case 283011:
-                    case 283012:
+                    case RedWall:
+                    case BlueWall:
+                    case BurningGround:
                         n.GetController().Delete();
                         break;
                 }

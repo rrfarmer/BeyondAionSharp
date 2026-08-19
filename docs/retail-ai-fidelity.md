@@ -24420,3 +24420,71 @@ turns up about twenty; most are engine work rather than data (`AdvanceCorridorAI
 the pattern dump can answer, and two of the three found so far were real defects. `RvrBossAI`'s
 "TODO Spawn defensive guards" and `SpeakerAI`'s two "find if Dredgion Ship is spawned" are the next
 candidates of that shape.
+
+## Vasharti: the glove drop was half a mechanic
+
+Retail patterns `IDYun_Nmd6` (217313), `IDYun_Vasharti_Glove_ControllerA` / `C` / `E` (283002/4/6).
+
+An earlier pass gave Vasharti retail's HP steps (86/56/26), his two dancing flames and his hard-mode
+illusions, and recorded the **glove controllers** as deliberately not spawned: their npc templates are
+copies of Vasharti himself on plain `aggressive`, so placing them would put three extra full-strength
+bosses in the room. That judgement still holds. But the controllers' *pattern* is readable, and it is
+the whole of the phase this port approximates.
+
+**Retail's ladder**, off `ControllerA`'s battle timer, each rung armed by the one before and each
+carrying its own test-and-set flag var so the sequence runs once, in order:
+
+```
+open       4000ms
+1-1  2 red + 2 blue under random players (spawn_range 5, valid_distance 100)   3000ms
+1-2  3 red at the glove point, spread 35                                      1000ms
+1-3  3 blue at the glove point, spread 35                                     2000ms
+2-1  2 + 2      2-2  3 red   2-3  3 blue        (same 3000/1000/2000)
+3-1  2 + 3      3-2  3 red   3-3  3 blue
+4-1  3 + 3      4-2  3 red   4-3  3 blue
+5-1  3 + 3      5-2  3 red   5-3  3 blue        (last gap 4000ms)
+end        dispel, despawn_self
+```
+
+The delays sum to thirty-eight seconds, which is why the controller lives forty. Every smash lives six.
+
+**What stood here** was a fixed-rate task dropping fourteen, nineteen or twenty-four smashes *around
+the boss* every 7.1 seconds until the Sea of Fire effect ended. So **the half of the mechanic that puts
+a smash under a named player did not exist**, and neither did the escalation from two players to three
+across the five triples. The ladder is now written out rung by rung.
+
+**The three controllers differ only in which wall they drop** — A a red wall, C a blue one, E the
+burning ground at forty-five seconds rather than forty. This port picks the wall by reading the boss's
+health (>70, 41-70, ≤40), which lands on the same three, so that mapping is confirmed rather than
+changed.
+
+**A cleanup that never ran.** The end of the phase deletes the wall by walking the known list — and
+switched on `GetNpcId()`, **the boss's own id**, which is 217313 or 236300 and matches none of the wall
+ids. So no wall was ever deleted and each one stood for the rest of the instance. Java has the same
+line. Retail's controller gives every wall a `live_time` and despawns it besides, so this is a
+retail-sourced correction: the switch now reads the npc it is looking at, and the walls carry retail's
+own forty and forty-five seconds.
+
+**Pins** — `VashartiGloveLadderTests`, five, seven mutations, six caught.
+
+**The seventh mutation survives, and the reason matters.** Reverting the cleanup switch back to the
+boss's id changes nothing the pins can see, because the lifetime now removes the walls first. The
+cleanup is belt-and-braces after the lifetime, not the thing being asserted; pinning it needs the Sea
+of Fire effect to end inside a test, which is a longer path than this pass built. **The wall lifetime
+is what the pins actually guarantee.**
+
+**A count I got wrong, and the pin caught.** I first asserted three smashes after each rain. It is
+four: each smash lives six seconds, so the one dropped under the player three seconds earlier is still
+standing.
+
+**Still missing.**
+- **Retail's smash npcs are 856345 and 856346**, the b-prefixed generation of the same two "red/blue
+  flame smash" ids this port uses (283008/283009). **Our data has npc_skills rows only for the older
+  pair**, and the b-prefixed pair is on `aggressive_no_loot` with no skills — so switching to retail's
+  ids would replace a working cast-and-die with two mobs that stand and melee. The older pair stays
+  until those skill rows exist. This is the second time this session a retail id has been the wrong
+  thing to adopt because our data is behind it.
+- The controller's `broadcast_message 610001` at seventy metres, on every rung after the first. No
+  listener has been traced.
+- Retail's controller is a real npc that walks in; this port hangs its ladder off the boss, so
+  `on_leave_attack_state`'s dispel and the controller's own `despawn_all` have no equivalent.
