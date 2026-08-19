@@ -28130,3 +28130,65 @@ class of mistake as an assertion over an empty collection**: everything passes a
 - **The other two helpers have no pins.** 282177 and 282178 take the same corrected code path, but only
   282176 is exercised; the other two would catch a `walkPosition` edited to the wrong value for its route.
 - **Lahulahu and Grogget**, both still unwritten and both now unblocked.
+
+## Lahulahu's nozzle wave, and a route that was in our own spawn table all along
+
+`EngineerLahulahuAI` carried a paragraph saying his summon wave "cannot be written without inventing a
+trigger", because `BTIMERI_INDEX_9` is armed from `on_arrived_at_waypoint` and "neither his route nor the
+summons' path is in our walker data".
+
+**Both halves were wrong, and the second one embarrassingly so.**
+
+- `on_arrived_at_waypoint` is reachable — established two commits ago.
+- **His route was already in our spawn table.** `<spot ... walker_id="02692E8AA2C2793A7801E13C574871619504EEF9"/>`,
+  twenty-one steps, whose points are the client's `IDShulackShip_1F_Engineer_MobPath` to two decimals and
+  whose first point is **five millimetres** from his spawn. He has been walking retail's route this whole
+  time. Nobody looked.
+
+That is one of the hex-named Steel Rake routes the walker audit flagged as "a different and older
+import" — and this one is the client's route exactly, which is a useful correction to that entry as well.
+
+### The wave
+
+Retail arms `BTIMERI_INDEX_9` at **3500** from waypoints **2, 6, 12 and 16** of the twenty-one. When it
+fires, a probability cascade picks one of nine `BIDShulack_EngineerSum*` npcs by health band:
+
+| band | cascade | re-arms? |
+|---|---|---|
+| hp < 25 | 20% C, 40% F, 60% G, 80% H, else I | yes, 6500, on the first rung only |
+| 26–50 | 20% B, 40% F, 60% G, 80% H, else I | yes, first rung only |
+| 51–75 | 25% A, 50% D, 75% E, else H | yes, first rung only |
+| 75–100 | 33% D, 66% E, else H | **no** |
+
+**Only each band's first rung re-arms**, so the wave continues while that roll keeps winning and otherwise
+delivers one more nozzle and stops. The top band never continues at all.
+
+**It is a patrol mechanic, not a fight mechanic**, and realising that is what made it safe to build. Every
+rung carries `live_time=0` with `despawn_at_attack_state=TRUE`: the nozzles accumulate while he walks his
+round and go the moment he is pulled. Without modelling that second half, `live_time=0` would leave a
+patrol's worth of adds standing in the room for the life of the instance — so the class clears them when
+he enters combat.
+
+**Retail's bands leave holes, and they are reproduced deliberately.** `is_hp_lower_than 25` then
+`is_hp_in_boundary` 26-50, 51-75 and 75-100, all exclusive at both ends, so **nothing is summoned at
+exactly 25, 26, 50, 51 or 75 per cent**. The timer fires and no rung matches. It has its own pin, because
+the hole reads as a bug to anyone looking at the code and a "tidied" set of bands would be a silent
+divergence — and the mutation that tidies them is caught.
+
+**Pins** — six, in a class that had none. Six mutations, all six caught, run twice for flakiness. Full
+solution green at 2,753.
+
+**And one claim in the old comment was simply false.** It listed `is_aerial_spawn` as an unmodelled
+primitive. The flag is present on every one of these rungs and its value is **FALSE**. There was never
+anything to model; the field had been read as a guard rather than as data.
+
+**Still missing.**
+
+- **The shout and the cast** on each waypoint rung — `STR_CHAT_BIDShulack_Engineer_45_Ah_AIPattern_1` has
+  no message id we can resolve, and the `SKILLI_INDEX_9` beside it is the skill-index blocker.
+- **The `on_message 6647` path**, which arms the same timer at 1000 and despawns `SPAWN_ID_1`. Nothing in
+  this port sends 6647, so there is no sender to hang it on and inventing one would be worse than the gap.
+- **Grogget**, the last of the three encounters called blocked on waypoints, and the largest: stigma
+  stones at absolute coordinates on three separate indices, each arming two battle timers.
+- **The `95` HP phase** in this class is still this port's stand-in for entering combat rather than
+  retail's `on_enter_attack_state`, unchanged and still not a defect.

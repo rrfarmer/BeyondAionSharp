@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
@@ -24,23 +26,39 @@ namespace Aion.GameServer.Handlers.AI;
 /// openings measured from an HP phase.
 /// </para>
 /// <para>
-/// <b>What is genuinely missing is his summon wave, and it is blocked on waypoints.</b> Below
-/// twenty-five per cent retail runs a ladder on <c>BTIMERI_INDEX_9</c> that spawns one of nine
-/// <c>BIDShulack_EngineerSum*</c> npcs — 281103-281107, 281293-281295 and 281351, all of which exist in
-/// our data — chosen by a probability cascade (20, 40, 60, 80, then unguarded) and walked in on
-/// <c>BIDShulack_EngineerSum_NPCPath</c>. There are three such ladders, one per health band.
+/// <b>His summon wave is here now.</b> It was recorded as blocked on waypoints and on route data, and
+/// neither was true. <c>on_arrived_at_waypoint</c> is reachable — <c>MoveArrived</c> fires at every route
+/// step — and his route was already in our own data: spawn <c>walker_id</c>
+/// <c>02692E8AA2C2793A7801E13C574871619504EEF9</c>, twenty-one steps, whose points are the client's
+/// <c>IDShulackShip_1F_Engineer_MobPath</c> to two decimals and whose first point is his spawn to five
+/// millimetres.
 /// </para>
 /// <para>
-/// <b>It cannot be written without inventing a trigger.</b> <c>INDEX_9</c> is armed at <b>3500</b> from
-/// four <c>on_arrived_at_waypoint</c> rungs and at <b>1000</b> from an <c>on_message</c> — the wave is
-/// started by Lahulahu reaching points on his own route, and neither his route nor the summons' path is
-/// in our walker data. Only the ladder's first rung re-arms the timer, so in retail the wave continues
-/// only while the twenty-per-cent roll keeps winning and otherwise delivers one more summon and stops;
-/// that shape is consistent across all three bands and is worth preserving whenever the trigger exists.
+/// Retail arms <c>BTIMERI_INDEX_9</c> at <b>3500</b> from waypoints <b>2, 6, 12 and 16</b>. When it
+/// fires, a probability cascade picks one of nine <c>BIDShulack_EngineerSum*</c> npcs by health band, and
+/// <b>only the first rung of each band re-arms</b>, at 6500 — so the wave continues while that roll keeps
+/// winning and otherwise delivers one more summon and stops. The top band does not re-arm at all.
 /// </para>
 /// <para>
-/// <b>Also not translated:</b> the <c>is_aerial_spawn</c> guard those rungs carry, which this port has
-/// no equivalent primitive for.
+/// <b>This is a patrol mechanic, not a fight mechanic</b>, which is what makes it safe to spawn npcs with
+/// <c>live_time=0</c>. Every rung carries <c>despawn_at_attack_state=TRUE</c>: the nozzles accumulate
+/// while he walks his round and go when he is pulled. That is modelled here by clearing them when he
+/// enters combat, without which <c>live_time=0</c> would leave them standing for the life of the instance.
+/// </para>
+/// <para>
+/// <b>Retail's health bands leave holes and they are reproduced.</b> They are
+/// <c>is_hp_lower_than 25</c>, then <c>is_hp_in_boundary</c> 26-50, 51-75 and 75-100, all exclusive at
+/// both ends. So nothing at all is summoned at exactly 25, 26, 50, 51 or 75 per cent. The timer fires and
+/// no rung matches — which is what the data says, so it is what happens here.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> The shout on each waypoint rung
+/// (<c>STR_CHAT_BIDShulack_Engineer_45_Ah_AIPattern_1</c>) and the <c>SKILLI_INDEX_9</c> cast beside it —
+/// the first has no message id we can resolve and the second is the skill-index blocker. And the
+/// <c>on_message 6647</c> path, which arms the same timer at 1000 and despawns <c>SPAWN_ID_1</c>: nothing
+/// in this port sends 6647, so there is no sender to hang it on. The <c>is_aerial_spawn</c> flag noted
+/// here previously as unmodelled is <c>FALSE</c> on every one of these rungs, so there was never anything
+/// to model.
 /// </para>
 /// </remarks>
 [AIName("engineerlahulahu")]
@@ -83,11 +101,136 @@ public class EngineerLahulahuAI : AggressiveNpcAI, HpPhases.PhaseHandler
         npc11 = instance.GetNpc(281110);
     }
 
+    /// <summary>Retail's four summoning waypoints on his twenty-one-step route.</summary>
+    public static readonly int[] SummonWaypoints = { 2, 6, 12, 16 };
+
+    /// <summary>Retail's <c>BTIMERI_INDEX_9</c> delay from a waypoint rung.</summary>
+    public const long SummonDelayMillis = 3500L;
+
+    /// <summary>Retail's re-arm, carried by the first rung of a band and by no other.</summary>
+    public const long SummonRepeatMillis = 6500L;
+
+    /// <summary>
+    /// <c>SPAWN_LOCATION_WAY_POINT_START</c> on <c>BIDShulack_EngineerSum_NPCPath</c>: the first point of
+    /// that path, from <c>Map/Worlds/idshulackship</c>. The path has three points spanning barely a metre,
+    /// so it places the summon rather than walking it anywhere.
+    /// </summary>
+    public const float SummonX = 688.590820f;
+    public const float SummonY = 509.239136f;
+    public const float SummonZ = 868.099976f;
+
+    private readonly List<Npc> nozzles = new List<Npc>();
+
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
+        DespawnNozzles();
         hpPhases.TryEnterNextPhase(this);
     }
+
+    /// <summary>Retail's <c>despawn_at_attack_state=TRUE</c>, carried by every summon rung.</summary>
+    private void DespawnNozzles()
+    {
+        foreach (Npc nozzle in nozzles)
+        {
+            if (nozzle != null && nozzle.IsSpawned())
+                nozzle.GetController().Delete();
+        }
+        nozzles.Clear();
+    }
+
+    /// <summary>Retail's <c>on_arrived_at_waypoint</c> rungs at indices 2, 6, 12 and 16.</summary>
+    /// <remarks>
+    /// The index is read before <c>base</c>: the base handler runs <c>WalkManager.ChooseNextRouteStep</c>,
+    /// which advances the controller, so after it the index is the point he is leaving for.
+    /// </remarks>
+    protected override void HandleMoveArrived()
+    {
+        RouteStep arrived = GetMoveController().GetCurrentStep();
+        base.HandleMoveArrived();
+        if (arrived == null || System.Array.IndexOf(SummonWaypoints, arrived.GetStepIndex()) < 0)
+            return;
+        ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            SummonNozzle();
+            return ValueTask.CompletedTask;
+        }, SummonDelayMillis);
+    }
+
+    /// <summary>
+    /// One turn of retail's <c>BTIMERI_INDEX_9</c> ladder: pick the band by health, run its probability
+    /// cascade, place one nozzle, and re-arm only if the band's first rung was the one that won.
+    /// </summary>
+    private void SummonNozzle()
+    {
+        if (IsDead() || !GetOwner().IsSpawned())
+            return;
+
+        int hp = GetLifeStats().GetHpPercentage();
+        int nozzleId;
+        bool rearm = false;
+
+        // The boundaries below are retail's, exclusive at both ends, so 25, 26, 50, 51 and 75 fall through
+        // every band and summon nothing at all. That is the data, not an oversight here.
+        if (hp < 25)
+        {
+            if (Rnd.Chance() < 20) { nozzleId = NozzleC; rearm = true; }
+            else if (Rnd.Chance() < 40) nozzleId = NozzleF;
+            else if (Rnd.Chance() < 60) nozzleId = NozzleG;
+            else if (Rnd.Chance() < 80) nozzleId = NozzleH;
+            else nozzleId = NozzleI;
+        }
+        else if (hp > 26 && hp < 50)
+        {
+            if (Rnd.Chance() < 20) { nozzleId = NozzleB; rearm = true; }
+            else if (Rnd.Chance() < 40) nozzleId = NozzleF;
+            else if (Rnd.Chance() < 60) nozzleId = NozzleG;
+            else if (Rnd.Chance() < 80) nozzleId = NozzleH;
+            else nozzleId = NozzleI;
+        }
+        else if (hp > 51 && hp < 75)
+        {
+            if (Rnd.Chance() < 25) { nozzleId = NozzleA; rearm = true; }
+            else if (Rnd.Chance() < 50) nozzleId = NozzleD;
+            else if (Rnd.Chance() < 75) nozzleId = NozzleE;
+            else nozzleId = NozzleH;
+        }
+        else if (hp > 75 && hp < 100)
+        {
+            // This band does not re-arm at all -- retail hangs no timer on any of its three rungs.
+            if (Rnd.Chance() < 33) nozzleId = NozzleD;
+            else if (Rnd.Chance() < 66) nozzleId = NozzleE;
+            else if (hp > 76) nozzleId = NozzleH;
+            else return;
+        }
+        else
+        {
+            return;
+        }
+
+        if (Spawn(nozzleId, SummonX, SummonY, SummonZ, (sbyte)0) is Npc nozzle)
+            nozzles.Add(nozzle);
+
+        if (rearm)
+        {
+            ThreadPoolManager.GetInstance().Schedule(_ =>
+            {
+                SummonNozzle();
+                return ValueTask.CompletedTask;
+            }, SummonRepeatMillis);
+        }
+    }
+
+    // BIDShulack_EngineerSum{A..I}_45_An, resolved through ai_binding.tsv.
+    private const int NozzleA = 281103;
+    private const int NozzleB = 281104;
+    private const int NozzleC = 281105;
+    private const int NozzleD = 281106;
+    private const int NozzleE = 281107;
+    private const int NozzleF = 281293;
+    private const int NozzleG = 281294;
+    private const int NozzleH = 281295;
+    private const int NozzleI = 281351;
 
     public void HandleHpPhase(int phaseHpPercent)
     {
