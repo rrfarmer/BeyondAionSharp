@@ -28770,3 +28770,48 @@ stops meaning anything.
   (Muragan, Lahulahu, Grogget, Koakoa, the scientists, Hyperion's march), two closed as correct already
   (Sematariux's egg, Ophidan's despawn), two closed as inert or already-decided (Poppy, Vasharti), four
   closed as not findable. Nothing on that audit is now unexamined.
+
+## Retracting a "still missing" that was not missing
+
+Last commit closed by naming the Glove Controllers' own AI as "the actual gap behind Vasharti — three
+npcs that should drop walls and instead have none". **That was wrong**, and it took reading the
+controller's pattern to find out.
+
+`IDYun_Vasharti_Glove_ControllerA` is a full encounter in itself: an `on_wake_up` that drops the wall and
+the buffer at fixed coordinates, an `on_enter_attack_state` that arms a timer at 4000, and an
+`on_battle_timer` ladder of **sixteen rungs** — five phases of "pick players, rain red, rain blue" with
+re-arms of 3000, 1000 and 2000, the number of players picked climbing from two to three across the five,
+and a bare dispel rung at the end.
+
+> **All sixteen are already in `BrigadeGeneralVashartiAI.GloveLadder`**, with retail's counts and delays,
+> and the wall and buffer drop at the controller's exact absolute coordinates with its lifetimes. A
+> previous session transcribed the whole thing. The only rung not modelled is the last, which dispels
+> with an unresolvable `SKILLI_INDEX` and then despawns the controller — and in a collapse there is no
+> controller to despawn.
+
+**The smashes were the second scare and they are also fine.** Retail's rungs broadcast `610001` at
+seventy metres, and the two listeners for that message are the smash npcs themselves: each waits for it,
+casts, and despawns. Ours never broadcast it — but the smashes are not inert. They cast from
+`npc_skills`: **20540 for red, 20539 for blue, one-second delay**. So they detonate individually a second
+after landing rather than together when the next rung fires, which retail puts one to three seconds later.
+
+That is a difference in *synchronisation*, not a missing mechanic, and it is now the only thing between
+this collapse and the controller version. It is written into the class rather than left as a surprise.
+
+**Why this is worth a commit that changes no behaviour.** A false "still missing" is worse than no note:
+it sends the next session to build something that exists, and this one was specific enough to be
+convincing. Two turns ago the same list produced a genuine correction in the other direction (Vasharti's
+route *was* findable, my hand reading was wrong). **The list is only as good as the last time somebody
+checked an entry against the code**, and two of its entries have now been checked and both were wrong.
+
+**Still missing** — and these are the ones checked against the code today, not inherited:
+
+- **Synchronised detonation.** Nothing in this port sends 610001 and nothing listens; the smashes rely on
+  their own `npc_skills` delay. Closing it needs the broadcast and a listener on 283008/283009, and would
+  be worth it only if the one-second stagger is visibly wrong in play.
+- **Four classes with no findable route** — both Eternal Bastion npcs, Padmarashka, Sematariux, and the
+  two shared classes. Not from this data.
+- **`ophidan_bridge_call`'s index-1 rung**, still blocked on an unresolvable message id and a
+  `MOVETYPE_RUN` the pattern DSL has no action for.
+- **The 226 remaining rows of `audit_summon_ids.py`**, which is a reading list and has never been claimed
+  to be anything else.

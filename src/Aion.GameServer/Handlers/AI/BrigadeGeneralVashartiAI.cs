@@ -38,9 +38,24 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// </para>
     /// <para>
     /// What they would do is already done directly — the walls, the buffer and the smashes are dropped at
-    /// the glove point below, which is the same FX collapse used elsewhere in this port. The controllers
-    /// wait for their own AI, and until then the collapse is the closer of the two. See
+    /// the glove point below, which is the same FX collapse used elsewhere in this port. See
     /// docs/retail-ai-fidelity.md.
+    /// </para>
+    /// <para>
+    /// <b>The collapse is complete, and this was checked rather than assumed.</b> The controller's whole
+    /// <c>on_battle_timer</c> ladder is sixteen rungs and all sixteen are in <see cref="GloveLadder"/>
+    /// with retail's counts and delays; its <c>on_wake_up</c> wall and buffer drop at its exact absolute
+    /// coordinates with its lifetimes. The only rung not modelled is the last, which dispels with a
+    /// <c>SKILLI_INDEX</c> we cannot resolve and then despawns the controller, and there is no controller
+    /// here to despawn.
+    /// </para>
+    /// <para>
+    /// <b>The smashes do go off.</b> Retail synchronises them: each waits for the controller's
+    /// <c>broadcast_message 610001</c> and only then casts and despawns. Ours cast from <c>npc_skills</c>
+    /// instead (20540 red, 20539 blue, one-second delay), so they detonate individually a second after
+    /// landing rather than together when the next rung fires, which retail puts one to three seconds
+    /// later. That is a difference in timing, not a missing mechanic, and it is the last thing between
+    /// this collapse and the controller version.
     /// </para>
     /// </remarks>
     private readonly HpPhases hpPhases = new HpPhases(86, 56, 26);
