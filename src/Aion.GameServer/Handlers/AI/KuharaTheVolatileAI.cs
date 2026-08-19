@@ -13,12 +13,48 @@ using Aion.GameServer.World;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Java parity: ai/instance/rentusBase/KuharaTheVolatileAI (@author xTz, Estrayl).
-/// Still not retail-like and fully refactored.
+/// Kuhara the Volatile (217311, 236298). Retail pattern <c>IDYun_Nmd4</c>.
 /// </summary>
+/// <remarks>
+/// Java parity: ai/instance/rentusBase/KuharaTheVolatileAI (@author xTz, Estrayl). Retail-sourced
+/// corrections below; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>The shape was right and every number was wrong.</b> Retail alternates the two halves on a
+/// fifteen-second beat: barrels at twenty-five seconds, bombs fifteen after that, barrels fifteen after
+/// the bombs, and so on. This class opened at fifty seconds, waited fourteen for the bombs and eleven
+/// before resuming — a cycle of about seventy-five seconds against retail's forty, so a raid saw the
+/// mechanic roughly half as often.
+/// </para>
+/// <para>
+/// <b>The lifetimes were already right</b>, from an earlier pass: barrels fifteen seconds, bombs two
+/// minutes, keyed by npc id in <c>LifeOf</c>. What that pass could not see was that the fifteen seconds
+/// on a barrel is not an arbitrary lifetime — it is <i>exactly</i> the beat, so retail's barrels expire
+/// as the bombs land. With the gap at fourteen seconds they expired a second early, and with the cycle
+/// at fifty they were long gone before anything else happened.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> Retail's barrel rung is a 30/30/30/fallback ladder over the four points, which
+/// is a different distribution from this class's even roll — the three probability rungs and the
+/// fallback all pick one point each, so the fourth point is reached more often than the others. Left as
+/// an even roll because the rungs differ only in which point they choose and the pattern gives no
+/// per-point skill to tell them apart. Retail's <c>live_time=120</c> on the bombs is also not used: the
+/// bombs here walk to Kuhara and are removed when the phase ends, which is this port's way of expressing
+/// the explosion.
+/// </para>
+/// </remarks>
 [AIName("kuhara_the_volatile")]
 public class KuharaTheVolatileAI : AggressiveNpcAI
 {
+    /// <summary>Retail's <c>BTIMERI_INDEX_3</c>: twenty-five seconds to the first barrels.</summary>
+    private static readonly TimeSpan BarrelsFirst = TimeSpan.FromSeconds(25);
+
+    /// <summary>
+    /// And the beat the two halves alternate on: barrels, fifteen seconds, bombs, fifteen seconds,
+    /// barrels. Retail arms timer 2 from the barrel rung and timer 3 back from the bomb rung, both at
+    /// fifteen thousand.
+    /// </summary>
+    private static readonly TimeSpan Beat = TimeSpan.FromSeconds(15);
+
     private ScheduledTask? activeEventTask, barrelEventTask, bombEventTask;
     private readonly AtomicBoolean isStarted = new AtomicBoolean();
     private bool canThink = true;
@@ -49,10 +85,19 @@ public class KuharaTheVolatileAI : AggressiveNpcAI
             task.Cancel(true);
     }
 
-    private void StartBarrelEvent()
+    /// <summary>
+    /// Arms retail's barrel rung. It is a chain rather than a fixed rate: each wave arms the bombs, and
+    /// the bombs arm the next wave, which is how retail's two timers hand off to each other.
+    /// </summary>
+    private void StartBarrelEvent() => ArmBarrels(BarrelsFirst);
+
+    private void ArmBarrels(TimeSpan delay)
     {
-        barrelEventTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        barrelEventTask = ThreadPoolManager.GetInstance().Schedule(_ =>
         {
+            if (IsDead())
+                return ValueTask.CompletedTask;
+
             switch (Rnd.Get(1, 4))
             {
                 case 1:
@@ -74,7 +119,7 @@ public class KuharaTheVolatileAI : AggressiveNpcAI
             }
             StartBombEvent();
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(50000), TimeSpan.FromMilliseconds(50000));
+        }, (long)delay.TotalMilliseconds);
     }
 
     private void StartBombEvent()
@@ -89,6 +134,10 @@ public class KuharaTheVolatileAI : AggressiveNpcAI
                 SetStateIfNot(AIState.WALKING);
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19703, 60, GetOwner()).UseNoAnimationSkill();
                 SpawnBombEvent();
+
+                // Retail arms timer 3 again from the bomb rung itself, so the next barrels are one beat
+                // after the bombs land -- not one beat after he finishes resuming, which would be two.
+                ArmBarrels(Beat);
 
                 bombEventTask = ThreadPoolManager.GetInstance().Schedule(_ =>
                 {
@@ -112,14 +161,16 @@ public class KuharaTheVolatileAI : AggressiveNpcAI
                             HandleMoveValidate();
                             SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 19375, 60, GetOwner()).UseNoAnimationSkill();
                         }
-                        DeleteNpcs(GetPosition().GetWorldMapInstance().GetNpcs(282394));
+                        // Only the bombs. The barrels carry retail's fifteen-second live_time and expire
+                        // on their own -- and by the time this runs the next wave has already arrived,
+                        // so sweeping them here deleted the wave that had just landed.
                         DeleteNpcs(GetPosition().GetWorldMapInstance().GetNpcs(282396));
                     }
                     return ValueTask.CompletedTask;
-                }, 11000L);
+                }, (long)Beat.TotalMilliseconds);
             }
             return ValueTask.CompletedTask;
-        }, 14000L);
+        }, (long)Beat.TotalMilliseconds);
     }
 
     private void DeleteNpcs(List<Npc> npcs)

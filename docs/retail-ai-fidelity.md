@@ -25094,3 +25094,44 @@ for retail's broadcast-and-cast, but the boss's own accompanying cast has no equ
 five condition variables, a door, a fifteen-second gossip npc, broadcast 510 at a hundred metres — and
 his `on_message` handlers for 501/503/504/505 are all untranslated; 504 toggles his attackable flag,
 which is how retail makes him vulnerable, and nothing here sends it.
+
+## Kuhara: the shape was right and every number was wrong
+
+Retail pattern `IDYun_Nmd4` (217311, 236298). Second entry from `audit_timer_drift.py`, which reported
+8000/14000/50000 against a pattern containing none of them.
+
+```
+on_enter_attack_state   timers 0=7000, 1=11000, 3=25000
+timer 3 (barrels)       two barrels at ONE of four points, spawn_range 3, live 15
+                        -> arm timer 2 at 15000
+timer 2 (bombs)         two bombs at EACH of the four points, live 120, broadcast 9591, two casts
+                        -> arm timer 3 at 15000
+```
+
+Retail alternates the halves on a **fifteen-second beat**: barrels at twenty-five, bombs at forty,
+barrels again at fifty-five. This class opened at **fifty** seconds, waited **fourteen** for the bombs
+and **eleven** before resuming — a cycle near seventy-five seconds against retail's forty, so a raid saw
+the mechanic about half as often.
+
+**The lifetimes were already right**, from an earlier pass: barrels fifteen seconds, bombs two minutes,
+keyed by npc id. What that pass could not see is that fifteen is not an arbitrary lifetime — **it is
+exactly the beat**, so retail's barrels expire as the bombs land. At a fourteen-second gap they went a
+second early; at a fifty-second cycle they were long gone before anything else happened. Getting the
+cadence right is what makes the lifetime mean something.
+
+**Two ordering bugs surfaced while wiring it**, and both were mine, caught by the pins rather than by
+reading:
+
+1. I first armed the next barrels from the **resume** task, which is itself a beat after the bombs — so
+   they came at two beats, not one. Retail arms timer 3 from the bomb rung itself.
+2. With that fixed, the resume still ran `DeleteNpcs` over the **barrels** as well as the bombs, and by
+   then the next wave had already landed — so it deleted the wave that had just arrived. That sweep is a
+   Java-ism made redundant once the barrels carry their own lifetime; only the bombs are swept now.
+
+**Pins** — `KuharaTheVolatileAiTests`, four, six mutations, all caught.
+
+**Not translated.** Retail's barrel rung is a 30/30/30/fallback ladder over the four points, which is
+not an even roll — the fallback point is reached more often than the other three. It is left as an even
+roll here because the four rungs differ only in which point they choose, and nothing in the pattern
+distinguishes them otherwise. His `on_die` (a condition variable, two doors) and the two casts on the
+bomb rung are also untranslated, the latter needing skill indices.
