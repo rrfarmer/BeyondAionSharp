@@ -24238,3 +24238,39 @@ catches gross breakage only. Also note this was the fourth pin this session to f
 **Still missing.** `BF4_Rotation_Skill_NPC` (856297), placed by the monster's `on_battle_timer` on a
 15% roll — that pattern is still unread, so the branch is not translated. Neither is the monster's
 self-cast on waking.
+
+## Conquest offering: the monsters had no combat mechanic at all
+
+Same class, `F4_Rotation_Normal_Monster`, and the branch the previous entry left as "not translated".
+
+```
+on_enter_attack_state:  add_battle_timer 0, 6000
+on_battle_timer:
+  p1000  15%     re-arm 0 at 6000 + spawn_on_target BF4_Rotation_Skill_NPC, valid_distance 50, hate 0
+  p900   always  re-arm 0 at 6000
+```
+
+Both rungs re-arm, so the chain runs for as long as the fight does: **a fifteen per cent roll every six
+seconds to drop 856297 on whoever the monster is fighting**. Between spawning and dying this class did
+nothing whatsoever before; the conquest monsters were plain aggressive npcs.
+
+`BF4_Rotation_Skill_NPC` (856297) turns out to run `F4_Rotation_Ctrl_01`, which is two lines: cast
+`SKILLI_INDEX_0` on itself on waking, and despawn six seconds later on the idle timer. It is already
+bound to `aggressive` with `srange=50`, so it engages on its own, which is the part that matters in
+the fight.
+
+**Not translated, and the reason is data rather than code.** That self-cast, and the monster's own
+`on_wake_up` self-cast, both name `SKILLI_INDEX_0` — and **neither 856297 nor any of the 112 monsters
+has a row in our npc skill data**, so there is no skill for index 0 to resolve to. The npc is placed
+and behaves as retail's does in every other respect. Filling in those skill rows is the outstanding
+work, and it is a data gap, not a class gap.
+
+**Pins** — three more in `ConquestOfferingAiTests`, five mutations, all caught: deleting the drop,
+arming the timer on spawn rather than on combat, deleting the re-arm, ignoring the fifty-metre check,
+and dropping on the monster rather than the target.
+
+**One pin had to be rewritten to catch a mutation.** "At least one drop over a hundred turns" survived
+deleting the re-arm, because a single turn still drops something fifteen per cent of the time — and it
+did, on the run that counted. The pin now asserts a floor of four against an expectation of fifteen,
+which the one-turn mutation cannot reach and the true code misses about seven times in ten thousand.
+That is the second time this session a pin has passed for a mutation it should have caught.

@@ -1,5 +1,6 @@
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -204,6 +205,79 @@ public sealed class ConquestOfferingAiTests
 
 		// The turn that was eleven seconds away now never comes.
 		BossAiHarness.Watched seen = harness.WatchNew(30, null, SoloSpot, PartySpot);
+		Assert.Equal(0, seen.Total);
+	}
+
+	/// <summary><c>BF4_Rotation_Skill_NPC</c>, dropped on whoever the monster is fighting.</summary>
+	private const int SkillNpc = 856297;
+
+	/// <summary>
+	/// <b>A monster out of combat drops nothing</b>, however long it stands there.
+	/// </summary>
+	/// <remarks>
+	/// The six-second turn is armed by entering combat, not by spawning — so an idle monster is silent,
+	/// which is also what this class did in combat before the battle timer was ported.
+	/// </remarks>
+	[Fact]
+	public void AnIdleMonsterDropsNoSkillNpc()
+	{
+		using BossAiHarness harness = NewHarness();
+		harness.Spawn(SoloMonsters[0], 300f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromMinutes(2));
+
+		Assert.Equal(0, Count(harness, SkillNpc));
+	}
+
+	/// <summary>
+	/// <b>And a fighting one drops them on its target</b>, on a fifteen per cent roll every six seconds.
+	/// </summary>
+	/// <remarks>
+	/// Ten minutes is a hundred turns, so the count is the assertion rather than the presence: at 15% the
+	/// expected total is fifteen and fewer than four happens about seven times in ten thousand.
+	/// <para>
+	/// <b>A floor rather than “at least one”, deliberately.</b> Deleting the re-arm leaves exactly one
+	/// turn, which still drops something 15% of the time — so “at least one” survived that mutation on
+	/// the run that mattered. Four does not.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AFightingMonsterDropsSkillNpcsOnItsTarget()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc monster = harness.Spawn(SoloMonsters[0], 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(310f, 300f, 200f);
+		harness.Engage(monster, player);
+
+		// Ten minutes is a hundred turns; a hundred silent turns is 1 in 10^7.
+		BossAiHarness.Watched seen = harness.WatchNew(600, () => BossAiHarness.KeepAlive(player), SkillNpc);
+
+		Assert.True(seen.Total >= 4,
+			$"a hundred turns of the battle timer dropped {seen.Total} skill npcs, expected about fifteen");
+		foreach (Npc dropped in harness.LiveNpcs().Where(n => n.GetNpcId() == SkillNpc))
+		{
+			Assert.Equal(player.GetX(), dropped.GetX(), 1);
+			Assert.Equal(player.GetY(), dropped.GetY(), 1);
+		}
+	}
+
+	/// <summary>
+	/// <b>A target out of retail's fifty metres gets nothing.</b>
+	/// </summary>
+	/// <remarks>
+	/// <c>valid_distance</c> is 50, and it is measured from the monster. This is the same field that was
+	/// read as <c>spawn_range</c> earlier in this port and cost a pin one run in six.
+	/// </remarks>
+	[Fact]
+	public void ATargetBeyondFiftyMetresGetsNothing()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc monster = harness.Spawn(SoloMonsters[0], 300f, 300f, 200f);
+		// Engaged from eighty metres, which is past retail's fifty.
+		Player player = harness.SpawnPlayer(380f, 300f, 200f);
+		harness.Engage(monster, player);
+
+		BossAiHarness.Watched seen = harness.WatchNew(600, () => BossAiHarness.KeepAlive(player), SkillNpc);
 		Assert.Equal(0, seen.Total);
 	}
 }

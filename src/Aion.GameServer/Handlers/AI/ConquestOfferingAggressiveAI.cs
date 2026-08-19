@@ -1,6 +1,8 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Utils;
+using System.Threading.Tasks;
 
 namespace Aion.GameServer.Handlers.AI;
 
@@ -28,9 +30,16 @@ namespace Aion.GameServer.Handlers.AI;
 /// not equally likely: 9, 8.19, 7.45 and 6.78 per cent.
 /// </para>
 /// <para>
-/// <b>Not translated.</b> The fifteen per cent battle-timer branch that places
-/// <c>BF4_Rotation_Skill_NPC</c> (856297), whose own pattern is not read yet, and the self-cast on
-/// waking.
+/// <b>And it has a combat mechanic, which this class had none of.</b> On entering combat retail arms a
+/// six-second battle timer, and every turn of it is a fifteen per cent roll to drop
+/// <c>BF4_Rotation_Skill_NPC</c> (856297) on whoever it is fighting, within fifty metres and with no
+/// hate. Nothing here did anything between spawning and dying.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> Both self-casts — retail's <c>on_wake_up</c> here and the skill npc's own —
+/// name <c>SKILLI_INDEX_0</c>, and neither npc has a row in our npc skill data, so there is no skill to
+/// cast. The skill npc is placed and behaves as retail's does in every other respect; what it would
+/// have cast is missing from the data rather than from this class.
 /// </para>
 /// </remarks>
 [AIName("conquest_offering_aggressive")]
@@ -43,10 +52,79 @@ public class ConquestOfferingAggressiveAI : AggressiveNpcAI
     {
     }
 
+    /// <summary><c>BF4_Rotation_Skill_NPC</c>, dropped on the current target.</summary>
+    private const int SkillNpc = 856297;
+
+    /// <summary>Retail's <c>valid_distance</c> on that drop, and its <c>test_probability</c>.</summary>
+    private const float SkillNpcReach = 50f;
+    private const int SkillNpcChance = 15;
+
+    /// <summary>Retail's <c>BTIMERI_INDEX_0</c>, armed on entering combat and re-armed every turn.</summary>
+    private const long BattleTimerMillis = 6_000L;
+
+    private ScheduledTask battleTimer;
+
     protected override void HandleSpawned()
     {
         base.HandleSpawned();
         FindAndSetCreator();
+    }
+
+    /// <summary>Retail's <c>on_enter_attack_state</c>: arm the six-second turn, once.</summary>
+    protected override void HandleAttack(Creature creature)
+    {
+        base.HandleAttack(creature);
+
+        if (battleTimer == null)
+            ArmBattleTimer();
+    }
+
+    private void ArmBattleTimer()
+    {
+        battleTimer = ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            BattleTurn();
+            return ValueTask.CompletedTask;
+        }, BattleTimerMillis);
+    }
+
+    /// <summary>
+    /// One turn of retail's battle timer: re-arm on every rung, and drop the skill npc on fifteen.
+    /// </summary>
+    private void BattleTurn()
+    {
+        if (!GetOwner().IsSpawned() || GetOwner().IsDead())
+            return;
+
+        // Both of retail's rungs re-arm, so the chain runs for as long as the fight does.
+        ArmBattleTimer();
+
+        if (Rnd.NextInt(100) >= SkillNpcChance)
+            return;
+
+        // On the current target and nowhere else, so a monster with nothing in front of it drops
+        // nothing -- retail's spawn_on_target with no target simply does not fire.
+        if (GetOwner().GetTarget() is not Creature target)
+            return;
+
+        // Retail's valid_distance: fifty metres, measured from the monster.
+        if (!PositionUtil.IsInRange(GetOwner(), target, SkillNpcReach))
+            return;
+
+        Spawn(SkillNpc, target.GetX(), target.GetY(), target.GetZ(), (sbyte)target.GetHeading());
+    }
+
+    private void StopBattleTimer()
+    {
+        if (battleTimer != null && !battleTimer.IsDone())
+            battleTimer.Cancel(true);
+        battleTimer = null;
+    }
+
+    protected override void HandleDespawned()
+    {
+        StopBattleTimer();
+        base.HandleDespawned();
     }
 
     private void FindAndSetCreator()
@@ -57,6 +135,8 @@ public class ConquestOfferingAggressiveAI : AggressiveNpcAI
 
     protected override void HandleDied()
     {
+        StopBattleTimer();
+
         // The notification is conditional and the placement is not. Retail's death branches carry no
         // condition at all -- a monster whose spawner has gone still leaves its reset npc, and this
         // class placed nothing in that case, which is also every case a pin can construct.
