@@ -27,7 +27,11 @@ Everything else it can only surface. `--all` lists every absence claim with the 
 be worked through by hand, because "we have no vocabulary for `is_user_flying`" is not checkable by any
 amount of grep.
 
-Usage:  python audit_stale_claims.py [--xml DIR] [--all]
+`--messages` settles the other decidable shape: a class saying "nothing in our tree sends N" or
+"nothing listens for N". Whether a message can be sent or heard is a fact about which retail patterns
+our own npcs run, and that is a lookup rather than a judgement.
+
+Usage:  python audit_stale_claims.py [--xml DIR] [--all] [--messages]
 """
 import argparse
 import pathlib
@@ -114,10 +118,56 @@ def claims():
     return out
 
 
+MESSAGE_CLAIM = re.compile(r"(?:sends|listens for|answers|listener for)\D{0,20}?(\d{3,5})", re.I)
+MSG_SEND = re.compile(r"<broadcast_message>.*?<message_type>(\d+)</message_type>", re.S)
+MSG_HEAR = re.compile(r"<is_message>.*?<message_type>(\d+)</message_type>", re.S)
+
+
+def message_reach(xml_dir, runs, ai_of):
+    """(message -> patterns that send it, message -> patterns that hear it), restricted to OUR npcs.
+
+    A claim like "nothing in our tree sends 6835" is true exactly when no npc this server carries runs a
+    retail pattern that broadcasts it. That is decidable, and it changes as the port grows: Orissan's
+    death notice was such a claim until his class gained the broadcast.
+    """
+    ours = {pattern for npc_id, pattern in runs.items() if npc_id in ai_of}
+    sends, hears = {}, {}
+    for f in sorted(pathlib.Path(xml_dir).glob("NpcAIPatterns*.xml")):
+        for m in PATTERN_RE.finditer(read_text(f)):
+            body = m.group(0)
+            name = NAME_RE.search(body)
+            if not name or name.group(1) not in ours:
+                continue
+            for msg in set(MSG_SEND.findall(body)):
+                sends.setdefault(msg, set()).add(name.group(1))
+            for msg in set(MSG_HEAR.findall(body)):
+                hears.setdefault(msg, set()).add(name.group(1))
+    return sends, hears
+
+
+def report_messages(found, xml_dir, runs, ai_of):
+    sends, hears = message_reach(xml_dir, runs, ai_of)
+    rows = [(f, line, text, m) for f, line, text in found for m in set(MESSAGE_CLAIM.findall(text))]
+    print(f"{len(rows)} absence claims name a message number\n")
+    for f, line, text, msg in rows:
+        can_send = sorted(sends.get(msg, ()))[:2]
+        can_hear = sorted(hears.get(msg, ()))[:2]
+        verdict = "STILL TRUE" if not can_send and not can_hear else "CHECK"
+        print(f"  {f.relative_to(REPO).as_posix()}:{line}  message {msg}  {verdict}")
+        print(f"      claim: {text[:110]}")
+        if can_send:
+            print(f"      our npcs run patterns that SEND it: {' '.join(can_send)}")
+        if can_hear:
+            print(f"      our npcs run patterns that HEAR it: {' '.join(can_hear)}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
     ap.add_argument("--all", action="store_true", help="list every absence claim, not only the decidable ones")
+    ap.add_argument("--messages", action="store_true",
+                    help="settle claims about message numbers against the patterns our npcs run")
     args = ap.parse_args()
 
     found = claims()
@@ -132,6 +182,12 @@ def main():
     routes = our_route_ids()
     by_ai = npcs_by_ainame()
     runs = patterns_by_npc()
+
+    if args.messages:
+        templates = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml")
+        ours = set(re.findall(r'npc_id="(\d+)"', templates.read_text(encoding="utf-8", errors="replace")))
+        return report_messages(found, args.xml, runs, ours)
+
     pattern_paths = paths_in_patterns(args.xml)
 
     # Only the route-shaped claims can be settled without judgement.

@@ -31311,3 +31311,44 @@ messages; jurdin; `is_aerial_spawn`; the 34 non-route absence claims; the 33 nam
 hisen's 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat
 spawn; the `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded
 guards; Dynatoum's mine web; Pashid's `npc_skills`.
+
+## Settling message claims by command instead of by afternoon
+
+Captain Adhati's class says his two broadcasts are untranslated because "nothing in our tree listens for
+either". Checking that by hand took a long chain: find what 6835 and 6837 mean in retail, find every
+pattern that hears them, map those patterns to npcs, and look up what `ai` each carries here.
+
+**The claim is true.** 6835 is "focus this target" — listeners add hate to the message parameter and
+`attack_most_hating` — and of the four patterns that hear it, three are bound to no npc this port
+carries and the fourth is absent from `npc_templates.xml`. The only listener in reach, `Dread_HSer`,
+hears 6837, whose action is a cast against an unresolvable index.
+
+> **A verified-true claim is worth as much as a stale one.** It says "do not spend an afternoon here",
+> and until now nothing recorded that it had been checked.
+
+So `audit_stale_claims.py --messages` settles the question mechanically: for each claim naming a message
+number, does any npc this server carries run a retail pattern that sends or hears it? That is a lookup,
+and it changes as the port grows — Orissan's death notice was such a claim until his class gained the
+broadcast two entries ago.
+
+### It found one immediately
+
+`GravityTornadoAI` says "nothing in our tree sends 204". The tool answers **CHECK**, not stale, and the
+distinction is the point:
+
+> Our port *does* carry npcs that run patterns which send 204 — `IDTiamat_Garnon1` (800347) and
+> `IDTiamat_Hard_GravityBomb_Dmg` (856047). **They carry `general` and `aggressive`**, so they do not
+> broadcast anything. The senders exist; their classes do not.
+
+That is the Orissan shape exactly, and it is the next concrete piece: give those two a class that
+broadcasts 204, and the gravity tornado's listener stops being dead code.
+
+**Only one claim matched**, because the pattern requires "sends"/"listens for" close to the number.
+Adhati's own claim names 6835 and 6837 several words earlier and is missed. The regex is narrow on
+purpose — widening it matched skill ids and coordinates — and the miss is stated rather than hidden.
+
+**Still missing.** The 204 senders; Beritra's support guards, blocked on the scene trigger; the
+crystal-tier messages; jurdin; `is_aerial_spawn`; the remaining absence claims; the 33 named death-spawn
+rows; hisen's 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an
+enter-combat spawn; the `<summons>` schema's four owed attributes; the 258203/258207 family decision;
+the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.
