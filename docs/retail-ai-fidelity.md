@@ -24792,3 +24792,44 @@ rather than by messages, so `22716`/`22717` — *the source appears* — have no
 spawns `IDSeal_Twin_P_Source` does not exist here, and its summons-clearing effect goes with it.
 `22710`, the physical twin's mid-phase order to its gluttens to cast, is not translated either — that
 one needs a skill index.
+
+## The seal guardians' dying broadcast had a listener all along
+
+Retail patterns `IDSeal_Guardian_Chief_01` (855460-855469) and `IDSeal_Guardian_Seal_Keep` (855540).
+
+An earlier pass in this session added the chiefs' **delay keeper** — dropped at their feet on waking,
+standing eighty seconds — and closed by recording their dying broadcast as *"22610, which names the
+killer at fifty metres and has no listener in this port."*
+
+**It has one, and it is the keeper itself.** `IDSeal_Guardian_Seal_Keep` is three lines: hear 22610,
+cast on the npc named in the message — the killer — show a system message, and set a twenty-second
+idle timer that despawns it. So a chief's death sends its own keeper away twenty seconds later. 855540
+was bound to `general`, so nothing listened and a dead chief left its keeper standing out whatever
+remained of the eighty.
+
+`SealDelayKeeperAI` answers for it now, and the chief broadcasts on dying with its last attacker as
+retail's message parameter.
+
+**Confirmed rather than changed.** The eighty seconds an earlier pass gave the keeper is retail's own
+`live_time` on the chief's wake-up spawn. The twenty is the answer to a death, not the keeper's
+lifetime, and a pin holds both apart.
+
+**Pins** — three more in `SealGuardianAiTests`, six mutations, all caught.
+
+**One pin was passing for the wrong reason and the mutation sweep caught it.** The range pin put the
+second chief 250 units away, and widening retail's fifty-metre broadcast to five hundred **survived** —
+because `NpcMessageBus` only reaches npcs in the sender's known list, and at 250 units the second chief
+was never in it. The pin was asserting the known-list radius, not the range check. Moving the second
+chief to 65 units — outside fifty, inside the known list — makes it assert what it claims, and the
+mutation is caught.
+
+That is the second inert pin this session found by mutation rather than by review, and both had the
+same shape: an assertion that holds for a reason other than the one it names.
+
+**Still missing.**
+- **The keeper's cast.** Retail's `use_skill` names `SKILLI_INDEX_0` against `OBJI_MESSAGE_PARAM`, and
+  855540 has no row in our npc skill data. The timing is ported; the effect on the killer is not.
+- **The chief's `on_leave_attack_state`**: a 33% roll to say a line and **despawn the keeper** when it
+  drops combat. Not translated — this port has no leave-combat hook on that class, and the roll would
+  need one.
+- The two condition variables, `GUARDIAN_1` and `GUARDIAN_TIMER`, as before.

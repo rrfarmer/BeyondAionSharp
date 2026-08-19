@@ -37,9 +37,15 @@ namespace Aion.GameServer.Handlers.AI;
 /// does not cover. Removing it would trade a mechanic that works for nothing at all.
 /// </para>
 /// <para>
+/// <b>Its dying broadcast has a listener after all.</b> An earlier pass recorded <c>22610</c> as having
+/// none. It is the <b>delay keeper</b> the chief itself drops on waking: it hears the broadcast at fifty
+/// metres, casts on the named killer, and leaves twenty seconds later instead of standing out the rest
+/// of its eighty. 855540 was bound to <c>general</c>, so a dead chief left its keeper standing.
+/// <para>
 /// <b>Not translated.</b> The two condition variables each chief sets — <c>GUARDIAN_1</c> on waking and
-/// <c>GUARDIAN_TIMER</c> on dying — and broadcast <c>22610</c>, which names the killer at fifty metres
-/// and has no listener in this port.
+/// <c>GUARDIAN_TIMER</c> on dying — and the keeper's own cast, which names <c>SKILLI_INDEX_0</c> against
+/// the killer and has no row in our npc skill data.
+/// </para>
 /// </para>
 /// </remarks>
 [AIName("drakenspire_seal_guardian")]
@@ -48,6 +54,9 @@ public class SealGuardianAI : AggressiveNoLootNpcAI
     /// <summary><c>BIDSeal_Skill_Delay_Keep</c>, dropped on waking and standing eighty seconds.</summary>
     private const int DelayKeeper = 855540;
     private const int DelayKeeperLife = 80;
+
+    /// <summary>Retail's <c>range_as_meter</c> on the chief's dying broadcast.</summary>
+    private const float KillerEarshot = 50f;
 
     /// <summary><c>BIDSeal_Guardian_Chief_Reset_01</c>, left where the chief fell for ten seconds.</summary>
     private const int ResetMarker = 855538;
@@ -177,6 +186,9 @@ public class SealGuardianAI : AggressiveNoLootNpcAI
         // clears his position -- retail's branch runs while he is still standing there.
         SpawnFor(ResetMarker, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(),
             (sbyte)GetOwner().GetHeading(), ResetMarkerLife);
+
+        // And the broadcast that sends his delay keeper away, carrying the killer as retail does.
+        NpcMessageBus.Broadcast(GetOwner(), SealDelayKeeperAI.ChiefKilled, lastAttacker, KillerEarshot, null);
         base.HandleDied();
     }
 

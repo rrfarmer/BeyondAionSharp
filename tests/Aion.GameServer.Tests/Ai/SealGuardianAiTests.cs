@@ -125,4 +125,70 @@ public sealed class SealGuardianAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(11));
 		Assert.Equal(0, Count(harness, ResetMarker));
 	}
+
+	/// <summary>
+	/// <b>A dead chief sends its delay keeper away twenty seconds later.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's chief broadcasts <c>22610</c> at fifty metres as it dies, naming its killer, and the
+	/// keeper it dropped on waking answers: it casts on that killer and despawns twenty seconds on.
+	/// <para>
+	/// An earlier pass recorded that broadcast as having <b>no listener in this port</b>. It has one —
+	/// the keeper — and 855540 was bound to <c>general</c>, so a dead chief left its keeper standing for
+	/// whatever remained of its eighty seconds.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheKeeperLeavesTwentySecondsAfterItsChiefDies()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc chief = harness.Spawn(ChiefOne, 150f, 510f, 1749.59f);
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DelayKeeper));
+
+		chief.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(19));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DelayKeeper));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DelayKeeper));
+	}
+
+	/// <summary>
+	/// <b>And an untouched chief's keeper still stands out its eighty seconds.</b>
+	/// </summary>
+	/// <remarks>
+	/// The twenty seconds is the answer to a death, not the keeper's own lifetime. Without a chief dying
+	/// it keeps retail's <c>live_time=80</c> from the spawn.
+	/// </remarks>
+	[Fact]
+	public void AnUntouchedChiefsKeeperKeepsItsEightySeconds()
+	{
+		using BossAiHarness harness = NewHarness();
+		harness.Spawn(ChiefOne, 150f, 510f, 1749.59f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(25));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DelayKeeper));
+	}
+
+	/// <summary>
+	/// <b>A chief's death does not send another chief's keeper away.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's range is fifty metres, and the four chiefs stand at the corners of the seal. A keeper
+	/// belonging to a chief across the room keeps its own clock.
+	/// </remarks>
+	[Fact]
+	public void AKeeperBeyondFiftyMetresIsNotSentAway()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc near = harness.Spawn(ChiefOne, 150f, 510f, 1749.59f);
+		harness.Spawn(ChiefTwo, 215f, 510f, 1749.59f);
+		Assert.Equal(2, harness.LiveNpcs().Count(n => n.GetNpcId() == DelayKeeper));
+
+		near.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(21));
+
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DelayKeeper));
+	}
 }
