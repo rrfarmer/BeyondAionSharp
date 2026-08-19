@@ -226,7 +226,7 @@ public class TiamatsIncarnationAI : PatternAi
         areaAtkRearm: 25000, handBindRearm: 30000,
         deathEffect: 283063,
         powerAtkHazard: Do.SpawnOnTarget(HardCavityOfEarth, Hazards, range: 1f, liveSeconds: 7,
-            attackHate: 10000000),
+            attackHate: 10000000, validDistance: 50f),
         areaAtkHazard: Do.SpawnOnEachTarget(HardCavityOfEarth, Hazards, validDistance: 100f,
             maxTargets: 3, MultiTargetOrder.Descending, liveSeconds: 25));
 
@@ -234,7 +234,7 @@ public class TiamatsIncarnationAI : PatternAi
         areaAtkRearm: 30000, handBindRearm: 35000,
         deathEffect: 283065,
         powerAtkHazard: Do.SpawnOnAttacker(AggroTarget.RANDOM, HardGravityWhirlpool, Hazards,
-            range: 1f, liveSeconds: 4),
+            range: 1f, liveSeconds: 4, validDistance: 50f),
         areaAtkHazard: Do.SpawnOnEachTarget(HardGravityWhirlpool, Hazards, validDistance: 100f,
             maxTargets: 1, MultiTargetOrder.Descending, range: 6f, liveSeconds: 12));
 
@@ -261,7 +261,7 @@ public class TiamatsIncarnationAI : PatternAi
         [Fissurefang] = Incarnation(areaAtkRearm: 25000, handBindRearm: 30000,
             deathEffect: 283063,
             powerAtkHazard: Do.SpawnOnTarget(CavityOfEarth, Hazards, range: 1f, liveSeconds: 7,
-                attackHate: 10000000),
+                attackHate: 10000000, validDistance: 50f),
             areaAtkHazard: Do.SpawnOnEachTarget(CavityOfEarth, Hazards, validDistance: 100f,
                 maxTargets: 3, MultiTargetOrder.Descending, liveSeconds: 25)),
 
@@ -269,7 +269,7 @@ public class TiamatsIncarnationAI : PatternAi
         [Graviwing] = Incarnation(areaAtkRearm: 30000, handBindRearm: 35000,
             deathEffect: 283065,
             powerAtkHazard: Do.SpawnOnAttacker(AggroTarget.RANDOM, GravityWhirlpool, Hazards,
-                range: 1f, liveSeconds: 4),
+                range: 1f, liveSeconds: 4, validDistance: 50f),
             // Only the most-hated gets one, and it is the widest and shortest-lived of the three.
             areaAtkHazard: Do.SpawnOnEachTarget(GravityWhirlpool, Hazards, validDistance: 100f,
                 maxTargets: 1, MultiTargetOrder.Descending, range: 6f, liveSeconds: 12)),

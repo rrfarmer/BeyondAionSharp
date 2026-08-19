@@ -93,11 +93,13 @@ public class HighPriestYatriAI : PatternAi
             Branch(7, "26-55", [When.Timer(0), When.HpBetween(26, 55), When.FirstTime(Step2)],
                 Do.ArmTimer(0, 7000),
                 Do.Despawn(FirstWave),
-                Do.SpawnOnTarget(PowerOfYatri, SecondWave, count: 2, range: OnThem, liveSeconds: WaveLife)),
+                Do.SpawnOnTarget(PowerOfYatri, SecondWave, count: 2, range: OnThem, liveSeconds: WaveLife,
+                    validDistance: 50f)),
 
             Branch(4, "56-80", [When.Timer(0), When.HpBetween(56, 80), When.FirstTime(Step1)],
                 Do.ArmTimer(0, 7000),
-                Do.SpawnOnTarget(PowerOfYatri, FirstWave, count: 2, range: OnThem, liveSeconds: WaveLife)),
+                Do.SpawnOnTarget(PowerOfYatri, FirstWave, count: 2, range: OnThem, liveSeconds: WaveLife,
+                    validDistance: 50f)),
 
             // Kept although its casts are not: ten seconds against the fallback's six.
             Branch(2, "81-100", [When.Timer(0), When.HpBetween(81, 100), When.FirstTime(Opening)],

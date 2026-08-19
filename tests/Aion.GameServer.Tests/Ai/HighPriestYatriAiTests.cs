@@ -41,11 +41,18 @@ public sealed class HighPriestYatriAiTests
 	/// casts off the player.
 	/// </summary>
 	/// <param name="quarryX">
-	/// Where the thing he is fighting stands. Sixty metres out by default, so a wave placed on it
-	/// cannot be mistaken for one at his feet — but that is <b>further than his own fifty-metre
-	/// broadcast</b>, so any pin about 3319 has to stand the quarry where a real fight would.
+	/// Where the thing he is fighting stands. <b>Forty metres out by default</b> — far enough that a
+	/// wave placed on it cannot be mistaken for one at his feet, and inside retail's fifty-metre
+	/// <c>valid_distance</c> on the wave itself.
+	/// <para>
+	/// It was sixty, and this comment already said that was further than his own fifty-metre broadcast
+	/// and that "any pin about 3319 has to stand the quarry where a real fight would". <b>The same was
+	/// true of the waves and nobody had noticed</b>, because the guard was not modelled: once the
+	/// placement started honouring <c>valid_distance</c>, six pins here failed at once. They were
+	/// measuring a fight that stood outside the boss's own reach.
+	/// </para>
 	/// </param>
-	private static (BossAiHarness, Npc, Npc) Engaged(int npcId = Yatri, float quarryX = 360f)
+	private static (BossAiHarness, Npc, Npc) Engaged(int npcId = Yatri, float quarryX = 340f)
 	{
 		BossAiHarness harness = NewHarness();
 		Npc boss = harness.Spawn(npcId, 300f, 300f, 200f);

@@ -89,8 +89,10 @@ public class OmegaAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfMagicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
-                Do.SpawnOnTarget(CloneOfPhysicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
+                Do.SpawnOnTarget(CloneOfMagicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate,
+                    validDistance: 50f),
+                Do.SpawnOnTarget(CloneOfPhysicalBarrier, LastWave, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate,
+                    validDistance: 50f),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(19, "phase 45%", [When.Timer(0), When.HpBelow(45), When.FirstTime(2)],
@@ -98,7 +100,8 @@ public class OmegaAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfHealing, HealingWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
+                Do.SpawnOnTarget(CloneOfHealing, HealingWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate,
+                    validDistance: 50f),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(18, "phase 65%", [When.Timer(0), When.HpBelow(65), When.FirstTime(3)],
@@ -106,14 +109,16 @@ public class OmegaAI : PatternAi
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfExplosion, ExplosionWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
+                Do.SpawnOnTarget(CloneOfExplosion, ExplosionWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate,
+                    validDistance: 50f),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             Branch(17, "phase 85%", [When.Timer(0), When.HpBelow(85), When.FirstTime(4)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnSelf(SummonCastA),
                 Do.SkillOnSelf(SummonCastB),
-                Do.SpawnOnTarget(CloneOfPower, PowerWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate),
+                Do.SpawnOnTarget(CloneOfPower, PowerWave, count: 3, range: 3f, liveSeconds: WaveLife, attackHate: CloneHate,
+                    validDistance: 50f),
                 Do.Broadcast(RallyMessage, RallyRange, aboutTarget: true)),
 
             // The heartbeat every phase branch depends on: without it the chain ends on the first tick

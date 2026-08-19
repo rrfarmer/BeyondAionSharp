@@ -74,7 +74,7 @@ public class VritraRearguardAI : PatternAi
     public const int Target = 21212;
 
     private static PatternAction Mines() =>
-        Do.SpawnOnTarget(MineTrap, Untracked, count: 3, range: TrapSpread, liveSeconds: TrapLife);
+        Do.SpawnOnTarget(MineTrap, Untracked, count: 3, range: TrapSpread, liveSeconds: TrapLife, validDistance: 50f);
 
     /// <summary>A link of a chain. The casts do not resolve, so this is the timing alone.</summary>
     private static PatternBranch Step(int priority, int on, int next, int delay)
@@ -100,7 +100,8 @@ public class VritraRearguardAI : PatternAi
                 [When.Timer(0), When.HpBelow(50), When.FirstTime(LowChainLatch), When.FirstTime(NetsLaid)],
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(9, 5000),
-                Do.SpawnOnTarget(NetTrap, Nets, count: 2, range: TrapSpread, liveSeconds: TrapLife),
+                Do.SpawnOnTarget(NetTrap, Nets, count: 2, range: TrapSpread, liveSeconds: TrapLife,
+                    validDistance: 50f),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
 
             Branch(41, "BT0, HP<=50 again",

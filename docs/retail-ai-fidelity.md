@@ -23396,3 +23396,61 @@ with no class, no C# reference, and no spawn in our data. A whole fight, found b
 
 Build clean. Putting the cap back to two fails both Kurmata pins. **Three consecutive full-suite runs**:
 2,181 passing, 1 skipped.
+
+## Auditing the single-target placements, and closing the guard they all omitted
+
+The cap audit now covers `spawn_on_target` and `spawn_on_target_by_attacker_indicator` as well, where
+the fields that go wrong are `spawn_range`, `live_time` and `valid_distance` rather than a cap.
+
+### Two mismatches, both the tool's own fault
+
+Its first run reported Bollvig's vampire at a tenth of retail's lifetime and Df5's mine at 15 seconds
+against 40. **Both were false positives**, and from the same cause: **constants were collected per file
+rather than per class.** `BollvigBlackheartAI.cs` holds two classes that both define `VampireLife` — 24000
+in the boss, 2400 in the bat — and `Df5FieldNamedAI.cs` has `Life = 40` in one class and `Life = 15` in
+another. The later definition won and the tool reported the earlier one as wrong.
+
+**That is the same "two classes in one file" mode already recorded for `report_dropped_guards.py`.** It
+is now fixed at the source rather than worked around, and both rows disappeared.
+
+**Result: zero real mismatches** across 19 multi-target and 42 single-target placements. Every constant
+the tool can read agrees with retail.
+
+### The one category that was real: 28 placements with no guard at all
+
+`valid_distance` arrived as a parameter after most of these classes were written, so 28 placements across
+14 classes agreed with retail on range and lifetime and **passed no eligibility radius at all**. All 28
+now carry retail's own number, each resolved by npc id.
+
+### And it immediately caught a pin measuring an impossible fight
+
+Six High Priest Yatri pins failed the moment the guard was enforced. **The guard was right**: that
+harness stood his quarry **sixty metres out**, and the file's own comment already said sixty was further
+than his fifty-metre broadcast and that "any pin about 3319 has to stand the quarry where a real fight
+would". **The same was true of the waves and nobody had noticed**, because nothing enforced the radius.
+The quarry now stands at forty.
+
+### A fourth inert pin, and I wrote this one too
+
+The pin for the new guards **passed with every guard in Omega deleted.** It dropped him to ninety per
+cent, and his shallowest rung is guarded below eighty-five — so no branch matched and nothing spawned
+either way. Corrected to eighty-four, where the mutation now goes red.
+
+That is **four inert pins this session**: two found by mutation, one by an audit, one by mutation again —
+and two of the four were mine. The lesson is not "be careful": it is that **a pin is not evidence until
+its mutation has been run**, and nothing here does that automatically.
+
+### Still to do
+
+- **Mutation testing is manual and ad hoc.** Four inert pins in one session is a lower bound on how many
+  exist, because only pins someone happened to mutate have been checked.
+- **`hatepoints_to_add` and `attack_target_after_spawn`** are still cross-checked by nothing.
+- **Empress Muada**, `LDF4a_SandWarm_Monarch`, unported and unspawned.
+- **The four remaining classes**: `AbyssUndeadAI`, `KaligaTheUnjustAI`, `CalindiFlamelordAI`,
+  `YamennesSpawnGateAI`.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Zeroing Omega's guards fails its pin. **Three consecutive full-suite runs**: 2,182 passing
+(one new), 1 skipped.

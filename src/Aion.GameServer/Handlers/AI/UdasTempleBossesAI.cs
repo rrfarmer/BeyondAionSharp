@@ -148,7 +148,7 @@ public class DebilkarimTheMakerAI : PatternAi
     {
         OnAttacked = Of(
             Branch(10, "below 19", [When.Chance(SoulChance), When.HpBelow(19)],
-                Do.SpawnOnTarget(PyreSoul, Untracked, count: SoulsPerCall, range: SoulRange)),
+                Do.SpawnOnTarget(PyreSoul, Untracked, count: SoulsPerCall, range: SoulRange, validDistance: 50f)),
 
             Branch(6, "below 51", [When.HpBelow(51), When.FirstTime(Below51)],
                 Do.SpawnNear(Nucleus, Untracked, count: 2, range: 5f),

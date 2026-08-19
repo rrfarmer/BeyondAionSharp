@@ -212,4 +212,36 @@ public sealed class OmegaAiTests
 				+ $"{c.GetAggroList().GetHate(player)}"));
 		}
 	}
+
+	/// <summary>
+	/// <b>A target beyond fifty metres gets no clone.</b> Retail's <c>valid_distance</c>.
+	/// </summary>
+	/// <remarks>
+	/// Omega's five clone waves are five of the twenty-eight placements that agreed with retail on
+	/// range and lifetime and passed no eligibility radius at all, because the parameter arrived after
+	/// the classes did. <c>audit_multi_target_caps.py</c> counted them; this pins the mechanism for the
+	/// batch, and the audit is what keeps the other twenty-three honest.
+	/// <para>
+	/// One pin for the batch rather than twenty-eight: they all reach the same guard, and what varies
+	/// between them is a number the audit already checks against retail.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AQuarryBeyondFiftyMetresGetsNoClone()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Omega, 1780f, 2260f, 300f);
+
+		// Eighty metres out -- well past retail's fifty, and inside the harness map.
+		Player distant = harness.SpawnPlayer(1860f, 2260f, 300f);
+		harness.Engage(boss, distant);
+
+		// Eighty-four, not ninety: his shallowest rung is guarded below eighty-five, so at ninety no
+		// branch matches and the pin passes whatever the guard does. THE FIRST VERSION OF THIS PIN USED
+		// NINETY and survived deleting every guard in the class -- the fourth inert pin this session,
+		// and the second I wrote myself.
+		PhaseAt(harness, boss, distant, 84);
+
+		Assert.Equal(0, Count(harness, CloneOfPower));
+	}
 }

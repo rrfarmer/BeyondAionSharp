@@ -155,7 +155,8 @@ public class DreadgionDrakanMageAI : PatternAi
 
         // Does not re-arm timer 3, so this happens once however long the last third lasts.
         Branch(2, "a hand on the tank", [When.HpBelow(30), When.Timer(Hand)],
-            Do.SpawnOnTarget(MagicHand, Placed, count: 1, range: HandReach, liveSeconds: HandLife)),
+            Do.SpawnOnTarget(MagicHand, Placed, count: 1, range: HandReach, liveSeconds: HandLife,
+                validDistance: 50f)),
 
         Branch(1, "", [When.Timer(Hand)],
             Do.ArmTimer(Hand, 6000)));

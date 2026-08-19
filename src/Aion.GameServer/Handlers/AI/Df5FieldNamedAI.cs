@@ -86,8 +86,8 @@ public class TidalsailSpiritAI : PatternAi
 	private static PatternBranch Lay(int priority, int timer, int next)
 		=> Branch(priority, "a pair of mines", [When.Timer(timer)],
 			Do.ArmTimer(next, 6000),
-			Do.SpawnOnAttacker(AggroTarget.RANDOM, Mine, Loose, range: UnderFoot, liveSeconds: Life),
-			Do.SpawnOnAttacker(AggroTarget.RANDOM, Mine, Loose, range: UnderFoot, liveSeconds: Life));
+			Do.SpawnOnAttacker(AggroTarget.RANDOM, Mine, Loose, range: UnderFoot, liveSeconds: Life, validDistance: 50f),
+			Do.SpawnOnAttacker(AggroTarget.RANDOM, Mine, Loose, range: UnderFoot, liveSeconds: Life, validDistance: 50f));
 
 	public TidalsailSpiritAI(Npc owner)
 		: base(owner)
@@ -196,7 +196,7 @@ public class InfernomaneVortileAI : PatternAi
 		=> Branch(priority, $"{count} blazes", [When.Timer(timer), band],
 			Do.ArmTimer(next, 10000),
 			Do.SwitchTarget(AggroTarget.RANDOM),
-			Do.SpawnOnTarget(Blaze, Fires, count: count, range: Ring, liveSeconds: Life));
+			Do.SpawnOnTarget(Blaze, Fires, count: count, range: Ring, liveSeconds: Life, validDistance: 100f));
 
 	public InfernomaneVortileAI(Npc owner)
 		: base(owner)

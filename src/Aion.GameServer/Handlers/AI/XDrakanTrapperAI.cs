@@ -82,7 +82,7 @@ public class XDrakanTrapperAI : PatternAi
             Branch(6, "36-70 lays a trap and peels", [When.Timer(Heartbeat), When.HpBetween(36, 70),
                     When.FirstTime(Below70)],
                 Do.ArmTimer(Heartbeat, 6000),
-                Do.SpawnOnTarget(DragonsTrap, Laid, count: 1, range: Reach),
+                Do.SpawnOnTarget(DragonsTrap, Laid, count: 1, range: Reach, validDistance: 50f),
                 Do.SwitchTarget(AggroTarget.SECOND_MOST_HATED)),
 
             // Never re-armed, so this is the one peel every fight opens with.

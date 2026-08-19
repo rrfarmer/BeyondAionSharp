@@ -108,7 +108,7 @@ public class NochsanaNagaTeleporterAI : PatternAi
 				Do.ArmTimer(0, 10000),
 				Do.ArmTimer(1, 30000),
 				Do.Broadcast(NochsanaNagaProtectorAI.Call, Reach, aboutTarget: true),
-				Do.SpawnOnTarget(Reservist, Called, count: 1, range: Ring, liveSeconds: Life))),
+				Do.SpawnOnTarget(Reservist, Called, count: 1, range: Ring, liveSeconds: Life, validDistance: 50f))),
 
 		OnMessage = Of(
 			// Already fighting: he turns, and nothing else. Retail's own split, and the runtime can
@@ -129,7 +129,7 @@ public class NochsanaNagaTeleporterAI : PatternAi
 			Branch(6, "and one more", [When.Timer(1), When.HpBetween(71, 100),
 					When.FirstTime(SecondCalled)],
 				Do.ArmTimer(1, 30000),
-				Do.SpawnOnTarget(Reservist, Called, count: 1, range: Ring, liveSeconds: Life)),
+				Do.SpawnOnTarget(Reservist, Called, count: 1, range: Ring, liveSeconds: Life, validDistance: 50f)),
 
 			Branch(5, "", [When.Timer(1)],
 				Do.ArmTimer(1, 30000)),

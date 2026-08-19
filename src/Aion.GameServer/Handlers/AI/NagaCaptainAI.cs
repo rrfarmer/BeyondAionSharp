@@ -66,7 +66,8 @@ public class NagaCaptainAI : PatternAi
     private static readonly PatternCondition SummonBand = When.HpBetween(41, 60);
 
     private static PatternAction Slaves4() =>
-        Do.SpawnOnTarget(NagaSlave, Slaves, count: 4, range: AroundTheTarget, liveSeconds: SlaveLife);
+        Do.SpawnOnTarget(NagaSlave, Slaves, count: 4, range: AroundTheTarget, liveSeconds: SlaveLife,
+            validDistance: 50f);
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {

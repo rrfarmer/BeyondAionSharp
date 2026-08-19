@@ -164,7 +164,7 @@ public class TakahanAI : PatternAi
 
             Branch(7, "36-70 trap", [When.Timer(2), When.HpBetween(36, 70), When.FirstTime(TrapLaid)],
                 Do.ArmTimer(2, QuickMillis),
-                Do.SpawnOnTarget(ExplosiveTrap, Traps, count: 1, range: OnThem)),
+                Do.SpawnOnTarget(ExplosiveTrap, Traps, count: 1, range: OnThem, validDistance: 50f)),
 
             Branch(6, "36-70", [When.Timer(2), When.HpBetween(36, 70)],
                 Do.ArmTimer(2, SlowMillis)),

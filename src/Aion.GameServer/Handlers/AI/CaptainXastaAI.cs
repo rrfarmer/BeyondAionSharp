@@ -90,7 +90,7 @@ public class CaptainXastaAI : PatternAi
         OnBattleTimer = Of(
             Branch(6, "Blaze", [When.Timer(1)],
                 Do.SkillOnSelf(DragonBreath),
-                Do.SpawnOnTarget(MagicFlame, Adds, count: 3, range: 4f, liveSeconds: 15),
+                Do.SpawnOnTarget(MagicFlame, Adds, count: 3, range: 4f, liveSeconds: 15, validDistance: 100f),
                 Do.ArmTimer(1, 9000)),
 
             Branch(5, "wave_85%", [When.HpBelow(85), When.Timer(2), When.FirstTime(1)], Wave(artilleryman)),

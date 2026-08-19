@@ -68,10 +68,10 @@ public class PriestZitanAI : PatternAi
 
 		OnAttacked = Of(
 			Branch(9, "and two on his quarry under fifty", [When.HpBelow(50), When.FirstTime(Below50)],
-				Do.SpawnOnTarget(Illusion, Illusions, count: 2, range: Ring)),
+				Do.SpawnOnTarget(Illusion, Illusions, count: 2, range: Ring, validDistance: 50f)),
 
 			Branch(8, "and two more under twenty-five", [When.HpBelow(25), When.FirstTime(Below25)],
-				Do.SpawnOnTarget(Illusion, Illusions, count: 2, range: Ring))),
+				Do.SpawnOnTarget(Illusion, Illusions, count: 2, range: Ring, validDistance: 50f))),
 
 		OnLeaveAttack = Of(
 			Branch(15, "", When.Always,

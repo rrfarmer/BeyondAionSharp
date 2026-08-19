@@ -82,7 +82,7 @@ public class ChiefGunnerKurmataAI : PatternAi
 				Do.ArmTimer(1, 14000),
 				Do.Broadcast(SupplyBaseFlameCannonAI.OpenFire, Earshot, aboutTarget: true),
 				Do.SpawnOnAttacker(AggroTarget.RANDOM, Mark, Marks,
-					range: UnderFoot, liveSeconds: Life, attackHate: Stuck))),
+					range: UnderFoot, liveSeconds: Life, attackHate: Stuck, validDistance: 40f))),
 
 		OnBattleTimer = Of(
 			Branch(15, "and turns onto somebody else", [When.Timer(7)],
@@ -115,7 +115,7 @@ public class ChiefGunnerKurmataAI : PatternAi
 			Branch(6, "a mark on his quarry", [When.Timer(2), When.HpBetween(61, 100)],
 				Do.ArmTimer(3, 9000),
 				Do.SpawnOnTarget(Mark, Marks, count: 1, range: UnderFoot, liveSeconds: Life,
-					attackHate: Stuck)),
+					attackHate: Stuck, validDistance: 40f)),
 
 			Branch(4, "", [When.Timer(1), When.HpBetween(61, 100)],
 				Do.ArmTimer(2, 8000)),
