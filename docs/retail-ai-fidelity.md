@@ -28523,3 +28523,45 @@ under test is the most convincing kind of useless.
   a waypoint rung.
 - The `on_wake_up` and `on_see_user` rungs of the three scientist patterns, and the quest bookkeeping in
   this class, which is ours rather than retail's — retail's rung ends at `despawn_self`.
+
+## The harness can kill things now, which it could not
+
+Last commit left a mutation standing and named the reason: the scientists' release counts two guarding
+eyes dying through `DeathObserver`s, and nothing in `BossAiHarness` could produce a death those observers
+would hear.
+
+> **`AiEventType.Died` is not a death.** Raising it reaches the NPC's own `HandleDied` and stops there —
+> no `DeathObserver`, no friend notice, no respawn scheduling. Every mechanic where one NPC watches
+> another die is invisible to a pin written that way, and the silence reads as a missing feature rather
+> than an untestable one.
+
+`BossAiHarness.Kill(npc, killer)` puts damage on the aggro list, takes the NPC to zero through
+`ReduceHp`, and calls the controller's `OnDie` — so the observers, the friend notice and the AI event all
+run in the order the server runs them. **Three pins, and the third is the useful one**: raising the event
+alone notifies nobody, asserted side by side with the helper that does. Without that contrast the next
+person reaches for `OnGeneralEvent(Died)` again and reads the silence as a bug in the code under test.
+
+**One claim was trimmed to what is true.** The first version also asserted the AI ends in `DIED`. It does
+not: that transition is made further along the server's death path than the harness reaches. The NPC is
+dead and the observers fire, and the pin now says exactly that.
+
+### What it did not fix, which is the honest part
+
+**The scientists still cannot be released in a test.** With a real death driving the count, their route is
+still never attached — so the failing step is the *attach*, in `HandleCreatureSee`, not the death. That
+narrows it considerably and it is where the next attempt should start; three attempts at the death end
+were abandoned before this one worked, and a fourth at the wrong end would have been three too many.
+
+So the surviving mutation from last commit **still survives**: deleting the route lookup from `StartWalk`
+leaves every pin green. That is unchanged and unhidden.
+
+**Still missing.**
+
+- **Why the observer attach does not take.** The eyes are made mutually known, they are two metres away,
+  their npc id matches, and `MakeMutuallyKnown` feeds the same `KnownObjects` that `ForEachNpc` walks. One
+  of those four is not true in the harness and it is worth twenty minutes to find out which.
+- **Eight classes** from the waypoint survey, unchanged: `brigade_general_vasharti`,
+  `padmarashka_world_boss` and `sematariux` spawn at index 1; `poppyontherun` at 26; the two Eternal
+  Bastion classes broadcast at index 7 to listeners this port has no sender for; `summoner` and `useitem`
+  are shared classes where one or two npcs of hundreds carry a waypoint rung.
+- Every other `DeathObserver` mechanic in the port is now drivable and none of them has been revisited.

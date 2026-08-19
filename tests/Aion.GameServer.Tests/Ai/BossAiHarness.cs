@@ -239,6 +239,31 @@ public sealed class BossAiHarness : IDisposable
 	public static void Wound(Npc npc, Creature attacker, int damage = 100) =>
 		npc.GetAggroList().AddDamage(attacker, damage, notifyAttack: false, hopType: null);
 
+	/// <summary>
+	/// Kills an NPC through its controller, the way the server does, rather than by raising the AI event.
+	/// </summary>
+	/// <remarks>
+	/// <b><see cref="Aion.GameServer.Ai.Event.AiEventType.Died"/> is not a death.</b> Raising it reaches
+	/// the NPC's own <c>HandleDied</c> and nothing else — no <c>DeathObserver</c>, no friend notice, no
+	/// respawn scheduling. Every mechanic built on another NPC watching this one die is therefore
+	/// invisible to a pin that raises the event, and reads as a silently missing feature: the captured
+	/// Drakan scientists are released by counting two guarding eyes through observers, and a mutation
+	/// deleting their entire route lookup survived because that count could not be driven here.
+	/// <para>
+	/// This drops the NPC to zero and calls <c>OnDie</c>, so the observers, the friend notice and the
+	/// AI event all run in the order the server runs them.
+	/// </para>
+	/// </remarks>
+	public static void Kill(Npc npc, Creature killer)
+	{
+		Wound(npc, killer);
+		npc.GetLifeStats().ReduceHp(
+			Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE.DAMAGE,
+			npc.GetLifeStats().GetMaxHp(), 0,
+			Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG.REGULAR, killer);
+		npc.GetController().OnDie(killer);
+	}
+
 	/// <summary>Makes two objects visible to each other, which aggro and message broadcast both require.</summary>
 	public static void MakeMutuallyKnown(VisibleObject a, VisibleObject b)
 	{
