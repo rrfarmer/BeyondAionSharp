@@ -409,7 +409,7 @@ public sealed class ResearcherTeselikAiTests
 	public void ADeathNoPlayerEarnedLeavesNoBonusHands()
 	{
 		using BossAiHarness harness = Walking();
-		Npc teselik = harness.Spawn(Teselik, 500f, 500f, 200f);
+		Npc teselik = harness.Spawn(Teselik, HisX, HisY, HisZ);
 
 		teselik.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
 
@@ -429,8 +429,8 @@ public sealed class ResearcherTeselikAiTests
 	public void TheHandsHeSummonsOnEnteringCombatWalkInOnTwoPaths()
 	{
 		using BossAiHarness harness = Walking();
-		Npc teselik = harness.Spawn(Teselik, 500f, 500f, 200f);
-		Player raider = harness.SpawnPlayer(504f, 500f, 200f);
+		Npc teselik = harness.Spawn(Teselik, HisX, HisY, HisZ);
+		Player raider = harness.SpawnPlayer(HisX + 4f, HisY, HisZ);
 		harness.Engage(teselik, raider);
 
 		List<string?> routes = harness.LiveNpcs()
@@ -444,6 +444,20 @@ public sealed class ResearcherTeselikAiTests
 			routes.OrderBy(r => r));
 	}
 
+	/// <summary>
+	/// His own spawn point from <c>301130000_Sauro_Supply_Base.xml</c>.
+	/// </summary>
+	/// <remarks>
+	/// <b>Not an arbitrary corner, and that matters now his hands walk in.</b> The four
+	/// <c>NPCPath_Bboss_Hand_*</c> heads sit within fifteen metres of this spot. Spawning him somewhere
+	/// convenient instead put the hands a hundred and seventy metres away, so their death notice — a
+	/// broadcast with a fifty-metre range — never reached him and his live-hand counter never moved.
+	/// Anything that depends on him hearing his own hands has to start from where he actually stands.
+	/// </remarks>
+	private const float HisX = 480.297f;
+	private const float HisY = 331.069f;
+	private const float HisZ = 181.79274f;
+
 	/// <summary>A harness with the walker routes loaded, which the bonus hands need.</summary>
 	private static BossAiHarness Walking() =>
 		BossAiHarness.For(SauroSupplyBase).WithWorldSize(2048).WithWalkerRoutes()
@@ -452,8 +466,8 @@ public sealed class ResearcherTeselikAiTests
 
 	private static void KilledByAPlayer(BossAiHarness harness)
 	{
-		Npc teselik = harness.Spawn(Teselik, 500f, 500f, 200f);
-		Player raider = harness.SpawnPlayer(504f, 500f, 200f);
+		Npc teselik = harness.Spawn(Teselik, HisX, HisY, HisZ);
+		Player raider = harness.SpawnPlayer(HisX + 4f, HisY, HisZ);
 		harness.Engage(teselik, raider);
 		BossAiHarness.Wound(teselik, raider);
 		teselik.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);

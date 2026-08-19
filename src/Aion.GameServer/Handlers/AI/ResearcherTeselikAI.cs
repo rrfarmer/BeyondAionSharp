@@ -144,9 +144,16 @@ public class ResearcherTeselikAI : PatternAi
     /// <b>Not covered by a pin, and the mutation that proves it survives.</b> Putting all three on paths
     /// instead — the tidier reading, and the one a translator would reach for — is caught by nothing.
     /// Reaching this rung needs his live-hand counter at zero, which only moves when a hand dies and
-    /// reports in, plus the phase flag unspent and timer 0 coming round below 65; two attempts to set
-    /// that up in the harness produced no summon at all. Recorded rather than left as a green suite that
-    /// implies more than it checks. See docs/retail-ai-fidelity.md.
+    /// reports in, plus the phase flag unspent and timer 0 coming round below 65.
+    /// <para>
+    /// <b>Five attempts have failed and what they ruled out is worth more than the attempts.</b> Timer 0
+    /// fires exactly once, six seconds after combat starts, and whichever rung takes it arms timer 5
+    /// rather than re-arming timer 0 — so there is <i>one</i> instant in the whole fight when this rung
+    /// can be reached, and by then the counter must already read zero. Killing his hands through
+    /// <c>BossAiHarness.Kill</c> does not get it there, with or without the boss and hand made mutually
+    /// known, and with or without him standing at his real spawn point so the fifty-metre notice can
+    /// carry. Whoever picks this up should start by proving the counter moves at all, not by trying to
+    /// reach the rung. See docs/retail-ai-fidelity.md.
     /// </remarks>
     private static PatternAction SummonAtFeetThen(params int[] paths) => ai =>
     {

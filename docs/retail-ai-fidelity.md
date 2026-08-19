@@ -30474,3 +30474,52 @@ Full solution green at 2,591 in the game-server assembly.
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
   spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Three more attempts at the phase-two rung, and what they ruled out
+
+The survivor from the last entry — "the phase-two rung puts all three hands on paths" — got three further
+attempts. **It is still uncaught.** What changed is that the search space is now much smaller, and one
+real defect in the tests came out of the attempt.
+
+### The tests had him standing in the wrong place
+
+Every pin here spawned him at `(500, 500, 200)`, a convenient corner. His actual spawn in
+`301130000_Sauro_Supply_Base.xml` is `(480.3, 331.1, 181.8)`, and the four `NPCPath_Bboss_Hand_*` heads
+sit within fifteen metres of it.
+
+> That did not matter until this work made his hands walk in. Now it does: **the hands were arriving a
+> hundred and seventy metres away**, and their death notice is a broadcast with a fifty-metre range. Any
+> mechanic that depends on him hearing his own hands was silently unreachable.
+
+The pins now start from his real coordinates, and the constant says why.
+
+### What the attempts ruled out
+
+Tracing timer fire counts rather than guessing:
+
+* **Timer 0 fires exactly once**, six seconds after combat starts, and whichever rung takes it arms timer
+  5 rather than re-arming timer 0. So there is **one instant in the whole fight** when the phase-two rung
+  can be reached, and the counter must already read zero by then.
+* Killing his hands through `BossAiHarness.Kill` does not get the counter there — **not** with the boss
+  and hand made mutually known, and **not** with him at his real spawn point.
+
+So the blocker is upstream of the rung: the live-hand counter is not moving. **Whoever picks this up
+should start by proving the counter moves at all**, with a pin on that alone, rather than trying to reach
+the rung and reading the silence.
+
+That is written into the class beside the code, not only here, because that is where somebody will be
+standing when they need it.
+
+Full solution green at 2,591 in the game-server assembly; mutations re-run, still 2/3.
+
+**Still missing.**
+
+- **The phase-two asymmetry**, with the above as the starting point.
+- **`AHandThatSelfDestructsStillReportsIn` passes using a throwaway probe listener, not the boss** — so
+  the notice is proven to leave the hand and not proven to arrive at him. That gap is the likely home of
+  whatever is stopping the counter, and it was always there; this work only made it matter.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
+  spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
