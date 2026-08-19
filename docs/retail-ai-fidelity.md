@@ -26761,3 +26761,53 @@ than it looked before this was attempted, because `CheckAggro` covers most of th
   chief. The broadcast alone would announce a village's fall to a system that cannot act on it.
 - **The killers' own cast ladders and `goto_waypoint` walks**, which is how retail moves a killer to the
   guards it has come for. Here it stands where it spawned and waits to be called.
+
+## King Consierd's condors came late, too often, and never stopped
+
+`audit_hp_phases.py` — a tool this session had not used — reports sixteen classes whose `HpPhases`
+disagree with their retail pattern. King Consierd's row is `ours [75, 25]` against `retail [25]`, and
+reading the pattern found the disagreement was not really about the phase list at all.
+
+Retail gives the condors a battle timer of their own:
+
+```
+? is_battle_timer_indicator BTIMERI_INDEX_4
+? is_hp_in_boundary who=OBJI_SELF larger_than=26 less_than=100
+> add_battle_timer BTIMERI_INDEX_4 delay=30000
+> spawn IDArena_Summon_Condor_55_An num_to_spawn=2 spawn_range=10 live_time=600
+```
+
+and the rung that first arms `INDEX_4` is the one guarded by `larger_than=26 less_than=55`. So the
+condors **start at fifty-five per cent, arrive every thirty seconds, and stop below twenty-six.**
+
+**This class hung them off its own twenty-five-second skill task, behind an `hp <= 50` test.** Three
+things followed:
+
+- they arrived **five per cent late**;
+- they arrived **a fifth too often** — twenty-five seconds against thirty;
+- and they **never stopped**. Retail leaves the last quarter of the fight deliberately clear; here
+  condors kept coming until he died.
+
+**And both landed on his exact point** where retail scatters them over ten metres, which stacks two
+birds inside the boss and gives a melee group nothing to move for.
+
+**Pins** — five in `KingConsierdCondorTests`, six mutations, all caught.
+
+**A pin that failed for a reason worth recording: he heals.** The floor pin dropped him to twenty per
+cent and watched two virtual minutes, and saw six condors — which reads exactly like the guard not
+working. It is his own health regeneration lifting him back over twenty-six inside the window, at which
+point the condors correctly resume. `WatchNew`'s per-second hook holds him down, and the pin says so.
+**A long window is not a neutral observer of a health-guarded mechanic**, which is a new variant of the
+window problem this log has now hit four times.
+
+**Still missing on him.** Six battle timers of skill indices, the `ATTACKERI_THIRD_HATING` and
+`ATTACKERI_HAS_LOWEST_HP` target switches that go with them, and the three health bands — 81-100,
+56-80, 26-55 — that decide which cast rotation he is running. The `75` in his `HpPhases` is this port's
+own and starts our skill task; retail's band edge there is **80**, and moving it is only worth doing
+once the rotations it selects exist.
+
+**And fifteen more rows in that audit.** The largest disagreements are `HyperionAI` (fourteen phases
+against retail's five), `PadmarashkaCaveAI` (three against six, none shared) and `EmpoweredAgent` (nine
+against one). Each carries the tool's own warning that these are timer-driven rotations where a phase
+list will not line up — which is exactly what this row turned out to be, and the reason it was worth
+reading rather than renumbering.
