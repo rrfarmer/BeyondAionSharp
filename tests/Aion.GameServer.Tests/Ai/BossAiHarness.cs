@@ -14,6 +14,7 @@ using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Knownlist;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Templates.Npcskill;
+using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -278,6 +279,35 @@ public sealed class BossAiHarness : IDisposable
 			npc.GetLifeStats().GetMaxHp(), 0,
 			Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG.REGULAR, killer);
 		npc.GetController().OnDie(killer);
+	}
+
+	/// <summary>
+	/// Walks an NPC to the end of a route, so <c>IsStop()</c> is true and an
+	/// <c>is_last_waypoint</c> branch can run.
+	/// </summary>
+	/// <remarks>
+	/// <b>Two things have to be true together and neither is obvious.</b> <c>NpcMoveController</c> sets
+	/// its stop flag inside <c>SetRouteStep</c>, and only when the route's <c>loop_type</c> is
+	/// <c>NONE</c> <i>and</i> the step is the last one. A route with no <c>loop_type</c> attribute
+	/// defaults to <c>NORMAL</c> and never stops, so most routes in this repo cannot end a walk at all.
+	/// <para>
+	/// An earlier session concluded the harness simply could not finish a walk, and wrote that into the
+	/// fidelity doc. It could: the two requirements had been varied one at a time and never combined —
+	/// a looping route with the last step, then a non-looping route with the second-to-last. This
+	/// method exists so the combination is stated once rather than rediscovered.
+	/// </para>
+	/// </remarks>
+	public static void FinishWalk(Npc npc, string routeId)
+	{
+		WalkerTemplate route = DataManager.WALKER_DATA.GetWalkerTemplate(routeId)
+			?? throw new InvalidOperationException($"no walker route {routeId}");
+		if (route.GetLoopType() != WalkerTemplate.LoopType.NONE)
+			throw new InvalidOperationException(
+				$"route {routeId} loops ({route.GetLoopType()}), so a walk along it never ends");
+
+		npc.GetMoveController().SetWalkerTemplate(route, 0);
+		npc.GetMoveController().SetRouteStep(route.GetRouteSteps()[^1]);
+		npc.GetAi().OnGeneralEvent(AiEventType.MoveArrived);
 	}
 
 	/// <summary>Makes two objects visible to each other, which aggro and message broadcast both require.</summary>

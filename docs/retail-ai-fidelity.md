@@ -31555,3 +31555,40 @@ Orissan's crystal tiers; the 30009/30010 dismissal family; jurdin; `is_aerial_sp
 death-spawn rows; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn;
 the `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded
 guards; Dynatoum's mine web; Pashid's `npc_skills`.
+
+## Correction: the harness could finish a walk all along
+
+The previous entry said the demolisher's handoff could not be pinned, and put "a harness seam for
+finishing a walk" at the top of the owed list. **Both are wrong.**
+
+`NpcMoveController` sets its stop flag inside `SetRouteStep`, and the condition is a conjunction:
+
+```
+isStop = walkerTemplate.GetLoopType() == NONE && step.IsLastStep();
+```
+
+Four attempts had varied those **one at a time and never together** — a looping route with the last
+step, then a non-looping route with the second-to-last. Each failed for its own reason, and the
+conclusion drawn from four failures was that the thing was impossible.
+
+> **Changing two variables between attempts and reading the failures as one answer.** The entry even
+> listed the two requirements correctly, in the same paragraph that said they could not be met.
+
+The combination works first time: `isStop=True`, the successor placed, the demolisher gone.
+
+`BossAiHarness.FinishWalk(npc, routeId)` now states it once, and throws with a useful message if the
+route loops rather than silently doing nothing — which is what most routes in this repo would do, since
+a route with no `loop_type` attribute defaults to `NORMAL`.
+
+The demolisher's behaviour is pinned now: each side leaves its own successor, and the demolisher goes.
+3/3 mutations caught, including the two that the previous entry could not reach.
+
+**What this unblocks.** Every `is_last_waypoint` branch in the port is now testable — the same kind of
+step as `Kill` reaching death branches, and found the same way, by looking at what the code actually
+does rather than at what four failures seemed to say.
+
+**Still missing.** Surkana's bolstering surkana; Yamennes' spawn gate; Beritra's four; Orissan's crystal
+tiers; the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows;
+`is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>`
+schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's
+mine web; Pashid's `npc_skills`.
