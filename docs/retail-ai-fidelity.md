@@ -31052,3 +31052,42 @@ an enter-combat spawn; the `<summons>` schema's four owed attributes; the 258203
 the 59 stranded guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven
 unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven
 absent npc rows.
+
+## Flattening the comment that caused all that
+
+The blank run was not the renderer padding anything. **Designers put multi-line notes in `<comment>`,**
+and jurdin's `on_die` comment carries 97 embedded newlines. Printed verbatim it leaves a hole in the
+middle of the digest with the rest of the pattern below it — which is exactly what a reader lands in.
+
+`<comment>` is now collapsed to one line. Nothing is discarded; jurdin's digest goes from 306 lines,
+194 of them blank, to **110 lines with no blank runs at all**, and other patterns are unchanged.
+
+> The bug report was wrong and the thing it complained about was real. Both halves are worth keeping
+> straight: the tool never lost data, and it was still possible to read it as having lost data.
+
+### And the readable digest immediately paid
+
+Reading jurdin end to end — which had not actually been done — adds detail the hand-written extractor
+missed, because that extractor only looked for spawn actions:
+
+* **He walks.** Every band rung ends with `goto_waypoint`, and there is an `on_arrived_at_waypoint`
+  rung that hides him. The wave boss moves between phases; the map had him stationary.
+* **Six timers are armed on entering combat**, not two — including `BTIMERI_INDEX_5` at **eight
+  minutes**, whose rung is commented "Time to Rage!!". That is an enrage this work had no idea existed.
+* **His death dispels the raid**: `spawn_on_multi_target IDHouse_Prime_DispelSum`, three seconds, on
+  every target.
+
+None of that changes the spawn map, which stands. It does change what "implementing jurdin" means, and
+it is better to know now than after building him.
+
+**Still missing.**
+
+- **Jurdin**, now to a fuller map: four wave bands, a walk between them, an eight-minute enrage, and a
+  death dispel.
+- **A habit, not a tool.** The extractor written for jurdin answered exactly the question asked of it and
+  silently omitted everything else. The digest was there the whole time.
+- `is_aerial_spawn`; the 34 non-route absence claims; the 33 named death-spawn rows; hisen's 6401/6402
+  pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the
+  `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids;
+  Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

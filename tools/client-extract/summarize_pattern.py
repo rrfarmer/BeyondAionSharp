@@ -120,7 +120,12 @@ def is_pure_guard(branch: ET.Element) -> bool:
 def render(branch: ET.Element, indent: str = "    ") -> list[str]:
     priority = branch.findtext("priority", "?").strip()
     category = branch.findtext("action_category", "?").strip()
-    comment = (branch.findtext("comment") or "").strip()
+    # Collapsed to one line, not merely stripped. Designers put multi-line notes in <comment> -- the
+    # jurdin boss carries one with 97 embedded newlines -- and printing it verbatim leaves a blank run
+    # in the middle of the digest with the rest of the pattern below it. That is what made a reader
+    # conclude the tool had truncated its output and write it up as a bug; see
+    # docs/retail-ai-fidelity.md. The text is kept, just flattened.
+    comment = " ".join((branch.findtext("comment") or "").split())
     lines = [f"{indent}[p{priority:>3} {category:<7}] {comment}"]
     for section in ("conditions", "actions"):
         block = branch.find(section)
