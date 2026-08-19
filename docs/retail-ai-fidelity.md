@@ -27270,3 +27270,35 @@ place.
 *when the hole closes*, where this port spawns all three npcs together at the summoner, so the flash is
 standing before it is needed. And the fifteen-second cadence of the distortion itself is
 `BTIMERI_INDEX_2`, which this port drives from its own ladder — unchecked against retail so far.
+
+## Terath's floor was on one of his two mechanics
+
+Following the last note: the distortion's own cadence against retail's. **It matches** — retail arms
+`BTIMERI_INDEX_2` at **12000** on entering attack state and re-arms it at **15000**, and this class has
+carried `BlackHoleFirst = 12s` and `BlackHoleRepeat = 15s` since the cadence pass. A clean negative,
+recorded so nobody checks it a third time.
+
+**The guard on that branch was not.** Retail's rung reads
+`is_hp_in_boundary larger_than=15 less_than=100` — the same band as his jump, which has honoured it
+since an earlier pass. This class ran the distortion on nothing but *"am I alive"*.
+
+So below fifteen per cent **he stopped jumping and went on opening black holes**: half of a design that
+is plainly one thing. Retail clears the floor for the end of the fight — no jumps, no holes, just him —
+and here the last stretch still had a hole opening every fifteen seconds.
+
+The two now share one constant, `MovementFloorPercent`, because they are one number in the pattern and
+splitting them is how the second half went missing in the first place.
+
+**Pins** — two more in `TerathGravityAiTests`, three mutations, all caught. One of them,
+"floor lowered to nothing", is caught by the *jump* pin as well, which is the shared constant doing its
+job.
+
+**A window lesson applied rather than relearned.** Both new pins hold his health down each second
+through the watch. Over a minute his own regeneration lifts him back over fifteen and the holes
+correctly resume — which reads exactly like the guard not working. That is the same trap that cost a run
+on King Consierd's condor floor two weeks of commits ago; this time it was written in from the start.
+
+**Still missing.** The closing flash is spawned up front rather than when the hole shuts, which is the
+FX/DMG fold and is recorded in the class. And his jump and distortion are the only two rungs of this
+pattern reachable without the skill index — the rest of `IDTiamat_Sardha` is a cast ladder, and its
+`BTIMERI_INDEX_28` close is now the one message in it this port sends.

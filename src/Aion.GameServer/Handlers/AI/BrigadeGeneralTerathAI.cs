@@ -92,8 +92,20 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI
     /// </summary>
     private static readonly TimeSpan JumpRecheck = TimeSpan.FromSeconds(3);
 
-    /// <summary>Retail's <c>is_hp_in_boundary larger_than=15</c> on the jump rung.</summary>
-    private const int JumpFloorPercent = 15;
+    /// <summary>
+    /// Retail's <c>is_hp_in_boundary larger_than=15</c>, which guards <b>both</b> of his movement
+    /// mechanics: the jump rung and the gravity distortion.
+    /// </summary>
+    /// <remarks>
+    /// <b>The distortion's half was missing.</b> The jump has honoured this floor since an earlier
+    /// pass; the black hole branch carries the same guard in retail and this class ran it on nothing
+    /// but "am I alive". So below fifteen per cent he stopped jumping and went on opening holes — half
+    /// of a design that is plainly one thing. Retail clears the floor for the end of the fight: no
+    /// jumps, no holes, just him.
+    /// </remarks>
+    public const int MovementFloorPercent = 15;
+
+    private const int JumpFloorPercent = MovementFloorPercent;
 
     private ScheduledTask? jumpTask;
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
@@ -135,7 +147,10 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI
     {
         skillTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
         {
-            if (!IsDead())
+            // Retail's guard on this branch is the same band as the jump's: 15 to 100. The timer keeps
+            // running and simply stops matching, which is why this is checked here rather than by
+            // cancelling the task.
+            if (!IsDead() && GetLifeStats().GetHpPercentage() > MovementFloorPercent)
                 GravityDistortionEvent();
             return ValueTask.CompletedTask;
         }, BlackHoleFirst, BlackHoleRepeat);

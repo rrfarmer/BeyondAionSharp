@@ -105,4 +105,45 @@ public sealed class TerathGravityAiTests
 		Assert.True(Count(harness, GravityField) <= 1,
 			$"gravity fields piled up: {Count(harness, GravityField)}");
 	}
+
+	/// <summary>
+	/// <b>Below fifteen per cent he stops opening them.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail guards the distortion branch with <c>is_hp_in_boundary larger_than=15 less_than=100</c> —
+	/// the same band as his jump, which has honoured it since an earlier pass. This class ran the
+	/// distortion on nothing but "am I alive", so below fifteen he stopped jumping and went on opening
+	/// holes: half of a design that is plainly one thing. Retail clears the floor for the end of the
+	/// fight.
+	/// <para>
+	/// Counted as they arrive, and his health held down each second — over a window this long his own
+	/// regeneration lifts him back over the line and the holes correctly resume, which reads as the
+	/// guard not working.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void BelowFifteenPerCentHeStopsOpeningThem()
+	{
+		var (harness, boss) = Engaged();
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 12);
+
+		Assert.Equal(0, harness.WatchNew(60, () => BossAiHarness.SetExactPercent(boss, 12), BlackHole).Total);
+	}
+
+	/// <summary>
+	/// <b>And at twenty he still does.</b> The floor is a number, not "wounded".
+	/// </summary>
+	[Fact]
+	public void AndAtTwentyHeStillDoes()
+	{
+		var (harness, boss) = Engaged();
+		using BossAiHarness _h = harness;
+
+		BossAiHarness.SetExactPercent(boss, 20);
+
+		Assert.True(harness.WatchNew(20, () => BossAiHarness.SetExactPercent(boss, 20), BlackHole).Total > 0,
+			"at twenty per cent he should still open holes");
+	}
 }
