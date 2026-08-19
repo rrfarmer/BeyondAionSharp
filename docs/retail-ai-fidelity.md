@@ -24322,3 +24322,54 @@ short, and reverting the harness's skill-file merge.
   the pattern dump can answer.
 - **The instance's wave clock is not pinned.** There is no harness for instance handlers, so the
   tower-one correction above is asserted by reading only.
+
+## Terath: the jump event was placing two hostile drakan
+
+Retail pattern `IDTiamat_Sardha` (npc 219354, Tiamat Stronghold).
+
+Java's `BrigadeGeneralTerathAI` spawns npc **283558** at the two jump posts under a comment reading
+`TODO find Right ID 4.0`. 283558 is **`3rd vituperators assassin`** — a real aggressive monster.
+Retail's pattern names what belongs there outright: `IDTiamat_Sadha_JumpBoxFX`, which is **283158**, an
+effect npc on `general`. One digit apart, and the difference is **two extra adds every time Terath
+jumps**, in a fight retail gives none.
+
+The same read answers the other two TODOs in that class: `IDTiamat_Sardha_GravityUp` is 283109 and
+`_GravityDwn` is 283110, both of which this port already had right.
+
+**And the aetheric field stood seven hundred units away.** Java spawns it at
+`(1030.08, 1030.08, 1030.08)` — the x repeated into y and z. Retail's `IDTiamat_FOBJ_SardhaSheild` sits
+at `(1030.08, 297.31, 407.04)`, inside the room. Corrected, with retail's own coordinates.
+
+Retail's `live_time` values are now set too: 29 seconds on the jump boxes, 24 on the gravity pair, both
+placed at retail's single shared point rather than the two hand-typed rows that were a few centimetres
+apart.
+
+**Pins** — `BrigadeGeneralTerathAiTests`, four, five mutations. Four caught; the fifth is documented in
+the pin as uncatchable and is explained below.
+
+**A lifetime this port cannot observe.** This class ends its gravity event on a fixed thirty-second
+schedule and deletes anything left by hand. The jump boxes expire at twenty-nine, one second inside
+that, and the pin asserts within that window — present at twenty-eight, gone at twenty-nine and a half
+— so deleting their lifetime is caught. **The gravity pair cannot be pinned that way**: spawned ten
+seconds in with twenty-four seconds of life, it would expire at thirty-four and the sweep at thirty
+always beats it. Deleting that lifetime changes nothing and the mutation survives. It is set anyway,
+because it becomes load-bearing the moment the cadence below is fixed.
+
+**Still missing: the fight's whole cadence.** Retail drives Terath from four battle timers —
+
+```
+BTIMERI_0  front attack, 12s, while HP 15-100
+BTIMERI_1  jump: teleport home, two jump boxes, the gravity pair, 35s then every 55s
+BTIMERI_2  black hole: cast, FX at his feet for 10s, then timer 28 at 2s to close it, every 15s
+BTIMERI_3  rage below 14%, checked every 10s
+```
+
+— and re-arms each on its own rung, including rungs whose only content is the re-arm. **This class
+drives the jump off HP phases (90/70/50/30/25) and the black hole off a fixed thirty-second task**, and
+puts the rage at 25% rather than retail's 14%. A party that burns him quickly therefore sees a
+different fight from retail's: fewer jumps, or several at once. Rewriting it is a larger change than
+this pass and wants its own commit.
+
+**Also unread.** His `on_die` sets four condition spawn variables, controls a door, and places
+`IDTiamat_Tiamat_Sardha_Gossip_OnDie` (283178) for fifteen seconds; `on_leave_attack_state` dispels and
+heals. None of that is in this class.

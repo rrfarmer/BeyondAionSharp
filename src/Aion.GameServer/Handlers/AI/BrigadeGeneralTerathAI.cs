@@ -12,10 +12,50 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/tiamatStrongHold/BrigadeGeneralTerathAI (@author Cheatkiller).</summary>
+/// <summary>
+/// Brigade General Terath (219354). Retail pattern <c>IDTiamat_Sardha</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/tiamatStrongHold/BrigadeGeneralTerathAI (@author Cheatkiller).
+/// Retail-sourced corrections below; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>The jump event placed two hostile drakan that retail never places.</b> Java spawns 283558 at the
+/// two jump posts under a <c>TODO find Right ID</c>, and 283558 is <c>3rd vituperators assassin</c> — a
+/// real aggressive monster. Retail's pattern names the npc outright: <c>IDTiamat_Sadha_JumpBoxFX</c>,
+/// which is <b>283158</b>, an effect npc on <c>general</c>. One digit apart, and the difference is two
+/// extra adds in a fight that has none.
+/// </para>
+/// <para>
+/// <b>And the aetheric field stood seven hundred units away.</b> Java spawns it at
+/// <c>(1030.08, 1030.08, 1030.08)</c> — the x repeated into y and z. Retail's
+/// <c>IDTiamat_FOBJ_SardhaSheild</c> is at <c>(1030.08, 297.31, 407.04)</c>, which is inside the room.
+/// </para>
+/// <para>
+/// <b>Not translated: the fight's whole cadence.</b> Retail drives Terath from four battle timers —
+/// front attack every 12s, the jump at 35s then every 55s, the black hole every 15s with its closing
+/// cast two seconds later, and a rage check every 10s below 14% — and re-arms each on its own rung.
+/// This class drives the jump off <b>HP phases</b> (90/70/50/30/25) and the black hole off a fixed
+/// 30-second task instead, so a party that burns Terath quickly sees a different fight from retail's.
+/// Rewriting that is a larger change than this pass; the ids, posts and lifetimes are corrected here
+/// and the cadence is recorded as outstanding.
+/// </para>
+/// </remarks>
 [AIName("brigadegeneralterath")]
 public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
+    /// <summary><c>IDTiamat_FOBJ_SardhaSheild</c>, and retail's own coordinates for it.</summary>
+    private const int AethericField = 730692;
+    private const float FieldX = 1030.08f;
+    private const float FieldY = 297.31f;
+    private const float FieldZ = 407.04f;
+
+    /// <summary><c>IDTiamat_Sadha_JumpBoxFX</c> — an effect npc, not the drakan Java spawned.</summary>
+    private const int JumpBoxFx = 283158;
+
+    /// <summary>Retail's <c>live_time</c> on the jump's three npcs.</summary>
+    private const int JumpBoxLife = 29;
+    private const int GravityLife = 24;
+
     private readonly HpPhases hpPhases = new HpPhases(90, 70, 50, 30, 25);
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
     private ScheduledTask? skillTask;
@@ -35,7 +75,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
         {
             if (aethericField == null)
             {
-                aethericField = (Npc)Spawn(730692, 1030.08f, 1030.08f, 1030.08f, (sbyte)0);
+                aethericField = (Npc)Spawn(AethericField, FieldX, FieldY, FieldZ, (sbyte)0);
                 GetPosition().GetWorldMapInstance().SetDoorState(706, false);
             }
             if (!isGravityEvent)
@@ -85,8 +125,10 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
         canThink = false;
         isGravityEvent = true;
         CancelskillTask();
-        Spawn(283558, 1056.8f, 297.6f, 409.9f, (sbyte)0); // TODO find Right ID 4.0
-        Spawn(283558, 1002.07f, 297.4f, 409.85f, (sbyte)0); // TODO find Right ID 4.0
+        // Retail's two jump posts, and its own live_time. Java had 283558 here under a TODO: that is
+        // "3rd vituperators assassin", a real monster, so the event was placing two adds.
+        SpawnFor(JumpBoxFx, 1056.8f, 297.6f, 409.9f, (sbyte)0, JumpBoxLife);
+        SpawnFor(JumpBoxFx, 1002.07f, 297.41f, 409.85f, (sbyte)0, JumpBoxLife);
         SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20737, 55, GetOwner()).UseNoAnimationSkill();
         ThreadPoolManager.GetInstance().Schedule(_ =>
         {
@@ -100,8 +142,9 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
         }, 4000L);
         ThreadPoolManager.GetInstance().Schedule(_ =>
         {
-            Spawn(283109, 1029.9f, 297.26f, 409.08f, (sbyte)0); // 4.0
-            Spawn(283110, 1029.93f, 297.31f, 409.08f, (sbyte)0); // 4.0
+            // Retail places both at the same point and gives both twenty-four seconds.
+            SpawnFor(283109, 1029.93f, 297.31f, 409f, (sbyte)0, GravityLife);
+            SpawnFor(283110, 1029.93f, 297.31f, 409f, (sbyte)0, GravityLife);
             return ValueTask.CompletedTask;
         }, 10000L);
         ThreadPoolManager.GetInstance().Schedule(_ =>
@@ -158,7 +201,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     private void Despawn()
     {
         WorldMapInstance instance = GetPosition().GetWorldMapInstance();
-        DeleteNpcs(instance.GetNpcs(283558)); // TODO find Right ID 4.0
+        DeleteNpcs(instance.GetNpcs(JumpBoxFx));
         DeleteNpcs(instance.GetNpcs(283109)); // 4.0
         DeleteNpcs(instance.GetNpcs(283110)); // 4.0
     }
