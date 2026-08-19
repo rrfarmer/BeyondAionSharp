@@ -8,6 +8,26 @@ This does it on purpose. For each spawn call in an AI class it comments the call
 that class's test filter, and records whether anything went red. **A mutation that survives is a spawn no
 pin is really asserting**, whatever the pins may mention by name.
 
+`--mode thresholds` widens each `When.HpBelow`/`HpBetween` guard to the whole range instead. That is the
+sharper mutation for a band, and the one that matters most: **three of the four inert pins this session
+were about a threshold or a window**, not a spawn.
+
+## A survivor is not always a defect
+
+Three reasons a mutation lives, and only the first is worth fixing:
+
+1. **The pin is weak.** Nothing asserts the mechanic, or asserts it from outside the band it is named
+   for. Four of Miladi's five spawns and both of Tiamat's death effects were this.
+2. **The guard is unreachable.** Miladi's repeating low clock is guarded `HpBelow(30)`, and the timer it
+   waits on is armed only inside branches that already require it — so above thirty the branch cannot
+   fire whatever the guard says. Retail writes the guard; it is simply not independently observable.
+3. **The effect is not modelled.** The Dark Poeta generators' three skill-clock bands differ only in the
+   delay they re-arm, and the casts that would make that visible are unresolved skill indices. There is
+   nothing for a pin to see.
+
+Writing a pin for the second or third kind means inventing an assertion the port cannot support. **Read
+the branch before treating a survivor as a gap.**
+
 It is slow — a rebuild per mutation, roughly fifteen seconds — so it takes a filter and is meant to be
 run over a few classes at a time rather than the whole tree.
 
@@ -17,6 +37,7 @@ file under test.
 
 Usage:
     python mutate_spawns.py YamennesAI StormwingAI
+    python mutate_spawns.py --mode thresholds ChiefMaidMiladiAI
     python mutate_spawns.py --list
 """
 from __future__ import annotations
@@ -88,6 +109,39 @@ def neutralise(text: str, index: int) -> str:
     return "\n".join(lines[:index] + [replacement] + lines[end + 1:])
 
 
+# HP guards. Widening one to the whole range is the sharpest mutation available for a band: a pin that
+# does not notice is measuring "something happened", not "it happened in this band". THREE OF THE FOUR
+# INERT PINS this session were exactly that -- a health chosen outside the band under test, or a window
+# that let a neighbouring branch supply the evidence.
+HP_BELOW = re.compile(r"When\.HpBelow\((?P<n>\d+)\)")
+HP_BETWEEN = re.compile(r"When\.HpBetween\((?P<lo>\d+),\s*(?P<hi>\d+)\)")
+
+
+def threshold_sites(text: str) -> list[tuple[int, str]]:
+    """(line index, what it says) for every HP guard in the file."""
+    out = []
+    for i, line in enumerate(text.split("\n")):
+        for m in (HP_BELOW.search(line), HP_BETWEEN.search(line)):
+            if m:
+                out.append((i, m.group(0)))
+                break
+    return out
+
+
+def widen(text: str, index: int) -> str:
+    """Return `text` with the HP guard on line `index` opened to the whole range."""
+    lines = text.split("\n")
+    line = lines[index]
+    # 101 and not 100: the engine tests `HpPercent < percent`, so widening to 100 still excludes a
+    # boss at exactly full health -- and a pin that measures "nothing happens at 100%" would then pass
+    # against the mutation and be scored as strong when it is not. Cost an under-report on the Dark
+    # Poeta generators before it was noticed.
+    line = HP_BELOW.sub("When.HpBelow(101)", line, count=1)
+    line = HP_BETWEEN.sub("When.HpBetween(0, 101)", line, count=1)
+    lines[index] = line
+    return "\n".join(lines)
+
+
 def test_filter(class_name: str) -> str | None:
     """The xunit filter for a class's pins, or None when it has no test file."""
     stem = class_name.removesuffix("AI")
@@ -110,6 +164,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("classes", nargs="*", help="AI class file stems, e.g. YamennesAI")
     ap.add_argument("--list", action="store_true", help="list classes that have a test file")
+    ap.add_argument("--mode", choices=("spawns", "thresholds"), default="spawns",
+                    help="what to mutate: each spawn call, or each HP guard widened to 0-100")
     args = ap.parse_args()
 
     if args.list:
@@ -135,13 +191,16 @@ def main() -> int:
             continue
 
         original = path.read_text(encoding="utf-8")
-        targets = spawn_lines(original)
-        print(f"\n=== {stem} ({len(targets)} spawns, filter {filt}) ===")
+        if args.mode == "spawns":
+            targets = [(i, original.split("\n")[i].strip()[:70]) for i in spawn_lines(original)]
+        else:
+            targets = threshold_sites(original)
+        print(f"\n=== {stem} ({len(targets)} {args.mode}, filter {filt}) ===")
 
-        for index in targets:
-            lines = original.split("\n")
-            mutated = lines[index]
-            path.write_text(neutralise(original, index), encoding="utf-8")
+        for index, mutated in targets:
+            path.write_text(
+                neutralise(original, index) if args.mode == "spawns" else widen(original, index),
+                encoding="utf-8")
             try:
                 code, out = run(["dotnet", "test", str(TEST_PROJ), "--filter",
                                  f"FullyQualifiedName~{filt}", "--nologo", "-v", "q"])
@@ -149,7 +208,7 @@ def main() -> int:
                 path.write_text(original, encoding="utf-8")
 
             checked += 1
-            label = mutated.strip()[:70]
+            label = mutated
             if ": error" in out:
                 print(f"  [skip ] line {index + 1}: {label}   (did not compile)")
             elif code == 0:
@@ -158,7 +217,9 @@ def main() -> int:
             else:
                 print(f"  [dies ] line {index + 1}: {label}")
 
-    print(f"\n{checked} mutations run, {survivors} survived -- each survivor is a spawn no pin asserts")
+    what = "spawn" if args.mode == "spawns" else "HP guard"
+    print(f"\n{checked} mutations run, {survivors} survived -- "
+          f"each survivor is a {what} no pin asserts")
     return 0
 
 

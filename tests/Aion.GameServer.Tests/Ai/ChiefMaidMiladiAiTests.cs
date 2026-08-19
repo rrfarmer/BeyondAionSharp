@@ -191,4 +191,32 @@ public sealed class ChiefMaidMiladiAiTests
 
 		Assert.True(later.Total >= 2, $"the ten-second loop placed {later.Total} in twenty-two seconds");
 	}
+
+	/// <summary>
+	/// <b>Above seventy-five she adds nothing to the opener.</b>
+	/// </summary>
+	/// <remarks>
+	/// The band pins assert that each band fires; this asserts that <b>nothing fires outside one</b>,
+	/// which is the half they cannot cover. Found by mutating her HP guards: widening either of them to
+	/// the full range left the suite green, because every pin stood inside the band it was testing.
+	/// <para>
+	/// A full minute, so the five-second heartbeat has turned a dozen times.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AboveSeventyFiveSheAddsNothingToTheOpener()
+	{
+		var (harness, miladi, raid) = EngagedByARaid();
+		using BossAiHarness _h = harness;
+
+		int opener = Succubi(harness).Count;
+		Assert.Equal(1, opener);
+
+		BossAiHarness.SetHpPercent(miladi, 90);
+		BossAiHarness.Watched later = harness.WatchNew(
+			60, () => { foreach (Player member in raid) BossAiHarness.Rehate(miladi, member); },
+			Succubus);
+
+		Assert.Equal(0, later.Total);
+	}
 }

@@ -23810,3 +23810,53 @@ Six new pins later, both classes mutate clean. `DarkPoetaGeneratorAI`, `Petrific
 
 Build clean. Both classes now kill every mutation of their spawns. **Three consecutive full-suite runs**:
 2,207 passing (seven new), 1 skipped.
+
+## Mutating the thresholds, and two ways the harness itself was wrong
+
+Spawn mutation was the easy half. **Three of the four inert pins this session were about a threshold or
+a window**, not a spawn — so `--mode thresholds` widens each `When.HpBelow` / `HpBetween` guard to the
+whole range. A pin that does not notice is measuring "something happened", not "it happened in this
+band".
+
+### The harness under-reported, and the reason is worth keeping
+
+Widening to `HpBelow(100)` is **not** widening. The engine tests `HpPercent < percent`, so a boss at
+exactly full health still fails the guard — and a pin whose whole content is "nothing happens at 100%"
+passes against that mutation and gets scored as strong. **It scored the Dark Poeta generators' high band
+as unpinned when the pin was fine.** Widened to 101 instead, and that mutation now dies.
+
+That is the second self-inflicted flaw in this harness in two passes: the first reported "did not
+compile" for three mutations out of five, which also reads like a pass. **A mutation tool that is wrong
+is worse than none, because its silence is taken as evidence.**
+
+### What it found
+
+**Miladi's two bands were pinned to fire and not pinned to stay silent.** Widening either guard left the
+suite green, because every pin stood inside the band it tested. One pin — nothing new appears at ninety
+per cent over a full minute — kills both.
+
+### A survivor is not always a defect
+
+Three reasons a mutation lives, now in the tool's docstring, and **only the first is worth fixing**:
+
+1. **The pin is weak** — nothing asserts the mechanic, or asserts it from outside its band.
+2. **The guard is unreachable.** Miladi's repeating low clock is guarded `HpBelow(30)` and waits on a
+   timer armed only inside branches that already require it, so above thirty it cannot fire whatever the
+   guard says. Retail writes the guard; it is not independently observable.
+3. **The effect is not modelled.** The generators' three skill-clock bands differ only in the delay they
+   re-arm, and the casts that would show it are unresolved skill indices. There is nothing to see.
+
+Writing a pin for the second or third kind means inventing an assertion the port cannot support.
+
+### Still to do
+
+- **76 classes unmutated for spawns, 79 for thresholds.** This wants running over the tree in the
+  background, not a class at a time.
+- **Timers, broadcasts and target selection** still have no mutation. The remaining inert pin this
+  session was a window, which none of the three modes would catch.
+- 250 spawns named by no pin; 50 invented-spawn rows; the eighteen orphan classes; the other 568 fights.
+
+### Verification
+
+Build clean. Both of Miladi's guards now die under mutation; the Dark Poeta high band does too, once the
+mutation was fixed. **Three consecutive full-suite runs**: 2,208 passing (one new), 1 skipped.
