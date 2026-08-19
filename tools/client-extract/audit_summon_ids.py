@@ -154,6 +154,26 @@ def spawned_in_our_data():
     pat = re.compile(r'<spawn npc_id="(\d+)"')
     for f in root.rglob("*.xml"):
         out.update(pat.findall(f.read_text(encoding="utf-8", errors="replace")))
+
+    # And the summon groups, which are the OTHER way this port places an add and were missing here.
+    #
+    # Mistress Viloa is the case that showed it: her class was ranked as owing 233456, and 233456 is in
+    # spawn_helpers.xml with retail's own count and range -- corrected earlier in this same work. A
+    # class deriving from SummonerAI names none of its adds by design, so for those bosses the only
+    # place an add can appear is this file, and not reading it made every correctly-configured summon
+    # look unimplemented.
+    #
+    # Only blocks the game actually reads count. An inert block places nothing, so crediting it would
+    # hide real gaps -- which is the opposite mistake and the worse one.
+    helpers = REPO / "game-server" / "data" / "static_data" / "ai" / "spawn_helpers.xml"
+    templates = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml").read_text(
+        encoding="utf-8", errors="replace")
+    ai_of = dict(re.findall(r'npc_id="(\d+)"[^>]*?\bai="([^"]*)"', templates))
+    block = re.compile(r'<ai npcId="(\d+)">(.*?)</ai>', re.S)
+    group = re.compile(r'<summonGroup [^/>]*?npcId="(\d+)"')
+    for owner, body in block.findall(helpers.read_text(encoding="utf-8", errors="replace")):
+        if ai_of.get(owner) in SUMMON_READING_AI:
+            out.update(group.findall(body))
     return out
 
 
@@ -220,6 +240,14 @@ def report_swaps(rows, window=3):
     for filename, ai, m, e in sorted(hits):
         print(f"  {filename[:38]:40s} [{ai[:26]:28s}] retail {m}, class has {e}")
 
+
+# AI names whose class reaches the summon groups in spawn_helpers.xml. Mirrors the list in
+# audit_summon_numbers.py; a block on any other ai is inert and places nothing.
+SUMMON_READING_AI = frozenset((
+    "adjutant_galamat", "ashunatal_shadowslip", "brasseyegrogget", "captain_jarka", "captain_lakhara",
+    "commander_bakarma", "dynatoum", "enraged_agent", "eternal_bastion_summoner", "gunnerkoakoa",
+    "infernal_dynatoum", "kaluva", "mistressviloa", "queen_serusia", "summoner", "vallakhan",
+))
 
 FX_WORDS = ("NoShow", "Invisible", "_Fx", "Display", "_CTRL", "Control", "UseCheck",
             "Effect", "Dummy", "Marker", "Reset", "Timer", "Circle",

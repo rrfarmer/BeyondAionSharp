@@ -31135,3 +31135,49 @@ named death-spawn rows; hisen's 6401/6402 pair; `is_user` pinned one seam short;
 `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
 258203/258207 family decision; the 59 stranded guards; the eleven unread top-band ids; Dynatoum's mine
 web; Beritra's two spawn rows; Pashid's `npc_skills`.
+
+## The reading list was crediting one of the two ways this port places an add
+
+`audit_summon_ids.py --rank` filters out ids "our spawn data already places". It read
+`static_data/spawns/**` and **not `spawn_helpers.xml`**.
+
+That is the wrong half for exactly the bosses the list is about. **A class deriving from `SummonerAI`
+names none of its adds by design** — that is the whole reason this audit exists — so for those bosses the
+only place an add can appear is the summon-group file the filter never opened.
+
+Mistress Viloa is the proof: the list ranked her class as owing 233456, and 233456 is in
+`spawn_helpers.xml` with retail's own count and range, **corrected earlier in this same work**. The audit
+was reporting a fix as a gap.
+
+Summon groups now count, but only from blocks whose npc's `ai` actually reads them — crediting an inert
+block would hide a real gap, which is the worse mistake. Already-placed rises from 20 to 32; the reading
+list falls from 275 to **263**, and Viloa, both Dynatoums, Surkana and the Tiamat dying rotation all
+leave the top band. What is left at the top is Beritra's four detachment npcs and Orissan's three icing
+crystals.
+
+### The bug under the bug
+
+The fix did not work at first, and the reason is worth recording because it has now cost time twice in
+this work.
+
+The filter line read:
+
+```
+r'npc_id="(\d+)"[^>]*?<0x08>ai="([^"]*)"'
+```
+
+A literal **backspace** where `\b` was intended. It was written through a shell heredoc, which turned
+`\b` into the control character, and the regex then matched nothing — silently, since a regex that
+matches nothing looks exactly like data that contains nothing.
+
+> It took six probes to find, and every one of them looked wrong in a different place: the constant, the
+> path, the file size, the loop. The line printed fine in every dump. **`cat -A` is what found it**, and
+> nothing else would have.
+
+Swept the whole of `tools/` and `src/`: no other file carries a literal backspace.
+
+**Still missing.** Jurdin, to the fuller map; **Beritra's four detachment npcs and Orissan's three icing
+crystals**, now the top of the reading list; `is_aerial_spawn`; the 34 non-route absence claims; the 33
+named death-spawn rows; hisen's 6401/6402 pair; `is_user` pinned one seam short;
+`despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
+258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.
