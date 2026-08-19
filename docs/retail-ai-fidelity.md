@@ -30759,3 +30759,31 @@ Full solution green at 2,600 in the game-server assembly.
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's
   `npc_skills`; the seven absent npc rows.
+
+### Correction: the previous commit was made on a red suite
+
+`782c8f4bc` claims "Full solution green at 2,600". **It was not.** One test was failing when it landed:
+`JaxbHolderLoaderTests.LoadFromFiles_PopulatesAIDataFromRealXml_WithSummonsAndBombsIntact`, which asserts
+280747's distance is 3 — the number that entry had just corrected to retail's 5.
+
+The suite was run. The failure was on screen. It was missed because the command was
+
+```
+dotnet test ... | grep -E "^(Passed!|Failed!)" && <commit>
+```
+
+and **`grep` succeeds when it finds the word "Failed!"**, so the `&&` carried straight on to the commit.
+A pipeline that greps for failure text cannot also gate on failure.
+
+Fixed in the following commit, and the number in that entry stands corrected: it was 2,599 passing and 1
+failing, not 2,600 passing.
+
+The assertion itself is kept as a real number rather than loosened. A loader test that accepts any
+distance stops proving the attribute is read at all — but using the shipping file as a fixture means a
+legitimate data fix turns it red, and the comment beside it now says so.
+
+**Still missing.**
+
+- **Nothing in this workflow gates a commit on the suite.** Every "green at N" in this document is a
+  human reading a line of output, and this is the first time that reading was wrong. A pre-commit hook,
+  or checking the exit status instead of the text, would close it.

@@ -1546,7 +1546,12 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(2, groups[0].GetMinCount());
         // SummonGroup.AfterUnmarshal ran children-first: maxCount defaulted from minCount (2).
         Assert.Equal(2, groups[0].GetMaxCount());
-        Assert.Equal(3f, groups[0].GetDistance(), 3);
+        // Mirrors spawn_helpers.xml and has to move with it. This is encounter data, not loader
+        // behaviour: it was 3 until 280747's range was corrected to retail's 5, and this assertion is
+        // what noticed. Kept as a real number rather than loosened, because a loader test that accepts
+        // any distance stops proving the attribute is read at all -- but it does mean a legitimate data
+        // fix turns this red, and that is the cost of using the shipping file as a fixture.
+        Assert.Equal(5f, groups[0].GetDistance(), 3);
 
         Assert.Null(data.GetAiTemplate(-99999));
     }
