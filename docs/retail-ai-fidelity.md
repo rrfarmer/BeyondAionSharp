@@ -26561,3 +26561,64 @@ tribe differs from our `npc_templates`. Until that is answered, a killer arrivin
 absent: each killer's cast ladder and its `goto_waypoint` walk, which is how retail actually moves it to
 the guards it has come for — here it stands where it spawned. And the protectors' own 30002 broadcast,
 which retail sends from a battle timer inside a cast chain and is therefore behind the skill index.
+
+## The `is_enemy` blocker was not a blocker, and the fortress killer call now works
+
+Last commit shipped the killers' AI with the 30001 half inert, and blamed the faction data: every npc
+in the pair was `race="DRAKAN"`, `tribe="GUARD_DRAGON"`, so `is_enemy` was false and retail's million
+points never landed. The open question was recorded as *"either the client's tribe relations make
+`GUARD_DRAGON` hostile to itself under a condition we do not model, or the killers' real tribe differs
+from what our `npc_templates` says."*
+
+**Neither. Our data is correct and the npc I chose for the test was wrong.**
+
+The client ships `Map/XML/npc_tribe_relation.xml` — 950 tribes, and it had not been looked at before.
+Checked against ours:
+
+- `guard_Dragon` in the client: one `friendly` line, `UseAll_Teleporter_Li,UseAll_Teleporter_Da`, and
+  nothing else. Our `tribe_relations.xml`: `<friend>USEALL_TELEPORTER_LI USEALL_TELEPORTER_DA</friend>`.
+  **Identical.**
+- `LDF4_Advance_DrGuard` in the client: aggressive on `PC,PC_Dark,LDF4_Advance_LGuard,LDF4_Advance_DGuard`.
+  Ours: the same four. **Identical.**
+
+So `GUARD_DRAGON` really is hostile to nothing, in retail as here. What I had missed is that **the
+protectors are not all `GUARD_DRAGON`.** Of the npcs whose retail pattern answers 30001:
+
+| npcs | tribe | our AI |
+|---|---|---|
+| 166 | `PROTECTGUARD_LIGHT` | `artifact_protector` |
+| 166 | `PROTECTGUARD_DARK` | `artifact_protector` |
+| 155 | `GUARD_DRAGON` | `artifact_protector` |
+| 69 | `LDF5_V_CHIEF_*` | `base_protector` |
+| 44 | `LDF4_ADVANCE_*GUARD` | `base_protector` |
+| 38 | `GUARD` / `GUARD_DARK` | `simple_abyssguard` |
+
+I picked 251450, one of the 155 that share the killers' own tribe. Retested against 251467
+(`PROTECTGUARD_LIGHT`, base `GUARD`) the mechanic works on the first try: **a killer waking brings the
+protectors onto it, and a protector already fighting a player drops the player to do it.**
+
+**The same-tribe case is now a pin of its own**, because it is retail behaviour rather than a gap: a
+hundred and fifty-five artifact protectors genuinely ignore a killer of their own tribe, and that is
+worth recording so it is not rediscovered as a bug and "fixed".
+
+**Pins** — seven in `FortressKillerCallTests`, six mutations, five caught. The whole three-message loop
+is now verified: the killer announces itself and the protectors come; a protector's death sends the
+killer home; neither a wound nor another message does.
+
+**One mutation survives and the pin says so.** Dropping retail's `points_to_add` from a million to
+**1** passes, because `SummonOrder` ends by targeting whoever is *then* most-hated and a fresh hate
+entry takes that place whatever its size. That is `SummonOrder`'s own documented behaviour, not a fault
+introduced here, but it means the magnitude is held by review rather than by test.
+
+**The unexplained suite failure from two commits ago has a name.** With failure names now printed, one
+run in four failed `KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle` — the known flake recorded
+when the `SystemClock` hook was switched off, measured then at about one run in six. It is pre-existing
+and unrelated to this work, and it is the most likely identity of the earlier lost failure. Four runs
+here, one flake, three clean.
+
+**Still missing.** The 30001 answer is only on `AbstractSiegeProtectorAI`, which is the artifact and
+fortress protectors. The **69 village chiefs and 44 Advance guards on `base_protector`**, and the **38
+abyss guards on `simple_abyssguard`**, answer it in retail and do not here — and the Advance pairing is
+the one whose tribes are hostile by design, so it is the more valuable of the two. Their patterns also
+send 30002 (at **twenty** metres for the chiefs, fifty for the rest), which is the half that makes a
+protector call a killer to itself, and which no class implements at all.

@@ -23,7 +23,7 @@ public sealed class FortressKillerCallTests
 	private const int Reshanta = 400010000;
 
 	/// <summary>An artifact protector, and a killer that hunts protectors.</summary>
-	private const int Protector = 251450;
+	private const int Protector = 251467;
 	private const int Killer = 251463;
 
 	private static BossAiHarness NewHarness() =>
@@ -32,24 +32,21 @@ public sealed class FortressKillerCallTests
 				typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
 
 	/// <summary>
-	/// <b>A killer waking does not currently bring the protectors onto it, and this records why.</b>
+	/// <b>A killer waking brings the protectors onto it.</b>
 	/// </summary>
 	/// <remarks>
-	/// Retail's rung is <c>add_hate_point target=OBJI_MESSAGE_SENDER points_to_add=1000000</c> guarded by
-	/// <c>is_enemy who=OBJI_MESSAGE_SENDER</c>, and the send half is implemented — but
-	/// <b>every npc in this family is <c>race="DRAKAN"</c>, <c>tribe="GUARD_DRAGON"</c></b>, protectors
-	/// and killers alike, so our aggro list refuses the hate and the protector stays where it is.
+	/// The protector is never touched and no player is involved: this is the mechanic that takes a
+	/// fortress's guards down without either side being played.
 	/// <para>
-	/// <b>This asserts the wrong behaviour on purpose.</b> The alternative was to delete the pin and
-	/// leave the gap invisible. Retail plainly intends these two to fight — the whole family exists for
-	/// it — so either the client's tribe relations make <c>GUARD_DRAGON</c> hostile to itself under some
-	/// condition our model does not carry, or the killers' real tribe differs from what our
-	/// <c>npc_templates</c> says. Until that is settled, the 30001 half is inert and this pin will fail
-	/// the day it stops being. That is the intended signal, not a regression.
+	/// <b>The protector here is 251467, <c>PROTECTGUARD_LIGHT</c>, and the choice is the whole pin.</b>
+	/// Retail guards the rung with <c>is_enemy who=OBJI_MESSAGE_SENDER</c>, and a hundred and fifty-five
+	/// of the artifact protectors share the killers' own <c>GUARD_DRAGON</c> tribe — see
+	/// <see cref="ASameTribeProtectorCorrectlyIgnoresIt"/>. Picking one of those first made this look
+	/// like a faction-data gap when it is retail behaving exactly as its data says.
 	/// </para>
 	/// </remarks>
 	[Fact]
-	public void AKillerWakingDoesNotYetBringTheProtectorsOntoIt()
+	public void AKillerWakingBringsTheProtectorsOntoIt()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc protector = harness.Spawn(Protector, 300f, 300f, 200f);
@@ -58,9 +55,7 @@ public sealed class FortressKillerCallTests
 
 		killer.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.SPAWNED);
 
-		// Same race and tribe on both sides, so is_enemy is false and the million points never land.
-		Assert.Equal(protector.GetObjectTemplate().GetTribe(), killer.GetObjectTemplate().GetTribe());
-		Assert.Null(protector.GetTarget());
+		Assert.Equal(killer, protector.GetTarget());
 	}
 
 	/// <summary>
@@ -150,5 +145,67 @@ public sealed class FortressKillerCallTests
 		Aion.GameServer.Ai.NpcMessageBus.Broadcast(other, AbyssGuardCallAI.CallForHelp, other, 50f);
 
 		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == Killer));
+	}
+
+	/// <summary>
+	/// <b>A protector of the killer's own tribe correctly ignores it.</b>
+	/// </summary>
+	/// <remarks>
+	/// Not a limitation — retail's own data. 251450 is <c>GUARD_DRAGON</c>, the same tribe the killers
+	/// carry, and our <c>tribe_relations.xml</c> matches the client's <c>npc_tribe_relation.xml</c>
+	/// entry for it exactly: one <c>friendly</c> line naming two teleporters, and no hostility to
+	/// anything. So <c>is_enemy</c> is false and the million points never land.
+	/// <para>
+	/// The mechanic works between the killers and the three hundred and thirty-two protectors on
+	/// <c>PROTECTGUARD_LIGHT</c> and <c>PROTECTGUARD_DARK</c>, and between the Advance killers and the
+	/// village guards their tribe lists as <c>aggro</c>. Pinned so that the exception is recorded as
+	/// intended rather than rediscovered as a bug.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ASameTribeProtectorCorrectlyIgnoresIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc sameTribe = harness.Spawn(251450, 300f, 300f, 200f);
+		Npc killer = harness.Spawn(Killer, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(killer, sameTribe);
+
+		killer.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.SPAWNED);
+
+		Assert.Equal(sameTribe.GetObjectTemplate().GetTribe(), killer.GetObjectTemplate().GetTribe());
+		Assert.Null(sameTribe.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>And a protector already fighting a player drops it for the killer.</b>
+	/// </summary>
+	/// <remarks>
+	/// This is what retail's million points are for. A protector that kept tanking its attacker would
+	/// leave the killer unopposed, which is the mechanic failing quietly rather than loudly.
+	/// <para>
+	/// <b>The magnitude itself is not pinned, and cannot be from here.</b> Dropping
+	/// <c>DropEverything</c> from a million to <b>1</b> passes this pin at any damage the player deals,
+	/// because <see cref="SummonOrder"/> ends by targeting whoever is <em>then</em> most-hated and a
+	/// fresh hate entry takes that place regardless of size. That is <see cref="SummonOrder"/>'s own
+	/// documented behaviour rather than a fault here, but it means the number is held by review.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AndAProtectorAlreadyOnAPlayerDropsIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc protector = harness.Spawn(Protector, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		harness.Engage(protector, player);
+		// Enough damage that a single hate point cannot outrank it. At 5000 it could, so the size of
+		// retail's points_to_add was unpinned and dropping it to 1 passed.
+		BossAiHarness.Wound(protector, player, damage: 500_000);
+		Assert.Equal(player, protector.GetTarget());
+
+		Npc killer = harness.Spawn(Killer, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(killer, protector);
+		killer.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.SPAWNED);
+
+		Assert.Equal(killer, protector.GetTarget());
 	}
 }
