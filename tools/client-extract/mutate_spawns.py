@@ -151,24 +151,34 @@ def widen(text: str, index: int) -> str:
 def test_filter(class_name: str) -> str | None:
     """The xunit filter for a class's pins, or None when it has no test file of its own.
 
-    **Exact filename, and the file must name the class.** Two ways a looser rule lies. A prefix match
-    handed `AhserionAI` -- which has no test file -- its neighbour `AhserionTrooperAiTests`, reporting
-    five survivors when the truthful answer was "this class has no pins at all". And an exact filename
-    match still handed `CalindiFlamelordAI` a file that tests `DarkPoetaCalindiFlamelordAI`, whose name
-    merely ends the same way. **A borrowed filter turns a class with no coverage into a class with bad
-    coverage**, which is a worse thing to read.
-    """
-    exact = TEST_DIR / f"{class_name.removesuffix('AI')}AiTests.cs"
-    if not exact.exists():
-        return None
+    **Matched on the reference, not the filename.** Three rules were tried and only this one is both
+    sound and complete:
 
-    # And the file has to actually name the class. `CalindiFlamelordAiTests` exists and tests
-    # `DarkPoetaCalindiFlamelordAI` -- a different class whose name merely ends the same way -- so the
-    # filename matching alone still handed one class another's pins. Requiring the reference is the only
-    # criterion that means what it says.
-    if f"typeof({class_name})" not in exact.read_text(encoding="utf-8"):
+    - *prefix* handed `AhserionAI` -- which has no pins -- its neighbour `AhserionTrooperAiTests`,
+      reporting five survivors where the truth was "no coverage at all";
+    - *exact filename* still handed `CalindiFlamelordAI` a file testing `DarkPoetaCalindiFlamelordAI`,
+      whose name merely ends the same way;
+    - *exact filename plus a reference* then went wrong the other way, calling `YamennesSpawnGateAI`
+      unpinned when `UnstableYamennesAiTests` exercises it thoroughly under a different name.
+
+    So: whichever test files name the class, whatever they are called. **A borrowed filter turns a class
+    with no coverage into one with bad coverage; too strict a filter does the reverse**, and both are
+    read as fact.
+    """
+    source = AI_DIR / f"{class_name}.cs"
+    # A file's stem is not always a class it declares: `DeathDropBossesAI.cs` holds `DeathDropBossAI`
+    # and `TakahanAI`, and looking for `typeof(DeathDropBossesAI)` finds nothing though both are pinned.
+    declared = re.findall(r"^(?:public|internal)\s+(?:sealed\s+)?class\s+(\w+)",
+                          source.read_text(encoding="utf-8"), re.M) if source.exists() else []
+    wanted = {class_name, *declared}
+
+    hits = [path.stem for path in sorted(TEST_DIR.glob("*.cs"))
+            if any(f"typeof({name})" in path.read_text(encoding="utf-8") for name in wanted)]
+    if not hits:
         return None
-    return exact.stem
+    # Several files may exercise one class; the filter is a substring match, so the shared prefix of
+    # their names would be wrong. Run them as alternatives instead.
+    return "|FullyQualifiedName~".join(hits)
 
 
 def spawn_lines(text: str) -> list[int]:

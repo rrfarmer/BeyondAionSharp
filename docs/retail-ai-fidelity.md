@@ -23971,3 +23971,54 @@ a new pin first failed for a missing `WithAi` entry.
 
 Build clean. Blade Storm's mutation now dies. **Three consecutive full-suite runs**: 2,214 passing (one
 new), 1 skipped.
+
+## Three more tries at "which pins test this class", and the real number
+
+Last pass I reported that thirteen classes were being scored against tests that do not test them, and
+took the count of pinned classes from 82 to 69. **Both numbers were wrong**, and the rule was wrong in a
+new direction.
+
+### The rule, in four versions
+
+| rule | classes with pins | what it got wrong |
+|---|---|---|
+| prefix match | 82 | handed `AhserionAI` its neighbour's file |
+| exact filename | 79 | `CalindiFlamelordAiTests` tests `DarkPoetaCalindiFlamelordAI` |
+| filename **and** a reference | 69 | called `YamennesSpawnGateAI` unpinned, though `UnstableYamennesAiTests` exercises it thoroughly under another name |
+| **any test file naming any class the source declares** | **106** | — |
+
+The last step matters as much as the others: `DeathDropBossesAI.cs` declares `DeathDropBossAI` and
+`TakahanAI`, so **looking for `typeof(DeathDropBossesAI)` finds nothing** although both are well pinned.
+A file's stem is not always a class it holds.
+
+**A borrowed filter turns a class with no coverage into one with bad coverage; too strict a filter does
+the reverse.** Both are read as fact, and I published the first of them last pass.
+
+### The honest split
+
+**106 classes have spawns and pins. 81 have spawns and none.** Ranked by how many npcs bind to them, the
+largest unpinned are `ConquestOfferingAggressiveAI` (112 npcs), `ConquestOfferingSpawnerAI` (24),
+`EternalBastionAssaultMachineAI` (20), `RecordkeeperAI` (14) and `SealGuardianAI` (10).
+
+Where a class is exercised from several files the filter now runs them as alternatives, so
+`YamennesSpawnGateAI` is checked against both Yamennes suites at once — and its one spawn dies.
+
+### A start on the Drakenspire seal guardians, not finished
+
+`SealGuardianAI` places four guardians at fixed coordinates. **Retail's guardian-chief pattern does not
+place them at all**: on waking it sets a condition variable and drops a delay-keeper for eighty seconds;
+on being killed it sets a timer variable, leaves a reset marker for ten seconds, shouts, and broadcasts
+**22610** about its killer. Whether ours is an invented repopulation or a port of an instance script the
+pattern dump cannot see needs the chief's whole chain read, which is a pass of its own rather than the
+tail of this one.
+
+### Still to do
+
+- **81 unpinned classes**, now correctly counted and ranked.
+- **The seal guardians**, above.
+- Timers, broadcasts and target selection have no mutation mode.
+- 250 spawns named by no pin; 50 invented-spawn rows; the eighteen orphan classes; the other 568 fights.
+
+### Verification
+
+Build clean, no behaviour changed. **Two consecutive full-suite runs**: 2,214 passing, 1 skipped.
