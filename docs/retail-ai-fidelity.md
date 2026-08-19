@@ -30678,13 +30678,18 @@ the mechanic.**
 4/4 mutations caught through the runner, including one that first came back `SURVIVED` because the data
 fix had no pin at all; that is what the survivor line is for.
 
-Full solution green at 2,600 in the game-server assembly. Disagreements 20 to 15.
+Full solution green at 2,600 in the game-server assembly. Disagreements 20 to 19 — **not the drop the two
+fixes suggest**, because the saam's four rows are still counted: its `spawn_helpers` block was kept and
+marked inert rather than deleted, and an inert block is still compared. The audit marks such rows
+`[INERT]`; it does not exclude them.
 
 **Still missing.**
 
 - **The saam's counter is a score nothing reads.** Retail's bonus round presumably reports it; nothing in
   this port collects it, so the number is kept faithfully and used by no one.
-- **The remaining 15 disagreements**, of which 8 are on inert blocks.
+- **The remaining 19 disagreements**, of which 12 are now on inert blocks — a number that will keep
+  growing as bosses move from data to classes, and which will eventually make the headline count
+  meaningless unless inert rows are reported separately.
 - The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
   `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
