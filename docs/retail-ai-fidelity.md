@@ -28953,3 +28953,53 @@ calls those out rather than scoring them.
   bands (112 ids) are where the effects have collected.
 - **857599 and 856503**, both referenced by patterns and both absent from our npc data.
 - **Beritra's two spawn rows** (856384, 856385) and the fourteen route-blocked ids, unchanged.
+
+## Working the ranked list: one row explained, one row specified
+
+The first two rows off the new ranking, both scoring the maximum.
+
+### Isbariya's artifacts: explained, not missing
+
+`IsbariyaTheResoluteAI` was flagged for 281541 and 281542, the divine and magic artifacts — HERO, their
+own AI classes, spawned by retail at two absolute points on `on_enter_idle_state`.
+
+**They are in our spawn data.** `300170000_Beshmundir_Temple.xml` places both. Retail puts them down when
+the boss goes idle, which includes the instance opening; our spawn table simply has them there. Same
+outcome, different mechanism, and the class correctly names all three of its timed waves (281645, 281659,
+281660) besides. Nothing owed.
+
+That is the fourth row read to a conclusion and the third that turned out not to be a gap — which is the
+ranking working as intended, since it can only order candidates and not verify them.
+
+### Dynatoum's mines: real, and not implementable in isolation
+
+`DynatoumAI` never spawns 284859, 284860 or 284861 — "mine trap" twice and "maintenance device", all
+ELITE, all with AI classes of their own (`bomb`, `dynatoum_maintenance_device`), and **none of them in
+our spawn data either**. The class handles his enrage clock and the portal removal and has no mine
+mechanic at all. This one is a genuine gap.
+
+**It is also a forty-four-rung web across twenty-six battle timers**, banded by health:
+
+| band | chain | what it spawns |
+|---|---|---|
+| 81-100 | T1 → T2 → T3 → T4 → T5 → T6 → T1 | nothing; six skill casts |
+| 51-80 | T7 → T8..T13 → T7 | 4× 284859, or 2× 284860 at 51-65 |
+| 21-100 | T14 → T15..T20 → T14 | 3× 284861 at fixed points, 2× 284860 |
+| any | T21 → T22/T23/T24/T25 → T21 | 4× 284859, range 7, every 13s |
+
+**Most of those rungs are `use_skill` with a `SKILLI_INDEX`**, which is the standing blocker. The spawn
+rungs are woven between them: the timers that fire the mines are armed by rungs whose only content is a
+cast we cannot resolve. Writing the spawns alone means choosing the intervals myself.
+
+**So it is documented and not written, deliberately.** Every defect worth fixing in this work has been
+some earlier author inventing a cadence — Laksyaka's three-per-cent roll for a sixteen-second timer, the
+Mysterious Crate's uniform roll for a probability ladder, Vasharti's 75/50/25/10 for retail's 86/56/26.
+Adding a fifth would be the same mistake with better documentation.
+
+**Still missing.**
+
+- **Dynatoum's mines**, fully specified above and blocked on the skill-index problem for the surrounding
+  chain. If the skill indices are ever resolved this is a large, well-understood piece of work.
+- **The other forty-five top-ranked ids.** Two of the first two read were explained rather than owed, so
+  the practical yield of that list is lower than 47 and nobody yet knows by how much.
+- **857599 and 856503**, referenced by patterns and absent from our npc data.
