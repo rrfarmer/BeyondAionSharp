@@ -568,6 +568,8 @@ public sealed class BossAiHarness : IDisposable
 		private readonly List<Type> _aiHandlers = new();
 		private int _worldSize = DefaultWorldSize;
 
+		private bool _walkerRoutes;
+
 		internal Builder(int mapId) => _mapId = mapId;
 
 		/// <summary>
@@ -582,6 +584,23 @@ public sealed class BossAiHarness : IDisposable
 		public Builder WithWorldSize(int worldSize)
 		{
 			_worldSize = worldSize;
+			return this;
+		}
+
+		/// <summary>
+		/// Loads retail's own named routes, so a spawn placed at a route's head lands where retail puts it.
+		/// </summary>
+		/// <remarks>
+		/// <b>Opt-in, because the default empty holder is right for almost every pin.</b> A pin about how
+		/// long an add lives does not need it to walk, and the routes are the largest static file an AI
+		/// test could be made to pay for. But an encounter whose adds arrive down a corridor —
+		/// <c>SPAWN_LOCATION_WAY_POINT_START</c>, which 881 retail spawns use — cannot be pinned at all
+		/// without them: with an empty holder the spawn falls back to the summoner's feet, and a pin
+		/// written against that fallback would assert the exact bug it is supposed to catch.
+		/// </remarks>
+		public Builder WithWalkerRoutes()
+		{
+			_walkerRoutes = true;
 			return this;
 		}
 
@@ -632,7 +651,7 @@ public sealed class BossAiHarness : IDisposable
 			EnsureIdFactory();
 			RegisterAiHandlers(_aiHandlers);
 
-			var staticData = BuildStaticData(_mapId, _worldSize);
+			var staticData = BuildStaticData(_mapId, _worldSize, _walkerRoutes);
 			var dataManager = NewDataManager(staticData);
 			var clock = new VirtualThreadPool();
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
@@ -673,7 +692,7 @@ public sealed class BossAiHarness : IDisposable
 		/// </summary>
 		private static void RegisterAiHandlers(List<Type> types) => TestAiEngine.Register(types);
 
-		private static StaticData BuildStaticData(int mapId, int worldSize)
+		private static StaticData BuildStaticData(int mapId, int worldSize, bool walkerRoutes)
 		{
 			// GetUninitializedObject skips StaticData's field initializers (which would build every holder);
 			// only the handful the AI/spawn path reads are filled in. Same trick the golden tests use.
@@ -702,8 +721,10 @@ public sealed class BossAiHarness : IDisposable
 			// Empty is the right fixture: GetWalkerTemplate returns null, StartRouteWalking returns
 			// false, and the add stands still. A pin about how long an add lives does not need it to
 			// walk, and loading the real routes would make every AI test pay for them.
+			// ...unless the encounter under test spawns onto a route, which needs the real ones; see
+			// Builder.WithWalkerRoutes.
 			SetHolder(staticData, nameof(StaticData.WalkerDataDh),
-				new Aion.GameServer.Dataholders.WalkerData());
+				walkerRoutes ? RealWalkerData.Value : new Aion.GameServer.Dataholders.WalkerData());
 
 			// The skill engine's execution side reads this when resolving target relations, so a boss that
 			// casts through SkillEngine rather than the queue NREs without it. Empty is correct here: no
@@ -766,6 +787,18 @@ public sealed class BossAiHarness : IDisposable
 			JaxbHolderLoader.RunAfterUnmarshal(data);
 			return data;
 		});
+
+		/// <summary>
+		/// Retail's named routes, extracted from the 5.8 server's own world data.
+		/// </summary>
+		/// <remarks>
+		/// Only <c>retail_pattern_paths.xml</c>, not the whole <c>npc_walker</c> directory: the per-instance
+		/// route files are keyed by spawn hash and no pattern spawn names one, so loading them would cost
+		/// every opted-in test without adding a route any pattern can reach.
+		/// </remarks>
+		private static readonly Lazy<Aion.GameServer.Dataholders.WalkerData> RealWalkerData = new(() =>
+			LoadStaticDataFile<Aion.GameServer.Dataholders.WalkerData>(
+				"npc_walker", "retail_pattern_paths.xml"));
 
 		private static readonly Lazy<TribeRelationsData> RealTribeRelations = new(() =>
 			LoadStaticDataFile<TribeRelationsData>("tribe", "tribe_relations.xml"));

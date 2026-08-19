@@ -7,7 +7,10 @@ using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Ai.Manager;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates.Npcskill;
+using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
@@ -1052,6 +1055,56 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         foreach (SpawnSpot spot in spots)
             Track(spawnId, liveSeconds, Spawn(npcId, spot.X, spot.Y, spot.Z, spot.Heading));
+    }
+
+    /// <summary>
+    /// <c>SPAWN_LOCATION_WAY_POINT_START</c> — placed at the first step of a named route, walking it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The most-used spawn location retail has that this engine could not express.</b> 881 spawns
+    /// across the 5.8 pattern dump carry it, and every one of them means the same thing: the add does not
+    /// appear at the boss, it appears at the mouth of a corridor and comes down it. A port that placed
+    /// those adds at the summoner's feet would be describing a different fight — the walk <i>is</i> the
+    /// mechanic, because it is the time the raid gets to react.
+    /// <para>
+    /// The route is retail's own <c>pathname</c>, resolved through the walker data under its retail name.
+    /// <b>If no route by that name is loaded the add still spawns, at the summoner, and stands</b> — the
+    /// same fallback Tiamat's rush wave takes, on the same reasoning: an add in the wrong place is a
+    /// smaller error than an add that never arrives, and 123 of retail's 467 pattern route names are
+    /// undefined in retail's own shipped data, so the fallback is reachable through no fault of the port.
+    /// </para>
+    /// </remarks>
+    public void SpawnOnPath(int npcId, int spawnId, string pathName, float range, int liveSeconds)
+    {
+        WalkerTemplate? route = DataManager.WALKER_DATA.GetWalkerTemplate(pathName);
+        List<RouteStep>? steps = route?.GetRouteSteps();
+        if (steps == null || steps.Count == 0)
+        {
+            SpawnNear(npcId, spawnId, 1, range, liveSeconds);
+            return;
+        }
+
+        RouteStep start = steps[0];
+        float x = start.GetX();
+        float y = start.GetY();
+        if (range > 0f)
+        {
+            // Retail's spawn_range scatters around the start point rather than moving the start point,
+            // so the walk still begins at step zero -- the offset is only how far off the line it begins.
+            double angle = Rnd.NextFloat(360f) * Math.PI / 180.0;
+            float distance = Rnd.NextFloat(range);
+            x += (float)(Math.Cos(angle) * distance);
+            y += (float)(Math.Sin(angle) * distance);
+        }
+
+        VisibleObject? spawned = Spawn(npcId, x, y, start.GetZ(), 0);
+        Track(spawnId, liveSeconds, spawned);
+        if (spawned is not Npc walker)
+            return;
+
+        walker.GetSpawn().SetWalkerId(pathName);
+        if (walker.GetAi() is NpcAI ai)
+            WalkManager.StartWalking(ai);
     }
 
     /// <summary>Spawns around this NPC, scattered within <paramref name="range"/> metres.</summary>

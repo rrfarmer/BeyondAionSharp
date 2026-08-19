@@ -483,6 +483,13 @@ public static class Do
     public static PatternAction SpawnAt(int npcId, int spawnId, int liveSeconds, params SpawnSpot[] spots)
         => ai => ai.SpawnAt(npcId, spawnId, liveSeconds, spots);
 
+    /// <summary>
+    /// <c>spawn</c> at <c>SPAWN_LOCATION_WAY_POINT_START</c> — at the head of a named route, walking it.
+    /// </summary>
+    public static PatternAction SpawnOnPath(int npcId, int spawnId, string pathName,
+        float range = 0f, int liveSeconds = 0)
+        => ai => ai.SpawnOnPath(npcId, spawnId, pathName, range, liveSeconds);
+
     /// <summary><c>spawn</c> at <c>SPAWN_LOCATION_MY_POINT</c>, scattered within <paramref name="range"/>.</summary>
     public static PatternAction SpawnNear(int npcId, int spawnId, int count = 1, float range = 0f, int liveSeconds = 0)
         => ai => ai.SpawnNear(npcId, spawnId, count, range, liveSeconds);

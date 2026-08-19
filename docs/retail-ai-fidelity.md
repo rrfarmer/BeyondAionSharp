@@ -22616,3 +22616,65 @@ fight nobody has ported.
 ### Verification
 
 Build clean. The pin fails with the gate removed. Full suite **2,121 passing**, 1 skipped.
+
+## Dark Poeta's generators, and the spawn location 881 retail summons use
+
+Third from the 575, and the first that needed the engine to grow. **All three generators — 214895,
+214896, 214897 — ran `aggressive`**, so a room whose entire point is that the machines keep feeding cores
+down the corridors was three inert boxes that stood and hit back.
+
+### The adds do not appear at the boss, and that is the mechanic
+
+Every core spawn in all three patterns carries `SPAWN_LOCATION_WAY_POINT_START` with a named `pathname`:
+the core appears at the head of a corridor and walks down it. **The walk is the time the group gets to
+break off and intercept.** A port that dropped the cores at the generator's feet would have the right
+count and the wrong room.
+
+The engine had no way to say that. **881 spawns across the 5.8 dump carry that spawn location** — it is
+the most-used one this port could not express — so `Do.SpawnOnPath` is now an engine primitive rather
+than something a boss class hand-rolls, as Tiamat's rush wave had to.
+
+Everything it needs was already here: all six cores (281088-281093) are in `npc_templates.xml`, and all
+twelve `NPCPath_GCore_*` routes are in the retail path extract. **Nothing had to be guessed.**
+
+### One class, three generators
+
+The three patterns are the same machine with different wiring — identical branch structure, thresholds
+and clocks, differing only in which cores each sends and down which corridors. So they share a class and
+differ in a table.
+
+```
+on engaging   : a 5s core clock, a 12s skill clock
+below 80 once : two cores
+below 35 once : three cores
+skill clock   : 15s down to 12s once below thirty
+on dying      : one last core, by either hand
+```
+
+**The lifetimes are carried per core, not per band.** They are not uniform even inside one generator: the
+main generator's low band sends two cores that stay and one that leaves at thirty seconds, and the
+emergency generator's low band keeps one and times out two. **A class that assumed one number per band
+would have been wrong on five of these fifteen spawns.**
+
+### The harness had to opt in, and the reason is worth recording
+
+`BossAiHarness` installs a deliberately **empty** walker holder — right for almost every pin, since an add
+that stands still is fine when the question is how long it lives. But with an empty holder, a
+route-spawn falls back to the summoner's feet, **so a pin written without noticing would have asserted
+the exact bug it exists to catch**. `WithWalkerRoutes()` is opt-in and loads only the retail path file.
+
+The corridor pin was mutation-checked against that fallback and goes red.
+
+### Still to do
+
+- **The other 572.** Wrathclaw (8 spawns), Captain Xasta (6), Kexkra (5), Reviver Nasto (4) next.
+- **The three generator skill indices** (`SKILLI_INDEX_0`/`_1` on target, `_2` on self at both
+  thresholds) and `despawn_at_attack_state`, which every core spawn carries and the engine has no concept
+  for.
+- **880 other route spawns** now expressible and not yet ported — this unblocks them, it does not do them.
+- Convert `TiamatDragonAI`'s hand-rolled rush wave to `Do.SpawnOnPath`.
+
+### Verification
+
+Build clean. The corridor pins fail if the route lookup is forced to its fallback. Full suite **2,127
+passing** (six new), 1 skipped.
