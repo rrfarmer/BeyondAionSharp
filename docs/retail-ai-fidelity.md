@@ -29887,3 +29887,55 @@ make that choice on the caller's behalf.
   `spawn_helpers.xml` blocks, `live_time` with no attribute, the 45 live disagreements, the eleven unread
   top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent
   npc rows.
+
+## Drill instructor diplito, and four for four
+
+Back to encounters. The clearest remaining `--tiers` row was drill instructor diplito in Raksang Ruins.
+
+Retail's `IDRaksha_Re_A_KJS` calls one guard per band, each exactly once — both rungs consume a
+`set_flag_var`:
+
+| health | guard | range |
+|---|---|---|
+| below 75 | 855908, skeleton guard | 5 |
+| below 35 | **855909, lich guard** | 5 |
+
+Ours had **one** band at 40 calling the skeleton at distance 2.
+
+> So the lich guard never appeared, and it is not a reskin of the skeleton. 855908 is melee with a 2m
+> attack range; 855909 is a caster with a 16m one and its own `npc_skills` row. **The second half of this
+> fight was a melee add standing in for a caster**, and the first half arrived thirty-five points of
+> health late.
+
+Two pins, one mutation, caught. Full solution green at 2,818.
+
+### Four for four
+
+Every summon-data row opened so far has turned out to be **a missing npc rather than the number the row
+complained about**:
+
+| boss | row said | actually |
+|---|---|---|
+| Grand Chieftain Kasika | 1 vs 6 | two of four tiers absent, no escalation |
+| Spirit King Agro | range 10 vs 6 | 280772 never spawned |
+| adjutant ursanafi | (tiers) | own two elementals never spawned; live path was a different file |
+| drill instructor diplito | (tiers) | 855909 never spawned |
+
+The count and range comparison is a **detector, not a description**. It points at the right boss and is
+wrong about the problem every single time. That is worth stating plainly, because the natural reading of
+"range 10 vs retail 6" is a one-attribute fix, and it has not once been one.
+
+### A near miss worth recording
+
+The mutation for this fix was checked with `git checkout` on the data file to restore it — which reverted
+**the whole fix**, not the mutation. It was caught immediately because the next command re-read the file
+and printed `855909 present: False`. Restoring a hand-edited file with `git checkout` while the edit is
+still uncommitted throws the edit away; the mutation should be reverted by re-applying the intended
+value, or the file stashed first.
+
+**Still missing.**
+
+- The remaining `--tiers` rows, the 59 stranded guards, 25 guards with no `npc_templates.xml` row, 11
+  owner-less patterns, the 9 inert `spawn_helpers.xml` blocks, `live_time` with no attribute, the 45 live
+  disagreements, the eleven unread top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's
+  `npc_skills`, the seven absent npc rows.

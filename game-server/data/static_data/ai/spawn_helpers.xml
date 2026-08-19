@@ -745,10 +745,19 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Drill instructor diplito. Retail IDRaksha_Re_A_KJS calls one guard per band, each once: a
+	     skeleton guard 855908 below 75 and a lich guard 855909 below 35, both at spawn_range 5. This
+	     block had a single band at 40 calling the skeleton at distance 2, so the lich guard never
+	     appeared — it has its own npc_skills row and a 16m attack range, so the second half of this
+	     fight was a melee add standing in for a caster. Retail also gives both a live_time of 30s,
+	     which <summonGroup> has no attribute for; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="236303">
 		<summons>
-			<percentage percent="40">
-				<summonGroup npcId="855908" distance="2"/>
+			<percentage percent="75">
+				<summonGroup npcId="855908" distance="5"/>
+			</percentage>
+			<percentage percent="35">
+				<summonGroup npcId="855909" distance="5"/>
 			</percentage>
 		</summons>
 	</ai>
