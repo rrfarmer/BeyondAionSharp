@@ -1,82 +1,77 @@
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Controllers.Observer;
 
 namespace Aion.GameServer.Tests.Ai;
 
 /// <summary>
-/// <see cref="BossAiHarness.Kill"/>, which is a death rather than an announcement of one.
+/// That <see cref="BossAiHarness.Kill"/> actually reaches the dying NPC's death handling.
 /// </summary>
 /// <remarks>
-/// Raising <c>AiEventType.Died</c> reaches the NPC's own <c>HandleDied</c> and nothing else: no
-/// <c>DeathObserver</c>, no friend notice, no respawn scheduling. Every mechanic built on one NPC
-/// watching another die is invisible to a pin written that way, and reads as a missing feature rather
-/// than an untestable one — a mutation deleting an entire route lookup survived on exactly that.
+/// For a long time it did not, and nothing said so. <c>NpcController.OnDie</c> calls <c>DoReward()</c>
+/// before it raises <c>AiEventType.Died</c>, inside a <c>try</c> whose <c>catch</c> only logs; <c>Kill</c>
+/// recorded the killer's damage first, so the reward path ran for real, walked into the XP table, the
+/// drop registry and the housing service — none of which this harness stands up — threw, and was
+/// swallowed **along with the death event**.
+/// <para>
+/// The effect was that <b>every <c>on_die</c> branch of every pattern class, and every hand-written
+/// <c>HandleDied</c>, was unreachable from a test</b>, while <c>Kill</c>'s own documentation said the AI
+/// event ran in server order. It was found only because a new encounter's death spawn would not appear,
+/// and confirmed by reproducing it against a class written months earlier.
+/// </para>
+/// <para>
+/// This pin exists so it cannot come back quietly. It deliberately uses
+/// <see cref="QueenAlukinaAI"/> — a hand-written <c>HandleDied</c> that predates the pattern DSL — so it
+/// covers the seam rather than one class's translation.
+/// </para>
 /// </remarks>
 [Collection("GoldenDataManager")]
 public sealed class HarnessKillTests
 {
-	private const int TiamatStronghold = 300510000;
-	private const int GuardingEye = 219390;
+	private const int EmpyreanCrucible = 300300000;
 
-	private static BossAiHarness NewHarness() =>
-		BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
-			.WithAi(typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
-			.Build();
+	/// <summary>Queen Alukina of the Crucible, whose seven blobbles burst from <c>HandleDied</c>.</summary>
+	private const int AlukinaEmp = 217590;
+	private const int AzureBlobble = 280713;
+	private const int BlobblesOnDeath = 7;
 
 	/// <summary>
-	/// <b>A killed NPC is dead.</b>
+	/// <b>Killing an NPC runs its death handling.</b>
+	/// </summary>
+	[Fact]
+	public void KillingAnNpcRunsItsDeathHandling()
+	{
+		using BossAiHarness harness = BossAiHarness.For(EmpyreanCrucible).WithWorldSize(2048)
+			.WithAi(typeof(QueenAlukinaAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc queen = harness.Spawn(AlukinaEmp, 400f, 400f, 200f);
+		Player player = harness.SpawnPlayer(404f, 400f, 200f);
+		harness.Engage(queen, player);
+
+		BossAiHarness.Kill(queen, player);
+
+		Assert.Equal(BlobblesOnDeath, harness.LiveNpcs().Count(n => n.GetNpcId() == AzureBlobble));
+	}
+
+	/// <summary>
+	/// <b>And the NPC is actually dead afterwards.</b>
 	/// </summary>
 	/// <remarks>
-	/// Its AI state is <i>not</i> asserted: the move to <c>DIED</c> is made further along the server's
-	/// death path than the harness runs, and claiming it here would be claiming more than the helper
-	/// does. What the helper is for is the observers, which the next pin covers.
+	/// The pin above would still pass if <c>Kill</c> raised the AI event and did nothing else, which is
+	/// precisely the shortcut that was rejected when fixing this — it would have made death branches
+	/// testable while quietly making <c>Kill</c> a lie.
 	/// </remarks>
 	[Fact]
-	public void AKilledNpcIsDead()
+	public void AndTheNpcIsDeadAfterwards()
 	{
-		using BossAiHarness harness = NewHarness();
-		Npc npc = harness.Spawn(GuardingEye, 900f, 1300f, 397f);
-		Player killer = harness.SpawnPlayer(903f, 1300f, 397f);
+		using BossAiHarness harness = BossAiHarness.For(EmpyreanCrucible).WithWorldSize(2048)
+			.WithAi(typeof(QueenAlukinaAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc queen = harness.Spawn(AlukinaEmp, 400f, 400f, 200f);
+		Player player = harness.SpawnPlayer(404f, 400f, 200f);
+		harness.Engage(queen, player);
 
-		BossAiHarness.Kill(npc, killer);
+		BossAiHarness.Kill(queen, player);
 
-		Assert.True(npc.IsDead(), "Kill left the NPC alive");
-	}
-
-	/// <summary>
-	/// <b>And a watcher hears about it.</b> This is the whole point of the helper: it is the only way a
-	/// pin can drive a mechanic that counts other NPCs dying.
-	/// </summary>
-	[Fact]
-	public void AWatcherIsNotifiedOfTheDeath()
-	{
-		using BossAiHarness harness = NewHarness();
-		Npc npc = harness.Spawn(GuardingEye, 900f, 1300f, 397f);
-		Player killer = harness.SpawnPlayer(903f, 1300f, 397f);
-		int seen = 0;
-		npc.GetObserveController().Attach(new DeathObserver(_ => seen++));
-
-		BossAiHarness.Kill(npc, killer);
-
-		Assert.Equal(1, seen);
-	}
-
-	/// <summary>
-	/// <b>Raising the event alone does not.</b> The contrast is the reason the helper exists, and without
-	/// it somebody will reach for <c>OnGeneralEvent(Died)</c> again and read the silence as a bug.
-	/// </summary>
-	[Fact]
-	public void RaisingTheDiedEventNotifiesNobody()
-	{
-		using BossAiHarness harness = NewHarness();
-		Npc npc = harness.Spawn(GuardingEye, 900f, 1300f, 397f);
-		int seen = 0;
-		npc.GetObserveController().Attach(new DeathObserver(_ => seen++));
-
-		npc.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
-
-		Assert.Equal(0, seen);
+		Assert.True(queen.IsDead(), "Kill left the NPC alive");
+		Assert.Equal(0, queen.GetLifeStats().GetCurrentHp());
 	}
 }

@@ -30057,3 +30057,58 @@ and the count of servants looked right either way.
   11 owner-less patterns; the 9 inert `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven
   unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven
   absent npc rows.
+
+## The death event the harness threw away
+
+Last entry's top item was that `BossAiHarness.Kill` never reached a death branch. It does now, and the
+cause is worth writing down in full because nothing about it was visible from the outside.
+
+`NpcController.OnDie` calls `DoReward()` **before** it raises `AiEventType.Died`, and the whole block sits
+in a `try` whose `catch` only logs. `Kill` recorded the killer's damage first. So the reward path ran for
+real, and walked straight into services this harness does not stand up:
+
+| step | what was null or absent |
+|---|---|
+| `AddExp` → `PlayerCommonData.SetExp` | `DataManager.PLAYER_EXPERIENCE_TABLE` |
+| `DropRegistrationService.RegisterDrop` | `DataManager.CUSTOM_NPC_DROP` |
+| `Player.GetActiveHouse` | `HousingService`'s static initialiser |
+
+Each threw; the catch swallowed it; **and the death event went with it.** Every `on_die` branch of every
+pattern class and every hand-written `HandleDied` was unreachable from a test, while `Kill`'s own
+documentation said the AI event ran in the order the server runs it.
+
+### The fix is a subtraction
+
+The first two holders are now loaded — the XP table by parsing `<exp>` the way the production loader
+does, since `PlayerExperienceTable` has no parameterless constructor. **The housing service is not
+stubbed, and does not need to be**: `DoReward` returns at its first check when nothing did damage, so
+`Kill` simply records none.
+
+That is a real trade and it is stated on the method: the killer is still the killer — `OnDie` and the
+friend notice both receive it, so `OBJI_KILLER` branches work — but its **damage** is gone. A pin needing
+the killer in the aggro list must call `Wound` itself and accept losing the death event again.
+
+**The shortcut that was rejected:** having `Kill` raise `Died` itself. That would have made death
+branches testable while making the method a lie, so `AndTheNpcIsDeadAfterwards` pins that the NPC is
+genuinely dead and not merely notified.
+
+### What the pins are worth
+
+`HarnessKillTests` deliberately uses `QueenAlukinaAI` — a hand-written `HandleDied` predating the pattern
+DSL — so it covers the seam rather than one translation. Restoring the `Wound` call fails two pins.
+
+And `HarnessHolderInventoryTests` earned its keep immediately: adding two holders turned it red on the
+same run, which is exactly what a list-that-fails-when-it-changes is for. Its list is now twelve.
+
+**Still missing.**
+
+- **Reward-side death behaviour is still untestable.** Anything hanging off XP, drops, loot rights or
+  the housing service cannot be pinned here, and a pin that wants a killer's damage recorded still cannot
+  have the death event too. Stubbing `HousingService` is the next step for anyone who needs it.
+- **`NpcController.OnDie` swallowing exceptions is a production concern, not only a test one.** A live
+  server hitting an exception in `DoReward` would lose the same death event, and the only trace is a log
+  line. That is untouched here: it is Java-parity structure and changing it is a decision.
+- The `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded
+  guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert
+  `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine
+  web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

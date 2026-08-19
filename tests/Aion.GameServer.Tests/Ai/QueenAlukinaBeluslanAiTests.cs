@@ -118,15 +118,11 @@ public sealed class QueenAlukinaBeluslanAiTests
 	/// <b>Seven azure blobbles when she dies.</b> The mechanic the data schema could not hold.
 	/// </summary>
 	/// <remarks>
-	/// <b>Raised as an AI event rather than through <c>BossAiHarness.Kill</c>, and that is not laziness.</b>
-	/// <c>Kill</c> reaches death observers — it was added so the captured Drakan scientists could be
-	/// released by counting two eyes — but it does not reach the dying NPC's own <c>HandleDied</c>, so no
-	/// death branch of any pattern runs through it. Reproduced against the pre-existing
-	/// <see cref="QueenAlukinaAI"/>, which bursts the same seven blobbles from a hand-written
-	/// <c>HandleDied</c>: through <c>Kill</c> it produces none, and raising <c>Died</c> on the same
-	/// already-dead NPC produces all seven. That is recorded in docs/retail-ai-fidelity.md as work owed
-	/// on the harness; this pin uses the seam that works and says so rather than appearing to test more
-	/// than it does.
+	/// <b>Through <c>BossAiHarness.Kill</c>, which now reaches the death branch.</b> It did not when this
+	/// pin was written: <c>Kill</c> recorded the killer's damage first, so <c>NpcController.OnDie</c> ran
+	/// <c>DoReward()</c> before raising the event, the reward path threw on holders the harness does not
+	/// stand up, and its own <c>catch</c> swallowed the exception and the death event with it. Recording
+	/// no damage makes <c>DoReward</c> return at its first check. See <c>BossAiHarness.Kill</c>.
 	/// </remarks>
 	[Fact]
 	public void SevenBlobblesArriveWhenSheDies()
@@ -134,7 +130,7 @@ public sealed class QueenAlukinaBeluslanAiTests
 		using BossAiHarness harness = NewHarness();
 		(Npc queen, Player target) = Engaged(harness, 30);
 
-		queen.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		BossAiHarness.Kill(queen, target);
 
 		Assert.Equal(7, Of(harness, AzureBlobble).Count);
 	}
@@ -152,7 +148,7 @@ public sealed class QueenAlukinaBeluslanAiTests
 		float x = queen.GetX();
 		float y = queen.GetY();
 
-		queen.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		BossAiHarness.Kill(queen, target);
 
 		foreach (Npc blobble in Of(harness, AzureBlobble))
 			Assert.True(Distance(blobble, x, y) <= 10.0,

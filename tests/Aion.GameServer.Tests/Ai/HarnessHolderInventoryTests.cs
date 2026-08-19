@@ -39,9 +39,14 @@ public sealed class HarnessHolderInventoryTests
 	/// <summary>Holders the fixture sets, and which every AI test therefore depends on.</summary>
 	private static readonly string[] Provided =
 	[
-		"AbsoluteStatsDataDh", "AiDataDh", "Materials", "NpcDataDh", "NpcSkillDataDh",
-		"SkillDataDh", "TribeRelations", "WalkerDataDh", "WorldMaps2", "ZoneInfo",
+		"AbsoluteStatsDataDh", "AiDataDh", "CustomNpcDropDh", "Materials", "NpcDataDh", "NpcSkillDataDh",
+		"PlayerExperienceTable", "SkillDataDh", "TribeRelations", "WalkerDataDh", "WorldMaps2", "ZoneInfo",
 	];
+
+	// PlayerExperienceTable and CustomNpcDropDh were added for the death path: NpcController.OnDie runs
+	// DoReward() before raising the AI's Died event, and a null XP table or drop registry threw inside
+	// the catch that only logs -- so the death event vanished. They are the reason this list grew, and
+	// this pin is what made the growth visible rather than incidental.
 
 	[Fact]
 	public void TheHarnessProvidesExactlyTheHoldersItIsKnownTo()

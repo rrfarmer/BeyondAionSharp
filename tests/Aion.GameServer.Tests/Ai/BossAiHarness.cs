@@ -253,10 +253,26 @@ public sealed class BossAiHarness : IDisposable
 	/// This drops the NPC to zero and calls <c>OnDie</c>, so the observers, the friend notice and the
 	/// AI event all run in the order the server runs them.
 	/// </para>
+	/// <para>
+	/// <b>It deliberately records no damage, and that is what makes the AI event arrive.</b> This used to
+	/// call <see cref="Wound"/> first, which put the killer in the damage list — and
+	/// <c>NpcController.OnDie</c> calls <c>DoReward()</c> <em>before</em> it raises
+	/// <c>AiEventType.Died</c>, inside a <c>try</c> whose <c>catch</c> only logs. Rewarding a real killer
+	/// walks into the XP table, the drop registry and the housing service, none of which this harness
+	/// stands up, so <c>DoReward</c> threw, the catch swallowed it, and <b>the death event was never
+	/// raised at all</b>. Every <c>on_die</c> branch of every pattern class and every hand-written
+	/// <c>HandleDied</c> was silently unreachable through this method; the pins that needed one had to
+	/// raise <c>Died</c> by hand and say why.
+	/// </para>
+	/// <para>
+	/// The killer is still the killer — <c>OnDie</c> and the friend notice both receive it, so
+	/// <c>OBJI_KILLER</c> branches work. What is missing is only its damage. A pin that needs the killer
+	/// in the aggro list should call <see cref="Wound"/> itself first and accept that the reward path
+	/// will throw and take the death event with it.
+	/// </para>
 	/// </remarks>
 	public static void Kill(Npc npc, Creature killer)
 	{
-		Wound(npc, killer);
 		npc.GetLifeStats().ReduceHp(
 			Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE.DAMAGE,
 			npc.GetLifeStats().GetMaxHp(), 0,
@@ -819,6 +835,19 @@ public sealed class BossAiHarness : IDisposable
 			SetHolder(staticData, nameof(StaticData.SkillDataDh), RealSkills.Value);
 			// Aggro (AggroList.IsAware -> Npc.IsEnemy -> TribeRelationService) needs the real tribe graph.
 			SetHolder(staticData, nameof(StaticData.TribeRelations), RealTribeRelations.Value);
+
+			// Without this, killing anything silently loses its death branch. NpcController.OnDie calls
+			// DoReward() before raising AiEventType.Died, DoReward awards XP, and PlayerCommonData.SetExp
+			// dereferences DataManager.PLAYER_EXPERIENCE_TABLE -- which was null here, so DoReward threw
+			// NullReferenceException, OnDie's own catch logged it, and Died was never raised. Every
+			// on_die branch in every pattern class, and every hand-written HandleDied, was unreachable
+			// through Kill. See docs/retail-ai-fidelity.md.
+			SetHolder(staticData, nameof(StaticData.PlayerExperienceTable), RealExperienceTable.Value);
+
+			// Empty, not loaded: nothing here pins loot. It has to be non-null because DoReward registers
+			// a drop for the killer, and GetUninitializedObject skipped the field initializer that would
+			// normally have made one.
+			SetHolder(staticData, nameof(StaticData.CustomNpcDropDh), new CustomDrop());
 			// SummonerAI reads its whole summon table from here in HandleSpawned, so a boss whose retail
 			// summons live in ai/spawn_helpers.xml summons nothing at all without it.
 			SetHolder(staticData, nameof(StaticData.AiDataDh), RealAiData.Value);
@@ -939,6 +968,24 @@ public sealed class BossAiHarness : IDisposable
 			return data!;
 		});
 
+		/// <summary>Retail's XP curve. Loaded because <c>DoReward</c> runs before the death event.</summary>
+		/// <remarks>
+		/// Read with a regex rather than <see cref="LoadStaticDataFile{T}"/> because
+		/// <c>PlayerExperienceTable</c> has no parameterless constructor and is not what the XML
+		/// deserialises to -- production parses the <c>&lt;exp&gt;</c> list itself and hands it to the
+		/// constructor, and this does the same thing to the same file.
+		/// </remarks>
+		private static readonly Lazy<PlayerExperienceTable> RealExperienceTable = new(() =>
+		{
+			string path = Path.Combine(RepoRoot(), "game-server", "data", "static_data",
+				"player_experience_table.xml");
+			List<long> exp = System.Text.RegularExpressions.Regex
+				.Matches(File.ReadAllText(path), @"<exp>(\d+)</exp>")
+				.Select(m => long.Parse(m.Groups[1].Value))
+				.ToList();
+			return new PlayerExperienceTable(exp.AsReadOnly());
+		});
+
 		private static readonly Lazy<TribeRelationsData> RealTribeRelations = new(() =>
 			LoadStaticDataFile<TribeRelationsData>("tribe", "tribe_relations.xml"));
 
@@ -973,9 +1020,31 @@ public sealed class BossAiHarness : IDisposable
 			return merged;
 		}
 
+		/// <summary>
+		/// Puts a holder into <see cref="StaticData"/>, which the harness assembles by hand rather than
+		/// by booting the loader.
+		/// </summary>
+		/// <remarks>
+		/// Most holders are settable properties. A few — <c>PlayerExperienceTable</c> is the first the
+		/// harness needed — are get-only and assigned by the real constructor, so the property setter does
+		/// not exist and reflection throws "Property set method not found". Those are written straight to
+		/// the compiler's backing field, which is what constructing the whole of <c>StaticData</c> would
+		/// have done anyway.
+		/// </remarks>
 		private static void SetHolder(StaticData staticData, string propertyName, object value)
 		{
-			typeof(StaticData).GetProperty(propertyName)!.SetValue(staticData, value);
+			PropertyInfo property = typeof(StaticData).GetProperty(propertyName)!;
+			if (property.CanWrite)
+			{
+				property.SetValue(staticData, value);
+				return;
+			}
+
+			FieldInfo backing = typeof(StaticData).GetField(
+				$"<{propertyName}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
+				?? throw new InvalidOperationException(
+					$"{propertyName} has no setter and no backing field to write instead");
+			backing.SetValue(staticData, value);
 		}
 
 		private static DataManager NewDataManager(StaticData staticData)
