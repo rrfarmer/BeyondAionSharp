@@ -31875,3 +31875,55 @@ npc-on-npc brawl and a scattered room.
   `IDSeal_WaveStart_Lv3_Da/Li` and `IDSeal_Wave_Arrow_Target` are likewise generic. The wave's
   *scaffolding* — what starts a wave, what times it, what scores it — is entirely unported.
 - **`IDSeal_Wave_Door_Destroyer`** (2 npcs, `aggressive`) is the other sender of 22760.
+
+### The five leader groups
+
+Npcs 236216-236220, retail `IDSeal_Wave_LeaderGourp_Fi/As/Ra/Wi/Pr`. Previously on `wave_attacker`,
+now on the same `seal_wave_attacker` — they are the rank-and-file pattern with three differences, so
+they are three flags on the same builder rather than a second class.
+
+**They call on contact.** A third flag, `BETA_3`, carries **no health guard at all** and sits above both
+bands. First-match-wins means the very first player blow spends it whatever the leader's health is, and
+the two bands below keep their own calls — so a leader shouts three times over a fight where the rank
+and file shout twice. The tank leader is the exception: retail gives it two bands, like its rank and
+file.
+
+**They never roll for the taunt.** The rank-and-file 22760 rung is guarded on `test_probability 10`;
+the leaders' identical rung has no probability at all. Same message, same ten thousand, two different
+fights.
+
+**The tank leader does not peel off.** Where the rank-and-file tank answers the healer's 22755 by
+turning away, the leader answers it by *pulling* — four rungs of `use_skill` gated on
+`is_skill_count_left`, all skill indices. Untranslatable, so the leader simply holds on, which is at
+least the right half of the behaviour rather than the wrong one.
+
+**A mutation survived and the pin was right.** "The rank and file get the leaders' contact band" was
+reported as a survivor when applied to the *assassin's* pattern. The assassin's call is 22755, and the
+only rung in this family that answers 22755 requires tribe `IDSeal_Wave_Healer` — so nothing the
+assassin ever broadcasts is observable through this family at all. The mutation was unobservable, not
+the pin weak. Re-aimed at the rank-and-file **priest** (whose call the tanks do answer) and at the
+builder's shared default, both are caught.
+
+### Still missing after the leader groups
+
+- **Every skill the leaders exist for.** The pull (`LeaderGourp_Fi`, four rungs), the mez
+  (`LeaderGourp_Wi`, two rungs), the heals (`LeaderGourp_Pr`, five rungs including the leader-heal that
+  answers 22757), the command buffs, and `LeaderGourp_Ra`'s 22753 bombardment. All `SKILLI_INDEX_n`,
+  and several are additionally gated on `is_skill_count_left`, for which there is no vocabulary here.
+  **This is most of what a leader group does** — what is ported is its voice, not its arms.
+- **`random_move` and `on_stop_to_random_move`.** `LeaderGourp_As` answers the command buff by going
+  invisible and wandering, then on stopping switches to a random attacker with ten thousand hate. The
+  wandering has no vocabulary here; the switch that follows it does, but hanging it off nothing would
+  be inventing behaviour.
+- **`IDSeal_Wave1..5_Leader_Lv3`** (236239-236243) still run `wave_attacker`. Mapped but not built:
+  `on_enter_attack` arms two timers and broadcasts **22750** at 100m (the command buff the whole wave
+  answers) with a shout; battle timer 4 is a six-second health check that once, below seventy,
+  broadcasts **22757** — the reserved-heal request that `LeaderGourp_Pr` answers; timers 0-2 chain at
+  7s/10s/10s and alternate on `ALPHA_1` between a poison pair and a re-command that re-broadcasts 22750
+  and wanders. `on_killed_by_user` and `on_killed_by_npc` both `set_condition_spawn_variable
+  WAVE_LEADER modify=1`, which is the wave-progression counter and has no equivalent here.
+  Their taunt rung is unrolled, like the leader groups'.
+  **Worth doing:** the 22750 and 22757 broadcasts and the timer chain are all translatable; only the
+  skills are not. It was left out of this pass because the timer chain deserves its own reading rather
+  than being folded into a builder shaped for the rank and file.
+- **`IDSeal_Wave1/2/3_Leader_Lv1` and `Lv2`** (four npcs) have no class at all.

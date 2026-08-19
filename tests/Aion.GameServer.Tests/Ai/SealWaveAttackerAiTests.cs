@@ -310,4 +310,123 @@ public sealed class SealWaveAttackerAiTests
 
 		Assert.Equal(0, attacker.GetAggroList().GetHate(guard));
 	}
+	/// <summary><c>IDSeal_Wave_LeadGroup_Pr</c> — three bands, and it never rolls for the taunt.</summary>
+	private const int PriestLeader = 236220;
+
+	/// <summary><c>IDSeal_Wave_LeadGroup_Fi</c> — the one leader with only two bands, and no peel-off.</summary>
+	private const int TankLeader = 236216;
+
+	/// <summary>
+	/// <b>A leader calls the moment a player touches it,</b> at any health. Retail's third flag carries no
+	/// health guard at all, and first-match-wins puts it above both bands — so the very first blow spends
+	/// it and the two bands below are left with their own calls still in them.
+	/// </summary>
+	[Fact]
+	public void ALeaderCallsTheMomentAPlayerTouchesIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(PriestLeader, 300f, 300f, 200f);
+		Npc tank = harness.Spawn(Tank, 305f, 300f, 200f);
+		Player hunted = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player other = harness.SpawnPlayer(302f, 250f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(leader, tank);
+
+		harness.Engage(tank, hunted);
+		BossAiHarness.Rehate(tank, other);
+		harness.Engage(leader, hunted);
+		// Untouched health: no band a rank-and-file attacker has would fire here.
+		harness.Engage(leader, hunted);
+
+		Assert.Same(other, tank.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>And the rank and file do not,</b> which is what makes the band above a leader difference rather
+	/// than something the whole wave does.
+	/// </summary>
+	[Fact]
+	public void AndTheRankAndFileDoNot()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc healer = harness.Spawn(Healer, 300f, 300f, 200f);
+		Npc tank = harness.Spawn(Tank, 305f, 300f, 200f);
+		Player hunted = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player other = harness.SpawnPlayer(302f, 250f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(healer, tank);
+
+		harness.Engage(tank, hunted);
+		BossAiHarness.Rehate(tank, other);
+		harness.Engage(healer, hunted);
+		harness.Engage(healer, hunted);
+
+		Assert.Same(hunted, tank.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>The leader's first call does not spend the bands below it.</b> Three flags, three calls: one on
+	/// contact, one crossing seventy, one crossing forty.
+	/// </summary>
+	[Fact]
+	public void TheLeadersFirstCallDoesNotSpendTheBandsBelowIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(PriestLeader, 300f, 300f, 200f);
+		Npc tank = harness.Spawn(Tank, 305f, 300f, 200f);
+		Player hunted = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player other = harness.SpawnPlayer(302f, 250f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(leader, tank);
+
+		harness.Engage(leader, hunted);
+		leader.GetAi().OnCreatureEvent(AiEventType.Attack, hunted);
+
+		// The contact band is spent. Crossing seventy still has a call of its own.
+		harness.Engage(tank, hunted);
+		BossAiHarness.Rehate(tank, other);
+		BossAiHarness.SetHpPercent(leader, 60);
+		leader.GetAi().OnCreatureEvent(AiEventType.Attack, hunted);
+
+		Assert.Same(other, tank.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>A leader takes the guard's shout every time.</b> The rank and file roll one in ten for it and
+	/// the leaders have no <c>test_probability</c> at all — the same rung, two different fights.
+	/// </summary>
+	[Fact]
+	public void ALeaderTakesTheGuardsShoutEveryTime()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(ForwardGuard, 300f, 300f, 200f);
+		Npc leader = harness.Spawn(TankLeader, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, leader);
+		BossAiHarness.NeverRolls(leader);
+
+		NpcMessageBus.Broadcast(guard, SealWaveAttackerAI.GuardTaunt, null, 100f);
+
+		Assert.Equal(SealWaveAttackerAI.TauntHate, leader.GetAggroList().GetHate(guard));
+	}
+
+	/// <summary>
+	/// <b>The tank leader does not peel off.</b> It is the one leader retail gives two bands rather than
+	/// three, and its answer to the healer is a pull built from skill indices — so where the rank-and-file
+	/// tank turns, this one holds on.
+	/// </summary>
+	[Fact]
+	public void TheTankLeaderDoesNotPeelOff()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc healer = harness.Spawn(Healer, 300f, 300f, 200f);
+		Npc leader = harness.Spawn(TankLeader, 305f, 300f, 200f);
+		Player hunted = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player other = harness.SpawnPlayer(302f, 250f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(healer, leader);
+
+		harness.Engage(leader, hunted);
+		BossAiHarness.Rehate(leader, other);
+		harness.Engage(healer, hunted);
+		BossAiHarness.SetHpPercent(healer, 60);
+		healer.GetAi().OnCreatureEvent(AiEventType.Attack, hunted);
+
+		Assert.Same(hunted, leader.GetTarget());
+	}
 }

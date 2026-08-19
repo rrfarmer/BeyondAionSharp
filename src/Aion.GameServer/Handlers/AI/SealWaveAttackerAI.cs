@@ -88,6 +88,9 @@ public class SealWaveAttackerAI : PatternAi
 	private const int MidBand = 1;
 	private const int LowBand = 2;
 
+	/// <summary>Retail's <c>FLAGVARI_BETA_3</c>: the leaders only, and it has no health guard.</summary>
+	private const int FirstBlood = 3;
+
 	/// <summary>Retail's usual reach. The priest's melee call is the one exception.</summary>
 	private const float FarCall = 100f;
 	private const float PriestMeleeCall = 15f;
@@ -96,6 +99,15 @@ public class SealWaveAttackerAI : PatternAi
 	private static readonly AiPattern Assassin = Build(MeleeCall, FarCall, FarCall);
 	private static readonly AiPattern Ranged = Build(RangedCall, FarCall, FarCall);
 	private static readonly AiPattern Priest = Build(MeleeCall, PriestMeleeCall, FarCall);
+
+	private static readonly AiPattern TankLeader =
+		Build(TankCall, FarCall, FarCall, namesSelf: true, leader: true);
+	private static readonly AiPattern AssassinLeader =
+		Build(MeleeCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true);
+	private static readonly AiPattern RangedLeader =
+		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true);
+	private static readonly AiPattern PriestLeader =
+		Build(MeleeCall, PriestMeleeCall, FarCall, leader: true, callsOnFirstBlood: true);
 
 	public SealWaveAttackerAI(Npc owner)
 		: base(owner)
@@ -107,15 +119,23 @@ public class SealWaveAttackerAI : PatternAi
 		236204 or 236208 or 236212 or 855844 => Tank,
 		236205 or 236209 or 236213 or 855845 => Assassin,
 		855847 => Priest,
+
+		236216 => TankLeader,
+		236217 => AssassinLeader,
+		236220 => PriestLeader,
+		236218 or 236219 => RangedLeader,
+
 		_ => Ranged,
 	};
 
 	/// <summary>
-	/// The five patterns differ only in the number they shout, how far it carries, whether it names the
-	/// sender or the attacker, and whether the tank's peel-off rung is present.
+	/// The nine patterns differ only in the number they shout, how far it carries, whether it names the
+	/// sender or the attacker, and three flags: the tank's peel-off, the leaders' unrolled taunt, and
+	/// the leaders' extra unguarded band.
 	/// </summary>
 	private static AiPattern Build(int call, float meleeRange, float spellRange,
-		bool namesSelf = false, bool peelsOff = false)
+		bool namesSelf = false, bool peelsOff = false, bool leader = false,
+		bool callsOnFirstBlood = false)
 	{
 		// is_hp_in_boundary is exclusive at both ends, so larger_than=40 less_than=70 is 41 to 69.
 		PatternAction MeleeShout() => namesSelf
@@ -140,24 +160,42 @@ public class SealWaveAttackerAI : PatternAi
 				Do.SwitchTarget(AggroTarget.RANDOM_EXCEPT_CURRENT_TARGET)));
 		}
 
-		onMessage.Add(Branch(1, "one time in ten, take the guard's shout personally",
-			[When.Chance(10), When.Message(GuardTaunt)],
-			Do.HateMessageSender(TauntHate)));
+		// The leaders take the guard's shout every time; only the rank and file roll for it.
+		onMessage.Add(leader
+			? Branch(1, "take the guard's shout personally", [When.Message(GuardTaunt)],
+				Do.HateMessageSender(TauntHate))
+			: Branch(1, "one time in ten, take the guard's shout personally",
+				[When.Chance(10), When.Message(GuardTaunt)],
+				Do.HateMessageSender(TauntHate)));
+
+		List<PatternBranch> onAttacked = [];
+		List<PatternBranch> onSpelled = [];
+
+		// FLAGVARI_BETA_3, and it carries NO health guard at all. First-match-wins means it takes the
+		// very first player blow whatever the leader's health is, spends itself, and leaves the two
+		// bands below untouched -- so a leader calls the instant it is engaged and twice more after.
+		if (callsOnFirstBlood)
+		{
+			onAttacked.Add(Branch(4, "somebody has started on me",
+				[When.AttackedByPlayer, When.FirstTime(FirstBlood)], MeleeShout()));
+			onSpelled.Add(Branch(7, "somebody has started on me",
+				[When.SpelledByPlayer, When.FirstTime(FirstBlood)], SpellShout()));
+		}
+
+		onAttacked.Add(Branch(3, "under forty",
+			[When.HpBelow(40), When.AttackedByPlayer, When.FirstTime(LowBand)], MeleeShout()));
+		onAttacked.Add(Branch(2, "under seventy",
+			[When.AttackedByPlayer, When.HpBetween(41, 69), When.FirstTime(MidBand)], MeleeShout()));
+
+		onSpelled.Add(Branch(6, "under forty",
+			[When.HpBelow(40), When.SpelledByPlayer, When.FirstTime(LowBand)], SpellShout()));
+		onSpelled.Add(Branch(5, "under seventy",
+			[When.SpelledByPlayer, When.HpBetween(41, 69), When.FirstTime(MidBand)], SpellShout()));
 
 		return new AiPattern
 		{
-			OnAttacked = Of(
-				Branch(3, "under forty", [When.HpBelow(40), When.AttackedByPlayer, When.FirstTime(LowBand)],
-					MeleeShout()),
-				Branch(2, "under seventy", [When.AttackedByPlayer, When.HpBetween(41, 69), When.FirstTime(MidBand)],
-					MeleeShout())),
-
-			OnSpelled = Of(
-				Branch(5, "under forty", [When.HpBelow(40), When.SpelledByPlayer, When.FirstTime(LowBand)],
-					SpellShout()),
-				Branch(4, "under seventy", [When.SpelledByPlayer, When.HpBetween(41, 69), When.FirstTime(MidBand)],
-					SpellShout())),
-
+			OnAttacked = [.. onAttacked],
+			OnSpelled = [.. onSpelled],
 			OnMessage = [.. onMessage],
 		};
 	}
