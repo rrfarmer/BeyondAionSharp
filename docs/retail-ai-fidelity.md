@@ -30361,3 +30361,65 @@ Full solution green at 2,838.
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
   spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Correcting the last entry: the guard was covered, and the harness was fine
+
+The previous entry recorded two things about Tiamat's rush that are **both wrong**, and the way they went
+wrong is worth more than the fix.
+
+It said the world-flag guard had no behavioural pin, because deleting the guard left the pins green. It
+also said the harness's virtual clock does not re-fire an idle timer a branch re-arms from inside its own
+callback.
+
+**Neither is true.**
+
+* A probe class with a self-re-arming idle branch fires **ten times in twenty seconds**, one jump or ten
+  steps alike. The clock is fine.
+* The mutation used to test the guard — replacing `When.FirstTimeInWorld(RushCalled)` with
+  `When.Always` — **does not compile.** `When.Always` is already a `PatternCondition[]` and the branch
+  takes one, so `[When.Always]` is `PatternCondition[][]`.
+
+> A build failure produces no failing tests. I counted failing tests and read zero as "the mutation
+> survived". The guard was covered the whole time; the pin was fine; the conclusion was manufactured by
+> the measurement.
+
+Mutating the guard to an empty condition list compiles, and the pin fails. Restored to saying what it
+does.
+
+### This is the exact failure `run_mutations.py` exists to prevent
+
+Its docstring, written earlier in this work, opens by describing it:
+
+> *"one of those omitted its compile check — a mutation that did not build was reported as `passes` ...
+> That failure mode is the dangerous direction: it says 'your pin is weak' when the truth is 'your
+> mutation never ran', and the natural response is to write more pins for a hole that does not exist."*
+
+The tool was there. **I hand-rolled a bash loop instead**, and reproduced the failure it was built to
+stop — including the predicted follow-on, since the previous entry went on to document a harness
+limitation that does not exist.
+
+Every mutation from the last three entries has now been re-run through the runner:
+
+| | |
+|---|---|
+| Tiamat rush: world flag, walking, idle arming | **3/3 caught** |
+| DeathSpawnAI: guard on, guard off | **2/2 caught** |
+| Siege weapons: heading | **caught** |
+| Teselik: four paths collapsed to one | **caught** |
+
+Note the third Tiamat row. Replacing `Do.SetIdleTimer` in `on_wake_up` with an unrelated timer is caught
+by all three rush pins — which is the evidence that the `SetIdle` branch really was inert before, rather
+than merely looking it.
+
+Full solution green at 2,838.
+
+**Still missing.**
+
+- **Ad-hoc mutation testing is still possible and still wrong.** Nothing stops the next person doing
+  what I did. `run_mutations.py` is a tool you have to remember; a `grep -c FAIL` in a shell loop is
+  always to hand. The honest mitigation is that it is now written down twice.
+- The 34 non-route absence claims; Teselik's in-combat hands; the 33 named death-spawn rows; `is_user`
+  pinned one seam short; the `<summons>` schema's three owed attributes; the 258203/258207 family
+  decision; the 59 stranded guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns;
+  the 9 inert `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids;
+  Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

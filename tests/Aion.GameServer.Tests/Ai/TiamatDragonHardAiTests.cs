@@ -236,22 +236,23 @@ public sealed class TiamatDragonHardAiTests
 	}
 
 	/// <summary>
-	/// <b>Nineteen arrive, not thirty-eight.</b>
+	/// <b>The rush comes once.</b> Retail guards it with a world flag, not a per-npc one.
 	/// </summary>
 	/// <remarks>
-	/// <b>This does NOT pin retail's world-flag guard, and two attempts to make it were wrong.</b> The
-	/// first advanced the clock thirty seconds in one jump; the second in ten two-second steps. Deleting
-	/// <c>When.FirstTimeInWorld</c> leaves both green, because the harness's virtual clock does not
-	/// re-fire an idle timer that the branch re-arms from inside its own callback — so the branch runs
-	/// once whatever guards it, and the pin was measuring the harness.
+	/// <b>This pin was briefly documented as not covering the guard, and that was wrong.</b> The
+	/// mutation used to check it — replacing <c>When.FirstTimeInWorld(RushCalled)</c> with
+	/// <c>When.Always</c> — does not compile, because <c>When.Always</c> is already a
+	/// <c>PatternCondition[]</c> and the branch takes one. A build failure produces no failing tests, and
+	/// zero failures was read as a surviving mutation.
 	/// <para>
-	/// What it does cover is that one firing places nineteen and no more, which is worth having and is
-	/// all it claims. The guard itself is recorded as uncovered in docs/retail-ai-fidelity.md rather
-	/// than left looking tested.
+	/// Mutating the guard to an empty condition list compiles, and this pin fails. The clock is advanced
+	/// in ten two-second steps so the branch's own re-arm comes round again — verified separately that a
+	/// self-re-arming idle timer fires ten times in twenty seconds, which was also briefly believed
+	/// otherwise.
 	/// </para>
 	/// </remarks>
 	[Fact]
-	public void OneFiringPlacesNineteenAndNoMore()
+	public void TheRushComesOnlyOnce()
 	{
 		using BossAiHarness harness = Rushing();
 		Npc tiamat = harness.Spawn(HardTiamat, 500f, 500f, 417f);
