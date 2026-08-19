@@ -42,6 +42,17 @@ public class UnstableRukrilAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// </remarks>
     private const int SummonLife = 70;
 
+    /// <summary>
+    /// Retail's <c>BTIMERI_INDEX_1</c>: <b>fifty</b> seconds to the first pair, seventy between.
+    /// </summary>
+    /// <remarks>
+    /// All four splinter cores carry the same two numbers. The seventy was already right — it matches
+    /// the summons' own lifetime, so a set expires as the next is due — and the opening was five, so the
+    /// first pair arrived forty-five seconds early on every one of them.
+    /// </remarks>
+    private static readonly System.TimeSpan SummonFirst = System.TimeSpan.FromSeconds(50);
+    private static readonly System.TimeSpan SummonRepeat = System.TimeSpan.FromSeconds(70);
+
     private void StartSkillTask()
     {
         Npc ebonsoul = GetPosition().GetWorldMapInstance().GetNpc(219552);
@@ -64,7 +75,7 @@ public class UnstableRukrilAI : AggressiveNpcAI, HpPhases.PhaseHandler
             }
 
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(5000), System.TimeSpan.FromMilliseconds(70000));
+        }, SummonFirst, SummonRepeat);
     }
 
     private void CancelTask()

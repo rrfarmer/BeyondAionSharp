@@ -60,7 +60,13 @@ public sealed class SplinterCoreSummonAiTests
 	private static List<Npc> Summons(BossAiHarness harness, int npcId) =>
 		harness.LiveNpcs().Where(n => n.GetNpcId() == npcId).ToList();
 
-	/// <summary><b>The summons arrive.</b> Five seconds in, which is this class's own opening delay.</summary>
+	/// <summary>
+	/// <b>The summons arrive at fifty seconds</b>, which is retail's <c>BTIMERI_INDEX_1</c>.
+	/// </summary>
+	/// <remarks>
+	/// All four cores opened at five. The seventy-second cycle was already right; the opening was not, so
+	/// the first pair arrived forty-five seconds early on every one of them.
+	/// </remarks>
 	[Theory]
 	[MemberData(nameof(Cores))]
 	public void TheSummonsArrive(int map, int npcId, int summon, string _ai)
@@ -68,8 +74,10 @@ public sealed class SplinterCoreSummonAiTests
 		var (harness, _) = Engaged(map, npcId);
 		using BossAiHarness _h = harness;
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		harness.Clock.Advance(TimeSpan.FromSeconds(48));
+		Assert.Empty(Summons(harness, summon));
 
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
 		Assert.NotEmpty(Summons(harness, summon));
 	}
 
@@ -84,7 +92,7 @@ public sealed class SplinterCoreSummonAiTests
 		var (harness, _) = Engaged(map, npcId);
 		using BossAiHarness _h = harness;
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		harness.Clock.Advance(TimeSpan.FromSeconds(51));
 		var first = Summons(harness, summon).ToHashSet();
 		Assert.NotEmpty(first);
 
@@ -104,12 +112,43 @@ public sealed class SplinterCoreSummonAiTests
 		var (harness, _) = Engaged(map, npcId);
 		using BossAiHarness _h = harness;
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		harness.Clock.Advance(TimeSpan.FromSeconds(51));
 		int firstWave = Summons(harness, summon).Count;
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(210));
 
 		Assert.True(Summons(harness, summon).Count <= firstWave,
 			$"summons piled up: {Summons(harness, summon).Count} against a wave of {firstWave}");
+	}
+
+	/// <summary><c>IDAbRe_Core_Sum_Dark_Die</c>, the giant Ebonsoul leaves where he falls.</summary>
+	private const int DeathGiant = 282012;
+
+	/// <summary>
+	/// <b>Ebonsoul leaves a giant of darkness for a minute when he dies.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's <c>on_die</c> places it at a fixed point with <c>live_time=60</c>, and its own pattern
+	/// announces it — broadcast <c>11111</c> at fifty metres on waking, <c>11112</c> on leaving, with a
+	/// system message between. <b>Nothing in this port placed it</b>, so his death was silent and left
+	/// nothing behind.
+	/// </remarks>
+	[Fact]
+	public void EbonsoulLeavesAGiantWhereHeFalls()
+	{
+		var (harness, boss) = Engaged(AbyssalSplinter, 216949);
+		using BossAiHarness _h = harness;
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+
+		Npc giant = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == DeathGiant);
+		Assert.Equal(448.99f, giant.GetX(), 2);
+		Assert.Equal(694.32f, giant.GetY(), 2);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(59));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == DeathGiant));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == DeathGiant));
 	}
 }

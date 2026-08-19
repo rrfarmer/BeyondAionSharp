@@ -25495,3 +25495,37 @@ session.
 **Not translated.** The casts on both rungs, and `BTIMERI_INDEX_2` and `_3`, which retail arms at five
 and eight seconds from the rungs above — both carry only skill indices. His `on_die` sets
 `STAGE8_OVER`, which this port expresses through the arena's own stage handling.
+
+## All four splinter cores summoned forty-five seconds early
+
+Retail patterns `IDAbRe_Core_NamedA1` / `A2` (216948, 216949) and their unstable twins
+`_A1_02` / `_A2_02` (219551, 219552).
+
+An earlier pass gave these summons retail's seventy-second lifetime and removed an "only if none are
+standing" guard that the lifetime had made harmful. It matched the **cycle** — seventy seconds, so a set
+expires exactly as the next is due — and left the **opening** at five.
+
+Retail's is **fifty**. All four cores carry the same pair, `BTIMERI_INDEX_1 = 50000` on entering combat
+re-armed at 70000, so the first pair arrived forty-five seconds early on every one of them. The two
+numbers do different jobs and only one had been checked: seventy is the rhythm, fifty is how long the
+raid gets before any of it starts.
+
+**And Ebonsoul's death was silent.** Retail's `on_die` leaves `IDAbRe_Core_Sum_Dark_Die` (282012) at a
+fixed point for sixty seconds — a giant of darkness that announces itself, broadcasting **11111** at
+fifty metres on waking and **11112** on leaving, with a system message between. **Nothing in this port
+placed it.**
+
+**Pins** — one new in `SplinterCoreSummonAiTests` and three retimed, five mutations, all caught. The
+arrival pin now reads on both sides of the threshold — empty at forty-eight seconds, present at
+fifty-one — so it separates fifty from the five it replaced rather than merely observing that summons
+turn up.
+
+**Reading of the wider list.** This is the fourth class off `audit_timer_drift.py` where the *repeat*
+was right and the *opening* was wrong, which is now worth stating as a pattern in its own right: a
+cycle length is easy to notice because it recurs, and an opening delay happens once and looks like
+nothing. The audit reports both, and the openings are the ones that keep surviving review.
+
+**Not translated.** The three other timers retail arms on entering combat (6000, 7000, 15000, 3000) and
+the deep rung that switches `BTIMERI_INDEX_4` to forty seconds below seven per cent health — all carry
+casts only. The placement divergence recorded by the earlier pass also stands: retail spawns its pair at
+the boss's own point within fifteen metres, where this class uses two fixed marks.
