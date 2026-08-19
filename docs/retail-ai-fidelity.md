@@ -25283,3 +25283,46 @@ threshold was crossed, and now advance the clock to the following turn.
 **Not translated.** The casts on every rung, which name skill indices; retail's 30% variant on the top
 band; and its `on_enter_idle_state`, which places two basic summons at fixed points when he drops
 combat.
+
+## Tiamat's incarnation hazards: one pulse, not a stream
+
+Retail patterns `LDF4b_Tiamat_Temp01` through `_Temp11` (282727-282737) and their hard-mode twins
+(856068-856076).
+
+Next fixed-rate class on the audit. Every ground hazard an incarnation leaves works the same way in
+retail:
+
+```
+on_wake_up     set_idle_timer 2000   (the earth pair)  or  6000  (everything else)
+on_idle_timer  spawn <name>_invisible at my point, live 2      <- and no set_idle_timer
+_invisible     use_skill on itself, despawn_self
+```
+
+**There is no re-arm on that rung**, so a hazard casts **once**, however long it stands. This class
+scheduled a cast every three seconds from two and a half.
+
+The opening delay was wrong for every hazard too — two and a half for all of them, where retail is two
+for the earth pair and six for the rest, and the split does not follow the id order: 282735/282737 are
+the earth pair in normal mode, and in hard mode it is 856068/856070, which sit numerically where the
+gravity balls are in the other set.
+
+**The invisible twin is collapsed into the hazard here**, the same arrangement this port already uses
+for Calindi's crown and Chantra's rings. That collapse is fine; the count and the delay were not.
+
+**Pins** — two added to `TiamatsIncarnationAiTests`, five mutations, four caught.
+
+**The fifth survived, and it is the important one.** Restoring the repeating task passes every pin here.
+This port has the hazard **cast** rather than spawn a caster, and a cast leaves nothing to count: the
+obvious proxy, `GetLastSkillTime`, is wall-clock rather than the harness's virtual clock, so it barely
+moves across a whole test. The pin that claimed to assert "only once" was doing nothing, and has been
+replaced by a remark saying so.
+
+**And that means a claim has to be withdrawn.** The natural reading — that hazards were doing several
+times retail's damage — is **not established**. A cast resolves against the caster's target and these
+hazards have none, so the repeats may already have been failing silently below this class. The shape
+now matches the pattern; **how much this changed in play is unknown**, and nothing in this suite can
+say. Establishing it needs an effect-level probe the harness does not have.
+
+**Not translated.** The earthquake's fifteen-second swap — retail arms a battle timer when it is engaged
+and turns `Crack_EarthQuake` into `Crack_BrokenGround` for four minutes. This port treats the two as
+separate hazards the boss places, so the transition does not exist.

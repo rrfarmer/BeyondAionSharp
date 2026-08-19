@@ -426,4 +426,52 @@ public sealed class TiamatsIncarnationAiTests
 		Assert.Equal(0, Count(harness, BurrowingFx));
 		Assert.Equal(0, Count(harness, deathEffect));
 	}
+
+	/// <summary>The two hazards whose opening delay differs, and a skill each carries.</summary>
+	private const int CavityOfEarthSkill = 20172;
+	private const int GravityWhirlpoolSkill = 20155;
+
+	/// <summary>
+	/// <b>An earth hazard pulses two seconds in, and a gravity one at six.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's <c>set_idle_timer</c> on the hazard is two seconds for the earth pair and six for the
+	/// rest; this class opened every one of them at two and a half.
+	/// </remarks>
+	[Fact]
+	public void EachHazardOpensOnItsOwnDelay()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc quake = harness.Spawn(CavityOfEarth, 470f, 510f, 418f);
+		Npc gravity = harness.Spawn(GravityWhirlpool, 480f, 510f, 418f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		Assert.True(quake.GetEffectController().HasAbnormalEffect(CavityOfEarthSkill)
+			|| Fired(harness, quake), "the earth hazard had not pulsed three seconds in");
+		Assert.False(Fired(harness, gravity), "the gravity hazard pulsed before its six seconds");
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+		Assert.True(Fired(harness, gravity), "the gravity hazard never pulsed");
+	}
+
+	/// <summary>Whether a hazard has cast: its skill is on cooldown once it has.</summary>
+	private static bool Fired(BossAiHarness harness, Npc hazard) =>
+		hazard.GetGameStats().GetLastSkillTime() > 0;
+
+	/// <summary>
+	/// <b>That it pulses only once is not pinned, and cannot be from here.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's rung carries no <c>set_idle_timer</c>, so a hazard casts a single time however long it
+	/// stands, and this class scheduled a cast every three seconds instead. The correction is made — the
+	/// task is one-shot now — but <b>no pin here can tell one cast from ten</b>: this port has the hazard
+	/// cast rather than spawn a caster, and a cast leaves nothing to count. The obvious proxy,
+	/// <c>GetLastSkillTime</c>, is wall-clock rather than the harness's virtual clock, so it barely moves
+	/// across a whole test and comparing it proves nothing — restoring the repeating task survives it.
+	/// <para>
+	/// Worth being plain about a second thing: because the repeats may already have been suppressed
+	/// somewhere below (a cast with no target resolves to nothing), <b>how much damage this actually
+	/// changed in play is unknown</b>. What is certain is the shape, which now matches the pattern.
+	/// </para>
+	/// </remarks>
 }
