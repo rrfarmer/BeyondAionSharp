@@ -120,6 +120,23 @@ def npc_pattern_and_ai():
     return pat, ai
 
 
+def spawned_in_our_data():
+    """npc ids our own spawn tables already place.
+
+    Retail spawns plenty of things from an AI rung that this port simply puts in a spawn file: Isbariya's
+    two artifacts arrive on `on_enter_idle_state` in retail and sit in
+    `300170000_Beshmundir_Temple.xml` here. Same outcome, different mechanism, nothing owed -- but the
+    audit counted them as missing because it only reads C# source. Every such id inflates the reading
+    list with work that is already done.
+    """
+    out = set()
+    root = REPO / "game-server" / "data" / "static_data" / "spawns"
+    pat = re.compile(r'<spawn npc_id="(\d+)"')
+    for f in root.rglob("*.xml"):
+        out.update(pat.findall(f.read_text(encoding="utf-8", errors="replace")))
+    return out
+
+
 def rank_missing(rows, route_blocked, xml_dir):
     """Sort every unnamed id by whether it looks like an add or an effect.
 
@@ -156,10 +173,14 @@ def rank_missing(rows, route_blocked, xml_dir):
         if len(parts) > 3 and parts[3]:
             has_pattern.add(parts[0])
 
-    scored = []
+    placed = spawned_in_our_data()
+    scored, already_placed = [], 0
     for _, ai, filename, missing, _ in rows:
         for nid in missing:
             if nid in route_blocked:
+                continue
+            if nid in placed:
+                already_placed += 1
                 continue
             score, why = 0, []
             if rating.get(nid) in ("ELITE", "HERO", "LEGENDARY"):
@@ -179,13 +200,30 @@ def rank_missing(rows, route_blocked, xml_dir):
             scored.append((score, nid, filename, ai, name, ", ".join(why)))
 
     scored.sort(key=lambda s: (-s[0], s[2]))
-    print(f"{len(scored)} unnamed ids that are not route-blocked, ranked")
+    print(f"{already_placed} of the unnamed ids are already placed by our own spawn data")
+    print(f"{len(scored)} remain: not route-blocked, not spawned here, ranked")
     print()
     for score, nid, filename, ai, name, why in scored[:30]:
         print(f"  {score}  {nid}  {filename[:34]:36s} {name[:26]:28s} {why}")
     buckets = collections.Counter(s[0] for s in scored)
     print()
     print("score distribution:", dict(sorted(buckets.items(), reverse=True)))
+
+
+def handler_constants():
+    """Every npc id declared as a `const int` anywhere in Handlers/AI.
+
+    Constants are shared across files here: `AhserionConstructDestroyerAI` spawns `PodAssassin` and
+    `PodAssassin = 297191` is declared in `AhserionAggressiveNpcAI.cs`. Reading one file at a time
+    reported that id as unimplemented when the port spawns it exactly as retail does, twice, with
+    retail's lifetime. Only declarations count, not every six-digit number in the directory: a bare
+    literal elsewhere is coincidence, a declaration is somebody naming that npc.
+    """
+    out = set()
+    decl = re.compile(r"const\s+int\s+\w+\s*=\s*(\d{6})")
+    for f in (REPO / "src" / "Aion.GameServer" / "Handlers" / "AI").glob("*.cs"):
+        out.update(decl.findall(f.read_text(encoding="utf-8", errors="replace")))
+    return out
 
 
 def main():
@@ -212,9 +250,12 @@ def main():
                      if d in dev2npc and not (paths & have_routes)}
     npc2pat, npc2ai = npc_pattern_and_ai()
 
+    declared = handler_constants()
     sources = {}
+    shared = []
     for f in (REPO / "src" / "Aion.GameServer" / "Handlers" / "AI").glob("*.cs"):
         text = f.read_text(encoding="utf-8", errors="replace")
+        shared.append(text)
         for name in AINAME.findall(text):
             sources[name] = (f.name, text)
 
@@ -243,9 +284,16 @@ def main():
             shared += 1
             continue
         filename, text = sources[ai]
-        literals = set(LITERAL.findall(text))
-        missing = sorted(ids - literals)
-        extra = sorted(i for i in literals if i not in ids and i in npc2ai)
+        # An id counts as named if it appears anywhere in Handlers/AI, not only in this class's own file.
+        # Constants are shared across files here -- AhserionConstructDestroyerAI spawns PodAssassin, and
+        # PodAssassin = 297191 is declared in AhserionAggressiveNpcAI.cs -- so reading one file at a time
+        # reported an id the port spawns exactly as retail does. False negatives are the right failure
+        # direction for a reading list; false positives send people to re-implement working code.
+        own = set(LITERAL.findall(text))
+        # "missing" forgives a constant declared in a sibling file; "extra" must not, or every class
+        # inherits every other class's ids and the whole report becomes one row per class.
+        missing = sorted(ids - own - declared)
+        extra = sorted(i for i in own if i not in ids and i in npc2ai)
         if missing or extra:
             rows.append((len(missing), ai, filename, missing, extra))
 

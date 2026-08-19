@@ -29003,3 +29003,55 @@ Adding a fifth would be the same mistake with better documentation.
 - **The other forty-five top-ranked ids.** Two of the first two read were explained rather than owed, so
   the practical yield of that list is lower than 47 and nobody yet knows by how much.
 - **857599 and 856503**, referenced by patterns and absent from our npc data.
+
+## The reading list was inflated three ways, and the top of it was a false positive
+
+The first id off the newly ranked list — the highest-scoring row in the whole audit — was
+**`297191`, "ahserion troopers assassin", flagged against `AhserionConstructDestroyerAI`**.
+
+It is not missing. That class spawns it **twice, on entering combat, with retail's 180-second lifetime**,
+which is exactly what `Gab1_Sub_Tank_Destroyer` does. The audit could not see it because the constant
+lives in a different file:
+
+```csharp
+// AhserionConstructDestroyerAI.cs
+SpawnFor(PodAssassin, p.GetX() + 5, ...);
+// AhserionAggressiveNpcAI.cs
+public const int PodAssassin = 297191;
+```
+
+**The tool read one file at a time.** Constants are shared across classes throughout this codebase, so
+any boss whose adds are named by a base or sibling class reported them as unimplemented. That is the
+worst direction for a reading list to fail in: it sends someone to re-implement working code, and it put
+this one at the very top.
+
+### Three corrections, and what each was worth
+
+| correction | effect |
+|---|---|
+| ids our own **spawn data** already places (Isbariya's artifacts) | −15 |
+| ids named by a **`const int` in a sibling file** (Ahserion's pod assassin) | −15 |
+| ids that need a **route the client does not define** (Tiamat's rush) | −14 |
+
+```
+299 unnamed ids  ->  255 that are not placed, not declared elsewhere, not route-blocked
+top band 47      ->  37
+```
+
+**`extra` deliberately did not get the same forgiveness.** Counting a sibling's constants as "named"
+for the missing column is right; doing it for the extra column gives every class every other class's ids,
+and the first attempt did exactly that — the report went from 28 clean classes to 0, every class
+suddenly disagreeing. The two columns ask different questions and only one of them is about the
+directory.
+
+**Every one of the four rows read by hand so far was explained rather than owed** — Tiamat hard
+(route-blocked), Beritra (FX collapse plus an unspawned controller), Isbariya (in spawn data), Ahserion
+(named in a sibling file). Four out of four. The 255 that remain have had three whole classes of false
+positive removed, which is the only reason to believe the next one might be real.
+
+**Still missing.**
+
+- **Dynatoum's mine web**, fully specified last commit and blocked on the skill-index problem.
+- **The 37 top-band ids**, now with three fewer ways to be spurious. Nobody has read one that turned out
+  to be owed, and that is the honest state of it.
+- **857599 and 856503**, referenced by patterns and absent from our npc data.
