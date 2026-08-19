@@ -206,7 +206,11 @@ def report_swaps(rows, window=3):
 
 
 FX_WORDS = ("NoShow", "Invisible", "_Fx", "Display", "_CTRL", "Control", "UseCheck",
-            "Effect", "Dummy", "Marker", "Reset", "Timer", "Circle")
+            "Effect", "Dummy", "Marker", "Reset", "Timer", "Circle",
+            # Outcome markers: retail spawns a thing to say the encounter was won or lost, and this port
+            # simply does the winning or losing. BIDSeal_Boss_Lv3_Success is the one that surfaced --
+            # Lord Beritra's third seal bomb, which our base class already counts correctly.
+            "Success", "Failed", "_Fail", "Gossip")
 
 
 def rank_missing(rows, route_blocked, xml_dir):

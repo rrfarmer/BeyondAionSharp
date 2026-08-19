@@ -29399,3 +29399,48 @@ kind again.
   other than code.
 - **`Lv3HumanBeritraAI` / 856347 "lord beritra" LEGENDARY** is new to the top band and has not been read.
 - Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## Lord Beritra's third bomb, already counted
+
+Row nine off the ranked list: **856347, "lord beritra", LEGENDARY**, against `Lv3HumanBeritraAI`. It is
+the highest-rated id the audit has ever flagged, and it is explained.
+
+The rung behind it is one of the fourteen `is_event_skill_id` rungs catalogued long ago, and it is the
+encounter's win condition:
+
+> On being damaged by `IDSeal_SealGuard_Bomb` — **skill 21624** — increment a counter. The condition is
+> true **only when it hits the bound, three**, and is then clamped to ten so it can never fire again. The
+> actions despawn all three spawn groups and put down `BIDSeal_Guardian_Chief_Reset_01` and
+> `BIDSeal_Boss_Lv3_Success`.
+
+**Our base class already does this, and does it exactly.** `Lv2HumanBeritraAI.OnEffectApplied` counts
+skill 21624 and switches on the count: one and two shout and spawn pustules, and **three calls
+`HandleLastSealBlasted()`**, which `Lv3HumanBeritraAI` overrides into the transformation. The bound is
+right, the skill is right, and the hook is `OnEffectApplied`, which is the correct one for `on_spelled`.
+
+**856347 is an outcome marker.** `BIDSeal_Boss_Lv3_Success` is a thing retail spawns to say the encounter
+was won; this port simply wins it. Same collapse as every other display npc here.
+
+**So it becomes a filter, like the eight before it.** `Success`, `Failed`, `_Fail` and `Gossip` join the
+devname list — retail marks outcomes with npcs and this port does not need them. Sixty-eight of the 275
+now carry a machinery devname, and the top band is 29.
+
+### Nine rows read
+
+| verdict | count |
+|---|---|
+| explained | **7** |
+| owed | 2 |
+
+**Every explained row has produced a filter**, and the filters have now removed, between them: ids our
+spawn data already places, ids named by a sibling file's constant, ids needing a route the client does
+not define, and ids whose devname says they are machinery or an outcome marker. The list started at 299
+unfiltered ids and a top band of 47; it is 275 with a top band of 29, and the difference is entirely
+things nobody needed to read.
+
+**Still missing.**
+
+- **The 29 top-band ids.** Beritra's four detachment guards and Dynatoum's six mine entries dominate
+  them, and both are documented as blocked on things other than code — so the genuinely unread part of
+  the top band is smaller than 29 and nobody has counted it exactly.
+- Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
