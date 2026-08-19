@@ -141,19 +141,21 @@ public class ResearcherTeselikAI : PatternAi
 
     /// <summary>The phase-two shape: one at his feet, then the rest walking in.</summary>
     /// <remarks>
-    /// <b>Not covered by a pin, and the mutation that proves it survives.</b> Putting all three on paths
-    /// instead — the tidier reading, and the one a translator would reach for — is caught by nothing.
-    /// Reaching this rung needs his live-hand counter at zero, which only moves when a hand dies and
-    /// reports in, plus the phase flag unspent and timer 0 coming round below 65.
+    /// <b>This rung can never fire, and that is retail's ordering, not an oversight here.</b> Retail's
+    /// <c>p13</c> and <c>p12</c> both carry <c>! set_flag_var FLAGVARI_ALPHA_1</c> third, ahead of the
+    /// counter test. A test-and-set consumes its flag as it passes, so <c>p13</c> spends it whether or
+    /// not its own counter test then succeeds — and <c>p12</c> always finds it spent.
     /// <para>
-    /// <b>Five attempts have failed and what they ruled out is worth more than the attempts.</b> Timer 0
-    /// fires exactly once, six seconds after combat starts, and whichever rung takes it arms timer 5
-    /// rather than re-arming timer 0 — so there is <i>one</i> instant in the whole fight when this rung
-    /// can be reached, and by then the counter must already read zero. Killing his hands through
-    /// <c>BossAiHarness.Kill</c> does not get it there, with or without the boss and hand made mutually
-    /// known, and with or without him standing at his real spawn point so the fifty-metre notice can
-    /// carry. Whoever picks this up should start by proving the counter moves at all, not by trying to
-    /// reach the rung. See docs/retail-ai-fidelity.md.
+    /// The paths below are therefore a faithful translation of a rung that does not run. They are kept
+    /// because reordering the pair to make it run would be a change dressed as a translation, and
+    /// <see cref="ResearcherTeselikAiTests.ThePhaseTwoSummonRungNeverFires"/> pins the quirk from
+    /// outside so a future "tidy" is caught.
+    /// </para>
+    /// <para>
+    /// <b>The class remarks above have said this since before the paths were written</b> — "the
+    /// summoning variant below it can never match" — and three sessions were spent rediscovering it by
+    /// experiment. Worth stating twice, next to the code as well as at the top of the file.
+    /// </para>
     /// </remarks>
     private static PatternAction SummonAtFeetThen(params int[] paths) => ai =>
     {

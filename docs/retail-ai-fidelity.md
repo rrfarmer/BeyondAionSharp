@@ -30523,3 +30523,57 @@ Full solution green at 2,591 in the game-server assembly; mutations re-run, stil
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
   spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## The rung was dead, and the file said so
+
+The surviving mutation is closed. It was never a coverage gap: **the rung it mutates cannot fire.**
+
+Retail's `p13` and `p12` both carry `! set_flag_var FLAGVARI_ALPHA_1` in the **same position** — third,
+ahead of the counter test. A test-and-set consumes its flag as it passes, and conditions are evaluated in
+order, so at the one instant timer 0 comes round below 65:
+
+| hands | what happens |
+|---|---|
+| alive | `p13` passes throughout and detonates them; `p12` finds the flag spent |
+| dead | `p13` spends the flag, **then** fails its counter test; `p12` finds the flag spent |
+
+Either way `p12` never runs. Its three summons are unreachable in retail as written, so no pin could ever
+catch a change to where they are placed.
+
+It is pinned from outside instead — at the phase-two instant with the hands dead, nothing is summoned —
+and the mutation that would make the rung reachable (moving the flag test after the counter test) is now
+**caught**. 3/3.
+
+### What this cost, and why
+
+The previous entry said "the live-hand counter is not moving" and told the next reader to start there.
+**That was wrong.** The counter moves exactly as designed: 2 on entering combat, 1 when a hand is killed
+and reports in. Measured directly through `PatternAi.Counter`, which has existed all along.
+
+Worse, the answer was already written at the top of the file being edited:
+
+> *"Phase two is guarded by a one-shot flag that sits ahead of the count test, so if the hands all happen
+> to be dead at the tick he crosses 65% the flag is spent by the branch that then fails, and the
+> summoning variant below it can never match — phase two is skipped entirely for that fight."*
+
+And a pin named `PhaseTwoIsSkippedEntirelyWhenNoHandIsStanding` was already covering it.
+
+> **Three sessions of experiment rediscovered what the class remarks stated plainly.** The reflex on a
+> surviving mutation was to reach for the harness; the cheaper move was to read the file. Nothing about
+> the tooling would have shortened this — only reading first.
+
+The one-shot-flag note is now repeated beside the rung as well as at the top, since that is where
+somebody about to "fix" the ordering will be standing.
+
+Full solution green at 2,592 in the game-server assembly.
+
+**Still missing.**
+
+- **`AHandThatSelfDestructsStillReportsIn` still uses a probe listener rather than the boss.** The
+  counter measurement above shows the notice does reach him, so this is now a known-good path with a
+  test that proves less than it could, rather than a suspected hole.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
+  spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

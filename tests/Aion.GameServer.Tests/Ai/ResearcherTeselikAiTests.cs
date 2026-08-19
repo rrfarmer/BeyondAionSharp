@@ -445,6 +445,51 @@ public sealed class ResearcherTeselikAiTests
 	}
 
 	/// <summary>
+	/// <b>The phase-two summon rung cannot fire, and that is retail's own ordering.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's <c>p13</c> and <c>p12</c> both carry <c>! set_flag_var FLAGVARI_ALPHA_1</c> in the
+	/// <b>same position</b> — third, ahead of the counter test. Conditions are evaluated in order and a
+	/// test-and-set consumes its flag as it passes, so when timer 0 comes round below 65:
+	/// <list type="bullet">
+	/// <item>hands alive — <c>p13</c> passes throughout and detonates them; <c>p12</c> finds the flag
+	/// spent;</item>
+	/// <item>hands dead — <c>p13</c> spends the flag and <i>then</i> fails its counter test; <c>p12</c>
+	/// finds the flag spent.</item>
+	/// </list>
+	/// Either way <c>p12</c> never runs. <b>Its three summons are unreachable in retail as written</b>,
+	/// and this port reproduces that faithfully rather than reordering the pair into something that
+	/// works.
+	/// <para>
+	/// This is why the mutation "the phase-two rung puts all three hands on paths" survives, and why
+	/// three sessions of trying to reach the rung found nothing: the rung is dead, not the pin weak. It
+	/// is pinned from the outside — at the phase-two instant with the hands dead, nothing is summoned.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ThePhaseTwoSummonRungNeverFires()
+	{
+		using BossAiHarness harness = Walking();
+		Npc teselik = harness.Spawn(Teselik, HisX, HisY, HisZ);
+		Player raider = harness.SpawnPlayer(HisX + 4f, HisY, HisZ);
+		harness.Engage(teselik, raider);
+
+		foreach (Npc hand in harness.LiveNpcs().Where(n => n.GetNpcId() == Hand).ToList())
+			BossAiHarness.Kill(hand, raider);
+		Assert.Equal(0, ((Aion.GameServer.Ai.Pattern.PatternAi)teselik.GetAi()).Counter(LiveHands));
+
+		BossAiHarness.SetExactPercent(teselik, 60);
+		for (int i = 0; i < 15; i++)
+		{
+			BossAiHarness.Rehate(teselik, raider);
+			BossAiHarness.KeepAlive(raider);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		}
+
+		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == Hand));
+	}
+
+	/// <summary>
 	/// His own spawn point from <c>301130000_Sauro_Supply_Base.xml</c>.
 	/// </summary>
 	/// <remarks>
