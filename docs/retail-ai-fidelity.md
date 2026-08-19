@@ -30820,3 +30820,51 @@ pattern dump and this repo does not carry it.
   decision; the 59 stranded guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns;
   the 9 inert `spawn_helpers.xml` blocks; the eleven unread top-band ids; Dynatoum's mine web; Beritra's
   two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Every inert block now says so, and three bosses summon nothing at all
+
+All eleven inert blocks in `spawn_helpers.xml` carry a warning now. Writing them made a distinction the
+`[INERT]` marker had been hiding: **inert is two different states.**
+
+**Superseded** — a class does the work instead, and the block is dead but harmless. Silikor of memory is
+the clearest: retail calls **one** servant every thirty seconds on a coin flip, five metres out, three
+minutes each, and `SilikorofMemoryAI` does exactly that. The block underneath says two and three at two
+metres, which is neither retail's shape nor this port's behaviour, and would mislead anyone who read it.
+
+**Unimplemented** — the npc runs plain `aggressive`, so nothing reads the block and no class replaces it.
+Those bosses summon **nothing**:
+
+| npc | retail pattern | spawn actions |
+|---|---|---|
+| spiritmaster atmach | `Naga_WhA` | 4 |
+| divine hisen | `Cromede_Hierarch` | 6 |
+| **jurdin the cursed** | `IDForest_Wave_Trico_Boss` | **25** |
+
+Jurdin is the largest unimplemented summoner this audit has found. All three have a `spawn_helpers` block
+that looks like an implementation and is not one — which is exactly how they stayed invisible: the file
+says what should happen, and nothing reads the file.
+
+Two others are neither: staff captain lahumu is a guard-family npc whose reinforcements live in the
+generated table, and aetheric protection swiftshank's retail pattern has **no spawn actions at all**, so
+its block is invented rather than stale.
+
+### The verifier earned itself within the hour
+
+The comments were written with `--` inside them, which is illegal in XML. That took the loader down and
+**1,709 tests failed**. `tools/verify.py`, committed an hour earlier, reported it as
+`TESTS FAILED - 1709 failing` and exited 1 on the first run.
+
+> The previous version of this mistake — the same `--`, in the same file — was caught by a test run whose
+> output was read by eye. This one could not have been missed by any reading, because the check does not
+> depend on one.
+
+**Still missing.**
+
+- **Three bosses that summon nothing**: atmach (4 actions), hisen (6), and **jurdin the cursed (25)**.
+  Each needs a class, and jurdin needs a substantial one.
+- **Whether the two invented blocks should be deleted.** Swiftshank's has no retail counterpart at all.
+  Deleting data is a decision this work has consistently declined to take on its own.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids;
+  Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

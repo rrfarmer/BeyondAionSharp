@@ -169,6 +169,10 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- staff captain lahumu (DrGuard_WhA_L48). INERT: His ai is "aggressive", so nothing reads this block, and his retail pattern is a guard family one
+	     whose reinforcements live in the generated GuardReinforcements.cs. Nothing here is owed; the
+	     block is simply not the mechanism.
+	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="214158">
 		<summons>
 			<percentage percent="99">
@@ -176,6 +180,10 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Brigadier indratu. SUPERSEDED AND INERT: his ai is "guard_reinforcement", which reads the
+	     generated GuardReinforcements.cs and not this file. That table has retail's range of 3 for both
+	     his elementals; the 2 below is stale. See docs/retail-ai-fidelity.md for the nine inert blocks
+	     in this file and why they are kept. -->
 	<ai npcId="214159">
 		<summons>
 			<percentage percent="50">
@@ -206,6 +214,12 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Silikor of memory. SUPERSEDED AND INERT: this npc runs ai="silikor" (SilikorofMemoryAI), which
+	     reads its pattern from code, not from here. Retail calls ONE servant every thirty seconds on a
+	     coin flip between the fragment and the essence, five metres out, each living three minutes, and
+	     the class does exactly that. The bands below say two and three at two metres, which is neither
+	     retail's shape nor this port's behaviour. Kept rather than deleted so the supersession is
+	     visible, and commented so the numbers are not mistaken for facts. -->
 	<ai npcId="214668">
 		<summons>
 			<percentage percent="50">
@@ -221,6 +235,8 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- unstable triroan (IDLF2A_ElementalKingNmd). INERT: His ai is "triroan" (UnstableTriroanAI), which carries its own pattern. This block is superseded.
+	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="214669">
 		<summons>
 			<percentage percent="75">
@@ -256,6 +272,9 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- spiritmaster atmach (Naga_WhA). INERT: His ai is "aggressive", so NOTHING reads this block and no class replaces it: he summons nothing
+	     at all in play. Retail Naga_WhA has four spawn actions. REAL WORK OWED.
+	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="214843">
 		<summons>
 			<percentage percent="60" skillId="17456" isIndividual="true"/>
@@ -376,6 +395,9 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- divine hisen (Cromede_Hierarch). INERT: His ai is "aggressive", so NOTHING reads this block and no class replaces it. Retail
+	     Cromede_Hierarch has six spawn actions. REAL WORK OWED.
+	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="216968">
 		<summons>
 			<percentage percent="99">
@@ -485,6 +507,10 @@
 	<!-- Omega (216516) summoned from here at 80/60/40/20, accumulating every wave and never
 	     spawning the clone of magical barrier. His retail pattern rotates four waves at
 	     85/65/45/25, so his summons now come from OmegaAI. See docs/retail-ai-fidelity.md. -->
+	<!-- jurdin the cursed (IDForest_Wave_Trico_Boss). INERT: His ai is "aggressive", so NOTHING reads this block and no class replaces it. Retail
+	     IDForest_Wave_Trico_Boss has TWENTY-FIVE spawn actions — the largest unimplemented summoner
+	     found by this audit. REAL WORK OWED.
+	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="217238">
 		<summons>
 			<percentage percent="80" skillId="19454" isIndividual="true"/>
@@ -555,6 +581,10 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- aetheric protection swiftshank (DF5_QuestMonster_03). INERT: Its ai is "aggressive", so nothing reads this block, and its retail pattern has no spawn actions
+	     at all — so the block is invented rather than stale. Nothing is owed except deciding whether to
+	     delete it.
+	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="219941">
 		<summons>
 			<percentage percent="90" skillId="19152" isIndividual="true"/>
