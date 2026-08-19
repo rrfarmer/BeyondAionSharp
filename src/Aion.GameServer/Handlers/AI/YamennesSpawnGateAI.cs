@@ -47,6 +47,23 @@ namespace Aion.GameServer.Handlers.AI;
 /// maps pattern owners rather than devnames. See docs/retail-ai-fidelity.md.
 /// </para>
 /// </remarks>
+/// <remarks>
+/// <b>A third set of gate ids runs these same four patterns</b> — 219567, 219579, 219580 and the four
+/// <c>Teleport2H</c> variants. Three of them were bound to a legacy class that fed out
+/// <c>idabre_core_02_Sum_CannonF</c> and <c>_WormF</c> (219565/219566) at three-metre offsets with no
+/// lifetime, twelve seconds in and once more a minute later.
+/// <para>
+/// <b>Retail's patterns for those three npcs are the ones this class already implements</b>: a
+/// <c>bidabre</c>-prefixed cannon on a fixed absolute mark every twelve seconds for seventy seconds,
+/// after a spawn gate summoned onto the gate itself starts its fight. Four things wrong in one class —
+/// wrong npc, wrong placement, no lifetime, and no opener.
+/// </para>
+/// <para>
+/// <b>None of the seven is spawned by anything in our data</b>, so this changes no live fight; it
+/// removes a landmine. Found by <c>audit_invented_spawns.py</c>, which asks which npcs our AI summons
+/// that no retail pattern ever summons.
+/// </para>
+/// </remarks>
 [AIName("yamennes_spawn_gate")]
 public class YamennesSpawnGateAI : PatternAi
 {
@@ -90,6 +107,18 @@ public class YamennesSpawnGateAI : PatternAi
         [282014] = new Feed(OldOrkanimum, 3000, 12000, 70, false, 331.33f, 722.18f, 212.93f),
         [282015] = new Feed(OldOrkanimum, 3000, 12000, 70, false, 348.55f, 741.76f, 212.93f),
         [282131] = new Feed(OldLapilima, 9000, 9000, 13, true, 0f, 0f, 0f),
+
+        // And a third set of ids on the very same four patterns -- 219567/219579/219580 and the four
+        // H-variants. Rows here rather than anywhere else because the patterns are identical: same
+        // marks, same clocks, same pair fed out. See the class remarks for what these were doing.
+        [219567] = new Feed(Orkanimum, 3000, 12000, 70, false, 309.95f, 738.02f, 217.12f),
+        [219579] = new Feed(Orkanimum, 3000, 12000, 70, false, 331.33f, 722.18f, 212.93f),
+        [219580] = new Feed(Orkanimum, 3000, 12000, 70, false, 348.55f, 741.76f, 212.93f),
+
+        [219587] = new Feed(Orkanimum, 3000, 12000, 70, false, 309.95f, 738.02f, 217.12f),
+        [219588] = new Feed(Orkanimum, 3000, 12000, 70, false, 331.33f, 722.18f, 212.93f),
+        [219589] = new Feed(Orkanimum, 3000, 12000, 70, false, 348.55f, 741.76f, 212.93f),
+        [219590] = new Feed(Lapilima, 9000, 9000, 13, true, 0f, 0f, 0f),
     };
 
     private static readonly ConcurrentDictionary<int, AiPattern> ByNpcId = new ConcurrentDictionary<int, AiPattern>();

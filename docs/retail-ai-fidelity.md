@@ -23512,3 +23512,65 @@ sweeps that swept the invented golem are gone with it.
 
 Build clean. Putting one invented golem back fails both new pins. **Three consecutive full-suite runs**:
 2,184 passing (two new), 1 skipped.
+
+## Hunting invented adds by asking what retail never summons
+
+Deleting the invented golem turned up a sharper filter than "unpinned". What made that add *wrong* was
+not that no pin named it — it was that **no pattern in the 5.8 dump spawns that npc at all.**
+
+`tools/client-extract/audit_invented_spawns.py` asks that of every add our AI places. **102 (class, npc)
+pairs** our classes summon are named by no retail pattern.
+
+**A row is a question, not a verdict**, and the docstring says so: retail also summons npcs from instance
+scripts, quests and spawn files, none of which the pattern dump covers.
+
+### Resolving the binding in the direction that works
+
+The first run reported 145 pairs and was mostly noise. Going devname → id leaves **1,132 spawn devnames
+unresolved**, because the binding table is still missing 12,000 templates — and every one of those reads
+as "retail never spawns this". Going **id → devname** instead asks the question actually being posed:
+*this* npc, whose devname we do know, is it named by any pattern? That cut it to 102 and is exact for any
+npc the binding covers.
+
+### Two wrong turns on the way, both caught before they were written up
+
+- **"41 AI classes are reachable by nothing."** Wrong twice over. The regex matched only lowercase AI
+  names, and **spawn files carry an `ai` attribute on `<spot>` elements** that I had not looked at. With
+  both fixed it is **19**, and the class this section is about was never among them.
+- **"`unstableyamenessportal` is bound by nothing."** I had grepped the templates for
+  `unstable_yameness_portal_summoned` — a snake_case name I invented — rather than the one in the
+  attribute. It is bound, to three npcs.
+
+### What the audit actually found
+
+**Seven unstable spawn gates run four patterns this port already implements correctly.** 219567, 219579,
+219580 and the four `Teleport2H` variants share `IDAbRe_Core_Summon4_02`, `_3_02`, `_6_02` and `_Low_02`
+with 283203/283222/283223/283233 — the same marks, the same clocks, the same pair fed out.
+
+Three of the seven were bound to a legacy class that got **four things wrong at once**:
+
+| | legacy class | retail |
+|---|---|---|
+| what it feeds | 219565/219566 (`idabre` prefix) | **283200** (`bidabre` prefix) |
+| where | three metres off the gate | a **fixed absolute mark**, one per gate |
+| for how long | forever | **seventy seconds** |
+| opener | none | a spawn gate summoned **onto the gate**, which starts its fight |
+
+All seven are now rows in `YamennesSpawnGateAI`, and the legacy class is deleted.
+
+**None of the seven is spawned by anything in our data**, so this changes no live fight — it removes a
+landmine rather than adding a mechanic. Saying that plainly matters: the other id-set finds this session
+were live, and this one is not.
+
+### Still to do
+
+- **101 remaining rows** in the invented-spawn audit, each needing the class and the pattern read.
+- **19 AI names bound by no template, no spawn spot and no code** — reachable by nothing. Not deleted:
+  worth a pass of its own, since some may be fights that *should* be bound.
+- **250 spawns named by no pin**; real mutation testing still absent.
+- **Empress Muada**; the four remaining unported-placement classes; the other 569 fights.
+
+### Verification
+
+Build clean. Removing one gate's row fails its pin. **Three consecutive full-suite runs**: 2,187 passing
+(three new), 1 skipped.

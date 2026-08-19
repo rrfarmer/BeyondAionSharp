@@ -559,4 +559,36 @@ public sealed class UnstableYamennesAiTests
 
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == InventedGolem));
 	}
+
+	/// <summary>
+	/// <b>The third set of gate ids feeds what retail says, not what a legacy class invented.</b>
+	/// </summary>
+	/// <remarks>
+	/// 219567, 219579 and 219580 run the same three patterns as 283203/283222/283223, and were bound to
+	/// a class that fed out 219565 and 219566 at three-metre offsets with no lifetime. Retail feeds a
+	/// <c>bidabre</c> cannon — 283200 — onto a fixed mark for seventy seconds.
+	/// <para>
+	/// <b>None of these gates is spawned by anything in our data</b>, so this pin guards a landmine
+	/// rather than a live fight: if one is ever summoned, it now behaves.
+	/// </para>
+	/// </remarks>
+	[Theory]
+	[InlineData(219567)]
+	[InlineData(219579)]
+	[InlineData(219580)]
+	public void TheThirdGateSetFeedsTheRetailCannon(int gateId)
+	{
+		using BossAiHarness harness = BossAiHarness.For(UnstableSplinterpath).WithWorldSize(2048)
+			.WithAi(typeof(YamennesSpawnGateAI), typeof(GatesSummonedAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		harness.Spawn(gateId, 330f, 730f, 216f);
+
+		// Its own opener starts the fight, then the feed clock lands the first cannon at three seconds.
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == Orkanimum));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == 219565));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == 219566));
+	}
 }
