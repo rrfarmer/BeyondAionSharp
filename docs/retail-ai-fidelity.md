@@ -25785,3 +25785,87 @@ this port's phase table fires at **7** — left alone because the table came fro
 entry moves the whole phase sequence, but it is a real disagreement worth a look. Of the audit's
 remaining rows, `StrangeCreatureAI` (6.5s against 120) is unread, and traps still have **no standing
 lifetime at all**.
+
+## Correcting this document: traps are not missing a lifetime
+
+Two entries above say traps have **no standing lifetime at all** in this port and that *"retail expires
+an untriggered trap after 100 or 600 seconds"*. **Both halves of that are wrong, and it was written
+here twice.**
+
+- Skill-summoned traps already carry one. `SummonTrapEffect` schedules a despawn from the skill's own
+  `time` field, which is where a ranger's trap or a guard's trap gets its duration.
+- The 100/600 figure has nothing behind it. A sweep of every `spawn` command in the retail pattern
+  files finds **not one** that names a trap npc, with or without a `live_time` — 370 npcs sit on
+  `ai="trap"` and none of them is spawned by an AI pattern at all. `NTrap_A`, the pattern the strange
+  creature and its relatives use, is two rungs (`on_wake_up`, `on_see_user`), both of which fire once
+  and `despawn_self`. A placed trap standing until something triggers it **is** retail's behaviour.
+
+That also settles the last real-looking row of `audit_lifetime_conflicts.py`. `StrangeCreatureAI`'s
+six-and-a-half seconds is post-firing cleanup, not a lifetime, exactly like the seventy-three
+`TrapNpcAI` rows the tool's own docstring calls noise. **The audit is closed:** three defects found
+(Shabokan's sink, the Tiamat gossip npcs, the mosqua egg) plus one class it pointed at that turned out
+to hold three more (`FireStormAI`), and everything else is noise or already correct.
+
+**What this cost:** the wrong claim sat in this document for several commits and would have led whoever
+picked it up next to add expiry timers that retail does not have. Writing "still missing" is cheap and
+it is not free of consequence — an unchecked gap is a bug report against work nobody has done yet.
+
+## Popuchin's guided bomb, which a player could simply walk away from
+
+`ShulackGuidedBombAI` (217374, retail `Station_Flight_GuiBomb`). Retail's entire pattern:
+
+```
+on_enter_attack_state:
+  > say_to_all STR_CHAT_ShulackNM_06
+  > add_battle_timer BTIMERI_INDEX_0 delay=13000
+  > add_battle_timer BTIMERI_INDEX_1 delay=3000
+on_battle_timer:
+  ? BTIMERI_INDEX_0  > despawn_self
+  ? BTIMERI_INDEX_1  > use_skill target=OBJI_CUR_TARGET skill=SKILLI_INDEX_0
+                     > despawn_self
+```
+
+**It is a three-second fuse. This class made it a proximity mine.** On aggro it started a one-second
+poll and detonated only once its target was **within four units**. There is no distance condition
+anywhere in retail's pattern — the bomb goes off three seconds after it wakes, on whatever it is
+targeting, and whether the blast reaches is the skill's business. So in this port **a player who simply
+kept walking was never hit at all**: two bombs a cycle trailed after him and expired. The boss's
+signature mechanic did nothing.
+
+**And its clock started at the wrong moment.** Ten seconds from spawning, where retail's thirteen run
+from entering attack state. Retail arms nothing at all before aggro.
+
+**Which exposed a missing rung on the boss.** If an untouched bomb has no clock, something has to clear
+it — and retail says what: Popuchin's `on_leave_attack_state` is `control_door` and `despawn
+SPAWN_ID_1`. **That despawn was absent**, and it never showed, because the bomb's invented ten-second
+timer was quietly covering for it. `HandleBackHome` now clears both bomb npcs, which is also what
+retail's `despawn_at_attack_state=TRUE` on the spawn commands means.
+
+**Pins** — four in `ShulackGuidedBombAiTests`, five mutations, all caught. The player in the detonation
+pin stands sixty units away and never moves, which is the case the old class could not hit.
+
+**Two mutations survived their first run because the mutations were wrong, not the fix.** One put the
+ten-second clock on the aggro path instead of the spawn path, where the "nobody aggros it" pin cannot
+see it; the other gated on `GetTarget()`, which is null in the harness, so `?? GetOwner()` made the
+distance zero and the gate always opened. A mutation that does not reproduce the original defect proves
+nothing about the pin. Both were rewritten to bite and both were then caught.
+
+**Deliberately kept:** the 3.2-second gap between detonating and leaving. Retail's `despawn_self` is in
+the same action list as the cast; here the npc has to outlive its own cast.
+
+**Not translated:** the shout, `STR_CHAT_ShulackNM_06`.
+
+**Still missing — Popuchin's own cadences, which are now fully readable.** His pattern
+(`Station_FlightNM`) is in hand and this port's numbers do not match it:
+
+| rung | retail | this port |
+|---|---|---|
+| guided bombs, above 50% | opening 7500, then **40000** | ~20s chain from a 15500 opening |
+| scattered bombs, below 50% | opening 2500, then **25000**, `num_to_spawn=10` at `spawn_range=35` | same chain, ten spawns at range **12** |
+| bombardment, above 50% | 15000 | not modelled separately |
+| storm / bombardment, below 50% | 12500, one gated at `test_probability 30` | not modelled |
+| on aggro | shout `ShulackNM_00` + a cast on the target | door only |
+
+Six `say_to_all` lines across the fight, none of them present. The casts are skill-index rungs and stay
+blocked, but the **spawn counts, ranges and every timer above are not** — that is the next piece of work
+on this boss.

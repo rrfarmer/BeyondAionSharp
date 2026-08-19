@@ -13,6 +13,10 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("popuchin")]
 public class PopuchinAI : AggressiveNpcAI
 {
+    /// <summary>The two bombs he puts out: guided above half health, scattered below it.</summary>
+    public const int GuidedBomb = 217374;
+    public const int ScatteredBomb = 217375;
+
     private bool isHome = true;
     private ScheduledTask bombTask;
 
@@ -48,8 +52,8 @@ public class PopuchinAI : AggressiveNpcAI
                                         WorldPosition p = GetPosition();
                                         if (p != null && p.GetWorldMapInstance() != null)
                                         {
-                                            Spawn(217374, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
-                                            Spawn(217374, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
+                                            Spawn(GuidedBomb, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
+                                            Spawn(GuidedBomb, p.GetX(), p.GetY(), p.GetZ(), (sbyte)p.GetHeading());
                                             StartBombTask();
                                         }
                                     }
@@ -81,6 +85,15 @@ public class PopuchinAI : AggressiveNpcAI
         }
     }
 
+    /// <summary>
+    /// Retail's <c>on_leave_attack_state</c>: <c>control_door</c> and <c>despawn spawn_id=SPAWN_ID_1</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The despawn was missing.</b> Every bomb he had put out stayed where it was when he reset, and
+    /// the guided ones carried a ten-second self-delete only because that class had invented one. With
+    /// the bomb's clock moved onto retail's aggro timer — where it belongs — this is the only thing that
+    /// clears a bomb nobody ever went near, which is exactly the job retail gives it.
+    /// </remarks>
     protected override void HandleBackHome()
     {
         isHome = true;
@@ -89,6 +102,22 @@ public class PopuchinAI : AggressiveNpcAI
         if (bombTask != null && !bombTask.IsDone())
         {
             bombTask.Cancel(true);
+        }
+
+        DespawnBombs();
+    }
+
+    /// <summary>Retail's <c>SPAWN_ID_1</c> for this boss: both bomb npcs.</summary>
+    private void DespawnBombs()
+    {
+        WorldMapInstance instance = GetPosition()?.GetWorldMapInstance();
+        if (instance == null)
+            return;
+
+        foreach (Npc bomb in instance.GetNpcs(GuidedBomb, ScatteredBomb))
+        {
+            if (bomb != null && !bomb.GetLifeStats().IsAboutToDie() && bomb.IsSpawned())
+                bomb.GetController().Delete();
         }
     }
 
@@ -100,7 +129,7 @@ public class PopuchinAI : AggressiveNpcAI
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    RndSpawnInRange(217375, 1, 12);
+                    RndSpawnInRange(ScatteredBomb, 1, 12);
                 }
             }
             return ValueTask.CompletedTask;
