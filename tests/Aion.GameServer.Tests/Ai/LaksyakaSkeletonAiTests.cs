@@ -10,14 +10,12 @@ namespace Aion.GameServer.Tests.Ai;
 /// </summary>
 /// <remarks>
 /// Retail <c>IDTiamat_Rakshaka</c> gives <c>IDTiamat_Rakshaka_Skeleton</c> twenty seconds. This class
-/// summoned four at a time on a three-percent roll per blow and never removed them, so a long fight
-/// accumulated them without bound.
+/// summoned four at a time and never removed them, so a long fight accumulated them without bound.
 /// <para>
-/// <b>The roll cannot be forced.</b> <c>BossAiHarness</c>'s roll helpers reach <c>PatternAi.RollPercent</c>
-/// and this is a Java-parity class calling <c>Rnd.Chance()</c> directly, so the pin lands the blow until a
-/// wave appears. At three percent a blow, five hundred blows miss with probability around three in ten
-/// million — <b>stated rather than hidden</b>, because a bounded retry loop is a real if small source of
-/// flake and the last four flaky pins in this log were all pins that looked deterministic.
+/// <b>These pins used to land up to five hundred blows to force a three-percent roll</b>, because that
+/// roll was how the wave arrived. It is not any more: retail arms the wave on a battle timer at fifteen
+/// seconds and re-arms it at twenty, and the roll is gone. The setup advances the clock instead, and the
+/// retry loop — honestly documented at the time as a small source of flake — goes with it.
 /// </para>
 /// </remarks>
 [Collection("GoldenDataManager")]
@@ -30,7 +28,7 @@ public sealed class LaksyakaSkeletonAiTests
 	private static int Skeletons(BossAiHarness harness) =>
 		harness.LiveNpcs().Count(n => n.GetNpcId() == Skeleton);
 
-	/// <summary>Lands blows until a wave appears, or gives up after five hundred.</summary>
+	/// <summary>Advances to retail's first wave, fifteen seconds into the fight.</summary>
 	private static (BossAiHarness, Npc) WithAWave()
 	{
 		BossAiHarness harness = BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
@@ -40,10 +38,9 @@ public sealed class LaksyakaSkeletonAiTests
 		Player player = harness.SpawnPlayer(646f, 1321f, 488f);
 		harness.Engage(boss, player);
 
-		for (int i = 0; i < 500 && Skeletons(harness) == 0; i++)
-			boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(16));
 
-		Assert.True(Skeletons(harness) > 0, "no wave in five hundred blows");
+		Assert.True(Skeletons(harness) > 0, "no wave sixteen seconds into the fight");
 		return (harness, boss);
 	}
 

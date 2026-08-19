@@ -24,27 +24,52 @@ public class BrigadeGeneralLaksyakaAI : AggressiveNpcAI
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
-        if (Rnd.Chance() < 3)
-            SpawnSummon();
         if (isHome.CompareAndSet(true, false))
             StartSkillTask();
-        if (!isFinalBuff && GetOwner().GetLifeStats().GetHpPercentage() <= 25)
+        if (!isFinalBuff && GetOwner().GetLifeStats().GetHpPercentage() <= RagePercent)
         {
             isFinalBuff = true;
             AIActions.UseSkill(this, 20731);
         }
     }
 
+    /// <summary>Retail's <c>BTIMERI_INDEX_0</c>: sixteen seconds, and sixteen again after every turn.</summary>
+    private static readonly System.TimeSpan EyeFirst = System.TimeSpan.FromSeconds(16);
+    private static readonly System.TimeSpan EyeRepeat = System.TimeSpan.FromSeconds(16);
+
+    /// <summary>Retail's <c>BTIMERI_INDEX_1</c>: fifteen seconds to the first wave, twenty between.</summary>
+    private static readonly System.TimeSpan SkeletonFirst = System.TimeSpan.FromSeconds(15);
+    private static readonly System.TimeSpan SkeletonRepeat = System.TimeSpan.FromSeconds(20);
+
+    /// <summary>Retail's <c>is_hp_in_boundary larger_than=15</c> on both rungs, and its rage percent.</summary>
+    private const int FloorPercent = 15;
+    private const int RagePercent = 15;
+
+    /// <summary>Retail's <c>num_to_spawn</c> and <c>spawn_range</c> on the skeleton wave.</summary>
+    private const int SkeletonCount = 4;
+    private const float SkeletonSpread = 7f;
+
+    private ScheduledTask? eyeTask;
+
     private void StartSkillTask()
     {
-        skeletonTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        eyeTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
         {
             if (IsDead())
                 CancelTask();
             else
                 StartSkeletonEvent();
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(5000), System.TimeSpan.FromMilliseconds(40000));
+        }, EyeFirst, EyeRepeat);
+
+        skeletonTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
+        {
+            if (IsDead())
+                CancelTask();
+            else
+                SpawnSummon();
+            return ValueTask.CompletedTask;
+        }, SkeletonFirst, SkeletonRepeat);
     }
 
     private void CancelTask()
@@ -53,10 +78,26 @@ public class BrigadeGeneralLaksyakaAI : AggressiveNpcAI
         {
             skeletonTask.Cancel(true);
         }
+
+        if (eyeTask != null && !eyeTask.IsCancelled)
+        {
+            eyeTask.Cancel(true);
+        }
     }
 
+    /// <summary>
+    /// Retail's <c>BTIMERI_INDEX_0</c> rung: broadcast 100, which is what makes Tiamat's Eye fire.
+    /// </summary>
+    /// <remarks>
+    /// Misnamed since the port -- it has nothing to do with skeletons. The eye's own pattern answers
+    /// message 100 with a cast; this port applies the effect directly instead, which is the same thing
+    /// said in its own terms.
+    /// </remarks>
     private void StartSkeletonEvent()
     {
+        if (GetLifeStats().GetHpPercentage() <= FloorPercent)
+            return;
+
         Npc tiamatEye = GetPosition().GetWorldMapInstance().GetNpc(283089); // 4.0
         List<Player> players = new List<Player>();
         GetKnownList().ForEachPlayer(player =>
@@ -81,19 +122,28 @@ public class BrigadeGeneralLaksyakaAI : AggressiveNpcAI
     /// </remarks>
     private const int SkeletonLife = 20;
 
+    /// <summary>
+    /// Retail's <c>BTIMERI_INDEX_1</c> rung: four skeletons at his own feet, inside seven metres.
+    /// </summary>
+    /// <remarks>
+    /// <b>This hung off a three per cent roll on every blow he took</b>, so the wave arrived as a
+    /// function of how hard he was being hit rather than on a clock — the same defect Kumbanda had, in
+    /// the same instance. There is no "only if none are standing" guard either: retail's rung has none,
+    /// and at twenty seconds between waves of twenty-second skeletons it does not need one.
+    /// </remarks>
     private void SpawnSummon()
     {
-        if (GetPosition().GetWorldMapInstance().GetNpc(283115) == null) // 4.0
-        {
-            RndSpawn(283115, 4); // 4.0
-        }
+        if (GetLifeStats().GetHpPercentage() <= FloorPercent)
+            return;
+
+        RndSpawn(283115, SkeletonCount);
     }
 
     private void RndSpawn(int npcId, int count)
     {
         for (int i = 0; i < count; i++)
         {
-            Expire(RndSpawnInRange(npcId, 10), SkeletonLife);
+            Expire(RndSpawnInRange(npcId, SkeletonSpread), SkeletonLife);
         }
     }
 

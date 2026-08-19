@@ -25037,3 +25037,60 @@ Windows corrected with them: circles 15-100, avatar **15-70** where this class u
 accompany the circles, the avatar and the rage — all name skill indices, and none of these npcs has a
 row in our npc skill data. The 33/35/100 ladder collapses to one circle set here for the same reason:
 the three rungs differ only in which skill they cast.
+
+## An audit for cadences that are not in the pattern
+
+Terath's black hole at half rate, Chantra's area attack at a sixth, both of Kumbanda's mechanics on a
+roll per blow — three fights in a row with the same defect, and none of it visible by reading the C#,
+because a hand-picked number looks exactly like a deliberate one. They only showed up against the
+pattern.
+
+`tools/client-extract/audit_timer_drift.py` compares the two. For each `[AIName]` class it collects
+every delay retail gives that npc — `add_battle_timer`, `set_idle_timer`, `live_time` — and every delay
+the class schedules, and reports the ones the pattern has no match for.
+
+**A hit is not automatically a defect** and the tool says so: a lifetime this port applies where retail
+leaves an npc standing, a stagger between two spawns retail does inline, or a mechanic the dump does not
+cover will all show up. What it gives is a ranking of where to look.
+
+**Its first version was mostly noise** — skill ids and npc ids sitting on the same line as a scheduling
+call, read as delays. Filtering those by identity against the real skill and npc tables cut the report
+from 96 classes to 73 and turned the top of the list from `21165, 21169, 21170` into real numbers.
+
+## Laksyaka: the skeleton wave hung off a three per cent roll per blow
+
+Retail pattern `IDTiamat_Rakshaka` (219356). Top of the audit's list, and the same instance as Kumbanda.
+
+```
+on_enter_attack_state   timers 0=16000, 1=15000, 2=6000
+timer 0                 broadcast 100 at 100m, cast, re-arm at 16000     (HP 15-100)
+timer 1                 cast, four Skeletons at his own point, spawn_range 7, live 20,
+                        re-arm at 20000                                   (HP 15-100)
+timer 2                 rage below 15 per cent, re-arm at 6000
+```
+
+**This class rolled three per cent on every blow he took for the wave**, so it arrived as a function of
+how hard he was being hit — a hard-hitting group saw several in the first seconds and a careful one saw
+none. The eye broadcast ran at five seconds and then every forty, against retail's sixteen and sixteen.
+Both are on their own timers now, with retail's health floor on each, and the rage moved from
+twenty-five to fifteen.
+
+The wave also had an "only if none are standing" guard. Retail's rung has none and does not need one:
+waves are twenty seconds apart and the skeletons live twenty, so one clears exactly as the next lands.
+Left in, that guard would have suppressed every wave after the first once the timings were right — the
+same trap as Kumbanda's circles, found the same way.
+
+**Pins** — `BrigadeGeneralLaksyakaAiTests`, five, eight mutations, all caught.
+
+**And two older pins had to change.** `LaksyakaSkeletonAiTests` landed **up to five hundred blows** to
+force the three per cent roll, with an honest note at the time that a bounded retry loop is a small
+source of flake. The roll is gone, so the loop is gone: they advance the clock to sixteen seconds. Worth
+noting that the note was right — that pin was a real if small flake risk for as long as the defect it
+was pinning existed.
+
+**Still missing.** The casts on all three rungs name skill indices. `SKILLI_INDEX_2` on the eye rung is
+the one that matters most: this port applies effect 20865 from Tiamat's Eye directly, which stands in
+for retail's broadcast-and-cast, but the boss's own accompanying cast has no equivalent. His `on_die` —
+five condition variables, a door, a fifteen-second gossip npc, broadcast 510 at a hundred metres — and
+his `on_message` handlers for 501/503/504/505 are all untranslated; 504 toggles his attackable flag,
+which is how retail makes him vulnerable, and nothing here sends it.
