@@ -46,10 +46,23 @@ public class GreenfingersAI : AggressiveNpcAI
         }
     }
 
+    /// <remarks>
+    /// <b>The step index has to be read before <c>base</c>.</b> The base handler runs
+    /// <c>WalkManager.ChooseNextRouteStep</c>, which advances the move controller, so after it the index is
+    /// the point being left for and not the one reached. These three routes carry no <c>loop_type</c>, so
+    /// they default to <c>NORMAL</c> and wrap: arriving at the genuine last step read back as index zero
+    /// and never matched, while arriving at the second-to-last read back as the last and did. The helper
+    /// therefore cast its skill and despawned <b>one waypoint early</b>, every run.
+    /// <para>
+    /// The three <c>walkPosition</c> values are 24, 26 and 40 against routes of 25, 27 and 41 steps -- each
+    /// one the final index, so "the end of the route" is unambiguously what was meant.
+    /// <c>ReianBomberAI</c> reads it in the right order already.
+    /// </para>
+    /// </remarks>
     protected override void HandleMoveArrived()
     {
-        base.HandleMoveArrived();
         int point = GetOwner().GetMoveController().GetCurrentStep().GetStepIndex();
+        base.HandleMoveArrived();
         if (walkPosition == point)
         {
             if (isDestroyed.CompareAndSet(false, true))

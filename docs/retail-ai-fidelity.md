@@ -28080,3 +28080,53 @@ loading walker routes, and that path had no pin at all before.
 - Muragan still walks the route with no rest at the points; the client's `stay_duration` values came
   across as `rest_time` in the import and `ChooseNextRouteStep` honours them, so this may already be
   right and has not been checked.
+
+## Dalia's helpers were leaving a waypoint early, and the ordering trap was real
+
+The last entry flagged `GreenfingersAI` and `ReianBomberAI` as reading the step index after `base` and
+said they should not be changed until their patterns had been read. Both have now been read.
+
+**The bomber is fine** — it reads the index before `base` already.
+
+**Greenfingers is not, and the effect is worse than an off-by-one.** Its three helpers each carry a
+`walkPosition`: 24, 26 and 40. Their routes -- `3002500002`, `3002500001`, `3002500003` -- have **25, 27
+and 41 steps**. Every one of those numbers is the final index, so "the end of the route" is unambiguously
+what was meant.
+
+> **None of the three routes carries a `loop_type`, so all three default to `NORMAL` and wrap.** Reading
+> the index after `base` -- which is what runs `ChooseNextRouteStep` -- meant arriving at the genuine last
+> step read back as **index zero** and never matched, while arriving at the second-to-last read back as
+> the last and did.
+
+So the helper stopped, buffed Dalia and despawned **one waypoint before the end of its route, every run**,
+and could never fire at the point it names. The read is moved above `base`.
+
+**Retail's own indices do not settle it, and that is worth being clear about.** `IDF4Re_Drana_NamedA_Sum_1`
+despawns at index 16, `_Sum_2` at 16 and `_Sum_3` at 22, with earlier rungs at 0 and at 7/15. Those are
+indices into *retail's* route, and these three npcs have no `<pathname>` in their patterns, so the client
+route they refer to cannot be resolved and its length is unknown. **The fix here is measured against our
+own data** -- 24 is the last index of a 25-step route -- not against retail's numbering, and the entry
+says so rather than implying a correspondence that was not established.
+
+**One thing retail does that we still do not**: the middle rung. `Sum_1` broadcasts
+`message_type=100000000` at index 7 and `Sum_3` at index 15, partway along the walk. Our class does
+nothing at any intermediate point. What listens for that message is not identified, so it is recorded
+rather than guessed at.
+
+**Pins** — three new, in a class that had none, two mutations, both caught. The interesting one is
+"read the step after base again", which fails both behavioural pins; it is the same mutation that
+`MuraganAI` now carries, and this is the second class it has caught.
+
+**And the first version of the test was wrong in a way worth recording.** It set the walker template
+directly and asserted the helper was not `IDLE`. He was idle -- because he had never been put in the
+`WALKING` state at all, so the arrival never reached `ChooseNextRouteStep` and the pin was measuring the
+setup rather than the code. It now starts him exactly as `DaliaCharlandsAI` does, walker id on the spawn
+then `WalkManager.StartWalking`. **A state the production path sets and the test does not is the same
+class of mistake as an assertion over an empty collection**: everything passes and nothing was exercised.
+
+**Still missing.**
+
+- **The intermediate broadcasts** above, on `Sum_1` and `Sum_3`.
+- **The other two helpers have no pins.** 282177 and 282178 take the same corrected code path, but only
+  282176 is exercised; the other two would catch a `walkPosition` edited to the wrong value for its route.
+- **Lahulahu and Grogget**, both still unwritten and both now unblocked.
