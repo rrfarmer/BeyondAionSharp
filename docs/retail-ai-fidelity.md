@@ -29444,3 +29444,57 @@ things nobody needed to read.
   them, and both are documented as blocked on things other than code — so the genuinely unread part of
   the top band is smaller than 29 and nobody has counted it exactly.
 - Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## Counting what is actually left, and Viloa's nightmares arriving late
+
+Last commit ended saying the genuinely unread part of the top band was smaller than 29 and nobody had
+counted it. Counted: **of 29 top-band rows, 17 are already discussed somewhere in this document and 12
+have never been mentioned at all.** Those twelve are the real queue — Mistress Viloa, Surkana, four
+entries on `TiamatDyingRotationAI`, two on `TwinDoorDestroyerAI`, two on `WaveEventExecutorAI`, and
+Yamennes' spawn gate.
+
+### Mistress Viloa: the mechanic was there, the numbers were not
+
+Retail's `IDAsteria_IU_world_2Stage_Boss` spawns her three Primal Nightmares on
+`on_enter_attack_state`, once, `num_to_spawn=3`, `spawn_range=5`, **and no timer of any kind**.
+
+`MistressViloaAI` is twenty-seven lines that broadcast two messages; the summon comes from
+`spawn_helpers.xml`, which had:
+
+```xml
+<summonGroup npcId="233456" minCount="3" distance="3" schedule="5000"/>
+```
+
+**The count was right and the other two were not.** The nightmares arrived **five seconds after the
+pull** and huddled inside three metres instead of five. Corrected to `distance="5" schedule="0"`.
+
+Five seconds is not cosmetic in a pull: it is long enough for a group to have moved through the space the
+adds were meant to contest, which turns three melee adds into three adds chasing.
+
+**Pins** — two, one mutation, caught. Full solution green at 2,800.
+
+**One honest wrinkle in the pin.** `SummonerAI` always routes a summon group through the scheduler, so
+`schedule="0"` is immediate in production but still needs one tick of the harness clock. The test
+therefore asserts at one second rather than at zero, and says so. What that second measures is still
+real: with `schedule="5000"` it finds nothing.
+
+### Ten rows read
+
+| verdict | count |
+|---|---|
+| explained | 7 |
+| **owed** | **3** — Pashid's strike id, the Eternal Bastion summoner, Viloa's timing |
+
+Viloa is the first row where the mechanic existed and only its **numbers** were wrong, which is a third
+kind of defect after "wrong id" and "absent entirely". The audit found it because it asks whether a class
+names every id its pattern spawns — and a class that delegates to `spawn_helpers.xml` names none of them.
+**That is a blind spot worth stating**: every `SummonerAI` subclass will look like it is missing its adds,
+and the adds may be there with the wrong numbers, as here.
+
+**Still missing.**
+
+- **The eleven unread top-band rows**, now listed by name.
+- **A check for summon data.** The audit could read `spawn_helpers.xml` and compare `minCount`,
+  `distance` and `schedule` against retail's `num_to_spawn`, `spawn_range` and timers. That would turn
+  Viloa's class of defect from a hand-read into a query, and it is the obvious next tool.
+- Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.

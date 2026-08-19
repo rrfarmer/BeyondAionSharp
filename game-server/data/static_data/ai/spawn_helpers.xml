@@ -665,11 +665,14 @@
 			<percentage percent="20" isIndividual="true"/>
 		</summons>
 	</ai>
-	<!-- Mistress Viloa (Nightmare Circus) -->
+	<!-- Mistress Viloa (Nightmare Circus). Retail pattern IDAsteria_IU_world_2Stage_Boss spawns these on
+	     on_enter_attack_state, once, with num_to_spawn=3 and spawn_range=5 and no timer at all: the three
+	     nightmares are on the floor as she is pulled. distance was 3 and schedule 5000 here, so they
+	     arrived tighter and five seconds late. -->
 	<ai npcId="233459">
 		<summons>
 			<percentage percent="100">
-				<summonGroup npcId="233456" minCount="3" distance="3" schedule="5000"/><!-- Primal Nightmare -->
+				<summonGroup npcId="233456" minCount="3" distance="5" schedule="0"/><!-- Primal Nightmare -->
 			</percentage>
 		</summons>
 	</ai>
