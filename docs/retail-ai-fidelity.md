@@ -23636,3 +23636,67 @@ listener that can only cast unknown skills**, so it was not bound.
 
 Build clean. Removing the crystal spawn fails all four pins. **Three consecutive full-suite runs**: 2,191
 passing (four new), 1 skipped.
+
+## Four eggs, not one egg with four formations
+
+Working the invented-spawn audit. Filtering it to `MONSTER` templates cut 102 rows to **56** — the other
+46 were treasure chests, doors and levers, which retail spawns from instance scripts the pattern dump
+does not cover, plus bosses re-placing themselves on reset.
+
+**Two false positives read and dismissed before touching anything.** `IllusionMasterSharikAI` spawning
+its own npc id is a reset-to-spawn idiom, not an invented add. And I concluded from a truncated dump that
+retail's spider eggs "do not spawn spiders at all" — **they do, further down the pattern than the twenty
+lines I had read.** Second time this session a `head` produced a wrong conclusion.
+
+### What the eggs actually do
+
+The Unstable Splinterpath has **four** egg npcs, and each hatches one fixed brood:
+
+| egg | retail pattern | hatches |
+|---|---|---|
+| 219564 | `IDAbRe_Core_Egg_02` | **12 small** |
+| 219581 | `_Egg2_02` | **2 big** |
+| 219582 | `_Egg3_02` | **1 big** |
+| 219583 | `_Egg4_02` | **1 big + 3 small** |
+
+all scattered within five metres, all standing five minutes.
+
+**The class rolled a die between those four compositions**, so which egg the raid broke decided nothing —
+and it hatched **219572/219573/219584**, the `idabre`-prefixed family that **no retail pattern spawns
+anywhere**. 219584 is the sharpest case: it is a third spider species that exists in no hatch at all,
+because `Egg3_02`'s single big spider had been rendered as a creature of its own.
+
+They also stacked on the egg's own point with no lifetime, where retail scatters them and gives each five
+minutes.
+
+### The trigger is left alone, deliberately
+
+Retail's eggs hatch on **`on_despawn`**, and they despawn because `IDAbRe_Core_NamedB_NPC_02` broadcasts
+**111** within ten metres. **That npc is spawned by nothing in this port**, so rewiring the hatch onto
+that chain would trade a mechanic that works for one that never fires. The existing trigger — Kaluva's
+debuff, twenty-eight seconds — is kept and the divergence recorded.
+
+That is the same judgement as the vampire last commit, and the opposite of the one taken for the invented
+golem: **delete invented behaviour that duplicates a real mechanic; keep invented behaviour that is
+currently the only path to a real one.**
+
+### A fifth flaky pin
+
+`TheSecondTimerThrowsFourEveryEighteenSeconds` asserted four cries per throw and failed about **one
+full-suite run in three**. A throw puts four webs out and only the ones landing on somebody speak, so
+with four webs on random targets the tally is regularly under four — **the diagnosis this file already
+records four times.** Moved onto the throw clock, which is what "every eighteen seconds" actually means.
+
+Five flaky pins now, four of them in this one file, every one the same cause.
+
+### Still to do
+
+- **55 remaining rows** in the invented-spawn audit.
+- **Real mutation testing**; 250 spawns named by no pin.
+- **The other eighteen orphan classes**; **Empress Muada**; the four remaining unported-placement
+  classes; the other 568 fights.
+
+### Verification
+
+Build clean. Swapping a brood fails two pins; dropping the lifetime fails a third. **Four consecutive
+full-suite runs**: 2,200 passing (nine new), 1 skipped.

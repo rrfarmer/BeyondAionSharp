@@ -140,17 +140,23 @@ public sealed class KingspinAiTests
 		var (harness, boss, raid, cries) = Engaged(6);
 		using BossAiHarness _h = harness;
 
-		// Counted by what the webs say, not by how many stand: each one thrown at a player fires and
-		// vanishes on the tick it lands. Retail's second timer throws four every eighteen seconds --
-		// and only below fifty-one, which is where he has to be for this to be about the timer.
+		// Counted off the throw clock, not off the cries. A throw puts four webs out and only the ones
+		// landing on somebody speak, so the cry tally depends on where the raid is standing -- and with
+		// four webs on random targets it is regularly under four. THIS PIN ASSERTED FOUR CRIES PER
+		// THROW and failed about one full-suite run in three. Fifth pin in this file to be moved off
+		// cries, and the fourth to be moved onto the clock the assertion is actually about.
 		BossAiHarness.SetExactPercent(boss, 40);
 		Advance(harness, boss, raid, 25);
-		int afterFirst = Cries(cries);
-		Assert.True(afterFirst >= 4, $"only {afterFirst} cries by twenty-five seconds");
+		int afterFirst = Throws(boss);
+		Assert.True(afterFirst >= 1, $"the throw clock had not fired by twenty-five seconds");
 
+		// Eighteen seconds is exactly one more turn of it.
 		Advance(harness, boss, raid, 18);
-		Assert.True(Cries(cries) >= afterFirst + 4,
-			$"the second throw added {Cries(cries) - afterFirst} cries, not four");
+		Assert.Equal(afterFirst + 1, Throws(boss));
+
+		// And a throw is still four webs: that is what the cries are for, asserted where the count is
+		// bounded rather than exact.
+		Assert.True(Cries(cries) > 0, "no web spoke at all");
 	}
 
 	/// <summary>

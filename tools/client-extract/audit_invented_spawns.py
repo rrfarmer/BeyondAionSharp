@@ -90,15 +90,29 @@ def names() -> dict[str, str]:
     return dict(re.findall(r'npc_id="(\d+)"[^>]*?\bname="([^"]*)"', text))
 
 
+def types() -> dict[str, str]:
+    """npc id -> template `type`, used to keep the scenery out of the report."""
+    text = TEMPLATES.read_text(encoding="utf-8")
+    return dict(re.findall(r'npc_id="(\d+)"[^>]*?\btype="([^"]*)"', text))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--patterns-dir", type=pathlib.Path, default=DEFAULT_PATTERNS)
+    # Three legitimate categories swamp this report, and all three are scenery or bookkeeping rather
+    # than adds: treasure chests and doors and levers, which retail spawns from instance scripts the
+    # pattern dump does not cover; bosses re-placing themselves on reset; and bosses summoning the next
+    # phase's boss. Restricting to MONSTER templates drops the first outright and most of the rest.
+    ap.add_argument("--all-types", action="store_true",
+                    help="include non-MONSTER templates (chests, doors, levers, artifacts)")
     args = ap.parse_args()
 
     retail, retail_names, unresolved = retail_spawned(args.patterns_dir)
     devnames = id_to_devname()
     label = names()
+    kind = types()
     unknown_devname = 0
+    scenery = 0
 
     rows = []
     for path in sorted(U.AI_DIR.glob("*.cs")):
@@ -117,6 +131,9 @@ def main() -> int:
                     continue
                 if devname.lower() in retail_names:
                     continue
+                if not args.all_types and kind.get(value) != "MONSTER":
+                    scenery += 1
+                    continue
                 rows.append((path.name, class_name, value, devname))
 
     seen = set()
@@ -129,7 +146,8 @@ def main() -> int:
     print(f"\n{len(seen)} (class, npc) pairs our AI summons that no retail pattern summons")
     print(f"{len(retail)} npc ids and {len(retail_names)} devnames are placed by retail patterns; "
           f"{unresolved} spawn devnames did not resolve through the binding table, and "
-          f"{unknown_devname} of ours have no devname to check")
+          f"{unknown_devname} of ours have no devname to check, and "
+          f"{scenery} are not MONSTER templates")
     return 0
 
 
