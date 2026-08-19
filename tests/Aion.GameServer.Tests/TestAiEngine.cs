@@ -39,18 +39,36 @@ internal static class TestAiEngine
 	private static readonly HashSet<Type> HandRegistered = new();
 	private static bool _allRegistered;
 
-	/// <summary>Binds just <paramref name="aiHandlerTypes"/>, unless the whole registry is already loaded.</summary>
+	/// <summary>Binds <paramref name="aiHandlerTypes"/>, skipping any name the registry already holds.</summary>
+	/// <remarks>
+	/// <b>This used to return early once the full registry was loaded, and that was wrong.</b> A full load
+	/// scans the game-server assembly only, and several pins declare probe handlers of their own in the
+	/// test assembly — <c>talk_probe</c> and friends. Returning early dropped them, so those pins failed
+	/// the moment <c>BossAiHarness</c> started loading the full set.
+	/// <para>
+	/// Registration is therefore additive now: every type is offered, and a duplicate name is skipped
+	/// rather than thrown. <c>AIEngine.RegisterAI</c> throws on a duplicate and offers no lookup, so the
+	/// skip is a catch.
+	/// </para>
+	/// </remarks>
 	internal static void Register(IEnumerable<Type> aiHandlerTypes)
 	{
 		lock (Gate)
 		{
-			if (_allRegistered)
-				return;
-
 			foreach (Type type in aiHandlerTypes)
 			{
-				if (HandRegistered.Add(type))
+				if (!HandRegistered.Add(type))
+					continue;
+
+				try
+				{
 					AIEngine.GetInstance().RegisterAI(type);
+				}
+				catch (ArgumentException)
+				{
+					// Already bound by the full load. Nothing to do; the production class wins, which is
+					// what a test naming a real handler wants anyway.
+				}
 			}
 		}
 	}

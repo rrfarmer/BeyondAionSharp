@@ -649,6 +649,16 @@ public sealed class BossAiHarness : IDisposable
 		/// handlers — <c>general</c>, <c>thick_dust</c> and the like — is not optional for those tests.
 		/// </para>
 		/// </remarks>
+		/// <summary>
+		/// Names the AI handlers this encounter needs.
+		/// </summary>
+		/// <remarks>
+		/// <b>This is documentation, not a restriction.</b> <see cref="Build"/> binds the whole
+		/// <c>[AIName]</c> registry, so an npc whose handler is not named here still resolves. It used to
+		/// throw, which made every rebind of an npc a silent break of unrelated pins; see the comment in
+		/// Build. Keep declaring what an encounter uses -- it says what the test is about -- but do not
+		/// read a passing spawn as proof the list is complete.
+		/// </remarks>
 		public Builder WithAi(params Type[] aiHandlerTypes)
 		{
 			_aiHandlers.AddRange(aiHandlerTypes);
@@ -669,7 +679,6 @@ public sealed class BossAiHarness : IDisposable
 			AIConfig.SHOUTS_ENABLE = false;
 
 			EnsureIdFactory();
-			RegisterAiHandlers(_aiHandlers);
 
 			var staticData = BuildStaticData(_mapId, _worldSize, _walkerRoutes);
 			var dataManager = NewDataManager(staticData);
@@ -681,6 +690,29 @@ public sealed class BossAiHarness : IDisposable
 			// Order mirrors GameServerBootstrapService: pool, ids, data, then the world that reads the data.
 			ThreadPoolManager.RegisterInstance(clock);
 			DataManager.RegisterInstance(dataManager);
+
+			// Then bind every [AIName] handler there is, which needs the real templates registered above
+			// because a full load validates every ai_name in them.
+			//
+			// WHY THIS IS HERE. WithAi used to be the whole registry for a harness test, and an npc whose
+			// AI name was not declared threw "No AI found" out of the spawn -- seven times this session,
+			// most recently when rebinding four npcs off `general` broke seven assertions in a pin that
+			// had been passing for weeks and named none of them.
+			//
+			// It was never a real guarantee either. AIEngine is process-global with no unregister, so once
+			// a boot test loaded the full registry every later harness could resolve every handler: whether
+			// a missing WithAi threw depended on xUnit's ordering. The declaration was, as this file's own
+			// TestAiEngine remarks put it, a floor and not a ceiling.
+			//
+			// So it is a floor everywhere now. WithAi still reads as documentation of what an encounter
+			// needs, and a pin that means to prove a handler is required has to assert the behaviour rather
+			// than lean on the spawn throwing.
+			TestAiEngine.EnsureAllRegistered();
+
+			// And then anything this pin declared that the full load could not see: a probe handler
+			// defined in the test assembly rather than in the game server.
+			RegisterAiHandlers(_aiHandlers);
+
 			world.LoadWorldMaps(staticData.WorldMaps2);
 			GameWorld.RegisterInstance(world);
 

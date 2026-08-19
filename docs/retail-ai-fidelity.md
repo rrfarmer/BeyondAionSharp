@@ -24701,3 +24701,41 @@ binds every `[AIName]` handler the way production boot does; the harness deliber
 instead. **The fix is to let an unknown AI name fall back to the real registry rather than throw**, and
 it is still not done — it changes shared test infrastructure that a hundred pins depend on, and this
 pass had already spent its budget on the audit.
+
+## The harness no longer punishes rebinding an npc
+
+Last commit closed with this as the outstanding item, and it had earned its place: **seven times this
+session a pin failed first with "No AI found for name X"**, and the seventh was not a new pin at all —
+rebinding four npcs off `general` broke seven assertions in `TiamatsIncarnationAiTests`, which had been
+passing for weeks and named none of them.
+
+**`BossAiHarness.Build` now binds the whole `[AIName]` registry**, after the templates are registered
+because a full load validates every `ai_name` in them.
+
+**It was never the guarantee it looked like.** `AIEngine` is process-global with no unregister, so once
+a boot test loaded the full registry, every later harness test could resolve every handler — whether a
+missing `WithAi` threw depended on xUnit's ordering. `TestAiEngine`'s own remarks already said as much:
+the declaration was *"a floor, not a ceiling"*. It is a floor everywhere now, which is at least
+consistent. `WithAi` stays, and still reads as documentation of what an encounter uses; what it no
+longer does is fail a pin for an npc some other change rebound.
+
+**One correction fell out of it.** `TestAiEngine.Register` returned early once the full registry was
+loaded. A full load scans the game-server assembly only, and several pins declare **probe handlers in
+the test assembly** — `talk_probe` and friends — so returning early dropped them and two talk-handler
+pins failed the moment the harness started loading the full set. Registration is additive now: every
+type is offered and a duplicate name is skipped rather than thrown, since `AIEngine.RegisterAI` throws
+on duplicates and offers no lookup.
+
+**Verified by removing a declaration.** With `TiamatIncarnationDeathEffectAiTests` cut down to a single
+`WithAi` entry — dropping the `aggressive_no_loot` its mages need — all six pins still pass. Before
+this change that spawn threw.
+
+Full suite clean three times, 2,523 tests. Suite time moved from about 28 to about 31 seconds for the
+game-server assembly: the assembly scan the boot tests already paid for, now paid once per process
+regardless of which tests run.
+
+**What this costs, stated plainly.** A pin can no longer prove an encounter *needs* a particular
+handler by watching the spawn throw without it. Nothing in this suite was doing that deliberately, but
+it is a real loss: a test that means to make that claim now has to assert the behaviour the handler
+produces. The `WithAi` list is documentation from here on, and a passing spawn is no evidence that the
+list is complete.
