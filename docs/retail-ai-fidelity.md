@@ -26622,3 +26622,45 @@ abyss guards on `simple_abyssguard`**, answer it in retail and do not here — a
 the one whose tribes are hostile by design, so it is the more valuable of the two. Their patterns also
 send 30002 (at **twenty** metres for the chiefs, fifty for the rest), which is the half that makes a
 protector call a killer to itself, and which no class implements at all.
+
+## The village guards answer their killer, on the pairing the mechanic was built for
+
+Last commit established that the killer call works and that the artifact protectors were the awkward
+case — a third of them share the killers' own `GUARD_DRAGON` tribe and correctly ignore them. The
+pairing retail actually designed around is the other one, and this ports it.
+
+`BaseProtectorAI` — the **village chiefs** (`LDF5_Village_chief01`..`19`) and the **Advance village
+guards** (`LDF4_Advance_village_01`..`37`), 113 npcs — carries the same rung in both families:
+
+```
+on_message:
+  ? is_message message_type=30001
+  > add_hate_point target=OBJI_MESSAGE_SENDER point_to_add=1000000
+```
+
+**None of them heard it.** A killer arriving at a village stood there and nothing happened.
+
+**And these tribes are hostile by design**, which is what makes this the valuable half: the Advance
+killers are `LDF4_ADVANCE_DRGUARD`, and that tribe lists `LDF4_ADVANCE_LGUARD` and
+`LDF4_ADVANCE_DGUARD` as `aggro` — in the client's own `npc_tribe_relation.xml` and in ours, checked
+against each other last commit. The pin asserts the hostility directly as well as the behaviour,
+because the previous attempt at this mechanic failed on exactly that point.
+
+**Retail adds no `is_enemy` guard on this rung**, unlike the artifact protectors' version, and none was
+added. The aggro list applies its own tribe test either way; writing one in would be inventing a
+condition the pattern does not have.
+
+**Pins** — four in `AdvanceVillageKillerCallTests`, three mutations, all caught.
+
+**Still missing, and it is the sends.** Nothing in this port lets a guard call a killer *to* itself:
+
+- an **Advance guard** broadcasts `30004` at fifty metres as it enters combat, and then `30002` every
+  **5000** off a battle timer, for as long as the fight lasts;
+- a **village chief** broadcasts `30002` on entering combat and `30003` on dying, alongside two
+  `set_condition_spawn_variable` calls recording which of the three races killed it — `pc_light`,
+  `pc_dark` or `drakan`, each setting a different value.
+
+Both are index-free and reachable; neither is written. Until they are, the loop runs one way only: a
+killer that wakes is answered, but a guard under attack cannot summon one. The 38 abyss guards on
+`simple_abyssguard` also answer 30001 in retail and still do not here — that class is a `PatternAi`
+with an empty pattern, so it is a different shape of change from this one.
