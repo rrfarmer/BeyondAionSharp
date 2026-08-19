@@ -31592,3 +31592,46 @@ tiers; the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named
 `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>`
 schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's
 mine web; Pashid's `npc_skills`.
+
+## Surkana's twelve traps: found, written, and reverted
+
+`Dread_Surkana` carries **twelve** one-shot bands, and this is the first time they have been written
+down:
+
+| handler | thresholds | range | lifetime |
+|---|---|---|---|
+| `on_attacked` | 90, 75, 45, 30, 15 | 2m | 15s |
+| `on_attacked` | **60** | **1m** | **20s** |
+| `on_spelled` | 90, 75, 60, 45, 15 | 1m | 10s |
+| `on_spelled` | **30** | 1m | **15s** |
+
+Each drops one `BIDAb1_Dreadgion_SurkanaNPC` (281287), which runs `NTrap_A`. **Cracking a surkana is
+supposed to litter the deck with traps.** The Java class carries the other half of the same rungs — the
+room aggro, this port's reading of retail's `broadcast_message 6835` naming the attacker — and no trap
+at all.
+
+The two sets are separate one-shots in retail, so a surkana struck **and** cast on at one health owes
+two traps. Collapsing them into six would be tidier and wrong.
+
+### Why it was reverted
+
+The implementation was written, built clean, and **could not be shown to run**. `SurkanaAI` derives from
+`OneDmgNoActionAI : NpcAI`, and in the harness `HandleAttack` is never reached: not before `Engage`, not
+after it with the AI in `FIGHT`, not with the trap spawn moved ahead of the room aggro in case that
+threw. A manual spawn of 281287 in the same harness works, so the npc and the map are fine.
+
+> Twice this session a "cannot be tested" conclusion has been wrong — the death branches and the walk
+> ending. That is an argument for suspecting this one too, **not** for landing behaviour on the strength
+> of it. Unverified code that looks right is exactly what this document keeps finding as the previous
+> author's mistake.
+
+So the change is out and the finding is here, complete enough to reimplement in one sitting: the twelve
+bands above, `Expire(RndSpawnInRange(281287, range), live)`, separate flag arrays per handler.
+
+**Still missing.** **Surkana's twelve traps**, and first the question they turn on: *why does an
+`NpcAI`-derived handler not receive `Attack` in the harness?* Whoever answers that unlocks this and
+every other `noaction`-family encounter. Then: Yamennes' spawn gate; Beritra's four; Orissan's crystal
+tiers; the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows;
+`is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>`
+schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's
+mine web; Pashid's `npc_skills`.
