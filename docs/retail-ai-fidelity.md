@@ -26912,3 +26912,46 @@ leaves. His skill chain, his shouts and the treasure box on his death are also a
 once in these three runs and once in the previous three — consistent with the roughly one-in-six
 measured when the `SystemClock` hook was switched off. It is pre-existing, unrelated to this work, and
 now reported every time because suite runs print failing names.
+
+## The Kingspin flake is fixed, and it was reading the wrong number all along
+
+`KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle` has failed about one run in six since the
+`SystemClock` hook was switched off because of it. It is the only thing that has made this suite
+unreliable, and it turned out to be one line.
+
+**It counted webs that spoke, not throws.** A web only cries if it lands on somebody, so the count moved
+with where four raiders happened to be standing between runs. The deterministic measurement was already
+in the file — `Throws(boss)`, reading the throw clock's own fire count, whose summary says in as many
+words that it *"does not depend on where anyone stands"*. It was written for the pins above it and not
+reached for here. Six full-suite runs and twelve focused runs since, all green.
+
+**And then the pin turned out to assert less than its name claims, for a reason worth recording.**
+With the flake gone the obvious next move was to demand a strict gain instead of "not worse". It does
+not exist to be demanded:
+
+- **Retail guards the cry rung with `set_flag_var`**, so it fires **once per fight, not once per cry** —
+  the first web to catch somebody opens the accelerator windows and the rest do not re-open them. The
+  class already says this in as many words. So at most **one** cycle is ever shortened, and there is no
+  sustained rate to compare.
+- Measured with the deterministic counter, both arms read **three and three**. Changing the watch from
+  three eighteen-second gaps to six nine-second ones — deliberately chosen to sit between his
+  accelerated eight seconds and his quiet fifteen — still read three and three.
+- **Mutating `AcceleratedThrowMillis` from 8s up to 15s and then 30s left both arms at three.** The new
+  mutation runner reported both as survivors, and they are: the acceleration is genuinely unobservable
+  from a throw count.
+
+So the assertion is back to `withCry >= without`, which is what the mechanism supports, and the pin now
+says why in place of leaving it to be rediscovered. What it pins is that the cries do not *cost* him
+throws — which is the defect that was actually found and fixed in that thread.
+
+**The runner earned its keep twice more.** One of the two mutations above was first written against
+`AcceleratedThrowMillis = 8000` when the source says `8_000`; the tool stopped with
+`ANCHOR MATCHED 0 TIMES` rather than reporting a survivor. A throwaway script would have counted it as
+one, and the conclusion of this entry would have been the opposite of the truth.
+
+**Still missing.** The `SystemClock` hook in `BossAiHarness` is still switched off, and this flake was
+the stated reason. Turning it on is now unblocked as far as Kingspin is concerned, but it was also
+measured to make `TahabataGargoyleAiTests` fail about one run in five before that pin was repaired, so
+it needs its own pass with the suite run enough times to see a one-in-six event — twenty runs, not
+three. That would in turn unblock cast-cadence pinning, which is the largest single test-side gap in
+this work.

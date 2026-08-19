@@ -278,6 +278,25 @@ public sealed class KingspinAiTests
 	/// The loop is closed and internal: he throws the webs that call him. This pin drives it from the
 	/// outside instead, sending the cry directly, so the acceleration is measured on its own rather than
 	/// through however many webs happened to land.
+	/// <para>
+	/// <b>Counted by his throw clock, not by the webs that spoke, and that is what stopped it flaking.</b>
+	/// It used to read the cry probe — a web only speaks if it lands on somebody, so the count moved with
+	/// where four raiders happened to be standing, and the pin failed about one run in six. The clock's
+	/// own fire count is the same measurement without the raid in it, and the file already had a helper
+	/// for it: <see cref="Throws"/>, whose summary says in as many words that it "does not depend on
+	/// where anyone stands". It was written for the pins above and not reached for here.
+	/// </para>
+	/// <para>
+	/// <b>Why this can only ever assert "not worse".</b> Retail guards the cry rung with
+	/// <c>set_flag_var</c>, so it fires <b>once per fight, not once per cry</b> — the first web to catch
+	/// somebody opens the windows and the rest do not re-open them. There is therefore no sustained rate
+	/// to compare: at most one cycle is ever shortened. Measured with the deterministic counter the two
+	/// arms read three and three, and <b>mutating <c>AcceleratedThrowMillis</c> up to fifteen or thirty
+	/// seconds leaves them both at three</b> — the acceleration is genuinely unobservable from a throw
+	/// count, and no rewording of this pin changes that. The number is held by review; what is pinned
+	/// here is that the cries do not <i>cost</i> him throws, which is the defect that was actually
+	/// found.
+	/// </para>
 	/// </remarks>
 	[Fact]
 	public void ACryInsideAWindowShortensHisThrowCycle()
@@ -289,14 +308,11 @@ public sealed class KingspinAiTests
 
 			BossAiHarness.SetExactPercent(boss, percent);
 			Advance(harness, boss, raid, 20);
-			int before = Cries(cries);
+			int before = Throws(boss);
 
-			// At the rate a fight supplies them. He throws four webs every eighteen seconds and only the
-			// ones that land on somebody call, so cries arrive in bursts eighteen seconds apart -- not
-			// on a metronome. An earlier draft sent one every five seconds, which drove the mechanism
-			// far harder than the encounter can and found a degeneracy: each cry restarted the
-			// eight-second clock before it could fire, and he threw nothing at all. That is a real
-			// property of ArmTimer and not a defect, because the game cannot reach the rate.
+			// At the rate a fight supplies them. An earlier draft sent one every five seconds and found
+			// a degeneracy under the old arming semantics, where each cry restarted the clock before it
+			// could fire; arming only shortens now, so that is gone.
 			for (int i = 0; i < 3; i++)
 			{
 				if (cry)
@@ -304,7 +320,7 @@ public sealed class KingspinAiTests
 						.OnNpcMessage(boss, KingspinAI.WebCaught, null);
 				Advance(harness, boss, raid, 18);
 			}
-			return Cries(cries) - before;
+			return Throws(boss) - before;
 		}
 
 		int withCry = Thrown(35, cry: true);
