@@ -31396,3 +31396,45 @@ jurdin; `is_aerial_spawn`; the remaining absence claims; the 33 named death-spaw
 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the
 `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
 Dynatoum's mine web; Pashid's `npc_skills`.
+
+## Corrections that span lines, and the size of the message surface
+
+### The wart I left last entry
+
+`--messages` kept reporting `GravityTornadoAI` after its claim had been corrected, because the
+correction filter matched **one line** and a correction rarely fits on the line it corrects — "This used
+to read" sat two lines above the quoted claim.
+
+It matches over a window of six lines either side now: enough to hold the correcting sentence, short
+enough that an unrelated remark further down cannot silence a real claim. Claims fall from 38 to 37, and
+both modes report clean.
+
+### How big the message surface actually is
+
+Having used the same shape twice — Orissan's death notice and the gravity tornado's metronome, both
+"the sender exists here and has no class that broadcasts" — the obvious question is how many more there
+are. Measured:
+
+> **946 message types are both sent and heard by retail patterns that npcs in this port run.**
+
+That number is not a work list and should not be read as one. Two reasons:
+
+* **The "already handled" test is a digit match.** 527 of the 946 appear somewhere in our C#, but `1001`
+  matching a source file proves nothing. A real check would have to look at what sends and what listens,
+  which is what the two fixed cases needed a person for.
+* **Most are guard-family chatter** — 10001, 10004, 30001, 30002 — where the mechanic is already
+  translated structurally by `GuardReinforcementPatterns` and the individual message is irrelevant.
+
+The cleanest unmatched pair is **30009/30010**, sent by 26 patterns and heard by 27, all
+`LDF4_Advance_Killer_*`. Reading one: `on_message 30010 -> despawn_self`. It is the Kamar battlefield
+dismissing one side's npcs as the other advances — a phase mechanic across fifty-three patterns, tied to
+a battlefield state this port may not model, and not something to start at the end of a session.
+
+**Recorded as a measurement, not a backlog.** The two fixes that came from this shape were each found by
+reading one class's own claim, and that remains the way in.
+
+**Still missing.** The 30009/30010 dismissal family; Beritra's support guards; the crystal-tier
+messages; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; hisen's 6401/6402 pair; `is_user`
+pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four
+owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web;
+Pashid's `npc_skills`.

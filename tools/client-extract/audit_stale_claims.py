@@ -52,9 +52,13 @@ ABSENCE = re.compile(
 
 ROUTEISH = re.compile(r"(route|path)", re.I)
 
-# A remark that quotes its own former claim in the act of correcting it is not a claim. Both fixed
-# classes now read "this used to say ... which we do not have", and without this the audit reports them
-# for ever -- which would train the next person to ignore it.
+# A remark that quotes its own former claim in the act of correcting it is not a claim. Fixed classes
+# read "this used to say ... which we do not have", and without this the audit reports them for ever --
+# which would train the next person to ignore it.
+#
+# Matched over a WINDOW of lines, not one line. A correction rarely fits on the line it corrects: the
+# gravity tornado's rewrite put "This used to read" two lines above the quoted claim, so a line-local
+# test still reported it. The window is the remark, which is the unit a human reads anyway.
 CORRECTED = re.compile(r"(used to (say|read|end)|no longer|stopped being true|was true when)", re.I)
 AINAME_RE = re.compile(r'\[AIName\("([^"]+)"\)\]')
 PATHNAME_RE = re.compile(r"<pathname>([^<]+)</pathname>")
@@ -109,12 +113,19 @@ def claims():
     for f in sorted((REPO / "src").rglob("*.cs")):
         if "/obj/" in f.as_posix() or "/bin/" in f.as_posix():
             continue
-        for i, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+        for i, line in enumerate(lines, 1):
             stripped = line.strip()
             if not (stripped.startswith("///") or stripped.startswith("//")):
                 continue
-            if ABSENCE.search(stripped) and not CORRECTED.search(stripped):
-                out.append((f, i, stripped.lstrip("/ ").strip()))
+            if not ABSENCE.search(stripped):
+                continue
+            # Six lines either side: enough to hold the correcting sentence, short enough that an
+            # unrelated remark further down the file cannot silence a real claim.
+            window = " ".join(lines[max(0, i - 7):i + 6])
+            if CORRECTED.search(window):
+                continue
+            out.append((f, i, stripped.lstrip("/ ").strip()))
     return out
 
 
