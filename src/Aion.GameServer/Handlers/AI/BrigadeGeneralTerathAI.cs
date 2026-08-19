@@ -47,16 +47,21 @@ namespace Aion.GameServer.Handlers.AI;
 /// stretch of this fight to spend enraged.
 /// </para>
 /// <para>
-/// <b>Still not translated: the jump.</b> Retail arms it at 35s and re-arms every 55s; this class fires
-/// it off <b>HP phases</b> (90/70/50/30/25). A party that burns Terath quickly still sees a different
-/// fight from retail's there, and the two structures cannot be half-merged — the jump event teleports
-/// him and takes thirty seconds, so moving it onto a timer means re-pinning everything that hangs off
-/// the phase ladder. It wants its own commit.
+/// <b>And the jump is on retail's timer now too.</b> Retail arms <c>BTIMERI_INDEX_1</c> at 35 seconds
+/// when he enters combat and re-arms it at 55 after every jump, guarded by <c>is_hp_in_boundary 15-100</c>
+/// — so the jumps stop below fifteen per cent, where a bare rung re-checks every three seconds and
+/// never fires again. This class fired the jump off <b>HP phases</b> (90/70/50/30/25) instead, which is
+/// a different fight: a raid that burned him quickly got four jumps in a row, and one that ground him
+/// down slowly got none between phases.
+/// <para>
+/// The HP ladder is gone with it. Retail gives Terath no phase ladder at all — the only two health
+/// numbers in his pattern are the 15% floor on the jump and the 14% rage, and both are here.
+/// </para>
 /// </para>
 /// </para>
 /// </remarks>
 [AIName("brigadegeneralterath")]
-public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
+public class BrigadeGeneralTerathAI : AggressiveNpcAI
 {
     /// <summary><c>IDTiamat_FOBJ_SardhaSheild</c>, and retail's own coordinates for it.</summary>
     private const int AethericField = 730692;
@@ -78,7 +83,19 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// <summary>Retail's <c>is_hp_lower_than percent=14</c> on the rage rung.</summary>
     private const int RagePercent = 14;
 
-    private readonly HpPhases hpPhases = new HpPhases(90, 70, 50, 30, 25);
+    /// <summary>Retail's <c>BTIMERI_INDEX_1</c>: 35 seconds to the first jump, 55 between them.</summary>
+    private static readonly TimeSpan JumpFirst = TimeSpan.FromSeconds(35);
+    private static readonly TimeSpan JumpRepeat = TimeSpan.FromSeconds(55);
+
+    /// <summary>
+    /// And the bare rung underneath, which re-checks every three seconds when the guard fails.
+    /// </summary>
+    private static readonly TimeSpan JumpRecheck = TimeSpan.FromSeconds(3);
+
+    /// <summary>Retail's <c>is_hp_in_boundary larger_than=15</c> on the jump rung.</summary>
+    private const int JumpFloorPercent = 15;
+
+    private ScheduledTask? jumpTask;
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
     private ScheduledTask? skillTask;
     private bool canThink = true;
@@ -104,8 +121,9 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
             {
                 StartSkillTask();
             }
+
+            ArmJump(JumpFirst);
         }
-        hpPhases.TryEnterNextPhase(this);
         if (!isFinalBuff && GetOwner().GetLifeStats().GetHpPercentage() <= RagePercent)
         {
             isFinalBuff = true;
@@ -140,7 +158,45 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
         ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20741, 55, GetOwner()).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 5000L);
     }
 
-    public void HandleHpPhase(int phaseHpPercent)
+    private void CancelJumpTask()
+    {
+        if (jumpTask != null && !jumpTask.IsCancelled)
+            jumpTask.Cancel(true);
+        jumpTask = null;
+    }
+
+    /// <summary>Arms retail's jump timer, cancelling anything already on it.</summary>
+    private void ArmJump(TimeSpan delay)
+    {
+        CancelJumpTask();
+        jumpTask = ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            JumpTurn();
+            return ValueTask.CompletedTask;
+        }, (long)delay.TotalMilliseconds);
+    }
+
+    /// <summary>
+    /// One turn of retail's jump timer: jump if he is above the floor, otherwise look again shortly.
+    /// </summary>
+    private void JumpTurn()
+    {
+        if (IsDead() || !GetOwner().IsSpawned())
+            return;
+
+        // Retail's guard is a band, 15 to 100, and the rung under it only re-arms. Below fifteen per
+        // cent he therefore stops jumping for the rest of the fight.
+        if (GetLifeStats().GetHpPercentage() <= JumpFloorPercent)
+        {
+            ArmJump(JumpRecheck);
+            return;
+        }
+
+        ArmJump(JumpRepeat);
+        RunJump();
+    }
+
+    private void RunJump()
     {
         if (isGravityEvent)
             return;
@@ -215,6 +271,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         base.HandleDied();
         CancelskillTask();
+        CancelJumpTask();
         aethericField.GetController().Delete();
         GetPosition().GetWorldMapInstance().SetDoorState(706, true);
         Despawn();
@@ -231,9 +288,9 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     protected override void HandleBackHome()
     {
         base.HandleBackHome();
-        hpPhases.Reset();
         isFinalBuff = false;
         CancelskillTask();
+        CancelJumpTask();
         isGravityEvent = false;
         canThink = true;
         isHome.Set(true);
@@ -246,6 +303,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         base.HandleDespawned();
         CancelskillTask();
+        CancelJumpTask();
     }
 
     public override bool CanThink()

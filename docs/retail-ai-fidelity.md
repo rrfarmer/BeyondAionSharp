@@ -24877,3 +24877,46 @@ ladder. It wants its own commit, and it is the last large piece of this fight.
 
 Also still missing, unchanged from the earlier entry: his `on_die` (four condition variables, a door, a
 fifteen-second gossip npc) and `on_leave_attack_state` (dispel and heal).
+
+## Terath's jump is on retail's timer, and his HP ladder is gone
+
+Retail pattern `IDTiamat_Sardha` (219354). This finishes the cadence work deferred twice.
+
+```
+on_enter_attack_state   BTIMERI_INDEX_1 = 35000
+on_battle_timer p9      timer 1 AND is_hp_in_boundary 15-100
+                        -> collision off/on, cast, teleport to (1030.03, 301.83, 409.09, dir 90),
+                           two jump boxes (live 29), the gravity pair (live 24), cast,
+                           re-arm timer 1 at 55000
+on_battle_timer p7      timer 1 -> re-arm at 3000        (the bare rung under the guard)
+```
+
+**This class fired the jump off HP phases** — 90/70/50/30/25 — which is a different fight in both
+directions: a raid that burned him quickly got four jumps in a row, and one that ground him down slowly
+got none at all between thresholds. It is on the timer now: thirty-five seconds to the first, fifty-five
+between, and **no jumps at all below fifteen per cent**, where retail's guard fails and the bare rung
+re-checks every three seconds forever.
+
+**The HP ladder is gone with it.** Retail gives Terath no phase ladder — the only two health numbers in
+his whole pattern are the 15% floor on the jump and the 14% rage, and both are now here and pinned.
+
+**Pins** — three more in `BrigadeGeneralTerathAiTests` (ten in the class now), six mutations, all
+caught. Four existing pins drove the jump by dropping his health and were rewritten to advance the
+clock; they were asserting the trigger this commit removes.
+
+**The floor's value needed its own pin.** "Below fifteen he stops jumping" only ever asks about twelve
+per cent, so a guard set anywhere from sixteen to ninety-nine passes it — raising the floor to half
+health **survived** the sweep. A second pin at thirty per cent, where he must still jump, is what
+separates fifteen from any other number. That is the third time this session a pin has been strong
+about the behaviour and silent about the constant behind it.
+
+**A divergence this commit exposes rather than introduces.** This class cancels the black-hole task
+while the jump event runs and restarts it thirty seconds later; **retail never touches timer 2 from the
+jump rung**, so its black holes keep coming through the jump. The black-hole cadence pin now measures
+the stretch before the first jump so that it asserts the cadence rather than the interruption. Fixing
+the interruption is a separate change: the event walks Terath across the room, and whether a black hole
+should follow him or stay where it opened is not something the pattern answers.
+
+**Still missing**, unchanged: his `on_die` — four condition spawn variables, a door, a fifteen-second
+gossip npc — and `on_leave_attack_state`, which dispels and heals. Both need machinery this port does
+not have for that instance.

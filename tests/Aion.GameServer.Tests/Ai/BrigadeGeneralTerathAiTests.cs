@@ -80,8 +80,8 @@ public sealed class BrigadeGeneralTerathAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc terath = Engaged(harness);
 
-		BossAiHarness.SetHpPercent(terath, 89);
-		terath.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, terath);
+		// Retail's jump timer: thirty-five seconds after he enters combat.
+		harness.Clock.Advance(TimeSpan.FromSeconds(36));
 
 		Assert.Equal(2, Count(harness, JumpBoxFx));
 		Assert.Equal(0, Count(harness, VituperatorsAssassin));
@@ -107,15 +107,15 @@ public sealed class BrigadeGeneralTerathAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc terath = Engaged(harness);
 
-		BossAiHarness.SetHpPercent(terath, 89);
-		terath.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, terath);
+		// Retail's jump timer: thirty-five seconds after he enters combat.
+		harness.Clock.Advance(TimeSpan.FromSeconds(36));
 
 		float[] posts = harness.LiveNpcs().Where(n => n.GetNpcId() == JumpBoxFx)
 			.Select(n => n.GetX()).OrderBy(x => x).ToArray();
 		Assert.Equal(1002.07f, posts[0], 2);
 		Assert.Equal(1056.8f, posts[1], 2);
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(28));
+		harness.Clock.Advance(TimeSpan.FromSeconds(27));
 		Assert.Equal(2, Count(harness, JumpBoxFx));
 
 		// Inside the one second between retail's live time and this class's own sweep.
@@ -136,10 +136,10 @@ public sealed class BrigadeGeneralTerathAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc terath = Engaged(harness);
 
-		BossAiHarness.SetHpPercent(terath, 89);
-		terath.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, terath);
+		// Retail's jump timer: thirty-five seconds after he enters combat.
+		harness.Clock.Advance(TimeSpan.FromSeconds(36));
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(9));
+		harness.Clock.Advance(TimeSpan.FromSeconds(8));
 		Assert.Equal(0, Count(harness, GravityUp));
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
@@ -184,6 +184,13 @@ public sealed class BrigadeGeneralTerathAiTests
 	/// This is the half of the correction that changes how the fight feels: at thirty seconds a raid saw
 	/// the hazard half as often as retail's. Counted by arrivals rather than by what is standing, because
 	/// each black hole closes itself after ten seconds.
+	/// <para>
+	/// The window stops short of thirty-five seconds on purpose. <b>This class cancels the black hole
+	/// while the jump event runs</b> and restarts it thirty seconds later, which retail does not do —
+	/// retail's timer 2 is never touched by the jump rung. That divergence is recorded in
+	/// docs/retail-ai-fidelity.md rather than fixed here, and this pin measures the stretch before the
+	/// first jump so it asserts the cadence and not the interruption.
+	/// </para>
 	/// </remarks>
 	[Fact]
 	public void TheBlackHoleReturnsEveryFifteenSeconds()
@@ -191,10 +198,10 @@ public sealed class BrigadeGeneralTerathAiTests
 		using BossAiHarness harness = NewHarness();
 		Engaged(harness);
 
-		// Twelve seconds to the first, then one every fifteen: four inside the first minute.
-		BossAiHarness.Watched seen = harness.WatchNew(60, null, BlackHoleTicker);
+		// Twelve seconds to the first, then one every fifteen: two inside the first thirty-three.
+		BossAiHarness.Watched seen = harness.WatchNew(33, null, BlackHoleTicker);
 
-		Assert.Equal(4, seen.Total);
+		Assert.Equal(2, seen.Total);
 	}
 
 	/// <summary>
@@ -223,5 +230,71 @@ public sealed class BrigadeGeneralTerathAiTests
 		terath.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, terath);
 		Assert.True(terath.GetEffectController().HasAbnormalEffect(20942),
 			"Terath did not enrage at thirteen per cent");
+	}
+
+	/// <summary>
+	/// <b>He jumps again fifty-five seconds later, and not on any health threshold.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail arms <c>BTIMERI_INDEX_1</c> at 35 seconds and re-arms it at 55 after every jump. This class
+	/// fired the jump off HP phases, so a raid that burned him quickly saw four jumps in a row and one
+	/// that ground him down slowly saw none between phases.
+	/// </remarks>
+	[Fact]
+	public void HeJumpsAgainFiftyFiveSecondsLater()
+	{
+		using BossAiHarness harness = NewHarness();
+		Engaged(harness);
+
+		// First jump at 35; the boxes it drops live 29 seconds, so by 70 the room is clear again.
+		harness.Clock.Advance(TimeSpan.FromSeconds(70));
+		Assert.Equal(0, Count(harness, JumpBoxFx));
+
+		// Second jump at 90, with no change in health at all.
+		harness.Clock.Advance(TimeSpan.FromSeconds(21));
+		Assert.Equal(2, Count(harness, JumpBoxFx));
+	}
+
+	/// <summary>
+	/// <b>And below fifteen per cent he stops jumping.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's rung is guarded by <c>is_hp_in_boundary larger_than=15 less_than=100</c>, and the bare
+	/// rung underneath only re-arms at three seconds — so once he is under the floor the jump never comes
+	/// again. That is the opposite of the HP ladder this class had, which fired a jump <i>because</i> he
+	/// had dropped past a threshold.
+	/// </remarks>
+	[Fact]
+	public void BelowFifteenPerCentHeStopsJumping()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc terath = Engaged(harness);
+
+		BossAiHarness.SetHpPercent(terath, 12);
+
+		// Past the first jump, and past two more turns of the fifty-five second clock.
+		harness.Clock.Advance(TimeSpan.FromSeconds(150));
+
+		Assert.Equal(0, Count(harness, JumpBoxFx));
+	}
+
+	/// <summary>
+	/// <b>But at thirty per cent he still jumps.</b> The floor is fifteen, not "wounded".
+	/// </summary>
+	/// <remarks>
+	/// Without this the floor's <i>value</i> is unpinned: a guard set anywhere between sixteen and
+	/// ninety-nine passes the pin above, because that one only ever asks about twelve per cent. Raising
+	/// the floor to half health survived the mutation sweep until this case was added.
+	/// </remarks>
+	[Fact]
+	public void AtThirtyPerCentHeStillJumps()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc terath = Engaged(harness);
+
+		BossAiHarness.SetHpPercent(terath, 30);
+		harness.Clock.Advance(TimeSpan.FromSeconds(36));
+
+		Assert.Equal(2, Count(harness, JumpBoxFx));
 	}
 }
