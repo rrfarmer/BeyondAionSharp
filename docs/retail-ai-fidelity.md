@@ -31770,3 +31770,108 @@ Yamennes gate coordinates; Beritra's four; Orissan's crystal tiers; the 30009/30
 jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_user` pinned one seam short;
 `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.
+
+## Idgel Dome's wave: seventeen attackers that never spoke
+
+`SealWaveAttackerAI` — retail patterns `IDSeal_Wave_Fi`, `_As`, `_Ra`, `_Wi`, `_Pr`.
+Npcs 236204-236215 and 855844-855848.
+
+**Found by extending the family-split audit past what it can see.** `audit_odd_ai.py` reported the
+As/Fi/Ra families as splits: `Group1` carried `wave_attacker` and `Group2`, `Group3` and the `B...`
+variant carried plain `aggressive_no_loot`. Reading the whole `IDSeal_Wave*` set rather than just the
+rows the audit printed turned up two more families the audit **cannot** report — `IDSeal_Wave_Wi` and
+`IDSeal_Wave_Pr`, where *every* member is generic, so there is no minority to be the odd one out. The
+wizard and the priest had been missed entirely, and the audit is structurally blind to that shape.
+
+**The first plan was wrong.** The obvious move was to extend `wave_attacker` to the fourteen siblings,
+the way the scene bombers were extended. Reading the retail patterns first is what stopped it: the
+class does not do what the pattern does.
+
+### What the aionemu class does, and what retail does
+
+`WaveAttackerAI` watches for a creature of tribe `IDSEAL_PCGUARD` and then adds ten thousand hate to
+npcs `236248` and `236249`, unconditionally, by id.
+
+Retail has that rung. It is priority 1, `INSTANT`:
+
+```
+? test_probability percent=10
+? is_message message_type=22760
+> add_hate_point target=OBJI_MESSAGE_SENDER point_to_add=10000
+```
+
+236248 and 236249 **are** `IDSeal_Forward_Guard_Li_Fi` and `_Da_Fi`, and they are the senders of 22760.
+So the port had the right two npcs and the right ten thousand wired to the wrong trigger: a certainty
+where retail rolls one in ten, and both guards where retail hates *whichever one spoke*. Extending that
+class to fourteen more npcs would have propagated the approximation, not fixed anything.
+
+### The mechanic
+
+**Calling for help.** Two one-shot bands, `41..69` and below `40` (`is_hp_in_boundary` is exclusive at
+both ends), each guarded on `is_user`. The two flags `BETA_1` and `BETA_2` are **shared between
+`on_attacked` and `on_spelled`**, so an attacker being hit and cast at in the same band calls once.
+
+The shout differs per class, and this is why they are five patterns rather than one:
+
+| class | message | melee reach | spell reach | names |
+|---|---|---|---|---|
+| Fi (tank) | 22756 | 100 | 100 | **itself** |
+| As | 22755 | 100 | 100 | attacker / caster |
+| Ra, Wi | 22754 | 100 | 100 | attacker / caster |
+| Pr (healer) | 22755 | **15** | 100 | attacker / caster |
+
+The tank naming *itself* is a request to be healed rather than a point at anybody, which is why
+`Do.BroadcastAboutSelf` had to exist — `Do.Broadcast` names the current target or nobody, and nobody is
+a different message.
+
+**Answering one.** The tank alone answers, and only the healer's call: hearing 22755 from tribe
+`IDSeal_Wave_Healer`, a tank already fighting the player the message names peels off to somebody else.
+Both the healer and the assassin broadcast 22755.
+
+**Being dismissed.** 22764 through 22771, eight separate rungs, each `despawn_self`. Sent by the scene
+messengers of scenes 18-21 in both faction variants and by three others. This is how the room clears
+when the fight moves on rather than when the last one dies — nothing here did that.
+
+### `tribe_name`: 1,205 conditions that were invisible
+
+`is_tribe` printed as a bare argumentless guard because `tribe_name` was missing from
+`summarize_pattern.py`'s field list, exactly the way `is_race` read before `race_type` was added to it.
+**1,205 conditions in the 5.8 files carry one.** The tag is now in `KEEP`.
+
+It is not cosmetic here: `tribe_name=IDSeal_Wave_Healer` is the *entire* difference between the 22755
+the tanks answer and the 22755 they ignore. Without it the peel-off cannot be written correctly, and a
+pin for it would pass either way.
+
+The tribes were already right in `npc_templates.xml` — `IDSEAL_WAVE_TANKER`, `_DEALER`, `_HEALER` —
+which is another instance of correct data that nothing read.
+
+### New DSL
+
+`When.AttackedByPlayer`, `When.SpelledByPlayer` (`is_user` on the two combat handlers, distinct from
+`KilledByPlayer` which asks a different question), `When.SenderTribe`, `When.MessageParamIsMyTarget`,
+and `Do.BroadcastAboutSelf`.
+
+### Pins
+
+Eighteen, all seven mutations caught. The `is_user` pin **survived its mutation on the first writing**
+and the reason is worth keeping: it had the tank holding a *player*, so deleting the guard made the
+healer call and name the forward guard — which is not what the tank was on, so the peel-off correctly
+did nothing either way. The pin was measuring the wrong half of the branch. Putting the tank on the
+guard makes the named npc the tank's own target and the guard becomes the only thing between the
+npc-on-npc brawl and a scattered room.
+
+### Still missing
+
+- **The command buff.** Priority 20 answers 22750 — broadcast by all nine wave leaders — with
+  `use_skill SKILLI_INDEX_0`. Blocked on skill indices, like everything else that needs them. It is the
+  one thing the leaders say that the rank and file would answer.
+- **The ten leaders.** `IDSeal_Wave_LeaderGourp_*` (236216-236220) and `IDSeal_Wave1..5_Leader_Lv3`
+  (236239-236243) still run `wave_attacker`. They are three more retail patterns, they are the senders
+  of 22750 and hearers of 22754/22755/22756, and they are the other half of this conversation. Left on
+  the aionemu class deliberately: they at least hear 22760's family, so the approximation is in the
+  right room, and rebinding them without porting their patterns would be a downgrade.
+- **`IDSeal_Wave1/2/3_Leader_Lv1` and `Lv2`** (four npcs) are on `aggressive_no_loot` with no class at
+  all; `IDSeal_WaveTimer_Lv2/Lv3`, `IDSeal_Wave_Bonus1..4`, `IDSeal_Wave_Checker`,
+  `IDSeal_WaveStart_Lv3_Da/Li` and `IDSeal_Wave_Arrow_Target` are likewise generic. The wave's
+  *scaffolding* — what starts a wave, what times it, what scores it — is entirely unported.
+- **`IDSeal_Wave_Door_Destroyer`** (2 npcs, `aggressive`) is the other sender of 22760.

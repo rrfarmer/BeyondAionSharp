@@ -454,6 +454,54 @@ public static class When
     public static PatternCondition AttackerClass(params PlayerClass[] classes)
         => ai => ai.LastAttacker is Player hitter && classes.Contains(hitter.GetPlayerClass());
 
+    /// <summary>
+    /// <c>is_user</c> on <c>on_attacked</c> — the blow that just landed came from a player.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from <see cref="KilledByPlayer"/>, which is the same retail word on a death handler and
+    /// asks a different question: who did the most damage over the whole fight, rather than who swung
+    /// last.
+    /// <para>
+    /// Retail leans on this to keep NPC-on-NPC scuffles from setting off crowd behaviour. Idgel Dome's
+    /// wave attackers call for help at two health bands, and this guard is what stops the raid's own
+    /// forward guards triggering that call while they trade blows with the wave.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition AttackedByPlayer => ai => ai.LastAttacker is Player;
+
+    /// <summary><c>is_user</c> on <c>on_spelled</c> — the spell came from a player, not an NPC.</summary>
+    public static PatternCondition SpelledByPlayer => ai => ai.LastCaster is Player;
+
+    /// <summary>
+    /// <c>is_tribe target=OBJI_MESSAGE_SENDER tribe_name=...</c> — who is talking, by role rather than
+    /// by NPC id.
+    /// </summary>
+    /// <remarks>
+    /// <b>1,205 conditions in the 5.8 files carry a <c>tribe_name</c></b>, and every one of them was
+    /// invisible here until now: the summariser's field list did not include the tag, so <c>is_tribe</c>
+    /// printed as a bare argumentless guard — exactly the way <c>is_race</c> did before <c>race_type</c>
+    /// was added to that list.
+    /// <para>
+    /// It matters because retail addresses a whole role at once rather than an NPC id. Idgel Dome's wave
+    /// healer and its wave assassin both broadcast 22755; only the healer's call makes the tanks peel
+    /// off, and <c>tribe_name=IDSeal_Wave_Healer</c> is the entire difference between the two.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition SenderTribe(params TribeClass[] tribes)
+        => ai => ai.MessageSender is Npc sender && tribes.Contains(sender.GetTribe());
+
+    /// <summary>
+    /// <c>is_my_curent_target who=OBJI_MESSAGE_PARAM</c> (retail's own spelling) — the player named in
+    /// the message is the one this NPC is already fighting.
+    /// </summary>
+    /// <remarks>
+    /// The point of a call-out: a message naming a player is only interesting to whoever is on that
+    /// player. Everyone else in range hears it and does nothing, which is why the guard sits on the
+    /// branch rather than on the broadcast.
+    /// </remarks>
+    public static PatternCondition MessageParamIsMyTarget
+        => ai => ai.MessageParam is Creature named && ReferenceEquals(named, ai.CurrentTarget);
+
     /// <summary><c>is_race from=OBJI_CUR_TARGET</c>.</summary>
     public static PatternCondition TargetRace(params Race[] races)
         => ai => ai.CurrentTarget is Creature target && races.Contains(target.GetRace());
@@ -672,6 +720,10 @@ public static class Do
     /// <summary><c>broadcast_message param_obj=OBJI_CASTER</c>.</summary>
     public static PatternAction BroadcastAboutCaster(int messageType, float range)
         => ai => ai.BroadcastAboutCaster(messageType, range);
+
+    /// <summary><c>broadcast_message param_obj=OBJI_SELF</c>.</summary>
+    public static PatternAction BroadcastAboutSelf(int messageType, float range)
+        => ai => ai.BroadcastAboutSelf(messageType, range);
 
     /// <summary>
     /// <c>use_skill(OBJI_SELF, SKILLI_INDEX_0)</c> where the NPC's list holds exactly one skill.

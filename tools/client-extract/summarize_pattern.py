@@ -54,6 +54,11 @@ KEEP = {
     # at, and the black claw tamers for three; none of that was visible until the raw XML was read by
     # hand. `seconds` is the whole content of the action it appears in, exactly like `delay`.
     "seconds", "push_state",
+    # `is_tribe` was read the same way `is_race` was -- as an argumentless guard -- and it is not
+    # rare either: 1,205 conditions in the 5.8 files carry a `tribe_name`. Idgel Dome's wave healer
+    # and its wave assassin broadcast the SAME message number, and `tribe_name=IDSeal_Wave_Healer`
+    # is the only thing that separates the call the tanks answer from the one they ignore.
+    "tribe_name",
     # `is_race` was read as an argumentless guard for months and treated as unusable because of it.
     # Every one of the 2,879 `is_race` conditions in the 5.8 files carries a `race_type`, and the
     # value is the whole content of the guard: `gchief_light` and `gchief_dark` are what makes a

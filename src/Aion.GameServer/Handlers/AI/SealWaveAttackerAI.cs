@@ -1,0 +1,164 @@
+using System.Collections.Generic;
+using System.Linq;
+using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects;
+using static Aion.GameServer.Ai.Pattern.AiPattern;
+
+namespace Aion.GameServer.Handlers.AI;
+
+/// <summary>
+/// Idgel Dome's seventeen rank-and-file wave attackers — retail patterns <c>IDSeal_Wave_Fi</c>,
+/// <c>_As</c>, <c>_Ra</c>, <c>_Wi</c> and <c>_Pr</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>The wave is a conversation, and none of it was being had.</b> Fourteen of the seventeen ran plain
+/// <c>aggressive_no_loot</c>; the other three ran <see cref="WaveAttackerAI"/>, which is aionemu's
+/// approximation and does something retail does not.
+/// </para>
+/// <para>
+/// <b>What the approximation got wrong.</b> That class watches for a creature of tribe
+/// <c>IDSEAL_PCGUARD</c> and then adds ten thousand hate to npcs <c>236248</c> and <c>236249</c>,
+/// unconditionally, by id. Retail's rung is the same ten thousand hate for the same two npcs — 236248
+/// and 236249 <em>are</em> <c>IDSeal_Forward_Guard_Li_Fi</c> and <c>_Da_Fi</c> — but it is reached by
+/// <b>hearing message 22760 from one of them, at a one-in-ten chance</b>, and the hate lands on
+/// <em>whichever guard spoke</em>. So the port had the right numbers wired to the wrong trigger: a
+/// certainty where retail rolls, and both guards where retail picks the one that called.
+/// </para>
+/// <para>
+/// <b>Calling for help.</b> Each attacker shouts once when it drops under seventy and once more under
+/// forty — the two bands share retail's <c>BETA_1</c> and <c>BETA_2</c> flags across both the melee and
+/// the spell handler, so a fighter that is being hit and cast at still calls twice, not four times.
+/// Every band is guarded on <c>is_user</c>: the wave and the raid's forward guards fight each other, and
+/// without the guard that brawl would set the whole room shouting.
+/// </para>
+/// <para>
+/// <b>Which shout, and what it names,</b> is the difference between the five classes and is the reason
+/// they are five patterns rather than one. The ranged pair name their attacker, the tank names
+/// <em>itself</em> — it is asking to be healed, not pointing at anybody — and the priest's melee call
+/// carries fifteen metres where every other call carries a hundred.
+/// </para>
+/// <para>
+/// <b>Answering one.</b> The only call answered inside this family is the tank's: on hearing 22755 from
+/// the wave <em>healer</em>, a tank already fighting the player the message names peels off to somebody
+/// else. Both the healer and the assassin broadcast 22755 and only the healer's counts, which is what
+/// <c>tribe_name</c> is for and why <see cref="When.SenderTribe"/> had to exist before this could be
+/// written at all.
+/// </para>
+/// <para>
+/// <b>Being dismissed.</b> Eight message numbers, 22764 through 22771, each end the wave. They are sent
+/// by the scene messengers of scenes 18 through 21 in both factions' variants, and by three others; a
+/// wave attacker answers all eight with <c>despawn_self</c>, which is how a room clears when the fight
+/// moves on rather than when the last one dies.
+/// </para>
+/// <para>
+/// <b>Not translated:</b> the command buff. Retail's priority-20 rung answers 22750 — broadcast by all
+/// nine wave leaders — with <c>use_skill SKILLI_INDEX_0</c>, and this port cannot resolve a skill index
+/// to a skill id. The rung is left out rather than left ticking on an empty branch, the same call made
+/// for <see cref="DivineHisenAI"/>'s two heartbeats. It is the one thing the leaders say that the rank
+/// and file would answer, so it is worth recovering when indices are.
+/// </para>
+/// </remarks>
+[AIName("seal_wave_attacker")]
+public class SealWaveAttackerAI : PatternAi
+{
+	/// <summary>The tank's call, naming itself: <c>IDSeal_Wave_Fi</c> only.</summary>
+	public const int TankCall = 22756;
+
+	/// <summary>The ranged pair's call: <c>IDSeal_Wave_Ra</c> and <c>_Wi</c>.</summary>
+	public const int RangedCall = 22754;
+
+	/// <summary>Sent by both <c>IDSeal_Wave_As</c> and <c>IDSeal_Wave_Pr</c>; only the priest's is answered.</summary>
+	public const int MeleeCall = 22755;
+
+	/// <summary>Broadcast by the forward guards. A one-in-ten chance of taking it personally.</summary>
+	public const int GuardTaunt = 22760;
+
+	/// <summary>Retail's <c>point_to_add=10000</c>, on the guard that spoke.</summary>
+	public const int TauntHate = 10000;
+
+	/// <summary>Retail's eight wave-end numbers. Every one of them means leave.</summary>
+	public static readonly int[] WaveOver = [22764, 22765, 22766, 22767, 22768, 22769, 22770, 22771];
+
+	/// <summary>Retail's <c>FLAGVARI_BETA_1</c> and <c>BETA_2</c>, shared by the melee and spell handlers.</summary>
+	private const int MidBand = 1;
+	private const int LowBand = 2;
+
+	/// <summary>Retail's usual reach. The priest's melee call is the one exception.</summary>
+	private const float FarCall = 100f;
+	private const float PriestMeleeCall = 15f;
+
+	private static readonly AiPattern Tank = Build(TankCall, FarCall, FarCall, namesSelf: true, peelsOff: true);
+	private static readonly AiPattern Assassin = Build(MeleeCall, FarCall, FarCall);
+	private static readonly AiPattern Ranged = Build(RangedCall, FarCall, FarCall);
+	private static readonly AiPattern Priest = Build(MeleeCall, PriestMeleeCall, FarCall);
+
+	public SealWaveAttackerAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => GetOwner().GetNpcId() switch
+	{
+		236204 or 236208 or 236212 or 855844 => Tank,
+		236205 or 236209 or 236213 or 855845 => Assassin,
+		855847 => Priest,
+		_ => Ranged,
+	};
+
+	/// <summary>
+	/// The five patterns differ only in the number they shout, how far it carries, whether it names the
+	/// sender or the attacker, and whether the tank's peel-off rung is present.
+	/// </summary>
+	private static AiPattern Build(int call, float meleeRange, float spellRange,
+		bool namesSelf = false, bool peelsOff = false)
+	{
+		// is_hp_in_boundary is exclusive at both ends, so larger_than=40 less_than=70 is 41 to 69.
+		PatternAction MeleeShout() => namesSelf
+			? Do.BroadcastAboutSelf(call, meleeRange)
+			: Do.BroadcastAboutAttacker(call, meleeRange);
+		PatternAction SpellShout() => namesSelf
+			? Do.BroadcastAboutSelf(call, spellRange)
+			: Do.BroadcastAboutCaster(call, spellRange);
+
+		List<PatternBranch> onMessage = [];
+
+		// Retail gives each dismissal its own rung, priorities 98 down to 91, highest number first.
+		int priority = 98;
+		foreach (int over in WaveOver.Reverse())
+			onMessage.Add(Branch(priority--, "the wave is over", [When.Message(over)], Do.DespawnSelf()));
+
+		if (peelsOff)
+		{
+			onMessage.Add(Branch(21, "the healer named who I am on, so get off them",
+				[When.Message(MeleeCall), When.SenderTribe(TribeClass.IDSEAL_WAVE_HEALER),
+					When.MessageParamIsMyTarget],
+				Do.SwitchTarget(AggroTarget.RANDOM_EXCEPT_CURRENT_TARGET)));
+		}
+
+		onMessage.Add(Branch(1, "one time in ten, take the guard's shout personally",
+			[When.Chance(10), When.Message(GuardTaunt)],
+			Do.HateMessageSender(TauntHate)));
+
+		return new AiPattern
+		{
+			OnAttacked = Of(
+				Branch(3, "under forty", [When.HpBelow(40), When.AttackedByPlayer, When.FirstTime(LowBand)],
+					MeleeShout()),
+				Branch(2, "under seventy", [When.AttackedByPlayer, When.HpBetween(41, 69), When.FirstTime(MidBand)],
+					MeleeShout())),
+
+			OnSpelled = Of(
+				Branch(5, "under forty", [When.HpBelow(40), When.SpelledByPlayer, When.FirstTime(LowBand)],
+					SpellShout()),
+				Branch(4, "under seventy", [When.SpelledByPlayer, When.HpBetween(41, 69), When.FirstTime(MidBand)],
+					SpellShout())),
+
+			OnMessage = [.. onMessage],
+		};
+	}
+}

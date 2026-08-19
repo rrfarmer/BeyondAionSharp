@@ -565,6 +565,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     public void BroadcastAboutCaster(int messageType, float range)
         => BroadcastAbout(messageType, range, LastCaster, includeOwnSpawns: false);
 
+    /// <summary><c>broadcast_message param_obj=OBJI_SELF</c> — the message names the sender.</summary>
+    /// <remarks>
+    /// Not the same as naming nobody. A call that carries no parameter is an announcement; one that
+    /// names its sender is a request, and the hearer is expected to act <em>on the sender</em>. Idgel
+    /// Dome's wave tank is the case: it broadcasts 22756 naming itself, and the wave's priest reads that
+    /// parameter to know who to heal.
+    /// </remarks>
+    public void BroadcastAboutSelf(int messageType, float range)
+        => BroadcastAbout(messageType, range, GetOwner(), includeOwnSpawns: false);
+
     private void BroadcastAbout(int messageType, float range, VisibleObject? about, bool includeOwnSpawns)
         => NpcMessageBus.Broadcast(GetOwner(), messageType, about, range,
             includeOwnSpawns || spawnedThisBranch.Count == 0 ? null : spawnedThisBranch);
