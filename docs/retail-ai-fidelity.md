@@ -30787,3 +30787,36 @@ legitimate data fix turns it red, and the comment beside it now says so.
 - **Nothing in this workflow gates a commit on the suite.** Every "green at N" in this document is a
   human reading a line of output, and this is the first time that reading was wrong. A pre-commit hook,
   or checking the exit status instead of the text, would close it.
+
+## One command whose result cannot be misread
+
+The last entry's owed item was that nothing gates on the suite: every "green at N" in this document is a
+human reading a line of output, and once that reading was wrong.
+
+`tools/verify.py` builds, tests, and exits **0 or 1**. There is nothing clever in it. The point is what
+it avoids:
+
+```
+dotnet test ... | grep -E "^(Passed!|Failed!)" && <commit>
+```
+
+`grep` succeeds when it finds the word `Failed!`, so that chain commits on a red suite. **The exit status
+is the only thing that means what it says, and piping through `grep` throws it away.**
+
+Verified in both directions, because a checker that cannot fail is worse than none: green gives
+`all green - 2850 passing`, exit 0, and breaking one assertion gives `TESTS FAILED - 1 failing, 2849
+passing`, names the pin, exit 1.
+
+`--regen` adds the generator check, and is opt-in rather than default because that one needs the retail
+pattern dump and this repo does not carry it.
+
+**Still missing.**
+
+- **It is a command someone has to run**, exactly like `regen_check.py` and `run_mutations.py` before it.
+  Three tools now exist that make the right thing easy and none of them makes the wrong thing hard. A
+  pre-commit hook would; adding one changes how everybody works and is not this work's call to make.
+- The 12 inert disagreements; the 34 non-route absence claims; the 33 named death-spawn rows; `is_user`
+  pinned one seam short; the `<summons>` schema's four owed attributes; the 258203/258207 family
+  decision; the 59 stranded guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns;
+  the 9 inert `spawn_helpers.xml` blocks; the eleven unread top-band ids; Dynatoum's mine web; Beritra's
+  two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
