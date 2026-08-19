@@ -7,10 +7,33 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/ConquestOfferingBuffNpcAI (@author Yeats).</summary>
+/// <summary>
+/// The conquest offering buff npcs (856175-856178 and their siblings). Retail pattern
+/// <c>F4_Rotation_Buff_NPC</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/ConquestOfferingBuffNpcAI (@author Yeats). Retail-sourced correction below; see
+/// docs/retail-ai-fidelity.md. Found by <c>audit_timer_drift.py</c>.
+/// <para>
+/// <b>It stood sixty-five seconds and retail gives it sixty.</b> Every rung of its <c>on_wake_up</c>
+/// ladder sets an idle timer of <b>60000</b>, and <c>on_idle_timer</c> is a bare <c>despawn_self</c>.
+/// Five seconds is a small thing on its own; it is here because it is the same five seconds as
+/// <see cref="ConquestOfferingPortalAI"/> was carrying against a hundred and eighty, and one number
+/// appears to have been used for both.
+/// </para>
+/// <para>
+/// <b>Not translated:</b> the ladder itself. Retail picks one of several wake-up shouts by
+/// <c>test_probability percent=30</c>, each setting a different pair of flag vars — so which greeting
+/// it gives decides which of its buffs are available afterwards. This port sends one message and offers
+/// the same thing every time.
+/// </para>
+/// </remarks>
 [AIName("conquest_offering_buff_npc")]
 public class ConquestOfferingBuffNpcAI : ActionItemNpcAI
 {
+    /// <summary>Retail's <c>set_idle_timer</c>, the same on every rung of its wake-up ladder.</summary>
+    public const long BuffNpcLifeMillis = 60_000L;
+
     private readonly AtomicBoolean used = new AtomicBoolean(false);
     private ScheduledTask despawnTask;
 
@@ -23,7 +46,7 @@ public class ConquestOfferingBuffNpcAI : ActionItemNpcAI
     {
         base.HandleSpawned();
         SendWakeUpMsg();
-        despawnTask = ThreadPoolManager.GetInstance().Schedule(ct => { GetOwner().GetController().Delete(); return System.Threading.Tasks.ValueTask.CompletedTask; }, 65000L);
+        despawnTask = ThreadPoolManager.GetInstance().Schedule(ct => { GetOwner().GetController().Delete(); return System.Threading.Tasks.ValueTask.CompletedTask; }, BuffNpcLifeMillis);
     }
 
     protected override void HandleUseItemFinish(Player player)

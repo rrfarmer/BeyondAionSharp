@@ -27084,3 +27084,34 @@ session, and a second sighting would make it worth chasing.
 genuinely index-blocked — 3000/3000/6000 in the top band, and which skill decides nothing we can reach).
 And the remarks in those classes still say cast cadences cannot be observed, which is now true only of
 the ones that apply effects directly.
+
+## One number stood in for two: the conquest portal and its buff npc
+
+Two more rows from the sweep, and they turned out to be the same mistake made once.
+
+**The portal (833018, 833021) closed after sixty-five seconds; retail gives it a hundred and eighty.**
+Its whole pattern is two rungs — `on_wake_up` sets an idle timer of 180000, `on_idle_timer` is a bare
+`despawn_self` — and the rotation monster that drops it spawns it with `live_time=0`, permanent, so the
+portal's own clock is the only one on it. Sixty-five seconds is a third of that: a portal left by a
+conquest kill is meant to be something a group can finish the fight, loot, and then walk into, and at
+sixty-five it was gone before most of that.
+
+**The buff npc stood sixty-five too; retail gives it sixty.** Every rung of its wake-up ladder sets an
+idle timer of 60000 and its `on_idle_timer` is the same bare despawn.
+
+Five seconds on the buff npc is a small thing on its own. It is worth the commit because **it is the
+same sixty-five thousand as the portal's**, in two classes that share an instance and nothing else — one
+number written once and used twice, wrong in both places and wrong by different amounts. The third pin
+asserts the two are *not equal*, so a later tidy-up cannot reintroduce it by hoisting a constant.
+
+**Pins** — three in `ConquestOfferingLifetimeTests`, three mutations, all caught. Table pins: both npcs
+are placed by instance code and removed by a plain scheduled delete, so there is no fight for the
+harness to drive.
+
+**Still missing.** The portal's destination table: retail's `on_talked_by_user` is a ladder of rungs
+each carrying `test_probability percent=2` and a `teleport_target_alias`, a weighted list of
+destinations. This port picks from the spawn data instead, excluding anything within fifty metres of the
+creator — a different mechanism reaching a similar place, and one that cannot reproduce retail's
+weighting. And the buff npc's own ladder: retail picks one of several wake-up shouts at `percent=30`,
+each setting a different pair of flag vars, so **which greeting it gives decides which buffs it then
+offers**. This port sends one message and offers the same thing every time.
