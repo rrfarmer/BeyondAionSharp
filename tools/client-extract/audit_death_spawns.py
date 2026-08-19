@@ -48,7 +48,13 @@ It splits owners by what their `ai` could possibly do:
   classes have no per-npc death behaviour and `<summons>` is keyed on health percentage with no death
   trigger at all, so a death spawn here **cannot** be happening. These are missing, with confidence.
 * **`bespoke`** — the owner runs its own class, which may or may not do it. These need reading, and the
-  count is reported rather than guessed at.
+  count is reported rather than guessed at. `--bespoke` marks each row `named` or **`UNNAMED`**: whether
+  any C# file in `src/` mentions the spawned npc id at all.
+
+  **`UNNAMED` is evidence, not proof.** An id no source file mentions cannot be being spawned by hand-
+  written code, so those rows are the ones worth opening first. `named` proves only that the number
+  appears somewhere — possibly in a different class, possibly as a coincidence of digits — so it still
+  needs a read before anyone calls it done.
 
 Usage:  python audit_death_spawns.py [--xml DIR] [--bespoke] [--limit N]
 """
@@ -74,6 +80,12 @@ NAMEID_RE = re.compile(r"<npc_nameid>([^<]+)</npc_nameid>")
 HERALD_ACTIONS = frozenset((
     "broadcast_message", "say_to_all", "display_system_message", "send_system_msg", "despawn_self",
     "do_nothing", "set_flag_var", "unset_flag_var", "set_world_flag_var", "unset_world_flag_var",
+    # Opening a door and toggling a windpath are the same kind of thing as announcing something: retail
+    # spawns a short-lived npc to do it because a pattern action needs an npc to hang off. This port
+    # does it directly from the instance handler. Captain Murugan is the case that proved it -- his
+    # IDF4Re_Drana_Named_B_NPC_01 is labelled, in Korean, "Araka zone 2 ventilator door control NPC",
+    # and EsoterraceInstance.OnDie already sends STR_MSG_IDF4Re_Drana_05 and opens doors 45, 52 and 67.
+    "control_door", "on_off_windpath",
 ))
 ACTION_RE = re.compile(r"<(\w+)>")
 COUNT_RE = re.compile(r"<num_to_spawn>(\d+)</num_to_spawn>")
@@ -87,12 +99,18 @@ GENERIC_AI = frozenset((
 ))
 
 
-def herald_ids(xml_dir, dev):
+def herald_ids(xml_dir, runs):
     """Npcs whose own pattern only announces something and goes away.
 
     Retail spawns a short-lived npc to carry a broadcast; this port broadcasts directly. Detected from
     the spawned npc's *own* pattern rather than from its name, so it does not depend on a naming
     convention the way the FX-word list does.
+
+    **Resolved through `ai_binding.tsv`, not by assuming the devname is the pattern name.** The first
+    version compared devnames against pattern names directly, which works for the many npcs where they
+    match and silently fails where they do not -- Captain Murugan's door controller is
+    `IDF4Re_Drana_Named_B_NPC_01` running `IDArena_Sum_Monster_05`, so it slipped through and cost a
+    hand-read to reach a conclusion the filter already had the facts for.
     """
     by_name = {}
     for f in sorted(pathlib.Path(xml_dir).glob("NpcAIPatterns*.xml")):
@@ -106,7 +124,22 @@ def herald_ids(xml_dir, dev):
                                         "move_", "control_", "add_battle_timer", "do_nothing"))}
             if actions and actions <= HERALD_ACTIONS:
                 by_name[name.group(1)] = True
-    return {npc_id for devname, npc_id in dev.items() if by_name.get(devname)}
+    return {npc_id for npc_id, pattern in runs.items() if by_name.get(pattern)}
+
+
+def ids_named_in_source():
+    """Every integer literal 5-7 digits long appearing anywhere in the C# sources.
+
+    Crude on purpose. The question it answers is only "could a hand-written class be spawning this?",
+    and for that a false positive costs a read while a false negative would hide a defect.
+    """
+    out = set()
+    literal = re.compile(r"\b(\d{5,7})\b")
+    for f in (REPO / "src").rglob("*.cs"):
+        if "/obj/" in f.as_posix() or "/bin/" in f.as_posix():
+            continue
+        out.update(literal.findall(f.read_text(encoding="utf-8", errors="replace")))
+    return out
 
 
 def owner_templates():
@@ -163,9 +196,9 @@ def main():
     dev = npc_names(args.xml)
     furniture = unattackable_ids(args.xml)
     placed = spawned_in_our_data()
-    heralds = herald_ids(args.xml, dev)
     ai_of = owner_templates()
     runs = patterns_by_npc()
+    heralds = herald_ids(args.xml, runs)
     # The pattern each spawned npc runs, so an FX marker on its behaviour is visible even when
     # its devname carries none. See the Padmarashka note in this module's docstring.
     fx_by_ai = {npc_id for npc_id, pattern in runs.items()
@@ -201,10 +234,19 @@ def main():
 
     rows = bespoke if args.bespoke else generic
     label = "bespoke" if args.bespoke else "generic"
+    named = ids_named_in_source() if args.bespoke else set()
+    if args.bespoke:
+        unnamed = [r for r in rows if any(sid not in named for sid in r[2])]
+        print(f"  {len(unnamed)} of the {len(rows)} spawn an id NO source file mentions -- read these first\n")
     print(f"--- {label}, worst first ---")
     for npc_id, pattern, owed in rows[:args.limit]:
-        placed_str = " ".join(f"{sid}x{n}" for sid, n in sorted(owed.items()))
-        print(f"  npc {npc_id:8s} ai={ai_of[npc_id]:24s} [{pattern[:30]}]  {placed_str}")
+        placed_str = " ".join(
+            f"{sid}x{n}" + ("" if not args.bespoke else ("" if sid in named else "!"))
+            for sid, n in sorted(owed.items()))
+        mark = ""
+        if args.bespoke:
+            mark = "  UNNAMED" if any(sid not in named for sid in owed) else "  named"
+        print(f"  npc {npc_id:8s} ai={ai_of[npc_id]:24s} [{pattern[:30]}]  {placed_str}{mark}")
     if len(rows) > args.limit:
         print(f"  ... and {len(rows) - args.limit} more (--limit)")
     return 0

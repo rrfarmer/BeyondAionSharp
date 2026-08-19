@@ -356,6 +356,81 @@ public sealed class ResearcherTeselikAiTests
 		Assert.NotEmpty(cast);
 		Assert.All(cast, c => Assert.Equal(16791, c));
 	}
+
+	/// <summary>
+	/// <b>Killing him leaves four bonus hands walking in.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's <c>on_killed_by_user</c> places four <c>IDVritra_Base_HakcAndSlash_Bonus</c> (284457),
+	/// one at the head of each of <c>NPCPath_Bboss_Hand_01</c>..<c>04</c>, five metres off the line.
+	/// <para>
+	/// <b>This class said they were missing, and said why: "named server paths ... which we do not
+	/// have".</b> We do have them — all four are in <c>npc_walker/retail_pattern_paths.xml</c> under
+	/// retail's own names, added after that remark was written and never re-checked against it. The gap
+	/// was a stale claim rather than a missing capability, which is the kind that survives longest
+	/// because it reads as a decision somebody already made.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void KillingHimLeavesFourBonusHands()
+	{
+		using BossAiHarness harness = Walking();
+		KilledByAPlayer(harness);
+
+		Assert.Equal(4, harness.LiveNpcs().Count(n => n.GetNpcId() == ResearcherTeselikAI.BonusHand));
+	}
+
+	/// <summary>
+	/// <b>And each starts on a different one of the four paths.</b>
+	/// </summary>
+	/// <remarks>
+	/// Four calls naming the same path would leave four hands in a heap and still satisfy the count.
+	/// The paths are the point: they walk in from four directions.
+	/// </remarks>
+	[Fact]
+	public void TheFourBonusHandsWalkFourDifferentPaths()
+	{
+		using BossAiHarness harness = Walking();
+		KilledByAPlayer(harness);
+
+		List<string?> routes = harness.LiveNpcs()
+			.Where(n => n.GetNpcId() == ResearcherTeselikAI.BonusHand)
+			.Select(n => n.GetMoveController().GetWalkerTemplate()?.GetRouteId())
+			.ToList();
+
+		Assert.Equal(4, routes.Distinct().Count());
+		Assert.All(routes, r => Assert.Contains(r, ResearcherTeselikAI.HandPaths));
+	}
+
+	/// <summary>
+	/// <b>A death nobody earned leaves none of them.</b> Retail's <c>on_killed_by_user</c>.
+	/// </summary>
+	[Fact]
+	public void ADeathNoPlayerEarnedLeavesNoBonusHands()
+	{
+		using BossAiHarness harness = Walking();
+		Npc teselik = harness.Spawn(Teselik, 500f, 500f, 200f);
+
+		teselik.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+
+		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == ResearcherTeselikAI.BonusHand));
+	}
+
+	/// <summary>A harness with the walker routes loaded, which the bonus hands need.</summary>
+	private static BossAiHarness Walking() =>
+		BossAiHarness.For(SauroSupplyBase).WithWorldSize(2048).WithWalkerRoutes()
+			.WithAi(typeof(ResearcherTeselikAI), typeof(ShebanMysticalTyrhundAI), typeof(AggressiveNpcAI))
+			.Build();
+
+	private static void KilledByAPlayer(BossAiHarness harness)
+	{
+		Npc teselik = harness.Spawn(Teselik, 500f, 500f, 200f);
+		Player raider = harness.SpawnPlayer(504f, 500f, 200f);
+		harness.Engage(teselik, raider);
+		BossAiHarness.Wound(teselik, raider);
+		teselik.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+	}
+
 }
 
 /// <summary>Despawns when it hears a hand report in, so the notice is observable.</summary>

@@ -51,8 +51,10 @@ namespace Aion.GameServer.Handlers.AI;
 /// monster's AI. Retail expresses it inside the pattern; we do not need to.
 /// <para>
 /// <b>Not translated:</b> his three shouts (<c>STR_CHAT_IDVritra_Base_Nmd3_01/02/03</c>), which have
-/// no numeric id in our data, and the four bonus hands (284457) the death tail places on named server
-/// paths — those are spawned by nothing anywhere and remain missing.
+/// no numeric id in our data. <b>The four bonus hands (284457) are no longer missing</b>: the death tail
+/// places them on <c>NPCPath_Bboss_Hand_01</c>..<c>04</c>, which this repo does have. What is still owed
+/// is the in-combat hands, which retail also puts on those same four paths and which still arrive at his
+/// feet here.
 /// </para>
 /// </remarks>
 [AIName("researcher_teselik")]
@@ -86,11 +88,31 @@ public class ResearcherTeselikAI : PatternAi
     private const float MessageRange = 50f;
 
     /// <summary>
-    /// Retail anchors the hands on four named server paths (<c>NPCPath_Bboss_Hand_01</c> through
-    /// <c>04</c>) which we do not have, so they arrive next to him instead. Retail's own phase-two
-    /// branch already places one of the three at his feet, so this is a small stand-in rather than a
-    /// new idea — but it is ours, not theirs.
+    /// Retail anchors every hand on one of four named server paths.
     /// </summary>
+    /// <remarks>
+    /// <b>This used to say we did not have them.</b> We do — all four are in
+    /// <c>npc_walker/retail_pattern_paths.xml</c>, keyed by retail's own name, and were added after this
+    /// remark was written. The stand-in below survived because nothing re-checked the claim; the death
+    /// tail now uses the real paths, and the in-combat summons are a separate correction still owed
+    /// (see docs/retail-ai-fidelity.md).
+    /// </remarks>
+    internal static readonly string[] HandPaths =
+    [
+        "NPCPath_Bboss_Hand_01", "NPCPath_Bboss_Hand_02",
+        "NPCPath_Bboss_Hand_03", "NPCPath_Bboss_Hand_04",
+    ];
+
+    /// <summary>The four he leaves behind — a different npc from the hands he fights with.</summary>
+    internal const int BonusHand = 284457;
+
+    /// <summary>Retail's <c>SPAWN_ID_NONE</c>: the bonus hands belong to nobody and are never cleared.</summary>
+    private const int Unowned = 0;
+
+    /// <summary>Retail's <c>spawn_range</c> on all four: how far off the line each one starts.</summary>
+    private const float BonusSpread = 5f;
+
+    /// <summary>Where his in-combat hands arrive. See <see cref="HandPaths"/> — this is a stand-in.</summary>
     private const float NearHim = 3f;
 
     private static PatternAction Summon(int count) =>
@@ -215,7 +237,15 @@ public class ResearcherTeselikAI : PatternAi
 
         // Retail hangs this off on_killed_by_user, together with the door and the bonus hands.
         OnDie = Of(
-            Branch(18, "clear the hands", When.Always,
+            Branch(18, "clear the hands, then leave four walking in", [When.KilledByPlayer],
+                Do.Despawn(Hands),
+                Do.SpawnOnPath(BonusHand, Unowned, HandPaths[0], BonusSpread),
+                Do.SpawnOnPath(BonusHand, Unowned, HandPaths[1], BonusSpread),
+                Do.SpawnOnPath(BonusHand, Unowned, HandPaths[2], BonusSpread),
+                Do.SpawnOnPath(BonusHand, Unowned, HandPaths[3], BonusSpread)),
+
+            // A death that no player earned still clears his own hands; it just leaves no bonus.
+            Branch(17, "clear the hands", When.Always,
                 Do.Despawn(Hands))),
     };
 

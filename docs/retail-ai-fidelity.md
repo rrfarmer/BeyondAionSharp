@@ -30234,3 +30234,64 @@ Full solution green at 2,833.
   guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert
   `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine
   web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Reading the last column, and a claim that had gone stale
+
+33 death-spawn rows were left on bespoke classes, with no way to decide by grep whether each already did
+its job. So the audit gained the one thing that *is* decidable: whether any C# file mentions the spawned
+npc id at all.
+
+**`UNNAMED` is evidence, not proof** — an id no source mentions cannot be being spawned by hand-written
+code, so those rows are worth opening first, while `named` proves only that the number appears somewhere.
+Exactly one row came back `UNNAMED`, and it was a false positive worth keeping:
+
+> Captain Murugan owes `IDF4Re_Drana_Named_B_NPC_01`. That npc's own pattern is four `control_door`
+> calls and a system message, labelled in Korean as *"Araka zone 2 ventilator door control NPC"* — and
+> `EsoterraceInstance.OnDie` already sends `STR_MSG_IDF4Re_Drana_05` and opens doors 45, 52 and 67.
+
+The herald filter should have caught it and did not, because it compared **devnames against pattern
+names**. Those match for most npcs and not for this one, whose devname is `IDF4Re_Drana_Named_B_NPC_01`
+and whose pattern is `IDArena_Sum_Monster_05`. Resolved through `ai_binding.tsv` now, and `control_door`
+and `on_off_windpath` joined the herald actions: opening a door is the same kind of thing as announcing
+something, and this port does both from the instance handler.
+
+The category now reads: **0 structurally impossible, 0 spawning an id no source mentions**, 33 on classes
+that name their id — which spot-checking found implemented.
+
+### Researcher Teselik's four bonus hands
+
+One of the 33 was already documented as missing, by its own author:
+
+> *"the four bonus hands (284457) the death tail places on named server paths — those are spawned by
+> nothing anywhere and remain missing."*
+
+And beside it, the reason: *"four named server paths ... **which we do not have**"*.
+
+**We do have them.** All four are in `npc_walker/retail_pattern_paths.xml` under retail's own names,
+added by later route-extraction work and never re-checked against the remark that predated it.
+
+> This is the kind of gap that survives longest, because **a stale claim reads as a decision somebody
+> already made.** Nobody re-opens "we do not have X"; they route around it. The `NearHim = 3f` stand-in
+> underneath it is exactly that routing-around.
+
+The death tail now places four 284457 at the head of `NPCPath_Bboss_Hand_01`..`04`, five metres off the
+line, guarded on `is_user` as retail guards it. Three pins — the count, four *distinct* paths (four calls
+naming one path would satisfy a count and leave the hands in a heap), and nothing at all for a death no
+player earned. Both mutations caught.
+
+Full solution green at 2,836.
+
+**Still missing.**
+
+- **Teselik's in-combat hands are still a stand-in.** Retail puts every one of them on those same four
+  paths — the pattern names a path on all eleven of its spawn actions — and here they arrive three metres
+  from his feet. That is now a known divergence rather than a missing capability, and it needs the
+  per-rung path mapping read carefully rather than assumed.
+- **The stale-claim class of defect has no audit.** Every "we do not have X" in a remark is a fact that
+  was true once; nothing re-checks them. A sweep for such phrases against what the repo now contains
+  would be cheap and is not written.
+- The 33 named rows are spot-checked, not read. `is_user` remains pinned one seam short; the
+  `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
+  spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
