@@ -11,8 +11,23 @@ namespace Aion.GameServer.Handlers.AI;
 /// @author Estrayl
 /// </summary>
 [AIName("orissans_summon")]
-public class OrissansSummonAI : GeneralNpcAI
+public class OrissansSummonAI : GeneralNpcAI, INpcMessageListener
 {
+    /// <summary>
+    /// Retail's <c>on_message 22737</c>: Orissan has fallen, so the crystal goes with him.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. In retail the listener sits on the two summon
+    /// helpers, which despawn their spawn group and themselves. This port's helpers delete themselves
+    /// the moment they have placed a crystal, so by the time Orissan dies there is nothing left to do
+    /// the despawning -- the listener has to be on the crystal itself. Same outcome, one hop shorter.
+    /// </remarks>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        if (messageType == OrissanAI.OrissanIsDead)
+            AIActions.DeleteOwner(this);
+    }
+
     private readonly AtomicBoolean isActive = new AtomicBoolean();
 
     public OrissansSummonAI(Npc owner) : base(owner)

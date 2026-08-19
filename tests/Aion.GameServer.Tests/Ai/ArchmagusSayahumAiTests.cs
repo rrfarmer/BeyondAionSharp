@@ -142,6 +142,20 @@ public sealed class ArchmagusSayahumAiTests
 	/// <b>Below forty-five he turns on every lap, so the same window shows more of the raid.</b> Two
 	/// phases of the same fight, measured the same way, and the difference is the mechanic.
 	/// </summary>
+	/// <remarks>
+	/// <b>Observed failing once, under a whole-solution run, and not reproduced since.</b> Five
+	/// isolated runs and four further full runs were green. The assertion depends on
+	/// <c>SwitchTarget(RANDOM)</c> landing on more than one raid member across two hundred seconds,
+	/// which is overwhelmingly likely but not certain, and there is no seam here to make the choice
+	/// deterministic — <c>PatternAi.Shuffle</c> is <c>protected virtual</c> and no test can reach it
+	/// for an existing handler.
+	/// <para>
+	/// Written down rather than silently re-run, because the last flake in this suite was found only
+	/// because an earlier session recorded "did not recur in five runs" instead of forgetting it. If
+	/// this fails again, that is two, and the fix is a seam for the target roll rather than a longer
+	/// window.
+	/// </para>
+	/// </remarks>
 	[Fact]
 	public void BelowFortyFiveHeTurnsTwiceAsOften()
 	{

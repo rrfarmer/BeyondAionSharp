@@ -31181,3 +31181,48 @@ crystals**, now the top of the reading list; `is_aerial_spawn`; the 34 non-route
 named death-spawn rows; hisen's 6401/6402 pair; `is_user` pinned one seam short;
 `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.
+
+## Orissan's crystals go with him
+
+Top of the corrected reading list was `OrissanSummonHelperAI` owing three icing crystals. Reading the
+whole chain rather than the row:
+
+* The two summon helpers are **message-driven**. They listen for 22735, 22736 and 22729 and place a
+  different crystal for each — spread Lv3, spread Lv2, broken Lv3 — and for **22737**, which means
+  "Orissan is dead", they clear their crystal and themselves.
+* Orissan's four wake-state patterns each end `on_killed_by_user` and `on_killed_by_npc` with
+  `broadcast_message 22737` at range 100.
+
+> **Nothing in this port sent any of the four.** So his crystals stayed exactly where they were after he
+> fell: live, hostile furniture in a room the raid had already won.
+
+The death notice is now sent and answered. It is one hop shorter than retail on purpose: retail's
+listener sits on the helpers, and this port's helpers delete themselves the moment they have placed a
+crystal, so by the time Orissan dies there is nothing left to do the despawning. The crystal listens
+instead. Same outcome, and the remark says why it differs.
+
+3/3 mutations caught, including the range: retail gives the broadcast a hundred metres rather than making
+it global, and a translation using `float.MaxValue` would satisfy every other assertion.
+
+**The tier half is not done.** 22735, 22736 and 22729 choose *which* crystal appears, and this port's
+helper always places one fixed crystal. Wiring those needs Orissan's own rungs, which are skill-index
+guarded.
+
+### A flake, recorded rather than re-run
+
+One full-solution run failed `ArchmagusSayahumAiTests.BelowFortyFiveHeTurnsTwiceAsOften`. Five isolated
+runs and four further full runs were green.
+
+The assertion depends on `SwitchTarget(RANDOM)` landing on more than one raid member across two hundred
+seconds — overwhelmingly likely, not certain — and **there is no seam to make that deterministic**:
+`PatternAi.Shuffle` is `protected virtual` and no test can reach it for an existing handler.
+
+> It is written into the test rather than forgotten, because the last flake in this suite was found only
+> because an earlier session wrote down "did not recur in five runs". If it fails again that is two, and
+> the fix is a seam for the target roll, not a longer window.
+
+**Still missing.** The crystal-tier messages; jurdin; Beritra's four detachment npcs, now the top of the
+reading list; `is_aerial_spawn`; the 34 non-route absence claims; the 33 named death-spawn rows; hisen's
+6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the
+`<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+Dynatoum's mine web; Pashid's `npc_skills`; **a deterministic seam for random target choice**.

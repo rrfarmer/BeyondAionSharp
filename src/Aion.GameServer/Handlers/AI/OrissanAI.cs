@@ -139,9 +139,22 @@ public class OrissanAI : AggressiveNoLootNpcAI
         base.HandleBackHome();
     }
 
+    /// <summary>Retail's <c>broadcast_message 22737</c>, range 100: "Orissan is dead".</summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. Every one of his wake-state patterns ends
+    /// <c>on_killed_by_user</c> and <c>on_killed_by_npc</c> with this broadcast, and the glacier
+    /// crystals he leaves around the room answer it by removing themselves. <b>Nothing in this port
+    /// sent it</b>, so his crystals stayed where they were after he fell -- live, hostile furniture in
+    /// a room the raid had already won.
+    /// </remarks>
+    public const int OrissanIsDead = 22737;
+
+    private const float DeathNoticeRange = 100f;
+
     protected override void HandleDied()
     {
         CancelTask();
+        NpcMessageBus.Broadcast(GetOwner(), OrissanIsDead, null, DeathNoticeRange);
         base.HandleDespawned();
     }
 
