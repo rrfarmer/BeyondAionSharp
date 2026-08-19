@@ -31,11 +31,24 @@ public sealed class TahabataGargoyleAiTests
 		return (harness, gargoyle, player);
 	}
 
+	/// <summary>
+	/// Advances a second at a time, keeping the player alive but <b>not</b> topping the hate up.
+	/// </summary>
+	/// <remarks>
+	/// <b>Re-hating every second re-armed the fuse.</b> <c>AddHate</c> can put the npc back through
+	/// entering-attack, and this gargoyle arms its ten-second timer there — so a top-up landing on the
+	/// wrong tick pushed the blast past the window and the pin failed about one run in three.
+	/// <para>
+	/// It only surfaced when the harness started driving the combat model's clock: until then the state
+	/// transitions that lead back through entering-attack were gated on timestamps that never moved. The
+	/// pin was always fragile; the clock made the fragility visible. Twelve seconds needs no top-up
+	/// anyway — <c>Engage</c> leaves a thousand hate on the list.
+	/// </para>
+	/// </remarks>
 	private static void Advance(BossAiHarness harness, Npc npc, Player player, int seconds)
 	{
 		for (int i = 0; i < seconds; i++)
 		{
-			BossAiHarness.Rehate(npc, player);
 			BossAiHarness.KeepAlive(player);
 			harness.Clock.Advance(TimeSpan.FromSeconds(1));
 		}

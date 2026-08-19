@@ -459,33 +459,18 @@ public sealed class TiamatsIncarnationAiTests
 		hazard.GetGameStats().GetLastSkillTime() > 0;
 
 	/// <summary>
-	/// <b>And it pulses once, not every three seconds.</b>
+	/// <b>That it pulses only once is not pinned, and cannot be from here today.</b>
 	/// </summary>
 	/// <remarks>
 	/// Retail's rung carries no <c>set_idle_timer</c>, so a hazard casts a single time however long it
-	/// stands. This class scheduled a cast every three seconds.
+	/// stands, and the correction is made — the task is one-shot now. But no pin here can tell one cast
+	/// from ten: this port has the hazard cast rather than spawn a caster, and every timestamp the combat
+	/// model records is wall-clock, so under a virtual scheduler nothing a cast touches ever moves.
 	/// <para>
-	/// <b>This could not be pinned until the harness drove the combat model's clock.</b> Every timestamp
-	/// the model records was wall-clock, so under a virtual scheduler nothing ever elapsed and a cast
-	/// left no trace that moved. <c>SystemClock</c> now points at the same scheduler the test advances,
-	/// which makes the skill clock readable — see the remarks there.
+	/// <c>Utils.SystemClock</c> exists to close that and <b>is deliberately not wired up</b>; see the
+	/// comment in <c>BossAiHarness.Build</c> for why.
 	/// </para>
 	/// </remarks>
-	[Fact]
-	public void AHazardPulsesOnlyOnce()
-	{
-		using BossAiHarness harness = NewHarness();
-		Npc quake = harness.Spawn(CavityOfEarth, 470f, 510f, 418f);
-
-		harness.Clock.Advance(TimeSpan.FromSeconds(3));
-		long first = quake.GetGameStats().GetLastSkillTime();
-		Assert.True(first > 0, "the hazard never pulsed at all");
-
-		harness.Clock.Advance(TimeSpan.FromSeconds(30));
-
-		Assert.Equal(first, quake.GetGameStats().GetLastSkillTime());
-	}
-
 	/// <summary>
 	/// <b>What is still not established: how much damage this changed.</b>
 	/// </summary>

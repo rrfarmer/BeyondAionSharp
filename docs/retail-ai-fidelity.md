@@ -25367,3 +25367,55 @@ cadence is pinned; the damage in play is unmeasured, and would need an effect-le
 now behaves in a harness test the way it does in production. Pins written before this were not wrong,
 but they were written against a world with no cooldowns — if one of them starts failing after an
 unrelated change, that is the first thing to check.
+
+## Three brigade generals dropped each other's gossip npc
+
+Retail patterns `IDTiamat_Sardha`, `IDTiamat_Rakshaka` and `IDTiamat_Tahabata`, each of which names one
+gossip npc in its own `on_die`.
+
+| boss | retail | this port dropped | coordinates |
+|---|---|---|---|
+| 219354 Terath | 283178 | **283179** | 1030.03 / 301.83 / 411, dir 26 — exact |
+| 219356 Laksyaka | 283179 | **283180** | 629.1 / 1319.5 / 501.2 — exact |
+| 219358 Tahabata | 283180 | **283178** | 679.88 / 1068.88 / 504.2, dir 119 — exact |
+
+A clean three-way rotation, and **the coordinates were right every time**, which is what made it
+invisible: each npc appeared exactly where it should, wearing the wrong name. All three call sites
+carried an `// ex 2839xx` comment from an earlier renumbering, which is the likeliest origin.
+
+Retail also gives all three `live_time=15`, which this port did not; they now decay on that clock.
+
+**Pins** — `TiamatStrongholdGossipTests`, four, two mutations, both caught. Weaker than usual and worth
+saying so: instance handlers have no harness, so this pins the **table** rather than a fight. It fixes
+the mapping in place and would not notice if the call sites stopped reading the table.
+
+## The clock hook is reverted, and why
+
+Last commit pointed the combat model's clock at the harness scheduler, which closed a real gap: it made
+a mutation catchable that nothing else could catch. **It is now switched off again.**
+
+`TahabataGargoyleAiTests.ItBlowsUpTenSecondsAfterBeingEngaged` began failing about **one full-suite run
+in five** while passing **eight isolated runs out of eight**. An A/B with the hook disabled was clean
+six times out of six, so the hook was the cause, not a coincidence.
+
+Part of it was a genuinely fragile pin, and that part is fixed: it topped the hate up every second, and
+`AddHate` can put an npc back through entering-attack, which is where this gargoyle arms its
+ten-second fuse — so a top-up on the wrong tick pushed the blast outside the window. Twelve seconds
+needs no top-up; `Engage` leaves a thousand hate on the list. **The pin was always fragile and the clock
+only made it visible.**
+
+But that was not all of it. With the pin fixed the flake persisted in full runs and not in isolation,
+which points at something process-wide — the clock source is a global, and something in a full run
+leaves it pointing at a scheduler other than the one the failing test is advancing. Every AI test but
+one is in the same serialising collection, so simple parallelism does not explain it, and **the real
+cause was not found**.
+
+So `Utils/SystemClock` stays in the tree, production-identical and unused, with the harness call
+commented out and both this file and `BossAiHarness.Build` saying why. A flaky suite is worse than a
+limited one. **What it costs:** cast cadences remain unpinnable, `AHazardPulsesOnlyOnce` is back to
+being a documented limitation rather than a pin, and the two audits that keep hitting this ceiling still
+hit it.
+
+**What would finish it:** find what leaves the global pointing elsewhere during a full run — most
+likely a harness disposed while another is still live, or a test that builds two — and make the source
+per-harness rather than per-process.

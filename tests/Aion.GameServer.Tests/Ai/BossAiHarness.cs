@@ -698,11 +698,14 @@ public sealed class BossAiHarness : IDisposable
 			// while the scheduler runs for minutes, so CanUseNextSkill never comes back true and an
 			// npc's own skill rotation cannot run inside a test. See Utils/SystemClock.
 			//
-			// Offset from the real epoch rather than started at zero: the scheduler counts from 0, and a
-			// model timestamp taken before the swap is an epoch value, so a bare NowMillis makes every
-			// delta enormously negative and nothing ever looks elapsed.
-			long epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-			Aion.GameServer.Utils.SystemClock.UseSource(() => epoch + clock.NowMillis);
+			// NOT WIRED UP, deliberately. Pointing SystemClock at this scheduler is what a cast-cadence
+			// pin needs, and it works: it made a mutation catchable that nothing else could catch. But it
+			// also made TahabataGargoyleAiTests fail about one full-suite run in five while passing eight
+			// isolated runs out of eight, and the cause was not found -- the clock source is a process
+			// global and something in a full run leaves it pointing somewhere unexpected. A flaky suite
+			// is worse than a limited one, so it stays off until that is understood.
+			//
+			// Aion.GameServer.Utils.SystemClock.UseSource(() => epoch + clock.NowMillis);
 			DataManager.RegisterInstance(dataManager);
 
 			// Then bind every [AIName] handler there is, which needs the real templates registered above

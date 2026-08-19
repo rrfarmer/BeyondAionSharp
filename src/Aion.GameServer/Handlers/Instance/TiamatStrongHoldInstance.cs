@@ -63,7 +63,7 @@ public class TiamatStrongHoldInstance : GeneralInstanceHandler
                 Spawn(701541, 677.35785f, 1069.5361f, 499.86716f, (byte)0);
                 Spawn(701527, 1073.948f, 1068.8732f, 787.685f, (byte)61);
                 Spawn(730622, 652.4821f, 1069.0302f, 498.7787f, (byte)0, 82);
-                Spawn(283178, 679.88f, 1068.88f, 504.2f, (byte)119);// ex 283916
+                SpawnGossip(GossipOnDie[219358], 679.88f, 1068.88f, 504.2f, (byte)119);
                 SpawnExitIfCleared();
                 break;
             case 219353:// ex 219401
@@ -73,7 +73,7 @@ public class TiamatStrongHoldInstance : GeneralInstanceHandler
                 break;
             case 219354:// ex 219402
                 SendMsg(SM_SYSTEM_MESSAGE.STR_IDTIAMAT_TIAMAT_REWARD_SPAWN());
-                Spawn(283179, 1030.03f, 301.83f, 411f, (byte)26);// ex 283914
+                SpawnGossip(GossipOnDie[219354], 1030.03f, 301.83f, 411f, (byte)26);
                 Spawn(701501, 1086.274f, 1098.3997f, 787.685f, (byte)90);
                 Spawn(730622, 1029.792f, 267.0502f, 409.7982f, (byte)0, 83);
                 SpawnExitIfCleared();
@@ -92,7 +92,7 @@ public class TiamatStrongHoldInstance : GeneralInstanceHandler
                 Spawn(701501, 1099.8691f, 1047.1895f, 787.685f, (byte)64);
                 Spawn(730622, 644.4221f, 1319.6221f, 488.7422f, (byte)0, 15);
                 Spawn(800438, 665.63409f, 1319.7051f, 487.9f, (byte)61);
-                Spawn(283180, 629.1f, 1319.5f, 501.2f, (byte)0);// ex 283915
+                SpawnGossip(GossipOnDie[219356], 629.1f, 1319.5f, 501.2f, (byte)0);
                 SpawnExitIfCleared();
                 break;
         }
@@ -224,6 +224,37 @@ public class TiamatStrongHoldInstance : GeneralInstanceHandler
                 Spawn(219364, 762.6f, 1192.1f, 495.6f, (byte)30);
                 break;
         }
+    }
+
+    /// <summary>
+    /// The gossip npc each brigade general leaves when he dies.
+    /// </summary>
+    /// <remarks>
+    /// Retail names one per boss in his own <c>on_die</c>: Sardha's is 283178, Rakshaka's 283179 and
+    /// Tahabata's 283180.
+    /// <para>
+    /// <b>All three were rotated by one here.</b> Terath dropped Rakshaka's, Laksyaka dropped
+    /// Tahabata's and Tahabata dropped Sardha's — at the right coordinates every time, which is what
+    /// made it invisible: the npc appeared exactly where it should, wearing the wrong name. Each of the
+    /// three call sites carried an <c>// ex 2839xx</c> comment from an earlier renumbering, which is
+    /// where the rotation most likely came in.
+    /// </para>
+    /// </remarks>
+    internal static readonly Dictionary<int, int> GossipOnDie = new Dictionary<int, int>
+    {
+        [219354] = 283178, // Terath, retail IDTiamat_Sardha
+        [219356] = 283179, // Laksyaka, retail IDTiamat_Rakshaka
+        [219358] = 283180, // Tahabata
+    };
+
+    /// <summary>Retail's <c>live_time</c> on all three: fifteen seconds.</summary>
+    private const int GossipLife = 15;
+
+    private void SpawnGossip(int npcId, float x, float y, float z, byte heading)
+    {
+        Npc gossip = (Npc)Spawn(npcId, x, y, z, heading);
+        if (gossip != null)
+            Aion.GameServer.Services.RespawnService.ScheduleDecayTask(gossip, GossipLife * 1000);
     }
 
     private void SpawnExitIfCleared()
