@@ -26270,3 +26270,51 @@ re-arms `INDEX_1` at **15000** rather than 25000 below that line, which is unobs
 it drives are casts we cannot make, so the timer here stays at 25000 throughout. His death rung is also
 absent apart from the despawns — `CaspaGhost_01`, the killer's cutscene, and
 `set_condition_spawn_variable IDElim_3F_Boss`, which is the mechanism this port has no equivalent for.
+
+## Beritra's breath marks stood five metres below the floor they mark
+
+From `audit_timer_drift.py`, `Lv1HumanBeritraAI`: all three of its delays are absent from retail's
+pattern. Most of what surrounds them is out of reach — his guardian waves hang off `VRITRA_TIMER` and
+`GUARDIAN_TIMER` condition variables, and his fight is driven by messages from the seal event — but the
+rapid-breath wave is self-contained and readable.
+
+Retail does not run it from Beritra at all. He spawns `BIDSeal_Skill_RapidBreath_CTRL`, which waits
+**3000** on an idle timer, picks one of four trios, spawns its three marks and despawns itself.
+
+**The marks were five metres low.** Retail spawns every one of the eight at **z=1755**; this port used
+**1749.9**. On a breath mark that is the difference between standing on it and standing under it.
+
+**Checked and correct, and worth recording as such:**
+
+- **The four trios.** 1/3/6 at twenty-five per cent, 2/5/7 at thirty-three, 3/5/8 at fifty, 1/4/7
+  unguarded — read mark by mark out of the control npc's pattern and matching what was here. A rotation
+  among four trios is exactly the failure this shape invites and would look right from any single pull.
+- **The cascade of independent rolls.** `Rnd.Chance() < 25`, then `< 33`, then `< 50` reads like the
+  classic mistake — four weights that do not sum — and **it is not one.** Retail is four rungs each
+  carrying its own `test_probability`, tried highest-priority first, which is precisely a chain of
+  separate rolls. Left alone, and now said out loud in the class so the next reader does not "fix" it.
+
+Both were extracted into tables so they can be pinned at all; the wave fires from `OnEndUseSkill`, which
+needs a cast the harness cannot make.
+
+**Pins** — six in `BeritraRapidBreathTests`, six mutations, all caught.
+
+**One survived first time, and it is the same blind spot as last commit's.** The picker pin drove
+`PickBreathSet` with a stub that makes exactly **one** threshold true, so **every arrangement of the
+four rungs satisfies it** — reversing the whole cascade passed. Priority only shows when more than one
+rung would match at once. Two pins now cover that: a roll that satisfies everything must take the
+twenty-five-per-cent trio, and one that satisfies nothing must fall through to the unguarded one. The
+lesson repeats from Celestius's cycle: **a pin driven by one input cannot see an ordering**, and the
+mutation that exposes it is always the one that reorders rather than the one that changes a value.
+
+**Also this commit:** `CaptainXastaAI`'s class summary still said his second form "runs its own pattern,
+which is not translated here". It was translated several commits ago and the detailed remarks below it
+describe the translation; only the summary was stale. Its remaining audit row is the thirty-second
+self-cast that class deliberately keeps, which is documented in place.
+
+**Still missing on Beritra.** The three-second wind-up before a trio appears, and the marks'
+lifetime: retail gives them `live_time=0` with `despawn_at_attack_state=TRUE`, so they stand until the
+fight ends rather than being swept after eight seconds as they are here. Both were left because this
+port collapses the control npc away and changing the lifetime model without knowing what clears them is
+a guess. Beyond the wave: his guardian-spawn cadence, the `ExtinctionField` wipe on message 22633 with
+its `total_set_to_spawn=12`, the support-guard spawns on 22637, and both condition variables on death.

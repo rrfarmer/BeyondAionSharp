@@ -13,8 +13,8 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Captain Xasta, Rentus Base. Retail pattern IDYun_Nmd3 (217309); his second form (217310) runs its
-/// own pattern, which is not translated here.
+/// Captain Xasta, Rentus Base. Retail pattern IDYun_Nmd3 (217309); his second form (217310) runs
+/// IDYun_Nmd3_FallOff, which is translated below as <see cref="SecondForm"/>.
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md. His first form ran a 28s cycle that stopped him

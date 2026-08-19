@@ -124,10 +124,71 @@ public class Lv1HumanBeritraAI : AggressiveNoLootNpcAI
             GetOwner().QueueSkill(entry);
     }
 
+    /// <summary>One of retail's eight rapid-breath marks: its npc and where it stands.</summary>
+    public readonly record struct BreathMark(int NpcId, float X, float Y, float Z);
+
     /// <summary>
-    /// Retail: Use one of the following patterns:
-    /// 25% => 1 3 6; 33% => 2 5 7; 50% => 3 5 8; Fix => 1 4 7
+    /// The eight marks, <c>BIDSeal_Skill_RapidBreath_Target_01</c>..<c>_08</c>, at retail's coordinates.
     /// </summary>
+    /// <remarks>
+    /// <b>The z was 1749.9 here and retail spawns every one of them at 1755.</b> Five metres of a
+    /// breath mark is the difference between standing on it and standing under it.
+    /// </remarks>
+    private const float MarkZ = 1755f;
+
+    public static readonly BreathMark[] Marks =
+    [
+        new BreathMark(855745, 136.6f, 496.7f, MarkZ),   // 1
+        new BreathMark(855746, 129.6f, 516.2f, MarkZ),   // 2
+        new BreathMark(855747, 137.5f, 534.4f, MarkZ),   // 3
+        new BreathMark(855748, 154.6f, 540.7f, MarkZ),   // 4
+        new BreathMark(855749, 173.7f, 534.0f, MarkZ),   // 5
+        new BreathMark(855750, 180.9f, 515.4f, MarkZ),   // 6
+        new BreathMark(855751, 174.3f, 498.2f, MarkZ),   // 7
+        new BreathMark(855752, 156.4f, 490.2f, MarkZ),   // 8
+    ];
+
+    /// <summary>
+    /// Retail's four sets, in the priority order its control npc tries them: 25%, then 33%, then 50%,
+    /// then the unguarded one. Indices into <see cref="Marks"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>The cascade of independent rolls is right, and worth saying so.</b> Retail is four rungs each
+    /// carrying its own <c>test_probability</c>, evaluated highest priority first — which is exactly a
+    /// chain of separate rolls, not one weighted draw. The code here reads like the common mistake and
+    /// is not one.
+    /// <para>
+    /// The sets and their order were checked against <c>IDSeal_Skill_RapidBreath_CTRL</c> mark by mark
+    /// and are correct. Recorded because a rotation among four trios is the failure this shape invites.
+    /// </para>
+    /// </remarks>
+    public static readonly int[][] BreathSets =
+    [
+        [0, 2, 5],  // 25%  -- marks 1, 3, 6
+        [1, 4, 6],  // 33%  -- marks 2, 5, 7
+        [2, 4, 7],  // 50%  -- marks 3, 5, 8
+        [0, 3, 6],  //       -- marks 1, 4, 7
+    ];
+
+    /// <summary>Picks a set the way retail's control npc does: one probability test per rung, in order.</summary>
+    public static int[] PickBreathSet(System.Func<int, bool> chance) =>
+        chance(25) ? BreathSets[0]
+        : chance(33) ? BreathSets[1]
+        : chance(50) ? BreathSets[2]
+        : BreathSets[3];
+
+    /// <summary>
+    /// Retail's rapid-breath wave, from <c>IDSeal_Skill_RapidBreath_CTRL</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Not translated, and the shape of what is missing matters.</b> Retail does not run this from
+    /// the boss at all: he spawns a control npc, which waits <b>3000</b> on an idle timer, picks one of
+    /// four sets, spawns its three marks and <c>despawn_self</c>. The marks carry <c>live_time=0</c> —
+    /// permanent — and <c>despawn_at_attack_state=TRUE</c>, so they leave when the fight does, not on a
+    /// clock. This port collapses the control npc away, spawns three caster npcs at one point, fires
+    /// after 500ms and clears everything after 8000. The three-second wind-up and the
+    /// leave-with-the-fight lifetime are both absent; the eight-second sweep is ours.
+    /// </remarks>
     private void HandlePulseWave()
     {
         // 855541
@@ -135,31 +196,10 @@ public class Lv1HumanBeritraAI : AggressiveNoLootNpcAI
         Npc skill2 = (Npc)Spawn(855742, 151.9f, 518.6f, 1749.6f, (sbyte)0);
         Npc skill3 = (Npc)Spawn(855742, 151.9f, 518.6f, 1749.6f, (sbyte)0);
 
-        Npc slave1, slave2, slave3;
-        if (Rnd.Chance() < 25)
-        {
-            slave1 = (Npc)Spawn(855745, 136.6f, 496.7f, 1749.9f, (sbyte)0); // Pos 1
-            slave2 = (Npc)Spawn(855747, 137.5f, 534.4f, 1749.9f, (sbyte)0); // Pos 3
-            slave3 = (Npc)Spawn(855750, 180.9f, 515.4f, 1749.9f, (sbyte)0); // Pos 6
-        }
-        else if (Rnd.Chance() < 33)
-        {
-            slave1 = (Npc)Spawn(855746, 129.6f, 516.2f, 1749.9f, (sbyte)0); // Pos 2
-            slave2 = (Npc)Spawn(855749, 173.7f, 534.0f, 1749.9f, (sbyte)0); // Pos 5
-            slave3 = (Npc)Spawn(855751, 174.3f, 498.2f, 1749.9f, (sbyte)0); // Pos 7
-        }
-        else if (Rnd.Chance() < 50)
-        {
-            slave1 = (Npc)Spawn(855747, 137.5f, 534.4f, 1749.9f, (sbyte)0); // Pos 3
-            slave2 = (Npc)Spawn(855749, 173.7f, 534.0f, 1749.9f, (sbyte)0); // Pos 5
-            slave3 = (Npc)Spawn(855752, 156.4f, 490.2f, 1749.9f, (sbyte)0); // Pos 8
-        }
-        else
-        {
-            slave1 = (Npc)Spawn(855745, 136.6f, 496.7f, 1749.9f, (sbyte)0); // Pos 1
-            slave2 = (Npc)Spawn(855748, 154.6f, 540.7f, 1749.9f, (sbyte)0); // Pos 4
-            slave3 = (Npc)Spawn(855751, 174.3f, 498.2f, 1749.9f, (sbyte)0); // Pos 7
-        }
+        int[] set = PickBreathSet(percent => Rnd.Chance() < percent);
+        Npc slave1 = (Npc)Spawn(Marks[set[0]].NpcId, Marks[set[0]].X, Marks[set[0]].Y, Marks[set[0]].Z, (sbyte)0);
+        Npc slave2 = (Npc)Spawn(Marks[set[1]].NpcId, Marks[set[1]].X, Marks[set[1]].Y, Marks[set[1]].Z, (sbyte)0);
+        Npc slave3 = (Npc)Spawn(Marks[set[2]].NpcId, Marks[set[2]].X, Marks[set[2]].Y, Marks[set[2]].Z, (sbyte)0);
 
         ThreadPoolManager.GetInstance().Schedule(_ =>
         {
