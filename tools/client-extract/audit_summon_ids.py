@@ -66,22 +66,41 @@ AINAME = re.compile(r'\[AIName\("([^"]+)"\)\]')
 LITERAL = re.compile(r"\b(\d{6})\b")
 
 
-def devname_to_npc():
-    out = {}
+def devname_to_npc(xml_dir="D:/Aion58ServerTesting/Server/Map/XML"):
+    """devname -> npc id, preferring the client's own npc tables over the AI binding.
+
+    ai_binding.tsv only knows npcs that carry an AI pattern, so gates, flags, portals and effect markers
+    resolved to nothing and 6% of every spawn action in the pattern set was invisible here. See
+    client_npc_names.py for the two checks that justify preferring the client table: it closes all 509
+    gaps and disagrees with the binding on none of the 5,948 names they share.
+    """
+    from client_npc_names import npc_names
+    out = dict(npc_names(xml_dir))
     tsv = REPO / "tools" / "client-extract" / "out" / "ai_binding.tsv"
     for line in tsv.read_text(encoding="utf-8").splitlines()[1:]:
-        parts = line.split("\t")
+        parts = line.split(chr(9))
         if len(parts) > 1 and parts[1]:
             out.setdefault(parts[1], parts[0])
     return out
 
 
+SPAWN_ACTION = re.compile(r"<(spawn|spawn_on_target|spawn_on_multi_target)>(.*?)</\1>", re.S)
+
+
 def pattern_spawns(xml_dir):
-    """pattern name -> set of devnames it spawns."""
+    """pattern name -> set of devnames it actually SPAWNS.
+
+    Only `npc_nameid` inside a spawn action counts. A pattern names npcs in plenty of other places --
+    conditions that test whether one exists, despawn actions, state checks -- and counting those made
+    this audit claim Berserk Anoha spawns `BLDF5_Fortress_Anoha_Summon1_65_Al`, which appears in his
+    pattern **sixteen times and never once inside a spawn**. That row could not be explained by hand for
+    two commits; it was the tool describing a set it had built wrong.
+    """
     out = collections.defaultdict(set)
     for f in sorted(pathlib.Path(xml_dir).glob("NpcAIPatterns*.xml")):
         for m in PATTERN.finditer(read_text(f)):
-            names = NAMEID.findall(m.group(2))
+            names = [n for action in SPAWN_ACTION.finditer(m.group(2))
+                     for n in NAMEID.findall(action.group(2))]
             if names:
                 out[m.group(1)].update(names)
     return out

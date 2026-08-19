@@ -29140,3 +29140,63 @@ would lose the only tool that has ever found this class of bug.
   the likeliest cause and are worth a look, since unresolved devnames anywhere mean the binding table has
   holes this work has been trusting.
 - Pashid's missing `npc_skills`, Dynatoum's mine web, 857599 and 856503, unchanged.
+
+## Two holes in the foundation everything here was built on
+
+Last commit ended by noticing that Berserk Anoha's two commander devnames resolved to nothing, and that
+"this work has been trusting that table throughout". Both halves of that turned out to be worth pulling.
+
+### The resolver only knew npcs that carry AI
+
+`ai_binding.tsv` is derived from the AI patterns, so it lists **only npcs that have one**. Gates, flags,
+portals, treasure boxes, healing objects and effect markers have none.
+
+> **509 devnames — 1,132 spawn actions, 6% of every spawn in the pattern set — resolved to nothing.**
+> Not reported as missing. Reported as nothing at all.
+
+The client carries the full table in `npcs.xml`, `npcs_monsters.xml` and `npcs_std_monsters.xml`, as
+plain `<id>` / `<name>` pairs: **87,734 names** against the binding's 69,184. Same trick as
+`skill_base.xml`, in files nobody had opened.
+
+**It was checked before being adopted, not after.** It resolves **all 509** gaps, and across the **5,948**
+names both tables know it disagrees on **none**. A strict superset, not a competing opinion — so
+`client_npc_names.py` is now the resolver and `ai_binding.tsv` keeps its real job, which is saying which
+*pattern* an npc runs.
+
+### The audit counted every mention of an npc as a spawn
+
+`pattern_spawns` collected every `<npc_nameid>` anywhere in a pattern. Patterns name npcs in conditions
+that test whether one exists, in despawn actions, in state checks. So:
+
+> `BLDF5_Fortress_Anoha_Summon1_65_Al` appears in Anoha's pattern **sixteen times and never once inside a
+> spawn**, and the audit reported it as an add he was missing.
+
+That row could not be explained by hand across two commits — it was the tool describing a set it had
+built wrong. Only `<spawn>`, `<spawn_on_target>` and `<spawn_on_multi_target>` count now.
+
+### What the two corrections did to the numbers
+
+They pull in opposite directions, which is why both were needed:
+
+```
+before   299 unnamed ids
+counting spawn actions only        ->  281   (false positives removed)
+resolving every devname            ->  310   (spawns that were invisible)
+```
+
+**310 is the first honest count**, and it is higher than where this started. The top band is 36.
+
+### And Anoha's row now says something real
+
+With both fixes it reads: retail spawns **806517 and 806524** — Solis and Sonntag — and the class names
+**804594 and 804595**, two npcs called "commander anoha". **Neither 806517 nor 806524 exists in our
+`npc_templates.xml` at all.** So this is not a wrong id in code; it is retail spawning two npcs our data
+does not carry, and an earlier author substituting two that it does. That is a data gap, correctly
+surfaced for the first time.
+
+**Still missing.**
+
+- **806517 and 806524**, and the other npcs retail spawns that our data lacks. The audit can now name
+  them, which it could not before.
+- **The 36 top-band ids**, recomputed on the corrected numbers.
+- Pashid's `npc_skills`, Dynatoum's mine web, 857599 and 856503, unchanged.
