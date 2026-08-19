@@ -27155,3 +27155,45 @@ minutes, and loosening that fifteenfold in the name of fidelity would make the e
 (30000 against a six-timer chain) are the next two rows, and both need a look at whether their npcs are
 retail encounters at all before their numbers are treated as drift — the class names suggest a custom
 feature that happens to share a binding.
+
+## Three audit rows that were never drift, and one healer at half speed
+
+### The audit was chasing this server's own features
+
+`CustomInstanceBossAI`'s row read "200 against retail's 5000 and 7000" and looked like a bad opening.
+It is not a port at all: the class is built on `Aion.GameServer.Custom.Instance`, this server's own
+neural-network instance, and its npcs simply carry an `ai_name` that happens to bind to a retail
+pattern. The comparison ran and meant nothing.
+
+`audit_timer_drift.py` now marks any class that references `Aion.GameServer.Custom` as
+**`[CUSTOM -- not a port, ignore the numbers]`** and counts them in its header. Three classes qualify.
+Marked rather than dropped, because the binding itself is worth seeing — an ai_name shared between a
+custom feature and a retail encounter is a thing to know about.
+
+**This is the third kind of false positive that audit has grown a label for**, after "casts only" and
+"the opening is measured from an HP phase". Each one was a row somebody would otherwise have spent an
+afternoon on.
+
+### The drakan healing servant healed every six seconds
+
+Retail's `IDYun_Temp_69` is two rungs: entering attack state arms `BTIMERI_INDEX_0` at 1000, and the
+rung it fires re-arms at **3000** and casts. This port re-armed at **6000** — half the throughput.
+
+A healing servant is an add a group is meant to have to kill quickly, and at half rate it was never the
+pressure it should have been.
+
+**The opening is this port's own and is deliberately left.** Retail measures its 1000 from entering
+attack state; here the servant waits 2000 after spawning to acquire its creator as a target and then
+opens at 1000, so the first heal lands about three seconds in rather than one. The acquisition step is
+plumbing retail does not need, and shortening it risks a servant that finds no creator and never heals
+at all — a worse failure than a late first tick.
+
+**Pins** — three in `DrakanHealingServantTests`, three mutations, all caught. Table pins, and the file
+says why: the servant heals its creator and does nothing without one, and the harness spawns npcs
+without a creator, so there is no fight in which the cadence can be observed.
+
+**Still missing.** `DistortedSpaceAI` (500 against 0, 1500, 2000 and 3000) is the next unread row.
+`AdjutantGalamatAI` remains genuinely index-blocked: its whole fight is a cast chain where each rung
+arms the next timer — 3000, 3000, 6000 in the top band and 4000, 2000, 2000, 2000 below it — and the
+chain's shape is readable while every action in it is a skill index. Its 25000 is not a cadence at all
+but the delay on a queued shield skill, so the audit row was never about the chain.

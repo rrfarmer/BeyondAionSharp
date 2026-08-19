@@ -261,6 +261,13 @@ def main() -> int:
         if not theirs:
             continue  # no pattern to compare against; audit_missing_patterns covers that
 
+        # A class built on Aion.GameServer.Custom is this server's own feature, not a port of a retail
+        # encounter. Its npcs still carry an ai_name that happens to bind to a retail pattern, so it
+        # lands in this audit looking like drift -- CustomInstanceBossAI's 200ms against a retail
+        # 5000/7000 is a made-up fight's opening compared with somebody else's. Marked rather than
+        # dropped, because the binding itself is worth seeing.
+        custom = "Aion.GameServer.Custom" in source
+
         can_act = any(pattern_of.get(n, "") in actionable for n in npcs_of_ai.get(name.group(1).lower(), []))
         fixed_rate = "ScheduleAtFixedRateTask" in source
         varies = any(pattern_of.get(n, "") in variable for n in npcs_of_ai.get(name.group(1).lower(), []))
@@ -271,7 +278,7 @@ def main() -> int:
 
         unmatched = sorted(d for d in mine if d not in theirs)
         rows.append((len(unmatched), len(mine), path.stem, unmatched, sorted(theirs), can_act,
-                     fixed_rate and varies, bad_openings, sorted(their_openings)))
+                     fixed_rate and varies, bad_openings, sorted(their_openings), custom))
 
     rows.sort(key=lambda r: (-r[0], r[2]))
     print(f"{len(rows)} classes schedule something and have a retail pattern to compare against.\n")
@@ -283,11 +290,19 @@ def main() -> int:
     print()
     print(f"{sum(1 for r in rows if r[7])} open a fixed-rate task at a delay their pattern does not "
           f"arm on entering combat.")
+    print()
+    print(f"{sum(1 for r in rows if r[9])} are built on Aion.GameServer.Custom -- this server's own "
+          f"features, not ports.")
+    print("  (their npcs carry an ai_name that binds to a retail pattern, so the comparison runs and")
+    print("   means nothing. Marked [CUSTOM] below; do not treat those numbers as drift.)")
     print("  (only meaningful where the task is armed on engaging -- a task started from an HP phase")
     print("   measures its opening from that threshold, and those lines are false positives.)")
     print()
-    for unmatched_n, mine_n, stem, unmatched, theirs, can_act, fixed_wrong, bad_open, their_open in rows[: args.limit]:
-        mark = "" if can_act else "   [casts only -- needs the skill index]"
+    for (unmatched_n, mine_n, stem, unmatched, theirs, can_act, fixed_wrong, bad_open, their_open,
+         custom) in rows[: args.limit]:
+        mark = "   [CUSTOM -- not a port, ignore the numbers]" if custom else ""
+        if not can_act:
+            mark += "   [casts only -- needs the skill index]"
         if fixed_wrong:
             mark += "   [FIXED RATE, retail rung varies]"
         print(f"{stem}: {unmatched_n} of {mine_n} port delays are not in retail's pattern{mark}")
