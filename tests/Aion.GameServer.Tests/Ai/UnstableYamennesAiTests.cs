@@ -528,4 +528,35 @@ public sealed class UnstableYamennesAiTests
 		Npc worm = harness.LiveNpcs().First(n => n.GetNpcId() == OldLapilima);
 		Assert.Equal(gate.GetX(), worm.GetX(), 1);
 	}
+
+	/// <summary>The golem this fight used to summon and retail never does.</summary>
+	private const int InventedGolem = 219586;
+
+	/// <summary>
+	/// <b>The healing debuff summons nothing.</b>
+	/// </summary>
+	/// <remarks>
+	/// It used to place three golems at ten-metre diagonals off the boss and re-place them on every
+	/// debuff, so the fight ran <b>six golems where retail has three</b> — the real ones standing on
+	/// their marks, and three more following him around the room.
+	/// <para>
+	/// Npc 219586, <c>idabre_core_02_Sum_Golem</c>, <b>is spawned by no pattern in the 5.8 dump</b>.
+	/// Retail has exactly two golems here and this class already places the other correctly. Found by
+	/// <c>audit_unpinned_spawns.py</c> — it was the only spawn in the class no pin named, and the
+	/// reason no pin named it is that it was not a mechanic.
+	/// </para>
+	/// </remarks>
+	[Theory]
+	[InlineData(DurableYamennes)]
+	[InlineData(Painflare)]
+	public void TheHealingDebuffSummonsNoGolems(int npcId)
+	{
+		var (harness, boss, player) = EngagedSingle(npcId);
+		using BossAiHarness _h = harness;
+
+		// Past the portal wave that drives the debuff, and past a second turn of it.
+		harness.Clock.Advance(TimeSpan.FromSeconds(150));
+
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == InventedGolem));
+	}
 }

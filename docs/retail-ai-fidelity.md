@@ -23454,3 +23454,61 @@ its mutation has been run**, and nothing here does that automatically.
 
 Build clean. Zeroing Omega's guards fails its pin. **Three consecutive full-suite runs**: 2,182 passing
 (one new), 1 skipped.
+
+## Counting the adds no pin names, and deleting three golems retail never had
+
+Top of the backlog was that **nothing checks whether a pin measures what it is named for**. Four inert
+pins turned up in one session, each by accident. Real mutation testing — delete a spawn, rebuild, run
+that class's tests — is the honest answer and costs a rebuild per mutation.
+
+`tools/client-extract/audit_unpinned_spawns.py` is the cheap proxy that runs in seconds: **for every npc
+an AI class spawns, does any pin so much as mention it?** An id no test names cannot be asserted, so the
+answer is a sound lower bound.
+
+**251 of 275 spawned npcs, across 95 classes, are named by no pin.**
+
+That number is the point of the tool. It is not a to-do list of 251 bugs — most of those adds are
+probably fine — but it is the honest size of the unpinned surface, and it was previously unknown.
+
+**What it cannot do**, and the docstring says so: a *mentioned* id may still be unpinned. Omega's clones
+were named by a pin that dropped him to a health no branch matched; Kurmata's cap was named by a pin
+asserting the wrong number. This finds mechanics with **no** coverage, not mechanics with **bad**
+coverage.
+
+### Every class touched this session was clean but one
+
+Of the eleven classes worked on over this session, ten had every spawn named by a pin. The exception was
+`UnstableYamennesAI`, with one: npc **219586**.
+
+### And that one was not a mechanic at all
+
+**No pattern in the 5.8 dump spawns `idabre_core_02_Sum_Golem`.** Retail has exactly two golems in this
+fight — `IDAbRe_Core_Sum_Golem` (282107) and `bidabre_core_02_Sum_Golem` (283229) — and this class
+already places the second correctly, on its own marks, on its own three-minute timer.
+
+The third was invented: three of them re-placed at ten-metre diagonals off the boss **every time the
+healing debuff fired**, following him around the room. So the fight ran **six golems where retail has
+three**, and the extra three moved — which is the same fault already corrected for the hard-mode set and
+left standing here.
+
+**The reason no pin named it is that it was not a mechanic.** That is a pleasing property of this
+audit: invented behaviour tends to be unpinned, because nobody had a retail number to assert.
+
+The debuff keeps what retail gives it — the cast, the hate reset and the message — and the two cleanup
+sweeps that swept the invented golem are gone with it.
+
+### Still to do
+
+- **250 spawns still named by no pin.** The tool reports them; nothing yet works through them.
+- **Real mutation testing.** This proxy cannot see a pin that names an add and asserts nothing useful
+  about it, which is exactly what three of the four inert pins did.
+- **`hatepoints_to_add` and `attack_target_after_spawn`** are cross-checked by nothing.
+- **Empress Muada**, `LDF4a_SandWarm_Monarch`, unported and unspawned.
+- **The four remaining classes**: `AbyssUndeadAI`, `KaligaTheUnjustAI`, `CalindiFlamelordAI`,
+  `YamennesSpawnGateAI`.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Putting one invented golem back fails both new pins. **Three consecutive full-suite runs**:
+2,184 passing (two new), 1 skipped.

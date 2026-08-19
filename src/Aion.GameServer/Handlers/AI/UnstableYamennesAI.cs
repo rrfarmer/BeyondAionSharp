@@ -215,14 +215,29 @@ public class UnstableYamennesAI : AggressiveNpcAI
             (sbyte)GetOwner().GetHeading());
     }
 
+    /// <summary>
+    /// Retail's reset-aggro branch: a cast, the hate list cleared, and the message that says so.
+    /// </summary>
+    /// <remarks>
+    /// <b>It used to summon three golems as well, and retail summons none here.</b> They were npc
+    /// 219586, <c>idabre_core_02_Sum_Golem</c> — and <b>no pattern in the 5.8 dump spawns that npc at
+    /// all</b>. Retail has exactly two golems in this fight, <c>IDAbRe_Core_Sum_Golem</c> (282107) and
+    /// <c>bidabre_core_02_Sum_Golem</c> (283229), and this class already places the second correctly on
+    /// its own marks on its own three-minute timer.
+    /// <para>
+    /// So the fight was running <b>six golems where retail has three</b>: the real ones standing on
+    /// their marks, and three invented ones re-placed at ten-metre diagonals off the boss every time
+    /// the debuff fired — following him around the room, which is the same fault already corrected for
+    /// the hard-mode set and left standing here.
+    /// </para>
+    /// <para>
+    /// Found by <c>audit_unpinned_spawns.py</c>: it was the only spawn in this class that no pin named,
+    /// and the reason no pin named it is that it was not retail's.
+    /// </para>
+    /// </remarks>
     private void OnHealingDebuff()
     {
-        WorldMapInstance instance = GetPosition().GetWorldMapInstance();
-        DeleteNpcs(instance.GetNpcs(219586));
         GetOwner().QueueSkill(19282, 55);
-        Spawn(219586, GetOwner().GetX() + 10, GetOwner().GetY() - 10, GetOwner().GetZ(), (sbyte)0);
-        Spawn(219586, GetOwner().GetX() - 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0);
-        Spawn(219586, GetOwner().GetX() + 10, GetOwner().GetY() + 10, GetOwner().GetZ(), (sbyte)0);
         GetOwner().ClearAttackedCount();
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_ResetAggro());
     }
@@ -288,7 +303,6 @@ public class UnstableYamennesAI : AggressiveNpcAI
     protected override void HandleDespawned()
     {
         CancelTasks();
-        DeleteNpcs(GetPosition().GetWorldMapInstance().GetNpcs(219586));
         base.HandleDespawned();
     }
 
@@ -296,7 +310,6 @@ public class UnstableYamennesAI : AggressiveNpcAI
     {
         CancelTasks();
         SpawnSlivers();
-        DeleteNpcs(GetPosition().GetWorldMapInstance().GetNpcs(219586));
         base.HandleDied();
     }
 
