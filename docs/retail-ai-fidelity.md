@@ -24634,3 +24634,70 @@ count stands as Java wrote it.
 **Unpinned.** The marker's own ten-second lifetime lives in `ScaldingExecutorAI`, which only places
 markers after a follow-and-arrive; the pins place markers directly, so they assert the blaze's lifetime
 and not the marker's.
+
+## Killing an incarnation is what removes its drakan mage — and it removed none
+
+Retail patterns `IDTiamat_BurrowingWorm_SumAscention_OnDie` (283063),
+`IDTiamat_NagaQueen_BlazingInfernoFX` (283064), `_BlazingInfernoDmg` (283065),
+`IDTiamat_NagaQueen_Meteor` (283066), and `IDTiamat_Temp16` through `_Temp19` (283163-283166,
+hard 856483-856486).
+
+Last commit noted that `audit_skilless_casters.py` cannot see an npc that *should* cast but is never
+asked to. `audit_silent_hazards.py` asks that wider question — for every npc whose retail pattern
+contains a `use_skill`, does this port give it any way to cast? — and found this.
+
+**Retail's mechanic.** Each incarnation leaves a mark when it dies. All four marks are three lines and
+identical in shape: cast a dispel on themselves, **broadcast at ninety-nine metres**, despawn. Each
+message is answered by exactly one **balaur spiritualist** — the drakan mage at that incarnation's
+corner — which despawns on hearing it.
+
+```
+283063  Fissurefang  broadcasts 55  ->  mage 283163 / 856483
+283066  Wrathclaw    broadcasts 56  ->  mage 283164 / 856484
+283064  Petriscale   broadcasts 57  ->  mage 283165 / 856485
+283065  Graviwing    broadcasts 58  ->  mage 283166 / 856486
+```
+
+**The pairing is not derivable.** The marks run 283063-283066 and the mages 283163-283166, but 283064
+answers to mage *three* and 283065 to mage *four* — the order is retail's message numbers, not the id
+order. A table, and one the pins check per row.
+
+**What this port had.** `TiamatsIncarnationAI` already places all four marks, on the right deaths, for
+retail's six seconds. They were bound to `general`, so they were scenery: **every mage stayed in the
+room however many incarnations the raid killed.**
+
+**Pins** — `TiamatIncarnationDeathEffectAiTests`, six, six mutations, all caught.
+
+**Not translated: the dispel.** Each mark's `use_skill` names `SKILLI_INDEX_0` and none of these npcs
+has a skill row — the same blocker logged against Tiamat's hard-mode uplift. The mage removal needs no
+skill, which is why it could be ported.
+
+## The audit, and a correction to how it reports
+
+`audit_silent_hazards.py` lists 1308 npcs whose retail pattern casts while this port gives them no
+means to. **Read that number carefully**: most are ordinary guards, quest mobs and wildlife whose
+aionemu templates simply carry no skill list — a broad data gap, not broken mechanics. 141 are placed
+by something here and **53 by an AI or instance handler**, which is the set worth reading
+(`--placed-by-code`).
+
+**Its first version filtered instead of annotating, and that was wrong twice over.** Two routes supply
+a cast without touching `npc_skills` — the arena bonus table in `PvPArenaScore.GetNpcBonusSkill`, which
+is how the Harmony arena traps fire, and any handler that names the id and casts through `SkillEngine`,
+which is how Tiamat's Eye fires. The first version excluded both. The exclusion **silently matched
+nothing** and the totals were identical either way, which is exactly the failure an exclusion invites:
+had it worked and been slightly wrong, real defects would have vanished from the report with nothing to
+say so. Hits are now annotated `CAST-FOR` and left in.
+
+## Rebinding an npc breaks every pin that places it
+
+Fixing the four marks meant rebinding them off `general`, and that **broke seven existing assertions in
+`TiamatsIncarnationAiTests`**, which places those same npcs. The harness validates every AI name it is
+asked to place, and each pin lists them by hand.
+
+That is the **seventh** occurrence of this failure mode this session and the first caused by a *data*
+change rather than by a new pin — which makes it worse than an inconvenience: any future rebind silently
+breaks unrelated pins until someone reads the stack trace. `TestAiEngine.EnsureAllRegistered()` already
+binds every `[AIName]` handler the way production boot does; the harness deliberately registers a subset
+instead. **The fix is to let an unknown AI name fall back to the real registry rather than throw**, and
+it is still not done — it changes shared test infrastructure that a hundred pins depend on, and this
+pass had already spent its budget on the audit.

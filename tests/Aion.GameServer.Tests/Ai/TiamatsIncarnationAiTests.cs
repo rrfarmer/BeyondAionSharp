@@ -51,8 +51,12 @@ public sealed class TiamatsIncarnationAiTests
 
 	private static BossAiHarness NewHarness() => BossAiHarness.For(DragonLordsRefuge)
 		.WithWorldSize(2048)
-		.WithAi(typeof(TiamatsIncarnationAI), typeof(TiamatsIncarnationSpawnsAI), typeof(AggressiveNpcAI),
-			typeof(GeneralNpcAI))
+		// The four closing effects were rebound off `general` when the drakan mages they dismiss were
+		// ported, and this pin places them -- so it started throwing until the class was named here.
+		// Seventh time this failure mode has come up, and the first caused by a data change rather than
+		// by a new pin: rebinding an npc breaks every existing pin that places it.
+		.WithAi(typeof(TiamatsIncarnationAI), typeof(TiamatsIncarnationSpawnsAI),
+			typeof(TiamatIncarnationDeathEffectAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 		.Build();
 
 	/// <summary>The crack they close on death sits near 478/514, so they fight where they stand.</summary>
