@@ -30997,19 +30997,15 @@ present state while adding invisible npcs to the room.
 
 The map above is the hard part and did not exist before. What remains is mechanical.
 
-### One thing found on the way
+### One thing found on the way, which was not what it looked like
 
-`summarize_pattern.py` **silently produces a truncated file** when its output is redirected and the
-pattern contains Korean branch comments: 306 lines, of which everything after line 17 is blank. Read on
-a terminal it is fine. Every pattern in this work has been read through that tool, and any redirected to
-a file may have been read short without anybody noticing.
+**Retracted in the next entry: the tool is fine.** What was written here — that `summarize_pattern.py`
+silently truncates a redirected file — is false. See "The tool was not broken; the window was" below.
 
 **Still missing.**
 
 - **Jurdin himself**, to the map above.
-- **`summarize_pattern.py`'s redirect bug.** It is an encoding fault on write, not a parse fault, so
-  nothing it has ever printed to a terminal is suspect — but the tool should not be able to fail that
-  quietly, and it is not fixed here.
+- ~~`summarize_pattern.py`'s redirect bug~~ — **there is no bug; retracted below.**
 - **`is_aerial_spawn`**, the guard separating the two idle rungs of every phase, has no vocabulary in
   this port and no obvious meaning from the data alone.
 - The 34 non-route absence claims; the 33 named death-spawn rows; hisen's 6401/6402 pair; `is_user`
@@ -31017,3 +31013,42 @@ a file may have been read short without anybody noticing.
   four owed attributes; the 258203/258207 family decision; the 59 stranded guards; 25 guards with no
   `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids; Dynatoum's mine web;
   Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## The tool was not broken; the window was
+
+The previous entry reported that `summarize_pattern.py` silently truncates its output when redirected.
+**That is wrong and is retracted.**
+
+Re-run and compared byte for byte, the redirected file and the original are identical: 9,549 bytes, 306
+lines, 112 of them non-empty, content running to line 305. Nothing was ever lost.
+
+What actually happened:
+
+1. A first attempt to print the file crashed on `UnicodeEncodeError` — the console here is cp1252 and
+   the pattern carries Korean branch comments.
+2. The retry printed lines 16–90 with the non-ASCII replaced, and they came back blank.
+3. **That window happens to sit inside a 97-line blank run** the renderer emits inside one rung, from
+   line 18 to line 114. The next content is at 115.
+4. From "everything in my window is blank" came "everything after line 17 is blank".
+
+> The generalisation was from a window I chose, to a file I never looked at the end of. The count was
+> right there in the same output — 306 lines for a pattern whose digest is a few dozen — and it did not
+> get asked why.
+
+**The cost of getting this wrong is not symmetric.** A tool wrongly declared broken is worse than one
+quietly broken: everything it has ever produced becomes suspect, and this one is how every retail pattern
+in this work has been read. The retraction is in the entry above as well as here, because somebody
+reading that entry alone would distrust the tool.
+
+The jurdin map in that entry stands: it was built with a separate extractor written for the purpose, not
+from the summary, so nothing in it depended on the mistake.
+
+**Still owed, and real:** the renderer does emit long blank runs inside a rung, which is what made the
+misreading possible. That is cosmetic, not a fault, and is not fixed here.
+
+**Still missing.** Jurdin himself; `is_aerial_spawn`; the 34 non-route absence claims; the 33 named
+death-spawn rows; hisen's 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on
+an enter-combat spawn; the `<summons>` schema's four owed attributes; the 258203/258207 family decision;
+the 59 stranded guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven
+unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven
+absent npc rows.
