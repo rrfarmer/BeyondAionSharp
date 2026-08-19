@@ -23281,3 +23281,66 @@ Both mutations go red — freezing the flag, and restoring the four-wave cap.
 ### Verification
 
 Build clean. **Three consecutive full-suite runs**: 2,179 passing, 1 skipped.
+
+## Fixing the summariser that caused three misreads, and finishing Stormwing
+
+Three times this session I read a pattern wrong by grepping the file instead of reading its branches. The
+right response is not to be more careful; it is to fix the tool that made the careful reading hard.
+
+### What the summariser was dropping
+
+`summarize_pattern.py` collapses a pattern to one line per condition and action, keeping "only the fields
+that carry meaning". **Two of the fields that carry the most meaning were not in that list:**
+
+| field | why it matters |
+|---|---|
+| `total_set_to_spawn` | the cap on a `spawn_on_multi_target`, **often 1**. The op name says "everybody"; this says how many |
+| `order_in_attacker_list` | whether the cap takes the top of the hate list or a random slice |
+
+Every multi-target op therefore had to be re-read out of the raw XML by hand — **four times**, and one of
+those nearly shipped Stormwing's single lightning as a raid-wide wave.
+
+And the renderer marked only `set_flag_var` as a mutating guard. **`unset_flag_var` mutates too** — 1,143
+of them across the dump — and so does `increase_intvar`, and both printed as passive reads. That is
+exactly why Stormwing's escalation looked like a four-wave sequence: **a branch pair holding a set and an
+unset copy of one flag ping-pongs for ever**, and the summary gave no sign of it.
+
+Both fixed at the source, with the reasoning in the file. The very first run of the corrected tool
+surfaced a fact three passes of hand-reading had missed: **normal mode's root escalation branches drop
+three lightnings**, not one and not none.
+
+### Stormwing's last three rungs
+
+- **Normal's root escalation** now drops its three lightnings.
+- **Hard mode's two extra rungs at 31-50**, which normal does not have at all: a bleed twister planted on
+  whoever he is facing for thirty seconds, and a root twister scattered five metres off a random attacker
+  for five — the shortest-lived add in the fight. **These are the only twisters aimed at a player rather
+  than at a route**, so that band is a different fight in the two modes rather than the same one scaled.
+
+### The pin that asserted nothing
+
+`HardModeAddsTwoTwistersInTheMiddleBand` **passed with both rungs deleted.** The band ladder spawns the
+same two npc ids, and at forty per cent it still had four bands left to cross — so the window counted
+those and the assertion was satisfied by machinery it was not testing.
+
+Caught only because the mutation was run. **A pin that is not mutated is a pin that might be measuring
+the wrong thing**, and this is the second time this session that a green pin turned out to be inert. It
+now spends every band above forty before the window opens, and it fails when the rungs are removed.
+
+It also needed two full turns of the timer chain rather than one: the chain was already part-way through
+its above-fifty cadence when the health dropped, so a short window can catch either rung alone.
+
+### Still to do
+
+- **The escalation's cadence** is still our fixed thirty seconds; retail arms timer 1 from the lightning
+  rungs at fifty and forty-five, coupling the two chains in a way this class does not reproduce.
+- **The four remaining classes**: `AbyssUndeadAI`, `KaligaTheUnjustAI`, `CalindiFlamelordAI`,
+  `YamennesSpawnGateAI`.
+- **Re-read the multi-target ops in every ported class** now that the summariser prints their caps —
+  four were checked by hand, and there are more.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Deleting both rungs fails the middle-band pin. **Three consecutive full-suite runs**: 2,181
+passing (two new), 1 skipped.

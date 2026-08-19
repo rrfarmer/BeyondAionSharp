@@ -13,9 +13,13 @@ are first-match-wins chains and the order is the behaviour.
 
 Two things to read carefully in the output:
 
-- `set_flag_var` in a *condition* is a test-and-set, so that branch fires once.
-  A branch whose only gate is `is_hp_lower_than` without one fires on every tick
-  below the threshold instead.
+- A gate marked `!` mutates when it passes -- `set_flag_var` is a test-and-set, so that
+  branch fires once; `unset_flag_var` is its mirror. **A pair of branches holding a set and
+  an unset copy of one flag alternates for ever**, which is how retail writes a two-state
+  rotation. A branch whose only gate is `is_hp_lower_than` fires on every tick below the
+  threshold instead.
+- `total_set_to_spawn` on a `spawn_on_multi_target` is the cap, and it is often 1. The op name
+  says "everybody"; the field says how many.
 - `SKILLI_INDEX_n` is an index into the NPC's server-side skill list, which no
   client file carries; `audit_skill_index_reach.py` says whether ours is long
   enough to resolve it.
@@ -60,7 +64,22 @@ KEEP = {
     # `point_to_add` on add_hate_point and `points_to_add` on switch_target: the weight of a call is
     # the mechanic, not decoration. Read out of the raw XML by hand three times before this.
     "point_to_add", "points_to_add", "percent_to_add",
+    # The two fields that decide what a multi-target spawn actually does. `spawn_on_multi_target` reads
+    # as "one on everybody" and is almost never that: `total_set_to_spawn` caps it, at one in several
+    # fights, and `order_in_attacker_list` says whether the cap takes the top of the hate list or a
+    # random slice. Both were dropped here, so every multi-target op had to be re-read out of the raw
+    # XML by hand -- four times, and one of those nearly shipped Stormwing's single lightning as a
+    # raid-wide wave. Fourth dropped value to produce a wrong conclusion; see docs/retail-ai-fidelity.md.
+    "total_set_to_spawn", "order_in_attacker_list",
 }
+
+# Condition tags that mutate when they pass. These read as guards and behave as actions, which is the
+# whole of how a retail pattern alternates: a branch pair holding a set and an unset copy of one flag
+# ping-pongs between two behaviours for ever. Marking only `set_flag_var` made `unset_flag_var` look
+# like a passive read, and Stormwing's escalation was ported as a four-wave sequence that stopped
+# because of it.
+MUTATING_GUARDS = {"set_flag_var", "unset_flag_var", "set_world_flag_var", "increase_intvar",
+                   "set_int_var", "add_intvar"}
 DROP_VALUES = {"", "0", "FALSE", "OBJI_NONE", "NPCI_NONE"}
 
 
@@ -110,8 +129,9 @@ def render(branch: ET.Element, indent: str = "    ") -> list[str]:
         for op in block:
             mark = "?" if section == "conditions" else ">"
             detail = fields(op)
-            # A test-and-set gate reads like a condition but mutates, so call it out.
-            if section == "conditions" and op.tag in ("set_flag_var", "set_int_var"):
+            # A gate that mutates when it passes reads like a condition and behaves like an action,
+            # so call it out. See MUTATING_GUARDS.
+            if section == "conditions" and op.tag in MUTATING_GUARDS:
                 mark = "!"
             lines.append(f"{indent}  {mark} {op.tag}{(' ' + detail) if detail else ''}")
     return lines

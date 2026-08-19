@@ -221,6 +221,13 @@ public class StormwingAI : AggressiveNpcAI
             return;
 
         int hp = GetLifeStats().GetHpPercentage();
+
+        // Hard mode's own rung, which normal does not have: a bleed twister planted on whoever he is
+        // facing, standing thirty seconds. It is the only twister in this fight aimed at a player
+        // rather than at a route.
+        if (IsHardMode && hp > 30 && hp <= 50)
+            SpawnOnCurrentTarget(SharpTwister, 30, spawnRange: 0f);
+
         long toLightning = hp <= 30 ? 15000L : hp <= 50 ? 25000L : 20000L;
         lightningTask = ThreadPoolManager.GetInstance().Schedule(
             _ => { OnLightningRung(); return ValueTask.CompletedTask; }, toLightning);
@@ -236,24 +243,84 @@ public class StormwingAI : AggressiveNpcAI
 
         int hp = GetLifeStats().GetHpPercentage();
         if (hp <= 30)
+        {
             SpawnLightning(7);
+        }
         else if (hp <= 50)
+        {
             SpawnLightning(15);
+
+            // And hard mode adds a root twister on a random attacker beside it -- five seconds, which
+            // is the shortest-lived add in the fight, scattered five metres off whoever it picked.
+            if (IsHardMode)
+                SpawnOnRandomAttacker(RootTwister, 5, spawnRange: 5f);
+        }
 
         long backToCast = hp <= 30 ? 35000L : hp <= 50 ? 30000L : 20000L;
         lightningTask = ThreadPoolManager.GetInstance().Schedule(
             _ => { OnCastRung(); return ValueTask.CompletedTask; }, backToCast);
     }
 
-    /// <summary>One lightning, on a random player inside retail's fifty-metre valid distance.</summary>
-    private void SpawnLightning(int liveSeconds)
+    /// <summary>
+    /// Lightning on up to <paramref name="cap"/> random players inside retail's fifty-metre valid
+    /// distance.
+    /// </summary>
+    /// <remarks>
+    /// <b>The cap is the whole content of the op.</b> Both rungs of the timer chain carry
+    /// <c>total_set_to_spawn=1</c>; the escalation's root branches carry <b>three</b>. Reading
+    /// <c>spawn_on_multi_target</c> as "everybody" would make either several times harsher than retail.
+    /// </remarks>
+    private void SpawnLightning(int liveSeconds, int cap = 1)
+    {
+        foreach (Creature target in RandomValidTargets(cap))
+            SpawnFor(Lightning, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0, liveSeconds);
+    }
+
+    /// <summary>Retail's <c>ORDERI_RANDOM</c> slice of the hate list, inside the valid distance.</summary>
+    private List<Creature> RandomValidTargets(int cap)
     {
         List<Creature> valid = GetAggroList().StreamValidTargets(LightningReach).ToList();
-        if (valid.Count == 0)
+        var picked = new List<Creature>();
+        while (picked.Count < cap && valid.Count > 0)
+        {
+            int i = Rnd.NextInt(valid.Count);
+            picked.Add(valid[i]);
+            valid.RemoveAt(i);
+        }
+
+        return picked;
+    }
+
+    /// <summary><c>spawn_on_target target_obj=OBJI_CUR_TARGET</c>, inside the valid distance.</summary>
+    private void SpawnOnCurrentTarget(int npcId, int liveSeconds, float spawnRange)
+    {
+        Creature? target = GetTarget() as Creature;
+        if (target == null || !PositionUtil.IsInRange(GetOwner(), target, (int)LightningReach))
             return;
 
-        Creature target = valid[Rnd.NextInt(valid.Count)];
-        SpawnFor(Lightning, target.GetX(), target.GetY(), target.GetZ(), (sbyte)0, liveSeconds);
+        Scatter(npcId, target, liveSeconds, spawnRange);
+    }
+
+    /// <summary><c>spawn_on_target_by_attacker_indicator ATTACKERI_RANDOM_ONE</c>.</summary>
+    private void SpawnOnRandomAttacker(int npcId, int liveSeconds, float spawnRange)
+    {
+        foreach (Creature target in RandomValidTargets(1))
+            Scatter(npcId, target, liveSeconds, spawnRange);
+    }
+
+    private void Scatter(int npcId, Creature target, int liveSeconds, float spawnRange)
+    {
+        float x = target.GetX();
+        float y = target.GetY();
+        if (spawnRange > 0f)
+        {
+            double angle = Rnd.NextFloat(360f) * System.Math.PI / 180.0;
+            float distance = Rnd.NextFloat(spawnRange);
+            x += (float)(System.Math.Cos(angle) * distance);
+            y += (float)(System.Math.Sin(angle) * distance);
+        }
+
+        SpawnFor(npcId, x, y, target.GetZ(), (sbyte)0, liveSeconds);
     }
 
     private void OnBandTick()
@@ -322,6 +389,12 @@ public class StormwingAI : AggressiveNpcAI
         NpcSkillCasting.QueueAtDataLevel(GetOwner(), ThreshingWind, NpcSkillTargetAttribute.ME);
         foreach (int route in routes)
             SpawnNear(npcId, 0f, 0f, EscalationLife, "NPCPathPath_RudraWind_" + route);
+
+        // Normal mode's root pair drops three lightnings alongside the elites; hard mode's does not.
+        // Found only once the summariser started printing total_set_to_spawn -- the field that says
+        // this is three and not one, and not everybody.
+        if (!bleed && !IsHardMode)
+            SpawnLightning(7, cap: 3);
     }
 
     /// <summary>

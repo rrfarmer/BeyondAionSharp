@@ -348,4 +348,67 @@ public sealed class StormwingAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(4));
 		Assert.All(opening, tw => Assert.False(tw.IsSpawned(), "still standing past thirty seconds"));
 	}
+
+	/// <summary>
+	/// <b>Hard mode's two extra rungs, which only exist between thirty-one and fifty per cent.</b>
+	/// </summary>
+	/// <remarks>
+	/// These are the only twisters in the fight aimed at a player rather than at a route: a bleed
+	/// twister planted on whoever he is facing for thirty seconds, and a root twister scattered five
+	/// metres off a random attacker for five. Normal mode has neither, so the band is a different fight
+	/// in the two modes rather than the same one scaled.
+	/// <para>
+	/// Counted as arrivals over a window, because the five-second one is gone almost as soon as it
+	/// lands and a standing count would miss it on most samples.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void HardModeAddsTwoTwistersInTheMiddleBand()
+	{
+		using var harness = NewHarness();
+		Npc boss = SpawnBoss(harness);
+		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
+		harness.Engage(boss, player);
+
+		// Every band above forty has to be spent before the window opens: the ladder spawns the same two
+		// npc ids, so a window that still had bands to cross would count those instead. THE FIRST
+		// VERSION OF THIS PIN DID NOT DO THIS, and it passed with both rungs deleted -- it was
+		// measuring the band ladder and asserting nothing at all about what it was named for.
+		foreach (int band in new[] { 94, 79, 64, 49 })
+			TickBandAt(harness, boss, player, band);
+
+		BossAiHarness.SetHpPercent(boss, 40);
+
+		// Two full turns of the chain. One turn is not enough: the chain was already part-way through
+		// its above-fifty cadence when the health dropped, so the first rung inside a short window can
+		// be either of the two.
+		BossAiHarness.Watched seen = harness.WatchNew(
+			120, () => BossAiHarness.Rehate(boss, player), SharpTwister, RootTwister);
+
+		Assert.True(seen.Total >= 2,
+			$"the middle band should plant a bleed and a root twister: saw {seen.Total}");
+	}
+
+	/// <summary><b>And above the band it plants neither.</b></summary>
+	[Fact]
+	public void OutsideTheMiddleBandThereAreNoPlantedTwisters()
+	{
+		using var harness = NewHarness();
+		Npc boss = SpawnBoss(harness);
+		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
+		harness.Engage(boss, player);
+
+		// The band ladder spawns the same two npc ids, so the bands above sixty have to be spent before
+		// the window opens or it would count them instead. The first version of this pin did exactly
+		// that and read three band waves as planted twisters.
+		foreach (int band in new[] { 94, 79, 64 })
+			TickBandAt(harness, boss, player, band);
+
+		// Sixty per cent: past every band it can still cross, and above the 31-50 rungs.
+		BossAiHarness.SetHpPercent(boss, 60);
+		BossAiHarness.Watched seen = harness.WatchNew(
+			45, () => BossAiHarness.Rehate(boss, player), SharpTwister, RootTwister);
+
+		Assert.Equal(0, seen.Total);
+	}
 }
