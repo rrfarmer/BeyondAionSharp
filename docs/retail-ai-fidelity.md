@@ -25688,3 +25688,52 @@ test suite says nothing about, because nothing asserted them.
 `SinkingSandAI` rows, which are the collapse and are fine. And traps themselves have **no standing
 lifetime at all** in this port — retail expires an untriggered trap after 100 or 600 seconds, and here
 one stands until the instance ends.
+
+## The mosqua egg hatched on a clock, and hatched the wrong thing
+
+Second real row out of `audit_lifetime_conflicts.py`: `MosquaEggAI` (282006, retail pattern
+`Elim_NeutflyEgg`) removed itself after seventeen seconds against a retail `live_time` of three hundred.
+Reading the class found three defects, and the flagged one turned out to be the least of them.
+
+Retail's whole pattern is a single rung:
+
+```
+on_see_user:
+  ! set_flag_var FLAGVARI_ALPHA_1
+  > use_skill target=OBJI_SELF skill=SKILLI_INDEX_0
+  > spawn_on_target OBJI_SELF, BIDElim_NeutWorkmanflySummon_51_n, spawn_range=1,
+                    live_time=18, valid_distance=50
+  > despawn_self
+```
+
+**It hatches when somebody sees it, not on a clock.** This class started a seventeen-second timer in
+`HandleSpawned` and hatched when it expired, whatever anybody did. So an egg nobody went near opened
+anyway — a room of eggs emptied itself before a group ever reached it — and an egg walked straight past
+sat there for the rest of the seventeen seconds first. The trigger is `on_see_user`, flag-guarded so it
+fires exactly once, and it is a player: an npc that sees it leaves it shut, which matters in Taloc's
+Hollow, where the wandering supraklaw would otherwise have hatched the room themselves.
+
+**And it hatched the wrong npc.** Retail names `BIDElim_NeutWorkmanflySummon_51_n`, which is **282082**.
+This class spawned **217132**, which is `IDElim_2F_NeutQeen_Summon_51_An` — the queen's summon, a
+different npc that the instance also places from its own spawn table. **Both are called "spawned
+supraklaw"**, which is what let it pass: on screen the egg produced something with the right name at the
+right spot, drawn from the wrong npc entirely.
+
+**The hatchling has retail's eighteen-second `live_time` now**, which it had none of. That is also why
+the audit's three-hundred flag was a red herring in the end: the three hundred belongs to the *egg*,
+whose despawn is its own rung, and the eighteen belongs to the thing it leaves behind.
+
+**Pins** — five in `MosquaEggAiTests`, five mutations. Four caught.
+
+**One mutation survived, and the pin that should have caught it says so.** Deleting the once-guard
+changes nothing, because the egg deletes itself as it hatches and a second sighting never reaches a live
+npc. `AnEggOpensOnlyOnce` therefore passes for a reason other than the flag it names, and its remarks
+now state that outright rather than letting it read as evidence. The guard is kept because it is
+retail's.
+
+**Still missing.** The rung's `use_skill SKILLI_INDEX_0` is unresolved like every other skill index —
+the egg does not cast anything as it opens. `spawn_range=1` and `valid_distance=50` are not modelled:
+the hatchling lands on the egg's own point rather than within a metre of it, and the fifty-metre
+validity check that would stop a hatch across a wall is absent. Of the audit's remaining rows,
+`FireStormAI` (20s against 180) and `StrangeCreatureAI` (6.5s against 120) are unread, and traps still
+have **no standing lifetime at all** where retail expires an untriggered one after 100 or 600 seconds.
