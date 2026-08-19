@@ -27343,3 +27343,42 @@ rotations the tool warns about — `HyperionAI` (fourteen phases against retail'
 `EnragedQueenModorAI` (six against one, none shared), `BrigadeGeneralTahabataAI` and `EmpoweredAgent`.
 Each needs its pattern read before any number is moved, and on this evidence a good share of what looks
 like drift in them will be stand-ins rather than mistakes.
+
+## The waypoint gap: 9,566 npcs whose AI walks and whose spawn data does not
+
+Three mechanics have now been left unwritten because the npc driving them has no route — Muragan the
+Loyal's escort, Lahulahu's summon wave, and the fortress killers' walk to the guards they came for.
+Each read as a one-off. `tools/client-extract/audit_waypoint_gap.py` counts them.
+
+> **9,612 of our npcs run a retail pattern that uses waypoints. 46 of them have a walker route.**
+
+| op | uses |
+|---|---|
+| `goto_waypoint` | 2,225 |
+| `is_waypoint_index` | 1,072 |
+| `SPAWN_LOCATION_WAY_POINT_START` | 881 |
+| `on_arrived_at_waypoint` | 784 |
+
+across **1,298** patterns, 1,184 of them bound to npcs we place.
+
+**And this is not "our route data is incomplete".** 2,213 npcs *do* carry a `walker_id` in our spawn
+data — the overlap with the walking patterns is 46. The two bodies of data are about **different npcs**:
+ours routes ambient patrols, and retail's waypoint-driven encounters are almost a disjoint set.
+
+The largest single row is `LDF6_Named_Enter_Attack` at **1,941** npcs, none routed; then
+`LDF6_D2_Basic` at 738, and the artifact guards at 316 and 160 — the same guards whose call family was
+ported three commits ago, which walk back to their posts in retail and stand where they were put here.
+
+**What it costs.** Movement itself is the visible part, but the expensive part is what hangs off it:
+`on_arrived_at_waypoint` is a *trigger*, and 784 uses of it are 784 places where reaching a point starts
+something. Lahulahu's summon wave is one of them. Anything gated that way is unreachable here no matter
+how completely its own rungs are ported — which is why that wave was written up rather than written.
+
+**Not a thing to fix by inventing routes.** A made-up path is a made-up encounter: where an npc walks
+decides where its adds arrive, where its hazards land, and when its timers start. The honest options are
+to extract the routes from the client's own data — the 467 `<pathname>` values name them, and whether
+the geometry is reachable has not been investigated — or to leave these mechanics out and say so, which
+is what this log has been doing one npc at a time without knowing the size of it.
+
+**No behaviour changed this commit.** The number is now a tool rather than three separate notes saying
+"blocked on waypoints".
