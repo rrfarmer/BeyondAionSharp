@@ -29288,3 +29288,60 @@ job with the wrong npcs, which makes this a lower-stakes gap than it first read.
 - **The 36 top-band ids**, Pashid's `npc_skills`, Dynatoum's mine web — unchanged.
 - **No generator for `npc_templates.xml` exists in this repo**, only audits. Seven rows is small enough to
   hand-write; if the number ever grows, that absence is what to fix first.
+
+## The summoner that never summoned
+
+Sixth row off the ranked list, and the second that was owed.
+
+`EternalBastionSummonerAI` was this, in full:
+
+```csharp
+public override bool Ask(AIQuestion question) => question switch
+{
+    AIQuestion.REWARD_LOOT or AIQuestion.REWARD_AP => false,
+    _ => base.Ask(question),
+};
+```
+
+**An override of `Ask` and nothing else.** The one thing its name describes did not happen.
+
+Retail's `IDF5_TD_Nor_Pr` gives it a single rung, hung on `on_attacked` and again on `on_spelled`:
+
+> **Below fifty per cent, once**, one `revitalizing servant` (284441) at its own point within five
+> metres, permanent.
+
+Three details, each of which is a defect if dropped:
+
+- **`is_hp_lower_than 50` is strictly below.** Fifty itself does not fire.
+- **`set_flag_var` makes it a one-shot.** Without it the rung fires on every blow under half and one add
+  becomes a stream — the same shape as Laksyaka's three-per-cent roll, which is the defect that started
+  this whole line of work.
+- **`on_spelled` as well as `on_attacked`.** A caster group that never lands a physical blow would
+  otherwise never see the servant. That is the `OnEffectApplied` hook, not the `Spelled` AI event, which
+  is raised only from the damage path.
+
+**Pins** — four, four mutations, all caught. Full solution green at 2,798.
+
+**Not translated:** `despawn_at_attack_state=TRUE` on that spawn. Elsewhere here it means "goes when the
+summoner is pulled", but this spawn happens *during* combat, so there is no later moment for it to fire
+on and modelling it would remove the servant immediately.
+
+### Where the ranked list stands
+
+| row | verdict |
+|---|---|
+| Tiamat hard | route-blocked |
+| Lord Beritra | FX collapse, plus an unspawned controller |
+| Isbariya | already in our spawn data |
+| Ahserion | named by a sibling file's constant |
+| Pashid | **owed — wrong id** |
+| **Eternal Bastion summoner** | **owed — mechanic entirely absent** |
+
+**Two of six owed.** The four explained ones each became a filter, and this one was found after those
+filters had cleared the noise — which is the ranking doing its job rather than luck.
+
+**Still missing.**
+
+- **The 35 remaining top-band ids.**
+- **Dynatoum's mine web**, blocked on the skill-index problem; **Beritra's two spawn rows**; **Pashid's
+  `npc_skills`**; **the seven absent npc rows** with their retail values recorded.
