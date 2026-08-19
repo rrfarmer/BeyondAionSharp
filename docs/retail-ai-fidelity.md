@@ -25869,3 +25869,56 @@ the same action list as the cast; here the npc has to outlive its own cast.
 Six `say_to_all` lines across the fight, none of them present. The casts are skill-index rungs and stay
 blocked, but the **spawn counts, ranges and every timer above are not** — that is the next piece of work
 on this boss.
+
+## Popuchin's bombs were one chain where retail has two timers
+
+Following the guided bomb back to its owner. Retail's `Station_FlightNM` arms four battle timers on
+entering attack state and the two bomb mechanics sit on different ones, guarded by opposite halves of
+his health bar:
+
+| | retail | this port |
+|---|---|---|
+| guided bombs | `BTIMERI_INDEX_0`, opening **7500**, repeat **40000**, `larger_than=50`, two per firing | one 15500 chain, ~20s cycle |
+| scattered bombs | `BTIMERI_INDEX_3`, opening **2500**, repeat **25000**, `lower_than=50`, ten at `spawn_range=35` | same chain, ten at range **12** |
+
+This class ran **one** task: wait 15500, wind up, then throw two guided bombs or ten scattered ones
+depending on his health, and start over. Three things follow from that.
+
+**The guided bombs came twice as often as retail's.** A ~20-second cycle against 40 seconds, two bombs
+each time, for the whole first half of the fight.
+
+**The scattered ones came at less than half the rate** — and, worse, **late**. Retail's scatter timer
+is one of two that tick every 2500 the entire time he is healthy, doing nothing, so the first salvo
+lands within two and a half seconds of his health crossing fifty percent. Here a player who pushed him
+into the second phase waited out whatever was left of a twenty-second cycle before anything happened at
+all. That is the difference between a phase transition and a pause.
+
+**And the scatter was a third of its width.** Ten bombs at `spawn_range=35` cover the platform; at 12
+they land in a huddle around him, which is not something a group has to move for.
+
+Retail's fifty-percent edge is exclusive on both sides (`larger_than=50`, `lower_than=50`), so at
+exactly half health neither rung fires and he throws nothing. That is mirrored rather than tidied up.
+
+**Pins** — seven in `PopuchinAiTests`, nine mutations, all caught.
+
+**Three of those nine survived their first run, and all three were pins that could not fail.** Two
+asserted "he throws none" by counting bombs still standing after a two-minute window — but **both bomb
+npcs are long gone by then**, the guided ones by their own thirteen-second backstop, so the count was
+zero whether he threw any or not. The third used two twenty-second windows to tell a 25-second repeat
+from a 20-second one; both land the second salvo in the second window, so the arithmetic could never
+separate them. All three are now spawn-window counts with the boundaries worked out against both the
+real and the mutated schedule.
+
+**This is the third time in two days that a pin has passed on an empty collection**, after the
+`DrainQueuedSkills` pair on Tahabata's hazards. The shape is always the same: assert the *absence* of
+something that disappears on its own, over a window long enough for it to disappear. Counting arrivals
+rather than survivors is the fix, and `WatchNew` is what it is for.
+
+**Still missing on this boss.** Four of his rungs are casts behind skill indices and **none of those
+timers exists here at all**: `SKILLI_INDEX_4` on entering attack state, a bombardment on
+`BTIMERI_INDEX_1` every 15000 above half health, and two more on `BTIMERI_INDEX_2` every 12500 below
+it — one of the pair gated behind `test_probability percent=30`, which is his only random branch. So
+above half health he should be doing something every 15 seconds between bomb salvos, and below it every
+12.5, and he does neither. His six `say_to_all` lines (`STR_CHAT_ShulackNM_00` through `_05`) are also
+absent and their ids are unresolvable. The 4500ms wind-up before each salvo is this port's own, from
+Java: retail's action list is atomic. It is kept, and the pins measure through it.
