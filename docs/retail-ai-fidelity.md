@@ -28252,3 +28252,55 @@ for. `audit_summon_ids.py` still carries the row, which now reads **2 missing in
 while this was being finished, and did not recur in five subsequent runs (three of the game-server suite,
 two of the whole solution) — so it is recorded here rather than claimed as fixed or dismissed. The suite
 is otherwise green at 2,759.
+
+## Closing the waypoint thread: nobody who walks here is missing a waypoint mechanic
+
+Muragan, Lahulahu and Grogget were all found the same way — by hand, one at a time, each with a class
+insisting the mechanic was blocked on route data that was already in our own spawn table. Three times is
+enough. `audit_waypoint_rungs.py` makes it a query.
+
+It takes every npc with **all three** of a retail `on_arrived_at_waypoint` handler that *does* something,
+a `walker_id` on its spawn so it actually walks here, and a non-generic C# class — and asks whether that
+class listens, and then whether the indices retail guards on appear in it at all.
+
+> **4 classes qualify. All 4 listen. None is missing the mechanic.**
+
+That is the answer to the question the last three commits kept raising, and it is a closure rather than a
+finding: there is no fourth Grogget waiting.
+
+**The tool was wrong twice before it was right, and both errors were the kind worth writing down.**
+
+- **It did not know what listening looks like.** It checked for a `HandleMoveArrived` override. A
+  `PatternAi` subclass does not have one — it declares `OnArrivedAtWaypoint` and the base class raises the
+  event. So the first run reported `OphidanBridgeCallAI` and `SealedAkaimumAI` as having no handler, when
+  `OphidanBridgeCallAI` already contained the exact `is_last_waypoint` despawn the tool said was missing.
+  **I was one step from implementing a mechanic that was already there.**
+- **It counted indices from rungs that do nothing.** A rung whose whole body is `goto_next_waypoint` is
+  retail telling the npc to keep walking, which our walker does by itself. Counting those made it ask why
+  `EngineerLahulahuAI` never mentions waypoints 11 or 15 — when there is nothing at 11 or 15 to mention.
+  Indices are now collected per rung, and only from rungs that act.
+
+A third weakness is left in deliberately: the index check treats **any** small integer literal in the
+class as naming that index. The first version looked for `GetStepIndex() == 4` and flagged all four
+classes, including the two written in the two commits before it, because both hold their indices in named
+constants. For a tool whose output is a reading list, false negatives are the right failure direction.
+
+**The one row that survives is real and is blocked on two primitives.** The Ophidan Bridge fugitives'
+index-1 rung is `shout_to_all STR_CHAT_IDF5_U01_Ra_Goossip_05` plus
+`goto_next_waypoint MOVETYPE_RUN` — so from their second waypoint they **run** rather than walk, and say
+something on the way. The shout has no message id this port can resolve and there is no run-speed action
+in the pattern DSL. Both actions of the rung are unavailable, so the rung is recorded rather than
+half-built.
+
+**Still missing.**
+
+- **Eleven classes whose npcs have no `walker_id`** but whose patterns act at waypoints:
+  `hyperion_defence` (16 npcs), `captured_drakan_scientist`, `brigade_general_vasharti`,
+  `gunnerkoakoa`, `padmarashka_world_boss`, `sematariux`, `poppyontherun`, the two Eternal Bastion
+  classes, `summoner` and `useitem`. **A missing `walker_id` is not proof they do not walk** — Dalia
+  routes her three helpers at runtime and `ReianBomberAI` routes itself in `HandleSpawned`, and neither
+  would appear in our spawn table. Each needs the same check by hand: is a route attached somewhere in
+  code? That is the next batch, and `gunnerkoakoa` is the obvious first — it is also on
+  `audit_summon_ids.py`'s list with its own unnamed ids.
+- The `MOVETYPE_RUN` distinction generally: retail's `goto_next_waypoint` carries a movement type, and
+  nothing in this port reads it, so every patrol that is meant to break into a run does not.
