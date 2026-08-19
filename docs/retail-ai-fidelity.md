@@ -26075,3 +26075,48 @@ drive is unreachable. That makes it, by a distance, the **largest single unmodel
 found so far — ahead of the skill index, which blocks individual casts rather than world state. Sizing
 what the 2,121 variables actually gate needs the client's spawn tables read alongside the patterns,
 which has not been done.
+
+## Anoha's reward went to the faction that did not kill him
+
+From `audit_timer_drift.py`: `BerserkAnohaAI` had a delay of 3600000 where retail's pattern
+(`LDF5_Fortress_Anoha`) tops out at 1800000. Reading it found the timer was the smaller of two
+defects.
+
+**The commander he leaves belongs to whoever killed him.** Retail's `on_killed_by_user` is split on the
+killer:
+
+```
+? is_race from=OBJI_KILLER race_type=pc_dark
+> spawn LDF5_Fortress_7011_Sonntag_E ... live_time=1800
+? is_race from=OBJI_KILLER race_type=pc_light
+> spawn LDF5_Fortress_7011_Solis_E ... live_time=1800
+```
+
+This class picked from `occupier` — the fortress race read when Anoha **spawned**. So a raid that came
+and took him from the holding faction was handed **the holding faction's** commander: the reward for the
+kill went to the side that did not make it. That is the whole point of the rung, inverted.
+
+**And the commander stood an hour where retail gives it thirty minutes.** `live_time=1800`.
+
+**Pins** — four in `BerserkAnohaAiTests`, four mutations, three caught.
+
+**The fourth survived, and the pin said in advance that it would.** Its remarks state that the mapping
+is pinned as a table because Anoha's death path reaches `SiegeService` and the quest engine, neither of
+which the AI harness stands up, and that it "would not notice if `CheckForFactionReward` stopped calling
+it". The mutation that puts the old `occupier` lookup back at the call site does exactly that, and
+passes. **The limitation was declared before it was demonstrated, which is the only reason it is honest
+rather than a hole.** Closing it needs a harness that can construct a fortress, which is a larger piece
+of work than this fix.
+
+**Left alone deliberately.** Retail's `on_wake_up` sets an idle timer of **1200000** — twenty minutes —
+against this class's one-hour removal. It is tempting to call that the same number wrong, but the
+`on_idle_timer` rung it drives only broadcasts a message and re-arms at 6000: it is a warning beat, and
+**nothing in the pattern removes him at all**. His spawn and removal belong to the siege schedule here,
+so the hour stands rather than being replaced by a guess. That is the second time in this stretch that a
+timer flagged by the drift audit turned out not to be the despawn it looked like.
+
+**Still missing.** The entire fight: seven skill indices across five battle timers, a health ladder at
+10, 40 and 100, and target switches on `ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET` — all behind the
+skill index. Plus the two `set_condition_spawn_variable` calls on the kill
+(`7011_rewardcon_l_set`, `7011_rewardcon_d_set`), which are part of the 12,446-use mechanism this port
+has no equivalent for, and which here are what retail uses to close out the fortress reward state.
