@@ -28471,3 +28471,55 @@ moved to the wrong lane. Full solution green at 2,771.
   route will hit the emitter's first guard, by design — it is meant to be a stop, not a surprise.
 - Everything else these twelve Hyperion patterns do, which is still a great deal of casting, and the two
   invisible `21101` controllers our data never spawns.
+
+## Three scientists, one door, and a nine-second clock
+
+The nine classes left by the waypoint audit were surveyed in one pass rather than opened one at a time.
+`captured_drakan_scientist` was the clearest: three npcs, each with a single rung —
+`is_waypoint_index 5, despawn_self` — and no route anywhere in our data.
+
+**It is `MuraganAI`'s defect again, in the same instance, with the same number copied across.**
+
+> This class sent **all three** scientists to `(838, 1317, 396)`. That coordinate is index 5 of
+> `Path_IDTiamat_Drakan_Surama_1_1` — **800425's route, and no one else's**. And it deleted every one of
+> them on a **nine-second clock** whether it had arrived or not, exactly as Muragan was deleted at ten.
+
+Retail defines **ten** of these paths, two per spawn spot at each end of the corridor, all converging on
+the door Muragan opens. Our spawn table uses three spots, and each matches one path **to 0.00m** with the
+next nearest seven metres away — which is how the three were identified without guessing from the names,
+whose numbering does not follow the npcs'. Their sixth points are metres apart: two of the three were
+walking to another scientist's door.
+
+All three are imported, each scientist gets its own, and the walk now ends on arrival at index 5 with a
+two-minute backstop instead of a nine-second delete.
+
+**Pins** — fourteen. Four mutations, **three caught and one survivor that is not being dressed up**:
+
+> **"Delete the route lookup from `StartWalk`" survives.** A scientist only starts walking after two
+> guarding eyes die, counted through `DeathObserver`s attached inside a `CompareAndSet`-guarded
+> `HandleCreatureSee`. **That chain does not fire in the harness** — the observers hang off the
+> controller's death path, and `OnGeneralEvent(Died)` raises the AI event and nothing else. Notifying the
+> observers directly does not release them either, and three attempts at it were abandoned rather than
+> keep bending the test around the harness.
+
+So the pins split: the arrival behaviour is driven by attaching a route directly, and the npc-to-route
+assignment is pinned as **data** on a now-public `Routes` map. Between them they catch the wrong waypoint,
+an escape at every waypoint, and two scientists sharing a route. **What no pin covers is the link between
+the two** — that `StartWalk` consults the map at all.
+
+**That was worth the mutation run finding rather than me asserting.** The first version of these tests
+attached routes themselves and looked complete; two of the four mutations survived it, including the one
+that reverts the entire fix. A test file that reaches the interesting behaviour by setting up the thing
+under test is the most convincing kind of useless.
+
+**Still missing.**
+
+- **The release chain in the harness.** Until `BossAiHarness` can run a controller death, this encounter's
+  trigger and every other `DeathObserver` mechanic are untestable, and the surviving mutation stands.
+- **Eight classes** from the waypoint survey, with what each needs now known:
+  `brigade_general_vasharti` and `padmarashka_world_boss` and `sematariux` spawn at index 1;
+  `poppyontherun` at 26; the two Eternal Bastion classes broadcast at index 7 to listeners this port has
+  no sender for; `summoner` and `useitem` are shared classes where only one or two npcs of hundreds carry
+  a waypoint rung.
+- The `on_wake_up` and `on_see_user` rungs of the three scientist patterns, and the quest bookkeeping in
+  this class, which is ours rather than retail's — retail's rung ends at `despawn_self`.

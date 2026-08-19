@@ -30,4 +30,50 @@
 		<routestep x="917.966675" y="1316.410156" z="400.279602" />
 		<routestep x="930.518311" y="1316.280029" z="401.100006" />
 	</walker_template>
+	<!-- The three captured Drakan scientists. Retail defines ten of these paths, two per
+	     spawn spot at each end of the corridor; our spawn table uses three of the ten and each
+	     of those matches its npc's spawn exactly. All ten converge on the door Muragan opens,
+	     and each despawns its walker at index 5. -->
+	<!-- Path_IDTiamat_Drakan_Surama_1_1, walked by 800425 -->
+	<walker_template route_id="3005100002">
+		<routestep x="882.382019" y="1262.392822" z="399.100006"/>
+		<routestep x="880.123352" y="1270.604126" z="399.008118"/>
+		<routestep x="875.382629" y="1278.955444" z="399.249725"/>
+		<routestep x="873.086792" y="1283.240967" z="397.079742"/>
+		<routestep x="858.218262" y="1299.929077" z="399.000000"/>
+		<routestep x="838.033020" y="1317.379883" z="398.167480"/>
+		<routestep x="858.217285" y="1299.934082" z="399.000000"/>
+		<routestep x="873.084290" y="1283.243652" z="397.079742"/>
+		<routestep x="875.386353" y="1278.958618" z="399.249725"/>
+		<routestep x="880.121765" y="1270.603149" z="399.008057"/>
+		<routestep x="882.383911" y="1262.392700" z="399.099579"/>
+	</walker_template>
+	<!-- Path_IDTiamat_Drakan_Surama_4_1, walked by 800427 -->
+	<walker_template route_id="3005100003">
+		<routestep x="885.202698" y="1248.198730" z="399.100006"/>
+		<routestep x="879.002075" y="1269.872070" z="399.012848"/>
+		<routestep x="874.266968" y="1278.225220" z="399.250519"/>
+		<routestep x="871.968872" y="1282.532349" z="397.028046"/>
+		<routestep x="856.845947" y="1299.244385" z="399.000000"/>
+		<routestep x="837.923706" y="1314.743896" z="398.165894"/>
+		<routestep x="856.838135" y="1299.257446" z="399.000000"/>
+		<routestep x="871.965515" y="1282.537231" z="397.028046"/>
+		<routestep x="874.271362" y="1278.222168" z="399.250519"/>
+		<routestep x="879.001953" y="1269.877563" z="399.012848"/>
+		<routestep x="885.201965" y="1248.196533" z="399.099152"/>
+	</walker_template>
+	<!-- Path_IDTiamat_Drakan_Surama_4_2, walked by 800426 -->
+	<walker_template route_id="3005100004">
+		<routestep x="888.422302" y="1390.021729" z="399.100006"/>
+		<routestep x="880.141541" y="1369.048462" z="399.097931"/>
+		<routestep x="875.345337" y="1361.017456" z="399.243622"/>
+		<routestep x="872.924683" y="1356.883789" z="397.009003"/>
+		<routestep x="857.023438" y="1340.218262" z="399.000000"/>
+		<routestep x="838.071350" y="1325.877930" z="398.094391"/>
+		<routestep x="857.019104" y="1340.224854" z="399.000000"/>
+		<routestep x="872.929932" y="1356.896851" z="397.009003"/>
+		<routestep x="875.345215" y="1361.024658" z="399.243622"/>
+		<routestep x="880.140625" y="1369.047852" z="399.097931"/>
+		<routestep x="888.424438" y="1390.017334" z="399.100250"/>
+	</walker_template>
 </npc_walker>
