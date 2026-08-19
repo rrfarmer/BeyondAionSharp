@@ -27602,3 +27602,52 @@ the real kind — a 97-route client reference against 31 of ours that begin some
 imported route is still unbound, waiting on the walker controller to raise arrival at a waypoint index.
 And the 252 other resolved routes, the 37 route-holding worlds with no `cName` match, and the 182
 referenced pathnames with no definition, all unchanged.
+
+## The right question was never "where does the route start"
+
+With GAb1_03 explained, Steel Rake's 31 were the only concentration left, and they looked like the
+ordinary kind: three to seventy metres out, a smooth gradient down to 3.6m against a 3m threshold. A
+gradient that runs right up to the threshold usually means the threshold is the only thing creating the
+category.
+
+**Two innocent explanations, both ruled out.**
+
+* *Resampling* — our route being the same loop with points at different intervals, so our first point
+  falls between two of the client's. Client vertex spacing in Steel Rake is **3.8m median, 16.8m at
+  worst**. That can displace a first point by two metres, not twelve.
+* *A version shift* — the ship's geometry moving between client builds, which would offset all 31 by the
+  same vector. The offsets have **median (0.5, 1.5) and scatter in every direction**. No shift.
+
+**So the measure was changed to the one that was always the real question.** Not *where does our route
+start* but *does our route go where the client's goes* — averaged over every one of our points, the
+distance to the nearest client route.
+
+> **It separates the two cases completely.** In Steel Rake our 78 routes split 47 matching and 31 not.
+> **33 of the 47 are exact — 0.00m mean, every point identical.** **Not one of the 31 comes within 4m.**
+
+There is no middle ground in that distribution, which is what makes it safe to act on. A metric that
+produced a smear of ambiguous cases would need a judgement per route; this one produces two piles.
+
+**Across the whole audit it retired nine false leads** — routes that start at a vertex the client does not
+have but trace its route the whole way:
+
+```
+350 begin on a point of a client route (83%)
+  9 start elsewhere but trace a client route the whole way (mean under 4m)
+ 59 are a different path
+```
+
+**All seven Illuminary Obelisk routes were among the nine.** They were the third-largest concentration in
+the last report and the next thing anybody would have opened after Steel Rake. They are correct, and the
+only thing wrong with them was the question being asked.
+
+**Steel Rake's 31 are real, then, and now properly described**: paths in the same rooms as client routes
+that walk through them differently. Their route ids in that file are hex hashes rather than the numeric
+ids used everywhere else, which points at an older and separate import — a lead the geometry alone could
+not have given.
+
+**Still missing.** The 31 themselves, which are now a bounded, understood job: 31 named client routes
+exist for those rooms and could replace ours, but each needs the same decision Muragan's did — which npc
+takes which — and Steel Rake runs several copies of similar mobs, so it is exactly the case where a wrong
+assignment moves an encounter silently. Not a batch job. And nothing here changes behaviour: this commit
+only tells the truth about which rows deserve attention.

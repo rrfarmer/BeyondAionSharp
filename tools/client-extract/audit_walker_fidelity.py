@@ -47,6 +47,7 @@ import argparse
 import collections
 import math
 import pathlib
+import statistics
 import re
 import sys
 
@@ -55,6 +56,7 @@ from extract_client_waypoints import client_routes, map_ids_by_world  # noqa: E4
 
 WALKERS = pathlib.Path(__file__).resolve().parents[2] / "game-server" / "data" / "static_data" / "npc_walker"
 MATCH_METRES = 3.0
+HUG_METRES = 4.0
 
 TEMPLATE = re.compile(r'<walker_template route_id="([^"]+)"(.*?)</walker_template>', re.S)
 STEP = re.compile(r'<routestep x="([-0-9.]+)" y="([-0-9.]+)"')
@@ -82,7 +84,7 @@ def main():
         print("no client routes resolved -- check the worlds directory and world_maps.xml cName join")
         return 1
 
-    total = matched = 0
+    total = matched = same_path = 0
     misses = []
     for f in sorted(WALKERS.glob("*.xml")):
         named = re.match(r"(\d+)_", f.name)
@@ -105,12 +107,28 @@ def main():
                     best, nearest = d, name
             if best < MATCH_METRES:
                 matched += 1
+                continue
+            # A first-point miss does not say the route is wrong -- it may be the same loop drawn with
+            # different vertices. Ask the stronger question: averaged over EVERY one of our points, how
+            # far does this route sit from the closest client route? Under HUG_METRES it is the same
+            # path; well above it, it is a different path that happens to be in the same rooms.
+            ours = [(float(a), float(b)) for a, b in steps]
+            hug, hugged = 9e9, None
+            for name, points in candidates:
+                m = statistics.mean(min(math.dist(s, p) for p in points) for s in ours)
+                if m < hug:
+                    hug, hugged = m, name
+            if hug < HUG_METRES:
+                same_path += 1
             else:
-                misses.append((map_id, template.group(1), round(best, 1), nearest, len(steps)))
+                misses.append((map_id, template.group(1), round(best, 1), hugged or nearest,
+                               len(steps), round(hug, 1)))
 
     print(f"{total} walker_templates sit in maps the client covers")
     print(f"{matched} begin on a point of a client route ({100 * matched // max(1, total)}%)")
-    print(f"{len(misses)} do not\n")
+    print(f"{same_path} start elsewhere but trace a client route the whole way"
+          f" (mean under {HUG_METRES:.0f}m)")
+    print(f"{len(misses)} are a different path\n")
     print("unmatched by map, with how much of that map the client actually covers:")
     for map_id, count in collections.Counter(m[0] for m in misses).most_common():
         routes_here = len(by_map.get(map_id, []))
@@ -120,8 +138,9 @@ def main():
               f" / {points_here} points{thin}")
     if args.list:
         print()
-        for map_id, route, distance, nearest, steps in sorted(misses, key=lambda m: -m[2]):
-            print(f"  map {map_id}  {route[:16]:18s} {distance:8.1f}m from {nearest}  ({steps} steps)")
+        for map_id, route, distance, nearest, steps, hug in sorted(misses, key=lambda m: -m[5]):
+            print(f"  map {map_id}  {route[:16]:18s} first {distance:7.1f}m  whole-route {hug:7.1f}m "
+                  f"from {nearest}  ({steps} steps)")
     return 0
 
 
