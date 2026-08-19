@@ -10,7 +10,35 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/tiamatStrongHold/MuraganAI (Cheatkiller).</summary>
+/// <summary>
+/// The three Muragan escort npcs in Tiamat Stronghold (800435, 800436, 800438).
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/tiamatStrongHold/MuraganAI (Cheatkiller). Retail-sourced corrections below;
+/// see docs/retail-ai-fidelity.md. Each of the three has its own pattern —
+/// <c>IDTiamat_Murugan1</c>, <c>IDTiamat_Murugan2</c> and <c>IDTiamat_murugan4</c>.
+/// <para>
+/// <b>Muragan the Loyal was deleted while he was still walking.</b> He starts at
+/// (930.9, 1316.3, 401) and walks to (838, 1317, 396) — <b>ninety-three units</b> — on a clock that
+/// removed him after <b>ten seconds</b>, which is not enough to cover it at any npc walk speed. So the
+/// escort a group is meant to follow down the corridor vanished part-way along it. Retail chains six
+/// waypoints and <c>despawn_self</c>s at the last one; he now goes when he arrives.
+/// </para>
+/// <para>
+/// <b>And the door-opener deleted himself for no reason.</b> 800436's whole retail pattern is one
+/// flag-guarded <c>on_see_user</c> rung that calls <c>control_door</c>. There is no
+/// <c>despawn_self</c> anywhere in it — he opens the door and stays standing.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> 800438 shouts twice in retail — <c>STR_CHAT_IDTiamat_Murugan_3_02</c> on
+/// waking and <c>_3_03</c> three seconds later off an idle timer — and only one of the two has an id
+/// we can resolve, so he keeps the single shout he had. Muragan the Loyal's six waypoints are a route
+/// our spawn data does not carry, so the straight move to the door stands in for them. And his rung
+/// ends with <c>set_condition_spawn_variable MURUGAN_SPAWN</c>, which is almost certainly how retail
+/// replaces the guard captain with a body — <see cref="KillGuardCaptain"/> does that here directly,
+/// because this port has no conditional-spawn mechanism to hang it on.
+/// </para>
+/// </remarks>
 [AIName("muragan")]
 public class MuraganAI : GeneralNpcAI
 {
@@ -63,22 +91,48 @@ public class MuraganAI : GeneralNpcAI
 
         SetStateIfNot(AIState.WALKING);
         GetOwner().SetState(CreatureState.ACTIVE, true);
-        GetMoveController().MoveToPoint(838, 1317, 396);
+        GetMoveController().MoveToPoint(DoorX, DoorY, DoorZ);
         PacketSendUtility.BroadcastPacket(GetOwner(), new SM_EMOTION(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetOwner().GetObjectId()));
+
+        // Retail despawns him at his last waypoint, not on a clock. The backstop below is ours: if the
+        // move never reports arrival he would otherwise stand in the corridor for the whole instance.
         ThreadPoolManager.GetInstance().Schedule(_ =>
         {
             AIActions.DeleteOwner(this);
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(10000));
+        }, System.TimeSpan.FromMilliseconds(WalkBackstopMillis));
     }
 
+    /// <summary>Where Muragan the Loyal is walking, ninety-three units from where he starts.</summary>
+    public const float DoorX = 838f;
+    public const float DoorY = 1317f;
+    public const float DoorZ = 396f;
+
+    /// <summary>
+    /// <b>Ours, not retail's.</b> Retail ends his route with <c>despawn_self</c> at the final waypoint
+    /// and has no timer at all; this is only here so a move that never arrives cannot leave him
+    /// standing. It replaces a ten-second delete that fired <b>while he was still walking</b>.
+    /// </summary>
+    public const long WalkBackstopMillis = 120_000L;
+
+    /// <summary>Retail's <c>despawn_self</c> on arriving at the end of the route.</summary>
+    protected override void HandleMoveArrived()
+    {
+        base.HandleMoveArrived();
+        if (GetNpcId() == 800435)
+            AIActions.DeleteOwner(this);
+    }
+
+    /// <summary>
+    /// Retail's <c>IDTiamat_Murugan2</c>, in full: a flag-guarded <c>on_see_user</c> that opens the
+    /// door. <b>Nothing in it despawns him</b>, and this class did.
+    /// </summary>
     private void OpenSuramaDoor()
     {
         if (GetOwner().GetNpcId() == 800436)
         {
             PacketSendUtility.BroadcastMessage(GetOwner(), 390835);
             GetPosition().GetWorldMapInstance().SetDoorState(56, true);
-            AIActions.DeleteOwner(this);
         }
     }
 

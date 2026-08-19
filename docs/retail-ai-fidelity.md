@@ -26318,3 +26318,45 @@ fight ends rather than being swept after eight seconds as they are here. Both we
 port collapses the control npc away and changing the lifetime model without knowing what clears them is
 a guess. Beyond the wave: his guardian-spawn cadence, the `ExtinctionField` wipe on message 22633 with
 its `total_set_to_spawn=12`, the support-guard spawns on 22637, and both condition variables on death.
+
+## Muragan the Loyal was deleted while he was still walking
+
+From `audit_invented_spawns.py`, following `MuraganAI`. The flagged spawn turned out to be defensible;
+what the read found instead was an escort that never arrives.
+
+The three npcs have three separate retail patterns, and this class treats them as one.
+
+**Muragan the Loyal (800435) walks ninety-three units on a ten-second clock.** He spawns at
+(930.9, 1316.3, 401) and this class sends him to (838, 1317, 396), then deletes him after **ten
+seconds** — which no npc walk speed covers. So the escort a group is supposed to follow down the
+corridor **vanished part-way along it, every run**. Retail chains six waypoints and `despawn_self`s at
+the last one. He now goes when he arrives, with a two-minute backstop that is **ours and labelled as
+ours** — retail has no timer at all, and the backstop exists only so a move that never reports arrival
+cannot leave him standing for the instance.
+
+**The door-opener (800436) deleted himself for no reason.** His entire retail pattern is one
+flag-guarded `on_see_user` rung that calls `control_door`. There is no `despawn_self` anywhere in it. He
+opened the door and disappeared in the same breath, so the npc a group walks past was gone before they
+reached the doorway.
+
+**Pins** — six in `MuraganEscortTests`, seven mutations, all caught.
+
+**Two of them exist because of the last two commits' lesson.** The despawn-on-arrival survived its first
+mutation, because nothing raised the arrival — the harness does not walk him down the corridor. Raising
+`MOVE_ARRIVED` directly pins it, and a second pin checks the **door-opener does not** despawn on the
+same event, because a despawn keyed on nothing at all would satisfy the first one. That is the same
+ordering-and-scope blind spot that Celestius's cycle and Beritra's picker both had: **a pin driven by
+one case cannot see what the code keys on.**
+
+**Deliberately kept, with the reason written into the class.** `KillGuardCaptain` swaps the live guard
+captain (219392) for a corpse prop (283145, `IDTiamat_DeadBody_DrakanPig`) — the row that put this class
+on the audit. Muragan the Loyal's retail rung ends with `set_condition_spawn_variable MURUGAN_SPAWN`,
+which is almost certainly how retail makes that swap, and the guard captain has **no AI pattern at all**
+to do it himself. So the direct swap stands in for a conditional-spawn mechanism this port does not
+have, rather than being an invention to delete. The corpse's devname confirms what it is.
+
+**Still missing.** 800438 shouts **twice** in retail — `STR_CHAT_IDTiamat_Murugan_3_02` on waking and
+`_3_03` three seconds later off an idle timer — and only one of the two has an id we can resolve, so he
+keeps the single shout. Muragan the Loyal's six waypoints are a route our spawn data does not carry, so
+the straight move stands in for them; if that route is ever added, the arrival despawn is already in the
+right place to end it.
