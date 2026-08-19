@@ -25967,3 +25967,52 @@ docstring now says plainly that most of them will be fine. It cannot see whether
 which is the fact that decides each row, so it will stay a prompt rather than a measurement. A stronger
 version would read the AI class behind each counted npc id and rank by *known* lifetime against window
 length; that needs the npc-id-to-AI-class map the binding table already has half of.
+
+## Heiramune was running an add train retail does not have
+
+From `audit_timer_drift.py`: `NightmareLordHeiramuneAI` had delays of 0 and 20000 where retail's whole
+pattern (`IDAsteria_IU_world_3Stage_Boss`) contains exactly one delay, 8000.
+
+At eighty per cent this class started a **fixed-rate task that put two adds on the floor every twenty
+seconds for the rest of the fight**, at hardcoded coordinates, and nothing ever stopped it short of his
+death. Retail's eighty-per-cent rung is two lines:
+
+```
+? is_hp_lower_than percent=80
+! set_flag_var FLAGVARI_ALPHA_2
+> say_to_all STR_CHAT_..._Gossip_15
+> set_condition_spawn_variable string=Condition_S3 modify=1
+```
+
+**No rung anywhere in the pattern spawns on a repeating timer.** His three `on_battle_timer` rungs are
+casts, one per health band, all re-armed at 8000.
+
+**And the npc was from a different wave.** 233457 is `IDAsteria_IU_WORLD_2w_Mammoth_65_Ae` — a
+**second**-stage event npc. The third-stage boss never spawns it. The add he does own, 233162, is
+`IDAsteria_IU_3w_Shu_Fi_65_An` at fifty-five per cent, which was already correct and is untouched.
+
+**The fortieth per cent was missing entirely.** Retail crosses three thresholds — 80, 55 and 40 — and
+this class had two. Eighty and forty share `Gossip_15` while fifty-five carries `Gossip_14`, which is
+how the two message ids already in the class are paired up: 1501139 to the two shouting thresholds,
+1501138 to the add. **That mapping is inferred from the pairing, not resolved**, and the class says so.
+
+**His add now leaves when he does.** Retail's spawn carries `despawn_at_attack_state=TRUE`. This class
+cleared the floor on death but not on going home, so an add outlived a wipe.
+
+**Pins** — four in `NightmareLordHeiramuneAiTests`, four mutations, all caught, including one that moves
+the train down to the forty-per-cent rung rather than deleting it.
+
+**Deliberately counted as survivors, not arrivals.** These pins count what stands after four minutes,
+which is the shape `audit_hollow_absence_pins.py` flags — and here it is the right one: an enraged
+nightmare has no lifetime, so anything the train produced is still there, and four minutes of a
+twenty-second train is twenty-four npcs rather than zero. `WatchNew` would have been the reflex and
+would have been worse, for the same reason it was worse on the conquest spawner.
+
+**Still missing.** `Condition_S3` is a conditional-spawn variable, bumped at 80 and again at 40, and
+whatever the world spawn tables hang off it is what actually arrives at those thresholds. **This port
+has no equivalent mechanism at all**, so both now shout and do nothing else. That is much closer to
+retail than an endless train, but it is not the whole rung, and it is the first time a
+`set_condition_spawn_variable` has come up as the blocking piece rather than a skill index — worth
+noting because the same call appears in his `on_enter_attack_state` and `on_die` as well. His four
+casts (two on entering combat, one per health band on the 8000 timer) remain absent behind the skill
+index.
