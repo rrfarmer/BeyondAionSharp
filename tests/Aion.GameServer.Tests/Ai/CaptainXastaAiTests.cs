@@ -193,11 +193,22 @@ public sealed class CaptainXastaAiTests
 
 		// Asserting on the timers rather than their effects is the point: both bodies bail on IsDead(),
 		// so a leaked repeating task is invisible from outside while still running forever.
-		Assert.Equal(idle, harness.Clock.ArmedTimerCount);
+		//
+		// One timer outlives him, and it is not his. His fall-off successor stands up where he fell --
+		// retail's SPAWN_LOCATION_MY_POINT, which this class used to render as an absolute coordinate --
+		// so it arrives beside the player, engages, and arms its own ten-second trap clock. That is the
+		// fight continuing, not a leak; before the correction the successor landed two hundred and forty
+		// metres away and idled, and this read as `idle`.
+		Assert.Equal(idle + 1, harness.Clock.ArmedTimerCount);
 	}
 
 	/// <summary>His second form, and the trap that is its clock.</summary>
 	private const int SecondFormXasta = 217310;
+
+	/// <summary>Occupied Rentus Base's pair, and the artilleryman only they send.</summary>
+	private const int HardCaptainXasta = 236296;
+	private const int HardSecondFormXasta = 236297;
+	private const int HardSiegeArtilleryman = 856500;
 	private const int XastasTrap = 282444;
 
 	private static BossAiHarness SecondFormHarness() => BossAiHarness.For(RentusBase)
@@ -295,5 +306,56 @@ public sealed class CaptainXastaAiTests
 
 		Assert.True(Count(harness, XastasTrap) <= 1,
 			$"his second form drops one trap at a time: {Count(harness, XastasTrap)}");
+	}
+
+	/// <summary>
+	/// <b>The fall-off successor stands up where he fell</b>, which is retail's
+	/// <c>SPAWN_LOCATION_MY_POINT</c>.
+	/// </summary>
+	/// <remarks>
+	/// The class placed him at a fixed coordinate instead. That happened to be right for the one npc it
+	/// covered and is wrong for Occupied Rentus Base's, whose instance drops him <b>a hundred and twenty
+	/// metres away and thirty metres lower</b> — so the hard mode's second form would have appeared in
+	/// the wrong part of the map, out of reach of the group that just killed the first.
+	/// </remarks>
+	[Theory]
+	[InlineData(CaptainXasta, SecondFormXasta)]
+	[InlineData(HardCaptainXasta, HardSecondFormXasta)]
+	public void TheSecondFormStandsUpWhereTheFirstFell(int firstForm, int secondForm)
+	{
+		using var harness = NewHarness();
+		Npc boss = harness.Spawn(firstForm, 400f, 400f, 200f);
+		Player player = harness.SpawnPlayer(402f, 402f, 200f);
+		harness.Engage(boss, player);
+
+		boss.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Npc successor = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == secondForm);
+		Assert.Equal(400f, successor.GetX(), 1);
+		Assert.Equal(400f, successor.GetY(), 1);
+	}
+
+	/// <summary>
+	/// <b>Occupied Rentus Base's Xasta runs the same fight with the hard mode's own artilleryman.</b>
+	/// </summary>
+	/// <remarks>
+	/// Both hard npcs were on <c>aggressive</c>. <c>IDYun_Nmd_Hard_03</c> and <c>IDYun_Nmd3</c> differ in
+	/// five lines and all five are npc ids; the two second forms share one pattern name outright.
+	/// <b>The sibling audit could not have found these</b> — they are spawned from the instance handler
+	/// in code, not from spawn data, and its filter only sees spawn files.
+	/// </remarks>
+	[Fact]
+	public void TheHardXastaSendsTheHardArtilleryman()
+	{
+		using var harness = NewHarness();
+		Npc boss = harness.Spawn(HardCaptainXasta, 400f, 400f, 200f);
+		Player player = harness.SpawnPlayer(402f, 402f, 200f);
+		harness.Engage(boss, player);
+		BossAiHarness.SetHpPercent(boss, 80);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(7));
+
+		Assert.Equal(1, Count(harness, HardSiegeArtilleryman));
+		Assert.Equal(0, Count(harness, SiegeArtilleryman));
 	}
 }

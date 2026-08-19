@@ -22877,3 +22877,73 @@ that pattern fails if it is left off the binding — which is exactly how these 
 
 Build clean. Unbinding any of the four newly pinned npcs turns its pin red. Full suite **2,164 passing**
 (fourteen new), 1 skipped.
+
+## The hard Xasta, a fall-off in the wrong room, and a flaky pin that was a real bug
+
+### Occupied Rentus Base's Captain Xasta
+
+Both hard-mode Xastas — **236296** and **236297** — were on `aggressive` while the normal pair had a
+class. `IDYun_Nmd_Hard_03` and `IDYun_Nmd3` **differ in five lines, and all five are npc ids** (diffed
+whole, not sampled); the two second forms share one pattern name outright, so nothing separates them at
+all.
+
+```
+normal : artilleryman 282606,  second form 217310
+hard   : artilleryman 856500,  second form 236297
+```
+
+**The sibling audit could not have found these.** It filters on npcs our spawn data places, and these two
+are spawned from `OccupiedRentusBaseInstance.OnSpecialEvent` **in code** — one or the other depending on
+whether the previous boss was above half health when he fell. **An empty audit is not an empty backlog.**
+
+### A fall-off that landed in the wrong room
+
+Retail's fall-off is `SPAWN_LOCATION_MY_POINT` — the second form stands up where the first fell. **The
+class rendered it as an absolute coordinate.** That was right for the one npc it covered and wrong the
+moment a second arrived: the hard instance drops Xasta **a hundred and twenty metres away and thirty
+metres lower**, so his successor would have appeared out of reach of the group that just killed him.
+
+Corrected to what the pattern says rather than special-cased per mode. **One existing pin had to change
+with it** — the timer-leak pin now expects one timer to outlive him, because the successor lands beside
+the raid, engages, and arms its own clock. That is the fight continuing; before the fix the successor
+landed two hundred and forty metres away and idled.
+
+### A flaky pin, and why it was flaky
+
+`TheSuccubusLandsOnThePlayer` failed about **one run in six**. It was not a flaky test — it was a
+correct test of a wrong class, and the randomness only decided which runs noticed.
+
+Miladi's spawn carries **`spawn_range=0`** and **`valid_distance=50`**. I read the fifty as scatter when
+I wrote that class, so her succubi went anywhere within fifty metres of the player instead of onto them.
+**Fifty is further than she stands from the raid**, so an add could land nearer her than her victim —
+which is exactly the approximation the class exists to avoid.
+
+Two different numbers, and the engine had only one:
+
+| retail | means | was |
+|---|---|---|
+| `spawn_range` | scatter around the target | the only parameter `SpawnOnAttacker` had |
+| `valid_distance` | how far the attacker may be from the caster and still get one | **not modelled** |
+
+`Do.SpawnOnAttacker` now takes both, the succubi arrive underfoot, and an attacker beyond fifty metres
+gets none. The mutation back to the misread fails **deterministically**, three runs in three, where the
+old pin caught it one in six.
+
+**The other fifteen `SpawnOnAttacker` call sites were checked**: every one passes either no range or a
+small one matching its pattern's own `spawn_range`. Miladi was the only misread.
+
+### Still to do
+
+- **The other 569.** Reviver Nasto (236306, Raksang) and Kexkra (217204, Esoterrace) next, both with
+  instance handlers to read first.
+- **Ariana 799668**, whom Xasta's second form escorts on death, **is in no spawn file and no code**. The
+  escort has therefore never run, in either mode — a pre-existing gap, found while checking this one and
+  left alone rather than guessed at.
+- `valid_distance` is now modelled for one spawn op only; the other placements still ignore it.
+- The 880 route spawns; the 12,000 unbound templates; the hard Rentus `IDYun_Nmd6_Hard` (236300), whose
+  npc our templates do not carry at all.
+
+### Verification
+
+Build clean. Both Xasta mutations go red; the Miladi mutation goes red every run. Full suite **2,168
+passing** (three new), 1 skipped.

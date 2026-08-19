@@ -34,10 +34,17 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("chief_maid_miladi")]
 public class ChiefMaidMiladiAI : PatternAi
 {
-    /// <summary>Retail <c>BIDDF2A_SuccubusSum_50_An</c>, twelve seconds within fifty metres.</summary>
+    /// <summary>Retail <c>BIDDF2A_SuccubusSum_50_An</c>, twelve seconds, on the player exactly.</summary>
+    /// <remarks>
+    /// <b>Fifty is retail's <c>valid_distance</c>, not its <c>spawn_range</c>.</b> The first version of
+    /// this class read it as scatter, which put the succubi anywhere within fifty metres of the player
+    /// instead of on them — and since that is further than Miladi stands from the raid, an add could
+    /// land nearer her than her victim, which is precisely the fight this class exists to avoid
+    /// approximating. <c>spawn_range</c> is zero: they arrive underfoot.
+    /// </remarks>
     private const int Succubus = 280963;
     private const int SuccubusLife = 12;
-    private const float Reach = 50f;
+    private const float Eligible = 50f;
 
     /// <summary>Retail's <c>SPAWN_ID_1</c>: every summon shares one group.</summary>
     private const int Summons = 1;
@@ -58,7 +65,7 @@ public class ChiefMaidMiladiAI : PatternAi
                 Do.ArmTimer(Heartbeat, 5000),
                 Do.ArmTimer(OpenerClock, 15000),
                 Do.SpawnOnAttacker(AggroTarget.MOST_HATED, Succubus, Summons,
-                    range: Reach, liveSeconds: SuccubusLife))),
+                    validDistance: Eligible, liveSeconds: SuccubusLife))),
 
         OnBattleTimer = Of(
             // Below thirty she opens on two players at once and turns on the third most hated.
@@ -67,9 +74,9 @@ public class ChiefMaidMiladiAI : PatternAi
                 Do.ArmTimer(Heartbeat, 5000),
                 Do.ArmTimer(LowClock, 10000),
                 Do.SpawnOnAttacker(AggroTarget.SECOND_MOST_HATED, Succubus, Summons,
-                    range: Reach, liveSeconds: SuccubusLife),
+                    validDistance: Eligible, liveSeconds: SuccubusLife),
                 Do.SpawnOnAttacker(AggroTarget.THIRD_MOST_HATED, Succubus, Summons,
-                    range: Reach, liveSeconds: SuccubusLife),
+                    validDistance: Eligible, liveSeconds: SuccubusLife),
                 Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
 
             Branch(5, "75-31, opening", [When.Timer(Heartbeat), When.HpBetween(31, 75),
@@ -77,13 +84,13 @@ public class ChiefMaidMiladiAI : PatternAi
                 Do.ArmTimer(Heartbeat, 5000),
                 Do.ArmTimer(MidClock, 15000),
                 Do.SpawnOnAttacker(AggroTarget.SECOND_MOST_HATED, Succubus, Summons,
-                    range: Reach, liveSeconds: SuccubusLife)),
+                    validDistance: Eligible, liveSeconds: SuccubusLife)),
 
             // The two band clocks, which keep placing succubi once their band has opened.
             Branch(4, "below 30, repeating", [When.Timer(LowClock), When.HpBelow(30)],
                 Do.ArmTimer(LowClock, 10000),
                 Do.SpawnOnAttacker(AggroTarget.THIRD_MOST_HATED, Succubus, Summons,
-                    range: Reach, liveSeconds: SuccubusLife)),
+                    validDistance: Eligible, liveSeconds: SuccubusLife)),
 
             // Retail's heartbeat, so the chain keeps ticking between bands. Without it a fight that
             // opens the 75-31 band and then drops below thirty never reaches the branch above.

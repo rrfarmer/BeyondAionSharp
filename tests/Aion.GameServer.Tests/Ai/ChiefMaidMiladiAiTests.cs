@@ -45,6 +45,14 @@ public sealed class ChiefMaidMiladiAiTests
 	/// <b>And it lands on the player, not on her.</b> The whole point of
 	/// <c>spawn_on_target_by_attacker_indicator</c>: a succubus at her feet would be a different fight.
 	/// </summary>
+	/// <remarks>
+	/// <b>This pin was flaky, and the flakiness was a real bug.</b> Its first version asserted only that
+	/// the succubus stood nearer the player than Miladi, which retail's <c>spawn_range=0</c> makes
+	/// trivially true — but the class had read retail's <c>valid_distance=50</c> as the scatter, so the
+	/// add went anywhere within fifty metres of the player. Fifty is further than she stands from the
+	/// raid, so it sometimes landed nearer her, and the pin failed about one run in six. Now the
+	/// assertion is the exact one: <b>on the player</b>.
+	/// </remarks>
 	[Fact]
 	public void TheSuccubusLandsOnThePlayer()
 	{
@@ -56,9 +64,24 @@ public sealed class ChiefMaidMiladiAiTests
 
 		Npc succubus = Assert.Single(Succubi(harness));
 
-		// Twenty-three metres from her, next to the player she is fighting.
-		Assert.True(PositionUtilDistance(succubus, tank) < PositionUtilDistance(succubus, miladi),
-			"the succubus stood closer to Miladi than to the player she was summoned onto");
+		Assert.Equal(tank.GetX(), succubus.GetX(), 1);
+		Assert.Equal(tank.GetY(), succubus.GetY(), 1);
+	}
+
+	/// <summary>
+	/// <b>And an attacker further off than fifty metres gets none.</b> Retail's <c>valid_distance</c>,
+	/// which is the number the scatter used to be read as.
+	/// </summary>
+	[Fact]
+	public void AnAttackerBeyondFiftyMetresGetsNoSuccubus()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc miladi = harness.Spawn(Miladi, 497f, 575f, 189.49f);
+		Player distant = harness.SpawnPlayer(497f, 700f, 189.49f, race: Race.ELYOS);
+		BossAiHarness.MakeMutuallyKnown(miladi, distant);
+		harness.Engage(miladi, distant);
+
+		Assert.Empty(Succubi(harness));
 	}
 
 	/// <summary><b>And it leaves at twelve seconds</b>, which is retail's <c>live_time</c>.</summary>

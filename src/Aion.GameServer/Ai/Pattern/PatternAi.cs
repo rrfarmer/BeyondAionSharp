@@ -1354,11 +1354,27 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Puts an add on one attacker chosen the way the pattern names them.</summary>
+    /// <param name="validDistance">
+    /// Retail's <c>valid_distance</c>: how far from this NPC the chosen attacker may be and still get
+    /// one. Beyond it the spawn is skipped entirely.
+    /// </param>
+    /// <remarks>
+    /// <b><paramref name="range"/> and <paramref name="validDistance"/> are different numbers and were
+    /// once confused here.</b> Range is retail's <c>spawn_range</c>, the scatter around the target;
+    /// valid distance is the eligibility radius around the caster. Miladi's succubi carry
+    /// <c>spawn_range=0</c> and <c>valid_distance=50</c>, and reading the fifty as scatter put her adds
+    /// up to fifty metres from the player they are supposed to land on — which is the whole mechanic.
+    /// </remarks>
     public void SpawnOnAttacker(AggroTarget which, int npcId, int spawnId, float range, int liveSeconds,
-        int attackHate = 0)
+        int attackHate = 0, float validDistance = 0f)
     {
         Creature? target = GetAggroList().GetTarget(which);
         if (target == null)
+            return;
+
+        // Rounded up, so a target exactly at the boundary is still eligible; retail's numbers are whole
+        // metres and the int overload is the only range check this codebase has.
+        if (validDistance > 0f && !IsInRange(target, (int)System.Math.Ceiling(validDistance)))
             return;
 
         if (attackHate <= 0)

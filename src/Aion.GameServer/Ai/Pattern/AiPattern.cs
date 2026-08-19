@@ -545,9 +545,15 @@ public static class Do
             attackHate);
 
     /// <summary><c>spawn_on_target_by_attacker_indicator</c> — on one attacker rather than the tank.</summary>
+    /// <param name="range">Retail's <c>spawn_range</c> — the scatter around the target, often zero.</param>
+    /// <param name="validDistance">
+    /// Retail's <c>valid_distance</c> — how far the attacker may be from the caster and still get one.
+    /// <b>Not the same number as <paramref name="range"/></b>; see the runtime for the fight that
+    /// proved it.
+    /// </param>
     public static PatternAction SpawnOnAttacker(AggroTarget which, int npcId, int spawnId,
-        float range = 0f, int liveSeconds = 0, int attackHate = 0)
-        => ai => ai.SpawnOnAttacker(which, npcId, spawnId, range, liveSeconds, attackHate);
+        float range = 0f, int liveSeconds = 0, int attackHate = 0, float validDistance = 0f)
+        => ai => ai.SpawnOnAttacker(which, npcId, spawnId, range, liveSeconds, attackHate, validDistance);
 
     /// <summary><c>spawn_on_target target_obj=OBJI_KILLER</c> — on whoever brought this NPC down.</summary>
     public static PatternAction SpawnOnKiller(int npcId, int spawnId, int count = 1, float range = 0f,

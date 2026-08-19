@@ -38,24 +38,48 @@ public class CaptainXastaAI : PatternAi
     private const int FirstFormNpcId = 217309;
     private const int SecondFormNpcId = 217310;
 
+    /// <summary>
+    /// Occupied Rentus Base's Xasta, who is the same fight under different ids.
+    /// </summary>
+    /// <remarks>
+    /// <c>IDYun_Nmd_Hard_03</c> and <c>IDYun_Nmd3</c> differ in <b>five lines, all of them npc ids</b> —
+    /// diffed whole rather than sampled — and the two second forms share one pattern name outright, so
+    /// there is nothing to separate them at all. Both hard npcs were on <c>aggressive</c>.
+    /// <para>
+    /// <b>The sibling audit could not see these.</b> It filters on npcs our spawn data places, and these
+    /// two are spawned from <c>OccupiedRentusBaseInstance.OnSpecialEvent</c> in code — one or the other
+    /// depending on whether the previous boss was above half health when he fell. A spawn-file filter is
+    /// blind to that, which is worth knowing before treating an empty audit as an empty backlog.
+    /// </para>
+    /// </remarks>
+    private const int HardFirstFormNpcId = 236296;
+    private const int HardSecondFormNpcId = 236297;
+
     /// <summary>Skill index 0 — Dragon Breath, cast at himself.</summary>
     private const int DragonBreath = 19657;
 
     private const int MagicFlame = 282390;
     private const int SiegeArtilleryman = 282606;
 
+    /// <summary><c>BIDYun_Rasta_Sum_Invisible</c> — the hard mode's own artilleryman.</summary>
+    private const int HardSiegeArtilleryman = 856500;
+
     /// <summary>Retail files the flames and the artillerymen together, so leaving the fight clears both.</summary>
     private const int Adds = 1;
 
     /// <summary>The four wave branches differ only in threshold and flag, so their actions are shared.</summary>
-    private static PatternAction[] Wave() =>
+    private static PatternAction[] Wave(int artilleryman) =>
     [
         Do.Say(1500389),
         Do.ArmTimer(2, 6000),
-        Do.SpawnNear(SiegeArtilleryman, Adds, count: 1, range: 5f),
+        Do.SpawnNear(artilleryman, Adds, count: 1, range: 5f),
     ];
 
-    private static readonly AiPattern FirstForm = new AiPattern
+    /// <summary>
+    /// His first form, in either mode: the two differ only in which artilleryman the waves send and
+    /// which second form he falls into.
+    /// </summary>
+    private static AiPattern FirstFormFor(int artilleryman, int secondForm) => new AiPattern
     {
         OnEnterAttack = Of(
             Branch(8, "start Timer_0", When.Always,
@@ -69,10 +93,10 @@ public class CaptainXastaAI : PatternAi
                 Do.SpawnOnTarget(MagicFlame, Adds, count: 3, range: 4f, liveSeconds: 15),
                 Do.ArmTimer(1, 9000)),
 
-            Branch(5, "wave_85%", [When.HpBelow(85), When.Timer(2), When.FirstTime(1)], Wave()),
-            Branch(4, "wave_65%", [When.HpBelow(65), When.Timer(2), When.FirstTime(2)], Wave()),
-            Branch(3, "wave_45%", [When.HpBelow(45), When.Timer(2), When.FirstTime(3)], Wave()),
-            Branch(2, "wave_20%", [When.HpBelow(20), When.Timer(2), When.FirstTime(4)], Wave()),
+            Branch(5, "wave_85%", [When.HpBelow(85), When.Timer(2), When.FirstTime(1)], Wave(artilleryman)),
+            Branch(4, "wave_65%", [When.HpBelow(65), When.Timer(2), When.FirstTime(2)], Wave(artilleryman)),
+            Branch(3, "wave_45%", [When.HpBelow(45), When.Timer(2), When.FirstTime(3)], Wave(artilleryman)),
+            Branch(2, "wave_20%", [When.HpBelow(20), When.Timer(2), When.FirstTime(4)], Wave(artilleryman)),
 
             Branch(1, "RepeatTimer2", [When.Timer(2)],
                 Do.ArmTimer(2, 6000))),
@@ -81,14 +105,23 @@ public class CaptainXastaAI : PatternAi
             Branch(14, "Despawn&Broad", When.Always,
                 Do.Despawn(Adds))),
 
+        // Retail's fall-off is SPAWN_LOCATION_MY_POINT -- the second form stands up where the first fell.
+        // This was an absolute coordinate, which happened to be right for the one npc the class covered
+        // and is wrong for the hard mode's, whose instance drops him a hundred and twenty metres away and
+        // thirty metres lower. Corrected to what the pattern says rather than special-cased per mode.
         OnDie = Of(
             Branch(13, "FallOff", When.Always,
                 Do.Say(1500390),
-                Do.SpawnAt(SecondFormNpcId, spawnId: 2, liveSeconds: 0,
-                    new SpawnSpot(238.160f, 598.624f, 178.480f)),
+                Do.SpawnNear(secondForm, spawnId: 2, count: 1, range: 0f),
                 Do.Despawn(Adds),
                 Do.DespawnSelf())),
     };
+
+    private static readonly AiPattern FirstForm =
+        FirstFormFor(SiegeArtilleryman, SecondFormNpcId);
+
+    private static readonly AiPattern HardFirstForm =
+        FirstFormFor(HardSiegeArtilleryman, HardSecondFormNpcId);
 
     /// <summary><c>IDYun_Rasta_Trap</c> — the trap the second form drops on one random attacker.</summary>
     private const int XastasTrap = 282444;
@@ -159,12 +192,24 @@ public class CaptainXastaAI : PatternAi
     {
     }
 
-    protected override AiPattern Pattern => GetNpcId() == FirstFormNpcId ? FirstForm : SecondForm;
+    /// <summary>
+    /// <b>The two second forms share one retail pattern name</b>, <c>IDYun_Nmd3_FallOff</c>, so there is
+    /// one table for both and no id to switch on beyond which half of the fight this npc is.
+    /// </summary>
+    protected override AiPattern Pattern => GetNpcId() switch
+    {
+        FirstFormNpcId => FirstForm,
+        HardFirstFormNpcId => HardFirstForm,
+        _ => SecondForm,
+    };
+
+    private bool IsSecondForm =>
+        GetNpcId() == SecondFormNpcId || GetNpcId() == HardSecondFormNpcId;
 
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
-        if (GetNpcId() == SecondFormNpcId && secondFormTask == null)
+        if (IsSecondForm && secondFormTask == null)
             StartSecondFormTask();
     }
 
@@ -200,7 +245,7 @@ public class CaptainXastaAI : PatternAi
     protected override void HandleDied()
     {
         CancelSecondFormTask();
-        bool secondForm = GetNpcId() == SecondFormNpcId;
+        bool secondForm = IsSecondForm;
         base.HandleDied();
         if (secondForm)
             OnSecondFormDied();
