@@ -23574,3 +23574,65 @@ were live, and this one is not.
 
 Build clean. Removing one gate's row fails its pin. **Three consecutive full-suite runs**: 2,187 passing
 (three new), 1 skipped.
+
+## Triaging the classes nothing reaches, and the boss one of them was written for
+
+Nineteen AI names are bound by no template, no spawn spot and no code. The open question was whether they
+are superseded or orphaned. **Both, and the split matters.**
+
+### Superseded — most of them
+
+`BollvigAI` names five npcs that now run `bollvig_relic`, `bollvig_blackheart` and `bollvig_bloodwing`.
+`DynatoumHealerAI` names two that run `dynatoum` and `infernal_dynatoum`. `AhserionAssaultPod` names one
+that runs `ahserion_aggressive_npc`. `HM_TiamatWeakenedDragonAI` names six that run five newer classes
+between them. These are the residue of work that was redone, and they are harmless.
+
+### Orphaned — one that was simply dropped
+
+**`IncarnateAI` names the Petrification Incarnate (259614), and nothing replaced it.** The npc has been
+on `aggressive` ever since, so the four holy stones his fight is built around never appeared.
+
+`LDF4b_Tiamat_Lapidification` now has a class:
+
+- **on engaging** — four clocks, at six, eighteen, twenty-four seconds and three minutes
+- **the eighteen-second clock** — **four petrification crystals** scattered within forty metres, each
+  standing thirty-five seconds, then re-armed at **thirty**, so the opening gap and the cadence are
+  different numbers
+
+**The crystals are npc 282731 — the one Tiamat's incarnations already drop.** This fight is a later use
+of an add somebody had already ported, which is why nothing had to be guessed.
+
+**Not translated, and it is most of the fight.** Fifteen skill indices, including an eight-rung buff
+ladder where every rung is a self-cast behind its own flag var. The pattern is seven hundred and fifty
+lines and nearly all of it is `use_skill` with an index no client file resolves. The death branch spawns
+`LDF4b_FOBJ_Scale`, whose devname **resolves to no npc in our binding table** — one of the 12,000 still
+unbound — so the scale cannot be placed.
+
+The three clocks whose casts do not resolve are armed anyway: a branch that only casts still decides when
+the next thing happens, and dropping them would make the crystal clock look like the whole encounter.
+
+### A pin that failed for a reason worth writing down
+
+All four pins failed on their first run, reporting a boss that summoned nothing. **The crystal carries
+`tiamats_incarnation_spawn`, and the harness validates every AI name it is asked to place** — so leaving
+it out of `WithAi` makes the spawn fail silently. That reads exactly like the bug the class was written
+to fix, which is a good way to waste an hour. Noted in the harness call.
+
+### Also checked and correctly left alone
+
+Bollvig's cruel vampire (280804) runs `aggressive` and **has** a retail pattern, `ND2_Sum_WhD3` — two
+message branches answering **6185** and **6186** with a cast each. Both skill indices are unresolved, and
+the class already records 6185 and 6188 as untranslatable for that reason. **Binding it would add a
+listener that can only cast unknown skills**, so it was not bound.
+
+### Still to do
+
+- **The other eighteen orphan classes** are unreferenced code. Not deleted here: that is a tidy-up pass
+  of its own, and some may yet name a fight worth binding.
+- **101 rows** in the invented-spawn audit; **250 spawns** named by no pin; real mutation testing.
+- **Empress Muada**; the four remaining unported-placement classes; the other 568 fights.
+
+### Verification
+
+Build clean. Removing the crystal spawn fails all four pins. **Three consecutive full-suite runs**: 2,191
+passing (four new), 1 skipped.
