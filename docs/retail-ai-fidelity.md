@@ -24970,3 +24970,70 @@ unrelated commit, and looked like flakiness rather than a real gap.
 eight seconds — needs a skill index and is not translated, so the eight-second beat of his fight is
 absent. Nor is his `on_die` (two condition variables, two doors, a reward message) or his
 `on_leave_attack_state` dispel-and-heal.
+
+## The rage sweep, and Kumbanda
+
+Terath and Chantra both had their rage at twenty-five per cent where retail says fourteen, which is the
+kind of coincidence worth chasing. Every class casting **20942** was checked against its own pattern:
+
+| class | this port | retail | verdict |
+|---|---|---|---|
+| `BrigadeGeneralTerathAI` | 25 | 14 | fixed earlier this session |
+| `BrigadeGeneralChantraAI` | 25 | 14 | fixed earlier this session |
+| `BrigadeGeneralTahabataAI` | 10 | 10 | **already correct** |
+| `CalindiFlamelordAI` | 15 | 15 | **already correct** |
+| `TraitorKumbandaAI` | 5 | 15 | fixed here |
+
+So it was not a systematic aionemu-ism — two of the five were already right, and the sweep is worth
+recording precisely because it closed the question rather than because it found a pattern.
+
+## Kumbanda: both mechanics hung off a five per cent roll per blow
+
+Retail pattern `IDTiamat_Kumbanda` (219355).
+
+```
+on_enter_attack_state   timers 0=3000, 1=5000, 2=6000, 3=6000
+timer 1                 SumCircle, 33/35/100 ladder, HP 15-100: four CircleFX on fixed marks,
+                        live 15, re-arm at 14000
+timer 2                 SummonAvatar, HP 15-70: spawn_on_target_by_attacker_indicator
+                        ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET, valid_distance 100,
+                        attack_target_after_spawn, hatepoints_to_add 2147483647, re-arm at 25000
+timer 3                 Rage below 15 per cent
+```
+
+**This class rolled `Rnd.Chance() < 5` on every blow he took** and did both mechanics off that one roll,
+so the cadence was a function of how hard he was being hit: a fast group triggered them constantly and
+a slow one barely at all. They are on retail's two timers now.
+
+**The circles stand on four marks** — (871, 1332), (853, 1332), (853, 1306), (871, 1306) at z 396 —
+where this class put one at his feet and scattered six more at random inside six metres. The marks a
+raid learns to avoid did not exist.
+
+**And the avatar belongs on a player, not on him.** Retail drops it on a random attacker *other than the
+current target* with effectively infinite hate. This class spawned it at Kumbanda's own position with
+none, so it walked to whoever he was already fighting — the exact opposite of the mechanic, which is
+about splitting the raid's attention.
+
+Windows corrected with them: circles 15-100, avatar **15-70** where this class used "below fifty", rage
+**15** where it used five.
+
+**Pins** — `TraitorKumbandaAiTests`, seven, nine mutations, all caught.
+
+**Three things the pins found that reading did not.**
+
+1. **A guard that suppressed the mechanic.** The circle rung had a "only if none is standing" check.
+   Retail has none, and with fourteen seconds between turns and fifteen of life **the sets overlap by a
+   second** — so that guard blocked every turn after the first. The pin that asserts eight circles
+   during the overlap is what proves it is gone.
+2. **Hate set inline does not stick.** The avatar is an `aggressive` npc, which picks its own target out
+   of `BringIntoWorld`, and the first version's `AddHate` + `SetTarget` were simply overwritten — the
+   avatar re-acquired the boss's own target, which is the bug being fixed. `AttackAfterSpawn.NextTick`
+   defers it a tick, which is what the rest of this port already uses.
+3. **A pin that named the wrong thing.** It asserted the avatar lands on "the second player", but which
+   of the two tops the boss's aggro list is the harness's business, not retail's rule. It now reads the
+   most-hated at that moment and asserts the avatar landed on somebody else.
+
+**Not translated.** The power attack on `BTIMERI_INDEX_0` every seven seconds, and the casts that
+accompany the circles, the avatar and the rage — all name skill indices, and none of these npcs has a
+row in our npc skill data. The 33/35/100 ladder collapses to one circle set here for the same reason:
+the three rungs differ only in which skill they cast.
