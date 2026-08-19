@@ -44,6 +44,8 @@ It does not write walker data. Two things are missing before that is safe:
   mapping nobody has built; guessing it puts a route in the wrong instance.
 * **Route ids are ours, not the client's.** Our templates are keyed by number and referenced from spawn
   data by `walker_id`; assigning those is a decision about our data, not a translation of theirs.
+* **Which npc walks which route is per encounter.** The pattern names a path; nothing says which of the
+  npcs on that pattern takes it, and in an instance with several copies that is a judgement.
 
 Converting the geometry is mechanical. Deciding which map each route belongs to, and which npc should
 walk it, is not -- and a route attached to the wrong npc is a worse defect than no route at all,
@@ -91,6 +93,18 @@ def client_routes(worlds_dir):
     return routes
 
 
+WORLD_MAPS = REPO_MAPS = pathlib.Path(__file__).resolve().parents[2] / "game-server" / "data" / "static_data" / "world_maps.xml"
+
+
+def map_ids_by_world():
+    """client world directory (lowercased) -> our map id, from world_maps.xml cName."""
+    text = WORLD_MAPS.read_text(encoding="utf-8", errors="replace")
+    out = {}
+    for m in re.finditer(r'<map id="(\d+)"[^>]*cName="([^"]*)"', text):
+        out.setdefault(m.group(2).lower(), int(m.group(1)))
+    return out
+
+
 def referenced_paths(patterns_dir):
     wanted = set()
     for f in sorted(pathlib.Path(patterns_dir).glob("NpcAIPatterns*.xml")):
@@ -106,6 +120,8 @@ def main():
     ap.add_argument("--show", help="print one route as a walker_template")
     ap.add_argument("--world", help="which world's copy of --show to print, when the name is shared")
     ap.add_argument("--missing", action="store_true", help="list the referenced paths not found")
+    ap.add_argument("--resolve", action="store_true",
+                    help="join client worlds to our map ids via world_maps.xml cName")
     args = ap.parse_args()
 
     routes = client_routes(args.worlds)
@@ -142,6 +158,24 @@ def main():
 
     wanted = referenced_paths(args.patterns)
     present = wanted & set(routes)
+
+    if args.resolve:
+        ids = map_ids_by_world()
+        worlds = sorted({w for copies in routes.values() for w in copies})
+        known = [w for w in worlds if w.lower() in ids]
+        print(f"{len(ids)} cName values in world_maps.xml; {len(worlds)} worlds hold routes")
+        print(f"{len(known)} of those worlds resolve to one of our map ids, "
+              f"{len(worlds) - len(known)} do not")
+        print()
+        placeable = sum(1 for n in present
+                        if any(w.lower() in ids for w in routes[n]))
+        print(f"of the {len(present)} routes the AI asks for and the client defines, "
+              f"{placeable} are in a world we can name a map for.")
+        print()
+        for w in known[:12]:
+            count = sum(1 for copies in routes.values() if w in copies)
+            print(f"  {w:26s} -> {ids[w.lower()]}   ({count} routes)")
+        return 0
     if args.missing:
         for name in sorted(wanted - set(routes)):
             print(name)

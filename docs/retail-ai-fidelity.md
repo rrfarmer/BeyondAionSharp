@@ -27436,3 +27436,42 @@ somewhere it never goes.
 concludes they are absent — some may be the ambiguity above in reverse, named in a world file this
 index did not reach. And the world-to-map mapping is the one piece of work that turns all of this from
 an index into 9,566 npcs that walk.
+
+## The world-to-map mapping was already in our own data
+
+Last commit named it as "the one piece of work that turns all of this from an index into 9,566 npcs
+that walk", and guessed it would have to be built by hand. It did not.
+
+**`world_maps.xml` carries a `cName` on every map, and it is the client's world directory name.**
+
+```
+<map id="400030000" name="..." cName="GAb1_Sub" .../>      Map/Worlds/GAb1_Sub/
+<map id="301260000" name="..." cName="IDAbRe_Up3_Crotan_02" .../>
+```
+
+- 161 `cName` values against 256 client world directories: **159 match exactly**, case-insensitively.
+- **No `cName` is ambiguous** — not one maps to two ids.
+- Of the 143 worlds that actually hold routes, **106 resolve**.
+- **Of the 285 routes the AI asks for and the client defines, 253 land in a world we can name a map
+  for** — 54% of the original 467, and 89% of what was findable.
+
+`extract_client_waypoints.py --resolve` prints the join.
+
+**So the chain is complete except for two decisions that are ours to make.** Geometry: found. Format:
+a rename. Map id: joined. What remains is not translation:
+
+* **Route ids.** Our templates are keyed by number and referenced from spawn data by `walker_id`.
+* **Which npc walks which route.** The pattern names a path; nothing says which of the npcs on that
+  pattern takes it, and in an instance holding several copies that is a judgement, not a lookup.
+
+That second one is why this still stops here rather than writing 253 walker templates. A route on the
+wrong npc moves an encounter somewhere it never goes, and it does so silently — the same failure mode as
+the name collision found last commit, which is what makes me unwilling to batch it.
+
+**Still missing.**
+
+- The **37 route-holding worlds with no `cName` match** — `DF4_M`, `IDAb1_Ere`, `IDAbRe_Core_03`,
+  `Aion_tournament` and the rest. Some will be maps this port does not carry; others may be naming
+  variants worth a manual pass, and 32 of the AI's routes are in them.
+- The **182 referenced paths with no definition found at all**, unchanged from last commit.
+- And the actual conversion, which is now a bounded job on 253 routes rather than an open question.
