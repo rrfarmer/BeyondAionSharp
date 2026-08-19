@@ -151,13 +151,24 @@ def widen(text: str, index: int) -> str:
 def test_filter(class_name: str) -> str | None:
     """The xunit filter for a class's pins, or None when it has no test file of its own.
 
-    **Exact match only.** A prefix match silently borrows a neighbour's pins: `AhserionAI` has no test
-    file, and matching on prefix handed it `AhserionTrooperAiTests`, which reported five survivors when
-    the truthful answer was "this class has no pins at all". A borrowed filter turns a class with no
-    coverage into a class with bad coverage, which is a worse thing to read.
+    **Exact filename, and the file must name the class.** Two ways a looser rule lies. A prefix match
+    handed `AhserionAI` -- which has no test file -- its neighbour `AhserionTrooperAiTests`, reporting
+    five survivors when the truthful answer was "this class has no pins at all". And an exact filename
+    match still handed `CalindiFlamelordAI` a file that tests `DarkPoetaCalindiFlamelordAI`, whose name
+    merely ends the same way. **A borrowed filter turns a class with no coverage into a class with bad
+    coverage**, which is a worse thing to read.
     """
     exact = TEST_DIR / f"{class_name.removesuffix('AI')}AiTests.cs"
-    return exact.stem if exact.exists() else None
+    if not exact.exists():
+        return None
+
+    # And the file has to actually name the class. `CalindiFlamelordAiTests` exists and tests
+    # `DarkPoetaCalindiFlamelordAI` -- a different class whose name merely ends the same way -- so the
+    # filename matching alone still handed one class another's pins. Requiring the reference is the only
+    # criterion that means what it says.
+    if f"typeof({class_name})" not in exact.read_text(encoding="utf-8"):
+        return None
+    return exact.stem
 
 
 def spawn_lines(text: str) -> list[int]:

@@ -27,7 +27,9 @@ public sealed class AdjutantAnuhartAiTests
 	private const int AdjutantAnuhart = 219357;
 
 	private static BossAiHarness NewHarness() => BossAiHarness.For()
-		.WithAi(typeof(AdjutantAnuhartAI))
+		// The blade storm npc carries its own AI, and the harness validates every name it is asked to
+		// place -- omitting it makes the spawn throw rather than silently do nothing.
+		.WithAi(typeof(AdjutantAnuhartAI), typeof(BladeStormAI))
 		.Build();
 
 	[Fact]
@@ -120,5 +122,34 @@ public sealed class AdjutantAnuhartAiTests
 			Attack(harness, boss, player, threshold);
 			Assert.Equal(++phase, PhaseOf(boss));
 		}
+	}
+
+	/// <summary>Retail's blade storm: the skill, and the npc that carries it.</summary>
+	private const int BladeStorm = 20747;
+	private const int BladeStormNpc = 283099;
+
+	/// <summary>
+	/// <b>Blade Storm puts its npc at his feet</b>, and nothing asserted that until now.
+	/// </summary>
+	/// <remarks>
+	/// The spawn hangs off <c>OnStartUseSkill</c> rather than a timer or a threshold, so none of the
+	/// phase pins in this file could ever reach it — the mutation harness deleted it and every one of
+	/// them stayed green. Skill-driven spawns are the shape most likely to be missed by a suite built
+	/// around health bands.
+	/// </remarks>
+	[Fact]
+	public void BladeStormPlacesItsNpc()
+	{
+		using var harness = NewHarness();
+		Npc boss = harness.Spawn(AdjutantAnuhart);
+
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == BladeStormNpc));
+
+		boss.GetAi().OnStartUseSkill(
+			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(BladeStorm), 1);
+
+		Npc storm = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == BladeStormNpc);
+		Assert.Equal(boss.GetX(), storm.GetX(), 1);
+		Assert.Equal(boss.GetY(), storm.GetY(), 1);
 	}
 }

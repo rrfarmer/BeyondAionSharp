@@ -23922,3 +23922,52 @@ when he was mutated.
 
 Build clean. All six of Kaliga's spawns die under mutation. **Three consecutive full-suite runs, after
 the batch finished**: 2,213 passing (five new), 1 skipped.
+
+## Thirteen classes were being scored against tests that do not test them
+
+Chasing the batch's three survivors turned into a second correction to the harness, and the number is
+larger than the first.
+
+### The filter lied twice more
+
+Last pass fixed a **prefix** match that handed `AhserionAI` its neighbour's pins. Exact filename matching
+still lies: **`CalindiFlamelordAiTests` tests `DarkPoetaCalindiFlamelordAI`** — a different class whose
+name merely ends the same way — so `CalindiFlamelordAI` was scored against a file that never mentions it,
+and its two survivors were an artefact.
+
+The criterion that means what it says is **does the test file name the class**. With that:
+
+| rule | classes claimed to have pins |
+|---|---|
+| prefix match | 82 |
+| exact filename | 79 |
+| filename **and** `typeof(TheClass)` | **69** |
+
+**Thirteen classes were being scored against tests that do not test them.** Every one of those was
+reported as pinned when it has no coverage at all — and "pinned" is exactly the claim this harness exists
+to make trustworthy.
+
+### The one real survivor
+
+**Adjutant Anuhart's Blade Storm places an npc at his feet**, and nothing asserted it. The spawn hangs
+off `OnStartUseSkill` rather than a timer or a threshold, so none of the phase pins in that file could
+ever have reached it. **Skill-driven spawns are the shape a suite built around health bands is most
+likely to miss**, and this suite is built around health bands.
+
+Its pin needed the blade storm's own AI registered in the harness — omitting it makes the spawn *throw*
+rather than silently do nothing, which is at least a loud failure. That is the second time this session
+a new pin first failed for a missing `WithAi` entry.
+
+### Still to do
+
+- **59 classes** unmutated, and the honest denominator is now 69 rather than 82.
+- **Thirteen classes with no pins at all**, previously invisible behind the borrowed filters:
+  `AhserionAI` and `CalindiFlamelordAI` are two; the tool now names the rest by refusing them.
+- Timers, broadcasts and target selection have no mutation mode; skill-driven spawns are only found by
+  the spawn mode when the class is correctly filtered.
+- 250 spawns named by no pin; 50 invented-spawn rows; the eighteen orphan classes; the other 568 fights.
+
+### Verification
+
+Build clean. Blade Storm's mutation now dies. **Three consecutive full-suite runs**: 2,214 passing (one
+new), 1 skipped.
