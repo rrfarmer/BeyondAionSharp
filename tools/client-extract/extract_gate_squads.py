@@ -37,6 +37,7 @@ import re
 import sys
 
 from audit_missing_adds import NAME_RE, PATTERN_RE, read_text
+from client_npc_names import npc_names
 from extract_guard_reinforcements import (
     EXPRESSIBLE_OPS, TIMER_RE, branches_of, spawns_in)
 
@@ -75,6 +76,14 @@ def main() -> None:
             continue
         by_devname.setdefault(parts[1].lower(), parts[0])
         owners[parts[3]].append(parts[0])
+
+
+    # The client's own npc tables, consulted SECOND so nothing already resolving can move. The binding
+    # table is derived from the AI patterns and so only knows npcs that carry one; plain `aggressive`
+    # summons may be missing from it entirely. That gap cost 19 reinforcement bands in
+    # extract_guard_reinforcements.py before it was closed there -- see docs/retail-ai-fidelity.md.
+    for _devname, _npc_id in npc_names().items():
+        by_devname.setdefault(_devname.lower(), _npc_id)
 
     # A level variant stores only what differs from its base: BGuard_DGate_L50 carries the timer
     # branches and nothing else, while BGuard_DGate carries the opener, the leave handler and the
@@ -178,7 +187,10 @@ def main() -> None:
                     broken = True
                     break
                 pairs = []
-                for devname, count, _live, _rng, _op in spawns:
+                # Tuple-tolerant on purpose: this unpacked exactly five fields, and adding
+                # attack_hate to spawns_in() in extract_guard_reinforcements.py made every run
+                # of this script raise ValueError. Nothing noticed, because nothing re-runs it.
+                for devname, count, *_ in spawns:
                     npc_id = by_devname.get(devname.lower())
                     if npc_id is None:
                         skipped[f"devname {devname}"] += 1

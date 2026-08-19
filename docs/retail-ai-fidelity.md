@@ -29761,3 +29761,48 @@ one guard is reverted.
 - The 9 inert `spawn_helpers.xml` blocks, `live_time` having no `<summonGroup>` attribute, the 45 live
   disagreements, the eleven unread top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's
   `npc_skills`, the seven absent npc rows.
+
+## Sweeping the same hole through the other generators, and finding a crash instead
+
+The resolver hole was found in one extractor. The obvious question is whether the other three that emit
+live tables have it too, and the answer needed measuring rather than guessing.
+
+`extract_gate_squads.py`, `extract_tiamat_rotation.py` and `extract_vritra_callers.py` all resolved
+devnames through `ai_binding.tsv` alone. All three now consult the client npc tables second.
+
+> **Regenerating all three changed nothing: 0 rows added, 0 removed, byte-identical output.**
+
+That is worth recording as a result rather than quietly dropping. The hole was real only in the
+reinforcements extractor because that one spans 213 pattern variants across the whole guard family and so
+reaches obscure `aggressive` summons; the other three cover single encounters whose npcs all carry AI of
+their own and are therefore all in the binding table. The fallback stays in place as insurance, not
+because it fixed anything.
+
+### What the sweep did find
+
+`extract_gate_squads.py` **crashed on every run**:
+
+```
+for devname, count, _live, _rng, _op in spawns:
+ValueError: too many values to unpack (expected 5, got 6)
+```
+
+`Carry attack_target_after_spawn through the guard table` added a sixth field to `spawns_in()` ten
+minutes after `Wire the fortress gates` started importing it, and nothing re-runs these scripts, so
+nothing noticed.
+
+**The shipped `gate_squads.tsv` is unaffected** — regenerating it after the fix produces the identical
+file, because it was generated before the field was added. So this corrupted no data; it meant the gate
+squads could not be regenerated at all, which would have been discovered by whoever next tried and
+blamed on their own change. The unpack is now `*_`, so a seventh field cannot do it again.
+
+**Still missing.**
+
+- **Nothing re-runs the generators.** All four write into `tools/client-extract/out/` and thence into
+  generated C#, and all four are invoked by hand. A crash in one is invisible until someone needs it. A
+  make target or a test that regenerates into a temp file and diffs would have caught this the same day;
+  neither exists.
+- The 59 stranded guards, 25 guards with no `npc_templates.xml` row, 11 owner-less patterns, the 9 inert
+  `spawn_helpers.xml` blocks, `live_time` with no attribute, the 45 live disagreements, the eleven unread
+  top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent
+  npc rows.

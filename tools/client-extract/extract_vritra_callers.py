@@ -29,6 +29,7 @@ import re
 import sys
 
 from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
+from client_npc_names import npc_names
 from extract_guard_reinforcements import PROB_RE, branches_of
 
 CALLER_RE = re.compile(r"^BIDRuneWP_Main_CallVritra")
@@ -58,6 +59,14 @@ def main() -> None:
             continue
         by_devname.setdefault(parts[1].lower(), parts[0])
         owners[parts[3]].append(parts[0])
+
+
+    # The client's own npc tables, consulted SECOND so nothing already resolving can move. The binding
+    # table is derived from the AI patterns and so only knows npcs that carry one; plain `aggressive`
+    # summons may be missing from it entirely. That gap cost 19 reinforcement bands in
+    # extract_guard_reinforcements.py before it was closed there -- see docs/retail-ai-fidelity.md.
+    for _devname, _npc_id in npc_names().items():
+        by_devname.setdefault(_devname.lower(), _npc_id)
 
     rows: list[tuple] = []
     skipped: collections.Counter = collections.Counter()

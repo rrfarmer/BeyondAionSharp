@@ -28,6 +28,7 @@ import re
 import sys
 
 from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
+from client_npc_names import npc_names
 from extract_guard_reinforcements import BOUNDARY_RE, TIMER_RE, branches_of
 
 DEFAULT_PATTERN = "IDTiamat_Tiamat_Dragon_Dying_Named_60_Al"
@@ -59,6 +60,14 @@ def main() -> None:
         if len(parts) < 4 or parts[0] == "npc_id":
             continue
         by_devname.setdefault(parts[1].lower(), parts[0])
+
+
+    # The client's own npc tables, consulted SECOND so nothing already resolving can move. The binding
+    # table is derived from the AI patterns and so only knows npcs that carry one; plain `aggressive`
+    # summons may be missing from it entirely. That gap cost 19 reinforcement bands in
+    # extract_guard_reinforcements.py before it was closed there -- see docs/retail-ai-fidelity.md.
+    for _devname, _npc_id in npc_names().items():
+        by_devname.setdefault(_devname.lower(), _npc_id)
 
     rows: list[tuple] = []
     unresolved: collections.Counter = collections.Counter()
