@@ -27,8 +27,26 @@ the current script produces from the current patterns, which happens for three q
 
 It cannot tell you which. It tells you the three files that need looking at instead of eighty.
 
-Exits non-zero if anything crashed or drifted, so it can be wired into CI once the client XML is
-available there. It needs the retail pattern dump, so it is a developer command rather than a test.
+BOTH HALVES OF THE PIPELINE
+---------------------------
+The patterns become a `.tsv` in `out/`, and the `.tsv` becomes generated C# in `src/`. Checking only the
+first half leaves the case where a table is correct and the C# beside it is stale -- which is the more
+dangerous of the two, because the `.tsv` is a working file and the `.cs` is what actually ships.
+
+So the emit step is checked the same way: each `emit_*.py` is run from the **committed** table into a
+temp file and diffed against the committed `.cs`. Running from the committed table rather than the
+freshly extracted one is deliberate: it keeps the two halves independent, so a drift report names which
+step is out of date instead of blaming both.
+
+EXIT CODES
+----------
+* **0** -- everything ran and reproduced what is committed.
+* **1** -- something crashed or drifted.
+* **2** -- nothing was wrong, but the retail dump was absent so only the emit half could be checked.
+
+2 is deliberately distinct from both. A CI job that treats "could not check" as "checked and fine" is
+worse than no CI job, and one that treats it as a failure would go red on every machine without the
+dump. The caller has to decide which it wants, so the tool refuses to decide for it.
 
 Usage:  python regen_check.py [--xml DIR]
 """
@@ -56,11 +74,45 @@ GENERATORS = [
 # Same job, different CLI: it takes the output path positionally and has no --out.
 POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv")]
 
+# (emitter, committed .cs, argv builder). The tiamat emitter takes the output path FIRST and its tables
+# as repeated --table switches, so it cannot share the others' shape.
+GEN = pathlib.Path("src/Aion.GameServer/Handlers/AI")
+EMITTERS = [
+    ("emit_guard_table.py", GEN / "GuardReinforcements.cs",
+     lambda out: [str(HERE / "out" / "guard_reinforcements.tsv"), out]),
+    ("emit_gate_table.py", GEN / "GateSquads.cs",
+     lambda out: [str(HERE / "out" / "gate_squads.tsv"), out]),
+    ("emit_vritra_table.py", GEN / "VritraCallers.cs",
+     lambda out: [str(HERE / "out" / "vritra_callers.tsv"), out]),
+    ("emit_guard_calls_table.py", GEN / "GuardCalls.cs",
+     lambda out: [str(HERE / "out" / "guard_calls.tsv"), out]),
+    ("emit_tiamat_table.py", GEN / "TiamatRotation.cs",
+     lambda out: [out,
+                  "--table", f"219362={HERE / 'out' / 'tiamat_rotation.tsv'}",
+                  "--table", f"236277={HERE / 'out' / 'tiamat_rotation_hard.tsv'}"]),
+]
+
 
 def run(script, args):
     result = subprocess.run([sys.executable, str(HERE / script), *args],
                             capture_output=True, text=True, errors="replace")
     return result.returncode, result.stderr
+
+
+def check_emitters(problems):
+    """Each emitter, run from the committed table, against the committed C#."""
+    repo = HERE.parents[1]
+    with tempfile.TemporaryDirectory() as tmp:
+        for script, target, argv in EMITTERS:
+            out = str(pathlib.Path(tmp) / target.name)
+            code, err = run(script, [str(a) for a in argv(out)])
+            label = f"{script} -> {target.name}"
+            if code != 0:
+                tail = "\n      ".join(err.strip().splitlines()[-3:])
+                problems.append(f"{label}: CRASHED\n      {tail}")
+                print(f"  CRASH    {label}")
+                continue
+            compare(label, pathlib.Path(out), repo / target, problems)
 
 
 def compare(label, produced, committed, problems):
@@ -83,11 +135,18 @@ def main():
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
     args = ap.parse_args()
 
-    if not pathlib.Path(args.xml).is_dir():
-        print(f"retail pattern dump not found at {args.xml}; nothing to check", file=sys.stderr)
-        return 2
-
     problems = []
+
+    # The emit half reads only committed files, so it is checked either way. A missing pattern dump
+    # should not mean "nothing to check" when half the pipeline is checkable without it.
+    print("emit: committed table -> committed C#")
+    check_emitters(problems)
+
+    if not pathlib.Path(args.xml).is_dir():
+        print(f"\nretail pattern dump not found at {args.xml}; extract half skipped", file=sys.stderr)
+        return 1 if problems else 2
+
+    print("\nextract: retail patterns -> committed table")
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = pathlib.Path(tmp)
         for script, table, extra in GENERATORS:
@@ -112,7 +171,7 @@ def main():
 
     print()
     if not problems:
-        print("every generator runs and reproduces its committed table")
+        print("every generator and emitter runs and reproduces what is committed")
         return 0
     print(f"{len(problems)} problem(s):")
     for p in problems:

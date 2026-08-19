@@ -29846,3 +29846,44 @@ row in one committed table reports `DRIFT, 1 rows added`. All six currently repr
   `spawn_helpers.xml` blocks, `live_time` with no attribute, the 45 live disagreements, the eleven unread
   top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent
   npc rows.
+
+## The other half of the pipeline
+
+The previous entry closed the extract half and listed the emit half as owed, which is a short enough
+gap to close next.
+
+The pipeline is two steps — patterns become a `.tsv` in `out/`, the `.tsv` becomes generated C# in
+`src/` — and checking only the first leaves the more dangerous case: a table that is correct with stale
+C# beside it. **The `.tsv` is a working file; the `.cs` is what ships.**
+
+`regen_check.py` now runs all five emitters too, from the **committed** table rather than the freshly
+extracted one. That is deliberate. Chaining them would mean a single drift lit up both halves and named
+neither; keeping them independent means a report says which step is out of date.
+
+Eleven checks in all — six extract, five emit — and all eleven currently reproduce what is committed, so
+no stale C# was found. Drift on the emit half was verified by deleting one row from `GateSquads.cs`.
+
+### Three outcomes, not two
+
+The emit half reads only committed files, so it runs whether or not the retail dump is present. That
+makes "dump absent" a third state rather than an absence of information, and the exit codes say so:
+
+| exit | meaning |
+|---|---|
+| 0 | everything reproduced |
+| 1 | something crashed or drifted |
+| **2** | **nothing wrong, but only the emit half could be checked** |
+
+**2 is deliberately neither.** A CI job that reads "could not check" as "checked and fine" is worse than
+no CI job; one that reads it as failure goes red on every machine without the dump. The tool declines to
+make that choice on the caller's behalf.
+
+**Still missing.**
+
+- **Still not in CI.** The emit half could go in today — it needs nothing but the repo. That is a real
+  option and is not taken here because wiring CI is not a data fix and should be someone's deliberate
+  choice, not a side effect of this work.
+- The 59 stranded guards, 25 guards with no `npc_templates.xml` row, 11 owner-less patterns, the 9 inert
+  `spawn_helpers.xml` blocks, `live_time` with no attribute, the 45 live disagreements, the eleven unread
+  top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent
+  npc rows.
