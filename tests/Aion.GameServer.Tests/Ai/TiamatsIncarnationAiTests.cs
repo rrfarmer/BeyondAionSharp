@@ -379,4 +379,47 @@ public sealed class TiamatsIncarnationAiTests
 		Npc whirl = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == GravityWhirlpool));
 		Assert.NotEqual(AIState.FIGHT, whirl.GetAi().GetState());
 	}
+
+	/// <summary>Retail's two death effects, at the crack each incarnation closes.</summary>
+	private const int BurrowingFx = 283060;
+
+	/// <summary>
+	/// <b>Each incarnation leaves two effects where the crack is</b>, and they last six seconds.
+	/// </summary>
+	/// <remarks>
+	/// <b>No pin asserted these until now</b> — the mutation harness deleted both and the suite stayed
+	/// green. They matter for a reason the class already records: retail files them under the same
+	/// spawn id it despawns one line later, so taken literally the death is silent. Giving them their
+	/// own id is what lets both halves of that branch do something, and nothing was checking that the
+	/// half worth keeping still happened.
+	/// <para>
+	/// The second effect differs per incarnation, which is the other half of what makes this worth
+	/// pinning: a single shared id would have looked correct against any one of them.
+	/// </para>
+	/// </remarks>
+	[Theory]
+	[InlineData(Fissurefang, 283063)]
+	[InlineData(Graviwing, 283065)]
+	[InlineData(Petriscale, 283064)]
+	[InlineData(Wrathclaw, 283066)]
+	public void EachIncarnationLeavesItsOwnPairOfEffects(int npcId, int deathEffect)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = SpawnBoss(harness, npcId);
+		Player player = harness.SpawnPlayer(472f, 512f, 418f);
+		harness.Engage(boss, player);
+
+		Assert.Equal(0, Count(harness, BurrowingFx));
+		Assert.Equal(0, Count(harness, deathEffect));
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+
+		Assert.Equal(1, Count(harness, BurrowingFx));
+		Assert.Equal(1, Count(harness, deathEffect));
+
+		// And they are effects, not scenery: six seconds and gone.
+		harness.Clock.Advance(TimeSpan.FromSeconds(7));
+		Assert.Equal(0, Count(harness, BurrowingFx));
+		Assert.Equal(0, Count(harness, deathEffect));
+	}
 }

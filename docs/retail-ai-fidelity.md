@@ -23755,3 +23755,58 @@ Stress-run **eight times: stable.** Its framing tolerates the variance the other
 ### Verification
 
 Build clean, no behaviour changed. **Three consecutive full-suite runs**: 2,200 passing, 1 skipped.
+
+## Mutation testing, and the six spawns it found that nothing asserted
+
+Nine pins this session were found to be measuring nothing — four inert, five flaky — and **every one was
+found by hand**, by someone happening to run a mutation. That makes nine a lower bound with no idea of
+the upper.
+
+`tools/client-extract/mutate_spawns.py` does it deliberately: for each spawn call in a class it replaces
+the call, rebuilds, runs only that class's pins, and reports whether anything went red. **A mutation that
+survives is a spawn no pin is really asserting**, whatever the pins may mention by name. Eighty-two
+classes have both spawns and a test file.
+
+### Two attempts at the mutation itself, and why the second is right
+
+Blanking the line does not work: a `Do.Spawn*` call is an **argument to `Branch(...)`**, so deleting it
+leaves a dangling comma and the file stops compiling — three of Miladi's five mutations were reported as
+"did not compile", which reads like a pass. It now substitutes **another `PatternAction`**:
+`Do.ArmTimer(31, 1)` arms a slot no pattern uses, type-checks anywhere a spawn does, and does nothing.
+
+**And the first substitution was wrong too**, in the other direction: the closing line usually reads
+`...))),` where only the first paren belongs to the spawn. Stripping the trailing punctuation and putting
+it back after a replacement that carries its own parens produced one too many, and **all five mutations
+failed to compile** — a tool reporting "nothing to see" for the worst possible reason. It now uses the
+offset where the paren depth returns to zero.
+
+Statements outside a `Branch` — `Spawn(...)` and `SpawnFor(...)` — become an empty block rather than a
+comment, because they are regularly the whole body of a `foreach`.
+
+### What it found
+
+**Four of Chief Maid Miladi's five spawns were asserted by nothing.** Only the opener was pinned — and
+the opener is one succubus on the tank, while everything that makes her fight interesting is the two
+bands below seventy-five. That class was written earlier in this same session.
+
+**Both of Tiamat's incarnations' death effects** likewise. They matter for a reason the class already
+records: retail files them under the same spawn id it despawns one line later, so taken literally the
+death is silent, and giving them their own id is what lets both halves of that branch do something.
+**Nothing was checking that the half worth keeping still happened.**
+
+Six new pins later, both classes mutate clean. `DarkPoetaGeneratorAI`, `PetrificationIncarnateAI`,
+`YamennesAI`, `OphidanBridgeCallAI` and `CaptainXastaAI` were already clean.
+
+### Still to do
+
+- **76 classes not yet mutated.** At roughly fifteen seconds a mutation this is an afternoon, not a
+  pass; it wants running in the background over the whole tree.
+- **Mutating only spawns.** Timers, skills, thresholds and broadcasts get no such check, and three of
+  the four inert pins this session were about a threshold or a window rather than a spawn.
+- **250 spawns named by no pin**; 50 invented-spawn rows; the eighteen orphan classes; the other 568
+  fights.
+
+### Verification
+
+Build clean. Both classes now kill every mutation of their spawns. **Three consecutive full-suite runs**:
+2,207 passing (seven new), 1 skipped.
