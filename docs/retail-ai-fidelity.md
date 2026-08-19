@@ -24022,3 +24022,58 @@ tail of this one.
 ### Verification
 
 Build clean, no behaviour changed. **Two consecutive full-suite runs**: 2,214 passing, 1 skipped.
+
+## The Drakenspire seal guardians: two markers nobody summoned, and eight spawns nobody pinned
+
+Named last pass as needing the chief's whole chain read. Ten npcs run `SealGuardianAI` and **nothing
+asserted any of it** — it was the largest unpinned class after the conquest and bastion machinery.
+
+### Two markers were missing outright
+
+All ten chiefs carry the same pair, and neither was placed:
+
+| | retail | |
+|---|---|---|
+| **on waking** | `BIDSeal_Skill_Delay_Keep` (855540) at its own feet | **eighty seconds** |
+| **on dying** | `BIDSeal_Guardian_Chief_Reset_01` (855538) where it fell | **ten seconds** |
+
+Both npcs were already in our data with an AI of their own, summoned by nobody. The keeper's eighty
+seconds is a fifth longer than the minute an untouched chief waits before teleporting out, so it
+outlives it — which is presumably the point of a thing called a delay keeper.
+
+**One marker on death, not two.** Retail writes that branch twice, for `on_killed_by_user` and
+`on_killed_by_npc`, byte-identical and both carrying the same test-and-set flag var, so the second can
+never run. **Fourth time this log has recorded that idiom**, and the count is now asserted rather than
+assumed.
+
+### The specter placement is kept, though retail has no such branch
+
+`SealGuardianAI` places four specters at fixed coordinates. **No pattern in the 5.8 dump places
+855452/855454/855456/855458, and they are in no spawn file** — so this class is the only thing that puts
+a guardian in that room, and retail evidently places them from instance data the pattern dump does not
+cover. Shape two of the invented-spawn taxonomy: **keep it, record it**. Removing it would trade a
+mechanic that works for nothing at all.
+
+### The pins, and what mutation caught
+
+Seven new pins; the class mutates clean. **The first version left two of the ten mutations alive** — a
+theory covering chiefs one and two, where retail gives each of four its own specter. Widened to all four.
+
+Its first run also failed for a **missing `WithAi` entry**: the specters carry
+`drakenspire_ghastly_protector`, and the harness validates every AI name it is asked to place, so the
+spawn throws rather than quietly doing nothing. **Third pin this session to fail that way first** — it is
+becoming the standard first error when pinning a class whose adds have AI of their own.
+
+### Still to do
+
+- **80 unpinned classes**, led by `ConquestOfferingAggressiveAI` (112 npcs bound),
+  `ConquestOfferingSpawnerAI` (24) and `EternalBastionAssaultMachineAI` (20).
+- **The seal chiefs' two condition variables** — `GUARDIAN_1` on waking, `GUARDIAN_TIMER` on dying — and
+  broadcast `22610`, which names the killer at fifty metres and has no listener in this port.
+- Timers, broadcasts and target selection have no mutation mode.
+- 250 spawns named by no pin; 50 invented-spawn rows; the eighteen orphan classes; the other 568 fights.
+
+### Verification
+
+Build clean. All ten of the class's spawns die under mutation. **Three consecutive full-suite runs**:
+2,221 passing (seven new), 1 skipped.
