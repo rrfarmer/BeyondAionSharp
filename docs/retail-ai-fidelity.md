@@ -29100,3 +29100,43 @@ filters removed the other four kinds — which is roughly what the filters were 
 - **`npc_skills` for 284697 and 284698**, without which neither strike does anything at all.
 - **The 36 remaining top-band ids.** One in five is the only rate anyone has measured.
 - Dynatoum's mine web, 857599 and 856503, unchanged.
+
+## Hunting for more Pashids, and finding mostly variants
+
+Pashid's defect had a shape worth generalising: the class named an id **one away** from the one retail
+spawns, and the two npcs had nearly the same name. If that happened once it could have happened
+elsewhere, so `audit_summon_ids.py --swaps` looks for any class that both misses an id and names a
+neighbour within three of it.
+
+**Thirty candidates.** The two strongest — a single missing id paired with a single adjacent extra — were
+read, and **both are false positives**:
+
+- **`FireStormAI`**: retail 283103, class has 283102. Both are called "fire tornado". 283102 is the
+  tornado; **283103 is its damage twin**, spawned by the tornado itself with `live_time=3`. That is the
+  FX/DMG collapse, and this port is on the correct side of it.
+- **`BerserkAnohaAI`**: retail 855264, class has 855263. 855263 is **Anoha himself**; his class naturally
+  names his own id. His pattern `LDF5_Fortress_Anoha` spawns only the two faction commanders on death,
+  which the class does. Where the audit's 855264 comes from could not be traced: both commander devnames
+  are unresolved in the binding table, so they contribute nothing, and no pattern in the dump spawns
+  `Anoha_Summon1` under any spawn form. **That row is a false positive of unknown origin**, which is worth
+  writing down as such rather than leaving as a lead.
+
+**The detector's own docstring predicted this**: "adjacent ids are also how variants are numbered". In
+this data an id one away is more often an FX twin, a hard-mode variant or the npc itself than a typo. It
+found Pashid because Pashid *was* a typo — but it cannot tell the two apart, and the two examples above
+are what its top of list looks like.
+
+**So it is kept as a candidate generator and labelled as one.** Thirty rows is a small enough set to read
+and the header says each is "a candidate wrong digit, not a finding". The alternative — dropping it —
+would lose the only tool that has ever found this class of bug.
+
+**Still missing.**
+
+- **The twenty-eight unread swap candidates**, including several with more structure than these two:
+  Arminos names 217744 where retail spawns 217741/2/3, and Ahuradim names 284445/284446 where retail
+  spawns 284448/284449. Groups shifted by three are a different pattern from a single digit and may be a
+  block renumbering.
+- **Why the audit believes `berserk_anoha` spawns 855264.** Two unresolved devnames on that pattern are
+  the likeliest cause and are worth a look, since unresolved devnames anywhere mean the binding table has
+  holes this work has been trusting.
+- Pashid's missing `npc_skills`, Dynatoum's mine web, 857599 and 856503, unchanged.

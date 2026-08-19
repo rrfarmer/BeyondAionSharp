@@ -137,6 +137,30 @@ def spawned_in_our_data():
     return out
 
 
+def report_swaps(rows, window=3):
+    """Classes that name an id numerically next to one retail spawns, which is usually a typo.
+
+    Grand Commander Pashid spawned 284697 where his pattern spawns 284698: the rank-and-file rider's
+    strike instead of the chief's, one digit apart, two npcs with almost the same name. Nothing about
+    that is visible in play -- both are invisible one-shot casters -- and it survived the port.
+
+    If a class both misses an id and names a neighbour retail never spawns, the neighbour is the more
+    likely explanation than two independent mistakes. The window is deliberately narrow: adjacent ids in
+    this data are variants of one thing, ten apart is a different npc.
+    """
+    hits = []
+    for _, ai, filename, missing, extra in rows:
+        for m in missing:
+            for e in extra:
+                if 0 < abs(int(m) - int(e)) <= window:
+                    hits.append((filename, ai, m, e))
+    print(f"{len(hits)} places where a class names an id within {window} of one retail spawns")
+    print("Each is a candidate wrong digit, not a finding: adjacent ids are also how variants are numbered.")
+    print()
+    for filename, ai, m, e in sorted(hits):
+        print(f"  {filename[:38]:40s} [{ai[:26]:28s}] retail {m}, class has {e}")
+
+
 def rank_missing(rows, route_blocked, xml_dir):
     """Sort every unnamed id by whether it looks like an add or an effect.
 
@@ -232,6 +256,8 @@ def main():
     ap.add_argument("--class", dest="only", help="report one AI name in full")
     ap.add_argument("--limit", type=int, default=25)
     ap.add_argument("--worlds", default="D:/Aion58ServerTesting/Server/Map/Worlds")
+    ap.add_argument("--swaps", action="store_true",
+                    help="find classes naming an id adjacent to one retail spawns -- a likely wrong digit")
     ap.add_argument("--rank", action="store_true",
                     help="rank every unnamed id by how likely it is to be a real add rather than an effect")
     ap.add_argument("--max-patterns", type=int, default=3,
@@ -296,6 +322,10 @@ def main():
         extra = sorted(i for i in own if i not in ids and i in npc2ai)
         if missing or extra:
             rows.append((len(missing), ai, filename, missing, extra))
+
+    if args.swaps:
+        report_swaps(rows)
+        return 0
 
     if args.rank:
         rank_missing(rows, route_blocked, args.xml)
