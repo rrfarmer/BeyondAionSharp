@@ -90,31 +90,38 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Grand Chieftain Kasika. Retail pattern NLycan_LELA runs an escalating ladder, a different
+	     guard tier per health band and a rising count: 2x 280469 at 61-80, 3x 280470 at 41-60,
+	     4x 280471 at 21-40, 6x 280472 below 20. This block spawned the same mix of four at every
+	     band, and 280470 and 280471 appeared nowhere in our data at all, so two of the four tiers
+	     never showed up and the fight did not escalate.
+	     The coordinates are ours, not retail's: retail uses SPAWN_LOCATION_WAY_POINT_START and walks
+	     each guard in on its own path, which we do not have. The existing points are kept and reused
+	     where a band needs more of them than were written down. -->
 	<ai npcId="212874">
 		<summons>
 			<percentage percent="80">
-				<summonGroup npcId="280472" x="2938.67" y="883.34" z="369.814" h="79"/>
+				<summonGroup npcId="280469" x="2938.67" y="883.34" z="369.814" h="79"/>
 				<summonGroup npcId="280469" x="2929.45" y="888.97" z="369.793" h="88"/>
-				<summonGroup npcId="280472" x="2923.81" y="876.97" z="369.561" h="36"/>
-				<summonGroup npcId="280472" x="2927" y="870" z="369.51" h="44"/>
 			</percentage>
 			<percentage percent="60">
-				<summonGroup npcId="280472" x="2938.67" y="883.34" z="369.814" h="79"/>
-				<summonGroup npcId="280469" x="2929.45" y="888.97" z="369.793" h="88"/>
-				<summonGroup npcId="280472" x="2923.81" y="876.97" z="369.561" h="36"/>
-				<summonGroup npcId="280472" x="2927" y="870" z="369.51" h="44"/>
+				<summonGroup npcId="280470" x="2938.67" y="883.34" z="369.814" h="79"/>
+				<summonGroup npcId="280470" x="2929.45" y="888.97" z="369.793" h="88"/>
+				<summonGroup npcId="280470" x="2923.81" y="876.97" z="369.561" h="36"/>
 			</percentage>
 			<percentage percent="40">
-				<summonGroup npcId="280469" x="2956.56" y="858.68" z="368.89" h="92"/>
-				<summonGroup npcId="280472" x="2951.7" y="879.04" z="368" h="118"/>
-				<summonGroup npcId="280469" x="2928.45" y="850.91" z="368.222" h="61"/>
-				<summonGroup npcId="280469" x="2913.81" y="872.17" z="368.17" h="67"/>
+				<summonGroup npcId="280471" x="2938.67" y="883.34" z="369.814" h="79"/>
+				<summonGroup npcId="280471" x="2929.45" y="888.97" z="369.793" h="88"/>
+				<summonGroup npcId="280471" x="2923.81" y="876.97" z="369.561" h="36"/>
+				<summonGroup npcId="280471" x="2927" y="870" z="369.51" h="44"/>
 			</percentage>
 			<percentage percent="20">
-				<summonGroup npcId="280469" x="2956.56" y="858.68" z="368.89" h="92"/>
+				<summonGroup npcId="280472" x="2938.67" y="883.34" z="369.814" h="79"/>
+				<summonGroup npcId="280472" x="2929.45" y="888.97" z="369.793" h="88"/>
+				<summonGroup npcId="280472" x="2923.81" y="876.97" z="369.561" h="36"/>
+				<summonGroup npcId="280472" x="2927" y="870" z="369.51" h="44"/>
+				<summonGroup npcId="280472" x="2956.56" y="858.68" z="368.89" h="92"/>
 				<summonGroup npcId="280472" x="2951.7" y="879.04" z="368" h="118"/>
-				<summonGroup npcId="280469" x="2928.45" y="850.91" z="368.222" h="61"/>
-				<summonGroup npcId="280469" x="2913.81" y="872.17" z="368.17" h="67"/>
 			</percentage>
 		</summons>
 	</ai>

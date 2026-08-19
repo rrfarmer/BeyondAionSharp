@@ -29537,3 +29537,52 @@ flattening that to a number would invent a comparison. Viloa's case was clear on
   `npc 212346` spawning two where a rung places one.
 - **The eleven unread top-band ids** from `audit_summon_ids.py --rank`.
 - Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## Grand Chieftain Kasika's four tiers, two of which did not exist
+
+The new audit's clearest row was `npc 212874 spawns 280472, count 1-1 vs retail rungs [6]`. Opening it
+found more than the row said.
+
+**Retail's `NLycan_LELA` is an escalating ladder** — a different guard tier per health band, and a rising
+count:
+
+| band | guard | count |
+|---|---|---|
+| 61-80 | 280469 | 2 |
+| 41-60 | 280470 | 3 |
+| 21-40 | 280471 | 4 |
+| below 20 | 280472 | **6** |
+
+**Ours spawned the same mix of four at every band.** Three 280472 and one 280469 at the top two bands,
+three 280469 and one 280472 at the bottom two — and:
+
+> **280470 and 280471 appeared nowhere in our `spawn_helpers.xml` at all.** Two of the four guard tiers
+> did not exist, and the fight did not escalate: the last band put down four instead of six, and the
+> first put down the *final* tier's guards.
+
+All four npcs are named "grand chieftain kasika" — they are his four grades of summoned guard, which is
+why nobody noticed: the room filled up either way.
+
+**Rewritten to retail's ladder.** The coordinates are kept and reused where a band needs more of them
+than were written down, and the comment says plainly that they are ours: retail uses
+`SPAWN_LOCATION_WAY_POINT_START` and walks each guard in on its own path, which this port does not have.
+
+**Pins** — five, two mutations, both caught. The pin that matters is per-band: a pin that only counted
+adds would have passed against the original, because the original spawned four every time.
+
+Full solution green at 2,805, and the audit's disagreement count falls from 58 to 55.
+
+### The audit earned its keep
+
+This is the first defect found by `audit_summon_numbers.py` rather than by reading, and it is the largest
+single fidelity gap found in a while — a boss whose entire escalation was flat. It also shows why the
+tool's output is a **reading list**: the row said "1 vs 6" for one npc, and the actual defect was two
+missing npcs, four wrong counts and a missing escalation. **The row pointed at the right boss and
+described almost none of the problem.**
+
+**Still missing.**
+
+- **The remaining 55 disagreements.** `npc 212346` spawning two where a rung places one, and
+  `npc 211908` at range 10 against retail's 6, are the next clearest.
+- **The eleven unread top-band ids** from `--rank`.
+- Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
