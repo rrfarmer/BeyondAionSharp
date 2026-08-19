@@ -48,6 +48,18 @@ one before comparison when they come from a `When.AtWaypoint(n)` call, and taken
 runtime (`DaliaCharlandsAI` does this for its three helpers, `ReianBomberAI` does it to itself in
 `HandleSpawned`), so `--unwalked` lists those separately rather than dropping them.
 
+**`--unwalked` also triages whether a route could be found at all.** Three things have ever identified
+one: our own spawn table already carrying the `walker_id`; a client route whose name contains the npc's
+**devname**; or a client route whose first point sits on the npc's spawn. Where none holds, the route is
+absent from both sides — the npc-to-route binding lives in server-side spawn data this dump does not
+contain, and guessing a patrol moves an encounter somewhere it has never been.
+
+**Use the devname, not the pattern name.** Doing this by hand I decided Brigade General Vasharti had no
+findable route, because his pattern is `IDYun_Nmd6` and the nearest route is `Path_IDYun_Nmd_7Named_60_Ah`
+— a different boss, obviously. It is not: **his npc devname is `IDYun_Nmd_7Named_60_Ah`**, so that route
+is exactly his and the pattern name simply does not match the npc name. The tool found this because it
+compares the right field, and it reversed a conclusion I had already written down.
+
 Usage:  python audit_waypoint_rungs.py [--xml DIR] [--unwalked] [--limit N]
 """
 import argparse
@@ -152,6 +164,7 @@ def main():
     ap.add_argument("--unwalked", action="store_true",
                     help="also list npcs with no walker_id, which another AI may still route at runtime")
     ap.add_argument("--limit", type=int, default=40)
+    ap.add_argument("--worlds", default="D:/Aion58ServerTesting/Server/Map/Worlds")
     args = ap.parse_args()
 
     acting = acting_waypoint_patterns(args.xml)
@@ -210,11 +223,60 @@ def main():
         print(f"  INDEX GAP   {row[0]:36s} [{ai}]  never names {unseen}{tail}")
 
     if args.unwalked:
+        # Triage: an npc with no walker_id can still be given one, but only if its route can be
+        # IDENTIFIED. Three things have identified one so far, and nothing else has:
+        #   1. our own spawn table already carries the walker_id  (handled above, these are the leftovers)
+        #   2. a client route whose name contains the npc's devname
+        #   3. a client route whose first point is on the npc's spawn
+        # Where none of the three holds the route is simply absent: the npc-to-route binding lives in
+        # server-side spawn data that is not in this dump, and guessing a patrol moves an encounter
+        # somewhere it has never been. Vasharti and Padmarashka were each worked out by hand before this
+        # existed; the answer for both was "not findable", and that is a conclusion worth reaching in a
+        # second rather than an hour.
+        import math
+        sys.path.insert(0, str(pathlib.Path(__file__).parent))
+        from extract_client_waypoints import client_routes as _routes
+        routes = _routes(args.worlds)
+        devname = {}
+        for line in (REPO / "tools" / "client-extract" / "out" / "ai_binding.tsv").read_text(
+                encoding="utf-8").splitlines()[1:]:
+            parts = line.split("	")
+            if len(parts) > 1:
+                devname[parts[0]] = parts[1]
+        spawn_xy = {}
+        spawn_open = re.compile(r'<spawn npc_id="(\d+)"')
+        spot = re.compile(r'<spot x="([-0-9.]+)" y="([-0-9.]+)"')
+        for f in (REPO / "game-server" / "data" / "static_data").rglob("*.xml"):
+            current = None
+            for line in f.read_text(encoding="utf-8", errors="replace").splitlines():
+                m = spawn_open.search(line)
+                if m:
+                    current = m.group(1)
+                s = spot.search(line)
+                if s and current:
+                    spawn_xy.setdefault(current, (float(s.group(1)), float(s.group(2))))
+
+        def identify(npc):
+            dev = devname.get(npc, "")
+            for name, copies in routes.items():
+                if dev and dev in name:
+                    return f"name match: {name}"
+            xy = spawn_xy.get(npc)
+            if xy:
+                for name, copies in routes.items():
+                    for pts in copies.values():
+                        if math.dist(xy, (float(pts[0][0]), float(pts[0][1]))) < 1.0:
+                            return f"spawn match: {name}"
+            return None
+
         silent = {a: r for a, r in unwalked.items() if not r[1]}
         print(f"\n{len(silent)} more have no walker_id on their spawn and do not listen either.")
         print("A route can still be attached at runtime by another AI, so these need checking, not fixing:")
         for ai, row in sorted(silent.items())[:args.limit]:
-            print(f"  {row[0]:36s} [{ai}]  {len(row[3])} npc(s)")
+            found = [identify(npc) for npc in row[3]]
+            got = [f for f in found if f]
+            verdict = got[0] if got else "NO ROUTE FINDABLE"
+            print(f"  {row[0]:36s} [{ai}]  {len(row[3])} npc(s)  {verdict}")
     return 0
 
 

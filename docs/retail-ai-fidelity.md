@@ -28670,3 +28670,55 @@ guessing a patrol for a world boss would move an open-world encounter somewhere 
   the two Eternal Bastion classes broadcasting at index 7 to listeners with no sender; `summoner` and
   `useitem`, shared classes where one or two npcs of hundreds carry a rung.
 - The rest of Padmarashka's unnamed spawn ids: 281457, 281928, 281937, 295092, 296337.
+
+## Triaging the rest, and being corrected by the tool
+
+Padmarashka's route was worth one more look, in the client's spawn data rather than its waypoint data.
+It is not there: `Map/Worlds/df4/world_N.xml` never mentions her devname, her record in `npcs_monsters.xml`
+carries movement speeds and a `hide_path` flag but no path, and `Server/NPCServer` is binaries and config.
+**Her route is absent from every file in this dump.**
+
+Rather than reach that conclusion a third time by hand, `--unwalked` now triages it. Three things have
+ever identified a route, and nothing else has:
+
+1. our own spawn table already carries the `walker_id`;
+2. a client route whose name contains the npc's **devname**;
+3. a client route whose first point sits on the npc's spawn.
+
+```
+BrigadeGeneralVashartiAI.cs   [brigade_general_vasharti]  name match: Path_IDYun_Nmd_7Named_60_Ah
+PoppyOnTheRunAI.cs            [poppyontherun]             name match: NPCPathIDArena_Solo_S4_Polymorph_Porguss
+EternalBastionBomberAI.cs     [eternal_bastion_bomber]    NO ROUTE FINDABLE
+EternalBastionSiegeRamAI.cs   [eternal_bastion_siege_ram] NO ROUTE FINDABLE
+GelkmarosPadmarashkaAI.cs     [padmarashka_world_boss]    NO ROUTE FINDABLE
+SematariuxAI.cs               [sematariux]                NO ROUTE FINDABLE
+SummonerAI.cs / ActionItemNpcAI.cs                        NO ROUTE FINDABLE
+```
+
+### It reversed a conclusion I had already written
+
+**I decided by hand that Vasharti had no route.** His pattern is `IDYun_Nmd6`; the nearest client route is
+`Path_IDYun_Nmd_7Named_60_Ah`, three metres away and named for a different boss. That reasoning was
+wrong in one specific way:
+
+> **His npc devname is `IDYun_Nmd_7Named_60_Ah`.** The pattern name and the npc name are different fields
+> and they do not agree for this boss. The route is exactly his.
+
+The tool got it right because it compares the devname, which is the field the client's own naming follows;
+I compared the pattern name, which is what I happened to have on screen. **Two of the six remaining
+classes are unblocked by that correction**, not one — Poppy on the Run matches the same way, exactly.
+
+That is the second time in this work a tool has overturned a hand conclusion (the first was
+`audit_summon_ids.py` reporting Laksyaka's taunt as carried by skill data), and both times the hand
+conclusion had already been committed to the log.
+
+**Still missing.**
+
+- **Vasharti's glove controllers**, now unblocked. At waypoint 1 of his three-point route he drops
+  `IDYun_Vasharti_Glove_ControllerA`, `C` and `E` — 283002, 283004, 283006 — one each, `live_time=40`, on
+  a once-only ladder at 86%, 56% and 26% guarded by `set_flag_var` on `BETA_1`, `BETA_3` and `BETA_5`. The
+  even letters are absent from this handler and are probably on the Hard pattern, which wants checking
+  before the odd ones are written.
+- **Poppy on the Run**, unblocked the same way, spawning at index 26 of her route.
+- **Four classes with no findable route**: both Eternal Bastion npcs, Padmarashka, Sematariux, and the two
+  shared classes. For these the answer is not "not yet" but "not from this data".
