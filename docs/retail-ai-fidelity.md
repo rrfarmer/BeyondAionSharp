@@ -27197,3 +27197,32 @@ without a creator, so there is no fight in which the cadence can be observed.
 arms the next timer — 3000, 3000, 6000 in the top band and 4000, 2000, 2000, 2000 below it — and the
 chain's shape is readable while every action in it is a skill index. Its 25000 is not a cadence at all
 but the delay on a queued shield skill, so the audit row was never about the chain.
+
+## Sardha's black hole opened a second early
+
+Next sweep row. Retail splits the black hole across three npcs and this port folds them into one:
+
+| npc | retail pattern | what it does |
+|---|---|---|
+| 283096 FX | `IDTiamat_Sardha_BlackHoleFX` | the controller — idle timer 1500 on waking, then 2000, laying a damage npc each firing |
+| 283097 DMG | `IDTiamat_Sardha_BlackHoleDMG` | casts on waking and despawns |
+| 283098 OnDie | `IDTiamat_Sardha_BlackHoleOnDie` | the same, for the closing flash |
+
+**The port opened at 500 where the controller opens at 1500.** The repeat was already right. A full
+second early on a hole that pulls players into it is the difference between being caught and walking
+clear — it is exactly the grace that makes the mechanic answerable.
+
+**The collapse went the other way round from the pattern, and that is worth recording.** Retail drives
+the cadence from the FX npc and spawns a fresh DMG npc per pulse; this port has the DMG npc do the
+pulsing itself. It is the usual FX/DMG fold and it is kept, but the guard in the class reads as though
+283097 were the controller, which it is not.
+
+**Pins** — four in `SardhaBlackHoleTests`, four mutations, all caught. Behavioural, reading
+`GetLastSkillTime`.
+
+**Still missing, and it is a whole mechanic.** Retail's FX npc answers **`on_message 31`** by spawning
+the OnDie flash for three seconds and despawning itself — **the hole can be closed early**. Nothing in
+this port sends 31 or listens for it, so the hole always runs its full ten seconds and whatever was
+meant to shut it does nothing at all. That is not a cadence, and the timer audit will never surface it;
+it came out of reading the pattern for a different reason, which is the argument for reading whole
+patterns rather than the rows a tool points at.
