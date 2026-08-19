@@ -31271,3 +31271,43 @@ the 34 non-route absence claims; the 33 named death-spawn rows; hisen's 6401/640
 one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed
 attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's
 `npc_skills`.
+
+## Beritra's combat support guards, traced end to end and blocked on a scene
+
+Top of the reading list was `DragonBeritraAI` owing four npcs. They are not adds — they are **the
+raid's own reinforcements**, and the chain runs four hops:
+
+1. Something spawns **856384** (`BIDSeal_Scene_23_Li_Message`) or **856385** (`_Da_Message`).
+2. That npc's whole pattern is: `broadcast_message 22655` (Elyos) or `22656` (Asmodian) at range 100,
+   then `despawn_self`. It exists only to say one word and leave.
+3. Beritra (**236247**, `IDSeal_TrueBoss`) answers on `on_message` — the Korean comments read
+   *"combat support guard, Elyos"* and *"…Asmodian"* — arming timer 9 at five seconds and placing
+   **three guards** at fixed marks:
+
+| | leader | soldier | soldier |
+|---|---|---|---|
+| Elyos | 209732 @ (141.3, 519, 1750) | 209733 @ (141.4, 516.1, 1750) | 209733 @ (140.7, 524, 1750) |
+| Asmodian | 209797 @ same | 209798 @ same | 209798 @ same |
+
+All `dir=180` except the last Elyos soldier at `120`, all `despawn_at_attack_state`.
+
+### Why it is not built
+
+**Nothing spawns the message npc — in retail's patterns either.** No pattern in the 5.8 set names
+856384 or 856385, and nothing in this port's code or spawn data mentions them. They are placed by the
+scene system (`Scene_23`), which this port does not model.
+
+So the answering half would be dead code: a listener for a message no one can send. The natural hook is
+`Lv3HumanBeritraAI`, which spawns the dragon form, or `DrakenspireDepthsInstance` — but **which moment
+of the scene fires it is not in the AI data**, and inventing that moment is exactly the kind of guess
+this document keeps recording as a defect.
+
+> The item has sat on the owed list as "Beritra's two spawn rows" for a long time. It is now a specific
+> blocked one: **the guards, their ids, their marks and their headings are all known; only the trigger
+> is missing**, and the trigger is not an AI event.
+
+**Still missing.** Beritra's support guards, blocked on the `Scene_23` trigger; the crystal-tier
+messages; jurdin; `is_aerial_spawn`; the 34 non-route absence claims; the 33 named death-spawn rows;
+hisen's 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat
+spawn; the `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded
+guards; Dynatoum's mine web; Pashid's `npc_skills`.
