@@ -17,11 +17,8 @@ namespace Aion.GameServer.Tests.Ai;
 /// them on a nine-second clock whether it had arrived or not. It is the same defect <c>MuraganAI</c>
 /// carried, in the same instance, with the same hardcoded coordinate copied across.
 /// <para>
-/// <b>These pins drive the walk directly rather than through the release.</b> A scientist starts walking
-/// only after two guarding eyes die, counted through a <c>DeathObserver</c>, and the harness does not run
-/// the controller death path those observers hang off. So the release chain is <b>not</b> covered here,
-/// and that is said plainly rather than worked around: what is covered is the part that was wrong, which
-/// is where each scientist walks and when it goes.
+/// <b>The release is covered now.</b> It took <c>BossAiHarness.Kill</c> to run a real controller death, and
+/// then one more thing: the eyes have to be spawned <i>before</i> the player. See <see cref="Released"/>.
 /// </para>
 /// </remarks>
 [Collection("GoldenDataManager")]
@@ -137,13 +134,8 @@ public sealed class CapturedDrakanScientistAiTests
 	/// <b>The class hands each scientist its own route.</b>
 	/// </summary>
 	/// <remarks>
-	/// This pins the map as data because the walk itself cannot be driven here: a scientist starts only
-	/// after two guarding eyes die, counted through <c>DeathObserver</c>s attached inside a
-	/// <c>CompareAndSet</c>-guarded <c>HandleCreatureSee</c>, and that chain does not fire in the harness.
-	/// <b>Two mutations survive because of it</b> -- deleting the route lookup from <c>StartWalk</c>, and
-	/// leaving the map correct but never consulting it. Both are recorded in
-	/// docs/retail-ai-fidelity.md rather than papered over; what this pin does cover is the assignment
-	/// that was wrong, which is which scientist gets which path.
+	/// This pins the map as data, which is cheap and independent of the release chain. The behavioural
+	/// half is <see cref="ReleasedEachScientistTakesItsOwnRoute"/>.
 	/// </remarks>
 	[Theory]
 	[MemberData(nameof(Scientists))]
@@ -164,4 +156,49 @@ public sealed class CapturedDrakanScientistAiTests
 		Assert.Equal(3, CapturedDrakanScientistAI.Routes.Values.Distinct().Count());
 	}
 
+	private const int GuardingEye = 219390;
+
+	/// <summary>Releases a scientist the way the encounter does: two guarding eyes die.</summary>
+	/// <remarks>
+	/// <b>The eyes must exist before the player does.</b> The class attaches its death observers inside a
+	/// <c>CompareAndSet</c>-guarded <c>HandleCreatureSee</c>, so it walks its known list exactly once —
+	/// and the harness delivers <c>CreatureSee</c> as soon as a player is spawned nearby. A player
+	/// created first therefore spends the scientist's single activation on an empty room, and every eye
+	/// added afterwards goes unwatched. That cost several attempts, all of them spent at the other end of
+	/// the chain: it looked like the deaths were not landing, and the deaths were fine.
+	/// </remarks>
+	private static Npc Released(BossAiHarness harness, int npcId, float x, float y)
+	{
+		Npc scientist = harness.Spawn(npcId, x, y, 397.42f);
+		Npc[] eyes = { harness.Spawn(GuardingEye, x + 2f, y, 397.42f),
+		               harness.Spawn(GuardingEye, x + 3f, y, 397.42f) };
+		foreach (Npc eye in eyes)
+			BossAiHarness.MakeMutuallyKnown(scientist, eye);
+
+		Player player = harness.SpawnPlayer(x + 4f, y, 397.42f);
+		scientist.GetAi().OnCreatureEvent(AiEventType.CREATURE_SEE, player);
+		foreach (Npc eye in eyes)
+			BossAiHarness.Kill(eye, player);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		return scientist;
+	}
+
+	/// <summary>
+	/// <b>Released for real, each scientist takes its own route.</b>
+	/// </summary>
+	/// <remarks>
+	/// This is the pin the others cannot be: they attach a route themselves to reach the arrival
+	/// behaviour, so none of them can see the class hand out the wrong one. A mutation deleting the whole
+	/// route lookup from <c>StartWalk</c> survived two commits until this existed.
+	/// </remarks>
+	[Theory]
+	[MemberData(nameof(Scientists))]
+	public void ReleasedEachScientistTakesItsOwnRoute(int npcId, float x, float y, string routeId)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc scientist = Released(harness, npcId, x, y);
+
+		Assert.Equal(routeId, scientist.GetMoveController().GetWalkerTemplate()?.GetRouteId());
+	}
 }

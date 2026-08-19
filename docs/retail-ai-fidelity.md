@@ -28565,3 +28565,56 @@ leaves every pin green. That is unchanged and unhidden.
   Bastion classes broadcast at index 7 to listeners this port has no sender for; `summoner` and `useitem`
   are shared classes where one or two npcs of hundreds carry a waypoint rung.
 - Every other `DeathObserver` mechanic in the port is now drivable and none of them has been revisited.
+
+## The scientists' release, and the order two spawns happen in
+
+Two commits ago a mutation that deletes the scientists' entire route lookup survived, and the reason was
+recorded as "the release chain cannot be driven". Last commit gave the harness a real death and it still
+survived — which narrowed the problem to the observer *attach* rather than the death. That is where it
+was.
+
+**Six things were ruled out before the seventh was found**, and they are worth listing because each one
+looked like the answer:
+
+| checked | result |
+|---|---|
+| the eyes are in the scientist's known list | 2 of 2 |
+| their npc id matches | 2 of 2 |
+| they are inside the twenty-five metre test | 2 of 2 |
+| `AiEventType.CREATURE_SEE` is the member the dispatcher switches on | `CREATURE_SEE = CreatureSee`, same value |
+| `NpcAI.GetKnownList()` is the owner's list | it is |
+| the scheduled release runs on the harness clock | five virtual minutes changed nothing |
+
+**The seventh was the order of two lines.**
+
+> The class attaches its observers inside a `CompareAndSet`-guarded `HandleCreatureSee`, so it walks its
+> known list **exactly once**. The harness delivers `CreatureSee` as soon as a player is spawned nearby.
+> A test that creates the player before the eyes therefore spends the scientist's single activation on an
+> empty room, and every eye added afterwards goes unwatched.
+
+It was visible the whole time in a detail I had read past: probing `MuraganAI` to prove `CREATURE_SEE`
+was delivered at all showed him **already `WALKING` before the explicit event was raised**. His handler
+had fired at player spawn. That line said what the problem was and I read it as noise because the number
+I was looking at was the route id beside it.
+
+**All four mutations are caught now**, including "delete the route lookup from `StartWalk`", which had
+stood for two commits. The scientists' encounter is covered end to end: released by two real deaths, each
+taking its own path, surviving the points before the sixth and going at it.
+
+**Two lessons, both cheap to state and expensive to learn.**
+
+- **A one-shot guard makes setup order part of the contract.** Anything using `CompareAndSet` to arm
+  itself will silently consume its activation on whatever exists at that moment, and the symptom appears
+  at the far end of the chain — here, three commits away, as "deaths do not seem to land".
+- **I spent three attempts at the wrong end of the chain**, and the thing that finally moved it was
+  proving a *neighbouring* mechanic worked rather than testing the broken one again.
+
+**Still missing.**
+
+- **Eight classes** from the waypoint survey, unchanged: `brigade_general_vasharti`,
+  `padmarashka_world_boss` and `sematariux` spawn at index 1; `poppyontherun` at 26; the two Eternal
+  Bastion classes broadcast at index 7 to listeners this port has no sender for; `summoner` and `useitem`
+  are shared classes where one or two npcs of hundreds carry a waypoint rung.
+- **Every other `DeathObserver` mechanic** is now drivable and none has been revisited.
+- The scientists' `on_wake_up` and `on_see_user` rungs, and the quest bookkeeping in that class, which is
+  ours rather than retail's.
