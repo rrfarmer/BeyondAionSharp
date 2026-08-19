@@ -31,13 +31,28 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>IDTiamat_FOBJ_SardhaSheild</c> is at <c>(1030.08, 297.31, 407.04)</c>, which is inside the room.
 /// </para>
 /// <para>
-/// <b>Not translated: the fight's whole cadence.</b> Retail drives Terath from four battle timers —
-/// front attack every 12s, the jump at 35s then every 55s, the black hole every 15s with its closing
-/// cast two seconds later, and a rage check every 10s below 14% — and re-arms each on its own rung.
-/// This class drives the jump off <b>HP phases</b> (90/70/50/30/25) and the black hole off a fixed
-/// 30-second task instead, so a party that burns Terath quickly sees a different fight from retail's.
-/// Rewriting that is a larger change than this pass; the ids, posts and lifetimes are corrected here
-/// and the cadence is recorded as outstanding.
+/// <b>The black hole now runs on retail's clock.</b> Retail arms it twelve seconds into the fight and
+/// re-arms every fifteen; this class opened at five seconds and repeated every thirty, so a raid saw
+/// the hazard half as often as retail's. Both numbers are corrected.
+/// <para>
+/// <b>The tick train inside it was already faithful and is left alone.</b> Retail's black hole is three
+/// npcs — an FX that spawns five damage npcs at two-second intervals over its ten-second life, and a
+/// closing burst when the hole shuts. <see cref="DistortedSpaceAI"/> collapses all three into 283097,
+/// which casts every two seconds for ten seconds and then casts its closing skill. Same five ticks,
+/// same ten seconds, same close.
+/// </para>
+/// <para>
+/// <b>And the rage is at fourteen per cent, not twenty-five.</b> Retail checks
+/// <c>is_hp_lower_than percent=14</c> on its own ten-second timer. Eleven points of health is a long
+/// stretch of this fight to spend enraged.
+/// </para>
+/// <para>
+/// <b>Still not translated: the jump.</b> Retail arms it at 35s and re-arms every 55s; this class fires
+/// it off <b>HP phases</b> (90/70/50/30/25). A party that burns Terath quickly still sees a different
+/// fight from retail's there, and the two structures cannot be half-merged — the jump event teleports
+/// him and takes thirty seconds, so moving it onto a timer means re-pinning everything that hangs off
+/// the phase ladder. It wants its own commit.
+/// </para>
 /// </para>
 /// </remarks>
 [AIName("brigadegeneralterath")]
@@ -55,6 +70,13 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// <summary>Retail's <c>live_time</c> on the jump's three npcs.</summary>
     private const int JumpBoxLife = 29;
     private const int GravityLife = 24;
+
+    /// <summary>Retail's <c>BTIMERI_INDEX_2</c>: armed at twelve seconds, re-armed every fifteen.</summary>
+    private static readonly TimeSpan BlackHoleFirst = TimeSpan.FromSeconds(12);
+    private static readonly TimeSpan BlackHoleRepeat = TimeSpan.FromSeconds(15);
+
+    /// <summary>Retail's <c>is_hp_lower_than percent=14</c> on the rage rung.</summary>
+    private const int RagePercent = 14;
 
     private readonly HpPhases hpPhases = new HpPhases(90, 70, 50, 30, 25);
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
@@ -84,7 +106,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
             }
         }
         hpPhases.TryEnterNextPhase(this);
-        if (!isFinalBuff && GetOwner().GetLifeStats().GetHpPercentage() <= 25)
+        if (!isFinalBuff && GetOwner().GetLifeStats().GetHpPercentage() <= RagePercent)
         {
             isFinalBuff = true;
             AIActions.UseSkill(this, 20942);
@@ -98,7 +120,7 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI, HpPhases.PhaseHandler
             if (!IsDead())
                 GravityDistortionEvent();
             return ValueTask.CompletedTask;
-        }, System.TimeSpan.FromMilliseconds(5000), System.TimeSpan.FromMilliseconds(30000));
+        }, BlackHoleFirst, BlackHoleRepeat);
     }
 
     private void CancelskillTask()

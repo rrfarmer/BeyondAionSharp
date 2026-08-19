@@ -24833,3 +24833,47 @@ same shape: an assertion that holds for a reason other than the one it names.
   drops combat. Not translated — this port has no leave-combat hook on that class, and the roll would
   need one.
 - The two condition variables, `GUARDIAN_1` and `GUARDIAN_TIMER`, as before.
+
+## Terath's black hole ran at half retail's rate
+
+Retail pattern `IDTiamat_Sardha` (219354), with `IDTiamat_Sardha_BlackHoleFX` (283096), `_BlackHoleDMG`
+(283097) and `_BlackHoleOnDie` (283098).
+
+An earlier pass this session fixed Terath's ids, posts and lifetimes and closed by recording the
+fight's cadence as outstanding — four battle timers against this class's HP phases and fixed tasks.
+The black hole is the part of that which is **independent of the jump**, so it is done here and the
+jump is left where it was.
+
+```
+BTIMERI_INDEX_2   armed at 12000 on entering combat
+                  each firing: cast, spawn BlackHoleFX (live 10), arm timer 28 at 2000, re-arm at 15000
+BTIMERI_INDEX_28  cast, broadcast 31 at 50m -- the hole closing
+BTIMERI_INDEX_3   rage rung, is_hp_lower_than percent=14
+```
+
+**This class opened at five seconds and repeated every thirty.** Retail is twelve and fifteen, so a
+raid saw the hazard **half as often** as it should. Both numbers corrected.
+
+**The rage was at twenty-five per cent and retail's rung reads fourteen.** Eleven points of health is a
+long stretch of this fight to spend enraged.
+
+**The tick train inside the hole was already faithful, and is left alone.** Retail's black hole is
+three npcs: an FX that spawns a damage npc five times at two-second intervals across its ten-second
+life, and a closing burst when the hole shuts. `DistortedSpaceAI` collapses all three into 283097,
+casting every two seconds for ten seconds and then casting its closing skill — same five ticks, same
+ten seconds, same close. Confirmed rather than changed.
+
+**Pins** — three more in `BrigadeGeneralTerathAiTests`, five mutations, all caught.
+
+**Two existing pins had the old cadence baked in.** `TerathGravityAiTests` advanced six seconds to
+catch a hole placed at five; with the opening moved to twelve they failed, correctly. They now wait
+thirteen. Worth stating plainly: **those pins were pinning the defect** — they were written against
+what the class did, not against what retail says, and nothing flagged that until the number moved.
+
+**Still not translated: the jump.** Retail arms it at 35s and re-arms every 55s; this class fires it
+off HP phases (90/70/50/30/25). The two structures cannot be half-merged — the jump teleports Terath
+and runs thirty seconds, so moving it onto a timer means re-pinning everything hanging off the phase
+ladder. It wants its own commit, and it is the last large piece of this fight.
+
+Also still missing, unchanged from the earlier entry: his `on_die` (four condition variables, a door, a
+fifteen-second gossip npc) and `on_leave_attack_state` (dispel and heal).

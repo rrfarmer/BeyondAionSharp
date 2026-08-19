@@ -153,4 +153,75 @@ public sealed class BrigadeGeneralTerathAiTests
 		Assert.Equal(0, Count(harness, GravityUp));
 		Assert.Equal(0, Count(harness, GravityDown));
 	}
+
+	/// <summary>The black hole's own npc — the one that carries its five damage ticks.</summary>
+	private const int BlackHoleTicker = 283097;
+
+	/// <summary>
+	/// <b>The black hole opens twelve seconds into the fight, not five.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail arms <c>BTIMERI_INDEX_2</c> at twelve seconds when Terath enters combat. This class opened
+	/// at five.
+	/// </remarks>
+	[Fact]
+	public void TheBlackHoleOpensAtTwelveSeconds()
+	{
+		using BossAiHarness harness = NewHarness();
+		Engaged(harness);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(11));
+		Assert.Equal(0, Count(harness, BlackHoleTicker));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.Equal(1, Count(harness, BlackHoleTicker));
+	}
+
+	/// <summary>
+	/// <b>And again every fifteen seconds, not every thirty.</b>
+	/// </summary>
+	/// <remarks>
+	/// This is the half of the correction that changes how the fight feels: at thirty seconds a raid saw
+	/// the hazard half as often as retail's. Counted by arrivals rather than by what is standing, because
+	/// each black hole closes itself after ten seconds.
+	/// </remarks>
+	[Fact]
+	public void TheBlackHoleReturnsEveryFifteenSeconds()
+	{
+		using BossAiHarness harness = NewHarness();
+		Engaged(harness);
+
+		// Twelve seconds to the first, then one every fifteen: four inside the first minute.
+		BossAiHarness.Watched seen = harness.WatchNew(60, null, BlackHoleTicker);
+
+		Assert.Equal(4, seen.Total);
+	}
+
+	/// <summary>
+	/// <b>Terath enrages at fourteen per cent, not twenty-five.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's rung reads <c>is_hp_lower_than percent=14</c>. Eleven points of health is a long stretch
+	/// of this fight to spend enraged.
+	/// <para>
+	/// Asserted through the buff's own abnormal effect: the enrage is a self-cast, so there is nothing
+	/// spawned to count.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheRageWaitsForFourteenPerCent()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc terath = Engaged(harness);
+
+		BossAiHarness.SetHpPercent(terath, 20);
+		terath.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, terath);
+		Assert.False(terath.GetEffectController().HasAbnormalEffect(20942),
+			"Terath enraged at twenty per cent, where retail waits for fourteen");
+
+		BossAiHarness.SetHpPercent(terath, 13);
+		terath.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, terath);
+		Assert.True(terath.GetEffectController().HasAbnormalEffect(20942),
+			"Terath did not enrage at thirteen per cent");
+	}
 }

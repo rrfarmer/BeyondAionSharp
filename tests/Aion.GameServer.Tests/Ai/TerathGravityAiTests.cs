@@ -38,9 +38,10 @@ public sealed class TerathGravityAiTests
 		Player player = harness.SpawnPlayer(1032f, 303f, 409.08f);
 		harness.Engage(boss, player);
 
-		// His distortion clock starts on the first blow and first fires five seconds later.
+		// His distortion clock starts on the first blow and first fires at retail's twelve seconds --
+		// it was five until the cadence was corrected, and these pins had the old number baked in.
 		boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
-		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		harness.Clock.Advance(TimeSpan.FromSeconds(13));
 		return (harness, boss);
 	}
 
@@ -76,8 +77,8 @@ public sealed class TerathGravityAiTests
 		var first = harness.LiveNpcs().Where(n => n.GetNpcId() == BlackHole).ToHashSet();
 		Assert.NotEmpty(first);
 
-		// The hole is placed on the five-second tick and the setup already advanced to six, so it is one
-		// second old here: eight more makes it nine, inside retail's ten and past Java's eight.
+		// The hole is placed on the twelve-second tick and the setup already advanced to thirteen, so it
+		// is one second old here: eight more makes it nine, inside retail's ten and past Java's eight.
 		harness.Clock.Advance(TimeSpan.FromSeconds(8));
 		Assert.All(first, hole => Assert.Contains(hole, harness.LiveNpcs()));
 
@@ -86,8 +87,8 @@ public sealed class TerathGravityAiTests
 	}
 
 	/// <summary>
-	/// <b>And they do not pile up across casts.</b> The distortion repeats every thirty seconds, so three
-	/// minutes of fighting used to leave six black holes standing on top of each other.
+	/// <b>And they do not pile up across casts.</b> The distortion repeats every fifteen seconds, so three
+	/// minutes of fighting would otherwise leave a dozen black holes standing on top of each other.
 	/// </summary>
 	[Fact]
 	public void TheEffectsDoNotAccumulate()
