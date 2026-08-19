@@ -705,15 +705,15 @@ public sealed class BossAiHarness : IDisposable
 			// Scoped to this test's execution context, not the process. A plain static was tried first
 			// and had to be reverted -- one harness could leave the source pointing at its own scheduler
 			// after another had taken over, and a gargoyle pin failed one full-suite run in five.
-			// STILL OFF, and the reason has moved on. AsyncLocal fixed the process-global problem this
-			// hook had: with it, TahabataGargoyleAiTests is clean where it used to fail one full run in
-			// five. What turning it on now exposes is different and genuine -- behaviours that were
-			// frozen start running, so pins that count events over a window become sensitive.
-			// KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle is the current example, failing one
-			// run in six. Those pins want reviewing one at a time; the plumbing no longer does.
-			//
-			// long epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-			// Aion.GameServer.Utils.SystemClock.UseSource(() => epoch + clock.NowMillis);
+			// ON. It was off for two reasons and both are gone. The first was plumbing -- a plain static
+			// let one harness leave the source pointing at its own scheduler after another had taken
+			// over, and AsyncLocal fixed that. The second was that turning it on unfreezes behaviour,
+			// which makes pins that count events over a window sensitive; the one that actually failed,
+			// KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle at one run in six, turned out to be
+			// counting webs that landed on somebody rather than the throw clock's own fire count, and
+			// now counts the latter.
+			long epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			Aion.GameServer.Utils.SystemClock.UseSource(() => epoch + clock.NowMillis);
 			DataManager.RegisterInstance(dataManager);
 
 			// Then bind every [AIName] handler there is, which needs the real templates registered above

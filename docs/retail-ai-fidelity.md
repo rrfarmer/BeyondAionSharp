@@ -26955,3 +26955,44 @@ measured to make `TahabataGargoyleAiTests` fail about one run in five before tha
 it needs its own pass with the suite run enough times to see a one-in-six event — twenty runs, not
 three. That would in turn unblock cast-cadence pinning, which is the largest single test-side gap in
 this work.
+
+## The clock hook is on, and cast cadences are pinnable at last
+
+`SystemClock` has been wired into the harness and switched off since it was written. The combat model
+reads wall-clock time; the harness runs a virtual one; so `CanUseNextSkill` never came back true and an
+npc's own rotation could not run inside a test. Everything that class does — every timer-driven cast in
+this project — has been pinned as a **table** because of it, with the phrase "casts leave nothing the
+harness can observe under the virtual clock" copied into class after class.
+
+**It is on.** Both reasons it was off are gone:
+
+- **The plumbing.** A plain static let one harness leave the source pointing at its own scheduler after
+  another had taken over. `AsyncLocal` fixed that, and it was already done.
+- **The pins.** Turning it on unfreezes behaviour, so pins that sample a window become sensitive. Two
+  were, and both were reading the wrong thing:
+  - `KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle`, one run in six — fixed last commit; it
+    counted webs that landed on somebody rather than the throw clock's own fire count.
+  - `TahabataGargoyleAiTests.ItBlowsUpTenSecondsAfterBeingEngaged`, about one run in four. It drained
+    the skill queue **twice**, at the start of a window and at the end. With the clock live that is a
+    race: a queued skill the npc gets round to casting is gone by the second sample, so the assertion
+    saw an empty list whenever the rotation won. It collects every second now, which is the same
+    observation without the race — and takes the skill out before the npc can act on it, which is what
+    the frozen clock used to do by accident.
+
+**Evidence: twenty-two consecutive clean full-suite runs with the hook on** — fourteen after the
+gargoyle fix, eight more after the change below. A one-in-six flake survives fourteen runs about eight
+times in a hundred.
+
+**What it unblocks, demonstrated rather than asserted.** A probe confirmed `GetLastSkillTime` now moves
+under the virtual clock — from 0 to a real timestamp after ten seconds. So `FireStormAiTests`, which
+said in its own remarks that its cadence "is pinned as a table, not through a fight, and that is
+weaker", now pins **both opening delays behaviourally**: the statue's first cast lands between 2.5 and
+3.5 seconds, the tornado's between 1.5 and 2.5. Three mutations, all caught, two of them by the new
+behavioural pins as well as the table.
+
+**Still missing.** The repeats are still table pins here, and every other class in this family still
+carries the old limitation in its remarks — those sentences are now wrong wherever they appear, and
+each one is a cadence that could be held by something the npc actually did. `audit_timer_drift.py`
+listed twenty classes as "casts only — needs the skill index"; the skill index still blocks *which*
+skill, but **when** is now observable, which is most of what those rows were about. That is the next
+sweep, and it is a large one.

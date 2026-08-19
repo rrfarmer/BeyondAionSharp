@@ -54,6 +54,31 @@ public sealed class TahabataGargoyleAiTests
 		}
 	}
 
+	/// <summary>
+	/// Advances the clock a second at a time, taking everything queued as it appears.
+	/// </summary>
+	/// <remarks>
+	/// <b>Draining twice — once at the start of a window and once at the end — is a race once the
+	/// combat clock is live.</b> A queued skill the npc gets round to casting is gone from the queue by
+	/// the next sample, so a pin that looks only at the end sees an empty list whenever the rotation won
+	/// it: this was one failure in about four with the clock hook on. Collecting every second is the
+	/// same observation without the race, and it also takes the skill out before the npc can act on it,
+	/// which is what the frozen clock used to do by accident.
+	/// </remarks>
+	private static List<BossAiHarness.QueuedCast> Collect(
+		BossAiHarness harness, Npc npc, Player player, int seconds)
+	{
+		var seen = new List<BossAiHarness.QueuedCast>();
+		for (int i = 0; i < seconds; i++)
+		{
+			BossAiHarness.KeepAlive(player);
+			harness.Clock.Advance(TimeSpan.FromSeconds(1));
+			seen.AddRange(BossAiHarness.DrainQueuedSkills(npc));
+		}
+
+		return seen;
+	}
+
 	/// <summary>Ten seconds after something engages it, it blows itself up.</summary>
 	[Fact]
 	public void ItBlowsUpTenSecondsAfterBeingEngaged()
@@ -61,12 +86,9 @@ public sealed class TahabataGargoyleAiTests
 		var (harness, gargoyle, player) = Engaged();
 		using BossAiHarness _h = harness;
 
-		Advance(harness, gargoyle, player, 8);
-		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(gargoyle), c => c.SkillId == SelfBlow);
+		Assert.DoesNotContain(Collect(harness, gargoyle, player, 8), c => c.SkillId == SelfBlow);
 
-		Advance(harness, gargoyle, player, 4);
-
-		Assert.Contains(BossAiHarness.DrainQueuedSkills(gargoyle), c => c.SkillId == SelfBlow);
+		Assert.Contains(Collect(harness, gargoyle, player, 4), c => c.SkillId == SelfBlow);
 	}
 
 	/// <summary>
