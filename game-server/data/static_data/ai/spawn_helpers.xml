@@ -397,8 +397,9 @@
 			</percentage>
 		</summons>
 	</ai>
-	<!-- divine hisen (Cromede_Hierarch). INERT: His ai is "aggressive", so NOTHING reads this block and no class replaces it. Retail
-	     Cromede_Hierarch has six spawn actions. REAL WORK OWED.
+	<!-- divine hisen (Cromede_Hierarch). INERT: SUPERSEDED: his ai is now "divine_hisen" (DivineHisenAI). The two stones and their coordinates
+	     below were already correct and had simply never run, because nothing reads this file for an
+	     npc whose ai is "aggressive".
 	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="216968">
 		<summons>

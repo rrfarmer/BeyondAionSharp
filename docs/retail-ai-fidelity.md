@@ -30915,3 +30915,39 @@ the pin depended on.
   `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids;
   Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Divine hisen's two stones, and data that was right all along
+
+Second of the three silent bosses. He ran plain `aggressive`, so the two stones his fight is built around
+never appeared.
+
+**The data describing them was already correct.** The `spawn_helpers.xml` block names 282103 and 282104
+at retail's own absolute coordinates, to two decimal places. Somebody read `Cromede_Hierarch` and wrote
+it down properly.
+
+> Nothing read the file, because his `ai` was `aggressive`. And no test could have caught it, because
+> **a summoner that summons nothing looks exactly like a boss with no summons.** The only way to see it
+> was to compare what the file says against who reads the file — which is what the inert-block sweep
+> did, two entries ago.
+
+`DivineHisenAI` now places a red stone and a blue stone at their marks on entering combat, and clears
+both when he dies and when he resets. 3/3 mutations caught, including the one that matters most here:
+placing them near him instead of at their marks, which would satisfy any pin that only counted them. The
+stones are room furniture the fight is built around; **where they stand is the mechanic.**
+
+Not translated: every action on both `on_message` rungs and all seven battle-timer rungs is a
+`use_skill` against an unresolvable index, so the two heartbeats are left unarmed rather than ticking on
+empty branches.
+
+**Still missing.**
+
+- **Jurdin the cursed** (`IDForest_Wave_Trico_Boss`, **25 spawn actions**) is the last of the three and
+  much the largest.
+- **Hisen's message pair, 6401 and 6402.** The room tells him a stone has been dealt with and he answers
+  with a cast; both halves are index-only, so nothing sends those numbers and nothing would answer them.
+  The stones exist now, but nothing happens when they are used.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short;
+  `despawn_at_attack_state` on a spawn made during `on_enter_attack_state`; the `<summons>` schema's four
+  owed attributes; the 258203/258207 family decision; the 59 stranded guards; 25 guards with no
+  `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids; Dynatoum's mine web;
+  Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
