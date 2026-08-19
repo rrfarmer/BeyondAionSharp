@@ -32,7 +32,10 @@ public sealed class ConquestOfferingAiTests
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Gelkmaros).WithWorldSize(2048)
 			.WithAi(typeof(ConquestOfferingSpawnerAI), typeof(ConquestOfferingSpotAI),
-				typeof(ConquestOfferingAggressiveAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+				typeof(ConquestOfferingAggressiveAI), typeof(ConquestOfferingTimeResetAI),
+				// Fourth pin this session to fail first for a missing WithAi entry: the harness validates
+				// every AI name it is asked to place, and the buff npcs carry one of their own.
+				typeof(ConquestOfferingBuffNpcAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
 	private static int Count(BossAiHarness harness, int npcId) =>
@@ -117,5 +120,90 @@ public sealed class ConquestOfferingAiTests
 		// And nothing from the party spot's table, which is a different eight.
 		Assert.Equal(0, Count(harness, 236391));
 		Assert.True(spot.IsSpawned());
+	}
+
+	/// <summary>The npc that carries the message home, and the four buff npcs beside it.</summary>
+	private const int TimeReset = 856502;
+	private static readonly int[] BuffNpcs = [856175, 856176, 856177, 856178];
+
+	/// <summary>
+	/// <b>A monster always leaves the time-reset npc where it fell</b>, whatever else it leaves.
+	/// </summary>
+	/// <remarks>
+	/// This class used to leave <b>nothing at all forty-five per cent of the time</b>, and a secret
+	/// portal rather than the reset npc on most of the rest — so the message that re-arms the spawner
+	/// had no sender and the rotation never closed.
+	/// </remarks>
+	[Fact]
+	public void ADeadMonsterAlwaysLeavesTheResetNpc()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc monster = harness.Spawn(SoloMonsters[0], 300f, 300f, 200f);
+
+		monster.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+
+		Assert.Equal(1, Count(harness, TimeReset));
+	}
+
+	/// <summary>
+	/// <b>And a buff npc beside it about a third of the time</b>, never more than one per death.
+	/// </summary>
+	/// <remarks>
+	/// Retail's ladder is four branches at nine per cent, first match wins, so the chance of any buff is
+	/// 1 − 0.91⁴ ≈ 31%. What is deterministic is the cap: one buff npc from a death, or none, never two.
+	/// <para>
+	/// <b>This pin does not separate the ladder from four independent nine-per-cent rolls.</b> Deleting the
+	/// <c>break</c> that makes the rungs exclusive survives it: the means are 31.4% against 36.0% per death
+	/// and the counts overlap heavily, so no batch assertion this suite can afford tells them apart. The
+	/// cap below catches gross breakage only, and it is checked per death rather than over the batch —
+	/// summing over twelve deaths was inert against everything.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AtMostOneBuffNpcArrivesWithIt()
+	{
+		using BossAiHarness harness = NewHarness();
+
+		for (int i = 0; i < 12; i++)
+		{
+			int before = BuffNpcs.Sum(b => Count(harness, b));
+
+			Npc monster = harness.Spawn(SoloMonsters[0], 300f + i, 300f, 200f);
+			monster.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+
+			int added = BuffNpcs.Sum(b => Count(harness, b)) - before;
+			Assert.InRange(added, 0, 1);
+		}
+
+		// And the reset npc from every one of them, which is the part that is not a roll.
+		Assert.Equal(12, Count(harness, TimeReset));
+	}
+
+	/// <summary>
+	/// <b>The reset npc re-arms a nearby spawner's clock.</b> This is the loop closing.
+	/// </summary>
+	/// <remarks>
+	/// Spawner places a spot, spot places a monster, monster leaves the reset npc, reset npc broadcasts
+	/// <c>13929</c> at fifty metres — and the spawner starts its eight minutes again. Nothing in this
+	/// port sent that message before, so a spawner's clock ran on regardless of what the raid did.
+	/// <para>
+	/// Asserted by driving the clock almost to its end, resetting it, and showing that the turn which
+	/// would have fired does not.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheResetNpcStartsTheSpawnersEightMinutesAgain()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc spawner = harness.Spawn(Spawner, 300f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(470));
+
+		// The reset npc lands ten metres off, inside its fifty-metre earshot.
+		harness.Spawn(TimeReset, 310f, 300f, 200f);
+
+		// The turn that was eleven seconds away now never comes.
+		BossAiHarness.Watched seen = harness.WatchNew(30, null, SoloSpot, PartySpot);
+		Assert.Equal(0, seen.Total);
 	}
 }

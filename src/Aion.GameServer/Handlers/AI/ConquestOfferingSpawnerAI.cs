@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.World;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
@@ -38,8 +39,11 @@ namespace Aion.GameServer.Handlers.AI;
 /// </para>
 /// </remarks>
 [AIName("conquest_offering_spawner")]
-public class ConquestOfferingSpawnerAI : NpcAI
+public class ConquestOfferingSpawnerAI : NpcAI, INpcMessageListener
 {
+    /// <summary>Retail's message from the time-reset npc: start the eight minutes again.</summary>
+    public const int TimeReset = 13929;
+
     /// <summary>Retail's idle timer on every spawner.</summary>
     private const long CycleMillis = 480_000L;
 
@@ -135,6 +139,86 @@ public class ConquestOfferingSpawnerAI : NpcAI
     protected override void HandleDied()
     {
         CancelCycle();
+        base.HandleDied();
+    }
+
+    /// <summary>
+    /// <c>13929</c> — a monster died somewhere near, and its reset npc says so.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the loop closing.</b> The spawner places a spot, the spot places a monster, the
+    /// monster leaves a reset npc where it fell, and the reset npc broadcasts this at fifty metres —
+    /// which starts the spawner's eight minutes again rather than letting it run out on its own.
+    /// Recorded as having no sender in this port until the monster's death ladder was read.
+    /// </remarks>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject param)
+    {
+        if (messageType != TimeReset)
+            return;
+
+        CancelCycle();
+        ArmCycle();
+    }
+}
+
+/// <summary>
+/// The conquest time-reset npc (856502). Retail pattern <c>F4_Rotation_Fixed_Portal</c>.
+/// </summary>
+/// <remarks>
+/// Retail-sourced; see docs/retail-ai-fidelity.md. Left where a conquest monster falls, it broadcasts
+/// <c>13929</c> at fifty metres on waking and every six seconds after — which re-arms the spawner whose
+/// spot placed that monster. <b>Nothing in this port sent that message before</b>, so a spawner's clock
+/// simply ran on regardless of what the raid did.
+/// </remarks>
+[AIName("conquest_offering_time_reset")]
+public class ConquestOfferingTimeResetAI : NpcAI
+{
+    /// <summary>Retail's <c>range_as_meter</c> and its idle delay.</summary>
+    private const float Earshot = 50f;
+    private const long RepeatMillis = 6_000L;
+
+    private ScheduledTask beatTask;
+
+    public ConquestOfferingTimeResetAI(Npc owner)
+        : base(owner)
+    {
+    }
+
+    protected override void HandleSpawned()
+    {
+        base.HandleSpawned();
+        Announce();
+    }
+
+    private void Announce()
+    {
+        if (!GetOwner().IsSpawned())
+            return;
+
+        NpcMessageBus.Broadcast(GetOwner(), ConquestOfferingSpawnerAI.TimeReset, GetOwner(), Earshot, null);
+        beatTask = ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            Announce();
+            return ValueTask.CompletedTask;
+        }, RepeatMillis);
+    }
+
+    private void Stop()
+    {
+        if (beatTask != null && !beatTask.IsDone())
+            beatTask.Cancel(true);
+        beatTask = null;
+    }
+
+    protected override void HandleDespawned()
+    {
+        Stop();
+        base.HandleDespawned();
+    }
+
+    protected override void HandleDied()
+    {
+        Stop();
         base.HandleDied();
     }
 }

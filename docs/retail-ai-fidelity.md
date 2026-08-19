@@ -24184,3 +24184,57 @@ expression-bodied member** and had reported that spawn as "did not compile", whi
 
 Build clean. Both spawns die under mutation. **Three consecutive full-suite runs**: 2,225 passing (four
 new), 1 skipped.
+
+## Conquest offering: the return path that closes the rotation
+
+Retail patterns `F4_Rotation_Normal_Monster` (112 npcs) and `F4_Rotation_Fixed_Portal` (856502).
+
+The previous entry recorded the conquest cascade as spawner -> spot -> monster and noted that the
+spawner's eight-minute clock had "no sender in this port" for its reset message. Reading the monster's
+own pattern found the sender: it is the monster's death.
+
+**Retail's death ladder.** `on_killed_by_user` and `on_die` carry identical ladders:
+
+```
+p1000  9%      time-reset npc + buff npc 01
+p900   9%      time-reset npc + buff npc 02
+p800   9%      time-reset npc + buff npc 03
+p700   9%      time-reset npc + buff npc 04
+p600   always  time-reset npc alone
+```
+
+First match wins, so the four buff npcs are 9, 8.19, 7.45 and 6.78 per cent — a descending ladder, not
+a flat share — and any buff at all is 1 − 0.91⁴ ≈ 31.4%. The **time-reset npc (856502) is placed on
+every rung**, including the one that carries no buff.
+
+That npc runs `F4_Rotation_Fixed_Portal`: on waking it broadcasts **13929 at fifty metres**, and again
+every six seconds. `ConquestOfferingSpawnerAI` now listens for it and starts its eight minutes again.
+So the loop runs spawner -> spot -> monster -> reset npc -> spawner, and it is the raid killing the
+monster that turns the clock, rather than the clock turning regardless.
+
+**What this port had.** The class rolled 55% and then 45% for a buff npc: the right four ids, but at
+24.75% rather than 31.4% and uniform rather than laddered. The other 55% of that first roll placed a
+`secret portal` (833018/833021), which is not the reset npc and carries no message at all. And the
+first roll failing meant **forty-five per cent of deaths produced nothing whatsoever**. Nothing in the
+port ever sent 13929, so no spawner's clock was ever reset.
+
+**A second divergence in the same method.** The whole death body sat inside
+`if (spawner != null && !spawner.IsDead())`. Retail's branches carry no condition — a monster whose
+spawner has gone still leaves its reset npc. The Java notification (`OnCustomEvent(1)`) keeps the
+guard; the placement no longer does.
+
+**Rebound.** 856502 from `general` to `conquest_offering_time_reset`.
+
+**Pins** — `ConquestOfferingAiTests`, four new, mutation-verified: deleting the reset placement is
+caught by two, and both muting the broadcast and making the spawner ignore 13929 are caught by the
+loop-closing pin.
+
+**Unpinned, honestly.** The exclusivity of the buff ladder is not pinned. Deleting the `break` that
+makes the rungs mutually exclusive **survived mutation**: per-death means of 31.4% against 36.0%
+overlap far too heavily for any batch assertion this suite can afford. The per-death cap that stands
+catches gross breakage only. Also note this was the fourth pin this session to fail first for a missing
+`WithAi` entry — the buff npcs carry `conquest_offering_buff_npc`, a class that already existed.
+
+**Still missing.** `BF4_Rotation_Skill_NPC` (856297), placed by the monster's `on_battle_timer` on a
+15% roll — that pattern is still unread, so the branch is not translated. Neither is the monster's
+self-cast on waking.
