@@ -24593,3 +24593,44 @@ an npc id and register whatever AI its template names, instead of making every p
   whatever answers that broadcast — has no equivalent.
 - `HM_CalindiFlamelordAI` rolls `Rnd.Chance() < 3` for the crown and the normal class rolls `< 2`.
   Neither number is in the pattern; both predate this work.
+
+## Raksang's flame quadrants were laid out correctly and never lit
+
+Retail patterns `Raksha_Deliverfire` and its numbered twins (282451-282454),
+`IDRaksha_NoshowNPC_11` through `_14` (282455-282458), `IDRaksha_NoshowNPC_15` (282459).
+
+`audit_invented_spawns.py` flagged `ScaldingExecutorAI` placing four "torment blaze" ids that no
+pattern places. Reading the chain behind them found the mechanic sitting half-built.
+
+**Retail's chain.** A fire deliverer walks its route; at the last waypoint it casts,
+**broadcasts 12501 at eighty metres** and despawns itself. The quadrant's thirty-two floor markers are
+permanent invisible npcs; each hears 12501 and puts a **torment blaze** on itself for **ten seconds**.
+That is the quadrant catching fire.
+
+**What this port had.** The executor follows its brazier and places all thirty-two markers itself, at
+retail's own coordinates — the right answer, because our spawn tables carry no permanent floor markers,
+so *being placed* is this port's version of hearing the broadcast. **But all four marker npcs were
+bound to `general`.** No blaze, no lifetime, no behaviour. Every delivery left thirty-two invisible
+npcs standing on the floor for the rest of the instance and lit nothing at all.
+
+`RaksangFlameSectorAI` now answers for them, and the executor gives each marker retail's ten seconds
+so a delivery clears up after itself.
+
+**Pins** — `RaksangFlameSectorAiTests`, six, four mutations, all caught.
+
+**Not translated: the damage.** Retail's blaze (`IDRaksha_NoshowNPC_15`) casts `SKILLI_INDEX_0` on
+waking and on seeing a player, and broadcasts **12505 at fifty metres** so neighbouring blazes fire
+too — a quadrant that spreads. Our 282459 is bound `general` with no skill row, so the blaze is
+**scenery**: it appears in the right place for the right ten seconds and does nothing. This is the same
+skill-index gap logged against Tiamat's hard-mode uplift, and it is worth noting that
+`audit_skilless_casters.py` does **not** catch this one — 282459 is on `general`, not on a cast-and-die
+AI, so an npc that should cast and simply is not asked to falls outside that audit.
+
+**An asymmetry left alone.** Quadrant one carries **31** markers in this class where the other three
+carry 32. Retail cannot settle it: its markers are permanent instance spawns our tables do not have, so
+there is no list to compare against. Inventing a thirty-second coordinate would be guessing, so the
+count stands as Java wrote it.
+
+**Unpinned.** The marker's own ten-second lifetime lives in `ScaldingExecutorAI`, which only places
+markers after a follow-and-arrive; the pins place markers directly, so they assert the blaze's lifetime
+and not the marker's.
