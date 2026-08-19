@@ -25529,3 +25529,43 @@ nothing. The audit reports both, and the openings are the ones that keep survivi
 the deep rung that switches `BTIMERI_INDEX_4` to forty seconds below seven per cent health — all carry
 casts only. The placement divergence recorded by the earlier pass also stands: retail spawns its pair at
 the boss's own point within fifteen metres, where this class uses two fixed marks.
+
+## Splitting openings from repeats, and two candidates that were not defects
+
+Four classes in a row had the repeat right and the opening wrong, so `audit_timer_drift.py` now reports
+them separately: it reads each fixed-rate schedule's **first** delay and compares it against the delays
+the pattern arms in `on_enter_attack_state`, apart from the cycle comparison it already did.
+
+Getting the scan right took two attempts. A single regex cannot span a `ScheduleAtFixedRateTask` call —
+the two delays are its last arguments and the lambda between them is full of semicolons and parentheses,
+so the pattern either stops early or runs away. It scans forward from each call site now. The first
+version reported **zero** hits, which looked like good news and was a bug.
+
+It reports **21**. And the first two candidates I took to the pattern were **both false positives**,
+which is the part worth recording:
+
+* **Tahabata** opens two tasks at ten and fifteen seconds where retail arms 3000 and 6000 — but his
+  tasks are started from HP phases, not on engaging, so their openings are measured from a threshold
+  and retail's engage delays say nothing about them.
+* **Heiramune** opens a wave at zero where retail arms 8000 — same reason. His wave starts at the 80%
+  rung.
+
+So an `OPENS AT` line is **a question, not a finding**: *is this task armed when he enters combat?* If
+not, the line means nothing. That caveat is now in the tool's docstring and printed under the count,
+because the number is otherwise inviting.
+
+**No mechanic changed this pass.** The two candidates were checked against the pattern and neither was
+wrong. That is a real result — the previous four openings were defects and these two are not — but it
+is worth being plain that this entry buys a sharper audit and two closed questions rather than a fix.
+
+## What was found while looking
+
+**Heiramune's 80% wave has no counterpart in retail.** His pattern's 80 and 40 rungs say only a gossip
+line and `set_condition_spawn_variable Condition_S3 modify=1`; the spawning is left to the instance's
+condition spawns. This port has no such machinery, so the class spawns **two enraged nightmares
+(233457) every twenty seconds** in their place, and **nothing else places that npc anywhere** — no spawn
+table, no instance handler. It is invented, and it is also the only thing that happens in that phase, so
+it stays. Recorded here rather than changed.
+
+**His 55% rung is already right.** Retail spawns one clone (233162) at his own point within five metres,
+once, flag-guarded, and that is exactly what the class does.

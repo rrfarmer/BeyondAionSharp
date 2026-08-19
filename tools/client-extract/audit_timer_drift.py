@@ -102,6 +102,64 @@ def patterns_with_variable_rungs(patterns_dir: pathlib.Path) -> set[str]:
     return out
 
 
+def opening_delays(patterns_dir: pathlib.Path) -> dict[str, set[int]]:
+    """
+    The delays each pattern arms **on entering combat**, as opposed to the ones its rungs re-arm with.
+
+    Four classes in a row had the repeat right and the opening wrong -- the splinter cores summoned at
+    five seconds against retail's fifty while cycling correctly at seventy. A cycle recurs and gets
+    noticed; an opening happens once and looks like nothing, so it survives review. Reporting the two
+    separately is the only way this shows up.
+
+    **The comparison only holds if the port's task is armed on engaging.** Many classes here start a
+    fixed-rate task from an HP phase instead, and then its opening is measured from that threshold rather
+    than from the start of the fight -- against which retail's on_enter_attack_state delays say nothing.
+    Tahabata and Heiramune are both like that and both are false positives. So an OPENS AT line is a
+    question, not a finding: *is this task armed when he enters combat?* If it is not, the line means
+    nothing.
+    """
+    out: dict[str, set[int]] = {}
+    for path in patterns_dir.rglob("*.xml"):
+        try:
+            text = S.read_text(path)
+        except Exception:
+            continue
+        for m in re.finditer(r"<name>([^<]+)</name>(.*?)(?=<name>|\Z)", text, re.S):
+            enter = re.search(r"<on_enter_attack_state>(.*?)</on_enter_attack_state>", m.group(2), re.S)
+            if not enter:
+                continue
+            found = {int(d) for d in re.findall(r"<delay>(\d+)</delay>", enter.group(1))}
+            if found:
+                out.setdefault(m.group(1).strip().lower(), set()).update(found)
+    return out
+
+
+#: The two TimeSpan arguments that close a fixed-rate schedule.
+RATE_ARGS = re.compile(
+    r"(?:System\.)?TimeSpan\.From(Seconds|Milliseconds|Minutes)\(\s*([\d_]+)\s*\)\s*,\s*"
+    r"(?:System\.)?TimeSpan\.From(Seconds|Milliseconds|Minutes)\(\s*([\d_]+)\s*\)")
+
+UNIT = {"Seconds": 1000, "Milliseconds": 1, "Minutes": 60000}
+
+
+def openings_used(source: str) -> set[int]:
+    """
+    Every opening delay a fixed-rate schedule in this class uses, in milliseconds.
+
+    Scanned forward from each <c>ScheduleAtFixedRateTask(</c> rather than matched in one regex: the two
+    delays are the *last* arguments, and the lambda between them is full of semicolons and parentheses,
+    so a single pattern either stops early or runs away. A class whose delays are named constants
+    contributes nothing here, which is correct -- those have already been read against the pattern.
+    """
+    found: set[int] = set()
+    for call in re.finditer(r"ScheduleAtFixedRateTask\(", source):
+        window = source[call.end(): call.end() + 4000]
+        hit = RATE_ARGS.search(window)
+        if hit:
+            found.add(int(hit.group(2).replace("_", "")) * UNIT[hit.group(1)])
+    return found
+
+
 def pattern_delays(patterns_dir: pathlib.Path) -> dict[str, set[int]]:
     """Every timer delay and live_time each pattern uses, in milliseconds."""
     out: dict[str, set[int]] = {}
@@ -159,6 +217,7 @@ def main() -> int:
     delays_of = pattern_delays(pathlib.Path(args.patterns))
     actionable = pattern_actionable(pathlib.Path(args.patterns))
     variable = patterns_with_variable_rungs(pathlib.Path(args.patterns))
+    openings = opening_delays(pathlib.Path(args.patterns))
 
     # Numbers that appear on scheduling lines and are not delays.
     not_delays: set[int] = set()
@@ -205,9 +264,14 @@ def main() -> int:
         can_act = any(pattern_of.get(n, "") in actionable for n in npcs_of_ai.get(name.group(1).lower(), []))
         fixed_rate = "ScheduleAtFixedRateTask" in source
         varies = any(pattern_of.get(n, "") in variable for n in npcs_of_ai.get(name.group(1).lower(), []))
+        their_openings: set[int] = set()
+        for npc_id in npcs_of_ai.get(name.group(1).lower(), []):
+            their_openings |= openings.get(pattern_of.get(npc_id, ""), set())
+        bad_openings = sorted(o for o in openings_used(source) if their_openings and o not in their_openings)
+
         unmatched = sorted(d for d in mine if d not in theirs)
         rows.append((len(unmatched), len(mine), path.stem, unmatched, sorted(theirs), can_act,
-                     fixed_rate and varies))
+                     fixed_rate and varies, bad_openings, sorted(their_openings)))
 
     rows.sort(key=lambda r: (-r[0], r[2]))
     print(f"{len(rows)} classes schedule something and have a retail pattern to compare against.\n")
@@ -217,13 +281,20 @@ def main() -> int:
     print(f"{sum(1 for r in rows if r[6])} use a fixed-rate task where retail re-arms the same timer "
           f"with different delays, which a fixed rate cannot express.")
     print()
-    for unmatched_n, mine_n, stem, unmatched, theirs, can_act, fixed_wrong in rows[: args.limit]:
+    print(f"{sum(1 for r in rows if r[7])} open a fixed-rate task at a delay their pattern does not "
+          f"arm on entering combat.")
+    print("  (only meaningful where the task is armed on engaging -- a task started from an HP phase")
+    print("   measures its opening from that threshold, and those lines are false positives.)")
+    print()
+    for unmatched_n, mine_n, stem, unmatched, theirs, can_act, fixed_wrong, bad_open, their_open in rows[: args.limit]:
         mark = "" if can_act else "   [casts only -- needs the skill index]"
         if fixed_wrong:
             mark += "   [FIXED RATE, retail rung varies]"
         print(f"{stem}: {unmatched_n} of {mine_n} port delays are not in retail's pattern{mark}")
         print(f"    port only: {unmatched}")
         print(f"    retail has: {theirs[:14]}{' ...' if len(theirs) > 14 else ''}")
+        if bad_open:
+            print(f"    OPENS AT {bad_open}; retail arms {their_open} on entering combat")
 
     return 0
 
