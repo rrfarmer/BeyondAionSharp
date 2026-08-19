@@ -29711,3 +29711,53 @@ regenerating it rather than assumed.
 - **11 patterns with reinforcement branches own no npc** (`BGuard_Chief*`, `DGuard_AhA_L45` and kin).
 - The remaining 45 live disagreements, the eleven unread top-band ids, Dynatoum's mine web, Beritra's two
   spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## Forty drakan guards that had their orders and never read them
+
+The previous entry left 99 guards whose generated rows never ran, with the blocker written down as a
+question rather than a verdict: *is `GuardReinforcementAI` a safe superset of `aggressive`?*
+
+It is, and that is checkable rather than arguable. `PatternAi` derives from `AggressiveNpcAI`, and all
+twelve of its overrides evaluate the pattern and then delegate to base — read one by one, not assumed
+from the four that were obvious. A guard whose id is absent from the table gets an empty pattern and
+behaves exactly as before. So for a guard on plain `aggressive`, re-pointing it is a **translation**.
+
+### Not a missing family — a partial one
+
+The forty are all `DrGuard_*`, which invites the conclusion that the drakan side was never wired up. The
+family census says otherwise:
+
+| family | rows on a reader AI | rows on `aggressive` |
+|---|---|---|
+| DGuard | 694 | 0 |
+| LGuard | 677 | 0 |
+| **DrGuard** | **305** | **80** |
+
+So somebody did wire the drakan guards and **left forty behind**. Among them is brigadier indratu, whose
+fire elemental the resolver hole had also eaten — he was silent twice over, and neither defect would have
+revealed the other.
+
+99 stranded guards become 59.
+
+### The pin is narrower than the temptation
+
+The obvious invariant is "every guard in the table runs a reader AI". **That is false, and falsely
+reassuring** — 59 guards legitimately run siege and fortress AIs this table cannot drive, so the pin
+would have to carve out an allow-list and would then pass by construction.
+
+What is pinned instead is that no guard with rows sits on `aggressive`. That is the template default: a
+guard left on it has rows by accident of generation rather than by anyone's decision. Both pins fail when
+one guard is reverted.
+
+**Still missing.**
+
+- **The 59 remaining stranded guards**, and this is now a genuine design question rather than a
+  translation: `fortress_protector` (38), `general` (8), `siege_shieldnpc` (3), `awakened_chamber_lord`
+  (3), `gate_squad` (3), `fortress_instance_duke` (3), `artifact_protector` (1). None is a `PatternAi`
+  subclass, so re-pointing them trades one mechanic for another. Either their reinforcement branches move
+  into those classes, or those classes gain a pattern hook. **Do not mass-edit `ai=` for these.**
+- **25 guards in the table with no `npc_templates.xml` row.**
+- **11 patterns with reinforcement branches that own no npc** (`BGuard_Chief*`, `DGuard_AhA_L45` and kin).
+- The 9 inert `spawn_helpers.xml` blocks, `live_time` having no `<summonGroup>` attribute, the 45 live
+  disagreements, the eleven unread top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's
+  `npc_skills`, the seven absent npc rows.
