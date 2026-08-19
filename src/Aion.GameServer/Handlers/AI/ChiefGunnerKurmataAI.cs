@@ -56,8 +56,17 @@ public class ChiefGunnerKurmataAI : PatternAi
 	private const int Stuck = 100000;
 	private const int Welded = 1000000;
 
-	/// <summary>Retail's <c>total_set_to_spawn</c> on the two-player marks.</summary>
+	/// <summary>
+	/// Retail's <c>total_set_to_spawn</c> on his two multi-target marks — and <b>they differ</b>.
+	/// </summary>
+	/// <remarks>
+	/// The timer-6 loop marks two; the below-sixty branch marks <b>one</b>. This class gave both the
+	/// pair, and its own branch comment said "he marks two at a time" about the branch that does not.
+	/// Found by <c>audit_multi_target_caps.py</c>, which exists because <c>spawn_on_multi_target</c>
+	/// reads as "everybody" and is capped in almost every fight that uses it.
+	/// </remarks>
 	private const int Pair = 2;
+	private const int Single = 1;
 
 	/// <summary>Retail's <c>range_as_meter</c> on the call to the cannon.</summary>
 	private const float Earshot = 50f;
@@ -89,10 +98,10 @@ public class ChiefGunnerKurmataAI : PatternAi
 			Branch(12, "", [When.Timer(5)],
 				Do.ArmTimer(6, 8000)),
 
-			Branch(11, "below sixty he marks two at a time", [When.Timer(0), When.HpBelow(60),
-					When.FirstTime(Opened)],
+			Branch(11, "below sixty he opens a second loop, marking one", [When.Timer(0),
+					When.HpBelow(60), When.FirstTime(Opened)],
 				Do.ArmTimer(5, 10000),
-				Do.SpawnOnEachTarget(Mark, Marks, validDistance: Reach, maxTargets: Pair,
+				Do.SpawnOnEachTarget(Mark, Marks, validDistance: Reach, maxTargets: Single,
 					order: MultiTargetOrder.Random, range: UnderFoot, liveSeconds: Life,
 					attackHate: Welded)),
 

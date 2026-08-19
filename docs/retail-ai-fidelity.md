@@ -23344,3 +23344,55 @@ its above-fifty cadence when the health dropped, so a short window can catch eit
 
 Build clean. Deleting both rungs fails the middle-band pin. **Three consecutive full-suite runs**: 2,181
 passing (two new), 1 skipped.
+
+## Checking every ported multi-target cap, now that the caps print
+
+Last commit's fix to the summariser made `total_set_to_spawn` and `order_in_attacker_list` visible for
+the first time. The obvious next move is to check every op that had been ported while they were invisible.
+
+`tools/client-extract/audit_multi_target_caps.py` matches each `SpawnOnEachTarget` call site to its retail
+op **by npc id**, resolving the class's own constants, and compares cap and order.
+
+### Nineteen ported ops, one wrong
+
+**Chief Gunner Kurmata's two multi-target branches carry different caps and the class gave both the
+same one.** The timer-6 relay marks a pair; the below-sixty rung that opens it marks **one**.
+
+**The pin asserted the bug, and so did the pin's own summary** — "Retail's `total_set_to_spawn` is two,
+not the whole raid". It is two on the branch the pin's name refers to and one on the branch it actually
+measured. That is the third time this session a green pin has turned out to be describing the wrong
+thing, and the second where the prose was as wrong as the assertion.
+
+A second pin moved with it: the relay tally was six and is now five, because the opener contributes one.
+
+### What the other eighteen said
+
+**No other mismatch.** Flarestorm's 3/4/5/6 ladder matches retail's four rungs exactly; Tiamat's
+incarnations carry 2 on the power attack and 3 on the area attack, and both are present; Chunapa's cap of
+two is right.
+
+The tool reports **ambiguous** rather than guessing when one npc appears in several ops with different
+caps — which is how it should behave, and it is what turned up the lead below.
+
+### A lead, not a fix
+
+Npc **282556** is spawned by two patterns: `LDF4a_SandWarm_General` at cap 2, which is Chunapa and is
+ported, and **`LDF4a_SandWarm_Monarch` at cap 3**, which is **Empress Muada (218782)** — on `aggressive`,
+with no class, no C# reference, and no spawn in our data. A whole fight, found by an audit about caps.
+
+### Still to do
+
+- **Empress Muada**, `LDF4a_SandWarm_Monarch`, unported and unspawned.
+- **The single-target placements deserve the same treatment.** This audit covers `spawn_on_multi_target`
+  only; `spawn_on_target` and `spawn_on_target_by_attacker_indicator` carry `valid_distance` and
+  `spawn_range` that nothing cross-checks.
+- **Three inert pins in one session** — two found by mutation, one by an audit. Nothing systematically
+  mutates the suite, so the count is a lower bound, not a total.
+- **The four remaining classes**: `AbyssUndeadAI`, `KaligaTheUnjustAI`, `CalindiFlamelordAI`,
+  `YamennesSpawnGateAI`.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Putting the cap back to two fails both Kurmata pins. **Three consecutive full-suite runs**:
+2,181 passing, 1 skipped.

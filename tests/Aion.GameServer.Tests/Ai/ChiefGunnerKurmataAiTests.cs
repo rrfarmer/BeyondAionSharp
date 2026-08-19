@@ -125,23 +125,37 @@ public sealed class ChiefGunnerKurmataAiTests
 	}
 
 	/// <summary>
-	/// <b>Below sixty he marks two at a time.</b> Retail's <c>total_set_to_spawn</c> is two, not the
-	/// whole raid, which is what the element's name invites you to assume.
+	/// <b>Below sixty he marks one, and the relay that follows marks two.</b>
 	/// </summary>
+	/// <remarks>
+	/// <b>This pin asserted the bug, and so did its own summary.</b> It said retail's
+	/// <c>total_set_to_spawn</c> here is two; it is <b>one</b>. His two multi-target branches carry
+	/// different caps — the timer-6 relay marks a pair, the below-sixty rung that opens it marks a
+	/// single — and the class gave both the pair.
+	/// <para>
+	/// Found by <c>audit_multi_target_caps.py</c>, written because <c>spawn_on_multi_target</c> reads
+	/// as "everybody" and is capped in nearly every fight that uses it. Nineteen ported ops were
+	/// checked against retail by npc id; this was the only one wrong.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void BelowSixtyHeMarksTwoAtATime()
+	public void BelowSixtyHeMarksOneNotTwo()
 	{
 		var (harness, boss, raid) = Engaged();
 		using BossAiHarness _h = harness;
 		BossAiHarness.SetExactPercent(boss, 50);
 
-		// The opening mark, then the sixty-percent rung at the first five-second tick.
+		// The opening mark on engaging, then the sixty-percent rung at the first five-second tick.
 		Advance(harness, raid, boss, 8);
 
-		Assert.Equal(3, Standing(harness, Mark));
+		Assert.Equal(2, Standing(harness, Mark));
 	}
 
 	/// <summary>And the relay puts two more up nineteen seconds after that, over and over.</summary>
+	/// <remarks>
+	/// <b>The opener and the relay are not the same size</b>, which is the whole of what the cap fix
+	/// changed: one from the below-sixty rung and two from each turn of the relay.
+	/// </remarks>
 	[Fact]
 	public void AndTheRelayKeepsMarkingInPairs()
 	{
@@ -158,9 +172,10 @@ public sealed class ChiefGunnerKurmataAiTests
 			}
 		}, Mark).Total;
 
-		// Three pairs: the sixty-percent rung, and two turns of the eleven-and-fourteen relay. The
-		// mark he plants on the pull is already standing when the watch opens, so it is not counted.
-		Assert.Equal(6, arrived);
+		// One from the sixty-percent rung, then two from each of two turns of the eleven-and-fourteen
+		// relay. The mark he plants on the pull is already standing when the watch opens, so it is not
+		// counted. This read six while the rung was giving out pairs.
+		Assert.Equal(5, arrived);
 	}
 
 	/// <summary>
