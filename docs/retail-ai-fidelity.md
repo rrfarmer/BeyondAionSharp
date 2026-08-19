@@ -27382,3 +27382,57 @@ is what this log has been doing one npc at a time without knowing the size of it
 
 **No behaviour changed this commit.** The number is now a tool rather than three separate notes saying
 "blocked on waypoints".
+
+## The waypoint routes are in the client after all
+
+Last commit closed with "the honest options are to extract the routes from the client's own data — the
+467 `<pathname>` values name them, and whether the geometry is reachable has not been investigated — or
+to leave these mechanics out". It has been investigated. **The geometry is there.**
+
+Every world directory under `Map/Worlds/<world>/` carries `world_N_WayPoint_*.xml`:
+
+```
+<way_point>
+  <name>BIDShulack_EngineerSum_NPCPath</name>
+  <points>
+    <data><x>688.59</x><y>509.24</y><z>868.10</z><stay_duration>10000</stay_duration></data>
+```
+
+against our own
+
+```
+<walker_template route_id="...">
+  <routestep x="688.59" y="509.24" z="868.10" rest_time="10000"/>
+```
+
+`stay_duration` is `rest_time`. Everything else is a rename, and `stay_motion` has no counterpart here.
+
+> **7,418 named routes with points, across 143 worlds. 285 of the 467 pathnames the AI patterns ask
+> for are among them — 61%.**
+
+`tools/client-extract/extract_client_waypoints.py` indexes them, reports that coverage, lists the 182
+that are missing, and prints any single route already in our walker format.
+
+**A name is not an identifier, and finding that out was the whole value of the exercise.**
+**1,188 of the 7,418 names are defined in more than one world, with different geometry** —
+`IDAbRe_Up3_DoorNPC4` exists in nine. The first version of the tool kept whichever copy it walked past
+first, and printed the *arena's* copy of a Steel Rake path without saying so. It now refuses `--show`
+on an ambiguous name and lists the worlds to choose from. Had that gone unnoticed, a conversion built on
+it would have put encounters' routes in the wrong instances — silently, and in bulk.
+
+**What is deliberately not done: writing walker data.** Two things stand in the way and neither is
+mechanical:
+
+* **A world directory is not a map id.** `idshulackship` has to become 300100000, by hand or by a
+  mapping nobody has built.
+* **Route ids are ours.** Our templates are keyed by number and referenced from spawn data by
+  `walker_id`; assigning them is a decision about our data, not a translation of the client's.
+
+Converting geometry is a rename. Deciding which map a route belongs to and which npc should walk it is
+not — and a route attached to the wrong npc is worse than no route, because it moves an encounter
+somewhere it never goes.
+
+**Still missing.** The 182 referenced paths with no definition found need their own look before anyone
+concludes they are absent — some may be the ambiguity above in reverse, named in a world file this
+index did not reach. And the world-to-map mapping is the one piece of work that turns all of this from
+an index into 9,566 npcs that walk.
