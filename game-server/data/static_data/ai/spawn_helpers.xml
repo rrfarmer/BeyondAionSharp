@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ai_templates xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ai.xsd">
 	<!-- Ragenon Souleater -->
+	<!-- Seven ranges corrected together against retail, counts already right in every case: 280747 3->5,
+	     280749 3->5, 280685 2->6, 280686 2->8, 280932 3->2, 282007 2->1, 281384 3->5. Two of them are
+	     wider than anything a wave usually gets — the Drakan boss's two slave tiers arrive across six
+	     and eight metres, which is a ring around the room rather than a huddle at his feet, and ours
+	     put both at two. Note 280932 goes the other way: ours was too wide. -->
 	<ai npcId="212145">
 		<summons>
 			<percentage percent="50">
 				<!-- Harvested Soul -->
-				<summonGroup npcId="280747" minCount="2" distance="3"/>
+				<summonGroup npcId="280747" minCount="2" distance="5"/>
 			</percentage>
 		</summons>
 	</ai>
@@ -14,7 +19,7 @@
 		<summons>
 			<percentage percent="50">
 				<!-- Cursed Sailor -->
-				<summonGroup npcId="280749" minCount="3" distance="3"/>
+				<summonGroup npcId="280749" minCount="3" distance="5"/>
 			</percentage>
 		</summons>
 	</ai>
@@ -41,7 +46,7 @@
 		<summons>
 			<percentage percent="75">
 				<!-- Faithful Subordinate -->
-				<summonGroup npcId="280932" distance="3"/>
+				<summonGroup npcId="280932" distance="2"/>
 			</percentage>
 		</summons>
 	</ai>
@@ -157,10 +162,10 @@
 	<ai npcId="213780">
 		<summons>
 			<percentage percent="75">
-				<summonGroup npcId="280685" minCount="3" distance="2"/>
+				<summonGroup npcId="280685" minCount="3" distance="6"/>
 			</percentage>
 			<percentage percent="50">
-				<summonGroup npcId="280686" minCount="3" distance="2"/>
+				<summonGroup npcId="280686" minCount="3" distance="8"/>
 			</percentage>
 		</summons>
 	</ai>
@@ -241,7 +246,7 @@
 				<summonGroup npcId="282006" minCount="3" distance="2"/>
 			</percentage>
 			<percentage percent="40">
-				<summonGroup npcId="282007" distance="2"/>
+				<summonGroup npcId="282007" distance="1"/>
 			</percentage>
 			<percentage percent="30">
 				<summonGroup npcId="282006" minCount="4" distance="2"/>
@@ -307,7 +312,7 @@
 	<ai npcId="215782">
 		<summons>
 			<percentage percent="99">
-				<summonGroup npcId="281384" distance="3"/>
+				<summonGroup npcId="281384" distance="5"/>
 			</percentage>
 			<percentage percent="75">
 				<summonGroup npcId="281524" minCount="2" distance="3"/>

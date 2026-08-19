@@ -30695,3 +30695,67 @@ marked inert rather than deleted, and an inert block is still compared. The audi
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's
   `npc_skills`; the seven absent npc rows.
+
+## The live disagreements reach zero
+
+Two changes, one to the audit and one to the data.
+
+### The headline now counts the work
+
+The last entry noted that lumping inert rows in with live ones made the number drift: two real fixes
+moved it by one, because the boss they fixed had just become inert. The report splits them now:
+
+```
+88 agree on both count and range
+
+0 disagree on an npc whose ai reads this file   <-- the work
+12 disagree on an npc whose ai does not
+```
+
+An inert row is still worth correcting — a wrong number reads as a fact — but it is not the same work,
+and every boss that moves from data to its own class adds another.
+
+### Seven ranges, and one of them going the other way
+
+All seven remaining live rows were ranges, with counts already right. Read one at a time, because in this
+work a "range" row has not once been *only* a range — this time, five of seven, they were.
+
+| npc | was | retail |
+|---|---|---|
+| 280747, 280749 | 3 | 5 |
+| **280685** | 2 | **6** |
+| **280686** | 2 | **8** |
+| 281384 | 3 | 5 |
+| 282007 | 2 | 1 |
+| **280932** | **3** | **2** |
+
+The Drakan boss's two slave tiers are the ones worth naming: six and eight metres is **a ring around the
+room**, and ours put both at two — a huddle at his feet. And 280932 goes the other way, ours too wide,
+which is worth stating because it is evidence the old numbers were guesses rather than a systematic
+under-estimate.
+
+### These seven are guarded by the audit, not by a test
+
+**Deliberate, and stated rather than glossed.** A spawn's distance is a uniform random draw inside the
+range, so a behavioural pin can only be statistical: with the old range of 2 against retail's 6, a
+three-add sample says nothing, and a reliable pin needs dozens of spawns. This work has already produced
+one flaky pin, found only because it failed one run in three, and a statistical distance assertion is a
+worse version of that.
+
+So the regression guard here is `audit_summon_numbers.py`, which compares against retail and now reports
+zero. That is a real guard — it fails if anybody changes these numbers — but it is a **developer command
+that needs the retail dump**, not something CI runs. Said plainly so nobody reads a green suite as
+covering it.
+
+Full solution green at 2,600 in the game-server assembly.
+
+**Still missing.**
+
+- **Ranges have no automated regression guard inside the repo.** The audit catches them and CI cannot
+  run the audit. That is the honest state.
+- **The 12 inert disagreements**, which are corrections to files nothing reads.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's
+  `npc_skills`; the seven absent npc rows.

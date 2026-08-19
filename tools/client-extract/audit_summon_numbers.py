@@ -288,11 +288,19 @@ def main():
             else:
                 agreed += 1
 
+    live_rows = [r for r in rows if r[5]]
+    inert_rows = [r for r in rows if not r[5]]
     print(f"{compared} summon groups can be compared against a retail spawn action")
     print(f"{agreed} agree on both count and range")
-    print(f"{len(rows)} do not\n")
-    print(f"  ({sum(1 for r in rows if not r[5])} of them on an npc whose ai never reads this file)\n")
-    for owner, npc_id, pattern, notes, schedule, live in rows:
+    print()
+    # Reported apart because they are different work. An inert row is a wrong number in a file nothing
+    # reads: worth correcting so it does not read as a fact, but it changes no behaviour, and every boss
+    # that moves from data to its own class adds another. Counted together, the headline drifts away
+    # from the work remaining -- two real fixes once moved it by one, because the boss they fixed had
+    # just become inert.
+    print(f"{len(live_rows)} disagree on an npc whose ai reads this file   <-- the work")
+    print(f"{len(inert_rows)} disagree on an npc whose ai does not\n")
+    for owner, npc_id, pattern, notes, schedule, live in live_rows + inert_rows:
         extra = f"   [schedule={schedule}ms, not compared]" if schedule else ""
         extra += "" if live else "   [INERT]"
         print(f"  npc {owner} spawns {npc_id}  [{pattern[:34]}]{extra}")
