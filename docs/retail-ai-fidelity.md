@@ -26717,3 +26717,47 @@ single window could not see a cadence, after Celestius's cycle and Beritra's pic
 The 38 abyss guards on `simple_abyssguard` also answer 30001 in retail and still do not here. That
 class is a `PatternAi` with a deliberately empty pattern, so it is a different shape of change from
 these two — and the one remaining piece of this family that is neither blocked nor ambiguous.
+
+## The last piece of the call family, written and put back
+
+`simple_abyssguard` was recorded last commit as "the one remaining piece of this family that is neither
+blocked nor ambiguous": 38 npcs — nineteen `GUARD`, nineteen `GUARD_DARK` — running
+`LDF5_Village_chief01`..`19`, the same retail patterns as `BaseProtectorAI`'s chiefs but arriving under
+a second AI name. The rung was written, with the thirty-eight ids listed rather than inferred (the
+class is also worn by ordinary abyss guards that answer none of it), it built, and **it was reverted.**
+
+**The reason is a property of this class that had not been noticed, and it is worth more than the
+change would have been.** `AbyssGuardSimpleAI` carries its own npc-versus-npc `CheckAggro`, verbatim
+from Java: it attacks any enemy npc it can see within its aggro range, with no message involved at all.
+So for these thirty-eight npcs **a killer that walks up is already attacked**, and every pin written for
+the message rung was really watching that instead — a chief targeted a killer standing eighteen metres
+away before any broadcast was made.
+
+**The rung is not entirely redundant, and that is exactly what makes it unverifiable here.** It adds
+three things `CheckAggro` does not:
+
+- **reach** — the call carries twenty metres against the chief's fifteen-metre sight range;
+- **line of sight** — `CheckAggro` requires `GeoService.CanSee`, the message does not;
+- **the busy guard** — `CheckAggro` skips any npc that already has a target, so a killer mid-fight is
+  ignored by sight and answered by message.
+
+All three are differences of a few metres or of state the harness does not model, and none could be
+separated from the aggro that fires first. A change that cannot be distinguished from behaviour already
+present is not one to land on thirty-eight npcs on the strength of the pattern file alone.
+
+**What it costs to say no here.** The family is otherwise complete and this was the last clean piece;
+leaving it out means those thirty-eight chiefs answer a killer only by seeing it. That is a smaller gap
+than it looked before this was attempted, because `CheckAggro` covers most of the same ground.
+
+**Still missing, and now the whole list for this family.**
+
+- **`simple_abyssguard`'s 30001 and 30002**, above — needs a way to observe message-driven aggro
+  separately from sight-driven aggro, which probably means a pin that puts the killer out of line of
+  sight rather than merely out of range.
+- **The Advance guards' `30004`**, broadcast once on entering combat, which **no pattern in the dump
+  answers**.
+- **The village chiefs' `on_die` rung** — `30003` at fifty metres plus two
+  `set_condition_spawn_variable` calls recording which of `pc_light`, `pc_dark` or `drakan` killed the
+  chief. The broadcast alone would announce a village's fall to a system that cannot act on it.
+- **The killers' own cast ladders and `goto_waypoint` walks**, which is how retail moves a killer to the
+  guards it has come for. Here it stands where it spawned and waits to be called.
