@@ -30,6 +30,13 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>despawn_self</c> anywhere in it — he opens the door and stays standing.
 /// </para>
 /// <para>
+/// <b>Half translated: his route.</b> Retail walks him through six waypoints and despawns him at the
+/// last. The six are now in our walker data, taken from the client, and the straight move below ends at
+/// the sixth of them rather than at the approximation it used to carry — but he still walks to it in a
+/// line instead of along the route, because binding a <c>walker_id</c> would set him patrolling from
+/// the moment the instance opens and retail has him stand still until somebody comes near.
+/// </para>
+/// <para>
 /// <b>Not translated.</b> 800438 shouts twice in retail — <c>STR_CHAT_IDTiamat_Murugan_3_02</c> on
 /// waking and <c>_3_03</c> three seconds later off an idle timer — and only one of the two has an id
 /// we can resolve, so he keeps the single shout he had. Muragan the Loyal's six waypoints are a route
@@ -103,10 +110,20 @@ public class MuraganAI : GeneralNpcAI
         }, System.TimeSpan.FromMilliseconds(WalkBackstopMillis));
     }
 
-    /// <summary>Where Muragan the Loyal is walking, ninety-three units from where he starts.</summary>
-    public const float DoorX = 838f;
-    public const float DoorY = 1317f;
-    public const float DoorZ = 396f;
+    /// <summary>
+    /// Where Muragan the Loyal is walking: the sixth point of retail's own route,
+    /// <c>Path_IDTiamat_Murugan_1</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Taken from the client rather than guessed.</b> The route is in
+    /// <c>Map/Worlds/idtiamat_1/world_N_WayPoint_1.xml</c> and now in
+    /// <c>npc_walker/300510000_Tiamat_Stronghold.xml</c>; its first point is his spawn to within half a
+    /// metre and its sixth is this door. The numbers here were (838, 1317, 396), which is close enough
+    /// to look right — nearly two metres off in y and nearly two in z.
+    /// </remarks>
+    public const float DoorX = 838.003113f;
+    public const float DoorY = 1319.114136f;
+    public const float DoorZ = 397.737579f;
 
     /// <summary>
     /// <b>Ours, not retail's.</b> Retail ends his route with <c>despawn_self</c> at the final waypoint

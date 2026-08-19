@@ -27475,3 +27475,40 @@ the name collision found last commit, which is what makes me unwilling to batch 
   variants worth a manual pass, and 32 of the AI's routes are in them.
 - The **182 referenced paths with no definition found at all**, unchanged from last commit.
 - And the actual conversion, which is now a bounded job on 253 routes rather than an open question.
+
+## The first route imported, and it moved a door two metres
+
+The chain built over the last three commits — client geometry, our walker format, the `cName` join — run
+once, end to end, on the encounter that started it.
+
+Muragan the Loyal's route is `Path_IDTiamat_Murugan_1`, in `Map/Worlds/idtiamat_1/`, which the `cName`
+on `world_maps.xml` resolves to **300510000**, Tiamat Stronghold. It is now
+`npc_walker/300510000_Tiamat_Stronghold.xml`, the first walker file this port has taken from the client.
+
+**It confirms itself.** The route's first point is (930.52, 1316.28, 401.1); his spawn in our own data is
+(930.91, 1316.27, 401) — under half a metre apart, from two files that have never met. That agreement
+is what makes the rest of the route trustworthy.
+
+**And it corrected the destination.** This class walked him to (838, 1317, 396), a coordinate somebody
+read off the map. Retail's sixth waypoint is **(838.003, 1319.114, 397.738)** — nearly two metres out in
+y and nearly two in z. Close enough to look right, which is exactly the kind of number that never gets
+checked.
+
+**Eleven points, and six of them are his.** The client authors the route as an out-and-back; retail's
+`IDTiamat_Murugan1` despawns him at the sixth, so points seven to eleven walk a path he never takes. All
+eleven are kept: trimming shipped data to one consumer's use of it is how the next reader is misled.
+
+**Not bound to a spawn, deliberately.** Giving 800435 a `walker_id` would set him patrolling the moment
+the instance opens, and retail has him stand still until a player comes within fifteen metres. Binding it
+needs `MuraganAI` to start the walk itself — which is the next piece, and a small one now the geometry
+exists.
+
+**Pins** — one more in `MuraganEscortTests`, two mutations, both caught. The existing "ninety-three units
+long" pin tolerated both the old coordinate and the new, which is why the exact waypoint needed its own
+assertion; it is written out rather than compared against the constants, because a pin that reads the
+thing it is pinning tests nothing, and that mistake has been made twice in this suite already.
+
+**Still missing.** Everything the route was for: he still walks to the door in a straight line rather
+than along it. And the 252 other resolved routes, each of which needs the same two decisions — a
+route id, and which npc on the pattern takes it. This one took a commit because it was understood
+first; the rest are not a batch job for the same reason.

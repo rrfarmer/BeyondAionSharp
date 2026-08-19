@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc_walker xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="npc_walker.xsd">
+	<!--
+		Muragan the Loyal (800435). Retail route Path_IDTiamat_Murugan_1, from the client's own
+		Map/Worlds/idtiamat_1/world_N_WayPoint_1.xml, extracted with
+		tools/client-extract/extract_client_waypoints.py. The world resolves to this map through the
+		cName on world_maps.xml.
+
+		The first point is his spawn (930.91, 1316.27, 401) to within half a metre, and the sixth is the
+		door he walks to. Points seven to eleven walk him back the way he came: the client authors this
+		as an out-and-back, and retail's IDTiamat_Murugan1 despawns him at the sixth, so the return half
+		is never used by him. It is kept because it is the route as shipped, and trimming data to match
+		one consumer's use of it is how the next reader gets misled.
+
+		NOT YET BOUND TO A SPAWN. Giving 800435 a walker_id here would set him patrolling from the moment
+		the instance opens, and retail has him stand still until a player comes within fifteen metres.
+		Wiring it needs MuraganAI to start the walk itself, which is the next piece of work; see
+		docs/retail-ai-fidelity.md.
+	-->
+	<walker_template route_id="3005100001">
+		<routestep x="930.520020" y="1316.280029" z="401.100006" />
+		<routestep x="917.960938" y="1316.416992" z="400.279602" />
+		<routestep x="903.148499" y="1319.382202" z="400.279602" />
+		<routestep x="882.313171" y="1318.991699" z="400.196869" />
+		<routestep x="844.788879" y="1319.076660" z="397.737579" />
+		<routestep x="838.003113" y="1319.114136" z="397.737579" />
+		<routestep x="844.753723" y="1319.076538" z="397.737579" />
+		<routestep x="882.312012" y="1318.992920" z="400.195129" />
+		<routestep x="903.151978" y="1319.385864" z="400.279602" />
+		<routestep x="917.966675" y="1316.410156" z="400.279602" />
+		<routestep x="930.518311" y="1316.280029" z="401.100006" />
+	</walker_template>
+</npc_walker>

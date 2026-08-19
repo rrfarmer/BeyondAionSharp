@@ -153,4 +153,25 @@ public sealed class MuraganEscortTests
 
 		Assert.Equal(1, Alive(harness, TheDoorOpener));
 	}
+
+	/// <summary>
+	/// <b>And the door he walks to is retail's own waypoint.</b>
+	/// </summary>
+	/// <remarks>
+	/// The sixth point of <c>Path_IDTiamat_Murugan_1</c>, from the client's
+	/// <c>Map/Worlds/idtiamat_1/world_N_WayPoint_1.xml</c> and now in
+	/// <c>npc_walker/300510000_Tiamat_Stronghold.xml</c>. It used to be (838, 1317, 396) — close enough
+	/// to look right, and nearly two metres out in both y and z.
+	/// <para>
+	/// Written out rather than compared against the constants, because a pin that reads the thing it is
+	/// pinning tests nothing; that mistake has been made twice in this suite already.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AndTheDoorHeWalksToIsRetailsOwnWaypoint()
+	{
+		Assert.Equal(838.003113f, MuraganAI.DoorX, 4);
+		Assert.Equal(1319.114136f, MuraganAI.DoorY, 4);
+		Assert.Equal(397.737579f, MuraganAI.DoorZ, 4);
+	}
 }
