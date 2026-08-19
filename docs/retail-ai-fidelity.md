@@ -31635,3 +31635,46 @@ tiers; the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named
 `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>`
 schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's
 mine web; Pashid's `npc_skills`.
+
+## Surkana's traps, and a revert that should not have happened
+
+The previous entry reverted this work because the implementation "could not be shown to run". **It had
+been running correctly the whole time.** The pins were measuring something that cannot exist.
+
+`NTrapAI`'s own summary is the answer, and it is one line: *"The trap that goes off the moment it
+appears."* It casts and leaves. **A test that counts live traps will always read zero**, however
+perfectly the surkana lays them.
+
+A probe settled it in one run: `attacks=1`, `spawned=1`, `live=0`. The handler ran, the spawn succeeded,
+and nothing survived to be counted.
+
+> Three times this session a "cannot be tested" conclusion has been wrong — the death branches, the walk
+> ending, and now this. **All three were measurement errors wearing the costume of a capability gap.**
+> The previous entry even said "twice this session that conclusion has been wrong… that is an argument
+> for suspecting this one too" — and then reverted anyway.
+
+The code is back, with `TrapsDropped` as the seam, and the class remark says why counting survivors
+cannot work.
+
+### The bands
+
+Twelve one-shot rungs, six per handler, and the numbers are not uniform: the struck 60 band lands at one
+metre for twenty seconds where its neighbours use two and fifteen, and the spelled 30 band lasts fifteen
+where its neighbours last ten.
+
+Four mutations caught. A fifth — "the bands are a ladder" — **survived and was replaced**: with the loop
+cascading, requiring the previous band to have fired changes nothing, because the previous band fires
+first in the same pass. `return` after the first drop is the mutation that actually differs, and
+`OneBlowAcrossSeveralBandsOpensAllOfThem` catches it.
+
+### And a harness detail worth knowing
+
+A surkana has **`maxHp="50"`**, so its health moves in two-point steps and `SetExactPercent` cannot
+reach an odd one. The first pins asked for 25 and 95 and failed **inside the harness**, which for a few
+minutes looked like another encounter problem.
+
+**Still missing.** Yamennes' spawn gate; Beritra's four; Orissan's crystal tiers; the 30009/30010
+dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_user` pinned one seam
+short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed
+attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's
+`npc_skills`.
