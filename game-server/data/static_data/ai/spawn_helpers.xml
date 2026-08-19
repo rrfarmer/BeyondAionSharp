@@ -19,15 +19,20 @@
 		</summons>
 	</ai>
 	<!-- Pitiless Graveknight -->
+	<!-- Pitiless Graveknight. Retail ND2_FeD has one summon rung, guarded on is_hp_in_boundary 35 to 70,
+	     placing one 280814 at spawn_range 5. The count here is right and the range was 3.
+	     The two percentage blocks are left alone: retail's single band is 36-69 and ours fire at 75 and
+	     30, one either side of it, and mapping two blocks onto one band is a judgement rather than a
+	     translation. -->
 	<ai npcId="212346">
 		<summons>
 			<percentage percent="75">
 				<!-- Geschphalt's Minion -->
-				<summonGroup npcId="280814" distance="3"/>
+				<summonGroup npcId="280814" distance="5"/>
 			</percentage>
 			<percentage percent="30">
 				<!-- Geschphalt's Minion -->
-				<summonGroup npcId="280814" distance="3"/>
+				<summonGroup npcId="280814" distance="5"/>
 			</percentage>
 		</summons>
 	</ai>
@@ -64,13 +69,18 @@
 	     inert so there is one source of truth for what he summons: it named 280333 for all three
 	     waves, at the wrong thresholds, with random counts, no lifetime and no hand-over. -->
 	<!-- Spirit King Agro -->
+	<!-- Spirit King Agro. Retail ND2_PeC summons two different underlings by band: 2x 280772 while health
+	     is between 30 and 75 (rung p3 on BTIMERI_INDEX_0), and 2x 280771 below 30, whose timer is armed
+	     only by a rung guarded on is_hp_lower_than 30. Both at spawn_range 6. This block summoned 280771
+	     in both bands at distance 10, so 280772 never appeared at all and the mid-fight underlings were
+	     the wrong ones, spread four metres too wide. -->
 	<ai npcId="211908">
 		<summons>
 			<percentage percent="75">
-				<summonGroup npcId="280771" minCount="2" distance="10"/>
+				<summonGroup npcId="280772" minCount="2" distance="6"/>
 			</percentage>
 			<percentage percent="30">
-				<summonGroup npcId="280771" minCount="2" distance="10"/>
+				<summonGroup npcId="280771" minCount="2" distance="6"/>
 			</percentage>
 		</summons>
 	</ai>

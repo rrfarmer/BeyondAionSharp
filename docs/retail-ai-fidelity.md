@@ -29586,3 +29586,57 @@ described almost none of the problem.**
   `npc 211908` at range 10 against retail's 6, are the next clearest.
 - **The eleven unread top-band ids** from `--rank`.
 - Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## Spirit King Agro's other underling, and the shape this defect keeps taking
+
+Two more rows from `audit_summon_numbers.py`, and one of them is Kasika again.
+
+### Spirit King Agro: 280772 never appeared
+
+The row said `range 10 vs retail [6]`. The range was the least of it. Reading `ND2_PeC` in full:
+
+| health | underling | count | range |
+|---|---|---|---|
+| 30-75 | **280772** | 2 | 6 |
+| below 30 | 280771 | 2 | 6 |
+
+The two tiers do not overlap: the below-thirty rung's timer (`BTIMERI_INDEX_2`) is armed **only** by a
+rung guarded on `is_hp_lower_than 30`, while the mid-band rung hangs off `BTIMERI_INDEX_0` inside
+`is_hp_in_boundary 30..75`.
+
+> **Our data summoned 280771 in both bands, at distance 10.** So 280772 — which exists in
+> `npc_templates.xml`, has its own `npc_skills` row, and is named "underling of agro" like its sibling —
+> **was never spawned by anything in this port**, and the mid-fight underlings were the wrong tier spread
+> four metres too wide.
+
+Corrected to 280772 at distance 6 in the 75 block and 280771 at distance 6 in the 30 block. Two pins, one
+mutation, caught.
+
+### Pitiless Graveknight: range only, and a band question left open
+
+Retail's `ND2_FeD` has one summon rung — `is_hp_in_boundary 35..70`, one 280814, `spawn_range 5`. Our
+count was right and the range was 3, now 5.
+
+**The two percentage blocks are deliberately left alone.** Retail's single band is 36-69; ours fire at 75
+and 30, one either side of it. Mapping two blocks onto one band is a judgement about which of ours should
+disappear, not a translation, and this document has enough entries about authors who made that call
+quietly.
+
+### The shape
+
+Three summon-data rows have now been opened and **two were the same defect**: a boss with several tiers of
+add, where our data uses one tier for every band and the others are never spawned at all. Kasika had two
+of four missing; Agro had one of two.
+
+**The audit cannot see that directly** — it compares counts and ranges, and a wrong-but-present npc has a
+plausible count. Both were found because the row pointed at the right boss and the pattern was then read
+in full. **A "range" disagreement is worth opening precisely because it is cheap to dismiss.**
+
+Full solution green at 2,807. Disagreements fall from 55 to 53.
+
+**Still missing.**
+
+- **53 disagreements**, and the tier-swap defect above suggests the count rows are not the only ones worth
+  reading.
+- **The eleven unread top-band ids** from `--rank`.
+- Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
