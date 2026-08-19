@@ -238,6 +238,26 @@ public sealed class BossAiHarness : IDisposable
 	}
 
 	/// <summary>Drops <paramref name="npc"/> to an exact HP percentage without going through combat.</summary>
+	/// <summary>
+	/// Puts an NPC on the last step of a named route and tells its AI it arrived there.
+	/// </summary>
+	/// <remarks>
+	/// <c>is_last_waypoint</c> branches are what stops a patrol accumulating at the end of its path, and
+	/// the harness has no mover — so the arrival is delivered directly rather than walked to. Needs
+	/// <see cref="Builder.WithWalkerRoutes"/>, because the route has to be a real one for its last step
+	/// to be flagged as last.
+	/// </remarks>
+	public static void ArriveAtLastWaypoint(Npc npc, string routeId)
+	{
+		Aion.GameServer.Model.Templates.Walker.WalkerTemplate route =
+			Aion.GameServer.Dataholders.DataManager.WALKER_DATA.GetWalkerTemplate(routeId)
+			?? throw new InvalidOperationException($"no route '{routeId}' is loaded");
+
+		npc.GetSpawn().SetWalkerId(routeId);
+		npc.GetMoveController().SetWalkerTemplate(route, route.GetRouteSteps().Count - 1);
+		npc.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.MOVE_ARRIVED);
+	}
+
 	public static void SetHpPercent(Npc npc, int percent) => npc.GetLifeStats().SetCurrentHpPercent(percent);
 
 	/// <summary>
@@ -789,16 +809,33 @@ public sealed class BossAiHarness : IDisposable
 		});
 
 		/// <summary>
-		/// Retail's named routes, extracted from the 5.8 server's own world data.
+		/// Every named route the server loads, merged the way <c>StaticData</c> merges them.
 		/// </summary>
 		/// <remarks>
-		/// Only <c>retail_pattern_paths.xml</c>, not the whole <c>npc_walker</c> directory: the per-instance
-		/// route files are keyed by spawn hash and no pattern spawn names one, so loading them would cost
-		/// every opted-in test without adding a route any pattern can reach.
+		/// <b>This was first written to load only <c>retail_pattern_paths.xml</c></b>, on the reasoning that
+		/// the per-instance files are keyed by spawn hash and no pattern names one. <b>That was wrong.</b>
+		/// Ophidan Bridge's patrols walk <c>idldf5_under_01_PathRunway_Path01</c> — a named route in
+		/// <c>npc_walker.xml</c>, given to them by their spawn and walked by their pattern — so the split
+		/// was not where the reasoning put it. The whole directory is 6.6 MB, loaded once and cached, and
+		/// only for the tests that ask for it.
 		/// </remarks>
 		private static readonly Lazy<Aion.GameServer.Dataholders.WalkerData> RealWalkerData = new(() =>
-			LoadStaticDataFile<Aion.GameServer.Dataholders.WalkerData>(
-				"npc_walker", "retail_pattern_paths.xml"));
+		{
+			string dir = Path.Combine(RepoRoot(), "game-server", "data", "static_data", "npc_walker");
+			Aion.GameServer.Dataholders.WalkerData? data = null;
+			foreach (string file in Directory
+				.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories)
+				.OrderBy(f => f, StringComparer.Ordinal))
+			{
+				var part = JaxbHolderLoader.DeserializeFile<Aion.GameServer.Dataholders.WalkerData>(file);
+				if (data == null)
+					data = part;
+				else
+					data.MergePending(part);
+			}
+			JaxbHolderLoader.RunAfterUnmarshal(data!);
+			return data!;
+		});
 
 		private static readonly Lazy<TribeRelationsData> RealTribeRelations = new(() =>
 			LoadStaticDataFile<TribeRelationsData>("tribe", "tribe_relations.xml"));

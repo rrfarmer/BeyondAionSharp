@@ -239,6 +239,18 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <c>on_arrived_at_waypoint</c>. Runs before the base handler so a branch sees the arrival before
     /// the shout system does.
     /// </summary>
+    /// <summary>Which step of its route this NPC last reached, or -1 if it is not walking one.</summary>
+    /// <remarks>
+    /// Zero-based, as this port's <c>RouteStep</c> indexes are; <see cref="When.AtWaypoint"/> converts
+    /// from retail's one-based numbering so tables can quote retail's own index.
+    /// </remarks>
+    internal int WaypointIndex =>
+        GetOwner().GetMoveController().GetCurrentStep()?.GetStepIndex() ?? -1;
+
+    /// <summary><c>is_last_waypoint</c> — true once the NPC has reached the final step of its route.</summary>
+    internal bool AtRouteEnd =>
+        GetOwner().GetMoveController().GetCurrentStep()?.IsLastStep() ?? false;
+
     protected override void HandleMoveArrived()
     {
         Evaluate(Pattern.OnArrivedAtWaypoint);
@@ -1046,6 +1058,13 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         if (!IsDead())
             PacketSendUtility.BroadcastMessage(GetOwner(), messageId, delayMillis);
+    }
+
+    /// <summary><c>goto_waypoint</c> — begin walking the route named on this NPC's spawn.</summary>
+    public void StartWalking()
+    {
+        if (GetOwner().IsPathWalker())
+            WalkManager.StartWalking(this);
     }
 
     public void DespawnSelf() => AIActions.DeleteOwner(this);

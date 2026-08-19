@@ -154,31 +154,32 @@
 			<spot x="599.00916" y="412.65414" z="610.18" h="5"/>
 			<spot x="599.69183" y="418.16626" z="609.9432" h="0"/>
 		</spawn>
-		<!-- TODO: Find out how they work -->
+		<!-- They walk the route their spot names and remove themselves at the end of it; see
+		     OphidanBridgeCallAI.Patrol and docs/retail-ai-fidelity.md. -->
 		<!-- idf5_u01_t_n_runaway_as_65_ah_s_p1 -->
-		<!-- <spawn npc_id="235785">
+		<spawn npc_id="235785">
 			<spot x="580.58" y="562.43" z="595.36" h="22" walker_id="idldf5_under_01_PathRunway_Path05"/>
 			<spot x="674.68" y="508.6" z="599.49" h="22" walker_id="idldf5_under_01_PathRunway_Path04"/>
 			<spot x="750.86" y="511.67" z="582.11" h="22" walker_id="idldf5_under_01_PathRunway_Path01"/>
 			<spot x="662.34" y="446.09" z="603.5" h="22" walker_id="idldf5_under_01_PathRunway_Path02"/>
 			<spot x="535.88" y="462.84" z="621.12" h="22" walker_id="idldf5_under_01_PathRunway_Path03"/>
-		</spawn>-->
+		</spawn>
 		<!-- idf5_u01_t_n_runaway_pr_65_ah_s_p1 -->
-		<!-- <spawn npc_id="235784">
+		<spawn npc_id="235784">
 			<spot x="580.58" y="562.43" z="595.36" h="22" walker_id="idldf5_under_01_PathRunway_Path05"/>
 			<spot x="674.68" y="508.6" z="599.49" h="22" walker_id="idldf5_under_01_PathRunway_Path04"/>
 			<spot x="750.86" y="511.67" z="582.11" h="22" walker_id="idldf5_under_01_PathRunway_Path01"/>
 			<spot x="662.34" y="446.09" z="603.5" h="22" walker_id="idldf5_under_01_PathRunway_Path02"/>
 			<spot x="535.88" y="462.84" z="621.12" h="22" walker_id="idldf5_under_01_PathRunway_Path03"/>
-		</spawn>-->
+		</spawn>
 		<!-- idf5_u01_t_n_runaway_wi_65_ah_s_p1 -->
-		<!-- <spawn npc_id="235783">
+		<spawn npc_id="235783">
 			<spot x="580.58" y="562.43" z="595.36" h="22" walker_id="idldf5_under_01_PathRunway_Path05"/>
 			<spot x="674.68" y="508.6" z="599.49" h="22" walker_id="idldf5_under_01_PathRunway_Path04"/>
 			<spot x="750.86" y="511.67" z="582.11" h="22" walker_id="idldf5_under_01_PathRunway_Path01"/>
 			<spot x="662.34" y="446.09" z="603.5" h="22" walker_id="idldf5_under_01_PathRunway_Path02"/>
 			<spot x="535.88" y="462.84" z="621.12" h="22" walker_id="idldf5_under_01_PathRunway_Path03"/>
-		</spawn>-->
+		</spawn>
 		<!-- idf5_u01_n_p1_runaway_as_65_ah -->
 		<!-- <spawn npc_id="235764">
 			<spot x="675.59" y="472.95" z="601.14" h="22"/>

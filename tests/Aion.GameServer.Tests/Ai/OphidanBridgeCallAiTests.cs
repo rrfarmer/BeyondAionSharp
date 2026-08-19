@@ -402,4 +402,65 @@ public sealed class OphidanBridgeCallAiTests
 
 		Assert.Contains(harness.LiveNpcs(), n => ReferenceEquals(n, marker));
 	}
+
+	/// <summary>
+	/// <b>A fugitive grade runs when a stronghold falls, and its leader does not.</b>
+	/// </summary>
+	/// <remarks>
+	/// This used to be inferred — anything that called and did not sweep was given the escape — and the
+	/// inference put a despawn on the three fugitive leaders that retail never wrote. <b>All twelve
+	/// grade patterns carry the <c>10000</c> branch and all three leader patterns lack it</b>, in every
+	/// one of the three families, so the split is unanimous and has nothing to do with calling.
+	/// </remarks>
+	[Theory]
+	[InlineData(235756, true)]   // fugitive mazikin, first grade
+	[InlineData(235757, true)]   // and second
+	[InlineData(235758, true)]   // and third
+	[InlineData(235759, false)]  // their leader, who stays
+	[InlineData(235763, false)]  // runaway hirakiki's leader
+	[InlineData(235767, false)]  // escapee asachin's leader
+	public void OnlyTheGradesRunWhenAStrongholdFalls(int npcId, bool flees)
+	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+
+		Npc listener = harness.Spawn(npcId, CallerX, CallerY, Floor);
+		Npc crier = harness.Spawn(Mazikin, CallerX + 5f, CallerY, Floor);
+
+		((Aion.GameServer.Ai.Pattern.PatternAi)listener.GetAi())
+			.OnNpcMessage(crier, OphidanBridgeCallAI.Escape, crier);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(!flees, harness.LiveNpcs().Any(n => ReferenceEquals(n, listener)));
+	}
+
+	/// <summary>
+	/// <b>A patrol walks its route and removes itself at the end of it.</b>
+	/// </summary>
+	/// <remarks>
+	/// The three <c>_S_P1</c> npcs had a TODO in the spawn file saying nobody knew how they worked, and
+	/// their spawns were commented out. <b>Without the last-waypoint branch they would stand at the end
+	/// of the path or loop it</b>, so binding them without it would have traded three missing NPCs for
+	/// three permanent ones.
+	/// </remarks>
+	[Theory]
+	[InlineData(235783)]
+	[InlineData(235784)]
+	[InlineData(235785)]
+	public void APatrolLeavesAtTheEndOfItsRoute(int npcId)
+	{
+		BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
+			.WithWalkerRoutes()
+			.WithAi(typeof(OphidanBridgeCallAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+			.Build();
+		using BossAiHarness _h = harness;
+
+		Npc patrol = harness.Spawn(npcId, CallerX, CallerY, Floor);
+		Assert.Contains(harness.LiveNpcs(), n => ReferenceEquals(n, patrol));
+
+		// Reaching the last step is what ends it, however the mover got there.
+		BossAiHarness.ArriveAtLastWaypoint(patrol, "idldf5_under_01_PathRunway_Path01");
+
+		Assert.DoesNotContain(harness.LiveNpcs(), n => ReferenceEquals(n, patrol));
+	}
 }

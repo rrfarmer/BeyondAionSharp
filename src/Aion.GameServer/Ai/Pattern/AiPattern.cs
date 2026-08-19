@@ -204,6 +204,25 @@ public static class When
     /// <summary><c>is_battle_timer_indicator</c> — the branch belongs to timer slot <paramref name="index"/>.</summary>
     public static PatternCondition Timer(int index) => ai => ai.FiredTimer == index;
 
+    /// <summary>
+    /// <c>is_waypoint_index</c> — the NPC has just reached step <paramref name="index"/> of its route.
+    /// </summary>
+    /// <remarks>
+    /// Retail counts its waypoints from one, and this port's route steps from zero, so the two differ by
+    /// one and the conversion belongs here rather than in every table that uses it. <b>1,072 branches
+    /// across the 5.8 dump are guarded on this</b> and none of them could be expressed before: a patrol
+    /// that shouts at the third corner and turns at the fifth is entirely made of these.
+    /// </remarks>
+    public static PatternCondition AtWaypoint(int index) => ai => ai.WaypointIndex == index - 1;
+
+    /// <summary><c>is_last_waypoint</c> — the NPC has reached the end of its route.</summary>
+    /// <remarks>
+    /// The 98 branches guarded on this are mostly one action: the NPC removes itself. A patrol whose
+    /// route has run out and which cannot say so <b>stands at the end of it, or loops back</b>, and the
+    /// difference is a permanent extra NPC in the room.
+    /// </remarks>
+    public static readonly PatternCondition AtLastWaypoint = ai => ai.AtRouteEnd;
+
     /// <summary><c>is_hp_lower_than</c> — true on every evaluation below the threshold, not just the first.</summary>
     public static PatternCondition HpBelow(int percent) => ai => ai.HpPercent < percent;
 
@@ -553,6 +572,14 @@ public static class Do
         => ai => ai.FleeFromMessageParam(seconds);
 
     /// <summary><c>despawn</c> of everything spawned under one spawn id.</summary>
+    /// <summary><c>goto_waypoint</c> — start down the route this NPC's spawn names.</summary>
+    /// <remarks>
+    /// 1,112 patterns open with it. A path-walking NPC usually starts on its own once its AI reaches
+    /// THINK, so this is not always load-bearing — but retail states it, and a pattern that says "walk"
+    /// should say it here rather than depend on the state machine reaching the same conclusion.
+    /// </remarks>
+    public static PatternAction StartWalking() => ai => ai.StartWalking();
+
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
 
     /// <summary><c>set_idle_timer</c> — arm the single idle slot, replacing whatever was in it.</summary>

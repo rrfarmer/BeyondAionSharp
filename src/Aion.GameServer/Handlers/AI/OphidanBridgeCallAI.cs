@@ -117,34 +117,83 @@ public class OphidanBridgeCallAI : PatternAi
 	/// builder: <c>Calls</c> is the linked pull, <c>Sweeps</c> drops the four bridge triggers, and
 	/// <c>ClearsOnWake</c> is one <c>despawn_by_nameid</c> the moment the npc appears.
 	/// </summary>
-	private static readonly Dictionary<int, (bool Calls, bool Sweeps, int ClearsOnWake)> Roster = new()
+	/// <summary>
+	/// What each npc does. <b>Fleeing is its own column and not a consequence of calling</b> — see the
+	/// remark on <see cref="Build"/>.
+	/// </summary>
+	private static readonly Dictionary<int, (bool Calls, bool Sweeps, int ClearsOnWake, bool Flees)> Roster = new()
 	{
-		[235768] = (false, true, 0),               // spirited velkur, normal mode: sweeps, never calls
-		[235769] = (true, true, NormalModeBoss),   // velkur aethercaster
-		[235770] = (true, true, NormalModeBoss),   // velkur aetherpriest
-		[235771] = (true, true, NormalModeBoss),   // velkur aetherknife
+		[235768] = (false, true, 0, false),              // spirited velkur, normal mode: sweeps, never calls
+		[235769] = (true, true, NormalModeBoss, false),  // velkur aethercaster
+		[235770] = (true, true, NormalModeBoss, false),  // velkur aetherpriest
+		[235771] = (true, true, NormalModeBoss, false),  // velkur aetherknife
 
-		[235756] = (true, false, 0),               // fugitive mazikin, first grade
-		[235757] = (true, false, CheckMarker),     // and second, which clears the check marker
-		[235787] = (true, false, CheckMarker),
-		[235758] = (true, false, 0),               // and third
-		[235759] = (true, false, 0),               // fugitive mazikin leader
+		[235756] = (true, false, 0, true),               // fugitive mazikin, first grade
+		[235757] = (true, false, CheckMarker, true),     // and second, which clears the check marker
+		[235787] = (true, false, CheckMarker, true),
+		[235758] = (true, false, 0, true),               // and third
+		[235759] = (true, false, 0, false),              // fugitive mazikin leader, who holds his ground
 
-		[235760] = (true, false, 0),               // runaway hirakiki, the same three grades
-		[235761] = (true, false, CheckMarker),
-		[235788] = (true, false, CheckMarker),
-		[235762] = (true, false, 0),
+		[235760] = (true, false, 0, true),               // runaway hirakiki, the same three grades
+		[235761] = (true, false, CheckMarker, true),
+		[235788] = (true, false, CheckMarker, true),
+		[235762] = (true, false, 0, true),
+		[235763] = (true, false, 0, false),              // and her leader
 
-		[235764] = (true, false, 0),               // escapee asachin, likewise
-		[235765] = (true, false, CheckMarker),
-		[235789] = (true, false, CheckMarker),
-		[235766] = (true, false, 0),
+		[235764] = (true, false, 0, true),               // escapee asachin, likewise
+		[235765] = (true, false, CheckMarker, true),
+		[235789] = (true, false, CheckMarker, true),
+		[235766] = (true, false, 0, true),
+		[235767] = (true, false, 0, false),              // and his
 	};
 
-	private static readonly Dictionary<int, AiPattern> Patterns =
-		Roster.ToDictionary(e => e.Key, e => Build(e.Value.Calls, e.Value.Sweeps, e.Value.ClearsOnWake));
+	/// <summary>
+	/// The three patrols — <c>BIDF5_U01_Runaway_{Wi,Pr,As}_S_P1</c>, byte-identical to each other.
+	/// </summary>
+	/// <remarks>
+	/// <b>These three had a TODO in the spawn file saying nobody knew how they worked</b>, and their
+	/// spawns were commented out because of it. They are the simplest thing in this instance: walk the
+	/// route the spawn names, and <b>remove yourself when it runs out</b>. Every other event in their
+	/// patterns is <c>do_nothing guard only</c> — they ignore players entirely, which is why they are
+	/// scenery that leaves rather than a fight.
+	/// <para>
+	/// Without the last-waypoint branch a patrol reaching the end of its path either stands there or
+	/// loops, so the three of them would accumulate as permanent extra NPCs. That branch is the whole
+	/// reason this is worth binding.
+	/// </para>
+	/// <para>
+	/// <b>Not translated.</b> Retail's first branch shouts <c>STR_CHAT_IDF5_U01_Ra_Goossip_05</c> at
+	/// waypoint one and then continues; the string id is unresolved, and what remains of that branch —
+	/// carry on walking — is what walking already does, so it is left out rather than written as a
+	/// no-op that looks like a translation.
+	/// </para>
+	/// </remarks>
+	private static readonly AiPattern Patrol = new AiPattern
+	{
+		OnWakeUp = Of(
+			Branch(1000, "무적 후 패스 이동", When.Always, Do.StartWalking())),
 
-	private static AiPattern Build(bool calls, bool sweeps, int clearsOnWake)
+		OnArrivedAtWaypoint = Of(
+			Branch(900, "", [When.AtLastWaypoint], Do.DespawnSelf())),
+	};
+
+	/// <summary>The three patrol npcs, one per fugitive family.</summary>
+	private static readonly int[] Patrols = [235783, 235784, 235785];
+
+	private static readonly Dictionary<int, AiPattern> Patterns =
+		Roster.ToDictionary(e => e.Key,
+				e => Build(e.Value.Calls, e.Value.Sweeps, e.Value.ClearsOnWake, e.Value.Flees))
+			.Concat(Patrols.Select(id => new KeyValuePair<int, AiPattern>(id, Patrol)))
+			.ToDictionary(e => e.Key, e => e.Value);
+
+	/// <remarks>
+	/// <b>Fleeing used to be inferred as <c>calls &amp;&amp; !sweeps</c>, and that was wrong.</b> The
+	/// three fugitive leaders call exactly as their grades do and answer no <c>10000</c> at all — the
+	/// branch is simply absent from their patterns, in all three families, unanimously — so the inference
+	/// gave them a despawn retail never wrote. Reading the twelve grade patterns and the three leader
+	/// patterns is what separated the two, and nothing about calling implies anything about fleeing.
+	/// </remarks>
+	private static AiPattern Build(bool calls, bool sweeps, int clearsOnWake, bool flees)
 	{
 		var opening = new List<PatternAction>();
 		if (calls)
@@ -162,9 +211,7 @@ public class OphidanBridgeCallAI : PatternAi
 			OnEnterAttack = Of(
 				Branch(1000, "", When.Always, opening.ToArray())),
 
-			// Calling without sweeping is what a fugitive does, and fleeing is the other half of it:
-			// the three velkurs and the normal-mode boss hold their ground when a stronghold falls.
-			OnMessage = calls && !sweeps
+			OnMessage = calls && flees
 				? Of(
 					Branch(1300, "", [When.Message(Call)],
 						Do.HateMessageParam(Decisive)),

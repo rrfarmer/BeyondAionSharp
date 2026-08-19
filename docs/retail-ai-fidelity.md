@@ -22749,3 +22749,73 @@ itself and starts its pattern legitimately. Counting the cycle-only ids does not
 
 Build clean. The sphere pins fail if either Wrathclaw is given normal-mode spheres. Full suite **2,141
 passing** (fourteen new), 1 skipped.
+
+## An audit for the shape three finds took, and what its first row turned up
+
+Three separate finds in recent passes were the same shape: **an npc left on a generic AI while a sibling
+sharing its retail pattern already had a class.** 216952 (the normal Yamennes), 236280 and 856032 (both
+Wrathclaws). In each case the pattern was translated and the class existed; **only a template attribute
+was wrong.** That is the cheapest missing mechanic there is, and nothing here looked for it.
+
+`tools/client-extract/audit_unbound_siblings.py` now does. It reports **743 patterns** with both a bound
+npc and a loose one — **616 once fleets are excluded** with `--max-bound`, since a pattern with two
+hundred bound npcs is siege or artifact infrastructure where the difference is deliberate.
+
+**It reports candidates for reading, not edits to make.** Two npcs on one pattern can legitimately want
+different behaviour — the hard/normal Yamennes golems are exactly that — and the last audit written here
+was 100% false positives. So its first row was checked by hand before any of it was believed.
+
+### The first row: Ophidan Bridge
+
+It pointed at `ophidan_bridge_call`, and reading around it found four separate things.
+
+**1. A bug in the existing class.** Fleeing was inferred as `calls && !sweeps`. It is not a consequence
+of calling: **all twelve fugitive grade patterns carry the `10000` escape branch and all three leader
+patterns lack it**, unanimously, in every family. The inference gave the three leaders a despawn retail
+never wrote — they hold their ground when a stronghold falls. It is now its own column.
+
+**2. Two leaders were never in the roster at all.** 235759 was; **235763 and 235767 were not**, though
+their patterns are identical to his. Both were on `aggressive`.
+
+**3. The three patrols, and a TODO that named the gap.** 235783/4/5 ran `general`, and their spawns were
+commented out under `<!-- TODO: Find out how they work -->`. Their pattern answers it in four lines: walk
+the route the spawn names, and **remove yourself when it runs out**. Every other event is `do_nothing
+guard only` — they ignore players entirely. **Without the last-waypoint branch they stand at the end of
+the path or loop it**, so binding them without it would have traded three missing NPCs for three
+permanent ones. Spawns uncommented, TODO replaced with the answer.
+
+**4. A sixteen-npc mirror set, deliberately left alone.** 855991-856006 run the very same sixteen
+patterns as 235756-235771. **They are spawned nowhere in our data**, so binding them would be cosmetic;
+recorded here rather than done. If those spawns ever arrive, the roster is the only file to touch.
+
+### Engine: the waypoint conditions
+
+Two conditions and one action, all previously inexpressible:
+
+| new | retail | uses in the 5.8 dump |
+|---|---|---|
+| `When.AtWaypoint(n)` | `is_waypoint_index` | **1,072** |
+| `When.AtLastWaypoint` | `is_last_waypoint` | 98 |
+| `Do.StartWalking()` | `goto_waypoint` | 1,112 |
+
+`AtWaypoint` converts from retail's one-based numbering, so tables can quote retail's own index.
+
+### A correction to last commit's harness work
+
+`WithWalkerRoutes()` was written to load only `retail_pattern_paths.xml`, reasoning that the per-instance
+files are keyed by spawn hash and no pattern names one. **That was wrong** — Ophidan's patrols walk
+`idldf5_under_01_PathRunway_Path01`, a named route in `npc_walker.xml`, given by a spawn and walked by a
+pattern. It now merges the whole directory the way `StaticData` does.
+
+### Still to do
+
+- **615 more audit rows to read.** Unvalidated beyond the first; the tool's own docstring says so.
+- **Ophidan's remaining untranslated content**: the `10900` chain (a leader's death arms a six-second
+  timer on every fugitive), `on_see_user` aggro-on-sight for the leaders, the `_Start_` patterns' random
+  middle-boss selection via `set_condition_spawn_variable`, and the shout string ids.
+- The other 571 unported fights; 880 route spawns; the 12,000 unbound templates.
+
+### Verification
+
+Build clean. Reverting the fleeing inference fails exactly the three leader rows; removing the
+last-waypoint branch fails all three patrols. Full suite **2,150 passing** (nine new), 1 skipped.
