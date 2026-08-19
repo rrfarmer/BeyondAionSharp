@@ -1151,6 +1151,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         => SpawnAround(GetPosition(), npcId, spawnId, count, range, liveSeconds);
 
     /// <summary>
+    /// <c>spawn ... SPAWN_LOCATION_MY_POINT</c> with retail's <c>dir</c>: at this NPC's feet, facing a
+    /// direction of its own rather than inheriting the spawner's.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="SpawnNear"/> hands the new NPC the spawner's heading, which is right for a wave of adds
+    /// and wrong for anything that has to point somewhere. Tiamat Stronghold's siege weapons are the case
+    /// that forced it: each destroyed Vritra cannon leaves a player-usable one behind, and retail gives
+    /// every one of the eleven its own <c>dir</c> — 165, 50, 90, 35, 50, 0, 153, 40, 150, 105, 0 — because
+    /// a siege weapon aimed the wrong way is furniture. Degrees, converted by
+    /// <see cref="PositionUtil.ConvertAngleToHeading"/>.
+    /// </remarks>
+    public void SpawnFacing(int npcId, int spawnId, int degrees, int liveSeconds)
+    {
+        WorldPosition here = GetPosition();
+        VisibleObject? spawned = Spawn(npcId, here.GetX(), here.GetY(), here.GetZ(),
+            (sbyte)PositionUtil.ConvertAngleToHeading(degrees));
+        Track(spawnId, liveSeconds, spawned);
+    }
+
+    /// <summary>
     /// <c>spawn_on_target target_obj=OBJI_SELF</c> with <c>attack_target_after_spawn</c>: an NPC that
     /// appears at this one's feet and immediately attacks <em>it</em>.
     /// </summary>

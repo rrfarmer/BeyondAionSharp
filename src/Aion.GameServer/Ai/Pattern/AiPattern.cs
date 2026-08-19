@@ -333,6 +333,22 @@ public static class When
         && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), param, metres);
 
     /// <summary><c>is_npc_state(NPCI_SELF, NPC_STATE_ATTACK)</c> — already in a fight.</summary>
+    /// <summary>
+    /// <c>is_user</c> on a death handler — true when a player did the damage that mattered.
+    /// </summary>
+    /// <remarks>
+    /// Retail guards its death rewards with this so that only a kill by players pays out. Tiamat
+    /// Stronghold's siege weapons are the clearest case: each leaves a usable cannon behind, and without
+    /// the guard a reset or a cleanup would litter the field with artillery nobody earned.
+    /// <para>
+    /// Backed by <see cref="PatternAi.Killer"/>, which is whoever did the most <em>player</em> damage. A
+    /// death with no player damage recorded is therefore not a user kill, which is the intended reading
+    /// and also the reason this cannot be exercised through <c>BossAiHarness.Kill</c> — that records no
+    /// damage on purpose, because the reward path it would otherwise run needs a database.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition KilledByPlayer => ai => ai.Killer != null;
+
     public static PatternCondition Fighting => ai => ai.InCombat;
 
     /// <summary><c>is_npc_state(NPCI_SELF, NPC_STATE_IDLE)</c> — standing about.</summary>
@@ -508,6 +524,13 @@ public static class Do
     public static PatternAction SpawnOnPath(int npcId, int spawnId, string pathName,
         float range = 0f, int liveSeconds = 0)
         => ai => ai.SpawnOnPath(npcId, spawnId, pathName, range, liveSeconds);
+
+    /// <summary>
+    /// <c>spawn</c> at <c>SPAWN_LOCATION_MY_POINT</c> with retail's <c>dir</c> in degrees, for a spawn
+    /// that has to face a particular way rather than inherit the spawner's heading.
+    /// </summary>
+    public static PatternAction SpawnFacing(int npcId, int spawnId, int degrees, int liveSeconds = 0)
+        => ai => ai.SpawnFacing(npcId, spawnId, degrees, liveSeconds);
 
     /// <summary><c>spawn</c> at <c>SPAWN_LOCATION_MY_POINT</c>, scattered within <paramref name="range"/>.</summary>
     public static PatternAction SpawnNear(int npcId, int spawnId, int count = 1, float range = 0f, int liveSeconds = 0)

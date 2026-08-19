@@ -30112,3 +30112,68 @@ same run, which is exactly what a list-that-fails-when-it-changes is for. Its li
   guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert
   `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine
   web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Counting the death spawns, now that one can be tested
+
+Fixing `BossAiHarness.Kill` made a whole category worth enumerating for the first time, so
+`audit_death_spawns.py` counts retail spawn actions under `on_die`, `on_killed_by_user` and
+`on_killed_by_npc`. Raw, that is **4,983 actions across 1,479 patterns**, which is not a work list. Two
+new filters cut it to something readable, and both came from reading a row that turned out to be nothing.
+
+**Heralds.** The four Draupnir Cave adjutants each "spawn" `IDDF3_BroadNPC_System` when they die. Its
+entire pattern is `broadcast_message` and `despawn_self` — retail's way of sending a message — and
+`DraupnirCaveInstance.OnDie` already counts the four kills, sends the four messages and spawns Commander
+Bakarma. Detected from the spawned npc's **own pattern**, so it does not depend on a naming convention.
+
+**FX markers live on the AI name, not the devname.** Padmarashka's three elite guards each leave
+`IDDramata_01_NPC_08`, a devname with no marker in it at all. Its `ai_name` is
+`IDDramata_NoShowNPC_08`.
+
+> The marker was there the whole time, one field across. Retail names the *behaviour* honestly even where
+> it names the npc blandly — and `FX_WORDS` had only ever been matched against devnames.
+
+That leaves 40, split by what the owner's AI could possibly do: 20 on a shared class, where a death spawn
+**cannot** be happening because no death trigger exists for them, and 20 on their own class, which need
+reading. The audit says which it is instead of guessing.
+
+## The Iron Wall Warfront's siege weapons
+
+The largest honest cluster was eleven, and they are not scenery.
+
+Every `IDF5_TD_War_Vri_Cannon*` and `IDF5_TD_War_Vri_DirectGun*` carries the same rung: `is_user`, then
+one `BIDF5_TD_War_PC_*` at its own point with a `dir`.
+
+> The **PC** is the point. 284869 is a `type="GENERAL"` "pashid reserve aetheric cannon" — **a siege
+> weapon the raid can use.** Destroying the defenders' artillery is how you get your own, and in this
+> port destroying it did nothing whatever. All eleven ran plain `aggressive`.
+
+Each has its own heading — 165, 50, 90, 35, 50, 0, 153, 40, 150, 105, 0 — and a siege weapon pointing the
+wrong way is furniture, so this needed a new action: `Do.SpawnFacing`, retail's `MY_POINT` plus `dir`,
+where `SpawnNear` hands over the spawner's heading. Both mutations are caught: swapping it for
+`SpawnNear` fails two pins, dropping the `is_user` guard fails one.
+
+### A correction to the last entry
+
+It said the killer "is still the killer — `OnDie` and the friend notice both receive it, so
+`OBJI_KILLER` branches work". **That is wrong for `PatternAi.Killer`**, which is
+`GetAggroList().GetMostPlayerDamage()` — and `Kill` records no damage, so it is null.
+
+So `is_user` cannot be exercised through `Kill` at all. It is not a fixable oversight either:
+`HousingService`'s constructor loads houses from the database, so a real reward path cannot run headless.
+The two seams are therefore split on purpose — `HarnessKillTests` proves the controller reaches a death
+branch, and these pins raise the event with damage recorded to prove what the branch does.
+
+Full solution green at 2,828.
+
+**Still missing.**
+
+- **The 12 remaining shared-AI death spawns**, each of which needs a class, and **28 bespoke owners**
+  whose classes need reading to see whether they already do it.
+- **`is_user` and `Kill` remain mutually exclusive in tests.** Any death mechanic guarded on a player
+  kill is pinned one seam short, and will be until the harness can survive `DoReward` — which means
+  standing up or stubbing the housing service.
+- The firing rotations of all eleven weapons, blocked on skill-index resolution as ever.
+- The `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded
+  guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert
+  `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine
+  web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
