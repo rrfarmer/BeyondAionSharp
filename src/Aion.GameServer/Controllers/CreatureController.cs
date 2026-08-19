@@ -196,7 +196,7 @@ public abstract class CreatureController : VisibleObjectController
         // Retail's on_spelled, which aionemu has no event for. An Effect is what distinguishes a skill
         // from a swing, so this is the one place in the damage path that can tell them apart.
         if (effect != null)
-            GetOwner().GetAi().OnSpelled(attacker, effect.GetSkillId());
+            GetOwner().GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Spelled, attacker);
 
         GetOwner().GetAggroList().AddDamage(attacker, damage, notifyAttack, hopType);
 

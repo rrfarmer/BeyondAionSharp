@@ -54,12 +54,13 @@ public class ShugoTombImperialObeliskAI : GeneralNpcAI, HpPhases.PhaseHandler
 
     /// <summary>
     /// Retail hangs both rungs on on_attacked AND on_spelled. Damage that carries an Effect already reaches
-    /// HandleAttack through the aggro path, but a spell that deals no damage adds no hate and so raises only
-    /// this event -- which is the case aionemu, having no on_spelled, could not express.
+    /// HandleAttack through the aggro path; a spell that deals no damage adds no hate and reaches neither --
+    /// and it does not reach the Spelled event either, because that is raised from the damage path and a
+    /// damageless skill never enters it. This hook is the one that fires for every skill that lands.
     /// </summary>
-    protected override void HandleSpelled(Creature caster)
+    public override void OnEffectApplied(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
-        base.HandleSpelled(caster);
+        base.OnEffectApplied(effect);
         AdvanceRungs();
     }
 

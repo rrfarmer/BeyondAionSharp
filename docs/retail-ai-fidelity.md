@@ -27821,3 +27821,74 @@ version of that test would have passed against the broken arithmetic.
 - **The raise site is damage-only.** `CreatureController` raises `Spelled` where an `Effect` accompanies
   damage. A skill that lands with no damage at all — a pure dispel, which is exactly what the twin
   protectors answer — may not reach it, and that wants checking before those rungs are written.
+
+## Correction: `is_event_skill_id` was never blocked, and the taunt was never missing
+
+The previous two entries are wrong in their central claim, and this one retracts them. Both are left in
+place above because the reasoning that produced them is the useful part.
+
+**The claim was**: `is_event_skill_id` cannot be expressed here, because `CreatureController` raises
+`Spelled` with the attacker and not the skill, and therefore 379 npcs are blocked on threading a skill id
+through that event. So it was threaded through — `AI.OnSpelled(caster, skillId)`, a `[ThreadStatic]` field
+on `AbstractAI`, and Brigade General Laksyaka's `IDTiamat_Rakshaka` provoke rung built on top of it.
+
+**All of that is reverted.** Three things came out in order, each undoing more of it.
+
+**One: `Spelled` is the wrong hook, and it is not the only one.** `Effect.ApplyEffect` already ends with
+`effected.GetAi().OnEffectApplied(this)` — a hook that fires once for every skill that lands, carrying the
+whole effect, skill id included. **And `YumeAI`, `IceChunkAI`, `AhserionAI` and the two `Lv*HumanBeritraAI`
+classes already switch on `effect.GetSkillId()` inside it.** Those are the same classes the audit had
+listed as affected by `is_event_skill_id` — `yume` keys on 21463 and 21465, which are exactly the
+`world_iu_Heart` devnames resolved last commit, and `Lv1HumanBeritraAI` keys on 20834, which is
+`IDSeal_PCGuard_Dispel_All`. **The mechanic was already here, under aionemu's name for it.** The tool
+that resolved the devnames is still right and still useful; the conclusion drawn from it was not.
+
+**Two: the hook that was added would rarely have fired.** Every `OnAttack` caller in the skill engine is
+a damage effect — `DamageEffect`, `BleedEffect`, `PoisonEffect`, the drains and procs. A skill that deals
+no damage never enters the damage path, so it never raises `Spelled` at all. Which means the *previous*
+commit is wrong too: the imperial obelisk's `HandleSpelled`, added specifically for "a spell that deals no
+damage", could not fire for one. **It has been moved to `OnEffectApplied`**, and its pin now drives that
+hook. That is the one change here that fixes a real defect rather than removing an invented one.
+
+**Three: Laksyaka's taunt is already implemented, in the skill.**
+
+```xml
+<skill_template skill_id="20866" name="Ghost Shout" ...>
+  <effects>
+    <hostileup value="4000" hopb="50000" hopa="1000" temp_value="500000" .../>
+```
+
+`hostileup` *is* `switch_target`. Retail splits the taunt across skill data and AI pattern; this port
+carries it in the skill, and it works today. The rung would have added a second taunt of `int.MaxValue` on
+top, overriding four deliberately chosen numbers with a saturating one. **This is exactly the case
+CLAUDE.md warns about** — C# that looks like it is missing something is often a faithful port, and the
+check is to read the data before writing the code. Reading the pattern is not enough; the skill it names
+had to be read too.
+
+**What survives, and why.**
+
+> **`AggroInfo.AddHate` was `_hate += hate` on a signed int followed by a clamp of anything under one back
+> up to one.** Add a large value to an attacker who already has hate and it wraps negative, and the clamp
+> pins them to **1** — the more hate added, the lower they end up. Widened to `long` and saturating.
+
+That is a genuine defect and it is kept, but it now has its own pins in
+`AggroInfoHateArithmeticTests` rather than borrowing Laksyaka's — three of them, covering the ordinary
+path unchanged, the saturation, and that saturation is stable under a second large addition. Nothing in
+the server passes a value that reaches it today, which is why it had never been seen; it is kept because
+wrapping to the bottom of the hate list is not behaviour anyone intended, not because something needs it.
+
+**Pins**: three new for the arithmetic, one obelisk pin rewritten to the correct hook, three mutations,
+all three caught. Full solution green at 2,737. The Laksyaka pins are removed along with the rung they
+covered.
+
+**Still missing.**
+
+- **A real look at whether any `is_event_skill_id` rung is actually absent.** The count of 379 npcs stands,
+  but "affected" was never "missing" — several were already implemented and at least one is carried in
+  skill data instead. The honest next step is to check the resolved skill id of each rung against both
+  `OnEffectApplied` overrides *and* the skill's own `<effects>`, and only then report a gap. That is a
+  cheap tool and it should exist before any more of these are written.
+- **`on_see_spell`**, still with no counterpart and still unsized.
+- The `Spelled` AI event remains raised only from the damage path. Nothing depends on it now, but it is a
+  trap for the next reader, and either it should be raised from `ApplyEffect` alongside `OnEffectApplied`
+  or it should be documented at the raise site as damage-only.

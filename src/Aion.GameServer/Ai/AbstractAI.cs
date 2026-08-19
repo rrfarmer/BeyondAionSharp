@@ -135,33 +135,6 @@ public abstract class AbstractAI : AI
         }
     }
 
-    /// <summary>
-    /// The skill currently being handled by <see cref="HandleSpelled"/>, or 0 outside one. Held in a field
-    /// rather than passed down so that <see cref="OnCreatureEvent"/> keeps doing the state, recursion-depth
-    /// and logging work for this event exactly as it does for every other; a handler that does not care
-    /// about the skill needs no change. It is saved and restored around the dispatch, so a handler that
-    /// spells something back does not corrupt the value its own caller is still reading.
-    /// </summary>
-    [ThreadStatic]
-    private static int spelledSkillId;
-
-    public void OnSpelled(Creature caster, int skillId)
-    {
-        int previous = spelledSkillId;
-        spelledSkillId = skillId;
-        try
-        {
-            OnCreatureEvent(AiEventType.Spelled, caster);
-        }
-        finally
-        {
-            spelledSkillId = previous;
-        }
-    }
-
-    /// <summary>Which skill landed, valid only inside <see cref="HandleSpelled"/>. 0 when unknown.</summary>
-    protected static int GetSpelledSkillId() => spelledSkillId;
-
     public void OnCreatureEvent(AiEventType @event, Creature creature)
     {
         if (creature == null)

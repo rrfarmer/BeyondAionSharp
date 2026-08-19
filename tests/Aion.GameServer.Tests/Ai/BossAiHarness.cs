@@ -216,6 +216,15 @@ public sealed class BossAiHarness : IDisposable
 	/// the wrong reason. Count swings with a bare <c>OnCreatureEvent(AiEventType.Attack, …)</c> and
 	/// rely on <see cref="Engage"/>'s hate to hold the fight open.
 	/// </remarks>
+	/// <summary>
+	/// An <see cref="Aion.GameServer.SkillEngine.Model.Effect"/> for one skill, to drive
+	/// <c>OnEffectApplied</c> -- the hook that answers retail's <c>on_spelled</c>. Nothing is applied; the
+	/// effect is only the carrier for the skill id, which is what <c>is_event_skill_id</c> tests.
+	/// </summary>
+	public static Aion.GameServer.SkillEngine.Model.Effect EffectOf(Creature effector, Creature effected, int skillId) =>
+		new Aion.GameServer.SkillEngine.Model.Effect(effector, effected,
+			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(skillId), 1);
+
 	public static void Rehate(Npc npc, Creature attacker) => npc.GetAggroList().AddHate(attacker, InitialHate);
 
 	/// <summary>

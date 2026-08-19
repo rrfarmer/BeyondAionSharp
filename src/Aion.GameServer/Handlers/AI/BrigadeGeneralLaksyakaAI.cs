@@ -33,28 +33,6 @@ public class BrigadeGeneralLaksyakaAI : AggressiveNpcAI
         }
     }
 
-    /// <summary>
-    /// Retail's <c>IDTiamat_Rakshaka_Polymorph_Provoke</c>, the taunt this fight hands the raid. Its
-    /// <c>on_spelled</c> rung is priority 99 and DIRECT -- it interrupts whatever he is doing.
-    /// </summary>
-    public const int ProvokeSkillId = 20866;
-
-    /// <summary>Retail's <c>points_to_add</c> on the switch_target: <see cref="int.MaxValue"/>.</summary>
-    public const int ProvokeHate = int.MaxValue;
-
-    /// <summary>
-    /// Retail: <c>switch_target target=OBJI_CASTER percent_to_add=100 points_to_add=2147483647</c> followed
-    /// by <c>attack_most_hating</c> -- which is what <see cref="SummonOrder.Take"/> does. The condition is
-    /// <c>is_event_skill_id</c>, so it answers one skill and no other; without the skill id on the event
-    /// this rung could not be written at all.
-    /// </summary>
-    protected override void HandleSpelled(Creature caster)
-    {
-        base.HandleSpelled(caster);
-        if (GetSpelledSkillId() == ProvokeSkillId)
-            SummonOrder.Take(GetOwner(), caster, ProvokeHate);
-    }
-
     /// <summary>Retail's <c>BTIMERI_INDEX_0</c>: sixteen seconds, and sixteen again after every turn.</summary>
     private static readonly System.TimeSpan EyeFirst = System.TimeSpan.FromSeconds(16);
     private static readonly System.TimeSpan EyeRepeat = System.TimeSpan.FromSeconds(16);

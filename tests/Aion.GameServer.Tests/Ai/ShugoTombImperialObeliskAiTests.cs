@@ -134,20 +134,25 @@ public sealed class ShugoTombImperialObeliskAiTests
 	}
 
 	/// <summary>
-	/// <b>Both rungs answer being spelled, not only being struck.</b> Damage carrying an effect reaches the
-	/// AI through hate anyway; a spell that deals none raises this event and nothing else, and retail hangs
-	/// the same two patterns on <c>on_spelled</c>.
+	/// <b>Both rungs answer any skill that lands, not only a blow.</b>
 	/// </summary>
+	/// <remarks>
+	/// Retail hangs the same two patterns on <c>on_spelled</c>. The hook for that here is
+	/// <c>OnEffectApplied</c>, not the <c>Spelled</c> AI event: that event is raised from the damage path,
+	/// so a skill dealing no damage -- the only case where this matters, since damaging skills already
+	/// reach the AI through hate -- never raises it. <c>OnEffectApplied</c> fires for every skill that
+	/// lands, which is why <c>YumeAI</c> and the Beritra classes key on it too.
+	/// </remarks>
 	[Fact]
-	public void ASpellWithNoDamageStillAdvancesTheRungs()
+	public void ASkillThatDealsNoDamageStillAdvancesTheRungs()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc obelisk = Engaged(harness);
 
 		BossAiHarness.SetExactPercent(obelisk, 68);
-		obelisk.GetAi().OnCreatureEvent(AiEventType.Spelled, obelisk);
+		obelisk.GetAi().OnEffectApplied(BossAiHarness.EffectOf(obelisk, obelisk, WakingBuff));
 
 		Assert.True(obelisk.GetEffectController().HasAbnormalEffect(FirstRungBuff),
-			"being spelled did not advance the obelisk's rungs, so a caster-only fight never buffs it");
+			"a damageless skill did not advance the obelisk's rungs, so a caster-only fight never buffs it");
 	}
 }
