@@ -27940,3 +27940,77 @@ best-understood: `IDSeal_PCGuard_Dispel_All` makes the protector spawn `BIDSeal_
 point and despawn, a phase change on a dispel. It needs the spawn devname resolved to an npc id, which is
 the same kind of join `skill_base.xml` turned out to be, and has not been looked for yet. And
 `on_see_spell` is still unsized.
+
+## The spawn devnames resolve too, and the first thing they found was a 33× rare drop
+
+`skill_base.xml` answered "which skill does this rung test". The obvious companion question — **which npc
+does this boss summon** — turned out to need no new file at all.
+
+**`ai_binding.tsv` is a devname -> npc_id table in its own right.** It lists every npc that carries an AI
+pattern, 69,184 of them, and retail's `spawn` action names its target the same way:
+
+```xml
+<spawn><npc_nameid>BIDSeal_Twin_P_Source</npc_nameid><num_to_spawn>1</num_to_spawn>...
+```
+
+> **6,457 distinct devnames are referenced by spawn actions across 17,869 uses, and 92% resolve.**
+
+`BIDSeal_Twin_P_Source` is npc 855708. Every add, every wave, every hazard twin in the pattern data is now
+a number this port can check itself against.
+
+**`audit_summon_ids.py`** does that check: the npc ids a C# class names as literals, against the ids its
+npcs' retail patterns spawn.
+
+**The first version was useless and the reason is worth keeping.** Aggregating by AI class put
+`guard_reinforcement` at the top with **220 unnamed ids** — because that class serves hundreds of npcs
+across dozens of patterns, and fortress guards take their ids from spawn data keyed by race and location,
+never from literals. Classes shared by many patterns are infrastructure and every one of their ids reads
+as missing. The tool now skips classes serving more than three patterns; 69 are set aside that way, and
+the remaining 256 are named bosses where the ids *are* written down.
+
+**And the top row after that was Grogget, who is blocked on `on_arrived_at_waypoint`** — his whole
+encounter, stigma stones included, hangs off waypoint indices, the same engine gap as Muragan and
+Lahulahu. Skipped for the same reason.
+
+### The Mysterious Crate
+
+`ND2_CheatboxSu`, on npc 211801, is six `on_killed_by_user` rungs tried in priority order, each an
+independent `test_probability` that ends the chain when it passes:
+
+| rung | chance | what comes out |
+|---|---|---|
+| 6 | **1%** | chaos dracus (211800) |
+| 5 | 20% | **six** oozing clodworms (211799) |
+| 4 | 20% | cursed muku + miku + camu (211797, 211796, 211795) |
+| 3 | 20% | mumu zoo + mumu mon (211794, 211793) |
+| 2 | 9% | arrogant amurru (211798) |
+| 1 | **no condition** | elroco (211792) |
+
+Ours was `Rnd.Get(1, 3)` over three npcs — elroco, one clodworm, chaos dracus.
+
+> **Chaos dracus at one in three, where retail gives one in a hundred.** The rarest thing in the crate,
+> thirty-three times too common. One clodworm instead of six. And the mosbear family, the mumu pair and
+> the amurru could not come out of the crate at all.
+
+The lowest rung carrying no condition is the detail that makes the ladder read correctly: the crate always
+produces something, and the elroco — the least interesting outcome — is the commonest, at roughly 46%
+once the rungs above it have had their turn.
+
+**Pins** — four, five mutations, all caught, and the statistical ones are deliberately loose. The dracus
+pin allows thirty in three hundred crates against an expectation of three; the old roll produced about a
+hundred, so it fails on the defect and not on a run of luck. It was run three times to check. The group
+pins assert that clodworms arrive six at a time and that the mosbear and mumu groups arrive whole, and
+each carries a **"saw it at least once"** guard, because an assertion inside an `if` that never runs is a
+pin that passes on an empty set — a mistake made four times in this suite already.
+
+**Still missing.**
+
+- **229 of the 256 focused classes disagree with their pattern**, and that is a reading list, not a defect
+  list. Three innocent explanations are in the tool's docstring, and the FX/DMG collapse is the biggest:
+  retail spawns an effect controller and a damage twin where this port collapses both into one npc, so a
+  correct class shows a missing id. Nothing here should be changed without reading the pattern first --
+  which is exactly what the crate needed, and it took one reading to see.
+- **`on_arrived_at_waypoint`** now blocks a third named encounter. Grogget's stigma stones, Lahulahu's
+  wave and Muragan's despawn all wait on the walker controller raising arrival at a waypoint index.
+  That single engine gap is now the most expensive missing piece in this work.
+- The 8% of spawn devnames that do not resolve — treasure boxes and gate props, by the look of the names.
