@@ -26172,3 +26172,47 @@ the Popuchin pair: an assertion whose subject never exists is not an assertion.
 indices. Neither is reachable. The `broadcast_message 23002` the leader sends on its wounded rungs has
 no listener implemented either — nothing in the pods' pattern answers it, so it may be addressed to
 something outside this pair, which has not been traced.
+
+## `Assert.All` over an empty sequence, which has now bitten four times
+
+Unlike the absence-assertion shape from two commits ago — which turned out to be common in sound pins
+and produced no defects — this one has a definite rule: **`Assert.All` over an empty sequence passes**,
+so a pin whose subject is a collection of spawned npcs asserts nothing at all when the spawn fails. That
+is exactly the failure such pins exist to catch.
+
+It has been hit four times in this stretch: the `DrainQueuedSkills` pair on Tahabata's hazards, the two
+"he throws none" pins on Popuchin, and the Ahserion pod z-offset pin last commit, which ranged over a
+sequence that is always empty in the harness.
+
+A scan for `Assert.All` with nothing earlier in the same test proving the sequence non-empty finds
+**eight**, three of them boss pins. All three are genuinely at risk, and one of them is worse than the
+others: `ThePortalsExpireOnRetailsSeventySeconds` takes a snapshot of the standing portals and then makes
+**both** of its assertions range over that snapshot, so an empty snapshot satisfies the entire test —
+it would report that portals expire on time in a fight that never placed any.
+
+All three now assert the count first, at the number their sibling pins already establish (two cores,
+three swarm, three portals).
+
+**What was proven, and what was not.** Each guard was probed by suppressing the spawn it depends on and
+running the pin with and without it:
+
+| pin | spawn suppressed, guard removed | with the guard |
+|---|---|---|
+| `TheyArriveAlreadyFighting` | **passes on nothing** | fails |
+| `ThePortalsExpireOnRetailsSeventySeconds` | fails | fails |
+| `TheCoresArriveAtTheCorridorHead` | passes | passes |
+
+Only the first is a demonstrated hole closed. For the portals, suppressing every portal spawn makes the
+pin fail for some other reason before the vacuity matters. For the cores, **the mutation never actually
+suppressed them** — two cores were still standing — so that row measures nothing about either version;
+two attempts at a mutation that would stop them both failed to, and the branch that places them has not
+been found.
+
+So: one guard proven, two added on the argument rather than the evidence. They are strictly stronger
+statements than what they replace and cost nothing, but they are recorded here as unproven rather than
+counted as fixes.
+
+**Still missing.** The five remaining rows are outside the AI tests — one in `InstanceScalerPortTests`
+and four in the player-protection trace reader — and are unread. And the scan itself is a one-off:
+unlike the shape it looks for, it has not been kept as a tool, because a single rule ("`Assert.All`
+wants a count in front of it") is better enforced by knowing it than by running something.

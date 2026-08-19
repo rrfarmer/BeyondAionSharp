@@ -104,6 +104,10 @@ public sealed class XipetoClodwormAiTests
 		// A hundred and one, not a hundred: retail's hatepoints_to_add is a hundred and our
 		// AttackAfterSpawn adds one more when the summon actually starts swinging. Pinned as read
 		// rather than rounded, so a change to either number shows up here.
+		// Assert.All over an empty sequence passes, so the count comes first: without it this
+		// pin holds when nothing spawns at all, which is the failure it exists to catch.
+		Assert.Equal(3, Live(harness, Swarm61).Count);
+
 		Assert.All(Live(harness, Swarm61), swarm =>
 		{
 			Assert.Same(raider, swarm.GetTarget());

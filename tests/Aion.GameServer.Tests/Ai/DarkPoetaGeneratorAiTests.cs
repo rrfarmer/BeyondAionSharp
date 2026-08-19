@@ -90,6 +90,10 @@ public sealed class DarkPoetaGeneratorAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(6));
 
+		// Assert.All over an empty sequence passes, so the count comes first: without it this
+		// pin holds when nothing spawns at all, which is the failure it exists to catch.
+		Assert.Equal(2, LiveCores(harness).Count);
+
 		Assert.All(LiveCores(harness), core =>
 			Assert.True(Distance(core, generator) > 40f,
 				$"a core stood {Distance(core, generator):0} metres from the generator, "

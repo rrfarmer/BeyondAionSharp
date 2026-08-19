@@ -110,6 +110,10 @@ public sealed class YamennesAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(60));
 		var first = Standing(harness).ToHashSet();
 
+		// Both assertions below range over `first`, so an empty snapshot satisfies the whole pin --
+		// it would report that portals expire correctly in a fight that never placed any.
+		Assert.Equal(3, first.Count);
+
 		harness.Clock.Advance(TimeSpan.FromSeconds(69));
 		Assert.All(first, portal => Assert.Contains(portal, Standing(harness)));
 
