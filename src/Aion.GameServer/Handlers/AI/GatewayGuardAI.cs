@@ -56,6 +56,13 @@ public class GatewayGuardAI : PatternAi
     private static readonly Traps Elyos = new Traps(281472, 281473, 281474, 281475);
     private static readonly Traps Asmodian = new Traps(281482, 281483, 281484, 281485);
 
+    /// <remarks>
+    /// <b>This table is why binding a guard is two edits and not one.</b> The pattern is shared, the
+    /// traps are not, so a guard bound without an entry here runs the whole ladder and lays nothing —
+    /// which looks like a working port. Pasiphae and Akacha were found that way, on <c>aggressive</c>
+    /// while their three siblings on each side were bound; they are the level-65 pair of an otherwise
+    /// level-55 set, which is presumably how they were missed.
+    /// </remarks>
     private static readonly Dictionary<int, Traps> ByGuard = new Dictionary<int, Traps>
     {
         // Inggison
@@ -63,12 +70,14 @@ public class GatewayGuardAI : PatternAi
         [296488] = Elyos,   // lord skyrose
         [296489] = Elyos,   // lord agios
         [296490] = Elyos,   // lady eiros
+        [296491] = Elyos,   // lady pasiphae
 
         // Gelkmaros
         [296453] = Asmodian, // matigium
         [296492] = Asmodian, // sands kukinsia
         [296493] = Asmodian, // sibarum darkwing
         [296494] = Asmodian, // revolver blackhands
+        [296495] = Asmodian, // hora akacha
     };
 
     /// <summary>Retail's <c>SPAWN_ID_NONE</c>: nothing clears them as a group, the minute does.</summary>

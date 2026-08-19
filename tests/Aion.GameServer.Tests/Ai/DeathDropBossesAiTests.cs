@@ -29,6 +29,9 @@ public sealed class DeathDropBossesAiTests
 	private const int StrangeObject = 280714;
 
 	private const int Takahan = 216884;
+
+	/// <summary>The other half of the same pattern, found a pass later by audit.</summary>
+	private const int Nupakun = 216883;
 	private const int ExplosiveTrap = 281619;
 
 	private static BossAiHarness NewHarness() =>
@@ -121,10 +124,12 @@ public sealed class DeathDropBossesAiTests
 	/// The player stands forty metres out: far enough that a trap laid on him cannot be mistaken for
 	/// one at the boss's feet, and inside retail's fifty-metre <c>valid_distance</c>.
 	/// </remarks>
-	private static (BossAiHarness, Npc, Player) TakahanAt(int percent)
+	private static (BossAiHarness, Npc, Player) TakahanAt(int percent) => SurkanaBossAt(Takahan, percent);
+
+	private static (BossAiHarness, Npc, Player) SurkanaBossAt(int npcId, int percent)
 	{
 		BossAiHarness harness = NewHarness();
-		Npc boss = harness.Spawn(Takahan, 300f, 300f, 200f);
+		Npc boss = harness.Spawn(npcId, 300f, 300f, 200f);
 		Player player = harness.SpawnPlayer(340f, 300f, 200f);
 		BossAiHarness.MakeMutuallyKnown(boss, player);
 		harness.Engage(boss, player);
@@ -256,5 +261,37 @@ public sealed class DeathDropBossesAiTests
 			ExplosiveTrap);
 
 		Assert.Equal(1, after.Total);
+	}
+
+	/// <summary>
+	/// <b>Nupakun lays the same trap on the same clock</b>, because he runs the same pattern.
+	/// </summary>
+	/// <remarks>
+	/// He was on <c>aggressive</c> for a pass after Takahan was bound, which is the shape
+	/// <c>audit_unbound_siblings.py</c> exists to catch: one retail pattern,
+	/// <c>Dread02_SurkanaNm06</c>, worn by two npcs in one room, and only one of them wired to it.
+	/// <b>Nothing about this fight needed writing</b> — the pattern was already translated.
+	/// </remarks>
+	[Fact]
+	public void NupakunLaysTheSameTrapAsTakahan()
+	{
+		var (harness, boss, player) = SurkanaBossAt(Nupakun, 50);
+		using BossAiHarness _h = harness;
+
+		Drive(harness, boss, player, 24);
+		Assert.Equal(0, Count(harness, ExplosiveTrap));
+
+		Drive(harness, boss, player, 2);
+		Assert.Equal(1, Count(harness, ExplosiveTrap));
+
+		// And once, not on a loop. Counted by object id, because the trap is an ntrap and takes itself
+		// away — so a live count two minutes on says nothing about how many were laid. The one already
+		// standing when the window opens is one Watch has seen, which is why one is the whole tally and
+		// not one more than it.
+		BossAiHarness.Watched whole = harness.Watch(
+			120, () => { BossAiHarness.Rehate(boss, player); BossAiHarness.KeepAlive(player); },
+			ExplosiveTrap);
+
+		Assert.Equal(1, whole.Total);
 	}
 }

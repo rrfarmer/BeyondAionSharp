@@ -26,6 +26,19 @@ public sealed class DefencePostAiTests
 	private const int Combatant = 233475;
 	private const int Scout = 233476;
 
+	/// <summary>
+	/// The three listeners on already-covered patterns that were never bound.
+	/// </summary>
+	/// <remarks>
+	/// 233481 and 233485 share <c>IDF5_U1_War_Vri_Def01_Re_Fi_65_Ae</c> with the bound 233475 and
+	/// 233479; 233474 shares <c>..._Re_Wi_...</c> with the bound 233478 and 233484. The class's own
+	/// remarks say "eight npcs across five retail patterns", which was an accurate count of what had
+	/// been bound rather than of what runs those patterns.
+	/// </remarks>
+	private const int SouthernCombatant = 233481;
+	private const int GuardPostCombatant = 233485;
+	private const int DefencePostMagus = 233474;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
 			.WithAi(typeof(DefencePostFlagAI), typeof(DefencePostGuardAI), typeof(AggressiveNpcAI),
@@ -148,5 +161,35 @@ public sealed class DefencePostAiTests
 		Strike(flag, raider);
 
 		Assert.Equal(100, latecomer.GetAggroList().GetHate(raider));
+	}
+
+	/// <summary>
+	/// <b>The three that were missed answer the post's call exactly as their twins do.</b>
+	/// </summary>
+	/// <remarks>
+	/// One pattern name per pair, so the answer is identical by construction — what is being pinned is
+	/// that they are wired to it at all. <c>233474</c> is included though our spawn data never places
+	/// it: it runs a covered pattern, and leaving one of three on <c>aggressive</c> because it happens
+	/// not to be spawned today is how this class came to be missing two that are.
+	/// </remarks>
+	[Theory]
+	[InlineData(SouthernCombatant)]
+	[InlineData(GuardPostCombatant)]
+	[InlineData(DefencePostMagus)]
+	public void TheMissedGuardsAnswerTheCallToo(int npcId)
+	{
+		BossAiHarness harness = NewHarness();
+		using BossAiHarness _h = harness;
+
+		Npc flag = harness.Spawn(Flag, 300f, 300f, 200f);
+		Npc guard = harness.Spawn(npcId, 320f, 300f, 200f);
+		Player raider = harness.SpawnPlayer(300f, 260f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(flag, guard);
+		Assert.Null(guard.GetTarget());
+
+		Strike(flag, raider);
+
+		Assert.Same(raider, guard.GetTarget());
+		Assert.Equal(100, guard.GetAggroList().GetHate(raider));
 	}
 }

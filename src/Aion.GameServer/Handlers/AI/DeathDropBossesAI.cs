@@ -82,11 +82,18 @@ public class DeathDropBossAI : PatternAi
 }
 
 /// <summary>
-/// Takahan (216884), the Dredgion surkana boss. Retail pattern <c>Dread02_SurkanaNm06</c>.
+/// Takahan (216884) and Quartermaster Nupakun (216883), the Dredgion surkana bosses. Retail pattern
+/// <c>Dread02_SurkanaNm06</c>, which both of them run.
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md. On plain <c>aggressive</c> with no AI class, and
-/// the <b>explosive trap</b> (281619) his fight is built on reachable by nobody.
+/// the <b>explosive trap</b> (281619) the fight is built on reachable by nobody.
+/// <para>
+/// <b>Nupakun was found a pass later, by audit rather than by hand.</b> He is the same fight —
+/// <c>IDDreadgion_02_DrakanRaKeyNamedA</c> and <c>...NamedB</c>, one pattern between them, same level,
+/// same rating, same room — and he was still on <c>aggressive</c> after Takahan was bound. Nothing
+/// needed writing; the pattern was already translated and only his template attribute was wrong.
+/// </para>
 /// <para>
 /// <b>One trap, once, and only in the middle of the fight.</b> An earlier translation of this class
 /// read the trap branch as a six-second loop; it carries both an <c>is_hp_in_boundary</c> band and a

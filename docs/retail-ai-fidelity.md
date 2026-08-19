@@ -22819,3 +22819,61 @@ pattern. It now merges the whole directory the way `StaticData` does.
 
 Build clean. Reverting the fleeing inference fails exactly the three leader rows; removing the
 last-waypoint branch fails all three patrols. Full suite **2,150 passing** (nine new), 1 skipped.
+
+## Reading the audit down to six rows, and eight npcs that were one attribute from working
+
+The sibling audit shipped at 743 rows, which is not a list anyone reads. Three filters, each learned
+from a specific mistake, cut it to **six patterns and eight loose npcs**:
+
+| filter | learned from |
+|---|---|
+| `--spawned-only` | Ophidan's 16-npc mirror set: same patterns, **spawned nowhere**, so binding it is cosmetic |
+| `--max-class-npcs` | `servant`, `summoner`, `simple_abyssguard` are shared *behaviours* worn by hundreds; two npcs wearing one says nothing about a third |
+| `--max-loose` | `Lizardman_FnA` alone contributed nineteen hundred rows — a generic melee template, not a forgotten sibling |
+
+Commented-out spawn blocks are stripped before counting, deliberately: **three of Ophidan's patrols were
+commented out *because* they had no AI**, so counting them as spawned would have hidden the gap.
+
+### Two false positives, one of which would have been a regression
+
+- **`defensive_cannon`** is a use-item npc whose only action is `switch (GetNpcId())` over two ids.
+  Binding a third would leave an npc that **deletes itself on use and does nothing else** — strictly
+  worse than the `aggressive` it replaced. **A class keyed to specific npcs is evidence against a row.**
+- **`custom_instance_dominator`** is this server's own content. One npc wearing a `custom_*` AI is a
+  decision made here, not evidence about a retail sibling. Now excluded outright.
+
+### Eight bound
+
+- **Quartermaster Nupakun (216883)** — `Dread02_SurkanaNm06`, the same pattern as Takahan, same room,
+  same rating, still on `aggressive` a pass after Takahan was bound. Nothing needed writing.
+- **Lady Pasiphae (296491), Hora Akacha (296495)** — the level-65 pair of an otherwise level-55 gateway
+  guard set. **Binding a gateway guard is two edits, not one**: the pattern is shared and the trap ids
+  are keyed by npc id, so a guard bound without a trap-table entry runs the whole ladder and lays
+  nothing, which reads as a working port.
+- **233481, 233485, 233474** — three defence post guards on patterns already covered. The class's own
+  remarks said "eight npcs across five retail patterns", which was **an accurate count of what had been
+  bound rather than of what runs those patterns**. 233474 is unspawned and bound anyway: leaving one of
+  three on `aggressive` because it is not placed today is how the other two survived.
+- **Captain Wigthor (219874), First Ironlightian Deity General (236022)** — one from each symmetric four
+  of the eight rift guardian heads. `RiftProtectorAI` holds these bosses at **a tenth** of their template
+  health, so the two were not merely missing a mechanic: they stood at their rifts with **ten times the
+  health** the other six have.
+
+The rift pin is written across **all eight**, not just the two that changed, so the next npc added to
+that pattern fails if it is left off the binding — which is exactly how these two survived.
+
+### Still to do
+
+- **233482**, southern approach post scout, runs `IDF5_U1_War_Vri_Def01_Re_Hide_As_65_Ae` — its own
+  pattern with no bound sibling, so it needs reading rather than copying.
+- **297189**, a second Ahserion, spawned only in `900190000_Tag_Match_Test_Level`. A stripped test copy
+  with no `type` or `title_id`; left alone and recorded.
+- **The rows the filters hide.** They are filters, not proofs: `--max-loose` would suppress a genuine
+  find on a pattern that also carries a crowd, and `--spawned-only` hides anything waiting on spawn data.
+  Run without them before believing the list is empty.
+- The other 571 unported fights; 880 route spawns; the 12,000 unbound templates.
+
+### Verification
+
+Build clean. Unbinding any of the four newly pinned npcs turns its pin red. Full suite **2,164 passing**
+(fourteen new), 1 skipped.

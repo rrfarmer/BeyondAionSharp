@@ -21,6 +21,10 @@ public sealed class GatewayGuardAiTests
 	private const int Trigon = 296444;
 	private const int Matigium = 296453;
 
+	/// <summary>The level-65 pair, found on <c>aggressive</c> a pass after their siblings were bound.</summary>
+	private const int LadyPasiphae = 296491;
+	private const int HoraAkacha = 296495;
+
 	private const int ElyosSnare = 281472;
 	private const int ElyosThrow = 281473;
 	private const int ElyosExplosion = 281474;
@@ -176,5 +180,27 @@ public sealed class GatewayGuardAiTests
 		Assert.Equal(1, Count(harness, AsmodianThrow));
 		Assert.Equal(1, Count(harness, AsmodianExplosion));
 		Assert.Equal(1, Count(harness, AsmodianMine));
+	}
+
+	/// <summary>
+	/// <b>The two that were missed lay their own faction's traps too.</b>
+	/// </summary>
+	/// <remarks>
+	/// Pasiphae and Akacha share <c>GwLGuard_FlA</c> and <c>GwDGuard_FlA</c> with the three bound
+	/// guards on each side and were still on <c>aggressive</c>. <b>Binding them is two edits, not
+	/// one</b>: the pattern is shared and the trap ids are not, so a guard added to the template
+	/// without an entry in the class's trap table runs the whole ladder and lays nothing — which reads
+	/// as a working port. This asserts the traps, which is the half that would have been missing.
+	/// </remarks>
+	[Theory]
+	[InlineData(Inggison, LadyPasiphae, ElyosSnare, AsmodianSnare)]
+	[InlineData(Gelkmaros, HoraAkacha, AsmodianSnare, ElyosSnare)]
+	public void TheLevelSixtyFivePairLayTheirOwnFactionsTraps(int mapId, int npcId, int ours, int theirs)
+	{
+		var (harness, _, _) = Engaged(mapId, npcId, 100);
+		using BossAiHarness _h = harness;
+
+		Assert.Equal(1, Count(harness, ours));
+		Assert.Equal(0, Count(harness, theirs));
 	}
 }
