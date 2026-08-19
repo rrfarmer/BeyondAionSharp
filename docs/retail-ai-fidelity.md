@@ -28862,3 +28862,50 @@ audit already skips as infrastructure.
 - **The twelve `path_tiamatdrakan_*` routes**, and the other absent routes behind the 14. These are the
   same shape as Padmarashka's: the npc-to-route binding lives in server-side spawn data this dump does
   not contain.
+
+## Reading a row of the list to the bottom: Lord Beritra's thirteen
+
+`DragonBeritraAI` sits third on `audit_summon_ids.py` with thirteen unnamed ids and one pattern,
+`IDSeal_TrueBoss`. It is the first row read all the way down, and the shape of the answer is worth having
+because most of the remaining 227 will look like it.
+
+**Eleven of the thirteen are FX controllers**, and this port collapses them by design:
+
+| id | what it is | where |
+|---|---|---|
+| 855612, 855436, 855440 | portal-breath control, area-attack damage, initial control | `on_wake_up` |
+| **855753** | rapid-breath control — **eighteen separate rungs spawn it** | `on_battle_timer` |
+| 856061 | rapid-breath control 2 | `on_battle_timer` |
+| 855441, 855539 | success display, guardian-chief reset | `on_killed_by_user` / `_by_npc` |
+| 856350 | "Boss_Failed", live 20 | `on_battle_timer` |
+| 856503 | buff use-check — **not in our npc_templates at all** | `on_message` |
+
+Eighteen rungs spawning one control npc is the FX/DMG collapse in its purest form: retail casts by
+spawning a thing that casts, and this port simply casts.
+
+**Two of the thirteen are real adds, and they are blocked one link back.** Messages **22655** and
+**22656** each bring a "detachment entry" leader and two soldiers — 209732/209733 for one faction,
+209797/209798 for the other — at three fixed points around (141, 516-524, 1750). A squad of NPC guards
+arriving to help.
+
+> **Nothing sends those messages here.** Retail's senders are `IDSeal_Temp_01` and `IDSeal_Temp_02`,
+> bound to npcs **856384** and **856385** — unnamed, `ai="aggressive"`, and **absent from every spawn file
+> in our data**. Their entire job is the broadcast. So the chain is boss ← message ← controller ← nothing.
+
+That is the same shape as Lahulahu's `on_message 6647` and Poppy's invisible marker: the mechanic is
+written and the thing that starts it was never placed. It is one spawn row away from working, and the
+spawn row is a decision about our data rather than a translation of retail's — which is why it is recorded
+rather than invented.
+
+**What this says about the other 227 rows.** A large unnamed-id count is not a large gap. Thirteen ids
+here are eleven collapses, one npc we do not carry, and one real mechanic missing a single spawn.
+**The count measures how much retail spawns, not how much we owe** — and reading one row to the bottom
+was the only way to find that out.
+
+**Still missing.**
+
+- **856384 and 856385**, two spawn rows that would start the detachment mechanic. Both npcs exist; only
+  their placement is absent, and where retail puts them is not in this dump.
+- **856503**, referenced by the pattern and not present in our `npc_templates.xml` at all — the only id in
+  this row that is missing from our data rather than from our code.
+- **227 rows** still unread, now with a better prior for what they contain.
