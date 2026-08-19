@@ -30177,3 +30177,60 @@ Full solution green at 2,828.
   guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert
   `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine
   web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Emptying the "cannot possibly be happening" column
+
+Last entry left 20 death spawns on shared AI classes — the ones where no class and no data could have
+been doing the work, because `<summons>` is keyed on health percentage and has no death trigger. That
+column is now **zero**.
+
+Nine of them were real and are implemented; the rest were furniture the filters had not yet caught.
+
+### One class, nine encounters
+
+They span five instances and have nothing to do with each other, but the mechanic is identical every
+time — on death, put N of something at my own point, optionally scattered, optionally for a while. So the
+structure is one class and the facts are a table, the same split as the guard reinforcements.
+
+| npc | leaves | for |
+|---|---|---|
+| **214700 suspicious boy** | **214701 betrayer villaire** | an hour |
+| 217121 huge gryphu egg | 217089 angry conchi | three minutes |
+| 216953 / 219545 core cannons | five orkanimum fragments | permanently |
+| 212151 lehpar | its assistant | six minutes |
+| 212205 | a mudthorn | ten minutes |
+| 218757 meat barrel | its meat, five metres out | permanently |
+| 231196 / 280946 | a five-second trap where it fell | five seconds |
+
+> **The suspicious boy is not a boy.** Killing him puts *betrayer villaire* where he stood. It is a
+> disguise, and this port let players kill the disguise and walk away from it.
+
+`is_user` is carried per row rather than flattened: four fire only on a player kill, and 214700 fires on
+`on_killed_by_user` **and** `on_killed_by_npc`, which is not the same as being unguarded. Both directions
+are pinned, because guarding everything and guarding nothing would each pass a one-sided test.
+
+### The filters, again from rows that were nothing
+
+**FX markers need both fields checked.** `IDArena_S7_NoShowNPC2_55_Ae` carries the marker in its
+**devname** and runs a pattern that does not; Padmarashka's `IDDramata_01_NPC_08` is the exact opposite.
+Last entry fixed the AI-name half and that let the devname half through — matching one field only ever
+catches half of them.
+
+`Test_` patterns are dropped: NCSoft's scratch content is not an encounter this server owes anything to.
+
+36 rows remain, **all of them on bespoke classes** which may or may not already implement their death
+spawn. That is a reading list, not a defect list, and the audit says so rather than guessing.
+
+Full solution green at 2,833.
+
+**Still missing.**
+
+- **The 36 bespoke owners.** Each needs its class read against its pattern. No shortcut exists — grep
+  cannot tell whether a hand-written `HandleDied` does what the rung says.
+- **`is_user` is still pinned one seam short.** Four rows here and all eleven siege weapons are exercised
+  by raising the death event with damage recorded, never through the controller, because `Kill` cannot
+  do both. Standing up or stubbing `HousingService` is what closes it.
+- The `<summons>` schema's three owed attributes; the 258203/258207 family decision; the 59 stranded
+  guards; 25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert
+  `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine
+  web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

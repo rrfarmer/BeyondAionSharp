@@ -26,7 +26,13 @@ row somebody read by hand:
   `broadcast_message` and `despawn_self`, and `DraupnirCaveInstance.OnDie` already counts the kills,
   sends the four messages and spawns Commander Bakarma. Counting those as missing adds would have sent
   somebody to reimplement a finished encounter.
-* **FX markers are matched on the npc's AI NAME, not its devname.** Padmarashka's three elite guards
+* **FX markers are matched on the devname AND the AI name.** Both are needed and neither is enough.
+  `IDArena_S7_NoShowNPC2_55_Ae` carries the marker in its devname and runs a pattern that does not;
+  Padmarashka's `IDDramata_01_NPC_08` is the exact opposite. Matching one field only lets the other
+  through, which is how both of these reached a hand-read.
+* **`Test_` patterns are dropped** — `Test_JM_Monster_6` and `Test_GHB_ONControl_NPC` are NCSoft's own
+  scratch content, not an encounter this server owes anything to.
+* **FX markers on the AI name specifically:** Padmarashka's three elite guards
   each "spawn" `IDDramata_01_NPC_08` on death — a devname with no marker in it at all, so the FX-word
   list missed it. Its `ai_name` is `IDDramata_NoShowNPC_08`. The marker was there the whole time, one
   field across. Retail names the *behaviour* honestly even where it names the npc blandly.
@@ -164,6 +170,8 @@ def main():
     # its devname carries none. See the Padmarashka note in this module's docstring.
     fx_by_ai = {npc_id for npc_id, pattern in runs.items()
                 if any(w.lower() in pattern.lower() for w in FX_WORDS)}
+    fx_by_devname = {npc_id for devname, npc_id in dev.items()
+                     if any(w.lower() in devname.lower() for w in FX_WORDS)}
     theirs = death_spawns(args.xml, dev)
 
     # An owner is only interesting if this server actually runs it.
@@ -171,11 +179,14 @@ def main():
 
     generic, bespoke = [], []
     for npc_id in live_owners:
+        if runs[npc_id].startswith("Test_"):
+            continue
         spawns = theirs.get(runs[npc_id])
         if not spawns:
             continue
         owed = {sid: n for sid, n in spawns.items()
-                if sid not in furniture and sid not in placed and sid not in heralds and sid not in fx_by_ai}
+                if sid not in furniture and sid not in placed and sid not in heralds and sid not in fx_by_ai
+                and sid not in fx_by_devname}
         if not owed:
             continue
         (generic if ai_of[npc_id] in GENERIC_AI else bespoke).append((npc_id, runs[npc_id], owed))
