@@ -30577,3 +30577,57 @@ Full solution green at 2,592 in the game-server assembly.
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
   blocks; the 44 live disagreements; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two
   spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Half the disagreements were the audit's unit, and head kutol's finale was a quarter of itself
+
+Reading the disagreement list rather than tooling first — the lesson from the last entry — the top rows
+were **Grand Chieftain Kasika**, fixed earlier in this same work, reported fifteen times over.
+
+His bands place 2, 3, 4 and 6 guards, and each is written as that many single-count `<summonGroup>`
+entries, because **a group carries one `x`/`y`/`z`** and each guard needs its own point. The audit
+compared group by group and read every one of them as "count 1-1 vs retail rungs [2]".
+
+> The unit was wrong. **A `<percentage>` band is one health threshold and a retail rung is one condition
+> set; those are the same thing.** Summing within a band is not the aggregation this module's header
+> warns against — that warning is about summing *across* bands, which is a different mistake and still
+> wrong.
+
+Disagreements fall from **52 to 25** without a single data change. Twenty-seven of the fifty-two were the
+comparison, not the port.
+
+### Head kutol, and a wave four times too small
+
+Retail's five bands are 90/75/60/45/30, each bringing **one** counter npc and a growing number of
+attendants — 1+2, 1+2, 1+3, 1+4 — and then twenty of a second summon at thirty.
+
+| band | retail | ours |
+|---|---|---|
+| 90 | 1 counter, 2 attendants | **2 counters, 1 attendant** |
+| 75 | 1 counter, 2 attendants | **fired at 70** |
+| 60, 45 | 1 counter, 3 then 4 | correct |
+| 30 | **20** | **5** |
+
+The top two had the counts the wrong way round, the second opened five points late — so between 75 and 71
+he brought nothing where retail brings a wave — and **the finale, the largest number in the encounter,
+was a quarter of itself.**
+
+**Not expressible, and not pretended otherwise:** retail hangs every band on `on_arrived_at_waypoint` as
+well as the threshold, so a band only opens when he reaches a point on his round. Ours fire the instant
+the threshold is crossed.
+
+One pin had to be rewritten: at 74 both the 90 and 75 bands have already opened, so an absolute count
+there says nothing about where the second one starts. It measures the **delta** across the threshold
+instead. 3/3 mutations caught, through the runner.
+
+Full solution green at 2,595 in the game-server assembly. Disagreements now 20.
+
+**Still missing.**
+
+- **The waypoint half of head kutol's bands**, and the same for any other summoner whose retail trigger
+  is an arrival rather than a threshold — the `<summons>` schema has no vocabulary for it, which is the
+  fourth thing that schema now owes.
+- The 20 remaining disagreements; the 34 non-route absence claims; the 33 named death-spawn rows;
+  `is_user` pinned one seam short; the 258203/258207 family decision; the 59 stranded guards; 25 guards
+  with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml` blocks; the
+  eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the
+  seven absent npc rows.

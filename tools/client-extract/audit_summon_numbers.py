@@ -71,22 +71,51 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 PATTERN = re.compile(r"<name>([^<]+)</name>(.*?)(?=<name>|\Z)", re.S)
 SPAWN_ACTION = re.compile(r"<spawn>(.*?)</spawn>", re.S)
 AI_BLOCK = re.compile(r'<ai npcId="(\d+)">(.*?)</ai>', re.S)
+PERCENTAGE = re.compile(r'<percentage percent="(\d+)"[^>]*>(.*?)</percentage>', re.S)
 GROUP = re.compile(r'<summonGroup ([^/>]*)/?>')
 
 
 def our_groups():
-    """summoner npc id -> [(spawned npc id, minCount, maxCount, distance, schedule)]."""
+    """summoner npc id -> [(spawned npc id, min, max, distance, schedule)], summed within each band.
+
+    **THE BAND IS THE UNIT ON OUR SIDE, AS THE RUNG IS ON RETAIL'S.**
+
+    A `<percentage>` block that wants four guards can say so in two ways: one group with
+    `minCount="4"`, or four groups of one. Both are used in this file, and the second is not a quirk --
+    a group carries a single `x`/`y`/`z`, so a band whose adds each need their own point *has* to be
+    written as several groups.
+
+    Comparing group by group therefore reported Grand Chieftain Kasika as fifteen separate defects:
+    2, 3, 4 and 6 guards, each written as that many single-count groups at distinct coordinates, each
+    read as "count 1-1 vs retail rungs [2]". His data is exactly right and had been corrected earlier in
+    this same work.
+
+    Summing **within one band** is not the aggregation this module's header warns about. That warning is
+    about summing **across** bands -- merging "two at seventy-five" with "two at fifty" into four --
+    which destroyed the comparison and dropped agreement to 22. A band is one health threshold, and
+    retail's rung is one condition set; those are the same unit.
+    """
     path = REPO / "game-server" / "data" / "static_data" / "ai" / "spawn_helpers.xml"
     out = collections.defaultdict(list)
     for block in AI_BLOCK.finditer(path.read_text(encoding="utf-8", errors="replace")):
         owner = block.group(1)
-        for group in GROUP.finditer(block.group(2)):
-            attrs = dict(re.findall(r'(\w+)="([^"]*)"', group.group(1)))
-            if "npcId" not in attrs:
-                continue
-            lo = int(attrs.get("minCount", 1))
-            out[owner].append((attrs["npcId"], lo, int(attrs.get("maxCount", lo)),
-                               float(attrs.get("distance", 0)), int(attrs.get("schedule", 0))))
+        for band in PERCENTAGE.finditer(block.group(2)):
+            totals = collections.Counter()
+            highs = collections.Counter()
+            distances = {}
+            schedules = {}
+            for group in GROUP.finditer(band.group(2)):
+                attrs = dict(re.findall(r'(\w+)="([^"]*)"', group.group(1)))
+                if "npcId" not in attrs:
+                    continue
+                npc_id = attrs["npcId"]
+                lo = int(attrs.get("minCount", 1))
+                totals[npc_id] += lo
+                highs[npc_id] += int(attrs.get("maxCount", lo))
+                distances.setdefault(npc_id, float(attrs.get("distance", 0)))
+                schedules.setdefault(npc_id, int(attrs.get("schedule", 0)))
+            for npc_id, lo in totals.items():
+                out[owner].append((npc_id, lo, highs[npc_id], distances[npc_id], schedules[npc_id]))
     return out
 
 

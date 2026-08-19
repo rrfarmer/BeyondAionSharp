@@ -511,15 +511,24 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Head kutol (IDForest_ManduriT_Leaf_Named). Retail's five bands are 90/75/60/45/30 and each brings
+	     ONE counter npc and a growing number of Sum1: 1+2, 1+2, 1+3, 1+4, then twenty Sum2 at thirty.
+	     The 60 and 45 bands here were already right. The other three were not: the top two had the
+	     counts the wrong way round (two counters and one Sum1 instead of one and two), the second band
+	     fired at 70 where retail fires at 75, and the finale placed five of Sum2 where retail places
+	     TWENTY — a quarter of the wave the fight ends on.
+	     NOT EXPRESSIBLE HERE: retail hangs every band on on_arrived_at_waypoint as well as the health
+	     threshold, so the band only opens when he reaches a point on his round. This schema is health
+	     only, so ours fire as soon as the threshold is crossed. See docs/retail-ai-fidelity.md. -->
 	<ai npcId="217277">
 		<summons>
 			<percentage percent="90" skillId="19507">
-				<summonGroup npcId="282304" minCount="2" distance="5"/>
-				<summonGroup npcId="282302" distance="5"/>
+				<summonGroup npcId="282304" distance="5"/>
+				<summonGroup npcId="282302" minCount="2" distance="5"/>
 			</percentage>
-			<percentage percent="70" skillId="19507">
-				<summonGroup npcId="282304" minCount="2" distance="5"/>
-				<summonGroup npcId="282302" distance="5"/>
+			<percentage percent="75" skillId="19507">
+				<summonGroup npcId="282304" distance="5"/>
+				<summonGroup npcId="282302" minCount="2" distance="5"/>
 			</percentage>
 			<percentage percent="60" skillId="19507">
 				<summonGroup npcId="282305" distance="5"/>
@@ -530,7 +539,7 @@
 				<summonGroup npcId="282306" distance="5"/>
 			</percentage>
 			<percentage percent="30" skillId="19508">
-				<summonGroup npcId="282303" minCount="5" distance="5"/>
+				<summonGroup npcId="282303" minCount="20" distance="5"/>
 			</percentage>
 		</summons>
 	</ai>
