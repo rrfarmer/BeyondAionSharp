@@ -28192,3 +28192,63 @@ anything to model; the field had been read as a guard rather than as data.
   stones at absolute coordinates on three separate indices, each arming two battle timers.
 - **The `95` HP phase** in this class is still this port's stand-in for entering combat rather than
   retail's `on_enter_attack_state`, unchanged and still not a defect.
+
+## Grogget's patrol, and the "need snif" comment that did not need a sniff
+
+`BrassEyeGroggetAI` carried this, unchanged since the port:
+
+```
+// todo 4 towers in the room center and fix coordinates of monsters
+// need snif
+```
+
+**The four towers are in the pattern, and he already walks the route they hang off.** Spawn `walker_id`
+`055B73AA897B0E07D287848D3AD6EBCABB7DD93D` is twelve steps and is the client's
+`IDShip_mobpath_ShulackCaptainNmd_46_Ah` — first point **exactly** on his spawn, 0.00m. That is the third
+encounter in a row where the route was already in our own data and the class said it was missing.
+
+### Two ladders on one route
+
+**Waypoint 4 drops one stigma stone per lap**, at four absolute coordinates:
+
+| lap | npc | at |
+|---|---|---|
+| 1 | 281191 | (397.43, 504.22, 1073.3) |
+| 2 | 281192 | (397.06, 516.37, 1073.3) |
+| 3 | 281193 | (409.63, 504.49, 1073.3) |
+| 4 | 281194 | (409.05, 516.65, 1073.3) |
+
+guarded by `unset_flag_var` on `FLAGVARI_ZETA_4` down to `ZETA_1` — test-and-unset, so each fires once and
+a fifth lap brings nothing. Those coordinates bracket the room, which is what "4 towers in the room
+center" was reaching for.
+
+**Waypoint 10 brings one wave per lap** at his own point — 281198, 281199, 281200 guarded by `set_flag_var`
+on `DELTA_1` to `DELTA_3`, and **a fourth rung with no guard at all**, so once the first three are spent
+every further lap brings 281201 again. The tail repeats rather than stopping, and that asymmetry is the
+whole shape of the mechanic.
+
+**All ten spawns are `live_time=0` with `despawn_at_attack_state=TRUE`** — the same patrol-furniture
+pattern as Lahulahu's nozzles, and the same reason it is safe to spawn permanent npcs: they go when he is
+pulled. That half is modelled, and its mutation is caught.
+
+**Pins** — six, in a class that had none. Six mutations, all six caught.
+
+**What is deliberately left alone.** The HP-percent helper spawning below the new code is aionemu's
+invention — its own comment says as much — and retail's spawn actions never mention 281181-281184 or
+281187. It is **not** removed: it fires in combat where all of the above fires on patrol, so the two do
+not collide, and deleting a fight's adds is a bigger decision than adding the patrol they were standing in
+for. `audit_summon_ids.py` still carries the row, which now reads **2 missing instead of 10**.
+
+**Still missing.**
+
+- **The shouts, the casts and the broadcasts.** Every rung has a `say_to_all` and a `use_skill`
+  (skill-index blocked), and messages 6661-6667 which nothing in this port sends or answers.
+- **The later index-4 rungs** — seven more, which re-arm battle timers at 15-23 seconds once the four
+  stones are spent. They are the fight's rhythm rather than its furniture and want reading as a group.
+- **281042 and 281335**, the two ids still on the audit row for this pattern.
+- The remaining 226 rows of `audit_summon_ids.py`, unchanged.
+
+**One honest note on the test run.** A single unidentified failure appeared in one full-solution run
+while this was being finished, and did not recur in five subsequent runs (three of the game-server suite,
+two of the whole solution) — so it is recorded here rather than claimed as fixed or dismissed. The suite
+is otherwise green at 2,759.
