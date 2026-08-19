@@ -53,7 +53,11 @@ public class YamennesAI : AggressiveNpcAI
                 System.TimeSpan.FromMilliseconds(GolemCycleMillis));
         }
 
-        portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(false); return ValueTask.CompletedTask; }, 60000L);
+        // The upper floor comes first. Retail's two branches share one battle timer and are told apart
+        // by a test-and-set flag: the upper branch passes while the flag is unset, so it takes the
+        // first firing, and the lower branch -- test-and-unset -- can only pass after it. This started
+        // with the lower floor, which inverts every wave of the fight.
+        portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(true); return ValueTask.CompletedTask; }, 60000L);
         furyTask = ThreadPoolManager.GetInstance().Schedule(
             _ => { SpawnFuries(); return ValueTask.CompletedTask; }, FirstFuryMillis);
     }
@@ -104,6 +108,27 @@ public class YamennesAI : AggressiveNpcAI
     /// Retail <c>IDAbRe_Core_NamedD_Hard</c>: the portals carry <c>live_time</c> 70 on a timer re-armed
     /// at 70 seconds, so a set expires exactly as the next arrives. Ours waited a flat 60.
     /// </summary>
+    /// <summary>
+    /// Retail's gates, by floor. Upstairs is three different npcs; downstairs is one npc three times.
+    /// </summary>
+    /// <remarks>
+    /// Retail-sourced; see docs/retail-ai-fidelity.md. <c>IDAbRe_Core_NamedD</c> alternates on a single
+    /// battle timer through a test-and-set flag: the set branch opens
+    /// <c>IDAbRe_Core_Sum_Teleport2</c>, <c>_03</c> and <c>_06</c> on the upper floor, and the
+    /// test-and-unset branch opens three <c>_Low</c> downstairs. Each gate then puts one enemy on
+    /// itself with a hundred thousand hate and lives seventy seconds.
+    /// <para>
+    /// <b>Coordinates are left as they were.</b> Retail gives its own marks and headings for all six,
+    /// and they are not these; the numbers here came from the Java class and presumably from a live
+    /// sniff. Moving portals is a different decision from naming them and is recorded as owed rather
+    /// than taken in passing.
+    /// </para>
+    /// </remarks>
+    internal const int UpperGateA = 281906;
+    internal const int UpperGateB = 282014;
+    internal const int UpperGateC = 282015;
+    internal const int LowerGate = 282131;
+
     private const int PortalLife = 70;
     private const int PortalCycleMillis = 70000;
 
@@ -213,17 +238,23 @@ public class YamennesAI : AggressiveNpcAI
         // ignored the portals rather than killing them saw the first wave and never another -- the same
         // shape the unstable variant was corrected for, and this class kept.
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDAbRe_Core_NmdD_SummonStart());
+        // Retail's two floors use different gates, and this used the wrong mix on both.
+        //
+        // Upstairs is three DIFFERENT gates -- Teleport2, _03 and _06 -- and downstairs is _Low three
+        // times over. What was here used _03, _06 and _Low upstairs and the same three again
+        // downstairs, so 281906 never appeared anywhere in the encounter and the lower floor was
+        // opened by two gates that belong upstairs.
         if (isTopSpawn)
         {
-            SpawnFor(282014, 288.10f, 741.95f, 216.81f, (sbyte)3, PortalLife);
-            SpawnFor(282015, 375.05f, 750.67f, 216.82f, (sbyte)59, PortalLife);
-            SpawnFor(282131, 341.33f, 699.38f, 216.86f, (sbyte)59, PortalLife);
+            SpawnFor(UpperGateA, 288.10f, 741.95f, 216.81f, (sbyte)3, PortalLife);
+            SpawnFor(UpperGateB, 375.05f, 750.67f, 216.82f, (sbyte)59, PortalLife);
+            SpawnFor(UpperGateC, 341.33f, 699.38f, 216.86f, (sbyte)59, PortalLife);
         }
         else
         {
-            SpawnFor(282014, 303.69f, 736.35f, 198.7f, (sbyte)0, PortalLife);
-            SpawnFor(282015, 335.19f, 708.92f, 198.9f, (sbyte)35, PortalLife);
-            SpawnFor(282131, 360.23f, 741.07f, 198.7f, (sbyte)0, PortalLife);
+            SpawnFor(LowerGate, 303.69f, 736.35f, 198.7f, (sbyte)0, PortalLife);
+            SpawnFor(LowerGate, 335.19f, 708.92f, 198.9f, (sbyte)35, PortalLife);
+            SpawnFor(LowerGate, 360.23f, 741.07f, 198.7f, (sbyte)0, PortalLife);
         }
         ThreadPoolManager.GetInstance().Schedule(_ => { OnHealingDebuff(); return ValueTask.CompletedTask; }, 3000L);
         portalTask = ThreadPoolManager.GetInstance().Schedule(_ => { SpawnPortals(!isTopSpawn); return ValueTask.CompletedTask; }, PortalCycleMillis);

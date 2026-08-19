@@ -25,7 +25,11 @@ public sealed class YamennesAiTests
 	private const int AbyssalSplinter = 300220000;
 	private const int Yamennes = 216960;
 
-	private static readonly int[] Portals = [282014, 282015, 282131];
+	/// <summary>Every gate either floor can open. See <see cref="YamennesAI.UpperGateA"/>.</summary>
+	private static readonly int[] Portals =
+	[
+		YamennesAI.UpperGateA, YamennesAI.UpperGateB, YamennesAI.UpperGateC, YamennesAI.LowerGate,
+	];
 
 	private const int Golem = 282107;
 
@@ -262,5 +266,53 @@ public sealed class YamennesAiTests
 		Npc sliver = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == YamennesSliver);
 		Assert.Equal(boss.GetX(), sliver.GetX(), 1);
 		Assert.Equal(boss.GetY(), sliver.GetY(), 1);
+	}
+
+	/// <summary>
+	/// <b>The upper floor opens three different gates.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's set branch names <c>IDAbRe_Core_Sum_Teleport2</c>, <c>_03</c> and <c>_06</c>. This class
+	/// used <c>_03</c>, <c>_06</c> and <c>_Low</c>, so <b>281906 never appeared in the encounter at
+	/// all</b> and the lower floor's gate was doing duty upstairs.
+	/// </remarks>
+	[Fact]
+	public void TheUpperFloorOpensThreeDifferentGates()
+	{
+		var (harness, boss, player) = EngagedAs(Yamennes);
+		using BossAiHarness _h = harness;
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(61));
+
+		List<int> opened = harness.LiveNpcs().Where(n => Portals.Contains(n.GetNpcId()))
+			.Select(n => n.GetNpcId()).OrderBy(i => i).ToList();
+		Assert.Equal(
+			new[] { YamennesAI.UpperGateA, YamennesAI.UpperGateB, YamennesAI.UpperGateC }
+				.OrderBy(i => i).ToList(),
+			opened);
+	}
+
+	/// <summary>
+	/// <b>The lower floor opens the same gate three times.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's test-and-unset branch names <c>_Low</c> three times over — not three different gates.
+	/// The two floors are not mirror images, and translating them as if they were is what put the wrong
+	/// npcs on both.
+	/// </remarks>
+	[Fact]
+	public void TheLowerFloorOpensTheSameGateThreeTimes()
+	{
+		var (harness, boss, player) = EngagedAs(Yamennes);
+		using BossAiHarness _h = harness;
+
+		// Past the first cycle and into the second, which is the lower floor.
+		harness.Clock.Advance(TimeSpan.FromSeconds(61));
+		harness.Clock.Advance(TimeSpan.FromSeconds(71));
+
+		List<int> opened = harness.LiveNpcs().Where(n => Portals.Contains(n.GetNpcId()))
+			.Select(n => n.GetNpcId()).ToList();
+		Assert.Equal(3, opened.Count);
+		Assert.All(opened, id => Assert.Equal(YamennesAI.LowerGate, id));
 	}
 }

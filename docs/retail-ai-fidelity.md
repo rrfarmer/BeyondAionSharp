@@ -31678,3 +31678,44 @@ dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_
 short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed
 attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's
 `npc_skills`.
+
+## Yamennes' gates: wrong npcs, wrong floor first, wrong AI
+
+The last unblocked row on the reading list, and it turned out to be three defects in one mechanic.
+
+Retail's `IDAbRe_Core_NamedD` alternates two branches on a single battle timer, told apart by a
+test-and-set flag:
+
+| branch | gates | floor |
+|---|---|---|
+| `set_flag_var` | `Teleport2` (**281906**), `_03`, `_06` — three **different** gates | upper, z≈216 |
+| `unset_flag_var` | `_Low` **three times** | lower, z≈198 |
+
+Each gate then puts one enemy on itself with a hundred thousand hate and lives seventy seconds.
+
+**What was here:**
+
+* the upper floor opened `_03`, `_06` and **`_Low`** — so **281906 never appeared in the encounter at
+  all**, and the lower floor's gate was doing duty upstairs;
+* the lower floor opened the same three, so it was not the lower floor's set either;
+* **the first wave was the lower floor.** The upper branch is the one that passes while the flag is
+  unset, so it takes the first firing — every wave of the fight was inverted;
+* and **281906 carried `ai="portal"`**, a teleporter, where retail binds it to the gate pattern. That is
+  why the corrected code produced two gates instead of three until the template was fixed — the npc
+  spawned and behaved like something else entirely.
+
+> The two floors are not mirror images. Translating them as if they were is what put the wrong npcs on
+> both, and it is the same shape as every other tier defect this work has found: **a plausible set that
+> is not retail's set.**
+
+3/3 mutations caught, including the inverted first wave.
+
+**Coordinates are deliberately untouched.** Retail gives its own marks and headings for all six gates
+and they are not the ones here; these came from the Java class and presumably a live sniff. Moving
+portals is a different decision from naming them.
+
+**Still missing.** The six gate coordinates; Beritra's four; Orissan's crystal tiers; the 30009/30010
+dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_user` pinned one seam
+short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed
+attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's
+`npc_skills`.
