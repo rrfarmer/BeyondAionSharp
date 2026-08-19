@@ -24077,3 +24077,56 @@ becoming the standard first error when pinning a class whose adds have AI of the
 
 Build clean. All ten of the class's spawns die under mutation. **Three consecutive full-suite runs**:
 2,221 passing (seven new), 1 skipped.
+
+## The conquest offering spawners: a two-stage cascade collapsed into one roll
+
+`ConquestOfferingSpawnerAI` is the second-largest unpinned class — 24 npcs, thirteen spawn sites, no pins
+at all — and it is retail-backed, so it was worth reading before pinning. **Pinning it first would have
+frozen the wrong behaviour**, which is why this pass ends with a specification rather than a change.
+
+### Retail runs two stages; we run one
+
+**Stage one, the spawner** (`LF4_Rotation_Nor_SpawnNPC_01` and siblings):
+
+- an **eight-minute** idle timer, re-armed on waking and reset by message `13929`
+- then **51%** a solo spot, **22%** a party spot, **27% nothing at all**
+- the spot it places is an npc in its own right, living **ten seconds**
+
+**Stage two, the spot** (`LF4_Rotation_Solo_SpawnNPC_01`, npc 856314): on waking it rolls again —
+**19/19/20/20** for four ordinary monsters and **6/7/7** for three "All" variants — and places one at its
+own point.
+
+**What this class does instead:** on spawning, once, immediately, it rolls **70/30** between normal and
+party with a nested **30%** "all", and places the monster **directly**. So:
+
+| | retail | ours |
+|---|---|---|
+| cadence | every eight minutes | once, on spawn |
+| chance of nothing | **27%** | none |
+| intermediate spot npc | yes, ten seconds | skipped |
+| monster odds | 19/19/20/20 + 6/7/7 | 70/30 with a nested 30 |
+| reset | message `13929` | — |
+
+### It is fully reachable, which is what makes it worth doing
+
+Both spot npcs — **856314** and **856320** — are in our templates with an AI of their own, and every
+monster the spots name resolves. **Nothing here needs guessing**; this is not shape two of the
+invented-spawn taxonomy but a mechanic that can be ported exactly.
+
+The size is what stops it being a tail-end job: **24 spawner and spot patterns** in that file, each
+naming its own pair of spots and its own seven monsters, so the table is 24 rows deep before a line of
+code is written.
+
+### Still to do
+
+- **Port the cascade**, with the per-spawner table above. The eight-minute clock and the 27% silence are
+  the two pieces most visible in play, and neither exists now.
+- **80 unpinned classes**, this one included — deliberately still unpinned, since its current behaviour
+  is not the behaviour to hold.
+- `ConquestOfferingAggressiveAI` (112 npcs bound) has not been read at all.
+- Timers, broadcasts and target selection have no mutation mode; 250 spawns named by no pin; 50
+  invented-spawn rows; the eighteen orphan classes; the other 568 fights.
+
+### Verification
+
+No code changed this pass; the suite stands where the previous commit left it at 2,221 passing.
