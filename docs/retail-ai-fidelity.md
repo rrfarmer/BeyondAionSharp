@@ -27038,3 +27038,49 @@ retail's 2000 and 3000), `AhserionSkyAssaulterAI` (400 against 5000), `ConquestO
 against 180000), `CustomInstanceBossAI` (200 against 5000 and 7000), `CustomInstanceDominatorAI` (30000
 against a six-timer chain). And the sentences that say cast cadences cannot be observed are still copied
 through those classes' remarks, where they are now simply untrue.
+
+## Tiamat's breath beacons burned twice as often for half again as long
+
+Next two rows from the unblocked sweep: `CalculatedAtrocityAI` and `UltimateAtrocityAI`, the strip of
+ground Tiamat's dying breath sweeps. Both were `[casts only -- needs the skill index]` in
+`audit_timer_drift.py`, and again that was about *which* skill.
+
+Retail's beacons are controllers. `on_wake_up` sets an idle timer of **2000**, and each firing lays a
+row of `..._dmg` npcs at fixed coordinates that cast on waking and despawn after two seconds. And
+`IDTiamat_Tiamat_Dragon_Dying_Named_60_Al` spawns **every** beacon variant with `live_time=`**7**.
+
+This port opened at **500**, repeated at 2000, and stood for **11000**. So it ran **six pulses where
+retail runs three** — at 0.5, 2.5, 4.5, 6.5, 8.5 and 10.5 against 2, 4 and 6. Twice the damage from a
+hazard standing over half again as long, and no grace at all for a player caught on a strip as it
+appeared.
+
+**The "4s" and "8s" in the beacon names are not lifetimes.** L, M and R, in both the four and eight
+forms, are all spawned with the same seven seconds. Worth writing down because the names invite exactly
+the wrong inference — and because **eleven looks like somebody splitting the difference between four
+and eight**.
+
+**Pins** — four in `TiamatBreathBeaconTests`, five mutations, all caught.
+
+**The clock hook does not help here, and a first draft passed on that.** These two classes do not cast:
+they call `ApplyEffectDirectly` on each player in front of them, so `GetLastSkillTime` never moves.
+Three pins written against it — "it does not burn on landing", twice, and a pulse count — were asserting
+against a value that is **always zero**. The two negative ones passed. It surfaced only because the
+pulse counter beside them read zero as well and made the pin fail. The lifetime is behavioural; the
+cadence is a table pin, and the file says which is which and why.
+
+**So the sweep is not uniform.** The clock hook makes `AIActions.UseSkill` observable, and that is most
+of the family — but a class that applies effects directly is not reached by it, and there is no way to
+tell which from the audit row. Each one has to be read.
+
+**An unrelated flake, characterised rather than ignored.** One of five full-suite runs failed
+`Aion.LoginServer.Tests.LoginServerHostedServiceTests.StartAsync_LoadsRegistryAndBanListsBeforeOpening
+SocketListeners`. It is in a different project, touches nothing in this work, and passed ten runs out of
+ten when run on its own. Recorded because it is the first failure seen outside the game server all
+session, and a second sighting would make it worth chasing.
+
+**Still missing.** Seventeen more `[casts only]` rows: `AhserionSkyAssaulterAI` (400 against 5000),
+`ConquestOfferingPortalAI` (65000 against 180000), `CustomInstanceBossAI` (200 against 5000 and 7000),
+`CustomInstanceDominatorAI` (30000 against a six-timer chain), `AdjutantGalamatAI` (whose cast chain is
+genuinely index-blocked — 3000/3000/6000 in the top band, and which skill decides nothing we can reach).
+And the remarks in those classes still say cast cadences cannot be observed, which is now true only of
+the ones that apply effects directly.
