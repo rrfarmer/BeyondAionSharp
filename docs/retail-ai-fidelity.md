@@ -27226,3 +27226,47 @@ this port sends 31 or listens for it, so the hole always runs its full ten secon
 meant to shut it does nothing at all. That is not a cadence, and the timer audit will never surface it;
 it came out of reading the pattern for a different reason, which is the argument for reading whole
 patterns rather than the rows a tool points at.
+
+## The black hole's ten seconds were a backstop, and it should stand for two
+
+Last commit recorded "the hole can be closed early" as missing and left it. Following it up turned a
+note into the larger half of the mechanic.
+
+Retail's branch does both things in one breath:
+
+```
+? is_hp_in_boundary larger_than=15 less_than=100
+? is_battle_timer_indicator BTIMERI_INDEX_2
+> add_battle_timer BTIMERI_INDEX_2 delay=15000     <- a hole every fifteen seconds
+> add_battle_timer BTIMERI_INDEX_28 delay=2000     <- and this one closes it
+> use_skill
+> spawn IDTiamat_Sardha_BlackHoleFX live_time=10
+```
+
+and the rung `INDEX_28` fires broadcasts **31** at fifty metres, which the hole answers by spawning its
+closing flash and despawning.
+
+**So `live_time=10` is what happens when nothing closes the hole.** In a fight it stands **two
+seconds**. This port had no close at all, so every hole ran the full ten — **five times too long, on a
+hazard that drags players into it.** The distortion comes every fifteen seconds, so the floor was
+occupied by a black hole two-thirds of the time instead of one-seventh.
+
+**Pins** — three more in `SardhaBlackHoleTests`, three mutations, all caught.
+
+**And an existing pin was measuring the backstop.** `TerathGravityAiTests.TheBlackHoleClosesAtTenSeconds`
+asserted the hole survived nine seconds and was gone by eleven — which was true, and true only because
+the close was missing. It is now `HeShutsTheHoleTwoSecondsAfterOpeningIt`, and the ten-second backstop
+is pinned where it belongs: on a hole standing on its own, in `SardhaBlackHoleTests`. **That is the
+second time in four commits that implementing a missing mechanic has falsified a pin that was correct
+about the old behaviour** — after Bakarma's vanguard count. A pin that encodes a gap reads as a
+specification of it, and the only defence is the commit that closes the gap having to look at it.
+
+**Its own remarks recorded the earlier version of the same mistake**: the pin had once asserted the hole
+was gone by eleven seconds, which passed whether or not the summoner set a lifetime. So this is the
+third measurement of the same number, each one wrong for a different reason, and each one recorded in
+place.
+
+**Still missing.** The closing flash: retail spawns `IDTiamat_Sardha_BlackHoleOnDie` for three seconds
+*when the hole closes*, where this port spawns all three npcs together at the summoner, so the flash is
+standing before it is needed. And the fifteen-second cadence of the distortion itself is
+`BTIMERI_INDEX_2`, which this port drives from its own ladder — unchecked against retail so far.

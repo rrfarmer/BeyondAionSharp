@@ -59,17 +59,21 @@ public sealed class TerathGravityAiTests
 	}
 
 	/// <summary>
-	/// <b>And it closes at ten seconds, not eight.</b> The bound was never missing — this add has always
-	/// killed itself — but Java closed it two seconds early, and retail writes ten.
+	/// <b>And he shuts it two seconds after opening it.</b>
 	/// </summary>
 	/// <remarks>
-	/// <b>This pin was written against the wrong thing first.</b> Its original version asserted the hole
-	/// was gone by eleven seconds, which passed whether or not the summoner set a lifetime, because the
-	/// add's own clock always won. Nine seconds is the only window that separates retail's ten from
-	/// Java's eight.
+	/// <b>This pin said "ten seconds" until the close was implemented, and it was measuring the
+	/// backstop.</b> Retail's branch spawns the hole with <c>live_time=10</c> and, in the same breath,
+	/// arms <c>BTIMERI_INDEX_28</c> at 2000; that timer broadcasts 31 and the hole answers by closing.
+	/// So ten is what happens when nothing closes it — which, before the message existed here, was every
+	/// time. Two is what a fight sees.
+	/// <para>
+	/// The ten-second backstop still exists and is pinned where it belongs, on a hole standing on its
+	/// own: <c>SardhaBlackHoleTests.AndTheHoleClosesAtTenSeconds</c>.
+	/// </para>
 	/// </remarks>
 	[Fact]
-	public void TheBlackHoleClosesAtTenSeconds()
+	public void HeShutsTheHoleTwoSecondsAfterOpeningIt()
 	{
 		var (harness, _) = Engaged();
 		using BossAiHarness _h = harness;
@@ -77,12 +81,10 @@ public sealed class TerathGravityAiTests
 		var first = harness.LiveNpcs().Where(n => n.GetNpcId() == BlackHole).ToHashSet();
 		Assert.NotEmpty(first);
 
-		// The hole is placed on the twelve-second tick and the setup already advanced to thirteen, so it
-		// is one second old here: eight more makes it nine, inside retail's ten and past Java's eight.
-		harness.Clock.Advance(TimeSpan.FromSeconds(8));
-		Assert.All(first, hole => Assert.Contains(hole, harness.LiveNpcs()));
-
+		// The hole is placed on the twelve-second tick and the setup already advanced to thirteen, so
+		// it is one second old here: one more second reaches the close, and two more clear it.
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
 		Assert.DoesNotContain(harness.LiveNpcs(), n => first.Contains(n));
 	}
 

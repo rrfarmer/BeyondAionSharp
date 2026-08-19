@@ -29,15 +29,26 @@ namespace Aion.GameServer.Handlers.AI;
 /// <see cref="UseSkill"/> reads as though 283097 were the controller.
 /// </para>
 /// <para>
-/// <b>Not translated: the hole can be closed early.</b> Retail's FX npc answers <c>on_message 31</c> by
-/// spawning <c>IDTiamat_Sardha_BlackHoleOnDie</c> for three seconds and despawning itself. Nothing in
-/// this port sends 31 or listens for it, so the hole always runs its full ten seconds and whatever was
-/// meant to shut it does nothing.
+/// <b>And the ten seconds were a backstop, not the mechanic.</b> Retail's hole is spawned with
+/// <c>live_time=10</c>, but the same branch that spawns it arms <c>BTIMERI_INDEX_28</c> at <b>2000</b>,
+/// and that timer's rung broadcasts <b>31</b> — which the hole answers by closing. So a black hole
+/// stands <b>two seconds</b> in a fight and ten only if the close never arrives. This port had no close
+/// at all, so every hole ran the full ten: <b>five times too long</b>, on a hazard that drags players
+/// into it.
+/// </para>
+/// <para>
+/// <b>Partly translated.</b> Retail's FX npc answers 31 by spawning
+/// <c>IDTiamat_Sardha_BlackHoleOnDie</c> for three seconds and then despawning. This port already
+/// spawns all three npcs together at the summoner, so the closing flash is standing before it is
+/// needed; the answer here despawns the hole and leaves the flash's own clock to it.
 /// </para>
 /// </remarks>
 [AIName("distortedspace")]
-public class DistortedSpaceAI : NpcAI
+public class DistortedSpaceAI : NpcAI, INpcMessageListener
 {
+    /// <summary>Retail's "close the hole" message, broadcast by the summoner at fifty metres.</summary>
+    public const int CloseHole = 31;
+
     /// <summary>Retail's <c>set_idle_timer</c> on the controller: 1500 on waking, 2000 thereafter.</summary>
     public const long OpeningMillis = 1500L;
     public const long RepeatMillis = 2000L;
@@ -65,6 +76,16 @@ public class DistortedSpaceAI : NpcAI
     /// won. Corrected here, where the clock actually is.
     /// </remarks>
     private const long BlackHoleLifeMillis = 10000L;
+
+    /// <summary>Retail's <c>on_message 31</c> rung: the hole shuts.</summary>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        if (messageType != CloseHole || IsDead())
+            return;
+
+        CancelTask();
+        AIActions.DeleteOwner(this);
+    }
 
     private void UseSkill()
     {

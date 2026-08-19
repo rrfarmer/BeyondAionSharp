@@ -149,6 +149,12 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI
         }
     }
 
+    /// <summary>Retail's <c>BTIMERI_INDEX_28</c>, armed in the same branch that opens the hole.</summary>
+    public const long CloseHoleDelayMillis = 2000L;
+
+    /// <summary>Retail's <c>range_as_meter</c> on the close.</summary>
+    public const float CloseHoleRange = 50f;
+
     private void GravityDistortionEvent()
     {
         SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20739, 55, GetOwner()).UseNoAnimationSkill();
@@ -156,6 +162,15 @@ public class BrigadeGeneralTerathAI : AggressiveNpcAI
         Spawn(283097, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0); // 4.0
         Spawn(283098, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0); // 4.0
         ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20741, 55, GetOwner()).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 5000L);
+
+        // Retail's CloseHole rung. The branch that spawns the hole arms BTIMERI_INDEX_28 at 2000, and
+        // that timer broadcasts 31 at fifty metres; the hole answers by shutting. Without it the hole
+        // ran its ten-second backstop every time -- five times as long as a fight ever sees.
+        ThreadPoolManager.GetInstance().Schedule(_ =>
+        {
+            NpcMessageBus.Broadcast(GetOwner(), DistortedSpaceAI.CloseHole, GetOwner(), CloseHoleRange);
+            return ValueTask.CompletedTask;
+        }, CloseHoleDelayMillis);
     }
 
     private void CancelJumpTask()

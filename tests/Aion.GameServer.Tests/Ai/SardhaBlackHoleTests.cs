@@ -97,4 +97,57 @@ public sealed class SardhaBlackHoleTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == BlackHoleDmg));
 	}
+
+	/// <summary>
+	/// <b>And the summoner shuts it after two seconds.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's ten seconds are a backstop, not the mechanic: the branch that opens the hole arms
+	/// <c>BTIMERI_INDEX_28</c> at 2000, and that timer broadcasts 31, which the hole answers by closing.
+	/// This port had no close at all, so every hole ran the full ten — five times as long as a fight
+	/// ever sees, on a hazard that drags players into it.
+	/// </remarks>
+	[Fact]
+	public void AndTheSummonerShutsItAfterTwoSeconds()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc caller = harness.Spawn(BlackHoleDmg, 1030f, 297f, 409f);
+		Npc hole = harness.Spawn(BlackHoleDmg, 1032f, 297f, 409f);
+		BossAiHarness.MakeMutuallyKnown(caller, hole);
+		Assert.Equal(2, harness.LiveNpcs().Count(n => n.GetNpcId() == BlackHoleDmg));
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(caller, DistortedSpaceAI.CloseHole, caller,
+			BrigadeGeneralTerathAI.CloseHoleRange);
+
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == BlackHoleDmg));
+	}
+
+	/// <summary>
+	/// <b>And another message leaves it open.</b>
+	/// </summary>
+	[Fact]
+	public void AndAnotherMessageLeavesItOpen()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc caller = harness.Spawn(BlackHoleDmg, 1030f, 297f, 409f);
+		Npc hole = harness.Spawn(BlackHoleDmg, 1032f, 297f, 409f);
+		BossAiHarness.MakeMutuallyKnown(caller, hole);
+
+		Aion.GameServer.Ai.NpcMessageBus.Broadcast(caller, 32, caller, 50f);
+
+		Assert.Equal(2, harness.LiveNpcs().Count(n => n.GetNpcId() == BlackHoleDmg));
+	}
+
+	/// <summary>
+	/// <b>And the close comes two seconds after the hole opens, not ten.</b>
+	/// </summary>
+	/// <remarks>
+	/// The delay itself, from the timer Terath arms in the same branch. A table pin: the summoner's
+	/// gravity event runs from a phase ladder the harness cannot walk without the full fight.
+	/// </remarks>
+	[Fact]
+	public void AndTheCloseComesTwoSecondsAfterTheHoleOpens()
+	{
+		Assert.Equal(2000L, BrigadeGeneralTerathAI.CloseHoleDelayMillis);
+	}
 }
