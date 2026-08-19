@@ -120,12 +120,82 @@ def npc_pattern_and_ai():
     return pat, ai
 
 
+def rank_missing(rows, route_blocked, xml_dir):
+    """Sort every unnamed id by whether it looks like an add or an effect.
+
+    Three rows read by hand -- Tiamat hard, Lord Beritra and Laksyaka -- all came back mostly effects, so
+    the useful question stopped being "how many ids" and became "which of them is a monster". These are
+    the signals that separated them in those three:
+
+    * **a rating.** Effects are NORMAL or carry none; the things players fight are ELITE, HERO or LEGENDARY.
+    * **a pattern of its own.** An npc retail gives no AI pattern does nothing but exist and expire.
+    * **a name.** Display npcs are blank or carry an untranslated devname full of underscores.
+    * **a lifetime.** A few seconds is an effect; live_time 0 is something that stays.
+
+    None is conclusive alone and the ranking says so; it exists to put the twenty worth reading first.
+    """
+    text = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml").read_text(
+        encoding="utf-8", errors="replace")
+    rating, named_ai, npc_name = {}, {}, {}
+    for m in re.finditer(r'<npc_template ([^>]*)>', text):
+        a = m.group(1)
+        nid = re.search(r'npc_id="(\d+)"', a)
+        if not nid:
+            continue
+        r = re.search(r'rating="([^"]*)"', a)
+        ai = re.search(r'ai="([^"]*)"', a)
+        nm = re.search(r'name="([^"]*)"', a)
+        rating[nid.group(1)] = r.group(1) if r else ""
+        named_ai[nid.group(1)] = ai.group(1) if ai else ""
+        npc_name[nid.group(1)] = nm.group(1) if nm else ""
+
+    has_pattern = set()
+    for line in (REPO / "tools" / "client-extract" / "out" / "ai_binding.tsv").read_text(
+            encoding="utf-8").splitlines()[1:]:
+        parts = line.split("	")
+        if len(parts) > 3 and parts[3]:
+            has_pattern.add(parts[0])
+
+    scored = []
+    for _, ai, filename, missing, _ in rows:
+        for nid in missing:
+            if nid in route_blocked:
+                continue
+            score, why = 0, []
+            if rating.get(nid) in ("ELITE", "HERO", "LEGENDARY"):
+                score += 3; why.append(rating[nid])
+            if nid in has_pattern:
+                score += 2; why.append("has pattern")
+            name = npc_name.get(nid, "")
+            if name.strip() and "_" not in name:
+                score += 1; why.append("named")
+            ai_name = named_ai.get(nid)
+            # An id absent from npc_templates entirely scores nothing here and is called out instead: it
+            # is a different problem from an unimplemented add, and 857599 is one.
+            if ai_name is None:
+                why.append("NOT IN npc_templates")
+            elif ai_name not in ("general", "noaction", "", "aggressive"):
+                score += 1; why.append(ai_name)
+            scored.append((score, nid, filename, ai, name, ", ".join(why)))
+
+    scored.sort(key=lambda s: (-s[0], s[2]))
+    print(f"{len(scored)} unnamed ids that are not route-blocked, ranked")
+    print()
+    for score, nid, filename, ai, name, why in scored[:30]:
+        print(f"  {score}  {nid}  {filename[:34]:36s} {name[:26]:28s} {why}")
+    buckets = collections.Counter(s[0] for s in scored)
+    print()
+    print("score distribution:", dict(sorted(buckets.items(), reverse=True)))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
     ap.add_argument("--class", dest="only", help="report one AI name in full")
     ap.add_argument("--limit", type=int, default=25)
     ap.add_argument("--worlds", default="D:/Aion58ServerTesting/Server/Map/Worlds")
+    ap.add_argument("--rank", action="store_true",
+                    help="rank every unnamed id by how likely it is to be a real add rather than an effect")
     ap.add_argument("--max-patterns", type=int, default=3,
                     help="skip AI classes serving more patterns than this (infrastructure)")
     args = ap.parse_args()
@@ -178,6 +248,10 @@ def main():
         extra = sorted(i for i in literals if i not in ids and i in npc2ai)
         if missing or extra:
             rows.append((len(missing), ai, filename, missing, extra))
+
+    if args.rank:
+        rank_missing(rows, route_blocked, args.xml)
+        return 0
 
     focused = len(wanted) - shared
     print(f"{len(wanted)} named AI classes have a retail pattern that spawns something resolvable")

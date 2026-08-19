@@ -28909,3 +28909,47 @@ was the only way to find that out.
 - **856503**, referenced by the pattern and not present in our `npc_templates.xml` at all — the only id in
   this row that is missing from our data rather than from our code.
 - **227 rows** still unread, now with a better prior for what they contain.
+
+## Ranking the reading list, after three rows said the same thing
+
+Three rows have now been read to the bottom — Tiamat hard, Lord Beritra, Laksyaka — and all three came
+back the same way: **mostly effects**. Tiamat's seven were six route-blocked elites and one blank npc;
+Beritra's thirteen were eleven FX controllers, one npc we do not carry, and one real mechanic missing a
+spawn row; Laksyaka's single id is a display npc retail gives no pattern at all.
+
+So the useful question stopped being *how many ids* and became **which of them is a monster**.
+`audit_summon_ids.py --rank` asks it, using the four signals that separated them in those three rows:
+
+| signal | worth | why |
+|---|---|---|
+| rating ELITE / HERO / LEGENDARY | 3 | effects are NORMAL or carry no rating at all |
+| retail gives it a pattern of its own | 2 | an npc with no pattern does nothing but exist and expire |
+| a real name, not a devname | 1 | display npcs are blank or full of underscores |
+| a non-generic AI in our own data | 1 | somebody already thought it was worth a class |
+
+```
+285 unnamed ids that are not route-blocked, ranked
+score distribution: {7: 47, 6: 80, 5: 22, 4: 24, 3: 32, 2: 77, 1: 1, 0: 2}
+```
+
+**Forty-seven score the maximum**, and they read like a to-do list rather than a haystack: Dynatoum's
+mine traps and maintenance device, Isbariya's divine and magic artifacts, Sheba's bladesmen, the Eternal
+Bastion's revitalizing servant, Ahuradim's three shield generators, Beritra's detachment guards,
+Arminos's dimension gate. **Every one of those already has an AI class in this port** — the class exists
+and the boss never spawns it, which is a very different kind of gap from an unmodelled effect.
+
+**The ranking is not a verdict and the docstring says so.** No signal is conclusive alone; the score puts
+the twenty worth reading first, which is all it is for. Laksyaka's display npc scores 7 as well, because
+our data gives it a rating and an AI class it does not need — a reminder that the list orders effort, it
+does not replace reading.
+
+**One id is a different problem.** 857599 is spawned by a retail pattern and is **absent from our
+`npc_templates.xml` altogether**, so it is not an unimplemented add but a missing row of data. The ranker
+calls those out rather than scoring them.
+
+**Still missing.**
+
+- **The forty-seven top-ranked ids**, now in a sensible order for the first time. The three-and-under
+  bands (112 ids) are where the effects have collected.
+- **857599 and 856503**, both referenced by patterns and both absent from our npc data.
+- **Beritra's two spawn rows** (856384, 856385) and the fourteen route-blocked ids, unchanged.
