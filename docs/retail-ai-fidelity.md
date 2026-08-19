@@ -31352,3 +31352,47 @@ crystal-tier messages; jurdin; `is_aerial_spawn`; the remaining absence claims; 
 rows; hisen's 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an
 enter-combat spawn; the `<summons>` schema's four owed attributes; the 258203/258207 family decision;
 the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.
+
+## The gravity tornado gets its metronome
+
+The `--messages` check flagged `GravityTornadoAI`'s claim that nothing sends 204. The claim was true and
+the reason it was true is the interesting part: **the sender is an npc this class already spawns.**
+
+Retail's gravity bomb comes in two halves. 283141 is the visible bomb that walks at a player, which this
+port has as `gravity_crusher`. **283142 — and 856047 in hard mode — is the damage twin, and its entire
+pattern is three lines:**
+
+```
+on_wake_up:    set_idle_timer 1000
+on_idle_timer: broadcast_message 204 range_as_meter=1 param_obj=OBJI_SELF
+               set_idle_timer 3000
+```
+
+It does no damage and is not an add. **It is a metronome**: one second after it appears, and every three
+seconds after, it tells whatever is standing on it to cast. The range is one metre, so the only thing
+that can hear it is the tornado that put it there.
+
+Both twins ran plain `aggressive`. So the tornado drove its own cast from a Java timer at **2.5 seconds
+then every six** — half retail's rate — and its class recorded the divergence as unrepairable because
+"repairing it means an instance script we do not have".
+
+> **No instance script was needed.** The tornado spawns the sender itself, on its own mark, and has done
+> all along. The missing piece was a class for the twin.
+
+The twin has one now, the tornado listens for 204, and its repeating timer is gone — it still casts once
+as it appears, which retail does too. 3/3 mutations caught.
+
+### A pin that agreed with whatever it was told
+
+`TheTwinStandsOnTheTornado` asserted the twin stands within `GravityBombDamageAI.Reach` metres. A
+mutation widening the beat from one metre to a hundred **passed it**, because the pin compared the
+distance against the constant it was supposed to be pinning.
+
+> A pin that uses the value under test as its own expectation cannot fail. It now compares against
+> retail's literal `1f` and asserts the constant separately.
+
+**Still missing.** Beritra's support guards, blocked on the scene trigger; the crystal-tier messages;
+jurdin; `is_aerial_spawn`; the remaining absence claims; the 33 named death-spawn rows; hisen's
+6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the
+`<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+Dynatoum's mine web; Pashid's `npc_skills`.

@@ -30,16 +30,28 @@ namespace Aion.GameServer.Handlers.AI;
 /// intent is certain even though what it tested could not work. Keyed by tornado now.
 /// </para>
 /// <para>
-/// <b>The cast cadence is ours and stays.</b> Retail casts once on waking and then only on
-/// <c>on_message</c> 204 — and nothing in our tree sends 204, so translating that half literally would
-/// leave the tornado casting once and falling silent. The Java timer keeps it doing its job; the
-/// divergence is recorded rather than repaired, because repairing it means an instance script we do
-/// not have.
+/// <b>The cast cadence is retail's now.</b> This used to read "the cast cadence is ours and stays …
+/// nothing in our tree sends 204 … repairing it means an instance script we do not have". <b>No
+/// instance script was needed.</b> The sender is the damage twin this class already spawns on its own
+/// mark, which ran plain <c>aggressive</c> and so beat no time; it has a class now
+/// (<see cref="GravityBombDamageAI"/>) and pulses 204 at one metre, one second in and every three
+/// after.
+/// <para>
+/// The Java timer it replaces fired first at 2.5 seconds and then every <b>six</b> — half retail's rate.
+/// The tornado still casts once as it appears, which retail does too on <c>on_wake_up</c>.
+/// </para>
 /// </para>
 /// </remarks>
 [AIName("gravity_tornado")]
-public class GravityTornadoAI : NpcAI
+public class GravityTornadoAI : NpcAI, INpcMessageListener
 {
+	/// <summary>Retail's <c>on_message</c> 204, sent by the damage twin standing on this tornado.</summary>
+	public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+	{
+		if (messageType == GravityBombDamageAI.CastNow && !IsDead())
+			AIActions.UseSkill(this, GravitySkillFor(GetNpcId()));
+	}
+
     private const int NormalTornado = 283140;
     private const int HardTornado = 856046;
 
@@ -50,10 +62,6 @@ public class GravityTornadoAI : NpcAI
     private const int NormalGravity = 20966;
     private const int HardGravity = 21901;
 
-    private static readonly TimeSpan FirstCast = TimeSpan.FromMilliseconds(2500);
-    private static readonly TimeSpan CastInterval = TimeSpan.FromMilliseconds(6000);
-
-    private ScheduledTask? task;
     private Npc? crusher;
 
     public GravityTornadoAI(Npc owner)
@@ -83,19 +91,15 @@ public class GravityTornadoAI : NpcAI
                 GetOwner().GetZ(), (sbyte)GetOwner().GetHeading()) is Npc spawned)
             crusher = spawned;
 
-        int skillId = GravitySkillFor(GetNpcId());
-        task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
-        {
-            AIActions.UseSkill(this, skillId);
-            return ValueTask.CompletedTask;
-        }, FirstCast, CastInterval);
+        // Retail's own on_wake_up cast. Everything after it is driven by the twin's 204, so there is
+        // no repeating timer here any more -- see the remarks.
+        AIActions.UseSkill(this, GravitySkillFor(GetNpcId()));
     }
 
     protected override void HandleDespawned()
     {
-        if (task != null && !task.IsDone())
-            task.Cancel(true);
-        task = null;
+        // No timer to cancel any more: the beat comes from the twin, and clearing the twin below stops
+        // it. That is retail's own arrangement -- the tornado never kept time for itself.
 
         // Retail's on_despawn clears SPAWN_ID_1, which is the crusher.
         crusher?.GetController().DeleteIfAliveOrCancelRespawn();
