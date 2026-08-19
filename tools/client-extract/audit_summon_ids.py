@@ -205,6 +205,10 @@ def report_swaps(rows, window=3):
         print(f"  {filename[:38]:40s} [{ai[:26]:28s}] retail {m}, class has {e}")
 
 
+FX_WORDS = ("NoShow", "Invisible", "_Fx", "Display", "_CTRL", "Control", "UseCheck",
+            "Effect", "Dummy", "Marker", "Reset", "Timer", "Circle")
+
+
 def rank_missing(rows, route_blocked, xml_dir):
     """Sort every unnamed id by whether it looks like an add or an effect.
 
@@ -241,6 +245,7 @@ def rank_missing(rows, route_blocked, xml_dir):
         if len(parts) > 3 and parts[3]:
             has_pattern.add(parts[0])
 
+    inv_dev = {v: k for k, v in devname_to_npc(xml_dir).items()}
     placed = spawned_in_our_data()
     scored, already_placed = [], 0
     for _, ai, filename, missing, _ in rows:
@@ -251,6 +256,14 @@ def rank_missing(rows, route_blocked, xml_dir):
                 already_placed += 1
                 continue
             score, why = 0, []
+            # The devname usually says outright that an npc is an effect. Every row read by hand that
+            # turned out to be a collapse had one of these in it: Modor's and the frost summons'
+            # MagCircle_NoShow circles, Beritra's RapidBreath_CTRL, the TrueBoss Buff_UseCheck, the
+            # SuccessDisplay. Retail names its invisible machinery, and this port collapses all of it.
+            devname = inv_dev.get(nid, "")
+            marker = next((w for w in FX_WORDS if w.lower() in devname.lower()), None)
+            if marker:
+                score -= 3; why.append(f"FX?({marker})")
             if rating.get(nid) in ("ELITE", "HERO", "LEGENDARY"):
                 score += 3; why.append(rating[nid])
             if nid in has_pattern:
@@ -269,7 +282,10 @@ def rank_missing(rows, route_blocked, xml_dir):
 
     scored.sort(key=lambda s: (-s[0], s[2]))
     print(f"{already_placed} of the unnamed ids are already placed by our own spawn data")
+    flagged = sum(1 for s in scored if "FX?" in s[5])
     print(f"{len(scored)} remain: not route-blocked, not spawned here, ranked")
+    print(f"{flagged} carry a devname that says they are machinery (NoShow, CTRL, Display, UseCheck...) "
+          f"and are pushed down")
     print()
     for score, nid, filename, ai, name, why in scored[:30]:
         print(f"  {score}  {nid}  {filename[:34]:36s} {name[:26]:28s} {why}")

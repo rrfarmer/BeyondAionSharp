@@ -29345,3 +29345,57 @@ filters had cleared the noise — which is the ranking doing its job rather than
 - **The 35 remaining top-band ids.**
 - **Dynatoum's mine web**, blocked on the skill-index problem; **Beritra's two spawn rows**; **Pashid's
   `npc_skills`**; **the seven absent npc rows** with their retail values recorded.
+
+## Retail names its own machinery, and the list can read the names
+
+Rows seven and eight off the ranked list were the two "witch queen modor" HERO entries that sat at the
+top: **284386 and 284528**. Both are explained, and by the same thing — their devnames:
+
+```
+BLDF5_Under_Rune_FrostNmd_MagCircle_NoShow1
+BLDF5_Under_Rune_FrostNmd_MagCircle_NoShow1_2
+```
+
+**`NoShow` means invisible.** They are magic circles Modor drops below fifty per cent on a battle timer,
+at absolute points — the machinery behind an effect, not an add. This port collapses that machinery, as
+it does everywhere else.
+
+**The interesting part is that the name said so, and the ranker was not reading it.** Every row read by
+hand that turned out to be a collapse had the answer in its devname:
+
+| devname fragment | what was behind it |
+|---|---|
+| `MagCircle_NoShow` | Modor's ice circles — this commit |
+| `RapidBreath_CTRL` | Beritra's eighteen battle-timer rungs |
+| `Buff_UseCheck` | the TrueBoss check npc |
+| `SuccessDisplay` | Beritra's kill display |
+| `TornadoDMGArea` | Tahabata's fire tornado twin |
+
+So the ranker now subtracts for a devname containing `NoShow`, `Invisible`, `_Fx`, `Display`, `_CTRL`,
+`Control`, `UseCheck`, `Effect`, `Dummy`, `Marker`, `Reset`, `Timer` or `Circle`. **Sixty-three of the
+275 carry one**, and the top band falls from 37 to 30.
+
+**It is a demotion, not an exclusion, and that is deliberate.** A demoted row still appears; it is pushed
+below the ids that look like monsters. Two of the words are genuinely ambiguous — a `Timer` npc can be
+real machinery worth spawning, and `Circle` appears in at least one add's name — so removing them
+outright would hide work. The count is printed in the header so the filter's reach is visible rather than
+silent.
+
+### Eight rows read
+
+| verdict | rows |
+|---|---|
+| explained — route-blocked, in spawn data, sibling constant, FX collapse | 6 |
+| **owed** | **2** (Pashid's strike id, the Eternal Bastion summoner) |
+
+Every explained row has become a filter: spawn data, sibling constants, route-blocking, and now devname
+machinery. That is the whole method — read one, and if it was not a defect, make sure nobody reads that
+kind again.
+
+**Still missing.**
+
+- **The 30 top-band ids**, now with the machinery pushed out of the way. Beritra's four detachment guards
+  and Dynatoum's three mines are the top of it, and both are already documented as blocked on things
+  other than code.
+- **`Lv3HumanBeritraAI` / 856347 "lord beritra" LEGENDARY** is new to the top band and has not been read.
+- Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
