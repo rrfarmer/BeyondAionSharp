@@ -30951,3 +30951,69 @@ empty branches.
   owed attributes; the 258203/258207 family decision; the 59 stranded guards; 25 guards with no
   `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids; Dynatoum's mine web;
   Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Jurdin the cursed, mapped but not built
+
+The third and largest silent boss. **This entry is research, not a fix**, and says so up front: the
+encounter is five classes deep and half of a wave boss is worse than none.
+
+### What he is
+
+Not a summoner. `IDForest_Wave_Trico_Boss` is a **wave controller**. At each of four one-shot health
+bands it lights two or three fixed spawn points, and each point is an `unattackable` npc that lives ten
+seconds and pours out a wave of its own.
+
+| band | lights | at |
+|---|---|---|
+| below 80 | 3 × `wave_spawner1` | (477.48, 820.79), (486.38, 764.89), (449.55, 758.04) |
+| below 60 | 3 × `wave_spawner2` | the same three points |
+| below 40 | 2 × `wave_spawner3` | the first two |
+| below 25 | 2 × `wave_spawner4` | the first two |
+
+Each of the first three bands also puts one **wisp** at his own feet for sixty seconds — the only
+attackable thing he spawns directly. A separate timer places twelve `Trico_ActionSum` across six fixed
+points, and his death leaves a sandbag.
+
+### What the spawn points do
+
+Each is an `IDForest_Wave_PhaseN` pattern: wake, wait three seconds, then alternate two idle rungs.
+
+| phase | wave |
+|---|---|
+| 1 | 5 spaky, then 3 spaky + 1 spaky bomb |
+| 2 | 2 laphilima + 1 bomb, then 6 laphilima |
+| 3 | 5 spaky, then 1 **spaky boss** |
+| 4 | 1 bomb + 1 **laphilima boss** on waking, then 2 bombs + 1 boss per tick |
+
+Every wave npc lives sixty seconds and arrives within five or six metres of its point. **The controller's
+ten-second lifetime is what bounds the wave** — it emits, re-arms, and is gone.
+
+### Why it is not built here
+
+Faithfully this is five classes, four counter-guarded idle chains, and a controller lifetime that decides
+how many waves land. **Get the lifetime wrong and the room fills until the instance is unplayable.** A
+half-built version — jurdin lighting points whose controllers do nothing — would look identical to the
+present state while adding invisible npcs to the room.
+
+The map above is the hard part and did not exist before. What remains is mechanical.
+
+### One thing found on the way
+
+`summarize_pattern.py` **silently produces a truncated file** when its output is redirected and the
+pattern contains Korean branch comments: 306 lines, of which everything after line 17 is blank. Read on
+a terminal it is fine. Every pattern in this work has been read through that tool, and any redirected to
+a file may have been read short without anybody noticing.
+
+**Still missing.**
+
+- **Jurdin himself**, to the map above.
+- **`summarize_pattern.py`'s redirect bug.** It is an encoding fault on write, not a parse fault, so
+  nothing it has ever printed to a terminal is suspect — but the tool should not be able to fail that
+  quietly, and it is not fixed here.
+- **`is_aerial_spawn`**, the guard separating the two idle rungs of every phase, has no vocabulary in
+  this port and no obvious meaning from the data alone.
+- The 34 non-route absence claims; the 33 named death-spawn rows; hisen's 6401/6402 pair; `is_user`
+  pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's
+  four owed attributes; the 258203/258207 family decision; the 59 stranded guards; 25 guards with no
+  `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids; Dynatoum's mine web;
+  Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
