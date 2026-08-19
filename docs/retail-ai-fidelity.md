@@ -25419,3 +25419,40 @@ hit it.
 **What would finish it:** find what leaves the global pointing elsewhere during a full run — most
 likely a harness disposed while another is still live, or a test that builds two — and make the source
 per-harness rather than per-process.
+
+## The clock hook, second attempt: the plumbing is fixed, the pins are not
+
+Last commit switched the clock hook off with the cause unfound, and named what would finish it: *make
+the source per-harness rather than per-process*. That is now done, and it works — but it is not what
+was blocking the hook.
+
+**`SystemClock` holds an `AsyncLocal` instead of a static field.** xUnit gives each test its own
+execution context, so a harness can no longer leave the source pointing at its own scheduler after
+another test has taken over. Null means nobody overrode it, which is production and every non-harness
+test.
+
+**That fixed the symptom it was meant to fix.** `TahabataGargoyleAiTests`, which failed about one
+full-suite run in five, is clean with the hook on.
+
+**And a different pin took its place.** `KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle` failed
+one run in six. It counts webs thrown across two twenty-second windows and compares them with and
+without cries — the kind of pin that is only ever *nearly* deterministic, and its own remarks already
+record a degeneracy found while writing it.
+
+So the diagnosis has moved. This is no longer a plumbing problem:
+
+* **process-global source** — fixed, by `AsyncLocal`;
+* **genuinely time-sensitive pins** — the real remaining cost. Turning the clock on makes behaviours
+  that were frozen start running, and any pin that counts events over a window inherits that variance.
+
+**Two are known.** The gargoyle's is fixed on its merits and stays fixed: it topped hate up every second
+and `AddHate` can put an npc back through entering-attack, which is where that fuse is armed. Kingspin's
+is not, and it is the harder kind — a statistical comparison rather than a single event.
+
+**The hook is off again**, with both call sites and this entry saying why. **The next step is not more
+plumbing**: it is to review the pins that count events over a window, hardest first, and only then turn
+the clock on. What that buys, once done, is the whole category this log keeps deferring — cast cadences,
+cooldown-gated rotations, and the two audits that stop at "casts only".
+
+**Kept from both attempts:** `SystemClock` itself, production-identical and unused; the `AsyncLocal`
+scoping; and the gargoyle pin's repair.

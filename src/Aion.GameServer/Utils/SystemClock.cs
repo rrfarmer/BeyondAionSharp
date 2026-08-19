@@ -26,15 +26,27 @@ namespace Aion.GameServer.Utils;
 /// </remarks>
 public static class SystemClock
 {
-    private static Func<long> source = () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    /// <summary>
+    /// The replacement clock, per execution context rather than per process.
+    /// </summary>
+    /// <remarks>
+    /// <b>A plain static field was tried first and had to be reverted.</b> One test's harness could
+    /// leave the source pointing at its own scheduler after another had taken over, and a gargoyle pin
+    /// failed about one full-suite run in five while passing every isolated run. <c>AsyncLocal</c> scopes
+    /// the override to the flow that set it, so a harness cannot reach outside its own test.
+    /// <para>
+    /// Null means "nobody overrode it", which is the production case and every non-harness test.
+    /// </para>
+    /// </remarks>
+    private static readonly AsyncLocal<Func<long>?> Source = new();
 
     /// <summary>Milliseconds since the epoch, as Java's <c>System.currentTimeMillis()</c> reports them.</summary>
-    public static long CurrentMillis() => source();
+    public static long CurrentMillis() =>
+        Source.Value?.Invoke() ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-    /// <summary>Points the clock at another source. Tests only; production never calls this.</summary>
-    public static void UseSource(Func<long> replacement) => source = replacement;
+    /// <summary>Points the clock at another source, for this execution context. Tests only.</summary>
+    public static void UseSource(Func<long> replacement) => Source.Value = replacement;
 
-    /// <summary>Puts the real clock back.</summary>
-    public static void UseSystemClock() =>
-        source = () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    /// <summary>Puts the real clock back for this execution context.</summary>
+    public static void UseSystemClock() => Source.Value = null;
 }

@@ -698,13 +698,21 @@ public sealed class BossAiHarness : IDisposable
 			// while the scheduler runs for minutes, so CanUseNextSkill never comes back true and an
 			// npc's own skill rotation cannot run inside a test. See Utils/SystemClock.
 			//
-			// NOT WIRED UP, deliberately. Pointing SystemClock at this scheduler is what a cast-cadence
-			// pin needs, and it works: it made a mutation catchable that nothing else could catch. But it
-			// also made TahabataGargoyleAiTests fail about one full-suite run in five while passing eight
-			// isolated runs out of eight, and the cause was not found -- the clock source is a process
-			// global and something in a full run leaves it pointing somewhere unexpected. A flaky suite
-			// is worse than a limited one, so it stays off until that is understood.
+			// Offset from the real epoch rather than started at zero: the scheduler counts from 0, and a
+			// model timestamp taken before the swap is an epoch value, so a bare NowMillis makes every
+			// delta enormously negative and nothing ever looks elapsed.
 			//
+			// Scoped to this test's execution context, not the process. A plain static was tried first
+			// and had to be reverted -- one harness could leave the source pointing at its own scheduler
+			// after another had taken over, and a gargoyle pin failed one full-suite run in five.
+			// STILL OFF, and the reason has moved on. AsyncLocal fixed the process-global problem this
+			// hook had: with it, TahabataGargoyleAiTests is clean where it used to fail one full run in
+			// five. What turning it on now exposes is different and genuine -- behaviours that were
+			// frozen start running, so pins that count events over a window become sensitive.
+			// KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle is the current example, failing one
+			// run in six. Those pins want reviewing one at a time; the plumbing no longer does.
+			//
+			// long epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			// Aion.GameServer.Utils.SystemClock.UseSource(() => epoch + clock.NowMillis);
 			DataManager.RegisterInstance(dataManager);
 
