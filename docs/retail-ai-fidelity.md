@@ -25922,3 +25922,48 @@ above half health he should be doing something every 15 seconds between bomb sal
 12.5, and he does neither. His six `say_to_all` lines (`STR_CHAT_ShulackNM_00` through `_05`) are also
 absent and their ids are unresolvable. The 4500ms wind-up before each salvo is this port's own, from
 Java: retail's action list is atomic. It is kept, and the pins measure through it.
+
+## An audit for pins that assert an absence — and why it changed nothing
+
+Three pins in three days passed on an empty collection, so the shape was worth a tool:
+`tools/client-extract/audit_hollow_absence_pins.py`. It finds absence assertions made after a clock
+advance long enough for the thing being counted to have removed itself, filters out the ones already
+counted through a watch window and the ones whose test asserts the same subject *present* earlier (a
+lifetime pin, where the absence is the measurement), and ranks what is left by window length. 130 rows.
+
+**Every candidate examined turned out to be sound, and the attempt to fix two of them made one
+strictly worse.** That is the useful result, so it is written down rather than buried.
+
+**Terath's jump floor.** `BelowFifteenPerCentHeStopsJumping` waits 150 seconds and counts jump boxes,
+which live 29. It looks textbook. Dropping `JumpFloorPercent` to 0 so he keeps jumping — **the old pin
+caught it.** The jump cadence happens to put a box inside the sampling instant. Fragile, but not
+hollow.
+
+**The conquest spawner, where the attempted fix backfired.** `TheSpawnerIsSilentForEightMinutes` waits
+479 seconds and counts spots, which live 10. Rewriting it as `WatchNew(479, ...)` looked like an
+obvious improvement. Then it was probed with the regression the pin exists to catch — its own remarks
+name it: *"the old class placed a monster the instant it spawned"* — by calling `PlaceSpot()` from
+`HandleSpawned`:
+
+| | old pin, counting survivors | rewritten pin, `WatchNew` |
+|---|---|---|
+| spawner places on spawning | **caught** | **survived** |
+
+**`WatchNew` is `Watch(countExisting: false)`.** It ignores anything already alive when the window
+opens — and something placed during `Spawn` is exactly that. So for *"was one ever placed here"* it is
+weaker than counting what stands, not stronger. `Watch`, which counts existing, is the helper that
+answers that question; `WatchNew` answers *"how many arrived during this window"*, which is a different
+question that happened to be the right one for Popuchin's bombs and the wrong one here. Both pin
+rewrites were reverted; nothing in the suite changed this commit.
+
+**What the near-miss says.** The rewrite passed the full suite three times over and would have gone in
+as a test-quality improvement. What caught it was insisting the *new* pin be probed with the defect it
+guards against, not merely that it still be green. A pin rewrite is a change to the thing that judges
+changes, and it needs the same mutation discipline as the code — arguably more, because nothing else is
+watching it.
+
+**Still missing.** The 130 rows are unread apart from the handful checked here, and the tool's own
+docstring now says plainly that most of them will be fine. It cannot see whether an npc self-removes,
+which is the fact that decides each row, so it will stay a prompt rather than a measurement. A stronger
+version would read the AI class behind each counted npc id and rank by *known* lifetime against window
+length; that needs the npc-id-to-AI-class map the binding table already has half of.
