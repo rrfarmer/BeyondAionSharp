@@ -22,6 +22,25 @@ Rows are only emitted where every devname resolves to an npc id our client knows
 Anything that does not resolve is reported on stderr rather than dropped silently —
 a guard whose healer is missing would otherwise look like a guard that never heals.
 
+DEVNAMES RESOLVE THROUGH THE CLIENT NPC TABLE, NOT ONLY `ai_binding.tsv`
+-----------------------------------------------------------------------
+`ai_binding.tsv` is derived from the AI patterns, so it only knows npcs that carry one. A summon that
+is plain `aggressive` — which most reinforcements are — may be missing from it entirely, and this
+script drops the **whole band** when one devname fails, precisely so nothing goes quiet.
+
+That safety turned into the bug it was written to prevent. Five fire-elemental devnames were absent
+from the binding table, and with them **19 bands across 15 guards**, including both of adjutant
+ursanafi's:
+
+> `DrGuard_FireElemental_Ae_lv48` is not in `ai_binding.tsv`, so the drakan priest's 36–69 fire band
+> was dropped and only his below-35 earth band survived. Reading the emitted table, he looked like a
+> guard with one tier. Reading retail, he has two.
+
+`client_npc_names.py` reads the client's own `npcs*.xml` tables — 87,734 names against the binding
+table's 69,184 — and was checked to resolve 100% of the binding table's gaps with zero disagreements
+where both know a name. It is consulted second, so the binding table still wins where it has an
+answer and nothing already emitted can move.
+
 CLI:
     python extract_guard_reinforcements.py <patterns_dir> <binding_tsv> [--out FILE]
 """
@@ -34,6 +53,7 @@ import re
 import sys
 
 from audit_missing_adds import NAME_RE, PATTERN_RE, SPAWN_RE, read_text
+from client_npc_names import npc_names
 
 # D, L and Dr. The first two are the Elyos/Asmodian abyss guards; Dr is the drakan side, which runs
 # the same mechanic and was missed for one letter. BGuard is deliberately out -- those are the gates,
@@ -154,6 +174,12 @@ def main() -> None:
         npc_id, devname, _ai, pattern = parts[0], parts[1], parts[2], parts[3]
         by_devname.setdefault(devname.lower(), npc_id)
         owners[pattern].append(npc_id)
+
+    # Second, never first: the binding table keeps every answer it already had, so adopting this
+    # cannot move a row that was already being emitted. It can only fill in a name that resolved to
+    # nothing -- which is the whole of the change.
+    for devname, npc_id in npc_names().items():
+        by_devname.setdefault(devname.lower(), npc_id)
 
     rows: list[tuple] = []
     unresolved: collections.Counter = collections.Counter()

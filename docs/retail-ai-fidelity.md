@@ -29640,3 +29640,74 @@ Full solution green at 2,807. Disagreements fall from 55 to 53.
   reading.
 - **The eleven unread top-band ids** from `--rank`.
 - Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## A resolver hole ate 19 bands, and two files that nothing reads
+
+Chasing the tier-swap shape further turned up something larger than a boss.
+
+### `--tiers`: comparing the sets, not the counts
+
+Kasika and Agro were both a boss with several tiers of add where our data used one tier for every band.
+A count comparison cannot see that, so `audit_summon_numbers.py` gained a `--tiers` mode that compares
+the **set** of npcs retail spawns against the set ours does.
+
+**The first version had no filters and put Station_NinjaNM at the top**, with a fully disjoint set:
+retail "names 217377 and 217378", ours spawns 217379, 217380 and 217381, not one id in common.
+
+> It is not a defect at all. That block is exactly right. The two ids ours "never spawns" are
+> `IDStation_DrakanNinja_CTRL_1` and `_CTRL_2` — FX controllers, which this port collapses.
+
+The FX-marker and already-placed filters from `audit_summon_ids.py` now apply here too, and the report
+prints devnames beside the ids so triage is a glance rather than a lookup. 20 rows became 15, and the
+remaining ones are readable.
+
+### Adjutant ursanafi, and the hole underneath him
+
+The best-looking row was the drakan priest: ours summoned 296347 in both bands where retail calls a fire
+elemental at 36–70 and an earth one below 35. 296347 is not a tier of this fight — it is a
+**SEASONED**-rank spirit belonging to the neighbouring boss `DrGuard_WhA_L48`.
+
+**But `spawn_helpers.xml` is not the live path for this npc.** Only `SummonerAI` and `CaptainLakharaAI`
+read summon groups; this priest's ai is `guard_reinforcement`, which reads the generated
+`GuardReinforcements.cs`. That file had the earth band and not the fire one.
+
+`extract_guard_reinforcements.py` resolves summon devnames through `ai_binding.tsv` — the table with the
+known 509-name blind spot, closed everywhere else in this toolchain months ago and still open here. Five
+fire-elemental devnames are missing from it. And because the extractor deliberately **discards a whole
+band when one devname fails** — so a guard missing its healer cannot look like a guard that never heals —
+the safety turned into the bug it was written to prevent:
+
+> **19 bands across 15 guards were dropped**, both of the priest's among them. The emitted table read as
+> though a one-tier guard were retail's own shape.
+
+Resolving through the client's npc tables *after* the binding table added **81 rows and removed none**.
+
+### Two counts of dead data
+
+| file | blocks | never read |
+|---|---|---|
+| `spawn_helpers.xml` | 73 | **9** |
+| `GuardReinforcements.cs` | 1,265 guards | **99** (+25 with no `npc_templates` row) |
+
+Rows are now marked `[INERT]` by the audit. Eight of its 53 disagreements are inert — worth correcting,
+because wrong data reads as a fact, but **not** behaviour fixes and not to be pinned as though they were.
+
+### The pin that passed against the broken table
+
+The first generalising pin asserted no guard has an upper band without a lower one. **It passed on the
+pre-fix table.** A failed devname does not remove one band; it removes the band it appears in, and these
+five appear in the low band too, so the guards lost both and left no gap. Replaced with one that names
+the five ids directly: 6 of 7 pins now fail against the pre-fix table, and that was verified by
+regenerating it rather than assumed.
+
+**Still missing.**
+
+- **The 99 guards and 9 blocks above.** Changing an npc's `ai=` is a behaviour decision, not a
+  translation — 40 are `aggressive` and 38 `fortress_protector`, and whether `GuardReinforcementAI` is a
+  safe superset of either has not been checked. **Nobody should mass-edit these without checking.**
+- **25 guards in the table with no `npc_templates.xml` row.**
+- **`live_time` has no `<summonGroup>` attribute.** Retail gives the drakan elementals 100s; our schema
+  mirrors Java's and has no field for it. Not invented here.
+- **11 patterns with reinforcement branches own no npc** (`BGuard_Chief*`, `DGuard_AhA_L45` and kin).
+- The remaining 45 live disagreements, the eleven unread top-band ids, Dynatoum's mine web, Beritra's two
+  spawn rows, Pashid's `npc_skills`, the seven absent npc rows.

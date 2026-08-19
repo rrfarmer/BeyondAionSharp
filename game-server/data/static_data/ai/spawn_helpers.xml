@@ -179,13 +179,22 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Drakan priest of Indratu (adjutant ursanafi). THIS BLOCK IS INERT AND KEPT ONLY SO IT IS NOT
+	     MISLEADING. Only SummonerAI and CaptainLakharaAI read summon groups; this npc's ai is
+	     "guard_reinforcement", so nothing here has ever run. The live path is GuardReinforcements.cs,
+	     generated from retail DrGuard_PhB_L48, which now carries both of his bands: fire 296348 between
+	     36 and 70, earth 296349 below 35, both at range 2 for 100s.
+	     The values below were wrong in their own right — 296347 in both bands, which is a SEASONED-rank
+	     spirit belonging to the neighbouring boss DrGuard_WhA_L48 — and are corrected rather than left,
+	     because a wrong inert block reads as a fact. Nine of the 73 blocks in this file are inert this
+	     way; see docs/retail-ai-fidelity.md for the list. -->
 	<ai npcId="214163">
 		<summons>
-			<percentage percent="75">
-				<summonGroup npcId="296347" distance="2"/>
+			<percentage percent="70">
+				<summonGroup npcId="296348" distance="2"/>
 			</percentage>
-			<percentage percent="20">
-				<summonGroup npcId="296347" distance="2"/>
+			<percentage percent="35">
+				<summonGroup npcId="296349" distance="2"/>
 			</percentage>
 		</summons>
 	</ai>
