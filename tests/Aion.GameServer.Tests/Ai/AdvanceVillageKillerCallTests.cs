@@ -111,4 +111,108 @@ public sealed class AdvanceVillageKillerCallTests
 
 		Assert.Null(guard.GetTarget());
 	}
+
+	/// <summary>
+	/// <b>A guard being fought calls the killer over.</b>
+	/// </summary>
+	/// <remarks>
+	/// The return leg of the mechanic: the guards answer a killer that wakes, and a guard under attack
+	/// summons one. The killer here is never touched and never wakes — only the guard's broadcast puts
+	/// it into the fight.
+	/// </remarks>
+	[Fact]
+	public void AGuardBeingFoughtCallsTheKillerOver()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(VillageGuard, 300f, 300f, 200f);
+		Npc killer = harness.Spawn(AdvanceKiller, 320f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, killer);
+		Assert.Null(killer.GetTarget());
+
+		guard.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CREATURE_AGGRO, player);
+
+		Assert.Equal(guard, killer.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>And it keeps calling every five seconds while the fight lasts.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail re-arms the timer at 5000 on every firing, so the call is not a one-off announcement — a
+	/// killer that arrives late, or one that was busy, still hears it. Counted through a probe rather
+	/// than through the killer, because the killer only needs to hear it once to act.
+	/// </remarks>
+	[Fact]
+	public void AndItKeepsCallingEveryFiveSeconds()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(VillageGuard, 300f, 300f, 200f);
+		Npc killer = harness.Spawn(AdvanceKiller, 320f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, killer);
+		guard.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CREATURE_AGGRO, player);
+
+		// The killer is removed so its own answer cannot mask a call that stopped.
+		killer.GetController().Delete();
+		Npc late = harness.Spawn(AdvanceKiller, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, late);
+		Assert.Null(late.GetTarget());
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		Assert.Equal(guard, late.GetTarget());
+
+		// A second replacement, past the second firing: one call and a long silence would satisfy the
+		// assertion above, because the first firing is still at five seconds whatever the period is.
+		late.GetController().Delete();
+		Npc later = harness.Spawn(AdvanceKiller, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, later);
+		Assert.Null(later.GetTarget());
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		Assert.Equal(guard, later.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>And it stops calling when it goes home.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's is a battle timer, which ends with the fight. A call that outlived combat would keep
+	/// dragging killers to a guard standing quietly at its post.
+	/// </remarks>
+	[Fact]
+	public void AndItStopsCallingWhenItGoesHome()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(VillageGuard, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		guard.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CREATURE_AGGRO, player);
+
+		guard.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.BACK_HOME);
+
+		Npc killer = harness.Spawn(AdvanceKiller, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, killer);
+		harness.Clock.Advance(TimeSpan.FromSeconds(12));
+
+		Assert.Null(killer.GetTarget());
+	}
+
+	/// <summary>
+	/// <b>A village chief calls twenty metres, an Advance guard fifty.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's own split between the two families, and the sort of number a shared constant would have
+	/// swallowed. Pinned on the table because the harness cannot separate ranges near fifty — the
+	/// message bus's own reach ends there.
+	/// </remarks>
+	[Theory]
+	[InlineData(Aion.GameServer.Model.TribeClass.LDF5_V_CHIEF_L, 20f)]
+	[InlineData(Aion.GameServer.Model.TribeClass.LDF5_V_CHIEF_D, 20f)]
+	[InlineData(Aion.GameServer.Model.TribeClass.LDF5_V_CHIEF_DR, 20f)]
+	[InlineData(Aion.GameServer.Model.TribeClass.LDF4_ADVANCE_LGUARD, 50f)]
+	[InlineData(Aion.GameServer.Model.TribeClass.LDF4_ADVANCE_DGUARD, 50f)]
+	public void EachFamilyCallsAtItsOwnRange(Aion.GameServer.Model.TribeClass tribe, float range)
+	{
+		Assert.Equal(range, BaseProtectorAI.CallRangeFor(tribe));
+	}
 }

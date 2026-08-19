@@ -26664,3 +26664,56 @@ Both are index-free and reachable; neither is written. Until they are, the loop 
 killer that wakes is answered, but a guard under attack cannot summon one. The 38 abyss guards on
 `simple_abyssguard` also answer 30001 in retail and still do not here — that class is a `PatternAi`
 with an empty pattern, so it is a different shape of change from this one.
+
+## And a guard under attack calls the killer over: the loop closes
+
+The return leg, and the last index-free piece of the call family. Both `base_protector` families carry
+the same pair, differing only in reach:
+
+```
+on_enter_attack_state:
+  > add_battle_timer BTIMERI_INDEX_0 delay=5000
+  > broadcast_message message_type=30002 range_as_meter=20|50 param_obj=OBJI_SELF
+on_battle_timer:
+  ? is_battle_timer_indicator BTIMERI_INDEX_0
+  > add_battle_timer BTIMERI_INDEX_0 delay=5000
+  > broadcast_message message_type=30002 range_as_meter=20|50 param_obj=OBJI_SELF
+```
+
+A guard entering combat says "come and deal with me", and keeps saying it every five seconds for as
+long as the fight lasts. `FortressKillerAI` already answers 30002 by coming for whoever sent it, so
+**the mechanic now runs both ways**: a killer that wakes pulls the guards onto it, and a guard being
+fought pulls a killer over.
+
+**The range is per family and is retail's own split** — twenty metres for a village chief, fifty for an
+Advance guard. Selected by tribe, and pinned as a table because the harness cannot separate ranges near
+fifty: the message bus's own reach ends there, as established two commits ago.
+
+**Broadcast first, then arm.** Retail's rung broadcasts and *then* adds the timer, so the first call is
+part of entering combat rather than the timer's first firing. The first attempt scheduled it at zero
+instead and the immediate pin failed — a zero-delay task still waits for a clock tick, which in a live
+fight is a killer standing next to something it has not been told about.
+
+**Pins** — eight in `AdvanceVillageKillerCallTests`, eight mutations, all caught.
+
+**Two survived first, and both were windows too small to see the thing they tested.** Setting the
+repeat period to an hour passed, because the timer's *first* firing is at five seconds whatever the
+period is — so the pin had to replace the killer a second time and advance again. And nothing asserted
+the call ever stops, so deleting `StopCalling` passed; a guard that kept calling after going home would
+drag killers to a target standing quietly at its post. This is the third time in this stretch that a
+single window could not see a cadence, after Celestius's cycle and Beritra's picker.
+
+**Still missing.** Two sends remain, and both are blocked on something rather than merely unwritten:
+
+- the Advance guards' **`30004`**, broadcast once on entering combat at fifty metres. **Nothing in the
+  5.8 dump answers it** — 68 senders, no listeners — so its audience is unknown and writing a broadcast
+  with no reader would be guessing at a mechanic rather than porting one.
+- the village chiefs' **`on_die`** rung: `30003` at fifty metres, alongside two
+  `set_condition_spawn_variable` calls that record which of `pc_light`, `pc_dark` or `drakan` killed the
+  chief, each setting a different value. The broadcast half could be written today; the condition
+  variables are the mechanism this port has no equivalent for, and writing the broadcast alone would
+  announce a village's fall to a system that cannot act on it.
+
+The 38 abyss guards on `simple_abyssguard` also answer 30001 in retail and still do not here. That
+class is a `PatternAi` with a deliberately empty pattern, so it is a different shape of change from
+these two — and the one remaining piece of this family that is neither blocked nor ambiguous.
