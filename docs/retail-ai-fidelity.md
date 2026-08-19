@@ -29992,3 +29992,68 @@ replacing a working encounter for eleven bosses on a hunch is worse than leaving
   row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml` blocks; the 45 live disagreements; the
   eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the
   seven absent npc rows.
+
+## Queen Alukina of Beluslan, and two mistakes worth more than the fix
+
+The Seiren row was listed last time as "real, and not expressible" because the death spawn cannot be
+written in a health-band schema. That was true of the schema and false of the port: a `PatternAi` class
+can express all of it, which is what `QueenAlukinaBeluslanAI` now does.
+
+| | retail `ND2_FhM` | what our data did |
+|---|---|---|
+| faithful servant | one, `spawn_on_target`, range 2, on the player | **three, range 10, at the queen** |
+| when | a two-beat timer loop that starts at fifty-five | bands at 80, 60 and 40 |
+| below 25 | stops, and the group is despawned | kept summoning |
+| on death | **seven azure blobbles for thirty seconds** | nothing |
+
+The servant is a thing that appears *on you*. It was appearing in a huddle across the room.
+
+### I overwrote a working class
+
+`QueenAlukinaAI.cs` already existed, and I wrote a new file straight over it without reading it. It was
+a substantial, correct implementation of a **different** Queen Alukina — 217590, Empyrean Crucible,
+pattern `IDArena_S8_Named_3` — with its own skill rotation and its own blobble burst.
+
+> Two npcs share the name, the tribe, and a death spawn of seven azure blobbles, and nothing else.
+
+The suite caught it immediately and specifically: `No AIs could be found for the following npc_template
+AI names: alukina_emp`. It was restored from HEAD and mine lives in `QueenAlukinaBeluslanAI.cs` under
+`alukina_beluslan`, with each class naming the other. **The lesson is the plain one — Write over a path
+you have not read is a destructive act**, and "the name matches what I am building" is exactly the
+circumstance where it will be a different thing with the same name.
+
+### `BossAiHarness.Kill` does not run death branches
+
+Chasing why the blobbles would not appear turned up something that is not mine:
+
+> Through `Kill`, **no death branch of any pattern runs.** Raising `AiEventType.Died` on the same
+> already-dead NPC produces all seven blobbles.
+
+Reproduced against the **pre-existing** `QueenAlukinaAI`, which bursts its blobbles from a hand-written
+`HandleDied`: `viaKill=0`, then `viaEvent=7`. So this predates today and is not caused by the pattern
+DSL. `Kill` does reach `DeathObserver`s — that is what it was added for — but it does not reach the
+dying NPC's own `HandleDied`, and its docstring claims it "calls `OnDie`, so the observers, the friend
+notice and the AI event all run in the order the server runs them."
+
+The two death pins here therefore raise the event and say in the remark exactly what they are and are
+not testing.
+
+### And a mutation that survived
+
+The first mutation of the servant loop — moving one beat back to the queen's feet — **passed**. The
+window was forty seconds and the loop's second beat is armed at twenty-five by the first, so it never
+came round. Widened to sixty, the mutation is caught. A pin that never reaches a branch cannot defend it,
+and the count of servants looked right either way.
+
+**Still missing.**
+
+- **`BossAiHarness.Kill` reaching `HandleDied`.** Until then, every death branch in every pattern class
+  is pinned only through the raw event, and the docstring overstates what it does. This is the most
+  valuable item on this list: it is one harness fix that would make an entire category of mechanic
+  testable.
+- Retail's shouts and all seven `use_skill` indices here, blocked as ever on skill-index resolution.
+- The `<summons>` schema still owes `live_time`, `pathname` and a non-health trigger.
+- The 258203/258207 family decision; the 59 stranded guards; 25 guards with no `npc_templates.xml` row;
+  11 owner-less patterns; the 9 inert `spawn_helpers.xml` blocks; the 44 live disagreements; the eleven
+  unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven
+  absent npc rows.

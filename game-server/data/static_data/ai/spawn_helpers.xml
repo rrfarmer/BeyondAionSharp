@@ -652,6 +652,12 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Queen Alukina. SUPERSEDED AND INERT: her npc now runs ai="queen_alukina" (QueenAlukinaAI), which
+	     is a translation of retail ND2_FhM. Kept rather than deleted so the change is visible and
+	     reversible. What was here placed three faithful servants at distance 10 from the queen in three
+	     identical bands; retail puts ONE on the current target at spawn_range 2, on a two-beat timer
+	     loop, and stops entirely below 25 — and separately drops seven azure blobbles when she dies,
+	     which this health-percentage schema cannot express at all. -->
 	<ai npcId="213747">
 		<summons>
 			<percentage percent="80">
