@@ -97,7 +97,7 @@ public class SematariuxAI : AggressiveNpcAI, HpPhases.PhaseHandler
         {
             if (PositionUtil.IsInRange(GetOwner(), 141.77f, 2142.31f, 440.0f, 4f) && isEggEventActive.CompareAndSet(false, true))
             {
-                Npc egg = (Npc)SpawnFor(281451, 141.77f, 2142.31f, 440.0f, (sbyte)0, EggLife);
+                Npc egg = (Npc)SpawnFor(281451, 141.77f, 2142.31f, 440.0f, (sbyte)0, EggLifeSeconds);
                 ThreadPoolManager.GetInstance().Schedule(_ => { SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 18726, 1, egg).UseNoAnimationSkill(); return ValueTask.CompletedTask; }, 2500L);
             }
         }
@@ -153,7 +153,14 @@ public class SematariuxAI : AggressiveNpcAI, HpPhases.PhaseHandler
     }
 
     /// <summary>Retail <c>BLF4_DramataEgg_57_l</c> stands ten minutes; ours was never removed at all.</summary>
-    private const int EggLife = 600;
+    public const int EggLifeSeconds = 600;
+
+    /// <summary>
+    /// One. Retail's pattern also carries a two-egg rung, and it can never fire: both rungs are
+    /// <c>PLANNED</c> and guarded only by <c>is_waypoint_index 1</c>, so the higher-priority one-egg rung
+    /// always wins. The number here is right and the pattern looks like it disagrees.
+    /// </summary>
+    public const int EggsPerLaying = 1;
 
     protected override void HandleDied()
     {

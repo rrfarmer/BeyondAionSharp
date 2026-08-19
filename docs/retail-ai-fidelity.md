@@ -28618,3 +28618,55 @@ taking its own path, surviving the points before the sixth and going at it.
 - **Every other `DeathObserver` mechanic** is now drivable and none has been revisited.
 - The scientists' `on_wake_up` and `on_see_user` rungs, and the quest bookkeeping in that class, which is
   ours rather than retail's.
+
+## Two dragons, one dead rung, and one route that is nobody's
+
+`sematariux` and `padmarashka_world_boss` were the next two of the eight, both flagged for a spawn at
+waypoint index 1. Both are the Dramata world dragons, and what they do there is **lay eggs**.
+
+### Sematariux: already right, and the pattern says otherwise
+
+`LF4_Dramata` has two rungs at waypoint 1, both `PLANNED`, both guarded by nothing but the index:
+
+| priority | eggs |
+|---|---|
+| 100 | 1 |
+| 99 | **2** |
+
+Evaluation takes the highest priority whose conditions pass and stops. The higher rung carries no
+probability. **So the two-egg rung can never fire — it is dead code in NCSoft's own data.**
+
+Our single egg is therefore correct, and `EggLifeSeconds = 600` matches `live_time`. Nothing to fix, and
+**two pins added anyway**, because this is precisely the shape of thing a future reader corrects in the
+wrong direction: open the pattern, find a two-egg branch we do not implement, "fix" it. The reason the
+number is right lives three lines above it in a priority field. Both pins are mutation-checked.
+
+Her sibling shows what a live version looks like: `DF4_Dramata`'s two-egg rung carries
+`test_probability 25`, so the one-egg rung beneath it is a real fallback rather than a shadow.
+
+### Padmarashka: blocked, and on something specific
+
+She **never lays an egg here** — `GelkmarosPadmarashkaAI` does not mention 281455 at all, and the summon
+audit has said so all along. Retail lays one at waypoint 1: 25% for two, otherwise one, plus a
+`BTIMERI_INDEX_21` at 30 seconds.
+
+**It cannot be written, because nobody knows where she walks.** She is placed by
+`custom_events.xml` at (2940.20, 851.29, 35.29) with no `walker_id`, and the client's `df4` world defines
+no route within 25 metres of that point. The nine `DF4_MobPath_Dramata*` routes are named for her
+**pets and guardians**, not for her: four eighteen-point pet paths and four three-point guardian paths,
+none of them starting where she does.
+
+That is a different kind of missing from the last four encounters, where the route turned out to be in
+our own spawn table or one hop away in the client. Here the geometry is genuinely absent from both, and
+guessing a patrol for a world boss would move an open-world encounter somewhere it has never been.
+
+**Still missing.**
+
+- **Padmarashka's egg**, and with it her waypoint rung and its 30-second timer. It needs her route, which
+  is in neither our data nor the client's waypoint files under a name that can be matched to her. The
+  next thing to try is the client's own spawn data rather than its waypoint data — every other lead here
+  has come from a file nobody had opened yet.
+- **Six classes** from the waypoint survey: `brigade_general_vasharti` at index 1; `poppyontherun` at 26;
+  the two Eternal Bastion classes broadcasting at index 7 to listeners with no sender; `summoner` and
+  `useitem`, shared classes where one or two npcs of hundreds carry a rung.
+- The rest of Padmarashka's unnamed spawn ids: 281457, 281928, 281937, 295092, 296337.
