@@ -26996,3 +26996,45 @@ each one is a cadence that could be held by something the npc actually did. `aud
 listed twenty classes as "casts only — needs the skill index"; the skill index still blocks *which*
 skill, but **when** is now observable, which is most of what those rows were about. That is the next
 sweep, and it is a large one.
+
+## Terath's gravity fields, and the first cadence pinned by what the npc did
+
+The first row taken from the sweep the clock hook unblocked. `audit_timer_drift.py` has listed
+`GravityAI` as `[casts only -- needs the skill index]` since the tool was written — which was true of
+*which* skill and never of *when*.
+
+Retail's `IDTiamat_Sardha_GravityUp` is two rungs and nothing else:
+
+```
+on_wake_up:   > set_idle_timer delay=2000
+on_idle_timer: > set_idle_timer delay=2000
+               > spawn IDTiamat_Thor_SumStatue_MgcAtk_NoShowNpc live_time=3
+```
+
+**The field opens after two seconds and pulses every two.** This port opened **on landing** and pulsed
+every **3250** — no opening delay at all, and a beat and a half slower than retail. Standing in a
+gravity field cost less than it should, and walking into one cost more: there was no grace at all
+between arriving and the first pulse.
+
+**The FX/DMG collapse is kept.** Retail's rung does not cast — it spawns a three-second damage npc on
+its own point, the usual pair this port folds into one npc that casts. Only the cadence is corrected.
+
+**283110 has no pattern in the 5.8 dump.** Only the up-field does. Both get retail's cadence, because
+nothing contradicts it and `BrigadeGeneralTerathAI` places the pair together as one mechanic — recorded
+rather than left to be inferred.
+
+**Pins** — six in `GravityFieldTests`, four mutations, all caught. **All of them behavioural**, reading
+`GetLastSkillTime`, which is the thing that was impossible a commit ago.
+
+**The runner stopped a wasted run and an over-claim.** Its baseline check refused to start:
+`BASELINE IS ALREADY FAILING: AndPulseEveryTwoSecondsAfterThat`. The pin sampled at 2.5 and 3.5 seconds
+— but at a two-second beat the pulses land at 2000 and 4000, so both readings see the same one and the
+pin could never pass. Under a throwaway script that would have run anyway and reported four mutations
+caught for free, since a failing baseline catches everything.
+
+**Still missing.** The rest of the sweep. Nineteen more classes carry `[casts only]` in that audit and
+most of them are about *when*: `CalculatedAtrocityAI` and `UltimateAtrocityAI` (500 and 11000 against
+retail's 2000 and 3000), `AhserionSkyAssaulterAI` (400 against 5000), `ConquestOfferingPortalAI` (65000
+against 180000), `CustomInstanceBossAI` (200 against 5000 and 7000), `CustomInstanceDominatorAI` (30000
+against a six-timer chain). And the sentences that say cast cadences cannot be observed are still copied
+through those classes' remarks, where they are now simply untrue.
