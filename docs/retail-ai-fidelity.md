@@ -30868,3 +30868,50 @@ The comments were written with `--` inside them, which is illegal in XML. That t
   `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids;
   Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Spiritmaster atmach summons something now
+
+First of the three bosses named last entry as summoning nothing at all.
+
+He ran plain `aggressive`, and the `spawn_helpers.xml` block that looked like his implementation was
+never read — **and named two npcs (214832, 215226) that appear nowhere in his retail pattern.** So the
+file described a fight that neither retail nor this server ever ran.
+
+What `Naga_WhA` actually does:
+
+* a trap at his feet the moment the fight starts;
+* **two faithful underlings, once**, when he first crosses 35%, three metres out, for half an hour;
+* the underlings cleared when he dies and when he resets.
+
+The heartbeat underneath is a three-band ladder on one timer: timer 0 comes round every six seconds and
+the band it lands in lights a different secondary timer — 1 above 76, 2 between 37 and 74, 3 below 35 —
+each a one-shot handover behind its own flag, with a final rung taking timer 0 unguarded so the heartbeat
+survives every handover being spent. All translated; what hangs off the secondary timers is ten skill
+indices and is not.
+
+4/4 mutations caught.
+
+### A pin that claimed more than was known
+
+The first version asserted the trap **outlives him**, reasoning from retail clearing only `SPAWN_ID_2` on
+death. It failed: in this port the trap goes with him.
+
+That could have been read as a defect and "fixed". It was not, because the trap carries
+`despawn_at_attack_state=TRUE` and **what that flag means for something spawned on *entering* combat is
+not established by anything this work has read.** Retail's own semantics are unclear at exactly the point
+the pin depended on.
+
+> Pinning a guess in either direction would freeze the guess. The pin now asserts only the underlings,
+> and the remark says why the trap is left alone.
+
+**Still missing.**
+
+- **`despawn_at_attack_state` on a spawn made during `on_enter_attack_state`.** The flag is read
+  elsewhere in this work as "patrol furniture that clears on pull", which cannot be what it means here.
+  Until somebody establishes it, atmach's trap lifetime is this port's guess, not retail's.
+- **Divine hisen (`Cromede_Hierarch`, 6 spawn actions) and jurdin the cursed
+  (`IDForest_Wave_Trico_Boss`, 25)** still summon nothing.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids;
+  Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.

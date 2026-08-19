@@ -272,8 +272,10 @@
 			</percentage>
 		</summons>
 	</ai>
-	<!-- spiritmaster atmach (Naga_WhA). INERT: His ai is "aggressive", so NOTHING reads this block and no class replaces it: he summons nothing
-	     at all in play. Retail Naga_WhA has four spawn actions. REAL WORK OWED.
+	<!-- spiritmaster atmach (Naga_WhA). INERT: SUPERSEDED: his ai is now "spiritmaster_atmach" (SpiritmasterAtmachAI), a translation of retail
+	     Naga_WhA. Until that class existed nothing read this block and no class replaced it, so he
+	     summoned nothing at all. The npcs named below (214832, 215226) appear nowhere in his retail
+	     pattern; his actual adds are a trap at his feet and two faithful underlings below 35.
 	     Kept rather than deleted so the state is visible; see docs/retail-ai-fidelity.md. -->
 	<ai npcId="214843">
 		<summons>
