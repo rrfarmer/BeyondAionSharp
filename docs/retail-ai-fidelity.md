@@ -30631,3 +30631,62 @@ Full solution green at 2,595 in the game-server assembly. Disagreements now 20.
   with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml` blocks; the
   eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the
   seven absent npc rows.
+
+## A ladder that stopped climbing, and a boss that was never a band boss
+
+Two more rows read rather than assumed.
+
+### The water elementals: 2 / 2 / 4
+
+`ND2_WhA` escalates two, **three**, four across its bands. Ours placed 2 / 2 / 4.
+
+> The fight got no harder between the first band and the third. The step whose only job is to raise the
+> pressure did nothing — and **two is a perfectly plausible number for a wave**, which is why an eye
+> passing over the file would never stop on it. Only the sequence gives it away, which is why the pin
+> asserts all three together rather than one band each.
+
+### The arena saam has no health bands at all
+
+`IDArena_S2_Bonus_1` is a bonus round, and its entire mechanic is one `on_attacked` rung:
+
+```
+? test_probability percent=50
+! increase_intvar INTVARI_FIRST
+> spawn S2_SAAM2_55_n num_to_spawn=1 spawn_range=10
+> flee_from from=OBJI_ATTACKER seconds=5
+```
+
+Half the time it sheds one piece and **bolts for five seconds**, counting what it has shed — the count is
+the round's score.
+
+**Our data gave it four health bands each placing two.** Not the trigger, not the count, not the fleeing,
+not the roll, not the score. The audit could only ever see "count 2 vs retail 1", four times; the row was
+right about the boss and wrong about everything else, for the fourth time in this work.
+
+Now `ArenaSaamAI`, with the `spawn_helpers` block kept and marked inert so the change is reversible.
+
+### Two pins had to be rewritten before they meant anything
+
+* **Head kutol's second band** could not be measured absolutely: at 74 both the 90 and 75 bands have
+  opened, so it measures the delta across the threshold.
+* **The saam's pieces** likewise: `Engage` is itself hitting it, and counting absolutely read six for
+  four hits. Every pin here measures the delta across its own hits.
+
+Both are the same lesson — **when a mechanic accumulates, an absolute count measures the setup as much as
+the mechanic.**
+
+4/4 mutations caught through the runner, including one that first came back `SURVIVED` because the data
+fix had no pin at all; that is what the survivor line is for.
+
+Full solution green at 2,600 in the game-server assembly. Disagreements 20 to 15.
+
+**Still missing.**
+
+- **The saam's counter is a score nothing reads.** Retail's bonus round presumably reports it; nothing in
+  this port collects it, so the number is kept faithfully and used by no one.
+- **The remaining 15 disagreements**, of which 8 are on inert blocks.
+- The 34 non-route absence claims; the 33 named death-spawn rows; `is_user` pinned one seam short; the
+  `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
+  25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml`
+  blocks; the eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's
+  `npc_skills`; the seven absent npc rows.

@@ -141,7 +141,10 @@
 				<summonGroup npcId="280705" minCount="2" distance="10"/>
 			</percentage>
 			<percentage percent="55">
-				<summonGroup npcId="280706" minCount="2" distance="10"/>
+				<!-- Three, not two. Retail's middle rung is num_to_spawn=3 and the ladder it sits in
+				     climbs 2 / 3 / 4; ours placed 2 / 2 / 4, so the middle step of the escalation was
+				     flat and the fight got no harder between the first band and the third. -->
+				<summonGroup npcId="280706" minCount="3" distance="10"/>
 			</percentage>
 			<percentage percent="35">
 				<summonGroup npcId="280707" minCount="4" distance="10"/>
@@ -431,6 +434,10 @@
 			</percentage>
 		</summons>
 	</ai>
+	<!-- Arena saam. SUPERSEDED AND INERT: this npc now runs ai="arena_saam" (ArenaSaamAI), a translation
+	     of retail IDArena_S2_Bonus_1, which has no health bands at all — it sheds one piece on a 50%%
+	     roll per hit and flees for five seconds. The four bands below are kept so the change is visible
+	     and reversible. -->
 	<ai npcId="217737">
 		<summons>
 			<percentage percent="80">
