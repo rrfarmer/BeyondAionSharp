@@ -31927,3 +31927,78 @@ builder's shared default, both are caught.
   skills are not. It was left out of this pass because the timer chain deserves its own reading rather
   than being folded into a builder shaped for the rank and file.
 - **`IDSeal_Wave1/2/3_Leader_Lv1` and `Lv2`** (four npcs) have no class at all.
+
+### The five wave leaders, and the wave's only add
+
+`SealWaveLeaderAI` — npcs 236239-236243, retail `IDSeal_Wave1..5_Leader_Lv3`. All five ran
+`wave_attacker`, which after this pass has **no users left at all**.
+
+**They are five different bosses,** not variants of one pattern the way the rank and file are: five
+distinct timer chains at five cadences. Sharing a single class between them is why none of it happened.
+
+**They are the voice the rest of the wave was waiting for.** Every one broadcasts **22750** on entering
+combat and again on its command rung — the buff message all nine wave patterns listen for. Four also run
+a six-second health check that once, below seventy, sends **22757**, the reserved-heal request the
+priest leader answers. Nothing in the instance was sending either, so both rungs on the hearing side
+looked like dead branches.
+
+**The alternation.** Timers 0, 1 and 2 hand off in a ring; when it closes on timer 2, two rungs compete
+— one guarded by `set_flag_var`, one by `unset_flag_var` on the same flag. Test-and-set against
+test-and-unset makes them take turns, so the command rung and its add come every *other* time round.
+Leader 4 splits on health instead; leader 5 adds a third rung below fifty that pre-empts both.
+
+**`BIDSeal_Wave_Arrow_Target` (855923) is the only add in the entire wave** and nothing was placing it.
+It lands on the leader's current target with ten million hate for fifteen seconds. Leader 5's
+below-fifty rung throws **three** at once, on the three highest attackers. Leader 5 is also the only one
+that leaves something where it falls: `IDSeal_FOBJ_Mind_Control_Q` (702769), "ominous darkness".
+
+#### Three things this cost an hour to learn, worth writing down
+
+**1. `is_hp_in_boundary 50..100` excludes 100.** Leader 4's command timer has two rungs, below-fifty and
+50..100 exclusive, and *neither* matches an untouched leader at exactly full health — so the timer never
+comes round again and the boss does nothing forever. **That is retail's own gap**, not a translation
+error, and in a real fight it closes on the first blow. But it means a pin has to land a hit before
+advancing the clock, and the first version of these pins did not: two "the add never spawns" failures
+were the measurement, not the mechanic.
+
+**2. `BossAiHarness.Kill` must not be preceded by `Wound` unless the reward path can run.**
+`NpcController.OnDie` calls `DoReward()` **before** raising the AI's `Died` event, and wraps the whole
+block in a `catch` that only logs. `DoReward` returns harmlessly when nothing recorded damage — but add
+a `Wound` and it goes on into AP/XP, throws on the database this suite does not have, and **the
+exception silently eats the death handler**. An `on_die` branch then looks exactly like one that was
+never written: no failure, no exception at the call site, just nothing. The harness's own `Kill` remark
+says it records no damage on purpose; this is what happens when a pin adds some.
+
+**3. Two mutations survived and both were inert, not weak pins.** "Leader 4 gains a health check" adds
+rungs for a timer leader 4 never arms; adding the timer alone adds no rung. Only rebinding 236242 to
+leader 3's whole chain is a fair mutation, and that is caught three times over. Likewise **the heal
+request's one-shot flag is unobservable on its own** — the rung deliberately does not rearm its
+heartbeat, so there is never a second chance for the flag to block. Retail carries both guards; only the
+pair is testable, and mutating the pair is caught.
+
+#### New seam
+
+`NpcMessageBus.Observer`, with `NpcMessageBusProbe` wrapping it in the test project. **Some npcs exist
+only to talk**: the leaders' entire contribution is 22750 and 22757, and *both* answers in the retail
+data are `use_skill SKILLI_INDEX_n`. There is no listener that can be made to react, so without a seam
+the whole sending half of the encounter is unpinnable — a leader that broadcasts nothing looks exactly
+like one that broadcasts correctly.
+
+### Still missing after the wave leaders
+
+- **Every skill, again.** The buff itself (index 0 on all five), every strike hung off every timer rung,
+  and the healer-protect and mez answers to 22755 on leaders 1, 2 and 5. The chains keep their timing
+  and their voice but not their blows.
+- **`set_condition_spawn_variable WAVE_LEADER modify=1`** on both death handlers of all five. This is
+  the wave progression counter — what tells the instance a wave is done — and there is no equivalent
+  here. **Without it the waves cannot advance**, which makes it the single most valuable missing piece
+  in this instance.
+- **`random_move` / `on_stop_to_random_move`** on leaders 1, 3 and 5 and on `LeaderGourp_As`.
+- **`points_to_add` on a target switch.** Leader 5 switches with 150,000 and `LeaderGourp_As` with
+  10,000; `Do.SwitchTarget` carries no hate figure, so the switch happens but not its weight.
+- **The wave scaffolding is still entirely unported**: `IDSeal_Wave_Checker`, `IDSeal_WaveTimer_Lv2/Lv3`,
+  `IDSeal_Wave_Bonus1..4`, `IDSeal_WaveStart_Lv3_Da/Li`, `IDSeal_Q_WaveStart`,
+  `IDSeal_Wave1/2/3_Leader_Lv1` and `Lv2`, and `IDSeal_Wave_Door_Destroyer` (the other 22760 sender).
+- **`WaveAttackerAI` now has no users.** Left in place rather than deleted — it is a Java-parity class
+  and removing it is a judgement about the Java tree, not a translation. Flagged here so it does not sit
+  unnoticed as the inert-code shape this project keeps finding.

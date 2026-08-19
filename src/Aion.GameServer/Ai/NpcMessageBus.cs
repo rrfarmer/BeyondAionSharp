@@ -47,9 +47,28 @@ public static class NpcMessageBus
     /// spawn path puts a summon in its spawner's known list before the next action of that branch
     /// runs, so the exclusion has to be explicit. See docs/retail-ai-fidelity.md.
     /// </param>
+    /// <summary>
+    /// Test seam: every broadcast, whether or not anything hears it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Some NPCs exist only to talk.</b> Idgel Dome's five wave leaders are the case that forced this:
+    /// their whole contribution is 22750 and 22757, and <em>both</em> answers in the retail data are
+    /// <c>use_skill SKILLI_INDEX_n</c>, which this port cannot resolve. So there is no listener that can
+    /// be made to react, and without a seam the entire sending half of the encounter is unpinnable — a
+    /// leader that broadcasts nothing looks exactly like one that broadcasts correctly.
+    /// <para>
+    /// Deliberately a plain settable delegate rather than an event: a pin sets it, reads it, and clears
+    /// it, and a test that forgets to unsubscribe should break loudly rather than leak into the next one.
+    /// Production never assigns it.
+    /// </para>
+    /// </remarks>
+    public static System.Action<Npc, int, VisibleObject?>? Observer { get; set; }
+
     public static void Broadcast(Npc sender, int messageType, VisibleObject? param, float range,
         IReadOnlyCollection<Npc>? except = null)
     {
+        Observer?.Invoke(sender, messageType, param);
+
         foreach (VisibleObject candidate in Nearby(sender))
         {
             if (candidate is not Npc npc || npc == sender || npc.IsDead())
