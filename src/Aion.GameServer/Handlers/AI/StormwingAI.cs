@@ -80,8 +80,49 @@ public class StormwingAI : AggressiveNpcAI
     };
 
 
-    /// <summary>Retail p10 to p7, all fifteen seconds.</summary>
-    private const int EscalationLife = 15;
+    /// <summary>
+    /// The escalation: four timer-1 branches that ping-pong on one flag var.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is not a four-wave sequence that runs out, which is what the class did.</b> The four
+    /// branches are two pairs — bleed and root — and each pair has a test-and-set copy and a
+    /// test-and-unset copy of the same flag. So on any tick exactly one of four things happens:
+    /// <list type="number">
+    /// <item>bleed elites, at <b>70%</b>, on one of its two route sets;</item>
+    /// <item>otherwise root elites, at <b>50%</b> in normal mode and <b>always</b> in hard;</item>
+    /// <item>otherwise nothing at all — a 15% chance in normal mode, impossible in hard;</item>
+    /// <item>and whichever fires <b>flips the flag</b>, which picks the other route set next time.</item>
+    /// </list>
+    /// <b>It never stops.</b> The old reading — sharp twice, root twice, then silence for the rest of
+    /// the fight — got the kinds roughly right and the structure wrong, and made the second half of
+    /// every fight quieter than retail.
+    /// <para>
+    /// The lifetime was hard mode's fifteen seconds applied to both. Normal holds its elites for
+    /// <b>thirty</b>, which with four of them arriving on most ticks is a materially denser room.
+    /// </para>
+    /// </remarks>
+    private int EscalationLife => IsHardMode ? 15 : 30;
+
+    /// <summary>Retail's <c>test_probability</c> on the bleed pair and the root pair.</summary>
+    private const int BleedChance = 70;
+
+    private int RootChance => IsHardMode ? 100 : 50;
+
+    /// <summary>
+    /// The sixteen <c>NPCPathPath_RudraWind_N</c> routes, split the way retail splits them.
+    /// </summary>
+    /// <remarks>
+    /// Hard mode sends eight at once and uses all sixteen across its two sets; normal sends four and
+    /// gives each of its four branches a distinct quarter. <b>None of these were being used at all</b> —
+    /// the escalation spawned its elites on top of the boss and left them there.
+    /// </remarks>
+    private static readonly int[] NormalBleedA = { 0, 8, 4, 12 };
+    private static readonly int[] NormalBleedB = { 2, 10, 6, 14 };
+    private static readonly int[] NormalRootA = { 1, 9, 5, 13 };
+    private static readonly int[] NormalRootB = { 3, 11, 7, 15 };
+
+    private static readonly int[] HardEven = { 0, 8, 2, 10, 4, 12, 6, 14 };
+    private static readonly int[] HardOdd = { 1, 9, 3, 11, 5, 13, 7, 15 };
 
     /// <summary>
     /// Retail's <c>BIDCTN_SumLightning_55_Ae</c>, and the chain that decides when it lands.
@@ -133,7 +174,8 @@ public class StormwingAI : AggressiveNpcAI
 
     private readonly object bandLock = new object();
     private int bandsCrossed;
-    private int escalationWave;
+    /// <summary>Retail's <c>FLAGVARI_GAMMA_1</c>: which of the two route sets comes next.</summary>
+    private bool escalationFlag;
 
     private ScheduledTask? bandTask;
     private ScheduledTask? escalationTask;
@@ -261,19 +303,38 @@ public class StormwingAI : AggressiveNpcAI
         if (GetLifeStats().GetHpPercentage() > 50)
             return;
 
-        int wave;
+        bool bleed;
+        bool flagWasSet;
         lock (bandLock)
         {
-            if (escalationWave >= 4)
+            // Retail's order of evaluation, and it matters: the bleed pair is tried first, so a tick
+            // that rolls its seventy never reaches the root pair at all.
+            bleed = Rnd.NextInt(100) < BleedChance;
+            if (!bleed && Rnd.NextInt(100) >= RootChance)
                 return;
-            wave = escalationWave++;
+
+            flagWasSet = escalationFlag;
+            escalationFlag = !escalationFlag;
         }
 
-        int npcId = wave < 2 ? SharpTwisterElite : RootTwisterElite;
-        int count = IsHardMode ? 8 : 4;
+        int npcId = bleed ? SharpTwisterElite : RootTwisterElite;
+        int[] routes = RoutesFor(bleed, flagWasSet);
         NpcSkillCasting.QueueAtDataLevel(GetOwner(), ThreshingWind, NpcSkillTargetAttribute.ME);
-        for (int i = 0; i < count; i++)
-            SpawnNear(npcId, 0f, 0f, EscalationLife);
+        foreach (int route in routes)
+            SpawnNear(npcId, 0f, 0f, EscalationLife, "NPCPathPath_RudraWind_" + route);
+    }
+
+    /// <summary>
+    /// Which quarter of the sixteen routes this branch takes. Hard mode splits them evens against odds
+    /// and reuses both halves for both kinds; normal gives each of its four branches its own quarter.
+    /// </summary>
+    private int[] RoutesFor(bool bleed, bool flagWasSet)
+    {
+        if (IsHardMode)
+            return flagWasSet ? HardOdd : HardEven;
+        if (bleed)
+            return flagWasSet ? NormalBleedB : NormalBleedA;
+        return flagWasSet ? NormalRootB : NormalRootA;
     }
 
     private void SpawnNear(int npcId, float dx, float dy, int liveSeconds, string? path = null)
@@ -319,7 +380,7 @@ public class StormwingAI : AggressiveNpcAI
         lock (bandLock)
         {
             bandsCrossed = 0;
-            escalationWave = 0;
+            escalationFlag = false;
         }
     }
 

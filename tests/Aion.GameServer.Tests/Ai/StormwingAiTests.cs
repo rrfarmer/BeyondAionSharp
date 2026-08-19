@@ -133,11 +133,30 @@ public sealed class StormwingAiTests
 		Assert.Equal(scattered + 1, stacked);
 	}
 
+	/// <summary>
+	/// <b>The escalation never stops</b>, and it alternates route sets rather than kinds.
+	/// </summary>
+	/// <remarks>
+	/// This pin used to assert four waves -- sharp twice, root twice -- and then silence for the rest of
+	/// the fight. That was the class's reading, not retail's. The four timer-1 branches are two pairs,
+	/// bleed and root, each pair holding a test-and-set and a test-and-unset copy of one flag: on every
+	/// tick the bleed pair is tried at seventy per cent and the root pair takes what is left, and
+	/// whichever fires flips the flag so the next wave takes the other route set.
+	/// <para>
+	/// <b>Which kind arrives is a coin toss, so nothing here asserts it.</b> What is deterministic is
+	/// that hard mode summons on every tick -- its root pair is unconditional, so the "nothing happens"
+	/// outcome is impossible -- and that consecutive waves take disjoint routes.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void EscalatesBelowHalfHealthSharpThenRoot()
+	public void TheEscalationKeepsComingAndAlternatesItsRoutes()
 	{
-		using var harness = NewHarness();
-		Npc boss = SpawnBoss(harness);
+		using var harness = BossAiHarness.For(BeshmundirTemple)
+			.WithWorldSize(2048)
+			.WithWalkerRoutes()
+			.WithAi(typeof(StormwingAI), typeof(AggressiveNpcAI))
+			.Build();
+		Npc boss = harness.Spawn(Stormwing, 558.306f, 1369.02f, 224.795f, 70);
 		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
 		harness.Engage(boss, player);
 
@@ -150,23 +169,26 @@ public sealed class StormwingAiTests
 		boss.SetTarget(player);
 		boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
 
-		// Four waves, 30s apart: sharp twice, then root twice. Hard mode sends eight per wave.
-		//
-		// Counted as who is standing after each wave rather than as a delta from the wave before. The
-		// elites live fifteen seconds and the waves are thirty apart, so each wave has buried the last
-		// one before the next arrives -- a delta would read the second sharp wave as zero.
-		var waves = new List<(int Sharp, int Root)>();
-		for (int i = 0; i < 4; i++)
+		// Six waves, thirty seconds apart. The elites live fifteen seconds in hard mode, so each wave
+		// has gone before the next lands and every sample is one wave on its own.
+		var routeSets = new List<HashSet<string>>();
+		for (int i = 0; i < 6; i++)
 		{
 			harness.Clock.Advance(TimeSpan.FromSeconds(30));
-			waves.Add((Count(harness, SharpTwisterElite), Count(harness, RootTwisterElite)));
-		}
-		Assert.Equal([(8, 0), (8, 0), (0, 8), (0, 8)], waves);
+			List<Npc> wave = harness.LiveNpcs()
+				.Where(n => n.GetNpcId() is SharpTwisterElite or RootTwisterElite).ToList();
 
-		// The escalation is four waves and then stops: a fifth would be standing here.
-		harness.Clock.Advance(TimeSpan.FromSeconds(30));
-		Assert.Equal(0, Count(harness, SharpTwisterElite));
-		Assert.Equal(0, Count(harness, RootTwisterElite));
+			// THE ASSERTION THAT PINS THE CHANGE: the fifth and sixth waves matter as much as the
+			// first. Under the old four-wave cap these were empty.
+			Assert.Equal(8, wave.Count);
+			routeSets.Add(wave.Select(n => n.GetSpawn().GetWalkerId()!).ToHashSet());
+		}
+
+		Assert.All(routeSets, s => Assert.All(s, r => Assert.StartsWith("NPCPathPath_RudraWind_", r)));
+
+		// Consecutive waves take the other half of the sixteen routes, which is the flag doing its work.
+		for (int i = 1; i < routeSets.Count; i++)
+			Assert.Empty(routeSets[i].Intersect(routeSets[i - 1]));
 	}
 
 	[Fact]

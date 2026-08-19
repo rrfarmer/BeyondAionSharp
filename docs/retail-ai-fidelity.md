@@ -23217,3 +23217,67 @@ old.
 
 Build clean. Re-reversing the table fails four pins. **Three consecutive full-suite runs**: 2,179
 passing (one new), 1 skipped.
+
+## Stormwing's escalation never stopped, and the sixteen routes belong to it
+
+Finishing the item the last commit left open. Extracting the four timer-1 branches properly — after two
+passes of reading greps and getting it wrong — turned the escalation into something quite different from
+what the class did.
+
+### It is a flag ping-pong, not a four-wave sequence
+
+The four branches are **two pairs**, bleed and root, and each pair holds a **test-and-set** and a
+**test-and-unset** copy of the same flag var. So on every tick exactly one of these happens:
+
+| | normal | hard |
+|---|---|---|
+| bleed elites | 70% | 70% |
+| else root elites | 50% | **always** |
+| else nothing | 15% | impossible |
+
+and **whichever fires flips the flag**, which selects the other route set for the next wave.
+
+**It never stops.** The class ran four waves — sharp twice, root twice — and then went silent for the
+rest of the fight. That got the kinds roughly right and the structure wrong, and made the second half of
+every Stormwing kill quieter than retail's.
+
+### The sixteen routes were the escalation's all along
+
+Two commits ago I recorded these as belonging to hard mode's *band* spawns. They do not: **they belong to
+the escalation, in both modes**, and none of them were being used. The elites appeared on top of the boss
+and stayed there.
+
+- **Normal** sends four and gives each of its four branches its own quarter: `0,8,4,12` / `2,10,6,14` for
+  bleed, `1,9,5,13` / `3,11,7,15` for root.
+- **Hard** sends eight and splits all sixteen evens against odds, reusing both halves for both kinds.
+
+### And the lifetime was hard mode's, applied to both
+
+`EscalationLife` was a flat fifteen seconds. That is hard mode's number; normal holds its elites for
+**thirty** — which, with four arriving on most ticks, is a materially denser room than the class produced.
+
+### The pin
+
+The old one asserted four waves and then silence. Which kind arrives is a coin toss, so the replacement
+asserts nothing about kinds. What is deterministic: **hard mode summons on every tick** — its root pair
+is unconditional, so "nothing happens" cannot occur — and **consecutive waves take disjoint route sets**,
+which is the flag doing its work. Six waves are sampled, so the fifth and sixth carry the weight: under
+the old cap they were empty.
+
+Both mutations go red — freezing the flag, and restoring the four-wave cap.
+
+### Still to do
+
+- **Hard mode's two extra summon rungs** at 31-50, which normal does not have: a bleed twister on the
+  current target for thirty seconds, and a root twister on a random attacker for five.
+- **The escalation's cadence** is still our fixed thirty seconds. Retail arms timer 1 from the lightning
+  rungs at fifty and forty-five seconds, so the two chains are coupled in a way this class does not
+  reproduce — recorded rather than guessed at.
+- **Normal mode's root branches also drop a lightning**, which this class does not.
+- **The four remaining classes**: `AbyssUndeadAI`, `KaligaTheUnjustAI`, `CalindiFlamelordAI`,
+  `YamennesSpawnGateAI`.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. **Three consecutive full-suite runs**: 2,179 passing, 1 skipped.
