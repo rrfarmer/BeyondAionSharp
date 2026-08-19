@@ -25326,3 +25326,44 @@ say. Establishing it needs an effect-level probe the harness does not have.
 **Not translated.** The earthquake's fifteen-second swap — retail arms a battle timer when it is engaged
 and turns `Crack_EarthQuake` into `Crack_BrokenGround` for four minutes. This port treats the two as
 separate hazards the boss places, so the transition does not exist.
+
+## The harness was testing a world where no cooldown ever elapses
+
+Last commit withdrew a claim because a cast left nothing countable: the obvious proxy,
+`NpcGameStats.GetLastSkillTime`, barely moved across a whole test. Chasing why turned up something
+larger than one pin.
+
+**The combat model reads the wall clock.** Four private `CurrentTimeMillis()` helpers — in `Creature`,
+`NpcGameStats`, `PlayerController` and `Skill` — each call `DateTimeOffset.UtcNow`, faithfully copying
+Java's `System.currentTimeMillis()`. `BossAiHarness` advances its scheduler by minutes inside a few
+milliseconds of real time, so **every timestamp the model records stood still**: cooldowns never
+elapsed, `CanUseNextSkill` stayed false once a skill had set a delay, and an npc's own skill rotation
+could not run inside a test.
+
+The exposure is narrow but it is exactly where this session kept getting stuck —
+`SkillAttackManager` gates skill selection on `CanUseNextSkill`, and `AttackManager`'s stuck-check reads
+attack deltas. **Two attempts to pin a cast cadence came back saying nothing because of it.**
+
+`Utils/SystemClock` makes the source a hook. Production is unchanged — the default is the same call —
+and `BossAiHarness` points it at the same scheduler the test advances, then puts the real clock back on
+dispose.
+
+**Offset from the epoch, not started at zero.** The first version handed the scheduler's raw
+`NowMillis`, which counts from 0, and any timestamp taken before the swap is an epoch value — so every
+delta came out enormously negative and *nothing* looked elapsed. Four pins failed immediately, which is
+how it was caught: Kalindi's flames stopped expiring, and three call-chain pins stopped chaining. The
+source is `epoch + clock.NowMillis` now and all four pass.
+
+**Verified by the mutation that could not be caught before.** Restoring the incarnation hazards'
+repeating task — the survivor that forced last commit's withdrawal — is now caught by
+`AHazardPulsesOnlyOnce`. That pin has been restored, and the claim about the hazards' shape is pinned
+rather than asserted.
+
+**What this does not settle.** Whether those repeats were ever landing is still unknown: a cast resolves
+against the caster's target and these hazards have none. The structure matches the pattern and the
+cadence is pinned; the damage in play is unmeasured, and would need an effect-level probe.
+
+**Worth knowing for every future pin.** Anything gated on a cooldown, a cast delay or an attack delta
+now behaves in a harness test the way it does in production. Pins written before this were not wrong,
+but they were written against a world with no cooldowns — if one of them starts failing after an
+unrelated change, that is the first thing to check.

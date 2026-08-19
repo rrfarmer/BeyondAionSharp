@@ -73,7 +73,7 @@ public class Skill
 
     // Java parity helpers.
     private static int JRound(float a) => (int)Math.Floor(a + 0.5f);
-    private static long CurrentTimeMillis() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    private static long CurrentTimeMillis() => Aion.GameServer.Utils.SystemClock.CurrentMillis();
 
     /// <summary>Each skill is a separate object upon invocation. Skill level populated from player SkillList.</summary>
     public Skill(SkillTemplate skillTemplate, Player effector, Creature firstTarget)

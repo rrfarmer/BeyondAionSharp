@@ -42,7 +42,7 @@ public abstract class Creature : VisibleObject
     private int attackedCount;
     private long spawnTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-    private static long CurrentTimeMillis() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    private static long CurrentTimeMillis() => Aion.GameServer.Utils.SystemClock.CurrentMillis();
 
     public Creature(int objId, CreatureController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, CreatureTemplate objectTemplate,
         WorldPosition position, bool autoReleaseObjectId)

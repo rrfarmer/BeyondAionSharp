@@ -33,7 +33,7 @@ public class NpcGameStats : CreatureGameStats<Npc>
     // Java parity helper: Math.round(float) = floor(x+0.5).
     private static int JRound(float a) => (int)Math.Floor(a + 0.5f);
 
-    private static long CurrentTimeMillis() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    private static long CurrentTimeMillis() => Aion.GameServer.Utils.SystemClock.CurrentMillis();
 
     protected override void OnStatsChange(Effect effect)
     {

@@ -459,19 +459,40 @@ public sealed class TiamatsIncarnationAiTests
 		hazard.GetGameStats().GetLastSkillTime() > 0;
 
 	/// <summary>
-	/// <b>That it pulses only once is not pinned, and cannot be from here.</b>
+	/// <b>And it pulses once, not every three seconds.</b>
 	/// </summary>
 	/// <remarks>
 	/// Retail's rung carries no <c>set_idle_timer</c>, so a hazard casts a single time however long it
-	/// stands, and this class scheduled a cast every three seconds instead. The correction is made — the
-	/// task is one-shot now — but <b>no pin here can tell one cast from ten</b>: this port has the hazard
-	/// cast rather than spawn a caster, and a cast leaves nothing to count. The obvious proxy,
-	/// <c>GetLastSkillTime</c>, is wall-clock rather than the harness's virtual clock, so it barely moves
-	/// across a whole test and comparing it proves nothing — restoring the repeating task survives it.
+	/// stands. This class scheduled a cast every three seconds.
 	/// <para>
-	/// Worth being plain about a second thing: because the repeats may already have been suppressed
-	/// somewhere below (a cast with no target resolves to nothing), <b>how much damage this actually
-	/// changed in play is unknown</b>. What is certain is the shape, which now matches the pattern.
+	/// <b>This could not be pinned until the harness drove the combat model's clock.</b> Every timestamp
+	/// the model records was wall-clock, so under a virtual scheduler nothing ever elapsed and a cast
+	/// left no trace that moved. <c>SystemClock</c> now points at the same scheduler the test advances,
+	/// which makes the skill clock readable — see the remarks there.
 	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AHazardPulsesOnlyOnce()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc quake = harness.Spawn(CavityOfEarth, 470f, 510f, 418f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		long first = quake.GetGameStats().GetLastSkillTime();
+		Assert.True(first > 0, "the hazard never pulsed at all");
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(30));
+
+		Assert.Equal(first, quake.GetGameStats().GetLastSkillTime());
+	}
+
+	/// <summary>
+	/// <b>What is still not established: how much damage this changed.</b>
+	/// </summary>
+	/// <remarks>
+	/// The shape now matches the pattern and the cadence is pinned. What no pin here says is whether the
+	/// repeats were landing before: a cast resolves against the caster's target and these hazards have
+	/// none, so the extra ticks may have been failing silently below this class. The correction is to
+	/// the structure; the effect in play is unmeasured.
 	/// </remarks>
 }

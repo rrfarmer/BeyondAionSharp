@@ -28,7 +28,7 @@ public class PlayerController : CreatureController<Player>
     private long lastAttackedMillis = 0;
     private StanceObserver stanceObserver;
 
-    private static long CurrentTimeMillis() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+    private static long CurrentTimeMillis() => Aion.GameServer.Utils.SystemClock.CurrentMillis();
 
     public override void See(VisibleObject obj)
     {

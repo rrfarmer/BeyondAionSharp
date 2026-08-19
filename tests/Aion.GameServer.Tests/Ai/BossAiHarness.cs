@@ -519,6 +519,9 @@ public sealed class BossAiHarness : IDisposable
 		InstanceConfig.INSTANCE_SCALING_ENABLE = _previousInstanceScaling;
 		AIConfig.SHOUTS_ENABLE = _previousShouts;
 		DataManager.RestoreInstance(_previousDataManager);
+		// And give the combat model its real clock back, or a later test that does not build a harness
+		// reads timestamps from a scheduler that has stopped.
+		Aion.GameServer.Utils.SystemClock.UseSystemClock();
 		// The World and ThreadPoolManager bridges have no unregister. Leaving the harness's own instances bound
 		// would hand a later test a world full of this encounter's corpses, or a clock that never ticks, so a
 		// blank replacement goes in when there was nothing registered before.
@@ -689,6 +692,17 @@ public sealed class BossAiHarness : IDisposable
 
 			// Order mirrors GameServerBootstrapService: pool, ids, data, then the world that reads the data.
 			ThreadPoolManager.RegisterInstance(clock);
+
+			// And point the combat model's wall clock at the same scheduler. Without this every
+			// timestamp the model records -- last skill, last attack, cooldowns -- stays where it was
+			// while the scheduler runs for minutes, so CanUseNextSkill never comes back true and an
+			// npc's own skill rotation cannot run inside a test. See Utils/SystemClock.
+			//
+			// Offset from the real epoch rather than started at zero: the scheduler counts from 0, and a
+			// model timestamp taken before the swap is an epoch value, so a bare NowMillis makes every
+			// delta enormously negative and nothing ever looks elapsed.
+			long epoch = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			Aion.GameServer.Utils.SystemClock.UseSource(() => epoch + clock.NowMillis);
 			DataManager.RegisterInstance(dataManager);
 
 			// Then bind every [AIName] handler there is, which needs the real templates registered above
