@@ -25188,3 +25188,47 @@ which is what it has to separate.
 **Not translated.** The casts on every rung, as ever. Retail's `on_message 1` rung — a cast plus a
 `SumStatue_PhyAtk` on the sender for 180 seconds — has no sender in this port, and his `on_die` places
 a gossip npc and a treasure box that nothing here places.
+
+## Sharik called no statues at all
+
+Retail pattern `Raksha_MirrorMage_Nmd` (217425), with `BIDRaksha_StatueDispel` (282576).
+
+Next actionable class on `audit_timer_drift.py`, which reported 3000/40000 against a pattern whose
+rungs are 9000, 10000, 30000 and 37000 — no forty anywhere.
+
+```
+on_enter_attack_state   timers 0=30000, 1=10000, 2=9000, 3=37000
+timer 3 (HP 50-100)     casts, broadcast 12006 at 15m and 1001 at 50m,
+                        spawn 2 StatueDispel on self, spawn_range 2, valid_distance 50
+                        -> re-arm at 37000
+timer 0 (HP < 50, 35%)  the same, opening with two despawns -> re-arm at 30000
+```
+
+**Nothing in this port had ever placed 282576.** It is bound here to `servant`, which heals its master —
+so the pair's absence made the fight materially easier: **nothing had to be killed to stop him
+healing**. They arrive two at a time now, replacing the pair before them as retail's despawns do.
+
+**And the rung is faster when he is wounded, not slower.** Retail switches from the thirty-seven second
+timer to the thirty second one below half health. This port had a flat forty.
+
+**Pins** — `IllusionMasterSharikAiTests`, three, six mutations, all caught.
+
+**A fixed rate could not express it.** The first version scheduled with
+`ScheduleAtFixedRateTask(RungDelay(), RungDelay())`, and a fixed rate **evaluates its delay once** — so
+a Sharik who dropped below half kept the slower rung for the rest of the fight. It is a self-re-arming
+chain now, which is what the last three fights needed too; that is four classes in a row where retail's
+"re-arm at the end of the rung" does not survive translation into a fixed-rate task.
+
+**Two pin problems worth recording.**
+
+1. **The already-ticking turn keeps its old delay**, so no single moment separates the two rungs — the
+   difference only shows in how many turns fit a window. The pin counts arrivals over a hundred seconds:
+   three turns at thirty, two at thirty-seven.
+2. **A boss left alone regenerates.** The first version of that pin set health to forty and watched; by
+   the end he was back over half and the rung had reverted, so it read four statues instead of six. It
+   holds the health down each second now. Worth remembering for every future pin that reads a health
+   band over a long window.
+
+**Not translated.** The 35% roll retail puts on the below-half rung; the two broadcasts that accompany
+both rungs; and the teleport pair on messages 12100/12101 that moves him between the two mirror posts —
+this port picks the post from a `position` field of its own, and nothing sends those messages.
