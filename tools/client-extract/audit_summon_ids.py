@@ -156,6 +156,31 @@ def spawned_in_our_data():
     return out
 
 
+def report_absent(rows, xml_dir):
+    """Ids our own classes' patterns spawn that our npc_templates.xml has no row for.
+
+    A different kind of gap from an unimplemented add: the code could not spawn these even if somebody
+    wrote it, because the npc does not exist here.
+
+    **The headline number for this is badly misleading and the small one is the real one.** Across the
+    whole pattern set, 3,696 of the 6,437 ids retail spawns -- 57% -- are absent from our data. That is
+    almost entirely post-4.8 content: this is a 4.8 port read against a 5.8 dump, and the top of that
+    list is Lakrum-era doors, transform rooms and Eternity effects on patterns no class here implements.
+    Restricted to patterns our own classes actually run, the count is **nine**.
+    """
+    tmpl = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml").read_text(
+        encoding="utf-8", errors="replace")
+    ours = set(re.findall(r'npc_id="(\d+)"', tmpl))
+    dev = devname_to_npc(xml_dir)
+    inv = {v: k for k, v in dev.items()}
+    absent = sorted({i for _, _, _, missing, _ in rows for i in missing if i not in ours})
+    print(f"{len(absent)} npcs our classes' patterns spawn that npc_templates.xml does not carry")
+    print("These cannot be implemented in code: the npc row has to exist first.")
+    print()
+    for i in absent:
+        print(f"  {i}  {inv.get(i, '?')}")
+
+
 def report_swaps(rows, window=3):
     """Classes that name an id numerically next to one retail spawns, which is usually a typo.
 
@@ -275,6 +300,8 @@ def main():
     ap.add_argument("--class", dest="only", help="report one AI name in full")
     ap.add_argument("--limit", type=int, default=25)
     ap.add_argument("--worlds", default="D:/Aion58ServerTesting/Server/Map/Worlds")
+    ap.add_argument("--absent", action="store_true",
+                    help="list npcs our own classes' patterns spawn that npc_templates.xml does not carry")
     ap.add_argument("--swaps", action="store_true",
                     help="find classes naming an id adjacent to one retail spawns -- a likely wrong digit")
     ap.add_argument("--rank", action="store_true",
@@ -341,6 +368,10 @@ def main():
         extra = sorted(i for i in own if i not in ids and i in npc2ai)
         if missing or extra:
             rows.append((len(missing), ai, filename, missing, extra))
+
+    if args.absent:
+        report_absent(rows, args.xml)
+        return 0
 
     if args.swaps:
         report_swaps(rows)

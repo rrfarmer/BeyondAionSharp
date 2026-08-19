@@ -29200,3 +29200,48 @@ surfaced for the first time.
   them, which it could not before.
 - **The 36 top-band ids**, recomputed on the corrected numbers.
 - Pashid's `npc_skills`, Dynatoum's mine web, 857599 and 856503, unchanged.
+
+## The npcs that cannot be implemented, and a number that would have been quoted wrongly
+
+Anoha's corrected row revealed a kind of gap the audit had never been able to name: **retail spawning an
+npc our `npc_templates.xml` has no row for**. Code cannot fix that — the npc has to exist first.
+
+With the resolver corrected, this is finally countable. The first count is a trap:
+
+> **3,696 of the 6,437 ids retail spawns — 57% — are absent from our data.**
+
+**That number is nearly meaningless and would have been quoted.** This is a 4.8 port read against a 5.8
+dump, and the top of that list is `DF6_H_Event_G3_Door` (57 spawns), `LF6_H_Event_G3_Door` (51),
+`IDTransform_TransRoom_01_69` (40), `IDEternity_02_Tower_Boss_Area_Fx` — Lakrum-era doors, transform
+rooms and tower effects, on patterns no class in this port implements. The pattern set simply covers more
+content than the port does, and it always has.
+
+Restricted to patterns **our own classes actually run**, the honest count is **seven**:
+
+| id | devname |
+|---|---|
+| 805301, 805302 | `IDYun_floor_invisible_circle_a` / `_b` |
+| 806517, 806524 | `LDF5_Fortress_7011_Solis_E` / `Sonntag_E` — Anoha's two faction commanders |
+| 856503 | `BIDSeal_TrueBoss_Buff_UseCheck` — found while reading Beritra's row |
+| 856504 | `BIDSeal_Vritra_Initial_Control_2` |
+| 857599 | `BIDLDF5_Under_Rune_Reset_NPC_Nor` — the id the ranker had to special-case |
+
+Three of those seven had already been met one at a time in earlier commits, each recorded as an oddity in
+its own encounter. They are one thing: **a short list of npc rows this port is missing**, and it is now
+`audit_summon_ids.py --absent` rather than a memory.
+
+**Anoha is the clearest case.** Retail spawns Solis and Sonntag on his death; neither exists here, and an
+earlier author substituted 804594/804595, two npcs called "commander anoha". The substitution is
+reasonable and the gap is in the data, not the class — which is exactly the distinction the audit could
+not draw until this commit.
+
+**Still missing.**
+
+- **Seven npc rows**, listed above. Each needs a template before any code can use it, and three of them
+  are effect controllers whose absence is why their mechanics read as collapses.
+- **The 36 top-band ids**, on the corrected numbers.
+- Pashid's `npc_skills`, Dynatoum's mine web, unchanged.
+- **A caveat that should attach to every count in this document**: the 5.8 pattern dump describes content
+  a 4.8 port does not have, and any figure taken across the whole pattern set rather than across this
+  port's own classes will be inflated by it. The focused numbers were always the ones to quote; now there
+  is a measured example of how far apart the two can be — 57% against seven.
