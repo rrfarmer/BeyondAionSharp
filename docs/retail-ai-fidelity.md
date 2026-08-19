@@ -31226,3 +31226,48 @@ reading list; `is_aerial_spawn`; the 34 non-route absence claims; the 33 named d
 6401/6402 pair; `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the
 `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
 Dynatoum's mine web; Pashid's `npc_skills`; **a deterministic seam for random target choice**.
+
+## Two flakes, and a seam that was already there
+
+### The seam existed
+
+The previous entry's owed list ended with "a deterministic seam for random target choice". **There is
+one, and it predates the flake**: `PatternAi.TargetPickOverride`, with a remark describing exactly this
+problem, and `BossAiHarness.CountSwitches` built on top of it. Wrong again, in the same direction as the
+phase-two rung and the `Counter` accessor — reaching for the harness before reading it.
+
+### The Archmagus pin now measures what its name says
+
+`BelowFortyFiveHeTurnsTwiceAsOften` asserted that a two-hundred-second window showed **more than one raid
+member**. That is a proxy: `AggroTarget.RANDOM` can re-pick the creature already targeted, so a turn is
+only visible when the dice land elsewhere.
+
+It counts the switches now — the calls the branch makes, with selection running normally.
+
+Two things came out of the rewrite that the proxy had hidden:
+
+* **Sixty seconds shows two turns in each phase.** The first honest version failed with "he turned 2
+  times against 2": the healthy chain laps in about thirty-two seconds and the wounded one in
+  forty-six, so a minute is not enough for either to show a cadence. Three hundred seconds is.
+* **The obvious mutation is self-defeating.** Guarding the wounded turn with `When.Chance(0)` survives,
+  because the harness forces rolled guards to pass. Removing the `SwitchTarget` action is caught by two
+  pins. A mutation has to be one the harness cannot neutralise.
+
+### The other flake was a port race
+
+A whole-solution run then failed `LoginServerHostedServiceTests` — nothing to do with this work. Five
+isolated runs passed.
+
+`GetFreeLoopbackPort` asks the OS for a free port and **releases it before the caller binds**, so the
+caller binds a port that was free a moment ago. Under a parallel run several tests ask at once and the
+window is long enough to lose.
+
+The in-process half is closed: ports handed out are remembered, so two of our own tests cannot be given
+the same one. **The OS half is not closable from here** and is stated as such rather than papered over.
+Four consecutive full runs green.
+
+**Still missing.** The crystal-tier messages; jurdin; Beritra's four detachment npcs; `is_aerial_spawn`;
+the 34 non-route absence claims; the 33 named death-spawn rows; hisen's 6401/6402 pair; `is_user` pinned
+one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed
+attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's
+`npc_skills`.

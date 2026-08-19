@@ -998,13 +998,41 @@ public sealed class SocketServerSmokeTests
 		}
 	}
 
+	/// <summary>Ports already handed out in this process, so two tests cannot be given the same one.</summary>
+	private static readonly HashSet<int> HandedOut = new HashSet<int>();
+
+	/// <summary>
+	/// A loopback port nothing is listening on.
+	/// </summary>
+	/// <remarks>
+	/// <b>This asks the OS for a free port and then releases it, so the caller binds a port that was
+	/// free a moment ago.</b> That is inherently a race, and it showed: one whole-solution run failed
+	/// <c>LoginServerHostedServiceTests.StartAsync_LoadsRegistryAndBanListsBeforeOpeningSocketListeners</c>
+	/// while five isolated runs of the same test passed. Under a parallel run several tests ask at once,
+	/// and the window between <c>Stop</c> here and <c>Bind</c> there is long enough to lose.
+	/// <para>
+	/// The in-process half of that is closed by remembering what has been handed out. The OS half — some
+	/// other program taking the port in the same instant — is not closable from here, and is far less
+	/// likely than two of our own tests colliding.
+	/// </para>
+	/// </remarks>
 	internal static int GetFreeLoopbackPort()
 	{
-		var listener = new TcpListener(IPAddress.Loopback, 0);
-		listener.Start();
-		var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-		listener.Stop();
-		return port;
+		for (var attempt = 0; attempt < 50; attempt++)
+		{
+			var listener = new TcpListener(IPAddress.Loopback, 0);
+			listener.Start();
+			var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+			listener.Stop();
+
+			lock (HandedOut)
+			{
+				if (HandedOut.Add(port))
+					return port;
+			}
+		}
+
+		throw new InvalidOperationException("could not find a loopback port not already handed out");
 	}
 
 	internal static async Task<TcpClient> ConnectWithRetryAsync(int port)

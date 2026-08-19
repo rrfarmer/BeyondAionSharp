@@ -139,21 +139,20 @@ public sealed class ArchmagusSayahumAiTests
 	}
 
 	/// <summary>
-	/// <b>Below forty-five he turns on every lap, so the same window shows more of the raid.</b> Two
-	/// phases of the same fight, measured the same way, and the difference is the mechanic.
+	/// <b>Below forty-five he turns on every lap, and above it on every other one.</b> Two phases of
+	/// the same fight, measured the same way, and the difference is the mechanic.
 	/// </summary>
 	/// <remarks>
-	/// <b>Observed failing once, under a whole-solution run, and not reproduced since.</b> Five
-	/// isolated runs and four further full runs were green. The assertion depends on
-	/// <c>SwitchTarget(RANDOM)</c> landing on more than one raid member across two hundred seconds,
-	/// which is overwhelmingly likely but not certain, and there is no seam here to make the choice
-	/// deterministic — <c>PatternAi.Shuffle</c> is <c>protected virtual</c> and no test can reach it
-	/// for an existing handler.
+	/// <b>Counts the switches, not the faces.</b> The earlier version asserted that a two-hundred-second
+	/// window showed more than one raid member, which is a proxy for the same thing and a flaky one:
+	/// <c>AggroTarget.RANDOM</c> can re-pick the creature already targeted, so a turn is only visible
+	/// when the dice happen to land elsewhere. It failed once under a whole-solution run and could not
+	/// be reproduced in nine further runs.
 	/// <para>
-	/// Written down rather than silently re-run, because the last flake in this suite was found only
-	/// because an earlier session recorded "did not recur in five runs" instead of forgetting it. If
-	/// this fails again, that is two, and the fix is a seam for the target roll rather than a longer
-	/// window.
+	/// <c>BossAiHarness.CountSwitches</c> was already there for exactly this — it counts the calls the
+	/// branch makes and lets the selection run normally, so the pin measures the cadence rather than the
+	/// dice. The claim in the entry before last, that this suite lacked a seam for the target roll, was
+	/// wrong: the seam predates the flake.
 	/// </para>
 	/// </remarks>
 	[Fact]
@@ -162,13 +161,19 @@ public sealed class ArchmagusSayahumAiTests
 		var (harness, boss, raid) = Engaged();
 		using BossAiHarness _h = harness;
 
-		BossAiHarness.SetExactPercent(boss, 70);
-		TargetsOver(harness, boss, raid, 10);
-		BossAiHarness.SetExactPercent(boss, 30);
-		TargetsOver(harness, boss, raid, 20);
+		Func<int> switches = BossAiHarness.CountSwitches(boss);
 
-		Assert.True(TargetsOver(harness, boss, raid, 200).Count > 1,
-			"the last phase never turned him");
+		BossAiHarness.SetExactPercent(boss, 70);
+		TargetsOver(harness, boss, raid, 300);
+		int healthy = switches();
+
+		BossAiHarness.SetExactPercent(boss, 30);
+		TargetsOver(harness, boss, raid, 300);
+		int wounded = switches() - healthy;
+
+		Assert.True(healthy > 0, "he never turned in the healthy phase");
+		Assert.True(wounded > healthy,
+			$"below forty-five he turned {wounded} times against {healthy} above it");
 	}
 
 	/// <summary>
