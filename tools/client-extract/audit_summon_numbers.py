@@ -65,7 +65,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from audit_missing_adds import read_text  # noqa: E402
 from audit_summon_ids import FX_WORDS, devname_to_npc, spawned_in_our_data  # noqa: E402
-from client_npc_names import npc_names  # noqa: E402
+from client_npc_names import npc_names, unattackable_ids  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 PATTERN = re.compile(r"<name>([^<]+)</name>(.*?)(?=<name>|\Z)", re.S)
@@ -159,6 +159,11 @@ def report_tiers(ours, theirs, of, ai_of):
     """
     placed = spawned_in_our_data()
     devname_of = {npc_id: devname for devname, npc_id in npc_names().items()}
+    # The client's own unattackable flag, alongside the devname markers rather than instead of them.
+    # Chief gunner koakoa's five SumA..SumE devnames carry no FX marker and read exactly like a
+    # five-tier collapse; all five are unattackable markers that place the one attackable bomb our data
+    # already spawns. See client_npc_names.unattackable_ids.
+    furniture = unattackable_ids()
     rows = []
     for owner, groups in sorted(ours.items()):
         pattern = of.get(owner)
@@ -168,6 +173,7 @@ def report_tiers(ours, theirs, of, ai_of):
         retail = set(theirs[pattern])
         unspawned = [n for n in sorted(retail - mine)
                      if n not in placed
+                     and n not in furniture
                      and not any(w.lower() in devname_of.get(n, "").lower() for w in FX_WORDS)]
         if unspawned:
             rows.append((owner, pattern, unspawned, sorted(mine)))

@@ -77,6 +77,46 @@ def npc_names(xml_dir="D:/Aion58ServerTesting/Server/Map/XML"):
     return out
 
 
+_unattackable: dict = {}
+
+
+def unattackable_ids(xml_dir="D:/Aion58ServerTesting/Server/Map/XML"):
+    """npc ids the client marks `unattackable`, i.e. FX and controller npcs.
+
+    WHY THIS BEATS GUESSING AT DEVNAMES
+    -----------------------------------
+    `audit_summon_ids.FX_WORDS` spots controllers by substring -- `_CTRL`, `NoShow`, `Display` and a
+    dozen more -- and every entry in that list was added after a person read a row and found furniture.
+    It is a growing list of guesses about naming, and it misses anything named differently.
+
+    Chief gunner koakoa is what missing one costs. His pattern spawns `BIDShulack_GunnerSumA_45_n`
+    through `SumE`, five devnames with no FX marker in them at all, and our data spawns none of them --
+    which reads exactly like the five-tier collapse that Kasika and Agro turned out to be. **It is not.**
+    All five are `unattackable`; they are the transparent markers that place 281327, the attackable
+    "flame bomb" our data spawns directly. The collapse is correct and was correct before this audit
+    existed.
+
+    The client says so in one field, for every npc, without anyone guessing. This is consulted in
+    addition to the devname list rather than instead of it, because the two disagree in both directions:
+    some collapsed FX npcs are attackable, and this catches nothing they do not.
+    """
+    key = str(xml_dir)
+    if key in _unattackable:
+        return _unattackable[key]
+    out = set()
+    for name in FILES:
+        path = pathlib.Path(xml_dir) / name
+        if not path.exists():
+            continue
+        for m in re.finditer(r"<npc>(.*?)</npc>", read_text(path), re.S):
+            body = m.group(1)
+            found = re.search(r"<id>(\d+)</id>", body)
+            if found and re.search(r"<unattackable>1</unattackable>", body):
+                out.add(found.group(1))
+    _unattackable[key] = out
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")

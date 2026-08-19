@@ -29939,3 +29939,56 @@ value, or the file stashed first.
   owner-less patterns, the 9 inert `spawn_helpers.xml` blocks, `live_time` with no attribute, the 45 live
   disagreements, the eleven unread top-band ids, Dynatoum's mine web, Beritra's two spawn rows, Pashid's
   `npc_skills`, the seven absent npc rows.
+
+## The client already knew which npcs are furniture
+
+Chief gunner koakoa was the next `--tiers` row and looked like the worst collapse yet: retail spawns
+`BIDShulack_GunnerSumA_45_n` through `SumE`, five devnames, **and our data spawns none of them**. Five
+tiers to one is exactly the Kasika shape.
+
+> It is not a defect. All five are `unattackable`, and 281327 — the one npc our data does spawn — is the
+> attackable "flame bomb" they exist to place. **The collapse is correct and predates this audit.**
+
+That is the second time a `--tiers` row has been furniture, and the reason both got through is that
+`FX_WORDS` spots controllers **by substring** — `_CTRL`, `NoShow`, `Display` and a dozen more. Every
+entry in that list was added after a person read a row and found furniture. It is a growing list of
+guesses about naming, and `GunnerSumA` contains none of them.
+
+**The client carries `unattackable` as a field, on every npc, with no guessing involved.** It is now
+consulted alongside the devname list rather than instead of it, because the two disagree in both
+directions. 17,559 npcs carry the flag; live rows fall from **14 to 5**.
+
+### The three rows left, and why none of them is a quick fix
+
+**Seiren (213747, `ND2_FhM`) — real, and not expressible.** 280713 is spawned seven at a time from
+`on_killed_by_user`, not from a health band. Our `<summons>` schema is health-percentage only, so **a
+death spawn cannot be written in it at all**. Separately, 280712 arrives via `spawn_on_target` at range 2
+on the current target; ours places three at distance 10 from the boss in three identical bands. Both
+halves are wrong and neither is an attribute edit.
+
+**Enraged mastarius (258207, `DF4_GH_KJS`) and its Elyos twin (258203) — needs a decision, not a
+translation.** Retail sends four elementals in on named pet paths (`LDF4_Pet1_KJS`..), inside a 47–69
+band at 33%. Our data has a hand-written four-rung escalation of level-65 holy servants at 80/60/40/20.
+Three things have to be settled first, and none of them by me in passing:
+
+* the pattern is shared by **more than ten bosses** (`LF4_2111_Boss_Da_1..5`, `DF4_3111_Boss_Da_*`), each
+  of which has its own block here, so this is one change to a family;
+* the pet paths **do exist** in `retail_pattern_paths.xml`, so it is not blocked — the mechanism is there;
+* `<summonGroup>` has no pathname attribute, so waypoint-start pets need the same schema work as
+  `live_time`.
+
+The holy-servant ladder has every mark of being invented — round bands, English comments, npcs from a
+different faction and level to everything retail names — but "looks invented" is not evidence, and
+replacing a working encounter for eleven bosses on a hunch is worse than leaving it documented.
+
+**Test_JM_Monster_8 (286933)** is a test npc and is noise.
+
+**Still missing.**
+
+- **A death-spawn and a target-spawn concept in `<summons>`.** Three attributes are now owed by the
+  schema: `live_time`, `pathname`, and a trigger other than health. All three are Java-parity structures,
+  so extending them is a real decision.
+- The 258203/258207 family decision above; the 59 stranded guards; 25 guards with no `npc_templates.xml`
+  row; 11 owner-less patterns; the 9 inert `spawn_helpers.xml` blocks; the 45 live disagreements; the
+  eleven unread top-band ids; Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the
+  seven absent npc rows.
