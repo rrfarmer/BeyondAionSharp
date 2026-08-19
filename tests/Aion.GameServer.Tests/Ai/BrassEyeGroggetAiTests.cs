@@ -54,8 +54,13 @@ public sealed class BrassEyeGroggetAiTests
 		grogget.GetAi().OnGeneralEvent(AiEventType.MoveArrived);
 	}
 
+	/// <summary>
+	/// What of <paramref name="ids"/> is alive, <b>sorted</b>. <c>LiveNpcs()</c> does not promise an order,
+	/// and comparing it as a sequence made this file fail about one run in three -- an intermittent that
+	/// cost two turns to attribute because it only ever showed up in whole-solution runs.
+	/// </summary>
 	private static List<int> Spawned(BossAiHarness harness, int[] ids) =>
-		harness.LiveNpcs().Select(n => n.GetNpcId()).Where(ids.Contains).ToList();
+		harness.LiveNpcs().Select(n => n.GetNpcId()).Where(ids.Contains).OrderBy(i => i).ToList();
 
 	/// <summary>
 	/// <b>Four laps bring the four stigma stones, one each and in order.</b> These are the "4 towers in the
@@ -70,7 +75,7 @@ public sealed class BrassEyeGroggetAiTests
 		for (int lap = 1; lap <= 4; lap++)
 		{
 			ArriveAt(grogget, StonePoint);
-			Assert.Equal(Stones.Take(lap), Spawned(harness, Stones));
+			Assert.Equal(Stones.Take(lap).OrderBy(i => i), Spawned(harness, Stones));
 		}
 	}
 
@@ -122,7 +127,7 @@ public sealed class BrassEyeGroggetAiTests
 		for (int lap = 1; lap <= 3; lap++)
 		{
 			ArriveAt(grogget, WavePoint);
-			Assert.Equal(Waves.Take(lap), Spawned(harness, Waves));
+			Assert.Equal(Waves.Take(lap).OrderBy(i => i), Spawned(harness, Waves));
 		}
 
 		ArriveAt(grogget, WavePoint);

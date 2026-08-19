@@ -1673,4 +1673,16 @@
 		<routestep x="471.12" y="543.57" z="1033.1794" />
 		<routestep x="477.1" y="543.73" z="1033.1794" />
 	</walker_template>
+	<!-- Chief Gunner Koakoa (215070). Taken from the client: IDShip_Mobpath_ShulackRaAtilleryChKnmd_45_Ah
+	     in Map/Worlds/idshulackship, whose name is his own devname and whose first point is 0.35m from his
+	     spawn. He walks out along the gun deck and back; retail fires his cascade at point 3, the far end. -->
+	<walker_template route_id="3001000001">
+		<routestep x="755.432190" y="509.046814" z="1013.672485"/>
+		<routestep x="752.916931" y="509.009674" z="1013.672485"/>
+		<routestep x="749.610291" y="509.001923" z="1013.672485"/>
+		<routestep x="746.183105" y="508.942810" z="1013.672485"/>
+		<routestep x="749.593750" y="508.964111" z="1013.672485"/>
+		<routestep x="752.936035" y="509.036804" z="1013.672485"/>
+		<routestep x="755.858582" y="509.031525" z="1013.672485"/>
+	</walker_template>
 </npc_walker>

@@ -28304,3 +28304,63 @@ half-built.
   `audit_summon_ids.py`'s list with its own unnamed ids.
 - The `MOVETYPE_RUN` distinction generally: retail's `goto_next_waypoint` carries a movement type, and
   nothing in this port reads it, so every patrol that is meant to break into a run does not.
+
+## Koakoa paces the gun deck, and the intermittent failure was mine
+
+`gunnerkoakoa` was named last commit as the obvious first of the eleven classes whose patterns act at a
+waypoint but whose npcs carry no `walker_id`. It is the first of the four Steel Rake encounters where the
+route was **not** already in our data.
+
+**He did not walk at all.** No `walker_id` on his spawn, no route attached anywhere in code. The client
+has one and its name gives it away: `IDShip_Mobpath_ShulackRaAtilleryChKnmd_45_Ah`, against his devname
+`IDShip_ShulackRaAtilleryChKnmd_45_Ah`, first point **0.35m** from his spawn. Seven points, out along the
+gun deck and back. It is now `route_id="3001000001"` in the Steel Rake walker file, bound to his spot.
+
+**At point 3 — the far end — he fires a six-rung cascade**: 17% A, 33% B, 50% C, 67% D, 83% E, and an
+unguarded sixth rung that is E again. One npc at his own feet.
+
+> **`live_time=6`, and that is the whole reading of the mechanic.** Six seconds is not an add. These are
+> the muzzle flashes of the guns he is inspecting, which is why five of them in a row do not fill the
+> deck. A class that read them as summons would have built a very different fight.
+
+**Pins** — five, four mutations, all caught. `audit_summon_ids.py`'s row for this class falls from nine
+unnamed ids to four.
+
+**One pin is deliberately weaker than it looks, and says so.** The `walker_id` added to
+`300100000_Steel Rake.xml` is *not* pinned by anything: `BossAiHarness` synthesises spawn templates rather
+than reading the spawn files, so the tests set the walker id themselves. What is pinned is the imported
+route and the behaviour hanging off it. The binding in the data file is covered by nothing, and that is
+recorded in the test file rather than left for someone to assume.
+
+### The intermittent failure, identified
+
+Last commit recorded "a single unidentified test failure in one full-solution run, which did not recur in
+five further runs". It recurred. It is
+**`BrassEyeGroggetAiTests.TheWavesRunOutAndThenRepeatTheLast`, written in that same commit**, and the
+cause is mine:
+
+```csharp
+Assert.Equal(Waves.Take(lap), Spawned(harness, Waves));   // sequence comparison
+```
+
+`LiveNpcs()` promises no order. Comparing it as a sequence passes whenever the world list happens to come
+back sorted and fails when it does not — about one run in three, and **only in whole-solution runs**,
+which is why three consecutive game-server-only runs looked clean and the thing survived a commit. Both
+order-dependent assertions in that file now sort; six repeat runs of the file and three of the whole
+solution are green.
+
+**Two things worth keeping from that.** A flake that only appears under one invocation path will be
+declared fixed by any amount of re-running under the other. And "did not recur in five runs" was the
+right thing to write down and the wrong thing to be reassured by — the note is what made it findable the
+second time.
+
+**Still missing.**
+
+- **Ten more classes** from the same list, none checked: `hyperion_defence` (16 npcs) is much the
+  largest, then `captured_drakan_scientist`, `brigade_general_vasharti`, `padmarashka_world_boss`,
+  `sematariux`, `poppyontherun`, the two Eternal Bastion classes, `summoner` and `useitem`. Each needs the
+  same two questions: does a route exist for it in the client, and does anything attach one at runtime.
+- **Koakoa's `BTIMERI_INDEX_1` re-arm at 20000**, set by every rung of the cascade, driving a handler this
+  class does not model — and the `use_skill` beside each rung, still skill-index blocked.
+- **The four remaining unnamed ids** on his audit row: 281328, 281329, 281330 and 281335.
+- The `walker_id`-in-spawn-data binding remains unpinnable until the harness reads spawn files.

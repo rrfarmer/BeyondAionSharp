@@ -2,17 +2,79 @@ using Aion.GameServer.Ai;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Ai;
+using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/rakes/ChiefGunnerKoakoaAI (@author xTz).</summary>
+/// <summary>
+/// Chief Gunner Koakoa (215070), Steel Rake. Retail pattern <c>IDSlk_Gunner</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/rakes/ChiefGunnerKoakoaAI (@author xTz). Retail-sourced additions below; see
+/// docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>He did not walk at all here, and retail has him pacing the gun deck.</b> Unlike the three
+/// encounters before him his route was <i>not</i> already in our data -- it had to come from the client.
+/// <c>IDShip_Mobpath_ShulackRaAtilleryChKnmd_45_Ah</c> in <c>Map/Worlds/idshulackship</c> carries his own
+/// devname and its first point is 0.35m from his spawn: seven points out along the deck and back. It is
+/// now <c>route_id="3001000001"</c> in the Steel Rake walker file and bound to his spot.
+/// </para>
+/// <para>
+/// <b>At point 3 -- the far end of the walk -- he fires a six-rung cascade</b>: 17% A, 33% B, 50% C,
+/// 67% D, 83% E, and an unguarded last rung that is E again. One npc, at his own feet, with
+/// <c>live_time=6</c>. <b>Six seconds is the tell</b>: these are the muzzle effects of the guns he is
+/// checking, not adds, which is why five of them can be spawned in a row without filling the deck.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> The <c>use_skill</c> beside each rung (skill-index blocked) and the
+/// <c>BTIMERI_INDEX_1</c> re-arm at 20000 that each one sets, which drives a handler this class does not
+/// model. The HP-percent spawning below is aionemu's own -- retail's spawn actions never name 281212 or
+/// 281213 -- and is left alone for the same reason Grogget's is: it fires in combat, this fires on
+/// patrol, and removing a fight's adds is a separate decision.
+/// </para>
+/// </remarks>
 [AIName("gunnerkoakoa")]
 public class ChiefGunnerKoakoaAI : SummonerAI
 {
     public ChiefGunnerKoakoaAI(Npc owner)
         : base(owner)
     {
+    }
+
+    /// <summary>Retail's <c>is_waypoint_index</c> for the cascade: the far end of the deck.</summary>
+    public const int GunWaypoint = 3;
+
+    /// <summary>Retail's <c>live_time</c> on every rung. Six seconds, so these are effects, not adds.</summary>
+    public const int MuzzleLifeSeconds = 6;
+
+    // BIDShulack_GunnerSum{A..E}_45_n, resolved through ai_binding.tsv.
+    private const int MuzzleA = 281220;
+    private const int MuzzleB = 281221;
+    private const int MuzzleC = 281222;
+    private const int MuzzleD = 281223;
+    private const int MuzzleE = 281296;
+
+    /// <summary>
+    /// Retail's six rungs at waypoint 3, in priority order. The last carries no <c>test_probability</c> at
+    /// all, and spawns E just as the rung above it does.
+    /// </summary>
+    protected override void HandleMoveArrived()
+    {
+        RouteStep arrived = GetMoveController().GetCurrentStep();
+        base.HandleMoveArrived();
+        if (arrived == null || arrived.GetStepIndex() != GunWaypoint)
+            return;
+
+        int muzzle;
+        if (Rnd.Chance() < 17) muzzle = MuzzleA;
+        else if (Rnd.Chance() < 33) muzzle = MuzzleB;
+        else if (Rnd.Chance() < 50) muzzle = MuzzleC;
+        else if (Rnd.Chance() < 67) muzzle = MuzzleD;
+        else muzzle = MuzzleE;
+
+        SpawnFor(muzzle, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(),
+            (sbyte)GetOwner().GetHeading(), MuzzleLifeSeconds);
     }
 
     protected override void HandleIndividualSpawnedSummons(Percentage percent)

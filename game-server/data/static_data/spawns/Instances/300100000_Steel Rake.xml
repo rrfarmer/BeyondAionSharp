@@ -59,7 +59,7 @@
 		</spawn>
 		<!-- Chief Gunner Koakoa -->
 		<spawn npc_id="215070">
-			<spot x="755.777" y="509.02" z="1012.3" h="60"/>
+			<spot x="755.777" y="509.02" z="1012.3" h="60" walker_id="3001000001"/>
 		</spawn>
 		<!-- Cockroach -->
 		<spawn npc_id="214714">
