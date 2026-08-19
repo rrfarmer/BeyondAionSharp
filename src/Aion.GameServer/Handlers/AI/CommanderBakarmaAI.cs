@@ -60,6 +60,21 @@ public class CommanderBakarmaAI : SummonerAI, HpPhases.PhaseHandler
 	/// <summary>Retail's <c>range_as_meter</c> on both.</summary>
 	private const float CallReach = 50f;
 
+	/// <summary>
+	/// The vanguards he puts out himself when he crosses fifty per cent, in the same branch as the
+	/// <c>5001</c> call. Retail: <c>num_to_spawn=3</c>, <c>spawn_range=8</c>, <c>live_time=1800</c>.
+	/// </summary>
+	/// <remarks>
+	/// <b>Only the call was here.</b> The ladder classes answer 5001 by promoting a legionary that is
+	/// already standing, which is the half that was built — but retail's rung does both, and if there is
+	/// no legionary left to promote it does nothing at all. These three arrive whatever the floor looks
+	/// like, which is what makes fifty per cent a moment rather than a message.
+	/// </remarks>
+	public const int Vanguard = 280686;
+	public const int VanguardsAtHalf = 3;
+	public const float VanguardSpread = 8f;
+	public const int VanguardLifeSeconds = 1800;
+
 	private readonly HpPhases hpPhases = new HpPhases(50, 25);
 
 	public CommanderBakarmaAI(Npc owner)
@@ -83,6 +98,13 @@ public class CommanderBakarmaAI : SummonerAI, HpPhases.PhaseHandler
 		};
 		if (message != 0)
 			NpcMessageBus.Broadcast(GetOwner(), message, GetTarget(), CallReach);
+
+		// Retail's fifty-per-cent rung spawns three vanguards in the same branch as the call.
+		if (phaseHpPercent == 50)
+		{
+			for (int i = 0; i < VanguardsAtHalf; i++)
+				Expire(RndSpawnInRange(Vanguard, 1, VanguardSpread), VanguardLifeSeconds);
+		}
 	}
 
 	protected override void HandleDied()

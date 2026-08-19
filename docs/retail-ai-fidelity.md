@@ -26856,3 +26856,59 @@ worth a hundred thousand points that go with the breath casts, and the `Phage` a
 variables she sets at 21 and 51. Her other four retail thresholds — 71, 41, 21 — drive casts only and
 are deliberately **not** added: a phase that fires nothing is worse than no phase, because it reads as
 ported.
+
+## The mutation runner is a tool now, and it caught its own first case
+
+Last commit ended with a mutation script that **omitted its compile check** and reported a change that
+did not build as `passes`. Two mutations were called survivors on that basis. The runner lives in
+`tools/client-extract/run_mutations.py` now, and the check is not optional. It also guarantees three
+things the throwaway scripts did not:
+
+- **an anchor that does not match exactly once stops the run** — a mutation that silently matched
+  nothing used to look like a surviving mutant;
+- **the baseline is run first**, and a failing or non-building baseline stops everything, because
+  under one nothing below means anything;
+- **the file is restored even on exception.**
+
+Its first run included a deliberate `int = "not an int"` mutation, and reported `DID NOT COMPILE`
+rather than a pass. That is the guarantee working on the exact failure that prompted it.
+
+## Bakarma calls for vanguards and now brings some himself
+
+`audit_hp_phases.py` again: `ours [50, 25]` against `retail [25]`. Reading the pattern, his
+fifty-per-cent rung does **two** things in one branch — the `5001` call, which the ladder classes
+already answer by promoting a legionary where it stands, and:
+
+```
+> spawn spawn_id=SPAWN_ID_2 npc_nameid=BDF3_NM_DrakanDF3Slave2_48_Ah num_to_spawn=3
+        spawn_location_type=SPAWN_LOCATION_MY_POINT spawn_range=8 live_time=1800
+```
+
+**Only the call was here.** Which means on a floor with no legionaries left to promote — a raid that
+cleared the adds before pushing him — **crossing fifty per cent did nothing at all.** Three vanguards
+now arrive whatever the floor looks like, eight metres out, for half an hour.
+
+**Pins** — four new in `CommanderBakarmaAiTests`, six mutations, all caught.
+
+**An existing pin had to change, and that is the interesting part.**
+`AtFiftyTheLegionariesTakeTheNextRank` walked his health down and asserted a vanguard count of two. That
+count stopped being true the moment he spawned three of his own — and it would have read as **the
+promotion breaking** rather than as new behaviour arriving. Its own remarks had already named the fix:
+the file carries a `Tell()` helper written to hand an add a message directly, "so a pin on what the
+rung does is not also a pin on what Bakarma's summon table lays at that percentage". It now uses it.
+
+**Two survivors on the first run, both self-inflicted.** The count pin asserted against
+`VanguardsAtHalf`, the constant under test, so changing it to two moved both sides of the assertion
+together — it is written out as `3` now. And the spread pin asserted only that a vanguard was not at
+distance zero, which a range of zero also satisfies, because the spawn helper takes a minimum of one
+metre; the radius is a table assertion alongside it, and the file says why.
+
+**Still missing on him.** Message `6001` — "everyone onto my target" — remains deliberately unbuilt, for
+the reason the class already records: retail sends it from a timer whose period changes with the band,
+out of branches that are otherwise skill indices, and a plain beat would fire in the gaps its ladder
+leaves. His skill chain, his shouts and the treasure box on his death are also absent.
+
+**And the flake has a name and a rate.** `KingspinAiTests.ACryInsideAWindowShortensHisThrowCycle` failed
+once in these three runs and once in the previous three — consistent with the roughly one-in-six
+measured when the `SystemClock` hook was switched off. It is pre-existing, unrelated to this work, and
+now reported every time because suite runs print failing names.

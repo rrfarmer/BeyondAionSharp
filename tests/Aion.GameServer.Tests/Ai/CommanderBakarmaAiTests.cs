@@ -54,8 +54,14 @@ public sealed class CommanderBakarmaAiTests
 
 	/// <summary>
 	/// <b>Between twenty-six and fifty percent, every legionary becomes a vanguard where it stands.</b>
-	/// Nothing new is summoned — the add replaces itself, so the count holds and the fight grows.
+	/// The add replaces itself, so no legionary is left standing and each becomes one vanguard.
 	/// </summary>
+	/// <remarks>
+	/// <b>Driven by the call rather than by his health</b>, which is what <see cref="Tell"/> is for:
+	/// crossing fifty per cent also makes him spawn three vanguards of his own, and this pin is about
+	/// the promotion. It used to walk his health down and assert a count of two — which stopped being
+	/// true the day the spawn was added, and would have read as the promotion breaking.
+	/// </remarks>
 	[Fact]
 	public void AtFiftyTheLegionariesTakeTheNextRank()
 	{
@@ -67,8 +73,8 @@ public sealed class CommanderBakarmaAiTests
 		BossAiHarness.MakeMutuallyKnown(boss, one);
 		BossAiHarness.MakeMutuallyKnown(boss, two);
 
-		BossAiHarness.SetExactPercent(boss, 49);
-		Strike(boss, raider);
+		Tell(one, boss, CommanderBakarmaAI.TakeTheNextRank);
+		Tell(two, boss, CommanderBakarmaAI.TakeTheNextRank);
 
 		Assert.Empty(Live(harness, Legionary));
 		Assert.Equal(2, Live(harness, Vanguard).Count);
@@ -252,5 +258,109 @@ public sealed class CommanderBakarmaAiTests
 		Aion.GameServer.Ai.FriendDeathNotice.Raise(stranger, raider);
 
 		Assert.True(watcher.IsSpawned());
+	}
+
+	/// <summary>
+	/// <b>And he puts three vanguards out himself as he crosses it.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's fifty-per-cent rung does two things in one branch: the <c>5001</c> call, which promotes
+	/// legionaries already standing, and <c>num_to_spawn=3</c> of the vanguard at <c>spawn_range=8</c>
+	/// for <c>live_time=1800</c>. Only the call was here — so on a floor with no legionaries left to
+	/// promote, crossing fifty per cent did nothing at all.
+	/// <para>
+	/// No legionaries are placed here on purpose: it isolates what <em>he</em> spawns from what the
+	/// call promotes.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AndHePutsThreeVanguardsOutHimselfAtFifty()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+		Assert.Empty(Live(harness, Vanguard));
+
+		for (int hp = 99; hp >= 49; hp--)
+		{
+			BossAiHarness.SetExactPercent(boss, hp);
+			Strike(boss, raider);
+		}
+
+		// Three, written out: asserting against VanguardsAtHalf moves with the constant, so
+		// changing it to two passed.
+		Assert.Equal(3, Live(harness, Vanguard).Count);
+	}
+
+	/// <summary>
+	/// <b>They land around him, not on him.</b> Retail's <c>spawn_range</c> is eight.
+	/// </summary>
+	[Fact]
+	public void AndTheyLandAroundHimNotOnHim()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+		for (int hp = 99; hp >= 49; hp--)
+		{
+			BossAiHarness.SetExactPercent(boss, hp);
+			Strike(boss, raider);
+		}
+
+		List<Npc> vanguards = Live(harness, Vanguard);
+		Assert.Equal(3, vanguards.Count);
+		Assert.All(vanguards, v => Assert.InRange(
+			Math.Sqrt(Math.Pow(v.GetX() - boss.GetX(), 2) + Math.Pow(v.GetY() - boss.GetY(), 2)),
+			1d, CommanderBakarmaAI.VanguardSpread + 1d));
+
+		// The radius itself is a table assertion: the spread helper takes a minimum of one, so setting
+		// the range to zero still puts them a metre out and the distance check above cannot see it.
+		Assert.Equal(8f, CommanderBakarmaAI.VanguardSpread);
+	}
+
+	/// <summary>
+	/// <b>And they stand half an hour.</b> Retail's <c>live_time</c> is 1800.
+	/// </summary>
+	/// <remarks>
+	/// Long enough that the fight decides their fate rather than a clock, but bounded — without it three
+	/// vanguards per pull accumulate in the cave for the rest of the instance.
+	/// </remarks>
+	[Fact]
+	public void AndTheyStandHalfAnHour()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+		for (int hp = 99; hp >= 49; hp--)
+		{
+			BossAiHarness.SetExactPercent(boss, hp);
+			Strike(boss, raider);
+		}
+
+		// Followed by object id: he keeps summoning through the window, so a plain count measures his
+		// whole output rather than the three this rung placed.
+		var placed = Live(harness, Vanguard).Select(v => v.GetObjectId()).ToHashSet();
+		Assert.Equal(3, placed.Count);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(CommanderBakarmaAI.VanguardLifeSeconds - 60));
+		Assert.Equal(placed.Count, Live(harness, Vanguard).Count(v => placed.Contains(v.GetObjectId())));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(120));
+		Assert.Empty(Live(harness, Vanguard).Where(v => placed.Contains(v.GetObjectId())));
+	}
+
+	/// <summary>
+	/// <b>And nothing arrives before he gets there.</b>
+	/// </summary>
+	[Fact]
+	public void AndNothingArrivesBeforeHeGetsThere()
+	{
+		var (harness, boss, raider) = Cave();
+		using BossAiHarness _h = harness;
+
+		for (int hp = 99; hp >= 60; hp--)
+		{
+			BossAiHarness.SetExactPercent(boss, hp);
+			Strike(boss, raider);
+		}
+
+		Assert.Empty(Live(harness, Vanguard));
 	}
 }
