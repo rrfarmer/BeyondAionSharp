@@ -31091,3 +31091,47 @@ it is better to know now than after building him.
   `<summons>` schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards;
   25 guards with no `npc_templates.xml` row; 11 owner-less patterns; the eleven unread top-band ids;
   Dynatoum's mine web; Beritra's two spawn rows; Pashid's `npc_skills`; the seven absent npc rows.
+
+## Three owed items that were never work
+
+Applying the previous entry's lesson — ask the fuller question, not the one that produced the list —
+to three items that had sat on the "still missing" tail for a long time. **All three are closed, and none
+of them by writing code.**
+
+### The seven absent npc rows
+
+`audit_summon_ids.py --absent` reported seven npcs "our classes' patterns spawn that `npc_templates.xml`
+does not carry", with the line *"These cannot be implemented in code: the npc row has to exist first."*
+That reads as work.
+
+> **All seven are `unattackable`** — two invisible circles, a buff use-check, two control npcs, a rune
+> reset — the FX furniture this port collapses rather than spawns. And **no C# file names any of them.**
+
+A missing row for something nobody spawns is not a gap. The unattackable filter every other audit here
+gained is applied to `--absent` now, and the list is **empty**.
+
+### The eleven owner-less patterns
+
+The reinforcement extractor reports eleven patterns as "has no npc". That came from `ai_binding.tsv`,
+which is derived from the patterns themselves — so the fuller question is what the **client's npc tables**
+say. They say the same thing: **no npc anywhere carries any of the eleven as its `ai_name`.** They are
+orphans in retail's own data.
+
+### The twenty-five guards with no template row
+
+All attackable, all `Ab1_1011_Boss_*`, ids **885020–885604**. Our `npc_templates.xml` stops at **882332**.
+They are content newer than this 4.8 port carries, so adding them is porting 5.x content, not fixing
+fidelity.
+
+### What this was worth
+
+Three lines came off the owed list, and none needed a fix. **A list of gaps that includes non-gaps is
+worse than a shorter honest one**: it makes the remaining work look larger than it is, and every reading
+of it spends attention on items that will never repay it. All three are now recorded where they will be
+read — in the tools that print them, not only here.
+
+**Still missing.** Jurdin, to the fuller map; `is_aerial_spawn`; the 34 non-route absence claims; the 33
+named death-spawn rows; hisen's 6401/6402 pair; `is_user` pinned one seam short;
+`despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
+258203/258207 family decision; the 59 stranded guards; the eleven unread top-band ids; Dynatoum's mine
+web; Beritra's two spawn rows; Pashid's `npc_skills`.

@@ -56,6 +56,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from audit_missing_adds import read_text  # noqa: E402
+from client_npc_names import unattackable_ids  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 NAMEID = re.compile(r"<npc_nameid>([^<]+)</npc_nameid>")
@@ -167,15 +168,30 @@ def report_absent(rows, xml_dir):
     almost entirely post-4.8 content: this is a 4.8 port read against a 5.8 dump, and the top of that
     list is Lakrum-era doors, transform rooms and Eternity effects on patterns no class here implements.
     Restricted to patterns our own classes actually run, the count is **nine**.
+
+    AND OF THOSE, THE ONES THAT MATTER ARE THE ATTACKABLE ONES
+    ----------------------------------------------------------
+    Seven of the nine were listed for a long time as "cannot be implemented; the npc row has to exist
+    first", which reads as work owed. It is not. **All seven are `unattackable`** -- invisible circles,
+    a buff use-check, two control npcs, a rune reset -- the FX and controller furniture this port
+    collapses rather than spawns. And **no C# file names any of them**, so nothing here wants them.
+
+    A missing row for something nobody spawns is not a gap. The unattackable filter every other audit in
+    this directory gained is applied here now, and it empties the list.
     """
     tmpl = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml").read_text(
         encoding="utf-8", errors="replace")
     ours = set(re.findall(r'npc_id="(\d+)"', tmpl))
     dev = devname_to_npc(xml_dir)
     inv = {v: k for k, v in dev.items()}
-    absent = sorted({i for _, _, _, missing, _ in rows for i in missing if i not in ours})
-    print(f"{len(absent)} npcs our classes' patterns spawn that npc_templates.xml does not carry")
-    print("These cannot be implemented in code: the npc row has to exist first.")
+    furniture = unattackable_ids(xml_dir)
+    all_absent = sorted({i for _, _, _, missing, _ in rows for i in missing if i not in ours})
+    absent = [i for i in all_absent if i not in furniture]
+    hidden = len(all_absent) - len(absent)
+    print(f"{len(absent)} attackable npcs our classes' patterns spawn that npc_templates.xml lacks")
+    print(f"({hidden} more are unattackable furniture this port collapses rather than spawns)")
+    if absent:
+        print("These cannot be implemented in code: the npc row has to exist first.")
     print()
     for i in absent:
         print(f"  {i}  {inv.get(i, '?')}")

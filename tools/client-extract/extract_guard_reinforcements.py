@@ -18,6 +18,18 @@ What it emits, one row per (guard npc, band):
 where `summons` is `npc_id*count` joined by commas, and the band is the retail
 `is_hp_in_boundary` / `is_hp_lower_than` guard verbatim.
 
+THE TWO LEFTOVERS THIS REPORTS, AND WHY NEITHER IS WORK
+------------------------------------------------------
+* **"pattern X has no npc" (11 of them).** Checked against the client's own `npcs*.xml` tables, not only
+  against `ai_binding.tsv`: **no npc anywhere carries any of these as its `ai_name`.** They are orphan
+  patterns in retail's own data -- `BGuard_ChiefA`, `BGuard_ChiefF4*`, the `L45` and `L54` guard
+  variants -- shipped and bound to nothing. Nothing is owed.
+* **25 guards with rows but no `npc_templates.xml` entry.** All attackable, all `Ab1_1011_Boss_*`, ids
+  885020-885604. **Our templates stop at 882332.** They are content newer than this 4.8 port carries,
+  so adding them is porting 5.x content rather than fixing fidelity.
+
+Both were on the owed list for a long time reading like defects. They are not.
+
 Rows are only emitted where every devname resolves to an npc id our client knows.
 Anything that does not resolve is reported on stderr rather than dropped silently —
 a guard whose healer is missing would otherwise look like a guard that never heals.
