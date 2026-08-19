@@ -25,10 +25,14 @@ public sealed class InvincibleShabokanAiTests
 	private const int Sink = 283083;
 	private const int SinkDamage = 283084;
 
+	/// <summary>The earthquake's FX and the damage it drops.</summary>
+	private const int QuakeFx = 283081;
+	private const int QuakeDamage = 283082;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
 			.WithAi(typeof(InvincibleShabokanAI), typeof(SinkingSandAI), typeof(EarthQuakeAI),
-				typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
+				typeof(ShabokanEarthquakeFxAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
 			.Build();
 
 	private static int Count(BossAiHarness harness, int npcId) =>
@@ -85,22 +89,22 @@ public sealed class InvincibleShabokanAiTests
 	}
 
 	/// <summary>
-	/// <b>One npc per target, not two.</b>
+	/// <b>One damage twin per target, not two.</b>
 	/// </summary>
 	/// <remarks>
-	/// Retail spawns only the sink and lets the sink's own pattern place its <c>SinkDMG</c> twin. Both
-	/// ids run <c>SinkingSandAI</c> here, which casts once and removes itself, so spawning the pair meant
-	/// two casts where retail has one.
+	/// Retail spawns only the sink; the sink's own pattern places the <c>SinkDMG</c>. Shabokan used to
+	/// place both himself, and both ids cast — so every target took two casts where retail has one. Six
+	/// sinks now mean six twins, not twelve.
 	/// </remarks>
 	[Fact]
-	public void OnlyTheSinkIsPlaced()
+	public void OneDamageTwinPerTarget()
 	{
 		using BossAiHarness harness = NewHarness();
 		Engaged(harness, 8);
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(21));
 
-		Assert.Equal(0, Count(harness, SinkDamage));
+		Assert.Equal(6, Count(harness, SinkDamage));
 	}
 
 	/// <summary>
@@ -141,5 +145,77 @@ public sealed class InvincibleShabokanAiTests
 			70, () => BossAiHarness.SetHpPercent(boss, 12), Sink);
 
 		Assert.Equal(0, seen.Total);
+	}
+
+	/// <summary>
+	/// <b>The earthquake places the FX, and the FX drops the damage.</b>
+	/// </summary>
+	/// <remarks>
+	/// This class placed the damage npc directly and never the FX at all — 283081 was bound to
+	/// <c>general</c> and spawned by nothing.
+	/// </remarks>
+	[Fact]
+	public void TheEarthquakePlacesItsFx()
+	{
+		using BossAiHarness harness = NewHarness();
+		Engaged(harness, 2);
+
+		// Thirty seconds to the rung, and the FX drops its first damage a second later.
+		harness.Clock.Advance(TimeSpan.FromSeconds(31));
+		Assert.Equal(1, Count(harness, QuakeFx));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.True(Count(harness, QuakeDamage) > 0, "the FX dropped no damage npc");
+	}
+
+	/// <summary>
+	/// <b>And it is a train, two seconds apart — four of the five rungs reach the ground.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail writes five rungs on the FX's idle timer, each with its own flag var, at one, three, five,
+	/// seven and nine seconds — and gives the FX itself <b>eight</b>. So the fifth is cut off by the FX's
+	/// own lifetime and four land. That is retail's arithmetic, not a rounding here, and the pin asserts
+	/// what reaches the ground rather than what the pattern writes.
+	/// <para>
+	/// The old code dropped one npc per earthquake, so the ground shook a quarter as much as it should.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheEarthquakeIsATrainOfFive()
+	{
+		using BossAiHarness harness = NewHarness();
+		Engaged(harness, 2);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(30));
+
+		// Ticks at 1, 3, 5 and 7 seconds after the FX lands; the ninth-second rung never runs.
+		BossAiHarness.Watched seen = harness.WatchNew(12, null, QuakeDamage);
+		Assert.Equal(4, seen.Total);
+	}
+
+	/// <summary>
+	/// <b>A sink stands for a minute and drops its own damage.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's sink lives sixty seconds and its <c>SinkDMG</c> twin six. Both ids ran the same
+	/// three-second cast and four-second self-delete here, so the field a raid is meant to walk around
+	/// was a flash.
+	/// </remarks>
+	[Fact]
+	public void ASinkStandsForAMinuteAndDropsItsOwnDamage()
+	{
+		using BossAiHarness harness = NewHarness();
+		Engaged(harness, 8);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(21));
+		Assert.Equal(6, Count(harness, Sink));
+		Assert.Equal(6, Count(harness, SinkDamage));
+
+		// The twin casts on waking and removes itself; the sink stands on. Its six-second live_time is a
+		// backstop the npc's own clock always beats, so deleting that lifetime is not something this pin
+		// can see -- the same shape recorded for Terath's gravity pair.
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
+		Assert.Equal(0, Count(harness, SinkDamage));
+		Assert.Equal(6, Count(harness, Sink));
 	}
 }

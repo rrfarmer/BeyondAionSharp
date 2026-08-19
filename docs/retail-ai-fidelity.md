@@ -25608,3 +25608,41 @@ and re-arms at fifty. That is the same guard-plus-no-lifetime shape corrected fo
 Kumbanda, and it is left here because the earthquake npc's own AI was not read this pass. `SinkingSandAI`
 also removes itself after about four seconds where retail's sink stands for sixty, so the hazard is a
 flash rather than a field.
+
+## Finishing Shabokan: the earthquake train and the sink field
+
+Last entry corrected Shabokan's two rungs and closed by naming what it had left: the earthquake still
+placed the damage npc directly rather than the FX, and the sink was a flash rather than a field. Both
+are done.
+
+**The earthquake is a train.** Retail spawns `EarthQuakeFX` (283081) at his feet for **eight** seconds,
+and the FX's own idle timer drops an `EarthQuakeDMG` (283082, live 5) five times at two-second
+intervals before despawning itself. This class placed **one** damage npc directly and never the FX at
+all — 283081 was bound to `general` and spawned by nothing.
+
+**Four of those five rungs land**, and that is retail's own arithmetic rather than a rounding here: the
+ticks fall at one, three, five, seven and nine seconds, and the FX is given eight, so the last is cut
+off by its own lifetime. The pin asserts what reaches the ground, and says why.
+
+The damage npc's self-delete was **nine** seconds against retail's five. That number only became
+visible once the FX existed to drop them in a train: at nine, four overlap and the patch is continuous;
+at five, three do.
+
+**The sink is a field, not a flash.** Retail's `Sink` (283083) drops a `SinkDMG` (283084) at its own
+point on waking and then **stands for a minute**, waiting for message 301 to cast and leave; the twin is
+the half that casts. Both ids ran the same three-second cast and four-second self-delete here, which is
+why Shabokan spawning the pair meant two casts per target. He now spawns only the sink, the sink drops
+its own twin, and the twin casts on waking as retail's does.
+
+**Pins** — three more in `InvincibleShabokanAiTests` (eight in the class), eight mutations, seven
+caught.
+
+**The eighth cannot be caught, and it is a familiar shape.** Deleting the twin's six-second lifetime
+changes nothing, because the twin removes itself as soon as it has cast — the shorter clock always
+wins. That is the third time this session a retail `live_time` has turned out to be a backstop the
+npc's own behaviour beats (Terath's gravity pair, Ebonsoul's black hole, this). The lifetime is kept
+because it is retail's number and becomes load-bearing if the AI ever stops self-deleting.
+
+**Still missing.** Message **301**, which is what ends a sink early in retail — nothing in this port
+sends it, so a sink always stands its full minute. And `BTIMERI_INDEX_1`, the seismic wave, whose rung
+carries only casts.

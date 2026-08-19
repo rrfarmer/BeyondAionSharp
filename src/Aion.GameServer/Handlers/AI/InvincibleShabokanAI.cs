@@ -94,14 +94,25 @@ public class InvincibleShabokanAI : AggressiveNpcAI
         }
     }
 
+    /// <summary><c>IDTiamat_Shavorkhan_EarthQuakeFX</c>, and retail's <c>live_time</c> for it.</summary>
+    private const int EarthQuakeFx = 283081;
+    private const int EarthQuakeFxLife = 8;
+
+    /// <summary>
+    /// Retail's earthquake rung: the FX at his own feet, which then drops the damage itself.
+    /// </summary>
+    /// <remarks>
+    /// <b>This placed the damage npc directly, once, and never the FX.</b> Retail spawns 283081 and lets
+    /// its own pattern run a train of five — see <see cref="ShabokanEarthquakeFxAI"/> — so the ground
+    /// shook a fifth as much as it should. The "only if none is standing" test went with it: retail's
+    /// rung has none, and with a fifty-second re-arm and an eight-second FX there is nothing to guard
+    /// against.
+    /// </remarks>
     private void EarthQuakeEvent()
     {
-        Npc invisible = GetPosition().GetWorldMapInstance().GetNpc(283082); // 4.0
         SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 20717, 55, GetOwner()).UseNoAnimationSkill();
-        if (invisible == null)
-        {
-            Spawn(283082, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0); // 4.0
-        }
+        SpawnFor(EarthQuakeFx, GetOwner().GetX(), GetOwner().GetY(), GetOwner().GetZ(), (sbyte)0,
+            EarthQuakeFxLife);
     }
 
     /// <summary>

@@ -43,9 +43,19 @@ public class EarthQuakeAI : NpcAI
         Despawn();
     }
 
+    /// <summary>
+    /// Retail's <c>live_time</c> on <c>EarthQuakeDMG</c> is five seconds; this class used nine.
+    /// </summary>
+    /// <remarks>
+    /// It mattered more than a lifetime usually does. The FX drops one of these every two seconds, so at
+    /// nine seconds four of them overlap and the patch of ground is continuous; at five, three do. The
+    /// number only became visible once the FX existed to drop them in a train.
+    /// </remarks>
+    private const long DamageLifeMillis = 5000L;
+
     private void Despawn()
     {
-        ThreadPoolManager.GetInstance().Schedule(_ => { GetOwner().GetController().Delete(); return ValueTask.CompletedTask; }, 9000L);
+        ThreadPoolManager.GetInstance().Schedule(_ => { GetOwner().GetController().Delete(); return ValueTask.CompletedTask; }, DamageLifeMillis);
     }
 
     public override bool Ask(AIQuestion question)
