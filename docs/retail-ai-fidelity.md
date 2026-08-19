@@ -29498,3 +29498,42 @@ and the adds may be there with the wrong numbers, as here.
   `distance` and `schedule` against retail's `num_to_spawn`, `spawn_range` and timers. That would turn
   Viloa's class of defect from a hand-read into a query, and it is the obvious next tool.
 - Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
+
+## Comparing summon numbers, and four wrong ways to do it
+
+Viloa's defect — right count, wrong range and timing, in `spawn_helpers.xml` rather than in code — is
+invisible to `audit_summon_ids.py`, which only asks whether a class *names* an id. Every `SummonerAI`
+subclass names none of its adds. So `audit_summon_numbers.py` compares the data instead.
+
+**It took four versions, and the first three would each have sent somebody to change correct data.**
+
+| version | agreed | why it was wrong |
+|---|---|---|
+| per spawn action | 89 | retail writes "three" as three actions of one; a correct group of three reads as "3 vs retail 1" |
+| summed over the whole pattern | 15 | most repeated actions are **alternative rungs** — different health bands — not cumulative |
+| **per rung** | **61** | kept |
+| per rung, our side merged per npc | 22 | merges across health-percentage blocks, so "two at 75 and two at 50" becomes four |
+
+**A rung is the unit.** One `<pattern>` block: its conditions pass and everything inside it happens, so
+two actions of two in one rung place four, while two rungs of two place two. That is right about
+retail's side and it is the version kept.
+
+**It is still only a candidate generator, and the docstring says so.** The two sides group differently
+and there is no reliable mapping: our data is organised by health-percentage block and retail's by rung,
+and one boss's "two at seventy-five, two at fifty" cannot be told from "two, twice" without reading the
+conditions on every rung. **58 disagreements is a reading list**, not a defect count.
+
+**Timing is deliberately not compared at all.** `schedule` is a delay in milliseconds; retail's
+equivalent is wherever the rung hangs — `on_enter_attack_state`, a battle timer, an HP boundary — and
+flattening that to a number would invent a comparison. Viloa's case was clear only because her rung had
+**no timer whatsoever**. The tool prints `schedule` beside each row and marks it not compared.
+
+**So a clean row here means the counts and ranges agree. It does not mean the timing does.**
+
+**Still missing.**
+
+- **The 58 disagreements**, each needing its percentage blocks read against its rungs' conditions. The
+  count rows are the ones worth opening first: `npc 212874` spawning one where a rung places six, and
+  `npc 212346` spawning two where a rung places one.
+- **The eleven unread top-band ids** from `audit_summon_ids.py --rank`.
+- Dynatoum's mine web, Beritra's two spawn rows, Pashid's `npc_skills`, the seven absent npc rows.
