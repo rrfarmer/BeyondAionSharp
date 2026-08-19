@@ -22678,3 +22678,74 @@ The corridor pin was mutation-checked against that fallback and goes red.
 
 Build clean. The corridor pins fail if the route lookup is forced to its fallback. Full suite **2,127
 passing** (six new), 1 skipped.
+
+## Twelve incarnations, not four — and the last invented mechanic in the Refuge
+
+Fourth from the 575. The list said "Wrathclaw, 236280, no AI". **Reading the file turned one npc into
+eight**, and closed the last piece of invented behaviour in Dragon Lord's Refuge.
+
+### What was actually there
+
+- **219365-219368** — normal mode, translated some passes ago.
+- **236278-236281** — hard mode. Three bound to `TiamatsIncarnationAI` but resolved to an **empty
+  pattern**, which selected an invented summon cycle. **236280 ran `aggressive`.**
+- **856030-856033** — *a second hard-mode id set running the same four patterns.* Same story, and
+  **856032 also ran `aggressive`**: the same omission, made twice, in two id sets nobody had compared.
+
+The class's own docstring said the hard sets "keep the behaviour they had", which had quietly become a
+statement that six bosses ran a mechanic **no pattern in the game describes**: two hazards on two random
+players within thirty metres, every thirty seconds, on a clock started at activation rather than at
+combat.
+
+### The hard patterns are the normal patterns
+
+`IDTiamat_Hard_Crack_Key` and friends turned out to be the normal four with **one substitution**: a
+parallel set of hazard and sphere npc ids. Every rearm, threshold, lifetime, valid distance,
+multi-target cap and order is identical — **checked field by field against the raw XML**, because the
+caps and orders (`total_set_to_spawn`, `order_in_attacker_list`) are exactly the fields the pattern
+summary omits. Even the death effects are the same ids. Their `npc_skills` rows are shared with the
+normal four, so the skill indices resolve identically and nothing had to be guessed.
+
+```
+normal : 282735 / 282727 / 282731   spheres 282979 / 282733
+hard   : 856068 / 856074 / 856072   spheres 856078 / 856080
+```
+
+So the four hard tables are the four normal builders called with different ids, and the eight hard npcs
+map onto them.
+
+### Two things worth writing down
+
+**The fallback is gone.** `Pattern` was `Tables.TryGetValue(...) ? table : Untranslated`, and that
+fallback was the only thing keeping the invented cycle alive. With all twelve in the table it is now
+`Tables[GetNpcId()]` — which throws loudly if a thirteenth npc is ever bound here, instead of silently
+running nothing.
+
+**Static initializer order nearly ate it.** The four shared hard tables were first declared *below*
+`Tables`, and C# runs static field initializers in textual order — so every hard entry would have been
+initialized to `null`. Moved above, with a comment saying why.
+
+### The invented cycle's own fingerprint
+
+Its id lists included **collapsing earth (856070)** and **thunderbolt whirlpool (856076)**, which **no
+branch of any of the four patterns spawns**. Their absence over a full minute of combat is a sharper
+proof the cycle is gone than any hazard count, since the pattern legitimately drops the other id every
+nine seconds. That is what the pin measures.
+
+**One pin premise was wrong and had to be replaced:** the first version asserted an unengaged
+incarnation summons nothing, which failed because an aggressive-rated boss picks up a nearby player by
+itself and starts its pattern legitimately. Counting the cycle-only ids does not have that flaw.
+
+### Still to do
+
+- **The other 571.** Captain Xasta (6 spawns), Kexkra (5), Reviver Nasto (4) next.
+- **`on_message` 71, DeadlyHowling** (`SKILLI_INDEX_3`) — all twelve carry it, and the message chain
+  from Tiamat is still not translated. The breath keeps its `npc_skills` probability so it appears.
+- **`set_condition_spawn_variable TELEPORT_FUTUREIN1-4`** on each death, which the engine has no concept
+  for. The system messages beside it are already sent from the instance layer on effect end.
+- 880 route spawns now expressible and not yet ported; the 12,000 unbound templates.
+
+### Verification
+
+Build clean. The sphere pins fail if either Wrathclaw is given normal-mode spheres. Full suite **2,141
+passing** (fourteen new), 1 skipped.

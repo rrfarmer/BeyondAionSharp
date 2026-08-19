@@ -37,8 +37,10 @@ namespace Aion.GameServer.Handlers.AI;
 /// whole raid rather than on two people.
 /// </para>
 /// <para>
-/// The hard-mode twins (236278/236279/236281 and the 856xxx set) bind to their own
-/// <c>IDTiamat_Hard_*</c> patterns, which are not translated here; they keep the behaviour they had.
+/// <b>All twelve are translated.</b> The hard-mode eight — 236278-236281 and 856030-856033, two id sets
+/// running the same four <c>IDTiamat_Hard_*_Key</c> patterns — used to fall through to an invented
+/// summon cycle, which is now gone. Their patterns turned out to be the normal four with a parallel set
+/// of hazard and sphere ids and every number identical, which the raw XML confirms field by field.
 /// </para>
 /// </remarks>
 [AIName("tiamats_incarnation")]
@@ -48,6 +50,26 @@ public class TiamatsIncarnationAI : PatternAi
     private const int Graviwing = 219366;
     private const int Petriscale = 219368;
     private const int Wrathclaw = 219367;
+
+    /// <summary>The hard-mode four, whose patterns are the same fights with a different hazard set.</summary>
+    private const int FissurefangHard = 236278;
+    private const int GraviwingHard = 236279;
+    private const int WrathclawHard = 236280;
+    private const int PetriscaleHard = 236281;
+
+    /// <summary>
+    /// And the hard mode's <i>second</i> set of four, which run the very same four patterns.
+    /// </summary>
+    /// <remarks>
+    /// <b>Twelve incarnations, not eight.</b> 856030-856033 carry the same <c>IDTiamat_Hard_*_Key</c>
+    /// pattern names as 236278-236281, so they are the same four fights again under a second set of ids,
+    /// and they get the same four tables. Both sets had their Wrathclaw left on <c>aggressive</c> while
+    /// his three siblings were bound here — the same omission, made twice.
+    /// </remarks>
+    private const int FissurefangHard2 = 856030;
+    private const int GraviwingHard2 = 856031;
+    private const int WrathclawHard2 = 856032;
+    private const int PetriscaleHard2 = 856033;
 
     // Skill indices, corroborated by stack name rather than by position in our list -- which is a
     // different order: our entries run 20105, 20145, 20146, breath, while the pattern's indices are
@@ -67,6 +89,15 @@ public class TiamatsIncarnationAI : PatternAi
 
     private const int SphereOfWrath = 282979;
     private const int SphereOfPeace = 282733;
+
+    /// <summary>The hard mode's own spheres, <c>BIDTiamat_Fury_TiamatAnger</c> and <c>_Rage_Tranq</c>.</summary>
+    private const int HardSphereOfWrath = 856078;
+    private const int HardSphereOfPeace = 856080;
+
+    /// <summary>And its own hazards, which is the only thing separating the two sets of four.</summary>
+    private const int HardCavityOfEarth = 856068;
+    private const int HardGravityWhirlpool = 856074;
+    private const int HardPetrificationCrystal = 856072;
 
     /// <summary>The two points his spheres occupy. Which sphere is at which is what changes.</summary>
     private static readonly SpawnSpot NorthPoint = new SpawnSpot(214f, 858f, 246.5f);
@@ -130,30 +161,31 @@ public class TiamatsIncarnationAI : PatternAi
         };
 
     /// <summary>Puts the two spheres out, wrath at whichever point is named first.</summary>
-    private static PatternAction[] PlaceSpheres(SpawnSpot wrathAt, SpawnSpot peaceAt) =>
+    private static PatternAction[] PlaceSpheres(int wrath, int peace, SpawnSpot wrathAt, SpawnSpot peaceAt) =>
     [
-        Do.SpawnAt(SphereOfWrath, Hazards, liveSeconds: 0, wrathAt),
-        Do.SpawnAt(SphereOfPeace, Hazards, liveSeconds: 0, peaceAt),
+        Do.SpawnAt(wrath, Hazards, liveSeconds: 0, wrathAt),
+        Do.SpawnAt(peace, Hazards, liveSeconds: 0, peaceAt),
     ];
 
     /// <summary>One of his two area attacks: clear the spheres, cast, put them back as given.</summary>
     private static PatternBranch AreaAttack(int priority, string comment, PatternCondition[] conditions,
-        SpawnSpot wrathAt, SpawnSpot peaceAt)
+        int wrath, int peace, SpawnSpot wrathAt, SpawnSpot peaceAt)
     {
         PatternAction[] actions =
         [
             Do.ArmTimer(1, 25000),
             Do.Despawn(Hazards),
             Do.SkillOnSelf(AreaAtk),
-            .. PlaceSpheres(wrathAt, peaceAt),
+            .. PlaceSpheres(wrath, peace, wrathAt, peaceAt),
         ];
         return Branch(priority, comment, conditions, actions);
     }
 
-    private static readonly AiPattern WrathclawPattern = new AiPattern
+    /// <summary>Wrathclaw's fight, in either mode: the two modes differ only in which spheres he sets.</summary>
+    private static AiPattern Wrathclaw_(int wrath, int peace, int deathEffect) => new AiPattern
     {
         OnWakeUp = Of(
-            Branch(7, "SpawnCircle", When.Always, PlaceSpheres(NorthPoint, SouthPoint))),
+            Branch(7, "SpawnCircle", When.Always, PlaceSpheres(wrath, peace, NorthPoint, SouthPoint))),
 
         OnEnterAttack = Of(
             Branch(6, "SetTimer", When.Always,
@@ -167,10 +199,11 @@ public class TiamatsIncarnationAI : PatternAi
                 Do.SkillOnTarget(PowerAtk)),
 
             // A third of the time the spheres go back where they were...
-            AreaAttack(4, "AreaAtk_34", [When.Chance(34), When.Timer(1)], NorthPoint, SouthPoint),
+            AreaAttack(4, "AreaAtk_34", [When.Chance(34), When.Timer(1)], wrath, peace,
+                NorthPoint, SouthPoint),
 
             // ...and otherwise they come back swapped, which is the point of the fight.
-            AreaAttack(3, "AreaAtk_100", [When.Timer(1)], SouthPoint, NorthPoint),
+            AreaAttack(3, "AreaAtk_100", [When.Timer(1)], wrath, peace, SouthPoint, NorthPoint),
 
             Branch(2, "HandBind", [When.Timer(2), When.HpBelow(30)],
                 Do.ArmTimer(2, 30000),
@@ -182,13 +215,42 @@ public class TiamatsIncarnationAI : PatternAi
         OnDie = Of(
             Branch(8, "Int+1", When.Always,
                 Do.SpawnAt(BurrowingAttack, DeathEffects, liveSeconds: 6, BurrowSpot),
-                Do.SpawnAt(283066, DeathEffects, liveSeconds: 6, EffectSpot),
+                Do.SpawnAt(deathEffect, DeathEffects, liveSeconds: 6, EffectSpot),
                 Do.Despawn(Hazards))),
     };
 
+    private static readonly AiPattern HardWrathclaw =
+        Wrathclaw_(HardSphereOfWrath, HardSphereOfPeace, deathEffect: 283066);
+
+    private static readonly AiPattern HardFissurefang = Incarnation(
+        areaAtkRearm: 25000, handBindRearm: 30000,
+        deathEffect: 283063,
+        powerAtkHazard: Do.SpawnOnTarget(HardCavityOfEarth, Hazards, range: 1f, liveSeconds: 7,
+            attackHate: 10000000),
+        areaAtkHazard: Do.SpawnOnEachTarget(HardCavityOfEarth, Hazards, validDistance: 100f,
+            maxTargets: 3, MultiTargetOrder.Descending, liveSeconds: 25));
+
+    private static readonly AiPattern HardGraviwing = Incarnation(
+        areaAtkRearm: 30000, handBindRearm: 35000,
+        deathEffect: 283065,
+        powerAtkHazard: Do.SpawnOnAttacker(AggroTarget.RANDOM, HardGravityWhirlpool, Hazards,
+            range: 1f, liveSeconds: 4),
+        areaAtkHazard: Do.SpawnOnEachTarget(HardGravityWhirlpool, Hazards, validDistance: 100f,
+            maxTargets: 1, MultiTargetOrder.Descending, range: 6f, liveSeconds: 12));
+
+    private static readonly AiPattern HardPetriscale = Incarnation(
+        areaAtkRearm: 25000, handBindRearm: 30000,
+        deathEffect: 283064,
+        powerAtkHazard: Do.SpawnOnEachTarget(HardPetrificationCrystal, Hazards, validDistance: 50f,
+            maxTargets: 2, MultiTargetOrder.Descending, liveSeconds: 20),
+        areaAtkHazard: Do.SpawnOnEachTarget(HardPetrificationCrystal, Hazards, validDistance: 100f,
+            maxTargets: 3, MultiTargetOrder.Descending, range: 1f, liveSeconds: 20));
+
+    // Declared before Tables, and it has to be: static field initializers run in textual order, so a
+    // Tables entry referring to a field declared below it would be initialized to null.
     private static readonly Dictionary<int, AiPattern> Tables = new Dictionary<int, AiPattern>
     {
-        [Wrathclaw] = WrathclawPattern,
+        [Wrathclaw] = Wrathclaw_(SphereOfWrath, SphereOfPeace, deathEffect: 283066),
 
         // Fissurefang's hazard lands under the tank and engages it on arrival with ten million hate --
         // retail's way of saying this will not peel. The comment here used to say we left that to the
@@ -219,60 +281,39 @@ public class TiamatsIncarnationAI : PatternAi
                 maxTargets: 2, MultiTargetOrder.Descending, liveSeconds: 20),
             areaAtkHazard: Do.SpawnOnEachTarget(PetrificationCrystal, Hazards, validDistance: 100f,
                 maxTargets: 3, MultiTargetOrder.Descending, range: 1f, liveSeconds: 20)),
-    };
 
-    private static readonly AiPattern Untranslated = new AiPattern();
+        // The hard-mode four. Their IDTiamat_Hard_*_Key patterns are the normal patterns with one
+        // substitution -- every count, distance, lifetime, rearm and threshold is identical, and the
+        // hazards and spheres are a parallel set of npc ids. That is checkable rather than assumed: the
+        // two sets were compared field by field, including the multi-target counts and orders, which the
+        // pattern summary omits and the raw XML carries. Even the death effects are the same ids.
+        // Their npc_skills rows are shared with the normal four, so the skill indices resolve identically.
+        [WrathclawHard] = HardWrathclaw,
+        [WrathclawHard2] = HardWrathclaw,
+
+        [FissurefangHard] = HardFissurefang,
+        [FissurefangHard2] = HardFissurefang,
+
+        [GraviwingHard] = HardGraviwing,
+        [GraviwingHard2] = HardGraviwing,
+
+        [PetriscaleHard] = HardPetriscale,
+        [PetriscaleHard2] = HardPetriscale,
+    };
 
     public TiamatsIncarnationAI(Npc owner)
         : base(owner)
     {
     }
 
-    protected override AiPattern Pattern =>
-        Tables.TryGetValue(GetNpcId(), out AiPattern? table) ? table : Untranslated;
-
-    private bool IsTranslated => Tables.ContainsKey(GetNpcId());
-
-    protected override void HandleActivate()
-    {
-        base.HandleActivate();
-        if (!IsTranslated)
-            ScheduleSummons(20000);
-    }
-
-    /// <summary>The invented summon cycle, still driving the hard-mode twins.</summary>
-    private void ScheduleSummons(int delay)
-    {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            if (!IsDead() && GetTarget() != null)
-            {
-                List<Player> nearbyPlayers = GetNearbyPlayers();
-                if (nearbyPlayers.Count > 1)
-                {
-                    Player first = RemoveAt(nearbyPlayers, Rnd.NextInt(nearbyPlayers.Count));
-                    Player second = RemoveAt(nearbyPlayers, Rnd.NextInt(nearbyPlayers.Count));
-                    int summonId = Rnd.Get(GetSummonNpcIds().ToArray());
-                    Spawn(summonId, first.GetX(), first.GetY(), first.GetZ(), (sbyte)0);
-                    Spawn(summonId, second.GetX(), second.GetY(), second.GetZ(), (sbyte)0);
-                    ScheduleSummons(30000);
-                }
-            }
-            return ValueTask.CompletedTask;
-        }, delay);
-    }
-
-    private static Player RemoveAt(List<Player> list, int index)
-    {
-        Player p = list[index];
-        list.RemoveAt(index);
-        return p;
-    }
-
-    private List<Player> GetNearbyPlayers()
-    {
-        return GetKnownList().StreamPlayers().Where(player => !player.IsDead() && IsInRange(player, 30)).ToList();
-    }
+    /// <remarks>
+    /// <b>Every incarnation in the instance is now in this table</b>, so the fallback is gone along with
+    /// the invented summon cycle it selected: two hazards dropped on two random players within thirty
+    /// metres every thirty seconds, which is not a thing any of the four patterns does. It survived this
+    /// long because it only ran for the hard-mode set, and the hard-mode set had no translation to
+    /// replace it with.
+    /// </remarks>
+    protected override AiPattern Pattern => Tables[GetNpcId()];
 
     protected override void HandleDespawned()
     {
@@ -287,15 +328,18 @@ public class TiamatsIncarnationAI : PatternAi
         {
             case Graviwing:
                 return new List<int> { GravityWhirlpool, 282729 }; // Gravity Whirlpool, Thunderbolt Whirlpool
-            case 236279: // Graviwing HM
+            case GraviwingHard:
+            case GraviwingHard2:
                 return new List<int> { 856074, 856076 };
             case Petriscale:
                 return new List<int> { PetrificationCrystal }; // Petrification Crystal
-            case 236281: // Petriscale HM
+            case PetriscaleHard:
+            case PetriscaleHard2:
                 return new List<int> { 856072 };
             case Fissurefang:
                 return new List<int> { CavityOfEarth, 282737 }; // Cavity of Earth, Collapsing Earth
-            case 236278: // Fissurefang HM
+            case FissurefangHard:
+            case FissurefangHard2:
                 return new List<int> { 856068, 856070 };
             default:
                 return new List<int>();
