@@ -32,15 +32,31 @@ public class AhserionConstructDestroyerAI : AhserionAggressiveNpcAI
         }
     }
 
+    /// <summary>Retail's <c>range_as_meter</c> on the call.</summary>
+    private const float CallRange = 20f;
+
+    /// <summary>
+    /// Retail's <c>SPAWN_LOCATION_RELATIVE x=5 y=-5 z=5</c>, mirrored for the second pod.
+    /// </summary>
+    /// <remarks>
+    /// The z was <b>0.5</b> here. Five is what the command says, and on an air fortress the difference
+    /// is a pod that arrives beside its master rather than under his feet.
+    /// </remarks>
+    private const float PodUp = 5f;
+
     protected override void HandleCreatureAggro(Creature creature)
     {
         base.HandleCreatureAggro(creature);
-        if (isActivated.CompareAndSet(false, true))
-        {
-            WorldPosition p = GetPosition();
-            SpawnFor(297191, p.GetX() + 5, p.GetY() - 5, p.GetZ() + 0.5f, (sbyte)0, TrooperLife); // Ahserion Troopers Assassin
-            SpawnFor(297191, p.GetX() - 5, p.GetY() + 5, p.GetZ() + 0.5f, (sbyte)0, TrooperLife); // Ahserion Troopers Assassin
-        }
+        if (!isActivated.CompareAndSet(false, true))
+            return;
+
+        WorldPosition p = GetPosition();
+        SpawnFor(PodAssassin, p.GetX() + 5, p.GetY() - 5, p.GetZ() + PodUp, (sbyte)0, TrooperLife);
+        SpawnFor(PodAssassin, p.GetX() - 5, p.GetY() + 5, p.GetZ() + PodUp, (sbyte)0, TrooperLife);
+
+        // Retail's last action in the same branch: broadcast_message 23000 to twenty metres, naming
+        // its current target. The pods are meant to hear it -- that is what puts them on a player.
+        NpcMessageBus.Broadcast(GetOwner(), DestroyerCall, creature, CallRange);
     }
 
     public override void OnEndUseSkill(SkillTemplate skillTemplate, int skillLevel)
@@ -60,7 +76,7 @@ public class AhserionConstructDestroyerAI : AhserionAggressiveNpcAI
     {
         GetKnownList().ForEachNpc(npc =>
         {
-            if (npc.GetNpcId() == 297191)
+            if (npc.GetNpcId() == PodAssassin)
                 npc.GetController().DeleteIfAliveOrCancelRespawn();
         });
     }

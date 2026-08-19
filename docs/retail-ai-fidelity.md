@@ -26120,3 +26120,55 @@ timer flagged by the drift audit turned out not to be the despawn it looked like
 skill index. Plus the two `set_condition_spawn_variable` calls on the kill
 (`7011_rewardcon_l_set`, `7011_rewardcon_d_set`), which are part of the 12,446-use mechanism this port
 has no equivalent for, and which here are what retail uses to close out the fortress reward state.
+
+## Ahserion's pod assassins were deaf, so an ambush pair stood still
+
+From `audit_timer_drift.py`, following the two Ahserion classes. The flagged timers turned out to be
+spawn-schedule business again, but the pattern pair underneath had a real mechanic missing.
+
+The reserve assault leader (297185, `Gab1_Sub_Tank_Destroyer`) does four things in one
+`on_enter_attack_state` branch:
+
+```
+> add_battle_timer BTIMERI_INDEX_0 delay=6000
+> spawn BGab1_Sub_Pod_Sum_Vri_As_65_Ae ... SPAWN_LOCATION_RELATIVE x=5 y=-5 z=5 live_time=180
+> spawn BGab1_Sub_Pod_Sum_Vri_As_65_Ae ... SPAWN_LOCATION_RELATIVE x=-5 y=5 z=5 live_time=180
+> use_skill target=OBJI_CUR_TARGET skill=SKILLI_INDEX_2
+> broadcast_message message_type=23000 range_as_meter=20 param_obj=OBJI_CUR_TARGET
+```
+
+**The broadcast was missing, and it is the half that makes the pods an ambush.** The pods'
+own pattern (`Gab1_Sub_Pod_Sum_Vri_As`) answers 23000 with `add_hate_point` and `attack_most_hating` —
+or a `switch_target` worth 100 points if they are already fighting. Without the call, this port spawned
+two assassins beside their master and **they stood there** until a player happened to walk into them.
+Two adds that do nothing are not an ambush pod; they are scenery with a three-minute lifetime.
+
+**The pods also arrived under his feet.** Retail's relative spawn is `z=5`; this class used `0.5`. On an
+air fortress that is the difference between appearing level with the leader and appearing inside the
+platform he is standing on.
+
+**Scoped to the one npc, deliberately.** Several unrelated npcs share the `ahserion_aggressive_npc` AI
+name and their retail patterns say nothing about 23000. Message numbers are per encounter, so the
+listener checks the npc id as well as the number — and the leader itself broadcasts **23002** on its
+wounded rungs, which a pod keyed on "any message addressed to me" would have taken as an order too.
+
+**Pins** — four in `AhserionPodAssassinTests`, seven mutations, four caught.
+
+**Three survive, and the reason is a harness limitation worth naming.**
+`AhserionConstructDestroyerAI.HandleSpawned` casts its spawn template to `AhserionsFlightSpawnTemplate`,
+which the harness does not build, so a leader placed in it never runs the branch at all — driving him
+produces nothing to observe. Deleting his `broadcast_message`, widening the twenty-metre range, and
+reverting the `z=5` all pass. **The message contract is pinned from the listening end; the calling end
+is held only by review.** That is written into the test file as well as here.
+
+**A pin that passed on an empty set, caught before it was committed.** The first attempt at pinning the
+leader's end asserted the pods' z with `Assert.All` over the spawned pods — and since none spawn in the
+harness, `Assert.All` over an empty sequence **passes**. It only surfaced because the sibling pin in the
+same file asserted a count of two and failed. That is the same family as the `DrainQueuedSkills` pair and
+the Popuchin pair: an assertion whose subject never exists is not an assertion.
+
+**Still missing.** The leader's fight is five battle timers of skill indices with a 35% health gate and
+`use_skill_by_attacker_indicator` pairs; the pods' own rotation is a three-step 5000ms cycle, all
+indices. Neither is reachable. The `broadcast_message 23002` the leader sends on its wounded rungs has
+no listener implemented either — nothing in the pods' pattern answers it, so it may be addressed to
+something outside this pair, which has not been traced.
