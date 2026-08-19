@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<npc_walker xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<!-- Infinity Shard (300800000). The two lanes Hyperion's attackers march in on, taken from
+	     Map/Worlds/idruneweapon: NPCPathVriAss_Path01 and _Path02. Retail hangs them on the spawn
+	     actions of the eight BIDRuneWP_Main_CallVritra* controllers. The plain callers use lane 1
+	     and the B callers lane 2, and each trooper npc id belongs to exactly one lane. -->
+	<!-- NPCPathVriAss_Path01 -->
+	<walker_template route_id="3008000001">
+		<routestep x="147.133392" y="150.251083" z="125.333321"/>
+		<routestep x="144.378113" y="154.505814" z="124.134483"/>
+		<routestep x="139.747101" y="157.783600" z="122.817276"/>
+		<routestep x="133.408051" y="159.234222" z="121.326370"/>
+		<routestep x="127.196213" y="159.135818" z="119.250084"/>
+		<routestep x="120.390663" y="156.803741" z="117.208961"/>
+		<routestep x="113.854240" y="152.123154" z="115.366119"/>
+		<routestep x="110.227379" y="144.989899" z="114.336182"/>
+		<routestep x="109.669418" y="140.789246" z="114.226051"/>
+		<routestep x="118.762329" y="138.649780" z="113.840767"/>
+	</walker_template>
+	<!-- NPCPathVriAss_Path02 -->
+	<walker_template route_id="3008000002">
+		<routestep x="112.600487" y="123.788651" z="125.330917"/>
+		<routestep x="116.037354" y="119.829384" z="124.358231"/>
+		<routestep x="121.873062" y="117.002953" z="122.896042"/>
+		<routestep x="129.304047" y="116.092155" z="120.917702"/>
+		<routestep x="135.624115" y="117.646156" z="119.264755"/>
+		<routestep x="142.271576" y="120.605064" z="117.080513"/>
+		<routestep x="146.215729" y="124.554642" z="115.471748"/>
+		<routestep x="149.033951" y="129.317307" z="114.318077"/>
+		<routestep x="149.801376" y="134.716858" z="113.358841"/>
+		<routestep x="138.378708" y="136.998444" z="113.685875"/>
+	</walker_template>
+</npc_walker>

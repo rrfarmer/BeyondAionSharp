@@ -79,6 +79,7 @@ def main():
     print(f"baseline: {len(mutations)} mutations to try, pins green\n")
 
     survivors = 0
+    broken = 0
     for mutation in mutations:
         path = pathlib.Path(mutation["file"])
         original = path.read_text(encoding="utf-8")
@@ -95,6 +96,7 @@ def main():
 
         if not compiled:
             verdict = "DID NOT COMPILE"
+            broken += 1
         elif failing:
             verdict = "caught by: " + ", ".join(failing[:3])
         else:
@@ -102,7 +104,13 @@ def main():
             survivors += 1
         print(f"{mutation['name']:44s} {verdict}")
 
-    print(f"\n{len(mutations) - survivors}/{len(mutations)} caught")
+    # A mutation that will not build proves nothing either way, so it is counted apart from the caught
+    # ones rather than folded in with them. This tool reported "5/5 caught" for a run in which one
+    # mutation never compiled -- which is exactly how a mutation run flatters itself.
+    caught = len(mutations) - survivors - broken
+    print()
+    print(f"{caught}/{len(mutations) - broken} caught"
+          + (f"   ({broken} did not compile, and prove nothing)" if broken else ""))
     return 0
 
 

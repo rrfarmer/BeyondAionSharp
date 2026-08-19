@@ -28364,3 +28364,65 @@ second time.
   class does not model — and the `use_skill` beside each rung, still skill-index blocked.
 - **The four remaining unnamed ids** on his audit row: 281328, 281329, 281330 and 281335.
 - The `walker_id`-in-spawn-data binding remains unpinnable until the harness reads spawn files.
+
+## Hyperion's attackers march in, and a data file that would not have loaded
+
+`hyperion_defence` was the largest of the eleven classes left by the waypoint audit: 16 npcs, patterns
+that act at a waypoint, and no `walker_id` anywhere. Its own class comment said what was missing without
+knowing it: *"Not translated: everything else these twelve patterns do, which is a great deal of casting
+and a good deal of walking."*
+
+**The walking was one line of data per spawn action.** Every spawn on the eight
+`BIDRuneWP_Main_CallVritra*` controllers carries a `pathname` beside its coordinates:
+
+```xml
+<spawn_location_type>SPAWN_LOCATION_ABSOLUTE</spawn_location_type>
+<x>150.03</x> <y>145.5</y> <z>125.2</z>
+<pathname>NPCPathVriAss_Path01</pathname>
+```
+
+The trooper appears at its caller's feet **and then marches**. `VritraCallers.cs` — generated from these
+very patterns — captured the coordinates and dropped the pathname, so the wave was materialising at the
+objective instead of walking to it.
+
+**Two lanes, and the split is the caller's.** The plain callers use `NPCPathVriAss_Path01`, the `B`
+callers `NPCPathVriAss_Path02`; ten points each, converging on the objective from opposite sides. Neither
+was in our data. Both are now `300800000_Infinity_Shard.xml`.
+
+> **No trooper npc id appears under both lanes** — checked, 0 of 20 — which is what lets the trooper find
+> its own route from its own id rather than the caller having to hand one over. That is the difference
+> between a table change plus a DSL change, and twenty lines in one class.
+
+**At the end of the lane, `attack_most_hating`.** That needed a new action, and the half of it that
+matters even against an empty hate list is **stopping**: neither lane carries a `loop_type`, so both
+default to `NORMAL` and wrap, and without the rung the trooper walks back to the start and marches the
+lane again for ever. `Do.AttackMostHating()` stops the walk, then engages the top of the hate list if
+there is one. **98 branches in the 5.8 dump pair that action with `is_last_waypoint`**, so it will be
+wanted again.
+
+**Pins** — five, five mutations, all caught.
+
+### The data file would not have loaded
+
+The first run of the new pins failed with `An XML comment cannot contain '--'`. The comment I had written
+into the walker file used `--` as a dash. **That is not a test problem: the loader deserialises that file
+at server start**, and it would have thrown there in exactly the same way. A sweep of every XML file under
+`static_data` found no others, including the Steel Rake comment added the commit before.
+
+### And the mutation runner was flattering itself
+
+The same run reported **`5/5 caught` for a set in which one mutation never compiled** — the mutation used
+a `When.Never` that does not exist. A mutation that will not build proves nothing in either direction, and
+counting it as caught is the same failure the runner was written to prevent, one level up. It now reports
+compiled and non-compiled separately, and the docstring says so.
+
+**Still missing.**
+
+- **Nine more classes** from the waypoint list, none checked: `captured_drakan_scientist`,
+  `brigade_general_vasharti`, `padmarashka_world_boss`, `sematariux`, `poppyontherun`, the two Eternal
+  Bastion classes, `summoner` and `useitem`.
+- **The rest of these twelve patterns**, which is still a great deal of casting.
+- **`VritraCallers.cs` still drops the pathname.** The lane is duplicated in `HyperionDefenceAI` as a
+  hand-written map because the generated table has nowhere to put it. That is a small emitter change and
+  it should be made before the next person edits one of the two and not the other.
+- The two invisible controllers that answer `21101` and which our data never spawns, unchanged.

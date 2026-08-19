@@ -1067,6 +1067,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             WalkManager.StartWalking(this);
     }
 
+    /// <summary>
+    /// Retail's <c>attack_most_hating</c> with <c>SKILLI_NONE</c>: stop whatever you are doing and fight
+    /// the top of your hate list.
+    /// </summary>
+    /// <remarks>
+    /// The half that matters even with an empty hate list is <b>stopping</b>. A patrol rung that ends a
+    /// march has to take the NPC out of WALKING, or the walker loops it back to the first point and the
+    /// march never ends -- routes default to <c>LoopType.NORMAL</c> and most carry no <c>loop_type</c> at
+    /// all.
+    /// </remarks>
+    public void AttackMostHating()
+    {
+        WalkManager.StopWalking(this);
+        if (GetOwner().GetAggroList().GetTarget(AggroTarget.MOST_HATED) is not Creature mostHated)
+            return;
+        SetStateIfNot(AIState.FIGHT);
+        GetOwner().SetTarget(mostHated);
+        OnCreatureEvent(AiEventType.Attack, mostHated);
+    }
+
     public void DespawnSelf() => AIActions.DeleteOwner(this);
 
     /// <summary>Spawns one NPC per listed coordinate.</summary>

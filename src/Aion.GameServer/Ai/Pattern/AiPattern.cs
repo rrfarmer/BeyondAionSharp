@@ -586,6 +586,13 @@ public static class Do
     /// </remarks>
     public static PatternAction StartWalking() => ai => ai.StartWalking();
 
+    /// <summary><c>attack_most_hating</c> — end the march and engage.</summary>
+    /// <remarks>
+    /// <b>98 branches in the 5.8 dump pair this with <c>is_last_waypoint</c></b>, which is a wave that
+    /// walks in and then fights. Without it the walker loops the NPC back to its first point forever.
+    /// </remarks>
+    public static PatternAction AttackMostHating() => ai => ai.AttackMostHating();
+
     public static PatternAction Despawn(int spawnId) => ai => ai.DespawnGroup(spawnId);
 
     /// <summary><c>set_idle_timer</c> — arm the single idle slot, replacing whatever was in it.</summary>
