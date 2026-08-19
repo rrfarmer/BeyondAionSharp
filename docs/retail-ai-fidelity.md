@@ -28815,3 +28815,50 @@ checked an entry against the code**, and two of its entries have now been checke
   `MOVETYPE_RUN` the pattern DSL has no action for.
 - **The 226 remaining rows of `audit_summon_ids.py`**, which is a reading list and has never been claimed
   to be anything else.
+
+## A third "still missing" checked — this one was right
+
+After two stale entries in a row, the next one checked was Tiamat's hard mode, whose class says the
+nineteen-drakan rush is left out because every spawn carries `pathname=path_tiamatdrakan_*`, "a
+server-side walk route we do not have". **That note is correct.** All twelve of those routes —
+`path_tiamatdrakan_1_1` through `4_3` — are absent from the client's waypoint files, checked against the
+7,418-route index that did not exist when the note was written.
+
+So the score on re-checked entries is two stale, one sound. The list is not rotten; it is simply not
+self-maintaining, and the only way to know which kind an entry is has been to open it.
+
+**The rush itself is worth writing down properly**, since it is the largest single unimplemented wave
+found so far: nineteen npcs across eight types (236713-236720, the protectorate elites), at four corner
+points — (464, 463), (461, 570), (543, 463), (542, 564), all at z 417.4, five at each of the first three
+and four at the last — fired once per world by `set_world_flag_var` on an idle timer, all with
+`live_time=0`.
+
+### Making that check a query
+
+`audit_summon_ids.py` now separates its missing ids by whether they could be placed at all:
+
+```
+228 disagree -- read them, do not trust them
+of 299 unnamed ids, 14 need a route the client does not define
+```
+
+A spawn action carrying a `pathname` is not a placement, it is the start of a walk. Spawning that npc
+without its route leaves it standing where retail has it charging — differently wrong rather than partly
+right. **"Nobody wrote it" and "it cannot be written from this data" are different queues**, and mixing
+them makes the larger one look like work it is not.
+
+**The number is smaller than it first looked, and that is worth saying.** 295 spawned npcs across the
+whole pattern set carry a pathname and 87 of those name only absent routes — but only **14** of them turn
+up as unnamed ids on the focused rows. The first figure is the one that sounds impressive; the second is
+the one that means anything, and the difference is that most route-carrying spawns belong to classes the
+audit already skips as infrastructure.
+
+**Still missing.**
+
+- **283184**, the one genuinely open id on Tiamat's hard row now that the six elites are correctly filed
+  as route-blocked. It is an unnamed npc (` `) on plain `aggressive`.
+- **285 unnamed ids that are not route-blocked**, across 227 rows. That is the reading list, unchanged in
+  size and now honest about which part of it is unreachable.
+- **The twelve `path_tiamatdrakan_*` routes**, and the other absent routes behind the 14. These are the
+  same shape as Padmarashka's: the npc-to-route binding lives in server-side spawn data this dump does
+  not contain.

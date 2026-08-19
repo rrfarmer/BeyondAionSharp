@@ -22,6 +22,17 @@ source, and compares them against the ids the retail pattern for that class's np
 - **missing**: retail spawns an npc id that never appears in the class.
 - **extra**: the class names an npc id retail's spawn actions never mention.
 
+**Missing ids are split by whether they could be placed at all.** A spawn action that carries a
+`pathname` is not a placement, it is the start of a walk; if the client does not define that route,
+spawning the npc leaves it standing where retail has it charging. Those are reported separately, because
+"nobody wrote it" and "it cannot be written from this data" are different queues and mixing them makes
+the larger one look like work.
+
+Tiamat's hard mode is the case that made this worth reporting: six of its seven unnamed ids are the
+nineteen-drakan rush, and **all twelve of its `path_tiamatdrakan_*` routes are absent from the client**.
+That was already written by hand in `TiamatDragonHardAI`'s comments; this makes the same check a query
+for the other 227 rows.
+
 WHAT IT IS NOT
 --------------
 Not a defect list. Three reasons a clean class shows up here:
@@ -48,6 +59,8 @@ from audit_missing_adds import read_text  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 NAMEID = re.compile(r"<npc_nameid>([^<]+)</npc_nameid>")
+SPAWN_BLOCK = re.compile(r"<spawn>(.*?)</spawn>", re.S)
+SPAWN_PATH = re.compile(r"<pathname>([^<]*)</pathname>")
 PATTERN = re.compile(r"<name>([^<]+)</name>(.*?)(?=<name>|\Z)", re.S)
 AINAME = re.compile(r'\[AIName\("([^"]+)"\)\]')
 LITERAL = re.compile(r"\b(\d{6})\b")
@@ -74,6 +87,25 @@ def pattern_spawns(xml_dir):
     return out
 
 
+def spawns_needing_a_route(xml_dir):
+    """devname -> the pathnames its spawn actions hang on it.
+
+    A spawn that carries a `pathname` is not a placement, it is the start of a walk. If the client does
+    not define that route, spawning the npc anyway leaves it standing where retail has it charging, and
+    the encounter is differently wrong rather than partly right. Tiamat's nineteen-drakan rush is the
+    case that made this worth reporting: all twelve of its `path_tiamatdrakan_*` routes are absent.
+    """
+    out = collections.defaultdict(set)
+    for f in sorted(pathlib.Path(xml_dir).glob("NpcAIPatterns*.xml")):
+        for block in SPAWN_BLOCK.finditer(read_text(f)):
+            body = block.group(1)
+            name = NAMEID.search(body)
+            path = SPAWN_PATH.search(body)
+            if name and path and path.group(1):
+                out[name.group(1)].add(path.group(1))
+    return out
+
+
 def npc_pattern_and_ai():
     """npc_id -> pattern name, and npc_id -> our ai name."""
     tsv = REPO / "tools" / "client-extract" / "out" / "ai_binding.tsv"
@@ -93,12 +125,21 @@ def main():
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
     ap.add_argument("--class", dest="only", help="report one AI name in full")
     ap.add_argument("--limit", type=int, default=25)
+    ap.add_argument("--worlds", default="D:/Aion58ServerTesting/Server/Map/Worlds")
     ap.add_argument("--max-patterns", type=int, default=3,
                     help="skip AI classes serving more patterns than this (infrastructure)")
     args = ap.parse_args()
 
     dev2npc = devname_to_npc()
     spawns = pattern_spawns(args.xml)
+
+    # Which of the missing ids could not be placed correctly even if someone wrote the code: their spawn
+    # actions carry a pathname the client does not define, so they would stand where retail has them walk.
+    from extract_client_waypoints import client_routes
+    needs_route = spawns_needing_a_route(args.xml)
+    have_routes = set(client_routes(args.worlds))
+    route_blocked = {dev2npc[d] for d, paths in needs_route.items()
+                     if d in dev2npc and not (paths & have_routes)}
     npc2pat, npc2ai = npc_pattern_and_ai()
 
     sources = {}
@@ -142,14 +183,24 @@ def main():
     print(f"{len(wanted)} named AI classes have a retail pattern that spawns something resolvable")
     print(f"{shared} serve more than {args.max_patterns} patterns and are skipped as infrastructure")
     print(f"{focused - len(rows)} of the remaining {focused} name every npc their pattern spawns")
-    print(f"{len(rows)} disagree -- read them, do not trust them (see the docstring)\n")
+    print(f"{len(rows)} disagree -- read them, do not trust them (see the docstring)")
+    all_missing = [x for r in rows for x in r[3]]
+    walk_blocked = [x for x in all_missing if x in route_blocked]
+    print(f"of {len(all_missing)} unnamed ids, {len(walk_blocked)} need a route "
+          f"the client does not define")
+    print()
 
     for count, ai, filename, missing, extra in sorted(rows, key=lambda r: -r[0])[:args.limit]:
         if args.only and ai != args.only:
             continue
         print(f"{filename}  [{ai}]  ({len(patterns_per_ai[ai])} pattern(s))")
         if missing:
-            print(f"    retail spawns, class never names : {' '.join(missing)}")
+            walk = [i for i in missing if i in route_blocked]
+            free = [i for i in missing if i not in route_blocked]
+            if free:
+                print(f"    retail spawns, class never names : {' '.join(free)}")
+            if walk:
+                print(f"    ...and these need a route the client does not define: {' '.join(walk)}")
         if extra:
             print(f"    class names, retail never spawns : {' '.join(extra[:12])}")
     return 0
