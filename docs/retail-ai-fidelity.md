@@ -27702,3 +27702,60 @@ describes more than it can see is worse than no pin**, because the next person t
 `DaliaCharlandsAI`, `EmpyreanLordAI`, `IsbariyaTheResoluteAI` — all mix regimes with timer-driven
 rotations, so none can be corrected by editing thresholds the way this one could, and each needs its
 pattern read whole. This was the tractable one, and it was tractable precisely because it had no timers.
+
+## Skill devnames resolve, and they were in a file nothing had ever matched in
+
+The obelisk was the first class in this port to hang behaviour on `on_spelled`, so the obvious next
+question was how much else does. The answer turned into something larger than the question.
+
+**1,170 patterns have an `on_spelled` handler, across 6,692 npcs.** Most are not interesting: **334
+mirror `on_attacked` exactly**, which is the obelisk's case and matters only for a spell that deals no
+damage. **836 differ, and 147 have no `on_attacked` at all** — behaviour that exists only for being
+spelled.
+
+**What those 147 contain is one condition, 154 times: `is_event_skill_id`.** "The skill that just hit me
+is this one." Hung off it are `despawn_self` (58), `use_skill` (98), `say_to_all` (33), `spawn_id` (25)
+and `broadcast_message` (24) — npcs that die to one specific player skill, or answer it, or shout about
+it. Across the whole pattern set there are **259 uses in 185 patterns, covering 379 npcs**.
+
+And the condition names its skill the way nothing else in this codebase does:
+
+```xml
+<is_event_skill_id><skill_id>Q_IDLF1_BrownieBomb</skill_id></is_event_skill_id>
+```
+
+**Not an id, not a `SKILLI_INDEX_N`, a devname.** Which looked like the same dead end as the skill-index
+blocker, until `Map/XML/skill_base.xml`:
+
+```xml
+<skill_base><id>18130</id><name>Q_IDLF1_BrownieBomb</name>
+```
+
+> **All 259 uses resolve. 100%. 237 of the ids already exist in our own `skill_templates.xml`.**
+> The table itself is **14,457 devnames, 90% of which name a skill this port ships.**
+
+`tools/client-extract/extract_client_skills.py` builds it and reports both numbers.
+
+**It had never been found because grep cannot read these files.** `skill_base.xml` is 38 million
+characters of UTF-16; `grep` on it returns nothing at all rather than failing, and an empty result reads
+as an answer. That is the third time this exact trap has produced a confident wrong conclusion in this
+work, and the second time it hid a file that had what was wanted in it all along.
+
+**What this does not do is make the condition expressible.** `CreatureController` raises
+`AiEventType.Spelled` with the attacker and nothing else — the AI learns that it was spelled, never with
+what. So the resolution is real and the mechanic is still unavailable.
+
+**Still missing, and now precisely specified.**
+
+- **The engine piece**: thread the skill id through the `Spelled` event. The effect is already in hand at
+  the raise site — it is what distinguishes a spell from a swing there — so this is a signature change and
+  its callers, not a design problem. Everything above is blocked on exactly that and nothing else.
+- **28 of the 379 npcs run a named AI class** — `fortressgate` (4), `orissans_summon` (4),
+  `guard_captain_ahuradim_generator` (3), `twin_protector` (2), `brigadegenerallaksyaka`, `orissan`,
+  the four `drakenspire_*_beritra` classes, `suramathetraitor`, `yume` and the rest. Those are where a
+  missing reaction is most likely to be visible, and they are the right place to start once the event
+  carries a skill id.
+- **`on_see_spell`** appears alongside `on_spelled` and has no counterpart here at all — an npc reacting
+  to a spell cast *near* it rather than *at* it. Not sized yet.
+- And the devname table may reach further than this one condition: 90% coverage of 14,457 names is a
+  general-purpose join, and only `is_event_skill_id` has been checked against it.
