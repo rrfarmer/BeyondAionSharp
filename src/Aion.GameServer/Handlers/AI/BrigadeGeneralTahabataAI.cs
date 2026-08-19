@@ -13,7 +13,12 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("brigadegeneraltahabata")]
 public class BrigadeGeneralTahabataAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(96, 75, 60, 55, 40, 25, 20, 10, 7);
+    /// <summary>
+    /// Retail's three lava rungs are at <b>95, 60 and 20</b>; this class had 96 and 55 for the first
+    /// two. The other rungs are this port's own and are left alone -- retail's pattern has nothing at
+    /// 75, 40, 25 or 7, and they carry casts rather than floors.
+    /// </summary>
+    private readonly HpPhases hpPhases = new HpPhases(95, 75, 60, 40, 25, 20, 10, 7);
     private readonly AtomicBoolean isHome = new AtomicBoolean(true);
     private ScheduledTask? piercingStrikeTask;
     private ScheduledTask? fireStormTask;
@@ -106,8 +111,8 @@ public class BrigadeGeneralTahabataAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 96:
-                LavaEruptionEvent(283116); // 4.0
+            case 95:
+                LavaEruptionEvent(283116);
                 StartPiercingStrikeTask();
                 break;
             case 75:
@@ -116,9 +121,7 @@ public class BrigadeGeneralTahabataAI : AggressiveNpcAI, HpPhases.PhaseHandler
                 break;
             case 60:
                 AIActions.UseSkill(this, 20761);
-                break;
-            case 55:
-                LavaEruptionEvent(283118); // 4.0
+                LavaEruptionEvent(283118);
                 break;
             case 40:
             case 25:
@@ -127,7 +130,7 @@ public class BrigadeGeneralTahabataAI : AggressiveNpcAI, HpPhases.PhaseHandler
             case 20:
                 CancelFireStorm();
                 CancelPiercingStrike();
-                LavaEruptionEvent(283120); // 4.0
+                LavaEruptionEvent(283120);
                 break;
             case 10:
                 AIActions.UseSkill(this, 20942);
@@ -150,14 +153,33 @@ public class BrigadeGeneralTahabataAI : AggressiveNpcAI, HpPhases.PhaseHandler
         Spawnfloor(floorId);
     }
 
+    /// <summary>Every floor npc, so a new rung can clear the one before it.</summary>
+    private static readonly int[] Floors = [283116, 283118, 283120];
+
+    /// <summary>The point all three floors stand on.</summary>
+    private const float FloorX = 679.88f;
+    private const float FloorY = 1068.88f;
+    private const float FloorZ = 497.88f;
+
+    /// <summary>
+    /// Lays a floor, and takes up the one before it.
+    /// </summary>
+    /// <remarks>
+    /// Retail's rung opens with <c>despawn SPAWN_ID_2</c> — the previous floor — and then places the new
+    /// one inline. This class waited ten seconds before placing anything and never removed the old
+    /// floor, so the three of them accumulated across the fight.
+    /// <para>
+    /// It also placed the damage npc itself, once. That belongs to the floor and repeats every second;
+    /// see <see cref="TahabataLavaFloorAI"/>.
+    /// </para>
+    /// </remarks>
     private void Spawnfloor(int floor)
     {
-        ThreadPoolManager.GetInstance().Schedule(_ =>
-        {
-            Spawn(floor, 679.88f, 1068.88f, 497.88f, (sbyte)0);
-            Spawn(floor + 1, 679.88f, 1068.88f, 497.88f, (sbyte)0);
-            return ValueTask.CompletedTask;
-        }, 10000L);
+        foreach (int old in Floors)
+            foreach (Npc npc in GetPosition().GetWorldMapInstance().GetNpcs(old))
+                npc?.GetController().Delete();
+
+        Spawn(floor, FloorX, FloorY, FloorZ, (sbyte)0);
     }
 
     private void RndSpawn(int npcId, int count)

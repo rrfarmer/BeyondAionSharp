@@ -45,6 +45,34 @@ TIMESPAN = re.compile(r"TimeSpan\.From(Seconds|Milliseconds|Minutes)\(\s*([\d_]+
 MILLIS = re.compile(r"\b(\d[\d_]{2,})L?\b")
 
 
+#: Actions a timer rung can carry that this port can reproduce without knowing the skill index.
+ACTIONABLE = ("<spawn>", "<spawn_on_target>", "<spawn_on_multi_target>", "<despawn", "<broadcast_message>",
+              "<teleport_target>", "<set_condition_spawn_variable>")
+
+
+def pattern_actionable(patterns_dir: pathlib.Path) -> set[str]:
+    """
+    Patterns whose timer rungs do something other than cast.
+
+    **This is the ceiling on what a timing correction can achieve.** A rung that only carries
+    `use_skill SKILLI_INDEX_n` cannot be told from its neighbours without the skill index, and the index
+    is unresolved -- so knowing the delay is wrong does not say which of this port's casts owns it.
+    Kinquid and Galamat are both like that: every rung is a cast, and their real cadences stay unknown.
+    """
+    out: set[str] = set()
+    for path in patterns_dir.rglob("*.xml"):
+        try:
+            text = S.read_text(path)
+        except Exception:
+            continue
+        for m in re.finditer(r"<name>([^<]+)</name>(.*?)(?=<name>|\Z)", text, re.S):
+            body = m.group(2)
+            timers = re.search(r"<on_battle_timer>(.*?)</on_battle_timer>", body, re.S)
+            if timers and any(tag in timers.group(1) for tag in ACTIONABLE):
+                out.add(m.group(1).strip().lower())
+    return out
+
+
 def pattern_delays(patterns_dir: pathlib.Path) -> dict[str, set[int]]:
     """Every timer delay and live_time each pattern uses, in milliseconds."""
     out: dict[str, set[int]] = {}
@@ -100,6 +128,7 @@ def main() -> int:
     static = repo / "game-server" / "data" / "static_data"
 
     delays_of = pattern_delays(pathlib.Path(args.patterns))
+    actionable = pattern_actionable(pathlib.Path(args.patterns))
 
     # Numbers that appear on scheduling lines and are not delays.
     not_delays: set[int] = set()
@@ -143,13 +172,18 @@ def main() -> int:
         if not theirs:
             continue  # no pattern to compare against; audit_missing_patterns covers that
 
+        can_act = any(pattern_of.get(n, "") in actionable for n in npcs_of_ai.get(name.group(1).lower(), []))
         unmatched = sorted(d for d in mine if d not in theirs)
-        rows.append((len(unmatched), len(mine), path.stem, unmatched, sorted(theirs)))
+        rows.append((len(unmatched), len(mine), path.stem, unmatched, sorted(theirs), can_act))
 
     rows.sort(key=lambda r: (-r[0], r[2]))
     print(f"{len(rows)} classes schedule something and have a retail pattern to compare against.\n")
-    for unmatched_n, mine_n, stem, unmatched, theirs in rows[: args.limit]:
-        print(f"{stem}: {unmatched_n} of {mine_n} port delays are not in retail's pattern")
+    print(f"{sum(1 for r in rows if r[5])} of them have a timer rung that does something other than "
+          f"cast, which is the set a timing fix can act on.")
+    print()
+    for unmatched_n, mine_n, stem, unmatched, theirs, can_act in rows[: args.limit]:
+        mark = "" if can_act else "   [casts only -- needs the skill index]"
+        print(f"{stem}: {unmatched_n} of {mine_n} port delays are not in retail's pattern{mark}")
         print(f"    port only: {unmatched}")
         print(f"    retail has: {theirs[:14]}{' ...' if len(theirs) > 14 else ''}")
 

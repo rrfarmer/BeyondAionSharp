@@ -25135,3 +25135,56 @@ not an even roll — the fallback point is reached more often than the other thr
 roll here because the four rungs differ only in which point they choose, and nothing in the pattern
 distinguishes them otherwise. His `on_die` (a condition variable, two doors) and the two casts on the
 bomb rung are also untranslated, the latter needing skill indices.
+
+## What the timer audit cannot fix, measured
+
+Working down `audit_timer_drift.py` hit a wall twice in a row. **Kinquid** and **Galamat** both drift —
+35000/25000 against a pattern with none of them, 25000 against 2000/3000/4000/6000 — and neither can be
+corrected. Every rung in their patterns carries **only** `use_skill SKILLI_INDEX_n`, and the index is
+unresolved, so knowing a delay is wrong does not say which of this port's casts owns it.
+
+That is worth measuring rather than rediscovering per class, so the audit now marks it. Of the 73
+classes it compares, **53 have a timer rung that does something other than cast** — a spawn, a despawn,
+a broadcast, a condition variable — and those are the ones a timing correction can act on. The other
+twenty are blocked behind the skill index, and the report says so on the line.
+
+## Tahabata's lava floor burned once instead of for the whole phase
+
+Retail pattern `IDTiamat_Tahabata` (219358) with `_Area1_FX` (283116) through `_Area3_FX` (283120) and
+their `_Dmg` twins.
+
+```
+95 / 60 / 20 rungs   despawn the previous floor, spawn AreaN_FX at (679.88, 1068.88, 497.88), cast
+AreaN_FX on waking   set_idle_timer 2000
+AreaN_FX on idle     spawn AreaN_Dmg at my point, live 3, set_idle_timer 1000   <- re-arms
+```
+
+The floor is a **pulser**, like Calindi's fire crown and Chantra's ring: it ticks every second for as
+long as it stands, and it carries no `live_time` of its own — the next health rung takes it up.
+
+**This port spawned the floor and one damage npc together, once, ten seconds after the rung fired.** A
+floor that ticks once is not the mechanic; that phase is meant to be a place you cannot stand. The
+pulse now belongs to the floor, in `TahabataLavaFloorAI`.
+
+**Two rung thresholds were off**: retail's are 95, 60 and 20, and this class had **96** and **55**. And
+**nothing removed the old floor** — retail's rung opens with `despawn SPAWN_ID_2`, so the three
+accumulated here and the room kept every phase's damage at once.
+
+**Confirmed rather than changed.** The `_Dmg` twin really is the next id up from its `_FX`, for all
+three pairs, so the port's `floor + 1` arithmetic was right.
+
+**Pins** — `TahabataLavaFloorAiTests`, nine, seven mutations, all caught.
+
+**Two of them only after the sweep**, and both were gaps of the same kind: a pin that watches *arrivals*
+cannot see a missing lifetime, and pins that only exercise the floor npc say nothing about the boss
+rung that lays it. Deleting the damage lifetime and reverting the whole HP ladder both survived until
+pins were added that count what is standing and that drive the boss's health across the threshold.
+
+**A rounding trap worth recording.** The threshold pin first read at ninety-six per cent and found the
+floor already down: `GetHpPercentage` computes current over max and rounds, so ninety-six can read as
+ninety-five and fire the rung. It reads at ninety-eight now — still below the old ninety-six threshold,
+which is what it has to separate.
+
+**Not translated.** The casts on every rung, as ever. Retail's `on_message 1` rung — a cast plus a
+`SumStatue_PhyAtk` on the sender for 180 seconds — has no sender in this port, and his `on_die` places
+a gossip npc and a treasure box that nothing here places.
