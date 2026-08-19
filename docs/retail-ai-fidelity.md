@@ -27759,3 +27759,65 @@ what. So the resolution is real and the mechanic is still unavailable.
   to a spell cast *near* it rather than *at* it. Not sized yet.
 - And the devname table may reach further than this one condition: 90% coverage of 14,457 names is a
   general-purpose join, and only `is_event_skill_id` has been checked against it.
+
+## The Spelled event learns which skill, and Laksyaka gets his taunt
+
+Last commit ended: "threading the skill id through that event is the one thing blocking all 379 npcs, and
+the effect is already in hand at the raise site". That is now done, and the first rung built on it found a
+second defect underneath.
+
+**The event.** `AI` gains `OnSpelled(Creature caster, int skillId)`. It is a separate entry point rather
+than another `AiEventType` because `OnCreatureEvent` can only carry *what happened* and *to whom* — there
+is nowhere to put a third thing. `AbstractAI` implements it by parking the id in a `[ThreadStatic]` field
+and dispatching through `OnCreatureEvent` as before, so the state gate, the recursion-depth guard and the
+logging all still run, and **every existing `HandleSpelled` override needed no change**. The field is
+saved and restored around the dispatch, so a handler that spells something back cannot corrupt the value
+its own caller is still reading. `HandleSpelled` asks for it with `GetSpelledSkillId()`.
+
+**The first consumer is Brigade General Laksyaka**, whose pattern `IDTiamat_Rakshaka` carries:
+
+```
+on_spelled [p 99 DIRECT]
+  ? is_event_skill_id  IDTiamat_Rakshaka_Polymorph_Provoke   (-> 20866)
+  > switch_target target=OBJI_CASTER percent_to_add=100 points_to_add=2147483647
+  > attack_most_hating skill=SKILLI_NONE
+```
+
+**That is a taunt the fight hands the raid, and this port did not have it at all.** Priority 99 and
+DIRECT, so it interrupts whatever he is doing. `SummonOrder.Take` already means exactly
+`switch_target` + `attack_most_hating`, so the rung is four lines.
+
+**And `points_to_add=2147483647` does not do what it says.**
+
+> `AggroInfo.AddHate` was `_hate += hate` on a signed int, followed by `if (_hate < 1) _hate = 1`.
+> Add `int.MaxValue` to a caster who already has *any* hate and it wraps negative — and the clamp then
+> pins it to **1**. The strongest taunt in the game would have put its caster at the very bottom of the
+> hate list.
+
+Java has the same arithmetic and never exercises it, because aionemu does not implement this mechanic.
+The addition is widened to `long` and saturates; every ordinary value behaves exactly as before, and only
+the overflow case changes. This is precisely the "numbers/overflow — verify semantics whenever the value
+goes into a calculation" item in CLAUDE.md, and it was invisible until a retail number went through it.
+
+**Pins** — three, four mutations, all caught, and the full solution is green at 2,737.
+
+**One of them only started working after being fixed.** The "wrong provoke skill id" mutation survived
+first time, because both the class and the test read `BrigadeGeneralLaksyakaAI.ProvokeSkillId` — a pin
+computing its expectation from the thing it pins, which passes whatever that constant becomes. **This is
+the third time that exact mistake has been made in this suite.** The test now writes `20866` out. The
+overflow pin is likewise deliberate about setup: a caster with no hate never overflows, so the obvious
+version of that test would have passed against the broken arithmetic.
+
+**Still missing.**
+
+- **The other 378 npcs.** The condition is now expressible; nothing else has been written. The
+  best-understood next ones are `IDSeal_Twin_P` and `IDSeal_Twin_M` (`twin_protector`, npcs 236227/236228
+  and 855508/855509), where `IDSeal_PCGuard_Dispel_All` (20834) makes the protector spawn
+  `BIDSeal_Twin_P_Source` at its own point and despawn — a phase change on a dispel, currently absent.
+  Then `orissans_summon` (the `IDSeal_Glacier_*` pair), `fortressgate` (`IDRaksha_Invincible_Shield` and
+  its dispel), `suramathetraitor` (`IDTiamat_Rakshaka_Onekill`, 20952) and `yume`.
+- **`on_see_spell`**, which uses the same condition for a spell cast *near* rather than *at* the npc, and
+  still has no event here. Unsized.
+- **The raise site is damage-only.** `CreatureController` raises `Spelled` where an `Effect` accompanies
+  damage. A skill that lands with no damage at all — a pure dispel, which is exactly what the twin
+  protectors answer — may not reach it, and that wants checking before those rungs are written.

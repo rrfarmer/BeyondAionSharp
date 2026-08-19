@@ -11,6 +11,14 @@ public interface AI
 {
     void OnCreatureEvent(AiEventType @event, Creature creature);
 
+    /// <summary>
+    /// Retail's <c>on_spelled</c>, which carries <i>which</i> skill landed -- its
+    /// <c>is_event_skill_id</c> condition asks exactly that, and 379 npcs across 185 patterns depend on it.
+    /// <see cref="OnCreatureEvent"/> can only say that something happened and to whom, so this is a
+    /// separate entry point rather than another AiEventType.
+    /// </summary>
+    void OnSpelled(Creature caster, int skillId);
+
     void OnCustomEvent(int eventId, params object[] args);
 
     void OnGeneralEvent(AiEventType @event);

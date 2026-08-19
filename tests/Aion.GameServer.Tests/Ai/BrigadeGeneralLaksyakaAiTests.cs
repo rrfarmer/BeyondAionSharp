@@ -24,6 +24,16 @@ public sealed class BrigadeGeneralLaksyakaAiTests
 	private const int Laksyaka = 219356;
 	private const int Skeleton = 283115;
 
+	/// <summary>
+	/// Retail's <c>IDTiamat_Rakshaka_Polymorph_Provoke</c>, resolved through <c>skill_base.xml</c>. Written
+	/// out rather than read from the class: a pin that takes its expectation from the constant it is pinning
+	/// passes whatever that constant becomes.
+	/// </summary>
+	private const int ProvokeSkill = 20866;
+
+	/// <summary>His own rage buff -- a real skill that is not the provoke.</summary>
+	private const int SomeOtherSkill = 20731;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
 			.WithAi(typeof(BrigadeGeneralLaksyakaAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
@@ -139,5 +149,75 @@ public sealed class BrigadeGeneralLaksyakaAiTests
 		boss.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, boss);
 		Assert.True(boss.GetEffectController().HasAbnormalEffect(20731),
 			"Laksyaka did not enrage at fourteen per cent");
+	}
+
+	/// <summary>
+	/// <b>The raid's provoke drags him off whoever he was on.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail hangs a priority-99 DIRECT rung on <c>on_spelled</c>, guarded by
+	/// <c>is_event_skill_id</c> for <c>IDTiamat_Rakshaka_Polymorph_Provoke</c>, that does
+	/// <c>switch_target target=OBJI_CASTER points_to_add=2147483647</c> then <c>attack_most_hating</c>.
+	/// This port had no such mechanic, because the Spelled event carried the caster and not the skill.
+	/// </remarks>
+	[Fact]
+	public void TheProvokeDragsHimOntoWhoeverCastIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Laksyaka, 629f, 1319f, 501f);
+		Player tank = harness.SpawnPlayer(633f, 1319f, 501f);
+		Player caster = harness.SpawnPlayer(627f, 1319f, 501f);
+		harness.Engage(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, caster);
+		Assert.Same(tank, boss.GetAggroList().GetTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED));
+
+		boss.GetAi().OnSpelled(caster, ProvokeSkill);
+
+		Assert.Same(caster, boss.GetAggroList().GetTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED));
+	}
+
+	/// <summary>
+	/// <b>Any other skill leaves him where he is.</b> The rung is guarded by one skill id, not by being
+	/// spelled at all, and a boss that turned on every caster would be a different fight.
+	/// </summary>
+	[Fact]
+	public void AnyOtherSkillDoesNotTauntHim()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Laksyaka, 629f, 1319f, 501f);
+		Player tank = harness.SpawnPlayer(633f, 1319f, 501f);
+		Player caster = harness.SpawnPlayer(627f, 1319f, 501f);
+		harness.Engage(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, caster);
+
+		boss.GetAi().OnSpelled(caster, SomeOtherSkill);
+
+		Assert.Same(tank, boss.GetAggroList().GetTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED));
+	}
+
+	/// <summary>
+	/// <b>The taunt survives the caster already having hate.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's <c>points_to_add</c> is <c>int.MaxValue</c>. Added to any existing hate that overflows a
+	/// signed int, and <c>AggroInfo.AddHate</c> then clamps anything below one back up to one -- so the
+	/// strongest taunt in the game would have left the caster at the very bottom of the list. The arithmetic
+	/// saturates instead. This is the case the obvious test misses, because a caster with no hate at all
+	/// never overflows.
+	/// </remarks>
+	[Fact]
+	public void TheProvokeWorksOnSomeoneWhoAlreadyHasHate()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Laksyaka, 629f, 1319f, 501f);
+		Player tank = harness.SpawnPlayer(633f, 1319f, 501f);
+		Player caster = harness.SpawnPlayer(627f, 1319f, 501f);
+		harness.Engage(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, caster);
+		BossAiHarness.Rehate(boss, caster);
+
+		boss.GetAi().OnSpelled(caster, ProvokeSkill);
+
+		Assert.Same(caster, boss.GetAggroList().GetTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED));
 	}
 }

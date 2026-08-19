@@ -34,7 +34,13 @@ public class AggroInfo
     // Java parity: addHate(int)
     public void AddHate(int hate)
     {
-        _hate += hate;
+        // Java parity except for the overflow, which Java shares and never exercises. Retail's
+        // switch_target carries points_to_add=2147483647 to mean "top of the list, permanently"; adding
+        // that to any existing hate wraps negative, and the clamp below then pins it to 1 -- turning the
+        // strongest taunt in the game into the weakest. Widening to long and saturating keeps every
+        // ordinary value identical and makes the extreme one mean what it says.
+        long sum = (long)_hate + hate;
+        _hate = sum > int.MaxValue ? int.MaxValue : (int)sum;
         if (_hate < 1)
             _hate = 1;
         _lastInteractionTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
