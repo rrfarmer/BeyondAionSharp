@@ -31476,3 +31476,40 @@ casters, the senders are three different invisible npcs, and his answer is an un
 `is_user` pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>`
 schema's four owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's
 mine web; Pashid's `npc_skills`.
+
+## The other place encounter behaviour lives
+
+`TwinFontAI` was next on the list, owing two **HERO**-rank protectors. Reading it: both are handled, in
+`DrakenspireDepthsInstance` — and **the class's own remark says so, one line above the ids**.
+
+That is the same shape as the generated tables last entry, and the same rule causing it: the audit reads
+the owning class file and nothing else. But this codebase has consistently put encounter behaviour in
+**two** places, and does so on purpose —
+
+* Draupnir Cave counts its four adjutants and spawns Commander Bakarma;
+* Esoterrace opens the ventilator doors when Captain Murugan falls;
+* Drakenspire brings the fountless twin protectors back.
+
+Each of those was found earlier in this work *as an argument for why something was not a gap*. The audit
+never learned it.
+
+Instance handlers now count. Already-placed rises from 58 to **79**; the reading list falls from 237 to
+**216**. Over the last two entries it has gone **275 → 216**, entirely by teaching the audit where this
+port actually keeps things — no encounter changed.
+
+> Both rules are deliberately narrow. "Any sibling file" was tried once and made 28 correctly-clean
+> classes look like they disagreed. **"Generated tables" and "instance handlers" are specific places
+> with specific jobs**, and each was added only after a row pointed at one.
+
+### What is left at the top
+
+The seven-point band is now: Beritra's four (blocked on the scene trigger), Orissan's three crystal
+tiers (blocked on skill indices), Surkana's bolstering surkana, the two twin-door demolishers, and
+Yamennes' spawn gate. **Nothing in it is a false positive any more** — which is the first time that has
+been true.
+
+**Still missing.** Surkana's bolstering surkana; the two twin-door demolishers; Yamennes' spawn gate;
+the 30009/30010 dismissal family; jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_user`
+pinned one seam short; `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four
+owed attributes; the 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web;
+Pashid's `npc_skills`.

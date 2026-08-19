@@ -181,6 +181,19 @@ def spawned_in_our_data():
             continue
         out.update(re.findall(r"\b(\d{5,7})\b", gen.read_text(encoding="utf-8", errors="replace")))
 
+    # And the instance handlers, which are the other legitimate home for encounter behaviour here and
+    # are used that way constantly: Draupnir counts its adjutants and spawns Bakarma, Esoterrace opens
+    # the ventilator doors, Drakenspire brings the fountless twin protectors back. TwinFontAI was ranked
+    # as owing 236225 and 236226 and both are handled in DrakenspireDepthsInstance -- its own remark
+    # says so, one line above the ids.
+    #
+    # Narrow on purpose, like the generated-table rule above. "Any sibling file" was tried and made 28
+    # correctly-clean classes look like they disagreed; "the instance handlers" is a specific place with
+    # a specific job.
+    for handler in (REPO / "src").rglob("Handlers/Instance/*.cs"):
+        out.update(re.findall(r"\b(\d{5,7})\b",
+                              handler.read_text(encoding="utf-8", errors="replace")))
+
     helpers = REPO / "game-server" / "data" / "static_data" / "ai" / "spawn_helpers.xml"
     templates = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml").read_text(
         encoding="utf-8", errors="replace")
