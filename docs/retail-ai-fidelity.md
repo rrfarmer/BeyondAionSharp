@@ -27892,3 +27892,51 @@ covered.
 - The `Spelled` AI event remains raised only from the damage path. Nothing depends on it now, but it is a
   trap for the next reader, and either it should be raised from `ApplyEffect` alongside `OnEffectApplied`
   or it should be documented at the raise site as damage-only.
+
+## Fourteen, not three hundred and seventy-nine
+
+The retraction above ended by asking for a tool that checks whether an `is_event_skill_id` rung is
+*actually* absent, "before any more of these are written". `extract_client_skills.py --gaps` is it. For
+each rung it asks two questions: does the C# class bound to those npcs already mention that skill id, and
+does the skill's own template carry a `hostileup` / `damage` / `spellatk` / `hate` element that might
+deliver the behaviour without any AI at all.
+
+```
+232 is_event_skill_id rungs resolved to a skill
+    8 already answered by the C# class for those npcs
+   80 plausibly carried by the skill's own effects
+  144 OPEN -- neither
+      of the OPEN ones, 14 sit on bound npcs running a named AI class
+```
+
+> **Fourteen is the real number.** The headline of 379 npcs counted everything the condition touches.
+> Most OPEN rungs are on patterns no npc is bound to, or on npcs running a generic AI where a missing
+> reaction cannot be seen. Those are not work.
+
+**The tool reproduces the mistake it was built to prevent.** Laksyaka's `IDTiamat_Rakshaka` rung comes
+back as *carried by skill data*, which is the conclusion that cost a commit to reach by hand. That is the
+only real check on a tool like this — that it independently arrives at the answer already known.
+
+**The fourteen are concentrated**, which is the useful part: the Drakenspire and Seal instances. The twin
+protectors and Orissan answering `IDSeal_PCGuard_Dispel_All` (20834), the Beritra ladder on
+`IDSeal_PCGuard_Dispel` (20835) and `IDSeal_SealGuard_Bomb` (21624), `orissans_summon` on the
+`IDSeal_Immortal_Area*` pair, and the fortress gates on `IDRaksha_Invincible_Shield` (20019) and its
+dispel (20020). One instance family, one afternoon's reading.
+
+**Two honest weaknesses, both deliberate.**
+
+- **The skill-data test is loose.** It asks only whether the template has one of four elements. 80 rows is
+  far too many to take on trust; it is a prompt to go and read the skill, not a verdict. Laksyaka's row
+  happens to be right, and that is one row.
+- **The C# test is a substring search for the id in the bound class.** It cannot tell a real `case 21463:`
+  from the number appearing in a comment, and it will miss a rung implemented in a base class or a shared
+  helper rather than in the class the npc names.
+
+Both fail in the direction of showing too much work rather than too little, which is the right direction
+for a queue.
+
+**Still missing.** The fourteen themselves — none is written. `IDSeal_Twin_P` remains the
+best-understood: `IDSeal_PCGuard_Dispel_All` makes the protector spawn `BIDSeal_Twin_P_Source` at its own
+point and despawn, a phase change on a dispel. It needs the spawn devname resolved to an npc id, which is
+the same kind of join `skill_base.xml` turned out to be, and has not been looked for yet. And
+`on_see_spell` is still unsized.
