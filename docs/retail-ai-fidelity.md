@@ -26216,3 +26216,57 @@ counted as fixes.
 and four in the player-protection trace reader — and are unread. And the scan itself is a one-off:
 unlike the shape it looks for, it has not been kept as a tool, because a single rule ("`Assert.All`
 wants a count in front of it") is better enforced by knowing it than by running something.
+
+## Celestius called his summons unconditionally, and retail guards them twice
+
+From `audit_timer_drift.py`: `CelestiusAI` opened at 1000 where retail (`Elim_ComadAe`) arms 5000 and
+6000. The opening was the least of it. Retail's summon rung is:
+
+```
+? is_battle_timer_indicator BTIMERI_INDEX_1
+? is_distance_longer_than who=OBJI_CUR_TARGET distance=10
+? is_hp_in_boundary who=OBJI_SELF larger_than=61 less_than=100
+> add_battle_timer BTIMERI_INDEX_1 delay=25000
+> use_skill ... (two indices)
+> despawn SPAWN_ID_1 / _2 / _3
+> spawn x3 BIDElim_ComadeWi_Summon_52_Ae live_time=30 pathname=...
+```
+
+**Both guards were missing.** This class called three walkers every twenty-five seconds from the first
+hit until it died, at any health and at any range. So neither half of the mechanic existed: **push him
+below sixty-one and the adds stop**, and **stand inside ten metres and he fights instead of calling**.
+A fight with two answers had none.
+
+**The first wave came five seconds early** — 1000 against retail's 6000.
+
+**And the old wave was never cleared.** Retail despawns the previous three in the same branch. With a
+thirty-second lifetime against a twenty-five-second cycle, this class left six on the floor for five
+seconds of every cycle, where retail never has more than three.
+
+**Checked and clean:** the three spawn points and their walker routes. Retail pairs each `pathname` with
+the point it spawns at, and each of our routes begins at that same point, so the pairing here is right.
+Worth recording as a negative result — a rotation among three summon paths is the exact defect found
+twice already in this instance's neighbours, and it would have been easy to "fix" one that was not
+broken.
+
+**Pins** — seven in `CelestiusAiTests`, eight mutations, all caught.
+
+**The cycle needed two windows, not one, and the first version could not see it.** With the despawn in
+place there are always exactly three summons standing, so **every count-based pin passes at any cycle
+length** — halving the period was invisible to all six original pins. A thirty-second arrival window
+catches a halved cycle but **not a doubled one**, because at both 25s and 50s the second wave falls
+outside it. It takes a second window over the following fifteen seconds to separate them. Both
+directions are now probed; the first attempt at this pin only probed one.
+
+**Two harness details that cost a run each**, recorded because both will recur: the wave timer is armed
+from `HandleAttack`, which `Engage` alone does not raise, so a pin that only engages him observes
+nothing; and `SetHpPercent` lands *near* a percentage rather than on it, which is enough to move a
+boundary pin off its boundary — the sixty-two-per-cent case failed until it used `SetExactPercent`.
+
+**Still missing.** Seven skill indices across his two battle timers: the opening pair, the three
+health-stepped rungs on `BTIMERI_INDEX_0` at 75, 50 and 25 per cent, and the casts that replace the
+summon rung once he is under sixty-one. One consequence is baked in and stated in the class: retail
+re-arms `INDEX_1` at **15000** rather than 25000 below that line, which is unobservable while the rungs
+it drives are casts we cannot make, so the timer here stays at 25000 throughout. His death rung is also
+absent apart from the despawns — `CaspaGhost_01`, the killer's cutscene, and
+`set_condition_spawn_variable IDElim_3F_Boss`, which is the mechanism this port has no equivalent for.

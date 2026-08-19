@@ -1,4 +1,3 @@
-using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -6,93 +5,160 @@ using Aion.GameServer.Model.GameObjects.Players;
 namespace Aion.GameServer.Tests.Ai;
 
 /// <summary>
-/// Celestius' helpers, which used to join his patrol three at a time and never leave it.
+/// Celestius, whose summons had no guards at all.
 /// </summary>
 /// <remarks>
-/// Retail <c>Elim_ComadAe</c> gives all three summons <c>live_time</c> 30, and this class calls them
-/// <b>every twenty-five seconds for the whole fight</b>. With no lifetime that is three more walkers on
-/// the path per cycle without bound — <b>thirty-six of them five minutes in</b>, each one pathing and
-/// broadcasting. The lifetime caps it at two overlapping sets.
-/// <para>
-/// <b>This file was written, run, and deleted once</b> before the harness could carry it: the fixture
-/// left <c>WALKER_DATA</c> null, so the moment this class started a helper walking it threw. The pins
-/// below are the same ones, restored now that the holder exists.
-/// </para>
+/// Retail's <c>Elim_ComadAe</c> calls his three walkers only while his health is above sixty-one per
+/// cent and his current target is more than ten metres away. This class called three every twenty-five
+/// seconds from the first hit until it died, so neither half of the mechanic — push him down and they
+/// stop, close on him and he fights instead — existed.
 /// </remarks>
 [Collection("GoldenDataManager")]
 public sealed class CelestiusAiTests
 {
 	private const int TalocsHollow = 300190000;
 	private const int Celestius = 215488;
-	private const int Helper = 281514;
+	private const int Summon = 281514;
 
-	private const int PerCycle = 3;
+	/// <summary>The three spawn points, which are also where the three walker routes begin.</summary>
+	private const float BossX = 548f;
+	private const float BossY = 811f;
+	private const float BossZ = 1375f;
 
-	private static (BossAiHarness, Npc) Engaged()
-	{
-		BossAiHarness harness = BossAiHarness.For(TalocsHollow).WithWorldSize(2048)
+	private static BossAiHarness NewHarness() =>
+		BossAiHarness.For(TalocsHollow).WithWorldSize(2048).WithWalkerRoutes()
 			.WithAi(typeof(CelestiusAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
-		Npc boss = harness.Spawn(Celestius, 540f, 820f, 1377f);
-		Player player = harness.SpawnPlayer(542f, 822f, 1377f);
-		harness.Engage(boss, player);
 
-		// His helper call starts on the first blow from a player, not on entering combat.
-		boss.GetAi().OnCreatureEvent(AiEventType.Attack, player);
-		return (harness, boss);
-	}
+	private static int Summons(BossAiHarness harness) =>
+		harness.LiveNpcs().Count(n => n.GetNpcId() == Summon);
 
-	private static int Helpers(BossAiHarness harness) =>
-		harness.LiveNpcs().Count(n => n.GetNpcId() == Helper);
-
-	/// <summary>Three helpers on the first call.</summary>
-	[Fact]
-	public void ThreeHelpersAnswerTheFirstCall()
+	/// <summary>Engages him with a player at <paramref name="metres"/> and drops him to <paramref name="hp"/>.</summary>
+	private static BossAiHarness Engaged(int hp, float metres)
 	{
-		var (harness, _) = Engaged();
-		using BossAiHarness _h = harness;
-
-		harness.Clock.Advance(TimeSpan.FromSeconds(1));
-
-		Assert.Equal(PerCycle, Helpers(harness));
+		BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Celestius, BossX, BossY, BossZ);
+		Player player = harness.SpawnPlayer(BossX + metres, BossY, BossZ);
+		// Exact, not approximate: the guard's edge is at sixty-one and SetHpPercent lands near
+		// a percentage rather than on it, which is enough to move a boundary pin off the boundary.
+		BossAiHarness.SetExactPercent(boss, hp);
+		harness.Engage(boss, player);
+		boss.SetTarget(player);
+		// The wave timer is armed from HandleAttack, which Engage alone does not raise.
+		boss.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, player);
+		return harness;
 	}
 
 	/// <summary>
-	/// <b>And they do not accumulate over a long fight.</b> Eight cycles in, the unbounded version was
-	/// standing at twenty-four; retail's ceiling is two overlapping sets.
+	/// <b>The first wave lands at six seconds, not one.</b>
+	/// </summary>
+	[Fact]
+	public void TheFirstWaveLandsAtSixSeconds()
+	{
+		using BossAiHarness harness = Engaged(hp: 90, metres: 30f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+		Assert.Equal(0, Summons(harness));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		Assert.Equal(3, Summons(harness));
+	}
+
+	/// <summary>
+	/// <b>And there are never more than three on the floor.</b>
 	/// </summary>
 	/// <remarks>
-	/// Pinned as a ceiling rather than an exact count: the thirty-second life overruns the twenty-five
-	/// second cycle by five, so how many stand at any instant depends where in that overlap the clock is
-	/// read. <b>The bug was unbounded growth, and a ceiling is what distinguishes it.</b>
+	/// A summon lives thirty seconds against a twenty-five second cycle, so without retail's despawn of
+	/// the previous wave the counts overlap: six stood for five seconds of every cycle. Sampled just
+	/// after the second wave lands, which is exactly where the old ones would still be.
 	/// </remarks>
 	[Fact]
-	public void TheHelpersDoNotAccumulate()
+	public void AndThereAreNeverMoreThanThreeOnTheFloor()
 	{
-		var (harness, _) = Engaged();
-		using BossAiHarness _h = harness;
+		using BossAiHarness harness = Engaged(hp: 90, metres: 30f);
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(200));
+		harness.Clock.Advance(TimeSpan.FromSeconds(32));
 
-		Assert.True(Helpers(harness) <= PerCycle * 2,
-			$"helpers piled up: {Helpers(harness)} standing after eight calls");
+		Assert.Equal(3, Summons(harness));
 	}
 
 	/// <summary>
-	/// <b>And the first three are gone.</b> Stated separately so the ceiling above cannot be met by a
-	/// class that simply stopped calling — the originals have to actually leave.
+	/// <b>Below sixty-one per cent he stops calling them.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's guard is <c>is_hp_in_boundary larger_than=61</c>. Counted as they arrive, because a
+	/// summon lives thirty seconds and a two-minute window would be empty either way.
+	/// </remarks>
+	[Fact]
+	public void BelowSixtyOnePerCentHeStopsCallingThem()
+	{
+		using BossAiHarness harness = Engaged(hp: 55, metres: 30f);
+
+		Assert.Equal(0, harness.WatchNew(120, null, Summon).Total);
+	}
+
+	/// <summary>
+	/// <b>And at sixty-two he still does.</b> The floor is a number, not "wounded".
+	/// </summary>
+	/// <remarks>
+	/// Without this the guard's <i>value</i> is unpinned: a floor set anywhere above sixty-two would
+	/// satisfy the pin above just as well.
+	/// </remarks>
+	[Fact]
+	public void AndAtSixtyTwoHeStillDoes()
+	{
+		using BossAiHarness harness = Engaged(hp: 62, metres: 30f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(7));
+
+		Assert.Equal(3, Summons(harness));
+	}
+
+	/// <summary>
+	/// <b>A raid standing on him gets no summons either.</b>
+	/// </summary>
+	/// <remarks>
+	/// Retail's other guard is <c>is_distance_longer_than distance=10</c>: at close range the rung below
+	/// it casts instead. This is the half of the mechanic a melee group would feel.
+	/// </remarks>
+	[Fact]
+	public void ARaidStandingOnHimGetsNoSummonsEither()
+	{
+		using BossAiHarness harness = Engaged(hp: 90, metres: 5f);
+
+		Assert.Equal(0, harness.WatchNew(120, null, Summon).Total);
+	}
+
+	/// <summary>
+	/// <b>And one at eleven metres does.</b> The distance is ten, not "in melee".
 	/// </summary>
 	[Fact]
-	public void TheFirstThreeLeaveAtThirtySeconds()
+	public void AndOneAtElevenMetresDoes()
 	{
-		var (harness, _) = Engaged();
-		using BossAiHarness _h = harness;
+		using BossAiHarness harness = Engaged(hp: 90, metres: 11f);
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(1));
-		var first = harness.LiveNpcs().Where(n => n.GetNpcId() == Helper).ToHashSet();
-		Assert.Equal(PerCycle, first.Count);
+		harness.Clock.Advance(TimeSpan.FromSeconds(7));
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(31));
+		Assert.Equal(3, Summons(harness));
+	}
 
-		Assert.DoesNotContain(harness.LiveNpcs(), n => first.Contains(n));
+	/// <summary>
+	/// <b>And a wave every twenty-five seconds, not more often.</b>
+	/// </summary>
+	/// <remarks>
+	/// Counted as they arrive rather than as they stand, and that is the whole reason this pin exists:
+	/// with the previous wave despawned there are always exactly three on the floor, so <b>halving the
+	/// cycle is invisible to every count-based pin above</b>. Thirty seconds holds one wave at retail's
+	/// rate and three at twice it.
+	/// </remarks>
+	[Fact]
+	public void AndAWaveEveryTwentyFiveSeconds()
+	{
+		using BossAiHarness harness = Engaged(hp: 90, metres: 30f);
+
+		// Waves land at 6s and 31s. One window cannot pin the period: thirty seconds holds three at
+		// retail's rate and nine at twice it, but also three at half it, because the second wave falls
+		// outside either way. The second window is what separates 25 from 50.
+		Assert.Equal(3, harness.WatchNew(30, null, Summon).Total);
+		Assert.Equal(3, harness.WatchNew(15, null, Summon).Total);
 	}
 }
