@@ -11,11 +11,41 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/beshmundirTemple/IsbariyaTheResoluteAI (@author Luzien).</summary>
+/// <summary>
+/// Isbariya the Resolute (216182, 216263). Retail pattern <c>IDCT_Boss_ArchPriest</c>.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/instance/beshmundirTemple/IsbariyaTheResoluteAI (@author Luzien). Retail-sourced
+/// corrections below; see docs/retail-ai-fidelity.md.
+/// <para>
+/// <b>Every number in his phase ladder was off.</b> Retail's bands are <b>70</b>, <b>49</b> and
+/// <b>29</b>; this class used 75, 50 and 25. The mapping is not in doubt — each band sends its own
+/// system message, and this class already sent the matching one on each rung.
+/// </para>
+/// <para>
+/// The waves were wrong with them. Retail sends <b>three</b> Taros on the middle band and <b>two</b>
+/// shields on the deepest; this class sent five and one. And the rungs re-arm at <b>20</b>, <b>18</b>
+/// and <b>8</b> seconds, where this class used 25, 10 and 20 — so the deepest phase, which retail makes
+/// the fastest, was its slowest.
+/// </para>
+/// <para>
+/// <b>Not translated.</b> The casts on every rung, which name skill indices; retail's 30% variant on
+/// the top band; and its <c>on_enter_idle_state</c>, which places two basic summons at fixed points when
+/// he drops combat.
+/// </para>
+/// </remarks>
 [AIName("isbariya")]
 public class IsbariyaTheResoluteAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(75, 50, 25);
+    /// <summary>Retail's three bands: 70-100, 50-70, 30-49 and below 29.</summary>
+    private readonly HpPhases hpPhases = new HpPhases(70, 49, 29);
+
+    /// <summary>Retail's <c>total_set_to_spawn</c> on each wave, and its re-arm on each rung.</summary>
+    private const int TarosCount = 3;
+    private const int ShieldCount = 2;
+    private const int SkeletonRungMillis = 20000;
+    private const int TarosRungMillis = 18000;
+    private const int ShieldRungMillis = 8000;
     private readonly AtomicBoolean isStart = new AtomicBoolean();
     private readonly List<Point3D> soulLocations = new List<Point3D>();
     private ScheduledTask basicSkillTask;
@@ -42,11 +72,11 @@ public class IsbariyaTheResoluteAI : AggressiveNpcAI, HpPhases.PhaseHandler
     {
         switch (phaseHpPercent)
         {
-            case 75:
+            case 70:
                 PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDCatacombs_Boss_ArchPriest_3phase());
                 LaunchSpecial();
                 break;
-            case 50:
+            case 49:
                 PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDCatacombs_Boss_ArchPriest_2phase());
                 break;
         }
@@ -113,15 +143,16 @@ public class IsbariyaTheResoluteAI : AggressiveNpcAI, HpPhases.PhaseHandler
             case 1:
                 SkillEngine.SkillEngine.GetInstance().GetSkill(GetOwner(), 18959, 50, GetRandomTarget()).UseNoAnimationSkill();
                 SpawnSouls();
-                delay = 25000;
+                delay = SkeletonRungMillis;
                 break;
             case 2:
-                RndSpawn(281660, 5);
+                RndSpawn(281660, TarosCount);
+                delay = TarosRungMillis;
                 break;
             case 3:
-                RndSpawn(281659, 1);
+                RndSpawn(281659, ShieldCount);
                 AIActions.UseSkill(this, 18993);
-                delay = 20000;
+                delay = ShieldRungMillis;
                 break;
         }
         ScheduleSpecial(delay);

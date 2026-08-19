@@ -25232,3 +25232,54 @@ chain now, which is what the last three fights needed too; that is four classes 
 **Not translated.** The 35% roll retail puts on the below-half rung; the two broadcasts that accompany
 both rungs; and the teleport pair on messages 12100/12101 that moves him between the two mirror posts —
 this port picks the post from a `position` field of its own, and nothing sends those messages.
+
+## Four conversions in a row, so the audit now finds them
+
+Terath, Kumbanda, Laksyaka and Sharik all needed the same change: a `ScheduleAtFixedRateTask` turned
+into a self-re-arming chain. Retail re-arms a timer **at the end of whichever rung matched**, so one
+indicator carries different delays under different guards — Sharik's is thirty-seven seconds above half
+health and thirty below it. A fixed rate evaluates its period once, so a boss who crosses the guard
+keeps the delay he started with for the rest of the fight.
+
+`audit_timer_drift.py` now detects that directly: it groups each pattern's `add_battle_timer` calls by
+indicator and flags any pattern where one indicator is re-armed with more than one delay. **Forty of the
+seventy-three classes use a fixed-rate task against such a pattern.** Not all forty are wrong — the
+fixed rate may belong to a mechanic other than the varying timer — but it is a ranking, and four for
+four so far.
+
+## Isbariya: every number in his phase ladder
+
+Retail pattern `IDCT_Boss_ArchPriest` (216182, 216263).
+
+```
+HP 70-100   timer 0, re-arm 15000, casts only (a 30% variant and a fallback)
+HP 50-70    timer 2, re-arm 20000, two casts + 8 skeletons at a fixed point
+HP 30-49    timer 3, re-arm 18000, 3 Taros on descending attackers, live 20, hate 1000
+HP < 29     timer 6, re-arm  8000, a cast + 2 shields on descending attackers, live 7
+```
+
+**The bands were 75, 50 and 25.** The mapping is not in doubt — each band sends its own system message
+and this class already sent the matching one on each rung — so the thresholds were simply wrong.
+
+**The waves were wrong with them**: five Taros where retail sends three, one shield where it sends two.
+And the rungs re-arm at 20, 18 and 8 seconds where this class used 25, 10 and 20 — so **the deepest
+phase, which retail makes the fastest, was its slowest**.
+
+**And the two servants' lifetimes were swapped.** Retail gives the shield seven seconds and the Taros
+twenty; this class gave the shield twenty and everything else ten, so the short-lived one outlasted the
+long-lived one by a factor of three.
+
+**Pins** — `IsbariyaTheResoluteAiTests`, six, six mutations, all caught.
+
+**The last one only after the sweep.** The counts and the deepest rung were pinned and the *middle*
+interval was not, so speeding it from eighteen seconds to ten survived. It is pinned as an upper bound,
+because the error it has to catch makes the wave arrive more often rather than less — the first time in
+this log a pin has needed a ceiling rather than a floor.
+
+**A structural note for the next reader.** Entering a band does not fire a wave: it changes what the
+next scheduled turn does. Three of these pins failed at first for asserting the wave at the moment the
+threshold was crossed, and now advance the clock to the following turn.
+
+**Not translated.** The casts on every rung, which name skill indices; retail's 30% variant on the top
+band; and its `on_enter_idle_state`, which places two basic summons at fixed points when he drops
+combat.

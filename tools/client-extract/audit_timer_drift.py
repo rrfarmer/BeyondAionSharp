@@ -73,6 +73,35 @@ def pattern_actionable(patterns_dir: pathlib.Path) -> set[str]:
     return out
 
 
+def patterns_with_variable_rungs(patterns_dir: pathlib.Path) -> set[str]:
+    """
+    Patterns where one battle timer is re-armed with more than one delay.
+
+    **A fixed-rate task cannot express these.** Retail re-arms a timer at the end of whichever rung
+    matched, so the same indicator carries different delays under different guards -- Sharik's is
+    thirty-seven seconds above half health and thirty below it. `ScheduleAtFixedRateTask` evaluates its
+    period once, so a boss who crosses the guard keeps the delay he started with, for ever.
+
+    Four classes in a row needed converting from a fixed rate to a self-re-arming chain before this was
+    worth detecting rather than rediscovering: Terath, Kumbanda, Laksyaka and Sharik.
+    """
+    out: set[str] = set()
+    for path in patterns_dir.rglob("*.xml"):
+        try:
+            text = S.read_text(path)
+        except Exception:
+            continue
+        for m in re.finditer(r"<name>([^<]+)</name>(.*?)(?=<name>|\Z)", text, re.S):
+            by_timer: dict[str, set[str]] = {}
+            for arm in re.finditer(
+                    r"<add_battle_timer>\s*<btimer_indicator>([^<]+)</btimer_indicator>\s*"
+                    r"<delay>(\d+)</delay>", m.group(2), re.S):
+                by_timer.setdefault(arm.group(1), set()).add(arm.group(2))
+            if any(len(v) > 1 for v in by_timer.values()):
+                out.add(m.group(1).strip().lower())
+    return out
+
+
 def pattern_delays(patterns_dir: pathlib.Path) -> dict[str, set[int]]:
     """Every timer delay and live_time each pattern uses, in milliseconds."""
     out: dict[str, set[int]] = {}
@@ -129,6 +158,7 @@ def main() -> int:
 
     delays_of = pattern_delays(pathlib.Path(args.patterns))
     actionable = pattern_actionable(pathlib.Path(args.patterns))
+    variable = patterns_with_variable_rungs(pathlib.Path(args.patterns))
 
     # Numbers that appear on scheduling lines and are not delays.
     not_delays: set[int] = set()
@@ -173,16 +203,24 @@ def main() -> int:
             continue  # no pattern to compare against; audit_missing_patterns covers that
 
         can_act = any(pattern_of.get(n, "") in actionable for n in npcs_of_ai.get(name.group(1).lower(), []))
+        fixed_rate = "ScheduleAtFixedRateTask" in source
+        varies = any(pattern_of.get(n, "") in variable for n in npcs_of_ai.get(name.group(1).lower(), []))
         unmatched = sorted(d for d in mine if d not in theirs)
-        rows.append((len(unmatched), len(mine), path.stem, unmatched, sorted(theirs), can_act))
+        rows.append((len(unmatched), len(mine), path.stem, unmatched, sorted(theirs), can_act,
+                     fixed_rate and varies))
 
     rows.sort(key=lambda r: (-r[0], r[2]))
     print(f"{len(rows)} classes schedule something and have a retail pattern to compare against.\n")
     print(f"{sum(1 for r in rows if r[5])} of them have a timer rung that does something other than "
           f"cast, which is the set a timing fix can act on.")
     print()
-    for unmatched_n, mine_n, stem, unmatched, theirs, can_act in rows[: args.limit]:
+    print(f"{sum(1 for r in rows if r[6])} use a fixed-rate task where retail re-arms the same timer "
+          f"with different delays, which a fixed rate cannot express.")
+    print()
+    for unmatched_n, mine_n, stem, unmatched, theirs, can_act, fixed_wrong in rows[: args.limit]:
         mark = "" if can_act else "   [casts only -- needs the skill index]"
+        if fixed_wrong:
+            mark += "   [FIXED RATE, retail rung varies]"
         print(f"{stem}: {unmatched_n} of {mine_n} port delays are not in retail's pattern{mark}")
         print(f"    port only: {unmatched}")
         print(f"    retail has: {theirs[:14]}{' ...' if len(theirs) > 14 else ''}")
