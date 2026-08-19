@@ -26513,3 +26513,51 @@ enumerated with npc ids, the `is_enemy` requirement is understood, and the order
 **the killers need AI names before anything else is worth writing**, because the protectors' answer is
 inert until something calls. Doing it the other way round — which is what was attempted here — produces
 a listener nobody talks to and a broadcast nobody hears, neither of which can be tested.
+
+## The fortress killers get an AI, and half the loop closes
+
+Last commit recorded the order of work: **the killers need AI names before the protectors' answer is
+worth writing**, because a listener nobody talks to cannot be tested. That is what this does.
+
+`FortressKillerAI` is new, extends `AbyssGuardCallAI` so the killers that were already listed guards
+keep their 23000 call, and carries retail's three rungs:
+
+| | retail | what it does |
+|---|---|---|
+| `on_wake_up` | `broadcast_message 30001 range_as_meter=50` | tells the protectors it has arrived |
+| `on_message 30002` | `add_hate_point sender, points_to_add=1000000` | goes for the protector that called |
+| `on_message 30003` | `despawn_self`, at priority **100** | stands down when its quarry dies |
+
+**37 npcs are bound to it**, from the four killer patterns — nineteen `LDF4_Advance_Killer_43`, the
+artifact killers in Reshanta and Kaldor, and the fortress control npc. Sixteen of them were on plain
+`aggressive` and did nothing; four were on `abyss_guard_call` and knew only 23000. Twelve more that the
+audit lists have **no template at all in our data** and are left alone.
+
+`AbstractSiegeProtectorAI` gains the other end: answer 30001, and broadcast 30003 on dying. The
+broadcast goes **first**, ahead of `base.HandleDied()` — which is retail's own order, and also the only
+order that works, since everything after it reaches the siege services.
+
+**Pins** — five in `FortressKillerCallTests`, six mutations, all caught. **The 30003 half of the loop is
+verified end to end**: a protector dies, the killer hunting it despawns; a protector merely wounded
+does not send it anywhere; another message does not either.
+
+**The 30001 half does not work, and there is now a pin that says so.** Retail guards it with
+`is_enemy who=OBJI_MESSAGE_SENDER`, and **every npc in this family is `race="DRAKAN"`,
+`tribe="GUARD_DRAGON"`** — protectors and killers alike. Our aggro list refuses hate between friends, so
+the million points never land and the protector stays where it is. `AKillerWakingDoesNotYetBringThe
+ProtectorsOntoIt` asserts that wrong behaviour deliberately, with the tribes compared in the assertion
+itself, **so the gap is visible rather than absent.** It will fail the day the faction data changes,
+which is the intended signal.
+
+**Two mistakes of mine on the way, both worth recording.** The first pins used **251160 as the
+protector** — but 251160 is one of the killers, and this very commit had just rebound it, so the test
+was a killer talking to a killer. And the death broadcast originally sat *after* `base.HandleDied()`,
+where the harness never reaches it; the diagnostic that found it was a direct `NpcMessageBus.Broadcast`,
+which despawned the killer instantly and proved the class was fine and the trigger was not.
+
+**Still missing.** The `is_enemy` question is the blocker for the rest: either the client's tribe
+relations make `GUARD_DRAGON` hostile to itself under a condition we do not model, or the killers' real
+tribe differs from our `npc_templates`. Until that is answered, a killer arriving is silent. Also
+absent: each killer's cast ladder and its `goto_waypoint` walk, which is how retail actually moves it to
+the guards it has come for — here it stands where it spawned. And the protectors' own 30002 broadcast,
+which retail sends from a battle timer inside a cast chain and is therefore behind the skill index.

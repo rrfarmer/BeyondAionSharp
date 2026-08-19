@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Siege;
@@ -6,12 +7,68 @@ using Aion.GameServer.Services.Siege;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/siege/AbstractSiegeProtectorAI.</summary>
-public abstract class AbstractSiegeProtectorAI : SiegeNpcAI
+/// <summary>
+/// The artifact and fortress protectors. Retail patterns <c>AB1_LDGuard_Artifact</c>,
+/// <c>AB1_DrGuard_Artifact</c> and the <c>LDF5_Fortress_*_Artifact</c> pair.
+/// </summary>
+/// <remarks>
+/// Java parity: ai/siege/AbstractSiegeProtectorAI. Retail-sourced addition below; see
+/// docs/retail-ai-fidelity.md, and <c>tools/client-extract/audit_npc_call_family.py</c> for the size of
+/// what this is one half of.
+/// <para>
+/// <b>These guards fight the fortress killer, and here they ignored it.</b> Retail's second call family
+/// is npc-versus-npc and works the opposite way to <see cref="AbyssGuardCallAI"/>'s 23000: the message
+/// names its <b>sender</b> and carries <c>points_to_add=1000000</c>. A fortress killer broadcasts
+/// <b>30001</b> as it wakes, and every protector within fifty metres drops what it is doing and goes for
+/// it. That is not a nudge like 23000's single point — it is how a fortress changes hands without a
+/// player touching either side, and none of it happened here.
+/// </para>
+/// <para>
+/// <b>And a protector announces its own death.</b> Retail's <c>on_die</c> broadcasts <b>30003</b> at
+/// fifty metres naming itself, and the killer that was hunting it answers by despawning. Both ends
+/// exist now: see <see cref="FortressKillerAI"/>, which sends the 30001 this class answers and answers
+/// the 30003 this class sends.
+/// </para>
+/// <para>
+/// <b>Not translated:</b> the protectors' own <c>30002</c> broadcast, which retail sends from a battle
+/// timer inside a cast chain (<c>BTIMERI_INDEX_3</c>, re-arming <c>INDEX_1</c> at 7500) and so is
+/// behind the skill index like the rest of their ladder.
+/// </para>
+/// </remarks>
+public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
 {
+    /// <summary>Retail's killer-wakes call, and the range every protector pattern answers it at.</summary>
+    public const int KillerAwake = 30001;
+
+    /// <summary>Retail's <c>on_die</c> broadcast, and its range.</summary>
+    public const int ProtectorDown = 30003;
+    public const float DeathCallRange = 50f;
+
+    /// <summary>
+    /// Retail's <c>points_to_add</c> on both rungs of this family. A million, against 23000's one.
+    /// </summary>
+    public const int DropEverything = 1_000_000;
+
     public AbstractSiegeProtectorAI(Npc owner)
         : base(owner)
     {
+    }
+
+    /// <summary>
+    /// Retail's two <c>on_message</c> rungs for <c>30001</c>, both keyed on the <b>sender</b>: a
+    /// protector already fighting switches to it, one standing about takes the hate and goes.
+    /// </summary>
+    /// <remarks>
+    /// Both come through <see cref="SummonOrder"/> with retail's own value. At a million points the two
+    /// rungs land in the same place — whoever is then most-hated is the caller either way — which is
+    /// exactly why retail can afford to write them as one number and two guards.
+    /// </remarks>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        if (messageType != KillerAwake || IsDead() || sender == GetOwner())
+            return;
+
+        SummonOrder.Take(GetOwner(), sender, DropEverything);
     }
 
     protected override void HandleBackHome()
@@ -20,8 +77,16 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI
         GetAggroList().Clear(); // make sure old damages aren't counted in stopSiege
     }
 
+    /// <summary>Retail's <c>on_die</c>: tell the fifty metres around it that this one is gone.</summary>
+    /// <summary>Retail's <c>on_die</c>: tell the fifty metres around it that this one is gone.</summary>
+    /// <remarks>
+    /// <b>Broadcast first.</b> It is retail's own order — the broadcast is the first action in the
+    /// rung — and it also matters here: everything after it reaches the siege services, and a protector
+    /// dying outside a live siege must still tell the killer hunting it to stand down.
+    /// </remarks>
     protected override void HandleDied()
     {
+        NpcMessageBus.Broadcast(GetOwner(), ProtectorDown, GetOwner(), DeathCallRange);
         base.HandleDied();
         StopSiege((SiegeNpc)GetOwner());
     }
