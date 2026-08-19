@@ -26360,3 +26360,58 @@ have, rather than being an invention to delete. The corpse's devname confirms wh
 keeps the single shout. Muragan the Loyal's six waypoints are a route our spawn data does not carry, so
 the straight move stands in for them; if that route is ever added, the arrival despawn is already in the
 right place to end it.
+
+## Sematariux's thunder shields did not call each other
+
+From `audit_invented_spawns.py`, following `SematariuxAI`. The flagged spawn is fine; what the read
+found is that a field of twenty-four shields had to be pulled one at a time.
+
+All three shield tiers — 281931, 281932, 281933, patterns `LF4_DramataG1`, `G2` and `G3` — carry the
+same pair, identical in each:
+
+```
+on_enter_attack_state:
+  > add_battle_timer BTIMERI_INDEX_0 delay=15000
+  > broadcast_message message_type=10010 range_as_meter=50 param_obj=OBJI_EVENT_TARGET
+on_message:
+  ? is_message message_type=10010
+  > add_hate_point target=OBJI_MESSAGE_PARAM point_to_add=1
+  > attack_most_hating skill=SKILLI_NONE
+```
+
+**Neither half was here.** Six shields stand around Sematariux and each splits twice on dying, so the
+call is the difference between a field that answers a pull and twenty-four objects waiting to be hit
+individually. The split chain itself was already right and matches retail (each tier spawns two of the
+next at `spawn_range=5`).
+
+**The call is a call, not a target switch**, and at the smallest tier that matters: retail adds a
+*single* hate point and then attacks whoever is then most-hated. On a shield freshly split off and
+holding no hate those are the same thing; on one already fighting somebody they are not.
+`SummonOrder` is exactly that pair and is what is used.
+
+**Pins** — six in `SematariuxThunderShieldTests`, six mutations, five caught.
+
+**Two survived first time and both were the pins' fault, in the same way.** The "ignores another
+message" pin never made the caller and the shield known to each other, so the broadcast never reached
+it — the pin held for a class that answers everything. And the "out of earshot" pin put its shield
+eighty units away, which is past what the bus carries at all, so it proved nothing about the range
+check.
+
+**One of the two could not be repaired, and that is the more useful finding.** Measured across the
+harness: a shield at **forty-five** units hears the call and one at **fifty-five** does not — **whether
+the constant is fifty or five hundred.** The message bus's own reach ends within a few units of retail's
+number, so no placement can separate them. **`range_as_meter` is effectively unpinnable in this
+harness**, here and everywhere else the bus is used, and the pin now says so in place of implying
+otherwise.
+
+**An unexplained failure, recorded because it happened.** One full-suite run of the three failed with a
+single test, and the run was captured at quiet verbosity so **the name was not printed**. Eleven
+consecutive runs since have been clean and it has not recurred. It is not attributed to this change and
+it is not dismissed either; the practical lesson is that suite runs should capture failure names rather
+than the summary line, which is a change to how these runs are invoked rather than to the code.
+
+**Still missing.** Each tier's `BTIMERI_INDEX_0`, armed and re-armed at 15000, casting at its current
+target — all three are the same skill index and all three are blocked. The corpse the smallest tier
+leaves (`BLF4_DramataThunderDeath_57_n`, twelve seconds on a path) is absent, as is the boss's own
+wake-up: `set_condition_spawn_variable DRAMATA_ENTERABLE`, a broadcast of 7021 at thirty metres, and a
+thunder-control npc walked in on `C3_MobPath_BLF4_Dramata_58_Al`.
