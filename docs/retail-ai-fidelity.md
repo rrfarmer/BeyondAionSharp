@@ -24538,3 +24538,58 @@ appears in them — that build predates these npcs. So the index cannot be resol
 Normal mode's 283136 casts **Excavation 21896**; there is exactly one other Excavation, **20965**,
 bound to no npc anywhere — a plausible hard-mode twin and **not adopted**, because nothing ties it to
 856124 and inventing that row is precisely what the golden rule forbids.
+
+## Calindi's two ground hazards were run as one
+
+Retail patterns `IDTiamat_Kalyndi_FireCrown` / `_Dmg` (283130/283131), `IDTiamat_Kalyndi_ShadowFire` /
+`_Dmg` (283132/283133), their hard-mode `_Dmg` twins (856299/856298), and
+`IDTiamat_BurrowingWorm_BurrowDispel` (283059).
+
+`audit_invented_spawns.py` flagged `HM_CalindiFlamelordAI` placing 856299 — the *damage* npc — which
+led to the pair of chains behind it.
+
+**Retail's shape.** A hazard npc stands on the ground and drops a short-lived `_Dmg` npc at its own
+feet; each `_Dmg` casts once on waking and expires after three seconds. **This port holds that pair
+upside down**: it places the `_Dmg` npc as the persistent one and spawns the hazard beside it as a
+texture. The visible result is the same — a patch of ground that pulses — so the inversion is kept.
+What was wrong is how often it pulses and how long it stands.
+
+**The two hazards are not the same shape, and this class treated them as one.**
+
+```
+FireCrown    on_wake_up  set_idle_timer 1000
+             on_idle     spawn _Dmg (3s)  AND set_idle_timer 1000   <- re-arms
+             placed by the burrow-dispel worm with live_time=10
+
+ShadowFire   on_wake_up  set_idle_timer 1000
+             on_idle     spawn _Dmg (3s)                            <- no re-arm
+             placed by Calindi herself with live_time=15, normal and hard alike
+```
+
+So the crown pulses **every second for ten seconds**, and the shadow fire burns **exactly once**, a
+second after it appears, then simply stands for fifteen. This class ran both as fixed-rate loops for
+fifteen seconds: the crown every two seconds, and **the shadow fire every half second — about thirty
+casts where retail has one**.
+
+Both hazards now carry their own shape and their own lifetime, in a table keyed by npc id, with the
+hard-mode twins mapped alongside their normal counterparts.
+
+**Pins** — `CalindiSummonsAiTests`, eight (four theories), six mutations, all caught.
+
+**What the pins cannot see.** The pulses are casts in this port rather than spawns, so the pin can
+assert the hazard's lifetime and its texture npc but **not the number of casts** — the thing that was
+most wrong. The cast counts are stated here and are unpinned; pinning them wants an effect-level probe
+the harness does not have.
+
+**Sixth pin this session to fail first for a missing `WithAi` entry.** The texture npcs are on
+`noaction`, which is a real registered class, and the harness validates every AI name it is asked to
+place. That failure mode is now frequent enough to be worth a harness change: the builder could accept
+an npc id and register whatever AI its template names, instead of making every pin list them by hand.
+
+**Still missing.**
+- The chain that puts a fire crown on the ground at all: retail's `BurrowDispel` worm (283059) waits
+  two seconds, broadcasts **600 at a hundred metres**, spawns the crown and despawns itself. This port
+  spawns the crown's damage npc straight from Calindi's skill, so the worm's part of the chain — and
+  whatever answers that broadcast — has no equivalent.
+- `HM_CalindiFlamelordAI` rolls `Rnd.Chance() < 3` for the crown and the normal class rolls `< 2`.
+  Neither number is in the pattern; both predate this work.
