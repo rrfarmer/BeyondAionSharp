@@ -784,8 +784,19 @@ public sealed class BossAiHarness : IDisposable
 		private static readonly Lazy<NpcData> RealNpcs = new(() =>
 			LoadStaticDataFile<NpcData>("npcs", "npc_templates.xml"));
 
+		/// <summary>
+		/// Every npc skill file, merged the way <c>StaticData</c> merges them.
+		/// </summary>
+		/// <remarks>
+		/// <b>This used to load only the top-level <c>npc_skills.xml</c></b>, and the directory it sits in
+		/// holds the instance and open-world files too — so every instance npc in this harness had an
+		/// empty skill list. That is not a quiet difference: an npc on <c>useSkillAndDie</c> whose list is
+		/// empty <b>deletes itself the instant it spawns</b>, so a pin looking for it found nothing and
+		/// the natural reading was that the class never placed it. The Eternal Bastion assault pods are
+		/// where this was found; anything else that casts in an instance was equally invisible.
+		/// </remarks>
 		private static readonly Lazy<NpcSkillData> RealNpcSkills = new(() =>
-			LoadStaticDataFile<NpcSkillData>("npc_skills", "npc_skills.xml"));
+			LoadMergedStaticData<NpcSkillData>("npc_skills", (m, p) => m.MergePending(p)));
 
 		private static readonly Lazy<SkillData> RealSkills = new(() =>
 			LoadStaticDataFile<SkillData>("skills", "skill_templates.xml"));
@@ -845,6 +856,30 @@ public sealed class BossAiHarness : IDisposable
 			string path = Path.Combine(
 				new[] { RepoRoot(), "game-server", "data", "static_data" }.Concat(relativePath).ToArray());
 			return Aion.GameServer.Dataholders.LoadingUtils.JaxbHolderLoader.LoadFromFile<T>(path);
+		}
+
+		/// <summary>
+		/// Loads every <c>*.xml</c> under a static-data directory, recursively, and merges them into one
+		/// holder before <c>AfterUnmarshal</c> — which is what <c>StaticData.TryLoadMergedHolder</c> does.
+		/// </summary>
+		private static T LoadMergedStaticData<T>(string directory, Action<T, T> merge) where T : class
+		{
+			string root = Path.Combine(RepoRoot(), "game-server", "data", "static_data", directory);
+			T merged = null!;
+			foreach (string file in Directory.EnumerateFiles(root, "*.xml", SearchOption.AllDirectories)
+				.OrderBy(f => f, StringComparer.Ordinal))
+			{
+				T part = Aion.GameServer.Dataholders.LoadingUtils.JaxbHolderLoader.DeserializeFile<T>(file);
+				if (part == null)
+					continue;
+				if (merged == null)
+					merged = part;
+				else
+					merge(merged, part);
+			}
+
+			Aion.GameServer.Dataholders.LoadingUtils.JaxbHolderLoader.RunAfterUnmarshal(merged);
+			return merged;
 		}
 
 		private static void SetHolder(StaticData staticData, string propertyName, object value)

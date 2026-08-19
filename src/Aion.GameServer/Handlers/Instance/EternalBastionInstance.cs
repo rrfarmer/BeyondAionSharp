@@ -681,9 +681,26 @@ public class EternalBastionInstance : GeneralInstanceHandler
         }
     }
 
+    /// <summary>
+    /// The escorts each surviving siege tower keeps sending, once per qualifying wave.
+    /// </summary>
+    /// <remarks>
+    /// Retail drives this from the tower's own pattern: <c>IDF5_TD_Wave4_Boss1</c> through <c>_Boss5</c>
+    /// set a condition spawn variable to 1 when the tower becomes active and to 2 when it dies, and the
+    /// escorts come from the instance's condition spawns while it reads 1. Keying each block on the
+    /// tower still being alive is the same thing said in this port's own terms.
+    /// <para>
+    /// <b>Tower one's block asked after the wrong npc.</b> It tested 230783, which is retail's
+    /// <c>IDF5_TD_VriTower_65_Ae_temp</c> — a second npc on the same pattern that <b>nothing in this
+    /// port ever spawns</b> — so the test was always false and tower one alone never sent a second wave.
+    /// The tower this instance actually places at that post is 231143, and retail gives it the same
+    /// variable as the other four. Java has the same 230783 here; this is a retail-sourced correction,
+    /// logged in docs/retail-ai-fidelity.md.
+    /// </para>
+    /// </remarks>
     private void SpawnSiegeTowerWave()
     {
-        if (GetNpc(230783) != null)
+        if (GetNpc(231143) != null)
         {
             SpawnWithWalker(231107, 623.235f, 263.392f, 238.484f, (byte)3, "NPCPathIDLDF5b_TD_Z1_S4_T1");
             SpawnWithWalker(231105, 625.235f, 265.392f, 238.484f, (byte)3, "NPCPathIDLDF5b_TD_Z1_S4_T1");

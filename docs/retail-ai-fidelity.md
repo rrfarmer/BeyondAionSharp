@@ -24274,3 +24274,51 @@ deleting the re-arm, because a single turn still drops something fifteen per cen
 did, on the run that counted. The pin now asserts a floor of four against an expectation of fifteen,
 which the one-turn mutation cannot reach and the true code misses about seven times in ten thousand.
 That is the second time this session a pin has passed for a mutation it should have caught.
+
+## Eternal Bastion: the harness had been hiding every instance npc's skills
+
+Retail patterns `IDF5_TD_Wave_Pod_01` through `_12`, `IDF5_TD_Wave4_Boss1` through `_Boss5`,
+`IDF5_TD_PodStrike`, `IDF5_TD_HitFx_NPC_12`.
+
+`EternalBastionAssaultMachineAI` binds twenty npcs and had no pins at all — the largest such class in
+the port. Writing the first four found a defect in the **test harness** rather than in the class.
+
+**The harness loaded one npc skill file out of thirty.** `BossAiHarness` read
+`static_data/npc_skills/npc_skills.xml` and nothing else; the server merges that whole directory
+(`instances/*`, `open_worlds/*`, guard, siege, rift) into one holder the way Java's recursive import
+does. So **every instance npc in every AI pin had an empty skill list**. That is not a quiet
+difference: an npc on `useSkillAndDie` with no skills calls `Delete()` the instant it spawns, so the
+assault pod's strike npc vanished before any assertion could see it, and the natural reading was that
+the class never placed it. The harness now merges the directory; reverting that merge is one of the
+mutations below, and it is caught.
+
+Anything that casts inside an instance was equally invisible to this suite until now. The pins written
+before this commit did not depend on it — the full suite passes either way — but a pin written against
+the old harness *could* have asserted the wrong thing and looked right.
+
+**A real defect in the instance, found in passing.** `SpawnSiegeTowerWave` sends each surviving siege
+tower a fresh escort group per qualifying wave, keyed on the tower still being alive — which is this
+port's way of saying retail's condition spawn variable (`set=1` when the tower becomes active, `set=2`
+when it dies). **Tower one's block asked after npc 230783**, retail's `IDF5_TD_VriTower_65_Ae_temp`: a
+second npc on the same pattern that **nothing in this port ever spawns**. The test was therefore always
+false, and tower one alone never sent a second escort group while the other four did. The tower the
+instance actually places at that post is 231143. Java has 230783 here too, so this is a retail-sourced
+correction rather than a port bug.
+
+**Confirmed rather than changed.** The eight-to-four split of the twelve pods between
+`BIDF5_TD_AssultPodStrike` (284686) and `BIDF5_TD_AssultTBMStrike` (284699) matches retail exactly, pod
+for pod. The siege towers carry no strike npc in retail and carry none here.
+
+**Pins** — `EternalBastionAssaultMachineAiTests`, four, five mutations, all caught: deleting the strike
+npc, swapping the two strike ids, dropping the walker route from the escorts, cutting a pod's group
+short, and reverting the harness's skill-file merge.
+
+**Still missing.**
+- **231161 and 231166 are bound to this class and do nothing.** Neither has a case in either switch, so
+  they place no strike npc and no escort. Retail agrees: both are plain `Monster` with no pattern at
+  all, so the binding is inert rather than wrong. Worth unbinding, but it changes nothing to leave.
+- **230783 has no spawn anywhere in this port.** Retail has it on `IDF5_TD_Wave4_Boss1`, the same
+  pattern as 231143, which suggests one of the two posts places it instead. Which one is not something
+  the pattern dump can answer.
+- **The instance's wave clock is not pinned.** There is no harness for instance handlers, so the
+  tower-one correction above is asserted by reading only.
