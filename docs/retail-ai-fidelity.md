@@ -26415,3 +26415,55 @@ target — all three are the same skill index and all three are blocked. The cor
 leaves (`BLF4_DramataThunderDeath_57_n`, twelve seconds on a path) is absent, as is the boss's own
 wake-up: `set_condition_spawn_variable DRAMATA_ENTERABLE`, a broadcast of 7021 at thirty metres, and a
 thunder-control npc walked in on `C3_MobPath_BLF4_Dramata_58_Al`.
+
+## The other call family: 807 npcs, and the estimate said eight
+
+Sematariux's shields came out of an unimplemented `on_message` pair, so the obvious next move was to
+find the rest. `AbyssGuardCallAI` already named one: it ported message **23000** and left **30002**
+for a later pass, recording it as *"sent by fifty-three patterns and answered by four, of which our
+data spawns eight npcs"*.
+
+**That estimate was wrong by two orders of magnitude in npc terms.** Measured with the new
+`tools/client-extract/audit_npc_call_family.py`:
+
+> **88 retail patterns use 30001/30002/30003, and 807 of our npcs run one of them.**
+
+| our AI | npcs |
+|---|---|
+| `artifact_protector` | 487 |
+| `base_protector` | 158 |
+| `aggressive` | 96 |
+| `simple_abyssguard` | 38 |
+| none at all | 12 |
+| `fortress_protector` | 10 |
+| `abyss_guard_call` | 4 |
+
+**And it is a different mechanic, not a variant of the one already ported.** The difference is the hate
+value, and it changes what the message *means*:
+
+- **23000** names a **player** and carries `point_to_add=1`. One point is enough to enter combat and no
+  more; the raid's own threat decides the rest.
+- **30001** and **30002** name the **sender** and carry `points_to_add=1000000`. That is not a nudge but
+  a command — whoever hears it drops what it is doing and goes for the caller.
+
+They are npc-versus-npc. An artifact guard shouts **30002** and the fortress killer comes and kills it;
+the killer shouts **30001** as it wakes and every guard within fifty metres turns on the killer;
+**30003** is a plain despawn order. Between them, that is how a fortress changes hands without a player
+touching either side. **None of the three is implemented anywhere in this port**, so at present it
+simply does not happen.
+
+**No behaviour changed this commit.** What changed is that the number is now a tool rather than a
+sentence somebody wrote down, and the sentence has been corrected in place. A stale estimate in a
+comment is how a mechanic this size gets scheduled as an afternoon's work.
+
+**What porting it would take, so the next pass starts from something.** The senders and answerers do not
+line up with our AI classes: the 487 artifact protectors and 158 base protectors are the bulk of it and
+sit on two classes that know nothing about messages, while the killers that answer are split across
+`abyss_guard_call`, plain `aggressive`, and twelve npcs with no AI attribute at all. So this is not one
+listener added to one class — it is a message pair that has to reach four classes plus the unbound
+npcs, and the unbound ones need an AI name before they can hear anything. The ranges differ too: the
+village chiefs broadcast 30002 at **twenty** metres where everything else uses fifty.
+
+**Also worth carrying forward:** the full-suite runs in this commit were invoked so that a failing test
+name is printed, after last commit's single unexplained failure was captured at quiet verbosity and
+lost. Three runs, all clean, and this time a failure would have named itself.

@@ -51,10 +51,20 @@ namespace Aion.GameServer.Handlers.AI;
 /// NPC.
 /// </para>
 /// <para>
-/// Message <c>30002</c> — the same pair again but about the <em>sender</em> rather than its target, so
-/// one guard sets another on the thing attacking it — is sent by fifty-three patterns and answered by
-/// four, of which our data spawns eight npcs. Left for its own pass, with the count recorded so it is
-/// not mistaken for the same size as this.
+/// <b>There is a second call family, and this estimate of it was badly wrong.</b> It used to read
+/// "message 30002 ... sent by fifty-three patterns and answered by four, of which our data spawns
+/// eight npcs". Measured with <c>tools/client-extract/audit_npc_call_family.py</c>: <b>88 patterns and
+/// 807 of our npcs</b> — 487 artifact protectors, 158 base protectors, 38 abyss guards and 96 on plain
+/// <c>aggressive</c>.
+/// </para>
+/// <para>
+/// It is a different mechanic from this one, not a variant. <c>30001</c> and <c>30002</c> name the
+/// <em>sender</em> and carry <c>points_to_add=1000000</c>, where <c>23000</c> names a player and
+/// carries 1. A million is not a nudge — whoever hears it drops what it is doing and goes for the
+/// caller, because these are npc-versus-npc: an artifact guard shouts 30002 and the fortress killer
+/// comes for it; the killer shouts 30001 on waking and every guard within fifty metres turns on the
+/// killer. <c>30003</c> is a despawn order. <b>None of the three is implemented anywhere in this
+/// port</b>, so a fortress currently changes hands without any of it happening.
 /// </para>
 /// </remarks>
 [AIName("abyss_guard_call")]
