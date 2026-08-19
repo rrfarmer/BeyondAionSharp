@@ -33,6 +33,20 @@ BLANK_NAME_ID = "350000"  # the "no name" string; marks invisible control/FX NPC
 
 
 def read_text(path: pathlib.Path) -> str:
+    """Read a client XML file, which may be UTF-16.
+
+    **Always use this for the pattern files. Never `path.read_text(encoding="utf-8")`.**
+
+    Most of `Map/XML` is UTF-16 with a BOM. Decoding one of those as UTF-8 does not raise -- with
+    `errors="replace"` it yields a string of roughly the right length made of replacement characters,
+    so every regex over it matches nothing and the scan reports **zero hits and no error**. That reads
+    exactly like good news.
+
+    It has already cost one wrong conclusion: an ad-hoc sweep for `live_time` on trap spawns found
+    nothing this way and was written up as "retail does not give traps a lifetime". Decoded properly,
+    73 trap npcs are pattern-spawned and those commands carry 100 and 600 seconds. If a sweep of these
+    files comes back empty, suspect the decoding before believing the result.
+    """
     raw = path.read_bytes()
     if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
         return raw.decode("utf-16", "replace")

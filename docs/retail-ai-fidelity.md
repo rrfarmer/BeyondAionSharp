@@ -26016,3 +26016,62 @@ retail than an endless train, but it is not the whole rung, and it is the first 
 noting because the same call appears in his `on_enter_attack_state` and `on_die` as well. His four
 casts (two on entering combat, one per health band on the 8000 timer) remain absent behind the skill
 index.
+
+## Correcting the correction: the trap sweep read nothing at all
+
+Two entries ago this document withdrew the claim that *"retail expires an untriggered trap after 100 or
+600 seconds"*, on the strength of a sweep that found **not one** retail spawn command naming a trap npc.
+
+**That sweep was reading garbage.** Most of the client's `Map/XML` is UTF-16 with a BOM. Decoding one
+of those files as UTF-8 does not raise — with `errors="replace"` it returns a string of roughly the
+right length made entirely of replacement characters, so every regex over it matches nothing and the
+scan reports zero hits and no error. The 271,000-character file it "searched" contained zero instances
+of `npc_nameid` because it contained zero instances of anything.
+
+Decoded with the project's own `read_text`, the same sweep says:
+
+- **73 of the 370 trap npcs are spawned by a retail pattern.**
+- The `live_time` on those commands: `600` ×82, `100` ×67, `60` ×29, `15` ×16, `18` ×15, `50` ×7, and a
+  handful of others. **The original 100-and-600 figure was right.**
+
+**The retraction's conclusion survives its reasoning, for a different reason.** There is still no defect
+here, because the places that lay traps already pass a lifetime: `GuardReinforcements` carries retail's
+value in each `Band` (296465's bands say 18, 207651's say 100 — both match), `GatewayGuardAI` lays with
+`TrapLife = 60`, and `SummonTrapEffect` takes the skill's own duration. `TrapNpcAI` having no standing
+clock of its own is correct; the clock belongs to whoever laid it.
+
+**One small disagreement is left, and it is not solid enough to act on.** `GatewayGuardAI` uses a flat
+60 for all eight traps. Retail's commands give the Asmodian four 60 everywhere, but the Elyos four come
+back mixed — snare, throw and mine each appear with both 50 and 60, and the explosion trap appears twice
+and says 50 both times. That split is per call site and most likely per guard tier, which this class
+does not distinguish. Changing one trap to 50 on two observations while its three siblings show both
+values would be guessing; it is written down instead.
+
+**The tooling is not affected.** Every committed tool under `tools/client-extract` reads patterns
+through `read_text`; the bug was in two ad-hoc scripts written for that one sweep. `read_text` now
+carries a docstring saying plainly that a UTF-8 read of these files returns replacement characters and
+that an empty sweep should be suspected before it is believed.
+
+**What this cost, and the pattern it belongs to.** A silent zero looks like a finding. This is the third
+time in this stretch of work that a measurement returned nothing and the nothing was the bug rather than
+the answer — twice in audit scans whose regex could not match, once here in the file decoding. The habit
+that catches it is the same each time: before writing "there are none", check the scan finds *something*
+on a case known to exist.
+
+## And `set_condition_spawn_variable` is far bigger than last commit implied
+
+The same corrected sweep gives the real size of the conditional-spawn mechanism raised with Heiramune:
+
+> **12,446 uses, across 159 of the 242 pattern files, naming 2,121 distinct condition variables.**
+
+The heaviest users are the Abyss and fortress files (`Gab1` alone has 1,414), the seal and transform
+event patterns, and the Vritra advance-village pair. This is not a corner of the data — it is how retail
+drives a large part of world state: an npc bumps a named variable, and the spawn tables decide what
+appears, what disappears, and which stage a zone is in.
+
+**This port has no equivalent mechanism at all.** Every rung that only sets a condition variable is
+currently a no-op wherever it has been ported, and every conditional entry in the spawn tables it would
+drive is unreachable. That makes it, by a distance, the **largest single unmodelled retail mechanism**
+found so far — ahead of the skill index, which blocks individual casts rather than world state. Sizing
+what the 2,121 variables actually gate needs the client's spawn tables read alongside the patterns,
+which has not been done.
