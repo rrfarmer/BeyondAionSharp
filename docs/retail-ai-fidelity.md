@@ -23156,3 +23156,64 @@ chance of hiding from six runs — but the two known ones reproduced far more of
 
 Build clean. Summoning at any health fails the above-fifty pin; dropping the routes fails the route pin.
 **Three consecutive full-suite runs**: 2,178 passing (four new), 1 skipped.
+
+## Stormwing's band table was reversed, and hard mode sends fewer adds than normal
+
+Last commit listed hard mode's routes as the next thing here. **That entry was wrong**, and reading the
+hard pattern properly found something worse.
+
+### The correction to what I wrote last commit
+
+I recorded that `IDCTH_Rudra` uses sixteen `NPCPathPath_RudraWind_N` routes for its band spawns. **It
+does not.** Its band spawns use the same eight `C`-series routes as normal mode; the sixteen `_N` routes
+belong to a different branch entirely. The last entry was written from a grep of the file rather than
+from the branches, which is the mistake this log keeps recording about other people's work.
+
+### The lifetimes were reversed
+
+The class carried `BandLives = { 80, 45, 45, 30, 30, 30, 30 }` indexed by `Bands = { 95, 80, 65, 50, 35,
+20, 5 }`. The lifetimes were transcribed **in retail's branch order — p40 down to p34, which is 5% first
+and 95% last** — and then indexed by a band array running the other way.
+
+**So every band got the lifetime of its mirror.** The opening band's twisters stood eighty seconds
+instead of thirty; the last band's stood thirty instead of eighty.
+
+**The class's own remark stated retail's order correctly** — "p40 down to p34 carrying 80, 45, 45, 30,
+30, 30 and 30" — and the array applied it backwards. Reading the comment was not enough to catch it;
+nothing pinned the lifetimes at all, which is why it survived.
+
+### Hard mode is not "the same fight with more adds"
+
+It sends **fewer** per band, and holds them longer once the fight is past thirty-five per cent:
+
+| band | normal | hard |
+|---|---|---|
+| 95, 80, 65, 50 | 4 × 30s | **2 × 30s** |
+| 35, 20 | 4 × 30s | **3 × 45s** |
+| 5 | 4 × **120s** | 3 × 80s |
+
+The class sent four in both modes and distinguished them only by the escalation count. **Normal's last
+band is the real outlier**: four twisters standing a full two minutes, which no other band in either
+mode comes close to.
+
+### Three pins had to change with it
+
+Two asserted the flat four, and one asserted a standing total thirty seconds later — which under
+correct lifetimes measures the lifetime rather than the once-per-band guard it was written for. It now
+counts arrivals. **My own new lifetime pin was wrong twice before it was right**: `TickBandAt` advances
+ten seconds and the band fires on that tick, so the twisters are new when it returns, not ten seconds
+old.
+
+### Still to do
+
+- **Hard mode's two extra summon rungs**, which normal mode does not have: at 31-50 a bleed twister on
+  the current target (30s), and a root twister on a random attacker (5s) alongside the lightning.
+- **The sixteen `_N` routes**, used by a branch neither this class nor this log has yet read properly.
+- **The four remaining classes** with unported placements: `AbyssUndeadAI`, `KaligaTheUnjustAI`,
+  `CalindiFlamelordAI`, `YamennesSpawnGateAI`.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates.
+
+### Verification
+
+Build clean. Re-reversing the table fails four pins. **Three consecutive full-suite runs**: 2,179
+passing (one new), 1 skipped.

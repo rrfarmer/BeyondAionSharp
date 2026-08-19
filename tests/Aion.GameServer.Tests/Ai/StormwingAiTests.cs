@@ -64,8 +64,17 @@ public sealed class StormwingAiTests
 		Assert.Equal(MidnightWind, opener.SkillId);
 	}
 
+	/// <summary>
+	/// <b>Two twisters a band above thirty-five per cent</b>, once each — this is the hard variant.
+	/// </summary>
+	/// <remarks>
+	/// This pin asserted four, which was the class's old flat count for both modes. Retail gives hard
+	/// mode <i>fewer</i> per band than normal, not more: two in the top four bands and three in the
+	/// bottom three, against normal's four throughout. The harness boss is 216183, the hard one, which
+	/// is the variant the instance handler actually spawns.
+	/// </remarks>
 	[Fact]
-	public void SummonsFourTwistersOnEachHpBandExactlyOnce()
+	public void SummonsTwoTwistersOnEachUpperHpBandExactlyOnce()
 	{
 		using var harness = NewHarness();
 		Npc boss = SpawnBoss(harness);
@@ -82,15 +91,18 @@ public sealed class StormwingAiTests
 
 			TickBandAt(harness, boss, player, band);
 
-			Assert.Equal(sharp + 2, Count(harness, SharpTwister));
-			Assert.Equal(root + 2, Count(harness, RootTwister));
+			// Two per band up here: one sharp, one root, alternating from index zero.
+			Assert.Equal(sharp + 1, Count(harness, SharpTwister));
+			Assert.Equal(root + 1, Count(harness, RootTwister));
 			Assert.Contains(BossAiHarness.DrainQueuedSkills(boss), c => c.SkillId == ThreshingWind);
 		}
 
-		// A band already crossed must not fire again on a later tick.
-		int before = Count(harness, SharpTwister) + Count(harness, RootTwister);
-		harness.Clock.Advance(TimeSpan.FromSeconds(30));
-		Assert.Equal(before, Count(harness, SharpTwister) + Count(harness, RootTwister));
+		// A band already crossed must not fire again on a later tick. Counted as arrivals rather than
+		// as a standing total: the twisters now expire on retail's own thirty seconds, so a live count
+		// thirty seconds later measures the lifetime and not the guard.
+		BossAiHarness.Watched later = harness.WatchNew(
+			30, () => BossAiHarness.Rehate(boss, player), SharpTwister, RootTwister);
+		Assert.Equal(0, later.Total);
 	}
 
 	[Fact]
@@ -101,12 +113,13 @@ public sealed class StormwingAiTests
 		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
 		harness.Engage(boss, player);
 
-		// Band 0 (95) scatters to the four diagonals; band 1 (80) drops them on top of him.
+		// Band 0 (95) scatters to its diagonals; band 1 (80) drops them on top of him. Two per band in
+		// hard mode's upper four, so two distinct positions and then one more.
 		TickBandAt(harness, boss, player, 95);
 		var scattered = harness.LiveNpcs()
 			.Where(n => n.GetNpcId() is SharpTwister or RootTwister)
 			.Select(n => (n.GetX(), n.GetY())).Distinct().Count();
-		Assert.Equal(4, scattered);
+		Assert.Equal(2, scattered);
 
 		int before = harness.LiveNpcs().Count(n => n.GetNpcId() is SharpTwister or RootTwister);
 		TickBandAt(harness, boss, player, 80);
@@ -114,9 +127,9 @@ public sealed class StormwingAiTests
 			.Where(n => n.GetNpcId() is SharpTwister or RootTwister)
 			.Select(n => (n.GetX(), n.GetY())).Distinct().Count();
 
-		// Four more appeared, all sharing the boss's own point, so the distinct-position count
+		// Two more appeared, both sharing the boss's own point, so the distinct-position count
 		// grows by exactly one.
-		Assert.Equal(before + 4, harness.LiveNpcs().Count(n => n.GetNpcId() is SharpTwister or RootTwister));
+		Assert.Equal(before + 2, harness.LiveNpcs().Count(n => n.GetNpcId() is SharpTwister or RootTwister));
 		Assert.Equal(scattered + 1, stacked);
 	}
 
@@ -271,13 +284,46 @@ public sealed class StormwingAiTests
 		List<Npc> twisters = harness.LiveNpcs()
 			.Where(n => n.GetNpcId() == SharpTwister || n.GetNpcId() == RootTwister)
 			.ToList();
-		Assert.Equal(4, twisters.Count);
+		Assert.Equal(2, twisters.Count);
 
 		// The ninety-five band scatters, so it takes the wide set — and all four differ, which is what
 		// rules out every twister being handed the same route.
 		var routes = twisters.Select(n => n.GetSpawn().GetWalkerId()).ToList();
 		Assert.All(routes, r => Assert.StartsWith("NPCPathPath_RudraWindC", r));
 		Assert.All(routes, r => Assert.DoesNotContain("_1", r));
-		Assert.Equal(4, routes.Distinct().Count());
+		Assert.Equal(2, routes.Distinct().Count());
+	}
+
+	/// <summary>
+	/// <b>The lifetimes were reversed</b>: the opening band held its twisters for eighty seconds and
+	/// the last for thirty, when retail says the opposite.
+	/// </summary>
+	/// <remarks>
+	/// They were transcribed in retail's branch order — p40 down to p34, which is 5% first — and then
+	/// indexed by a band array running 95% first. The class's own remark stated the order correctly and
+	/// the array applied it backwards, so <b>reading the comment was not enough to catch this</b>;
+	/// nothing pinned the lifetimes at all until now.
+	/// </remarks>
+	[Fact]
+	public void TheOpeningBandsTwistersLeaveAtThirtySeconds()
+	{
+		using var harness = NewHarness();
+		Npc boss = SpawnBoss(harness);
+		Player player = harness.SpawnPlayer(560f, 1372f, 224.795f);
+		harness.Engage(boss, player);
+
+		TickBandAt(harness, boss, player, 94);
+		var opening = harness.LiveNpcs()
+			.Where(n => n.GetNpcId() is SharpTwister or RootTwister).ToHashSet();
+		Assert.NotEmpty(opening);
+
+		// TickBandAt advances ten seconds and the band fires on that tick, so the twisters are new here.
+		// Twenty-eight seconds on they are all still standing...
+		harness.Clock.Advance(TimeSpan.FromSeconds(28));
+		Assert.All(opening, tw => Assert.True(tw.IsSpawned(), "gone before thirty seconds"));
+
+		// ...and a little past thirty they are gone. Under the reversed table they stood for eighty.
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+		Assert.All(opening, tw => Assert.False(tw.IsSpawned(), "still standing past thirty seconds"));
 	}
 }

@@ -53,17 +53,32 @@ public class StormwingAI : AggressiveNpcAI
     private static readonly int[] Bands = { 95, 80, 65, 50, 35, 20, 5 };
 
     /// <summary>
-    /// How long each band'''s twisters stand, in retail'''s own order: <c>IDCTH_Rudra</c> writes seven
-    /// twister branches at p40 down to p34 carrying 80, 45, 45, 30, 30, 30 and 30 seconds.
+    /// How many twisters each band sends and how long they stand, per mode, in band order.
     /// </summary>
     /// <remarks>
-    /// <b>Seven branches against our seven bands, and four elite branches against our four escalation
-    /// waves</b>, which is what makes this a mapping rather than a guess. Until now every twister was
-    /// spawned with no lifetime at all and stood for the rest of the fight, so a long pull ended with
-    /// dozens of them: <b>the mechanic was strictly harsher than retail'''s and got harsher the longer
-    /// the fight ran.</b>
+    /// <b>These were reversed.</b> The lifetimes were transcribed in retail's own branch order -- p40
+    /// down to p34, which is 5% first and 95% last -- and then indexed by <see cref="Bands"/>, which
+    /// runs 95% first. So the opening band got the lifetime of the last and the last got the opening's:
+    /// the twisters that should stand thirty seconds stood eighty, and the ones meant to stand eighty
+    /// stood thirty. <b>The class's own remark stated the order correctly and the array applied it
+    /// backwards</b>, which is why reading the comment was not enough to catch it.
+    /// <para>
+    /// <b>And the two modes differ in count and lifetime both.</b> Hard mode is not "the same fight with
+    /// more adds" -- it sends <i>fewer</i> per band, two in the top four and three in the bottom three
+    /// against normal's flat four, and it holds them longer once past thirty-five per cent. Normal's
+    /// last band is the outlier in the other direction: four twisters standing a full two minutes.
+    /// </para>
     /// </remarks>
-    private static readonly int[] BandLives = { 80, 45, 45, 30, 30, 30, 30 };
+    private static readonly (int Count, int Life)[] NormalBands =
+    {
+        (4, 30), (4, 30), (4, 30), (4, 30), (4, 30), (4, 30), (4, 120),
+    };
+
+    private static readonly (int Count, int Life)[] HardBands =
+    {
+        (2, 30), (2, 30), (2, 30), (2, 30), (3, 45), (3, 45), (3, 80),
+    };
+
 
     /// <summary>Retail p10 to p7, all fifteen seconds.</summary>
     private const int EscalationLife = 15;
@@ -213,11 +228,12 @@ public class StormwingAI : AggressiveNpcAI
         // Bands alternate between scattering the twisters and dropping them on top of him.
         bool scatter = band % 2 == 0;
         string[] paths = scatter ? WidePaths : TightPaths;
-        for (int i = 0; i < 4; i++)
+        (int count, int life) = (IsHardMode ? HardBands : NormalBands)[band];
+        for (int i = 0; i < count; i++)
         {
             int npcId = i % 2 == 0 ? SharpTwister : RootTwister;
             (float dx, float dy) = scatter ? Diagonals[i] : (0f, 0f);
-            SpawnNear(npcId, dx, dy, BandLives[band], paths[i]);
+            SpawnNear(npcId, dx, dy, life, paths[i]);
         }
     }
 
