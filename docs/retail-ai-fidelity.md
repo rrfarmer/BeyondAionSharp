@@ -27512,3 +27512,49 @@ thing it is pinning tests nothing, and that mistake has been made twice in this 
 than along it. And the 252 other resolved routes, each of which needs the same two decisions — a
 route id, and which npc on the pattern takes it. This one took a commit because it was understood
 first; the rest are not a batch job for the same reason.
+
+## Checking the routes we already ship against the client's
+
+With a world resolvable to a map id, a question that was never askable became easy: **are the walker
+routes this port already ships the routes the client has?** `audit_walker_fidelity.py` answers it.
+
+> **418 of our templates sit in maps the client covers. 350 of them — 83% — begin on a point of a
+> client route.**
+
+That is good news and had never been checked: our walker data is client-derived and broadly faithful.
+
+**The metric had to be fixed before it was worth anything.** Comparing our first point to the client's
+first point flagged 91 routes. Comparing it to *any* point of each candidate flagged 68 — and the
+twenty-three-route difference was entirely the same loop entered at a different place. A patrol is a
+circle; where our copy starts going round it means nothing. The first version would have sent somebody to
+re-derive two dozen correct routes.
+
+**The 68 misses are not scattered, and that is the finding.**
+
+| map | unmatched |
+|---|---|
+| 300100000 Steel Rake | 31 |
+| 400050000 GAb1_03 | 27 |
+| 301230000 Illuminary Obelisk | 7 |
+| three others | 1 each |
+
+**And the GAb1_03 set is a different order of wrong.** Its routes — named `10X11_throne_room`,
+`10X11_western_corridor`, `10X11_outer_upper` — sit **1,000 to 1,118 metres** from the nearest point of
+anything the client defines in that world. Everything else in the audit misses by three to twenty metres,
+which is a route drawn slightly differently. A kilometre is a different room, or a different map: either
+our `cName` join is wrong for GAb1_03, or those routes were authored for somewhere else and filed here.
+Twenty-seven of them, all named as though they belong together.
+
+The Steel Rake and Obelisk misses are the ordinary kind — three to twenty metres, one route drawn by
+hand where the client drew another.
+
+**A miss is not automatically a defect**, and the tool says so: our route may predate this client dump or
+be deliberately hand-made. It reports the distance precisely so that the difference between "drawn
+slightly differently" and "a kilometre away" is visible rather than averaged into a percentage.
+
+**Still missing.** The GAb1_03 kilometre, which is the one row here worth opening next and needs the
+cName for that world checked against its actual geometry rather than its name. And Muragan still walks to
+his door in a straight line: binding his route needs the walker controller to signal arrival at a
+waypoint index, which it does not — it loops from the last step back to the first and tells the AI
+nothing, so "despawn at the sixth point" has nowhere to hang. That is engine work, not data work, and it
+is the last thing standing between the imported route and the encounter using it.
