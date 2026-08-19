@@ -27115,3 +27115,43 @@ creator — a different mechanism reaching a similar place, and one that cannot 
 weighting. And the buff npc's own ladder: retail picks one of several wake-up shouts at `percent=30`,
 each setting a different pair of flag vars, so **which greeting it gives decides which buffs it then
 offers**. This port sends one message and offers the same thing every time.
+
+## Ahserion's strike pod dropped its wave at its own feet
+
+Another sweep row, and a small one that is worth having because of how it was found.
+
+Retail drops both assault pods' troopers with `SPAWN_LOCATION_RELATIVE`:
+
+| pod | retail offsets |
+|---|---|
+| strike (297352) | `x=3 y=-3 z=3`, `z=3`, `x=3 y=3 z=3` |
+| TBM (297353) | `x=-2 y=2`, `x=2 y=-2`, `x=-2 y=-2 z=2` |
+
+**The TBM pod was already exactly right**, down to the one trooper of its three that carries a z at
+all. The strike pod's three were at **0, 0.1 and 0** — its wave arrived at the pod's feet rather than
+three metres above it.
+
+**The TBM pod being right is what made the strike pod's zeroes worth checking.** Had both been zero
+they would have read as this port's convention for "no offset given"; one right and one wrong is a
+mistake in one of them. It is pinned here as the control, so a fix that lifted every wave would break
+it.
+
+**Pins** — two in `AhserionAssaultPodTests`, three mutations, all caught.
+
+**Two survived first, and it is the same self-referential shape as the Bakarma count pin two commits
+ago.** The z assertion read `200f + AhserionSkyAssaulterAI.StrikeWaveUp`, putting the constant under
+test on both sides of the comparison — so setting it to zero, or to eight, passed. Written out as
+`203f` it catches both. **That is now twice in three commits**; the rule is that a pin must never
+compute its expectation from the thing it is pinning, and it is easy to violate because the constant is
+right there and reads as documentation.
+
+**Deliberately left alone, and already recorded in the class.** Retail's rung is atomic — spawn the pod,
+cast, land three troopers, despawn the pod and itself, all on `on_wake_up` — where this port staggers
+them over 400ms, 1000ms and 4000ms. And the troopers' retail `live_time` is **7200 seconds**, which the
+class declines to apply and says why: `AhserionAggressiveNpcAI` already removes them after eight
+minutes, and loosening that fifteenfold in the name of fidelity would make the encounter worse.
+
+**Still missing.** `CustomInstanceBossAI` (200 against 5000 and 7000) and `CustomInstanceDominatorAI`
+(30000 against a six-timer chain) are the next two rows, and both need a look at whether their npcs are
+retail encounters at all before their numbers are treated as drift — the class names suggest a custom
+feature that happens to share a binding.
