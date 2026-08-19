@@ -32,6 +32,15 @@ It is not automatically a defect. Our route may predate the client dump, belong 
 does not cover, or be deliberately hand-made. The tool reports distance so the size of the disagreement
 is visible: a route eight metres out is a different question from one two hundred metres out.
 
+**And a miss says nothing at all where the client's own set is thin.** GAb1_03 looked like the worst row
+in this audit -- 27 routes, 1,000 to 1,118 metres from anything. It is not a defect and the map id is not
+wrong: the client defines **4 routes** in that world against our 27, our routes cluster in a 284-unit box
+where the client's spread across the whole 2,000-unit map, and our spawns for the map cover the same
+extent the client's routes do. Ours are a hand-authored set for a fortress interior the client's file
+simply does not describe. So the count of client routes per map is printed next to the misses, and maps
+with fewer than ten are marked -- a large miss count against a four-route reference is an artefact of the
+reference, not a finding.
+
 Usage:  python audit_walker_fidelity.py [--worlds DIR] [--list]
 """
 import argparse
@@ -102,8 +111,13 @@ def main():
     print(f"{total} walker_templates sit in maps the client covers")
     print(f"{matched} begin on a point of a client route ({100 * matched // max(1, total)}%)")
     print(f"{len(misses)} do not\n")
+    print("unmatched by map, with how much of that map the client actually covers:")
     for map_id, count in collections.Counter(m[0] for m in misses).most_common():
-        print(f"  map {map_id}: {count} unmatched")
+        routes_here = len(by_map.get(map_id, []))
+        points_here = sum(len(pts) for _, pts in by_map.get(map_id, []))
+        thin = "   <-- client set is thin; a miss says little" if routes_here < 10 else ""
+        print(f"  map {map_id}: {count} unmatched   client has {routes_here} routes"
+              f" / {points_here} points{thin}")
     if args.list:
         print()
         for map_id, route, distance, nearest, steps in sorted(misses, key=lambda m: -m[2]):

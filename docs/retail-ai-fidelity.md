@@ -27558,3 +27558,47 @@ his door in a straight line: binding his route needs the walker controller to si
 waypoint index, which it does not — it loops from the last step back to the first and tells the AI
 nothing, so "despawn at the sixth point" has nowhere to hang. That is engine work, not data work, and it
 is the last thing standing between the imported route and the encounter using it.
+
+## The GAb1_03 kilometre was the reference being thin, not our data being wrong
+
+Last commit called this "the one row here worth opening next": 27 routes in map 400050000 sitting **1,000
+to 1,118 metres** from anything the client defines, when every other miss in the audit was three to twenty
+metres out. A kilometre is a different room or a different map, so either the `cName` join was wrong for
+that world or the routes were filed under it by mistake.
+
+**Neither. The join is right and the routes are fine.** Three checks, in the order that settled it:
+
+* **The map is what it says.** `<map id="400050000" name="Atanatos" cName="Gab1_03" world_size="2048"/>`,
+  and `Map/Worlds/gab1_03/` is where the client's routes came from. No ambiguity to resolve.
+* **The extents agree.** Our spawns for the map run x 55..1981, y 67..1984; the client's GAb1_03 routes
+  run x 187..1865, y 183..1859. Two files that have never met describe the same 2,048-unit world. Had the
+  join been wrong these would not overlap at all — that was the test.
+* **Our routes are a 284-unit box at the centre.** x 882..1166, y 882..1166, in a map whose middle is
+  1024. Named `10X11_throne_room`, `10X11_western_corridor`, `10X11_outer_upper`. That is the keep.
+
+**And the client's four routes are `NPCPathv01_guard_path02` and its siblings — exterior guard walks.**
+The client file for this world defines **4 routes and 36 points**. Ours defines 27 routes and 629 points,
+**all 27 bound to live spawns**. The client simply does not describe the fortress interior; the kilometre
+is the distance from the keep to the perimeter, measured against a reference that stops at the perimeter.
+
+**So the audit was reporting a true number and a false impression, and that is the fix.** It now prints
+how much of each map the client actually covers next to the miss count, and marks any map with fewer than
+ten client routes:
+
+```
+  map 300100000: 31 unmatched   client has 97 routes / 889 points
+  map 400050000: 27 unmatched   client has 4 routes / 36 points   <-- client set is thin; a miss says little
+```
+
+Twenty-seven misses against a 97-route reference is a finding. Twenty-seven against a 4-route reference is
+an artefact of the reference. The two rows looked identical before and sorted next to each other, which is
+how the second one got promoted to "worth opening next" — a percentage with no denominator beside it.
+
+**No behaviour changed and none should have.** This commit removes a false lead and stops it being
+re-opened; the docstring records the evidence so the next reader does not re-derive it.
+
+**Still missing.** The Steel Rake 31 are now the only concentration left worth looking at, and they are
+the real kind — a 97-route client reference against 31 of ours that begin somewhere else. Muragan's
+imported route is still unbound, waiting on the walker controller to raise arrival at a waypoint index.
+And the 252 other resolved routes, the 37 route-holding worlds with no `cName` match, and the 182
+referenced pathnames with no definition, all unchanged.
