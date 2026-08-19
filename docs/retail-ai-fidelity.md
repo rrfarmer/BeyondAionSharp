@@ -22947,3 +22947,70 @@ small one matching its pattern's own `spawn_range`. Miladi was the only misread.
 
 Build clean. Both Xasta mutations go red; the Miladi mutation goes red every run. Full suite **2,168
 passing** (three new), 1 skipped.
+
+## Sweeping the misread, and the guard nobody could express
+
+Last pass found that Miladi's class read retail's `valid_distance` as its `spawn_range`. The obvious
+question is whether that happened anywhere else. **It did not** — established mechanically rather than by
+eyeballing.
+
+### The sweep
+
+The misread has a fingerprint: **`spawn_range=0` with a non-zero `valid_distance`**, the pair most easily
+confused because one of them is the only number a reader sees. Across the 5.8 dump that is **460 spawn
+ops in 158 patterns**; **22 of those patterns are ported here**. Every call site in all 22 was checked
+against the op it translates, matched by npc id rather than by name.
+
+**Result: Miladi was the only one.** Padmarashka's `Reach = 150f` and Ragnarok's `Reach = 100f` are
+already in `SpawnOnEachTarget`'s valid-distance slot and correct; every other range argument is a small
+number matching its own pattern's `spawn_range`. The op list is kept at
+`tools/client-extract/out/valid_distance_ops.tsv` so the next class can be checked against it before it
+is written rather than after.
+
+### But the guard itself was missing everywhere
+
+The sweep turned up the larger fact. **`valid_distance` was not modelled at all** on the single-target
+placements — every one of them took `spawn_range` and dropped the eligibility radius on the floor. So a
+boss whose retail op says "only if your quarry is within fifty metres" placed the add regardless.
+
+`Do.SpawnOnTarget` and `Do.SpawnOnAttacker` now both take it, and **seven ported classes were given the
+number retail specifies**, each verified by resolving the op's `npc_nameid` to the id the class already
+uses:
+
+| class | add | valid distance |
+|---|---|---|
+| `CaptainXastaAI` | Xasta's trap | 50 |
+| `DrakanMageAI` | anti-magic barrier | 50 |
+| `SilikorGuardAI` | caster summon (×3) | 50 |
+| `UdasTempleBossesAI` | shatter | 100 |
+| `BollvigBlackheartAI` | cruel vampire | 50 |
+| `DestroyerKunaxAI` | Kunax's wrath | 50 |
+| `RagnarokAI` | parasite on the tank | 100 |
+
+**One naming collision was worth keeping apart.** Bollvig already had a `VampireReach = 50f` — the range
+of his bats' shout. The new constant is `VampireValidDistance`, not a reuse: two retail numbers that
+happen to coincide, and folding them together is exactly how the original confusion started.
+
+**Pinned, because an unpinned guard is indistinguishable from no guard** — otherwise the fifty is a
+constant nothing ever reads back. The pin puts Bollvig's quarry eighty metres out and asserts no vampire;
+setting the guard to zero turns it red.
+
+### Six classes do not port the op at all
+
+`AbyssUndeadAI`, `KaligaTheUnjustAI`, `StormwingAI`, `CalindiFlamelordAI`, `YamennesAI` /
+`UnstableYamennesAI` and `YamennesSpawnGateAI` cite patterns carrying a risky op but translate no
+placement for it — the spawn is simply not ported, which is a different gap and is listed below rather
+than papered over.
+
+### Still to do
+
+- **The unported placements in those six classes** — including Yamennes' `IDCatacombs_Hard_Buff` at a
+  three-hundred-metre valid distance, the widest in the dump.
+- **`valid_distance` on the remaining ops**: `SpawnOnKiller`, `SpawnOnSeen` and the multi-target
+  placements' *other* uses still ignore it.
+- The other 569 fights; 880 route spawns; 12,000 unbound templates; Ariana 799668, who is spawned by
+  nothing.
+
+### Verification
+
+Build clean. Removing the new guard turns its pin red. Full suite **2,169 passing** (one new), 1 skipped.

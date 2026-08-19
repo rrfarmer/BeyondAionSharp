@@ -40,6 +40,8 @@ public class DestroyerKunaxAI : PatternAi
     private const int AetherPrison = 21558;         // index 7
 
     private const int KunaxsWrath = 855009;
+    /// <summary>Retail's <c>valid_distance</c> on his wrath.</summary>
+    private const float WrathReach = 50f;
 
     /// <summary>The gap-closer he uses at range, driven by intention rather than by the chain.</summary>
     private const int AggressiveShot = 21550;
@@ -69,7 +71,7 @@ public class DestroyerKunaxAI : PatternAi
             Step(5, Do.SkillOnTarget(AerialConfinement)),
             Step(6, Do.SkillOnTarget(BloodyCrash)),
             Step(7, Do.SkillOnTarget(AetherPrison),
-                Do.SpawnOnTarget(KunaxsWrath, spawnId: 1))),
+                Do.SpawnOnTarget(KunaxsWrath, spawnId: 1, validDistance: WrathReach))),
     };
 
     public DestroyerKunaxAI(Npc owner)

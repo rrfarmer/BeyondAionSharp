@@ -57,6 +57,16 @@ public class BollvigBlackheartAI : PatternAi
 
     /// <summary><c>BLF3_NM_VampireSumVam_50_Ae</c> — cruel vampire.</summary>
     private const int CruelVampire = 280804;
+    /// <summary>
+    /// Retail's <c>valid_distance</c> on the vampire spawn — how far his target may be and still get one.
+    /// </summary>
+    /// <remarks>
+    /// <b>Named apart from <c>VampireReach</c> although both are fifty.</b> That one is the range of the
+    /// bats' shout; this one is an eligibility radius on a spawn. Two retail numbers that happen to
+    /// coincide, and folding them together is how <c>spawn_range</c> and <c>valid_distance</c> came to be
+    /// confused in the first place.
+    /// </remarks>
+    private const float VampireValidDistance = 50f;
 
     /// <summary>Retail's <c>SPAWN_ID_1</c> and <c>SPAWN_ID_2</c>: the bats and the vampires.</summary>
     private const int Bats = 1;
@@ -108,7 +118,8 @@ public class BollvigBlackheartAI : PatternAi
 
             Branch(11, "21-40 vampire", [When.Timer(5), When.HpBetween(21, 40)],
                 Do.ArmTimer(5, 35000),
-                Do.SpawnOnTarget(CruelVampire, Vampires, count: 1, liveSeconds: VampireLife)),
+                Do.SpawnOnTarget(CruelVampire, Vampires, count: 1, liveSeconds: VampireLife,
+                    validDistance: VampireValidDistance)),
 
             Branch(10, "21-40 opens", [When.Timer(0), When.HpBetween(21, 40), When.FirstTime(Below40)],
                 Do.ArmTimer(5, 17000),

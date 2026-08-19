@@ -264,4 +264,34 @@ public sealed class BollvigBlackheartAiTests
 
 		Assert.Equal(1, Count(harness, CruelVampire));
 	}
+
+	/// <summary>
+	/// <b>A quarry beyond fifty metres gets no vampire.</b> Retail's <c>valid_distance</c>.
+	/// </summary>
+	/// <remarks>
+	/// <b>The engine had no way to say this until now.</b> Every spawn placement took retail's
+	/// <c>spawn_range</c> — the scatter around the target — and ignored <c>valid_distance</c>, the
+	/// radius around the caster inside which a target is eligible at all. 460 spawn ops across the 5.8
+	/// dump carry a <c>valid_distance</c> with a zero <c>spawn_range</c>, which is the pair most easily
+	/// confused, and confusing them is what put Miladi's succubi in the wrong place for four passes.
+	/// <para>
+	/// Pinned here because <b>an unpinned guard is indistinguishable from no guard</b>: the fifty is
+	/// otherwise just a number in a constant that nothing ever reads back.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AQuarryBeyondFiftyMetresGetsNoVampire()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Bollvig, 1000f, 2800f, 236f);
+
+		// Eighty metres out — well past retail's fifty, and still inside the harness map.
+		Player distant = harness.SpawnPlayer(1080f, 2800f, 236f);
+		harness.Engage(boss, distant);
+
+		BossAiHarness.SetExactPercent(boss, 30);
+		Advance(harness, boss, distant, 60);
+
+		Assert.Equal(0, Count(harness, CruelVampire));
+	}
 }

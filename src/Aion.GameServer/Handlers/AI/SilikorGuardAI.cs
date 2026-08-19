@@ -63,6 +63,8 @@ public class SilikorGuardAI : PatternAi
 
     /// <summary><c>IDLF2A_HolyServantSum_CasterSum_50_An</c> — what the caster drops on people.</summary>
     private const int CasterSummon = 281025;
+    /// <summary>Retail's <c>valid_distance</c> on each of the three summons.</summary>
+    private const float SummonReach = 50f;
 
     /// <summary>Retail's <c>SPAWN_ID_1</c> on both the marker and the summon.</summary>
     private const int Mine = 1;
@@ -151,21 +153,24 @@ public class SilikorGuardAI : PatternAi
 
             Branch(7, "three in four", [When.Chance(75), When.Timer(Low)],
                 Do.ArmTimer(Low, 10000),
-                Do.SpawnOnAttacker(AggroTarget.RANDOM, CasterSummon, Mine, liveSeconds: SummonLife)),
+                Do.SpawnOnAttacker(AggroTarget.RANDOM, CasterSummon, Mine, liveSeconds: SummonLife,
+                    validDistance: SummonReach)),
 
             Branch(6, "", [When.Timer(Low)],
                 Do.ArmTimer(Low, 10000)),
 
             Branch(5, "one in two", [When.Chance(50), When.Timer(Mid), When.HpBetween(31, 100)],
                 Do.ArmTimer(Mid, 10000),
-                Do.SpawnOnAttacker(AggroTarget.RANDOM, CasterSummon, Mine, liveSeconds: SummonLife)),
+                Do.SpawnOnAttacker(AggroTarget.RANDOM, CasterSummon, Mine, liveSeconds: SummonLife,
+                    validDistance: SummonReach)),
 
             Branch(4, "", [When.Timer(Mid), When.HpBetween(31, 100)],
                 Do.ArmTimer(Mid, 10000)),
 
             Branch(3, "one in four", [When.Chance(25), When.Timer(High), When.HpBetween(76, 100)],
                 Do.ArmTimer(High, 15000),
-                Do.SpawnOnAttacker(AggroTarget.RANDOM, CasterSummon, Mine, liveSeconds: SummonLife)),
+                Do.SpawnOnAttacker(AggroTarget.RANDOM, CasterSummon, Mine, liveSeconds: SummonLife,
+                    validDistance: SummonReach)),
 
             Branch(2, "", [When.Timer(High), When.HpBetween(76, 100)],
                 Do.ArmTimer(High, 15000)),

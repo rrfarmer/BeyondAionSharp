@@ -125,6 +125,8 @@ public class CaptainXastaAI : PatternAi
 
     /// <summary><c>IDYun_Rasta_Trap</c> — the trap the second form drops on one random attacker.</summary>
     private const int XastasTrap = 282444;
+    /// <summary>Retail's <c>valid_distance</c> on the trap: a quarry further off gets none.</summary>
+    private const float TrapReach = 50f;
 
     /// <summary>Retail's <c>SPAWN_ID_1</c> on the second form.</summary>
     private const int Traps = 1;
@@ -178,7 +180,7 @@ public class CaptainXastaAI : PatternAi
         OnBattleTimer = Of(
             Branch(1, "Spawn Trap", [When.Timer(0)],
                 Do.SpawnOnAttacker(AggroTarget.RANDOM, XastasTrap, Traps,
-                    liveSeconds: TrapLife, attackHate: TrapHate))),
+                    liveSeconds: TrapLife, attackHate: TrapHate, validDistance: TrapReach))),
 
         OnMessage = Of(
             Branch(3, "Reset Timer", [When.Message(TrapGone)],

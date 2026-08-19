@@ -90,7 +90,8 @@ public class RagnarokAI : PatternAi
 
     /// <summary>Five parasites on whoever he is fighting.</summary>
     private static PatternAction OnTheTank(int group, int hate) =>
-        Do.SpawnOnTarget(Parasite, group, count: OnTankCount, liveSeconds: AddLife, attackHate: hate);
+        Do.SpawnOnTarget(Parasite, group, count: OnTankCount, liveSeconds: AddLife, attackHate: hate,
+            validDistance: Reach);
 
     /// <summary>And one on everybody else, up to retail's cap.</summary>
     private static PatternAction OnEveryone(int group) =>

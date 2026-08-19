@@ -519,8 +519,8 @@ public static class Do
     /// leave at 0 and the add arrives passive, as most of them do.
     /// </param>
     public static PatternAction SpawnOnTarget(int npcId, int spawnId, int count = 1, float range = 0f,
-        int liveSeconds = 0, int attackHate = 0)
-        => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds, attackHate);
+        int liveSeconds = 0, int attackHate = 0, float validDistance = 0f)
+        => ai => ai.SpawnOnTarget(npcId, spawnId, count, range, liveSeconds, attackHate, validDistance);
 
     /// <summary>
     /// <c>spawn_on_target target_obj=OBJI_SELF</c> with <c>attack_target_after_spawn</c> — a summon that

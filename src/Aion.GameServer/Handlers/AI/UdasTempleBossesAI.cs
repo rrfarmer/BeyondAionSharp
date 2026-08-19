@@ -36,6 +36,8 @@ public class AnvilfaceAI : PatternAi
 {
     /// <summary><c>BIDTP_Assistant_55_Ae</c>.</summary>
     private const int Shatter = 281424;
+    /// <summary>Retail's <c>valid_distance</c> on the call.</summary>
+    private const float ShatterReach = 100f;
 
     /// <summary>Retail's <c>SPAWN_ID_1</c>.</summary>
     private const int Called = 1;
@@ -60,7 +62,8 @@ public class AnvilfaceAI : PatternAi
             Do.SpawnNear(ClearController, 0, count: 4, range: 25f));
 
     private static PatternAction CallShatter =>
-        Do.SpawnOnAttacker(AggroTarget.THIRD_MOST_HATED, Shatter, Called, attackHate: OnArrival);
+        Do.SpawnOnAttacker(AggroTarget.THIRD_MOST_HATED, Shatter, Called, attackHate: OnArrival,
+            validDistance: ShatterReach);
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {

@@ -125,6 +125,8 @@ public class DreadgionDrakanMageAI : PatternAi
 {
     /// <summary><c>TiamatDrakan_AntiMagicalArea</c> — the great magical barrier.</summary>
     private const int Barrier = 282984;
+    /// <summary>Retail's <c>valid_distance</c> on the barrier.</summary>
+    private const float BarrierReach = 50f;
 
     /// <summary><c>TiamatDrakan_MagicHand</c> — the mystical tyrhund.</summary>
     private const int MagicHand = 282989;
@@ -148,7 +150,7 @@ public class DreadgionDrakanMageAI : PatternAi
     private static PatternBranch[] Timers => Of(
         Branch(4, "a barrier on somebody", [When.Timer(Ranged)],
             Do.SpawnOnAttacker(AggroTarget.RANDOM, Barrier, Placed, liveSeconds: BarrierLife,
-                attackHate: BarrierHate),
+                attackHate: BarrierHate, validDistance: BarrierReach),
             Do.ArmTimer(Ranged, 15000)),
 
         // Does not re-arm timer 3, so this happens once however long the last third lasts.

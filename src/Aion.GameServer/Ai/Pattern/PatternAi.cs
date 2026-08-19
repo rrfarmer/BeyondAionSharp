@@ -1277,10 +1277,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// The difference is not cosmetic. A guard's ranger trap that engages the player it lands on is a
     /// thing you have to deal with; the same trap standing inert is a thing you walk away from.
     /// </remarks>
-    public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds, int attackHate)
+    /// <inheritdoc cref="SpawnOnAttacker" path="/param[@name='validDistance']"/>
+    public void SpawnOnTarget(int npcId, int spawnId, int count, float range, int liveSeconds,
+        int attackHate, float validDistance = 0f)
     {
         Creature? target = CurrentTarget;
         if (target == null)
+            return;
+
+        if (validDistance > 0f && !IsInRange(target, (int)System.Math.Ceiling(validDistance)))
             return;
 
         if (attackHate <= 0)
