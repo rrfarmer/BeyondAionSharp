@@ -25646,3 +25646,45 @@ because it is retail's number and becomes load-bearing if the AI ever stops self
 **Still missing.** Message **301**, which is what ends a sink early in retail — nothing in this port
 sends it, so a sink always stands its full minute. And `BTIMERI_INDEX_1`, the seismic wave, whose rung
 carries only casts.
+
+## An audit for lifetimes the npc's own AI beats — and what it caught
+
+Three times this session a retail `live_time` turned out to be inert because the npc removes itself
+sooner: Terath's gravity pair, Ebonsoul's black hole, Shabokan's `SinkDMG`. Two were harmless — this
+port collapses a retail FX/DMG pair into one npc, so the AI's clock is the real one — but **one was
+not**: Shabokan's sink is meant to stand a minute and was deleted after four seconds.
+
+`tools/client-extract/audit_lifetime_conflicts.py` compares the two clocks. It is **noisy and the
+docstring says so**: 73 of its 82 rows are `TrapNpcAI`, whose five-second delete is the tidy-up *after*
+a trap fires and says nothing about how long an untriggered trap stands. Two attempts to separate
+"lifetime" from "cleanup" statically both failed — the second because `HandleSpawned` calls `Explode`
+for one trap name, which makes the cleanup reachable from the spawn path. **A row is a prompt to read
+the class, not a measurement.**
+
+Behind the noise there are nine real rows, and the first one read was a defect in this session's own
+work.
+
+## The gossip npcs said nothing, and left too early
+
+**They said nothing.** `TiamatEyeAI` switches on npc ids **283913-283916** to pick each general's
+line. These npcs are **283177-283180** — the same renumbering that had every general dropping another
+general's gossip npc, corrected a few commits ago. **Not one of the four cases could ever match**, so
+all four npcs stood silent. That commit fixed one half of the renumbering and left the other.
+
+**And they left after five seconds.** Retail gives them fifteen — except Tahabata's, which is **ten**.
+The fifteen-second decay added at the spawn site a few commits ago **never had any effect**, because
+this class deletes at five and the shorter clock wins; and it was wrong anyway, giving Tahabata's
+fifteen. The lifetimes are per npc in the AI now, and the spawn-site decay is gone.
+
+**Pins** — three more in `TiamatStrongholdGossipTests`, three mutations, all caught, including one that
+gives Tahabata's the other three's fifteen.
+
+**Worth saying plainly:** the audit's first useful row found two errors in work committed earlier in
+this same session, one of them a fix that could never have worked. Both were the kind that a passing
+test suite says nothing about, because nothing asserted them.
+
+**Still missing.** The other eight rows behind the trap noise are unread: `MosquaEggAI` (17s against
+300), `FireStormAI` (20s against 180), `StrangeCreatureAI` (6.5s against 120) and the two remaining
+`SinkingSandAI` rows, which are the collapse and are fine. And traps themselves have **no standing
+lifetime at all** in this port — retail expires an untriggered trap after 100 or 600 seconds, and here
+one stands until the instance ends.

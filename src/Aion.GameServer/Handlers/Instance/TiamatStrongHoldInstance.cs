@@ -247,14 +247,17 @@ public class TiamatStrongHoldInstance : GeneralInstanceHandler
         [219358] = 283180, // Tahabata
     };
 
-    /// <summary>Retail's <c>live_time</c> on all three: fifteen seconds.</summary>
-    private const int GossipLife = 15;
-
+    /// <summary>
+    /// Places a gossip npc. Its lifetime belongs to <c>TiamatEyeAI</c>, not here.
+    /// </summary>
+    /// <remarks>
+    /// This used to schedule a fifteen-second decay of its own. <b>It never had any effect</b> — the
+    /// npc's AI deletes it after five, and the shorter clock wins — and it was wrong besides: retail
+    /// gives Tahabata's ten where the other two get fifteen. The AI carries all three now.
+    /// </remarks>
     private void SpawnGossip(int npcId, float x, float y, float z, byte heading)
     {
-        Npc gossip = (Npc)Spawn(npcId, x, y, z, heading);
-        if (gossip != null)
-            Aion.GameServer.Services.RespawnService.ScheduleDecayTask(gossip, GossipLife * 1000);
+        Spawn(npcId, x, y, z, heading);
     }
 
     private void SpawnExitIfCleared()

@@ -1,4 +1,6 @@
+using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Handlers.Instance;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -22,6 +24,9 @@ namespace Aion.GameServer.Tests.Ai;
 /// </remarks>
 public sealed class TiamatStrongholdGossipTests
 {
+	private const int TiamatStronghold = 300510000;
+
+
 	private const int Terath = 219354;
 	private const int Laksyaka = 219356;
 	private const int Tahabata = 219358;
@@ -43,5 +48,31 @@ public sealed class TiamatStrongholdGossipTests
 	public void TheThreeAreDistinct()
 	{
 		Assert.Equal(3, TiamatStrongHoldInstance.GossipOnDie.Values.Distinct().Count());
+	}
+
+	/// <summary>
+	/// <b>Each gossip npc stands for retail's own lifetime</b> — fifteen seconds, and Tahabata's ten.
+	/// </summary>
+	/// <remarks>
+	/// The decay this port scheduled at the spawn site never had any effect: the npc's AI deleted it
+	/// after five seconds and the shorter clock wins. It was wrong besides — all three were given
+	/// fifteen, and Tahabata's is ten. Found by <c>audit_lifetime_conflicts.py</c>, in work from this
+	/// same session.
+	/// </remarks>
+	[Theory]
+	[InlineData(283178, 15)]
+	[InlineData(283179, 15)]
+	[InlineData(283180, 10)]
+	public void EachGossipNpcKeepsItsOwnLifetime(int gossip, int seconds)
+	{
+		using BossAiHarness harness = BossAiHarness.For(TiamatStronghold).WithWorldSize(2048)
+			.WithAi(typeof(TiamatEyeAI), typeof(GeneralNpcAI)).Build();
+		harness.Spawn(gossip, 1030f, 301f, 411f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(seconds - 1));
+		Assert.Equal(1, harness.LiveNpcs().Count(n => n.GetNpcId() == gossip));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		Assert.Equal(0, harness.LiveNpcs().Count(n => n.GetNpcId() == gossip));
 	}
 }
