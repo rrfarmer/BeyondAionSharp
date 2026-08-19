@@ -25456,3 +25456,42 @@ cooldown-gated rotations, and the two audits that stop at "casts only".
 
 **Kept from both attempts:** `SystemClock` itself, production-identical and unused; the `AsyncLocal`
 scoping; and the gargoyle pin's repair.
+
+## RM-1337: the fire never changed shape
+
+Retail pattern `IDArena_S8_Named_6` (217593), with `S8_Summon_Fire_55_Ae` (282373).
+
+```
+on_enter_attack_state   timer 0 = 30000, timer 1 = 10000        (no health condition)
+timer 0, HP < 50        re-arm 50000; 8 sparks at range 5, 10 at range 15,
+                        and 5 on one random attacker (total_set 1, valid_distance 50)
+timer 0, otherwise      re-arm 60000; 4 sparks at range 5, 5 at range 15
+timer 1, HP 1-50        re-arm 18000
+timer 1, HP 51-100      re-arm 15000
+```
+
+**Both rungs change pace at half health and neither did here.** The fire rung opened *immediately* and
+repeated at a flat sixty; the cast rung ran at a flat twenty-three, a number retail does not have
+anywhere in this pattern.
+
+**And the fire is a fixed shape, not a roll.** Retail drops nine sparks above half — four near, five far
+— and twenty-three below: eight near, ten far, and **five more on one random attacker**. That third drop
+exists only in the wounded band, so crossing half is a change in kind and not degree: the fire stops
+being something that surrounds the boss and starts being something that lands on a player. This class
+rolled eight to twelve at a single spread whatever his health.
+
+**A gate that is not retail's.** The fire rung was held back until he fell below seventy-five per cent.
+Retail arms both timers in `on_enter_attack_state` with no condition — health only decides how fast each
+re-arms and how much fire it drops. Both are armed on engaging now.
+
+**Pins** — `RM1337AiTests`, five, seven mutations, all caught.
+
+**Two pins needed their order corrected**, and the reason is worth keeping. The re-arm reads his health
+**at the moment the rung fires**, not when the next one is due — so wounding him after the first drop
+leaves the sixty-second delay already chosen, and the pin sees nothing. It wounds him before the rung
+runs now. The same mistake would be easy to make in any of the band-switching fights corrected this
+session.
+
+**Not translated.** The casts on both rungs, and `BTIMERI_INDEX_2` and `_3`, which retail arms at five
+and eight seconds from the rungs above — both carry only skill indices. His `on_die` sets
+`STAGE8_OVER`, which this port expresses through the arena's own stage handling.
