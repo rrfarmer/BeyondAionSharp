@@ -25,10 +25,23 @@ public class BrigadeGeneralVashartiAI : AggressiveNpcAI, HpPhases.PhaseHandler
     /// follow the renumbering.
     /// </summary>
     /// <remarks>
-    /// Retail also spawns a Glove Controller at each step. Those NPCs (283002/283004/283006) exist but
-    /// are plain aggressive clones of Vasharti himself with no controller AI, so spawning them would put
-    /// three extra full-strength bosses in the room rather than retail's controllers — harder than
-    /// retail, not closer to it. They wait for their own AI. See docs/retail-ai-fidelity.md.
+    /// Retail also spawns a Glove Controller at each step, from <c>on_arrived_at_waypoint</c> index 1 of
+    /// <c>Path_IDYun_Nmd_7Named_60_Ah</c> — a three-point pace whose middle point is his own spawn, so the
+    /// chance comes round each time he returns to it. <b>That trigger is now reachable</b> and is not why
+    /// this is unimplemented.
+    /// <para>
+    /// The reason is the controllers themselves. 283002, 283004 and 283006 are in our data as level-60
+    /// <c>rating="NORMAL"</c> npcs called "brigade general vasharti" running plain <c>aggressive</c> — his
+    /// name and no controller behaviour at all. Spawning them adds three more things to fight instead of
+    /// retail's three wall-droppers: harder than retail and no closer to it. (An earlier note here called
+    /// them "full-strength bosses"; they are NORMAL where he is HERO, so that overstated it.)
+    /// </para>
+    /// <para>
+    /// What they would do is already done directly — the walls, the buffer and the smashes are dropped at
+    /// the glove point below, which is the same FX collapse used elsewhere in this port. The controllers
+    /// wait for their own AI, and until then the collapse is the closer of the two. See
+    /// docs/retail-ai-fidelity.md.
+    /// </para>
     /// </remarks>
     private readonly HpPhases hpPhases = new HpPhases(86, 56, 26);
 

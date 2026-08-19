@@ -28722,3 +28722,51 @@ conclusion had already been committed to the log.
 - **Poppy on the Run**, unblocked the same way, spawning at index 26 of her route.
 - **Four classes with no findable route**: both Eternal Bastion npcs, Padmarashka, Sematariux, and the two
   shared classes. For these the answer is not "not yet" but "not from this data".
+
+## The two unblocked classes, and why neither needed writing
+
+Last commit's triage unblocked Vasharti and Poppy on the Run by finding their routes. Both were then read
+in full, and **neither turns out to want code** — for two different reasons, both worth recording so the
+routes are not "used" by someone who reads only the first half of that sentence.
+
+### Vasharti: the route was never the blocker
+
+His rung is `on_arrived_at_waypoint` index 1 of `Path_IDYun_Nmd_7Named_60_Ah` — a **three-point pace whose
+middle point is his own spawn**, so the chance comes round every time he walks back to where he started.
+At 86%, 56% and 26%, once each (`set_flag_var` on `BETA_1`, `_3`, `_5`), he drops a Glove Controller with
+`live_time=40`. The Hard pattern is the same ladder with `B`-prefixed npcs (856351/856352/856353), and the
+missing even letters are not missing: there are only ever three rungs.
+
+**The controllers are why it is unimplemented, and that was already decided.** 283002, 283004 and 283006
+are in our data as level-60 npcs called "brigade general vasharti" running plain `aggressive`. Spawning
+them adds three more things to fight in place of retail's three wall-droppers. What they would do is
+already done directly — the walls, the buffer and the smashes drop at the glove point — which is the same
+FX collapse used elsewhere here.
+
+**One detail in that existing note was wrong and is corrected.** It called them "full-strength bosses".
+They are `rating="NORMAL"` where Vasharti is `HERO`. The decision stands; the reason given for it was
+overstated, and an overstated reason is one a future reader either distrusts or over-trusts.
+
+### Poppy on the Run: both rungs are inert here
+
+- **Index 19** displays `STR_MSG_IDArena_Solo_SB1_HideNear_BROADCAST` and runs on. No message id this port
+  can resolve — the same blocker as a dozen shouts already logged.
+- **Index 26** spawns `IDArena_Solo_InviNPC_6`, which is npc **205694: name `" "`, ai `general`**. An
+  invisible marker with `live_time=0`, and **nothing in this port looks for it**. Spawning it would add an
+  invisible do-nothing npc to an arena and change no behaviour at all.
+
+So her route is findable and there is nothing useful to hang on it yet. That is a different answer from
+"blocked", and the difference matters: **blocked things go on a list, inert ones should not**, or the list
+stops meaning anything.
+
+**Still missing.**
+
+- **The Glove Controllers' own AI**, which is the actual gap behind Vasharti — three npcs that should drop
+  walls and instead have none. Writing it would let the collapse be undone in his class.
+- **Poppy's marker**, if anything is ever written that reacts to 205694.
+- **Four classes with no findable route at all**: both Eternal Bastion npcs, Padmarashka, Sematariux, and
+  the two shared classes. For those the answer remains "not from this data".
+- With this, **every class the waypoint audit raised has been read to a conclusion.** Four fixed
+  (Muragan, Lahulahu, Grogget, Koakoa, the scientists, Hyperion's march), two closed as correct already
+  (Sematariux's egg, Ophidan's despawn), two closed as inert or already-decided (Poppy, Vasharti), four
+  closed as not findable. Nothing on that audit is now unexamined.
