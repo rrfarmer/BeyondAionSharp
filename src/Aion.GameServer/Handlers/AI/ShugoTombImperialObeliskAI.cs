@@ -4,11 +4,21 @@ using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Handlers.AI;
 
-/// <summary>Java parity: ai/instance/shugoImperialTomb/ShugoTombImperialObeliskAI (@author Ritsu).</summary>
+/// <summary>
+/// Java parity: ai/instance/shugoImperialTomb/ShugoTombImperialObeliskAI (@author Ritsu), with the HP
+/// rungs and their trigger events taken from retail instead -- see docs/retail-ai-fidelity.md.
+/// </summary>
 [AIName("shugo_tomb_imperial_obelisk")]
 public class ShugoTombImperialObeliskAI : GeneralNpcAI, HpPhases.PhaseHandler
 {
-    private readonly HpPhases hpPhases = new HpPhases(70, 35);
+    /// <summary>Retail's first rung: is_hp_in_boundary(larger_than=30, less_than=69), exclusive both ends.</summary>
+    public const int FirstRungCeilingPercent = 68;
+    public const int FirstRungFloorPercent = 30;
+
+    /// <summary>Retail's second rung: is_hp_in_boundary(larger_than=0, less_than=29).</summary>
+    public const int SecondRungCeilingPercent = 28;
+
+    private readonly HpPhases hpPhases = new HpPhases(FirstRungCeilingPercent, SecondRungCeilingPercent);
 
     public ShugoTombImperialObeliskAI(Npc owner)
         : base(owner)
@@ -23,17 +33,49 @@ public class ShugoTombImperialObeliskAI : GeneralNpcAI, HpPhases.PhaseHandler
     protected override void HandleAttack(Creature creature)
     {
         base.HandleAttack(creature);
-        hpPhases.TryEnterNextPhase(this);
+        AdvanceRungs();
+    }
+
+    /// <summary>
+    /// Retail evaluates both rungs on a single on_attacked -- priority 6 then priority 5 -- so a hit that
+    /// crosses both plays what it should immediately. TryEnterNextPhase advances one rung per call, which
+    /// would defer the second to the following hit, so it is drained here instead.
+    /// </summary>
+    private void AdvanceRungs()
+    {
+        int before;
+        do
+        {
+            before = hpPhases.GetCurrentPhase();
+            hpPhases.TryEnterNextPhase(this);
+        }
+        while (hpPhases.GetCurrentPhase() != before);
+    }
+
+    /// <summary>
+    /// Retail hangs both rungs on on_attacked AND on_spelled. Damage that carries an Effect already reaches
+    /// HandleAttack through the aggro path, but a spell that deals no damage adds no hate and so raises only
+    /// this event -- which is the case aionemu, having no on_spelled, could not express.
+    /// </summary>
+    protected override void HandleSpelled(Creature caster)
+    {
+        base.HandleSpelled(caster);
+        AdvanceRungs();
     }
 
     public void HandleHpPhase(int phaseHpPercent)
     {
         switch (phaseHpPercent)
         {
-            case 70:
-                Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(21098, GetOwner(), GetOwner());
+            case FirstRungCeilingPercent:
+                // Retail's boundary is exclusive at the bottom too, so a rung the obelisk outran in a single
+                // hit is never played. HpPhases has already consumed it by the time we get here; dropping it
+                // is therefore exactly retail's behaviour, where HpPhases alone would play it late instead.
+                if (GetLifeStats().GetHpPercentage() > FirstRungFloorPercent)
+                    Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(21098, GetOwner(), GetOwner());
                 break;
-            case 35:
+            case SecondRungCeilingPercent:
+                // The matching larger_than=0 needs no check: HpPhases will not fire on a dead owner.
                 Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(21099, GetOwner(), GetOwner());
                 break;
         }

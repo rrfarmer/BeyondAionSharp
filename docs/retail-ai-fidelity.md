@@ -27651,3 +27651,54 @@ exist for those rooms and could replace ours, but each needs the same decision M
 takes which — and Steel Rake runs several copies of similar mobs, so it is exactly the case where a wrong
 assignment moves an encounter silently. Not a batch job. And nothing here changes behaviour: this commit
 only tells the truth about which rows deserve attention.
+
+## The imperial obelisk, and what a five per cent threshold was hiding
+
+`audit_hp_phases.py` has a bottom section for AIs whose retail pattern is guarded by HP *regimes* rather
+than thresholds — "reimplementation, not a threshold edit". `ShugoTombImperialObeliskAI` is the only row
+there with **zero battle-timer branches**, which makes it the only one whose whole behaviour is HP-driven
+and therefore fully readable from the pattern.
+
+```
+ours [70, 35]   retail regimes [(30, 69), (0, 29)]   timer branches 0
+```
+
+Java says `new HpPhases(70, 35)` and our C# copies it exactly, so this is the sanctioned exception: the
+pattern data outranks aionemu. Both patterns bound to this AI — `IDDF2Flying_event01_D_Tower02` and
+`IDDF2Flying_event01_B_WavePortal1_55_Ae` — carry identical rungs, so one correction serves all three
+npcs (831130, 831250, 831251).
+
+**The threshold is the headline and the smallest part of it.** Retail's second rung is thirty, not
+thirty-five: the tower gets its last buff five per cent of its health early. Reading the rest of the
+pattern found two more things the threshold pair could not express.
+
+**Retail's boundaries are exclusive at the bottom as well.** `larger_than=30 less_than=69` fires only for
+health in [31, 68]. `HpPhases` has no floor — it fires when health has fallen *past* a number, so a blow
+carrying the tower from full health to twenty-five plays the seventy buff anyway, one hit late.
+
+**And both rungs hang on `on_spelled` as well as `on_attacked`.** Damage that carries an effect already
+reaches `HandleAttack` through the aggro path, so this is not about casters generally — it is about a
+spell that deals *no* damage, which adds no hate and so raises `Spelled` and nothing else. aionemu has no
+`on_spelled` event at all; this port grew one earlier, and this is the first class to use it for a rung.
+
+**One more, found only by mutating.** Retail evaluates *both* patterns on a single `on_attacked` —
+priority 6, then priority 5. `TryEnterNextPhase` advances one rung per call, so a blow through both bands
+would defer the lower buff to the next hit. It is drained in a loop instead.
+
+**Pins** — five, four mutations, all four caught. The fifth mutation is documented rather than fixed:
+
+> **The exclusive lower bound has no pin, because it is unobservable.** Deleting the check left every
+> test green. A probe explains why: 21098 and 21099 share `tslot="BUFF"`, so the lower buff *evicts* the
+> upper one. Applying a buff the tower outran and then immediately replacing it reaches the same end state
+> as never applying it. `first=True firstAfterSecond=False second=True`.
+
+The guard is kept — it is what the pattern says, it costs nothing, and it stops being a no-op the moment
+those two skills stop sharing a slot. But the test that claimed to cover it was renamed and its
+documentation rewritten to say what it actually measures: the end state after a fall through both bands,
+which is worth pinning because reaching it requires both rungs evaluated on one blow. **A pin that
+describes more than it can see is worse than no pin**, because the next person trusts it.
+
+**Still missing.** The other four rows in that section — `CursedQueenModorAI` (84 timer branches),
+`DaliaCharlandsAI`, `EmpyreanLordAI`, `IsbariyaTheResoluteAI` — all mix regimes with timer-driven
+rotations, so none can be corrected by editing thresholds the way this one could, and each needs its
+pattern read whole. This was the tractable one, and it was tractable precisely because it had no timers.
