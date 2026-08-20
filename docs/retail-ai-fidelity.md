@@ -32189,3 +32189,94 @@ Not bosses, mostly — infrastructure that encounters depend on:
   `default="true"` flag; a group whose members are alternatives would be over-counted by these tools the
   same way the abyss grades were. The five artifact protectors carried `select_prob="-1"`, so it did not
   bite here, but it is the same class of mistake waiting in a different field.
+
+## `drakanmedic` was three different npcs wearing one class
+
+Following the world-spawn sweep to Heiron, where `drakanmedic` showed up as a class written and never
+placed. Reading the retail patterns behind it turned up something larger than a missing spawn: **the
+class is correct for seven of the seventy-eight npcs that run it.**
+
+`DrakanMedicAI` rolls three percent on *every swing* and, on a hit, summons a drakan servant — 281621 or
+281839 by rating. Grouping the seventy-eight by the retail pattern they actually run:
+
+| retail pattern | npcs | what it summons |
+|---|---|---|
+| `Lizardman_PeB` | 34 | **nothing** |
+| `Lizardman_PeB_Solo` | 12 | **nothing** |
+| `ND2_RnM` | 2 | **nothing** |
+| `IDArena_S5_Monster_3` | 1 | **nothing** |
+| `Naga_PeA1` | 4 | `BD3_Naga_Servant_44_Ae` (280638) |
+| `Naga_PeA2` | 11 | `BD3_Naga_Servant_46_Ae` (280639) |
+| `Naga_PeA3` | 6 | `BD3_Naga_Servant_48_Ae` (280640) |
+| `Naga_PeA4` | 1 | `BD3_Naga_Servant_50_Ae` (281301) |
+| `XDrakan_PeB_55` / `_ver40` | 5 | 281839 |
+| `IDCT_DrakanPr` | 2 | 281621 |
+
+So **forty-nine npcs summoned a servant retail never gives them**, twenty-two summoned a drakan when
+retail sends a level-matched naga, and seven were right.
+
+### `NagaMedicAI`
+
+The twenty-two naga medics now run a retail-faithful class. Two servants, not a dice roll on every
+swing:
+
+* **once**, the first time the medic drops below eighty-five (`ALPHA_2`), four metres out;
+* **again every fifteen seconds, but only if asked** — timer 2 is armed by message **3306** and by
+  nothing else in the pattern, so a lone medic summons exactly once all fight and a signalled one keeps
+  going.
+
+Both live four minutes, carry `despawn_at_attack_state`, and are filed under `SPAWN_ID_1` so leaving
+combat clears them. Also translated: the four band broadcasts (3302 opening, 3303 with the servant,
+3304 below fifty-five, 3305 below twenty-six) and the switch to the lowest-health player on the mid
+band.
+
+**There are four tiers, not three.** `Naga_PeA4` binds a single npc and was missed on the first pass
+because the grouping sorts a one-npc pattern to the bottom. It was caught before the class was committed
+but after it was written, which is the second time this session a single-npc pattern has nearly been
+dropped.
+
+### The forty-nine
+
+Rebound to `aggressive`. Without its summon, `DrakanPriestAI` is `AggressiveNpcAI` — its only other
+overrides despawn servants — so this removes a summon retail does not give them and takes nothing else
+away. **Only npcs with a retail pattern that demonstrably summons nothing were touched**; a
+`drakanmedic` npc with no pattern in the dump is not evidence of anything and was left alone.
+
+### A one-line fix the odd-ai audit cannot find
+
+`280638` ran `ai="aggressive"` while `280639`, `280640` and `281301` — the same
+`Naga_Servant` pattern, the same "sacred dragon relic" — ran `ai="servant"`. Now `servant`.
+
+**`audit_odd_ai.py` is structurally blind to this.** It reports a *specialised* minority against a
+specialised majority, and skips any npc whose own `ai` is generic, because that filter is what took its
+first run from 1,679 rows to 146. Here the majority is specialised and the minority is generic, which is
+the mirror image and is silently excluded. Worth a `--reverse` mode; not written yet.
+
+### The pin that failed for the third time in this session's own way
+
+Every servant rung hangs off timer 1, and **timer 1 has exactly one origin**: the opening rung, which
+takes timer 0 at seven seconds and requires `is_hp_in_boundary 86..100` — so 87 to 99. A medic dropped
+below eighty-seven *before* its first tick never arms timer 1 and does nothing for the rest of the
+fight.
+
+The first version of these pins set health to sixty immediately after `Engage`, and seven of nine failed
+with no servant at all. That was the measurement: in a real fight the medic is untouched when the
+seven-second tick lands. It is the same shape as leader 4's band that excludes exactly a hundred, and
+the same shape as the three false "cannot be tested" conclusions earlier in this work.
+
+Nine pins, eight of eight mutations caught.
+
+### Still missing
+
+- **Every heal.** These npcs are named for healing and not one heal is translated: the friend-heal below
+  fifty on `on_see_friend_attacked`, the dispel pair on `on_friend_spelled`, the self-buffs on the timer
+  rungs. All `SKILLI_INDEX_n`. The medic now brings help and turns on the weakest player, but it does not
+  heal anybody.
+- **Who sends 3306.** Nothing in this tree sends it, so the repeating servant cannot yet be triggered in
+  game even though the class answers it. Worth a sweep of the dump for its senders.
+- **Who hears 3302-3305.** Sent now, answered by nothing here.
+- **The 49 rebound to `aggressive` deserve a real class.** `Lizardman_PeB` is a substantial pattern — a
+  six-second timer chain with three health bands and a friend-heal — and all of it is skills. When skill
+  indices resolve, that is a class worth writing rather than a generic aggressive.
+- **`Naga_PeA` medics still have no spawn points** in Heiron; that was the finding that led here, and it
+  is unchanged. The class is now correct for when they are placed.
