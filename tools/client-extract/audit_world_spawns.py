@@ -81,14 +81,35 @@ def spawns_in(world_xml):
         if not conditions:
             # A territory with no condition_info spawns unconditionally; its npcs sit directly inside.
             for npc in NPC_RE.finditer(block):
-                yield tname, None, *npc_of(npc.group(1)), *placements(npc.group(1))
+                yield (tname, abyss_gate(npc.group(1)), *npc_of(npc.group(1)),
+                       *placements(npc.group(1)))
             continue
 
         for cond in conditions:
             ext = EXT_RE.search(cond.group(0))
             gate = unescape(ext.group(1)) if ext else None
             for npc in NPC_RE.finditer(cond.group(0)):
-                yield tname, gate, *npc_of(npc.group(1)), *placements(npc.group(1))
+                yield (tname, gate or abyss_gate(npc.group(1)), *npc_of(npc.group(1)),
+                       *placements(npc.group(1)))
+
+
+ABYSS_GATE = re.compile(r'<abyss_owner_grade|<abyss_related_race')
+
+
+def abyss_gate(body):
+    """Retail's *other* gate, and the one that nearly turned a tool into a false alarm.
+
+    Reshanta's artifact bosses list five protectors per race in a territory with no extcondition at all,
+    and this port spawns one. That read as a missing-spawn defect at scale -- 171 npcs in Reshanta alone,
+    the largest row in the sweep -- until the entries themselves were read: each carries
+    <abyss_owner_grade start="n" end="n"/>, so the five are the SAME protector at five artifact
+    ranks and exactly one is correct at any time. Spawning one was right all along.
+
+    A territory-level extcondition is not the only way retail says "not yet". Anything carrying an
+    abyss grade or race is gated on the abyss state, and counting it as ungated over-reports precisely
+    the maps with the most of it.
+    """
+    return "abyss owner grade / race" if ABYSS_GATE.search(body) else None
 
 
 def npc_of(body):

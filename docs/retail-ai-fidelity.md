@@ -32101,3 +32101,91 @@ names it on stderr instead. The rule is general, not a special case for this ins
   pairs, and `ORITSA_SUMMON == n`.
 - **`audit_world_spawns.py` has only been run against one world.** The other 162 are unexamined, and
   the Drakenspire result suggests the ungated-and-absent count alone will be worth having everywhere.
+
+## The spawn audit across all 163 worlds, and the two gates it had to learn
+
+`sweep_world_spawns.py` runs the world-spawn comparison against every retail world at once, joining
+retail's folder name to this port's map id through `world_maps.xml`'s `cName`.
+
+**The number that matters: 108 npcs across 37 worlds have a bespoke AI class here and no spawn point.**
+Somebody read the retail pattern, wrote the behaviour, tested it — and the npc cannot appear. That is
+exactly what had happened to all twenty-seven of Drakenspire Depths' wave npcs, and this is the rest of
+the list.
+
+Alongside it: **3,652 ungated npcs absent and placeable** (no engine work needed, coordinates already in
+retail's data), **106 held back as hostile furniture**, and **6,274 gated npcs waiting on the
+progression engine**.
+
+### Three measurement errors, and why they are the real content
+
+This sweep produced three different wrong answers before it produced a right one. Each was silent, each
+looked plausible, and each is worth recording because the shapes recur.
+
+**1. A case-sensitive join dropped 125 of 161 maps.** Retail's folder is `ab1`; `world_maps.xml` says
+`Ab1`. Windows hides the difference at the filesystem and Python does not hide it in a set. The first
+run reported "36 worlds matched" and a total of 335 — a quarter of the data presented as all of it. The
+tell was the ratio: 220 of 256 worlds "unmapped" is not a data property, it is a bug. Now keyed
+lower-case, with a comment saying why.
+
+**2. `\b` became a literal backspace, for the fourth time this session.** `re.findall(r"\b(\d{6})\b")`
+written through a shell heredoc arrives as `r"<BS>(\d{6})<BS>"`, which matches nothing. The symptom was
+a filter that changed no number at all — 447 before and 447 after — which is the giveaway: a filter that
+removes nothing has not run. Found with `cat -A`, as the previous three were.
+
+**Standing rule, since this keeps costing time: do not write regex escapes through a bash heredoc.**
+Use the Write/Edit tools, or build the string with `chr(92)`.
+
+**3. The one that would have been published: `abyss_owner_grade` is a gate.** Reshanta's artifact bosses
+list five protectors per race in a territory with *no* `extcondition`, and this port spawns one. That
+read as the largest single defect in the sweep — 171 npcs in Reshanta, 44 more in Kaldor, the top two
+rows by a wide margin.
+
+It was wrong. Reading the entries themselves rather than the territory around them:
+
+```xml
+<npc select_prob="-1">
+  <name>Ab1_1401_Boss_Li_2</name>
+  <abyss_related_race>pc_light</abyss_related_race>
+  <abyss_owner_grade start="2" end="2"/>
+```
+
+The five are the **same protector at five artifact ranks**, and exactly one is correct at any moment.
+Spawning one was right all along.
+
+> A territory-level `extcondition` is not the only way retail says "not yet". Counting abyss-gated
+> entries as ungated over-reports precisely the maps that have the most of them, which is why the
+> false finding sorted straight to the top of the list and looked like the headline.
+
+Both tools now treat `abyss_owner_grade` / `abyss_related_race` as gates. Reshanta's bespoke-class count
+went 171 → 2, Kaldor's 44 → 0, and the total 323 → 108. **The correction removed two thirds of the
+finding, and what is left is trustworthy.**
+
+### What the surviving 108 actually are
+
+Not bosses, mostly — infrastructure that encounters depend on:
+
+* **fortress doors and teleports** in Aspida and Disillon (`ai="portal"`, `ai="fortressgate"`), nine
+  apiece;
+* **quest field objects and chests** in Inggison, Steel Rake and elsewhere (`quest_use_item`, `chest`);
+* **Heiron's naga priests** on `ai="drakanmedic"` — a healing class written and never placed;
+* **abyss guards** on `simple_abyssguard` and `abyssguard_reinforcement` in Eltnen and Heiron, which is
+  the same 22735-family guard work recorded earlier in this document;
+* **Steel Rake's boss-room door** (730199, `ai="portal"`).
+
+### Still missing
+
+- **The 108 spawn points themselves.** Every one has retail coordinates and needs no engine work.
+  `audit_world_spawns.py --emit <world>` generates them, already filtering hostile furniture. Not done
+  here because each world wants the same reading Drakenspire Depths got — what the npc is, and whether
+  something else already places it — and doing thirty-seven worlds' worth without that reading is how
+  the abyss-grade mistake would have been committed rather than caught.
+- **97 retail worlds have no `cName` entry in `world_maps.xml`** and were skipped entirely. Some are
+  test and event maps (`arena_event_d`, `Concert`, `Aion_tournament`), but the list also holds
+  `iddc1_dreadgion`, `IDDreadgion_04`, `IDAbRe_Core_03` and `DF4_M`, which are real. Those worlds are
+  invisible to every audit in this directory, not just this one.
+- **The progression engine**, unchanged and still the largest single gap: 6,274 gated npcs across the
+  worlds that *are* mapped.
+- **`select_prob` is not yet read.** Retail's spawn groups carry per-npc probabilities and a
+  `default="true"` flag; a group whose members are alternatives would be over-counted by these tools the
+  same way the abyss grades were. The five artifact protectors carried `select_prob="-1"`, so it did not
+  bite here, but it is the same class of mistake waiting in a different field.
