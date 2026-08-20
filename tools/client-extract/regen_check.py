@@ -82,7 +82,8 @@ POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv"),
                   ("extract_idle_spawns.py", "idle_spawns.tsv"),
                   ("extract_idle_cycles.py", "idle_cycles.tsv"),
                   ("extract_battle_cycles.py", "battle_cycles.tsv"),
-                  ("extract_death_spawns.py", "death_spawns.tsv")]
+                  ("extract_death_spawns.py", "death_spawns.tsv"),
+                  ("extract_wake_variables.py", "wake_variables.tsv")]
 
 # Reads the world files rather than the pattern dump, so it takes a different first argument
 # and cannot join POSITIONAL_OUT above.
@@ -123,6 +124,8 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "battle_cycles.tsv"), out]),
     ("emit_death_spawns_table.py", GEN / "DeathSpawns.cs",
      lambda out: [str(HERE / "out" / "death_spawns.tsv"), out]),
+    ("emit_wake_variables_table.py", GEN / "WakeVariables.cs",
+     lambda out: [str(HERE / "out" / "wake_variables.tsv"), out]),
     ("emit_fortress_killers_table.py", GEN / "FortressKillers.cs",
      lambda out: [str(HERE / "out" / "fortress_killers.tsv"), out]),
     ("emit_protector_calls_table.py", GEN / "ProtectorCalls.cs",

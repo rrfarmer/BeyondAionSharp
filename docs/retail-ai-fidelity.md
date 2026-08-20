@@ -36012,3 +36012,53 @@ instance would open a gate in somebody else's copy of the fight while leaving th
   present where retail would remove them. Unchanged and still the oldest open item here.
 - **177 encounters still missing an add**; `control_door` (17) has no helper anywhere.
 - **Retail cast timings across 13,186 npcs.**
+
+## Npcs that exist in order to say they exist
+
+The previous entry joined the spawn engine's halves and reached 5,082 of 21,096 gated placements.
+Classifying the remaining gate variables by **who writes them** says where the rest is:
+
+| handler that writes a gated variable | gated placements behind it |
+|---|---|
+| **`on_wake_up`** | **15,327** |
+| `on_killed_by_user` | 9,360 |
+| `on_killed_by_npc` | 9,280 |
+| `on_message` | 7,130 |
+
+`on_wake_up` leads by a wide margin and is the simplest thing in the list: an npc announcing that it is
+there. **209 patterns write a variable on waking and do nothing else at all** -- no guard, no spawn, no
+timer -- and this table ports exactly those.
+
+| | before | after |
+|---|---|---|
+| variables our tables write | 101 | **318** |
+| gated placements reachable | 5,082 | **11,271 of 21,096** |
+
+Over half the conditional spawn content in the game is now behind something that actually happens.
+
+### The class deliberately does not descend from PatternAi
+
+**719 of the 1,031 npcs involved are on `general`, which is not aggressive.** Every other table here
+feeds a `PatternAi` subclass, and `PatternAi` extends `AggressiveNpcAI` -- so routing these through the
+usual machinery would have made invisible flag markers attack players on sight. The variable would still
+have been written and every gate pin would still have passed; the damage would have shown up in play,
+as passive scenery chasing people around Kamar.
+
+`WakeVariableAI` extends `GeneralNpcAI` and does the one thing these patterns do. A pin asserts the flag
+stays out of combat with a player standing next to it, because "it wrote the variable" is not the same
+claim as "it behaved".
+
+**The 197 npcs on `aggressive` whose patterns do the same thing are left alone**, for the mirror-image
+reason: binding them here would take their aggression away. They need an aggressive variant of this
+class, or a home in one of the pattern tables. Recorded, not guessed at.
+
+### Still missing
+
+- **The 197 aggressive wake-writers**, above. The cheapest remaining gate fuel.
+- **488 wake patterns that do something else as well** -- a message, a broadcast, a timer, a despawn --
+  and 136 with a guarded branch. Those belong in a pattern table.
+- **`on_killed_by_npc` (9,280 placements)** has no slot here at all: this port has `OnDie` and
+  `When.KilledByPlayer`, and no way to say "killed by something that was not a player".
+- **566 gate variables no retail pattern ever writes** -- server flags set at boot, quest state, or
+  something nobody has identified. They are the floor on what this approach can reach.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
