@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 1827 retail patterns across 13186 npcs, 165813 actions.
+/// Combat rotations: 1842 retail patterns across 13218 npcs, 166639 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -216,6 +216,7 @@ internal static class BattleCycles
         Cycle129(rungs);
         Cycle130(rungs);
         Cycle131(rungs);
+        Cycle132(rungs);
         return rungs;
     }
 
@@ -16740,6 +16741,15 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
         ];
+        rungs[216205] = [  // IDCT_Normal_Slime02
+            AiPattern.Branch(2, "rung 0", [When.Timer(1)],
+                Do.SystemMessage(1400445, 0),
+                Do.SpawnNearForTheFight(281672, 1, 2, 0f, 15),
+                Do.DespawnSelf()),
+            AiPattern.Branch(1, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(0, 12000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
+        ];
         rungs[216206] = [  // IDCT_Normal_LightFi
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 5000),
@@ -17008,6 +17018,20 @@ internal static class BattleCycles
                 Do.SwitchTarget(AggroTarget.SECOND_MOST_HATED)),
             AiPattern.Branch(1, "rung 7", [When.Timer(2)],
                 Do.ArmTimer(2, 6000)),
+        ];
+        rungs[216240] = [  // IDCT_Boss_Summoner
+            AiPattern.Branch(3, "rung 0", [When.Timer(1)],
+                Do.ArmTimer(1, 31000),
+                Do.SystemMessage(1400387, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18897)),
+            AiPattern.Branch(2, "rung 1", [When.Timer(2)],
+                Do.ArmTimer(2, 50000),
+                Do.SystemMessage(1400386, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18896)),
+            AiPattern.Branch(1, "rung 2", [When.Timer(0)],
+                Do.ArmTimer(0, 12000),
+                Do.SkillOn(NpcSkillTargetAttribute.SECOND_MOST_HATED, 18899),
+                Do.SkillOn(NpcSkillTargetAttribute.THIRD_MOST_HATED, 18899)),
         ];
         rungs[216242] = [  // IDCTN_UnTiamatDrakan
             AiPattern.Branch(40, "rung 0", [When.Timer(0), When.HpBetween(11, 49)],
@@ -17352,6 +17376,15 @@ internal static class BattleCycles
         rungs[216285] = [  // IDCT_Normal_Slime01
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
+        ];
+        rungs[216286] = [  // IDCT_Normal_Slime02
+            AiPattern.Branch(2, "rung 0", [When.Timer(1)],
+                Do.SystemMessage(1400445, 0),
+                Do.SpawnNearForTheFight(281672, 1, 2, 0f, 15),
+                Do.DespawnSelf()),
+            AiPattern.Branch(1, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(0, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
         ];
         rungs[216287] = [  // IDCT_Normal_LightFi
@@ -17774,6 +17807,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18765),
                 Do.ArmTimer(3, 23000)),
         ];
+    }
+
+    private static void Cycle10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[216346] = [  // IDTP_Fanatic_FeB
             AiPattern.Branch(6, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18759),
@@ -17794,10 +17831,6 @@ internal static class BattleCycles
                 Do.Broadcast(6932, 10f),
                 Do.ArmTimer(1, 26000)),
         ];
-    }
-
-    private static void Cycle10(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[216350] = [  // IDTP_Fanatic_EeB
             AiPattern.Branch(3, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18760),
@@ -18962,6 +18995,65 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+        rungs[216575] = [  // XDrakan_HighPriest
+            AiPattern.Branch(18, "rung 0", [When.Timer(20)],
+                Do.ArmTimer(20, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17697)),
+            AiPattern.Branch(17, "rung 1", [When.Timer(29)],
+                Do.Broadcast(6311, 15f)),
+            AiPattern.Branch(16, "rung 2", [When.Timer(0), When.HpBelow(25), When.FirstTime(0), When.FirstTime(1), When.FirstTime(2)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(3, 15000),
+                Do.SpawnNearForTheFight(281824, 1, 1, 0f, 30)),
+            AiPattern.Branch(15, "rung 3", [When.Chance(50), When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16837),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16826)),
+            AiPattern.Branch(14, "rung 4", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
+            AiPattern.Branch(13, "rung 5", [When.Timer(4)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
+                Do.SpawnNearForTheFight(281825, 1, 3, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(12, "rung 6", [When.Timer(5), When.Consuming(1)],
+                Do.Nothing()),
+            AiPattern.Branch(11, "rung 7", [When.Timer(6), When.Consuming(2)],
+                Do.Nothing()),
+            AiPattern.Branch(10, "rung 8", [When.Timer(0), When.HpBetween(27, 49), When.FirstTime(5), When.FirstTime(6), When.FirstTime(7)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(5, 15000),
+                Do.SpawnNearForTheFight(281824, 1, 1, 0f, 30)),
+            AiPattern.Branch(9, "rung 9", [When.Chance(50), When.Timer(5)],
+                Do.ArmTimer(6, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16837)),
+            AiPattern.Branch(8, "rung 10", [When.Timer(5)],
+                Do.ArmTimer(6, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17340)),
+            AiPattern.Branch(7, "rung 11", [When.Timer(6)],
+                Do.ArmTimer(5, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
+                Do.SpawnNearForTheFight(281825, 1, 3, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(6, "rung 12", [When.Timer(1), When.Consuming(6)],
+                Do.Nothing()),
+            AiPattern.Branch(5, "rung 13", [When.Timer(2), When.Consuming(7)],
+                Do.Nothing()),
+            AiPattern.Branch(4, "rung 14", [When.Chance(50), When.Timer(1)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
+            AiPattern.Branch(3, "rung 15", [When.Timer(1)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17340)),
+            AiPattern.Branch(2, "rung 16", [When.Timer(2)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
+                Do.SpawnNearForTheFight(281825, 1, 2, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(1, "rung 17", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
         rungs[216579] = [  // XDrakan_WeB
             AiPattern.Branch(11, "rung 0", [When.Timer(5), When.HpBelow(35)],
                 Do.ArmTimer(4, 12000),
@@ -19419,6 +19511,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle11(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[216666] = [  // Owllau_FeA
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -19515,10 +19611,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle11(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[216673] = [  // Owllau_FeA
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -21587,6 +21679,10 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle12(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217018] = [  // IDCT_DrakanFi
             AiPattern.Branch(10, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(2, 18000),
@@ -21700,10 +21796,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 8", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-    }
-
-    private static void Cycle12(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217045] = [  // IDCT_DrakanAs
             AiPattern.Branch(9, "rung 0", [When.Timer(2), When.HpBelow(35)],
                 Do.ArmTimer(4, 8000),
@@ -23152,6 +23244,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 4", [When.Timer(2)],
                 Do.ArmTimer(2, 5000)),
         ];
+    }
+
+    private static void Cycle13(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217396] = [  // Raksha_DrakanGuardFigheter
             AiPattern.Branch(5, "rung 0", [When.Timer(1), When.HpBelow(38)],
                 Do.ArmTimer(1, 13000),
@@ -23220,10 +23316,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18824)),
         ];
-    }
-
-    private static void Cycle13(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217400] = [  // Raksha_KerosKN_Nmd
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -25050,6 +25142,10 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 6", [When.Timer(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18112)),
         ];
+    }
+
+    private static void Cycle14(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217612] = [  // Raksha_DrakanGuardFigheter
             AiPattern.Branch(5, "rung 0", [When.Timer(1), When.HpBelow(38)],
                 Do.ArmTimer(1, 13000),
@@ -25119,10 +25215,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 4", [When.Timer(2)],
                 Do.ArmTimer(2, 5000)),
         ];
-    }
-
-    private static void Cycle14(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217616] = [  // Raksha_DrakanGuardScout
             AiPattern.Branch(8, "rung 0", [When.Timer(1), When.HpBelow(38)],
                 Do.ArmTimer(1, 14000),
@@ -26254,6 +26346,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19829)),
         ];
+    }
+
+    private static void Cycle15(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217888] = [  // LDF4a_Fox_Light_Nmd
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -26286,10 +26382,6 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle15(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217895] = [  // LDF4a_Spaky
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.HpBelow(20)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20152)),
@@ -26970,6 +27062,10 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
+    }
+
+    private static void Cycle16(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218024] = [  // LDF4a_Daily_ElementalLightF
             AiPattern.Branch(10, "rung 0", [When.Timer(1), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(1, 5000),
@@ -27005,10 +27101,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
-    }
-
-    private static void Cycle16(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218028] = [  // LDF4a_ElementalLightF
             AiPattern.Branch(10, "rung 0", [When.Timer(1), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(1, 5000),
@@ -27912,6 +28004,10 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
+    }
+
+    private static void Cycle17(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218144] = [  // 1Skill_Ev15s_UseSk1T
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -27937,10 +28033,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle17(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218149] = [  // LDF4A_DrakanScout_UnarmedFighter_Nmd
             AiPattern.Branch(15, "rung 0", [When.Timer(1), When.HpBelow(60), When.FirstTime(0)],
                 Do.ArmTimer(1, 5000),
@@ -28730,6 +28822,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 11000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20350)),
         ];
+    }
+
+    private static void Cycle18(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218297] = [  // LDF4b_T2_Spider_Leaf_An
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 11000),
@@ -28778,10 +28874,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 20519),
                 Do.ArmTimer(2, 25000)),
         ];
-    }
-
-    private static void Cycle18(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218303] = [  // LDF4b_TiamatDrakan_NobleFighter
             AiPattern.Branch(3, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20504),
@@ -29897,6 +29989,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle19(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218431] = [  // LDF4b_T4_Fungus_An
             AiPattern.Branch(4, "rung 0", [When.Timer(1), When.HpBelow(70), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20239)),
@@ -29931,10 +30027,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void Cycle19(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218436] = [  // LDF4b_T4_Twister_Aurora_An
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 14000),
@@ -31021,6 +31113,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19828),
                 Do.ArmTimer(0, 10000)),
         ];
+    }
+
+    private static void Cycle20(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218581] = [  // LDF4a_Lobster
             AiPattern.Branch(10, "rung 0", [When.Timer(1), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(1, 5000),
@@ -31046,10 +31142,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20078)),
         ];
-    }
-
-    private static void Cycle20(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218588] = [  // LDF4a_Calydon_Wizard
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 25000),
@@ -32054,6 +32146,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20240),
                 Do.ArmTimer(1, 15000)),
         ];
+    }
+
+    private static void Cycle21(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218726] = [  // LDF4b_T1_Scorpion_Giant_An
             AiPattern.Branch(3, "rung 0", [When.Timer(1), When.HpBelow(30), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20237)),
@@ -32086,10 +32182,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
-    }
-
-    private static void Cycle21(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218730] = [  // LDF4b_T2_Agrint_Gravity_An
             AiPattern.Branch(3, "rung 0", [When.Timer(1), When.HpBelow(30), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16522)),
@@ -33226,6 +33318,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle22(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219012] = [  // Shulack_Brownie
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 20000),
@@ -33257,10 +33353,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle22(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219016] = [  // Shulack_RatmanW
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -34383,6 +34475,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 8", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void Cycle23(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219242] = [  // IDDreadgion_03_DrakanRa_Vil_60_Ae
             AiPattern.Branch(10, "rung 0", [When.Timer(2), When.HpBelow(35)],
                 Do.ArmTimer(3, 9000),
@@ -34469,10 +34565,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 6000)),
         ];
-    }
-
-    private static void Cycle23(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219248] = [  // IDDreadgion_03_DrakanCl_Noble_60_Ae
             AiPattern.Branch(6, "rung 0", [When.HpBelow(80), When.Timer(0), When.FirstTime(0)],
                 Do.SpawnNearForTheFight(282988, 1, 1, 0f, 30),
@@ -35882,6 +35974,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 5", [When.Timer(3)],
                 Do.ArmTimer(3, 3000)),
         ];
+    }
+
+    private static void Cycle24(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219815] = [  // LF5_NewSpecies_Pr_KJS
             AiPattern.Branch(22, "rung 0", [When.Timer(3), When.HpBelow(50), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
@@ -35930,10 +36026,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 3", [When.Timer(3)],
                 Do.ArmTimer(3, 3000)),
         ];
-    }
-
-    private static void Cycle24(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219819] = [  // LF5_NewSpecies_Pr_KJS
             AiPattern.Branch(22, "rung 0", [When.Timer(3), When.HpBelow(50), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
@@ -37626,6 +37718,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle25(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[220188] = [  // Britra_Fi_HpDrain
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
@@ -37713,10 +37809,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle25(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[220194] = [  // F5_PvP_DGuard_Wi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17111)),
@@ -39317,6 +39409,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516)),
         ];
+    }
+
+    private static void Cycle26(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230212] = [  // Fanatic40_Ch
             AiPattern.Branch(10, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 20000),
@@ -39351,10 +39447,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516)),
         ];
-    }
-
-    private static void Cycle26(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230216] = [  // Fanatic40_Pr
             AiPattern.Branch(10, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 20000),
@@ -40406,6 +40498,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 13000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16525)),
         ];
+    }
+
+    private static void Cycle27(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230722] = [  // IDRose_M_ShulackF_Mu_P_Key_Ae
             AiPattern.Branch(32, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(0, 8000),
@@ -40444,10 +40540,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18814)),
         ];
-    }
-
-    private static void Cycle27(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230726] = [  // IDRose_M_KrallKeeper_Fi_P_Key_Ae
             AiPattern.Branch(32, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(0, 12000),
@@ -41890,6 +41982,10 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 15000)),
         ];
+    }
+
+    private static void Cycle28(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230908] = [  // TR_Drakan_Wi_Dot_solo
             AiPattern.Branch(8, "rung 0", [When.Chance(50), When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -41931,10 +42027,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16602)),
         ];
-    }
-
-    private static void Cycle28(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230912] = [  // TR_Lizard_Ra_Dot_First_Party
             AiPattern.Branch(9, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(0, 10000),
@@ -42674,6 +42766,25 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 13000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21288)),
         ];
+        rungs[230996] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(100, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 13000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17355),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17364)),
+            AiPattern.Branch(99, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(98, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(3, 13000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17700)),
+            AiPattern.Branch(97, "rung 3", [When.Timer(3)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(95, "rung 4", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
+            AiPattern.Branch(94, "rung 5", [When.Timer(11), When.Consuming(11)],
+                Do.Nothing()),
+        ];
         rungs[230997] = [  // VriTR_Stun_Q_Fi_N_60_Ae
             AiPattern.Branch(9, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(0, 10000),
@@ -43288,6 +43399,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20715)),
         ];
+    }
+
+    private static void Cycle29(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231051] = [  // IDF5_U1_SiegeWeapon_Gu_65_Ae
             AiPattern.Branch(21, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(0, 10000),
@@ -43372,10 +43487,6 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle29(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231068] = [  // IDLDF5Re_Solo_Vritra43IU_DrakanWn
             AiPattern.Branch(41, "rung 0", [When.HpBelow(50), When.Timer(2)],
                 Do.ArmTimer(2, 10000),
@@ -44357,6 +44468,49 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 9000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332)),
         ];
+        rungs[231242] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(100, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20715)),
+            AiPattern.Branch(99, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(98, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(97, "rung 3", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20714)),
+            AiPattern.Branch(96, "rung 4", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(95, "rung 5", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
+        ];
+        rungs[231243] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(101, "rung 0", [When.Timer(15)],
+                Do.ArmTimer(15, 7000),
+                Do.Broadcast(23051, 25f)),
+            AiPattern.Branch(100, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.ArmTimer(15, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21278),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361),
+                Do.SpawnNearForTheFight(283634, 1, 1, 0f, 25)),
+            AiPattern.Branch(99, "rung 2", [When.Timer(1)],
+                Do.ArmTimer(2, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(98, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17700)),
+            AiPattern.Branch(97, "rung 4", [When.Timer(3)],
+                Do.ArmTimer(0, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(95, "rung 5", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
+            AiPattern.Branch(94, "rung 6", [When.Timer(11), When.Consuming(11)],
+                Do.Nothing()),
+        ];
         rungs[231306] = [  // Britra_Table
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
@@ -44871,6 +45025,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17700)),
         ];
+    }
+
+    private static void Cycle30(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231348] = [  // Britra_Table
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
@@ -44952,10 +45110,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21292)),
         ];
-    }
-
-    private static void Cycle30(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231356] = [  // Britra_Fi_HpDrain
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
@@ -46062,6 +46216,10 @@ internal static class BattleCycles
             AiPattern.Branch(95, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 15000)),
         ];
+    }
+
+    private static void Cycle31(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231486] = [  // Post_DG_Watch_Ra_N_65_Ae
             AiPattern.Branch(50, "rung 0", [When.Timer(1), When.HpBetween(37, 99)],
                 Do.ArmTimer(2, 10000),
@@ -46225,10 +46383,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16987)),
         ];
-    }
-
-    private static void Cycle31(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231494] = [  // Shulack_STB_Kn_N_65_An
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 15000),
@@ -46484,6 +46638,21 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+        rungs[231509] = [  // Calydon_ChiefG_Pr_N_65_An
+            AiPattern.Branch(101, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(1)],
+                Do.ArmTimer(2, 13000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16563)),
+            AiPattern.Branch(100, "rung 1", [When.Timer(1), When.HpBetween(52, 99)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16638)),
+            AiPattern.Branch(99, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16638)),
+            AiPattern.Branch(50, "rung 3", [When.Timer(3), When.Consuming(1)],
+                Do.Nothing()),
+            AiPattern.Branch(7, "rung 4", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
         rungs[231511] = [  // Elewater4_Curse_El_N_65_Ae
             AiPattern.Branch(100, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 7000),
@@ -46727,6 +46896,16 @@ internal static class BattleCycles
             AiPattern.Branch(97, "rung 3", [When.Timer(3)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21300)),
+        ];
+        rungs[231522] = [  // Shulack_Debuff_Pr_N_65_An
+            AiPattern.Branch(101, "rung 0", [When.Timer(5), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(100, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(1, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21217)),
+            AiPattern.Branch(99, "rung 2", [When.Timer(1)],
+                Do.ArmTimer(0, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
         ];
         rungs[231524] = [  // Vri_FanaRBoss_El_65_N_An
             AiPattern.Branch(101, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(1)],
@@ -47530,6 +47709,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle32(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231697] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -47679,10 +47862,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle32(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231706] = [  // F5_PvPLight_LGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -49186,6 +49365,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle33(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231813] = [  // F5_PvP_LGuard_Ra_Ae_Broad
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18657)),
@@ -49363,10 +49546,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle33(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231825] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -51380,6 +51559,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle34(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231977] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -51551,10 +51734,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle34(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231986] = [  // F5_PvPLight_LGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -53205,6 +53384,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle35(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232087] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -53379,10 +53562,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle35(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232096] = [  // F5_PvP_LGuard_Fi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17079)),
@@ -54964,6 +55143,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle36(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232253] = [  // F5_PvPLight_LGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -55113,10 +55296,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle36(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232262] = [  // F5_PvPLight_LGuard_Ra_An_Broad
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17099)),
@@ -56627,6 +56806,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+    }
+
+    private static void Cycle37(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232391] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
             AiPattern.Branch(22, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 3000),
@@ -56762,10 +56945,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17295)),
         ];
-    }
-
-    private static void Cycle37(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232400] = [  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
             AiPattern.Branch(22, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 3000),
@@ -58167,6 +58346,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle38(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232491] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -58331,10 +58514,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle38(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232500] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17111)),
@@ -60098,6 +60277,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17335)),
         ];
+    }
+
+    private static void Cycle39(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232610] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -60256,10 +60439,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21288)),
         ];
-    }
-
-    private static void Cycle39(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232619] = [  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 4000),
@@ -61973,6 +62152,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle40(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232710] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -62147,10 +62330,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle40(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232719] = [  // F5_PvPLight_LGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -63979,6 +64158,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle41(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232810] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -64198,10 +64381,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle41(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232819] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -64746,6 +64925,25 @@ internal static class BattleCycles
             AiPattern.Branch(98, "rung 2", [When.Timer(2)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
+        ];
+        rungs[232844] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(100, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20715)),
+            AiPattern.Branch(99, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(98, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(97, "rung 3", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20714)),
+            AiPattern.Branch(96, "rung 4", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(95, "rung 5", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
         ];
         rungs[232845] = [  // Britra_Party_Ri_OpenAerial
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
@@ -65382,6 +65580,25 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17295)),
         ];
+        rungs[233069] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
+        ];
         rungs[233070] = [  // IDF5_U2_VriIU_As_solo_65_An
             AiPattern.Branch(23, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(0, 7000),
@@ -65662,6 +65879,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16554),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18159)),
         ];
+    }
+
+    private static void Cycle42(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233103] = [  // IDF5_U2_ShulackF_Wi_party_65_Ae
             AiPattern.Branch(22, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(0, 10000),
@@ -65767,6 +65988,25 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 11000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20179)),
         ];
+        rungs[233113] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20714)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
+        ];
         rungs[233115] = [  // IDF5_U2_VriRP_Fi_party_65_Ae
             AiPattern.Branch(22, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(0, 7000),
@@ -65806,6 +66046,25 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 11000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20179)),
         ];
+        rungs[233121] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20714)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
+        ];
         rungs[233123] = [  // IDF5_U2_VriRP_Fi_party_65_Ae
             AiPattern.Branch(22, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(0, 7000),
@@ -65817,10 +66076,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21284)),
         ];
-    }
-
-    private static void Cycle42(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233126] = [  // IDF5_U2_Light_Fi_party_65_Ae2
             AiPattern.Branch(42, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(5), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -67904,6 +68159,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 9000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21288)),
         ];
+    }
+
+    private static void Cycle43(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233338] = [  // IDVritra_Base_Drakan_Ri
             AiPattern.Branch(6, "rung 0", [When.Chance(30), When.Timer(2)],
                 Do.ArmTimer(0, 10000),
@@ -68146,10 +68405,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20247),
                 Do.ArmTimer(2, 25000)),
         ];
-    }
-
-    private static void Cycle43(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233359] = [  // IDDreadgion_03_DrakanCl_Tiamat_60_Ae
             AiPattern.Branch(6, "rung 0", [When.HpBelow(80), When.Timer(0), When.FirstTime(0)],
                 Do.SpawnNearForTheFight(282988, 1, 1, 0f, 30),
@@ -69816,6 +70071,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle44(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233523] = [  // IDF5_TD_War_Light_Officer_06
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19599),
@@ -70151,10 +70410,6 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 11", [When.Timer(0), When.HpBetween(52, 99)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle44(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233551] = [  // IDF5_TD_War_Vri_Officer_02
             AiPattern.Branch(15, "rung 0", [When.Timer(8)],
                 Do.ArmTimer(5, 8000),
@@ -71840,6 +72095,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle45(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234065] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(24, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -72026,10 +72285,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle45(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234093] = [  // F5_PvP_LGuard_Fi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17079)),
@@ -73701,6 +73956,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle46(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234397] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -73896,10 +74155,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle46(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234410] = [  // F5_PvPLight_LGuard_Kn_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16741)),
@@ -75477,6 +75732,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle47(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234553] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(2, 5000),
@@ -76605,10 +76864,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
-    }
-
-    private static void Cycle47(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234648] = [  // Britra_Table
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
@@ -78061,6 +78316,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17295)),
         ];
+    }
+
+    private static void Cycle48(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234838] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -78284,10 +78543,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle48(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234854] = [  // F5_PvPLight_DGuard_Pr_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17125)),
@@ -80009,6 +80264,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle49(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[235185] = [  // F5_PvP_LGuard_Fi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17079)),
@@ -80209,10 +80468,6 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 4", [When.Timer(1)],
                 Do.ArmTimer(1, 6000)),
         ];
-    }
-
-    private static void Cycle49(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[235395] = [  // Lizardman_FeC
             AiPattern.Branch(7, "rung 0", [When.Timer(1), When.HpBelow(35), When.FirstTime(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17461),
@@ -80368,6 +80623,25 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16570)),
         ];
+        rungs[235578] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20714)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
+        ];
         rungs[235579] = [  // IDF5_U2_VriRP_Fi_party_65_Ae2
             AiPattern.Branch(22, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(0, 10000),
@@ -80438,6 +80712,25 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 3", [When.Timer(1)],
                 Do.ArmTimer(2, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16570)),
+        ];
+        rungs[235604] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20714)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
         ];
         rungs[235605] = [  // IDF5_U2_VriRP_Fi_party_65_Ae2
             AiPattern.Branch(22, "rung 0", [When.Timer(2)],
@@ -82105,6 +82398,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle50(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[235984] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
             AiPattern.Branch(40, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -82450,10 +82747,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle50(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[235999] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
             AiPattern.Branch(24, "rung 0", [When.Timer(4)],
                 Do.ArmTimer(0, 10000),
@@ -84294,6 +84587,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle51(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[236680] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17111)),
@@ -84508,10 +84805,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-    }
-
-    private static void Cycle51(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[236748] = [  // NKrall_FeC
             AiPattern.Branch(2, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(0, 30000),
@@ -85950,6 +86243,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17316),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle52(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251158] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 6000),
@@ -86162,10 +86459,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17316),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle52(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251185] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 6000),
@@ -87338,6 +87631,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17316),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle53(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251323] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(24, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 8000),
@@ -87598,10 +87895,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332)),
         ];
-    }
-
-    private static void Cycle53(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251338] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 5000),
@@ -88712,6 +89005,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17342),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle54(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251429] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(24, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -88982,10 +89279,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21227)),
         ];
-    }
-
-    private static void Cycle54(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251444] = [  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 12000),
@@ -90392,6 +90685,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle55(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251623] = [  // F5_PvP_LGuard_Pr_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17129)),
@@ -90587,10 +90884,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle55(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251638] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17111)),
@@ -92141,6 +92434,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle56(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251797] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -92349,10 +92646,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17342),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle56(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251840] = [  // F5_RvR_LGuard_Kn_Ae
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 6000),
@@ -93253,6 +93546,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20667),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle57(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251942] = [  // F5_RvR_DGuard_Gu_Ae
             AiPattern.Branch(31, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 12000),
@@ -93400,10 +93697,6 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 8500),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17102)),
         ];
-    }
-
-    private static void Cycle57(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251967] = [  // F5_RvR_DGuard_Ra_Ae
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 7500),
@@ -94235,6 +94528,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
         ];
+    }
+
+    private static void Cycle58(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[252070] = [  // LDF5_LGuard_DisputeRvR_Support_Mez_We
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 8000),
@@ -94353,10 +94650,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21299),
                 Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
         ];
-    }
-
-    private static void Cycle58(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[252089] = [  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 12000),
@@ -95385,6 +95678,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle59(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[252368] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -95644,10 +95941,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle59(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[252387] = [  // F5_PvP_DGuard_As_Ae_Hide
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20375),
@@ -96761,6 +97054,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17490),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17489)),
         ];
+    }
+
+    private static void Cycle60(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[256637] = [  // AD2_Bst0BT15st1
             AiPattern.Branch(2, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -96931,10 +97228,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20381)),
         ];
-    }
-
-    private static void Cycle60(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[256750] = [  // BLDF5_SWHowitzer_Gu_65_Ae
             AiPattern.Branch(23, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(0, 7000),
@@ -98457,6 +98750,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle61(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[257331] = [  // DGuard_AsA
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -98731,10 +99028,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
-    }
-
-    private static void Cycle61(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[257432] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -100035,6 +100328,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle62(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[257789] = [  // LGuard_PnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
@@ -100344,10 +100641,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle62(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[257924] = [  // DGuard_FsA
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -101624,6 +101917,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle63(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[259112] = [  // DGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -102156,10 +102453,6 @@ internal static class BattleCycles
                 Do.ArmTimer(5, 300000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20142)),
         ];
-    }
-
-    private static void Cycle63(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[259211] = [  // LDF4b_Tiamat_Gravity
             AiPattern.Branch(13, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20105),
@@ -103756,6 +104049,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle64(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[259677] = [  // DrGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -103936,10 +104233,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle64(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[259714] = [  // LGuard_PnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
@@ -104935,6 +105228,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle65(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[260169] = [  // LGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -105115,10 +105412,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle65(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[260184] = [  // LGuard_PnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
@@ -106127,6 +106420,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle66(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[260646] = [  // LGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -106307,10 +106604,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle66(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[260916] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -107331,6 +107624,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle67(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[261256] = [  // DrGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -107511,10 +107808,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle67(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[261526] = [  // DrGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -108535,6 +108828,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle68(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[262121] = [  // DGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -108715,10 +109012,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle68(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[262136] = [  // DGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -109739,6 +110032,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle69(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[262731] = [  // LGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -109919,10 +110216,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle69(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[262746] = [  // LGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -110949,6 +111242,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle70(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263282] = [  // LGuard_FhA
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 20000),
@@ -111201,10 +111498,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle70(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[263443] = [  // DGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -112303,6 +112596,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle71(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263630] = [  // DrGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -112483,10 +112780,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle71(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[263645] = [  // DrGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -113507,6 +113800,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle72(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[264240] = [  // DGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -113687,10 +113984,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle72(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[264255] = [  // DGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -114789,6 +115082,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle73(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[264817] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -114969,10 +115266,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle73(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[264832] = [  // LGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -115993,6 +116286,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle74(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[265427] = [  // DrGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -116173,10 +116470,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle74(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[265442] = [  // DrGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -117197,6 +117490,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle75(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[266037] = [  // DGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -117377,10 +117674,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle75(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[266052] = [  // DGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -118389,6 +118682,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle76(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[266624] = [  // DGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -118569,10 +118866,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle76(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[266639] = [  // DGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -119593,6 +119886,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle77(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[267234] = [  // LGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -119773,10 +120070,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle77(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[267249] = [  // LGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -120797,6 +121090,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle78(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[267964] = [  // DrGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -120977,10 +121274,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle78(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[267979] = [  // DrGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -122079,6 +122372,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle79(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[268421] = [  // DGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -122259,10 +122556,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle79(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[268436] = [  // DGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -123283,6 +123576,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle80(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[269151] = [  // LGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -123463,10 +123760,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle80(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[269166] = [  // LGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -124475,6 +124768,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle81(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[269618] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -124655,10 +124952,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle81(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[269633] = [  // LGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -125667,6 +125960,10 @@ internal static class BattleCycles
                 Do.Say(340924, 0),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18143)),
         ];
+    }
+
+    private static void Cycle82(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[270153] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -125847,10 +126144,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle82(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[270220] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -126871,6 +127164,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle83(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[270560] = [  // DrGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -127051,10 +127348,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle83(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[270950] = [  // DrGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -128063,6 +128356,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle84(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[271147] = [  // LGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -128243,10 +128540,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle84(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[271417] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -129267,6 +129560,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle85(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[271757] = [  // DrGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -129381,10 +129678,6 @@ internal static class BattleCycles
                 Do.Say(340924, 0),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18426)),
         ];
-    }
-
-    private static void Cycle85(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[271819] = [  // LGuard_FhA_Officer
             AiPattern.Branch(8, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(2, 45000),
@@ -130480,6 +130773,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20667),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle86(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272077] = [  // F5_RvR_LGuard_Gu_Ae
             AiPattern.Branch(31, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 12000),
@@ -130615,10 +130912,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20667),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle86(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272117] = [  // F5_RvR_DGuard_Gu_Ae
             AiPattern.Branch(31, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 12000),
@@ -131471,6 +131764,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17316),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle87(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272232] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 6000),
@@ -131602,10 +131899,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17342),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle87(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272247] = [  // LDF5_LGuard_DisputeRvR_Support_Mez_We
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 8000),
@@ -132589,6 +132882,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20667),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle88(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272538] = [  // F5_RvR_LGuard_Gu_Ae
             AiPattern.Branch(31, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 12000),
@@ -132769,10 +133066,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20666),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle88(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272558] = [  // F5_RvR_LGuard_Kn_Ae
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 6000),
@@ -133627,6 +133920,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
         ];
+    }
+
+    private static void Cycle89(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272703] = [  // LDF5_LGuard_DisputeRvR_Support_Heal_Pe
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 7000),
@@ -133779,10 +134076,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16443)),
         ];
-    }
-
-    private static void Cycle89(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272718] = [  // LDF5_LGuard_DisputeRvR_Defend_PM_Ke
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 5000),
@@ -134860,6 +135153,10 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 8500),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17102)),
         ];
+    }
+
+    private static void Cycle90(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273031] = [  // F5_RvR_LGuard_Ra_Ae_Broad
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 7500),
@@ -135007,10 +135304,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20669),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle90(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[273051] = [  // F5_RvR_LGuard_El_Ae
             AiPattern.Branch(33, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(1, 8000),
@@ -135913,6 +136206,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21299),
                 Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
         ];
+    }
+
+    private static void Cycle91(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273196] = [  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 12000),
@@ -136041,10 +136338,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21287)),
         ];
-    }
-
-    private static void Cycle91(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[273211] = [  // LDF5_LGuard_DisputeRvR_Support_Deform_Ee
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 6000),
@@ -136952,6 +137245,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17325),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle92(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273336] = [  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 9000),
@@ -137098,10 +137395,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20389)),
         ];
-    }
-
-    private static void Cycle92(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[273373] = [  // F5_RvR_LGuard_Ra_Ae_Broad
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 7500),
@@ -138014,6 +138307,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42101, 13f)),
         ];
+    }
+
+    private static void Cycle93(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277953] = [  // Gab1_LArtiGuard_Boss_03_01_2
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
@@ -138089,10 +138386,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42101, 13f)),
         ];
-    }
-
-    private static void Cycle93(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277968] = [  // Gab1_BossSum_Vritra_03
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
@@ -139358,6 +139651,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle94(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279138] = [  // F5_PvP_LGuard_Gu_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20661),
@@ -139698,10 +139995,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle94(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279166] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -141172,6 +141465,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle95(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279265] = [  // F5_PvP_LGuard_Fi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17079)),
@@ -141437,10 +141734,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle95(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279280] = [  // F5_PvP_LGuard_As_Ae_Hide
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20375),
@@ -142903,6 +143196,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle96(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279379] = [  // F5_PvP_DGuard_As_Ae_Hide
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20375),
@@ -143103,10 +143400,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle96(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279394] = [  // F5_PvP_DGuard_Pr_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17129)),
@@ -144540,6 +144833,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle97(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279507] = [  // F5_PvP_DGuard_Wi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17111)),
@@ -144868,10 +145165,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17066),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void Cycle97(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279537] = [  // F5_RvR_DGuard_Fi_Ae
             AiPattern.Branch(36, "rung 0", [When.Timer(3), When.EventTargetFlying],
                 Do.ArmTimer(1, 5500),
@@ -146382,6 +146675,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17295)),
         ];
+    }
+
+    private static void Cycle98(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279664] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -146737,10 +147034,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
-    }
-
-    private static void Cycle98(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279679] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
             AiPattern.Branch(22, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 3000),
@@ -148188,6 +148481,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
+    }
+
+    private static void Cycle99(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279780] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
             AiPattern.Branch(22, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 3000),
@@ -148356,10 +148653,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21288)),
         ];
-    }
-
-    private static void Cycle99(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279796] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_We
             AiPattern.Branch(24, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -149831,6 +150124,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21288)),
         ];
+    }
+
+    private static void Cycle100(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279895] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_We
             AiPattern.Branch(24, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -150071,10 +150368,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8500),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17314)),
         ];
-    }
-
-    private static void Cycle100(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279911] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Re
             AiPattern.Branch(24, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 7000),
@@ -151490,6 +151783,10 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void Cycle101(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[280159] = [  // Lycan_HeB
             AiPattern.Branch(5, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 6000),
@@ -151637,10 +151934,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void Cycle101(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[280225] = [  // NKrall_KeB
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(1)],
                 Do.ArmTimer(0, 7000),
@@ -153001,6 +153294,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void Cycle102(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[280729] = [  // ND2_FeB
             AiPattern.Branch(5, "rung 0", [When.Timer(3), When.HpBelow(35)],
                 Do.ArmTimer(3, 15000),
@@ -153358,10 +153655,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 10", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-    }
-
-    private static void Cycle102(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[280762] = [  // ND2_KeF
             AiPattern.Branch(6, "rung 0", [When.HpBelow(35), When.Timer(3)],
                 Do.ArmTimer(3, 25000),
@@ -154733,6 +155026,103 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SpawnNearForTheFight(280969, 1, 2, 0f, 60)),
         ];
+        rungs[280974] = [  // ND2_FhX
+            AiPattern.Branch(24, "rung 0", [When.Chance(50), When.Timer(0), When.HpBelow(20), When.FirstTime(0)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(2, 25000),
+                Do.SkillOn(NpcSkillTargetAttribute.SECOND_MOST_HATED, 18493),
+                Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
+            AiPattern.Branch(23, "rung 1", [When.Timer(0), When.HpBelow(20), When.FirstTime(0)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(2, 25000),
+                Do.SkillOn(NpcSkillTargetAttribute.THIRD_MOST_HATED, 18488),
+                Do.SwitchTarget(AggroTarget.THIRD_MOST_HATED)),
+            AiPattern.Branch(22, "rung 2", [When.Timer(0), When.HpBetween(22, 39), When.FirstTime(1)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(4, 25000),
+                Do.SkillOn(NpcSkillTargetAttribute.SECOND_MOST_HATED, 18487),
+                Do.SkillOn(NpcSkillTargetAttribute.THIRD_MOST_HATED, 18487),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18488)),
+            AiPattern.Branch(21, "rung 3", [When.Timer(0), When.HpBetween(42, 59), When.FirstTime(2)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(5, 22500),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18489),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18490)),
+            AiPattern.Branch(20, "rung 4", [When.Timer(0), When.HpBetween(62, 79), When.FirstTime(3)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(6, 22500),
+                Do.ArmTimer(9, 35000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18491),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18492),
+                Do.Broadcast(6610, 100f)),
+            AiPattern.Branch(19, "rung 5", [When.Chance(50), When.Timer(2), When.HpBelow(20)],
+                Do.ArmTimer(3, 15000),
+                Do.ArmTimer(8, 1000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18493)),
+            AiPattern.Branch(18, "rung 6", [When.Chance(33), When.Timer(8)],
+                Do.SwitchTarget(AggroTarget.RANDOM)),
+            AiPattern.Branch(17, "rung 7", [When.Timer(8)],
+                Do.Nothing()),
+            AiPattern.Branch(16, "rung 8", [When.Timer(2), When.HpBelow(20)],
+                Do.ArmTimer(2, 25000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18493),
+                Do.SwitchTarget(AggroTarget.RANDOM),
+                Do.ArmTimer(11, 20000)),
+            AiPattern.Branch(15, "rung 9", [When.Chance(50), When.Timer(11), When.HpBelow(20)],
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18490)),
+            AiPattern.Branch(14, "rung 10", [When.Timer(11), When.HpBelow(20)],
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18488)),
+            AiPattern.Branch(13, "rung 11", [When.Chance(50), When.Timer(4), When.HpBetween(22, 39)],
+                Do.ArmTimer(4, 20000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18487)),
+            AiPattern.Branch(12, "rung 12", [When.Timer(4), When.HpBetween(22, 39)],
+                Do.ArmTimer(4, 20000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18488)),
+            AiPattern.Branch(11, "rung 13", [When.Chance(50), When.Timer(5), When.HpBetween(42, 59)],
+                Do.ArmTimer(5, 20000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18489)),
+            AiPattern.Branch(10, "rung 14", [When.Timer(5), When.HpBetween(42, 59)],
+                Do.ArmTimer(5, 20000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18490)),
+            AiPattern.Branch(9, "rung 15", [When.Chance(50), When.Timer(6), When.HpBetween(62, 79)],
+                Do.ArmTimer(6, 20000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18491)),
+            AiPattern.Branch(8, "rung 16", [When.Timer(6), When.HpBetween(62, 79)],
+                Do.ArmTimer(6, 20000),
+                Do.ArmTimer(9, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18492)),
+            AiPattern.Branch(7, "rung 17", [When.Chance(50), When.Timer(1), When.HpBetween(82, 99)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16699),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16531)),
+            AiPattern.Branch(6, "rung 18", [When.Timer(1), When.HpBetween(82, 99)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18493)),
+            AiPattern.Branch(5, "rung 19", [When.Timer(9), When.HpBelow(20)],
+                Do.ArmTimer(9, 15000),
+                Do.Say(341576, 0),
+                Do.Broadcast(6612, 100f)),
+            AiPattern.Branch(4, "rung 20", [When.Timer(9), When.HpBetween(22, 39)],
+                Do.ArmTimer(9, 25000),
+                Do.Say(341575, 0),
+                Do.Broadcast(6611, 100f)),
+            AiPattern.Branch(3, "rung 21", [When.Timer(9), When.HpBetween(42, 59)],
+                Do.ArmTimer(9, 25000),
+                Do.Say(341574, 0),
+                Do.Broadcast(6610, 100f)),
+            AiPattern.Branch(2, "rung 22", [When.Timer(9), When.HpBetween(62, 79)],
+                Do.ArmTimer(9, 30000),
+                Do.Say(341574, 0),
+                Do.Broadcast(6610, 100f)),
+            AiPattern.Branch(1, "rung 23", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
         rungs[280987] = [  // ND2_FeJSum
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
@@ -155535,6 +155925,10 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void Cycle103(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281101] = [  // ND2_FeL1
             AiPattern.Branch(5, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(2, 15000),
@@ -155813,10 +156207,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle103(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281147] = [  // ND2_Bst_33
             AiPattern.Branch(4, "rung 0", [When.Timer(1), When.HpBetween(52, 99)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18584),
@@ -157724,6 +158114,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5500),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18598)),
         ];
+    }
+
+    private static void Cycle104(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281384] = [  // IDTP_Fanatic_Elementalearth4
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18597),
@@ -157969,10 +158363,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle104(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281499] = [  // LF4_FieldRaid_SumD
             AiPattern.Branch(7, "rung 0", [When.Timer(2)],
                 Do.Say(342221, 0)),
@@ -158223,6 +158613,32 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0), When.HpBetween(26, 98)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18742),
                 Do.ArmTimer(0, 5000)),
+        ];
+        rungs[281539] = [  // IDCT_Boss_Summoner
+            AiPattern.Branch(3, "rung 0", [When.Timer(1)],
+                Do.ArmTimer(1, 31000),
+                Do.SystemMessage(1400387, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18897)),
+            AiPattern.Branch(2, "rung 1", [When.Timer(2)],
+                Do.ArmTimer(2, 50000),
+                Do.SystemMessage(1400386, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18896)),
+            AiPattern.Branch(1, "rung 2", [When.Timer(0)],
+                Do.ArmTimer(0, 12000),
+                Do.SkillOn(NpcSkillTargetAttribute.SECOND_MOST_HATED, 18899),
+                Do.SkillOn(NpcSkillTargetAttribute.THIRD_MOST_HATED, 18899)),
+        ];
+        rungs[281547] = [  // IDCT_Boss_ElementalFire
+            AiPattern.Branch(8, "rung 0", [When.Timer(1)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18911)),
+            AiPattern.Branch(7, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(0, 20000),
+                Do.ArmTimer(1, 14000),
+                Do.SystemMessage(1400388, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18910)),
+            AiPattern.Branch(6, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(2, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18909)),
         ];
         rungs[281549] = [  // Owllau_FeA
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
@@ -158646,6 +159062,15 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
         ];
+        rungs[281671] = [  // IDCT_Normal_Slime02
+            AiPattern.Branch(2, "rung 0", [When.Timer(1)],
+                Do.SystemMessage(1400445, 0),
+                Do.SpawnNearForTheFight(281672, 1, 2, 0f, 15),
+                Do.DespawnSelf()),
+            AiPattern.Branch(1, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(0, 12000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
+        ];
         rungs[281673] = [  // IDCT_Normal_LightFi
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 5000),
@@ -158922,6 +159347,74 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19067)),
         ];
+        rungs[281810] = [  // LF4_FieldRaid
+            AiPattern.Branch(20, "rung 0", [When.Timer(0), When.HpBelow(25), When.FirstTime(0)],
+                Do.Despawn(2),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19189),
+                Do.SystemMessage(1400609, 0),
+                Do.SpawnOnTarget(281949, 1, 1, 3.0f, 600, 100, 50.0f),
+                Do.SpawnOnTarget(281948, 1, 1, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19191),
+                Do.Say(342058, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18671),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(19, "rung 1", [When.Timer(0), When.HpBelow(45), When.FirstTime(1)],
+                Do.Despawn(3),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19189),
+                Do.SystemMessage(1400608, 0),
+                Do.SpawnOnTarget(281947, 2, 3, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19191),
+                Do.Say(342057, 0),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(18, "rung 2", [When.Timer(0), When.HpBelow(65), When.FirstTime(2)],
+                Do.Despawn(4),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19189),
+                Do.SystemMessage(1400607, 0),
+                Do.SpawnOnTarget(281946, 3, 3, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19191),
+                Do.Say(342056, 0),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(17, "rung 3", [When.Timer(0), When.HpBelow(85), When.FirstTime(3)],
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19189),
+                Do.SystemMessage(1400606, 0),
+                Do.SpawnOnTarget(281945, 4, 3, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19191),
+                Do.Say(342055, 0),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(16, "rung 4", [When.Chance(50), When.Timer(1), When.HpBelow(25)],
+                Do.ArmTimer(1, 30000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18665)),
+            AiPattern.Branch(15, "rung 5", [When.Timer(1), When.HpBelow(25)],
+                Do.ArmTimer(1, 30000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19206)),
+            AiPattern.Branch(14, "rung 6", [When.Chance(30), When.Timer(1), When.HpBetween(27, 44)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18683)),
+            AiPattern.Branch(13, "rung 7", [When.Timer(1), When.HpBetween(27, 44)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18673)),
+            AiPattern.Branch(12, "rung 8", [When.Chance(50), When.Timer(1), When.HpBetween(47, 64)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19292)),
+            AiPattern.Branch(11, "rung 9", [When.Timer(1), When.HpBetween(47, 64)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18666)),
+            AiPattern.Branch(10, "rung 10", [When.Chance(50), When.Timer(1), When.HpBetween(67, 84)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19292)),
+            AiPattern.Branch(9, "rung 11", [When.Timer(1), When.HpBetween(67, 84)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18660)),
+            AiPattern.Branch(8, "rung 12", [When.Timer(1), When.HpBetween(87, 99)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18664)),
+            AiPattern.Branch(7, "rung 13", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
         rungs[281813] = [  // Shulack_VChief
             AiPattern.Branch(17, "rung 0", [When.Timer(0), When.HpBelow(25), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -158989,6 +159482,65 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18598),
                 Do.ArmTimer(0, 6000)),
         ];
+        rungs[281823] = [  // XDrakan_HighPriest
+            AiPattern.Branch(18, "rung 0", [When.Timer(20)],
+                Do.ArmTimer(20, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17697)),
+            AiPattern.Branch(17, "rung 1", [When.Timer(29)],
+                Do.Broadcast(6311, 15f)),
+            AiPattern.Branch(16, "rung 2", [When.Timer(0), When.HpBelow(25), When.FirstTime(0), When.FirstTime(1), When.FirstTime(2)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(3, 15000),
+                Do.SpawnNearForTheFight(281824, 1, 1, 0f, 30)),
+            AiPattern.Branch(15, "rung 3", [When.Chance(50), When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16837),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16826)),
+            AiPattern.Branch(14, "rung 4", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
+            AiPattern.Branch(13, "rung 5", [When.Timer(4)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17355),
+                Do.SpawnNearForTheFight(281825, 1, 3, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(12, "rung 6", [When.Timer(5), When.Consuming(1)],
+                Do.Nothing()),
+            AiPattern.Branch(11, "rung 7", [When.Timer(6), When.Consuming(2)],
+                Do.Nothing()),
+            AiPattern.Branch(10, "rung 8", [When.Timer(0), When.HpBetween(27, 49), When.FirstTime(5), When.FirstTime(6), When.FirstTime(7)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(5, 15000),
+                Do.SpawnNearForTheFight(281824, 1, 1, 0f, 30)),
+            AiPattern.Branch(9, "rung 9", [When.Chance(50), When.Timer(5)],
+                Do.ArmTimer(6, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16837)),
+            AiPattern.Branch(8, "rung 10", [When.Timer(5)],
+                Do.ArmTimer(6, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17355)),
+            AiPattern.Branch(7, "rung 11", [When.Timer(6)],
+                Do.ArmTimer(5, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17355),
+                Do.SpawnNearForTheFight(281825, 1, 3, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(6, "rung 12", [When.Timer(1), When.Consuming(6)],
+                Do.Nothing()),
+            AiPattern.Branch(5, "rung 13", [When.Timer(2), When.Consuming(7)],
+                Do.Nothing()),
+            AiPattern.Branch(4, "rung 14", [When.Chance(50), When.Timer(1)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
+            AiPattern.Branch(3, "rung 15", [When.Timer(1)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17355)),
+            AiPattern.Branch(2, "rung 16", [When.Timer(2)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17355),
+                Do.SpawnNearForTheFight(281825, 1, 2, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(1, "rung 17", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
         rungs[281828] = [  // BGuard_FrostPillar
             AiPattern.Branch(4, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 4000),
@@ -158999,6 +159551,65 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 2", [When.Timer(2)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18479),
                 Do.DespawnSelf()),
+        ];
+        rungs[281841] = [  // XDrakan_HighPriest
+            AiPattern.Branch(18, "rung 0", [When.Timer(20)],
+                Do.ArmTimer(20, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17697)),
+            AiPattern.Branch(17, "rung 1", [When.Timer(29)],
+                Do.Broadcast(6311, 15f)),
+            AiPattern.Branch(16, "rung 2", [When.Timer(0), When.HpBelow(25), When.FirstTime(0), When.FirstTime(1), When.FirstTime(2)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(3, 15000),
+                Do.SpawnNearForTheFight(281824, 1, 1, 0f, 30)),
+            AiPattern.Branch(15, "rung 3", [When.Chance(50), When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16837),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16826)),
+            AiPattern.Branch(14, "rung 4", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
+            AiPattern.Branch(13, "rung 5", [When.Timer(4)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
+                Do.SpawnNearForTheFight(281825, 1, 3, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(12, "rung 6", [When.Timer(5), When.Consuming(1)],
+                Do.Nothing()),
+            AiPattern.Branch(11, "rung 7", [When.Timer(6), When.Consuming(2)],
+                Do.Nothing()),
+            AiPattern.Branch(10, "rung 8", [When.Timer(0), When.HpBetween(27, 49), When.FirstTime(5), When.FirstTime(6), When.FirstTime(7)],
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(5, 15000),
+                Do.SpawnNearForTheFight(281824, 1, 1, 0f, 30)),
+            AiPattern.Branch(9, "rung 9", [When.Chance(50), When.Timer(5)],
+                Do.ArmTimer(6, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16837)),
+            AiPattern.Branch(8, "rung 10", [When.Timer(5)],
+                Do.ArmTimer(6, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17340)),
+            AiPattern.Branch(7, "rung 11", [When.Timer(6)],
+                Do.ArmTimer(5, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
+                Do.SpawnNearForTheFight(281825, 1, 3, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(6, "rung 12", [When.Timer(1), When.Consuming(6)],
+                Do.Nothing()),
+            AiPattern.Branch(5, "rung 13", [When.Timer(2), When.Consuming(7)],
+                Do.Nothing()),
+            AiPattern.Branch(4, "rung 14", [When.Chance(50), When.Timer(1)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
+            AiPattern.Branch(3, "rung 15", [When.Timer(1)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17340)),
+            AiPattern.Branch(2, "rung 16", [When.Timer(2)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
+                Do.SpawnNearForTheFight(281825, 1, 2, 0f, 30),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17337)),
+            AiPattern.Branch(1, "rung 17", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
         ];
         rungs[281842] = [  // IDTP_Fanatic_MeA
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
@@ -159267,6 +159878,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle105(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281856] = [  // Dread02_LizardFi
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -159935,10 +160550,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-    }
-
-    private static void Cycle105(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281891] = [  // IDAbRe_Core_Cannon
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19139),
@@ -160657,6 +161268,10 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 15000)),
         ];
+    }
+
+    private static void Cycle106(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282327] = [  // Raksha_Evileye
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19125),
@@ -160918,10 +161533,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17317)),
         ];
-    }
-
-    private static void Cycle106(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282399] = [  // BDrakan_M
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
@@ -161673,6 +162284,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19829),
                 Do.ArmTimer(0, 10000)),
         ];
+    }
+
+    private static void Cycle107(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282645] = [  // IDStation_Darkan_1F_P1
             AiPattern.Branch(7, "rung 0", [When.Timer(1), When.HpBelow(30)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19834)),
@@ -161840,10 +162455,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
-    }
-
-    private static void Cycle107(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282669] = [  // LDF4a_Mimic
             AiPattern.Branch(10, "rung 0", [When.Timer(1), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(1, 5000),
@@ -162640,6 +163251,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle108(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282821] = [  // LDF4b_T2_Millipede_An
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 14000),
@@ -162789,10 +163404,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20232)),
         ];
-    }
-
-    private static void Cycle108(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282844] = [  // LDF4b_T3_Cherubim_An
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 12000),
@@ -163347,6 +163958,10 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16540)),
         ];
+    }
+
+    private static void Cycle109(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[283505] = [  // ShulackRose_Rid_StunTank
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 15000),
@@ -163612,10 +164227,6 @@ internal static class BattleCycles
             AiPattern.Branch(98, "rung 4", [When.Timer(0), When.Consuming(0)],
                 Do.ArmTimer(1, 2000)),
         ];
-    }
-
-    private static void Cycle109(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[283545] = [  // ShulackRose_Wi_Mez
             AiPattern.Branch(100, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(1, 15000),
@@ -164349,6 +164960,30 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+        rungs[283612] = [  // Britra_Party_Pr_Heal
+            AiPattern.Branch(100, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(3, 15000),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+            AiPattern.Branch(99, "rung 1", [When.Timer(0), When.HpBelow(30), When.FirstTime(1)],
+                Do.ArmTimer(4, 15000),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+            AiPattern.Branch(98, "rung 2", [When.Timer(3), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(97, "rung 3", [When.Timer(4), When.Consuming(1)],
+                Do.Nothing()),
+            AiPattern.Branch(96, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(95, "rung 5", [When.Timer(2)],
+                Do.ArmTimer(1, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
+            AiPattern.Branch(94, "rung 6", [When.Timer(5), When.Consuming(2)],
+                Do.Nothing()),
+            AiPattern.Branch(7, "rung 7", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
         rungs[283613] = [  // Britra_Party_Kn_ShieldFwAreaDD
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 3000),
@@ -164570,6 +165205,49 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 8", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+        rungs[283630] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(100, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20715)),
+            AiPattern.Branch(99, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(98, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(97, "rung 3", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20714)),
+            AiPattern.Branch(96, "rung 4", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(95, "rung 5", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
+        ];
+        rungs[283631] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(101, "rung 0", [When.Timer(15)],
+                Do.ArmTimer(15, 7000),
+                Do.Broadcast(23051, 25f)),
+            AiPattern.Branch(100, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.ArmTimer(15, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21278),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361),
+                Do.SpawnNearForTheFight(283634, 1, 1, 0f, 25)),
+            AiPattern.Branch(99, "rung 2", [When.Timer(1)],
+                Do.ArmTimer(2, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(98, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17700)),
+            AiPattern.Branch(97, "rung 4", [When.Timer(3)],
+                Do.ArmTimer(0, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(95, "rung 5", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
+            AiPattern.Branch(94, "rung 6", [When.Timer(11), When.Consuming(11)],
+                Do.Nothing()),
+        ];
         rungs[283648] = [  // AD2_BT10st0
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
@@ -164635,6 +165313,10 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle110(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[283811] = [  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
             AiPattern.Branch(41, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(2, 10000),
@@ -165075,10 +165757,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516)),
         ];
-    }
-
-    private static void Cycle110(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[283845] = [  // TR_Drakan_As_Broad_Third_solo
             AiPattern.Branch(9, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(2, 15000),
@@ -166131,6 +166809,10 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21291)),
         ];
+    }
+
+    private static void Cycle111(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284089] = [  // Vri_StHpDr_Q_Fi_N_65_Ae
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 15000),
@@ -166412,10 +167094,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17558)),
         ];
-    }
-
-    private static void Cycle111(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284162] = [  // AD2_BT10st0
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
@@ -166584,6 +167262,25 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 16000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18030),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18743)),
+        ];
+        rungs[284204] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(100, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 13000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17355),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17364)),
+            AiPattern.Branch(99, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(98, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(3, 13000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17700)),
+            AiPattern.Branch(97, "rung 3", [When.Timer(3)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+            AiPattern.Branch(95, "rung 4", [When.Timer(10), When.Consuming(10)],
+                Do.Nothing()),
+            AiPattern.Branch(94, "rung 5", [When.Timer(11), When.Consuming(11)],
+                Do.Nothing()),
         ];
         rungs[284206] = [  // Vri_Summon_Q_El_N_65_Ae
             AiPattern.Branch(100, "rung 0", [When.Timer(0), When.FirstTime(0)],
@@ -166936,6 +167633,16 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16987)),
         ];
+        rungs[284240] = [  // Shulack_Debuff_Pr_N_65_An
+            AiPattern.Branch(101, "rung 0", [When.Timer(5), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(100, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(1, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21217)),
+            AiPattern.Branch(99, "rung 2", [When.Timer(1)],
+                Do.ArmTimer(0, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+        ];
         rungs[284242] = [  // Shulack_SuTank_N_65_Ae
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 15000),
@@ -167052,6 +167759,21 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17048)),
             AiPattern.Branch(7, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
+        ];
+        rungs[284249] = [  // Calydon_ChiefG_Pr_N_65_An
+            AiPattern.Branch(101, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(1)],
+                Do.ArmTimer(2, 13000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16563)),
+            AiPattern.Branch(100, "rung 1", [When.Timer(1), When.HpBetween(52, 99)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16638)),
+            AiPattern.Branch(99, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16638)),
+            AiPattern.Branch(50, "rung 3", [When.Timer(3), When.Consuming(1)],
+                Do.Nothing()),
+            AiPattern.Branch(7, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
         rungs[284250] = [  // Owllau_Left_Fi_65_N_Ae
@@ -167923,6 +168645,10 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 11", [When.Timer(0), When.HpBetween(52, 99)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle112(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284349] = [  // IDF5_TD_Wave3_Boss3
             AiPattern.Branch(14, "rung 0", [When.Timer(8)],
                 Do.ArmTimer(5, 7000),
@@ -168492,10 +169218,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332)),
         ];
-    }
-
-    private static void Cycle112(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284526] = [  // IDF5_U1_Vri_Fence_Fi_65_Ae
             AiPattern.Branch(40, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -168802,6 +169524,25 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17295)),
+        ];
+        rungs[284590] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
         ];
         rungs[284591] = [  // IDF5_U2_VriIU_As_solo_65_An
             AiPattern.Branch(23, "rung 0", [When.Timer(3)],
@@ -169110,6 +169851,25 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(1, 11000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20179)),
+        ];
+        rungs[284626] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(25, "rung 0", [When.Timer(10), When.Consuming(0)],
+                Do.Nothing()),
+            AiPattern.Branch(24, "rung 1", [When.Timer(4)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(23, "rung 2", [When.Timer(3)],
+                Do.ArmTimer(4, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20714)),
+            AiPattern.Branch(22, "rung 3", [When.Timer(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20959)),
+            AiPattern.Branch(21, "rung 4", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+            AiPattern.Branch(20, "rung 5", [When.Timer(0)],
+                Do.ArmTimer(1, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
         ];
         rungs[284628] = [  // IDF5_U2_VriRP_Fi_party_65_Ae
             AiPattern.Branch(22, "rung 0", [When.Timer(2)],
@@ -169664,6 +170424,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 20519),
                 Do.ArmTimer(2, 15000)),
         ];
+    }
+
+    private static void Cycle113(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284740] = [  // IDDreadgion_03_DrakanFiNamedFA_60_Ae
             AiPattern.Branch(3, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20504),
@@ -170305,10 +171069,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21286)),
         ];
-    }
-
-    private static void Cycle113(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284807] = [  // IDF5_TD_War_Vri_Boss
             AiPattern.Branch(38, "rung 0", [When.Timer(23)],
                 Do.ArmTimer(20, 10000),
@@ -171795,6 +172555,10 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void Cycle114(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[285739] = [  // Lycan_HeB
             AiPattern.Branch(5, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(0, 6000),
@@ -172056,10 +172820,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17066)),
         ];
-    }
-
-    private static void Cycle114(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[286775] = [  // AD2_BT10st0
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
@@ -172074,6 +172834,74 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16554)),
+        ];
+        rungs[286791] = [  // LF4_FieldRaid
+            AiPattern.Branch(20, "rung 0", [When.Timer(0), When.HpBelow(25), When.FirstTime(0)],
+                Do.Despawn(2),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18661),
+                Do.SystemMessage(1400609, 0),
+                Do.SpawnOnTarget(281949, 1, 1, 3.0f, 600, 100, 50.0f),
+                Do.SpawnOnTarget(281948, 1, 1, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18662),
+                Do.Say(342058, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18667),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(19, "rung 1", [When.Timer(0), When.HpBelow(45), When.FirstTime(1)],
+                Do.Despawn(3),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18661),
+                Do.SystemMessage(1400608, 0),
+                Do.SpawnOnTarget(281947, 2, 3, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18662),
+                Do.Say(342057, 0),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(18, "rung 2", [When.Timer(0), When.HpBelow(65), When.FirstTime(2)],
+                Do.Despawn(4),
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18661),
+                Do.SystemMessage(1400607, 0),
+                Do.SpawnOnTarget(281946, 3, 3, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18662),
+                Do.Say(342056, 0),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(17, "rung 3", [When.Timer(0), When.HpBelow(85), When.FirstTime(3)],
+                Do.ArmTimer(0, 5000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18661),
+                Do.SystemMessage(1400606, 0),
+                Do.SpawnOnTarget(281945, 4, 3, 3.0f, 600, 100, 50.0f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18662),
+                Do.Say(342055, 0),
+                Do.Broadcast(6354, 50f)),
+            AiPattern.Branch(16, "rung 4", [When.Chance(50), When.Timer(1), When.HpBelow(25)],
+                Do.ArmTimer(1, 30000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18669)),
+            AiPattern.Branch(15, "rung 5", [When.Timer(1), When.HpBelow(25)],
+                Do.ArmTimer(1, 30000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18668)),
+            AiPattern.Branch(14, "rung 6", [When.Chance(30), When.Timer(1), When.HpBetween(27, 44)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18666)),
+            AiPattern.Branch(13, "rung 7", [When.Timer(1), When.HpBetween(27, 44)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18665)),
+            AiPattern.Branch(12, "rung 8", [When.Chance(50), When.Timer(1), When.HpBetween(47, 64)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18671)),
+            AiPattern.Branch(11, "rung 9", [When.Timer(1), When.HpBetween(47, 64)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18664)),
+            AiPattern.Branch(10, "rung 10", [When.Chance(50), When.Timer(1), When.HpBetween(67, 84)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18671)),
+            AiPattern.Branch(9, "rung 11", [When.Timer(1), When.HpBetween(67, 84)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18663)),
+            AiPattern.Branch(8, "rung 12", [When.Timer(1), When.HpBetween(87, 99)],
+                Do.ArmTimer(1, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18660)),
+            AiPattern.Branch(7, "rung 13", [When.Timer(0)],
+                Do.ArmTimer(0, 5000)),
         ];
         rungs[286880] = [  // XDrakan_FeB
             AiPattern.Branch(10, "rung 0", [When.Timer(5)],
@@ -173001,6 +173829,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16791)),
         ];
+        rungs[286995] = [  // Test_Monster_AI_KSJ_04
+            AiPattern.Branch(7, "rung 0", [When.Timer(0)],
+                Do.Broadcast(6464, 50f)),
+        ];
         rungs[287014] = [  // Test_Basic_Monster_AI_JKA_2
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16574),
@@ -173322,6 +174154,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void Cycle115(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[287189] = [  // Test_Basic_Monster_AI_GHB_2
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21300),
@@ -173859,10 +174695,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516)),
         ];
-    }
-
-    private static void Cycle115(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[290029] = [  // AD2_Wss0BT15st1
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -174788,6 +175620,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle116(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[294661] = [  // LGuard_FnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -175197,10 +176033,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle116(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[294730] = [  // BGuard_GatePr
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
@@ -176033,6 +176865,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle117(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[295139] = [  // BGuard_GatePr
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
@@ -176536,10 +177372,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle117(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[295284] = [  // LGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -177458,6 +178290,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle118(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[295672] = [  // LGuard_FhA
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 20000),
@@ -177897,10 +178733,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle118(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[295785] = [  // DGuard_RnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
@@ -178817,6 +179649,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18356)),
         ];
+    }
+
+    private static void Cycle119(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[296114] = [  // Carrier_Main_A
             AiPattern.Branch(7, "rung 0", [When.Chance(20), When.Timer(3)],
                 Do.ArmTimer(3, 60000),
@@ -179402,10 +180238,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle119(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[296454] = [  // GwDGuard_FhA
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
@@ -180546,6 +181378,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle120(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[296712] = [  // DGuard_PnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
@@ -180952,10 +181788,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle120(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[296811] = [  // DGuard_WnA
             AiPattern.Branch(4, "rung 0", [When.Chance(35), When.Timer(1)],
                 Do.ArmTimer(0, 5000),
@@ -182056,6 +182888,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17066),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
+    }
+
+    private static void Cycle121(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297004] = [  // F5_RvR_LGuard_As_Ae_Hide
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 7500),
@@ -182613,10 +183449,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17083)),
         ];
-    }
-
-    private static void Cycle121(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297041] = [  // DirectPortal_LGuard_Charge_PM_Fe
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -183759,6 +184591,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle122(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297151] = [  // F5_PvP_DGuard_Fi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17079)),
@@ -184381,10 +185217,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332)),
         ];
-    }
-
-    private static void Cycle122(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297250] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
             AiPattern.Branch(22, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 3000),
@@ -185801,6 +186633,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18342)),
         ];
+    }
+
+    private static void Cycle123(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297373] = [  // LDF5_LGuard_DisputeRvR_Defend_PM_Ke
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 5000),
@@ -186686,10 +187522,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17230)),
         ];
-    }
-
-    private static void Cycle123(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297405] = [  // DirectPortal_DGuard_Charge_PM_Fe2
             AiPattern.Branch(28, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -188161,6 +188993,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19359),
                 Do.ArmTimer(0, 9000)),
         ];
+    }
+
+    private static void Cycle124(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[799656] = [  // IDYun_Soldier_ND3
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19360),
@@ -188593,10 +189429,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle124(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[831082] = [  // InvadePortal_TestKeeper03
             AiPattern.Branch(20, "rung 0", [When.HpBelow(30), When.FirstTime(6)],
                 Do.SystemMessage(1401494, 0)),
@@ -189911,6 +190743,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle125(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855332] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17111)),
@@ -190552,10 +191388,6 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle125(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855616] = [  // Station_Shu_WI_B
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -191855,6 +192687,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle126(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[856104] = [  // IDF5_Mini_01_C_Killer_Fi
             AiPattern.Branch(100, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 22000),
@@ -192117,10 +192953,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42101, 13f)),
         ];
-    }
-
-    private static void Cycle126(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[880020] = [  // Gab1_LArtiGuard_Boss_02_01_4
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
@@ -192965,6 +193797,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
+    }
+
+    private static void Cycle127(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[880952] = [  // Gab1_TurretSwitch_toPC_05
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 4000),
@@ -193237,10 +194073,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
-    }
-
-    private static void Cycle127(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881477] = [  // Gab1_TurretSwitch_toPC_10
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 4000),
@@ -193624,6 +194456,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16443)),
         ];
+    }
+
+    private static void Cycle128(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881556] = [  // F5_RvR_LGuard_Kn_Ae
             AiPattern.Branch(35, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(1, 6000),
@@ -194047,10 +194883,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21284)),
         ];
-    }
-
-    private static void Cycle128(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881630] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(24, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 8000),
@@ -195184,6 +196016,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17316)),
         ];
+    }
+
+    private static void Cycle129(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881698] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(24, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
@@ -195689,10 +196525,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle129(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881730] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -196811,6 +197643,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle130(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881823] = [  // F5_PvPLight_DGuard_Pr_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17125)),
@@ -197286,10 +198122,6 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void Cycle130(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881855] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -198315,6 +199147,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21284)),
         ];
+    }
+
+    private static void Cycle131(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881943] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(24, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 8000),
@@ -198787,10 +199623,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21284)),
         ];
-    }
-
-    private static void Cycle131(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881978] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.Broadcast(23101, 50f),
@@ -200106,6 +200938,10 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void Cycle132(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[882200] = [  // F5_PvPLight_LGuard_Wi_An
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17115)),
@@ -200566,6 +201402,7 @@ internal static class BattleCycles
         OnEnterAttackState128(rungs);
         OnEnterAttackState129(rungs);
         OnEnterAttackState130(rungs);
+        OnEnterAttackState131(rungs);
         return rungs;
     }
 
@@ -206192,6 +207029,11 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
         ];
+        rungs[216205] = [  // IDCT_Normal_Slime02
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.ArmTimer(0, 12000),
+                Do.ArmTimer(1, 40000)),
+        ];
         rungs[216206] = [  // IDCT_Normal_LightFi
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -206279,6 +207121,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.ArmTimer(1, 20000)),
         ];
+    }
+
+    private static void OnEnterAttackState9(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[216233] = [  // IDCT_DrakanFi
             AiPattern.Branch(11, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
@@ -206286,10 +207132,6 @@ internal static class BattleCycles
                 Do.Say(340891, 0),
                 Do.SkillOnEventTarget(18166)),
         ];
-    }
-
-    private static void OnEnterAttackState9(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[216234] = [  // IDCT_DrakanWi
             AiPattern.Branch(12, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
@@ -206309,6 +207151,12 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 25000),
                 Do.SkillOnEventTarget(18173),
                 Do.SkillOnEventTarget(16812)),
+        ];
+        rungs[216240] = [  // IDCT_Boss_Summoner
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 12000),
+                Do.ArmTimer(2, 30000),
+                Do.ArmTimer(1, 3000)),
         ];
         rungs[216242] = [  // IDCTN_UnTiamatDrakan
             AiPattern.Branch(50, "rung 0", When.Always,
@@ -206422,6 +207270,11 @@ internal static class BattleCycles
         rungs[216285] = [  // IDCT_Normal_Slime01
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
+        ];
+        rungs[216286] = [  // IDCT_Normal_Slime02
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.ArmTimer(0, 12000),
+                Do.ArmTimer(1, 40000)),
         ];
         rungs[216287] = [  // IDCT_Normal_LightFi
             AiPattern.Branch(5, "rung 0", When.Always,
@@ -206835,6 +207688,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.ArmTimer(1, 12000)),
         ];
+    }
+
+    private static void OnEnterAttackState10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[216399] = [  // IDTP_Fanatic_EeA
             AiPattern.Branch(6, "rung 0", [When.FirstTime(2)],
                 Do.SpawnNear(281381, 1, 1, 5.0f, 180),
@@ -206848,10 +207705,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 20000)),
         ];
-    }
-
-    private static void OnEnterAttackState10(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[216435] = [  // DF4_RaidRun
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 20000)),
@@ -207079,6 +207932,13 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 9000),
                 Do.Say(340891, 0),
                 Do.SkillOnEventTarget(18166)),
+        ];
+        rungs[216575] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 20000),
+                Do.ArmTimer(20, 25000),
+                Do.SkillOnEventTarget(17355)),
         ];
         rungs[216579] = [  // XDrakan_WeB
             AiPattern.Branch(12, "rung 0", When.Always,
@@ -207423,6 +208283,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17167)),
         ];
+    }
+
+    private static void OnEnterAttackState11(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[216798] = [  // IDTP_Fanatic_ReB_ver40
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -207445,10 +208309,6 @@ internal static class BattleCycles
                 Do.Say(340891, 0),
                 Do.SkillOnEventTarget(18166)),
         ];
-    }
-
-    private static void OnEnterAttackState11(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[216806] = [  // IDCT_DrakanFi
             AiPattern.Branch(11, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
@@ -208051,6 +208911,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 9000),
                 Do.ArmTimer(2, 20000)),
         ];
+    }
+
+    private static void OnEnterAttackState12(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217256] = [  // IDForest_Nr_Light_sky
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
@@ -208072,10 +208936,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 3000),
                 Do.ArmTimer(1, 8000)),
         ];
-    }
-
-    private static void OnEnterAttackState12(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217261] = [  // IDForest_Nr_ElementalLight2
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000),
@@ -208681,6 +209541,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.ArmTimer(1, 9000)),
         ];
+    }
+
+    private static void OnEnterAttackState13(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217437] = [  // Raksha_Toothfighter
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -208711,10 +209575,6 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 7000),
                 Do.ArmTimer(3, 7000)),
         ];
-    }
-
-    private static void OnEnterAttackState13(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217441] = [  // Raksha_DrakanBoneKnight
             AiPattern.Branch(11, "rung 0", [When.Chance(30)],
                 Do.ArmTimer(0, 7000),
@@ -209602,6 +210462,10 @@ internal static class BattleCycles
                 Do.ArmTimer(3, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17297)),
         ];
+    }
+
+    private static void OnEnterAttackState14(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217659] = [  // Raksha_DrakanGuardKnight
             AiPattern.Branch(10, "rung 0", [When.Chance(30)],
                 Do.ArmTimer(0, 7000),
@@ -209642,10 +210506,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.Say(342356, 0)),
         ];
-    }
-
-    private static void OnEnterAttackState14(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217743] = [  // IDArena_S3_Bonus_5
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 12000),
@@ -210177,6 +211037,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void OnEnterAttackState15(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217944] = [  // LDF4a_Owllau_Assassin
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
@@ -210194,10 +211058,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 5000)),
         ];
-    }
-
-    private static void OnEnterAttackState15(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217948] = [  // LDF4a_Owllau_Priest
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -210694,6 +211554,10 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20258)),
         ];
+    }
+
+    private static void OnEnterAttackState16(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218069] = [  // LDF4a_B2_NepRe02
             AiPattern.Branch(15, "rung 0", When.Always,
                 Do.Say(1500322, 0),
@@ -210724,10 +211588,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOnEventTarget(19874)),
         ];
-    }
-
-    private static void OnEnterAttackState16(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218076] = [  // LDF4a_Lobster
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 20000),
@@ -211266,6 +212126,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19589)),
         ];
+    }
+
+    private static void OnEnterAttackState17(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218215] = [  // LDF4b_T1_Twister_Crack_An
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000),
@@ -211284,10 +212148,6 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000)),
         ];
-    }
-
-    private static void OnEnterAttackState17(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218219] = [  // LDF4b_T1_Flyingeye_An
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
@@ -211810,6 +212670,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20236)),
         ];
+    }
+
+    private static void OnEnterAttackState18(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218346] = [  // LDF4b_T3_ElementalFire1_An
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
@@ -211830,10 +212694,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 9000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20236)),
         ];
-    }
-
-    private static void OnEnterAttackState18(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218350] = [  // LDF4b_T3_ElementalFire3_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -212379,6 +213239,10 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
+    }
+
+    private static void OnEnterAttackState19(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218486] = [  // LDF4b_Gururu_As
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -212405,10 +213269,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.ArmTimer(2, 8000)),
         ];
-    }
-
-    private static void OnEnterAttackState19(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218497] = [  // LDF4b_C2_Enos_Named_60_Ae
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20243),
@@ -212990,6 +213850,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOnEventTarget(20127)),
         ];
+    }
+
+    private static void OnEnterAttackState20(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218642] = [  // LDF4a_Foam
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 20000),
@@ -213008,10 +213872,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
         ];
-    }
-
-    private static void OnEnterAttackState20(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218646] = [  // 1Skill_Ev15s_UseSk1T
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
@@ -213534,6 +214394,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.ArmTimer(2, 15000)),
         ];
+    }
+
+    private static void OnEnterAttackState21(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218822] = [  // LDF4b_TiamatDrakan_Fighter
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20241),
@@ -213557,10 +214421,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(1, 15000)),
         ];
-    }
-
-    private static void OnEnterAttackState21(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218905] = [  // LDF4b_Portal_DrakanFighter
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20243),
@@ -214060,6 +214920,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16614)),
         ];
+    }
+
+    private static void OnEnterAttackState22(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219077] = [  // NKrall_FeC_Solo
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -214082,10 +214946,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.ArmTimer(1, 4000)),
         ];
-    }
-
-    private static void OnEnterAttackState22(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219081] = [  // NKrall_KeC_Solo
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -214636,6 +215496,10 @@ internal static class BattleCycles
                 Do.Say(342310, 0),
                 Do.ArmTimer(0, 2000)),
         ];
+    }
+
+    private static void OnEnterAttackState23(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219401] = [  // IDTiamat_S5_TiamatDrakanCh_60_Ae
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000),
@@ -214661,10 +215525,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20238)),
         ];
-    }
-
-    private static void OnEnterAttackState23(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219540] = [  // IDArena_pvp02_S3_Brax_01
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7500)),
@@ -215231,6 +216091,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState24(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[220004] = [  // LF5_NewSpecies_Fi_KJS
             AiPattern.Branch(90, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -215253,10 +216117,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.ArmTimer(3, 6000)),
         ];
-    }
-
-    private static void OnEnterAttackState24(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[220010] = [  // LF5_NewSpecies_Wi_KJS
             AiPattern.Branch(90, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -215935,6 +216795,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17724)),
         ];
+    }
+
+    private static void OnEnterAttackState25(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230025] = [  // ShulackRose_Wi_DotD_Party
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
@@ -215952,10 +216816,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void OnEnterAttackState25(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230031] = [  // ShulackRose_Wi_DotD_Party
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
@@ -216414,6 +217274,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOnEventTarget(16902)),
         ];
+    }
+
+    private static void OnEnterAttackState26(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230657] = [  // IDRose_L_ShulackF_Fi_S_SN_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
@@ -216435,10 +217299,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21212)),
         ];
-    }
-
-    private static void OnEnterAttackState26(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230663] = [  // IDRose_M_KrallKeeper_Fi_S_SN_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -216886,6 +217746,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21294)),
         ];
+    }
+
+    private static void OnEnterAttackState27(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230820] = [  // IDVritra_Base_Drakan_Ba
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000),
@@ -216906,10 +217770,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 9000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20715)),
         ];
-    }
-
-    private static void OnEnterAttackState27(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230824] = [  // IDVritra_Base_Drakan_Ba_Officer
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000),
@@ -217339,6 +218199,10 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void OnEnterAttackState28(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230965] = [  // TR_Lizard_Fi_DD_Second_Party
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
@@ -217355,10 +218219,6 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void OnEnterAttackState28(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230969] = [  // TR_Lizard_Fi_DD_Fourth_Party
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
@@ -217421,6 +218281,12 @@ internal static class BattleCycles
                 Do.Broadcast(23035, 20f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17340),
                 Do.Say(1500920, 0)),
+        ];
+        rungs[230996] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.Broadcast(23012, 25f),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
         rungs[230997] = [  // VriTR_Stun_Q_Fi_N_60_Ae
             AiPattern.Branch(5, "rung 0", When.Always,
@@ -217884,6 +218750,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17322)),
         ];
+    }
+
+    private static void OnEnterAttackState29(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231223] = [  // Britra_Pr_Heal
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -217914,10 +218784,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
-    }
-
-    private static void OnEnterAttackState29(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231229] = [  // F5_PvPLight_LGuard_Kn_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -218002,6 +218868,17 @@ internal static class BattleCycles
         rungs[231240] = [  // Britra_Party_As_Broad
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
+        ];
+        rungs[231242] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+        ];
+        rungs[231243] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.Broadcast(23012, 25f),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
         rungs[231306] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -218389,6 +219266,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16662)),
         ];
+    }
+
+    private static void OnEnterAttackState30(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231399] = [  // Fanatic40_Fi
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -218420,10 +219301,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16702)),
         ];
-    }
-
-    private static void OnEnterAttackState30(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231406] = [  // Fanatic40_Kn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -218758,6 +219635,12 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 7000)),
         ];
+        rungs[231509] = [  // Calydon_ChiefG_Pr_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 8000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16564)),
+        ];
         rungs[231511] = [  // Elewater4_Curse_El_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 13000),
@@ -218802,6 +219685,12 @@ internal static class BattleCycles
         rungs[231521] = [  // Shulack_SuTank_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
+        ];
+        rungs[231522] = [  // Shulack_Debuff_Pr_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.Broadcast(21001, 15f),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16902)),
         ];
         rungs[231524] = [  // Vri_FanaRBoss_El_65_N_An
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -218886,6 +219775,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+    }
+
+    private static void OnEnterAttackState31(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231542] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -218930,10 +219823,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(16614)),
         ];
-    }
-
-    private static void OnEnterAttackState31(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231580] = [  // BLF_Krall_Guard_Fi_38_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -219689,6 +220578,10 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
+    }
+
+    private static void OnEnterAttackState32(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231760] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -219738,10 +220631,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
-    }
-
-    private static void OnEnterAttackState32(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231769] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
             AiPattern.Branch(7, "rung 0", [When.Chance(25)],
                 Do.ArmTimer(0, 7000),
@@ -220412,6 +221301,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21226)),
         ];
+    }
+
+    private static void OnEnterAttackState33(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231924] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -220487,10 +221380,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
-    }
-
-    private static void OnEnterAttackState33(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231933] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -221261,6 +222150,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
+    }
+
+    private static void OnEnterAttackState34(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232034] = [  // F5_PvPLight_DGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -221336,10 +222229,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
-    }
-
-    private static void OnEnterAttackState34(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232043] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -221972,6 +222861,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
+    }
+
+    private static void OnEnterAttackState35(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232200] = [  // F5_PvPLight_LGuard_Kn_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -222072,10 +222965,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(19581)),
         ];
-    }
-
-    private static void OnEnterAttackState35(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232209] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -223050,6 +223939,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState36(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232308] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -223139,10 +224032,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17122)),
         ];
-    }
-
-    private static void OnEnterAttackState36(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232323] = [  // F5_PvP_DGuard_Wi_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -223830,6 +224719,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState37(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232438] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -223878,10 +224771,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17360)),
         ];
-    }
-
-    private static void OnEnterAttackState37(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232447] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Re
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -224669,6 +225558,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
+    }
+
+    private static void OnEnterAttackState38(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232538] = [  // F5_PvPLight_LGuard_Ra_An_Broad
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23100, 25f),
@@ -224761,10 +225654,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
-    }
-
-    private static void OnEnterAttackState38(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232551] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -225396,6 +226285,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
+    }
+
+    private static void OnEnterAttackState39(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232657] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -225465,10 +226358,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
-    }
-
-    private static void OnEnterAttackState39(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232666] = [  // F5_PvPLight_LGuard_Ra_An_Broad
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23100, 25f),
@@ -226240,6 +227129,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState40(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232757] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -226287,10 +227180,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
-    }
-
-    private static void OnEnterAttackState40(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232766] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -226867,6 +227756,11 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+        rungs[232844] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+        ];
         rungs[232845] = [  // Britra_Party_Ri_OpenAerial
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -226944,6 +227838,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState41(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232910] = [  // Fanatic40_Wi
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -226988,10 +227886,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16614)),
         ];
-    }
-
-    private static void OnEnterAttackState41(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232998] = [  // Naga_CeA_Ver40
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -227123,6 +228017,11 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17294)),
         ];
+        rungs[233069] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
+        ];
         rungs[233070] = [  // IDF5_U2_VriIU_As_solo_65_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -227251,6 +228150,11 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20562),
                 Do.Broadcast(21261, 15f)),
         ];
+        rungs[233113] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
+        ];
         rungs[233115] = [  // IDF5_U2_VriRP_Fi_party_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -227269,6 +228173,11 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(20712),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20562),
                 Do.Broadcast(21261, 15f)),
+        ];
+        rungs[233121] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
         ];
         rungs[233123] = [  // IDF5_U2_VriRP_Fi_party_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -227602,6 +228511,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
+    }
+
+    private static void OnEnterAttackState42(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233223] = [  // F5_PvPLight_DGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -227712,10 +228625,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21294)),
         ];
-    }
-
-    private static void OnEnterAttackState42(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233253] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
             AiPattern.Branch(80, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -228253,6 +229162,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000)),
         ];
+    }
+
+    private static void OnEnterAttackState43(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233413] = [  // IDF5_U2_ShulackM_Fi_solo_65_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000)),
@@ -228316,10 +229229,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 9000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332)),
         ];
-    }
-
-    private static void OnEnterAttackState43(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233433] = [  // IDVritra_Base_Drakan_Wi_Officer
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000),
@@ -228945,6 +229854,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+    }
+
+    private static void OnEnterAttackState44(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233886] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -229025,10 +229938,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17101)),
         ];
-    }
-
-    private static void OnEnterAttackState44(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233961] = [  // F5_PvP_LGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -229753,6 +230662,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(30004, 50f)),
         ];
+    }
+
+    private static void OnEnterAttackState45(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234165] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -229822,10 +230735,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(19581)),
         ];
-    }
-
-    private static void OnEnterAttackState45(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234338] = [  // F5_PvPLight_DGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -230580,6 +231489,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17335)),
         ];
+    }
+
+    private static void OnEnterAttackState46(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234455] = [  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -230682,10 +231595,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
-    }
-
-    private static void OnEnterAttackState46(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234468] = [  // F5_PvP_LGuard_Gu_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -231228,6 +232137,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19598)),
         ];
+    }
+
+    private static void OnEnterAttackState47(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234762] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Re
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -231319,10 +232232,6 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17319)),
         ];
-    }
-
-    private static void OnEnterAttackState47(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234781] = [  // F5_PvP_LGuard_Ra_Ae_Broad
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23100, 25f),
@@ -232040,6 +232949,10 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
+    }
+
+    private static void OnEnterAttackState48(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234901] = [  // F5_PvPLight_LGuard_Pr_An
             AiPattern.Branch(9, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -232171,10 +233084,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(17065)),
         ];
-    }
-
-    private static void OnEnterAttackState48(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234926] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -232680,6 +233589,11 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20562),
                 Do.Broadcast(21271, 15f)),
         ];
+        rungs[235578] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
+        ];
         rungs[235579] = [  // IDF5_U2_VriRP_Fi_party_65_Ae2
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -232714,6 +233628,11 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(16696),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20562),
                 Do.Broadcast(21271, 15f)),
+        ];
+        rungs[235604] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
         ];
         rungs[235605] = [  // IDF5_U2_VriRP_Fi_party_65_Ae2
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -232828,6 +233747,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21284)),
         ];
+    }
+
+    private static void OnEnterAttackState49(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[235729] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -232913,10 +233836,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
         ];
-    }
-
-    private static void OnEnterAttackState49(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[235744] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -233441,6 +234360,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 3000),
                 Do.SetSpawnVariable("IMMORTAL", 2, 0)),
         ];
+    }
+
+    private static void OnEnterAttackState50(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[236255] = [  // LF5_Quest_Nmd_Fi_HpDrain
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -233512,10 +234435,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16405)),
         ];
-    }
-
-    private static void OnEnterAttackState50(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[236424] = [  // F4_Rotation_Force_Monster
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000),
@@ -234154,6 +235073,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19606)),
         ];
+    }
+
+    private static void OnEnterAttackState51(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251079] = [  // F5_PvP_DGuard_Wi_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -234244,10 +235167,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21226)),
         ];
-    }
-
-    private static void OnEnterAttackState51(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251101] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -235003,6 +235922,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17316)),
         ];
+    }
+
+    private static void OnEnterAttackState52(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251239] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -235157,10 +236080,6 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17316)),
         ];
-    }
-
-    private static void OnEnterAttackState52(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251265] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -235843,6 +236762,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17316)),
         ];
+    }
+
+    private static void OnEnterAttackState53(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251371] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -235930,10 +236853,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21284)),
         ];
-    }
-
-    private static void OnEnterAttackState53(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251392] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -236512,6 +237431,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19598)),
         ];
+    }
+
+    private static void OnEnterAttackState54(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251517] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -236650,10 +237573,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void OnEnterAttackState54(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251548] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -237425,6 +238344,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19598)),
         ];
+    }
+
+    private static void OnEnterAttackState55(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251671] = [  // F5_PvP_DGuard_Fi_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -237535,10 +238458,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17122)),
         ];
-    }
-
-    private static void OnEnterAttackState55(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251686] = [  // F5_PvP_DGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -238235,6 +239154,10 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(19607),
                 Do.SkillOnEventTarget(18331)),
         ];
+    }
+
+    private static void OnEnterAttackState56(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251879] = [  // F5_RvR_LGuard_El_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 8000),
@@ -238362,10 +239285,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 12000),
                 Do.SkillOnEventTarget(20667)),
         ];
-    }
-
-    private static void OnEnterAttackState56(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251895] = [  // F5_RvR_LGuard_Ra_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 8000),
@@ -239046,6 +239965,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20668)),
         ];
+    }
+
+    private static void OnEnterAttackState57(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[252006] = [  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -239165,10 +240088,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 12000),
                 Do.SkillOnEventTarget(21299)),
         ];
-    }
-
-    private static void OnEnterAttackState57(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[252024] = [  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 12000),
@@ -239734,6 +240653,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17360)),
         ];
+    }
+
+    private static void OnEnterAttackState58(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[252125] = [  // LDF5_LGuard_DisputeRvR_Support_Heal_Pe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -239848,10 +240771,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(18835)),
         ];
-    }
-
-    private static void OnEnterAttackState58(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[252163] = [  // F5_RvR_DGuard_El_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 8000),
@@ -240659,6 +241578,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17166)),
         ];
+    }
+
+    private static void OnEnterAttackState59(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[252423] = [  // F5_PvPLight_DGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -240780,10 +241703,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17318)),
         ];
-    }
-
-    private static void OnEnterAttackState59(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[253665] = [  // LGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -241284,6 +242203,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
+    }
+
+    private static void OnEnterAttackState60(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[257092] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -241396,10 +242319,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17334)),
         ];
-    }
-
-    private static void OnEnterAttackState60(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[257144] = [  // LGuard_PnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -242018,6 +242937,10 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 20000),
                 Do.SkillOnEventTarget(18917)),
         ];
+    }
+
+    private static void OnEnterAttackState61(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[257617] = [  // LGuard_FsA
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -242113,10 +243036,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 20000)),
         ];
-    }
-
-    private static void OnEnterAttackState61(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[257632] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -242736,6 +243655,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17123)),
         ];
+    }
+
+    private static void OnEnterAttackState62(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[258077] = [  // LGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -242854,10 +243777,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19008)),
         ];
-    }
-
-    private static void OnEnterAttackState62(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[258131] = [  // LGuard_FsA
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -243516,6 +244435,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState63(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[259467] = [  // DGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -243636,10 +244559,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
-    }
-
-    private static void OnEnterAttackState63(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[259504] = [  // DrGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -244320,6 +245239,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17291)),
         ];
+    }
+
+    private static void OnEnterAttackState64(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[259896] = [  // LGuard_AnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -244424,10 +245347,6 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000)),
         ];
-    }
-
-    private static void OnEnterAttackState64(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[259912] = [  // LDF4b_ArtifactKiller_E
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000)),
@@ -245116,6 +246035,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
+    }
+
+    private static void OnEnterAttackState65(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[260333] = [  // LGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -245236,10 +246159,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
-    }
-
-    private static void OnEnterAttackState65(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[260352] = [  // DGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -245920,6 +246839,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
+    }
+
+    private static void OnEnterAttackState66(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[260949] = [  // LGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -246040,10 +246963,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
-    }
-
-    private static void OnEnterAttackState66(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[261219] = [  // LGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -246724,6 +247643,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17334)),
         ];
+    }
+
+    private static void OnEnterAttackState67(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[261559] = [  // DrGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -246844,10 +247767,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17291)),
         ];
-    }
-
-    private static void OnEnterAttackState67(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[261829] = [  // DrGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -247528,6 +248447,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState68(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[262424] = [  // DGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -247648,10 +248571,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
-    }
-
-    private static void OnEnterAttackState68(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[262439] = [  // DGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -248332,6 +249251,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
+    }
+
+    private static void OnEnterAttackState69(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263154] = [  // LGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -248452,10 +249375,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
-    }
-
-    private static void OnEnterAttackState69(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[263169] = [  // LGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -249148,6 +250067,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
+    }
+
+    private static void OnEnterAttackState70(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263476] = [  // DrGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -249268,10 +250191,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17123)),
         ];
-    }
-
-    private static void OnEnterAttackState70(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[263560] = [  // LGuard_FhA_Officer
             AiPattern.Branch(9, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 20000),
@@ -249964,6 +250883,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
+    }
+
+    private static void OnEnterAttackState71(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263933] = [  // LGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -250084,10 +251007,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
-    }
-
-    private static void OnEnterAttackState71(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[263948] = [  // LGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -250768,6 +251687,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState72(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[264663] = [  // DrGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -250888,10 +251811,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17334)),
         ];
-    }
-
-    private static void OnEnterAttackState72(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[264678] = [  // DrGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -251584,6 +252503,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState73(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[265120] = [  // LGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -251704,10 +252627,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
-    }
-
-    private static void OnEnterAttackState73(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[265135] = [  // LGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -252388,6 +253307,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17291)),
         ];
+    }
+
+    private static void OnEnterAttackState74(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[265730] = [  // DrGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -252508,10 +253431,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17318)),
         ];
-    }
-
-    private static void OnEnterAttackState74(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[265745] = [  // DrGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -253192,6 +254111,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
+    }
+
+    private static void OnEnterAttackState75(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[266460] = [  // DGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -253312,10 +254235,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
-    }
-
-    private static void OnEnterAttackState75(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[266475] = [  // DGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -254008,6 +254927,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17291)),
         ];
+    }
+
+    private static void OnEnterAttackState76(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[266927] = [  // DrGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -254128,10 +255051,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17318)),
         ];
-    }
-
-    private static void OnEnterAttackState76(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[266942] = [  // DrGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -254812,6 +255731,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
+    }
+
+    private static void OnEnterAttackState77(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[267537] = [  // DGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -254932,10 +255855,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
-    }
-
-    private static void OnEnterAttackState77(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[267552] = [  // DGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -255628,6 +256547,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(17061)),
         ];
+    }
+
+    private static void OnEnterAttackState78(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[268073] = [  // DGuard_FhA
             AiPattern.Branch(10, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 20000),
@@ -255748,10 +256671,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17291)),
         ];
-    }
-
-    private static void OnEnterAttackState78(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[268129] = [  // DrGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -256432,6 +257351,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState79(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[268724] = [  // DGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -256552,10 +257475,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
-    }
-
-    private static void OnEnterAttackState79(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[268739] = [  // DGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -257248,6 +258167,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState80(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[269259] = [  // LGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -257368,10 +258291,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
-    }
-
-    private static void OnEnterAttackState80(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[269326] = [  // DrGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -258052,6 +258971,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState81(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[270041] = [  // DGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -258172,10 +259095,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
-    }
-
-    private static void OnEnterAttackState81(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[270056] = [  // DGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -258868,6 +259787,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
+    }
+
+    private static void OnEnterAttackState82(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[270253] = [  // DGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -258988,10 +259911,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
-    }
-
-    private static void OnEnterAttackState82(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[270523] = [  // DGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -259672,6 +260591,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17123)),
         ];
+    }
+
+    private static void OnEnterAttackState83(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[270983] = [  // LGuard_PnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -259804,10 +260727,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
-    }
-
-    private static void OnEnterAttackState83(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[271060] = [  // DrGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -260488,6 +261407,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17109)),
         ];
+    }
+
+    private static void OnEnterAttackState84(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[271450] = [  // LGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -260608,10 +261531,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
-    }
-
-    private static void OnEnterAttackState84(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[271720] = [  // LGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -261516,6 +262435,10 @@ internal static class BattleCycles
             AiPattern.Branch(12, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000)),
         ];
+    }
+
+    private static void OnEnterAttackState85(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272006] = [  // BGuard_ChiefF5_D
             AiPattern.Branch(12, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000)),
@@ -261611,10 +262534,6 @@ internal static class BattleCycles
                 Do.Broadcast(23100, 25f),
                 Do.SkillOnEventTarget(17168)),
         ];
-    }
-
-    private static void OnEnterAttackState85(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272030] = [  // F5_RvR_LGuard_Ra_Ae_Broad
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 8000),
@@ -262295,6 +263214,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20897)),
         ];
+    }
+
+    private static void OnEnterAttackState86(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272180] = [  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -262425,10 +263348,6 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17316)),
         ];
-    }
-
-    private static void OnEnterAttackState86(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272195] = [  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 12000),
@@ -263054,6 +263973,10 @@ internal static class BattleCycles
                 Do.Broadcast(23100, 25f),
                 Do.SkillOnEventTarget(18835)),
         ];
+    }
+
+    private static void OnEnterAttackState87(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272315] = [  // F5_RvR_LGuard_Ra_Ae_Broad
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 8000),
@@ -263197,10 +264120,6 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17316)),
         ];
-    }
-
-    private static void OnEnterAttackState87(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272335] = [  // LDF5_LGuard_DisputeRvR_Watch_PR_Re
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -263865,6 +264784,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 8000),
                 Do.SkillOnEventTarget(17122)),
         ];
+    }
+
+    private static void OnEnterAttackState88(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272621] = [  // F5_RvR_DGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 5000),
@@ -263980,10 +264903,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 8000),
                 Do.SkillOnEventTarget(17122)),
         ];
-    }
-
-    private static void OnEnterAttackState88(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272661] = [  // F5_RvR_DGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 5000),
@@ -264622,6 +265541,10 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(17697),
                 Do.SkillOnEventTarget(21287)),
         ];
+    }
+
+    private static void OnEnterAttackState89(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272751] = [  // LDF5_LGuard_DisputeRvR_Support_Deform_Ee
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000),
@@ -264741,10 +265664,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17360)),
         ];
-    }
-
-    private static void OnEnterAttackState89(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272824] = [  // LDF5_LGuard_DisputeRvR_Support_Heal_Pe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -265396,6 +266315,10 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(19607),
                 Do.SkillOnEventTarget(18331)),
         ];
+    }
+
+    private static void OnEnterAttackState90(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273094] = [  // F5_RvR_LGuard_El_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 8000),
@@ -265511,10 +266434,6 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(19607),
                 Do.SkillOnEventTarget(18331)),
         ];
-    }
-
-    private static void OnEnterAttackState90(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[273134] = [  // F5_RvR_DGuard_El_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 8000),
@@ -266156,6 +267075,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17360)),
         ];
+    }
+
+    private static void OnEnterAttackState91(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273244] = [  // LDF5_LGuard_DisputeRvR_Support_Heal_Pe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -266256,10 +267179,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOnEventTarget(17168)),
         ];
-    }
-
-    private static void OnEnterAttackState91(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[273259] = [  // F5_RvR_LGuard_As_Ae_Hide
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 5000),
@@ -266862,6 +267781,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 8000),
                 Do.SkillOnEventTarget(17122)),
         ];
+    }
+
+    private static void OnEnterAttackState92(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273422] = [  // F5_RvR_DGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 5000),
@@ -266954,10 +267877,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21287)),
         ];
-    }
-
-    private static void OnEnterAttackState92(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277706] = [  // Gab1_Gaurd_Charge_PM_Fn
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 7000),
@@ -267474,6 +268393,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17166)),
         ];
+    }
+
+    private static void OnEnterAttackState93(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279085] = [  // F5_PvP_LGuard_As_Ae_Hide
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -267623,10 +268546,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17122)),
         ];
-    }
-
-    private static void OnEnterAttackState93(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279100] = [  // F5_PvP_LGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -268435,6 +269354,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17122)),
         ];
+    }
+
+    private static void OnEnterAttackState94(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279199] = [  // F5_PvP_LGuard_Pr_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -268557,10 +269480,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19606)),
         ];
-    }
-
-    private static void OnEnterAttackState94(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279214] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -269365,6 +270284,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19606)),
         ];
+    }
+
+    private static void OnEnterAttackState95(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279313] = [  // F5_PvP_LGuard_Wi_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -269533,10 +270456,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17101)),
         ];
-    }
-
-    private static void OnEnterAttackState95(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279329] = [  // F5_PvP_LGuard_Ra_Ae_Broad
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23100, 25f),
@@ -270315,6 +271234,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOnEventTarget(20668)),
         ];
+    }
+
+    private static void OnEnterAttackState96(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279442] = [  // F5_RvR_DGuard_Fi_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 5000),
@@ -270464,10 +271387,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19598)),
         ];
-    }
-
-    private static void OnEnterAttackState96(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279470] = [  // F5_PvP_DGuard_Fi_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -271220,6 +272139,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState97(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279583] = [  // F5_PvPLight_DGuard_Pr_An
             AiPattern.Branch(9, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -271373,10 +272296,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(19581)),
         ];
-    }
-
-    private static void OnEnterAttackState97(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279598] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -271904,6 +272823,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17319)),
         ];
+    }
+
+    private static void OnEnterAttackState98(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279714] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Re
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -271986,10 +272909,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21226)),
         ];
-    }
-
-    private static void OnEnterAttackState98(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279731] = [  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -272472,6 +273391,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20668)),
         ];
+    }
+
+    private static void OnEnterAttackState99(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279832] = [  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -272564,10 +273487,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
-    }
-
-    private static void OnEnterAttackState99(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279856] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -273098,6 +274017,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17101)),
         ];
+    }
+
+    private static void OnEnterAttackState100(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279957] = [  // F5_PvP_LGuard_Gu_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -273239,10 +274162,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17101)),
         ];
-    }
-
-    private static void OnEnterAttackState100(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279973] = [  // F5_PvP_LGuard_Gu_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -273841,6 +274760,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 6000),
                 Do.SkillOnEventTarget(17047)),
         ];
+    }
+
+    private static void OnEnterAttackState101(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[280480] = [  // ND2_NeutQueen2
             AiPattern.Branch(9, "rung 0", When.Always,
                 Do.Broadcast(2003, 20f),
@@ -273926,10 +274849,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(17471)),
         ];
-    }
-
-    private static void OnEnterAttackState101(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[280667] = [  // Lizardman_ReE
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -274408,6 +275327,13 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
         ];
+        rungs[280974] = [  // ND2_FhX
+            AiPattern.Branch(25, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16699),
+                Do.SkillOnEventTarget(18493)),
+        ];
         rungs[280987] = [  // ND2_FeJSum
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -274420,6 +275346,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
         ];
+    }
+
+    private static void OnEnterAttackState102(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[280993] = [  // ND2_AeDSum
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -274513,10 +275443,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 20000),
                 Do.SkillOnEventTarget(16516)),
         ];
-    }
-
-    private static void OnEnterAttackState102(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281014] = [  // ND2_Bst_21
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -275031,6 +275957,10 @@ internal static class BattleCycles
                 Do.SpawnAt(281276, 1, 10, new SpawnSpot(1187.0f, 1229.0f, 144.0f)),
                 Do.SkillOnEventTarget(16775)),
         ];
+    }
+
+    private static void OnEnterAttackState103(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281277] = [  // ND2_AhD
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -275137,10 +276067,6 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.ArmTimer(0, 20000)),
         ];
-    }
-
-    private static void OnEnterAttackState103(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281359] = [  // AD2_BT15ss0
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
@@ -275433,6 +276359,17 @@ internal static class BattleCycles
                 Do.ArmTimer(5, 2000),
                 Do.ArmTimer(6, 17000)),
         ];
+        rungs[281539] = [  // IDCT_Boss_Summoner
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 12000),
+                Do.ArmTimer(2, 30000),
+                Do.ArmTimer(1, 3000)),
+        ];
+        rungs[281547] = [  // IDCT_Boss_ElementalFire
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.ArmTimer(0, 20000),
+                Do.ArmTimer(2, 7000)),
+        ];
         rungs[281549] = [  // Owllau_FeA
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -275565,6 +276502,11 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
         ];
+        rungs[281671] = [  // IDCT_Normal_Slime02
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.ArmTimer(0, 12000),
+                Do.ArmTimer(1, 40000)),
+        ];
         rungs[281673] = [  // IDCT_Normal_LightFi
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -275604,6 +276546,10 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
         ];
+    }
+
+    private static void OnEnterAttackState104(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281681] = [  // IDCT_Normal_Stalker01
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -275695,6 +276641,15 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
         ];
+        rungs[281810] = [  // LF4_FieldRaid
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 20000),
+                Do.ArmTimer(2, 3000),
+                Do.ArmTimer(3, 145000),
+                Do.Say(1500176, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18659)),
+        ];
         rungs[281813] = [  // Shulack_VChief
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -275710,18 +276665,28 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000)),
         ];
-    }
-
-    private static void OnEnterAttackState104(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281816] = [  // IDTP_Fanatic_Summon3
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
+        ];
+        rungs[281823] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 20000),
+                Do.ArmTimer(20, 25000),
+                Do.SkillOnEventTarget(17355)),
         ];
         rungs[281828] = [  // BGuard_FrostPillar
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18479)),
+        ];
+        rungs[281841] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 20000),
+                Do.ArmTimer(20, 25000),
+                Do.SkillOnEventTarget(17355)),
         ];
         rungs[281842] = [  // IDTP_Fanatic_MeA
             AiPattern.Branch(9, "rung 0", When.Always,
@@ -276208,6 +277173,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
         ];
+    }
+
+    private static void OnEnterAttackState105(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282081] = [  // LF4_Cactus
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -276302,10 +277271,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000)),
         ];
-    }
-
-    private static void OnEnterAttackState105(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282276] = [  // Station_Shu_AS
             AiPattern.Branch(6, "rung 0", When.Always,
                 Do.ArmTimer(1, 6000)),
@@ -276749,6 +277714,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState106(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282520] = [  // LDF4A_DrakanScout_UnarmedFighter
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -276868,10 +277837,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 5000),
                 Do.SkillOnEventTarget(20126)),
         ];
-    }
-
-    private static void OnEnterAttackState106(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282630] = [  // LDF4a_MagicHands_Light
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000),
@@ -277309,6 +278274,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOnEventTarget(19835)),
         ];
+    }
+
+    private static void OnEnterAttackState107(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282780] = [  // 1Skill_Ev15s_UseSk1T
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000)),
@@ -277433,10 +278402,6 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void OnEnterAttackState107(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282809] = [  // LDF4b_T1_Sandshark_An
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000)),
@@ -277831,6 +278796,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 30000)),
         ];
+    }
+
+    private static void OnEnterAttackState108(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282891] = [  // LF4_GHPetA_KJS
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 30000)),
@@ -277929,10 +278898,6 @@ internal static class BattleCycles
                 Do.SkillOnEventTarget(20725),
                 Do.ArmTimer(0, 2000)),
         ];
-    }
-
-    private static void OnEnterAttackState108(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[283106] = [  // IDTiamat_Tahabata_Blaze
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000)),
@@ -278264,6 +279229,10 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
         ];
+    }
+
+    private static void OnEnterAttackState109(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[283593] = [  // TR_Drakan_Pr_Heal_Party_65
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -278332,6 +279301,12 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+        rungs[283612] = [  // Britra_Party_Pr_Heal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 7000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+        ];
         rungs[283613] = [  // Britra_Party_Kn_ShieldFwAreaDD
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -278371,10 +279346,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
         ];
-    }
-
-    private static void OnEnterAttackState109(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[283627] = [  // Britra_Party_El_Summoner
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -278384,6 +279355,17 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17335)),
+        ];
+        rungs[283630] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
+        ];
+        rungs[283631] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.Broadcast(23012, 25f),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
         rungs[283648] = [  // AD2_BT10st0
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -278720,6 +279702,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState110(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[283891] = [  // Fanatic40_As
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -278844,10 +279830,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void OnEnterAttackState110(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284053] = [  // IDF5_TD_Nor_Wi
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 9000),
@@ -279019,6 +280001,12 @@ internal static class BattleCycles
                 Do.Broadcast(23035, 20f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17386)),
         ];
+        rungs[284204] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.Broadcast(23012, 25f),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
+        ];
         rungs[284206] = [  // Vri_Summon_Q_El_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
@@ -279114,6 +280102,12 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
         ];
+        rungs[284240] = [  // Shulack_Debuff_Pr_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.Broadcast(21001, 15f),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16902)),
+        ];
         rungs[284242] = [  // Shulack_SuTank_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000)),
@@ -279152,6 +280146,12 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 7000)),
+        ];
+        rungs[284249] = [  // Calydon_ChiefG_Pr_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 8000),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16564)),
         ];
         rungs[284250] = [  // Owllau_Left_Fi_65_N_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -279214,6 +280214,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 5000)),
         ];
+    }
+
+    private static void OnEnterAttackState111(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284261] = [  // Ghost_As_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -279368,10 +280372,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17931),
                 Do.Say(1501099, 0)),
         ];
-    }
-
-    private static void OnEnterAttackState111(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284351] = [  // BIDF5_TD_Headquater_1
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -279615,6 +280615,11 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17294)),
         ];
+        rungs[284590] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
+        ];
         rungs[284591] = [  // IDF5_U2_VriIU_As_solo_65_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -279722,6 +280727,11 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20562),
                 Do.Broadcast(21261, 15f)),
         ];
+        rungs[284626] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 10000),
+                Do.SkillOnEventTarget(20960)),
+        ];
         rungs[284628] = [  // IDF5_U2_VriRP_Fi_party_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -279750,6 +280760,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
         ];
+    }
+
+    private static void OnEnterAttackState112(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284674] = [  // IDVritra_Base_TimeOverGuard
             AiPattern.Branch(2, "rung 0", [When.FirstTime(0)],
                 Do.ArmTimer(0, 10000),
@@ -279957,10 +280971,6 @@ internal static class BattleCycles
                 Do.SystemMessage(1402100, 0),
                 Do.SkillOnEventTarget(17065)),
         ];
-    }
-
-    private static void OnEnterAttackState112(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284775] = [  // IDF5_TD_War_Dark_Officer_03
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -280471,6 +281481,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
+    }
+
+    private static void OnEnterAttackState113(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284915] = [  // Britra_As_Poison_LowNmd
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -280645,10 +281659,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16519),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-    }
-
-    private static void OnEnterAttackState113(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[286418] = [  // ND2_FnW
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(1, 12000),
@@ -280759,6 +281769,15 @@ internal static class BattleCycles
         rungs[286777] = [  // AD2_BT10st0
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
+        ];
+        rungs[286791] = [  // LF4_FieldRaid
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000),
+                Do.ArmTimer(1, 20000),
+                Do.ArmTimer(2, 3000),
+                Do.ArmTimer(3, 145000),
+                Do.Say(1500176, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18659)),
         ];
         rungs[286880] = [  // XDrakan_FeB
             AiPattern.Branch(11, "rung 0", When.Always,
@@ -281055,6 +282074,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 12000),
                 Do.SkillOnEventTarget(20667)),
         ];
+    }
+
+    private static void OnEnterAttackState114(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[287139] = [  // F5_RvR_LGuard_Fi_Ae
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 5000),
@@ -281247,10 +282270,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
         ];
-    }
-
-    private static void OnEnterAttackState114(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[287276] = [  // LDF4_kalnif_horn_LV2
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
@@ -281743,6 +282762,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17123)),
         ];
+    }
+
+    private static void OnEnterAttackState115(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[294631] = [  // DGuard_FnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -281991,10 +283014,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17173)),
         ];
-    }
-
-    private static void OnEnterAttackState115(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[294715] = [  // BGuard_AhAPetB
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -282487,6 +283506,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17334)),
         ];
+    }
+
+    private static void OnEnterAttackState116(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[295075] = [  // BGuard_FrostPillar
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
@@ -282711,10 +283734,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(1, 15000)),
         ];
-    }
-
-    private static void OnEnterAttackState116(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[295202] = [  // BGuard_GateWi
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -283257,6 +284276,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState117(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[295492] = [  // DGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -283505,10 +284528,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(17293)),
         ];
-    }
-
-    private static void OnEnterAttackState117(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[295741] = [  // DrGuard_WnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -284050,6 +285069,10 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(1, 15000)),
         ];
+    }
+
+    private static void OnEnterAttackState118(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[296068] = [  // BGuard_GateWi
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -284296,10 +285319,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(17061)),
         ];
-    }
-
-    private static void OnEnterAttackState118(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[296411] = [  // DGuard_FhA
             AiPattern.Branch(10, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 20000),
@@ -284793,6 +285812,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17058)),
         ];
+    }
+
+    private static void OnEnterAttackState119(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[296665] = [  // DGuard_FhA
             AiPattern.Branch(10, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 20000),
@@ -285044,10 +286067,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17100)),
         ];
-    }
-
-    private static void OnEnterAttackState119(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[296774] = [  // LGuard_RnA
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
@@ -285585,6 +286604,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOnEventTarget(17122)),
         ];
+    }
+
+    private static void OnEnterAttackState120(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[296986] = [  // F5_PvP_LGuard_ElementalFire_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 10000),
@@ -285819,10 +286842,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(20668)),
         ];
-    }
-
-    private static void OnEnterAttackState120(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297027] = [  // LDF5_LGuard_DisputeRvRLight_Support_Heal_Pe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -286269,6 +287288,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(17332)),
         ];
+    }
+
+    private static void OnEnterAttackState121(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297139] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Re
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -286473,10 +287496,6 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17319)),
         ];
-    }
-
-    private static void OnEnterAttackState121(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297226] = [  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -286932,6 +287951,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState122(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297362] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -287110,10 +288133,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(19598)),
         ];
-    }
-
-    private static void OnEnterAttackState122(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297393] = [  // DirectPortal_DGuard_Charge_PM_Fe2
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -287570,6 +288589,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(17061)),
         ];
+    }
+
+    private static void OnEnterAttackState123(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[799030] = [  // LGuard_FhA
             AiPattern.Branch(10, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 20000),
@@ -287757,10 +288780,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOnEventTarget(19581)),
         ];
-    }
-
-    private static void OnEnterAttackState123(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[801255] = [  // F5_PvPLight_DGuard_Wi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -288139,6 +289158,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(30004, 50f)),
         ];
+    }
+
+    private static void OnEnterAttackState124(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855276] = [  // LDF4_Advance_village_02
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -288342,10 +289365,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
         ];
-    }
-
-    private static void OnEnterAttackState124(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855421] = [  // Station_Shu_PR
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000)),
@@ -288710,6 +289729,10 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
+    }
+
+    private static void OnEnterAttackState125(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[856011] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -288870,10 +289893,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42101, 13f)),
         ];
-    }
-
-    private static void OnEnterAttackState125(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[880010] = [  // Gab1_LArtiGuard_Boss_01_01_3
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -289276,6 +290295,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17386)),
         ];
+    }
+
+    private static void OnEnterAttackState126(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[880577] = [  // Gab1_Gaurd_Charge_PM_Fn
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 7000),
@@ -289443,10 +290466,6 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16673)),
         ];
-    }
-
-    private static void OnEnterAttackState126(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881434] = [  // Gab1_Named_01
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -289793,6 +290812,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
+    }
+
+    private static void OnEnterAttackState127(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881538] = [  // Gab1_TurretSwitch_toPC_23
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
@@ -289997,10 +291020,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17335)),
         ];
-    }
-
-    private static void OnEnterAttackState127(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881620] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -290401,6 +291420,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(17332)),
         ];
+    }
+
+    private static void OnEnterAttackState128(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881689] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -290576,10 +291599,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17335)),
         ];
-    }
-
-    private static void OnEnterAttackState128(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881720] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -291208,6 +292227,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState129(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881814] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -291531,10 +292554,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(0, 7000)),
         ];
-    }
-
-    private static void OnEnterAttackState129(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881845] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
             AiPattern.Branch(7, "rung 0", [When.Chance(25)],
                 Do.ArmTimer(0, 7000),
@@ -292114,6 +293133,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17335)),
         ];
+    }
+
+    private static void OnEnterAttackState130(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881934] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
@@ -292294,10 +293317,6 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.SkillOnEventTarget(21284)),
         ];
-    }
-
-    private static void OnEnterAttackState130(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881965] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
@@ -292849,6 +293868,10 @@ internal static class BattleCycles
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17318)),
         ];
+    }
+
+    private static void OnEnterAttackState131(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[882172] = [  // F5_PvPLight_LGuard_Fi_An
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
@@ -293291,6 +294314,10 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.SkillOnMessageParam(17518)),
         ];
+        rungs[216575] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", [When.Message(6310)],
+                Do.ArmTimer(29, 2000)),
+        ];
         rungs[217800] = [  // IDArena_Solo_S3_Sprigg
             AiPattern.Branch(10, "rung 0", [When.Message(1011)],
                 Do.TargetMessageParam(),
@@ -293393,6 +294420,34 @@ internal static class BattleCycles
                 Do.ArmTimer(7, 2000),
                 Do.HateMessageParam(10000),
                 Do.AttackMostHating()),
+        ];
+        rungs[230996] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(151, "rung 0", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 10000),
+                Do.SkillOnMessageSender(17361)),
+            AiPattern.Branch(149, "rung 1", [When.Message(23040), When.FirstTime(11)],
+                Do.ArmTimer(11, 10000),
+                Do.SkillOnMessageSender(16566)),
+            AiPattern.Branch(148, "rung 2", [When.Message(23011)],
+                Do.SkillOnMessageSender(16566)),
+        ];
+        rungs[231242] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(5, "rung 0", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOnMessageSender(17361)),
+        ];
+        rungs[231243] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(500, "rung 0", [When.Message(23040), When.FirstTime(11)],
+                Do.ArmTimer(11, 15000),
+                Do.SkillOnMessageSender(16566)),
+            AiPattern.Branch(5, "rung 1", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOnMessageSender(17361)),
+        ];
+        rungs[232844] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(5, "rung 0", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOnMessageSender(17361)),
         ];
         rungs[233058] = [  // IDArena_pvp02_S3_Tog_03
             AiPattern.Branch(7, "rung 0", [When.Message(1001)],
@@ -293635,6 +294690,14 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19044),
                 Do.ArmTimer(0, 1000)),
         ];
+        rungs[281823] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", [When.Message(6310)],
+                Do.ArmTimer(29, 2000)),
+        ];
+        rungs[281841] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", [When.Message(6310)],
+                Do.ArmTimer(29, 2000)),
+        ];
         rungs[282619] = [  // IDDramata_Drakan_Pr
             AiPattern.Branch(11, "rung 0", [When.Message(6836)],
                 Do.ArmTimer(0, 6000),
@@ -293645,11 +294708,39 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 2", [When.Message(600)],
                 Do.DespawnSelf()),
         ];
+        rungs[283612] = [  // Britra_Party_Pr_Heal
+            AiPattern.Branch(200, "rung 0", [When.Message(23035), When.FirstTime(2)],
+                Do.ArmTimer(5, 15000),
+                Do.SkillOnMessageSender(17361)),
+        ];
+        rungs[283630] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(5, "rung 0", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOnMessageSender(17361)),
+        ];
+        rungs[283631] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(500, "rung 0", [When.Message(23040), When.FirstTime(11)],
+                Do.ArmTimer(11, 15000),
+                Do.SkillOnMessageSender(16566)),
+            AiPattern.Branch(5, "rung 1", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOnMessageSender(17361)),
+        ];
         rungs[284028] = [  // BIDF5_R2_Killer
             AiPattern.Branch(12, "rung 0", [When.Message(22106)],
                 Do.ArmTimer(7, 2000),
                 Do.HateMessageParam(10000),
                 Do.AttackMostHating()),
+        ];
+        rungs[284204] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(151, "rung 0", [When.Message(23035), When.FirstTime(10)],
+                Do.ArmTimer(10, 10000),
+                Do.SkillOnMessageSender(17361)),
+            AiPattern.Branch(149, "rung 1", [When.Message(23040), When.FirstTime(11)],
+                Do.ArmTimer(11, 10000),
+                Do.SkillOnMessageSender(16566)),
+            AiPattern.Branch(148, "rung 2", [When.Message(23011)],
+                Do.SkillOnMessageSender(16566)),
         ];
         rungs[284214] = [  // Vri_Sum_Sum_65_Ae
             AiPattern.Branch(202, "rung 0", [When.Message(23015)],
@@ -293787,6 +294878,12 @@ internal static class BattleCycles
                 Do.HateMessageParam(1),
                 Do.AttackMostHating(),
                 Do.TargetMessageParam()),
+        ];
+        rungs[286995] = [  // Test_Monster_AI_KSJ_04
+            AiPattern.Branch(8, "rung 0", [When.Message(9999), When.Counting(0, 0, 4, true)],
+                Do.Nothing()),
+            AiPattern.Branch(7, "rung 1", [When.Message(4646)],
+                Do.ArmTimer(0, 1000)),
         ];
         rungs[287086] = [  // Test_Basic_Monster_AI_KMD_1
             AiPattern.Branch(7, "rung 0", [When.Message(8282), When.FirstTime(2)],
@@ -294001,6 +295098,41 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17255)),
         ];
+        rungs[231242] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", [When.HpBelow(50), When.Consuming(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[232844] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", [When.HpBelow(50), When.Consuming(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[233069] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[233113] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[233121] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[235578] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[235604] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
         rungs[280098] = [  // D2_SouST_Su
             AiPattern.Branch(4, "rung 0", [When.HpBetween(36, 64), When.FirstTime(0)],
                 Do.ArmTimer(1, 3000),
@@ -294096,6 +295228,32 @@ internal static class BattleCycles
                 Do.Say(341994, 0),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18631)),
         ];
+        rungs[283630] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", [When.HpBelow(50), When.Consuming(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[284268] = [  // NeutQueen_N_65_Ah
+            AiPattern.Branch(200, "rung 0", [When.HpBelow(75), When.Counting(0, 0, 1, true)],
+                Do.ArmTimer(10, 15000),
+                Do.SpawnNearForTheFight(284273, 1, 1, 0f, 0)),
+            AiPattern.Branch(199, "rung 1", [When.HpBelow(50), When.Counting(1, 0, 1, true)],
+                Do.ArmTimer(11, 15000),
+                Do.SpawnNearForTheFight(284273, 1, 2, 0f, 0)),
+            AiPattern.Branch(198, "rung 2", [When.HpBelow(25), When.Counting(2, 0, 1, true)],
+                Do.ArmTimer(12, 15000),
+                Do.SpawnNearForTheFight(284273, 1, 3, 0f, 0)),
+        ];
+        rungs[284590] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[284626] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(10, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
         rungs[286990] = [  // Test_Monster_AI_KSJ_03
             AiPattern.Branch(9, "rung 0", [When.HpBelow(50), When.FirstTime(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16409)),
@@ -294129,6 +295287,67 @@ internal static class BattleCycles
 
     private static void OnSpelled0(Dictionary<int, PatternBranch[]> rungs)
     {
+        rungs[231242] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", [When.HpBelow(50), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[232844] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", [When.HpBelow(50), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[233069] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[233113] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[233121] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[235578] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[235604] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[283630] = [  // Britra_Party_Mu_HelpBuff
+            AiPattern.Branch(7, "rung 0", [When.HpBelow(50), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[284268] = [  // NeutQueen_N_65_Ah
+            AiPattern.Branch(200, "rung 0", [When.HpBelow(75), When.Counting(0, 0, 1, true)],
+                Do.ArmTimer(10, 15000),
+                Do.SpawnNearForTheFight(284273, 1, 1, 0f, 0)),
+            AiPattern.Branch(199, "rung 1", [When.HpBelow(50), When.Counting(1, 0, 1, true)],
+                Do.ArmTimer(11, 15000),
+                Do.SpawnNearForTheFight(284273, 1, 2, 0f, 0)),
+            AiPattern.Branch(198, "rung 2", [When.HpBelow(25), When.Counting(2, 0, 1, true)],
+                Do.ArmTimer(12, 15000),
+                Do.SpawnNearForTheFight(284273, 1, 3, 0f, 0)),
+        ];
+        rungs[284590] = [  // IDF5_U2_VriRP_Ba_solo_65_An
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        rungs[284626] = [  // IDF5_U2_VriRP_Ba_party_65_Ae
+            AiPattern.Branch(11, "rung 0", [When.HpBelow(50), When.FirstTime(0)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
         rungs[286990] = [  // Test_Monster_AI_KSJ_03
             AiPattern.Branch(9, "rung 0", [When.HpBelow(50), When.FirstTime(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16409)),
@@ -294259,6 +295478,7 @@ internal static class BattleCycles
         OnDie4(rungs);
         OnDie5(rungs);
         OnDie6(rungs);
+        OnDie7(rungs);
         return rungs;
     }
 
@@ -294295,9 +295515,21 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
+        rungs[215456] = [  // Elim_ShelukNm
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1400754, 0)),
+        ];
         rungs[215457] = [  // Elim_Octaside_Door
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("IDElim_1F_StartRush", 2, 0)),
+        ];
+        rungs[215478] = [  // Elim_OctasideNm_Item
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1400756, 0)),
+        ];
+        rungs[215482] = [  // Elim_ClodwormNm_Item
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1400755, 0)),
         ];
         rungs[215483] = [  // Elim_ComadFe2
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -294315,6 +295547,16 @@ internal static class BattleCycles
         rungs[215785] = [  // IDTP_Fanatic_FeC
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(341988, 0)),
+        ];
+        rungs[215788] = [  // IDTP_Fanatic_FeA_Key
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDCT_Boss_Spectre_noShown1", 0, 1),
+                Do.SystemMessage(1400366, 0)),
+        ];
+        rungs[215789] = [  // IDTP_Fanatic_CeA_Key
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDCT_Boss_Spectre_noShown1", 0, 1),
+                Do.SystemMessage(1400366, 0)),
         ];
         rungs[215807] = [  // IDTP_Fanatic_EeA
             AiPattern.Branch(10, "rung 0", When.Always,
@@ -294456,6 +295698,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1),
                 Do.Despawn(2)),
+        ];
+        rungs[216575] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
         ];
         rungs[216583] = [  // IDCT_Lichkey1
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -294683,6 +295929,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("Condition_S10", 0, 1)),
         ];
+    }
+
+    private static void OnDie1(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217607] = [  // IDArena_S10_Named_1
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1),
@@ -294711,10 +295961,6 @@ internal static class BattleCycles
                 Do.Say(342150, 0),
                 Do.SetSpawnVariable("Condition_S4A", 0, 1)),
         ];
-    }
-
-    private static void OnDie1(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217789] = [  // IDArena_Solo_S2_Nuki
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(342151, 0),
@@ -295118,6 +296364,10 @@ internal static class BattleCycles
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
         ];
+    }
+
+    private static void OnDie2(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219260] = [  // IDDreadgion_03_DrakanPrNamedCA_60_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
@@ -295142,10 +296392,6 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.SetSpawnVariable("Namedkilled", 0, 1)),
         ];
-    }
-
-    private static void OnDie2(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219310] = [  // 4BReward_Drakan_CL
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -295393,6 +296639,22 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
         ];
+        rungs[230662] = [  // IDRose_L_ShulackF_Ri_S_N_An
+            AiPattern.Branch(96, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[230665] = [  // IDRose_M_ShugoM_Wi_S_N_An
+            AiPattern.Branch(96, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[230666] = [  // IDRose_H_Boatswain_Fi_P_SN_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
         rungs[230726] = [  // IDRose_M_KrallKeeper_Fi_P_Key_Ae
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SpawnAtForTheFight(230725, 1, 0, new SpawnSpot(726.14f, 541.15f, 943.88f))),
@@ -295413,9 +296675,35 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
         ];
+        rungs[230737] = [  // IDRose_L_ShulackF_Ri_P_N_Ae
+            AiPattern.Branch(96, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[230740] = [  // IDRose_M_ShugoM_Wi_P_N_Ae
+            AiPattern.Branch(96, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[230741] = [  // IDRose_H_Boatswain_Fi_P_SN_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[230743] = [  // IDRose_H_Boss_Mu_P_N_Ae
+            AiPattern.Branch(96, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
         rungs[230995] = [  // Vri_5th_Q_Wi_N_65_Ah
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(1500921, 0)),
+        ];
+        rungs[230996] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
         ];
         rungs[231075] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
             AiPattern.Branch(100, "rung 0", When.Always,
@@ -295462,6 +296750,10 @@ internal static class BattleCycles
                 Do.SetSpawnVariable("cProtection04", 0, 1),
                 Do.Broadcast(21163, 50f)),
         ];
+        rungs[231243] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[231476] = [  // Frillfaimam_As_N_65_Ah
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -295503,6 +296795,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(342605, 0)),
         ];
+    }
+
+    private static void OnDie3(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232927] = [  // ShulackRose_Fi_Tanker
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(342605, 0)),
@@ -295531,6 +296827,14 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(342605, 0)),
         ];
+        rungs[233059] = [  // IDF5_U2_ShugoG_Wi_solo_65_An2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[233060] = [  // IDF5_U2_ShugoG_Wi_solo_65_An2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
         rungs[233086] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SetSpawnVariable("cSetPortal", 0, 1)),
@@ -295540,6 +296844,14 @@ internal static class BattleCycles
                 Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
                 Do.SetSpawnVariable("cSetPortal", 0, 1),
                 Do.Despawn(1)),
+        ];
+        rungs[233091] = [  // IDF5_U2_ShugoG_Wi_party_SN_65_Ae2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[233095] = [  // IDF5_U2_ShugoG_Wi_party_65_Ae2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
         ];
         rungs[233193] = [  // BIDF5_R2_KeyMonster
             AiPattern.Branch(6, "rung 0", When.Always,
@@ -295565,10 +296877,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
-    }
-
-    private static void OnDie3(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233303] = [  // GhostRune_As_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -295668,6 +296976,14 @@ internal static class BattleCycles
         rungs[233491] = [  // IDF5_U1_War_Vri_PVPNamed_Wi_N_65_Ah
             AiPattern.Branch(7, "rung 0", [When.FirstTime(20)],
                 Do.ArmTimer(18, 5000)),
+        ];
+        rungs[235573] = [  // IDF5_U2_ShugoG_Wi_party_65_Ae2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[235599] = [  // IDF5_U2_ShugoG_Wi_party_65_Ae2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
         ];
         rungs[235619] = [  // IDLDF5_Under_02_Boss_Wi
             AiPattern.Branch(1000, "rung 0", When.Always,
@@ -295961,6 +297277,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(4440444, 50f)),
         ];
+    }
+
+    private static void OnDie4(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277939] = [  // Gab1_DArtiGuard_Boss_04_01_3
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(4440444, 50f)),
@@ -296045,10 +297365,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(4440444, 50f)),
         ];
-    }
-
-    private static void OnDie4(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277960] = [  // Gab1_LArtiGuard_Boss_04_01_3
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(4440444, 50f)),
@@ -296221,6 +297537,10 @@ internal static class BattleCycles
                 Do.SetSpawnVariable("DOORWALL_SPAWN", 0, 1),
                 Do.SpawnNearForTheFight(281773, 1, 1, 0f, 10)),
         ];
+        rungs[281547] = [  // IDCT_Boss_ElementalFire
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[281648] = [  // IDCT_Boss_Shulack_Mage
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.Say(342032, 0)),
@@ -296282,7 +297602,22 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(1500053, 0)),
         ];
+        rungs[281810] = [  // LF4_FieldRaid
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3),
+                Do.Despawn(4)),
+        ];
         rungs[281813] = [  // Shulack_VChief
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281823] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281841] = [  // XDrakan_HighPriest
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
@@ -296324,9 +297659,21 @@ internal static class BattleCycles
                 Do.SpawnAtForTheFight(282113, 0, 60, new SpawnSpot(662.28f, 774.47f, 216.85f)),
                 Do.Despawn(1)),
         ];
+        rungs[282002] = [  // Elim_OctasideNm_Item
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1400756, 0)),
+        ];
+        rungs[282003] = [  // Elim_ClodwormNm_Item
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1400755, 0)),
+        ];
         rungs[282004] = [  // Elim_Octaside_Door
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("IDElim_1F_StartRush", 2, 0)),
+        ];
+        rungs[282005] = [  // Elim_ShelukNm
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1400754, 0)),
         ];
         rungs[282060] = [  // Elim_ComadFe2
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -296364,6 +297711,10 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
+    }
+
+    private static void OnDie5(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282144] = [  // IDAbRe_Core_Summon4_Low
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -296487,10 +297838,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SpawnOnTarget(282720, 1, 1, 0.0f, 5, 100, 50.0f)),
         ];
-    }
-
-    private static void OnDie5(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282868] = [  // LDF4b_T4_Fungy_Red_An
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.SpawnNear(282963, 1, 1, 0.0f, 10),
@@ -296639,6 +297986,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
+        rungs[283631] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[283818] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
@@ -296682,6 +298033,10 @@ internal static class BattleCycles
         rungs[284199] = [  // Vri_Post_3rd_Q_Ra_N_65_Ah
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(1500815, 0)),
+        ];
+        rungs[284204] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
         ];
         rungs[284206] = [  // Vri_Summon_Q_El_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -296777,15 +298132,31 @@ internal static class BattleCycles
                 Do.SetSpawnVariable("cProtection01", 0, 1),
                 Do.Broadcast(21133, 50f)),
         ];
+        rungs[284581] = [  // IDF5_U2_ShugoG_Wi_solo_65_An2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
         rungs[284605] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SetSpawnVariable("cSetPortal", 0, 1)),
         ];
+    }
+
+    private static void OnDie6(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284608] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
                 Do.SetSpawnVariable("cSetPortal", 0, 1),
                 Do.Despawn(1)),
+        ];
+        rungs[284610] = [  // IDF5_U2_ShugoG_Wi_party_SN_65_Ae2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[284614] = [  // IDF5_U2_ShugoG_Wi_party_65_Ae2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
         ];
         rungs[284721] = [  // IDDreadgion_03_DrakanCl_Noble_60_Ae
             AiPattern.Branch(8, "rung 0", When.Always,
@@ -296838,6 +298209,13 @@ internal static class BattleCycles
         rungs[284833] = [  // IDF5_U1_War_Vri_PVPNamed_Wi_N_65_Ah
             AiPattern.Branch(7, "rung 0", [When.FirstTime(20)],
                 Do.ArmTimer(18, 5000)),
+        ];
+        rungs[286791] = [  // LF4_FieldRaid
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3),
+                Do.Despawn(4)),
         ];
         rungs[286907] = [  // testai63
             AiPattern.Branch(3, "rung 0", When.Always,
@@ -296912,10 +298290,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(213832, 0, 1, 0f, 0)),
         ];
-    }
-
-    private static void OnDie6(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[287222] = [  // TEST_MONSTER_JSJ_03
             AiPattern.Branch(6, "rung 0", [When.FirstTime(0)],
                 Do.Broadcast(50003, 100f)),
@@ -297190,6 +298564,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(4440444, 50f)),
         ];
+    }
+
+    private static void OnDie7(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[880040] = [  // Gab1_BossSum_Vritra_02
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(4440444, 50f)),
@@ -297304,6 +298682,7 @@ internal static class BattleCycles
         OnLeaveAttack7(rungs);
         OnLeaveAttack8(rungs);
         OnLeaveAttack9(rungs);
+        OnLeaveAttack10(rungs);
         return rungs;
     }
 
@@ -297427,6 +298806,10 @@ internal static class BattleCycles
                 Do.Despawn(1)),
         ];
         rungs[216525] = [  // IDCT_Boss_Hidden_Hard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216575] = [  // XDrakan_HighPriest
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
@@ -297557,6 +298940,60 @@ internal static class BattleCycles
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.DespawnSelf()),
         ];
+        rungs[218684] = [  // IDArena_pvp01_S4_VaranusAlligatorD_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18168),
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218688] = [  // IDArena_pvp01_S5_Butler_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218689] = [  // IDArena_pvp01_S5_Lich_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218697] = [  // IDArena_pvp01_S4_VaranusAlligatorD_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18168),
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218701] = [  // IDArena_pvp01_S5_Butler_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218702] = [  // IDArena_pvp01_S5_Lich_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218710] = [  // IDArena_pvp01_S4_VaranusAlligatorD_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18168),
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218714] = [  // IDArena_pvp01_S5_Butler_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218715] = [  // IDArena_pvp01_S5_Lich_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218806] = [  // IDArena_pvp01_S4_VaranusAlligatorD_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16591),
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218807] = [  // IDArena_pvp01_S4_VaranusAlligatorD_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16591),
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[218808] = [  // IDArena_pvp01_S4_VaranusAlligatorD_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16591),
+                Do.GotoWaypoint(0)),
+        ];
         rungs[218943] = [  // AD2_Wss0BT15st1
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
@@ -297647,17 +299084,58 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
+        rungs[230662] = [  // IDRose_L_ShulackF_Ri_S_N_An
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
         rungs[230663] = [  // IDRose_M_KrallKeeper_Fi_S_SN_An
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[230665] = [  // IDRose_M_ShugoM_Wi_S_N_An
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557),
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
         ];
         rungs[230726] = [  // IDRose_M_KrallKeeper_Fi_P_Key_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
+        rungs[230737] = [  // IDRose_L_ShulackF_Ri_P_N_Ae
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+    }
+
+    private static void OnLeaveAttack1(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230738] = [  // IDRose_M_KrallKeeper_Fi_P_SN_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[230740] = [  // IDRose_M_ShugoM_Wi_P_N_Ae
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557),
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        rungs[230743] = [  // IDRose_H_Boss_Mu_P_N_Ae
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21220),
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
         ];
         rungs[230898] = [  // Britra_Party_Ri_OpenAerial_LowNmd
             AiPattern.Branch(10, "rung 0", When.Always,
@@ -297673,6 +299151,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[230996] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
         ];
         rungs[230997] = [  // VriTR_Stun_Q_Fi_N_60_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -297723,10 +299205,6 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
-    }
-
-    private static void OnLeaveAttack1(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231026] = [  // IDF5_U1_Vri_Def_As_65_Ae
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
@@ -297933,6 +299411,10 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
+        rungs[231243] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[231306] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
@@ -298061,6 +299543,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
+    }
+
+    private static void OnLeaveAttack2(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231490] = [  // Vri_1stBoss_Q_Fi_N_65_Al
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
@@ -298151,10 +299637,6 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
         ];
-    }
-
-    private static void OnLeaveAttack2(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231529] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
@@ -298366,6 +299848,24 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
         ];
+        rungs[233048] = [  // IDArena_pvp01_S4_VaranusAlligatorD_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18168),
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[233052] = [  // IDArena_pvp01_S5_Butler_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[233053] = [  // IDArena_pvp01_S5_Lich_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        rungs[233056] = [  // IDArena_pvp01_S4_VaranusAlligatorD_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16591),
+                Do.GotoWaypoint(0)),
+        ];
         rungs[233072] = [  // IDF5_U2_VriRP_As_solo_Hide_65_An
             AiPattern.Branch(91, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
@@ -298375,6 +299875,12 @@ internal static class BattleCycles
             AiPattern.Branch(91, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233089] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(92, "rung 0", When.Always,
+                Do.Despawn(1)),
+            AiPattern.Branch(91, "rung 1", When.Always,
+                Do.Nothing()),
         ];
         rungs[233193] = [  // BIDF5_R2_KeyMonster
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -298464,10 +299970,22 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
         ];
+        rungs[233380] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(92, "rung 0", When.Always,
+                Do.Despawn(1)),
+            AiPattern.Branch(91, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
         rungs[233382] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
             AiPattern.Branch(91, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233383] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(92, "rung 0", When.Always,
+                Do.Despawn(1)),
+            AiPattern.Branch(91, "rung 1", When.Always,
+                Do.Nothing()),
         ];
         rungs[233385] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
             AiPattern.Branch(91, "rung 0", When.Always,
@@ -298479,10 +299997,26 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
         ];
+        rungs[233473] = [  // IDF5_U1_War_Vri_Def00_NoRe_Fi_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.GotoWaypoint(0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233482] = [  // IDF5_U1_War_Vri_Def01_Re_Hide_As_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.GotoWaypoint(0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
         rungs[233490] = [  // IDF5_U1_Vri_Def_Ri_SN_65_Ae
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233590] = [  // IDF5_U1_War_Vri_Def01_Re_As_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.GotoWaypoint(0),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
         rungs[233864] = [  // ND2_ElementalSu2
             AiPattern.Branch(10, "rung 0", When.Always,
@@ -298490,6 +300024,10 @@ internal static class BattleCycles
                 Do.Despawn(2),
                 Do.Despawn(1)),
         ];
+    }
+
+    private static void OnLeaveAttack3(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233872] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
@@ -298625,10 +300163,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnLeaveAttack3(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234843] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -298933,6 +300467,10 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
+    }
+
+    private static void OnLeaveAttack4(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[236008] = [  // Britra_Table
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
@@ -299078,10 +300616,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnLeaveAttack4(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251404] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -299428,6 +300962,10 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
         ];
+    }
+
+    private static void OnLeaveAttack5(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[253707] = [  // AD2_Xipeto2a
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -299564,10 +301102,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
                 Do.Despawn(1)),
         ];
-    }
-
-    private static void OnLeaveAttack5(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[259206] = [  // LDF4b_Tiamat_Gravity
             AiPattern.Branch(15, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
@@ -299918,6 +301452,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+    }
+
+    private static void OnLeaveAttack6(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[273067] = [  // F5_RvR_LGuard_As_Ae_HideBroad
             AiPattern.Branch(94, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -300068,10 +301606,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnLeaveAttack6(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[273272] = [  // F5_RvR_LGuard_As_Ae_Hide
             AiPattern.Branch(94, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -300422,6 +301956,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+    }
+
+    private static void OnLeaveAttack7(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279575] = [  // F5_PvP_DGuard_As_Ae_Hide
             AiPattern.Branch(94, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -300572,10 +302110,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnLeaveAttack7(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279867] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -300857,6 +302391,10 @@ internal static class BattleCycles
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.Despawn(1)),
         ];
+        rungs[281547] = [  // IDCT_Boss_ElementalFire
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[281662] = [  // IDCT_Boss_Shulack
             AiPattern.Branch(12, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -300868,6 +302406,10 @@ internal static class BattleCycles
         rungs[281693] = [  // IDCT_Normal_ShulackAs
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[281810] = [  // LF4_FieldRaid
+            AiPattern.Branch(1, "rung 0", [When.Consuming(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18888)),
         ];
         rungs[281813] = [  // Shulack_VChief
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -300881,9 +302423,21 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnLeaveAttack8(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[281823] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[281828] = [  // BGuard_FrostPillar
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.DespawnSelf()),
+        ];
+        rungs[281841] = [  // XDrakan_HighPriest
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
         ];
         rungs[281960] = [  // Cromede_Hierarch
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -300984,6 +302538,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
         ];
+        rungs[283631] = [  // Britra_Party_Pr_HelpHeal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
         rungs[283808] = [  // IDLDF5Re_Solo_Vritra43IU_DrakanHideAn
             AiPattern.Branch(95, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
@@ -301023,14 +302581,14 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
-    }
-
-    private static void OnLeaveAttack8(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284201] = [  // Vri_Post_Sumble_I_Fi_N_65_Ah
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284204] = [  // Vri_HeHeal_Q_Pr_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
         ];
         rungs[284206] = [  // Vri_Summon_Q_El_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -301217,6 +302775,16 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
+        rungs[284428] = [  // Rune_FrostNmd_RealImitaion_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetIdleTimer(500),
+                Do.Broadcast(15062601, 100f)),
+        ];
+        rungs[284429] = [  // Rune_FrostNmd_RealImitaion_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetIdleTimer(500),
+                Do.Broadcast(15062601, 100f)),
+        ];
         rungs[284502] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
             AiPattern.Branch(90, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
@@ -301304,6 +302872,16 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
         ];
+    }
+
+    private static void OnLeaveAttack9(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[284608] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(92, "rung 0", When.Always,
+                Do.Despawn(1)),
+            AiPattern.Branch(91, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
         rungs[284717] = [  // IDDreadgion_03_DrakanPr_Vil_60_Ae
             AiPattern.Branch(13, "rung 0", When.Always,
                 Do.Despawn(1)),
@@ -301325,6 +302903,10 @@ internal static class BattleCycles
         rungs[284936] = [  // LDF4_Advance_DrakanTiamat_Pr
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[286791] = [  // LF4_FieldRaid
+            AiPattern.Branch(1, "rung 0", [When.Consuming(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18670)),
         ];
         rungs[290024] = [  // AD2_Xipeto2a
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -301482,10 +303064,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnLeaveAttack9(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297257] = [  // F5_PvP_DGuard_As_Ae_Hide
             AiPattern.Branch(94, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -301530,6 +303108,11 @@ internal static class BattleCycles
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297483] = [  // Gab1_DGuard_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762),
+                Do.GotoWaypoint(0)),
         ];
         rungs[297541] = [  // LDF5_Fortress_Guard_As
             AiPattern.Branch(100, "rung 0", When.Always,
@@ -301758,6 +303341,10 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+    }
+
+    private static void OnLeaveAttack10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881670] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),

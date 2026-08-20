@@ -37010,3 +37010,67 @@ that changes any table announces itself immediately.
 - **`control_door` (37)**, **`change_world_scene_status` (54)**, **`enable_area` (31)**,
   **`goto_waypoint` runs (35)**, **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**,
   **retail cast timings.**
+
+## The two parsers become one vocabulary
+
+`Retail-AI-Pattern: merged battle and idle element vocabularies`
+
+The port grew two readers of the same retail dialect. `extract_battle_cycles.py` learned the
+combat elements — `use_skill`, `spawn_npc`, `change_hate`, `add_battle_timer` — and
+`extract_idle_cycles.py` learned the out-of-combat ones — `set_idle_timer`, `goto_waypoint`,
+`increase_intvar`, `do_nothing`. Each refused what the other knew. That was tolerable while the
+two read disjoint handlers, and it stopped being tolerable once the tables started sharing
+`read_actions`, because retail does not partition its vocabulary the way our two parsers did.
+
+Measured before touching anything: **2,398 of 68,978 branches mix both vocabularies.** A branch
+that runs `use_skill` and then `set_idle_timer` was being dropped whole by the battle parser --
+not degraded, dropped -- because a branch is all-or-nothing (`read_actions` returns `None` when
+any element is unsayable, since a half-read branch would be a lie about what retail does). So a
+per-branch fallback between the two parsers would have been unsound; the union had to be at the
+element level.
+
+This commit gives the battle parser the four elements it lacked:
+
+- `increase_intvar` -> `count:` guard -> `When.Counting(slot, low, high, at_bound)`. A condition
+  that increments as it tests, the same test-and-mutate shape as `set_flag_var`.
+- `set_idle_timer` -> `Do.SetIdleTimer`, `goto_waypoint` -> `Do.GotoWaypoint`,
+  `do_nothing` -> `Do.Nothing`.
+
+`do_nothing` is carried rather than skipped, which is worth stating because "skip it, it does
+nothing" is the obvious wrong move. Retail branch lists are **first-match-wins**: `Evaluate`
+returns after the first matched branch. A matching `do_nothing` branch is retail saying *"in this
+case, and none of the cases listed below."* Dropping it would let a lower branch fire that retail
+never reaches. All 64 of them are load-bearing in exactly that way.
+
+`goto_waypoint` still refuses `MOVETYPE_RUN` (this port's route walking has one speed), so 20 of
+the walk-speed ones land and the running ones remain in the backlog below.
+
+### What the union bought
+
+The battle table went from 165,813 rows to **166,639** -- verified **0 removed, 826 added**, the
+check that matters, since a vocabulary change that silently rewrote existing rows would be a
+regression wearing a feature's clothes. Those 826 rows complete **43 patterns across 83 npcs**
+that were previously dropped mid-branch, including 26 new spawn rungs and 253 new casts. 33 npcs
+newly reach `battle_cycle` and 1 newly reaches `death_spawn`.
+
+Fightable retail adds our server never spawns: 226 -> **225** across 165 encounters.
+
+The small backlog movement is expected and is not the point of this commit. The backlog counts
+adds we cannot spawn *at all*; these 43 patterns were mostly npcs whose adds we already spawned
+from another rung, and what they were missing was the rest of the branch -- the timer that paces
+the wave, the counter that ends it, the do-nothing that stops a later branch from firing. The
+gain is fidelity inside encounters already on the board, not new encounters.
+
+### What this unblocks and what is still missing
+
+The structural wall named in the previous commit is unchanged by this: one npc still gets one
+`ai=` binding while the tables are family-shaped, so 33 encounters still lose adds from handlers
+their bound class never reads. The merged vocabulary was step one of three. Step two (no table
+loses rows) is done and verified. **Step three -- the unified npc-keyed table, which is what
+actually removes the wall -- is still to do.**
+
+Still refused, unchanged: `control_door` (37 placements, method mapping unknown),
+`change_world_scene_status` (54, no packet in either tree), `enable_area` (31), `goto_waypoint`
+with `MOVETYPE_RUN` (35), `GAb1_PvPStatus` (6,070 placements, state mapping unknown), 6,800
+duplicate gated placements, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings,
+which need play-testing rather than more parsing.

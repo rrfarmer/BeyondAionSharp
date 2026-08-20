@@ -130,6 +130,11 @@ def guard_code(token: str) -> str:
         return f"When.{argument}Flying"
     if kind == "chance":
         return f"When.Chance({argument})"
+    if kind == "count":
+        # `increase_intvar`, which the idle parser brought when the two merged: a condition that
+        # increments as it tests.
+        slot, low, high, at_bound = argument.split(":")
+        return f"When.Counting({slot}, {low}, {high}, {'true' if at_bound == '1' else 'false'})"
     raise ValueError(f"unknown guard {token}")
 
 
@@ -171,6 +176,13 @@ def action_code(row: dict) -> str:
         return "Do.AttackMostHating()"
     if kind == "despawn_self":
         return "Do.DespawnSelf()"
+    # The three the idle vocabulary brought when the parsers merged.
+    if kind == "timer":
+        return f"Do.SetIdleTimer({row['a1']})"
+    if kind == "waypoint":
+        return f"Do.GotoWaypoint({row['a1']})"
+    if kind == "nothing":
+        return "Do.Nothing()"
     if kind == "say":
         return f"Do.Say({row['a1']}, {row['a2']})"
     if kind == "sysmsg":

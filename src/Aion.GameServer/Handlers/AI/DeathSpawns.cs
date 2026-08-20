@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// What a retail npc leaves behind when it dies: 267 patterns across 497 npcs, 1893 actions.
+/// What a retail npc leaves behind when it dies: 268 patterns across 498 npcs, 1895 actions.
 /// </summary>
 /// <remarks>
 /// The encounters no rotation table can reach. <see cref="BattleCycles"/> reads <c>on_die</c> too, but
@@ -102,6 +102,11 @@ internal static class DeathSpawns
         rungs[215486] = [  // Elim_ComadMe2
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[215790] = [  // IDTP_Fanatic_MeA_Key
+            AiPattern.Branch(5, "on_die 0", When.Always,
+                Do.SetSpawnVariable("IDCT_Boss_Spectre_noShown1", 0, 1),
+                Do.SystemMessage(1400366, 0)),
         ];
         rungs[216939] = [  // Elim_ComadMe2
             AiPattern.Branch(7, "on_die 0", When.Always,
@@ -491,14 +496,14 @@ internal static class DeathSpawns
                 Do.Say(1500214, 0),
                 Do.SetSpawnVariable("Condition_S7_D", 0, 1)),
         ];
-        rungs[217589] = [  // IDArena_S8_Named_2
-            AiPattern.Branch(7, "on_die 0", When.Always,
-                Do.SetSpawnVariable("Condition_S8", 0, 1)),
-        ];
     }
 
     private static void Rungs1(Dictionary<int, PatternBranch[]> rungs)
     {
+        rungs[217589] = [  // IDArena_S8_Named_2
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("Condition_S8", 0, 1)),
+        ];
         rungs[217592] = [  // IDArena_S8_Named_5
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S8", 0, 1)),
@@ -942,14 +947,14 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("DF3_2_Killer", -1, 0)),
         ];
-        rungs[233090] = [  // IDF5_U2_VriRP_As_party_N_65_Ae2
-            AiPattern.Branch(100, "on_die 0", When.Always,
-                Do.SetSpawnVariable("cSetPortal", 0, 1)),
-        ];
     }
 
     private static void Rungs2(Dictionary<int, PatternBranch[]> rungs)
     {
+        rungs[233090] = [  // IDF5_U2_VriRP_As_party_N_65_Ae2
+            AiPattern.Branch(100, "on_die 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 0, 1)),
+        ];
         rungs[233381] = [  // IDF5_U2_VriRP_As_party_N_65_Ae2
             AiPattern.Branch(100, "on_die 0", When.Always,
                 Do.SetSpawnVariable("cSetPortal", 0, 1)),
@@ -2223,6 +2228,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
+    }
+
+    private static void Rungs3(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277445] = [  // BGuard_Chief_Gab1_L
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -2245,10 +2254,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
-    }
-
-    private static void Rungs3(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277446] = [  // BGuard_Chief_Gab1_L
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -3078,14 +3083,14 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("IDStation_Score", 0, 1)),
         ];
-        rungs[282302] = [  // IDForest_ManduriT_Sum1
-            AiPattern.Branch(5, "on_die 0", When.Always,
-                Do.SpawnNearForTheFight(282252, 1, 1, 0f, 2)),
-        ];
     }
 
     private static void Rungs4(Dictionary<int, PatternBranch[]> rungs)
     {
+        rungs[282302] = [  // IDForest_ManduriT_Sum1
+            AiPattern.Branch(5, "on_die 0", When.Always,
+                Do.SpawnNearForTheFight(282252, 1, 1, 0f, 2)),
+        ];
         rungs[282303] = [  // IDForest_ManduriT_Sum2
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(282252, 1, 1, 0f, 2)),

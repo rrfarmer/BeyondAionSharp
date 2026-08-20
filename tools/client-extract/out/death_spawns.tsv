@@ -16,6 +16,8 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 215079	IDSlk_KK	on_die	ANY	0	7		1	var	2	0	0	Lever	0.0	0.0	0.0	0
 215485	Elim_ComadMe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
 215486	Elim_ComadMe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
+215790	IDTP_Fanatic_MeA_Key	on_die	ANY	0	5		0	var	0	1	0	IDCT_Boss_Spectre_noShown1	0.0	0.0	0.0	0
+215790	IDTP_Fanatic_MeA_Key	on_die	ANY	0	5		1	sysmsg	1400366	0	0		0.0	0.0	0.0	0
 216939	Elim_ComadMe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
 216940	Elim_ComadMe2	on_die	ANY	0	7		0	var	0	1	0	IDElim_3F_Heal_Plant_Giant	0.0	0.0	0.0	0
 216999	Cromede_Relic3_Noshow	on_die	ANY	0	7		0	var	2	0	0	Cromede_Butler	0.0	0.0	0.0	0

@@ -69,7 +69,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 from client_npc_names import npc_names  # noqa: E402
-from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
+from extract_idle_cycles import COUNTERS, slot as flag_slot, string_ids  # noqa: E402
 
 #: Retail's skill targets, and the two this port can say. `OBJI_SELF` and `OBJI_CUR_TARGET` are 88% of
 #: all uses; the rest -- the event target, the talker, a friend, the message sender -- name a creature
@@ -217,6 +217,18 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind == "increase_intvar":
+            # A condition that increments as it tests, like the flag idiom. All 1,409 uses in the dump
+            # are conditions and none is an action; see `When.Counting`.
+            indicator = re.search(r"<intvar_indicator>([^<]+)</intvar_indicator>", body)
+            low = re.search(r"<lower_bound>(-?\d+)</lower_bound>", body)
+            high = re.search(r"<upper_bound>(-?\d+)</upper_bound>", body)
+            at_bound = re.search(r"<be_true_only_when_hit_the_bound>(\w+)</", body)
+            if not (indicator and low and high) or indicator.group(1).strip() not in COUNTERS:
+                raise Unsayable("increase_intvar on a counter this port does not number")
+            out.append("count:%d:%s:%s:%s" % (
+                COUNTERS.index(indicator.group(1).strip()), low.group(1), high.group(1),
+                "1" if at_bound and at_bound.group(1).upper() == "TRUE" else "0"))
         else:
             raise Unsayable(f"condition {kind}")
     return out
@@ -343,7 +355,26 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                         int(group.group(1)) if group else 0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
-        elif kind in ("say_to_all", "display_system_message"):
+        elif kind == "set_idle_timer":
+            delay = re.search(r"<delay>(\d+)</delay>", body)
+            out.append(("timer", int(delay.group(1)) if delay else 0, 0, 0, "",
+                        0.0, 0.0, 0.0, 0))
+        elif kind == "do_nothing":
+            # Carried rather than skipped: branch lists are first-match-wins, so a matching do-nothing
+            # branch is retail saying "this case, and none of the ones below".
+            out.append(("nothing", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "goto_waypoint":
+            # Retail's waypoint is an index into the npc's own route, not a named path. `move_type`
+            # says walk or run and this port's route walking has one speed, so a rung asking for a run
+            # is refused rather than quietly walked.
+            step = re.search(r"<waypoint>(\d+)</waypoint>", body)
+            how = re.search(r"<move_type>(\w+)</move_type>", body)
+            if not step:
+                raise Unsayable("goto_waypoint with no waypoint")
+            if how and how.group(1) == "MOVETYPE_RUN":
+                raise Unsayable("goto_waypoint asking for a run")
+            out.append(("waypoint", int(step.group(1)), 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind in ("say_to_all", "display_system_message", "send_system_msg"):
             named = re.search(r"<string_id>([^<]+)</string_id>", body)
             message = strings.get(named.group(1).strip()) if named else None
             if message is None:
