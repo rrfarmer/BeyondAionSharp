@@ -32350,3 +32350,81 @@ places: the class, the spawn data, and retail's own placement.
   means *binding is not enough*, and nothing says so where it would be read.
 - **The remaining reverse-audit rows below three siblings.** `--min-majority` is still 3; lowering it
   will surface pairs, at the cost of noise that has not been characterised.
+
+## Kaldor's balaur village chiefs, and the audit pointing at the wrong class
+
+`base_protector` was the largest untouched family in the reverse audit — 23 rows. Reading it the way
+the naga medics were read turned up a clean systematic omission and, more usefully, **a case where the
+audit named the right npcs and the wrong fix.**
+
+### What the audit said, and why following it would have been wrong
+
+Retail names Kaldor's village chiefs `LDF5_Village_chiefNN_L`, `_D` and `_DR` — the Elyos-held,
+Asmodian-held and balaur-held version of one village's chief. **All nineteen balaur variants ran plain
+`aggressive`** while their two race-siblings ran something else: a village whose chief behaves
+differently depending on who holds it.
+
+The audit reported them against `base_protector`, and that is genuinely what six of their nine pattern
+siblings use — because the retail pattern `LDF5_Village_chief01` also carries two *other* trios,
+`LDF5_chief_vNN_*` and `LDF5_Fortress_Chief_VNN_*`, which do run `base_protector`:
+
+```
+231630  base_protector      LDF5_chief_v01_L_61_An
+231631  base_protector      LDF5_chief_v01_D_61_An
+231632  base_protector      LDF5_chief_v01_DR_61_An
+234032  base_protector      LDF5_Fortress_Chief_V01_DR_65_An
+234033  base_protector      LDF5_Fortress_Chief_V01_Li_65_An
+234034  base_protector      LDF5_Fortress_Chief_V01_Da_65_An
+277069  simple_abyssguard   LDF5_Village_chief01_L
+277070  simple_abyssguard   LDF5_Village_chief01_D
+277071  aggressive          LDF5_Village_chief01_DR   <-- the audit's row
+```
+
+**The majority answer was `base_protector`; the right answer is `simple_abyssguard`.** The unbound npc's
+own two race-variants are the evidence, and they are drowned out by two unrelated trios that happen to
+share a pattern.
+
+> A retail pattern is not always one npc's behaviour. Where it binds several *named groups*, the
+> majority across the pattern is the wrong denominator and the naming trio is the right one. The audit
+> reports the split and the judgement stays with the reader — which is what its own docstring says, and
+> this is the first time that mattered.
+
+Checked across all nineteen villages before acting: the combination is `('simple_abyssguard',
+'simple_abyssguard', 'aggressive')` **nineteen times out of nineteen**, with no exceptions. Now bound.
+
+### `234162` deliberately left alone
+
+`LDF4_Advance_Vri_Strong_Named_Fi_65_Ae` shares `LDF4_Advance_village_19` with three village chiefs and
+was the twentieth row. It is a Vritra named *attacker*, not a chief — a different role that happens to
+share a pattern — so it keeps `aggressive`. Same shape as the scene-05/12 PCGuards left alone much
+earlier in this work: a judgement, not a translation.
+
+### And a caution the same reading produced
+
+**Twelve of the fifty-six patterns in these two families do not carry the 30001 rung at all**, yet have
+`base_protector` npcs bound to them — `LDF4_Advance_village_01` through `_10`, mostly. That is not
+evidence of a defect: `base_protector` is a base-defence class that does more than answer the fortress
+killer, and the 30001 answer was a retail-sourced addition to it. It is recorded here so that a future
+session does not read "no 30001 rung" as "wrong class" — the inference only runs the other way.
+
+### Pins
+
+Two, and they are stated as **rules rather than as nineteen ids**, so a twentieth village or a fourth
+race variant is covered the day it appears: every chief agrees with its own race-variants, and the
+balaur one resolves to `AbyssGuardSimpleAI`. Both mutations caught, including the one that applies the
+audit's majority answer.
+
+The pins place the chiefs through the harness rather than reading the template loader, because the
+`GoldenDataManager` fixture registers a stub `DataManager` with no npc templates in it — worth knowing
+before writing another data-binding pin.
+
+### Still missing
+
+- **The fifty-seven chiefs have no spawn point**, in Kaldor or anywhere else. They are part of the 289
+  that map owes in the world-spawn sweep. The binding is right and no player will meet one until those
+  spawns land.
+- **`conquest_offering_aggressive` (16 rows)** is now the largest untouched reverse-audit family.
+- **The reverse audit should compare within naming groups, not only within patterns.** This entry is
+  the argument for it: the correct denominator here was the `_L`/`_D`/`_DR` trio, and the tool cannot
+  see trios. A `--by-suffix` mode that groups an npc's siblings by shared dev-name stem would have given
+  the right answer directly instead of a majority that had to be overruled by hand.
