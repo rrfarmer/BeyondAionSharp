@@ -78,6 +78,42 @@ public sealed class SpawnVariablesTests
 		Assert.Equal(new[] { "v" }, heard);
 	}
 
+	/// <summary>
+	/// <b>A gate can read a variable no pattern ever writes.</b> 738 of the 2,272 do — 39% of all gate
+	/// uses — and they are server state: PvP status, siege conditions, portal wiring.
+	/// </summary>
+	[Fact]
+	public void ServerFlagsAreReadableAndNotWritable()
+	{
+		var flags = new Dictionary<string, int> { ["GAb1_PvPStatus"] = 2 };
+		var store = new SpawnVariables(flags);
+
+		Assert.Equal(2, store["GAb1_PvPStatus"]);
+		Assert.True(SpawnCondition.Parse("GAb1_PvPStatus == 2").Holds(store.Snapshot()));
+
+		// A map's own write shadows the flag for that map, and does not reach back into the server's.
+		store.Write("GAb1_PvPStatus", 5, 0);
+		Assert.Equal(5, store["GAb1_PvPStatus"]);
+		Assert.Equal(2, flags["GAb1_PvPStatus"]);
+	}
+
+	/// <summary>
+	/// <b>Two maps do not share a name.</b> <c>v01</c> is written by patterns in nine unrelated maps,
+	/// so one store for the server would have an instance and an abyss map overwriting each other.
+	/// </summary>
+	[Fact]
+	public void TwoMapsDoNotShareAName()
+	{
+		var flags = new Dictionary<string, int>();
+		var one = new SpawnVariables(flags);
+		var other = new SpawnVariables(flags);
+
+		one.Write("v01", 3, 0);
+
+		Assert.Equal(3, one["v01"]);
+		Assert.Equal(0, other["v01"]);
+	}
+
 	/// <summary><b>And the two halves meet</b>: a written variable satisfies the gate that reads it.</summary>
 	[Fact]
 	public void TheWriterFeedsTheGate()

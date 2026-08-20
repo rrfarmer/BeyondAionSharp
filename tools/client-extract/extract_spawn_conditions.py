@@ -41,6 +41,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("worlds_dir", type=pathlib.Path)
     ap.add_argument("out", type=pathlib.Path)
+    ap.add_argument("--patterns", type=pathlib.Path,
+                    help="pattern dump; with it, --inputs can say which variables no pattern writes")
+    ap.add_argument("--inputs", type=pathlib.Path,
+                    help="write the server-supplied variables here")
     args = ap.parse_args()
 
     uses: collections.Counter = collections.Counter()
@@ -65,7 +69,46 @@ def main() -> int:
             out.write(f"{count}\t{worlds[expression]}\t{expression}\n")
 
     print(f"{sum(uses.values())} gates, {len(uses)} distinct expressions -> {args.out}")
+
+    if args.inputs and args.patterns:
+        report_inputs(args.patterns, args.inputs, uses)
     return 0
+
+
+def report_inputs(patterns: pathlib.Path, out: pathlib.Path, uses) -> None:
+    """The gate variables no AI pattern ever writes -- the engine has to supply those.
+
+    **39% of all gates depend on them.** `GAb1_PvPStatus`, `SpecialServer_Cond`, `InterServer_Cond`,
+    the `DirectPortalDest_*` family and the transform rewards are read by the world files and written by
+    nothing in the AI dump, so they are server state rather than npc state: siege and PvP status, portal
+    wiring, event rewards. A store that only carried what patterns write would leave every one of those
+    gates reading zero.
+    """
+    written: set[str] = set()
+    for path in sorted(patterns.rglob("NpcAIPatterns*.xml")):
+        text = S.read_text(path)
+        for match in re.finditer(
+                r"<set_condition_spawn_variable>.*?<string>([^<]*)</string>", text, re.S):
+            written.add(match.group(1))
+
+    read: collections.Counter = collections.Counter()
+    for expression, count in uses.items():
+        for match in re.finditer(r"(\[SAVE\])?([A-Za-z_][A-Za-z_0-9]*)\s*(?:==|!=|>=|<=|>|<)",
+                                 expression):
+            read[(match.group(1) or "") + match.group(2)] += count
+        bare = re.fullmatch(r"\s*([A-Za-z_][A-Za-z_0-9]*)\s*", expression)
+        if bare:
+            read[bare.group(1)] += count
+
+    supplied = {name: count for name, count in read.items()
+                if name.replace("[SAVE]", "") not in written}
+    with out.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write("uses\tvariable\n")
+        for name, count in sorted(supplied.items(), key=lambda kv: (-kv[1], kv[0])):
+            handle.write(f"{count}\t{name}\n")
+
+    print(f"    {len(supplied)} of {len(read)} gate variables are never written by a pattern "
+          f"({sum(supplied.values())} gate uses) -> {out}")
 
 
 if __name__ == "__main__":

@@ -34559,3 +34559,50 @@ of it. Guessing would bake an assumption into every caller; the class asserts no
 - **The pattern action**: `Do.SetSpawnVariable` cannot exist until a `PatternAi` can reach a store,
   which is the scope question again.
 - The 113 remaining idle-spawn patterns, where 105 of these writers live.
+
+## Scope, settled by measurement: one store per map, reading through to the server
+
+The previous entry built both halves of the conditional spawn engine and refused to guess at scope.
+Measured now, and it is not one thing — it is two, and missing either breaks the other.
+
+### 39% of gates read state no NPC ever writes
+
+Of the **2,272 variables gates read**, **738 are never written by any pattern in the dump** — and they
+account for **21,286 gate uses, 39% of the total**:
+
+| variable | gate uses |
+|---|---|
+| `GAb1_PvPStatus` | 6,006 |
+| `SpecialServer_Cond` | 3,707 |
+| `InterServer_Cond` | 749 |
+| `DirectPortalDest_41`, `_42`, … | 329, 308, … |
+| `IDTransform_*_Reward` | 246 each |
+
+These are **server state** — PvP and siege status, portal wiring, event rewards — supplied by the
+engine, not by the AI. A store carrying only what patterns write would leave every one of those gates
+reading zero, which is a different fortress.
+
+### The rest belong to a map, and a global store would corrupt them
+
+Of the 2,122 names patterns *do* write, cross-referencing each writer's npc to the maps our spawn data
+places it in: **345 have writers in exactly one map, 88 in more than one.** The multi-map ones are all
+generic — `v01` through `v09` — spanning unrelated encounters, an instance and an abyss map among them.
+That is **the same name reused, not shared state.** One store for the server would have Panesterra's
+`v01` and an instance's `v01` overwriting each other.
+
+So: **one store per map, reading through to the server's flags.** A map's write shadows a flag locally
+and never reaches back into it, and two maps never see each other's names. Both have pins, and the
+mutations that break either die.
+
+`extract_spawn_conditions.py --inputs` emits the 738 as their own table, because the engine has to
+supply them from somewhere and the list is the specification for what.
+
+### Still missing
+
+- **What `[SAVE]` persistence attaches to** — the account, the character, the world, the server. 175
+  expressions and 2,600 gate uses depend on it, and nothing measured here distinguishes the options.
+- **1,689 written names whose writers this port cannot place on a map**, because the npc has no spawn
+  in our data. They are not evidence against per-map scope, but they are not evidence for it either.
+- **Group activation** — applying a gate at spawn time, re-checking on `Changed`, honouring
+  `despawnAtOther` — and the `Do.SetSpawnVariable` action, which can now be written because a
+  `PatternAi` knows its map.
