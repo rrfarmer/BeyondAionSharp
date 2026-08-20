@@ -51,8 +51,16 @@ GENERIC = {"aggressive", "general", "onedmg_aggressive", "aggressive_noloot", "d
 #: `set_flag_var` is retail's test-and-set and `unset_flag_var` its test-and-unset -- the alternating
 #: idiom this project has ported by hand many times. `test_probability` is a roll. Everything on the
 #: action side has a `Do.` helper, `set_condition_spawn_variable` included since the conditional spawn
-#: engine was built.
-SPEAKABLE_CONDITIONS = {"set_flag_var", "unset_flag_var", "is_flag_var", "test_probability"}
+#: engine was built. The world-flag forms are here too: `When.WorldFirstTime` and its neighbours exist,
+#: scoped to the instance, and leaving them out understated the reach by two patterns.
+#:
+#: **The flag numbering the generator will need**: retail names flags `FLAGVARI_<FAMILY>_<n>` and gives
+#: every npc 32 slots. The dump uses six families -- ALPHA, BETA, DELTA, EPSILON, GAMMA, ZETA -- with
+#: n from 1 to 5, so thirty in all. Sorted family index times five, plus n-1, numbers them 0..29 and
+#: fits. Any injective mapping would do, because flags are per npc and never compared across patterns,
+#: but a stable one keeps generated output diffable.
+SPEAKABLE_CONDITIONS = {"set_flag_var", "unset_flag_var", "is_flag_var", "test_probability",
+                        "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var"}
 SPEAKABLE_ACTIONS = {"spawn", "set_idle_timer", "set_condition_spawn_variable", "despawn_self",
                      "broadcast_message"}
 

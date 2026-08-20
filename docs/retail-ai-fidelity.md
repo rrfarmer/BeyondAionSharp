@@ -34952,3 +34952,31 @@ appears in; the dump carries some patterns twice. 65 is distinct names.
 - **The 6,800 duplicate placements**, filtered so nothing doubles, leaving those npcs permanently
   present where retail would remove them.
 - **`[SAVE]` persistence**, still with no evidence either way.
+
+## Groundwork for the multi-branch generator, and a correction that changed nothing
+
+The 65 expressible patterns need a generator that can emit a guarded multi-branch rung. Two pieces of
+groundwork, both measured:
+
+**The flag numbering.** Retail names flags `FLAGVARI_<FAMILY>_<n>` and gives every npc **32 slots**.
+The dump uses six families — ALPHA, BETA, DELTA, EPSILON, GAMMA, ZETA — with `n` from 1 to 5, so
+**thirty in all**, which is presumably why the slot count is what it is. Sorted family index × 5, plus
+n−1, numbers them 0..29 and fits. Any injective mapping would do, since flags are per npc and never
+compared across patterns, but a stable one keeps generated output diffable.
+
+**World flags were wrongly excluded** from the speakable set. `When.WorldFirstTime` and its neighbours
+exist, scoped to the instance. **Adding them changed the reachable count not at all** — the two patterns
+they blocked simply moved to their next missing piece, `increase_intvar` and `say_to_all`. A vocabulary
+gap is only worth closing if it is the *last* one for something.
+
+The blocked list is now: 16 with no wake delay this port can find, 12 on `increase_intvar`, 10 on
+`display_system_message`, and 2 each on `use_skill`, `say_to_all` and `despawn`.
+
+### Still missing
+
+- **The generator for the 65.** Everything it needs now exists: the conditions (`FirstTime`,
+  `Consuming`, `Chance`, and the world-flag forms), the actions (spawn in three location kinds, timer,
+  spawn variable, `despawn_self`, broadcast), and the flag numbering above.
+- **`increase_intvar`**, 12 patterns: a per-npc counter with a bounds test, which this port has no
+  equivalent of. It is the largest single vocabulary gap left in this family.
+- **`GAb1_PvPStatus`**, the 6,800 duplicate placements, and **`[SAVE]` persistence**, all unchanged.
