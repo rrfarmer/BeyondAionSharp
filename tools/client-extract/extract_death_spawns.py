@@ -54,10 +54,27 @@ from client_npc_names import npc_names  # noqa: E402
 from extract_idle_cycles import string_ids  # noqa: E402
 from extract_battle_cycles import Unsayable, read_handler  # noqa: E402
 
-#: Only `aggressive`, plus the class this table feeds. `DeathSpawnAI` extends `AggressiveNpcAI`, so
-#: rebinding an aggressive npc adds a death spawn and changes nothing else; rebinding a `general` npc
-#: would make it attack players. Same rule, same reason, as the rotation table.
-GENERIC = {"aggressive", "death_spawn"}
+#: Every class an npc may already be on and still acquire generated pattern rows.
+#:
+#: **This used to be per table, and that is what made the tables mutually exclusive.** Nothing here
+#: excluded another table's npcs on purpose; the sets simply disagreed, and binding order did the rest
+#: -- once the battle table moved an npc from `aggressive` to `battle_cycle`, no other extractor could
+#: see it any more. The measured cost was 533 npcs holding a retail rotation their owning table could
+#: not read, among much else.
+#:
+#: The set is now the same everywhere, so a pattern's handlers are read by every table that can read
+#: them, and `GeneratedPattern` composes what each npc ends up with. The class an npc is bound to still
+#: decides only one thing -- whether it fights -- which is why the generated class names are listed
+#: here too: rebinding must be idempotent, or a second run would drop everything the first run took.
+#:
+#: `wake_variable` and `wake_variable_aggressive` are **deliberately absent**, and it cost 143 npcs
+#: with real death rungs. Those two classes descend from `GeneralNpcAI` and `AggressiveNpcAI`, not
+#: from `PatternAi`, so they have no slots to compose into -- an npc bound there would carry rows that
+#: never run, which is the exact failure mode this whole change exists to remove. Folding them in means
+#: making `extract_wake_variables` give those npcs up under its own richer-wins rule and rebinding
+#: them, which is a separate change with its own thing to verify.
+GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
+           "idle_cycle_passive", "aggressive_pattern", "passive_pattern"}
 
 #: Retail's three death handlers, and the guard each one becomes here. `on_die` fires however the npc
 #: died; the other two ask who did it. Carrying the guard by name rather than as a flag is what let the

@@ -44,18 +44,6 @@ public class BattleCycleAI : PatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
-		new AiPattern
-		{
-			OnEnterAttack = AiPattern.Of(BattleCycles.ArmingRungsFor(id)),
-			OnMessage = AiPattern.Of(BattleCycles.MessageRungsFor(id)),
-			OnAttacked = AiPattern.Of(BattleCycles.AttackedRungsFor(id)),
-			OnSpelled = AiPattern.Of(BattleCycles.SpelledRungsFor(id)),
-			OnWakeUp = AiPattern.Of(BattleCycles.WakeRungsFor(id)),
-			OnSeeNpc = AiPattern.Of(BattleCycles.SeeNpcRungsFor(id)),
-			OnSeeUser = AiPattern.Of(BattleCycles.SeeUserRungsFor(id)),
-			OnDie = AiPattern.Of(BattleCycles.DeathRungsFor(id)),
-			OnLeaveAttack = AiPattern.Of(BattleCycles.LeaveFightRungsFor(id)),
-			OnBattleTimer = AiPattern.Of(BattleCycles.CycleRungsFor(id)),
-		});
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 }

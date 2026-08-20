@@ -30,12 +30,8 @@ public class PassivePatternAI : PassivePatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
-		new AiPattern
-		{
-			OnWakeUp = AiPattern.Of(WakeIdlePatterns.OnWakeUpFor(id)),
-			OnIdleTimer = AiPattern.Of(WakeIdlePatterns.OnIdleTimerFor(id)),
-		});
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 }
 
 /// <summary>
@@ -63,11 +59,7 @@ public class AggressivePatternAI : PatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
-		new AiPattern
-		{
-			OnWakeUp = AiPattern.Of(WakeIdlePatterns.OnWakeUpFor(id)),
-			OnIdleTimer = AiPattern.Of(WakeIdlePatterns.OnIdleTimerFor(id)),
-		});
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 
 }

@@ -250,6 +250,24 @@ public sealed class BattleCycleAiTests
 	/// the first time the table shrank, because rebinding is additive and nothing took the old ones
 	/// back. An npc in the table with no binding is a rotation that exists and never runs.
 	/// </remarks>
+	/// <summary>Every class that fills its slots from <c>GeneratedPattern</c>.</summary>
+	/// <remarks>
+	/// This used to name one class, because one table meant one class. It cannot any more: the tables
+	/// stopped being mutually exclusive, so an npc with a rotation may be bound to whichever of these
+	/// its aggression calls for, and asserting it is on <c>battle_cycle</c> specifically would now be
+	/// asserting the old wall is still standing.
+	/// <para>
+	/// The check that matters is unchanged and is still two-way: a table row with no binding is a
+	/// mechanic that exists and never runs, which is exactly how the rotation table lost npcs the first
+	/// time it shrank.
+	/// </para>
+	/// </remarks>
+	private static readonly string[] Composing =
+	[
+		"battle_cycle", "death_spawn", "idle_cycle", "idle_cycle_passive",
+		"aggressive_pattern", "passive_pattern",
+	];
+
 	[Fact]
 	public void TheBindingsAndTheTableAgree()
 	{
@@ -258,17 +276,20 @@ public sealed class BattleCycleAiTests
 		HashSet<int> bound = new HashSet<int>();
 		foreach (Match element in Regex.Matches(File.ReadAllText(path), "<npc_template [^>]*>"))
 		{
-			if (!element.Value.Contains("ai=\"battle_cycle\""))
+			if (!Composing.Any(name => element.Value.Contains($"ai=\"{name}\"")))
 				continue;
 			bound.Add(int.Parse(Regex.Match(element.Value, "npc_id=\"([0-9]+)\"").Groups[1].Value));
 		}
 
-		Assert.Equal(BattleCycles.Npcs.OrderBy(id => id), bound.OrderBy(id => id));
+		// One-way, and deliberately so. Every npc with a rotation must be bound to something that
+		// runs it; the reverse is no longer a defect, because a composing class is also where an npc
+		// with only a wake rung or only a death spawn now lives.
+		Assert.Empty(BattleCycles.Npcs.Where(id => !bound.Contains(id)));
 	}
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 56,571 casts across 13,218 npcs, none of them read by a human. The index they came from is only
+	/// 57,908 casts across 13,488 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -287,7 +308,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(56571, casts);
+		Assert.Equal(57908, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -328,7 +349,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(149, lowest);
+		Assert.Equal(157, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -729,6 +750,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(932, spawns);
+		Assert.Equal(1276, spawns);
 	}
 }

@@ -37169,3 +37169,82 @@ set, the aggressive/passive split taken from the npc's pre-existing `ai=`, and t
 precedence that stops two tables both filling `on_wake_up` -- is still to do. The other three
 tables (4,646 / 1,895 / 1,607 rows) are small enough that deduplicating them buys nothing today,
 and they are deliberately left alone.
+
+## Step three: the tables stop being mutually exclusive
+
+`Retail-AI-Pattern: one npc now reads every generated table that can speak for it`
+
+The wall, restated from its measurement two commits ago: an npc gets one `ai=` binding and therefore
+one class, each class filled only its own table's slots, and the tables were mutually exclusive --
+so a pattern's handlers were read by whichever table won the npc and nothing else.
+
+**The exclusivity was never deliberate.** No extractor excluded another's npcs on purpose. Their
+accepted-`ai=` sets simply disagreed, and binding order did the rest: once the battle table moved an
+npc from `aggressive` to `battle_cycle`, no other extractor could see it as generic any more. That
+accident cost 533 npcs a retail rotation, among much else.
+
+Two things change:
+
+1. The accepted set is now **the same in every extractor**, and includes the generated class names so
+   that rebinding is idempotent -- without that, a second run drops everything the first run took.
+2. A new `GeneratedPattern.For(npcId)` composes every table that has rows for an npc, and all five
+   generated-table classes now fill their slots from it.
+
+**This is composition, not rebinding, and that distinction was the whole design question.** The
+tempting fix -- widen the battle table's accepted classes so it takes the npcs the wake table holds --
+was rejected in the previous commit for a reason worth repeating: `BattleCycleAI` descends from
+`AggressiveNpcAI`, so it hands an aggro radius to passive npcs, and it drops their wake rungs in
+exchange for their rotation. Here every npc keeps the class it had, which already encodes whether
+retail lets it fight, and the class reads more.
+
+### The two slots that can be claimed twice
+
+The battle and death tables both read `on_die`; the battle, wake and idle tables all read
+`on_wake_up`. First-non-empty is only safe if the tables agree, so that was **measured before the
+composer was written**, by running all three extractors widened over the whole dump into scratch
+output:
+
+- `on_die` present in both tables for **290 npcs, rungs identical for all 290**.
+- `on_wake_up` never produced by two tables for the same npc -- **0 collisions**.
+
+So no reading of a handler can be silently lost to a worse one. The death table is preferred for
+`on_die` anyway, since it also carries `on_killed_by_npc` and `on_killed_by_user` with their killer
+guard and is a superset wherever it has rows at all.
+
+Slots are never concatenated. Retail branch lists are first-match-wins, so appending one table's
+reading of a handler to another's would let a branch fire *after* one retail says ends the evaluation.
+
+### What it bought
+
+| table | npcs before | npcs after |
+|---|---|---|
+| battle | 13,218 | **13,488** |
+| wake/idle | 1,653 | **3,737** |
+| death | 498 | **1,477** |
+
+**2,441 npcs are now fed by more than one table** -- 1,869 by battle and wake together, 322 by battle
+and death, 74 by all three. Every one of those combinations was unreachable before. 810 npcs on plain
+`general` were bound to `passive_pattern`; no npc changed aggression, because the binding rule maps
+base to base.
+
+Fightable retail adds our server never spawns: 225 -> **216**, across 165 -> **157** encounters.
+
+Two binding tests had to change, and they are the interesting casualties: both asserted that every
+npc in a table is bound to *that table's* class. That assertion was the wall written down as a test,
+so it now checks that every npc with rows is bound to something that runs them -- one-way, since a
+composing class is also where an npc with only a wake rung now lives.
+
+### What is still missing
+
+**143 npcs with real death rungs were given up to keep this honest.** `wake_variable` and
+`wake_variable_aggressive` are absent from the accepted set because those two classes descend from
+`GeneralNpcAI` and `AggressiveNpcAI`, not `PatternAi` -- they have no slots to compose into, so an npc
+bound there would carry rows that never run, which is the exact failure this change exists to remove.
+Folding them in means making `extract_wake_variables` give those npcs up under its own richer-wins
+rule and rebinding them; that is a separate change with its own subsumption claim to verify, and
+asserting it here without checking would have been the shortcut.
+
+Unchanged refusals: `control_door` (38 patterns), `enable_area` (32), `change_world_scene_status`,
+`goto_waypoint` with `MOVETYPE_RUN`, `play_cutscene_by_user_indicator` (5), the `is_user` / `is_npc`
+conditions in the death family (22), `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and
+retail cast timings, which need play-testing rather than more parsing.

@@ -128,6 +128,24 @@ public sealed class DeathSpawnTableTests
 	/// death spawn that exists and never runs. <see cref="DeathSpawnAI"/>'s nine hand-read npcs are
 	/// bound as well but are not in this table, so this checks one direction on them.
 	/// </remarks>
+	/// <summary>Every class that fills its slots from <c>GeneratedPattern</c>.</summary>
+	/// <remarks>
+	/// This used to name one class, because one table meant one class. It cannot any more: the tables
+	/// stopped being mutually exclusive, so an npc with a rotation may be bound to whichever of these
+	/// its aggression calls for, and asserting it is on <c>battle_cycle</c> specifically would now be
+	/// asserting the old wall is still standing.
+	/// <para>
+	/// The check that matters is unchanged and is still two-way: a table row with no binding is a
+	/// mechanic that exists and never runs, which is exactly how the rotation table lost npcs the first
+	/// time it shrank.
+	/// </para>
+	/// </remarks>
+	private static readonly string[] Composing =
+	[
+		"battle_cycle", "death_spawn", "idle_cycle", "idle_cycle_passive",
+		"aggressive_pattern", "passive_pattern",
+	];
+
 	[Fact]
 	public void EveryNpcInTheTableIsBound()
 	{
@@ -140,7 +158,11 @@ public sealed class DeathSpawnTableTests
 			Assert.Contains($"npc_id=\"{npc}\"", templates);
 			int at = templates.IndexOf($"npc_id=\"{npc}\"", StringComparison.Ordinal);
 			int end = templates.IndexOf('>', at);
-			Assert.Contains("ai=\"death_spawn\"", templates[at..end]);
+			string element = templates[at..end];
+			// Any class that composes GeneratedPattern runs these rungs now, not death_spawn alone.
+			Assert.True(
+				Composing.Any(name => element.Contains($"ai=\"{name}\"")),
+				$"npc {npc} has death rungs but is not bound to a class that runs them: {element}");
 		}
 	}
 	/// <summary><b>Tiamat's death opens the gate that brings Kahrun in.</b></summary>
@@ -223,7 +245,7 @@ public sealed class DeathSpawnTableTests
 
 		int npcKills = lines.Skip(1).Count(line => line.Split('	')[killerAt] == "KilledByNpc");
 
-		Assert.Equal(615, npcKills);
+		Assert.Equal(1344, npcKills);
 	}
 
 	/// <summary><b>And it does not fire when nothing killed it at all.</b></summary>

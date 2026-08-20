@@ -82,10 +82,10 @@ public class DeathSpawnAI : PatternAi
 	{
 		if (!Bequests.TryGetValue(npcId, out Bequest left))
 		{
-			// Everything not hand-read comes from the generated table: 109 retail death patterns
-			// across 265 npcs that no rotation table could reach, because they have no rotation.
-			PatternBranch[] generated = DeathSpawns.RungsFor(npcId);
-			return generated.Length == 0 ? Nothing : new AiPattern { OnDie = Of(generated) };
+			// Everything not hand-read comes from the generated tables, composed: this npc may also
+			// have a rotation, a wake rung or an idle cycle, and before GeneratedPattern existed
+			// being bound here meant none of those were ever read.
+			return GeneratedPattern.For(npcId);
 		}
 
 		PatternCondition[] guards = left.PlayerKillOnly ? [When.KilledByPlayer] : [];

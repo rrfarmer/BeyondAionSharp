@@ -42,12 +42,8 @@ public class IdleCycleAI : PatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
-		new AiPattern
-		{
-			OnWakeUp = AiPattern.Of(IdleCycles.WakeRungFor(id)),
-			OnIdleTimer = AiPattern.Of(IdleCycles.CycleRungsFor(id)),
-		});
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 }
 
 /// <summary>
@@ -71,11 +67,7 @@ public class IdleCyclePassiveAI : PassivePatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
-		new AiPattern
-		{
-			OnWakeUp = AiPattern.Of(IdleCycles.WakeRungFor(id)),
-			OnIdleTimer = AiPattern.Of(IdleCycles.CycleRungsFor(id)),
-		});
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 
 }

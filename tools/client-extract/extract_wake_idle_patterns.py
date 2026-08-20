@@ -61,19 +61,27 @@ SKILL_TARGETS = dict(TARGETS) | {name: "@" + role for name, role in ROLES.items(
 
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
-#: Every class whose npcs this table can take. It drives **two** AI classes, not one:
-#: `PassivePatternAI` for the npcs retail keeps on `general`, and `AggressivePatternAI` for the ones it
-#: keeps on `aggressive`. The table itself is pattern data and says nothing about fighting; the binder
-#: picks the class from what the npc already was, so nothing gains or loses aggression by acquiring a
-#: pattern. That is the same split the wake tables use and for the same reason.
+#: Every class an npc may already be on and still acquire generated pattern rows.
 #:
-#: The wake table took the simple cases first, and **93 npcs on it were running a partial pattern**:
-#: their spawn-variable writes without the timer, message or despawn standing beside them. This table
-#: is authoritative wherever it can say more, and `extract_wake_variables` gives those patterns up.
-#: `wake_variable_aggressive` is deliberately absent -- those npcs fight, and there is no aggressive
-#: pattern class for them yet.
-GENERIC = {"general", "passive_pattern", "wake_variable",
-           "aggressive", "aggressive_pattern", "wake_variable_aggressive"}
+#: **This used to be per table, and that is what made the tables mutually exclusive.** Nothing here
+#: excluded another table's npcs on purpose; the sets simply disagreed, and binding order did the rest
+#: -- once the battle table moved an npc from `aggressive` to `battle_cycle`, no other extractor could
+#: see it any more. The measured cost was 533 npcs holding a retail rotation their owning table could
+#: not read, among much else.
+#:
+#: The set is now the same everywhere, so a pattern's handlers are read by every table that can read
+#: them, and `GeneratedPattern` composes what each npc ends up with. The class an npc is bound to still
+#: decides only one thing -- whether it fights -- which is why the generated class names are listed
+#: here too: rebinding must be idempotent, or a second run would drop everything the first run took.
+#:
+#: `wake_variable` and `wake_variable_aggressive` are **deliberately absent**, and it cost 143 npcs
+#: with real death rungs. Those two classes descend from `GeneralNpcAI` and `AggressiveNpcAI`, not
+#: from `PatternAi`, so they have no slots to compose into -- an npc bound there would carry rows that
+#: never run, which is the exact failure mode this whole change exists to remove. Folding them in means
+#: making `extract_wake_variables` give those npcs up under its own richer-wins rule and rebinding
+#: them, which is a separate change with its own thing to verify.
+GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
+           "idle_cycle_passive", "aggressive_pattern", "passive_pattern"}
 
 HANDLERS = ["on_wake_up", "on_idle_timer"]
 
