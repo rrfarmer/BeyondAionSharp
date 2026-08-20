@@ -795,6 +795,39 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             .For(GetOwner().GetWorldId(), GetOwner().GetInstanceId())
             .Write(name, set, modify);
 
+    /// <summary>
+    /// <c>increase_intvar</c> — bumps one of retail's four counters and asks where it landed.
+    /// </summary>
+    /// <remarks>
+    /// A condition with a side effect, like <c>set_flag_var</c>: evaluating it <b>increments</b>. Branch
+    /// lists are first-match-wins, so only the rungs actually reached bump their counter, which is what
+    /// lets retail write a sequence as consecutive ranges — <c>0..1</c>, then <c>1..2</c>, then
+    /// <c>2..3</c> — each rung firing on a successive pass.
+    /// <para>
+    /// <b>The bound flag is read as retail names it and that reading is inference.</b>
+    /// <c>be_true_only_when_hit_the_bound</c> is TRUE in 1,145 of the 1,409 uses in the dump, and is
+    /// taken to mean "true only on the pass that reaches <paramref name="upper"/>" rather than "true
+    /// while inside the range". The consecutive-range idiom above only works under that reading — with
+    /// the other one, a rung guarded <c>0..3</c> would fire three times running. Nothing in the dump
+    /// states it outright, so it is written down here rather than left implicit.
+    /// </para>
+    /// </remarks>
+    public bool IncreaseIntVar(int slot, int lower, int upper, bool onlyAtBound)
+    {
+        lock (gate)
+        {
+            int now = ++counters[slot];
+            return onlyAtBound ? now == upper : now >= lower && now <= upper;
+        }
+    }
+
+    /// <summary>Reads a counter without bumping it. For tests and diagnostics only.</summary>
+    public int IntVar(int slot)
+    {
+        lock (gate)
+            return counters[slot];
+    }
+
     // ---- the idle timer ----------------------------------------------------------------------
 
     /// <summary>

@@ -266,6 +266,14 @@ public static class When
     public static PatternCondition Chance(int percent) => ai => ai.RollPercent(percent);
 
     /// <summary>
+    /// <c>increase_intvar</c> — bumps one of retail's four counters and asks where it landed. Evaluating
+    /// this <b>increments</b>; see <see cref="PatternAi.IncreaseIntVar"/> for what the bound flag means
+    /// and why that reading is written down.
+    /// </summary>
+    public static PatternCondition Counting(int slot, int lower, int upper, bool onlyAtBound = true)
+        => ai => ai.IncreaseIntVar(slot, lower, upper, onlyAtBound);
+
+    /// <summary>
     /// <c>set_intvar_if_less_than</c>: passes when counter <paramref name="counter"/> is below
     /// <paramref name="comparand"/>, and on passing sets it to <paramref name="setTo"/>.
     /// </summary>
@@ -684,7 +692,14 @@ public static class Do
     public static PatternAction DespawnKind(int npcId, float radius, int maxCount)
         => ai => ai.DespawnKind(npcId, radius, maxCount);
 
-    /// <summary><c>increase_intvar</c> — one on the counter, held inside the bounds.</summary>
+    /// <summary>One on the counter, held inside the bounds.</summary>
+    /// <remarks>
+    /// <b>This is not where retail puts <c>increase_intvar</c>.</b> All 1,409 uses in the dump are
+    /// <em>conditions</em> — the element increments and tests in one step, which is
+    /// <see cref="When.Counting"/>. This action is the shape two hand-ported classes reached for
+    /// (<c>ArenaSaamAI</c> and <c>OphidanReinforcementAI</c>) when the condition form did not exist, and
+    /// it stays because they are pinned against it. New ports should use the condition.
+    /// </remarks>
     public static PatternAction Increment(int counter, int low, int high)
         => ai => ai.IncrementCounter(counter, low, high);
 

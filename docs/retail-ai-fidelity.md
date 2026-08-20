@@ -35023,3 +35023,37 @@ message ids included — and excluded everything, which the count made obvious i
   test, blocking the patterns that hold the spawn-variable writers.
 - **16 patterns with no wake-up delay** this port can find, and 31 with a branch it cannot say.
 - **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, and **`[SAVE]` persistence**, unchanged.
+
+## `increase_intvar` is a condition, and this port had it as an action
+
+The largest gap left in the idle-cycle family, and reading it turned up a placement error rather than a
+missing feature.
+
+> **All 1,409 uses of `increase_intvar` in the dump are conditions.** Not one is an action.
+
+The element bumps one of four counters — `INTVARI_FIRST` through `FOURTH` — and asks where it landed, in
+one step, exactly as `set_flag_var` tests and sets in one step. This port had it as
+`Do.Increment(counter, low, high)`, documented as `increase_intvar`, which is the shape two hand-ported
+classes reached for when the condition form did not exist. **The counters were already there**; only the
+condition was missing.
+
+`When.Counting(slot, lower, upper, onlyAtBound)` is that condition. The action stays, because
+`ArenaSaamAI` and `OphidanReinforcementAI` are pinned against it, and its remark now says where retail
+actually puts the element.
+
+### The reading of the bound flag is inference, and is marked as such
+
+`be_true_only_when_hit_the_bound` is TRUE in 1,145 of the 1,409, and is taken to mean "true only on the
+pass that reaches the upper bound" rather than "true while inside the range". **The consecutive-range
+idiom is what argues for it**: retail writes a sequence as `0..1`, then `1..2`, then `2..3`, and under
+the other reading a rung guarded `0..3` would fire three times running. Nothing in the dump states it
+outright, so the remark says so and the pins fix the behaviour either way.
+
+### Still missing
+
+- **The 11 patterns this unblocks.** The condition exists; the extractor does not yet emit it, so
+  `IdleCycles` still refuses them. That is one vocabulary entry and a re-run.
+- **`display_system_message` and `say_to_all`** (string ids) and **`use_skill`** (skill indices), which
+  between them hold most of what is left.
+- **16 patterns with no wake-up delay** this port can find.
+- **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
