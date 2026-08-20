@@ -76,6 +76,15 @@ from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
 #: this table has no way to point at, and are refused rather than approximated with the most-hated one.
 TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED"}
 
+#: Where a battle timer can be armed. Retail does not only start a fight's chain from entering combat:
+#: of the 390 rotations with no `on_enter_attack_state` arming, 59 are started by a message from another
+#: npc, 21 by being attacked, 18 by being spelled and 10 on waking. Reading only the first handler left
+#: all of those inert -- the rotation was ported and nothing ever pulled the trigger.
+#:
+#: `on_battle_timer` is deliberately absent: 188 rotations re-arm only from inside themselves, which is
+#: a chain with no first link *in the pattern*, and guessing an entry point for those would be invention.
+ARMING = ["on_enter_attack_state", "on_message", "on_attacked", "on_spelled", "on_wake_up"]
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: **Only `aggressive`**, plus the class this table feeds. This is narrower than the set the idle
@@ -99,15 +108,15 @@ class Unsayable(Exception):
     """The one element that stopped a rotation being ported, by name."""
 
 
-def read_guards(block: str) -> list[str] | None:
-    """The branch's conditions as tokens, or None if one cannot be said."""
+def read_guards(block: str) -> list[str]:
+    """The branch's conditions as tokens; raises Unsayable if one cannot be said."""
     out: list[str] = []
     for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
         kind, body = element.group(1), element.group(2)
         if kind == "is_battle_timer_indicator":
             slot = timer_slot(body)
             if slot is None:
-                return None
+                raise Unsayable("is_battle_timer_indicator with no slot")
             out.append(f"timer:{slot}")
         elif kind == "is_hp_lower_than":
             who = re.search(r"<who>(\w+)</who>", body)
@@ -126,14 +135,20 @@ def read_guards(block: str) -> list[str] | None:
             out.append(f"hp_between:{int(low.group(1)) + 1}:{int(high.group(1)) - 1}")
         elif kind in ("set_flag_var", "unset_flag_var",
                       "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var"):
-            slot = flag_slot(body)
+            indicator = re.search(r"<flagvar_indicator>([^<]+)</flagvar_indicator>", body)
+            slot = flag_slot(indicator.group(1)) if indicator else None
             if slot is None:
-                return None
+                raise Unsayable(f"{kind} in a flag family this port does not number")
             out.append(f"{kind}:{slot}")
+        elif kind == "is_message":
+            number = re.search(r"<message_type>(\d+)</message_type>", body)
+            if not number:
+                raise Unsayable("is_message with no message type")
+            out.append(f"message:{number.group(1)}")
         elif kind == "test_probability":
-            percent = re.search(r"<probability>(\d+)</probability>", body)
+            percent = re.search(r"<percent>(\d+)</percent>", body)
             if not percent:
-                return None
+                raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
         else:
             raise Unsayable(f"condition {kind}")
@@ -189,6 +204,18 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                                 if index else "use_skill without an index")
             out.append(("skill", int(index.group(1)), 0, 0, TARGETS[who.group(1)],
                         0.0, 0.0, 0.0, 0))
+        elif kind in ("add_hate_point", "switch_target"):
+            # Only the message parameter: these name a creature by role, and the message param is the
+            # one this port can point at. `add_hate_point` at a friend or the caster is a different
+            # helper and is refused rather than aimed at the wrong creature.
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not who or who.group(1) != "OBJI_MESSAGE_PARAM":
+                raise Unsayable(f"{kind} at a creature this port cannot name")
+            hate = re.search(r"<point[s]?_to_add>(-?\d+)</", body)
+            out.append(("hate" if kind == "add_hate_point" else "switch",
+                        int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "attack_most_hating":
+            out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind in ("say_to_all", "display_system_message"):
@@ -231,8 +258,6 @@ def read_handler(body: str, name: str, dev, known, strings):
         found = re.search(r"<conditions>(.*?)</conditions>", branch.group(1), re.S)
         if found:
             guards = read_guards(found.group(1))
-            if guards is None:
-                return None
         actions: list[tuple] = []
         found = re.search(r"<actions>(.*?)</actions>", branch.group(1), re.S)
         if found:
@@ -303,19 +328,22 @@ def main() -> int:
                 continue
 
             try:
-                arming = read_handler(body, "on_enter_attack_state", dev, ai.keys(), strings)
+                arming = {h: read_handler(body, h, dev, ai.keys(), strings) for h in ARMING}
                 cycle = read_handler(body, "on_battle_timer", dev, ai.keys(), strings)
             except Unsayable as stopper:
                 refused[str(stopper)] += 1
                 continue
-            # Without an arming rung nothing ever starts the chain, and the whole rotation is inert.
-            if not arming or not cycle:
+            # Without a rung that arms a timer nothing starts the chain and the rotation is inert.
+            # A handler that merely exists is not enough -- it has to actually arm one.
+            armed = {h: rungs for h, rungs in arming.items()
+                     if any(action[0] == "arm" for _, _, _, actions in rungs for action in actions)}
+            if not armed or not cycle:
                 refused["nothing arms the first timer"] += 1
                 continue
 
             # A skill index is only meaningful against one npc's list, so an owner whose list cannot
             # answer every index the pattern uses is dropped -- not the whole pattern.
-            wanted = {action[1] for branches in (arming, cycle)
+            wanted = {action[1] for branches in [cycle, *armed.values()]
                       for _, _, _, actions in branches
                       for action in actions if action[0] == "skill"}
             if wanted:
@@ -328,7 +356,7 @@ def main() -> int:
 
             patterns += 1
             for npc in owners:
-                for handler, branches in (("arm", arming), ("cycle", cycle)):
+                for handler, branches in [("cycle", cycle), *armed.items()]:
                     for index, priority, guards, actions in branches:
                         for order, action in enumerate(actions):
                             if action[0] == "skill":

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
@@ -189,19 +190,53 @@ public sealed class BattleCycleAiTests
 	/// <summary><b>The table only carries rotations something arms.</b></summary>
 	/// <remarks>
 	/// A cycle rung whose timer is never armed is inert, and a table full of them would look ported
-	/// while doing nothing. 82 retail rotations are refused for exactly this reason -- they arm from
-	/// <c>on_message</c> or <c>on_attacked</c>, handlers this table does not read.
+	/// while doing nothing. Entering combat is the usual trigger but not the only one -- retail also
+	/// starts a chain from a message, a hit, a spell or waking -- so this accepts any of the five.
+	/// It is deliberately not <c>ArmingRungsFor</c> alone: that version passed only because the
+	/// extractor read one handler, and it failed the moment the others were added, which is what a
+	/// pin should do.
 	/// </remarks>
 	[Fact]
 	public void EveryRotationHasSomethingThatStartsIt()
 	{
 		foreach (int npc in BattleCycles.Npcs)
-			Assert.NotEmpty(BattleCycles.ArmingRungsFor(npc));
+		{
+			Assert.True(
+				BattleCycles.ArmingRungsFor(npc).Length > 0
+				|| BattleCycles.MessageRungsFor(npc).Length > 0
+				|| BattleCycles.AttackedRungsFor(npc).Length > 0
+				|| BattleCycles.SpelledRungsFor(npc).Length > 0
+				|| BattleCycles.WakeRungsFor(npc).Length > 0,
+				$"npc {npc} has a rotation but nothing that arms it");
+		}
+	}
+
+	/// <summary><b>The npcs bound to this class are exactly the ones the table drives.</b></summary>
+	/// <remarks>
+	/// Both halves matter and both have already gone wrong. An npc bound with no rungs is a lie in the
+	/// data -- it reads as ported and behaves as plain <c>aggressive</c> -- and 355 of those appeared
+	/// the first time the table shrank, because rebinding is additive and nothing took the old ones
+	/// back. An npc in the table with no binding is a rotation that exists and never runs.
+	/// </remarks>
+	[Fact]
+	public void TheBindingsAndTheTableAgree()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"game-server", "data", "static_data", "npcs", "npc_templates.xml");
+		HashSet<int> bound = new HashSet<int>();
+		foreach (Match element in Regex.Matches(File.ReadAllText(path), "<npc_template [^>]*>"))
+		{
+			if (!element.Value.Contains("ai=\"battle_cycle\""))
+				continue;
+			bound.Add(int.Parse(Regex.Match(element.Value, "npc_id=\"([0-9]+)\"").Groups[1].Value));
+		}
+
+		Assert.Equal(BattleCycles.Npcs.OrderBy(id => id), bound.OrderBy(id => id));
 	}
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 4,810 casts across 1,858 npcs, none of them read by a human. The index they came from is only
+	/// 8,288 casts across 2,619 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -220,7 +255,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(4810, casts);
+		Assert.Equal(8288, casts);
 	}
 
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
@@ -279,6 +314,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(34, spawns);
+		Assert.Equal(178, spawns);
 	}
 }

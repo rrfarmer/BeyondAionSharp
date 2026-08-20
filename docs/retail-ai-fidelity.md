@@ -35353,3 +35353,55 @@ before treating a green suite here as proof the rotations are faithful.
   and three structural pins. Retail cast *timings* in particular have never been observed here.
 - Unchanged: `GAb1_PvPStatus`, the 6,800 duplicate gated placements, `[SAVE]` persistence, the 16 idle
   cycles with no wake delay.
+
+## Two parser bugs that only ever subtracted, and the handlers that pull the trigger
+
+Reading arming from more than one handler was meant to add a few dozen rotations. It exposed two bugs
+in this extractor's own condition parser, and fixing them mattered more than the feature:
+
+* **`test_probability` uses `<percent>`, not `<probability>`.** Every chance roll failed to parse.
+* **`flag_slot` was handed the whole element** instead of the `<flagvar_indicator>` text, so **every**
+  flag guard failed to parse.
+
+Both refused the whole pattern, so neither ever corrupted the table -- they silently shrank it, which
+is why the earlier note that "only `timer:0` guards survive" read as a fact about retail's data. It was
+a fact about this parser. The guards now emitted: 2,994 HP-below, 2,701 flag idiom, 1,666 HP bands,
+1,224 chance rolls, 122 message gates.
+
+Correction to the previous entry: **it said 735 rotations arm from `on_message`, `on_attacked` or
+`on_spelled`.** That was the extractor's refusal count, not the population. The real figure is 390
+rotations with no `on_enter_attack_state` arming, of which 59 arm from a message, 21 on being hit, 18 on
+being spelled, 10 on waking -- and **188 re-arm only from inside themselves**, a chain with no first
+link in the pattern, while **147 have no arming anywhere at all**.
+
+Five handlers are now read. Together with the parser fixes:
+
+| | before | after |
+|---|---|---|
+| rotations | 545 | **793** |
+| npcs | 1,858 | **2,619** |
+| actions | 11,604 | **20,657** |
+| casts | 4,810 | **8,288** |
+
+### Bindings that outlived their rows
+
+When the table shrank, **355 npcs stayed bound to `battle_cycle` with no rungs left**. That is a lie in
+the data: it reads as ported and behaves as plain `aggressive`. Rebinding had always been additive and
+nothing ever took the old ones back. They are reverted, and `TheBindingsAndTheTableAgree` now pins both
+directions -- no binding without rungs, no rotation without a binding.
+
+`EveryRotationHasSomethingThatStartsIt` also had to change: it checked `on_enter_attack_state` alone,
+which passed only because the extractor read one handler, and it failed the moment the others arrived.
+That is a pin behaving correctly.
+
+### Still missing
+
+- **188 rotations re-arm only from within themselves**, and **147 arm nowhere in the pattern**. Both
+  are left alone: something outside the pattern starts them, and guessing what would be invention.
+- **641 rotations cast at a creature this port cannot name** -- still the top refusal.
+  `OBJI_MESSAGE_PARAM` now has helpers for hate and target switching but not for casting.
+- **198 need `is_user_flying`**, 150 `use_skill_by_attacker_indicator`, 140
+  `switch_target_by_attacker_indicator`, 67 `spawn_on_target`.
+- **`on_see_npc` (11), `on_see_user_move` (9), `on_see_user` (3)** also arm timers and are not read.
+- Still unverified against live play: 793 rotations rest on the data plus four structural pins, and
+  retail cast timings have never been observed on this server.
