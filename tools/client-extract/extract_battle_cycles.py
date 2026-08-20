@@ -134,6 +134,23 @@ ARMING = ["on_enter_attack_state", "on_message", "on_attacked", "on_spelled", "o
 #: handler, not the rotation.
 ENDINGS = ["on_die", "on_leave_attack_state"]
 
+#: Retail handlers whose engine slot in `PatternAi` was wired and never fed by any table.
+#:
+#: `Evaluate(Pattern.OnEnterIdle)`, `OnTalk`, `OnFriendAttacked`, `OnArrivedAtWaypoint`, `OnDespawn`,
+#: `OnFriendSpelled`, `OnStopFleeing` and `OnFriendKilled` have all been called by the runtime since
+#: `PatternAi` was written. Every one of them read an empty array, because the tables only ever filled
+#: the slots the table in question was named after. This is the same asymmetry `ENDINGS` was added to
+#: fix, two handlers at a time; these are the remaining eight.
+#:
+#: They are **best-effort** like the rest of `ARMING`, not `CORE`: an unsayable branch here loses this
+#: way in and keeps the rotation. That asymmetry is deliberate and is argued at `CORE` below -- a
+#: dropped rung in the rotation itself silently promotes the next one, because branch lists are
+#: first-match-wins, but a handler that never fires is merely a mechanic we do not have yet.
+SIGNALS = ["on_enter_idle_state", "on_talked_by_user", "on_see_friend_attacked",
+           "on_arrived_at_waypoint", "on_despawn", "on_friend_spelled", "on_stop_to_flee",
+           "on_see_friend_killed_by_user"]
+
+
 #: `on_battle_timer` and `on_enter_attack_state` are the rotation, and an unsayable branch in either
 #: refuses the whole pattern -- dropping a rung there silently promotes the next one, because branch
 #: lists are first-match-wins.
@@ -490,8 +507,14 @@ def main() -> int:
             named = S.NAME_RE.search(body)
             if not named:
                 continue
+            # A rotation is no longer the price of entry. This table was named after `on_battle_timer`
+            # and required it, which was right while it was the only thing here -- but the eight
+            # `SIGNALS` handlers live overwhelmingly in patterns that have no rotation at all, so
+            # requiring one meant reading 4 rows out of 1,332 patterns carrying `on_enter_idle_state`.
+            # A pattern is taken if it has a rotation **or** anything sayable in an ending or a signal.
             timer = re.search(r"<on_battle_timer>(.*?)</on_battle_timer>", body, re.S)
-            if not timer:
+            if not timer and not any(re.search(r"<%s>" % handler, body)
+                                     for handler in ENDINGS + SIGNALS):
                 continue
             owners = [n for n in binders.get(named.group(1), [])
                       if ai.get(n) in GENERIC and n not in spoken_for]
@@ -501,9 +524,14 @@ def main() -> int:
 
             arming = {}
             try:
-                cycle = read_handler(body, "on_battle_timer", dev, ai.keys(), strings)
-                for handler in ARMING + ENDINGS:
-                    if handler in CORE:
+                cycle = (read_handler(body, "on_battle_timer", dev, ai.keys(), strings)
+                         if timer else [])
+                for handler in ARMING + ENDINGS + SIGNALS:
+                    # `CORE` refuses the whole pattern when it cannot be read, and that severity is
+                    # about the rotation: dropping a rung there silently promotes the next one, because
+                    # branch lists are first-match-wins. With no rotation to corrupt there is nothing
+                    # to be severe about, so `on_enter_attack_state` is best-effort like the rest.
+                    if handler in CORE and cycle:
                         arming[handler] = read_handler(body, handler, dev, ai.keys(), strings)
                         continue
                     try:
@@ -519,14 +547,25 @@ def main() -> int:
             # An ending handler can carry an `arm`, but arming a battle timer as you die is not a way
             # into a rotation -- the npc is gone before it fires. They are kept for their spawns and
             # excluded from what counts as armed.
-            armed = {h: rungs for h, rungs in arming.items()
-                     if h in ENDINGS
-                     or any(action[0] == "arm" for _, _, _, actions in rungs for action in actions)}
-            if not any(h not in ENDINGS for h in armed):
-                armed = {}
-            if not armed or not cycle:
-                refused["nothing arms the first timer"] += 1
-                continue
+            if cycle:
+                # A way into a rotation has to actually arm a timer. Endings and signals ride along:
+                # they are worth keeping for their spawns, but arming a battle timer as you die is not
+                # a way in, because the npc is gone before it fires.
+                armed = {h: rungs for h, rungs in arming.items()
+                         if h in ENDINGS or h in SIGNALS
+                         or any(action[0] == "arm"
+                                for _, _, _, actions in rungs for action in actions)}
+                if not any(h not in ENDINGS and h not in SIGNALS for h in armed):
+                    refused["nothing arms the first timer"] += 1
+                    continue
+            else:
+                # No rotation, so nothing needs arming and the arming handlers have nothing to arm.
+                # Only the standalone handlers mean anything here, and one of them has to say something.
+                armed = {h: rungs for h, rungs in arming.items()
+                         if (h in ENDINGS or h in SIGNALS) and rungs}
+                if not armed:
+                    refused["no rotation and nothing sayable in an ending or signal"] += 1
+                    continue
 
             # A skill index is only meaningful against one npc's list, so an owner whose list cannot
             # answer every index the pattern uses is dropped -- not the whole pattern.

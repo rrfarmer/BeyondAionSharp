@@ -231,6 +231,16 @@ public sealed class BattleCycleAiTests
 	{
 		foreach (int npc in BattleCycles.Npcs)
 		{
+			// Only npcs that actually have one. The table used to require a rotation to enter it, so
+			// every npc in it had one and this loop could assume it; it now also holds npcs whose only
+			// rows are a signal handler -- an `on_die` that leaves an add, an `on_despawn` that does.
+			// Asserting those have an arming rung would be asserting they have a rotation, which they
+			// do not, and the failure message would say something untrue about them.
+			if (BattleCycles.CycleRungsFor(npc).Length == 0)
+			{
+				continue;
+			}
+
 			Assert.True(
 				BattleCycles.ArmingRungsFor(npc).Length > 0
 				|| BattleCycles.MessageRungsFor(npc).Length > 0
@@ -289,7 +299,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 57,908 casts across 13,488 npcs, none of them read by a human. The index they came from is only
+	/// 58,831 casts across 14,596 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -308,7 +318,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(57908, casts);
+		Assert.Equal(58831, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -750,6 +760,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1276, spawns);
+		Assert.Equal(1385, spawns);
 	}
 }

@@ -37307,3 +37307,78 @@ Still missing, unchanged: `control_door` (38 patterns), `enable_area` (32),
 `play_cutscene_by_user_indicator` (5), the `is_user` / `is_npc` conditions in the death family (22),
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings, which need
 play-testing rather than more parsing.
+
+## Eight slots the runtime always evaluated and nothing ever filled
+
+`Retail-AI-Pattern: the standalone signal handlers`
+
+With the composition wall down, the question became which retail handlers are read by *no* table at
+all. `PatternAi` calls `Evaluate` on nineteen slots. Eight of them had never once been given data:
+
+| retail handler | engine slot | patterns in the dump |
+|---|---|---|
+| `on_enter_idle_state` | `OnEnterIdle` | 1,332 |
+| `on_talked_by_user` | `OnTalk` | 720 |
+| `on_see_friend_attacked` | `OnFriendAttacked` | 397 |
+| `on_arrived_at_waypoint` | `OnArrivedAtWaypoint` | 392 |
+| `on_despawn` | `OnDespawn` | 361 |
+| `on_friend_spelled` | `OnFriendSpelled` | 344 |
+| `on_stop_to_flee` | `OnStopFleeing` | 138 |
+| `on_see_friend_killed_by_user` | `OnFriendKilled` | 129 |
+
+The runtime has called every one of these since `PatternAi` was written. Each read an empty array,
+because the tables only ever filled the slots the table was named after.
+
+### Reading them needed the table to stop being about rotations
+
+Adding the eight to the handler list produced **4 rows**. The battle extractor skipped any pattern
+without an `<on_battle_timer>`, and these handlers live overwhelmingly in patterns that have no
+rotation at all -- so 1,332 patterns carrying `on_enter_idle_state` contributed nothing.
+
+Two gates had to go:
+
+1. **A rotation is no longer the price of entry.** A pattern is taken if it has a rotation *or*
+   anything sayable in an ending or a signal.
+2. **`CORE` applies only when there is a rotation.** `on_enter_attack_state` refuses the whole
+   pattern when unreadable, and that severity is specifically about the rotation -- dropping a rung
+   there silently promotes the next one, because branch lists are first-match-wins. With no rotation
+   to corrupt, there is nothing to be severe about.
+
+Result: **1,760 rows across 1,279 npcs** in the eight handlers -- 811 casts, 292 spawn-variable
+writes, 195 broadcasts, 101 despawns, 73 waypoint moves. Table 13,488 -> **14,596 npcs**,
+1,889 -> **2,363 patterns**. Adds backlog 216 -> **211** across 157 -> **153** encounters.
+
+### Two mistakes this made, both caught by pins rather than by reading
+
+**`BattleCycles.Npcs` was the rotation's npc list.** It read `CycleOf.Keys`, which was right while a
+rotation was the price of entry. Left alone it would have silently excluded exactly the new npcs --
+the ones with only a signal handler -- from `TheBindingsAndTheTableAgree`, the pin whose whole job is
+catching rows that nothing runs. It is the union of every handler's owner map now.
+
+**Then that union broke 86 tests at once, none of them about npc lists.** The array it unions is
+emitted last, because it names every field above it, and C# runs static field initializers in
+textual order -- so a `readonly` field reading it got null and threw inside the type initializer,
+which takes down everything touching the class. On a live server that is every bound npc entering
+combat, not a test-harness quirk. It builds on demand now.
+
+`EveryRotationHasSomethingThatStartsIt` also had to change, and the reason is worth keeping: it
+asserted every npc in the table has an arming rung, with the message "has a rotation but nothing
+that arms it". That premise is now false for npcs whose only rows are a signal handler -- npc 216999
+has exactly one row, an `on_die`. It skips npcs with no cycle, so the assertion still means what its
+message says.
+
+### Still missing
+
+Eleven retail handlers remain unread with no engine slot to put them in: `on_see_user_move` (254),
+`on_damaged` (141), `on_hyperlink_clicked` (137), `on_most_hating_updated` (132),
+`on_see_friend_attacking` (129), `on_friend_spelling` (106), `on_see_npc_move` (106),
+`on_leave_return_sp` (103), and `on_enter_abnormal_state` (272, of which only 11 spawn or cast).
+Each needs an engine slot **and** a call site in `PatternAi` before any table could feed it, so these
+are engine work rather than extraction work, and none should be added speculatively -- a slot nothing
+calls is exactly the state these eight were just found in.
+
+Unchanged refusals: `control_door`, `enable_area`, `change_world_scene_status`, `goto_waypoint` with
+`MOVETYPE_RUN`, `goto_next_waypoint`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, the `is_user` / `is_npc`
+conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail
+cast timings, which need play-testing rather than more parsing.

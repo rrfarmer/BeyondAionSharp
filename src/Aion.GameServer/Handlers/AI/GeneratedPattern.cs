@@ -71,6 +71,16 @@ internal static class GeneratedPattern
 			OnLeaveAttack = AiPattern.Of(BattleCycles.LeaveFightRungsFor(npcId)),
 			OnBattleTimer = AiPattern.Of(BattleCycles.CycleRungsFor(npcId)),
 
+			// Eight slots the runtime has always evaluated and nothing ever filled.
+			OnEnterIdle = AiPattern.Of(BattleCycles.EnterIdleRungsFor(npcId)),
+			OnTalk = AiPattern.Of(BattleCycles.TalkRungsFor(npcId)),
+			OnFriendAttacked = AiPattern.Of(BattleCycles.FriendAttackedRungsFor(npcId)),
+			OnArrivedAtWaypoint = AiPattern.Of(BattleCycles.ArrivedRungsFor(npcId)),
+			OnDespawn = AiPattern.Of(BattleCycles.DespawnRungsFor(npcId)),
+			OnFriendSpelled = AiPattern.Of(BattleCycles.FriendSpelledRungsFor(npcId)),
+			OnStopFleeing = AiPattern.Of(BattleCycles.StopFleeingRungsFor(npcId)),
+			OnFriendKilled = AiPattern.Of(BattleCycles.FriendKilledRungsFor(npcId)),
+
 			// Waking and idling: three tables can read these, and never do so for the same npc.
 			OnWakeUp = AiPattern.Of(First(
 				BattleCycles.WakeRungsFor(npcId),
