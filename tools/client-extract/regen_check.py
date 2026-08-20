@@ -86,6 +86,10 @@ POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv"),
 # and cannot join POSITIONAL_OUT above.
 WORLD_EXTRACTORS = [("extract_spawn_conditions.py", "spawn_conditions.tsv")]
 
+# Reads strings.xml beside the pattern dump, so it takes the XML directory rather than a
+# patterns/binding pair.
+STRING_EXTRACTORS = [("extract_string_ids.py", "string_ids.tsv")]
+
 # Writes into game-server data rather than out/, because the server reads it directly.
 GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",
                          "game-server/data/static_data/spawns/gated/gated_spawns.tsv")]

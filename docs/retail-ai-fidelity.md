@@ -35101,3 +35101,42 @@ otherwise.
 - **16 patterns with no wake-up delay** this port can find — the second largest, and unexamined: they
   may start their cycle from an event other than `on_wake_up`.
 - **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
+
+## "Blocked on string ids" was never true: the client ships the table
+
+More mechanics in this log have been left unported for want of a string id than for any other single
+reason — every `say_to_all`, every `display_system_message`, every NPC shout. The patterns name strings
+symbolically (`STR_MSG_Ab1_Crotan_Named_Spawn_In`) and this port's own `npc_shouts.xml` is keyed by
+number, and the gap between them has been treated as unbridgeable for the whole of this work.
+
+**The client ships the bridge.** `strings.xml` is 118MB of `<id>`/`<name>` pairs — 371,981 of them — and
+it resolves the pattern dump **completely**:
+
+| | |
+|---|---|
+| distinct string ids used by patterns | 3,492 |
+| uses | 8,820 |
+| **resolved** | **all of them** |
+
+Every one belongs to a message element: `say_to_all` (932 uses), `display_system_message` (375),
+`send_system_msg` (6).
+
+`extract_string_ids.py` writes the 3,492 out. Only those, because the full table is two orders of
+magnitude larger and nothing here needs the rest, and **without the body text** — the server sends an id
+and the client renders it from its own locale files, so the Korean strings would add weight and encoding
+fragility for nothing.
+
+### What it unblocks immediately
+
+**`Do.Say` already exists** and sends exactly the `say_to_all` form. 932 uses across the dump become
+portable the moment an emitter looks the number up — including the 2 idle-cycle patterns blocked on it,
+and the shouts that several encounters in this log were written without.
+
+### Still missing
+
+- **A `display_system_message` helper.** 375 uses and 22 idle-cycle patterns wait on it — the largest
+  remaining blocker in that family. It is a different packet from a shout, sent to the players nearby
+  rather than spoken by the NPC, and `send_system_msg` (6 uses) may be a third form again.
+- **Nothing consumes the table yet.** It is an artefact and a regen-checked one, but no emitter reads it.
+- **16 idle-cycle patterns with no wake-up delay**, unexamined.
+- **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
