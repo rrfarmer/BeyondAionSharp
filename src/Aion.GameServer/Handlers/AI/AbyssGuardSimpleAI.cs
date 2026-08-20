@@ -23,10 +23,16 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("simple_abyssguard")]
 public class AbyssGuardSimpleAI : PatternAi
 {
-    /// <summary>Nothing, unless a subclass says otherwise.</summary>
-    private static readonly AiPattern Nothing = new AiPattern();
-
-    protected override AiPattern Pattern => Nothing;
+    /// <summary>
+    /// Retail's <c>30002</c> chain for the guards that have one, and nothing for the rest.
+    /// </summary>
+    /// <remarks>
+    /// <b>57 npcs on this class call their killer</b> and they are all Kaldor's village chiefs, which
+    /// broadcast in the enter-combat rung itself and then every five seconds. Subclasses that supply
+    /// their own table override this, as <see cref="AbyssGuardReinforcementAI"/> does; they lose the
+    /// call, and none of them is in the table.
+    /// </remarks>
+    protected override AiPattern Pattern => ProtectorCalls.PatternFor(GetOwner().GetNpcId());
 
     /// <summary>
     /// Retail's <c>on_killed_by_user</c> / <c>on_killed_by_npc</c>, for the guards that carry it.

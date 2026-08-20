@@ -1,5 +1,7 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Ai.Pattern;
+using static Aion.GameServer.Ai.Pattern.AiPattern;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Siege;
 using Aion.GameServer.Services;
@@ -60,10 +62,33 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
     /// </summary>
     public const int DropEverything = 1_000_000;
 
+    /// <summary>Retail's <c>30002</c>: "the killer should be fighting me".</summary>
+    public const int CallTheKiller = 30002;
+
+    /// <summary>
+    /// One pattern per protector, because the cadence differs and a fortress holds hundreds.
+    /// </summary>
+    /// <remarks>
+    /// <b>The middle message of the loop, and it was never sent.</b> Retail hangs 30002 off a
+    /// battle-timer chain several rungs deep — the artifact guards reach it 21.5 seconds into a fight
+    /// and every 22 thereafter, their balaur twins at 27.5 and 28, and the village chiefs the moment
+    /// they are engaged and every 5 seconds after. <see cref="ProtectorCalls"/> is those numbers, walked
+    /// out of the chains rather than fitted to one of them.
+    /// <para>
+    /// What hung off the same rungs and is still absent is the cast ladder: every one of these chains
+    /// interleaves <c>use_skill</c> with the timer hand-offs. Dropping those does not change when the
+    /// broadcast lands, which is why the cadence is a faithful reduction rather than an approximation.
+    /// </para>
+    /// </remarks>
+    private readonly AiPattern pattern;
+
     public AbstractSiegeProtectorAI(Npc owner)
         : base(owner)
     {
+        pattern = ProtectorCalls.PatternFor(owner.GetNpcId());
     }
+
+    protected override AiPattern Pattern => pattern;
 
     /// <summary>
     /// Retail's two <c>on_message</c> rungs for <c>30001</c>, both keyed on the <b>sender</b>: a

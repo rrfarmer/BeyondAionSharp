@@ -32710,3 +32710,74 @@ carry a per-npc pattern the way `AbyssGuardCallAI` does.
   controller hearing 30003. Those are instance-handler territory, not siege.
 - **Ten npcs on `AB1_LDGuard_Artifact` carry `fortress_protector` where 302 carry
   `artifact_protector`** — a *specialised* minority, so the forward audit's territory, and unexamined.
+
+## The middle message: 30002, and the siege loop closes
+
+The previous entry specified this and measured its two blockers. Both are now done.
+
+**753 npcs broadcast 30002 in retail and nothing in this port did.** Of the three-message siege loop —
+killer wakes and pulls the protectors (30001), protector calls the killer to itself (30002), dying
+protector calls it off (30003) — the first and third worked and the middle did not, so
+`FortressKillerAI`'s answer to 30002 had never once been reachable. A fortress fight could start and
+could end; it could not move.
+
+### Reading a cadence out of a timer graph
+
+The broadcast is not on a handler. It hangs off a battle timer several rungs deep, and the chain differs
+per pattern. `extract_protector_calls.py` walks timer → (next timer, delay) edges from the enter-combat
+rung to the rung that broadcasts, then walks the loop back to itself for the period. **754 npcs across
+23 patterns resolve; one pattern does not and emits nothing.**
+
+The result is three genuinely different cadences, which is the whole argument for walking rather than
+fitting:
+
+| | first call | then every |
+|---|---|---|
+| `AB1_LDGuard_Artifact` (316 npcs) | 21.5s | 22s |
+| `AB1_DrGuard_Artifact` (160) | 27.5s | 28s |
+| `LDF5_Village_chiefNN` (57) | **at once** | 5s |
+
+A number fitted to the artifact guards would have been six seconds wrong for their balaur twins and
+twenty-one seconds wrong for every village chief.
+
+**What it refuses to guess.** Only rungs whose sole condition is the timer are followed. Retail guards
+many of them on health or on `is_user_flying`, and a chain reaching the broadcast only through a health
+band has two cadences, not one. `IDSweep_NPC07` is the single pattern that hits this and it emits
+nothing, rather than a number that looks measured and is not.
+
+**A bug caught by reading one row that looked too fast.** The chiefs came out at 5000/5000, and five
+seconds to the first call seemed short. Their rung says otherwise —
+`전투 시작시 30002를 브로드하여` on the enter-combat branch, and `5초마다 반복` on the timer: they
+broadcast **immediately** and then every five seconds. The walk had only followed timers and missed a
+broadcast sitting in the enter-combat rung itself. That is a whole beat of a twelve-beat fight, and
+nothing but reading the pattern would have shown it.
+
+### Two structural changes
+
+**`SiegeNpcAI` now derives from `PatternAi`.** It was `AggressiveNpcAI`, and so is `PatternAi`, so this
+is the same one-line move already made for `AbyssGuardSimpleAI` — which adds nothing when the table is
+empty. That is twice now; a fair argument that the pattern base should be the default for AI classes in
+this port.
+
+**The pattern is built beside the table, not in the classes.** Four unrelated classes own npcs in this
+roster and only two share a base, so `ProtectorCalls.PatternFor(npcId)` returns the pattern and each
+class hands it back from its own `Pattern` property. The same shape `SiegeDeathCalls.Announce` took, for
+the same reason, and this is the second table to span classes that way.
+
+### Pins
+
+Five, four of four mutations caught. Two of the mutations had to be re-aimed: written against the TSV
+they were inert, because `run_mutations.py` does not re-run the emitters — the committed `.cs` is what
+the tests compile. That is worth knowing before writing a mutation against generated data again.
+
+### Still missing
+
+- **The cast ladders.** Every one of these chains interleaves `use_skill` with the timer hand-offs, and
+  none of it is translated. Dropping the casts does not move the broadcast, which is why the cadence is
+  a reduction rather than an approximation — but the protectors still fight with nothing but autoattack.
+- **`IDSweep_NPC07`**, the one pattern whose chain is health-gated.
+- **30004**, which the Advance villages broadcast on entering combat. Nothing in the dump answers it, so
+  its audience is unknown; recorded here because the extractor walked past it.
+- **`FortressKillerAI` still stands where it spawned.** Retail moves it to its targets with
+  `goto_waypoint`, and now that protectors actually call it, the walk is the next thing that would make
+  the mechanic visible in play rather than merely correct in the message log.
