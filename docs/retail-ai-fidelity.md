@@ -33040,3 +33040,53 @@ with it the only case where the focus race list and the sight race list differ.
   worth a look at every `Merge` in the tree before assuming this was the only instance.
 - **The other stats.** Only `max_hp` was compared. Retail's `npcs.xml` carries physical attack, defence,
   magic resist and a dozen more per npc, and none of them has been checked against ours.
+
+## The same bug again, one line further down
+
+The last entry closed a first-match-wins bug in `FortressKillerAI`'s enter-combat merge and asked
+whether the trap existed elsewhere. It did — **in the code written to fix it, in the rung above.**
+
+`FortressKillers.PatternFor` built the wake handler as two unconditional branches:
+
+```csharp
+Branch(95, "tell the guards I am here", When.Always, Do.BroadcastAboutSelf(...)),
+Branch(94, "and set off",              When.Always, Do.StartWalking()),
+```
+
+Branch lists are first-match-wins. The second never ran. **Seventeen killers that retail sends along a
+route with `goto_waypoint` stood exactly where they spawned** — and nothing said so, because the
+broadcast still went out and its pin still passed.
+
+Retail writes one rung with several actions. A translation that splits them is wrong on its own terms,
+and both times the split looked completely natural.
+
+### A pin for the shape, not the mechanic
+
+`NoEventHandlerCarriesTwoUnconditionalBranches` walks every handler of every killer's pattern and fails
+if any carries more than one unconditional branch. It checks the shape rather than any one behaviour, so
+a third instance fails there rather than being found by accident.
+
+That is the general lesson of this pair: **the defect was not in what the branches did, it was in there
+being two of them.** No amount of behaviour pinning on the first branch can see it.
+
+A second pin counts actions — a walker's wake rung carries one more than a stander's. It is structural
+because the walk genuinely cannot be observed here: `Do.StartWalking` reaches `WalkManager` only for an
+npc that `IsPathWalker`, and a harness spawn has no route. Deleting the walk outright left every
+behaviour pin green until this pin existed.
+
+### The audit for the rest of the tree
+
+`FortressKillerAI` is the only class in the tree that merges a base pattern with its own — checked, not
+assumed. But the shape pin only covers the killers, and any hand-written `AiPattern` in
+`Handlers/AI/*.cs` can make the same mistake by writing two unconditional branches for one retail rung.
+That is worth a sweep of its own and is recorded below rather than done.
+
+### Still missing
+
+- **A sweep for two-unconditional-branch handlers across every AI class**, not just the generated killer
+  patterns. The shape is mechanical to detect and this is now twice it has happened.
+- **A route to walk.** The seventeen walkers have no spawn entry to hang a walker id on, so even a
+  correct `goto_waypoint` has nowhere to go. Same absence the world-spawn sweep recorded.
+- **`goto_next_waypoint` is still `StartWalking`**, which resumes rather than advances.
+- **The 7,723 npcs whose health is higher here than retail's**, and **every stat other than `max_hp`**,
+  both unchanged from the last entry.

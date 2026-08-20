@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -257,5 +258,70 @@ public sealed class FortressKillerHuntTests
 		Assert.Equal(5_000, advance.FocusPeriod);
 
 		Assert.NotEqual(artifact.FocusPeriod, advance.FocusPeriod);
+	}
+
+	/// <summary>
+	/// <b>No event handler carries two unconditional branches.</b> Branch lists are first-match-wins, so
+	/// a second unconditional branch behind the first is dead code that looks like behaviour.
+	/// </summary>
+	/// <remarks>
+	/// <b>This has now been the bug twice in this class.</b> First the enter-combat rung, where the
+	/// base's 23000 branch swallowed the table's focus clock; then the wake rung, where the broadcast
+	/// swallowed the walk — seventeen killers that retail sends along a route stood still, and nothing
+	/// said so, because the broadcast still went out and its pin still passed.
+	/// <para>
+	/// Retail writes these as one rung with several actions, so a translation that splits them is wrong
+	/// on its own terms. This checks the shape rather than any one mechanic, so the third instance fails
+	/// here rather than being found by accident a month later.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void NoEventHandlerCarriesTwoUnconditionalBranches()
+	{
+		var offenders = new List<string>();
+
+		foreach (int npcId in FortressKillers.ByNpc.Keys)
+		{
+			AiPattern pattern = FortressKillers.PatternFor(npcId);
+			Check(npcId, nameof(AiPattern.OnWakeUp), pattern.OnWakeUp);
+			Check(npcId, nameof(AiPattern.OnEnterAttack), pattern.OnEnterAttack);
+			Check(npcId, nameof(AiPattern.OnLeaveAttack), pattern.OnLeaveAttack);
+			Check(npcId, nameof(AiPattern.OnBattleTimer), pattern.OnBattleTimer);
+			Check(npcId, nameof(AiPattern.OnSeeNpc), pattern.OnSeeNpc);
+		}
+
+		Assert.Empty(offenders);
+
+		void Check(int npcId, string handler, PatternBranch[] branches)
+		{
+			if (branches.Count(b => b.Conditions.Length == 0) > 1)
+				offenders.Add($"{npcId}.{handler}");
+		}
+	}
+
+	/// <summary>
+	/// <b>A walker's wake rung carries one more action than a stander's.</b> Retail's
+	/// <c>goto_waypoint</c>, in the same rung as the shout.
+	/// </summary>
+	/// <remarks>
+	/// <b>Structural, because the walk itself cannot be observed here.</b>
+	/// <see cref="AiPattern.Do.StartWalking"/> reaches <c>WalkManager</c> only for an npc that
+	/// <c>IsPathWalker</c>, and a harness spawn has no route — so deleting the walk outright leaves every
+	/// behaviour pin green. Counting the actions is what is left, and it is enough to catch the deletion.
+	/// <para>
+	/// Pinning a route walk properly needs a spawn with a walker id attached, which the harness can do
+	/// (<c>WithWalkerRoutes</c>) but these npcs have no spawn entry to attach one to — the same absence
+	/// recorded in the world-spawn sweep.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWalkersWakeRungCarriesOneMoreActionThanAStanders()
+	{
+		PatternBranch walker = FortressKillers.PatternFor(ArtifactKiller).OnWakeUp.Single();
+		PatternBranch stander = FortressKillers.PatternFor(AdvanceKiller).OnWakeUp.Single();
+
+		Assert.True(FortressKillers.ByNpc[ArtifactKiller].Walks);
+		Assert.False(FortressKillers.ByNpc[AdvanceKiller].Walks);
+		Assert.Equal(stander.Actions.Length + 1, walker.Actions.Length);
 	}
 }

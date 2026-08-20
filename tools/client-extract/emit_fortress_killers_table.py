@@ -77,13 +77,16 @@ FOOTER = '''    };
         if (!ByNpc.TryGetValue(id, out Killer killer))
             return Nothing;
 
-        List<PatternBranch> waking =
+        // ONE branch, not two. Retail's on_wake_up rung is a single rung that broadcasts and then
+        // walks, and branch lists here are first-match-wins -- so a second unconditional branch behind
+        // the first never runs. Written as two, the walk was dead for all seventeen killers that have
+        // one, and nothing said so: the broadcast still went out and the pin on it still passed.
+        List<PatternAction> waking =
         [
-            AiPattern.Branch(95, "tell the guards I am here", When.Always,
-                Do.BroadcastAboutSelf(FortressKillerAI.KillerAwake, killer.WakeRange)),
+            Do.BroadcastAboutSelf(FortressKillerAI.KillerAwake, killer.WakeRange),
         ];
         if (killer.Walks)
-            waking.Add(AiPattern.Branch(94, "and set off", When.Always, Do.StartWalking()));
+            waking.Add(Do.StartWalking());
 
         List<PatternBranch> onTimer = [];
         if (killer.FocusHate > 0)
@@ -96,7 +99,9 @@ FOOTER = '''    };
 
         return new AiPattern
         {
-            OnWakeUp = [.. waking],
+            OnWakeUp = AiPattern.Of(
+                AiPattern.Branch(95, "tell the guards I am here, then set off", When.Always,
+                    [.. waking])),
 
             OnEnterAttack = killer.FocusHate == 0
                 ? AiPattern.Of()
