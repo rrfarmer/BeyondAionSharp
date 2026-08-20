@@ -1,0 +1,2063 @@
+npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
+205433	IDArena_S10_MC_End	on_wake_up	0	7		0	say	342684	0	0		0.0	0.0	0.0
+205433	IDArena_S10_MC_End	on_wake_up	0	7		1	say	342685	0	0		0.0	0.0	0.0
+205662	IDArena_Solo_RoundNPC_9	on_wake_up	0	7		0	sysmsg	1401068	0	0		0.0	0.0	0.0
+205662	IDArena_Solo_RoundNPC_9	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+205690	IDArena_Solo_InviNPC_2	on_wake_up	0	10		0	broadcast	9999	50	0		0.0	0.0	0.0
+205691	IDArena_Solo_InviNPC_3	on_wake_up	0	7		0	broadcast	3001	50	0		0.0	0.0	0.0
+205691	IDArena_Solo_InviNPC_3	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+205693	IDArena_Solo_InviNPC_5	on_wake_up	0	100		0	broadcast	100014	50	0		0.0	0.0	0.0
+205693	IDArena_Solo_InviNPC_5	on_wake_up	0	100		1	var	1	0	0	STAGE2_OVER	0.0	0.0	0.0
+205693	IDArena_Solo_InviNPC_5	on_wake_up	0	100		2	despawn_self	0	0	0		0.0	0.0	0.0
+205694	IDArena_Solo_InviNPC_6	on_wake_up	0	100		0	sysmsg	1401071	0	0		0.0	0.0	0.0
+205694	IDArena_Solo_InviNPC_6	on_wake_up	0	100		1	broadcast	100013	50	0		0.0	0.0	0.0
+205694	IDArena_Solo_InviNPC_6	on_wake_up	0	100		2	broadcast	100012	50	0		0.0	0.0	0.0
+205694	IDArena_Solo_InviNPC_6	on_wake_up	0	100		3	var	1	0	0	STAGE2_OVER	0.0	0.0	0.0
+205694	IDArena_Solo_InviNPC_6	on_wake_up	0	100		4	despawn_self	0	0	0		0.0	0.0	0.0
+206200	IDRaksha_SensoryArea_06	on_wake_up	0	7		0	broadcast	12101	100	0		0.0	0.0	0.0
+206200	IDRaksha_SensoryArea_06	on_wake_up	0	7		1	sysmsg	1401162	0	0		0.0	0.0	0.0
+207035	IDArena_pvp01_InviNPC_1	on_idle_timer	0	7		0	broadcast	2001	100	0		0.0	0.0	0.0
+207035	IDArena_pvp01_InviNPC_1	on_wake_up	0	7		0	timer	15000	0	0		0.0	0.0	0.0
+207036	IDArena_pvp01_InviNPC_2	on_idle_timer	0	7		0	broadcast	2002	100	0		0.0	0.0	0.0
+207036	IDArena_pvp01_InviNPC_2	on_wake_up	0	7		0	timer	20000	0	0		0.0	0.0	0.0
+207038	IDArena_pvp01_InviNPC_4	on_idle_timer	0	7		0	broadcast	5001	50	0		0.0	0.0	0.0
+207038	IDArena_pvp01_InviNPC_4	on_wake_up	0	7		0	timer	10000	0	0		0.0	0.0	0.0
+207040	IDArena_pvp02_InviNPC_2	on_idle_timer	0	7		0	broadcast	1001	100	0		0.0	0.0	0.0
+207040	IDArena_pvp02_InviNPC_2	on_wake_up	0	7		0	timer	30000	0	0		0.0	0.0	0.0
+207048	IDArena_pvp01_InviNPC_7	on_idle_timer	0	7		0	broadcast	4001	20	0		0.0	0.0	0.0
+207048	IDArena_pvp01_InviNPC_7	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+207050	IDArena_pvp01_InviNPC_9	on_wake_up	0	7		0	sysmsg	1401526	0	0		0.0	0.0	0.0
+207053	IDArena_pvp02_InviNPC_4	on_idle_timer	0	7		0	broadcast	1001	50	0		0.0	0.0	0.0
+207053	IDArena_pvp02_InviNPC_4	on_wake_up	0	7		0	timer	3000	0	0		0.0	0.0	0.0
+207083	LDF4a_Public_End_Braod	on_idle_timer	0	7		0	broadcast	7203	100	0		0.0	0.0	0.0
+207083	LDF4a_Public_End_Braod	on_idle_timer	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+207083	LDF4a_Public_End_Braod	on_wake_up	0	7		0	broadcast	7203	100	0		0.0	0.0	0.0
+207083	LDF4a_Public_End_Braod	on_wake_up	0	7		1	timer	5000	0	0		0.0	0.0	0.0
+207107	IDArena_Team01_S2_Noshown_for_track_close	on_wake_up	0	7		0	broadcast	13500	50	0		0.0	0.0	0.0
+207107	IDArena_Team01_S2_Noshown_for_track_close	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+207114	IDArena_Team01_S1_Noshown_for_lever_close	on_wake_up	0	7		0	broadcast	1013	50	0		0.0	0.0	0.0
+207114	IDArena_Team01_S1_Noshown_for_lever_close	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+217372	Station_HugenNM_Sum2	on_wake_up	0	7		0	broadcast	7107	50	0		0.0	0.0	0.0
+217372	Station_HugenNM_Sum2	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_idle_timer	0	9	set_flag_var:0	0	timer	20000	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_idle_timer	0	9	set_flag_var:0	1	sysmsg	1401010	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_idle_timer	1	8	set_flag_var:1	0	timer	5000	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_idle_timer	1	8	set_flag_var:1	1	sysmsg	1401011	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_idle_timer	2	7	set_flag_var:2	0	sysmsg	1401012	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_idle_timer	3	6		0	despawn_self	0	0	0		0.0	0.0	0.0
+217779	IDArena_S3_Timer	on_wake_up	0	10		0	timer	30000	0	0		0.0	0.0	0.0
+217841	IDArena_Solo_S4_Meat	on_wake_up	0	27		0	broadcast	40001	50	0		0.0	0.0	0.0
+218561	IDArena_Solo_S4_od	on_wake_up	0	27		0	broadcast	40001	50	0		0.0	0.0	0.0
+218570	IDArena_Solo_S5_Telepoter	on_wake_up	0	7		0	broadcast	100011	50	0		0.0	0.0	0.0
+233386	Dread03_BoxSpawn01	on_wake_up	0	1		0	sysmsg	1401421	0	0		0.0	0.0	0.0
+233386	Dread03_BoxSpawn01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+233387	Dread03_BoxSpawn02	on_wake_up	0	1		0	sysmsg	1401424	0	0		0.0	0.0	0.0
+233387	Dread03_BoxSpawn02	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+233542	IDF5_TD_War_FTank_PC	on_wake_up	0	7		0	spawn	831981	1	0	for_the_fight_self	0.0	0.0	0.0
+233570	IDLDF5_Under_01_War_Guard_01	on_wake_up	0	7		0	sysmsg	1401966	0	0		0.0	0.0	0.0
+233571	IDLDF5_Under_01_War_Guard_02	on_wake_up	0	7		0	sysmsg	1401950	0	0		0.0	0.0	0.0
+233572	IDLDF5_Under_01_War_Guard_03	on_wake_up	0	7		0	sysmsg	1401966	0	0		0.0	0.0	0.0
+233573	IDLDF5_Under_01_War_Guard_04	on_idle_timer	0	7		0	sysmsg	1401951	0	0		0.0	0.0	0.0
+233573	IDLDF5_Under_01_War_Guard_04	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+233573	IDLDF5_Under_01_War_Guard_04	on_wake_up	0	7		0	sysmsg	1401950	0	0		0.0	0.0	0.0
+233573	IDLDF5_Under_01_War_Guard_04	on_wake_up	0	7		1	timer	3000	0	0		0.0	0.0	0.0
+233583	IDLDF5_Under_01_War_MSG_04	on_idle_timer	0	7		0	sysmsg	1401968	0	0		0.0	0.0	0.0
+233583	IDLDF5_Under_01_War_MSG_04	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+233583	IDLDF5_Under_01_War_MSG_04	on_wake_up	0	7		0	sysmsg	1402086	0	0		0.0	0.0	0.0
+233583	IDLDF5_Under_01_War_MSG_04	on_wake_up	0	7		1	timer	3000	0	0		0.0	0.0	0.0
+281036	ND2_WhG5	on_wake_up	0	7	set_flag_var:0	0	broadcast	6621	50	0		0.0	0.0	0.0
+281043	ND2_FhWSumG	on_wake_up	0	7	set_flag_var:0	0	broadcast	6608	50	0		0.0	0.0	0.0
+281044	ND2_FhWSumH	on_wake_up	0	7	set_flag_var:0	0	broadcast	6601	50	0		0.0	0.0	0.0
+281045	ND2_FhWSumA	on_wake_up	0	7	set_flag_var:0	0	broadcast	6602	50	0		0.0	0.0	0.0
+281046	ND2_FhWSumB	on_wake_up	0	7	set_flag_var:0	0	broadcast	6603	50	0		0.0	0.0	0.0
+281047	ND2_FhWSumC	on_wake_up	0	7	set_flag_var:0	0	broadcast	6604	50	0		0.0	0.0	0.0
+281048	ND2_FhWSumD	on_wake_up	0	7	set_flag_var:0	0	broadcast	6605	50	0		0.0	0.0	0.0
+281049	ND2_FhWSumE	on_wake_up	0	7	set_flag_var:0	0	broadcast	6606	50	0		0.0	0.0	0.0
+281050	ND2_FhWSumF	on_wake_up	0	7	set_flag_var:0	0	broadcast	6607	50	0		0.0	0.0	0.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		0	spawn	281070	1	6	for_the_fight_absolute	479.0	568.0	202.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		1	spawn	281070	1	6	for_the_fight_absolute	576.0	565.0	202.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		2	spawn	281070	1	6	for_the_fight_absolute	666.0	569.0	202.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		3	spawn	281070	1	6	for_the_fight_absolute	523.0	643.0	200.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		4	spawn	281070	1	6	for_the_fight_absolute	524.0	709.0	193.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		5	spawn	281070	1	6	for_the_fight_absolute	522.0	488.0	199.0
+281069	ABRwd_SpawnBoxA	on_wake_up	0	7		6	spawn	281070	1	6	for_the_fight_absolute	522.0	417.0	199.0
+281074	ABRwd_SpawnBoxB	on_wake_up	0	7		0	spawn	281070	1	6	for_the_fight_absolute	504.0	412.0	94.0
+281074	ABRwd_SpawnBoxB	on_wake_up	0	7		1	spawn	281070	1	6	for_the_fight_absolute	504.0	509.0	90.0
+281074	ABRwd_SpawnBoxB	on_wake_up	0	7		2	spawn	281070	1	6	for_the_fight_absolute	503.0	588.0	103.0
+281074	ABRwd_SpawnBoxB	on_wake_up	0	7		3	spawn	281070	1	6	for_the_fight_absolute	590.0	473.0	103.0
+281074	ABRwd_SpawnBoxB	on_wake_up	0	7		4	spawn	281070	1	6	for_the_fight_absolute	418.0	494.0	103.0
+281075	ABRwd_SpawnBoxC	on_wake_up	0	7		0	spawn	281070	1	6	for_the_fight_absolute	222.0	421.0	368.0
+281075	ABRwd_SpawnBoxC	on_wake_up	0	7		1	spawn	281070	1	6	for_the_fight_absolute	198.0	485.0	368.0
+281075	ABRwd_SpawnBoxC	on_wake_up	0	7		2	spawn	281070	1	6	for_the_fight_absolute	184.0	554.0	368.0
+281075	ABRwd_SpawnBoxC	on_wake_up	0	7		3	spawn	281070	1	6	for_the_fight_absolute	183.0	623.0	368.0
+281075	ABRwd_SpawnBoxC	on_wake_up	0	7		4	spawn	281070	1	6	for_the_fight_absolute	193.0	688.0	368.0
+281075	ABRwd_SpawnBoxC	on_wake_up	0	7		5	spawn	281070	1	6	for_the_fight_absolute	220.0	755.0	368.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		0	spawn	281070	1	6	for_the_fight_absolute	190.0	174.0	105.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		1	spawn	281070	1	6	for_the_fight_absolute	268.0	134.0	105.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		2	spawn	281070	1	6	for_the_fight_absolute	340.0	178.0	105.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		3	spawn	281070	1	6	for_the_fight_absolute	261.0	213.0	105.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		4	spawn	281070	1	6	for_the_fight_absolute	180.0	251.0	105.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		5	spawn	281070	1	6	for_the_fight_absolute	257.0	287.0	105.0
+281076	ABRwd_SpawnBoxD	on_wake_up	0	7		6	spawn	281070	1	6	for_the_fight_absolute	343.0	262.0	105.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		0	spawn	281070	1	6	for_the_fight_absolute	382.0	459.5	165.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		1	spawn	281070	1	6	for_the_fight_absolute	427.0	421.0	168.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		2	spawn	281070	1	6	for_the_fight_absolute	495.0	424.0	168.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		3	spawn	281070	1	6	for_the_fight_absolute	416.0	480.0	168.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		4	spawn	281070	1	6	for_the_fight_absolute	505.0	485.0	168.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		5	spawn	281070	1	6	for_the_fight_absolute	430.0	546.0	168.0
+281077	ABRwd_SpawnBoxE	on_wake_up	0	7		6	spawn	281070	1	6	for_the_fight_absolute	496.0	552.0	168.0
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		0	spawn	700539	1	235	for_the_fight_absolute	485.5	820.6	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		1	spawn	700539	1	295	for_the_fight_absolute	479.6	836.5	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		2	spawn	700539	1	345	for_the_fight_absolute	479.6	853.6	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		3	spawn	700539	1	395	for_the_fight_absolute	485.5	870.1	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		4	spawn	700539	1	435	for_the_fight_absolute	496.8	882.9	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		5	spawn	700539	1	475	for_the_fight_absolute	511.8	891.6	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		6	spawn	700539	1	505	for_the_fight_absolute	528.3	894.5	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		7	spawn	700539	1	535	for_the_fight_absolute	545.0	891.6	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		8	spawn	700539	1	555	for_the_fight_absolute	559.9	882.7	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		9	spawn	700539	1	575	for_the_fight_absolute	571.6	869.8	199.28
+281202	ABRwd_SpawnBoxF	on_wake_up	0	7		10	spawn	700559	1	595	for_the_fight_absolute	576.8	853.5	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		0	spawn	700541	1	235	for_the_fight_absolute	485.5	820.6	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		1	spawn	700541	1	295	for_the_fight_absolute	479.6	836.5	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		2	spawn	700541	1	345	for_the_fight_absolute	479.6	853.6	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		3	spawn	700541	1	395	for_the_fight_absolute	485.5	870.1	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		4	spawn	700541	1	435	for_the_fight_absolute	496.8	882.9	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		5	spawn	700541	1	475	for_the_fight_absolute	511.8	891.6	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		6	spawn	700541	1	505	for_the_fight_absolute	528.3	894.5	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		7	spawn	700541	1	535	for_the_fight_absolute	545.0	891.6	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		8	spawn	700541	1	555	for_the_fight_absolute	559.9	882.7	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		9	spawn	700541	1	575	for_the_fight_absolute	571.6	869.8	199.28
+281203	ABRwd_SpawnBoxG	on_wake_up	0	7		10	spawn	700560	1	595	for_the_fight_absolute	576.8	853.5	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		0	spawn	700543	1	235	for_the_fight_absolute	485.5	820.6	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		1	spawn	700543	1	295	for_the_fight_absolute	479.6	836.5	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		2	spawn	700543	1	345	for_the_fight_absolute	479.6	853.6	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		3	spawn	700543	1	395	for_the_fight_absolute	485.5	870.1	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		4	spawn	700543	1	435	for_the_fight_absolute	496.8	882.9	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		5	spawn	700543	1	475	for_the_fight_absolute	511.8	891.6	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		6	spawn	700543	1	505	for_the_fight_absolute	528.3	894.5	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		7	spawn	700543	1	535	for_the_fight_absolute	545.0	891.6	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		8	spawn	700543	1	555	for_the_fight_absolute	559.9	882.7	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		9	spawn	700543	1	575	for_the_fight_absolute	571.6	869.8	199.28
+281204	ABRwd_SpawnBoxH	on_wake_up	0	7		10	spawn	700561	1	595	for_the_fight_absolute	576.8	853.5	199.28
+281210	IDLF1_GCoreDS	on_wake_up	0	7		0	broadcast	6822	35	0		0.0	0.0	0.0
+281210	IDLF1_GCoreDS	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+281241	IDSlk_MateSumA	on_wake_up	0	7		0	broadcast	6636	50	0		0.0	0.0	0.0
+281288	ABRwd_DespawnDoor	on_wake_up	0	7		0	broadcast	6683	10	0		0.0	0.0	0.0
+281291	IDSlk_ShugoMove	on_wake_up	0	7		0	broadcast	6684	40	0		0.0	0.0	0.0
+281328	IDSlk_GunnerEventA	on_wake_up	0	7		0	spawn	281327	1	30	for_the_fight_absolute	0.0	0.0	0.0
+281328	IDSlk_GunnerEventA	on_wake_up	0	7		1	spawn	281327	1	30	for_the_fight_absolute	0.0	0.0	0.0
+281329	IDSlk_GunnerEventB	on_wake_up	0	7		0	spawn	281327	1	30	for_the_fight_absolute	0.0	0.0	0.0
+281329	IDSlk_GunnerEventB	on_wake_up	0	7		1	spawn	281327	1	30	for_the_fight_absolute	0.0	0.0	0.0
+281330	IDSlk_GunnerEventC	on_wake_up	0	7		0	spawn	281327	1	30	for_the_fight_absolute	0.0	0.0	0.0
+281330	IDSlk_GunnerEventC	on_wake_up	0	7		1	spawn	281327	1	30	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		0	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		1	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		2	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		3	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		4	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		5	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		6	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		7	spawn	281213	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		8	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		9	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		10	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		11	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		12	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		13	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281333	IDSlk_GunnerSumF	on_wake_up	0	7		14	spawn	281212	1	24	for_the_fight_absolute	0.0	0.0	0.0
+281335	IDSlk_GunnerEventReset	on_wake_up	0	7		0	broadcast	6701	50	0		0.0	0.0	0.0
+281445	LF4_GHSumA	on_wake_up	0	7		0	broadcast	6720	50	0		0.0	0.0	0.0
+281447	LF4_GHSumB	on_wake_up	0	7		0	broadcast	6721	50	0		0.0	0.0	0.0
+281455	DF4_DramataEgg	on_wake_up	0	7		0	broadcast	6705	50	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	0	sysmsg	1400726	0	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	1	spawn	281458	1	45	for_the_fight_absolute	2885.0	805.0	36.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	2	spawn	281458	1	45	for_the_fight_absolute	2866.0	835.0	36.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	3	spawn	281458	1	45	for_the_fight_absolute	2895.0	851.0	36.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	4	spawn	281458	1	45	for_the_fight_absolute	2918.0	788.0	36.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	5	spawn	281458	1	45	for_the_fight_absolute	2923.0	834.0	36.0
+281457	DF4_DramataSumC	on_wake_up	0	6	chance:16	6	broadcast	7011	10	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	0	sysmsg	1400726	0	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	1	spawn	281458	1	45	for_the_fight_absolute	2880.0	883.0	36.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	2	spawn	281458	1	45	for_the_fight_absolute	2910.0	876.0	36.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	3	spawn	281458	1	45	for_the_fight_absolute	2905.0	907.0	36.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	4	spawn	281458	1	45	for_the_fight_absolute	2934.0	887.0	36.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	5	spawn	281458	1	45	for_the_fight_absolute	2943.0	911.0	36.0
+281457	DF4_DramataSumC	on_wake_up	1	5	chance:33	6	broadcast	7011	10	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	0	sysmsg	1400726	0	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	1	spawn	281458	1	45	for_the_fight_absolute	2952.0	797.0	36.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	2	spawn	281458	1	45	for_the_fight_absolute	2946.0	824.0	36.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	3	spawn	281458	1	45	for_the_fight_absolute	2959.0	843.0	36.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	4	spawn	281458	1	45	for_the_fight_absolute	2978.0	812.0	36.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	5	spawn	281458	1	45	for_the_fight_absolute	2997.0	843.0	36.0
+281457	DF4_DramataSumC	on_wake_up	2	4	chance:50	6	broadcast	7011	10	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	0	sysmsg	1400726	0	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	1	spawn	281458	1	45	for_the_fight_absolute	2934.0	887.0	36.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	2	spawn	281458	1	45	for_the_fight_absolute	2969.0	870.0	36.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	3	spawn	281458	1	45	for_the_fight_absolute	2943.0	911.0	36.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	4	spawn	281458	1	45	for_the_fight_absolute	2965.0	897.0	36.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	5	spawn	281458	1	45	for_the_fight_absolute	2993.0	878.0	36.0
+281457	DF4_DramataSumC	on_wake_up	3	3	chance:66	6	broadcast	7011	10	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	0	sysmsg	1400726	0	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	1	spawn	281458	1	45	for_the_fight_absolute	2895.0	851.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	2	spawn	281458	1	45	for_the_fight_absolute	2923.0	834.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	3	spawn	281458	1	45	for_the_fight_absolute	2910.0	876.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	4	spawn	281458	1	45	for_the_fight_absolute	2932.0	860.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	5	spawn	281458	1	45	for_the_fight_absolute	2934.0	887.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	6	spawn	281458	1	45	for_the_fight_absolute	2946.0	824.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	7	spawn	281458	1	45	for_the_fight_absolute	2959.0	843.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	8	spawn	281458	1	45	for_the_fight_absolute	2969.0	870.0	36.0
+281457	DF4_DramataSumC	on_wake_up	4	2	chance:83	9	broadcast	7011	10	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	5	1		0	sysmsg	1400726	0	0		0.0	0.0	0.0
+281457	DF4_DramataSumC	on_wake_up	5	1		1	spawn	281458	1	45	for_the_fight_absolute	2885.0	805.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		2	spawn	281458	1	45	for_the_fight_absolute	2866.0	835.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		3	spawn	281458	1	45	for_the_fight_absolute	2880.0	883.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		4	spawn	281458	1	45	for_the_fight_absolute	2918.0	788.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		5	spawn	281458	1	45	for_the_fight_absolute	2952.0	797.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		6	spawn	281458	1	45	for_the_fight_absolute	2943.0	911.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		7	spawn	281458	1	45	for_the_fight_absolute	2965.0	897.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		8	spawn	281458	1	45	for_the_fight_absolute	2978.0	812.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		9	spawn	281458	1	45	for_the_fight_absolute	2997.0	843.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		10	spawn	281458	1	45	for_the_fight_absolute	2993.0	878.0	36.0
+281457	DF4_DramataSumC	on_wake_up	5	1		11	broadcast	7011	10	0		0.0	0.0	0.0
+281644	Elim_EventG	on_wake_up	0	7		0	broadcast	6751	50	0		0.0	0.0	0.0
+281928	LF4_DramataDied	on_wake_up	0	7		0	broadcast	7010	20	0		0.0	0.0	0.0
+281930	LF4_DramataGC	on_wake_up	0	7		0	spawn	281931	1	0	for_the_fight_absolute	0.0	0.0	0.0
+281930	LF4_DramataGC	on_wake_up	0	7		1	spawn	281931	1	0	for_the_fight_absolute	0.0	0.0	0.0
+281930	LF4_DramataGC	on_wake_up	0	7		2	spawn	281931	1	0	for_the_fight_absolute	0.0	0.0	0.0
+281934	LF4_DramataGD	on_wake_up	0	7		0	broadcast	7013	10	0		0.0	0.0	0.0
+281935	DF4_DramataEggSumA	on_wake_up	0	7		0	broadcast	7017	50	0		0.0	0.0	0.0
+281942	DF4_DramataGD	on_wake_up	0	7		0	broadcast	7016	10	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	0	7	chance:17	0	sysmsg	1400724	0	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	0	7	chance:17	1	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	0	7	chance:17	2	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	1	6	chance:33	0	sysmsg	1400724	0	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	1	6	chance:33	1	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	1	6	chance:33	2	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	2	5	chance:50	0	sysmsg	1400724	0	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	2	5	chance:50	1	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	2	5	chance:50	2	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	3	4	chance:67	0	sysmsg	1400724	0	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	3	4	chance:67	1	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	3	4	chance:67	2	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	4	3	chance:83	0	sysmsg	1400724	0	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	4	3	chance:83	1	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	4	3	chance:83	2	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	5	2		0	sysmsg	1400724	0	0		0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	5	2		1	spawn	281453	1	300	absolute	0.0	0.0	0.0
+281943	LF4_DramataSumC	on_wake_up	5	2		2	spawn	281453	1	300	absolute	0.0	0.0	0.0
+282058	Elim_Notice2F01	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282059	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282064	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282083	Cromede_Kmh_Noshow	on_wake_up	0	7		0	broadcast	6407	50	0		0.0	0.0	0.0
+282083	Cromede_Kmh_Noshow	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282088	Cromede_Bluestone	on_wake_up	0	7		0	broadcast	6401	50	0		0.0	0.0	0.0
+282088	Cromede_Bluestone	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282089	Cromede_NoShow_Door	on_wake_up	0	7		0	broadcast	6513	50	0		0.0	0.0	0.0
+282089	Cromede_NoShow_Door	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282090	Cromede_Redstone	on_wake_up	0	7		0	broadcast	6402	50	0		0.0	0.0	0.0
+282090	Cromede_Redstone	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282109	Elim_Broad1	on_wake_up	0	7		0	broadcast	6763	50	0		0.0	0.0	0.0
+282112	Cromede_Torture_Spawn	on_wake_up	0	7		0	spawn	217004	1	0	for_the_fight_absolute	663.07	769.54	216.85
+282112	Cromede_Torture_Spawn	on_wake_up	0	7		1	broadcast	6403	50	0		0.0	0.0	0.0
+282112	Cromede_Torture_Spawn	on_wake_up	0	7		2	broadcast	6404	50	0		0.0	0.0	0.0
+282112	Cromede_Torture_Spawn	on_wake_up	0	7		3	despawn_self	0	0	0		0.0	0.0	0.0
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		0	spawn	217001	1	0	for_the_fight_absolute	663.07	779.08	216.85
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		1	broadcast	6403	50	0		0.0	0.0	0.0
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		2	broadcast	6404	50	0		0.0	0.0	0.0
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		3	despawn_self	0	0	0		0.0	0.0	0.0
+282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		0	spawn	217003	1	0	for_the_fight_absolute	661.07	774.43	216.85
+282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		1	broadcast	6403	50	0		0.0	0.0	0.0
+282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		2	broadcast	6404	50	0		0.0	0.0	0.0
+282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		3	despawn_self	0	0	0		0.0	0.0	0.0
+282117	Cromede_Noshow_Bc2	on_wake_up	0	7		0	broadcast	6409	50	0		0.0	0.0	0.0
+282117	Cromede_Noshow_Bc2	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282118	Cromede_Noshow_Bc3	on_wake_up	0	7		0	broadcast	6410	50	0		0.0	0.0	0.0
+282118	Cromede_Noshow_Bc3	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282119	Cromede_Relic3	on_wake_up	0	7		0	broadcast	6411	50	0		0.0	0.0	0.0
+282119	Cromede_Relic3	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282128	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282129	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282130	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282132	LF4_DespawnTBox	on_wake_up	0	7		0	broadcast	11103	10	0		0.0	0.0	0.0
+282139	Elim_Effect_Heal1	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282155	IDDF3_BroadNPC_System	on_wake_up	0	7		0	broadcast	1125	50	0		0.0	0.0	0.0
+282155	IDDF3_BroadNPC_System	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282247	wave_spakynormal_die	on_wake_up	0	1		0	broadcast	11300	200	0		0.0	0.0	0.0
+282248	wave_spakybomb_die	on_wake_up	0	1		0	broadcast	11300	200	0		0.0	0.0	0.0
+282249	wave_spakyboss_die	on_wake_up	0	1		0	broadcast	11301	200	0		0.0	0.0	0.0
+282250	wave_lapnormal_die	on_wake_up	0	1		0	broadcast	11302	200	0		0.0	0.0	0.0
+282251	wave_lapbomb_die	on_wake_up	0	1		0	broadcast	11302	200	0		0.0	0.0	0.0
+282252	wave_lapboss_die	on_wake_up	0	1		0	broadcast	11103	100	0		0.0	0.0	0.0
+282252	wave_lapboss_die	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282298	IDF4Re_FOBJ_8	on_wake_up	0	7		0	broadcast	1002	10	0		0.0	0.0	0.0
+282298	IDF4Re_FOBJ_8	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282379	IDF4Re_FOBJ_A	on_wake_up	0	7		0	broadcast	10	20	0		0.0	0.0	0.0
+282379	IDF4Re_FOBJ_A	on_wake_up	0	7		1	broadcast	3344	10	0		0.0	0.0	0.0
+282432	IDElemental_Ex10	on_wake_up	0	1	set_world_flag_var:0	0	var	1	0	0	Spawn_IDElementalN_Nmd_Unicorn_60_Al	0.0	0.0	0.0
+282432	IDElemental_Ex10	on_wake_up	0	1	set_world_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+282435	IDArena_NPC_S1_End	on_wake_up	0	7	set_flag_var:0	0	broadcast	1001	100	0		0.0	0.0	0.0
+282435	IDArena_NPC_S1_End	on_wake_up	0	7	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+282445	IDRaksha_NoshowNPC_01	on_wake_up	0	7		0	broadcast	12300	100	0		0.0	0.0	0.0
+282445	IDRaksha_NoshowNPC_01	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282536	IDYun_Temp_03	on_wake_up	0	2		0	spawn	282981	1	120	for_the_fight_self	0.0	0.0	0.0
+282536	IDYun_Temp_03	on_wake_up	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+282537	IDYun_Temp_04	on_wake_up	0	2		0	spawn	282982	1	120	for_the_fight_self	0.0	0.0	0.0
+282537	IDYun_Temp_04	on_wake_up	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+282538	IDYun_Temp_05	on_wake_up	0	2		0	spawn	282983	1	120	for_the_fight_self	0.0	0.0	0.0
+282538	IDYun_Temp_05	on_wake_up	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+282541	IDYun_Temp_07	on_wake_up	0	1		0	broadcast	20	100	0		0.0	0.0	0.0
+282542	IDYun_Temp_08	on_wake_up	0	1		0	broadcast	10	10	0		0.0	0.0	0.0
+282542	IDYun_Temp_08	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282571	IDRaksha_NoshowNPC_07	on_idle_timer	0	7		0	timer	2000	0	0		0.0	0.0	0.0
+282571	IDRaksha_NoshowNPC_07	on_idle_timer	0	7		1	broadcast	12501	50	0		0.0	0.0	0.0
+282571	IDRaksha_NoshowNPC_07	on_wake_up	0	7		0	broadcast	12501	50	0		0.0	0.0	0.0
+282571	IDRaksha_NoshowNPC_07	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+282572	IDRaksha_NoshowNPC_08	on_idle_timer	0	7		0	timer	2000	0	0		0.0	0.0	0.0
+282572	IDRaksha_NoshowNPC_08	on_idle_timer	0	7		1	broadcast	12502	50	0		0.0	0.0	0.0
+282572	IDRaksha_NoshowNPC_08	on_wake_up	0	7		0	broadcast	12502	50	0		0.0	0.0	0.0
+282572	IDRaksha_NoshowNPC_08	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+282573	IDRaksha_NoshowNPC_09	on_idle_timer	0	7		0	timer	2000	0	0		0.0	0.0	0.0
+282573	IDRaksha_NoshowNPC_09	on_idle_timer	0	7		1	broadcast	12503	50	0		0.0	0.0	0.0
+282573	IDRaksha_NoshowNPC_09	on_wake_up	0	7		0	broadcast	12503	50	0		0.0	0.0	0.0
+282573	IDRaksha_NoshowNPC_09	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+282574	IDRaksha_NoshowNPC_10	on_idle_timer	0	7		0	timer	2000	0	0		0.0	0.0	0.0
+282574	IDRaksha_NoshowNPC_10	on_idle_timer	0	7		1	broadcast	12504	50	0		0.0	0.0	0.0
+282574	IDRaksha_NoshowNPC_10	on_wake_up	0	7		0	broadcast	12504	50	0		0.0	0.0	0.0
+282574	IDRaksha_NoshowNPC_10	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+282577	IDRaksha_NoshowNPC_19	on_wake_up	0	7		0	broadcast	12499	80	0		0.0	0.0	0.0
+282577	IDRaksha_NoshowNPC_19	on_wake_up	0	7		1	sysmsg	1401134	0	0		0.0	0.0	0.0
+282578	IDYun_Temp_40	on_idle_timer	0	1		0	var	1	0	0	7Nmd	0.0	0.0	0.0
+282578	IDYun_Temp_40	on_idle_timer	0	1		1	timer	0	0	0		0.0	0.0	0.0
+282578	IDYun_Temp_40	on_idle_timer	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
+282578	IDYun_Temp_40	on_wake_up	0	2		0	timer	3000	0	0		0.0	0.0	0.0
+282579	IDYun_Temp_41	on_idle_timer	0	2		0	broadcast	500	65	0		0.0	0.0	0.0
+282579	IDYun_Temp_41	on_idle_timer	0	2		1	timer	8000	0	0		0.0	0.0	0.0
+282579	IDYun_Temp_41	on_wake_up	0	5	chance:30|set_flag_var:0	0	timer	7000	0	0		0.0	0.0	0.0
+282579	IDYun_Temp_41	on_wake_up	1	4	chance:30|set_flag_var:0	0	timer	11000	0	0		0.0	0.0	0.0
+282579	IDYun_Temp_41	on_wake_up	2	3	chance:30|set_flag_var:0	0	timer	15000	0	0		0.0	0.0	0.0
+282579	IDYun_Temp_41	on_wake_up	3	2	set_flag_var:0	0	timer	19000	0	0		0.0	0.0	0.0
+282582	IDYun_Temp_42	on_idle_timer	0	1		0	broadcast	10	1	0		0.0	0.0	0.0
+282582	IDYun_Temp_42	on_idle_timer	0	1		1	timer	0	0	0		0.0	0.0	0.0
+282582	IDYun_Temp_42	on_wake_up	0	2		0	timer	5000	0	0		0.0	0.0	0.0
+282599	IDRaksha_NoshowNPC_22	on_wake_up	0	7		0	broadcast	12035	50	0		0.0	0.0	0.0
+282599	IDRaksha_NoshowNPC_22	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282700	IDDramata_NoShowNPC_04	on_wake_up	0	7		0	broadcast	300	100	0		0.0	0.0	0.0
+282702	IDDramata_NoShowNPC_06	on_wake_up	0	7		0	sysmsg	1401214	0	0		0.0	0.0	0.0
+282702	IDDramata_NoShowNPC_06	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+282703	IDDramata_NoShowNPC_07	on_wake_up	0	7		0	sysmsg	1401213	0	0		0.0	0.0	0.0
+282704	IDDramata_NoShowNPC_08	on_wake_up	0	7		0	broadcast	100	100	0		0.0	0.0	0.0
+282705	IDDramata_NoShowNPC_09	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
+282705	IDDramata_NoShowNPC_09	on_idle_timer	0	7		1	broadcast	600	160	0		0.0	0.0	0.0
+282705	IDDramata_NoShowNPC_09	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+282705	IDDramata_NoShowNPC_09	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+282969	LDF4a_SWM_Skill_Broad_1	on_wake_up	0	7		0	broadcast	7298	100	0		0.0	0.0	0.0
+282970	LDF4a_SWM_Skill_Broad_1	on_wake_up	0	7		0	broadcast	7298	100	0		0.0	0.0	0.0
+282975	Tdown_DrakanGiant_BroadCast_NoShowNpc	on_wake_up	0	1		0	broadcast	1021	50	0		0.0	0.0	0.0
+282975	Tdown_DrakanGiant_BroadCast_NoShowNpc	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283016	Dread03_BoxSpawn01	on_wake_up	0	1		0	sysmsg	1401421	0	0		0.0	0.0	0.0
+283016	Dread03_BoxSpawn01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283017	Dread03_BoxSpawn02	on_wake_up	0	1		0	sysmsg	1401424	0	0		0.0	0.0	0.0
+283017	Dread03_BoxSpawn02	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+284537	IDF5_TD_Cannon_Hit_09	on_wake_up	0	7		0	sysmsg	1401939	0	0		0.0	0.0	0.0
+284537	IDF5_TD_Cannon_Hit_09	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+284643	BIDF5_R2_Victim_FxMon	on_wake_up	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+284645	Rune_FrostNmd_PazeCheck_NoShow2	on_wake_up	0	7		0	sysmsg	1401840	0	0		0.0	0.0	0.0
+284646	Rune_FrostNmd_PazeCheck_NoShow3	on_wake_up	0	7		0	sysmsg	1401841	0	0		0.0	0.0	0.0
+284647	Rune_FrostNmd_PazeCheck_NoShow4	on_wake_up	0	7		0	sysmsg	1401842	0	0		0.0	0.0	0.0
+284648	Rune_FrostNmd_PazeCheck_NoShow5	on_wake_up	0	7		0	sysmsg	1401843	0	0		0.0	0.0	0.0
+284649	Rune_FrostNmd_PazeCheck_NoShow6	on_wake_up	0	7		0	sysmsg	1401844	0	0		0.0	0.0	0.0
+284650	Rune_FrostNmd_PazeCheck_NoShow_Sum2	on_wake_up	0	7		0	sysmsg	1401847	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	0	14	unset_flag_var:0|set_flag_var:1	0	broadcast	21172	50	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	0	14	unset_flag_var:0|set_flag_var:1	1	broadcast	21173	50	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	0	14	unset_flag_var:0|set_flag_var:1	2	timer	0	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	0	14	unset_flag_var:0|set_flag_var:1	3	despawn_self	0	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	1	13	count:1:2:121:1|set_flag_var:1	0	sysmsg	1401794	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	1	13	count:1:2:121:1|set_flag_var:1	1	var	1	0	0	cSetFastCharge	0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	1	13	count:1:2:121:1|set_flag_var:1	2	broadcast	21172	50	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	1	13	count:1:2:121:1|set_flag_var:1	3	broadcast	21173	50	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	1	13	count:1:2:121:1|set_flag_var:1	4	timer	0	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	1	13	count:1:2:121:1|set_flag_var:1	5	despawn_self	0	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	2	4	count:1:1:2:1	0	timer	10000	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	3	3	count:1:0:1:1	0	sysmsg	1401790	0	0		0.0	0.0	0.0
+284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	3	3	count:1:0:1:1	1	timer	5000	0	0		0.0	0.0	0.0
+284691	IDF5_U1_NoShowNPC04_WeaponFXSkill	on_wake_up	0	7		0	broadcast	21211	50	0		0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		0	var	2	0	0	GAMECONTROL	0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		1	var	2	0	0	GATECONTROL_B2	0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		2	var	2	0	0	GATECONTROL_B3	0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		3	var	2	0	0	GATECONTROL_B4	0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		4	var	2	0	0	GATECONTROL_B5	0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		5	var	2	0	0	OBJ_GATE_SELECTION	0.0	0.0	0.0
+284702	IDVritra_Base_GateControl_01	on_wake_up	0	7		6	spawn	730873	1	0	for_the_fight_absolute	127.5	432.8	151.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		0	var	2	0	0	GAMECONTROL	0.0	0.0	0.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		1	var	2	0	0	GATECONTROL_B1	0.0	0.0	0.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		2	var	2	0	0	GATECONTROL_B3	0.0	0.0	0.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		3	var	2	0	0	GATECONTROL_B4	0.0	0.0	0.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		4	var	2	0	0	GATECONTROL_B5	0.0	0.0	0.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		5	var	2	0	0	OBJ_GATE_SELECTION	0.0	0.0	0.0
+284703	IDVritra_Base_GateControl_02	on_wake_up	0	7		6	spawn	730874	1	0	for_the_fight_absolute	127.5	432.8	151.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		0	var	2	0	0	GAMECONTROL	0.0	0.0	0.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		1	var	2	0	0	GATECONTROL_B1	0.0	0.0	0.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		2	var	2	0	0	GATECONTROL_B2	0.0	0.0	0.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		3	var	2	0	0	GATECONTROL_B4	0.0	0.0	0.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		4	var	2	0	0	GATECONTROL_B5	0.0	0.0	0.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		5	var	2	0	0	OBJ_GATE_SELECTION	0.0	0.0	0.0
+284704	IDVritra_Base_GateControl_03	on_wake_up	0	7		6	spawn	730875	1	0	for_the_fight_absolute	127.5	432.8	151.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		0	var	2	0	0	GAMECONTROL	0.0	0.0	0.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		1	var	2	0	0	GATECONTROL_B1	0.0	0.0	0.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		2	var	2	0	0	GATECONTROL_B2	0.0	0.0	0.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		3	var	2	0	0	GATECONTROL_B3	0.0	0.0	0.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		4	var	2	0	0	GATECONTROL_B5	0.0	0.0	0.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		5	var	2	0	0	OBJ_GATE_SELECTION	0.0	0.0	0.0
+284705	IDVritra_Base_GateControl_04	on_wake_up	0	7		6	spawn	730876	1	0	for_the_fight_absolute	127.5	432.8	151.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		0	var	2	0	0	GAMECONTROL	0.0	0.0	0.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		1	var	2	0	0	GATECONTROL_B1	0.0	0.0	0.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		2	var	2	0	0	GATECONTROL_B2	0.0	0.0	0.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		3	var	2	0	0	GATECONTROL_B3	0.0	0.0	0.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		4	var	2	0	0	GATECONTROL_B4	0.0	0.0	0.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		5	var	2	0	0	OBJ_GATE_SELECTION	0.0	0.0	0.0
+284706	IDVritra_Base_GateControl_05	on_wake_up	0	7		6	spawn	730877	1	0	for_the_fight_absolute	127.5	432.8	151.0
+284750	BIDF5_U2_NoShowNPC02_SN_Broad	on_idle_timer	0	6		0	broadcast	21253	50	0		0.0	0.0	0.0
+284750	BIDF5_U2_NoShowNPC02_SN_Broad	on_idle_timer	0	6		1	timer	0	0	0		0.0	0.0	0.0
+284751	BIDF5_U2_NoShowNPC03_CtrlTrap	on_idle_timer	0	7		0	broadcast	21291	10	0		0.0	0.0	0.0
+284751	BIDF5_U2_NoShowNPC03_CtrlTrap	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+284761	IDF5_U1_SummonRetake_1	on_wake_up	0	1		0	sysmsg	1401942	0	0		0.0	0.0	0.0
+284762	IDF5_U1_SummonRetake_2	on_wake_up	0	1		0	sysmsg	1401943	0	0		0.0	0.0	0.0
+284763	IDF5_U1_SummonRetake_3	on_wake_up	0	1		0	sysmsg	1401944	0	0		0.0	0.0	0.0
+284764	IDF5_U1_SummonRetake_4	on_wake_up	0	1		0	sysmsg	1401945	0	0		0.0	0.0	0.0
+284765	BIDRuneWP_NoShowNPC_Protection_01	on_wake_up	0	7		0	broadcast	21130	10	0		0.0	0.0	0.0
+284766	BIDRuneWP_NoShowNPC_Protection_02	on_wake_up	0	7		0	broadcast	21140	10	0		0.0	0.0	0.0
+284767	BIDRuneWP_NoShowNPC_Protection_03	on_wake_up	0	7		0	broadcast	21150	10	0		0.0	0.0	0.0
+284768	BIDRuneWP_NoShowNPC_Protection_04	on_wake_up	0	7		0	broadcast	21160	10	0		0.0	0.0	0.0
+284769	BIDRuneWP_NoShowNPC_HugeProtection	on_wake_up	0	7		0	broadcast	21110	10	0		0.0	0.0	0.0
+284769	BIDRuneWP_NoShowNPC_HugeProtection	on_wake_up	0	7		1	broadcast	21112	10	0		0.0	0.0	0.0
+284785	IDF5_TD_War_Dark_Supply	on_wake_up	0	1		0	spawn	831979	1	0	for_the_fight_self	0.0	0.0	0.0
+284799	IDF5_TD_War_Light_Supply	on_wake_up	0	1		0	spawn	831978	1	0	for_the_fight_self	0.0	0.0	0.0
+284805	IDF5_TD_War_FTank_PC	on_wake_up	0	7		0	spawn	831981	1	0	for_the_fight_self	0.0	0.0	0.0
+284977	IDLDF4_Re_01_room_set	on_wake_up	0	8	chance:20	0	var	3	0	0	room	0.0	0.0	0.0
+284977	IDLDF4_Re_01_room_set	on_wake_up	0	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+284977	IDLDF4_Re_01_room_set	on_wake_up	1	7	chance:35	0	var	2	0	0	room	0.0	0.0	0.0
+284977	IDLDF4_Re_01_room_set	on_wake_up	1	7	chance:35	1	despawn_self	0	0	0		0.0	0.0	0.0
+284977	IDLDF4_Re_01_room_set	on_wake_up	2	6		0	var	1	0	0	room	0.0	0.0	0.0
+284977	IDLDF4_Re_01_room_set	on_wake_up	2	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+284992	IDVritra_Base_Temp07	on_wake_up	0	7		0	broadcast	22214	50	0		0.0	0.0	0.0
+284992	IDVritra_Base_Temp07	on_wake_up	0	7		1	broadcast	22218	50	0		0.0	0.0	0.0
+284992	IDVritra_Base_Temp07	on_wake_up	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+284993	IDVritra_Base_Temp08	on_wake_up	0	7		0	broadcast	22215	50	0		0.0	0.0	0.0
+284993	IDVritra_Base_Temp08	on_wake_up	0	7		1	broadcast	22218	50	0		0.0	0.0	0.0
+284993	IDVritra_Base_Temp08	on_wake_up	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+284994	IDVritra_Base_Temp09	on_wake_up	0	7		0	broadcast	22216	50	0		0.0	0.0	0.0
+284994	IDVritra_Base_Temp09	on_wake_up	0	7		1	broadcast	22218	50	0		0.0	0.0	0.0
+284994	IDVritra_Base_Temp09	on_wake_up	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+286800	testai58	on_wake_up	0	1		0	broadcast	1001	50	0		0.0	0.0	0.0
+286993	Test_Monster_AI_KSJ_07	on_wake_up	0	9	set_flag_var:10	0	broadcast	9999	1000	0		0.0	0.0	0.0
+287210	Test_GHB_Ed_65_N	on_wake_up	0	7		0	broadcast	2222	1000	0		0.0	0.0	0.0
+287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	0	spawn	287242	1	0	for_the_fight_self	0.0	0.0	0.0
+287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	1	spawn	287239	1	0	for_the_fight_self	1.0	1.0	0.0
+287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	2	timer	0	0	0		0.0	0.0	0.0
+287245	LDF5_U2_E_02_Time_03	on_idle_timer	1	4	set_flag_var:1	0	spawn	287244	1	0	for_the_fight_self	0.0	0.0	0.0
+287245	LDF5_U2_E_02_Time_03	on_idle_timer	1	4	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+287269	IDF4Re_Drana_Named_E	on_wake_up	0	7		0	say	1500200	0	0		0.0	0.0	0.0
+295092	BGuard_ChiefDespawn	on_wake_up	0	7		0	broadcast	10009	100	0		0.0	0.0	0.0
+295092	BGuard_ChiefDespawn	on_wake_up	0	7		1	broadcast	10037	100	0		0.0	0.0	0.0
+296239	BGuard_CDropGateA	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296239	BGuard_CDropGateA	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296241	BGuard_CDropGateA	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296241	BGuard_CDropGateA	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296242	BGuard_CDropGateA_30D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296242	BGuard_CDropGateA_30D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296243	BGuard_CDropGateA_60D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296243	BGuard_CDropGateA_60D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296244	BGuard_CDropGateA_90D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296244	BGuard_CDropGateA_90D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296245	BGuard_CDropGateA_120D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296245	BGuard_CDropGateA_120D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296246	BGuard_CDropGateA_150D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296246	BGuard_CDropGateA_150D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296247	BGuard_CDropGateA_180D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296247	BGuard_CDropGateA_180D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296248	BGuard_CDropGateA_210D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296248	BGuard_CDropGateA_210D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296249	BGuard_CDropGateA_240D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296249	BGuard_CDropGateA_240D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296250	BGuard_CDropGateA_270D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296250	BGuard_CDropGateA_270D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296251	BGuard_CDropGateA_300D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296251	BGuard_CDropGateA_300D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296252	BGuard_CDropGateA_330D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
+296252	BGuard_CDropGateA_330D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+296522	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		0	broadcast	10032	40	0		0.0	0.0	0.0
+296522	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+296522	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+296522	BGuard_TowerChiefF4ASum	on_wake_up	0	7		0	broadcast	10032	40	0		0.0	0.0	0.0
+296522	BGuard_TowerChiefF4ASum	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+296524	BGuard_TowerChiefF4BSum	on_idle_timer	0	7		0	broadcast	10034	40	0		0.0	0.0	0.0
+296524	BGuard_TowerChiefF4BSum	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+296524	BGuard_TowerChiefF4BSum	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+296524	BGuard_TowerChiefF4BSum	on_wake_up	0	7		0	broadcast	10034	40	0		0.0	0.0	0.0
+296524	BGuard_TowerChiefF4BSum	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+296910	LF4_GHObjectSum1_KJS	on_wake_up	0	7		0	broadcast	7010	3	0		0.0	0.0	0.0
+296912	LF4_GHObjectSum3_KJS	on_wake_up	0	7		0	broadcast	10007	50	0		0.0	0.0	0.0
+296918	DF4_GHObjectSum3_KJS	on_wake_up	0	7		0	broadcast	10008	50	0		0.0	0.0	0.0
+296920	DF4_GHObjectSum5_KJS	on_wake_up	0	7		0	broadcast	10004	50	0		0.0	0.0	0.0
+296923	LF4_GHObjectSum5_KJS	on_wake_up	0	7		0	broadcast	10003	50	0		0.0	0.0	0.0
+296935	DF4_GHObjectSum3	on_wake_up	0	7		0	broadcast	7003	40	0		0.0	0.0	0.0
+296936	DF4_GHObjectSum3	on_wake_up	0	7		0	broadcast	7003	40	0		0.0	0.0	0.0
+296937	DF4_GHObjectSum3	on_wake_up	0	7		0	broadcast	7003	40	0		0.0	0.0	0.0
+296938	DF4_GHObjectSum3	on_wake_up	0	7		0	broadcast	7003	40	0		0.0	0.0	0.0
+296947	LF4_GHObjectSum7_KJS	on_wake_up	0	7		0	broadcast	4444	50	0		0.0	0.0	0.0
+297099	BGuard_ChiefA_Renew_Obj_Dr4	on_idle_timer	0	10	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+297104	BGuard_ChiefA_Renew_Obj_Li4	on_idle_timer	0	10	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+297105	BGuard_ChiefA_Renew_Obj_Li5	on_idle_timer	0	10	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+297109	BGuard_ChiefA_Renew_Obj_Da4	on_idle_timer	0	10	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+297110	BGuard_ChiefA_Renew_Obj_Da5	on_idle_timer	0	10	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+297174	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		0	broadcast	10032	40	0		0.0	0.0	0.0
+297174	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+297174	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+297174	BGuard_TowerChiefF4ASum	on_wake_up	0	7		0	broadcast	10032	40	0		0.0	0.0	0.0
+297174	BGuard_TowerChiefF4ASum	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+297176	BGuard_TowerChiefF4BSum	on_idle_timer	0	7		0	broadcast	10034	40	0		0.0	0.0	0.0
+297176	BGuard_TowerChiefF4BSum	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+297176	BGuard_TowerChiefF4BSum	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+297176	BGuard_TowerChiefF4BSum	on_wake_up	0	7		0	broadcast	10034	40	0		0.0	0.0	0.0
+297176	BGuard_TowerChiefF4BSum	on_wake_up	0	7		1	timer	2000	0	0		0.0	0.0	0.0
+297546	LDF5_Fortress_GuardianHead_Ctrl	on_wake_up	0	100		0	broadcast	25050	50	0		0.0	0.0	0.0
+297546	LDF5_Fortress_GuardianHead_Ctrl	on_wake_up	0	100		1	despawn_self	0	0	0		0.0	0.0	0.0
+297547	LDF5_Fortress_Ctrl_03	on_wake_up	0	7		0	broadcast	25070	50	0		0.0	0.0	0.0
+297547	LDF5_Fortress_Ctrl_03	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+297548	LDF5_Fortress_Ctrl_04	on_wake_up	0	7		0	broadcast	25055	50	0		0.0	0.0	0.0
+297548	LDF5_Fortress_Ctrl_04	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+297551	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297551	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297551	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297551	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297552	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297552	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297552	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297552	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297553	LDF5_Fortress_CGate	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297553	LDF5_Fortress_CGate	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297553	LDF5_Fortress_CGate	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297553	LDF5_Fortress_CGate	on_wake_up	0	7		1	var	1	0	0	door01	0.0	0.0	0.0
+297553	LDF5_Fortress_CGate	on_wake_up	0	7		2	broadcast	25400	50	0		0.0	0.0	0.0
+297557	LDF5_Fortress_Barricade_Ctrl	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297557	LDF5_Fortress_Barricade_Ctrl	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297557	LDF5_Fortress_Barricade_Ctrl	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297557	LDF5_Fortress_Barricade_Ctrl	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297558	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297558	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297558	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297558	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297559	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297559	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297559	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297559	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297560	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297560	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297560	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297560	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297561	LDF5_Fortress_Barricade_Ctrl	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297561	LDF5_Fortress_Barricade_Ctrl	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297561	LDF5_Fortress_Barricade_Ctrl	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297561	LDF5_Fortress_Barricade_Ctrl	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297562	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297562	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297562	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297562	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297563	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297563	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297563	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297563	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297564	LDF5_Fortress_Barricade	on_idle_timer	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297564	LDF5_Fortress_Barricade	on_idle_timer	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297564	LDF5_Fortress_Barricade	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+297564	LDF5_Fortress_Barricade	on_wake_up	0	7		1	broadcast	25400	50	0		0.0	0.0	0.0
+297591	AB1_DoorOpenObj_Li_01_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297592	AB1_DoorOpenObj_Li_02_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297593	AB1_DoorOpenObj_Li_03_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297594	AB1_DoorOpenObj_Li_04_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297596	AB1_DoorOpenObj_Da_01_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297597	AB1_DoorOpenObj_Da_02_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297598	AB1_DoorOpenObj_Da_03_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297599	AB1_DoorOpenObj_Da_04_KJS	on_wake_up	0	7		0	sysmsg	1402731	0	0		0.0	0.0	0.0
+297603	AB1_DoorDamage_Noshow_Li_02_KJS	on_idle_timer	0	7		0	broadcast	909999	5	0		0.0	0.0	0.0
+297603	AB1_DoorDamage_Noshow_Li_02_KJS	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+297603	AB1_DoorDamage_Noshow_Li_02_KJS	on_wake_up	0	7		0	timer	1000	0	0		0.0	0.0	0.0
+700996	IDElemental_Ex5	on_wake_up	0	7		0	broadcast	6453	50	0		0.0	0.0	0.0
+701528	IDTiamat_NPC_Yun_Hero	on_wake_up	0	7		0	say	390859	0	0		0.0	0.0	0.0
+701594	IDAbRe_Core_Artifact	on_wake_up	0	3		0	broadcast	11110	40	0		0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		0	var	3	0	0	C_Flag_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		1	var	3	0	0	C_Flag_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		2	var	3	0	0	C_Flag_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		3	var	3	0	0	C_Flag_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		4	var	1	0	0	C_WaveATK_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		5	var	1	0	0	C_WaveATK_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		6	var	1	0	0	C_WaveATK_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		7	var	1	0	0	C_WaveATK_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		8	var	4	0	0	C_Defender_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		9	var	4	0	0	C_Defender_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		10	var	4	0	0	C_Defender_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		11	var	4	0	0	C_Defender_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		12	var	4	0	0	C_WaveReTake_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		13	var	4	0	0	C_WaveReTake_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		14	var	4	0	0	C_WaveReTake_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		15	var	4	0	0	C_WaveReTake_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		16	timer	0	0	0		0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		0	var	3	0	0	C_Flag_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		1	var	3	0	0	C_Flag_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		2	var	3	0	0	C_Flag_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		3	var	3	0	0	C_Flag_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		4	var	1	0	0	C_WaveATK_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		5	var	1	0	0	C_WaveATK_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		6	var	1	0	0	C_WaveATK_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		7	var	1	0	0	C_WaveATK_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		8	var	3	0	0	C_Defender_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		9	var	3	0	0	C_Defender_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		10	var	3	0	0	C_Defender_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		11	var	3	0	0	C_Defender_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		12	var	1	0	0	C_WaveReTake_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		13	var	1	0	0	C_WaveReTake_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		14	var	1	0	0	C_WaveReTake_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		15	var	1	0	0	C_WaveReTake_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		16	timer	5000	0	0		0.0	0.0	0.0
+701648	IDF5_Under_01_PcTank_Ctrl	on_wake_up	0	90		0	broadcast	21201	50	0		0.0	0.0	0.0
+701670	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+701671	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
+701705	LDF5b_6021_Explosion_Lever_01	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
+701705	LDF5b_6021_Explosion_Lever_01	on_idle_timer	0	7		1	var	-1	0	0	6021_WaterBoom_01	0.0	0.0	0.0
+701705	LDF5b_6021_Explosion_Lever_01	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+701706	LDF5b_6021_Explosion_Lever_02	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
+701706	LDF5b_6021_Explosion_Lever_02	on_idle_timer	0	7		1	var	-1	0	0	6021_WaterBoom_02	0.0	0.0	0.0
+701706	LDF5b_6021_Explosion_Lever_02	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+701707	LDF5b_6021_Explosion_Lever_03	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
+701707	LDF5b_6021_Explosion_Lever_03	on_idle_timer	0	7		1	var	-1	0	0	6021_WaterBoom_03	0.0	0.0	0.0
+701707	LDF5b_6021_Explosion_Lever_03	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+701708	LDF5b_6021_Explosion_Lever_04	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
+701708	LDF5b_6021_Explosion_Lever_04	on_idle_timer	0	7		1	var	-1	0	0	6021_WaterBoom_04	0.0	0.0	0.0
+701708	LDF5b_6021_Explosion_Lever_04	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+701905	IDKamar_FX_Check_02	on_wake_up	0	7		0	sysmsg	1401913	0	0		0.0	0.0	0.0
+701934	IDF5_U1_Bar_NoShowNPC04	on_wake_up	0	7		0	broadcast	21232	10	0		0.0	0.0	0.0
+701991	IDLDF5_Under_01_War_Guard_01	on_wake_up	0	7		0	sysmsg	1401966	0	0		0.0	0.0	0.0
+701992	IDLDF5_Under_01_War_Guard_02	on_wake_up	0	7		0	sysmsg	1401950	0	0		0.0	0.0	0.0
+701993	IDLDF5_Under_01_War_Guard_03	on_wake_up	0	7		0	sysmsg	1401966	0	0		0.0	0.0	0.0
+701994	IDLDF5_Under_01_War_Guard_04	on_idle_timer	0	7		0	sysmsg	1401951	0	0		0.0	0.0	0.0
+701994	IDLDF5_Under_01_War_Guard_04	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+701994	IDLDF5_Under_01_War_Guard_04	on_wake_up	0	7		0	sysmsg	1401950	0	0		0.0	0.0	0.0
+701994	IDLDF5_Under_01_War_Guard_04	on_wake_up	0	7		1	timer	3000	0	0		0.0	0.0	0.0
+702004	IDLDF5_Under_01_War_MSG_04	on_idle_timer	0	7		0	sysmsg	1401968	0	0		0.0	0.0	0.0
+702004	IDLDF5_Under_01_War_MSG_04	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
+702004	IDLDF5_Under_01_War_MSG_04	on_wake_up	0	7		0	sysmsg	1402086	0	0		0.0	0.0	0.0
+702004	IDLDF5_Under_01_War_MSG_04	on_wake_up	0	7		1	timer	3000	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	0	var	10	0	0	BOSS	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	1	var	2	0	0	N_WAVE_01	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	2	var	2	0	0	N_WAVE_02	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	3	var	2	0	0	N_WAVE_03	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	4	var	2	0	0	N_WAVE_04	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	5	var	2	0	0	H_WAVE_01_01	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	6	var	2	0	0	H_WAVE_01_02	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	7	var	2	0	0	H_WAVE_01_03	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	8	var	2	0	0	H_WAVE_02_01	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	9	var	2	0	0	H_WAVE_02_02	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	10	var	2	0	0	H_WAVE_02_03	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	11	var	2	0	0	H_WAVE_03_01	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	12	var	2	0	0	H_WAVE_03_02	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	13	var	2	0	0	H_WAVE_03_03	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	14	var	2	0	0	H_WAVE_04_01	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	15	var	2	0	0	H_WAVE_04_02	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	16	var	2	0	0	H_WAVE_04_03	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	17	var	2	0	0	CANNON_01	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	18	var	2	0	0	CANNON_02	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	19	var	2	0	0	CANNON_03	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	20	var	2	0	0	CANNON_04	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	21	sysmsg	1402236	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	22	var	1	0	0	TIMEOVER	0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	0	8	count:0:6:7:1	23	despawn_self	0	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	1	7	count:0:5:6:1	0	sysmsg	1402235	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	1	7	count:0:5:6:1	1	timer	60000	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	2	6	count:0:4:5:1	0	sysmsg	1402134	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	2	6	count:0:4:5:1	1	timer	240000	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	3	5	count:0:3:4:1	0	sysmsg	1402133	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	4	4	count:0:2:3:1	0	sysmsg	1402132	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	5	3	count:0:1:2:1	0	sysmsg	1402131	0	0		0.0	0.0	0.0
+702020	IDF5_U3_GameTimer	on_idle_timer	6	2	count:0:0:1:1	0	sysmsg	1402130	0	0		0.0	0.0	0.0
+702216	IDF5_U3_Boss_Portal_Destroy	on_idle_timer	0	3	set_flag_var:0	0	broadcast	22549	70	0		0.0	0.0	0.0
+702216	IDF5_U3_Boss_Portal_Destroy	on_wake_up	0	7		0	sysmsg	1403146	0	0		0.0	0.0	0.0
+702286	IDF5_U3_TEMP_10	on_wake_up	0	1		0	broadcast	22598	70	0		0.0	0.0	0.0
+702286	IDF5_U3_TEMP_10	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+702328	Gab1_Boss_Noshow_01	on_wake_up	0	7		0	var	-1	0	0	GAB1_RESURRECT_DEF	0.0	0.0	0.0
+702328	Gab1_Boss_Noshow_01	on_wake_up	0	7		1	sysmsg	1402644	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	0	var	10	0	0	BOSS	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	1	var	2	0	0	N_WAVE_01	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	2	var	2	0	0	N_WAVE_02	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	3	var	2	0	0	N_WAVE_03	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	4	var	2	0	0	N_WAVE_04	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	5	var	2	0	0	H_WAVE_01_01	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	6	var	2	0	0	H_WAVE_01_02	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	7	var	2	0	0	H_WAVE_01_03	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	8	var	2	0	0	H_WAVE_02_01	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	9	var	2	0	0	H_WAVE_02_02	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	10	var	2	0	0	H_WAVE_02_03	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	11	var	2	0	0	H_WAVE_03_01	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	12	var	2	0	0	H_WAVE_03_02	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	13	var	2	0	0	H_WAVE_03_03	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	14	var	2	0	0	H_WAVE_04_01	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	15	var	2	0	0	H_WAVE_04_02	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	16	var	2	0	0	H_WAVE_04_03	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	17	var	2	0	0	CANNON_01	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	18	var	2	0	0	CANNON_02	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	19	var	2	0	0	CANNON_03	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	20	var	2	0	0	CANNON_04	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	21	sysmsg	1402424	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	22	var	1	0	0	TIMEOVER	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	23	var	2	0	0	RESOURCE	0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	0	8	count:0:5:6:1	24	despawn_self	0	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	1	6	count:0:4:5:1	0	sysmsg	1402235	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	1	6	count:0:4:5:1	1	timer	60000	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	2	5	count:0:3:4:1	0	sysmsg	1402134	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	2	5	count:0:3:4:1	1	timer	240000	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	3	4	count:0:2:3:1	0	sysmsg	1402133	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	4	3	count:0:1:2:1	0	sysmsg	1402132	0	0		0.0	0.0	0.0
+702503	IDF5_U3_Hard_GameTimer	on_idle_timer	5	2	count:0:0:1:1	0	sysmsg	1402131	0	0		0.0	0.0	0.0
+702538	WorldRaid_CTRL_Selcet_1_3_ALL	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702538	WorldRaid_CTRL_Selcet_1_3_ALL	on_wake_up	0	1		1	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702538	WorldRaid_CTRL_Selcet_1_3_ALL	on_wake_up	0	1		2	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702538	WorldRaid_CTRL_Selcet_1_3_ALL	on_wake_up	0	1		3	sysmsg	1402383	0	0		0.0	0.0	0.0
+702539	WorldRaid_CTRL_Selcet_1_3	on_wake_up	0	3	chance:33	0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702539	WorldRaid_CTRL_Selcet_1_3	on_wake_up	0	3	chance:33	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702539	WorldRaid_CTRL_Selcet_1_3	on_wake_up	1	2	chance:50	0	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702539	WorldRaid_CTRL_Selcet_1_3	on_wake_up	1	2	chance:50	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702539	WorldRaid_CTRL_Selcet_1_3	on_wake_up	2	1		0	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702539	WorldRaid_CTRL_Selcet_1_3	on_wake_up	2	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702540	WorldRaid_CTRL_Selcet_4_5_ALL	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702540	WorldRaid_CTRL_Selcet_4_5_ALL	on_wake_up	0	1		1	var	1	0	0	WORLDRAID_05	0.0	0.0	0.0
+702540	WorldRaid_CTRL_Selcet_4_5_ALL	on_wake_up	0	1		2	sysmsg	1402383	0	0		0.0	0.0	0.0
+702541	WorldRaid_CTRL_Selcet_4_5	on_wake_up	0	2	chance:50	0	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702541	WorldRaid_CTRL_Selcet_4_5	on_wake_up	0	2	chance:50	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702541	WorldRaid_CTRL_Selcet_4_5	on_wake_up	1	1		0	var	1	0	0	WORLDRAID_05	0.0	0.0	0.0
+702541	WorldRaid_CTRL_Selcet_4_5	on_wake_up	1	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702542	WorldRaid_CTRL_Selcet_1_4_ALL	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702542	WorldRaid_CTRL_Selcet_1_4_ALL	on_wake_up	0	1		1	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702542	WorldRaid_CTRL_Selcet_1_4_ALL	on_wake_up	0	1		2	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702542	WorldRaid_CTRL_Selcet_1_4_ALL	on_wake_up	0	1		3	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702542	WorldRaid_CTRL_Selcet_1_4_ALL	on_wake_up	0	1		4	sysmsg	1402383	0	0		0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	0	4	chance:25	0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	0	4	chance:25	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	1	3	chance:33	0	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	1	3	chance:33	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	2	2	chance:50	0	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	2	2	chance:50	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	3	1		0	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702543	WorldRaid_CTRL_Selcet_1_4	on_wake_up	3	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702544	WorldRaid_CTRL_Selcet_5_7_ALL	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702544	WorldRaid_CTRL_Selcet_5_7_ALL	on_wake_up	0	1		1	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702544	WorldRaid_CTRL_Selcet_5_7_ALL	on_wake_up	0	1		2	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702544	WorldRaid_CTRL_Selcet_5_7_ALL	on_wake_up	0	1		3	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702544	WorldRaid_CTRL_Selcet_5_7_ALL	on_wake_up	0	1		4	var	1	0	0	WORLDRAID_05	0.0	0.0	0.0
+702544	WorldRaid_CTRL_Selcet_5_7_ALL	on_wake_up	0	1		5	sysmsg	1402383	0	0		0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	0	5	chance:20	0	var	1	0	0	WORLDRAID_05	0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	0	5	chance:20	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	1	4	chance:25	0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	1	4	chance:25	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	2	3	chance:33	0	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	2	3	chance:33	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	3	2	chance:50	0	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	3	2	chance:50	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	4	1		0	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702545	WorldRaid_CTRL_Selcet_5_7	on_wake_up	4	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702546	WorldRaid_CTRL_Selcet_5_9_ALL	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_05	0.0	0.0	0.0
+702546	WorldRaid_CTRL_Selcet_5_9_ALL	on_wake_up	0	1		1	var	1	0	0	WORLDRAID_06	0.0	0.0	0.0
+702546	WorldRaid_CTRL_Selcet_5_9_ALL	on_wake_up	0	1		2	var	1	0	0	WORLDRAID_07	0.0	0.0	0.0
+702546	WorldRaid_CTRL_Selcet_5_9_ALL	on_wake_up	0	1		3	var	1	0	0	WORLDRAID_08	0.0	0.0	0.0
+702546	WorldRaid_CTRL_Selcet_5_9_ALL	on_wake_up	0	1		4	var	1	0	0	WORLDRAID_09	0.0	0.0	0.0
+702546	WorldRaid_CTRL_Selcet_5_9_ALL	on_wake_up	0	1		5	sysmsg	1402383	0	0		0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	0	5	chance:20	0	var	1	0	0	WORLDRAID_05	0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	0	5	chance:20	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	1	4	chance:25	0	var	1	0	0	WORLDRAID_06	0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	1	4	chance:25	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	2	3	chance:33	0	var	1	0	0	WORLDRAID_07	0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	2	3	chance:33	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	3	2	chance:50	0	var	1	0	0	WORLDRAID_08	0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	3	2	chance:50	1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	4	1		0	var	1	0	0	WORLDRAID_09	0.0	0.0	0.0
+702547	WorldRaid_CTRL_Selcet_5_9	on_wake_up	4	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702588	IDF5_U3_TEMP_06	on_idle_timer	0	3	set_flag_var:0	0	broadcast	22549	70	0		0.0	0.0	0.0
+702588	IDF5_U3_TEMP_06	on_wake_up	0	1		0	sysmsg	1402202	0	0		0.0	0.0	0.0
+702625	WorldRaid_CTRL_Selcet_1	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_01	0.0	0.0	0.0
+702625	WorldRaid_CTRL_Selcet_1	on_wake_up	0	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702626	WorldRaid_CTRL_Selcet_2	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_02	0.0	0.0	0.0
+702626	WorldRaid_CTRL_Selcet_2	on_wake_up	0	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702627	WorldRaid_CTRL_Selcet_3	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_03	0.0	0.0	0.0
+702627	WorldRaid_CTRL_Selcet_3	on_wake_up	0	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702628	WorldRaid_CTRL_Selcet_4	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
+702628	WorldRaid_CTRL_Selcet_4	on_wake_up	0	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	0	7	set_flag_var:0	0	timer	240000	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	0	7	set_flag_var:0	1	sysmsg	1402609	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	1	6	set_flag_var:1	0	timer	30000	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	1	6	set_flag_var:1	1	sysmsg	1402610	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	2	5	set_flag_var:2	0	timer	20000	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	2	5	set_flag_var:2	1	sysmsg	1402611	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	3	4	set_flag_var:3	0	timer	10000	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	3	4	set_flag_var:3	1	sysmsg	1402612	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	4	3	set_flag_var:4	0	sysmsg	1402613	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	4	3	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+702645	Gab1_TimeStartCheck_Noshow_1	on_wake_up	0	7		0	timer	300000	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	0	8	set_flag_var:20	0	timer	115000	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	0	8	set_flag_var:20	1	sysmsg	1402982	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	1	7	set_flag_var:0	0	timer	120000	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	1	7	set_flag_var:0	1	sysmsg	1402983	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	2	6	set_flag_var:1	0	timer	50000	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	2	6	set_flag_var:1	1	sysmsg	1402984	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	3	5	set_flag_var:2	0	timer	10000	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	3	5	set_flag_var:2	1	sysmsg	1402985	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	4	4	set_flag_var:3	0	sysmsg	1402986	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_idle_timer	4	4	set_flag_var:3	1	despawn_self	0	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+702646	Gab1_TimeStartCheck_Noshow_2	on_wake_up	0	7		1	sysmsg	1403013	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	0	7	set_flag_var:0	0	timer	120000	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	0	7	set_flag_var:0	1	sysmsg	1402621	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	1	6	set_flag_var:1	0	timer	50000	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	1	6	set_flag_var:1	1	sysmsg	1402622	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	2	5	set_flag_var:2	0	timer	10000	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	2	5	set_flag_var:2	1	sysmsg	1402623	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	3	4	set_flag_var:3	0	sysmsg	1402624	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	3	4	set_flag_var:3	1	despawn_self	0	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_wake_up	0	7		0	timer	120000	0	0		0.0	0.0	0.0
+702647	Gab1_TimeStartCheck_Noshow_3	on_wake_up	0	7		1	sysmsg	1402620	0	0		0.0	0.0	0.0
+730612	IDTiamat_Wave1	on_idle_timer	0	1		0	broadcast	21	20	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	0	16	count:0:18:19:1	0	broadcast	22130	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	0	16	count:0:18:19:1	1	sysmsg	1401925	0	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	1	15	count:0:17:18:1	0	broadcast	22129	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	2	14	count:0:16:17:1	0	broadcast	22128	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	3	13	count:0:15:16:1	0	broadcast	22127	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	4	12	count:0:14:15:1	0	broadcast	22126	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	5	11	count:0:13:14:1	0	broadcast	22125	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	6	10	count:0:12:13:1	0	broadcast	22124	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	7	9	count:0:11:12:1	0	broadcast	22123	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	8	8	count:0:10:11:1	0	broadcast	22122	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	9	7	count:0:9:10:1	0	broadcast	22121	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	10	6	count:0:8:9:1	0	broadcast	22120	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	11	5	count:0:7:8:1	0	broadcast	22119	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	12	4	count:0:6:7:1	0	broadcast	22118	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	13	3	count:0:5:6:1	0	broadcast	22117	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	14	2	count:0:0:5:1	0	broadcast	22116	50	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_idle_timer	14	2	count:0:0:5:1	1	sysmsg	1401924	0	0		0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_wake_up	0	1		0	var	1	0	0	IDF5_R2_Victim	0.0	0.0	0.0
+730726	BIDF5_R2_Door3	on_wake_up	0	1		1	timer	30000	0	0		0.0	0.0	0.0
+730741	IDRuneWP_Protector01	on_idle_timer	0	992	set_flag_var:0	0	broadcast	21112	50	0		0.0	0.0	0.0
+730741	IDRuneWP_Protector01	on_idle_timer	0	992	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+730741	IDRuneWP_Protector01	on_idle_timer	1	991	unset_flag_var:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+731580	IDSeal_AreaDoor	on_idle_timer	0	10		0	broadcast	22774	100	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	0	4	set_flag_var:1	0	broadcast	30	50	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	0	4	set_flag_var:1	1	timer	7500	0	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	1	3	set_flag_var:2	0	say	1500435	0	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	1	3	set_flag_var:2	1	broadcast	31	50	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	1	3	set_flag_var:2	2	timer	17000	0	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	2	2	set_flag_var:3	0	broadcast	32	50	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	2	2	set_flag_var:3	1	timer	4500	0	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	2	2	set_flag_var:3	2	say	1500436	0	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	3	1	set_flag_var:4	0	broadcast	33	50	0		0.0	0.0	0.0
+799674	IDYun_Merops4	on_idle_timer	3	1	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	0	9	set_flag_var:0	0	say	390624	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	0	9	set_flag_var:0	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	1	8	set_flag_var:1	0	say	390625	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	1	8	set_flag_var:1	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	2	7	set_flag_var:2	0	say	390626	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	2	7	set_flag_var:2	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	3	6	set_flag_var:3	0	say	390627	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	3	6	set_flag_var:3	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	4	5	set_flag_var:4	0	say	390628	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	4	5	set_flag_var:4	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	5	4	set_flag_var:5	0	say	390629	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	5	4	set_flag_var:5	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	6	3	set_flag_var:6	0	say	390630	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	6	3	set_flag_var:6	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	7	2	set_flag_var:7	0	say	390631	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	7	2	set_flag_var:7	1	timer	20000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_idle_timer	8	1	unset_flag_var:0|unset_flag_var:1|unset_flag_var:2|unset_flag_var:3|unset_flag_var:4|unset_flag_var:5|unset_flag_var:6|unset_flag_var:7	0	timer	40000	0	0		0.0	0.0	0.0
+800160	LDF4b_Tiamat_Temp54	on_wake_up	0	10		0	timer	30000	0	0		0.0	0.0	0.0
+800335	IDTiamat_Kahrun1	on_idle_timer	0	1	set_flag_var:2	0	say	1500598	0	0		0.0	0.0	0.0
+800335	IDTiamat_Kahrun1	on_idle_timer	0	1	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	0	4	set_flag_var:0	0	say	1500602	0	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	0	4	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	1	3	set_flag_var:1	0	broadcast	201	30	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	1	3	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	2	2	set_flag_var:2	0	broadcast	203	50	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	2	2	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	3	1	set_flag_var:3	0	var	0	1	0	KAHRUN_SPAWN	0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	3	1	set_flag_var:3	1	var	0	1	0	GARNON_SPAWN	0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	3	1	set_flag_var:3	2	broadcast	205	50	0		0.0	0.0	0.0
+800339	IDTiamat_Kahrun5	on_idle_timer	3	1	set_flag_var:3	3	timer	0	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	0	5	set_flag_var:0	0	say	1500609	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	0	5	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	1	4	set_flag_var:1	0	broadcast	3	50	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	1	4	set_flag_var:1	1	say	1500610	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	1	4	set_flag_var:1	2	timer	0	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	2	3	set_flag_var:2	0	broadcast	5	50	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	2	3	set_flag_var:2	1	say	1500611	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	2	3	set_flag_var:2	2	timer	0	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	3	2	set_flag_var:3	0	broadcast	7	50	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	3	2	set_flag_var:3	1	timer	0	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	4	1	set_flag_var:4	0	timer	0	0	0		0.0	0.0	0.0
+800341	IDTiamat_Kahrun7	on_idle_timer	4	1	set_flag_var:4	1	despawn_self	0	0	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	0	100	set_flag_var:0	0	broadcast	15001	50	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	0	100	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	1	99	set_flag_var:1	0	broadcast	15003	50	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	1	99	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	2	98	set_flag_var:2	0	broadcast	15005	50	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	2	98	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	3	97	set_flag_var:4	0	timer	0	0	0		0.0	0.0	0.0
+800343	IDTiamat_Kahrun9	on_idle_timer	3	97	set_flag_var:4	1	despawn_self	0	0	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	0	100	set_flag_var:0	0	broadcast	15101	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	0	100	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	1	99	set_flag_var:1	0	broadcast	15103	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	1	99	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	2	98	set_flag_var:2	0	broadcast	15105	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	2	98	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	3	97	set_flag_var:3	0	broadcast	15108	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	3	97	set_flag_var:3	1	timer	0	0	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	4	96	set_flag_var:4	0	broadcast	15115	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	4	96	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	5	95	set_flag_var:5	0	broadcast	15117	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	5	95	set_flag_var:5	1	broadcast	2000	50	0		0.0	0.0	0.0
+800344	IDTiamat_Kahrun10	on_idle_timer	5	95	set_flag_var:5	2	timer	0	0	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	0	99	set_flag_var:1	0	broadcast	15102	50	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	0	99	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	1	98	set_flag_var:2	0	broadcast	15104	50	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	1	98	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	2	97	set_flag_var:3	0	var	0	1	0	ISRAPHEL_SPAWN	0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	2	97	set_flag_var:3	1	timer	0	0	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	3	96	set_flag_var:4	0	broadcast	15109	50	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	3	96	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	4	95	set_flag_var:5	0	broadcast	15111	50	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	4	95	set_flag_var:5	1	timer	0	0	0		0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	5	94	set_flag_var:6	0	var	0	1	0	KAHRUN_SPAWN	0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	5	94	set_flag_var:6	1	var	0	1	0	KAISINEL_SPAWN	0.0	0.0	0.0
+800351	IDTiamat_Kaisinel_2	on_idle_timer	5	94	set_flag_var:6	2	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	0	99	set_flag_var:1	0	broadcast	15102	50	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	0	99	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	1	98	set_flag_var:2	0	broadcast	15104	50	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	1	98	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	2	97	set_flag_var:3	0	var	0	1	0	ISRAPHEL_SPAWN	0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	2	97	set_flag_var:3	1	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	3	96	set_flag_var:4	0	broadcast	15109	50	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	3	96	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	4	95	set_flag_var:5	0	broadcast	15111	50	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	4	95	set_flag_var:5	1	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	5	94	set_flag_var:6	0	var	0	1	0	KAHRUN_SPAWN	0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	5	94	set_flag_var:6	1	timer	0	0	0		0.0	0.0	0.0
+800357	IDTiamat_Marchutan_2	on_idle_timer	5	94	set_flag_var:6	2	var	0	1	0	MARCHUTAN_SPAWN	0.0	0.0	0.0
+800369	IDTiamat_Surama1	on_idle_timer	0	1		0	say	390834	0	0		0.0	0.0	0.0
+800369	IDTiamat_Surama1	on_idle_timer	0	1		1	timer	15000	0	0		0.0	0.0	0.0
+800381	IDTiamat_NPC_Yun_Hero	on_wake_up	0	7		0	say	390859	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	0	101	set_flag_var:10	0	broadcast	15000	50	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	0	101	set_flag_var:10	1	timer	0	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	1	100	set_flag_var:1	0	broadcast	15002	50	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	1	100	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	2	99	set_flag_var:2	0	broadcast	15004	50	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	2	99	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	3	98	set_flag_var:3	0	timer	0	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	3	98	set_flag_var:3	1	timer	3000	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	4	97	set_flag_var:4	0	say	1500652	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	4	97	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	4	97	set_flag_var:4	2	timer	11000	0	0		0.0	0.0	0.0
+800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	5	96	set_flag_var:14	0	var	0	1	0	TIAMAT_SPAWN	0.0	0.0	0.0
+802196	IDLDF4a_IdGene_dispawn_01	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+802196	IDLDF4a_IdGene_dispawn_01	on_wake_up	0	7		0	broadcast	32000	50	0		0.0	0.0	0.0
+802196	IDLDF4a_IdGene_dispawn_01	on_wake_up	0	7		1	timer	15000	0	0		0.0	0.0	0.0
+804480	LDF4_Advance_Field_Setting	on_wake_up	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+831050	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
+831051	Elim_MercenaryPe	on_wake_up	0	7	set_flag_var:0	0	say	390511	0	0		0.0	0.0	0.0
+831052	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
+831053	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
+831054	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
+831748	IDASteria_IU_world_inviNPC01	on_wake_up	0	7	set_flag_var:5	0	var	0	1	0	Condition_TALK	0.0	0.0	0.0
+831748	IDASteria_IU_world_inviNPC01	on_wake_up	0	7	set_flag_var:5	1	despawn_self	0	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	0	8	count:0:6:7:1	0	var	1	0	0	TIME_35	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	0	8	count:0:6:7:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	0	8	count:0:6:7:1	2	despawn_self	0	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	1	7	count:0:5:6:1	0	var	1	0	0	TIME_30	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	1	7	count:0:5:6:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	2	6	count:0:4:5:1	0	var	1	0	0	TIME_25	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	2	6	count:0:4:5:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	3	5	count:0:3:4:1	0	var	1	0	0	TIME_20	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	3	5	count:0:3:4:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	4	4	count:0:2:3:1	0	var	1	0	0	TIME_15	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	4	4	count:0:2:3:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	5	3	count:0:1:2:1	0	var	1	0	0	TIME_10	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	5	3	count:0:1:2:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	6	2	count:0:0:1:1	0	var	1	0	0	TIME_05	0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_idle_timer	6	2	count:0:0:1:1	1	sysmsg	1402206	0	0		0.0	0.0	0.0
+831975	IDF5_TD_War_SupplyTimer	on_wake_up	0	1		0	timer	300000	0	0		0.0	0.0	0.0
+832255	LDF4_Noshow_Artifact_01_01	on_idle_timer	0	7		0	broadcast	6161661	30	0		0.0	0.0	0.0
+832255	LDF4_Noshow_Artifact_01_01	on_wake_up	0	7		0	broadcast	6161661	30	0		0.0	0.0	0.0
+832255	LDF4_Noshow_Artifact_01_01	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832256	LDF4_Noshow_Artifact_01_02	on_idle_timer	0	7		0	broadcast	6161662	30	0		0.0	0.0	0.0
+832256	LDF4_Noshow_Artifact_01_02	on_wake_up	0	7		0	broadcast	6161662	30	0		0.0	0.0	0.0
+832256	LDF4_Noshow_Artifact_01_02	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832257	LDF4_Noshow_Artifact_02_01	on_idle_timer	0	7		0	broadcast	6161663	30	0		0.0	0.0	0.0
+832257	LDF4_Noshow_Artifact_02_01	on_wake_up	0	7		0	broadcast	6161663	30	0		0.0	0.0	0.0
+832257	LDF4_Noshow_Artifact_02_01	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832258	LDF4_Noshow_Artifact_02_02	on_idle_timer	0	7		0	broadcast	6161664	30	0		0.0	0.0	0.0
+832258	LDF4_Noshow_Artifact_02_02	on_wake_up	0	7		0	broadcast	6161664	30	0		0.0	0.0	0.0
+832258	LDF4_Noshow_Artifact_02_02	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832269	LDF4_Noshow_Artifact_01_01	on_idle_timer	0	7		0	broadcast	6161661	30	0		0.0	0.0	0.0
+832269	LDF4_Noshow_Artifact_01_01	on_wake_up	0	7		0	broadcast	6161661	30	0		0.0	0.0	0.0
+832269	LDF4_Noshow_Artifact_01_01	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832270	LDF4_Noshow_Artifact_01_02	on_idle_timer	0	7		0	broadcast	6161662	30	0		0.0	0.0	0.0
+832270	LDF4_Noshow_Artifact_01_02	on_wake_up	0	7		0	broadcast	6161662	30	0		0.0	0.0	0.0
+832270	LDF4_Noshow_Artifact_01_02	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832271	LDF4_Noshow_Artifact_02_01	on_idle_timer	0	7		0	broadcast	6161663	30	0		0.0	0.0	0.0
+832271	LDF4_Noshow_Artifact_02_01	on_wake_up	0	7		0	broadcast	6161663	30	0		0.0	0.0	0.0
+832271	LDF4_Noshow_Artifact_02_01	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
+832906	IDLDF5_Under_02_Teleport_01	on_idle_timer	0	7	set_flag_var:0	0	var	1	0	0	cBox	0.0	0.0	0.0
+832906	IDLDF5_Under_02_Teleport_01	on_idle_timer	0	7	set_flag_var:0	1	var	1	0	0	cSetGameStart	0.0	0.0	0.0
+832906	IDLDF5_Under_02_Teleport_01	on_idle_timer	0	7	set_flag_var:0	2	var	1	0	0	chkSN	0.0	0.0	0.0
+833488	Legion_02_312	on_idle_timer	0	1000		0	say	1501356	0	0		0.0	0.0	0.0
+833488	Legion_02_312	on_idle_timer	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
+833488	Legion_02_312	on_wake_up	0	7		0	say	1501356	0	0		0.0	0.0	0.0
+833488	Legion_02_312	on_wake_up	0	7		1	timer	10000	0	0		0.0	0.0	0.0
+833489	Legion_02_312	on_idle_timer	0	1000		0	say	1501356	0	0		0.0	0.0	0.0
+833489	Legion_02_312	on_idle_timer	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
+833489	Legion_02_312	on_wake_up	0	7		0	say	1501356	0	0		0.0	0.0	0.0
+833489	Legion_02_312	on_wake_up	0	7		1	timer	10000	0	0		0.0	0.0	0.0
+855000	IDdreadgion04_NoShownpc_Broad_01	on_wake_up	0	7		0	var	0	1	0	cBossFlag	0.0	0.0	0.0
+855000	IDdreadgion04_NoShownpc_Broad_01	on_wake_up	0	7		1	broadcast	21111	50	0		0.0	0.0	0.0
+855001	IDdreadgion04_NoShownpc_Broad_02	on_wake_up	0	7		0	broadcast	21125	5	0		0.0	0.0	0.0
+855001	IDdreadgion04_NoShownpc_Broad_02	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+855002	IDdreadgion04_NoShownpc_Broad_03	on_wake_up	0	7		0	broadcast	21125	5	0		0.0	0.0	0.0
+855002	IDdreadgion04_NoShownpc_Broad_03	on_wake_up	0	7		1	var	1	0	0	cSetCannonB	0.0	0.0	0.0
+855002	IDdreadgion04_NoShownpc_Broad_03	on_wake_up	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+855003	IDdreadgion04_NoShownpc_Broad_04	on_wake_up	0	7		0	broadcast	21125	5	0		0.0	0.0	0.0
+855003	IDdreadgion04_NoShownpc_Broad_04	on_wake_up	0	7		1	var	1	0	0	cSetCannonA	0.0	0.0	0.0
+855003	IDdreadgion04_NoShownpc_Broad_04	on_wake_up	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
+855213	BIDLDF4_Re_01_summon01	on_wake_up	0	7		0	spawn	855087	1	100	for_the_fight_self	0.0	0.0	0.0
+855213	BIDLDF4_Re_01_summon01	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+855214	BIDLDF4_Re_01_summon02	on_wake_up	0	7		0	spawn	855088	1	100	for_the_fight_self	0.0	0.0	0.0
+855214	BIDLDF4_Re_01_summon02	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+855230	Gab1_Sub_Temp_01	on_idle_timer	0	2		0	say	1501160	0	0		0.0	0.0	0.0
+855230	Gab1_Sub_Temp_01	on_idle_timer	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+855230	Gab1_Sub_Temp_01	on_wake_up	0	1		0	timer	30000	0	0		0.0	0.0	0.0
+855372	LDF4_Advance_Killer_01	on_idle_timer	0	7	count:0:0:1:1	0	broadcast	30006	50	0		0.0	0.0	0.0
+855372	LDF4_Advance_Killer_01	on_idle_timer	0	7	count:0:0:1:1	1	timer	600000	0	0		0.0	0.0	0.0
+855372	LDF4_Advance_Killer_01	on_idle_timer	1	6	count:0:1:2:1	0	broadcast	30006	50	0		0.0	0.0	0.0
+855372	LDF4_Advance_Killer_01	on_idle_timer	1	6	count:0:1:2:1	1	timer	6000	0	0		0.0	0.0	0.0
+855372	LDF4_Advance_Killer_01	on_idle_timer	2	5	count:0:2:3:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855372	LDF4_Advance_Killer_01	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+855373	LDF4_Advance_Killer_02	on_idle_timer	0	7	count:0:0:1:1	0	broadcast	30005	50	0		0.0	0.0	0.0
+855373	LDF4_Advance_Killer_02	on_idle_timer	0	7	count:0:0:1:1	1	timer	600000	0	0		0.0	0.0	0.0
+855373	LDF4_Advance_Killer_02	on_idle_timer	1	6	count:0:1:2:1	0	broadcast	30005	50	0		0.0	0.0	0.0
+855373	LDF4_Advance_Killer_02	on_idle_timer	1	6	count:0:1:2:1	1	timer	6000	0	0		0.0	0.0	0.0
+855373	LDF4_Advance_Killer_02	on_idle_timer	2	5	count:0:2:3:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855373	LDF4_Advance_Killer_02	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+855374	LDF4_Advance_Killer_03	on_idle_timer	0	7	count:0:0:1:1	0	broadcast	30007	50	0		0.0	0.0	0.0
+855374	LDF4_Advance_Killer_03	on_idle_timer	0	7	count:0:0:1:1	1	timer	600000	0	0		0.0	0.0	0.0
+855374	LDF4_Advance_Killer_03	on_idle_timer	1	6	count:0:1:2:1	0	broadcast	30007	50	0		0.0	0.0	0.0
+855374	LDF4_Advance_Killer_03	on_idle_timer	1	6	count:0:1:2:1	1	timer	6000	0	0		0.0	0.0	0.0
+855374	LDF4_Advance_Killer_03	on_idle_timer	2	5	count:0:2:3:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855374	LDF4_Advance_Killer_03	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v01	0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402519	0	0		0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_wake_up	0	7		1	var	2	0	0	v01	0.0	0.0	0.0
+855375	LDF4_Advance_Killer_04	on_wake_up	0	7		2	var	0	1	0	vd_l	0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v02	0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402520	0	0		0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_wake_up	0	7		1	var	2	0	0	v02	0.0	0.0	0.0
+855376	LDF4_Advance_Killer_05	on_wake_up	0	7		2	var	0	1	0	va_l	0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_idle_timer	0	7	count:0:0:1:1	0	timer	10000	0	0		0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_idle_timer	0	7	count:0:0:1:1	1	sysmsg	1402521	0	0		0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_idle_timer	0	7	count:0:0:1:1	2	var	1	0	0	li_killer_v03	0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_wake_up	0	7		1	var	2	0	0	v03	0.0	0.0	0.0
+855377	LDF4_Advance_Killer_06	on_wake_up	0	7		2	var	0	1	0	va_l	0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v04	0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402522	0	0		0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_wake_up	0	7		1	var	2	0	0	v04	0.0	0.0	0.0
+855378	LDF4_Advance_Killer_07	on_wake_up	0	7		2	var	0	1	0	va_l	0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v05	0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402523	0	0		0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_wake_up	0	7		1	var	2	0	0	v05	0.0	0.0	0.0
+855379	LDF4_Advance_Killer_08	on_wake_up	0	7		2	var	0	1	0	vb_l	0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v06	0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402524	0	0		0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_wake_up	0	7		1	var	2	0	0	v06	0.0	0.0	0.0
+855380	LDF4_Advance_Killer_09	on_wake_up	0	7		2	var	0	1	0	vb_l	0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v07	0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402525	0	0		0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_wake_up	0	7		1	var	2	0	0	v07	0.0	0.0	0.0
+855381	LDF4_Advance_Killer_10	on_wake_up	0	7		2	var	0	1	0	vb_l	0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v08	0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402526	0	0		0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_idle_timer	1	6	count:0:1:2:1	0	timer	10000	0	0		0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_wake_up	0	7		1	var	2	0	0	v08	0.0	0.0	0.0
+855382	LDF4_Advance_Killer_11	on_wake_up	0	7		2	var	0	1	0	vc_l	0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v09	0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402527	0	0		0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_wake_up	0	7		1	var	2	0	0	v09	0.0	0.0	0.0
+855383	LDF4_Advance_Killer_12	on_wake_up	0	7		2	var	0	1	0	vc_l	0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v10	0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402528	0	0		0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_wake_up	0	7		1	var	2	0	0	v10	0.0	0.0	0.0
+855384	LDF4_Advance_Killer_13	on_wake_up	0	7		2	var	0	1	0	vd_l	0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v11	0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402529	0	0		0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_wake_up	0	7		1	var	2	0	0	v11	0.0	0.0	0.0
+855385	LDF4_Advance_Killer_14	on_wake_up	0	7		2	var	0	1	0	vd_l	0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v12	0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402530	0	0		0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_wake_up	0	7		1	var	2	0	0	v12	0.0	0.0	0.0
+855386	LDF4_Advance_Killer_15	on_wake_up	0	7		2	var	0	1	0	vc_l	0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v13	0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402531	0	0		0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_wake_up	0	7		1	var	2	0	0	v13	0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_wake_up	0	7		2	var	-1	0	0	da_killer_v13	0.0	0.0	0.0
+855387	LDF4_Advance_Killer_16	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v01	0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402519	0	0		0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_wake_up	0	7		1	var	3	0	0	v01	0.0	0.0	0.0
+855388	LDF4_Advance_Killer_17	on_wake_up	0	7		2	var	0	1	0	vd_d	0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v02	0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402520	0	0		0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_wake_up	0	7		1	var	3	0	0	v02	0.0	0.0	0.0
+855389	LDF4_Advance_Killer_18	on_wake_up	0	7		2	var	0	1	0	va_d	0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v03	0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402521	0	0		0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_wake_up	0	7		1	var	3	0	0	v03	0.0	0.0	0.0
+855390	LDF4_Advance_Killer_19	on_wake_up	0	7		2	var	0	1	0	va_d	0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v04	0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402522	0	0		0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_wake_up	0	7		1	var	3	0	0	v04	0.0	0.0	0.0
+855391	LDF4_Advance_Killer_20	on_wake_up	0	7		2	var	0	1	0	va_d	0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v05	0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402523	0	0		0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_wake_up	0	7		1	var	3	0	0	v05	0.0	0.0	0.0
+855392	LDF4_Advance_Killer_21	on_wake_up	0	7		2	var	0	1	0	vb_d	0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v06	0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402524	0	0		0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_wake_up	0	7		1	var	3	0	0	v06	0.0	0.0	0.0
+855393	LDF4_Advance_Killer_22	on_wake_up	0	7		2	var	0	1	0	vb_d	0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v07	0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402525	0	0		0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_wake_up	0	7		1	var	3	0	0	v07	0.0	0.0	0.0
+855394	LDF4_Advance_Killer_23	on_wake_up	0	7		2	var	0	1	0	vb_d	0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v08	0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402526	0	0		0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_wake_up	0	7		1	var	3	0	0	v08	0.0	0.0	0.0
+855395	LDF4_Advance_Killer_24	on_wake_up	0	7		2	var	0	1	0	vc_d	0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v09	0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402527	0	0		0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_wake_up	0	7		1	var	3	0	0	v09	0.0	0.0	0.0
+855396	LDF4_Advance_Killer_25	on_wake_up	0	7		2	var	0	1	0	vc_d	0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v10	0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402528	0	0		0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_wake_up	0	7		1	var	3	0	0	v10	0.0	0.0	0.0
+855397	LDF4_Advance_Killer_26	on_wake_up	0	7		2	var	0	1	0	vd_d	0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v11	0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402529	0	0		0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_wake_up	0	7		1	var	3	0	0	v11	0.0	0.0	0.0
+855398	LDF4_Advance_Killer_27	on_wake_up	0	7		2	var	0	1	0	vd_d	0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v12	0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402530	0	0		0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_wake_up	0	7		1	var	3	0	0	v12	0.0	0.0	0.0
+855399	LDF4_Advance_Killer_28	on_wake_up	0	7		2	var	0	1	0	vc_d	0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v13	0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402531	0	0		0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_wake_up	0	7		1	var	3	0	0	v13	0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_wake_up	0	7		2	var	-1	0	0	li_killer_v13	0.0	0.0	0.0
+855400	LDF4_Advance_Killer_29	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855401	LDF4_Advance_Killer_30	on_idle_timer	0	7	count:0:0:1:1	0	broadcast	30008	50	0		0.0	0.0	0.0
+855401	LDF4_Advance_Killer_30	on_idle_timer	0	7	count:0:0:1:1	1	timer	600000	0	0		0.0	0.0	0.0
+855401	LDF4_Advance_Killer_30	on_idle_timer	1	6	count:0:1:2:1	0	broadcast	30008	50	0		0.0	0.0	0.0
+855401	LDF4_Advance_Killer_30	on_idle_timer	1	6	count:0:1:2:1	1	timer	6000	0	0		0.0	0.0	0.0
+855401	LDF4_Advance_Killer_30	on_idle_timer	2	5	count:0:2:3:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855401	LDF4_Advance_Killer_30	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
+855415	LDF4_Scorpion_LV1	on_idle_timer	0	6		0	despawn_self	0	0	0		0.0	0.0	0.0
+855415	LDF4_Scorpion_LV1	on_wake_up	0	7		0	broadcast	30030	50	0		0.0	0.0	0.0
+855415	LDF4_Scorpion_LV1	on_wake_up	0	7		1	timer	13000	0	0		0.0	0.0	0.0
+855416	LDF4_Scorpion_LV2	on_idle_timer	0	6		0	despawn_self	0	0	0		0.0	0.0	0.0
+855416	LDF4_Scorpion_LV2	on_wake_up	0	7		0	broadcast	30031	50	0		0.0	0.0	0.0
+855416	LDF4_Scorpion_LV2	on_wake_up	0	7		1	timer	13000	0	0		0.0	0.0	0.0
+855417	LDF4_Neutl_LV2	on_idle_timer	0	6	count:0:0:1:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855417	LDF4_Neutl_LV2	on_wake_up	0	7		0	broadcast	30040	50	0		0.0	0.0	0.0
+855417	LDF4_Neutl_LV2	on_wake_up	0	7		1	timer	13000	0	0		0.0	0.0	0.0
+855418	LDF4_Neutl_LV3	on_idle_timer	0	6	count:0:0:1:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855418	LDF4_Neutl_LV3	on_wake_up	0	7		0	broadcast	30041	50	0		0.0	0.0	0.0
+855418	LDF4_Neutl_LV3	on_wake_up	0	7		1	timer	13000	0	0		0.0	0.0	0.0
+855433	IDSeal_Boss_Lv3_Transform	on_idle_timer	0	3	count:0:1:2:1	0	var	3	0	0	VRITRA	0.0	0.0	0.0
+855433	IDSeal_Boss_Lv3_Transform	on_idle_timer	0	3	count:0:1:2:1	1	despawn_self	0	0	0		0.0	0.0	0.0
+855433	IDSeal_Boss_Lv3_Transform	on_idle_timer	1	2	count:0:0:1:1	0	timer	2500	0	0		0.0	0.0	0.0
+855433	IDSeal_Boss_Lv3_Transform	on_idle_timer	1	2	count:0:0:1:1	1	broadcast	22640	100	0		0.0	0.0	0.0
+855433	IDSeal_Boss_Lv3_Transform	on_wake_up	0	1		0	timer	6000	0	0		0.0	0.0	0.0
+855433	IDSeal_Boss_Lv3_Transform	on_wake_up	0	1		1	broadcast	22641	100	0		0.0	0.0	0.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		0	var	20	0	0	VRITRA_TIMER_2	0.0	0.0	0.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		1	var	2	0	0	BOSS_ROOM	0.0	0.0	0.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		2	sysmsg	1402721	0	0		0.0	0.0	0.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		3	spawn	855612	1	0	for_the_fight_absolute	155.2	515.7	1751.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		4	spawn	855436	1	0	for_the_fight_absolute	155.2	515.7	1751.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		5	spawn	855440	1	0	for_the_fight_self	0.0	0.0	0.0
+855434	IDSeal_TrueBoss	on_wake_up	0	3		6	broadcast	22600	100	0		0.0	0.0	0.0
+855439	IDSeal_TrueBoss_Buff	on_idle_timer	0	2		0	broadcast	22620	100	0		0.0	0.0	0.0
+855439	IDSeal_TrueBoss_Buff	on_wake_up	0	1		0	timer	120000	0	0		0.0	0.0	0.0
+855439	IDSeal_TrueBoss_Buff	on_wake_up	0	1		1	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_idle_timer	0	2		0	var	10	0	0	VRITRA	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_idle_timer	0	2		1	var	26	0	0	SCENE	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_idle_timer	0	2		2	despawn_self	0	0	0		0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_wake_up	0	1		1	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_wake_up	0	1		2	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_wake_up	0	1		3	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_wake_up	0	1		4	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+855441	IDSeal_TrueBoss_Success	on_wake_up	0	1		5	var	10	0	0	DARKSUN	0.0	0.0	0.0
+855442	IDSeal_TrueBoss_Failed	on_wake_up	0	1		0	var	10	0	0	GUARDAIN_TIMER	0.0	0.0	0.0
+855442	IDSeal_TrueBoss_Failed	on_wake_up	0	1		1	spawn	855539	1	0	for_the_fight_self	0.0	0.0	0.0
+855442	IDSeal_TrueBoss_Failed	on_wake_up	0	1		2	broadcast	22638	100	0		0.0	0.0	0.0
+855442	IDSeal_TrueBoss_Failed	on_wake_up	0	1		3	despawn_self	0	0	0		0.0	0.0	0.0
+855453	IDSeal_Guardian_01_Resurrect	on_idle_timer	0	2		0	var	1	0	0	GUARDIAN_1	0.0	0.0	0.0
+855453	IDSeal_Guardian_01_Resurrect	on_wake_up	0	1		0	timer	30000	0	0		0.0	0.0	0.0
+855455	IDSeal_Guardian_02_Resurrect	on_idle_timer	0	2		0	var	1	0	0	GUARDIAN_2	0.0	0.0	0.0
+855455	IDSeal_Guardian_02_Resurrect	on_wake_up	0	1		0	timer	30000	0	0		0.0	0.0	0.0
+855457	IDSeal_Guardian_03_Resurrect	on_idle_timer	0	2		0	var	1	0	0	GUARDIAN_3	0.0	0.0	0.0
+855457	IDSeal_Guardian_03_Resurrect	on_wake_up	0	1		0	timer	30000	0	0		0.0	0.0	0.0
+855459	IDSeal_Guardian_04_Resurrect	on_idle_timer	0	2		0	var	1	0	0	GUARDIAN_4	0.0	0.0	0.0
+855459	IDSeal_Guardian_04_Resurrect	on_wake_up	0	1		0	timer	30000	0	0		0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	0	5	chance:25|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	0	5	chance:25|set_flag_var:0	1	var	1	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	0	5	chance:25|set_flag_var:0	2	var	2	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	1	4	chance:33|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	1	4	chance:33|set_flag_var:0	1	var	2	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	1	4	chance:33|set_flag_var:0	2	var	2	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	2	3	chance:50|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	2	3	chance:50|set_flag_var:0	1	var	3	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	2	3	chance:50|set_flag_var:0	2	var	2	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	3	2	set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	3	2	set_flag_var:0	1	var	4	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_idle_timer	3	2	set_flag_var:0	2	var	2	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855470	IDSeal_Guardian_Timer_01	on_wake_up	0	1		0	timer	60000	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	0	7	chance:17|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	0	7	chance:17|set_flag_var:0	1	var	11	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	0	7	chance:17|set_flag_var:0	2	broadcast	22620	50	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	0	7	chance:17|set_flag_var:0	3	var	1	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	0	7	chance:17|set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	1	6	chance:20|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	1	6	chance:20|set_flag_var:0	1	var	12	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	1	6	chance:20|set_flag_var:0	2	broadcast	22620	50	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	1	6	chance:20|set_flag_var:0	3	var	1	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	1	6	chance:20|set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	2	5	chance:25|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	2	5	chance:25|set_flag_var:0	1	var	13	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	2	5	chance:25|set_flag_var:0	2	broadcast	22620	50	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	2	5	chance:25|set_flag_var:0	3	var	1	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	2	5	chance:25|set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	3	4	chance:33|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	3	4	chance:33|set_flag_var:0	1	var	14	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	3	4	chance:33|set_flag_var:0	2	broadcast	22620	50	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	3	4	chance:33|set_flag_var:0	3	var	1	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	3	4	chance:33|set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	4	3	chance:50|set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	4	3	chance:50|set_flag_var:0	1	var	15	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	4	3	chance:50|set_flag_var:0	2	broadcast	22620	50	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	4	3	chance:50|set_flag_var:0	3	var	1	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	4	3	chance:50|set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	5	2	set_flag_var:0	0	sysmsg	1402728	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	5	2	set_flag_var:0	1	var	16	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	5	2	set_flag_var:0	2	broadcast	22620	50	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	5	2	set_flag_var:0	3	var	1	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_idle_timer	5	2	set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+855471	IDSeal_Guardian_Timer_11	on_wake_up	0	1		0	timer	60000	0	0		0.0	0.0	0.0
+855472	IDSeal_Guardian_Timer_12	on_idle_timer	0	2	set_flag_var:0	0	var	11	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+855472	IDSeal_Guardian_Timer_12	on_idle_timer	0	2	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+855472	IDSeal_Guardian_Timer_12	on_wake_up	0	1		0	timer	60000	0	0		0.0	0.0	0.0
+855481	IDSeal_Wave_Bonus1	on_idle_timer	0	1		0	var	10	0	0	LEVEL_CHECK_3	0.0	0.0	0.0
+855481	IDSeal_Wave_Bonus1	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+855481	IDSeal_Wave_Bonus1	on_wake_up	0	1		1	var	20	0	0	SCENE	0.0	0.0	0.0
+855481	IDSeal_Wave_Bonus1	on_wake_up	0	1		2	sysmsg	1402712	0	0		0.0	0.0	0.0
+855482	IDSeal_Wave_Bonus2	on_idle_timer	0	1		0	var	10	0	0	LEVEL_CHECK_3	0.0	0.0	0.0
+855482	IDSeal_Wave_Bonus2	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+855482	IDSeal_Wave_Bonus2	on_wake_up	0	1		1	var	1	0	0	WAVE_BONUS	0.0	0.0	0.0
+855482	IDSeal_Wave_Bonus2	on_wake_up	0	1		2	sysmsg	1402713	0	0		0.0	0.0	0.0
+855482	IDSeal_Wave_Bonus2	on_wake_up	0	1		3	var	19	0	0	SCENE	0.0	0.0	0.0
+855483	IDSeal_Wave_Bonus3	on_idle_timer	0	1		0	var	10	0	0	LEVEL_CHECK_3	0.0	0.0	0.0
+855483	IDSeal_Wave_Bonus3	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+855483	IDSeal_Wave_Bonus3	on_wake_up	0	1		1	var	2	0	0	WAVE_BONUS	0.0	0.0	0.0
+855483	IDSeal_Wave_Bonus3	on_wake_up	0	1		2	sysmsg	1402714	0	0		0.0	0.0	0.0
+855483	IDSeal_Wave_Bonus3	on_wake_up	0	1		3	var	19	0	0	SCENE	0.0	0.0	0.0
+855484	IDSeal_Wave_Bonus4	on_idle_timer	0	1		0	var	10	0	0	LEVEL_CHECK_3	0.0	0.0	0.0
+855484	IDSeal_Wave_Bonus4	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+855484	IDSeal_Wave_Bonus4	on_wake_up	0	1		1	var	4	0	0	WAVE_BONUS	0.0	0.0	0.0
+855484	IDSeal_Wave_Bonus4	on_wake_up	0	1		2	var	18	0	0	SCENE	0.0	0.0	0.0
+855484	IDSeal_Wave_Bonus4	on_wake_up	0	1		3	sysmsg	1402715	0	0		0.0	0.0	0.0
+855491	IDSeal_HalfWake_Change	on_idle_timer	0	3		0	broadcast	22722	100	0		0.0	0.0	0.0
+855491	IDSeal_HalfWake_Change	on_wake_up	0	1		0	var	2	0	0	IMMORTAL_TIMER	0.0	0.0	0.0
+855491	IDSeal_HalfWake_Change	on_wake_up	0	1		1	broadcast	22722	100	0		0.0	0.0	0.0
+855491	IDSeal_HalfWake_Change	on_wake_up	0	1		2	timer	3000	0	0		0.0	0.0	0.0
+855493	IDSeal_HalfWake_Lv2	on_wake_up	0	1		0	var	0	1	0	WAKE_TIMER	0.0	0.0	0.0
+855493	IDSeal_HalfWake_Lv2	on_wake_up	0	1		1	broadcast	22731	100	0		0.0	0.0	0.0
+855493	IDSeal_HalfWake_Lv2	on_wake_up	0	1		2	var	0	1	0	LEVEL_CHECK_2	0.0	0.0	0.0
+855494	IDSeal_HalfWake_Lv3	on_wake_up	0	1		0	var	0	1	0	WAKE_TIMER	0.0	0.0	0.0
+855494	IDSeal_HalfWake_Lv3	on_wake_up	0	1		1	broadcast	22731	100	0		0.0	0.0	0.0
+855494	IDSeal_HalfWake_Lv3	on_wake_up	0	1		2	var	0	1	0	LEVEL_CHECK_2	0.0	0.0	0.0
+855495	IDSeal_FullWake_Change	on_idle_timer	0	3		0	broadcast	22720	100	0		0.0	0.0	0.0
+855495	IDSeal_FullWake_Change	on_wake_up	0	1		0	broadcast	22720	100	0		0.0	0.0	0.0
+855495	IDSeal_FullWake_Change	on_wake_up	0	1		1	timer	3000	0	0		0.0	0.0	0.0
+855499	IDSeal_Immortal_Return	on_idle_timer	0	3		0	broadcast	22724	100	0		0.0	0.0	0.0
+855499	IDSeal_Immortal_Return	on_idle_timer	0	3		1	var	12	0	0	SCENE	0.0	0.0	0.0
+855499	IDSeal_Immortal_Return	on_wake_up	0	1		0	broadcast	22724	100	0		0.0	0.0	0.0
+855499	IDSeal_Immortal_Return	on_wake_up	0	1		1	var	0	1	0	LEVEL_CHECK_2	0.0	0.0	0.0
+855499	IDSeal_Immortal_Return	on_wake_up	0	1		2	var	12	0	0	SCENE	0.0	0.0	0.0
+855503	IDSeal_Immortal_Timer	on_idle_timer	0	3	count:0:1:2:1	0	var	4	0	0	IMMORTAL	0.0	0.0	0.0
+855503	IDSeal_Immortal_Timer	on_idle_timer	1	2	count:0:0:1:1	0	sysmsg	1402695	0	0		0.0	0.0	0.0
+855503	IDSeal_Immortal_Timer	on_idle_timer	1	2	count:0:0:1:1	1	timer	85000	0	0		0.0	0.0	0.0
+855503	IDSeal_Immortal_Timer	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+855503	IDSeal_Immortal_Timer	on_wake_up	0	1		1	sysmsg	1402694	0	0		0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_idle_timer	0	3	count:0:1:2:1	0	var	2	0	0	IMMORTAL	0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_idle_timer	0	3	count:0:1:2:1	1	despawn_self	0	0	0		0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_idle_timer	1	2	count:0:0:1:1	0	sysmsg	1402698	0	0		0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_idle_timer	1	2	count:0:0:1:1	1	broadcast	22746	100	0		0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_idle_timer	1	2	count:0:0:1:1	2	timer	115000	0	0		0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_wake_up	0	1		0	sysmsg	1402697	0	0		0.0	0.0	0.0
+855504	IDSeal_HalfWake_Timer_060	on_wake_up	0	1		1	timer	5000	0	0		0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_idle_timer	0	3	count:0:1:2:1	0	var	2	0	0	IMMORTAL	0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_idle_timer	0	3	count:0:1:2:1	1	despawn_self	0	0	0		0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_idle_timer	1	2	count:0:0:1:1	0	timer	235000	0	0		0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_idle_timer	1	2	count:0:0:1:1	1	sysmsg	1402698	0	0		0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_idle_timer	1	2	count:0:0:1:1	2	broadcast	22747	50	0		0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_wake_up	0	1		0	sysmsg	1402697	0	0		0.0	0.0	0.0
+855505	IDSeal_HalfWake_Timer_090	on_wake_up	0	1		1	timer	5000	0	0		0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_idle_timer	0	3	count:0:1:2:1	0	var	2	0	0	IMMORTAL	0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_idle_timer	0	3	count:0:1:2:1	1	despawn_self	0	0	0		0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_idle_timer	1	2	count:0:0:1:1	0	timer	355000	0	0		0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_idle_timer	1	2	count:0:0:1:1	1	sysmsg	1402698	0	0		0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_idle_timer	1	2	count:0:0:1:1	2	broadcast	22748	50	0		0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_wake_up	0	1		0	sysmsg	1402697	0	0		0.0	0.0	0.0
+855506	IDSeal_HalfWake_Timer_120	on_wake_up	0	1		1	timer	5000	0	0		0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_idle_timer	0	3	count:0:1:2:1	0	var	2	0	0	IMMORTAL	0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_idle_timer	0	3	count:0:1:2:1	1	despawn_self	0	0	0		0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_idle_timer	1	2	count:0:0:1:1	0	timer	475000	0	0		0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_idle_timer	1	2	count:0:0:1:1	1	sysmsg	1402698	0	0		0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_idle_timer	1	2	count:0:0:1:1	2	broadcast	22749	50	0		0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_wake_up	0	1		0	sysmsg	1402697	0	0		0.0	0.0	0.0
+855507	IDSeal_HalfWake_Timer_150	on_wake_up	0	1		1	timer	5000	0	0		0.0	0.0	0.0
+855508	IDSeal_Twin_P	on_wake_up	0	1		0	spawn	855626	1	0	for_the_fight_absolute	530.5	212.0	1682.0
+855508	IDSeal_Twin_P	on_wake_up	0	1		1	broadcast	22718	100	0		0.0	0.0	0.0
+855509	IDSeal_Twin_M	on_wake_up	0	1		0	spawn	855712	1	0	for_the_fight_absolute	531.4	151.0	1682.0
+855509	IDSeal_Twin_M	on_wake_up	0	1		1	broadcast	22719	100	0		0.0	0.0	0.0
+855512	IDSeal_Twin_P_Failed	on_wake_up	0	1		0	spawn	855626	1	0	for_the_fight_absolute	530.5	212.0	1682.0
+855512	IDSeal_Twin_P_Failed	on_wake_up	0	1		1	broadcast	22718	100	0		0.0	0.0	0.0
+855513	IDSeal_Twin_M_Failed	on_wake_up	0	1		0	broadcast	22719	100	0		0.0	0.0	0.0
+855513	IDSeal_Twin_M_Failed	on_wake_up	0	1		1	spawn	855712	1	0	for_the_fight_absolute	531.4	151.0	1682.0
+855514	IDSeal_Twin_Resurrect	on_wake_up	0	1		0	var	1	0	0	TWIN_RESURRECT	0.0	0.0	0.0
+855514	IDSeal_Twin_Resurrect	on_wake_up	0	1		1	sysmsg	1402690	0	0		0.0	0.0	0.0
+855514	IDSeal_Twin_Resurrect	on_wake_up	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	0	3	count:0:1:2:1	0	var	1	0	0	TWIN_P	0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	0	3	count:0:1:2:1	1	var	1	0	0	TWIN_M	0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	0	3	count:0:1:2:1	2	var	2	0	0	TWIN_RESURRECT	0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	0	3	count:0:1:2:1	3	sysmsg	1402692	0	0		0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	0	3	count:0:1:2:1	4	despawn_self	0	0	0		0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	1	2	count:0:0:1:1	0	timer	5000	0	0		0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	1	2	count:0:0:1:1	1	var	2	0	0	TWIN_P	0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	1	2	count:0:0:1:1	2	var	2	0	0	TWIN_M	0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_wake_up	0	1		0	timer	15000	0	0		0.0	0.0	0.0
+855517	IDSeal_Twin_Resurrect_Timer	on_wake_up	0	1		1	sysmsg	1402691	0	0		0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		0	broadcast	22637	100	0		0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		1	var	10	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		2	var	10	0	0	GUARDIAN_1	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		3	var	10	0	0	GUARDIAN_2	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		4	var	10	0	0	GUARDIAN_3	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		5	var	10	0	0	GUARDIAN_4	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		6	var	10	0	0	VRITRA_SUM_TIMER	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		7	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		8	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		9	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		10	var	10	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		11	despawn_self	0	0	0		0.0	0.0	0.0
+855544	IDF5_TD_DEFWeapon_01	on_idle_timer	0	2		0	broadcast	22300	50	0		0.0	0.0	0.0
+855545	IDF5_TD_DEFWeapon_02	on_idle_timer	0	2		0	broadcast	22301	50	0		0.0	0.0	0.0
+855546	IDF5_TD_DEFWeapon_03	on_idle_timer	0	2		0	broadcast	22303	50	0		0.0	0.0	0.0
+855547	IDF5_TD_DEFWeapon_04	on_idle_timer	0	2		0	broadcast	22304	50	0		0.0	0.0	0.0
+855548	IDF5_TD_DEFWeapon_05	on_idle_timer	0	2		0	broadcast	22306	50	0		0.0	0.0	0.0
+855549	IDF5_TD_DEFWeapon_06	on_idle_timer	0	2		0	broadcast	22307	50	0		0.0	0.0	0.0
+855550	IDF5_TD_DEFWeapon_07	on_idle_timer	0	2		0	broadcast	22309	50	0		0.0	0.0	0.0
+855551	IDF5_TD_DEFWeapon_08	on_idle_timer	0	2		0	broadcast	22310	50	0		0.0	0.0	0.0
+855552	IDF5_TD_DEFWeapon_09	on_idle_timer	0	2		0	broadcast	22312	50	0		0.0	0.0	0.0
+855553	IDF5_TD_DEFWeapon_10	on_idle_timer	0	2		0	broadcast	22313	50	0		0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v01	0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402519	0	0		0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_wake_up	0	7		1	var	3	0	0	v01	0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_wake_up	0	7		2	var	0	1	0	vd_d	0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_wake_up	0	7		3	var	0	-1	0	vd_l	0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_wake_up	0	7		4	var	-1	0	0	li_killer_v01	0.0	0.0	0.0
+855554	LDF4_Advance_Temp_01	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855555	LDF4_Advance_Temp_02	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855555	LDF4_Advance_Temp_02	on_wake_up	0	7		0	var	1	0	0	v01	0.0	0.0	0.0
+855555	LDF4_Advance_Temp_02	on_wake_up	0	7		1	var	0	-1	0	vd_l	0.0	0.0	0.0
+855555	LDF4_Advance_Temp_02	on_wake_up	0	7		2	var	-1	0	0	li_killer_v01	0.0	0.0	0.0
+855555	LDF4_Advance_Temp_02	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855555	LDF4_Advance_Temp_02	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v02	0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402520	0	0		0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_wake_up	0	7		1	var	3	0	0	v02	0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_wake_up	0	7		2	var	0	1	0	va_d	0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_wake_up	0	7		3	var	0	-1	0	va_l	0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_wake_up	0	7		4	var	-1	0	0	li_killer_v02	0.0	0.0	0.0
+855556	LDF4_Advance_Temp_03	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855557	LDF4_Advance_Temp_04	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855557	LDF4_Advance_Temp_04	on_wake_up	0	7		0	var	1	0	0	v02	0.0	0.0	0.0
+855557	LDF4_Advance_Temp_04	on_wake_up	0	7		1	var	0	-1	0	va_l	0.0	0.0	0.0
+855557	LDF4_Advance_Temp_04	on_wake_up	0	7		2	var	-1	0	0	li_killer_v02	0.0	0.0	0.0
+855557	LDF4_Advance_Temp_04	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855557	LDF4_Advance_Temp_04	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v03	0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402521	0	0		0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_wake_up	0	7		1	var	3	0	0	v03	0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_wake_up	0	7		2	var	0	1	0	va_d	0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_wake_up	0	7		3	var	0	-1	0	va_l	0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_wake_up	0	7		4	var	-1	0	0	li_killer_v03	0.0	0.0	0.0
+855558	LDF4_Advance_Temp_05	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855559	LDF4_Advance_Temp_06	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855559	LDF4_Advance_Temp_06	on_wake_up	0	7		0	var	1	0	0	v03	0.0	0.0	0.0
+855559	LDF4_Advance_Temp_06	on_wake_up	0	7		1	var	0	-1	0	va_l	0.0	0.0	0.0
+855559	LDF4_Advance_Temp_06	on_wake_up	0	7		2	var	-1	0	0	li_killer_v03	0.0	0.0	0.0
+855559	LDF4_Advance_Temp_06	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855559	LDF4_Advance_Temp_06	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v04	0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402522	0	0		0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_wake_up	0	7		1	var	3	0	0	v04	0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_wake_up	0	7		2	var	0	1	0	va_d	0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_wake_up	0	7		3	var	0	-1	0	va_l	0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_wake_up	0	7		4	var	-1	0	0	li_killer_v04	0.0	0.0	0.0
+855560	LDF4_Advance_Temp_07	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855561	LDF4_Advance_Temp_08	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855561	LDF4_Advance_Temp_08	on_wake_up	0	7		0	var	1	0	0	v04	0.0	0.0	0.0
+855561	LDF4_Advance_Temp_08	on_wake_up	0	7		1	var	0	-1	0	va_l	0.0	0.0	0.0
+855561	LDF4_Advance_Temp_08	on_wake_up	0	7		2	var	-1	0	0	li_killer_v04	0.0	0.0	0.0
+855561	LDF4_Advance_Temp_08	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855561	LDF4_Advance_Temp_08	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v05	0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402523	0	0		0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_wake_up	0	7		1	var	3	0	0	v05	0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_wake_up	0	7		2	var	0	1	0	vb_d	0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_wake_up	0	7		3	var	0	-1	0	vb_l	0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_wake_up	0	7		4	var	-1	0	0	li_killer_v05	0.0	0.0	0.0
+855562	LDF4_Advance_Temp_09	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855563	LDF4_Advance_Temp_10	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855563	LDF4_Advance_Temp_10	on_wake_up	0	7		0	var	1	0	0	v05	0.0	0.0	0.0
+855563	LDF4_Advance_Temp_10	on_wake_up	0	7		1	var	0	-1	0	vb_l	0.0	0.0	0.0
+855563	LDF4_Advance_Temp_10	on_wake_up	0	7		2	var	-1	0	0	li_killer_v05	0.0	0.0	0.0
+855563	LDF4_Advance_Temp_10	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855563	LDF4_Advance_Temp_10	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v06	0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402524	0	0		0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_wake_up	0	7		1	var	3	0	0	v06	0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_wake_up	0	7		2	var	0	1	0	vb_d	0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_wake_up	0	7		3	var	0	-1	0	vb_l	0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_wake_up	0	7		4	var	-1	0	0	li_killer_v06	0.0	0.0	0.0
+855564	LDF4_Advance_Temp_11	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855565	LDF4_Advance_Temp_12	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855565	LDF4_Advance_Temp_12	on_wake_up	0	7		0	var	1	0	0	v06	0.0	0.0	0.0
+855565	LDF4_Advance_Temp_12	on_wake_up	0	7		1	var	0	-1	0	vb_l	0.0	0.0	0.0
+855565	LDF4_Advance_Temp_12	on_wake_up	0	7		2	var	-1	0	0	li_killer_v06	0.0	0.0	0.0
+855565	LDF4_Advance_Temp_12	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855565	LDF4_Advance_Temp_12	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v07	0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402525	0	0		0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_wake_up	0	7		1	var	3	0	0	v07	0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_wake_up	0	7		2	var	0	1	0	vb_d	0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_wake_up	0	7		3	var	0	-1	0	vb_l	0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_wake_up	0	7		4	var	-1	0	0	li_killer_v07	0.0	0.0	0.0
+855566	LDF4_Advance_Temp_13	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855567	LDF4_Advance_Temp_14	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855567	LDF4_Advance_Temp_14	on_wake_up	0	7		0	var	1	0	0	v07	0.0	0.0	0.0
+855567	LDF4_Advance_Temp_14	on_wake_up	0	7		1	var	0	-1	0	vb_l	0.0	0.0	0.0
+855567	LDF4_Advance_Temp_14	on_wake_up	0	7		2	var	-1	0	0	li_killer_v07	0.0	0.0	0.0
+855567	LDF4_Advance_Temp_14	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855567	LDF4_Advance_Temp_14	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v08	0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402526	0	0		0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_wake_up	0	7		1	var	3	0	0	v08	0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_wake_up	0	7		2	var	0	1	0	vc_d	0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_wake_up	0	7		3	var	0	-1	0	vc_l	0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_wake_up	0	7		4	var	-1	0	0	li_killer_v08	0.0	0.0	0.0
+855568	LDF4_Advance_Temp_15	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855569	LDF4_Advance_Temp_16	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855569	LDF4_Advance_Temp_16	on_wake_up	0	7		0	var	1	0	0	v08	0.0	0.0	0.0
+855569	LDF4_Advance_Temp_16	on_wake_up	0	7		1	var	0	-1	0	vc_l	0.0	0.0	0.0
+855569	LDF4_Advance_Temp_16	on_wake_up	0	7		2	var	-1	0	0	li_killer_v08	0.0	0.0	0.0
+855569	LDF4_Advance_Temp_16	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855569	LDF4_Advance_Temp_16	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v09	0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402527	0	0		0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_wake_up	0	7		1	var	3	0	0	v09	0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_wake_up	0	7		2	var	0	1	0	vc_d	0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_wake_up	0	7		3	var	0	-1	0	vc_l	0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_wake_up	0	7		4	var	-1	0	0	li_killer_v09	0.0	0.0	0.0
+855570	LDF4_Advance_Temp_17	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855571	LDF4_Advance_Temp_18	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855571	LDF4_Advance_Temp_18	on_wake_up	0	7		0	var	1	0	0	v09	0.0	0.0	0.0
+855571	LDF4_Advance_Temp_18	on_wake_up	0	7		1	var	0	-1	0	vc_l	0.0	0.0	0.0
+855571	LDF4_Advance_Temp_18	on_wake_up	0	7		2	var	-1	0	0	li_killer_v09	0.0	0.0	0.0
+855571	LDF4_Advance_Temp_18	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855571	LDF4_Advance_Temp_18	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v10	0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402528	0	0		0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_wake_up	0	7		1	var	3	0	0	v10	0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_wake_up	0	7		2	var	0	1	0	vd_d	0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_wake_up	0	7		3	var	0	-1	0	vd_l	0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_wake_up	0	7		4	var	-1	0	0	li_killer_v10	0.0	0.0	0.0
+855572	LDF4_Advance_Temp_19	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855573	LDF4_Advance_Temp_20	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855573	LDF4_Advance_Temp_20	on_wake_up	0	7		0	var	1	0	0	v10	0.0	0.0	0.0
+855573	LDF4_Advance_Temp_20	on_wake_up	0	7		1	var	0	-1	0	vd_l	0.0	0.0	0.0
+855573	LDF4_Advance_Temp_20	on_wake_up	0	7		2	var	-1	0	0	li_killer_v10	0.0	0.0	0.0
+855573	LDF4_Advance_Temp_20	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855573	LDF4_Advance_Temp_20	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v11	0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402529	0	0		0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_wake_up	0	7		1	var	3	0	0	v11	0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_wake_up	0	7		2	var	0	1	0	vd_d	0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_wake_up	0	7		3	var	0	-1	0	vd_l	0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_wake_up	0	7		4	var	-1	0	0	li_killer_v11	0.0	0.0	0.0
+855574	LDF4_Advance_Temp_21	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855575	LDF4_Advance_Temp_22	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855575	LDF4_Advance_Temp_22	on_wake_up	0	7		0	var	1	0	0	v11	0.0	0.0	0.0
+855575	LDF4_Advance_Temp_22	on_wake_up	0	7		1	var	0	-1	0	vd_l	0.0	0.0	0.0
+855575	LDF4_Advance_Temp_22	on_wake_up	0	7		2	var	-1	0	0	li_killer_v11	0.0	0.0	0.0
+855575	LDF4_Advance_Temp_22	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855575	LDF4_Advance_Temp_22	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	da_killer_v12	0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402530	0	0		0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_idle_timer	1	7	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_wake_up	0	7		1	var	3	0	0	v12	0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_wake_up	0	7		2	var	0	1	0	vc_d	0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_wake_up	0	7		3	var	0	-1	0	vc_l	0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_wake_up	0	7		4	var	-1	0	0	li_killer_v12	0.0	0.0	0.0
+855576	LDF4_Advance_Temp_23	on_wake_up	0	7		5	broadcast	30009	50	0		0.0	0.0	0.0
+855577	LDF4_Advance_Temp_24	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855577	LDF4_Advance_Temp_24	on_wake_up	0	7		0	var	1	0	0	v12	0.0	0.0	0.0
+855577	LDF4_Advance_Temp_24	on_wake_up	0	7		1	var	0	-1	0	vc_l	0.0	0.0	0.0
+855577	LDF4_Advance_Temp_24	on_wake_up	0	7		2	var	-1	0	0	li_killer_v12	0.0	0.0	0.0
+855577	LDF4_Advance_Temp_24	on_wake_up	0	7		3	broadcast	30009	50	0		0.0	0.0	0.0
+855577	LDF4_Advance_Temp_24	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v01	0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402519	0	0		0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_wake_up	0	7		1	var	2	0	0	v01	0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_wake_up	0	7		2	var	0	1	0	vd_l	0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_wake_up	0	7		3	var	0	-1	0	vd_d	0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855578	LDF4_Advance_Temp_25	on_wake_up	0	7		5	var	-1	0	0	da_killer_v01	0.0	0.0	0.0
+855579	LDF4_Advance_Temp_26	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855579	LDF4_Advance_Temp_26	on_wake_up	0	7		0	var	1	0	0	v01	0.0	0.0	0.0
+855579	LDF4_Advance_Temp_26	on_wake_up	0	7		1	var	0	-1	0	vd_d	0.0	0.0	0.0
+855579	LDF4_Advance_Temp_26	on_wake_up	0	7		2	var	-1	0	0	da_killer_v01	0.0	0.0	0.0
+855579	LDF4_Advance_Temp_26	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855579	LDF4_Advance_Temp_26	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v02	0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402520	0	0		0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_wake_up	0	7		1	var	2	0	0	v02	0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_wake_up	0	7		2	var	0	1	0	va_l	0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_wake_up	0	7		3	var	0	-1	0	va_d	0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855580	LDF4_Advance_Temp_27	on_wake_up	0	7		5	var	-1	0	0	da_killer_v02	0.0	0.0	0.0
+855581	LDF4_Advance_Temp_28	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855581	LDF4_Advance_Temp_28	on_wake_up	0	7		0	var	1	0	0	v02	0.0	0.0	0.0
+855581	LDF4_Advance_Temp_28	on_wake_up	0	7		1	var	0	-1	0	va_d	0.0	0.0	0.0
+855581	LDF4_Advance_Temp_28	on_wake_up	0	7		2	var	-1	0	0	da_killer_v02	0.0	0.0	0.0
+855581	LDF4_Advance_Temp_28	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855581	LDF4_Advance_Temp_28	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v03	0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402521	0	0		0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_wake_up	0	7		1	var	2	0	0	v03	0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_wake_up	0	7		2	var	0	1	0	va_l	0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_wake_up	0	7		3	var	0	-1	0	va_d	0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855582	LDF4_Advance_Temp_29	on_wake_up	0	7		5	var	-1	0	0	da_killer_v03	0.0	0.0	0.0
+855583	LDF4_Advance_Temp_30	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855583	LDF4_Advance_Temp_30	on_wake_up	0	7		0	var	1	0	0	v03	0.0	0.0	0.0
+855583	LDF4_Advance_Temp_30	on_wake_up	0	7		1	var	0	-1	0	va_d	0.0	0.0	0.0
+855583	LDF4_Advance_Temp_30	on_wake_up	0	7		2	var	-1	0	0	da_killer_v03	0.0	0.0	0.0
+855583	LDF4_Advance_Temp_30	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855583	LDF4_Advance_Temp_30	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v04	0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402522	0	0		0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_wake_up	0	7		1	var	2	0	0	v04	0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_wake_up	0	7		2	var	0	1	0	va_l	0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_wake_up	0	7		3	var	0	-1	0	va_d	0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855584	LDF4_Advance_Temp_31	on_wake_up	0	7		5	var	-1	0	0	da_killer_v04	0.0	0.0	0.0
+855585	LDF4_Advance_Temp_32	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855585	LDF4_Advance_Temp_32	on_wake_up	0	7		0	var	1	0	0	v04	0.0	0.0	0.0
+855585	LDF4_Advance_Temp_32	on_wake_up	0	7		1	var	0	-1	0	va_d	0.0	0.0	0.0
+855585	LDF4_Advance_Temp_32	on_wake_up	0	7		2	var	-1	0	0	da_killer_v04	0.0	0.0	0.0
+855585	LDF4_Advance_Temp_32	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855585	LDF4_Advance_Temp_32	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v05	0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402523	0	0		0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_wake_up	0	7		1	var	2	0	0	v05	0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_wake_up	0	7		2	var	0	1	0	vb_l	0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_wake_up	0	7		3	var	0	-1	0	vb_d	0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855586	LDF4_Advance_Temp_33	on_wake_up	0	7		5	var	-1	0	0	da_killer_v05	0.0	0.0	0.0
+855587	LDF4_Advance_Temp_34	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855587	LDF4_Advance_Temp_34	on_wake_up	0	7		0	var	1	0	0	v05	0.0	0.0	0.0
+855587	LDF4_Advance_Temp_34	on_wake_up	0	7		1	var	0	-1	0	vb_d	0.0	0.0	0.0
+855587	LDF4_Advance_Temp_34	on_wake_up	0	7		2	var	-1	0	0	da_killer_v05	0.0	0.0	0.0
+855587	LDF4_Advance_Temp_34	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855587	LDF4_Advance_Temp_34	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v06	0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402524	0	0		0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_wake_up	0	7		1	var	2	0	0	v06	0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_wake_up	0	7		2	var	0	1	0	vb_l	0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_wake_up	0	7		3	var	0	-1	0	vb_d	0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855588	LDF4_Advance_Temp_35	on_wake_up	0	7		5	var	-1	0	0	da_killer_v06	0.0	0.0	0.0
+855589	LDF4_Advance_Temp_36	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855589	LDF4_Advance_Temp_36	on_wake_up	0	7		0	var	1	0	0	v06	0.0	0.0	0.0
+855589	LDF4_Advance_Temp_36	on_wake_up	0	7		1	var	0	-1	0	vb_d	0.0	0.0	0.0
+855589	LDF4_Advance_Temp_36	on_wake_up	0	7		2	var	-1	0	0	da_killer_v06	0.0	0.0	0.0
+855589	LDF4_Advance_Temp_36	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855589	LDF4_Advance_Temp_36	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v07	0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402525	0	0		0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_wake_up	0	7		1	var	2	0	0	v07	0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_wake_up	0	7		2	var	0	1	0	vb_l	0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_wake_up	0	7		3	var	0	-1	0	vb_d	0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855590	LDF4_Advance_Temp_37	on_wake_up	0	7		5	var	-1	0	0	da_killer_v07	0.0	0.0	0.0
+855591	LDF4_Advance_Temp_38	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855591	LDF4_Advance_Temp_38	on_wake_up	0	7		0	var	1	0	0	v07	0.0	0.0	0.0
+855591	LDF4_Advance_Temp_38	on_wake_up	0	7		1	var	0	-1	0	vb_d	0.0	0.0	0.0
+855591	LDF4_Advance_Temp_38	on_wake_up	0	7		2	var	-1	0	0	da_killer_v07	0.0	0.0	0.0
+855591	LDF4_Advance_Temp_38	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855591	LDF4_Advance_Temp_38	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v08	0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402526	0	0		0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_wake_up	0	7		1	var	2	0	0	v08	0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_wake_up	0	7		2	var	0	1	0	vc_l	0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_wake_up	0	7		3	var	0	-1	0	vc_d	0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855592	LDF4_Advance_Temp_39	on_wake_up	0	7		5	var	-1	0	0	da_killer_v08	0.0	0.0	0.0
+855593	LDF4_Advance_Temp_40	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855593	LDF4_Advance_Temp_40	on_wake_up	0	7		0	var	1	0	0	v08	0.0	0.0	0.0
+855593	LDF4_Advance_Temp_40	on_wake_up	0	7		1	var	0	-1	0	vc_d	0.0	0.0	0.0
+855593	LDF4_Advance_Temp_40	on_wake_up	0	7		2	var	-1	0	0	da_killer_v08	0.0	0.0	0.0
+855593	LDF4_Advance_Temp_40	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855593	LDF4_Advance_Temp_40	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v09	0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402527	0	0		0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_wake_up	0	7		1	var	2	0	0	v09	0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_wake_up	0	7		2	var	0	1	0	vc_l	0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_wake_up	0	7		3	var	0	-1	0	vc_d	0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855594	LDF4_Advance_Temp_41	on_wake_up	0	7		5	var	-1	0	0	da_killer_v09	0.0	0.0	0.0
+855595	LDF4_Advance_Temp_42	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855595	LDF4_Advance_Temp_42	on_wake_up	0	7		0	var	1	0	0	v09	0.0	0.0	0.0
+855595	LDF4_Advance_Temp_42	on_wake_up	0	7		1	var	0	-1	0	vc_d	0.0	0.0	0.0
+855595	LDF4_Advance_Temp_42	on_wake_up	0	7		2	var	-1	0	0	da_killer_v09	0.0	0.0	0.0
+855595	LDF4_Advance_Temp_42	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855595	LDF4_Advance_Temp_42	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v10	0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402528	0	0		0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_wake_up	0	7		1	var	2	0	0	v10	0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_wake_up	0	7		2	var	0	1	0	vd_l	0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_wake_up	0	7		3	var	0	-1	0	vd_d	0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855596	LDF4_Advance_Temp_43	on_wake_up	0	7		5	var	-1	0	0	da_killer_v10	0.0	0.0	0.0
+855597	LDF4_Advance_Temp_44	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855597	LDF4_Advance_Temp_44	on_wake_up	0	7		0	var	1	0	0	v10	0.0	0.0	0.0
+855597	LDF4_Advance_Temp_44	on_wake_up	0	7		1	var	0	-1	0	vd_d	0.0	0.0	0.0
+855597	LDF4_Advance_Temp_44	on_wake_up	0	7		2	var	-1	0	0	da_killer_v10	0.0	0.0	0.0
+855597	LDF4_Advance_Temp_44	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855597	LDF4_Advance_Temp_44	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v11	0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402529	0	0		0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_wake_up	0	7		1	var	2	0	0	v11	0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_wake_up	0	7		2	var	0	1	0	vd_l	0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_wake_up	0	7		3	var	0	-1	0	vd_d	0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855598	LDF4_Advance_Temp_45	on_wake_up	0	7		5	var	-1	0	0	da_killer_v11	0.0	0.0	0.0
+855599	LDF4_Advance_Temp_46	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855599	LDF4_Advance_Temp_46	on_wake_up	0	7		0	var	1	0	0	v11	0.0	0.0	0.0
+855599	LDF4_Advance_Temp_46	on_wake_up	0	7		1	var	0	-1	0	vd_d	0.0	0.0	0.0
+855599	LDF4_Advance_Temp_46	on_wake_up	0	7		2	var	-1	0	0	da_killer_v11	0.0	0.0	0.0
+855599	LDF4_Advance_Temp_46	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855599	LDF4_Advance_Temp_46	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_idle_timer	0	7	count:0:0:1:1	0	var	1	0	0	li_killer_v12	0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_idle_timer	0	7	count:0:0:1:1	1	timer	10000	0	0		0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_idle_timer	0	7	count:0:0:1:1	2	sysmsg	1402530	0	0		0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_wake_up	0	7		0	timer	1200000	0	0		0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_wake_up	0	7		1	var	2	0	0	v12	0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_wake_up	0	7		2	var	0	1	0	vc_l	0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_wake_up	0	7		3	var	0	-1	0	vc_d	0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_wake_up	0	7		4	broadcast	30010	50	0		0.0	0.0	0.0
+855600	LDF4_Advance_Temp_47	on_wake_up	0	7		5	var	-1	0	0	da_killer_v12	0.0	0.0	0.0
+855601	LDF4_Advance_Temp_48	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855601	LDF4_Advance_Temp_48	on_wake_up	0	7		0	var	1	0	0	v12	0.0	0.0	0.0
+855601	LDF4_Advance_Temp_48	on_wake_up	0	7		1	var	0	-1	0	vc_d	0.0	0.0	0.0
+855601	LDF4_Advance_Temp_48	on_wake_up	0	7		2	var	-1	0	0	da_killer_v12	0.0	0.0	0.0
+855601	LDF4_Advance_Temp_48	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855601	LDF4_Advance_Temp_48	on_wake_up	0	7		4	timer	10000	0	0		0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_idle_timer	0	7	count:0:0:1:0	0	despawn_self	0	0	0		0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_wake_up	0	7		0	timer	10000	0	0		0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_wake_up	0	7		1	var	1	0	0	v13	0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_wake_up	0	7		2	var	-1	0	0	li_killer_v13	0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_wake_up	0	7		3	broadcast	30010	50	0		0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_wake_up	0	7		4	broadcast	30009	50	0		0.0	0.0	0.0
+855602	LDF4_Advance_Temp_49	on_wake_up	0	7		5	var	-1	0	0	da_killer_v13	0.0	0.0	0.0
+855609	IDSeal_Glacier_Spread_Summon_03	on_idle_timer	0	8		0	broadcast	22740	50	0		0.0	0.0	0.0
+855609	IDSeal_Glacier_Spread_Summon_03	on_idle_timer	0	8		1	timer	0	0	0		0.0	0.0	0.0
+855610	IDSeal_Glacier_Spread_Summon_04	on_idle_timer	0	8		0	broadcast	22741	50	0		0.0	0.0	0.0
+855610	IDSeal_Glacier_Spread_Summon_04	on_idle_timer	0	8		1	timer	0	0	0		0.0	0.0	0.0
+855759	Legion_01_321	on_idle_timer	0	1000	set_flag_var:0	0	broadcast	10000	50	0		0.0	0.0	0.0
+855759	Legion_01_321	on_idle_timer	0	1000	set_flag_var:0	1	timer	6000	0	0		0.0	0.0	0.0
+855759	Legion_01_321	on_idle_timer	1	900		0	despawn_self	0	0	0		0.0	0.0	0.0
+855759	Legion_01_321	on_wake_up	0	1000		0	timer	120000	0	0		0.0	0.0	0.0
+855781	Legion_02_312	on_idle_timer	0	1000		0	say	1501356	0	0		0.0	0.0	0.0
+855781	Legion_02_312	on_idle_timer	0	1000		1	timer	10000	0	0		0.0	0.0	0.0
+855781	Legion_02_312	on_wake_up	0	7		0	say	1501356	0	0		0.0	0.0	0.0
+855781	Legion_02_312	on_wake_up	0	7		1	timer	10000	0	0		0.0	0.0	0.0
+856134	Legion_01_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856134	Legion_01_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855768	8	0	for_the_fight_self	0.0	0.0	0.0
+856134	Legion_01_2_M1_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856135	Legion_01_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856135	Legion_01_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855769	8	0	for_the_fight_self	0.0	0.0	0.0
+856135	Legion_01_2_M2_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856136	Legion_01_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856136	Legion_01_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855770	8	0	for_the_fight_self	0.0	0.0	0.0
+856136	Legion_01_2_M3_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855791	6	0	for_the_fight_self	0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_wake_up	0	1000		1	spawn	855768	2	0	for_the_fight_self	0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_wake_up	0	1000		2	timer	5000	0	0		0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855792	6	0	for_the_fight_self	0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_wake_up	0	1000		1	spawn	855769	2	0	for_the_fight_self	0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_wake_up	0	1000		2	timer	5000	0	0		0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855793	6	0	for_the_fight_self	0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_wake_up	0	1000		1	spawn	855770	2	0	for_the_fight_self	0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_wake_up	0	1000		2	timer	5000	0	0		0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855814	5	0	for_the_fight_self	0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		1	spawn	855791	2	0	for_the_fight_self	0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		2	spawn	855768	1	0	for_the_fight_self	0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		3	timer	5000	0	0		0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855815	5	0	for_the_fight_self	0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		1	spawn	855792	2	0	for_the_fight_self	0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		2	spawn	855769	1	0	for_the_fight_self	0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		3	timer	5000	0	0		0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855816	5	0	for_the_fight_self	0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		1	spawn	855793	2	0	for_the_fight_self	0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		2	spawn	855770	1	0	for_the_fight_self	0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		3	timer	5000	0	0		0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855837	4	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		1	spawn	855814	2	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		2	spawn	855791	1	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		3	spawn	855768	1	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		4	timer	5000	0	0		0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855838	4	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		1	spawn	855815	2	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		2	spawn	855792	1	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		3	spawn	855769	1	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		4	timer	5000	0	0		0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855839	4	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		1	spawn	855816	2	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		2	spawn	855793	1	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		3	spawn	855770	1	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		4	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	0	1000	chance:20|set_flag_var:1	0	var	1	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	0	1000	chance:20|set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	1	900	chance:20|set_flag_var:1	0	var	2	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	1	900	chance:20|set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	2	800	chance:20|set_flag_var:1	0	var	3	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	2	800	chance:20|set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	3	700	set_flag_var:1	0	var	4	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	3	700	set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	4	500	set_flag_var:4	0	var	-1	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	4	500	set_flag_var:4	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	5	400	set_flag_var:5	0	despawn_self	0	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	0	1000	chance:20|set_flag_var:0	0	timer	9000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	1	900	chance:20|set_flag_var:0	0	timer	18000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	2	800	chance:20|set_flag_var:0	0	timer	27000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	3	700	chance:20|set_flag_var:0	0	timer	36000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	4	600	set_flag_var:0	0	timer	45000	0	0		0.0	0.0	0.0
+856304	Legion_Scarecrow_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856304	Legion_Scarecrow_SpawnNPC	on_wake_up	0	1000		0	spawn	856305	1	240	for_the_fight_absolute	0.0	0.0	0.0
+856304	Legion_Scarecrow_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856313	BIDF5_U01_Ctrl_09	on_wake_up	0	1000		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_idle_timer	0	5		0	despawn_self	0	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	0	10	chance:25	0	spawn	856470	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	0	10	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	1	9	chance:25	0	spawn	856471	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	1	9	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	2	8	chance:25	0	spawn	856472	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	2	8	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	3	7	chance:25	0	spawn	856473	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	3	7	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	4	6		0	spawn	856451	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	4	6		1	timer	6000	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	0	1000	set_flag_var:1	0	timer	180000	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	0	1000	set_flag_var:1	1	sysmsg	1402861	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	1	900	set_flag_var:2	0	timer	62000	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	1	900	set_flag_var:2	1	sysmsg	1402862	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	2	800	set_flag_var:3	0	timer	6000	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	2	800	set_flag_var:3	1	sysmsg	1402839	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_idle_timer	3	700	set_flag_var:4	0	despawn_self	0	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_wake_up	0	1000	set_flag_var:0	0	timer	240000	0	0		0.0	0.0	0.0
+856386	BIDF5_U01_Ctrl_10	on_wake_up	0	1000	set_flag_var:0	1	sysmsg	1402860	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_idle_timer	0	5		0	despawn_self	0	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	0	10	chance:25	0	spawn	856474	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	0	10	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	1	9	chance:25	0	spawn	856475	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	1	9	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	2	8	chance:25	0	spawn	856476	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	2	8	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	3	7	chance:25	0	spawn	856477	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	3	7	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	4	6		0	spawn	856455	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	4	6		1	timer	6000	0	0		0.0	0.0	0.0
+856451	F4_Rotation_Treasure_Guardian_Ctrl_L	on_wake_up	0	9	chance:25	0	spawn	856452	1	20	for_the_fight_self	0.0	0.0	0.0
+856451	F4_Rotation_Treasure_Guardian_Ctrl_L	on_wake_up	1	8	chance:30	0	spawn	856453	1	20	for_the_fight_self	0.0	0.0	0.0
+856451	F4_Rotation_Treasure_Guardian_Ctrl_L	on_wake_up	2	7		0	spawn	856454	1	20	for_the_fight_self	0.0	0.0	0.0
+856452	F4_Rotation_Treasure_Guardian_L_01	on_wake_up	0	7		0	spawn	236423	1	600	absolute	812.0	454.0	529.0
+856452	F4_Rotation_Treasure_Guardian_L_01	on_wake_up	0	7		1	spawn	236663	1	600	absolute	2726.0	393.0	339.0
+856452	F4_Rotation_Treasure_Guardian_L_01	on_wake_up	0	7		2	spawn	236664	1	600	absolute	886.0	1256.0	415.0
+856452	F4_Rotation_Treasure_Guardian_L_01	on_wake_up	0	7		3	spawn	236665	1	600	absolute	1428.0	1925.0	308.0
+856452	F4_Rotation_Treasure_Guardian_L_01	on_wake_up	0	7		4	spawn	236666	1	600	absolute	2364.0	1347.0	242.0
+856453	F4_Rotation_Treasure_Guardian_L_02	on_wake_up	0	7		0	spawn	236423	1	600	absolute	886.0	1256.0	415.0
+856453	F4_Rotation_Treasure_Guardian_L_02	on_wake_up	0	7		1	spawn	236663	1	600	absolute	1428.0	1925.0	308.0
+856453	F4_Rotation_Treasure_Guardian_L_02	on_wake_up	0	7		2	spawn	236664	1	600	absolute	2364.0	1347.0	242.0
+856453	F4_Rotation_Treasure_Guardian_L_02	on_wake_up	0	7		3	spawn	236665	1	600	absolute	812.0	454.0	529.0
+856453	F4_Rotation_Treasure_Guardian_L_02	on_wake_up	0	7		4	spawn	236666	1	600	absolute	2726.0	393.0	339.0
+856454	F4_Rotation_Treasure_Guardian_L_03	on_wake_up	0	7		0	spawn	236423	1	600	absolute	2364.0	1347.0	242.0
+856454	F4_Rotation_Treasure_Guardian_L_03	on_wake_up	0	7		1	spawn	236663	1	600	absolute	812.0	454.0	529.0
+856454	F4_Rotation_Treasure_Guardian_L_03	on_wake_up	0	7		2	spawn	236664	1	600	absolute	2726.0	393.0	339.0
+856454	F4_Rotation_Treasure_Guardian_L_03	on_wake_up	0	7		3	spawn	236665	1	600	absolute	886.0	1256.0	415.0
+856454	F4_Rotation_Treasure_Guardian_L_03	on_wake_up	0	7		4	spawn	236666	1	600	absolute	1428.0	1925.0	308.0
+856455	F4_Rotation_Treasure_Guardian_Ctrl_D	on_wake_up	0	9	chance:25	0	spawn	856456	1	600	for_the_fight_self	0.0	0.0	0.0
+856455	F4_Rotation_Treasure_Guardian_Ctrl_D	on_wake_up	1	8	chance:30	0	spawn	856457	1	600	for_the_fight_self	0.0	0.0	0.0
+856455	F4_Rotation_Treasure_Guardian_Ctrl_D	on_wake_up	2	7		0	spawn	856458	1	600	for_the_fight_self	0.0	0.0	0.0
+856456	F4_Rotation_Treasure_Guardian_D_01	on_wake_up	0	7		0	spawn	236659	1	600	absolute	2467.0	1064.0	284.0
+856456	F4_Rotation_Treasure_Guardian_D_01	on_wake_up	0	7		1	spawn	236667	1	600	absolute	1348.0	1306.0	290.0
+856456	F4_Rotation_Treasure_Guardian_D_01	on_wake_up	0	7		2	spawn	236668	1	600	absolute	711.0	2031.0	341.0
+856456	F4_Rotation_Treasure_Guardian_D_01	on_wake_up	0	7		3	spawn	236669	1	600	absolute	2063.0	1630.0	355.0
+856456	F4_Rotation_Treasure_Guardian_D_01	on_wake_up	0	7		4	spawn	236670	1	600	absolute	2880.0	2367.0	482.0
+856457	F4_Rotation_Treasure_Guardian_D_02	on_wake_up	0	7		0	spawn	236659	1	600	absolute	711.0	2031.0	341.0
+856457	F4_Rotation_Treasure_Guardian_D_02	on_wake_up	0	7		1	spawn	236667	1	600	absolute	2063.0	1630.0	355.0
+856457	F4_Rotation_Treasure_Guardian_D_02	on_wake_up	0	7		2	spawn	236668	1	600	absolute	2880.0	2367.0	482.0
+856457	F4_Rotation_Treasure_Guardian_D_02	on_wake_up	0	7		3	spawn	236669	1	600	absolute	2467.0	1064.0	284.0
+856457	F4_Rotation_Treasure_Guardian_D_02	on_wake_up	0	7		4	spawn	236670	1	600	absolute	1348.0	1306.0	290.0
+856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		0	spawn	236659	1	600	absolute	2880.0	2367.0	482.0
+856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		1	spawn	236667	1	600	absolute	2467.0	1064.0	284.0
+856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		2	spawn	236668	1	600	absolute	1348.0	1306.0	290.0
+856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		3	spawn	236669	1	600	absolute	711.0	2031.0	341.0
+856458	F4_Rotation_Treasure_Guardian_D_03	on_wake_up	0	7		4	spawn	236670	1	600	absolute	2063.0	1630.0	355.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	0	10	chance:20	0	spawn	236420	1	600	absolute	812.0	454.0	529.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	0	10	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	1	9	chance:20	0	spawn	236420	1	600	absolute	2726.0	393.0	339.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	1	9	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	2	8	chance:20	0	spawn	236420	1	600	absolute	886.0	1256.0	415.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	2	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	3	7	chance:20	0	spawn	236420	1	600	absolute	1428.0	1925.0	308.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	3	7	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	4	6		0	spawn	236420	1	600	absolute	2364.0	1347.0	242.0
+856471	F4_Rotation_Treasure_Hide_Ctrl_L	on_wake_up	4	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	0	10	chance:20	0	spawn	236421	1	600	for_the_fight_absolute	812.0	454.0	529.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	0	10	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	1	9	chance:20	0	spawn	236421	1	600	absolute	2726.0	393.0	339.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	1	9	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	2	8	chance:20	0	spawn	236421	1	600	absolute	886.0	1256.0	415.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	2	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	3	7	chance:20	0	spawn	236421	1	600	absolute	1428.0	1925.0	308.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	3	7	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	4	6		0	spawn	236421	1	600	absolute	2364.0	1347.0	242.0
+856472	F4_Rotation_Treasure_Run_Ctrl_L	on_wake_up	4	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	0	10	chance:20	0	spawn	236422	1	600	absolute	0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	0	10	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	1	9	chance:20	0	spawn	236422	1	600	absolute	0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	1	9	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	2	8	chance:20	0	spawn	236422	1	600	absolute	0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	2	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	3	7	chance:20	0	spawn	236422	1	600	absolute	0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	3	7	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	4	6		0	spawn	236422	1	600	absolute	0.0	0.0	0.0
+856473	F4_Rotation_Treasure_Move_Ctrl_L	on_wake_up	4	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	0	10	chance:20	0	spawn	236656	1	600	absolute	2467.0	1064.0	284.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	0	10	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	1	9	chance:20	0	spawn	236656	1	600	absolute	1348.0	1306.0	290.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	1	9	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	2	8	chance:20	0	spawn	236656	1	600	absolute	711.0	2031.0	341.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	2	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	3	7	chance:20	0	spawn	236656	1	600	absolute	2036.0	1630.0	355.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	3	7	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	4	6		0	spawn	236656	1	600	absolute	2880.0	2367.0	482.0
+856475	F4_Rotation_Treasure_Hide_Ctrl_D	on_wake_up	4	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	0	10	chance:20	0	spawn	236657	1	600	absolute	2467.0	1064.0	284.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	0	10	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	1	9	chance:20	0	spawn	236657	1	600	absolute	1348.0	1306.0	290.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	1	9	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	2	8	chance:20	0	spawn	236657	1	600	absolute	2036.0	1630.0	341.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	2	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	3	7	chance:20	0	spawn	236657	1	600	absolute	2063.0	1630.0	355.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	3	7	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	4	6		0	spawn	236657	1	600	absolute	2880.0	2367.0	482.0
+856476	F4_Rotation_Treasure_Run_Ctrl_D	on_wake_up	4	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	0	10	chance:20	0	spawn	236658	1	600	absolute	0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	0	10	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	1	9	chance:20	0	spawn	236658	1	600	absolute	0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	1	9	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	2	8	chance:20	0	spawn	236658	1	600	absolute	0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	2	8	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	3	7	chance:20	0	spawn	236658	1	600	absolute	0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	3	7	chance:20	1	despawn_self	0	0	0		0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	4	6		0	spawn	236658	1	600	absolute	0.0	0.0	0.0
+856477	F4_Rotation_Treasure_Move_Ctrl_D	on_wake_up	4	6		1	despawn_self	0	0	0		0.0	0.0	0.0
+856479	IDSeal_BossRoom_03	on_idle_timer	0	2		0	var	2	0	0	DARKSUN	0.0	0.0	0.0
+856479	IDSeal_BossRoom_03	on_idle_timer	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+856479	IDSeal_BossRoom_03	on_wake_up	0	1		0	timer	2000	0	0		0.0	0.0	0.0
+856479	IDSeal_BossRoom_03	on_wake_up	0	1		1	var	1	0	0	GUARDIAN_TIMER	0.0	0.0	0.0

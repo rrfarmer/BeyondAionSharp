@@ -32,10 +32,17 @@ public sealed class DeathSpawnTableTests
 
 	private const int PlayerKillLeaves = 280722;
 
-	/// <summary><c>IDDF3_NamedNWi</c>: leaves something however it died.</summary>
-	private const int AnyDeath = 213778;
+	/// <summary><c>IDSlk_KK</c>: leaves something however it died, and the something stays.</summary>
+	/// <remarks>
+	/// This used to be <c>IDDF3_NamedNWi</c>, whose add is <c>IDDF3_BroadNPC_System</c> -- a relay that
+	/// appears, shouts to fifty metres and removes itself. Once the passive pattern table started
+	/// running that npc's own pattern the add stopped lingering, and the pin counting it failed. It was
+	/// only ever countable because nothing ran the pattern; the fix is a different encounter, not a
+	/// looser assertion.
+	/// </remarks>
+	private const int AnyDeath = 215079;
 
-	private const int AnyDeathLeaves = 282155;
+	private const int AnyDeathLeaves = 281197;
 
 	/// <summary><c>BGuard_Chief_Gab1_L</c>: leaves something only when an <i>npc</i> kills it.</summary>
 	private const int NpcKilled = 277400;
@@ -50,7 +57,10 @@ public sealed class DeathSpawnTableTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(AnyMap).WithWorldSize(4096)
-			.WithAi(typeof(DeathSpawnAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+			// PassivePatternAI is registered because some of the adds these npcs leave are themselves
+			// driven by a pattern now; without it the spawn silently produces nothing.
+			.WithAi(typeof(DeathSpawnAI), typeof(PassivePatternAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI)).Build();
 
 	private static int Count(BossAiHarness harness, int npcId) =>
 		harness.LiveNpcs().Count(npc => npc.GetNpcId() == npcId);

@@ -36410,3 +36410,48 @@ step after it is to try a different npc rather than to write the limitation down
 - **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), both blocked on evidence
   the data does not contain.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## The npcs that do not fight, finally running their own patterns
+
+`PassivePatternAi` existed and had nothing to drive. This is the table: **425 retail patterns across 462
+npcs, 2,062 actions**, every one of them a `general` npc -- a flag, a relay, a wave controller, a piece
+of scenery. `WakeVariables` had taken the ones whose whole behaviour was an unguarded list of variable
+writes; these carry a guard, a timer, a message or a spawn as well.
+
+The vocabulary needed no work at all: the parser is imported from `IdleCycles`, so the two tables cannot
+drift on what an action means, and the emitter reuses its action and guard code. **The obstacle was
+never vocabulary, it was the base class** -- and that had already been fixed.
+
+| kind | actions |
+|---|---|
+| spawn-variable writes | 544 |
+| timers | 393 |
+| broadcasts | 350 |
+| spawns | 288 |
+| despawn-self | 240 |
+| system messages / shouts | 247 |
+
+### A pin that broke because the port got more faithful, again
+
+`APlainDeathSpawnDoesNotCareWhoKilledIt` failed the moment this table landed. Its add is
+`IDDF3_BroadNPC_System` -- **a relay that appears, shouts to fifty metres and removes itself** -- and it
+had been countable only because nothing ran its pattern. Running it made the add do its job and go, and
+the pin that counted it a second later was measuring the absence of the feature.
+
+The fix was a different encounter, not a looser assertion. That is the second time this has happened
+(the first was an add whose `on_die` despawned it explicitly), and both times the tempting repair was to
+weaken the test rather than admit it had been pinning a bug.
+
+Also required: `DeathSpawnTableTests` had to register `PassivePatternAI`, because some of the adds those
+npcs leave are now driven by a pattern themselves. A harness that does not know a class spawns nothing
+and says nothing about why.
+
+### Still missing
+
+- **272 patterns refused for a branch this port cannot say** -- the largest remaining group here, and
+  unexamined by kind.
+- **The wake table took the simple cases first.** 724 npcs sit on `wake_variable` with only their
+  variable writes ported; some of those patterns have guarded or timed branches this table could now
+  run. Nobody has counted the overlap.
+- **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), blocked on evidence.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
