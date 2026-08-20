@@ -34757,3 +34757,51 @@ rows of XML would be several megabytes to parse at every start for no gain.
   quiet server and wrong during a siege.
 - **`[SAVE]` persistence** and **instance scope**, unchanged.
 - **50,841 placements** whose npcs this port has no template for, and **3,916** in unnamed worlds.
+
+## 6,800 placements this port already makes, and why the call site is not one line
+
+The previous entry left "wire it at world start" as the last step. Measured before doing it:
+
+> **6,800 of the 21,096 loadable placements are the same npc within five metres of a spawn this port
+> already makes unconditionally.**
+
+Retail expresses those as a gated group; this port expresses them as an always-on one. Loading both puts
+**two of everything** in those worlds. That is what "one wiring point" would actually have done.
+
+`extract_gated_spawns.py` marks them, `GatedSpawnData` skips them by default, and the numbers land at:
+
+| | |
+|---|---|
+| loadable placements | 21,096 |
+| gate parses | 21,092 |
+| **minus duplicates of a static spawn** | **14,292**, across 91 maps |
+| hold on an empty store | **619** |
+
+Skipping keeps the world right and leaves the mechanic wrong in the way it is wrong today: those npcs
+stay present when their gate would have removed them. The faithful repair is to delete the
+unconditional spawn and let the gate own it — one world at a time, with a server running.
+
+### The opening count has moved three times, and every move was real
+
+1,525 on the pre-join file, 1,447 after the map join dropped worlds `world_maps.xml` cannot name, and
+**619** once duplicates were filtered. Each was right for the file it was measured on. A fourth number,
+693, was a guess written into a pin and corrected by the suite within the minute.
+
+### A green run that meant nothing
+
+Adding the `overlaps_static` column shifted the gate to the last field, and the pin that parses every
+gate kept reading the old index — where it found `TRUE`. **A bare word is a valid gate** (`CHALLENGE_504`
+is one of 101), so it parsed happily and reported *zero* refusals instead of the expected four. The
+count assertion caught it; the parse assertion could not. The pin now says so at the point of the index.
+
+### Still missing
+
+- **The call site**, still. It is now safe to write — the duplicates are handled — and it will place
+  about 619 npcs that are absent today.
+- **`GAb1_PvPStatus`**, the largest unsupplied flag at 6,006 gate uses. Its three values are measurable:
+  `== 1` guards artifact guards and warcaptains (a siege in progress), `== 3` guards teleporters and the
+  four factions' scout infantry (the quiet state), `== 2` just 96 placements of temple gates. That is
+  strong for 1-versus-3 and silent on 2, so nothing is wired to `PanesterraService` yet.
+- **`SpecialServer_Cond` and `InterServer_Cond` need nothing**: both are 0/1 server-type flags, 0 is an
+  ordinary server, and unset already reads zero — 2,843 gate uses that are already correct.
+- **`[SAVE]` persistence** and **instance scope**, unchanged.

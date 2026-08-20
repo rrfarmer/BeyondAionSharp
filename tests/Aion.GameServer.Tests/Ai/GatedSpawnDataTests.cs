@@ -23,10 +23,12 @@ public sealed class GatedSpawnDataTests
 	{
 		IReadOnlyDictionary<int, IReadOnlyList<GatedSpawn>> byMap = GatedSpawnData.Load(Path_);
 
-		Assert.Equal(97, byMap.Count);
+		// Fewer maps than the file names, because a map whose every placement duplicates an existing
+		// static spawn contributes nothing once those are filtered.
+		Assert.Equal(91, byMap.Count);
 
-		// Nine gates in the dump are retail's own broken ones; four placements sit behind two of them.
-		Assert.Equal(21092, byMap.Values.Sum(g => g.Count));
+		// 21,096 rows, less 6,800 that duplicate a static spawn and four behind retail's broken gates.
+		Assert.Equal(14292, byMap.Values.Sum(g => g.Count));
 		Assert.All(byMap.Keys, mapId => Assert.True(mapId > 0));
 	}
 
@@ -46,11 +48,13 @@ public sealed class GatedSpawnDataTests
 	}
 
 	/// <summary>
-	/// <b>Only a fraction hold on an empty store.</b> 1,447 of them, so a fresh world places about that
-	/// many and leaves the rest waiting on a condition.
+	/// <b>Only a fraction hold on an empty store.</b> 619 of them, so wiring the call site places about
+	/// that many npcs that are absent today.
 	/// <para>
-	/// Measured at 1,525 before the map join, on the 25,012 placements that included worlds
-	/// <c>world_maps.xml</c> cannot name. The loadable set is smaller and so is its opening count.
+	/// This number has moved twice and both moves were real: 1,525 measured on the pre-join file, 1,447
+	/// after the map join dropped worlds <c>world_maps.xml</c> cannot name, and 693 once the placements
+	/// that duplicate an existing static spawn were filtered out. Each figure was right for the file it
+	/// was measured on, and 693 was a guess in between that the suite corrected to 619.
 	/// </para>
 	/// </summary>
 	[Fact]
@@ -61,7 +65,22 @@ public sealed class GatedSpawnDataTests
 
 		int holds = byMap.Values.SelectMany(g => g).Count(g => g.Gate.Holds(empty));
 
-		Assert.Equal(1447, holds);
+		Assert.Equal(619, holds);
+	}
+
+	/// <summary>
+	/// <b>The duplicates are there and are excluded by default.</b> 6,800 of the 21,096 are the same
+	/// npc within five metres of a spawn this port already makes unconditionally, so loading both would
+	/// put two of everything in those worlds.
+	/// </summary>
+	[Fact]
+	public void TheDuplicatesAreExcludedUnlessAskedFor()
+	{
+		int filtered = GatedSpawnData.Load(Path_).Values.Sum(g => g.Count);
+		int everything = GatedSpawnData.Load(Path_, includeOverlapping: true).Values.Sum(g => g.Count);
+
+		Assert.Equal(21092, everything);
+		Assert.Equal(6800, everything - filtered);
 	}
 
 	/// <summary><b>A missing file is empty, not a crash.</b></summary>

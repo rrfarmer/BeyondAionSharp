@@ -197,17 +197,20 @@ public sealed class SpawnConditionTests
 		foreach (string line in File.ReadLines(path).Skip(1))
 		{
 			string[] fields = line.Split('	');
-			if (fields.Length < 10)
+			if (fields.Length < 11)
 				continue;
 
 			placements++;
 			try
 			{
-				SpawnCondition.Parse(fields[9]);
+				// Column 10. A bare word is a valid gate -- `CHALLENGE_504` is one of 101 -- so reading
+				// the wrong column here parses `TRUE` happily and reports no refusals at all, which is
+				// how an off-by-one column survived a green run once.
+				SpawnCondition.Parse(fields[10]);
 			}
 			catch (FormatException)
 			{
-				refused.Add(fields[9]);
+				refused.Add(fields[10]);
 			}
 		}
 

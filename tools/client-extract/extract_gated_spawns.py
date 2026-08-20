@@ -45,6 +45,21 @@ INFO_RE = re.compile(r"<condition_info\b([^>]*)>(.*?)</condition_info>", re.S)
 NPC_RE = re.compile(r"<npc\b[^>]*>(.*?)</npc>", re.S)
 
 
+def existing_spawns(repo: pathlib.Path) -> dict[tuple[int, int], list[tuple[float, float]]]:
+    """(map, npc) -> the positions this port already spawns it at."""
+    out: dict[tuple[int, int], list[tuple[float, float]]] = {}
+    for path in (repo / "game-server/data/static_data/spawns").rglob("*.xml"):
+        text = A.read_text(path)
+        for chunk in re.finditer(r'<spawn_map map_id="(\d+)"(.*?)</spawn_map>', text, re.S):
+            map_id = int(chunk.group(1))
+            for spawn in re.finditer(r'npc_id="(\d+)"[^>]*?>(.*?)</spawn>', chunk.group(2), re.S):
+                npc_id = int(spawn.group(1))
+                for spot in re.finditer(r'x="([-\d.]+)"\s+y="([-\d.]+)"', spawn.group(2)):
+                    out.setdefault((map_id, npc_id), []).append(
+                        (float(spot.group(1)), float(spot.group(2))))
+    return out
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -62,6 +77,11 @@ def main() -> int:
     # it does not name cannot be loaded at runtime however good its data is -- those are counted below
     # rather than emitted with a name nothing can resolve.
     maps = map_ids_by_world()
+
+    # Where this port already places the same npc within a few metres, retail's gated copy is the same
+    # spawn expressed conditionally -- and putting both in the world doubles it. 6,800 of the 21,096
+    # are like that, so they are marked rather than silently emitted.
+    existing = existing_spawns(args.repo)
 
     rows: list[tuple] = []
     skipped_unknown = 0
@@ -105,15 +125,18 @@ def main() -> int:
                 if map_id is None:
                     skipped_unmapped += 1
                     continue
+                here = existing.get((map_id, npc_id), [])
+                overlaps = any(abs(ox - float(spot[0].group(1))) < 5
+                               and abs(oy - float(spot[1].group(1))) < 5 for ox, oy in here)
                 rows.append((map_id, world.parent.name, npc_id,
                              float(spot[0].group(1)), float(spot[1].group(1)), float(spot[2].group(1)),
                              int(float(heading.group(1))) if heading else 0,
                              int(respawn.group(1)) if respawn else 0,
-                             despawns, expression))
+                             despawns, "TRUE" if overlaps else "FALSE", expression))
 
     rows.sort()
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
-        out.write("map\tworld\tnpc\tx\ty\tz\tdir\trespawn\tdespawn_at_other\tgate\n")
+        out.write("map\tworld\tnpc\tx\ty\tz\tdir\trespawn\tdespawn_at_other\toverlaps_static\tgate\n")
         for row in rows:
             out.write("\t".join(str(f) for f in row) + "\n")
 
@@ -121,6 +144,7 @@ def main() -> int:
     print(f"{len(rows)} portable gated placements across {len(per)} worlds -> {args.out}")
     print(f"    {skipped_unknown} name an npc this port has no template for, and are dropped")
     print(f"    {skipped_unmapped} are in {len(unmapped_worlds)} worlds world_maps.xml does not name")
+    print(f"    {sum(1 for r in rows if r[9] == 'TRUE')} already exist within 5m in our static spawns")
     if skipped_unnamed:
         print(f"    {skipped_unnamed} carry no name at all")
     for world, count in per.most_common(6):
