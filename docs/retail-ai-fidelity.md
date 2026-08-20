@@ -33090,3 +33090,16 @@ That is worth a sweep of its own and is recorded below rather than done.
 - **`goto_next_waypoint` is still `StartWalking`**, which resumes rather than advances.
 - **The 7,723 npcs whose health is higher here than retail's**, and **every stat other than `max_hp`**,
   both unchanged from the last entry.
+
+### The sweep, and a clean result
+
+The entry above recorded a sweep as owed. Done: a scan of every `OnX = Of(...)` block in
+`Handlers/AI` — **no hand-written handler carries more than one unconditional branch.**
+
+That is worth writing down as a *result* rather than leaving as an assumption. The shape is a natural
+thing to write, it had already been written twice in this class, and the answer for the other hundred-odd
+AI classes turns out to be no. An afternoon is not needed there.
+
+`NoEventHandlerCarriesTwoUnconditionalBranches` now covers both generated tables — the killers and the
+protector calls — so the guard applies where the patterns are built by code and the sweep covered where
+they are written by hand.

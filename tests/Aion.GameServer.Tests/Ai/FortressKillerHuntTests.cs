@@ -273,6 +273,12 @@ public sealed class FortressKillerHuntTests
 	/// Retail writes these as one rung with several actions, so a translation that splits them is wrong
 	/// on its own terms. This checks the shape rather than any one mechanic, so the third instance fails
 	/// here rather than being found by accident a month later.
+	/// <para>
+	/// It covers both generated tables. <b>The hand-written AI classes were swept separately and are
+	/// clean</b> — a scan of every <c>OnX = Of(...)</c> block in <c>Handlers/AI</c> found no handler with
+	/// more than one unconditional branch. That is worth recording as a result rather than an assumption:
+	/// the shape is a natural thing to write, and it had already been written twice here.
+	/// </para>
 	/// </para>
 	/// </remarks>
 	[Fact]
@@ -281,21 +287,28 @@ public sealed class FortressKillerHuntTests
 		var offenders = new List<string>();
 
 		foreach (int npcId in FortressKillers.ByNpc.Keys)
-		{
-			AiPattern pattern = FortressKillers.PatternFor(npcId);
-			Check(npcId, nameof(AiPattern.OnWakeUp), pattern.OnWakeUp);
-			Check(npcId, nameof(AiPattern.OnEnterAttack), pattern.OnEnterAttack);
-			Check(npcId, nameof(AiPattern.OnLeaveAttack), pattern.OnLeaveAttack);
-			Check(npcId, nameof(AiPattern.OnBattleTimer), pattern.OnBattleTimer);
-			Check(npcId, nameof(AiPattern.OnSeeNpc), pattern.OnSeeNpc);
-		}
+			CheckAll($"killer {npcId}", FortressKillers.PatternFor(npcId));
+
+		// The other generated table builds patterns the same way and deserves the same guard.
+		foreach (int npcId in ProtectorCalls.ByNpc.Keys)
+			CheckAll($"protector {npcId}", ProtectorCalls.PatternFor(npcId));
 
 		Assert.Empty(offenders);
 
-		void Check(int npcId, string handler, PatternBranch[] branches)
+		void CheckAll(string who, AiPattern pattern)
+		{
+			Check(who, nameof(AiPattern.OnWakeUp), pattern.OnWakeUp);
+			Check(who, nameof(AiPattern.OnEnterAttack), pattern.OnEnterAttack);
+			Check(who, nameof(AiPattern.OnLeaveAttack), pattern.OnLeaveAttack);
+			Check(who, nameof(AiPattern.OnBattleTimer), pattern.OnBattleTimer);
+			Check(who, nameof(AiPattern.OnSeeNpc), pattern.OnSeeNpc);
+			Check(who, nameof(AiPattern.OnMessage), pattern.OnMessage);
+		}
+
+		void Check(string who, string handler, PatternBranch[] branches)
 		{
 			if (branches.Count(b => b.Conditions.Length == 0) > 1)
-				offenders.Add($"{npcId}.{handler}");
+				offenders.Add($"{who}.{handler}");
 		}
 	}
 
