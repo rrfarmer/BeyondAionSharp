@@ -33296,3 +33296,61 @@ forty-nine more are doing the wrong half.
 - **The death fan-out** — six broadcasts behind `is_tribe` guards on the killer, one per Panesterra
   faction — remains untranslated on both captain classes, and is base-capture bookkeeping rather than an
   AI action. It was already recorded; nothing here changes it.
+
+## 255 Ashunatal guards were pulled in silence
+
+The entry above left the larger half owed: Panesterra's chiefs broadcast **41101** when pulled and most
+of them did not. Measuring the whole mechanic rather than that one family found it is much bigger.
+
+Retail's enter-combat rung broadcasts one of four calls at one of two ranges — **41000/41001** on the
+Vritra side, **41100/41101** on the others, captain calls and guard calls. The difference is real: the
+answering rungs make a captain's call a `switch_target` and a guard's call a plain hate add. A captain
+is obeyed; a guard is noted.
+
+**The answering half was ported and the sending half was not.** 552 npcs listen for 41101 alone, and
+sixteen sent it. Across all four calls, **474 npcs should shout when pulled and 255 of them said
+nothing.**
+
+### The rule that bound them
+
+**The call and its range identify the role exactly.** Every npc already on `panesterra_cutthroat` sends
+41000 at thirteen metres; every `panesterra_lookout` sends 41000 at twenty-five; `slayer` 41100 at
+thirteen, `patrol` 41100 at twenty-five, `warcaptain` 41101, `dreadcaptain` 41001 — **no exceptions in
+474 npcs**. So the generic ones were bound by what their own retail rung shouts.
+
+That is a stronger rule than the family-majority and naming-group tests used earlier in this work: it
+does not ask what the siblings do, it asks what *this npc's* rung says. The pin asserts the rule held
+for all 474.
+
+### A table that would have made every patrol shout twice
+
+The first extractor read broadcasts across the whole enter-combat handler, and 129 npcs came out with
+two calls — 41100 at thirteen metres *and* at twenty-five.
+
+`PanesterraPatrolAI`'s own remark already had the answer: those are **two branches of one rung**,
+`is_user_flying` calling at thirteen and the unguarded fallback at twenty-five. This port cannot
+evaluate that condition and takes the fallback, and says so. The extractor had not been told, so it
+collected both.
+
+> The class knew. The tool did not. **A table built from a handler rather than from a branch is a table
+> that adds together things retail chooses between**, and the tell was 129 npcs with two entries where
+> the mechanic has one.
+
+Fixed to read the highest-priority *unguarded* branch — the same choice the class documents.
+
+**And a correction to a claim made while chasing it:** partway through I read the split as "32 patrol
+npcs shout at the wrong range" and nearly rewrote six classes on that basis. It was the extractor bug,
+not the classes. With it fixed, **every existing Panesterra class is internally consistent with its
+constant** and none of them needed changing.
+
+### Still missing
+
+- **Sixty npcs on `base_protector`** — 48 shouting 41101 and 12 shouting 41001 — still do not.
+  `BaseProtectorAI` is not a `PatternAi`, so it cannot take the generated rung the way the six guard
+  classes do; it needs the call made from its own aggro hook, with a latch, because retail's rung fires
+  once per fight and `HandleCreatureAggro` does not. That is the remaining piece and it is small.
+- **Two npcs on `general`** shouting 41101, left with the base protectors.
+- **`23200`**, the other well-answered pull call: 1,895 npcs send it in retail across 23 patterns and
+  549 listen. Nothing here has been checked against it. It is the next mechanic of this shape.
+- **The 173 other enter-combat broadcasts** are mostly unanswered by anything in the dump — shouts to
+  the client rather than npc mechanics — and are not worth a table on current evidence.
