@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -30,7 +31,8 @@ public sealed class WakeIdlePatternAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Map).WithWorldSize(4096)
-			.WithAi(typeof(PassivePatternAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+			.WithAi(typeof(PassivePatternAI), typeof(AggressivePatternAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI)).Build();
 
 	/// <summary><b>A relay does its one job and goes.</b></summary>
 	/// <remarks>
@@ -77,6 +79,9 @@ public sealed class WakeIdlePatternAiTests
 		Assert.Empty(passive.GetAggroList().Stream());
 	}
 
+	/// <summary>The tornado a Tiamat beacon lays: casts once, then removes itself.</summary>
+	private const int Tornado = 283069;
+
 	/// <summary>An npc hostile enough to players that the aggro event reaches its list.</summary>
 	private const int Hostile = 217307;
 
@@ -109,5 +114,30 @@ public sealed class WakeIdlePatternAiTests
 
 		Assert.NotEmpty(fighter.GetAggroList().Stream());
 		Assert.Empty(passive.GetAggroList().Stream());
+	}
+	/// <summary><b>The tornado a Tiamat beacon lays casts, and then goes.</b></summary>
+	/// <remarks>
+	/// The mechanic this whole thread exists for. <c>NLycan_SELC_S2</c> is a hazard: retail has it use a
+	/// skill and despawn itself, and the skill is the damage. Bound to inert <c>aggressive</c> it did
+	/// neither -- it stood on the ground and the beacon delivered nothing -- and a pin counting it
+	/// standing there passed for years.
+	/// <para>
+	/// <b>Both halves, because each alone has been claimed falsely.</b> A previous entry reported this
+	/// npc casting and leaving when the table had in fact given it up, and nothing here would have
+	/// noticed: the beacon's own pins had been moved onto its spawn count by then, so the hazard could
+	/// be dead without a single test objecting.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheTornadoCastsAndLeaves()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc tornado = harness.Spawn(Tornado, 300f, 300f, 200f);
+
+		Assert.Equal(1, ((PatternAi)tornado.GetAi()).ImmediateCastCount);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), npc => npc.GetNpcId() == Tornado);
 	}
 }

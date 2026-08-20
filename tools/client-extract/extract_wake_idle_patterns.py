@@ -119,27 +119,21 @@ def main() -> int:
         if fields[5] == "TRUE":
             skills[int(fields[0])][int(fields[1])] = int(fields[3])
 
-    # An npc that a *rotation* places is an add somebody else owns for the length of a fight, and its
-    # own wake pattern -- often a cast and a despawn -- contradicts the encounter that placed it.
-    # Kasika's fourth-tier guard is the case: `SummonerAI` brings it as a guard, retail also gives it a
-    # hazard pattern, and both accounts cannot be authoritative. Death spawns are deliberately not
-    # listed: a relay placed by a dying npc has no other account of its behaviour, and excluding those
-    # puts back a bug this log already fixed once.
+    # An npc gives up its own wake pattern when **a hand-written account of it already exists**, and
+    # only then. `spawn_helpers.xml` is that account: a curated file, comments and all, where somebody
+    # decided what an encounter's adds are and how many come per health band. Kasika's fourth-tier guard
+    # is there, and retail also gives it a hazard pattern that casts once and vanishes; both cannot be
+    # authoritative, so the curated one wins.
+    #
+    # **Being placed by a generated table is not such an account.** Those tables place an npc and say
+    # nothing else about it -- the Tiamat beacon lays a tornado and has no opinion on what the tornado
+    # does -- and excluding those npcs is how the hazard this work exists for stayed dead through two
+    # entries that claimed to have fixed it.
     placed: set[int] = set()
-    for table, column in (("battle_cycles.tsv", "a1"), ("idle_cycles.tsv", "a1"),
-                          ("idle_spawns.tsv", "placed")):
-        source = args.repo / "tools/client-extract/out" / table
-        if not source.exists():
-            continue
-        lines = source.read_text(encoding="utf-8").splitlines()
-        head = {name: index for index, name in enumerate(lines[0].split("	"))}
-        for line in lines[1:]:
-            fields = line.split("	")
-            if "kind" not in head or fields[head["kind"]].startswith("spawn"):
-                try:
-                    placed.add(int(fields[head[column]]))
-                except (ValueError, KeyError):
-                    pass
+    helpers = args.repo / "game-server/data/static_data/ai/spawn_helpers.xml"
+    if helpers.exists():
+        placed = {int(m.group(1))
+                  for m in re.finditer(r'npcId="(\d+)"', A.read_text(helpers))}
 
     spoken_for: set[int] = set()
     for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):

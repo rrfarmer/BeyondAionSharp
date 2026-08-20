@@ -260,6 +260,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		0	spawn	284698	1	0	for_the_fight_self	0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		1	sysmsg	1401819	0	0		0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		2	spawn	855545	1	0	for_the_fight_self	0.0	0.0	0.0
+231014	IDRose_M_Ratman_Wa_S_An	on_wake_up	0	95		0	skill	20557	0	0	ME	0.0	0.0	0.0
 231015	IDRose_M_Ratman_Wa_P_Ae	on_wake_up	0	95		0	skill	20557	0	0	ME	0.0	0.0	0.0
 231408	ShulackRose_Fi_Tanker	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 231489	Vri_Post_2nd_Q_As_N_65_Ah	on_wake_up	0	7		0	skill	21135	0	0	ME	0.0	0.0	0.0
@@ -685,18 +686,29 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 277483	Gab1_SetCond_Noshow_01	on_wake_up	0	7		22	var	21	0	0	Tur35	0.0	0.0	0.0
 277483	Gab1_SetCond_Noshow_01	on_wake_up	0	7		23	var	21	0	0	Tur36	0.0	0.0	0.0
 277483	Gab1_SetCond_Noshow_01	on_wake_up	0	7		24	despawn_self	0	0	0		0.0	0.0	0.0
+280327	ND2_NeutEgg	on_wake_up	0	1	set_flag_var:0	0	skill_now	16877	0	0	ME	0.0	0.0	0.0
+280327	ND2_NeutEgg	on_wake_up	0	1	set_flag_var:0	1	spawn	280326	1	600	for_the_fight_self	0.0	0.0	0.0
+280327	ND2_NeutEgg	on_wake_up	0	1	set_flag_var:0	2	despawn_self	0	0	0		0.0	0.0	0.0
 280483	ND2_NeutEgg2	on_wake_up	0	1	set_flag_var:0	0	skill_now	16877	0	0	ME	0.0	0.0	0.0
 280483	ND2_NeutEgg2	on_wake_up	0	1	set_flag_var:0	1	spawn	280481	1	600	for_the_fight_self	0.0	0.0	0.0
 280483	ND2_NeutEgg2	on_wake_up	0	1	set_flag_var:0	2	despawn_self	0	0	0		0.0	0.0	0.0
+280699	XLehpar_Trap	on_wake_up	0	5	chance:33|set_flag_var:0	0	skill_now	17903	0	0	ME	0.0	0.0	0.0
+280699	XLehpar_Trap	on_wake_up	0	5	chance:33|set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+280699	XLehpar_Trap	on_wake_up	1	3	chance:33|set_flag_var:0	0	skill_now	17906	0	0	ME	0.0	0.0	0.0
+280699	XLehpar_Trap	on_wake_up	1	3	chance:33|set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+280699	XLehpar_Trap	on_wake_up	2	1	set_flag_var:0	0	skill_now	17904	0	0	ME	0.0	0.0	0.0
+280699	XLehpar_Trap	on_wake_up	2	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
 280820	BGuard_Trap	on_wake_up	0	7		0	skill_now	18425	0	0	ME	0.0	0.0	0.0
 280820	BGuard_Trap	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 280821	BGuard_Trap	on_wake_up	0	7		0	skill_now	18425	0	0	ME	0.0	0.0	0.0
 280821	BGuard_Trap	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 281036	ND2_WhG5	on_wake_up	0	7	set_flag_var:0	0	broadcast	6621	50	0		0.0	0.0	0.0
 281043	ND2_FhWSumG	on_wake_up	0	7	set_flag_var:0	0	broadcast	6608	50	0		0.0	0.0	0.0
+281044	ND2_FhWSumH	on_wake_up	0	7	set_flag_var:0	0	broadcast	6601	50	0		0.0	0.0	0.0
 281045	ND2_FhWSumA	on_wake_up	0	7	set_flag_var:0	0	broadcast	6602	50	0		0.0	0.0	0.0
 281046	ND2_FhWSumB	on_wake_up	0	7	set_flag_var:0	0	broadcast	6603	50	0		0.0	0.0	0.0
 281047	ND2_FhWSumC	on_wake_up	0	7	set_flag_var:0	0	broadcast	6604	50	0		0.0	0.0	0.0
+281048	ND2_FhWSumD	on_wake_up	0	7	set_flag_var:0	0	broadcast	6605	50	0		0.0	0.0	0.0
 281049	ND2_FhWSumE	on_wake_up	0	7	set_flag_var:0	0	broadcast	6606	50	0		0.0	0.0	0.0
 281050	ND2_FhWSumF	on_wake_up	0	7	set_flag_var:0	0	broadcast	6607	50	0		0.0	0.0	0.0
 281069	ABRwd_SpawnBoxA	on_wake_up	0	7		0	spawn	281070	1	6	for_the_fight_absolute	479.0	568.0	202.0
@@ -810,6 +822,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281335	IDSlk_GunnerEventReset	on_wake_up	0	7		0	broadcast	6701	50	0		0.0	0.0	0.0
 281336	BGuard_Trap	on_wake_up	0	7		0	skill_now	18579	0	0	ME	0.0	0.0	0.0
 281336	BGuard_Trap	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+281388	IDTP_SumA	on_wake_up	0	7		0	broadcast	6981	50	0		0.0	0.0	0.0
+281388	IDTP_SumA	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 281390	IDTP_SumA	on_wake_up	0	7		0	broadcast	6981	50	0		0.0	0.0	0.0
 281390	IDTP_SumA	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 281445	LF4_GHSumA	on_wake_up	0	7		0	broadcast	6720	50	0		0.0	0.0	0.0
@@ -870,8 +884,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281634	IDCT_StDrakanFi_Fake	on_wake_up	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0
 281635	IDCT_StDrakanSc_Fake	on_wake_up	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0
 281644	Elim_EventG	on_wake_up	0	7		0	broadcast	6751	50	0		0.0	0.0	0.0
+281773	IDCT_Boss_Spectre_noShown2	on_wake_up	0	10		0	skill	19098	0	0	ME	0.0	0.0	0.0
+281773	IDCT_Boss_Spectre_noShown2	on_wake_up	0	10		1	say	342043	0	0		0.0	0.0	0.0
 281924	IDAbRe_Core_Summon11	on_wake_up	0	7		0	broadcast	11105	10	0		0.0	0.0	0.0
 281925	IDAbRe_Core_Summon12	on_wake_up	0	7		0	broadcast	11104	10	0		0.0	0.0	0.0
+281926	IDAbRe_Core_Summon13	on_wake_up	0	99		0	broadcast	11103	300	0		0.0	0.0	0.0
 281927	IDAbRe_Core_Summon13	on_wake_up	0	99		0	broadcast	11103	300	0		0.0	0.0	0.0
 281928	LF4_DramataDied	on_wake_up	0	7		0	broadcast	7010	20	0		0.0	0.0	0.0
 281930	LF4_DramataGC	on_wake_up	0	7		0	spawn	281931	1	0	for_the_fight_absolute	0.0	0.0	0.0
@@ -879,6 +896,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281930	LF4_DramataGC	on_wake_up	0	7		2	spawn	281931	1	0	for_the_fight_absolute	0.0	0.0	0.0
 281934	LF4_DramataGD	on_wake_up	0	7		0	broadcast	7013	10	0		0.0	0.0	0.0
 281935	DF4_DramataEggSumA	on_wake_up	0	7		0	broadcast	7017	50	0		0.0	0.0	0.0
+281942	DF4_DramataGD	on_wake_up	0	7		0	broadcast	7016	10	0		0.0	0.0	0.0
 281943	LF4_DramataSumC	on_wake_up	0	7	chance:17	0	sysmsg	1400724	0	0		0.0	0.0	0.0
 281943	LF4_DramataSumC	on_wake_up	0	7	chance:17	1	spawn	281453	1	300	absolute	0.0	0.0	0.0
 281943	LF4_DramataSumC	on_wake_up	0	7	chance:17	2	spawn	281453	1	300	absolute	0.0	0.0	0.0
@@ -912,11 +930,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282090	Cromede_Redstone	on_wake_up	0	7		0	broadcast	6402	50	0		0.0	0.0	0.0
 282090	Cromede_Redstone	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282105	IDAbRe_Core_Summon15	on_wake_up	0	1		0	skill	19144	0	0	ME	0.0	0.0	0.0
+282106	IDAbRe_Core_Summon15	on_wake_up	0	1		0	skill	19259	0	0	ME	0.0	0.0	0.0
 282109	Elim_Broad1	on_wake_up	0	7		0	broadcast	6763	50	0		0.0	0.0	0.0
 282112	Cromede_Torture_Spawn	on_wake_up	0	7		0	spawn	217004	1	0	for_the_fight_absolute	663.07	769.54	216.85
 282112	Cromede_Torture_Spawn	on_wake_up	0	7		1	broadcast	6403	50	0		0.0	0.0	0.0
 282112	Cromede_Torture_Spawn	on_wake_up	0	7		2	broadcast	6404	50	0		0.0	0.0	0.0
 282112	Cromede_Torture_Spawn	on_wake_up	0	7		3	despawn_self	0	0	0		0.0	0.0	0.0
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		0	spawn	217001	1	0	for_the_fight_absolute	663.07	779.08	216.85
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		1	broadcast	6403	50	0		0.0	0.0	0.0
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		2	broadcast	6404	50	0		0.0	0.0	0.0
+282113	Cromede_Wife_Spawn	on_wake_up	0	7		3	despawn_self	0	0	0		0.0	0.0	0.0
 282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		0	spawn	217003	1	0	for_the_fight_absolute	661.07	774.43	216.85
 282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		1	broadcast	6403	50	0		0.0	0.0	0.0
 282114	Cromede_Assijudge_Spawn	on_wake_up	0	7		2	broadcast	6404	50	0		0.0	0.0	0.0
@@ -932,15 +955,24 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282130	Elim_Effect_Debuff	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
 282132	LF4_DespawnTBox	on_wake_up	0	7		0	broadcast	11103	10	0		0.0	0.0	0.0
 282139	Elim_Effect_Heal1	on_wake_up	0	7	set_flag_var:0	0	broadcast	6515	5	0		0.0	0.0	0.0
+282155	IDDF3_BroadNPC_System	on_wake_up	0	7		0	broadcast	1125	50	0		0.0	0.0	0.0
+282155	IDDF3_BroadNPC_System	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	0	spawn	282208	1	0	for_the_fight_absolute	1020.13	1269.6	95.95
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	1	spawn	282208	1	0	for_the_fight_absolute	1006.09	1282.35	95.95
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	2	spawn	282208	1	0	for_the_fight_absolute	992.511	1269.61	95.95
 282189	IDForest_Wave_NPC_Bomb_Invisible	on_wake_up	0	1		0	spawn	282462	1	10	for_the_fight_absolute	843.153	1243.67	210.891
+282192	IDForest_Wave_Spaky_Invisible	on_wake_up	0	1		0	skill	19399	0	0	ME	0.0	0.0	0.0
+282196	IDForest_Wave_Spaky_Invisible	on_wake_up	0	1		0	skill	19399	0	0	ME	0.0	0.0	0.0
 282199	IDForest_Wave_Wisp_Invisible	on_wake_up	0	1		0	skill	19401	0	0	ME	0.0	0.0	0.0
 282222	IDForest_hidden_sum	on_wake_up	0	7		0	skill	19449	0	0	ME	0.0	0.0	0.0
 282245	IDForest_Wave_Wisp_Invisible	on_wake_up	0	1		0	skill	19434	0	0	ME	0.0	0.0	0.0
 282247	wave_spakynormal_die	on_wake_up	0	1		0	broadcast	11300	200	0		0.0	0.0	0.0
+282248	wave_spakybomb_die	on_wake_up	0	1		0	broadcast	11300	200	0		0.0	0.0	0.0
+282249	wave_spakyboss_die	on_wake_up	0	1		0	broadcast	11301	200	0		0.0	0.0	0.0
 282250	wave_lapnormal_die	on_wake_up	0	1		0	broadcast	11302	200	0		0.0	0.0	0.0
+282251	wave_lapbomb_die	on_wake_up	0	1		0	broadcast	11302	200	0		0.0	0.0	0.0
+282252	wave_lapboss_die	on_wake_up	0	1		0	broadcast	11103	100	0		0.0	0.0	0.0
+282252	wave_lapboss_die	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282254	IDForest_Wave_Phase5	on_wake_up	0	1		0	spawn	282190	8	0	for_the_fight_self	0.0	0.0	0.0
 282254	IDForest_Wave_Phase5	on_wake_up	0	1		1	spawn	282194	4	0	for_the_fight_self	0.0	0.0	0.0
 282254	IDForest_Wave_Phase5	on_wake_up	0	1		2	spawn	282191	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -969,11 +1001,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282354	IDHouse_Butler_InvisibleB	on_wake_up	0	1		1	broadcast	222	5	0		0.0	0.0	0.0
 282356	IDHouse_Butler_Debuff	on_wake_up	0	1		0	skill	19543	0	0	ME	0.0	0.0	0.0
 282367	IDArena_S7_Re_Named_2	on_wake_up	0	7		0	skill	19594	0	0	ME	0.0	0.0	0.0
+282370	IDArena_S7_Re_Named_2	on_wake_up	0	7		0	skill	19594	0	0	ME	0.0	0.0	0.0
+282379	IDF4Re_FOBJ_A	on_wake_up	0	7		0	broadcast	10	20	0		0.0	0.0	0.0
+282379	IDF4Re_FOBJ_A	on_wake_up	0	7		1	broadcast	3344	10	0		0.0	0.0	0.0
 282389	IDYun_Nmd3_Projectile	on_wake_up	0	1		0	spawn	282606	1	6	for_the_fight_self	0.0	0.0	0.0
 282389	IDYun_Nmd3_Projectile	on_wake_up	0	1		1	skill_now	19656	0	0	ME	0.0	0.0	0.0
 282389	IDYun_Nmd3_Projectile	on_wake_up	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
 282432	IDElemental_Ex10	on_wake_up	0	1	set_world_flag_var:0	0	var	1	0	0	Spawn_IDElementalN_Nmd_Unicorn_60_Al	0.0	0.0	0.0
 282432	IDElemental_Ex10	on_wake_up	0	1	set_world_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+282435	IDArena_NPC_S1_End	on_wake_up	0	7	set_flag_var:0	0	broadcast	1001	100	0		0.0	0.0	0.0
+282435	IDArena_NPC_S1_End	on_wake_up	0	7	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
 282445	IDRaksha_NoshowNPC_01	on_wake_up	0	7		0	broadcast	12300	100	0		0.0	0.0	0.0
 282445	IDRaksha_NoshowNPC_01	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282462	IDHouse_Butler_Debuff	on_wake_up	0	1		0	skill	19227	0	0	ME	0.0	0.0	0.0
@@ -993,8 +1030,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282538	IDYun_Temp_05	on_wake_up	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
 282540	IDYun_Temp_06	on_wake_up	0	1		0	skill	20553	0	0	ME	0.0	0.0	0.0
 282540	IDYun_Temp_06	on_wake_up	0	1		1	broadcast	10	6	0		0.0	0.0	0.0
+282541	IDYun_Temp_07	on_wake_up	0	1		0	broadcast	20	100	0		0.0	0.0	0.0
 282542	IDYun_Temp_08	on_wake_up	0	1		0	broadcast	10	10	0		0.0	0.0	0.0
 282542	IDYun_Temp_08	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282543	IDYun_Temp_09	on_wake_up	0	1		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
+282544	IDYun_Temp_10	on_wake_up	0	1		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
+282545	IDYun_Temp_11	on_wake_up	0	1		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
 282550	IDYun_Temp_18	on_wake_up	0	1		0	spawn	282594	1	0	for_the_fight_self	0.0	0.0	0.0
 282571	IDRaksha_NoshowNPC_07	on_idle_timer	0	7		0	timer	2000	0	0		0.0	0.0	0.0
 282571	IDRaksha_NoshowNPC_07	on_idle_timer	0	7		1	broadcast	12501	50	0		0.0	0.0	0.0
@@ -1056,6 +1097,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282702	IDDramata_NoShowNPC_06	on_wake_up	0	7		0	sysmsg	1401214	0	0		0.0	0.0	0.0
 282702	IDDramata_NoShowNPC_06	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282703	IDDramata_NoShowNPC_07	on_wake_up	0	7		0	sysmsg	1401213	0	0		0.0	0.0	0.0
+282704	IDDramata_NoShowNPC_08	on_wake_up	0	7		0	broadcast	100	100	0		0.0	0.0	0.0
 282705	IDDramata_NoShowNPC_09	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
 282705	IDDramata_NoShowNPC_09	on_idle_timer	0	7		1	broadcast	600	160	0		0.0	0.0	0.0
 282705	IDDramata_NoShowNPC_09	on_idle_timer	0	7		2	despawn_self	0	0	0		0.0	0.0	0.0
@@ -1066,6 +1108,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282730	LDF4b_Tiamat_Temp04	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282732	LDF4b_Tiamat_Temp06	on_wake_up	0	1		0	skill_now	20159	0	0	ME	0.0	0.0	0.0
 282732	LDF4b_Tiamat_Temp06	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282734	LDF4b_Tiamat_Temp08	on_wake_up	0	1		0	skill_now	20164	0	0	ME	0.0	0.0	0.0
+282734	LDF4b_Tiamat_Temp08	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282736	LDF4b_Tiamat_Temp10	on_wake_up	0	1		0	skill_now	20172	0	0	ME	0.0	0.0	0.0
 282736	LDF4b_Tiamat_Temp10	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282738	LDF4b_Tiamat_Temp12	on_wake_up	0	1		0	skill_now	20173	0	0	ME	0.0	0.0	0.0
@@ -1076,6 +1120,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282745	LDF4b_Golden_Gururu_Temp03	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282747	LDF4b_Golden_Gururu_Temp05	on_wake_up	0	1		0	skill_now	20215	0	0	ME	0.0	0.0	0.0
 282747	LDF4b_Golden_Gururu_Temp05	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282749	InvisibleNPC_Wakeup_UseSkill	on_wake_up	0	7		0	skill_now	20266	0	0	ME	0.0	0.0	0.0
+282749	InvisibleNPC_Wakeup_UseSkill	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282751	LDF4b_FOBJ_LavaRock1_invisible	on_wake_up	0	1		0	skill_now	20356	0	0	ME	0.0	0.0	0.0
 282751	LDF4b_FOBJ_LavaRock1_invisible	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282907	LDF4b_Tiamat_Temp16	on_wake_up	0	1		0	skill	20429	0	0	ME	0.0	0.0	0.0
@@ -1088,6 +1134,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282953	IDHouse_Butler_Debuff	on_wake_up	0	1		0	skill	19227	0	0	ME	0.0	0.0	0.0
 282969	LDF4a_SWM_Skill_Broad_1	on_wake_up	0	7		0	broadcast	7298	100	0		0.0	0.0	0.0
 282970	LDF4a_SWM_Skill_Broad_1	on_wake_up	0	7		0	broadcast	7298	100	0		0.0	0.0	0.0
+282975	Tdown_DrakanGiant_BroadCast_NoShowNpc	on_wake_up	0	1		0	broadcast	1021	50	0		0.0	0.0	0.0
+282975	Tdown_DrakanGiant_BroadCast_NoShowNpc	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282978	LDF4b_Tiamat_Temp08	on_wake_up	0	1		0	skill_now	20168	0	0	ME	0.0	0.0	0.0
+282978	LDF4b_Tiamat_Temp08	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+282980	LDF4b_Tiamat_Temp08	on_wake_up	0	1		0	skill_now	20162	0	0	ME	0.0	0.0	0.0
+282980	LDF4b_Tiamat_Temp08	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282981	IDYun_Temp_64	on_wake_up	0	1		0	skill_now	19906	0	0	ME	0.0	0.0	0.0
 282981	IDYun_Temp_64	on_wake_up	0	1		1	skill_now	19906	0	0	ME	0.0	0.0	0.0
 282981	IDYun_Temp_64	on_wake_up	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
@@ -1097,6 +1149,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282983	IDYun_Temp_64	on_wake_up	0	1		0	skill_now	19906	0	0	ME	0.0	0.0	0.0
 282983	IDYun_Temp_64	on_wake_up	0	1		1	skill_now	19906	0	0	ME	0.0	0.0	0.0
 282983	IDYun_Temp_64	on_wake_up	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
+282987	IDYun_Temp_68	on_wake_up	0	1		0	skill_now	20515	0	0	ME	0.0	0.0	0.0
+282987	IDYun_Temp_68	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 282993	LDF4a_LG_Skill_Broad_1	on_wake_up	0	7		0	broadcast	7211	100	0		0.0	0.0	0.0
 282994	LDF4a_LG_Skill_Broad_2	on_wake_up	0	7		0	broadcast	7212	100	0		0.0	0.0	0.0
 282995	LDF4a_LG_Skill_Broad_3	on_wake_up	0	7		0	broadcast	7213	100	0		0.0	0.0	0.0
@@ -1112,8 +1166,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283016	Dread03_BoxSpawn01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283017	Dread03_BoxSpawn02	on_wake_up	0	1		0	sysmsg	1401424	0	0		0.0	0.0	0.0
 283017	Dread03_BoxSpawn02	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283036	IDTiamat_PyramidHead_SpinAttacker	on_wake_up	0	1		0	skill	20583	0	0	ME	0.0	0.0	0.0
 283050	IDTiamat_Thor_StormElemental_OnDie	on_wake_up	0	1		0	skill_now	20728	0	0	ME	0.0	0.0	0.0
 283050	IDTiamat_Thor_StormElemental_OnDie	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283052	IDTiamat_Thor_HighVoltageDmg	on_wake_up	0	1		0	skill_now	20757	0	0	ME	0.0	0.0	0.0
+283052	IDTiamat_Thor_HighVoltageDmg	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283054	IDTiamat_Thor_StormAreaA_Dmg	on_idle_timer	0	1		0	spawn	283141	1	30	for_the_fight_self	0.0	0.0	0.0
 283054	IDTiamat_Thor_StormAreaA_Dmg	on_idle_timer	0	1		1	spawn	283141	1	0	for_the_fight_self	0.0	0.0	0.0
 283054	IDTiamat_Thor_StormAreaA_Dmg	on_idle_timer	0	1		2	spawn	283141	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -1133,6 +1190,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283058	IDTiamat_BurrowingWorm_BurrowDmg	on_idle_timer	0	1		3	timer	0	0	0		0.0	0.0	0.0
 283068	IDTiamat_NagaQueen_UpDraftFX	on_wake_up	0	1		0	skill_now	20925	0	0	ME	0.0	0.0	0.0
 283068	IDTiamat_NagaQueen_UpDraftFX	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283069	IDTiamat_NagaQueen_UpDraft_NoShowNpc	on_wake_up	0	1		0	skill_now	20598	0	0	ME	0.0	0.0	0.0
+283069	IDTiamat_NagaQueen_UpDraft_NoShowNpc	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283073	TiamatDown_TiamatAgent_SumBomb_NoShowNpc	on_wake_up	0	1		0	skill_now	20653	0	0	ME	0.0	0.0	0.0
 283073	TiamatDown_TiamatAgent_SumBomb_NoShowNpc	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283075	TiamatDown_TiamatAgent_SumBomb_NoShowNpc2	on_wake_up	0	1		0	skill_now	20654	0	0	ME	0.0	0.0	0.0
@@ -1145,9 +1204,13 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283093	IDTiamat_Chantra_AreaA_DMG	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283095	IDTiamat_Chantra_AreaB_DMG	on_wake_up	0	1		0	skill_now	20735	0	0	ME	0.0	0.0	0.0
 283095	IDTiamat_Chantra_AreaB_DMG	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283100	IDTiamat_Anuhart_Tornado	on_wake_up	0	1		0	skill_now	20748	0	0	ME	0.0	0.0	0.0
+283100	IDTiamat_Anuhart_Tornado	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283101	IDTiamat_Tahabata_Beacon	on_wake_up	0	1		0	broadcast	1	40	0		0.0	0.0	0.0
 283103	IDTiamat_Tahabata_TornadoDMG	on_wake_up	0	1		0	skill_now	20753	0	0	ME	0.0	0.0	0.0
 283103	IDTiamat_Tahabata_TornadoDMG	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+283108	IDTiamat_Tahabata_BlazeDMG	on_wake_up	0	1		0	skill_now	20759	0	0	ME	0.0	0.0	0.0
+283108	IDTiamat_Tahabata_BlazeDMG	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283112	IDAbRe_Core_Decoration5	on_wake_up	0	1		0	skill	19506	0	0	ME	0.0	0.0	0.0
 283122	IDTiamat_Drakan_Leader_Beacon	on_wake_up	0	1		0	broadcast	10	100	0		0.0	0.0	0.0
 283145	IDAbRe_Core_Decoration5	on_wake_up	0	1		0	skill	19506	0	0	ME	0.0	0.0	0.0
@@ -1188,6 +1251,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283542	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 283544	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 283546	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
+283629	Britra_Party_Sum_SN	on_wake_up	0	7		0	skill	17029	0	0	ME	0.0	0.0	0.0
 284061	IDF5_TD_Wave5_Boss_Sum2	on_wake_up	0	1		0	spawn	284697	1	0	for_the_fight_self	0.0	0.0	0.0
 284062	IDF5_TD_Wave5_Boss_Sum3	on_idle_timer	0	8	chance:20	0	skill	21232	0	0	ME	0.0	0.0	0.0
 284062	IDF5_TD_Wave5_Boss_Sum3	on_idle_timer	0	8	chance:20	1	spawn	284075	1	0	for_the_fight_absolute	671.0	369.0	242.0
@@ -1255,6 +1319,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284374	IDF5_R2_Victim_Fake	on_wake_up	0	1		0	skill	21091	0	0	ME	0.0	0.0	0.0
 284438	IDVritra_Base_Boss3_Sum	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284439	IDVritra_Base_Boss3_Sum	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+284444	Rune_FrostNmd_MagCircle_NoShow4	on_idle_timer	0	7		0	broadcast	104	100	0		0.0	0.0	0.0
+284444	Rune_FrostNmd_MagCircle_NoShow4	on_wake_up	0	7		0	broadcast	104	100	0		0.0	0.0	0.0
+284444	Rune_FrostNmd_MagCircle_NoShow4	on_wake_up	0	7		1	timer	3000	0	0		0.0	0.0	0.0
 284448	IDVritra_Base_Boss2_Support1	on_wake_up	0	7		0	skill	20773	0	0	ME	0.0	0.0	0.0
 284450	Rune_FrostNmd_MagCircle_NoShow_Sum1	on_idle_timer	0	7		0	broadcast	10009595	50	0		0.0	0.0	0.0
 284450	Rune_FrostNmd_MagCircle_NoShow_Sum1	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
@@ -1482,6 +1549,15 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 287200	Test_Basic_Monster_AI_CYS_5	on_idle_timer	0	7	set_flag_var:5	0	spawn	287200	1	0	for_the_fight_self	0.0	0.0	0.0
 287200	Test_Basic_Monster_AI_CYS_5	on_idle_timer	0	7	set_flag_var:5	1	broadcast	1776	50	0		0.0	0.0	0.0
 287210	Test_GHB_Ed_65_N	on_wake_up	0	7		0	broadcast	2222	1000	0		0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	0	10	set_flag_var:0	0	var	0	1	0	change	0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	0	10	set_flag_var:0	1	timer	300000	0	0		0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	1	9	set_flag_var:5	0	var	1	0	0	change	0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	1	9	set_flag_var:5	1	timer	300000	0	0		0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	2	8	set_flag_var:20	0	var	2	0	0	change	0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	2	8	set_flag_var:20	1	timer	300000	0	0		0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	3	7	unset_flag_var:0|unset_flag_var:5|unset_flag_var:20	0	timer	6000	0	0		0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_idle_timer	3	7	unset_flag_var:0|unset_flag_var:5|unset_flag_var:20	1	var	-1	0	0	change	0.0	0.0	0.0
+287223	Test_Monster_SSH_01	on_wake_up	0	7		0	timer	6000	0	0		0.0	0.0	0.0
 287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	0	spawn	287242	1	0	for_the_fight_self	0.0	0.0	0.0
 287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	1	spawn	287239	1	0	for_the_fight_self	1.0	1.0	0.0
 287245	LDF5_U2_E_02_Time_03	on_idle_timer	0	5	set_flag_var:0	2	timer	0	0	0		0.0	0.0	0.0
@@ -1495,6 +1571,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 290082	AD2_Wss0BT15p50st1st2H50ss3ss4	on_wake_up	0	8		0	skill	16699	0	0	ME	0.0	0.0	0.0
 290104	AD2_Wss0BT15st1H50ss2	on_wake_up	0	7		0	skill	16528	0	0	ME	0.0	0.0	0.0
 290107	AD2_Wss0BT15st1H50st2	on_wake_up	0	7		0	skill	16527	0	0	ME	0.0	0.0	0.0
+290118	AD2_NeutEgg	on_wake_up	0	1	set_flag_var:0	0	skill_now	16877	0	0	ME	0.0	0.0	0.0
+290118	AD2_NeutEgg	on_wake_up	0	1	set_flag_var:0	1	spawn	290119	2	300	for_the_fight_self	0.0	0.0	0.0
+290118	AD2_NeutEgg	on_wake_up	0	1	set_flag_var:0	2	despawn_self	0	0	0		0.0	0.0	0.0
 294561	Ab_SummonSkill	on_wake_up	0	1		0	skill_now	18139	0	0	ME	0.0	0.0	0.0
 294561	Ab_SummonSkill	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 294562	Ab_SummonSkill	on_wake_up	0	1		0	skill_now	18140	0	0	ME	0.0	0.0	0.0
@@ -1712,6 +1791,40 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 701590	IDAbRe_Artifact_Light	on_wake_up	0	7		0	skill	19283	0	0	ME	0.0	0.0	0.0
 701591	IDAbRe_Artifact_Dark	on_wake_up	0	7		0	skill	19283	0	0	ME	0.0	0.0	0.0
 701594	IDAbRe_Core_Artifact	on_wake_up	0	3		0	broadcast	11110	40	0		0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		0	var	3	0	0	C_Flag_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		1	var	3	0	0	C_Flag_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		2	var	3	0	0	C_Flag_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		3	var	3	0	0	C_Flag_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		4	var	1	0	0	C_WaveATK_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		5	var	1	0	0	C_WaveATK_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		6	var	1	0	0	C_WaveATK_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		7	var	1	0	0	C_WaveATK_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		8	var	4	0	0	C_Defender_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		9	var	4	0	0	C_Defender_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		10	var	4	0	0	C_Defender_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		11	var	4	0	0	C_Defender_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		12	var	4	0	0	C_WaveReTake_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		13	var	4	0	0	C_WaveReTake_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		14	var	4	0	0	C_WaveReTake_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		15	var	4	0	0	C_WaveReTake_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_idle_timer	0	7		16	timer	0	0	0		0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		0	var	3	0	0	C_Flag_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		1	var	3	0	0	C_Flag_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		2	var	3	0	0	C_Flag_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		3	var	3	0	0	C_Flag_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		4	var	1	0	0	C_WaveATK_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		5	var	1	0	0	C_WaveATK_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		6	var	1	0	0	C_WaveATK_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		7	var	1	0	0	C_WaveATK_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		8	var	3	0	0	C_Defender_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		9	var	3	0	0	C_Defender_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		10	var	3	0	0	C_Defender_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		11	var	3	0	0	C_Defender_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		12	var	1	0	0	C_WaveReTake_1	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		13	var	1	0	0	C_WaveReTake_2	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		14	var	1	0	0	C_WaveReTake_3	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		15	var	1	0	0	C_WaveReTake_4	0.0	0.0	0.0
+701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		16	timer	5000	0	0		0.0	0.0	0.0
 701648	IDF5_Under_01_PcTank_Ctrl	on_wake_up	0	90		0	broadcast	21201	50	0		0.0	0.0	0.0
 701670	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
 701671	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
@@ -3053,6 +3166,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855517	IDSeal_Twin_Resurrect_Timer	on_idle_timer	1	2	count:0:0:1:1	2	var	2	0	0	TWIN_M	0.0	0.0	0.0
 855517	IDSeal_Twin_Resurrect_Timer	on_wake_up	0	1		0	timer	15000	0	0		0.0	0.0	0.0
 855517	IDSeal_Twin_Resurrect_Timer	on_wake_up	0	1		1	sysmsg	1402691	0	0		0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		0	broadcast	22637	100	0		0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		1	var	10	0	0	GUARDIAN_CHIEF	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		2	var	10	0	0	GUARDIAN_1	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		3	var	10	0	0	GUARDIAN_2	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		4	var	10	0	0	GUARDIAN_3	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		5	var	10	0	0	GUARDIAN_4	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		6	var	10	0	0	VRITRA_SUM_TIMER	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		7	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		8	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		9	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		10	var	10	0	0	TRUEBOSS_BUFF	0.0	0.0	0.0
+855539	IDSeal_Guardian_Chief_Reset_02	on_wake_up	0	99		11	despawn_self	0	0	0		0.0	0.0	0.0
 855544	IDF5_TD_DEFWeapon_01	on_idle_timer	0	2		0	broadcast	22300	50	0		0.0	0.0	0.0
 855545	IDF5_TD_DEFWeapon_02	on_idle_timer	0	2		0	broadcast	22301	50	0		0.0	0.0	0.0
 855546	IDF5_TD_DEFWeapon_03	on_idle_timer	0	2		0	broadcast	22303	50	0		0.0	0.0	0.0
@@ -3496,6 +3621,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855990	BIDF5_U01_Middle_Boss_Dark	on_wake_up	0	1000		0	skill	20700	0	0	ME	0.0	0.0	0.0
 855998	BIDF5_U01_Runaway_Pr	on_wake_up	0	1000		0	skill	21878	0	0	ME	0.0	0.0	0.0
 856019	IDYun_TheThingFromAnotherWorld_01	on_wake_up	0	1		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
+856035	IDTiamat_Hard_Breath_Centarl_01	on_wake_up	0	1		0	skill_now	21895	0	0	ME	0.0	0.0	0.0
+856035	IDTiamat_Hard_Breath_Centarl_01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+856037	IDTiamat_Hard_Breath_Right_01	on_wake_up	0	1		0	skill_now	21894	0	0	ME	0.0	0.0	0.0
+856037	IDTiamat_Hard_Breath_Right_01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+856039	IDTiamat_Hard_Breath_Left_01	on_wake_up	0	1		0	skill_now	21895	0	0	ME	0.0	0.0	0.0
+856039	IDTiamat_Hard_Breath_Left_01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856044	IDTiamat_Hard_FallingRock_Dmg	on_wake_up	0	1		0	skill_now	21899	0	0	ME	0.0	0.0	0.0
 856044	IDTiamat_Hard_FallingRock_Dmg	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856054	BIDF5_U01_Ctrl_01	on_wake_up	0	1000	chance:30|set_flag_var:0	0	var	1	0	0	bridge_on	0.0	0.0	0.0
@@ -3513,6 +3644,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856054	BIDF5_U01_Ctrl_01	on_wake_up	2	980	set_flag_var:0	2	spawn	856062	1	0	for_the_fight_absolute	612.3	559.2	590.6
 856054	BIDF5_U01_Ctrl_01	on_wake_up	2	980	set_flag_var:0	3	spawn	856062	1	0	for_the_fight_absolute	528.7	436.9	620.3
 856054	BIDF5_U01_Ctrl_01	on_wake_up	2	980	set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0
+856055	IDStation_info_09	on_wake_up	0	7		0	skill	19522	0	0	ME	0.0	0.0	0.0
 856056	IDYun_info_04	on_idle_timer	0	7		0	sysmsg	1402776	0	0		0.0	0.0	0.0
 856056	IDYun_info_04	on_idle_timer	0	7		1	timer	0	0	0		0.0	0.0	0.0
 856057	BIDF5_U01_Ctrl_02	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
@@ -3529,6 +3661,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856075	IDTiamat_Hard_Temp_08	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856077	IDTiamat_Hard_Temp_10	on_wake_up	0	1		0	skill_now	20156	0	0	ME	0.0	0.0	0.0
 856077	IDTiamat_Hard_Temp_10	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+856079	IDTiamat_Hard_Temp_12	on_wake_up	0	1		0	skill_now	20162	0	0	ME	0.0	0.0	0.0
+856079	IDTiamat_Hard_Temp_12	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+856081	IDTiamat_Hard_Temp_12	on_wake_up	0	1		0	skill_now	20164	0	0	ME	0.0	0.0	0.0
+856081	IDTiamat_Hard_Temp_12	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856105	IDF5_Mini_01_C_Guard_Fi	on_idle_timer	0	7	set_world_flag_var:7	0	broadcast	1003	50	0		0.0	0.0	0.0
 856106	IDF5_Mini_01_C_Guard_As	on_idle_timer	0	7	set_world_flag_var:7	0	broadcast	1003	50	0		0.0	0.0	0.0
 856113	IDTiamat_Hard_BeaconL4s_dmg	on_wake_up	0	1		0	skill_now	21903	0	0	ME	0.0	0.0	0.0
@@ -3543,9 +3679,79 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856121	IDTiamat_Hard_BeaconR4s_dmg	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856123	IDTiamat_Hard_BeaconR8s_dmg	on_wake_up	0	1		0	skill_now	21908	0	0	ME	0.0	0.0	0.0
 856123	IDTiamat_Hard_BeaconR8s_dmg	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+856134	Legion_01_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856134	Legion_01_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855768	8	0	for_the_fight_self	0.0	0.0	0.0
+856134	Legion_01_2_M1_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856135	Legion_01_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856135	Legion_01_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855769	8	0	for_the_fight_self	0.0	0.0	0.0
+856135	Legion_01_2_M2_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856136	Legion_01_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856136	Legion_01_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855770	8	0	for_the_fight_self	0.0	0.0	0.0
+856136	Legion_01_2_M3_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855791	6	0	for_the_fight_self	0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_wake_up	0	1000		1	spawn	855768	2	0	for_the_fight_self	0.0	0.0	0.0
+856137	Legion_02_2_M1_SpawnNPC	on_wake_up	0	1000		2	timer	5000	0	0		0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855792	6	0	for_the_fight_self	0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_wake_up	0	1000		1	spawn	855769	2	0	for_the_fight_self	0.0	0.0	0.0
+856138	Legion_02_2_M2_SpawnNPC	on_wake_up	0	1000		2	timer	5000	0	0		0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855793	6	0	for_the_fight_self	0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_wake_up	0	1000		1	spawn	855770	2	0	for_the_fight_self	0.0	0.0	0.0
+856139	Legion_02_2_M3_SpawnNPC	on_wake_up	0	1000		2	timer	5000	0	0		0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855814	5	0	for_the_fight_self	0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		1	spawn	855791	2	0	for_the_fight_self	0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		2	spawn	855768	1	0	for_the_fight_self	0.0	0.0	0.0
+856140	Legion_03_2_M1_SpawnNPC	on_wake_up	0	1000		3	timer	5000	0	0		0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855815	5	0	for_the_fight_self	0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		1	spawn	855792	2	0	for_the_fight_self	0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		2	spawn	855769	1	0	for_the_fight_self	0.0	0.0	0.0
+856141	Legion_03_2_M2_SpawnNPC	on_wake_up	0	1000		3	timer	5000	0	0		0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855816	5	0	for_the_fight_self	0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		1	spawn	855793	2	0	for_the_fight_self	0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		2	spawn	855770	1	0	for_the_fight_self	0.0	0.0	0.0
+856142	Legion_03_2_M3_SpawnNPC	on_wake_up	0	1000		3	timer	5000	0	0		0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		0	spawn	855837	4	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		1	spawn	855814	2	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		2	spawn	855791	1	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		3	spawn	855768	1	0	for_the_fight_self	0.0	0.0	0.0
+856143	Legion_04_2_M1_SpawnNPC	on_wake_up	0	1000		4	timer	5000	0	0		0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		0	spawn	855838	4	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		1	spawn	855815	2	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		2	spawn	855792	1	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		3	spawn	855769	1	0	for_the_fight_self	0.0	0.0	0.0
+856144	Legion_04_2_M2_SpawnNPC	on_wake_up	0	1000		4	timer	5000	0	0		0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		0	spawn	855839	4	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		1	spawn	855816	2	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		2	spawn	855793	1	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		3	spawn	855770	1	0	for_the_fight_self	0.0	0.0	0.0
+856145	Legion_04_2_M3_SpawnNPC	on_wake_up	0	1000		4	timer	5000	0	0		0.0	0.0	0.0
 856291	F4_Rotation_Treasure_Monster_01	on_wake_up	0	20		0	sysmsg	1402890	0	0		0.0	0.0	0.0
 856294	F4_Rotation_Treasure_Monster_04	on_wake_up	0	20		0	sysmsg	1402890	0	0		0.0	0.0	0.0
 856295	F4_Rotation_Treasure_Monster_05	on_wake_up	0	20		0	sysmsg	1402890	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	0	1000	chance:20|set_flag_var:1	0	var	1	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	0	1000	chance:20|set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	1	900	chance:20|set_flag_var:1	0	var	2	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	1	900	chance:20|set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	2	800	chance:20|set_flag_var:1	0	var	3	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	2	800	chance:20|set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	3	700	set_flag_var:1	0	var	4	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	3	700	set_flag_var:1	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	4	500	set_flag_var:4	0	var	-1	0	0	hidden_on	0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	4	500	set_flag_var:4	1	timer	5000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_idle_timer	5	400	set_flag_var:5	0	despawn_self	0	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	0	1000	chance:20|set_flag_var:0	0	timer	9000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	1	900	chance:20|set_flag_var:0	0	timer	18000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	2	800	chance:20|set_flag_var:0	0	timer	27000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	3	700	chance:20|set_flag_var:0	0	timer	36000	0	0		0.0	0.0	0.0
+856302	Legion_Hidden_SpawnNPC	on_wake_up	4	600	set_flag_var:0	0	timer	45000	0	0		0.0	0.0	0.0
 856304	Legion_Scarecrow_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 856304	Legion_Scarecrow_SpawnNPC	on_wake_up	0	1000		0	spawn	856305	1	240	for_the_fight_absolute	0.0	0.0	0.0
 856304	Legion_Scarecrow_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
@@ -3554,6 +3760,17 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856312	Legion_End_Check	on_wake_up	0	1000	set_flag_var:0	1	skill	18705	0	0	ME	0.0	0.0	0.0
 856312	Legion_End_Check	on_wake_up	0	1000	set_flag_var:0	2	timer	6000	0	0		0.0	0.0	0.0
 856313	BIDF5_U01_Ctrl_09	on_wake_up	0	1000		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_idle_timer	0	5		0	despawn_self	0	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	0	10	chance:25	0	spawn	856470	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	0	10	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	1	9	chance:25	0	spawn	856471	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	1	9	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	2	8	chance:25	0	spawn	856472	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	2	8	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	3	7	chance:25	0	spawn	856473	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	3	7	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	4	6		0	spawn	856451	1	20	for_the_fight_self	0.0	0.0	0.0
+856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	4	6		1	timer	6000	0	0		0.0	0.0	0.0
 856351	BIDYun_Vasharti_Glove_ControllerA	on_wake_up	0	7		0	spawn	856491	1	40	for_the_fight_absolute	188.33	414.61	260.61
 856351	BIDYun_Vasharti_Glove_ControllerA	on_wake_up	0	7		1	spawn	283010	1	40	for_the_fight_absolute	188.33	414.61	260.61
 856352	BIDYun_Vasharti_Glove_ControllerC	on_wake_up	0	7		0	spawn	856491	1	40	for_the_fight_absolute	188.33	414.61	260.61
@@ -3593,6 +3810,17 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856393	IDSeal_Scene_21_Li_Message	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 856394	IDSeal_Scene_21_Da_Message	on_wake_up	0	7		0	broadcast	22771	100	0		0.0	0.0	0.0
 856394	IDSeal_Scene_21_Da_Message	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_idle_timer	0	5		0	despawn_self	0	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	0	10	chance:25	0	spawn	856474	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	0	10	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	1	9	chance:25	0	spawn	856475	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	1	9	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	2	8	chance:25	0	spawn	856476	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	2	8	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	3	7	chance:25	0	spawn	856477	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	3	7	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	4	6		0	spawn	856455	1	20	for_the_fight_self	0.0	0.0	0.0
+856450	F4_Rotation_Treasure_Ctrl_04	on_wake_up	4	6		1	timer	6000	0	0		0.0	0.0	0.0
 856451	F4_Rotation_Treasure_Guardian_Ctrl_L	on_wake_up	0	9	chance:25	0	spawn	856452	1	20	for_the_fight_self	0.0	0.0	0.0
 856451	F4_Rotation_Treasure_Guardian_Ctrl_L	on_wake_up	1	8	chance:30	0	spawn	856453	1	20	for_the_fight_self	0.0	0.0	0.0
 856451	F4_Rotation_Treasure_Guardian_Ctrl_L	on_wake_up	2	7		0	spawn	856454	1	20	for_the_fight_self	0.0	0.0	0.0

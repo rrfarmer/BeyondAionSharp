@@ -36776,3 +36776,43 @@ to `IDArena_Solo_InviNPC_3`, which nothing places at all.
   the list.
 - **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
   **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## Correction: the tornado was not casting, and the rule was too wide
+
+The previous entry claimed the tornado a Tiamat beacon lays "now casts and removes itself". **It did
+not.** The rotation-placed rule committed in the same entry excluded that very npc -- it is placed by
+`idle_spawns` -- so it stayed on inert `aggressive` and the beacon went on delivering nothing. The claim
+was written from the emitter's hazard count (115 rungs) without checking that this npc was among them.
+
+Nothing in the suite objected, and that is the part worth keeping: the beacon's own pins had been moved
+onto its **spawn count** an hour earlier, so the hazard could be entirely dead while every test that
+mentions it passed. Moving a pin off the thing that broke is how a suite stops noticing.
+
+### The rule, corrected
+
+An npc gives up its own wake pattern when **a hand-written account of it already exists** -- and only
+then. `spawn_helpers.xml` is that account: a curated file where somebody decided what an encounter's
+adds are and how many come per health band. Kasika's fourth-tier guard is in it, and retail also gives
+that npc a hazard pattern; both cannot be authoritative, so the curated one wins.
+
+**Being placed by a generated table is not such an account.** Those tables place an npc and say nothing
+about it -- the beacon lays a tornado and has no opinion on what the tornado does. Excluding those is
+what killed the mechanic.
+
+| | wide rule | corrected |
+|---|---|---|
+| wake/idle patterns | 830 across 1,319 npcs | **885 across 1,383** |
+| npcs given up | 72 | **17** |
+
+`TheTornadoCastsAndLeaves` now pins both halves -- it casts, and then it is gone -- and a mutation
+swapping the immediate helper for the queued one kills it. That pin is what the previous entry was
+missing, and it is deliberately about *this npc* rather than about a count of rungs.
+
+### Still missing
+
+- **17 npcs still give up their patterns** to `spawn_helpers.xml`. Retail runs both accounts; this port
+  keeps the curated one. Each is a small, known divergence rather than an accident now.
+- **381 patterns refused** for a branch this port cannot say, unexamined since `use_skill` left the
+  list.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
+  **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
