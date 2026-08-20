@@ -106,6 +106,8 @@ def action_code(row: dict) -> str:
         return f"Do.Say({row['a1']}, {row['a2']})"
     if kind == "sysmsg":
         return f"Do.SystemMessage({row['a1']}, {row['a2']})"
+    if kind == "nothing":
+        return "Do.Nothing()"
     if kind == "despawn_self":
         return "Do.DespawnSelf()"
     if kind == "broadcast":

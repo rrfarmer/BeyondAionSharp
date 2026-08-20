@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
@@ -139,5 +140,53 @@ public sealed class WakeIdlePatternAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(1));
 
 		Assert.DoesNotContain(harness.LiveNpcs(), npc => npc.GetNpcId() == Tornado);
+	}
+	/// <summary><b>Do-nothing branches are carried, and they sit above other branches.</b></summary>
+	/// <remarks>
+	/// Retail writes <c>do_nothing</c> 3,445 times, and it is not padding. Branch lists are
+	/// first-match-wins -- <c>PatternAi</c> runs the first branch whose guards hold and returns -- so a
+	/// matching do-nothing branch means "this case, and none of the ones below it". Dropping it
+	/// promotes whatever came next, which is the opposite instruction.
+	/// <para>
+	/// The count alone would not show that: a do-nothing branch at the bottom of a list changes
+	/// nothing, and one at the top changes everything. This asserts that the table actually contains
+	/// the second kind, which is what makes carrying them worth the row.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void DoNothingBranchesAreCarriedAndBlockTheOnesBelow()
+	{
+		string path = System.IO.Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "wake_idle_patterns.tsv");
+		string[] lines = System.IO.File.ReadAllLines(path);
+		string[] header = lines[0].Split('	');
+		int npcAt = Array.IndexOf(header, "npc");
+		int handlerAt = Array.IndexOf(header, "handler");
+		int branchAt = Array.IndexOf(header, "branch");
+		int kindAt = Array.IndexOf(header, "kind");
+
+		var byRung = new Dictionary<(string, string, string), List<string>>();
+		var lastBranch = new Dictionary<(string, string), int>();
+		foreach (string line in lines.Skip(1))
+		{
+			string[] f = line.Split('	');
+			var rung = (f[npcAt], f[handlerAt], f[branchAt]);
+			if (!byRung.TryGetValue(rung, out List<string>? kinds))
+				byRung[rung] = kinds = new List<string>();
+			kinds.Add(f[kindAt]);
+
+			var owner = (f[npcAt], f[handlerAt]);
+			int branch = int.Parse(f[branchAt]);
+			lastBranch[owner] = Math.Max(lastBranch.TryGetValue(owner, out int seen) ? seen : 0, branch);
+		}
+
+		int carried = byRung.Values.Count(kinds => kinds.All(k => k == "nothing"));
+		int blocking = byRung.Count(rung => rung.Value.All(k => k == "nothing")
+			&& int.Parse(rung.Key.Item3) < lastBranch[(rung.Key.Item1, rung.Key.Item2)]);
+
+		// Rungs, not actions: 58 do-nothing actions collapse into 39 branches, some rungs carrying the
+		// element more than once. The branch is the unit that blocks, so the branch is what is counted.
+		Assert.Equal(39, carried);
+		Assert.True(blocking > 0, "no do-nothing branch sits above another, so carrying them buys nothing");
 	}
 }

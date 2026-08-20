@@ -1,6 +1,12 @@
 npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 205433	IDArena_S10_MC_End	on_wake_up	0	7		0	say	342684	0	0		0.0	0.0	0.0
 205433	IDArena_S10_MC_End	on_wake_up	0	7		1	say	342685	0	0		0.0	0.0	0.0
+205498	IDHouse_Zadra_Deform_Air	on_idle_timer	0	3	set_flag_var:0	0	say	1500464	0	0		0.0	0.0	0.0
+205498	IDHouse_Zadra_Deform_Air	on_idle_timer	0	3	set_flag_var:0	1	timer	10000	0	0		0.0	0.0	0.0
+205498	IDHouse_Zadra_Deform_Air	on_idle_timer	1	2	set_flag_var:1	0	say	1500465	0	0		0.0	0.0	0.0
+205498	IDHouse_Zadra_Deform_Air	on_idle_timer	1	2	set_flag_var:1	1	timer	50000	0	0		0.0	0.0	0.0
+205498	IDHouse_Zadra_Deform_Air	on_idle_timer	2	1	unset_flag_var:0|unset_flag_var:1	0	timer	10000	0	0		0.0	0.0	0.0
+205498	IDHouse_Zadra_Deform_Air	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 205654	IDArena_Solo_RoundNPC_1	on_wake_up	0	7		0	var	1	0	0	Condition_S2A	0.0	0.0	0.0
 205654	IDArena_Solo_RoundNPC_1	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 205655	IDArena_Solo_RoundNPC_2	on_wake_up	0	7		0	var	1	0	0	Condition_S2B	0.0	0.0	0.0
@@ -94,19 +100,34 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		0	var	0	1	0	Wave_Z1	0.0	0.0	0.0
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 207127	IDSeal_RandomRoom_Bomb	on_wake_up	0	1		0	spawn	856459	1	0	for_the_fight_self	0.0	0.0	0.0
+215436	IDSlk_Extra1	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+216163	IDCTH_Boss_Slime	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 216216	IDCT_StDrakanFi_Fake	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 216217	IDCT_StDrakanSc_Fake	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
+216244	IDCT_Boss_Slime	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 216297	IDCT_StDrakanFi_Fake	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 216298	IDCT_StDrakanSc_Fake	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 216733	IDCT_Boss_LichKing	on_wake_up	0	7		0	skill	19046	0	0	ME	0.0	0.0	0.0
 216736	IDCT_Boss_LichKing	on_wake_up	0	7		0	skill	19046	0	0	ME	0.0	0.0	0.0
 216738	IDCT_Boss_LichKing	on_wake_up	0	7		0	skill	19048	0	0	ME	0.0	0.0	0.0
+217241	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	0	spawn	282208	1	0	for_the_fight_absolute	1020.13	1269.6	95.95
+217241	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	1	spawn	282208	1	0	for_the_fight_absolute	1006.09	1282.35	95.95
+217241	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	2	spawn	282208	1	0	for_the_fight_absolute	992.511	1269.61	95.95
+217241	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	3	nothing	0	0	0		0.0	0.0	0.0
+217242	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		0	say	1500481	0	0		0.0	0.0	0.0
+217242	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		1	nothing	0	0	0		0.0	0.0	0.0
 217244	IDForest_Bridge_Boss	on_wake_up	0	14		0	spawn	282362	1	10	for_the_fight_absolute	302.515	756.957	203.0
+217249	IDForest_Wave_Trico_Boss	on_wake_up	0	15		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0
+217249	IDForest_Wave_Trico_Boss	on_wake_up	0	15		1	sysmsg	1500242	0	0		0.0	0.0	0.0
+217249	IDForest_Wave_Trico_Boss	on_wake_up	0	15		2	nothing	0	0	0		0.0	0.0	0.0
+217253	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		0	say	1500481	0	0		0.0	0.0	0.0
+217253	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		1	nothing	0	0	0		0.0	0.0	0.0
 217267	IDForest_Nr_Light_sky_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
 217290	IDYun_Temp_29	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
 217303	IDYun_Temp_01	on_wake_up	0	7		0	skill	19368	0	0	ME	0.0	0.0	0.0
 217304	IDYun_Temp_01	on_wake_up	0	7		0	skill	19368	0	0	ME	0.0	0.0	0.0
 217305	IDYun_Temp_01	on_wake_up	0	7		0	skill	19368	0	0	ME	0.0	0.0	0.0
+217308	IDYun_Nmd2	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 217315	IDYun_TheThingFromAnotherWorld_01	on_wake_up	0	1		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
 217316	IDYun_TheThingFromAnotherWorld_02	on_wake_up	0	6		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
 217326	IDYun_Temp_34	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
@@ -256,7 +277,15 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 230043	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 230045	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 230047	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
+230122	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+230373	IDF5_R2_Runner_Fake_02	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+230374	IDF5_R2_Runner_Fake_03	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+230375	IDF5_R2_Runner_Fake_04	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 230376	IDF5_R2_Victim_Fake	on_wake_up	0	1		0	skill	21091	0	0	ME	0.0	0.0	0.0
+230664	IDRose_M_ShugoM_Fi_S_SN_An	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+230668	IDRose_H_Boss_Mu_P_N_Ae	on_wake_up	0	95		0	skill	21220	0	0	ME	0.0	0.0	0.0
+230668	IDRose_H_Boss_Mu_P_N_Ae	on_wake_up	1	7		0	nothing	0	0	0		0.0	0.0	0.0
+230739	IDRose_M_ShugoM_Fi_P_SN_Ae	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		0	spawn	284698	1	0	for_the_fight_self	0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		1	sysmsg	1401819	0	0		0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		2	spawn	855545	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -703,6 +732,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 280821	BGuard_Trap	on_wake_up	0	7		0	skill_now	18425	0	0	ME	0.0	0.0	0.0
 280821	BGuard_Trap	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 281036	ND2_WhG5	on_wake_up	0	7	set_flag_var:0	0	broadcast	6621	50	0		0.0	0.0	0.0
+281038	US_WFlag_A1	on_wake_up	0	7	unset_world_flag_var:0	0	nothing	0	0	0		0.0	0.0	0.0
+281039	US_WFlag_A2	on_wake_up	0	7	unset_world_flag_var:1	0	nothing	0	0	0		0.0	0.0	0.0
+281040	US_WFlag_A3	on_wake_up	0	7	unset_world_flag_var:2	0	nothing	0	0	0		0.0	0.0	0.0
+281041	US_WFlag_A4	on_wake_up	0	7	unset_world_flag_var:3	0	nothing	0	0	0		0.0	0.0	0.0
+281042	US_WFlag_A5	on_wake_up	0	7	unset_world_flag_var:4	0	nothing	0	0	0		0.0	0.0	0.0
 281043	ND2_FhWSumG	on_wake_up	0	7	set_flag_var:0	0	broadcast	6608	50	0		0.0	0.0	0.0
 281044	ND2_FhWSumH	on_wake_up	0	7	set_flag_var:0	0	broadcast	6601	50	0		0.0	0.0	0.0
 281045	ND2_FhWSumA	on_wake_up	0	7	set_flag_var:0	0	broadcast	6602	50	0		0.0	0.0	0.0
@@ -754,7 +788,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281097	ND2_WhHS3B	on_wake_up	0	1		0	broadcast	6819	50	0		0.0	0.0	0.0
 281097	ND2_WhHS3B	on_wake_up	0	1		1	skill_now	17937	0	0	ME	0.0	0.0	0.0
 281097	ND2_WhHS3B	on_wake_up	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
+281102	IDSlk_Engineer	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+281115	IDLF1_Sca_NoAction	on_wake_up	0	22		0	nothing	0	0	0		0.0	0.0	0.0
 281125	IDSlk_KKAhn	on_wake_up	0	7		0	skill	18189	0	0	ME	0.0	0.0	0.0
+281179	IDSlk_Captain	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 281202	ABRwd_SpawnBoxF	on_wake_up	0	7		0	spawn	700539	1	235	for_the_fight_absolute	485.5	820.6	199.28
 281202	ABRwd_SpawnBoxF	on_wake_up	0	7		1	spawn	700539	1	295	for_the_fight_absolute	479.6	836.5	199.28
 281202	ABRwd_SpawnBoxF	on_wake_up	0	7		2	spawn	700539	1	345	for_the_fight_absolute	479.6	853.6	199.28
@@ -884,6 +921,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281634	IDCT_StDrakanFi_Fake	on_wake_up	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0
 281635	IDCT_StDrakanSc_Fake	on_wake_up	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0
 281644	Elim_EventG	on_wake_up	0	7		0	broadcast	6751	50	0		0.0	0.0	0.0
+281766	IDCT_Boss_Slime	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+281770	IDCTH_Boss_Slime	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 281773	IDCT_Boss_Spectre_noShown2	on_wake_up	0	10		0	skill	19098	0	0	ME	0.0	0.0	0.0
 281773	IDCT_Boss_Spectre_noShown2	on_wake_up	0	10		1	say	342043	0	0		0.0	0.0	0.0
 281924	IDAbRe_Core_Summon11	on_wake_up	0	7		0	broadcast	11105	10	0		0.0	0.0	0.0
@@ -960,10 +999,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	0	spawn	282208	1	0	for_the_fight_absolute	1020.13	1269.6	95.95
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	1	spawn	282208	1	0	for_the_fight_absolute	1006.09	1282.35	95.95
 282179	IDHouse_Zadra_Boss_Phase1	on_wake_up	0	7	set_flag_var:0	2	spawn	282208	1	0	for_the_fight_absolute	992.511	1269.61	95.95
+282180	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	0	spawn	282208	1	0	for_the_fight_absolute	1020.13	1269.6	95.95
+282180	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	1	spawn	282208	1	0	for_the_fight_absolute	1006.09	1282.35	95.95
+282180	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	2	spawn	282208	1	0	for_the_fight_absolute	992.511	1269.61	95.95
+282180	IDHouse_Zadra_Boss_Phase2	on_wake_up	0	99	set_flag_var:0	3	nothing	0	0	0		0.0	0.0	0.0
+282182	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		0	say	1500481	0	0		0.0	0.0	0.0
+282182	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		1	nothing	0	0	0		0.0	0.0	0.0
+282185	IDHouse_Zadra_Deform_Air	on_idle_timer	0	3	set_flag_var:0	0	say	1500464	0	0		0.0	0.0	0.0
+282185	IDHouse_Zadra_Deform_Air	on_idle_timer	0	3	set_flag_var:0	1	timer	10000	0	0		0.0	0.0	0.0
+282185	IDHouse_Zadra_Deform_Air	on_idle_timer	1	2	set_flag_var:1	0	say	1500465	0	0		0.0	0.0	0.0
+282185	IDHouse_Zadra_Deform_Air	on_idle_timer	1	2	set_flag_var:1	1	timer	50000	0	0		0.0	0.0	0.0
+282185	IDHouse_Zadra_Deform_Air	on_idle_timer	2	1	unset_flag_var:0|unset_flag_var:1	0	timer	10000	0	0		0.0	0.0	0.0
+282185	IDHouse_Zadra_Deform_Air	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 282189	IDForest_Wave_NPC_Bomb_Invisible	on_wake_up	0	1		0	spawn	282462	1	10	for_the_fight_absolute	843.153	1243.67	210.891
 282192	IDForest_Wave_Spaky_Invisible	on_wake_up	0	1		0	skill	19399	0	0	ME	0.0	0.0	0.0
 282196	IDForest_Wave_Spaky_Invisible	on_wake_up	0	1		0	skill	19399	0	0	ME	0.0	0.0	0.0
 282199	IDForest_Wave_Wisp_Invisible	on_wake_up	0	1		0	skill	19401	0	0	ME	0.0	0.0	0.0
+282200	IDForest_Wave_Trico_Boss	on_wake_up	0	15		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0
+282200	IDForest_Wave_Trico_Boss	on_wake_up	0	15		1	sysmsg	1500242	0	0		0.0	0.0	0.0
+282200	IDForest_Wave_Trico_Boss	on_wake_up	0	15		2	nothing	0	0	0		0.0	0.0	0.0
 282222	IDForest_hidden_sum	on_wake_up	0	7		0	skill	19449	0	0	ME	0.0	0.0	0.0
 282245	IDForest_Wave_Wisp_Invisible	on_wake_up	0	1		0	skill	19434	0	0	ME	0.0	0.0	0.0
 282247	wave_spakynormal_die	on_wake_up	0	1		0	broadcast	11300	200	0		0.0	0.0	0.0
@@ -995,6 +1049,22 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282298	IDF4Re_FOBJ_8	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 282315	Raksha_Evileye_Nmd	on_wake_up	0	7		0	sysmsg	1401135	0	0		0.0	0.0	0.0
 282316	Raksha_DrakanAssasin_KNmd	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
+282345	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282345	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282346	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282346	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282347	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282347	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282348	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282348	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282349	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282349	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282350	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282350	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282351	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282351	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+282352	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
+282352	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
 282353	IDHouse_Butler_InvisibleA	on_wake_up	0	1		0	skill	19572	0	0	ME	0.0	0.0	0.0
 282353	IDHouse_Butler_InvisibleA	on_wake_up	0	1		1	broadcast	111	5	0		0.0	0.0	0.0
 282354	IDHouse_Butler_InvisibleB	on_wake_up	0	1		0	skill	19572	0	0	ME	0.0	0.0	0.0
@@ -1007,6 +1077,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282389	IDYun_Nmd3_Projectile	on_wake_up	0	1		0	spawn	282606	1	6	for_the_fight_self	0.0	0.0	0.0
 282389	IDYun_Nmd3_Projectile	on_wake_up	0	1		1	skill_now	19656	0	0	ME	0.0	0.0	0.0
 282389	IDYun_Nmd3_Projectile	on_wake_up	0	1		2	despawn_self	0	0	0		0.0	0.0	0.0
+282431	IDElemental_Ex9	on_wake_up	0	3	chance:30	0	timer	2000	0	0		0.0	0.0	0.0
+282431	IDElemental_Ex9	on_wake_up	0	3	chance:30	1	nothing	0	0	0		0.0	0.0	0.0
 282432	IDElemental_Ex10	on_wake_up	0	1	set_world_flag_var:0	0	var	1	0	0	Spawn_IDElementalN_Nmd_Unicorn_60_Al	0.0	0.0	0.0
 282432	IDElemental_Ex10	on_wake_up	0	1	set_world_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
 282435	IDArena_NPC_S1_End	on_wake_up	0	7	set_flag_var:0	0	broadcast	1001	100	0		0.0	0.0	0.0
@@ -1252,6 +1324,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283544	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 283546	ShulackRose_Pr_Heal	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 283629	Britra_Party_Sum_SN	on_wake_up	0	7		0	skill	17029	0	0	ME	0.0	0.0	0.0
+284030	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284061	IDF5_TD_Wave5_Boss_Sum2	on_wake_up	0	1		0	spawn	284697	1	0	for_the_fight_self	0.0	0.0	0.0
 284062	IDF5_TD_Wave5_Boss_Sum3	on_idle_timer	0	8	chance:20	0	skill	21232	0	0	ME	0.0	0.0	0.0
 284062	IDF5_TD_Wave5_Boss_Sum3	on_idle_timer	0	8	chance:20	1	spawn	284075	1	0	for_the_fight_absolute	671.0	369.0	242.0
@@ -1316,6 +1389,13 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284220	VriTR_BleedAr_Q_Ra_N_65_Ae	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 284241	Shulack_NoLaw_As_N_65_Ae	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 284286	EleAir_As_N_65_Ah	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
+284311	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284312	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284313	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284314	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284315	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284316	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284317	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284374	IDF5_R2_Victim_Fake	on_wake_up	0	1		0	skill	21091	0	0	ME	0.0	0.0	0.0
 284438	IDVritra_Base_Boss3_Sum	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284439	IDVritra_Base_Boss3_Sum	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
@@ -1432,6 +1512,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284750	BIDF5_U2_NoShowNPC02_SN_Broad	on_idle_timer	0	6		1	timer	0	0	0		0.0	0.0	0.0
 284751	BIDF5_U2_NoShowNPC03_CtrlTrap	on_idle_timer	0	7		0	broadcast	21291	10	0		0.0	0.0	0.0
 284751	BIDF5_U2_NoShowNPC03_CtrlTrap	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+284754	BIDF5_U2_NoShowNPC06_ChkBoss02	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+284756	BIDF5_U2_NoShowNPC08_ChkSN02	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 284757	IDKamar_FX_Show_01	on_wake_up	0	7		0	skill	21433	0	0	ME	0.0	0.0	0.0
 284760	IDVritra_Base_Temp05	on_wake_up	0	7		0	skill_now	21206	0	0	ME	0.0	0.0	0.0
 284760	IDVritra_Base_Temp05	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
@@ -2288,6 +2370,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	3	4	set_flag_var:3	1	despawn_self	0	0	0		0.0	0.0	0.0
 702647	Gab1_TimeStartCheck_Noshow_3	on_wake_up	0	7		0	timer	120000	0	0		0.0	0.0	0.0
 702647	Gab1_TimeStartCheck_Noshow_3	on_wake_up	0	7		1	sysmsg	1402620	0	0		0.0	0.0	0.0
+702689	IDRaksha_Solo_A_Door_Open_Trigger_02	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+702693	IDRaksha_Solo_A_Door_Open_Trigger_03	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 702719	IDSeal_Wave_Door_Destroyer	on_idle_timer	0	2		0	broadcast	22760	100	0		0.0	0.0	0.0
 702719	IDSeal_Wave_Door_Destroyer	on_wake_up	0	1		0	timer	10000	0	0		0.0	0.0	0.0
 702720	IDSeal_Wave_Door_Destroyer	on_idle_timer	0	2		0	broadcast	22760	100	0		0.0	0.0	0.0
@@ -2412,6 +2496,42 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 799668	IDYun_Ariana3	on_idle_timer	1	1	set_flag_var:1	0	timer	0	0	0		0.0	0.0	0.0
 799668	IDYun_Ariana3	on_idle_timer	1	1	set_flag_var:1	1	despawn_self	0	0	0		0.0	0.0	0.0
 799668	IDYun_Ariana3	on_wake_up	0	6		0	skill	19921	0	0	ME	0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	0	6	set_flag_var:0	0	say	1500421	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	0	6	set_flag_var:0	1	timer	3500	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	1	5	set_flag_var:1	0	say	1500422	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	1	5	set_flag_var:1	1	timer	3000	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	2	4	set_flag_var:2	0	say	1500423	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	2	4	set_flag_var:2	1	timer	3000	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	3	3	set_flag_var:3	0	spawn	282542	1	5	for_the_fight_self	0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	3	3	set_flag_var:3	1	timer	0	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	4	2	set_flag_var:4	0	spawn	283070	1	300	for_the_fight_self	0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	4	2	set_flag_var:4	1	say	1500424	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	4	2	set_flag_var:4	2	skill	19358	0	0	ME	0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	4	2	set_flag_var:4	3	spawn	217315	1	0	for_the_fight_absolute	759.46	636.45	157.0
+799671	IDYun_Merops1	on_idle_timer	4	2	set_flag_var:4	4	timer	0	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	5	1		0	say	1500425	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	5	1		1	skill_now	19358	0	0	ME	0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	5	1		2	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	5	1		3	timer	0	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_idle_timer	5	1		4	despawn_self	0	0	0		0.0	0.0	0.0
+799671	IDYun_Merops1	on_wake_up	0	11		0	var	1	0	0	InvisibleWall1	0.0	0.0	0.0
+799671	IDYun_Merops1	on_wake_up	0	11		1	nothing	0	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	0	9	set_flag_var:0	0	say	1500427	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	0	9	set_flag_var:0	1	timer	5000	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	1	8	set_flag_var:1	0	skill	19358	0	0	ME	0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	1	8	set_flag_var:1	1	say	1500428	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	1	8	set_flag_var:1	2	spawn	282547	1	10	for_the_fight_absolute	255.98	684.432	170.0
+799672	IDYun_Merops2	on_idle_timer	1	8	set_flag_var:1	3	spawn	282547	1	10	for_the_fight_absolute	270.59	672.19	170.0
+799672	IDYun_Merops2	on_idle_timer	1	8	set_flag_var:1	4	timer	25000	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	2	7	set_flag_var:2	0	say	1500429	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	2	7	set_flag_var:2	1	timer	5000	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	3	6	set_flag_var:3	0	spawn	217316	1	0	for_the_fight_absolute	258.09	671.51	170.0
+799672	IDYun_Merops2	on_idle_timer	3	6	set_flag_var:3	1	timer	3000	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	4	5	set_flag_var:4	0	say	1500430	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	4	5	set_flag_var:4	1	timer	7000	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	5	4	set_flag_var:5	0	spawn	282542	1	10	for_the_fight_self	0.0	0.0	0.0
+799672	IDYun_Merops2	on_idle_timer	5	4	set_flag_var:5	1	timer	0	0	0		0.0	0.0	0.0
+799672	IDYun_Merops2	on_wake_up	0	11		0	nothing	0	0	0		0.0	0.0	0.0
 799674	IDYun_Merops4	on_idle_timer	0	4	set_flag_var:1	0	broadcast	30	50	0		0.0	0.0	0.0
 799674	IDYun_Merops4	on_idle_timer	0	4	set_flag_var:1	1	timer	7500	0	0		0.0	0.0	0.0
 799674	IDYun_Merops4	on_idle_timer	1	3	set_flag_var:2	0	say	1500435	0	0		0.0	0.0	0.0
@@ -2624,6 +2744,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 833019	LF4_Rotation_Hidden_Portal	on_wake_up	0	1000		0	timer	180000	0	0		0.0	0.0	0.0
 833022	DF4_Rotation_Hidden_Portal	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 833022	DF4_Rotation_Hidden_Portal	on_wake_up	0	1000		0	timer	180000	0	0		0.0	0.0	0.0
+833476	IDYun_Temp_63	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
+833477	IDYun_Temp_63	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 833485	IDTiamat_Kahrun7	on_idle_timer	0	5	set_flag_var:0	0	say	1500609	0	0		0.0	0.0	0.0
 833485	IDTiamat_Kahrun7	on_idle_timer	0	5	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
 833485	IDTiamat_Kahrun7	on_idle_timer	1	4	set_flag_var:1	0	broadcast	3	50	0		0.0	0.0	0.0
@@ -2756,6 +2878,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855259	LDF4_Advance_condor_dr_named	on_idle_timer	6	14	count:0:7:8:1	20	var	3	0	0	cSet_1_1_21	0.0	0.0	0.0
 855259	LDF4_Advance_condor_dr_named	on_idle_timer	6	14	count:0:7:8:1	21	var	3	0	0	cSet_1_1_22	0.0	0.0	0.0
 855259	LDF4_Advance_condor_dr_named	on_wake_up	0	7		0	var	1	0	0	cSet_1_1_22	0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	0	5	count:0:4:5:1	0	sysmsg	1402427	0	0		0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	1	4	count:0:1:4:0	0	nothing	0	0	0		0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	2	3	count:0:5:6:1	0	broadcast	22541	50	0		0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	2	3	count:0:5:6:1	1	sysmsg	1402428	0	0		0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	2	3	count:0:5:6:1	2	var	1	0	0	TIMEOVER	0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	2	3	count:0:5:6:1	3	var	10	0	0	BOSS	0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	2	3	count:0:5:6:1	4	despawn_self	0	0	0		0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_idle_timer	3	3	count:0:0:1:1	0	sysmsg	1402426	0	0		0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_wake_up	0	1		0	var	2	0	0	N_WAVE_01	0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_wake_up	0	1		1	var	2	0	0	N_WAVE_02	0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_wake_up	0	1		2	var	2	0	0	N_WAVE_03	0.0	0.0	0.0
+855260	IDF5_U3_TEMP_05	on_wake_up	0	1		3	var	2	0	0	N_WAVE_04	0.0	0.0	0.0
 855261	LDF5_Fortress_GuardianHead	on_wake_up	0	1000		0	skill	21794	0	0	ME	0.0	0.0	0.0
 855327	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		0	skill	20664	0	0	ME	0.0	0.0	0.0
 855327	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		1	skill	18762	0	0	ME	0.0	0.0	0.0
@@ -3602,10 +3736,15 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855781	Legion_02_312	on_wake_up	0	7		0	say	1501356	0	0		0.0	0.0	0.0
 855781	Legion_02_312	on_wake_up	0	7		1	timer	10000	0	0		0.0	0.0	0.0
 855854	IDRaksha_Re_Boss_Sum_KJS	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+855866	IDForest_Wave_Trico_Boss	on_wake_up	0	15		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0
+855866	IDForest_Wave_Trico_Boss	on_wake_up	0	15		1	sysmsg	1500242	0	0		0.0	0.0	0.0
+855866	IDForest_Wave_Trico_Boss	on_wake_up	0	15		2	nothing	0	0	0		0.0	0.0	0.0
 855879	IDStation_Guide_01	on_wake_up	0	5		0	say	1501180	0	0		0.0	0.0	0.0
 855880	IDStation_Guide_02	on_wake_up	0	5		0	say	1501180	0	0		0.0	0.0	0.0
 855881	IDStation_Guide_03	on_wake_up	0	5		0	say	1501180	0	0		0.0	0.0	0.0
 855882	IDStation_Guide_04	on_wake_up	0	5		0	say	1501180	0	0		0.0	0.0	0.0
+855903	IDYun_Nmd6	on_wake_up	0	21		0	say	1500405	0	0		0.0	0.0	0.0
+855903	IDYun_Nmd6	on_wake_up	0	21		1	nothing	0	0	0		0.0	0.0	0.0
 855904	IDYun_TheThingFromAnotherWorld_02	on_wake_up	0	6		0	spawn	282465	1	5	for_the_fight_self	0.0	0.0	0.0
 855919	DF5_ItemNamed_6_Ra_01_SSH	on_wake_up	0	1		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855957	LF5_NewSpecies_As_KJS	on_wake_up	0	100		0	skill	16873	0	0	ME	0.0	0.0	0.0

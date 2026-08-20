@@ -201,6 +201,11 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 return None
             out.append(("skill", int(index.group(1)), 0, 0, skill_targets[who.group(1)],
                         0.0, 0.0, 0.0))
+        elif kind == "do_nothing":
+            # Carried rather than skipped: a branch list is first-match-wins, so a matching do-nothing
+            # branch is retail saying "this case, and none of the ones below". Dropping it promotes the
+            # next branch, which is the opposite of the instruction.
+            out.append(("nothing", 0, 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "broadcast_message":

@@ -713,6 +713,15 @@ public static class Do
     /// THINK, so this is not always load-bearing — but retail states it, and a pattern that says "walk"
     /// should say it here rather than depend on the state machine reaching the same conclusion.
     /// </remarks>
+    /// <summary>Retail's <c>do_nothing</c>: a branch that matches, does nothing, and stops.</summary>
+    /// <remarks>
+    /// <b>Not the same as leaving the branch out.</b> Branch lists are first-match-wins -- the runtime
+    /// runs the first branch whose guards hold and returns -- so a matching <c>do_nothing</c> is how
+    /// retail says "in this case, and not the cases below". Dropping it promotes whatever came next,
+    /// which is the opposite of what the pattern asks for. 3,445 uses across the dump.
+    /// </remarks>
+    public static PatternAction Nothing() => static _ => { };
+
     public static PatternAction StartWalking() => ai => ai.StartWalking();
 
     /// <summary><c>attack_most_hating</c> — end the march and engage.</summary>

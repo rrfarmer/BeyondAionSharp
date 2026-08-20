@@ -5,7 +5,7 @@
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Spawn variables retail sets simply by an npc existing: 313 patterns, 631 npcs, 793 writes.
+/// Spawn variables retail sets simply by an npc existing: 312 patterns, 630 npcs, 789 writes.
 /// </summary>
 /// <remarks>
 /// The conditional spawn engine reads 1,201 distinct variables across 21,096 gated placements, and the
@@ -636,7 +636,6 @@ internal static class WakeVariables
         [832118] = [new Write("3021Castle", 3, 0)],  // 3021_LDF4_Da_Noshow_NPC
         [832825] = [new Write("1011_Mercenary01", -1, 0), new Write("1011_Mercenary02", -1, 0), new Write("1011_Mercenary03", -1, 0), new Write("1011_Mercenary04", -1, 0)],  // Ab1_Castle_Deep_1011_Hire_Li_01
         [855138] = [new Write("v01", 1, 0), new Write("v02", 1, 0), new Write("v03", 1, 0), new Write("v04", 1, 0), new Write("v05", 1, 0), new Write("v06", 1, 0), new Write("v07", 1, 0), new Write("v08", 1, 0), new Write("v09", 1, 0), new Write("v10", 1, 0), new Write("v11", 1, 0), new Write("v12", 1, 0), new Write("v13", 1, 0)],  // LDF4_Advance_condition_14
-        [855260] = [new Write("N_WAVE_01", 2, 0), new Write("N_WAVE_02", 2, 0), new Write("N_WAVE_03", 2, 0), new Write("N_WAVE_04", 2, 0)],  // IDF5_U3_TEMP_05
         [855440] = [new Write("GUARDIAN_TIMER", 11, 0)],  // IDSeal_Temp_19
         [855485] = [new Write("LEVEL_CHECK_3", 0, 1)],  // IDSeal_Wave_Checker
         [855500] = [new Write("IMMORTAL", 10, 0), new Write("IMMORTAL_TIMER", 10, 0), new Write("WAKE_TIMER", 10, 0)],  // IDSeal_Immortal_Success

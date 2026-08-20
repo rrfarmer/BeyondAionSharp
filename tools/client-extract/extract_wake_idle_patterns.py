@@ -42,7 +42,16 @@ import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 from client_npc_names import npc_names  # noqa: E402
 from extract_idle_cycles import read_actions, read_guards, string_ids  # noqa: E402
+from audit_idle_spawns import flatten  # noqa: E402
 from extract_battle_cycles import ROLES, TARGETS  # noqa: E402
+from extract_idle_cycles import FLAG_KINDS  # noqa: E402
+
+#: What the shared parser can say, used only to name the first thing that stops a pattern. The parser
+#: refuses by returning None and says nothing about why, and "381 refused" is a number rather than a
+#: work plan.
+SAYABLE_CONDITIONS = set(FLAG_KINDS) | {"test_probability", "increase_intvar"}
+SAYABLE_ACTIONS = {"spawn", "set_idle_timer", "set_condition_spawn_variable", "despawn_self",
+                   "broadcast_message", "say_to_all", "display_system_message", "use_skill"}
 
 #: The skill targets this table can say: the hate-list ones plus retail's role targets, which the queue
 #: carries as a creature. The same map the battle table uses, so the two cannot disagree about what
@@ -67,6 +76,25 @@ GENERIC = {"general", "passive_pattern", "wake_variable",
            "aggressive", "aggressive_pattern", "wake_variable_aggressive"}
 
 HANDLERS = ["on_wake_up", "on_idle_timer"]
+
+
+def blocking_element(body: str, handlers) -> str:
+    """The first element in these handlers the parser cannot say, for counting refusals by cause."""
+    for handler in handlers:
+        block = re.search(r"<%s>(.*?)</%s>" % (handler, handler), body, re.S)
+        if not block:
+            continue
+        for branch in re.finditer(r"<pattern>(.*?)</pattern>", block.group(1), re.S):
+            for tag, allowed in (("conditions", SAYABLE_CONDITIONS), ("actions", SAYABLE_ACTIONS)):
+                found = re.search(r"<%s>(.*?)</%s>" % (tag, tag), branch.group(1), re.S)
+                if not found:
+                    continue
+                for name in flatten(found.group(1)):
+                    if name not in allowed:
+                        return f"{tag[:-1]} {name}"
+    # Vocabulary is fine, so it is the data: a spawn naming an npc with no template here, a message
+    # whose string id does not resolve, or a skill target this table cannot say.
+    return "an npc, string or skill target this port does not have"
 
 
 def read_handler(body: str, name: str, dev, known, strings):
@@ -169,7 +197,7 @@ def main() -> int:
             read = {handler: read_handler(body, handler, dev, ai.keys(), strings)
                     for handler in HANDLERS}
             if any(rungs is None for rungs in read.values()):
-                refused["a branch this port cannot say"] += 1
+                refused[blocking_element(body, HANDLERS)] += 1
                 continue
             if not any(read.values()):
                 continue

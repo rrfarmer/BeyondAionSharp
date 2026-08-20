@@ -36816,3 +36816,38 @@ missing, and it is deliberately about *this npc* rather than about a count of ru
   list.
 - **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
   **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## do_nothing is an instruction, not padding
+
+Naming the wake/idle refusals again put `goto_waypoint` (99), `change_world_scene_status` (54),
+`do_nothing` (37) and `control_door` (37) at the top. The third is free and the least obviously
+worthwhile, which is why it is worth writing down.
+
+**Branch lists are first-match-wins.** `PatternAi.Evaluate` runs the first branch whose guards hold and
+returns. So a matching `do_nothing` says *"in this case, and none of the cases below"* -- dropping it
+promotes whatever came next, which is the opposite instruction. Retail writes it **3,445 times**.
+
+| | before | after |
+|---|---|---|
+| wake/idle patterns | 885 across 1,383 npcs | **919 across 1,441** |
+| do-nothing branches carried | 0 | **39** |
+
+The pin asserts more than the count, because the count alone proves nothing: a do-nothing branch at the
+bottom of a list changes nothing and one at the top changes everything, so it also asserts that the
+table contains the second kind. `IdleCycles` is untouched -- it takes the same parser but none of its
+patterns use the element.
+
+### A regeneration ordering worth knowing
+
+Adding the element moved npcs between the wake and wake/idle tables, and `regen_check` failed with four
+rows of drift until **both** were regenerated. The two extractors decide ownership by asking which says
+more about a pattern, so a change to one changes the other's answer; regenerating one alone leaves the
+pair inconsistent and the bindings pointing at a table that no longer holds the npc.
+
+### Still missing
+
+- **`goto_waypoint` (99)** -- now the largest refusal. `Do.StartWalking` exists but retail's element
+  carries a named waypoint and a move type, and nothing here resolves either.
+- **`change_world_scene_status` (54)**, **`control_door` (37)**, **`enable_area` (31)**.
+- **17 npcs give up their patterns** to `spawn_helpers.xml`, each a known divergence.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
