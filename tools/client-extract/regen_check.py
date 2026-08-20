@@ -81,6 +81,10 @@ POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv"),
                   ("extract_tiamat_beacons.py", "tiamat_beacons.tsv"),
                   ("extract_idle_spawns.py", "idle_spawns.tsv")]
 
+# Reads the world files rather than the pattern dump, so it takes a different first argument
+# and cannot join POSITIONAL_OUT above.
+WORLD_EXTRACTORS = [("extract_spawn_conditions.py", "spawn_conditions.tsv")]
+
 # (emitter, committed .cs, argv builder). The tiamat emitter takes the output path FIRST and its tables
 # as repeated --table switches, so it cannot share the others' shape.
 GEN = pathlib.Path("src/Aion.GameServer/Handlers/AI")

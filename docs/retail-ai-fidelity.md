@@ -34469,3 +34469,50 @@ at x=1, y=1 in this one. Each has its own pin now.
   conditional spawn engine behind it is still unbuilt**, which is the single biggest missing mechanic
   this log has named.
 - The beacon and barrier `use_skill` indices, and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`.
+
+## The conditional spawn engine, half one: the gates parse
+
+The biggest mechanic this log has named has sat in the backlog as a number. It has two halves:
+
+* **Writers** — `set_condition_spawn_variable` in the AI patterns: 12,446 uses, 2,122 variable names,
+  each carrying a `<string>` name, a `<set>` value and a `<modify>` mode.
+* **Readers** — `<extcondition>` in the world files: **54,388 gates across 163 worlds**, 7,146 distinct
+  expressions, each deciding whether a spawn group exists. `despawnAtOther="true"` removes the group
+  again when the expression stops holding.
+
+This entry builds the reader half's **expression language**, which turned out to be the small part.
+
+### The grammar is tiny, and now fully covered
+
+`==` 68,163, `&&` 25,225, `>` 10,237, `>=` 4,677, `||` 2,756, `<` 2,314, `!=` 1,504, `<=` 1,244,
+brackets, integer literals. **There is no arithmetic and no variable-to-variable comparison.**
+
+`SpawnCondition` parses **7,137 of the 7,146** distinct gates. Three details the dump forced:
+
+* **`[SAVE]` is part of the name, not decoration.** 175 expressions and 2,600 uses carry it, marking a
+  persisted variable — and **eighteen names appear both with and without it** (`v01`, `v05`,
+  `link_weapon_li`), so stripping it would merge two variables retail keeps apart.
+* **A bare variable is a test for "not zero".** 101 gates carry no comparison at all.
+* **An unknown variable reads as zero**, which is what lets a world work before its writers exist:
+  `SpecialServer_Cond == 0` holds and the ordinary spawns appear.
+
+An earlier scan of this grammar reported `gt` as the most common variable, 10,237 times. That was
+`&gt;` — the operator, unescaped. The extractor now unescapes before it counts, and `>` is exactly those
+10,237.
+
+### The nine it refuses are retail's own
+
+Eight end **mid-expression** with an unclosed bracket, in the raw world file rather than in this port's
+reading of it — `(1131_mistoff == 1) && (1141_mistoff == 1` is one. The ninth is
+`Race == 2(Race == 2) && (Wave_Z1 <= 4)`, a fragment pasted into itself. They are refused rather than
+guessed at, and the twelve spawn groups behind them stay ungated.
+
+### Still missing — and this is most of it
+
+- **The variable store**: scope (per world? per instance? per faction?), lifetime, and what `[SAVE]`
+  persistence actually attaches to.
+- **Group activation**: applying a gate at spawn time, re-checking when a variable changes, and
+  honouring `despawnAtOther`.
+- **The writer half** entirely: `set_condition_spawn_variable`'s three `<modify>` modes are unread —
+  0 appears 10,895 times, 1 appears 1,190, and −1, 2, 7 and 4 make up the rest.
+- The 113 remaining idle-spawn patterns, which is where 105 of those writers live.
