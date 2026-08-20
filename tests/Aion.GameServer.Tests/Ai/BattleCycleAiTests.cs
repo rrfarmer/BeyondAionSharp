@@ -75,6 +75,22 @@ public sealed class BattleCycleAiTests
 	/// </remarks>
 	private const int SelfCast = 16858;
 
+	/// <summary><c>IDF5_Mini_01_C_Boss_Fi</c>: re-buffs itself the moment it gets home.</summary>
+	/// <remarks>
+	/// Picked because it has no <c>on_leave_attack_state</c>, which <see cref="PatternAi"/> also
+	/// evaluates from <c>HandleBackHome</c> -- an npc with both would queue two casts and the pin could
+	/// not say which handler produced the one it saw.
+	/// </remarks>
+	private const int Kurores = 219987;
+
+	/// <summary>Midnight Robe, the buff its <c>on_leave_return_sp</c> puts back on.</summary>
+	/// <remarks>
+	/// Worth knowing that this is a <c>BUFF</c>: the Java's <c>onBackHome</c> dispels the buff slot on
+	/// arriving, and retail's pattern re-applies it in the same breath. The two halves only make sense
+	/// together, and the port had the dispel and not the re-apply.
+	/// </remarks>
+	private const int ReturnBuff = 20700;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(AnyMap).WithWorldSize(4096)
 			.WithAi(typeof(BattleCycleAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
@@ -299,7 +315,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 58,831 casts across 14,596 npcs, none of them read by a human. The index they came from is only
+	/// 59,393 casts across 14,600 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -318,7 +334,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(58831, casts);
+		Assert.Equal(59393, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -762,4 +778,32 @@ public sealed class BattleCycleAiTests
 
 		Assert.Equal(1385, spawns);
 	}
+	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
+	/// <remarks>
+	/// Retail names this pair <c>on_enter_return_sp</c> / <c>on_leave_return_sp</c>, the same way it
+	/// names <c>on_enter_attack_state</c> / <c>on_leave_attack_state</c> -- which is what settles that
+	/// "leave return sp" is leaving the returning <i>state</i>, not leaving in order to return. The port
+	/// already had both edges from the Java: <c>ReturningEventHandler.OnNotAtHome</c> sets
+	/// <c>AIState.RETURNING</c> and <c>OnBackHome</c> sets <c>AIState.IDLE</c>.
+	/// <para>
+	/// <b>Both halves are asserted, and the negative one is the load-bearing half.</b> A pin that only
+	/// checked the cast after arriving would pass just as well if the rungs had been wired to the
+	/// entering edge and something else had triggered them -- the observation would be identical. This
+	/// npc's <c>on_enter_return_sp</c> is empty, so setting off for home must produce nothing.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void GettingHomeRunsTheReturnHandlerAndSettingOffDoesNot()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Kurores, 300f, 300f, 200f);
+		BossAiHarness.DrainQueuedSkills(boss);
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.NotAtHome);
+		Assert.Empty(BossAiHarness.DrainQueuedSkills(boss));
+
+		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.BackHome);
+		Assert.Equal([ReturnBuff], BossAiHarness.DrainQueuedSkills(boss).Select(c => c.SkillId));
+	}
+
 }

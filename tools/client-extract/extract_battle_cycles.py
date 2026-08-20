@@ -148,7 +148,7 @@ ENDINGS = ["on_die", "on_leave_attack_state"]
 #: first-match-wins, but a handler that never fires is merely a mechanic we do not have yet.
 SIGNALS = ["on_enter_idle_state", "on_talked_by_user", "on_see_friend_attacked",
            "on_arrived_at_waypoint", "on_despawn", "on_friend_spelled", "on_stop_to_flee",
-           "on_see_friend_killed_by_user"]
+           "on_see_friend_killed_by_user", "on_enter_return_sp", "on_leave_return_sp"]
 
 
 #: `on_battle_timer` and `on_enter_attack_state` are the rotation, and an unsayable branch in either

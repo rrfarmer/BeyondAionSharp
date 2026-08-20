@@ -99,6 +99,30 @@ public sealed class AiPattern
     /// </remarks>
     public PatternBranch[] OnArrivedAtWaypoint { get; init; } = None;
     public PatternBranch[] OnEnterIdle { get; init; } = None;
+
+    /// <summary>
+    /// <c>on_enter_return_sp</c> — the NPC has given up and started walking back to its spawn point.
+    /// </summary>
+    /// <remarks>
+    /// Retail names this pair the way it names <c>on_enter_attack_state</c> / <c>on_leave_attack_state</c>,
+    /// which is what settles what "leave return sp" means: it is leaving the returning <i>state</i>, not
+    /// leaving in order to return. 38 patterns use the enter side and 103 the leave side.
+    /// <para>
+    /// The port already had both transitions, from the Java: <c>ReturningEventHandler.OnNotAtHome</c>
+    /// sets <c>AIState.RETURNING</c> and <c>OnBackHome</c> sets <c>AIState.IDLE</c>. So these are the
+    /// two edges of that state and needed no new machinery, only a call site.
+    /// </para>
+    /// </remarks>
+    public PatternBranch[] OnEnterReturning { get; init; } = None;
+
+    /// <summary>
+    /// <c>on_leave_return_sp</c> — the NPC has finished returning and is idle at home again.
+    /// </summary>
+    /// <remarks>
+    /// <b>98 of its 103 patterns spawn or cast</b>, the highest proportion of any handler this port had
+    /// left unread — an npc that gets home and immediately puts something on the ground.
+    /// </remarks>
+    public PatternBranch[] OnLeaveReturning { get; init; } = None;
     public PatternBranch[] OnDie { get; init; } = None;
 
     /// <summary>

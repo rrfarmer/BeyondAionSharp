@@ -341,10 +341,21 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         base.HandleMoveArrived();
     }
 
+    protected override void HandleNotAtHome()
+    {
+        Evaluate(Pattern.OnEnterReturning);
+        base.HandleNotAtHome();
+    }
+
     protected override void HandleBackHome()
     {
         Evaluate(Pattern.OnLeaveAttack);
         Evaluate(Pattern.OnEnterIdle);
+
+        // Retail's `on_leave_return_sp`, and it belongs here rather than beside `OnEnterReturning`:
+        // the returning state is left by arriving, which is exactly what `OnBackHome` means in the
+        // Java this is ported from -- it sets `AIState.IDLE`.
+        Evaluate(Pattern.OnLeaveReturning);
         ResetPattern();
         base.HandleBackHome();
     }

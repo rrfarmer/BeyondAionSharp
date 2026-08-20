@@ -80,6 +80,8 @@ internal static class GeneratedPattern
 			OnFriendSpelled = AiPattern.Of(BattleCycles.FriendSpelledRungsFor(npcId)),
 			OnStopFleeing = AiPattern.Of(BattleCycles.StopFleeingRungsFor(npcId)),
 			OnFriendKilled = AiPattern.Of(BattleCycles.FriendKilledRungsFor(npcId)),
+			OnEnterReturning = AiPattern.Of(BattleCycles.EnterReturningRungsFor(npcId)),
+			OnLeaveReturning = AiPattern.Of(BattleCycles.LeaveReturningRungsFor(npcId)),
 
 			// Waking and idling: three tables can read these, and never do so for the same npc.
 			OnWakeUp = AiPattern.Of(First(

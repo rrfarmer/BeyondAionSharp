@@ -37382,3 +37382,80 @@ Unchanged refusals: `control_door`, `enable_area`, `change_world_scene_status`, 
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, the `is_user` / `is_npc`
 conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail
 cast timings, which need play-testing rather than more parsing.
+
+## The return-to-spawn pair, and why the name had to be settled first
+
+`Retail-AI-Pattern: on_enter_return_sp / on_leave_return_sp`
+
+The previous entry left eleven retail handlers unread because none had an engine slot, and said the
+next step was engine work rather than extraction. Ranking them by how much they actually *do*:
+
+| handler | patterns | of which spawn or cast |
+|---|---|---|
+| `on_hyperlink_clicked` | 137 | 114 |
+| `on_leave_return_sp` | 103 | **98** |
+| `on_see_user_move` | 254 | 68 |
+| `on_enter_abnormal_state` | 272 | 30 |
+| `on_most_hating_updated` | 132 | **0** |
+
+`on_leave_return_sp` acts in 95% of its patterns, the highest proportion of anything left.
+
+### The name is ambiguous and guessing it would have been invention
+
+"Leave return sp" reads two ways: leaving the *returning state*, or leaving *in order to return*.
+Those are opposite edges, and wiring it to the wrong one produces an npc that does its homecoming
+mechanic the moment it gives up instead.
+
+The dump settles it. **`on_enter_return_sp` also exists**, in 38 patterns -- so the pair follows the
+same convention as `on_enter_attack_state` / `on_leave_attack_state`, and "leave" is the state being
+left. The port already had both edges, ported from the Java: `ReturningEventHandler.OnNotAtHome`
+sets `AIState.RETURNING`, `OnBackHome` sets `AIState.IDLE`. No new machinery, only two call sites.
+
+The data corroborates it independently. The skills these handlers cast are 20700 "Midnight Robe",
+20557 and 21146 -- all `BUFF`s, aimed at `ME`. And the Java's `onBackHome` **dispels the buff slot**
+before idling. So retail strips the npc's buffs on arriving home and the pattern puts them straight
+back; the port had the dispel and not the re-apply. A homecoming re-buff makes sense on arrival and
+none at all on setting off, which is the reading the pair already gave.
+
+`AiPattern` gains `OnEnterReturning` and `OnLeaveReturning`; `PatternAi` gains a `HandleNotAtHome`
+override and one more `Evaluate` in `HandleBackHome`. **576 rows across 316 npcs** on the leave side,
+541 of them casts; 44 rows across 42 npcs on the enter side. Table 14,596 -> **14,600 npcs**.
+
+### The pin, and the half of it that does the work
+
+`GettingHomeRunsTheReturnHandlerAndSettingOffDoesNot` uses `IDF5_Mini_01_C_Boss_Fi`, chosen because
+it has no `on_leave_attack_state` -- `HandleBackHome` evaluates that too, and an npc with both would
+queue two casts with no way to say which handler produced the one observed.
+
+It asserts both edges, and **the negative half is the load-bearing one**: a pin that only checked the
+cast after arriving would pass identically if the rungs had been wired to the entering edge. Three
+mutations, all caught:
+
+| mutation | caught |
+|---|---|
+| return rungs wired to the entering edge | yes |
+| arriving-home rungs dropped | yes |
+| composer stops filling the leave slot | yes |
+
+Adds backlog unchanged at 211 across 153 encounters, as expected -- these are buffs and despawns on
+npcs already on the board, not new adds.
+
+### Still missing
+
+Nine handlers remain unread with no engine slot: `on_see_user_move` (254),
+`on_enter_abnormal_state` (272), `on_damaged` (141), `on_hyperlink_clicked` (137),
+`on_most_hating_updated` (132), `on_see_friend_attacking` (129), `on_friend_spelling` (106),
+`on_see_npc_move` (106). `on_most_hating_updated` is worth skipping outright -- 132 patterns and
+**not one of them spawns or casts**. `on_hyperlink_clicked` is the richest by proportion but needs
+the chat-link packet path, which this port does not have.
+
+**A newly visible refusal:** 143 `on_arrived_at_waypoint` handlers are dropped on the condition
+`is_waypoint_index`, which the port cannot evaluate because its route walking does not expose which
+point it is on. That is the single largest per-handler loss now and it is a movement-system gap, not
+a parsing one.
+
+Unchanged refusals: `control_door`, `enable_area`, `change_world_scene_status`, `goto_waypoint` with
+`MOVETYPE_RUN`, `goto_next_waypoint`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, the `is_user` / `is_npc`
+conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail
+cast timings.

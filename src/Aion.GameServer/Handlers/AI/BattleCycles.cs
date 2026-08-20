@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 2363 retail patterns across 14596 npcs, 173763 actions.
+/// Combat rotations: 2364 retail patterns across 14600 npcs, 174383 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -105,6 +105,14 @@ internal static class BattleCycles
     /// <summary>What it does when a player kills a friend.</summary>
     internal static PatternBranch[] FriendKilledRungsFor(int npcId)
         => OnFriendKilledOf.TryGetValue(npcId, out int variant) ? OnFriendKilledVariants[variant] : [];
+
+    /// <summary>What it does on giving up and heading home.</summary>
+    internal static PatternBranch[] EnterReturningRungsFor(int npcId)
+        => OnEnterReturnSpOf.TryGetValue(npcId, out int variant) ? OnEnterReturnSpVariants[variant] : [];
+
+    /// <summary>What it does on getting home again.</summary>
+    internal static PatternBranch[] LeaveReturningRungsFor(int npcId)
+        => OnLeaveReturnSpOf.TryGetValue(npcId, out int variant) ? OnLeaveReturnSpVariants[variant] : [];
 
     /// <summary>Every npc this table drives.</summary>
     /// <remarks>
@@ -71923,6 +71931,571 @@ internal static class BattleCycles
         owners[297177] = 1;  // BGuard_F4ChiefBuffer
     }
 
+    /// <summary>What it does on giving up and heading home.</summary>
+    private static readonly PatternBranch[][] OnEnterReturnSpVariants = BuildOnEnterReturnSpVariants();
+
+    private static PatternBranch[][] BuildOnEnterReturnSpVariants()
+    {
+        PatternBranch[][] variants = new PatternBranch[11][];
+        OnEnterReturnSpVariants0(variants);
+        return variants;
+    }
+
+    private static void OnEnterReturnSpVariants0(PatternBranch[][] variants)
+    {
+        variants[0] = [
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        variants[1] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 22664)),
+        ];
+        variants[2] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
+        ];
+        variants[3] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        variants[4] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        variants[5] = [
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(3)),
+        ];
+        variants[6] = [
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        variants[7] = [
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        variants[8] = [
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        variants[9] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146),
+                Do.Despawn(1)),
+        ];
+        variants[10] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+    }
+
+    private static readonly IReadOnlyDictionary<int, int> OnEnterReturnSpOf = BuildOnEnterReturnSpOf();
+
+    private static Dictionary<int, int> BuildOnEnterReturnSpOf()
+    {
+        Dictionary<int, int> owners = new Dictionary<int, int>();
+        OnEnterReturnSpOf0(owners);
+        return owners;
+    }
+
+    private static void OnEnterReturnSpOf0(Dictionary<int, int> owners)
+    {
+        owners[219586] = 0;  // IDAbRe_Core_Summon14
+        owners[219926] = 1;  // DF5_ItemNamed_6_Fi_01_SSH
+        owners[219927] = 1;  // DF5_ItemNamed_6_As_01_SSH
+        owners[219928] = 1;  // DF5_ItemNamed_6_Fi_02_SSH
+        owners[219931] = 2;  // DF5_ItemNamed_6_Fi_03_SSH
+        owners[219932] = 3;  // DF5_ItemNamed_6_Wi_02_SSH
+        owners[235188] = 4;  // LDF4_Advance_Guard_Ra
+        owners[235194] = 4;  // LDF4_Advance_Guard_Ra
+        owners[235200] = 4;  // LDF4_Advance_Guard_Ra
+        owners[235206] = 4;  // LDF4_Advance_Guard_Ra
+        owners[235967] = 2;  // DF5_ItemNamed_6_Fi_03_SSH
+        owners[235972] = 3;  // DF5_ItemNamed_6_Wi_02_SSH
+        owners[281383] = 5;  // IDTP_Fanatic_Boss_EL
+        owners[281662] = 6;  // IDCT_Boss_Shulack
+        owners[282107] = 0;  // IDAbRe_Core_Summon14
+        owners[283787] = 7;  // LDF5_D2_Xipeto_Clodworm_65
+        owners[283788] = 7;  // LDF5_D2_Xipeto_Sufur_Clodworm_65
+        owners[284147] = 7;  // LDF5_D2_Xipeto_Clodworm
+        owners[284148] = 7;  // LDF5_D2_Xipeto_Clodworm_62
+        owners[284149] = 7;  // LDF5_D2_Xipeto_Clodworm_63
+        owners[284150] = 7;  // LDF5_D2_Xipeto_Clodworm_64
+        owners[284151] = 7;  // LDF5_D2_Xipeto_Sufur_Clodworm
+        owners[284152] = 7;  // LDF5_D2_Xipeto_Sufur_Clodworm_62
+        owners[284153] = 7;  // LDF5_D2_Xipeto_Sufur_Clodworm_63
+        owners[284154] = 7;  // LDF5_D2_Xipeto_Sufur_Clodworm_64
+        owners[284171] = 7;  // LDF5_D2_Xipeto_Salt_Little_61
+        owners[284172] = 7;  // LDF5_D2_Xipeto_Salt_Little_62
+        owners[284173] = 7;  // LDF5_D2_Xipeto_Salt_Little_63
+        owners[284174] = 7;  // LDF5_D2_Xipeto_Salt_Little_64
+        owners[284175] = 7;  // LDF5_D2_Xipeto_Salt_Little_65
+        owners[284310] = 8;  // BIDF5_R2_Sync2_A5
+        owners[855671] = 7;  // LDF5_D2_Xipeto_Clodworm
+        owners[855906] = 2;  // DF5_ItemNamed_6_Fi_03_SSH
+        owners[855907] = 3;  // DF5_ItemNamed_6_Wi_02_SSH
+        owners[855910] = 9;  // DF5_ItemNamed_24_SSH
+        owners[855912] = 9;  // DF5_ItemNamed_12_SSH
+        owners[855914] = 10;  // DF5_ItemNamed_6_Fi_01_SSH
+        owners[855915] = 10;  // DF5_ItemNamed_6_Wi_01_SSH
+        owners[855917] = 10;  // DF5_ItemNamed_6_Fi_02_SSH
+        owners[855918] = 10;  // DF5_ItemNamed_6_As_01_SSH
+        owners[855921] = 2;  // DF5_ItemNamed_6_Fi_03_SSH
+        owners[855922] = 3;  // DF5_ItemNamed_6_Wi_02_SSH
+    }
+
+    /// <summary>What it does on getting home again.</summary>
+    private static readonly PatternBranch[][] OnLeaveReturnSpVariants = BuildOnLeaveReturnSpVariants();
+
+    private static PatternBranch[][] BuildOnLeaveReturnSpVariants()
+    {
+        PatternBranch[][] variants = new PatternBranch[22][];
+        OnLeaveReturnSpVariants0(variants);
+        return variants;
+    }
+
+    private static void OnLeaveReturnSpVariants0(PatternBranch[][] variants)
+    {
+        variants[0] = [
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.GotoWaypoint(0)),
+        ];
+        variants[1] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        variants[2] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        variants[3] = [
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_R2_Sync2_Sum", 3, 0)),
+        ];
+        variants[4] = [
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        variants[5] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        variants[6] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.Broadcast(21011, 50f),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        variants[7] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21220),
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3),
+                Do.Broadcast(21011, 50f)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        variants[8] = [
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        variants[9] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        variants[10] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        variants[11] = [
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        variants[12] = [
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        variants[13] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        variants[14] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        variants[15] = [
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        variants[16] = [
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        variants[17] = [
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.Nothing()),
+            AiPattern.Branch(91, "rung 1", When.Always,
+                Do.Nothing()),
+        ];
+        variants[18] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        variants[19] = [
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        variants[20] = [
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        variants[21] = [
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+    }
+
+    private static readonly IReadOnlyDictionary<int, int> OnLeaveReturnSpOf = BuildOnLeaveReturnSpOf();
+
+    private static Dictionary<int, int> BuildOnLeaveReturnSpOf()
+    {
+        Dictionary<int, int> owners = new Dictionary<int, int>();
+        OnLeaveReturnSpOf0(owners);
+        return owners;
+    }
+
+    private static void OnLeaveReturnSpOf0(Dictionary<int, int> owners)
+    {
+        owners[219277] = 0;  // IDArena_team01_S5_Roamer
+        owners[219278] = 0;  // IDArena_team01_S5_Roamer
+        owners[219279] = 0;  // IDArena_team01_S5_Roamer
+        owners[219648] = 0;  // IDArena_team01_S5_Roamer
+        owners[219987] = 1;  // IDF5_Mini_01_C_Boss_Fi
+        owners[230001] = 2;  // ShulackRose_Basic
+        owners[230003] = 2;  // ShulackRose_Basic
+        owners[230005] = 2;  // ShulackRose_Basic
+        owners[230010] = 2;  // ShulackRose_Basic
+        owners[230011] = 2;  // ShulackRose_Basic
+        owners[230016] = 2;  // ShulackRose_Basic
+        owners[230017] = 2;  // ShulackRose_Basic
+        owners[230108] = 3;  // BIDF5_R2_Sync2_A1
+        owners[230120] = 4;  // BIDF5_R2_Killer
+        owners[230651] = 2;  // IDRose_M_KrallKeeper_Fi_S_Key_An
+        owners[230662] = 5;  // IDRose_L_ShulackF_Ri_S_N_An
+        owners[230663] = 2;  // IDRose_M_KrallKeeper_Fi_S_SN_An
+        owners[230665] = 6;  // IDRose_M_ShugoM_Wi_S_N_An
+        owners[230726] = 2;  // IDRose_M_KrallKeeper_Fi_P_Key_Ae
+        owners[230737] = 6;  // IDRose_L_ShulackF_Ri_P_N_Ae
+        owners[230738] = 2;  // IDRose_M_KrallKeeper_Fi_P_SN_Ae
+        owners[230740] = 6;  // IDRose_M_ShugoM_Wi_P_N_Ae
+        owners[230743] = 7;  // IDRose_H_Boss_Mu_P_N_Ae
+        owners[230898] = 8;  // Britra_Party_Ri_OpenAerial_LowNmd
+        owners[230999] = 9;  // DeathKnight_Ri_N_65_Ae
+        owners[231014] = 10;  // IDRose_M_Ratman_Wa_S_An
+        owners[231015] = 10;  // IDRose_M_Ratman_Wa_P_Ae
+        owners[231019] = 2;  // IDRose_H_ShulackF_Fi_BossGuard
+        owners[231020] = 2;  // IDRose_H_ShulackF_Gu_BossGuard
+        owners[231021] = 2;  // IDRose_H_ShulackF_Ri_BossGuard
+        owners[231075] = 11;  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
+        owners[231076] = 12;  // IDRuneWP_A1_VriCU_Fi_65_Ae
+        owners[231077] = 12;  // IDRuneWP_A1_VriCU_Pr_65_Ae
+        owners[231081] = 12;  // IDRuneWP_A2_VriCU_Pr_65_Ae
+        owners[231084] = 12;  // IDRuneWP_A3_VriCU_Fi_65_Ae
+        owners[231085] = 12;  // IDRuneWP_A3_VriCU_Pr_65_Ae
+        owners[231087] = 12;  // IDRuneWP_A4_VriIU_As_65_Ae
+        owners[231088] = 12;  // IDRuneWP_A4_VriCU_Fi_65_Ae
+        owners[231089] = 12;  // IDRuneWP_A4_VriCU_Ra_65_Ae
+        owners[231090] = 12;  // IDRuneWP_VriRP_Fi_65_Ae
+        owners[231091] = 12;  // IDRuneWP_VriRP_Gu_65_Ae
+        owners[231809] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[231814] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[231834] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[231839] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232047] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232048] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232049] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232050] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232051] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232052] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232053] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232054] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232055] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232056] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232075] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232076] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232077] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232078] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[232098] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232103] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[232988] = 2;  // ShulackRose_Basic
+        owners[233010] = 2;  // ShulackRose_Basic
+        owners[233011] = 2;  // ShulackRose_Basic
+        owners[233012] = 2;  // ShulackRose_Basic
+        owners[233013] = 2;  // ShulackRose_Basic
+        owners[233038] = 2;  // ShulackRose_Basic
+        owners[233065] = 14;  // IDF5_U2_ShulackF_As_solo_warden_65_An
+        owners[233072] = 15;  // IDF5_U2_VriRP_As_solo_Hide_65_An
+        owners[233079] = 5;  // IDF5_U2_BrownieM_solo_65_An
+        owners[233080] = 5;  // IDF5_U2_BrownieM_solo_65_An
+        owners[233081] = 5;  // IDF5_U2_BrownieM_solo_65_An
+        owners[233086] = 16;  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+        owners[233089] = 17;  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+        owners[233138] = 18;  // IDF5_U2_BrownieM_party_65_An
+        owners[233193] = 19;  // BIDF5_R2_KeyMonster
+        owners[233266] = 19;  // BIDF5_R2_KeyMonster
+        owners[233269] = 3;  // BIDF5_R2_Sync2_A1
+        owners[233380] = 17;  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+        owners[233382] = 16;  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+        owners[233383] = 17;  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+        owners[233385] = 16;  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+        owners[233414] = 15;  // IDF5_U2_VriRP_As_solo_Hide_65_An
+        owners[233981] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[233988] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[234549] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[234551] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[234555] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[234557] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251056] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251057] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251072] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251073] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251613] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251614] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251615] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251616] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251617] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251618] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251619] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251620] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251621] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251622] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251673] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251674] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251675] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251676] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251677] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251678] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251679] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251680] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251681] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251682] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[251793] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251799] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252090] = 20;  // LDF5_Fortress_Guard_As
+        owners[252091] = 20;  // LDF5_Fortress_Guard_As
+        owners[252092] = 20;  // LDF5_Fortress_Guard_As
+        owners[252093] = 20;  // LDF5_Fortress_Guard_As
+        owners[252094] = 20;  // LDF5_Fortress_Guard_As
+        owners[252097] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[252098] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[252099] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[252100] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[252101] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[252102] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[252103] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[252104] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[252105] = 20;  // LDF5_Fortress_Guard_As
+        owners[252106] = 20;  // LDF5_Fortress_Guard_As
+        owners[252107] = 20;  // LDF5_Fortress_Guard_As
+        owners[252108] = 20;  // LDF5_Fortress_Guard_As
+        owners[252109] = 20;  // LDF5_Fortress_Guard_As
+        owners[252352] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252357] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252362] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252367] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252372] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252377] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252382] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252387] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252392] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252397] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252402] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252407] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252412] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252417] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[252422] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[252427] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[272025] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272026] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272027] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272028] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272029] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272065] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272066] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272067] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272068] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272069] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272525] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272526] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272527] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272528] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272529] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272565] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272566] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272567] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272568] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[272569] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273025] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273026] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273027] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273028] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273029] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273065] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273066] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273067] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273068] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273069] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273255] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273256] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273257] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273258] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273259] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273260] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273261] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273262] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273263] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273264] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273270] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273271] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273272] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273273] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273274] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[273275] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273276] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273277] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273278] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[273279] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[279079] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279080] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279081] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279082] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279083] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279084] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279085] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279086] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279087] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279088] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279177] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279178] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279179] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279180] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279181] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279182] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279183] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279184] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279185] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279186] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279275] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279276] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279277] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279278] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279279] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279280] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279281] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279282] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279283] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279284] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279373] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279374] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279375] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279376] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279377] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279378] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279379] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279380] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279381] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279382] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279471] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279472] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279473] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279474] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279475] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279476] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279477] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279478] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279479] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279480] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279569] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279570] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279571] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279572] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279573] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279574] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279575] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279576] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279577] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279578] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279946] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279947] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279962] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279963] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279978] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279979] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[279994] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279995] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[283500] = 2;  // ShulackRose_Basic
+        owners[283502] = 2;  // ShulackRose_Basic
+        owners[283504] = 2;  // ShulackRose_Basic
+        owners[283509] = 2;  // ShulackRose_Basic
+        owners[283510] = 2;  // ShulackRose_Basic
+        owners[283515] = 2;  // ShulackRose_Basic
+        owners[283516] = 2;  // ShulackRose_Basic
+        owners[283617] = 8;  // Britra_Party_Ri_OpenAerial_LowNmd
+        owners[283917] = 2;  // ShulackRose_Basic
+        owners[284016] = 3;  // BIDF5_R2_Sync2_A1
+        owners[284028] = 4;  // BIDF5_R2_Killer
+        owners[284259] = 9;  // DeathKnight_Ri_N_65_Ae
+        owners[284502] = 11;  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
+        owners[284507] = 12;  // IDRuneWP_A1_VriCU_Pr_65_Ae
+        owners[284508] = 12;  // IDRuneWP_VriRP_Fi_65_Ae
+        owners[284509] = 12;  // IDRuneWP_VriRP_Gu_65_Ae
+        owners[284586] = 14;  // IDF5_U2_ShulackF_As_solo_warden_65_An
+        owners[284593] = 15;  // IDF5_U2_VriRP_As_solo_Hide_65_An
+        owners[284600] = 5;  // IDF5_U2_BrownieM_solo_65_An
+        owners[284605] = 16;  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+        owners[284608] = 17;  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+        owners[284637] = 18;  // IDF5_U2_BrownieM_party_65_An
+        owners[296979] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[296994] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[297004] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[297005] = 13;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[297013] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+        owners[297145] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[297152] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[297233] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[297234] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[297253] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[297257] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[297264] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[297269] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[297297] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[297301] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[297541] = 20;  // LDF5_Fortress_Guard_As
+        owners[801026] = 21;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[801059] = 21;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[855161] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[855163] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[855167] = 13;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[855169] = 13;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[855874] = 9;  // DeathKnight_Ri_N_65_Ae
+        owners[856111] = 1;  // IDF5_Mini_01_C_Boss_Fi
+        owners[881558] = 20;  // LDF5_Fortress_Guard_As
+        owners[881559] = 13;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[881560] = 13;  // F5_RvR_DGuard_As_Ae_Hide
+    }
+
     private static readonly IReadOnlyDictionary<int, int>[] EveryOwnerTable =
     [
         CycleOf,
@@ -71943,6 +72516,8 @@ internal static class BattleCycles
         OnFriendSpelledOf,
         OnStopToFleeOf,
         OnFriendKilledOf,
+        OnEnterReturnSpOf,
+        OnLeaveReturnSpOf,
     ];
 
 }
