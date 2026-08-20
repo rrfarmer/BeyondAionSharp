@@ -34642,3 +34642,44 @@ it again.**
   exist in this port under other names.
 - **`[SAVE]` persistence**, unchanged: 175 expressions and 2,600 gate uses whose lifetime is unknown.
 - **Instance scope**, above.
+
+## What the gates actually guard: 25,012 placements this port could make and does not
+
+The engine's two halves are built and wired; nothing yet knows *what* a gate guards. Retail keeps that
+in the world files — a `<condition_info>` carries the expression and a `<spawn_group_list>` of real npc
+placements, with `despawnAtOther="TRUE"` meaning the group is taken away again when the gate stops
+holding.
+
+**78,865 npc placements sit behind a gate across 164 worlds.** Most are not portable, and the shape of
+that matters:
+
+| | placements |
+|---|---|
+| behind a gate in retail | 78,865 |
+| name resolves to an npc id | 64,877 |
+| **this port has a template for** | **26,615** |
+| this port already spawns somewhere | 10,337 |
+| **extracted with coordinates** | **25,012**, across 117 worlds |
+
+So around **fifteen thousand placements are npcs this port has and never puts anywhere**, and the rest
+name npcs it has no template for — later-version and event content.
+
+**A single world nearly sent this the wrong way.** Sampled on `ab1` first, the answer looked hopeless:
+1,285 gated npc ids, 13 already spawned, and **1,258 with no template at all**. `ab1` and the two
+`IDTransform` worlds (13,453 placements each) are almost entirely content this port does not carry.
+Measured across all 164 the picture reverses — `LDF4_Advance` alone has 2,775 portable placements, and
+Panesterra's four sub-worlds about 1,650 each. **One world is not a sample.**
+
+`extract_gated_spawns.py` writes the portable ones with their gate, position, heading, respawn time and
+`despawnAtOther`. A pin asserts that every gate in that file parses, which is a different claim from the
+whole-dump one already there: a parser could cover the dump and still choke on the part that matters.
+Four placements are refused, behind two of retail's own nine broken gates.
+
+### Still missing
+
+- **Activation.** The data exists and the engine reads it; nothing yet spawns a group when its gate
+  holds, or removes it on `Changed` when `despawnAtOther` is set. That is the last structural piece.
+- **The 738 server flags**, still supplied by nothing, so those gates read zero.
+- **`[SAVE]` persistence** and **instance scope**, unchanged.
+- **50,841 placements dropped** for having no template here — worth revisiting only if this port ever
+  gains that content.

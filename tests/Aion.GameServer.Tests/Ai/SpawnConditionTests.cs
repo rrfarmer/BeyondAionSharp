@@ -176,4 +176,50 @@ public sealed class SpawnConditionTests
 	{
 		Assert.Throws<FormatException>(() => SpawnCondition.Parse(expression));
 	}
+
+	/// <summary>
+	/// <b>Every gate guarding a spawn this port could actually place parses.</b> 25,012 placements
+	/// across 117 worlds, from <c>extract_gated_spawns.py</c>.
+	/// </summary>
+	/// <remarks>
+	/// The gate corpus above is every distinct expression in the dump; this is the subset that guards
+	/// npcs we have templates for, which is the half that could run. It is a separate claim because a
+	/// parser covering the whole dump would still be useless if it choked on the portable part.
+	/// </remarks>
+	[Fact]
+	public void EveryGateGuardingAPortableSpawnParses()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(), "tools", "client-extract", "out",
+			"gated_spawns.tsv");
+		List<string> refused = new List<string>();
+		int placements = 0;
+
+		foreach (string line in File.ReadLines(path).Skip(1))
+		{
+			string[] fields = line.Split('	');
+			if (fields.Length < 9)
+				continue;
+
+			placements++;
+			try
+			{
+				SpawnCondition.Parse(fields[8]);
+			}
+			catch (FormatException)
+			{
+				refused.Add(fields[8]);
+			}
+		}
+
+		Assert.Equal(25012, placements);
+
+		// The only refusals are retail's own broken gates, which turn out to guard portable spawns too:
+		// four placements behind two of the nine. Each is either unbalanced or the pasted-into-itself
+		// `Race == 2(Race == 2)`, so no *well-formed* gate on a spawn this port could place is refused.
+		Assert.All(refused, expression => Assert.True(
+			expression.Count(c => c == '(') != expression.Count(c => c == ')')
+				|| expression.StartsWith("Race == 2(", StringComparison.Ordinal),
+			expression));
+		Assert.Equal(4, refused.Count);
+	}
 }
