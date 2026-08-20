@@ -27,6 +27,9 @@ public sealed class WakeVariableAiTests
 	/// <summary>One of the 168 writers that was already aggressive and must stay so.</summary>
 	private const int AggressiveWriter = 216846;
 
+	/// <summary>An arena round marker: writes its variable and removes itself.</summary>
+	private const int Marker = 205654;
+
 	/// <summary>Any npc with a template, to stand in for a gated group.</summary>
 	private const int Gated = 283069;
 
@@ -138,5 +141,48 @@ public sealed class WakeVariableAiTests
 
 		Assert.NotEmpty(writer.GetAggroList().Stream());
 		Assert.NotEmpty(SpawnVariableRegistry.For(Map, harness.InstanceId).Snapshot());
+	}
+	/// <summary><b>A marker writes its variable and then removes itself.</b></summary>
+	/// <remarks>
+	/// 75 of these patterns carry <c>despawn_self</c> on the same rung as the write: the npc exists in
+	/// order to announce a state and go. Both halves are asserted, because a marker that writes and
+	/// stays is scenery standing in an arena, and one that goes without writing has done nothing at
+	/// all.
+	/// <para>
+	/// The removal is scheduled rather than done inline -- this runs inside the owner's own spawn path,
+	/// and taking it out of the world mid-spawn fights the rest of that path -- so the pin advances the
+	/// clock before looking.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AMarkerWritesAndThenLeaves()
+	{
+		using BossAiHarness harness = NewHarness();
+		SpawnVariableRegistry.Forget(Map, harness.InstanceId);
+		harness.Spawn(Marker, 300f, 300f, 200f);
+
+		Assert.Equal(1, SpawnVariableRegistry.For(Map, harness.InstanceId)["Condition_S2A"]);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.DoesNotContain(harness.LiveNpcs(), npc => npc.GetNpcId() == Marker);
+	}
+
+	/// <summary><b>And one retail does not mark stays put.</b></summary>
+	/// <remarks>
+	/// The other half, without which "remove them all" passes as well as the real rule. The flag npc
+	/// this file already uses writes and remains, because retail's pattern for it has no
+	/// <c>despawn_self</c>.
+	/// </remarks>
+	[Fact]
+	public void AnUnmarkedWriterStaysPut()
+	{
+		using BossAiHarness harness = NewHarness();
+		SpawnVariableRegistry.Forget(Map, harness.InstanceId);
+		harness.Spawn(Flag, 300f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Contains(harness.LiveNpcs(), npc => npc.GetNpcId() == Flag);
 	}
 }

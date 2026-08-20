@@ -98,6 +98,7 @@ def main() -> int:
                 continue
 
             writes: list[tuple[str, int, int]] = []
+            vanishes = False
             blocked = None
             for branch in re.finditer(r"<pattern>(.*?)</pattern>", wake.group(1), re.S):
                 guards = re.search(r"<conditions>(.*?)</conditions>", branch.group(1), re.S)
@@ -107,10 +108,16 @@ def main() -> int:
                 actions = re.search(r"<actions>(.*?)</actions>", branch.group(1), re.S)
                 if not actions:
                     continue
-                others = set(flatten(actions.group(1))) - {"set_condition_spawn_variable"}
+                # `despawn_self` is taken as well: 75 of these patterns write a variable and then
+                # remove the npc, which is a marker that exists only to announce a state and go. It
+                # needs nothing a passive npc cannot do, unlike the timers and spawns below it.
+                others = set(flatten(actions.group(1))) - {"set_condition_spawn_variable",
+                                                           "despawn_self"}
                 if others:
                     blocked = f"action {sorted(others)[0]}"
                     break
+                if "despawn_self" in flatten(actions.group(1)):
+                    vanishes = True
                 for write in re.finditer(
                         r"<set_condition_spawn_variable>(.*?)</set_condition_spawn_variable>",
                         actions.group(1), re.S):
@@ -140,11 +147,12 @@ def main() -> int:
             patterns += 1
             for npc in owners:
                 for order, (name, value, modify) in enumerate(writes):
-                    rows.append((npc, named.group(1), order, name, value, modify))
+                    rows.append((npc, named.group(1), order, name, value, modify,
+                                 "TRUE" if vanishes else "FALSE"))
 
     rows.sort()
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
-        out.write("npc\tpattern\torder\tname\tset\tmodify\n")
+        out.write("npc\tpattern\torder\tname\tset\tmodify\tvanishes\n")
         for row in rows:
             out.write("\t".join(str(f) for f in row) + "\n")
 

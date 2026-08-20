@@ -35,17 +35,15 @@ internal static class WakeVariables
     internal static Write[] For(int npcId)
         => ByNpc.TryGetValue(npcId, out Write[]? writes) ? writes : [];
 
+    /// <summary>Whether retail removes this npc once it has written -- a marker that announces and goes.</summary>
+    internal static bool Vanishes(int npcId) => Vanishing.Contains(npcId);
+
     /// <summary>Every npc this table drives.</summary>
     internal static IEnumerable<int> Npcs => ByNpc.Keys;
 
     private static readonly IReadOnlyDictionary<int, Write[]> ByNpc = new Dictionary<int, Write[]>
     {{
 '''
-
-FOOTER = '''    };
-}
-'''
-
 
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -56,12 +54,15 @@ def main() -> None:
     lines = args.tsv.read_text(encoding="utf-8").splitlines()
     header = lines[0].split("\t")
     writes: dict[int, list[tuple]] = collections.defaultdict(list)
+    vanishing: set[int] = set()
     names: dict[int, str] = {}
     for line in lines[1:]:
         row = dict(zip(header, line.split("\t")))
         npc = int(row["npc"])
         names[npc] = row["pattern"]
         writes[npc].append((row["name"], int(row["set"]), int(row["modify"])))
+        if row.get("vanishes") == "TRUE":
+            vanishing.add(npc)
 
     total = sum(len(v) for v in writes.values())
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
@@ -69,7 +70,12 @@ def main() -> None:
         for npc in sorted(writes):
             body = ", ".join(f'new Write("{n}", {s}, {m})' for n, s, m in writes[npc])
             out.write(f"        [{npc}] = [{body}],  // {names[npc]}\n")
-        out.write(FOOTER)
+        out.write("    };" + chr(10) + chr(10))
+        out.write("    /// <summary>The npcs retail removes once they have written.</summary>"
+                  + chr(10))
+        out.write("    private static readonly HashSet<int> Vanishing =" + chr(10) + "        [")
+        out.write(", ".join(str(n) for n in sorted(vanishing)))
+        out.write("];" + chr(10) + "}" + chr(10))
 
     print(f"{len(set(names.values()))} patterns, {len(writes)} npcs, {total} writes -> {args.out}")
 

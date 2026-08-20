@@ -1,6 +1,8 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World.Spawns;
+using System.Threading.Tasks;
 
 namespace Aion.GameServer.Handlers.AI;
 
@@ -84,5 +86,19 @@ internal static class WakeVariableWrites
 		SpawnVariables store = SpawnVariableRegistry.For(owner.GetWorldId(), owner.GetInstanceId());
 		foreach (WakeVariables.Write write in WakeVariables.For(owner.GetNpcId()))
 			store.Write(write.Name, write.Set, write.Modify);
+
+		if (!WakeVariables.Vanishes(owner.GetNpcId()))
+			return;
+
+		// Retail's `despawn_self` on the same rung: 75 of these patterns announce a state and go, which
+		// is the whole of what the npc is for. Scheduled rather than done here, for the reason
+		// `AttackAfterSpawn` gives -- this runs inside the owner's own BringIntoWorld, and removing it
+		// mid-spawn fights the rest of that path.
+		ThreadPoolManager.GetInstance().Schedule(_ =>
+		{
+			if (owner.IsSpawned())
+				owner.GetController().Delete();
+			return ValueTask.CompletedTask;
+		}, 0);
 	}
 }

@@ -36284,3 +36284,51 @@ than a door that never moves. Left unported.
   either in a minute.
 - **488 wake patterns that also do something else**, 136 with a guarded branch.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## Markers that announce a state and go
+
+The wake table took only patterns whose `on_wake_up` was nothing but variable writes. **75 more carry
+`despawn_self` on the same rung**: the npc exists in order to announce a state and leave, which is a
+whole mechanic rather than a decoration, and it needs nothing a passive npc cannot do.
+
+| | before | after |
+|---|---|---|
+| wake patterns | 315 | **376** |
+| npcs | 634 | **724** |
+| variables written across all tables | 434 | **484** |
+| placements this port can open on its own | 5,501 | **5,861** |
+
+The removal is scheduled rather than done inline, for the reason `AttackAfterSpawn` already records:
+this runs inside the owner's own spawn path, and taking the npc out of the world mid-spawn fights the
+rest of it. Both halves are pinned -- a marker that writes and stays is scenery standing in an arena,
+and one that leaves without writing has done nothing -- and both mutations die.
+
+### The same column-drift bug, a third time
+
+Adding the `vanishes` column to the extractor's rows without adding it to the header produced a TSV with
+seven fields and six names, exactly as with `scoped` and `killer` before it. The emitter reads that
+column **by name**, so this time it did not silently misread -- it produced an empty `Vanishing` set and
+75 markers that never left.
+
+All three had the same cause: a heredoc rewriting the extractor, where the header's `\t` escapes do not
+survive the shell the way the row-building code's do. The fix each time was a direct edit. **The pattern
+is the tell** -- when the same edit mechanism produces the same class of bug three times, the mechanism
+is the problem, not the attention paid to it.
+
+### Two items closed as blocked, with the evidence recorded
+
+* **`GAb1_PvPStatus`**: the four `GAb1` worlds are confirmed Panesterra -- `world_maps.xml` names them
+  Belus, Aspida and their neighbours with `world_type="PANESTERRA"` -- so `PanesterraService` is the
+  right home. What is missing is which of 1, 2, 3 is peace. Checked and rejected as evidence: the Java
+  tree has no `PvPStatus` at all; the dump never pairs the flag with an `IN_PEACE`-style name; and
+  comparing each value against the placements this port already spawns statically gives 36%, 75% and
+  53%, which arbitrates nothing because those spawns are aionemu's approximation in the first place.
+* **`control_door`**: unchanged from the previous entry and still one coin flip short.
+
+### Still missing
+
+- **252 wake patterns blocked on `set_idle_timer`** -- now the largest single reason, and they need a
+  timer, which means a pattern class, which means the aggression question again for the `general` ones.
+- **136 with a guarded branch**, 44 that spawn, 33 that cast.
+- **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), both blocked on evidence.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**

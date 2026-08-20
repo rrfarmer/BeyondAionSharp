@@ -1,797 +1,1068 @@
-npc	pattern	order	name	set	modify
-205432	IDArena_S10_MC_Start	0	STAGE	9	0
-207011	Test_NPC_Jun01	0	5011_L	1	0
-207012	Test_NPC_Jun02	0	5011_L	-1	0
-207012	Test_NPC_Jun02	1	5011_D	-1	0
-216846	DF4_WindBox1	0	DF4_D_WINDBOX_ON	2	0
-231598	LF2_1_KillerCtrl	0	LF2_1_Killer	1	0
-231599	LF2_2_KillerCtrl	0	LF2_2_Killer	1	0
-231600	DF2_1_KillerCtrl	0	DF2_1_Killer	1	0
-231601	DF2_2_KillerCtrl	0	DF2_2_Killer	1	0
-231602	LF3_1_KillerCtrl	0	LF3_1_Killer	1	0
-231603	LF3_2_KillerCtrl	0	LF3_2_Killer	1	0
-231604	DF3_1_KillerCtrl	0	DF3_1_Killer	1	0
-231605	DF3_2_KillerCtrl	0	DF3_2_Killer	1	0
-231867	LDF5_Village_KillerCtrl01_L	0	v01ctrl	2	0
-231868	LDF5_Village_KillerCtrl01_D	0	v01ctrl	3	0
-231869	LDF5_Village_KillerCtrl01_DR	0	v01ctrl	1	0
-231870	LDF5_Village_KillerCtrl02_L	0	v02ctrl	2	0
-231871	LDF5_Village_KillerCtrl02_D	0	v02ctrl	3	0
-231872	LDF5_Village_KillerCtrl02_DR	0	v02ctrl	1	0
-231873	LDF5_Village_KillerCtrl03_L	0	v03ctrl	2	0
-231874	LDF5_Village_KillerCtrl03_D	0	v03ctrl	3	0
-231875	LDF5_Village_KillerCtrl03_DR	0	v03ctrl	1	0
-231876	LDF5_Village_KillerCtrl04_L	0	v04ctrl	2	0
-231877	LDF5_Village_KillerCtrl04_D	0	v04ctrl	3	0
-231878	LDF5_Village_KillerCtrl04_DR	0	v04ctrl	1	0
-231879	LDF5_Village_KillerCtrl05_L	0	v05ctrl	2	0
-231880	LDF5_Village_KillerCtrl05_D	0	v05ctrl	3	0
-231881	LDF5_Village_KillerCtrl05_DR	0	v05ctrl	1	0
-231882	LDF5_Village_KillerCtrl06_L	0	v06ctrl	2	0
-231883	LDF5_Village_KillerCtrl06_D	0	v06ctrl	3	0
-231884	LDF5_Village_KillerCtrl06_DR	0	v06ctrl	1	0
-231885	LDF5_Village_KillerCtrl07_L	0	v07ctrl	2	0
-231886	LDF5_Village_KillerCtrl07_D	0	v07ctrl	3	0
-231887	LDF5_Village_KillerCtrl07_DR	0	v07ctrl	1	0
-231888	LDF5_Village_KillerCtrl08_L	0	v08ctrl	2	0
-231889	LDF5_Village_KillerCtrl08_D	0	v08ctrl	3	0
-231890	LDF5_Village_KillerCtrl08_DR	0	v08ctrl	1	0
-231891	LDF5_Village_KillerCtrl09_L	0	v09ctrl	2	0
-231892	LDF5_Village_KillerCtrl09_D	0	v09ctrl	3	0
-231893	LDF5_Village_KillerCtrl09_DR	0	v09ctrl	1	0
-231894	LDF5_Village_KillerCtrl10_L	0	v10ctrl	2	0
-231895	LDF5_Village_KillerCtrl10_D	0	v01ctrl	3	0
-231896	LDF5_Village_KillerCtrl10_DR	0	v10ctrl	1	0
-231897	LDF5_Village_KillerCtrl11_L	0	v11ctrl	2	0
-231898	LDF5_Village_KillerCtrl11_D	0	v11ctrl	3	0
-231899	LDF5_Village_KillerCtrl11_DR	0	v11ctrl	1	0
-231900	LDF5_Village_KillerCtrl12_L	0	v12ctrl	2	0
-231901	LDF5_Village_KillerCtrl12_D	0	v12ctrl	3	0
-231902	LDF5_Village_KillerCtrl12_DR	0	v12ctrl	1	0
-231903	LDF5_Village_KillerCtrl13_L	0	v13ctrl	2	0
-231904	LDF5_Village_KillerCtrl13_D	0	v13ctrl	3	0
-231905	LDF5_Village_KillerCtrl13_DR	0	v13ctrl	1	0
-231906	LDF5_Village_KillerCtrl14_L	0	v14ctrl	2	0
-231907	LDF5_Village_KillerCtrl14_D	0	v14ctrl	3	0
-231908	LDF5_Village_KillerCtrl14_DR	0	v14ctrl	1	0
-231909	LDF5_Village_KillerCtrl15_L	0	v15ctrl	2	0
-231910	LDF5_Village_KillerCtrl15_D	0	v15ctrl	3	0
-231911	LDF5_Village_KillerCtrl15_DR	0	v15ctrl	1	0
-231912	LDF5_Village_KillerCtrl16_L	0	v16ctrl	2	0
-231913	LDF5_Village_KillerCtrl16_D	0	v16ctrl	3	0
-231914	LDF5_Village_KillerCtrl16_DR	0	v16ctrl	1	0
-231915	LDF5_Village_KillerCtrl17_L	0	v17ctrl	2	0
-231916	LDF5_Village_KillerCtrl17_D	0	v17ctrl	3	0
-231917	LDF5_Village_KillerCtrl17_DR	0	v17ctrl	1	0
-231920	LDF5_Village_KillerCtrl18_DR	0	v18ctrl	1	0
-231921	LDF5_Village_KillerCtrl19_L	0	v19ctrl	2	0
-231922	LDF5_Village_KillerCtrl19_D	0	v19ctrl	3	0
-231923	LDF5_Village_KillerCtrl19_DR	0	v19ctrl	1	0
-233576	IDLDF5_Under_01_War_Guard_07	0	Drakan	2	0
-233577	IDLDF5_Under_01_War_Guard_08	0	Drakan	2	0
-233584	IDLDF5_Under_01_War_MSG_05	0	SouthNorth	1	0
-233585	IDLDF5_Under_01_War_MSG_06	0	EastWest	1	0
-233586	IDLDF5_Under_01_War_MSG_07	0	Drakan	1	0
-233587	IDLDF5_Under_01_War_MSG_08	0	Drakan	1	0
-233589	IDLDF5_Under_01_War_MSG_10	0	Q_NPCSpawn_On	1	0
-234128	LDF5_Village_KillerCtrl01_L	0	v01ctrl	2	0
-234129	LDF5_Village_KillerCtrl01_D	0	v01ctrl	3	0
-234130	LDF5_Village_KillerCtrl01_DR	0	v01ctrl	1	0
-234131	LDF5_Village_KillerCtrl02_L	0	v02ctrl	2	0
-234132	LDF5_Village_KillerCtrl02_D	0	v02ctrl	3	0
-234133	LDF5_Village_KillerCtrl02_DR	0	v02ctrl	1	0
-235679	IDSweep_Gold_PIG_A	0	PIG_DIE_A	0	1
-235686	IDSweep_Gold_PIG_B	0	PIG_DIE_B	0	1
-235687	IDSweep_Gold_PIG_C	0	PIG_DIE_C	0	1
-236497	LF4_WindBox2	0	C5_WINDBOX_ON	2	0
-257242	LF4_Condition_2011_Li	0	condition_2011	1	0
-257243	LF4_Condition_2011_Da	0	condition_2011	2	0
-257244	LF4_Condition_2011_Dr	0	condition_2011	0	0
-257542	LF4_Condition_2021_Li	0	condition_2021	1	0
-257543	LF4_Condition_2021_Da	0	condition_2021	2	0
-257544	LF4_Condition_2021_Dr	0	condition_2021	0	0
-257842	DF4_Condition_3011_Li	0	condition_3011	1	0
-257843	DF4_Condition_3011_Da	0	condition_3011	2	0
-257844	DF4_Condition_3011_Dr	0	condition_3011	0	0
-258142	DF4_Condition_3021_Li	0	condition_3021	1	0
-258143	DF4_Condition_3021_Da	0	condition_3021	2	0
-258144	DF4_Condition_3021_Dr	0	condition_3021	0	0
-258274	LDF5a_5011_Checker_MistOff	0	5011on	-1	0
-258274	LDF5a_5011_Checker_MistOff	1	5011off	1	0
-258274	LDF5a_5011_Checker_MistOff	2	5011_Mercenary01	-1	0
-258274	LDF5a_5011_Checker_MistOff	3	5011_Mercenary02	-1	0
-258274	LDF5a_5011_Checker_MistOff	4	5011_Mercenary03	-1	0
-258275	LDF5a_5011_Checker_MistOn	0	5011on	1	0
-258275	LDF5a_5011_Checker_MistOn	1	5011off	-1	0
-258276	LDF5a_6011_Checker_MistOff	0	6011on	-1	0
-258276	LDF5a_6011_Checker_MistOff	1	6011off	1	0
-258276	LDF5a_6011_Checker_MistOff	2	6011_Mercenary01	-1	0
-258276	LDF5a_6011_Checker_MistOff	3	6011_Mercenary02	-1	0
-258276	LDF5a_6011_Checker_MistOff	4	6011_Mercenary03	-1	0
-258276	LDF5a_6011_Checker_MistOff	5	6011Boss	-1	0
-258277	LDF5a_6011_Checker_MistOn	0	6011on	1	0
-258277	LDF5a_6011_Checker_MistOn	1	6011off	-1	0
-258278	LDF5a_6021_Checker_MistOff	0	6021on	-1	0
-258278	LDF5a_6021_Checker_MistOff	1	6021off	1	0
-258278	LDF5a_6021_Checker_MistOff	2	6021_Mercenary01	-1	0
-258278	LDF5a_6021_Checker_MistOff	3	6021_Mercenary02	-1	0
-258278	LDF5a_6021_Checker_MistOff	4	6021_Mercenary03	-1	0
-258278	LDF5a_6021_Checker_MistOff	5	6021Boss	-1	0
-258279	LDF5a_6021_Checker_MistOn	0	6021on	1	0
-258279	LDF5a_6021_Checker_MistOn	1	6021off	-1	0
-258309	LDF5b_6011_BossCheker	0	6011Boss	1	0
-258310	LDF5b_6021_BossCheker	0	6021Boss	1	0
-277126	LDF5_Village_KillerCtrl01_DR	0	v01ctrl	1	0
-277127	LDF5_Village_KillerCtrl02_DR	0	v02ctrl	1	0
-277128	LDF5_Village_KillerCtrl03_DR	0	v03ctrl	1	0
-277129	LDF5_Village_KillerCtrl04_DR	0	v04ctrl	1	0
-277130	LDF5_Village_KillerCtrl05_DR	0	v05ctrl	1	0
-277131	LDF5_Village_KillerCtrl06_DR	0	v06ctrl	1	0
-277132	LDF5_Village_KillerCtrl07_DR	0	v07ctrl	1	0
-277133	LDF5_Village_KillerCtrl08_DR	0	v08ctrl	1	0
-277134	LDF5_Village_KillerCtrl09_DR	0	v09ctrl	1	0
-277135	LDF5_Village_KillerCtrl10_DR	0	v10ctrl	1	0
-277136	LDF5_Village_KillerCtrl11_DR	0	v11ctrl	1	0
-277137	LDF5_Village_KillerCtrl12_DR	0	v12ctrl	1	0
-277138	LDF5_Village_KillerCtrl13_DR	0	v13ctrl	1	0
-277139	LDF5_Village_KillerCtrl14_DR	0	v14ctrl	1	0
-277140	LDF5_Village_KillerCtrl15_DR	0	v15ctrl	1	0
-277141	LDF5_Village_KillerCtrl16_DR	0	v16ctrl	1	0
-277142	LDF5_Village_KillerCtrl17_DR	0	v17ctrl	1	0
-277143	LDF5_Village_KillerCtrl18_DR	0	v18ctrl	1	0
-277144	LDF5_Village_KillerCtrl19_DR	0	v19ctrl	1	0
-277145	LDF5_Village_KillerCtrl01_L	0	v01ctrl	2	0
-277146	LDF5_Village_KillerCtrl02_L	0	v02ctrl	2	0
-277147	LDF5_Village_KillerCtrl03_L	0	v03ctrl	2	0
-277148	LDF5_Village_KillerCtrl04_L	0	v04ctrl	2	0
-277149	LDF5_Village_KillerCtrl05_L	0	v05ctrl	2	0
-277150	LDF5_Village_KillerCtrl06_L	0	v06ctrl	2	0
-277151	LDF5_Village_KillerCtrl07_L	0	v07ctrl	2	0
-277152	LDF5_Village_KillerCtrl08_L	0	v08ctrl	2	0
-277153	LDF5_Village_KillerCtrl09_L	0	v09ctrl	2	0
-277154	LDF5_Village_KillerCtrl10_L	0	v10ctrl	2	0
-277155	LDF5_Village_KillerCtrl11_L	0	v11ctrl	2	0
-277156	LDF5_Village_KillerCtrl12_L	0	v12ctrl	2	0
-277157	LDF5_Village_KillerCtrl13_L	0	v13ctrl	2	0
-277158	LDF5_Village_KillerCtrl14_L	0	v14ctrl	2	0
-277159	LDF5_Village_KillerCtrl15_L	0	v15ctrl	2	0
-277160	LDF5_Village_KillerCtrl16_L	0	v16ctrl	2	0
-277161	LDF5_Village_KillerCtrl17_L	0	v17ctrl	2	0
-277162	LDF5_Village_KillerCtrl18_L	0	v18ctrl	2	0
-277163	LDF5_Village_KillerCtrl19_L	0	v19ctrl	2	0
-277164	LDF5_Village_KillerCtrl01_D	0	v01ctrl	3	0
-277165	LDF5_Village_KillerCtrl02_D	0	v02ctrl	3	0
-277166	LDF5_Village_KillerCtrl03_D	0	v03ctrl	3	0
-277167	LDF5_Village_KillerCtrl04_D	0	v04ctrl	3	0
-277168	LDF5_Village_KillerCtrl05_D	0	v05ctrl	3	0
-277169	LDF5_Village_KillerCtrl06_D	0	v06ctrl	3	0
-277170	LDF5_Village_KillerCtrl07_D	0	v07ctrl	3	0
-277171	LDF5_Village_KillerCtrl08_D	0	v08ctrl	3	0
-277172	LDF5_Village_KillerCtrl09_D	0	v09ctrl	3	0
-277173	LDF5_Village_KillerCtrl10_D	0	v01ctrl	3	0
-277174	LDF5_Village_KillerCtrl11_D	0	v11ctrl	3	0
-277175	LDF5_Village_KillerCtrl12_D	0	v12ctrl	3	0
-277176	LDF5_Village_KillerCtrl13_D	0	v13ctrl	3	0
-277177	LDF5_Village_KillerCtrl14_D	0	v14ctrl	3	0
-277178	LDF5_Village_KillerCtrl15_D	0	v15ctrl	3	0
-277179	LDF5_Village_KillerCtrl16_D	0	v16ctrl	3	0
-277180	LDF5_Village_KillerCtrl17_D	0	v17ctrl	3	0
-277181	LDF5_Village_KillerCtrl18_D	0	v18ctrl	3	0
-277182	LDF5_Village_KillerCtrl19_D	0	v19ctrl	3	0
-277770	Gab1_Vritra_01	0	v01ctrl	1	0
-277774	Gab1_Vritra_05	0	v01ctrl	6	0
-277778	Gab1_Boss_Noshow_03	0	v01ctrl	11	0
-277782	Gab1_Msg_Noshow_03	0	v01ctrl	16	0
-281822	BLDF4_Dramata_SpawnCloseDoor	0	DRAMATA_ENTERABLE	2	0
-281822	BLDF4_Dramata_SpawnCloseDoor	1	LDF4_GHArtifactA	3	0
-281822	BLDF4_Dramata_SpawnCloseDoor	2	LDF4_GHArtifactB	3	0
-282590	IDYun_Temp_56	0	CrowdController	1	0
-282625	IDRaksha_NoshowNPC_30	0	idraksha_dust2	1	0
-282627	IDYun_Temp_56	0	CrowdController	1	0
-282955	LDF4b_Tiamat_Temp26	0	EnemySpawnL	0	1
-282956	LDF4b_Tiamat_Temp27	0	YunSpawnL	0	1
-282957	LDF4b_Tiamat_Temp28	0	DrakanSpawnL	0	1
-282966	LDF4b_Tiamat_Temp29	0	EnemySpawnD	0	1
-282967	LDF4b_Tiamat_Temp30	0	YunSpawnD	0	1
-282968	LDF4b_Tiamat_Temp31	0	DrakanSpawnD	0	1
-283146	IDTiamat_Temp1	0	KAHRUN_SPAWN	0	1
-283146	IDTiamat_Temp1	1	KAISINEL_SPAWN	0	1
-283147	IDTiamat_Temp2	0	KAHRUN_SPAWN	0	1
-283147	IDTiamat_Temp2	1	MARCHUTAN_SPAWN	0	1
-283148	IDTiamat_Temp3	0	TIAMAT_SPAWN	0	1
-283150	IDTiamat_Temp4	0	RELIC_SPAWN	0	1
-283152	IDTiamat_Temp5	0	ISRAPHEL_SPAWN	0	1
-283153	IDTiamat_Temp6	0	KAHRUN_TALK	0	1
-283153	IDTiamat_Temp6	1	IDTIAMAT_REAL_COLLISION	1	0
-283154	IDTiamat_Temp11	0	KAHRUN_SPAWN	0	1
-283161	IDTiamat_ARIANA_SORUS_Invisible	0	REWARDL_SPAWN	0	1
-283161	IDTiamat_ARIANA_SORUS_Invisible	1	ARIANASORUS_SPAWN	0	1
-284456	IDVritra_Base_Drakan_Guardian_Nmd_Gate	0	OBJ_GATE_SELECTION	1	0
-284458	Q_RuneSpawn_Noshow_1	0	Q_RuneSpawn_On	0	1
-284459	Q_Kahrun_Noshow_1	0	Q_KahrunSpawn_On	0	1
-284460	Q_VritraSoldierSpawn_Noshow_1	0	Q_VritraSpawn_On	0	1
-284701	IDVritra_Base_GameControl	0	GAMECONTROL	1	0
-284701	IDVritra_Base_GameControl	1	GATECONTROL_B1	1	0
-284701	IDVritra_Base_GameControl	2	GATECONTROL_B2	1	0
-284701	IDVritra_Base_GameControl	3	GATECONTROL_B3	1	0
-284701	IDVritra_Base_GameControl	4	GATECONTROL_B4	1	0
-284701	IDVritra_Base_GameControl	5	GATECONTROL_B5	1	0
-286931	Test_JM_Monster_6	0	condition_4	2	0
-286931	Test_JM_Monster_6	1	condition_5	2	0
-286936	Test_JM_NoAction_1	0	condition_type	1	0
-286955	Test_Monster_Jun01	0	v01	1	0
-286955	Test_Monster_Jun01	1	v02	1	0
-286955	Test_Monster_Jun01	2	v03	1	0
-286955	Test_Monster_Jun01	3	v04	1	0
-286955	Test_Monster_Jun01	4	v05	1	0
-286955	Test_Monster_Jun01	5	v06	1	0
-286955	Test_Monster_Jun01	6	v07	1	0
-286955	Test_Monster_Jun01	7	v08	1	0
-286955	Test_Monster_Jun01	8	v09	1	0
-286955	Test_Monster_Jun01	9	v10	1	0
-286955	Test_Monster_Jun01	10	v11	1	0
-286955	Test_Monster_Jun01	11	v12	1	0
-286955	Test_Monster_Jun01	12	v13	1	0
-286955	Test_Monster_Jun01	13	v14	1	0
-286955	Test_Monster_Jun01	14	v15	1	0
-286955	Test_Monster_Jun01	15	v16	1	0
-286955	Test_Monster_Jun01	16	v17	1	0
-286955	Test_Monster_Jun01	17	v18	1	0
-286955	Test_Monster_Jun01	18	v19	1	0
-287266	IDF4Re_Drana_Named_B	0	condition_type	1	0
-297569	Ab1_Castle_Deep_1011_Hire_Li_01	0	1011_Mercenary01	-1	0
-297569	Ab1_Castle_Deep_1011_Hire_Li_01	1	1011_Mercenary02	-1	0
-297569	Ab1_Castle_Deep_1011_Hire_Li_01	2	1011_Mercenary03	-1	0
-297569	Ab1_Castle_Deep_1011_Hire_Li_01	3	1011_Mercenary04	-1	0
-701116	IDStation_QuestChecker	0	questclear	1	0
-701642	IDF5_Under_01_Initial_NPC	0	C_Flag_1	1	0
-701642	IDF5_Under_01_Initial_NPC	1	C_Flag_2	1	0
-701642	IDF5_Under_01_Initial_NPC	2	C_Flag_3	1	0
-701642	IDF5_Under_01_Initial_NPC	3	C_Flag_4	1	0
-701642	IDF5_Under_01_Initial_NPC	4	C_Bridge	1	0
-701642	IDF5_Under_01_Initial_NPC	5	C_Defender_1	1	0
-701642	IDF5_Under_01_Initial_NPC	6	C_Defender_2	1	0
-701642	IDF5_Under_01_Initial_NPC	7	C_Defender_3	1	0
-701642	IDF5_Under_01_Initial_NPC	8	C_Defender_4	1	0
-701642	IDF5_Under_01_Initial_NPC	9	C_Bridge_On	-1	0
-701642	IDF5_Under_01_Initial_NPC	10	cBox	1	0
-701801	LDF5b_6021_Teleport_Li	0	LDF5b_6021_Teleport_On	2	0
-701802	LDF5b_6021_Teleport_Da	0	LDF5b_6021_Teleport_On	3	0
-701803	LDF5b_6021_Teleport_Dr	0	LDF5b_6021_Teleport_On	1	0
-701918	IDKamar_Invisible_Flag_1	0	v01	1	0
-701919	IDKamar_Invisible_Flag_2	0	v02	1	0
-701920	IDKamar_Invisible_Flag_3	0	v03	1	0
-701921	IDKamar_Invisible_Flag_4	0	v04	1	0
-701997	IDLDF5_Under_01_War_Guard_07	0	Drakan	2	0
-701998	IDLDF5_Under_01_War_Guard_08	0	Drakan	2	0
-702005	IDLDF5_Under_01_War_MSG_05	0	SouthNorth	1	0
-702006	IDLDF5_Under_01_War_MSG_06	0	EastWest	1	0
-702007	IDLDF5_Under_01_War_MSG_07	0	Drakan	1	0
-702008	IDLDF5_Under_01_War_MSG_08	0	Drakan	1	0
-702054	IDF5_U1_War_01_NoShowNPC_Base01_05_1	0	RewardLight_1_3_05	1	0
-702055	IDF5_U1_War_01_NoShowNPC_Base01_05_2	0	RewardDark_1_3_05	1	0
-702056	IDF5_U1_War_01_NoShowNPC_Base01_05_3	0	RewardDrakan_1_3_05	1	0
-702057	IDF5_U1_War_01_NoShowNPC_Base01_05_4	0	RewardLight_1_2_05	1	0
-702058	IDF5_U1_War_01_NoShowNPC_Base01_05_5	0	RewardDark_1_2_05	1	0
-702059	IDF5_U1_War_01_NoShowNPC_Base01_05_6	0	RewardDrakan_1_2_05	1	0
-702060	IDF5_U1_War_01_NoShowNPC_Base01_10_1	0	RewardLight_1_4_10	1	0
-702061	IDF5_U1_War_01_NoShowNPC_Base01_10_2	0	RewardDark_1_4_10	1	0
-702062	IDF5_U1_War_01_NoShowNPC_Base01_10_3	0	RewardDrakan_1_4_10	1	0
-702063	IDF5_U1_War_01_NoShowNPC_Base01_10_4	0	RewardLight_1_1_10	1	0
-702064	IDF5_U1_War_01_NoShowNPC_Base01_10_5	0	RewardDark_1_1_10	1	0
-702065	IDF5_U1_War_01_NoShowNPC_Base01_10_6	0	RewardDrakan_1_1_10	1	0
-702066	IDF5_U1_War_01_NoShowNPC_Base01_10_7	0	RewardLight_1_3_10	1	0
-702067	IDF5_U1_War_01_NoShowNPC_Base01_10_8	0	RewardDark_1_3_10	1	0
-702068	IDF5_U1_War_01_NoShowNPC_Base01_10_9	0	RewardDrakan_1_3_10	1	0
-702069	IDF5_U1_War_01_NoShowNPC_Base01_10_10	0	RewardLight_1_2_10	1	0
-702070	IDF5_U1_War_01_NoShowNPC_Base01_10_11	0	RewardDark_1_2_10	1	0
-702071	IDF5_U1_War_01_NoShowNPC_Base01_10_12	0	RewardDrakan_1_2_10	1	0
-702072	IDF5_U1_War_01_NoShowNPC_Base01_15_1	0	RewardLight_1_4_15	1	0
-702073	IDF5_U1_War_01_NoShowNPC_Base01_15_2	0	RewardDark_1_4_15	1	0
-702074	IDF5_U1_War_01_NoShowNPC_Base01_15_3	0	RewardDrakan_1_4_15	1	0
-702075	IDF5_U1_War_01_NoShowNPC_Base01_15_4	0	RewardLight_1_1_15	1	0
-702076	IDF5_U1_War_01_NoShowNPC_Base01_15_5	0	RewardDark_1_1_15	1	0
-702077	IDF5_U1_War_01_NoShowNPC_Base01_15_6	0	RewardDrakan_1_1_15	1	0
-702078	IDF5_U1_War_01_NoShowNPC_Base01_15_7	0	RewardLight_1_3_15	1	0
-702079	IDF5_U1_War_01_NoShowNPC_Base01_15_8	0	RewardDark_1_3_15	1	0
-702080	IDF5_U1_War_01_NoShowNPC_Base01_15_9	0	RewardDrakan_1_3_15	1	0
-702081	IDF5_U1_War_01_NoShowNPC_Base01_15_10	0	RewardLight_1_2_15	1	0
-702082	IDF5_U1_War_01_NoShowNPC_Base01_15_11	0	RewardDark_1_2_15	1	0
-702083	IDF5_U1_War_01_NoShowNPC_Base01_15_12	0	RewardDrakan_1_2_15	1	0
-702263	IDF5_TD_Wave_01_Up	0	Wave_01_Boss	0	1
-702264	IDF5_TD_Wave_02_Up	0	Wave_02_Boss	0	1
-702265	IDF5_TD_Wave_03_Up	0	Wave_03_Boss	0	1
-702266	IDF5_TD_Wave_04_Up	0	Wave_04_Boss	0	1
-702270	IDF5_TD_Castle_gate_01_Bomb	0	castle_gate_01_Bomb	2	0
-702271	IDF5_TD_Castle_gate_02_Bomb	0	castle_gate_02_Bomb	2	0
-702272	IDF5_TD_Castle_gate_03_Bomb	0	castle_gate_03_Bomb	1	0
-702273	IDF5_TD_TimeWave_Down	0	TimeWave_Down	0	-1
-702340	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0
-702341	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0
-702342	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0
-702343	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0
-702344	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0
-702345	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0
-702369	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0
-702370	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0
-702371	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0
-702372	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0
-702373	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0
-702374	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0
-702375	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0
-702376	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0
-702377	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0
-702378	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0
-702379	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0
-702380	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0
-702381	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0
-702382	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0
-702383	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0
-702384	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0
-702385	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0
-702386	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0
-702419	Gab1_04_Guard_Noshow_01	0	v01	21	0
-702419	Gab1_04_Guard_Noshow_01	1	v02	21	0
-702419	Gab1_04_Guard_Noshow_01	2	v03	21	0
-702419	Gab1_04_Guard_Noshow_01	3	v04	21	0
-702419	Gab1_04_Guard_Noshow_01	4	v05	22	0
-702419	Gab1_04_Guard_Noshow_01	5	v06	22	0
-702419	Gab1_04_Guard_Noshow_01	6	v07	22	0
-702419	Gab1_04_Guard_Noshow_01	7	v08	22	0
-702419	Gab1_04_Guard_Noshow_01	8	v09	22	0
-702419	Gab1_04_Guard_Noshow_01	9	v10	22	0
-702419	Gab1_04_Guard_Noshow_01	10	v11	22	0
-702419	Gab1_04_Guard_Noshow_01	11	v12	22	0
-702611	LDF5_Fortress_Block_FOBJ_01	0	Li_Vil	1	0
-702612	LDF5_Fortress_Block_FOBJ_02	0	Da_Vil	1	0
-702613	LDF5_Fortress_GuardBase_01_Owner_L	0	Li_Vil	-1	0
-702614	LDF5_Fortress_GuardBase_01_Owner_D	0	Da_Vil	-1	0
-702655	IDStation_info_04	0	door_01	0	1
-730981	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-730982	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-730983	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-730984	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-730985	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-730986	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-730987	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-730988	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-730989	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-730990	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-730991	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-730992	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-730993	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-730994	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-730995	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-730996	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-730997	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-730998	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-730999	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731000	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731001	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731002	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731003	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731004	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731005	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731006	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731007	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731008	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731009	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731010	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731011	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731012	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731029	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731030	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731031	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731032	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731033	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731034	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731035	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731036	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731037	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731038	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731039	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731040	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731041	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731042	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731043	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731044	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731045	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731046	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731047	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731048	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731049	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731050	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731051	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731052	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731053	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731054	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731055	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731056	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731057	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731058	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731059	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731060	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731061	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731062	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731063	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731064	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731065	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731066	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731067	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731068	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731069	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731070	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731071	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731072	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731073	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731074	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731075	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731076	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731077	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731078	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731079	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731080	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731081	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731082	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731083	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731084	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731085	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731086	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731087	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731088	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731089	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731090	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731091	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731092	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731093	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731094	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731095	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731096	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731097	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731098	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731099	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731100	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731101	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731102	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731103	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731104	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731105	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731106	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731107	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731108	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731109	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731110	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731111	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731112	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731113	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731114	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731115	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731116	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731117	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731118	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731119	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731120	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731121	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731122	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731123	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731124	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731125	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731126	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731127	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731128	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731129	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731130	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731131	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731132	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731133	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731134	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731135	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731136	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731137	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731138	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731139	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731140	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731141	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731142	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731143	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731144	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731145	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731146	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731147	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731148	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731149	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0
-731150	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0
-731151	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0
-731152	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0
-731153	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0
-731154	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0
-731155	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0
-731156	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0
-731355	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0
-731356	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0
-731357	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0
-731358	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0
-731359	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0
-731360	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0
-731361	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0
-731362	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0
-731363	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0
-731364	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0
-731365	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0
-731366	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0
-731367	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0
-731368	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0
-731369	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0
-731370	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0
-731371	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0
-731372	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0
-731373	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0
-731374	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0
-731375	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0
-731376	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0
-731377	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0
-731378	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0
-731379	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0
-731380	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0
-731381	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0
-731382	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0
-731383	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0
-731384	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0
-731385	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0
-731386	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0
-731387	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0
-731388	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0
-731389	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0
-731390	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0
-731391	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0
-731392	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0
-731393	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0
-731394	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0
-731395	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0
-731396	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0
-731397	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0
-731398	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0
-731399	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0
-731400	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0
-731401	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0
-731402	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0
-731403	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0
-731404	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0
-731405	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0
-731406	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0
-731407	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0
-731408	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0
-731409	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0
-731410	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0
-731411	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0
-731412	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0
-731413	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0
-731414	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0
-731415	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0
-731416	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0
-731417	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0
-731418	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0
-731419	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0
-731420	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0
-731421	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0
-731422	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0
-731423	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0
-731424	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0
-731425	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0
-731426	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0
-731427	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0
-731428	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0
-731429	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0
-731430	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0
-731431	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0
-731432	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0
-731433	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0
-731434	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0
-731435	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0
-731436	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0
-731437	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0
-731438	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0
-731439	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0
-731440	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0
-731441	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0
-731442	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0
-731443	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0
-731444	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0
-731445	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0
-731446	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0
-731447	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0
-731448	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0
-731449	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0
-731450	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0
-801591	5011_NoShow_Ownership_L	0	5011	2	0
-801592	5011_NoShow_Ownership_D	0	5011	3	0
-801593	5011_NoShow_Ownership_DR	0	5011	1	0
-801594	6011_NoShow_Ownership_L	0	6011	2	0
-801595	6011_NoShow_Ownership_D	0	6011	3	0
-801596	6011_NoShow_Ownership_DR	0	6011	1	0
-801597	6021_NoShow_Ownership_L	0	6021	2	0
-801598	6021_NoShow_Ownership_D	0	6021	3	0
-801599	6021_NoShow_Ownership_DR	0	6021	1	0
-802456	LDF5_Fortress_7011_Owner_L	0	7011	2	0
-802457	LDF5_Fortress_7011_Owner_D	0	7011	3	0
-802458	LDF5_Fortress_7011_Owner_Da	0	7011	1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	0	7011on	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	1	7011off	1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	2	7011_Mercenary01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	3	7011_Mercenary02	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	4	7011_Mercenary03	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	5	7011_Mercenary04	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	6	7011_Mercenary05	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	7	7011_Mercenary06	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	8	7011_Mercenary07	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	9	gb01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	10	gb01_2	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	11	gb02	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	12	gb02_2	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	13	gb03	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	14	gb03_2	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	15	MistOn_Dragon	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	16	MistOn_LD	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	17	door01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	18	Barricade01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	19	gb01_ctrl	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	20	gb02_ctrl	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	21	gb03_ctrl	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	22	Da_heal01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	23	Li_heal01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	24	GH_Shield_On01	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	25	GH_Shield_On02	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	26	GH_Shield_On03	-1	0
-802460	LDF5_Fortress_7011_Checker_Mist_Off	27	GH_Shield_Off01	-1	0
-804537	LDF5_Fortress_7012_Owner_L	0	7012	2	0
-804538	LDF5_Fortress_7012_Owner_D	0	7012	3	0
-804539	LDF5_Fortress_7012_Owner_Dr	0	7012	1	0
-804540	LDF5_Fortress_7013_Owner_L	0	7013	2	0
-804541	LDF5_Fortress_7013_Owner_D	0	7013	3	0
-804542	LDF5_Fortress_7013_Owner_Dr	0	7013	1	0
-804543	LDF5_Fortress_7014_Owner_L	0	7014	2	0
-804544	LDF5_Fortress_7014_Owner_D	0	7014	3	0
-804545	LDF5_Fortress_7014_Owner_Dr	0	7014	1	0
-804546	LDF5_Fortress_GuardBase_01_Owner_L	0	Li_Vil	-1	0
-804547	LDF5_Fortress_GuardBase_01_Owner_D	0	Da_Vil	-1	0
-804555	LDF5_Fortress_GuardBase_Setting	0	gb01	1	0
-804555	LDF5_Fortress_GuardBase_Setting	1	gb02	1	0
-804555	LDF5_Fortress_GuardBase_Setting	2	gb03	1	0
-804555	LDF5_Fortress_GuardBase_Setting	3	MistOn_Dragon	1	0
-804555	LDF5_Fortress_GuardBase_Setting	4	door01	1	0
-804555	LDF5_Fortress_GuardBase_Setting	5	Da_heal01	0	1
-804555	LDF5_Fortress_GuardBase_Setting	6	Li_heal01	0	1
-804571	LDF5_Fortress_MistOn_LandD	0	MistOn_LD	1	0
-804571	LDF5_Fortress_MistOn_LandD	1	Barricade01	1	0
-804819	F5_DirectPotalMonster_Set_01	0	directpotal_p1	1	0
-804819	F5_DirectPotalMonster_Set_01	1	directpotal_p2	1	0
-804819	F5_DirectPotalMonster_Set_01	2	directpotal_i	1	0
-832018	IDLDF4Re_01_Cond_1	0	cSet_1_1_1	0	1
-832019	IDLDF4Re_01_Cond_2	0	cSet_1_1_2	0	1
-832020	IDLDF4Re_01_Cond_3	0	cSet_1_1_3	0	1
-832021	IDLDF4Re_01_Cond_4	0	cSet_1_1_4	0	1
-832022	IDLDF4Re_01_Cond_5	0	cSet_1_1_5	0	1
-832023	IDLDF4Re_01_Cond_6	0	cSet_1_1_6	0	1
-832024	IDLDF4Re_01_Cond_7	0	cSet_1_1_7	0	1
-832025	IDLDF4Re_01_Cond_8	0	cSet_1_1_8	0	1
-832026	IDLDF4Re_01_Cond_9	0	cSet_1_1_9	0	1
-832027	IDLDF4Re_01_Cond_10	0	cSet_1_1_10	0	1
-832028	IDLDF4Re_01_Cond_11	0	cSet_1_1_11	0	1
-832029	IDLDF4Re_01_Cond_12	0	cSet_1_1_12	0	1
-832030	IDLDF4Re_01_Cond_13	0	cSet_1_1_13	0	1
-832031	IDLDF4Re_01_Cond_14	0	cSet_1_1_14	0	1
-832032	IDLDF4Re_01_Cond_15	0	cSet_1_1_15	0	1
-832033	IDLDF4Re_01_Cond_16	0	cSet_1_1_16	0	1
-832034	IDLDF4Re_01_Cond_17	0	cSet_1_1_17	0	1
-832035	IDLDF4Re_01_Cond_18	0	cSet_1_1_18	0	1
-832036	IDLDF4Re_01_Cond_19	0	cSet_1_1_19	0	1
-832037	IDLDF4Re_01_Cond_20	0	cSet_1_1_20	0	1
-832038	IDLDF4Re_01_Cond_21	0	cSet_1_1_21	0	1
-832099	2014_LDF4_Li_Noshow_NPC	0	2014Artifact	2	0
-832100	2014_LDF4_Da_Noshow_NPC	0	2014Artifact	3	0
-832101	2024_LDF4_Li_Noshow_NPC	0	2024Artifact	2	0
-832102	2024_LDF4_Da_Noshow_NPC	0	2024Artifact	3	0
-832103	3014_LDF4_Li_Noshow_NPC	0	3014Artifact	2	0
-832104	3014_LDF4_Da_Noshow_NPC	0	3014Artifact	3	0
-832105	3024_LDF4_Li_Noshow_NPC	0	3024Artifact	2	0
-832106	3024_LDF4_Da_Noshow_NPC	0	3024Artifact	3	0
-832107	2011_LDF4_Dr_Noshow_NPC	0	2011Castle	1	0
-832108	2011_LDF4_Li_Noshow_NPC	0	2011Castle	2	0
-832109	2011_LDF4_Da_Noshow_NPC	0	2011Castle	3	0
-832110	2021_LDF4_Dr_Noshow_NPC	0	2021Castle	1	0
-832111	2021_LDF4_Li_Noshow_NPC	0	2021Castle	2	0
-832112	2021_LDF4_Da_Noshow_NPC	0	2021Castle	3	0
-832113	3011_LDF4_Dr_Noshow_NPC	0	3011Castle	3	0
-832114	3011_LDF4_Li_Noshow_NPC	0	3011Castle	2	0
-832115	3011_LDF4_Da_Noshow_NPC	0	3011Castle	3	0
-832116	3021_LDF4_Dr_Noshow_NPC	0	3021Castle	1	0
-832117	3021_LDF4_Li_Noshow_NPC	0	3021Castle	2	0
-832118	3021_LDF4_Da_Noshow_NPC	0	3021Castle	3	0
-832825	Ab1_Castle_Deep_1011_Hire_Li_01	0	1011_Mercenary01	-1	0
-832825	Ab1_Castle_Deep_1011_Hire_Li_01	1	1011_Mercenary02	-1	0
-832825	Ab1_Castle_Deep_1011_Hire_Li_01	2	1011_Mercenary03	-1	0
-832825	Ab1_Castle_Deep_1011_Hire_Li_01	3	1011_Mercenary04	-1	0
-855138	LDF4_Advance_condition_14	0	v01	1	0
-855138	LDF4_Advance_condition_14	1	v02	1	0
-855138	LDF4_Advance_condition_14	2	v03	1	0
-855138	LDF4_Advance_condition_14	3	v04	1	0
-855138	LDF4_Advance_condition_14	4	v05	1	0
-855138	LDF4_Advance_condition_14	5	v06	1	0
-855138	LDF4_Advance_condition_14	6	v07	1	0
-855138	LDF4_Advance_condition_14	7	v08	1	0
-855138	LDF4_Advance_condition_14	8	v09	1	0
-855138	LDF4_Advance_condition_14	9	v10	1	0
-855138	LDF4_Advance_condition_14	10	v11	1	0
-855138	LDF4_Advance_condition_14	11	v12	1	0
-855138	LDF4_Advance_condition_14	12	v13	1	0
-855259	LDF4_Advance_condor_dr_named	0	cSet_1_1_22	1	0
-855260	IDF5_U3_TEMP_05	0	N_WAVE_01	2	0
-855260	IDF5_U3_TEMP_05	1	N_WAVE_02	2	0
-855260	IDF5_U3_TEMP_05	2	N_WAVE_03	2	0
-855260	IDF5_U3_TEMP_05	3	N_WAVE_04	2	0
-855440	IDSeal_Temp_19	0	GUARDIAN_TIMER	11	0
-855485	IDSeal_Wave_Checker	0	LEVEL_CHECK_3	0	1
-855500	IDSeal_Immortal_Success	0	IMMORTAL	10	0
-855500	IDSeal_Immortal_Success	1	IMMORTAL_TIMER	10	0
-855500	IDSeal_Immortal_Success	2	WAKE_TIMER	10	0
-855501	IDSeal_Immortal_Lv2_Failed	0	PLAY_LEVEL	1	0
-855501	IDSeal_Immortal_Lv2_Failed	1	IMMORTAL	10	0
-855501	IDSeal_Immortal_Lv2_Failed	2	IMMORTAL_TIMER	10	0
-855501	IDSeal_Immortal_Lv2_Failed	3	WAKE_TIMER	10	0
-855502	IDSeal_Immortal_Lv3_Failed	0	PLAY_LEVEL	2	0
-855502	IDSeal_Immortal_Lv3_Failed	1	IMMORTAL	10	0
-855502	IDSeal_Immortal_Lv3_Failed	2	IMMORTAL_TIMER	10	0
-855502	IDSeal_Immortal_Lv3_Failed	3	WAKE_TIMER	10	0
-855518	IDSeal_Twin_Success	0	TWIN_RESURRECT	10	0
-855518	IDSeal_Twin_Success	1	SCENE	6	0
-855518	IDSeal_Twin_Success	2	LEVEL_CHECK_1	10	0
-855519	IDSeal_Twin_Failed	0	TWIN_RESURRECT	10	0
-855519	IDSeal_Twin_Failed	1	PLAY_LEVEL	2	0
-855519	IDSeal_Twin_Failed	2	SCENE	6	0
-855519	IDSeal_Twin_Failed	3	LEVEL_CHECK_1	10	0
-855521	IDSeal_Level_Select_1_Li	0	TWIN_P	10	0
-855521	IDSeal_Level_Select_1_Li	1	TWIN_M	10	0
-855521	IDSeal_Level_Select_1_Li	2	PLAY_LEVEL	2	0
-855521	IDSeal_Level_Select_1_Li	3	LEVEL_CHECK_1	10	0
-855522	IDSeal_Level_Select_1_Da	0	TWIN_P	10	0
-855522	IDSeal_Level_Select_1_Da	1	TWIN_M	10	0
-855522	IDSeal_Level_Select_1_Da	2	PLAY_LEVEL	2	0
-855522	IDSeal_Level_Select_1_Da	3	LEVEL_CHECK_1	10	0
-855523	IDSeal_Level_Select_2_Li	0	PLAY_LEVEL	2	0
-855523	IDSeal_Level_Select_2_Li	1	LEVEL_CHECK_2	10	0
-855524	IDSeal_Level_Select_2_Da	0	PLAY_LEVEL	2	0
-855524	IDSeal_Level_Select_2_Da	1	LEVEL_CHECK_2	10	0
-855525	IDSeal_Level_Select_3_Li	0	PLAY_LEVEL	1	0
-855525	IDSeal_Level_Select_3_Li	1	LEVEL_CHECK_2	10	0
-855526	IDSeal_Level_Select_3_Da	0	PLAY_LEVEL	1	0
-855526	IDSeal_Level_Select_3_Da	1	LEVEL_CHECK_2	10	0
-855527	IDSeal_Area1_Open	0	TWIN_P	9	0
-855527	IDSeal_Area1_Open	1	TWIN_M	9	0
-855527	IDSeal_Area1_Open	2	PLAY_LEVEL	3	0
-855527	IDSeal_Area1_Open	3	VRITRA_TIMER_2	21	0
-855527	IDSeal_Area1_Open	4	VRITRA_SUM_01	10	0
-855527	IDSeal_Area1_Open	5	VRITRA_SUM_02	10	0
-855527	IDSeal_Area1_Open	6	VRITRA_SUM_03	10	0
-855527	IDSeal_Area1_Open	7	DEFENCE_WAVE	10	0
-855527	IDSeal_Area1_Open	8	BOSS_ROOM	1	0
-855527	IDSeal_Area1_Open	9	RANDOM_ROOM_01	1	0
-855527	IDSeal_Area1_Open	10	RANDOM_ROOM_02	1	0
-855527	IDSeal_Area1_Open	11	RANDOM_ROOM_03	1	0
-855527	IDSeal_Area1_Open	12	SCENE	1	0
-855527	IDSeal_Area1_Open	13	DARKSUN	1	0
-855528	IDSeal_Area2_Open	0	IMMORTAL	1	0
-855618	IDStation_info_01	0	tower_die	0	1
-855952	IDYun_info_01	0	InvisibleWall2	1	0
-855953	IDYun_info_02	0	dooropen	0	1
-880750	Gab1_Vritra_02	0	v02ctrl	1	0
-880754	Gab1_Vritra_06	0	v02ctrl	6	0
-880758	Gab1_Boss_Noshow_04	0	v02ctrl	11	0
-880762	Gab1_Msg_Noshow_04	0	v02ctrl	16	0
-880766	Gab1_Vritra_03	0	v03ctrl	1	0
-880770	Gab1_Vritra_07	0	v03ctrl	6	0
-880774	Gab1_Boss_Noshow_05	0	v03ctrl	11	0
-880778	Gab1_Msg_Noshow_05	0	v03ctrl	16	0
-880782	Gab1_Vritra_04	0	v04ctrl	1	0
-880786	Gab1_Vritra_08	0	v04ctrl	6	0
-880790	Gab1_Msg_Noshow_02	0	v04ctrl	11	0
-880794	Gab1_Msg_Noshow_06	0	v04ctrl	16	0
+npc	pattern	order	name	set	modify	vanishes
+205432	IDArena_S10_MC_Start	0	STAGE	9	0	FALSE
+205654	IDArena_Solo_RoundNPC_1	0	Condition_S2A	1	0	TRUE
+205655	IDArena_Solo_RoundNPC_2	0	Condition_S2B	1	0	TRUE
+205658	IDArena_Solo_RoundNPC_5	0	Condition_S3A	1	0	TRUE
+205659	IDArena_Solo_RoundNPC_6	0	Condition_S3B	1	0	TRUE
+207011	Test_NPC_Jun01	0	5011_L	1	0	FALSE
+207012	Test_NPC_Jun02	0	5011_L	-1	0	FALSE
+207012	Test_NPC_Jun02	1	5011_D	-1	0	FALSE
+207106	IDArena_Team01_S2_Noshown_for_track_open	0	s2_track	0	1	TRUE
+207110	IDArena_Team01_S2_Noshown_for_track_set	0	s2_track	0	-3	TRUE
+207113	IDArena_Team01_S1_Noshown_for_lever_open	0	s1_lever	0	1	TRUE
+207115	IDArena_Team01_S1_Noshown_for_lever_set	0	s1_lever	0	-1	TRUE
+207124	IDF5_TD_Wave_NPC	0	Wave_Z1	0	1	TRUE
+216846	DF4_WindBox1	0	DF4_D_WINDBOX_ON	2	0	FALSE
+231598	LF2_1_KillerCtrl	0	LF2_1_Killer	1	0	FALSE
+231599	LF2_2_KillerCtrl	0	LF2_2_Killer	1	0	FALSE
+231600	DF2_1_KillerCtrl	0	DF2_1_Killer	1	0	FALSE
+231601	DF2_2_KillerCtrl	0	DF2_2_Killer	1	0	FALSE
+231602	LF3_1_KillerCtrl	0	LF3_1_Killer	1	0	FALSE
+231603	LF3_2_KillerCtrl	0	LF3_2_Killer	1	0	FALSE
+231604	DF3_1_KillerCtrl	0	DF3_1_Killer	1	0	FALSE
+231605	DF3_2_KillerCtrl	0	DF3_2_Killer	1	0	FALSE
+231867	LDF5_Village_KillerCtrl01_L	0	v01ctrl	2	0	FALSE
+231868	LDF5_Village_KillerCtrl01_D	0	v01ctrl	3	0	FALSE
+231869	LDF5_Village_KillerCtrl01_DR	0	v01ctrl	1	0	FALSE
+231870	LDF5_Village_KillerCtrl02_L	0	v02ctrl	2	0	FALSE
+231871	LDF5_Village_KillerCtrl02_D	0	v02ctrl	3	0	FALSE
+231872	LDF5_Village_KillerCtrl02_DR	0	v02ctrl	1	0	FALSE
+231873	LDF5_Village_KillerCtrl03_L	0	v03ctrl	2	0	FALSE
+231874	LDF5_Village_KillerCtrl03_D	0	v03ctrl	3	0	FALSE
+231875	LDF5_Village_KillerCtrl03_DR	0	v03ctrl	1	0	FALSE
+231876	LDF5_Village_KillerCtrl04_L	0	v04ctrl	2	0	FALSE
+231877	LDF5_Village_KillerCtrl04_D	0	v04ctrl	3	0	FALSE
+231878	LDF5_Village_KillerCtrl04_DR	0	v04ctrl	1	0	FALSE
+231879	LDF5_Village_KillerCtrl05_L	0	v05ctrl	2	0	FALSE
+231880	LDF5_Village_KillerCtrl05_D	0	v05ctrl	3	0	FALSE
+231881	LDF5_Village_KillerCtrl05_DR	0	v05ctrl	1	0	FALSE
+231882	LDF5_Village_KillerCtrl06_L	0	v06ctrl	2	0	FALSE
+231883	LDF5_Village_KillerCtrl06_D	0	v06ctrl	3	0	FALSE
+231884	LDF5_Village_KillerCtrl06_DR	0	v06ctrl	1	0	FALSE
+231885	LDF5_Village_KillerCtrl07_L	0	v07ctrl	2	0	FALSE
+231886	LDF5_Village_KillerCtrl07_D	0	v07ctrl	3	0	FALSE
+231887	LDF5_Village_KillerCtrl07_DR	0	v07ctrl	1	0	FALSE
+231888	LDF5_Village_KillerCtrl08_L	0	v08ctrl	2	0	FALSE
+231889	LDF5_Village_KillerCtrl08_D	0	v08ctrl	3	0	FALSE
+231890	LDF5_Village_KillerCtrl08_DR	0	v08ctrl	1	0	FALSE
+231891	LDF5_Village_KillerCtrl09_L	0	v09ctrl	2	0	FALSE
+231892	LDF5_Village_KillerCtrl09_D	0	v09ctrl	3	0	FALSE
+231893	LDF5_Village_KillerCtrl09_DR	0	v09ctrl	1	0	FALSE
+231894	LDF5_Village_KillerCtrl10_L	0	v10ctrl	2	0	FALSE
+231895	LDF5_Village_KillerCtrl10_D	0	v01ctrl	3	0	FALSE
+231896	LDF5_Village_KillerCtrl10_DR	0	v10ctrl	1	0	FALSE
+231897	LDF5_Village_KillerCtrl11_L	0	v11ctrl	2	0	FALSE
+231898	LDF5_Village_KillerCtrl11_D	0	v11ctrl	3	0	FALSE
+231899	LDF5_Village_KillerCtrl11_DR	0	v11ctrl	1	0	FALSE
+231900	LDF5_Village_KillerCtrl12_L	0	v12ctrl	2	0	FALSE
+231901	LDF5_Village_KillerCtrl12_D	0	v12ctrl	3	0	FALSE
+231902	LDF5_Village_KillerCtrl12_DR	0	v12ctrl	1	0	FALSE
+231903	LDF5_Village_KillerCtrl13_L	0	v13ctrl	2	0	FALSE
+231904	LDF5_Village_KillerCtrl13_D	0	v13ctrl	3	0	FALSE
+231905	LDF5_Village_KillerCtrl13_DR	0	v13ctrl	1	0	FALSE
+231906	LDF5_Village_KillerCtrl14_L	0	v14ctrl	2	0	FALSE
+231907	LDF5_Village_KillerCtrl14_D	0	v14ctrl	3	0	FALSE
+231908	LDF5_Village_KillerCtrl14_DR	0	v14ctrl	1	0	FALSE
+231909	LDF5_Village_KillerCtrl15_L	0	v15ctrl	2	0	FALSE
+231910	LDF5_Village_KillerCtrl15_D	0	v15ctrl	3	0	FALSE
+231911	LDF5_Village_KillerCtrl15_DR	0	v15ctrl	1	0	FALSE
+231912	LDF5_Village_KillerCtrl16_L	0	v16ctrl	2	0	FALSE
+231913	LDF5_Village_KillerCtrl16_D	0	v16ctrl	3	0	FALSE
+231914	LDF5_Village_KillerCtrl16_DR	0	v16ctrl	1	0	FALSE
+231915	LDF5_Village_KillerCtrl17_L	0	v17ctrl	2	0	FALSE
+231916	LDF5_Village_KillerCtrl17_D	0	v17ctrl	3	0	FALSE
+231917	LDF5_Village_KillerCtrl17_DR	0	v17ctrl	1	0	FALSE
+231920	LDF5_Village_KillerCtrl18_DR	0	v18ctrl	1	0	FALSE
+231921	LDF5_Village_KillerCtrl19_L	0	v19ctrl	2	0	FALSE
+231922	LDF5_Village_KillerCtrl19_D	0	v19ctrl	3	0	FALSE
+231923	LDF5_Village_KillerCtrl19_DR	0	v19ctrl	1	0	FALSE
+233576	IDLDF5_Under_01_War_Guard_07	0	Drakan	2	0	FALSE
+233577	IDLDF5_Under_01_War_Guard_08	0	Drakan	2	0	FALSE
+233584	IDLDF5_Under_01_War_MSG_05	0	SouthNorth	1	0	FALSE
+233585	IDLDF5_Under_01_War_MSG_06	0	EastWest	1	0	FALSE
+233586	IDLDF5_Under_01_War_MSG_07	0	Drakan	1	0	FALSE
+233587	IDLDF5_Under_01_War_MSG_08	0	Drakan	1	0	FALSE
+233589	IDLDF5_Under_01_War_MSG_10	0	Q_NPCSpawn_On	1	0	FALSE
+234128	LDF5_Village_KillerCtrl01_L	0	v01ctrl	2	0	FALSE
+234129	LDF5_Village_KillerCtrl01_D	0	v01ctrl	3	0	FALSE
+234130	LDF5_Village_KillerCtrl01_DR	0	v01ctrl	1	0	FALSE
+234131	LDF5_Village_KillerCtrl02_L	0	v02ctrl	2	0	FALSE
+234132	LDF5_Village_KillerCtrl02_D	0	v02ctrl	3	0	FALSE
+234133	LDF5_Village_KillerCtrl02_DR	0	v02ctrl	1	0	FALSE
+235679	IDSweep_Gold_PIG_A	0	PIG_DIE_A	0	1	FALSE
+235686	IDSweep_Gold_PIG_B	0	PIG_DIE_B	0	1	FALSE
+235687	IDSweep_Gold_PIG_C	0	PIG_DIE_C	0	1	FALSE
+236497	LF4_WindBox2	0	C5_WINDBOX_ON	2	0	FALSE
+257242	LF4_Condition_2011_Li	0	condition_2011	1	0	FALSE
+257243	LF4_Condition_2011_Da	0	condition_2011	2	0	FALSE
+257244	LF4_Condition_2011_Dr	0	condition_2011	0	0	FALSE
+257542	LF4_Condition_2021_Li	0	condition_2021	1	0	FALSE
+257543	LF4_Condition_2021_Da	0	condition_2021	2	0	FALSE
+257544	LF4_Condition_2021_Dr	0	condition_2021	0	0	FALSE
+257842	DF4_Condition_3011_Li	0	condition_3011	1	0	FALSE
+257843	DF4_Condition_3011_Da	0	condition_3011	2	0	FALSE
+257844	DF4_Condition_3011_Dr	0	condition_3011	0	0	FALSE
+258142	DF4_Condition_3021_Li	0	condition_3021	1	0	FALSE
+258143	DF4_Condition_3021_Da	0	condition_3021	2	0	FALSE
+258144	DF4_Condition_3021_Dr	0	condition_3021	0	0	FALSE
+258274	LDF5a_5011_Checker_MistOff	0	5011on	-1	0	FALSE
+258274	LDF5a_5011_Checker_MistOff	1	5011off	1	0	FALSE
+258274	LDF5a_5011_Checker_MistOff	2	5011_Mercenary01	-1	0	FALSE
+258274	LDF5a_5011_Checker_MistOff	3	5011_Mercenary02	-1	0	FALSE
+258274	LDF5a_5011_Checker_MistOff	4	5011_Mercenary03	-1	0	FALSE
+258275	LDF5a_5011_Checker_MistOn	0	5011on	1	0	FALSE
+258275	LDF5a_5011_Checker_MistOn	1	5011off	-1	0	FALSE
+258276	LDF5a_6011_Checker_MistOff	0	6011on	-1	0	FALSE
+258276	LDF5a_6011_Checker_MistOff	1	6011off	1	0	FALSE
+258276	LDF5a_6011_Checker_MistOff	2	6011_Mercenary01	-1	0	FALSE
+258276	LDF5a_6011_Checker_MistOff	3	6011_Mercenary02	-1	0	FALSE
+258276	LDF5a_6011_Checker_MistOff	4	6011_Mercenary03	-1	0	FALSE
+258276	LDF5a_6011_Checker_MistOff	5	6011Boss	-1	0	FALSE
+258277	LDF5a_6011_Checker_MistOn	0	6011on	1	0	FALSE
+258277	LDF5a_6011_Checker_MistOn	1	6011off	-1	0	FALSE
+258278	LDF5a_6021_Checker_MistOff	0	6021on	-1	0	FALSE
+258278	LDF5a_6021_Checker_MistOff	1	6021off	1	0	FALSE
+258278	LDF5a_6021_Checker_MistOff	2	6021_Mercenary01	-1	0	FALSE
+258278	LDF5a_6021_Checker_MistOff	3	6021_Mercenary02	-1	0	FALSE
+258278	LDF5a_6021_Checker_MistOff	4	6021_Mercenary03	-1	0	FALSE
+258278	LDF5a_6021_Checker_MistOff	5	6021Boss	-1	0	FALSE
+258279	LDF5a_6021_Checker_MistOn	0	6021on	1	0	FALSE
+258279	LDF5a_6021_Checker_MistOn	1	6021off	-1	0	FALSE
+258309	LDF5b_6011_BossCheker	0	6011Boss	1	0	FALSE
+258310	LDF5b_6021_BossCheker	0	6021Boss	1	0	FALSE
+277126	LDF5_Village_KillerCtrl01_DR	0	v01ctrl	1	0	FALSE
+277127	LDF5_Village_KillerCtrl02_DR	0	v02ctrl	1	0	FALSE
+277128	LDF5_Village_KillerCtrl03_DR	0	v03ctrl	1	0	FALSE
+277129	LDF5_Village_KillerCtrl04_DR	0	v04ctrl	1	0	FALSE
+277130	LDF5_Village_KillerCtrl05_DR	0	v05ctrl	1	0	FALSE
+277131	LDF5_Village_KillerCtrl06_DR	0	v06ctrl	1	0	FALSE
+277132	LDF5_Village_KillerCtrl07_DR	0	v07ctrl	1	0	FALSE
+277133	LDF5_Village_KillerCtrl08_DR	0	v08ctrl	1	0	FALSE
+277134	LDF5_Village_KillerCtrl09_DR	0	v09ctrl	1	0	FALSE
+277135	LDF5_Village_KillerCtrl10_DR	0	v10ctrl	1	0	FALSE
+277136	LDF5_Village_KillerCtrl11_DR	0	v11ctrl	1	0	FALSE
+277137	LDF5_Village_KillerCtrl12_DR	0	v12ctrl	1	0	FALSE
+277138	LDF5_Village_KillerCtrl13_DR	0	v13ctrl	1	0	FALSE
+277139	LDF5_Village_KillerCtrl14_DR	0	v14ctrl	1	0	FALSE
+277140	LDF5_Village_KillerCtrl15_DR	0	v15ctrl	1	0	FALSE
+277141	LDF5_Village_KillerCtrl16_DR	0	v16ctrl	1	0	FALSE
+277142	LDF5_Village_KillerCtrl17_DR	0	v17ctrl	1	0	FALSE
+277143	LDF5_Village_KillerCtrl18_DR	0	v18ctrl	1	0	FALSE
+277144	LDF5_Village_KillerCtrl19_DR	0	v19ctrl	1	0	FALSE
+277145	LDF5_Village_KillerCtrl01_L	0	v01ctrl	2	0	FALSE
+277146	LDF5_Village_KillerCtrl02_L	0	v02ctrl	2	0	FALSE
+277147	LDF5_Village_KillerCtrl03_L	0	v03ctrl	2	0	FALSE
+277148	LDF5_Village_KillerCtrl04_L	0	v04ctrl	2	0	FALSE
+277149	LDF5_Village_KillerCtrl05_L	0	v05ctrl	2	0	FALSE
+277150	LDF5_Village_KillerCtrl06_L	0	v06ctrl	2	0	FALSE
+277151	LDF5_Village_KillerCtrl07_L	0	v07ctrl	2	0	FALSE
+277152	LDF5_Village_KillerCtrl08_L	0	v08ctrl	2	0	FALSE
+277153	LDF5_Village_KillerCtrl09_L	0	v09ctrl	2	0	FALSE
+277154	LDF5_Village_KillerCtrl10_L	0	v10ctrl	2	0	FALSE
+277155	LDF5_Village_KillerCtrl11_L	0	v11ctrl	2	0	FALSE
+277156	LDF5_Village_KillerCtrl12_L	0	v12ctrl	2	0	FALSE
+277157	LDF5_Village_KillerCtrl13_L	0	v13ctrl	2	0	FALSE
+277158	LDF5_Village_KillerCtrl14_L	0	v14ctrl	2	0	FALSE
+277159	LDF5_Village_KillerCtrl15_L	0	v15ctrl	2	0	FALSE
+277160	LDF5_Village_KillerCtrl16_L	0	v16ctrl	2	0	FALSE
+277161	LDF5_Village_KillerCtrl17_L	0	v17ctrl	2	0	FALSE
+277162	LDF5_Village_KillerCtrl18_L	0	v18ctrl	2	0	FALSE
+277163	LDF5_Village_KillerCtrl19_L	0	v19ctrl	2	0	FALSE
+277164	LDF5_Village_KillerCtrl01_D	0	v01ctrl	3	0	FALSE
+277165	LDF5_Village_KillerCtrl02_D	0	v02ctrl	3	0	FALSE
+277166	LDF5_Village_KillerCtrl03_D	0	v03ctrl	3	0	FALSE
+277167	LDF5_Village_KillerCtrl04_D	0	v04ctrl	3	0	FALSE
+277168	LDF5_Village_KillerCtrl05_D	0	v05ctrl	3	0	FALSE
+277169	LDF5_Village_KillerCtrl06_D	0	v06ctrl	3	0	FALSE
+277170	LDF5_Village_KillerCtrl07_D	0	v07ctrl	3	0	FALSE
+277171	LDF5_Village_KillerCtrl08_D	0	v08ctrl	3	0	FALSE
+277172	LDF5_Village_KillerCtrl09_D	0	v09ctrl	3	0	FALSE
+277173	LDF5_Village_KillerCtrl10_D	0	v01ctrl	3	0	FALSE
+277174	LDF5_Village_KillerCtrl11_D	0	v11ctrl	3	0	FALSE
+277175	LDF5_Village_KillerCtrl12_D	0	v12ctrl	3	0	FALSE
+277176	LDF5_Village_KillerCtrl13_D	0	v13ctrl	3	0	FALSE
+277177	LDF5_Village_KillerCtrl14_D	0	v14ctrl	3	0	FALSE
+277178	LDF5_Village_KillerCtrl15_D	0	v15ctrl	3	0	FALSE
+277179	LDF5_Village_KillerCtrl16_D	0	v16ctrl	3	0	FALSE
+277180	LDF5_Village_KillerCtrl17_D	0	v17ctrl	3	0	FALSE
+277181	LDF5_Village_KillerCtrl18_D	0	v18ctrl	3	0	FALSE
+277182	LDF5_Village_KillerCtrl19_D	0	v19ctrl	3	0	FALSE
+277480	Gab1_SetCond_Noshow_01	0	Tur13	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	1	Tur14	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	2	Tur15	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	3	Tur16	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	4	Tur17	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	5	Tur18	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	6	Tur19	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	7	Tur20	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	8	Tur21	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	9	Tur22	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	10	Tur23	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	11	Tur24	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	12	Tur25	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	13	Tur26	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	14	Tur27	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	15	Tur28	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	16	Tur29	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	17	Tur30	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	18	Tur31	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	19	Tur32	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	20	Tur33	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	21	Tur34	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	22	Tur35	21	0	TRUE
+277480	Gab1_SetCond_Noshow_01	23	Tur36	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	0	Tur13	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	1	Tur14	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	2	Tur15	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	3	Tur16	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	4	Tur17	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	5	Tur18	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	6	Tur19	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	7	Tur20	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	8	Tur21	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	9	Tur22	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	10	Tur23	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	11	Tur24	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	12	Tur25	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	13	Tur26	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	14	Tur27	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	15	Tur28	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	16	Tur29	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	17	Tur30	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	18	Tur31	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	19	Tur32	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	20	Tur33	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	21	Tur34	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	22	Tur35	21	0	TRUE
+277481	Gab1_SetCond_Noshow_01	23	Tur36	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	0	Tur13	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	1	Tur14	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	2	Tur15	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	3	Tur16	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	4	Tur17	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	5	Tur18	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	6	Tur19	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	7	Tur20	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	8	Tur21	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	9	Tur22	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	10	Tur23	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	11	Tur24	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	12	Tur25	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	13	Tur26	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	14	Tur27	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	15	Tur28	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	16	Tur29	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	17	Tur30	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	18	Tur31	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	19	Tur32	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	20	Tur33	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	21	Tur34	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	22	Tur35	21	0	TRUE
+277482	Gab1_SetCond_Noshow_01	23	Tur36	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	0	Tur13	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	1	Tur14	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	2	Tur15	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	3	Tur16	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	4	Tur17	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	5	Tur18	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	6	Tur19	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	7	Tur20	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	8	Tur21	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	9	Tur22	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	10	Tur23	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	11	Tur24	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	12	Tur25	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	13	Tur26	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	14	Tur27	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	15	Tur28	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	16	Tur29	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	17	Tur30	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	18	Tur31	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	19	Tur32	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	20	Tur33	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	21	Tur34	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	22	Tur35	21	0	TRUE
+277483	Gab1_SetCond_Noshow_01	23	Tur36	21	0	TRUE
+277770	Gab1_Vritra_01	0	v01ctrl	1	0	FALSE
+277774	Gab1_Vritra_05	0	v01ctrl	6	0	FALSE
+277778	Gab1_Boss_Noshow_03	0	v01ctrl	11	0	FALSE
+277782	Gab1_Msg_Noshow_03	0	v01ctrl	16	0	FALSE
+281822	BLDF4_Dramata_SpawnCloseDoor	0	DRAMATA_ENTERABLE	2	0	FALSE
+281822	BLDF4_Dramata_SpawnCloseDoor	1	LDF4_GHArtifactA	3	0	FALSE
+281822	BLDF4_Dramata_SpawnCloseDoor	2	LDF4_GHArtifactB	3	0	FALSE
+282590	IDYun_Temp_56	0	CrowdController	1	0	FALSE
+282625	IDRaksha_NoshowNPC_30	0	idraksha_dust2	1	0	FALSE
+282627	IDYun_Temp_56	0	CrowdController	1	0	FALSE
+282955	LDF4b_Tiamat_Temp26	0	EnemySpawnL	0	1	FALSE
+282956	LDF4b_Tiamat_Temp27	0	YunSpawnL	0	1	FALSE
+282957	LDF4b_Tiamat_Temp28	0	DrakanSpawnL	0	1	FALSE
+282966	LDF4b_Tiamat_Temp29	0	EnemySpawnD	0	1	FALSE
+282967	LDF4b_Tiamat_Temp30	0	YunSpawnD	0	1	FALSE
+282968	LDF4b_Tiamat_Temp31	0	DrakanSpawnD	0	1	FALSE
+283146	IDTiamat_Temp1	0	KAHRUN_SPAWN	0	1	FALSE
+283146	IDTiamat_Temp1	1	KAISINEL_SPAWN	0	1	FALSE
+283147	IDTiamat_Temp2	0	KAHRUN_SPAWN	0	1	FALSE
+283147	IDTiamat_Temp2	1	MARCHUTAN_SPAWN	0	1	FALSE
+283148	IDTiamat_Temp3	0	TIAMAT_SPAWN	0	1	FALSE
+283150	IDTiamat_Temp4	0	RELIC_SPAWN	0	1	FALSE
+283152	IDTiamat_Temp5	0	ISRAPHEL_SPAWN	0	1	FALSE
+283153	IDTiamat_Temp6	0	KAHRUN_TALK	0	1	FALSE
+283153	IDTiamat_Temp6	1	IDTIAMAT_REAL_COLLISION	1	0	FALSE
+283154	IDTiamat_Temp11	0	KAHRUN_SPAWN	0	1	FALSE
+283161	IDTiamat_ARIANA_SORUS_Invisible	0	REWARDL_SPAWN	0	1	FALSE
+283161	IDTiamat_ARIANA_SORUS_Invisible	1	ARIANASORUS_SPAWN	0	1	FALSE
+284456	IDVritra_Base_Drakan_Guardian_Nmd_Gate	0	OBJ_GATE_SELECTION	1	0	FALSE
+284458	Q_RuneSpawn_Noshow_1	0	Q_RuneSpawn_On	0	1	FALSE
+284459	Q_Kahrun_Noshow_1	0	Q_KahrunSpawn_On	0	1	FALSE
+284460	Q_VritraSoldierSpawn_Noshow_1	0	Q_VritraSpawn_On	0	1	FALSE
+284701	IDVritra_Base_GameControl	0	GAMECONTROL	1	0	FALSE
+284701	IDVritra_Base_GameControl	1	GATECONTROL_B1	1	0	FALSE
+284701	IDVritra_Base_GameControl	2	GATECONTROL_B2	1	0	FALSE
+284701	IDVritra_Base_GameControl	3	GATECONTROL_B3	1	0	FALSE
+284701	IDVritra_Base_GameControl	4	GATECONTROL_B4	1	0	FALSE
+284701	IDVritra_Base_GameControl	5	GATECONTROL_B5	1	0	FALSE
+286931	Test_JM_Monster_6	0	condition_4	2	0	FALSE
+286931	Test_JM_Monster_6	1	condition_5	2	0	FALSE
+286936	Test_JM_NoAction_1	0	condition_type	1	0	FALSE
+286955	Test_Monster_Jun01	0	v01	1	0	FALSE
+286955	Test_Monster_Jun01	1	v02	1	0	FALSE
+286955	Test_Monster_Jun01	2	v03	1	0	FALSE
+286955	Test_Monster_Jun01	3	v04	1	0	FALSE
+286955	Test_Monster_Jun01	4	v05	1	0	FALSE
+286955	Test_Monster_Jun01	5	v06	1	0	FALSE
+286955	Test_Monster_Jun01	6	v07	1	0	FALSE
+286955	Test_Monster_Jun01	7	v08	1	0	FALSE
+286955	Test_Monster_Jun01	8	v09	1	0	FALSE
+286955	Test_Monster_Jun01	9	v10	1	0	FALSE
+286955	Test_Monster_Jun01	10	v11	1	0	FALSE
+286955	Test_Monster_Jun01	11	v12	1	0	FALSE
+286955	Test_Monster_Jun01	12	v13	1	0	FALSE
+286955	Test_Monster_Jun01	13	v14	1	0	FALSE
+286955	Test_Monster_Jun01	14	v15	1	0	FALSE
+286955	Test_Monster_Jun01	15	v16	1	0	FALSE
+286955	Test_Monster_Jun01	16	v17	1	0	FALSE
+286955	Test_Monster_Jun01	17	v18	1	0	FALSE
+286955	Test_Monster_Jun01	18	v19	1	0	FALSE
+287266	IDF4Re_Drana_Named_B	0	condition_type	1	0	FALSE
+297569	Ab1_Castle_Deep_1011_Hire_Li_01	0	1011_Mercenary01	-1	0	FALSE
+297569	Ab1_Castle_Deep_1011_Hire_Li_01	1	1011_Mercenary02	-1	0	FALSE
+297569	Ab1_Castle_Deep_1011_Hire_Li_01	2	1011_Mercenary03	-1	0	FALSE
+297569	Ab1_Castle_Deep_1011_Hire_Li_01	3	1011_Mercenary04	-1	0	FALSE
+701116	IDStation_QuestChecker	0	questclear	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	0	C_Flag_1	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	1	C_Flag_2	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	2	C_Flag_3	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	3	C_Flag_4	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	4	C_Bridge	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	5	C_Defender_1	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	6	C_Defender_2	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	7	C_Defender_3	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	8	C_Defender_4	1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	9	C_Bridge_On	-1	0	FALSE
+701642	IDF5_Under_01_Initial_NPC	10	cBox	1	0	FALSE
+701801	LDF5b_6021_Teleport_Li	0	LDF5b_6021_Teleport_On	2	0	FALSE
+701802	LDF5b_6021_Teleport_Da	0	LDF5b_6021_Teleport_On	3	0	FALSE
+701803	LDF5b_6021_Teleport_Dr	0	LDF5b_6021_Teleport_On	1	0	FALSE
+701918	IDKamar_Invisible_Flag_1	0	v01	1	0	FALSE
+701919	IDKamar_Invisible_Flag_2	0	v02	1	0	FALSE
+701920	IDKamar_Invisible_Flag_3	0	v03	1	0	FALSE
+701921	IDKamar_Invisible_Flag_4	0	v04	1	0	FALSE
+701997	IDLDF5_Under_01_War_Guard_07	0	Drakan	2	0	FALSE
+701998	IDLDF5_Under_01_War_Guard_08	0	Drakan	2	0	FALSE
+702005	IDLDF5_Under_01_War_MSG_05	0	SouthNorth	1	0	FALSE
+702006	IDLDF5_Under_01_War_MSG_06	0	EastWest	1	0	FALSE
+702007	IDLDF5_Under_01_War_MSG_07	0	Drakan	1	0	FALSE
+702008	IDLDF5_Under_01_War_MSG_08	0	Drakan	1	0	FALSE
+702045	IDAB_Reward_Item_NoShowNPC_01	0	Tbox_01	1	0	TRUE
+702046	IDAB_Reward_Item_NoShowNPC_02	0	Tbox_02	1	0	TRUE
+702047	IDAB_Reward_Item_NoShowNPC_03	0	Tbox_03	1	0	TRUE
+702048	IDAB_Reward_Item_NoShowNPC_04	0	Tbox_04	1	0	TRUE
+702049	IDAB_Reward_Item_NoShowNPC_05	0	Tbox_05	1	0	TRUE
+702054	IDF5_U1_War_01_NoShowNPC_Base01_05_1	0	RewardLight_1_3_05	1	0	FALSE
+702055	IDF5_U1_War_01_NoShowNPC_Base01_05_2	0	RewardDark_1_3_05	1	0	FALSE
+702056	IDF5_U1_War_01_NoShowNPC_Base01_05_3	0	RewardDrakan_1_3_05	1	0	FALSE
+702057	IDF5_U1_War_01_NoShowNPC_Base01_05_4	0	RewardLight_1_2_05	1	0	FALSE
+702058	IDF5_U1_War_01_NoShowNPC_Base01_05_5	0	RewardDark_1_2_05	1	0	FALSE
+702059	IDF5_U1_War_01_NoShowNPC_Base01_05_6	0	RewardDrakan_1_2_05	1	0	FALSE
+702060	IDF5_U1_War_01_NoShowNPC_Base01_10_1	0	RewardLight_1_4_10	1	0	FALSE
+702061	IDF5_U1_War_01_NoShowNPC_Base01_10_2	0	RewardDark_1_4_10	1	0	FALSE
+702062	IDF5_U1_War_01_NoShowNPC_Base01_10_3	0	RewardDrakan_1_4_10	1	0	FALSE
+702063	IDF5_U1_War_01_NoShowNPC_Base01_10_4	0	RewardLight_1_1_10	1	0	FALSE
+702064	IDF5_U1_War_01_NoShowNPC_Base01_10_5	0	RewardDark_1_1_10	1	0	FALSE
+702065	IDF5_U1_War_01_NoShowNPC_Base01_10_6	0	RewardDrakan_1_1_10	1	0	FALSE
+702066	IDF5_U1_War_01_NoShowNPC_Base01_10_7	0	RewardLight_1_3_10	1	0	FALSE
+702067	IDF5_U1_War_01_NoShowNPC_Base01_10_8	0	RewardDark_1_3_10	1	0	FALSE
+702068	IDF5_U1_War_01_NoShowNPC_Base01_10_9	0	RewardDrakan_1_3_10	1	0	FALSE
+702069	IDF5_U1_War_01_NoShowNPC_Base01_10_10	0	RewardLight_1_2_10	1	0	FALSE
+702070	IDF5_U1_War_01_NoShowNPC_Base01_10_11	0	RewardDark_1_2_10	1	0	FALSE
+702071	IDF5_U1_War_01_NoShowNPC_Base01_10_12	0	RewardDrakan_1_2_10	1	0	FALSE
+702072	IDF5_U1_War_01_NoShowNPC_Base01_15_1	0	RewardLight_1_4_15	1	0	FALSE
+702073	IDF5_U1_War_01_NoShowNPC_Base01_15_2	0	RewardDark_1_4_15	1	0	FALSE
+702074	IDF5_U1_War_01_NoShowNPC_Base01_15_3	0	RewardDrakan_1_4_15	1	0	FALSE
+702075	IDF5_U1_War_01_NoShowNPC_Base01_15_4	0	RewardLight_1_1_15	1	0	FALSE
+702076	IDF5_U1_War_01_NoShowNPC_Base01_15_5	0	RewardDark_1_1_15	1	0	FALSE
+702077	IDF5_U1_War_01_NoShowNPC_Base01_15_6	0	RewardDrakan_1_1_15	1	0	FALSE
+702078	IDF5_U1_War_01_NoShowNPC_Base01_15_7	0	RewardLight_1_3_15	1	0	FALSE
+702079	IDF5_U1_War_01_NoShowNPC_Base01_15_8	0	RewardDark_1_3_15	1	0	FALSE
+702080	IDF5_U1_War_01_NoShowNPC_Base01_15_9	0	RewardDrakan_1_3_15	1	0	FALSE
+702081	IDF5_U1_War_01_NoShowNPC_Base01_15_10	0	RewardLight_1_2_15	1	0	FALSE
+702082	IDF5_U1_War_01_NoShowNPC_Base01_15_11	0	RewardDark_1_2_15	1	0	FALSE
+702083	IDF5_U1_War_01_NoShowNPC_Base01_15_12	0	RewardDrakan_1_2_15	1	0	FALSE
+702096	AB1_Castle_1221_MistOn	0	AB1_CASTLE_1221	1	0	TRUE
+702097	AB1_Castle_1221_MistOff	0	AB1_CASTLE_1221	2	0	TRUE
+702097	AB1_Castle_1221_MistOff	1	1221_Mercenary01	2	0	TRUE
+702097	AB1_Castle_1221_MistOff	2	1221_Mercenary02	2	0	TRUE
+702097	AB1_Castle_1221_MistOff	3	1221_Mercenary03	2	0	TRUE
+702097	AB1_Castle_1221_MistOff	4	1221_Mercenary04	2	0	TRUE
+702097	AB1_Castle_1221_MistOff	5	1221_Mercenary05	2	0	TRUE
+702097	AB1_Castle_1221_MistOff	6	1221_Mercenary06	2	0	TRUE
+702098	AB1_Castle_1231_MistOn	0	AB1_CASTLE_1231	1	0	TRUE
+702099	AB1_Castle_1231_MistOff	0	AB1_CASTLE_1231	2	0	TRUE
+702099	AB1_Castle_1231_MistOff	1	1231_Mercenary01	2	0	TRUE
+702099	AB1_Castle_1231_MistOff	2	1231_Mercenary02	2	0	TRUE
+702099	AB1_Castle_1231_MistOff	3	1231_Mercenary03	2	0	TRUE
+702099	AB1_Castle_1231_MistOff	4	1231_Mercenary04	2	0	TRUE
+702099	AB1_Castle_1231_MistOff	5	1231_Mercenary05	2	0	TRUE
+702100	AB1_Castle_1241_MistOn	0	AB1_CASTLE_1241	1	0	TRUE
+702101	AB1_Castle_1241_MistOff	0	AB1_CASTLE_1241	2	0	TRUE
+702101	AB1_Castle_1241_MistOff	1	1241_Mercenary01	2	0	TRUE
+702101	AB1_Castle_1241_MistOff	2	1241_Mercenary02	2	0	TRUE
+702101	AB1_Castle_1241_MistOff	3	1241_Mercenary03	2	0	TRUE
+702101	AB1_Castle_1241_MistOff	4	1241_Mercenary04	2	0	TRUE
+702101	AB1_Castle_1241_MistOff	5	1241_Mercenary05	2	0	TRUE
+702101	AB1_Castle_1241_MistOff	6	1241_Mercenary06	2	0	TRUE
+702102	AB1_Artifact_1401_Light	0	AB1_ARTIFACT_1401	2	0	TRUE
+702103	AB1_Artifact_1401_Dark	0	AB1_ARTIFACT_1401	3	0	TRUE
+702104	AB1_Artifact_1401_Dragon	0	AB1_ARTIFACT_1401	1	0	TRUE
+702105	AB1_Artifact_1402_Light	0	AB1_ARTIFACT_1402	2	0	TRUE
+702106	AB1_Artifact_1402_Dark	0	AB1_ARTIFACT_1402	3	0	TRUE
+702107	AB1_Artifact_1402_Dragon	0	AB1_ARTIFACT_1402	1	0	TRUE
+702108	AB1_Artifact_1403_Light	0	AB1_ARTIFACT_1403	2	0	TRUE
+702109	AB1_Artifact_1403_Dark	0	AB1_ARTIFACT_1403	3	0	TRUE
+702110	AB1_Artifact_1403_Dragon	0	AB1_ARTIFACT_1403	1	0	TRUE
+702111	AB1_Castle_1221_Occupy_Dragon	0	1221	1	0	TRUE
+702112	AB1_Castle_1221_Occupy_Light	0	1221	2	0	TRUE
+702113	AB1_Castle_1221_Occupy_Dark	0	1221	3	0	TRUE
+702114	AB1_Castle_1231_Occupy_Dragon	0	1231	1	0	TRUE
+702115	AB1_Castle_1231_Occupy_Light	0	1231	2	0	TRUE
+702116	AB1_Castle_1231_Occupy_Dark	0	1231	3	0	TRUE
+702117	AB1_Castle_1241_Occupy_Dragon	0	1241	1	0	TRUE
+702118	AB1_Castle_1241_Occupy_Light	0	1241	2	0	TRUE
+702119	AB1_Castle_1241_Occupy_Dark	0	1241	3	0	TRUE
+702263	IDF5_TD_Wave_01_Up	0	Wave_01_Boss	0	1	FALSE
+702264	IDF5_TD_Wave_02_Up	0	Wave_02_Boss	0	1	FALSE
+702265	IDF5_TD_Wave_03_Up	0	Wave_03_Boss	0	1	FALSE
+702266	IDF5_TD_Wave_04_Up	0	Wave_04_Boss	0	1	FALSE
+702270	IDF5_TD_Castle_gate_01_Bomb	0	castle_gate_01_Bomb	2	0	FALSE
+702271	IDF5_TD_Castle_gate_02_Bomb	0	castle_gate_02_Bomb	2	0	FALSE
+702272	IDF5_TD_Castle_gate_03_Bomb	0	castle_gate_03_Bomb	1	0	FALSE
+702273	IDF5_TD_TimeWave_Down	0	TimeWave_Down	0	-1	FALSE
+702307	Gab1_SetCond_Noshow_01	0	Tur13	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	1	Tur14	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	2	Tur15	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	3	Tur16	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	4	Tur17	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	5	Tur18	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	6	Tur19	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	7	Tur20	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	8	Tur21	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	9	Tur22	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	10	Tur23	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	11	Tur24	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	12	Tur25	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	13	Tur26	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	14	Tur27	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	15	Tur28	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	16	Tur29	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	17	Tur30	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	18	Tur31	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	19	Tur32	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	20	Tur33	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	21	Tur34	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	22	Tur35	21	0	TRUE
+702307	Gab1_SetCond_Noshow_01	23	Tur36	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	0	Tur13	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	1	Tur14	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	2	Tur15	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	3	Tur16	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	4	Tur17	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	5	Tur18	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	6	Tur19	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	7	Tur20	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	8	Tur21	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	9	Tur22	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	10	Tur23	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	11	Tur24	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	12	Tur25	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	13	Tur26	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	14	Tur27	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	15	Tur28	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	16	Tur29	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	17	Tur30	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	18	Tur31	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	19	Tur32	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	20	Tur33	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	21	Tur34	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	22	Tur35	21	0	TRUE
+702326	Gab1_SetCond_Noshow_01	23	Tur36	21	0	TRUE
+702340	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0	FALSE
+702341	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0	FALSE
+702342	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0	FALSE
+702343	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0	FALSE
+702344	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0	FALSE
+702345	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0	FALSE
+702369	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0	FALSE
+702370	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0	FALSE
+702371	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0	FALSE
+702372	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0	FALSE
+702373	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0	FALSE
+702374	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0	FALSE
+702375	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0	FALSE
+702376	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0	FALSE
+702377	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0	FALSE
+702378	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0	FALSE
+702379	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0	FALSE
+702380	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0	FALSE
+702381	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0	FALSE
+702382	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0	FALSE
+702383	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0	FALSE
+702384	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0	FALSE
+702385	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0	FALSE
+702386	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	0	v01	21	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	1	v02	21	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	2	v03	21	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	3	v04	21	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	4	v05	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	5	v06	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	6	v07	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	7	v08	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	8	v09	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	9	v10	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	10	v11	22	0	FALSE
+702419	Gab1_04_Guard_Noshow_01	11	v12	22	0	FALSE
+702570	WorldRaid_CTRL_1_3_Initial	0	WORLDRAID_01	2	0	TRUE
+702570	WorldRaid_CTRL_1_3_Initial	1	WORLDRAID_02	2	0	TRUE
+702570	WorldRaid_CTRL_1_3_Initial	2	WORLDRAID_03	2	0	TRUE
+702571	WorldRaid_CTRL_1_5_Initial	0	WORLDRAID_01	2	0	TRUE
+702571	WorldRaid_CTRL_1_5_Initial	1	WORLDRAID_02	2	0	TRUE
+702571	WorldRaid_CTRL_1_5_Initial	2	WORLDRAID_03	2	0	TRUE
+702571	WorldRaid_CTRL_1_5_Initial	3	WORLDRAID_04	2	0	TRUE
+702571	WorldRaid_CTRL_1_5_Initial	4	WORLDRAID_05	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	0	WORLDRAID_01	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	1	WORLDRAID_02	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	2	WORLDRAID_03	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	3	WORLDRAID_04	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	4	WORLDRAID_05	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	5	WORLDRAID_06	2	0	TRUE
+702572	WorldRaid_CTRL_1_7_Initial	6	WORLDRAID_07	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	0	WORLDRAID_01	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	1	WORLDRAID_02	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	2	WORLDRAID_03	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	3	WORLDRAID_04	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	4	WORLDRAID_05	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	5	WORLDRAID_06	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	6	WORLDRAID_07	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	7	WORLDRAID_08	2	0	TRUE
+702573	WorldRaid_CTRL_1_9_Initial	8	WORLDRAID_09	2	0	TRUE
+702611	LDF5_Fortress_Block_FOBJ_01	0	Li_Vil	1	0	FALSE
+702612	LDF5_Fortress_Block_FOBJ_02	0	Da_Vil	1	0	FALSE
+702613	LDF5_Fortress_GuardBase_01_Owner_L	0	Li_Vil	-1	0	FALSE
+702614	LDF5_Fortress_GuardBase_01_Owner_D	0	Da_Vil	-1	0	FALSE
+702655	IDStation_info_04	0	door_01	0	1	FALSE
+730981	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+730982	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+730983	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+730984	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+730985	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+730986	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+730987	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+730988	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+730989	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+730990	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+730991	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+730992	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+730993	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+730994	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+730995	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+730996	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+730997	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+730998	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+730999	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731000	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731001	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731002	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731003	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731004	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731005	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731006	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731007	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731008	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731009	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731010	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731011	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731012	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731029	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731030	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731031	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731032	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731033	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731034	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731035	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731036	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731037	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731038	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731039	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731040	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731041	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731042	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731043	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731044	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731045	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731046	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731047	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731048	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731049	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731050	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731051	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731052	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731053	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731054	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731055	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731056	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731057	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731058	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731059	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731060	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731061	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731062	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731063	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731064	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731065	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731066	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731067	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731068	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731069	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731070	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731071	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731072	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731073	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731074	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731075	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731076	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731077	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731078	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731079	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731080	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731081	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731082	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731083	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731084	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731085	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731086	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731087	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731088	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731089	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731090	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731091	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731092	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731093	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731094	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731095	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731096	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731097	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731098	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731099	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731100	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731101	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731102	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731103	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731104	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731105	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731106	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731107	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731108	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731109	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731110	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731111	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731112	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731113	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731114	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731115	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731116	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731117	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731118	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731119	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731120	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731121	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731122	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731123	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731124	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731125	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731126	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731127	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731128	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731129	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731130	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731131	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731132	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731133	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731134	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731135	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731136	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731137	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731138	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731139	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731140	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731141	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731142	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731143	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731144	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731145	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731146	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731147	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731148	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731149	Gab1_ArtiCore_01	0	ArtiCoreRe_01	-1	0	FALSE
+731150	Gab1_ArtiCore_02	0	ArtiCoreRe_02	-1	0	FALSE
+731151	Gab1_ArtiCore_03	0	ArtiCoreRe_03	-1	0	FALSE
+731152	Gab1_ArtiCore_04	0	ArtiCoreRe_04	-1	0	FALSE
+731153	Gab1_ArtiCore_05	0	ArtiCoreRe_05	-1	0	FALSE
+731154	Gab1_ArtiCore_06	0	ArtiCoreRe_06	-1	0	FALSE
+731155	Gab1_ArtiCore_07	0	ArtiCoreRe_07	-1	0	FALSE
+731156	Gab1_ArtiCore_08	0	ArtiCoreRe_08	-1	0	FALSE
+731161	Gab1_Arti_Noshow_1	0	v05	21	0	TRUE
+731162	Gab1_Arti_Noshow_2	0	v06	21	0	TRUE
+731163	Gab1_Arti_Noshow_3	0	v07	21	0	TRUE
+731164	Gab1_Arti_Noshow_4	0	v08	21	0	TRUE
+731165	Gab1_Arti_Noshow_5	0	v09	21	0	TRUE
+731166	Gab1_Arti_Noshow_6	0	v10	21	0	TRUE
+731167	Gab1_Arti_Noshow_7	0	v11	21	0	TRUE
+731168	Gab1_Arti_Noshow_8	0	v12	21	0	TRUE
+731169	Gab1_Arti_Noshow_1	0	v05	21	0	TRUE
+731170	Gab1_Arti_Noshow_2	0	v06	21	0	TRUE
+731171	Gab1_Arti_Noshow_3	0	v07	21	0	TRUE
+731172	Gab1_Arti_Noshow_4	0	v08	21	0	TRUE
+731173	Gab1_Arti_Noshow_5	0	v09	21	0	TRUE
+731174	Gab1_Arti_Noshow_6	0	v10	21	0	TRUE
+731175	Gab1_Arti_Noshow_7	0	v11	21	0	TRUE
+731176	Gab1_Arti_Noshow_8	0	v12	21	0	TRUE
+731177	Gab1_Arti_Noshow_1	0	v05	21	0	TRUE
+731178	Gab1_Arti_Noshow_2	0	v06	21	0	TRUE
+731179	Gab1_Arti_Noshow_3	0	v07	21	0	TRUE
+731180	Gab1_Arti_Noshow_4	0	v08	21	0	TRUE
+731181	Gab1_Arti_Noshow_5	0	v09	21	0	TRUE
+731182	Gab1_Arti_Noshow_6	0	v10	21	0	TRUE
+731183	Gab1_Arti_Noshow_7	0	v11	21	0	TRUE
+731184	Gab1_Arti_Noshow_8	0	v12	21	0	TRUE
+731185	Gab1_Arti_Noshow_1	0	v05	21	0	TRUE
+731186	Gab1_Arti_Noshow_2	0	v06	21	0	TRUE
+731187	Gab1_Arti_Noshow_3	0	v07	21	0	TRUE
+731188	Gab1_Arti_Noshow_4	0	v08	21	0	TRUE
+731189	Gab1_Arti_Noshow_5	0	v09	21	0	TRUE
+731190	Gab1_Arti_Noshow_6	0	v10	21	0	TRUE
+731191	Gab1_Arti_Noshow_7	0	v11	21	0	TRUE
+731192	Gab1_Arti_Noshow_8	0	v12	21	0	TRUE
+731355	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0	FALSE
+731356	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0	FALSE
+731357	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0	FALSE
+731358	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0	FALSE
+731359	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0	FALSE
+731360	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0	FALSE
+731361	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0	FALSE
+731362	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0	FALSE
+731363	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0	FALSE
+731364	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0	FALSE
+731365	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0	FALSE
+731366	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0	FALSE
+731367	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0	FALSE
+731368	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0	FALSE
+731369	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0	FALSE
+731370	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0	FALSE
+731371	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0	FALSE
+731372	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0	FALSE
+731373	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0	FALSE
+731374	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0	FALSE
+731375	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0	FALSE
+731376	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0	FALSE
+731377	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0	FALSE
+731378	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0	FALSE
+731379	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0	FALSE
+731380	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0	FALSE
+731381	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0	FALSE
+731382	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0	FALSE
+731383	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0	FALSE
+731384	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0	FALSE
+731385	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0	FALSE
+731386	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0	FALSE
+731387	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0	FALSE
+731388	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0	FALSE
+731389	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0	FALSE
+731390	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0	FALSE
+731391	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0	FALSE
+731392	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0	FALSE
+731393	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0	FALSE
+731394	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0	FALSE
+731395	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0	FALSE
+731396	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0	FALSE
+731397	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0	FALSE
+731398	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0	FALSE
+731399	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0	FALSE
+731400	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0	FALSE
+731401	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0	FALSE
+731402	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0	FALSE
+731403	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0	FALSE
+731404	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0	FALSE
+731405	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0	FALSE
+731406	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0	FALSE
+731407	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0	FALSE
+731408	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0	FALSE
+731409	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0	FALSE
+731410	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0	FALSE
+731411	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0	FALSE
+731412	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0	FALSE
+731413	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0	FALSE
+731414	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0	FALSE
+731415	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0	FALSE
+731416	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0	FALSE
+731417	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0	FALSE
+731418	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0	FALSE
+731419	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0	FALSE
+731420	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0	FALSE
+731421	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0	FALSE
+731422	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0	FALSE
+731423	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0	FALSE
+731424	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0	FALSE
+731425	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0	FALSE
+731426	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0	FALSE
+731427	Gab1_TurretSwitch_RideOn_01	0	Tur13	21	0	FALSE
+731428	Gab1_TurretSwitch_RideOn_02	0	Tur14	21	0	FALSE
+731429	Gab1_TurretSwitch_RideOn_03	0	Tur15	21	0	FALSE
+731430	Gab1_TurretSwitch_RideOn_04	0	Tur16	21	0	FALSE
+731431	Gab1_TurretSwitch_RideOn_05	0	Tur17	21	0	FALSE
+731432	Gab1_TurretSwitch_RideOn_06	0	Tur18	21	0	FALSE
+731433	Gab1_TurretSwitch_RideOn_07	0	Tur19	21	0	FALSE
+731434	Gab1_TurretSwitch_RideOn_08	0	Tur20	21	0	FALSE
+731435	Gab1_TurretSwitch_RideOn_09	0	Tur21	21	0	FALSE
+731436	Gab1_TurretSwitch_RideOn_10	0	Tur22	21	0	FALSE
+731437	Gab1_TurretSwitch_RideOn_11	0	Tur23	21	0	FALSE
+731438	Gab1_TurretSwitch_RideOn_12	0	Tur24	21	0	FALSE
+731439	Gab1_TurretSwitch_RideOn_13	0	Tur25	21	0	FALSE
+731440	Gab1_TurretSwitch_RideOn_14	0	Tur26	21	0	FALSE
+731441	Gab1_TurretSwitch_RideOn_15	0	Tur27	21	0	FALSE
+731442	Gab1_TurretSwitch_RideOn_16	0	Tur28	21	0	FALSE
+731443	Gab1_TurretSwitch_RideOn_17	0	Tur29	21	0	FALSE
+731444	Gab1_TurretSwitch_RideOn_18	0	Tur30	21	0	FALSE
+731445	Gab1_TurretSwitch_RideOn_19	0	Tur31	21	0	FALSE
+731446	Gab1_TurretSwitch_RideOn_20	0	Tur32	21	0	FALSE
+731447	Gab1_TurretSwitch_RideOn_21	0	Tur33	21	0	FALSE
+731448	Gab1_TurretSwitch_RideOn_22	0	Tur34	21	0	FALSE
+731449	Gab1_TurretSwitch_RideOn_23	0	Tur35	21	0	FALSE
+731450	Gab1_TurretSwitch_RideOn_24	0	Tur36	21	0	FALSE
+801591	5011_NoShow_Ownership_L	0	5011	2	0	FALSE
+801592	5011_NoShow_Ownership_D	0	5011	3	0	FALSE
+801593	5011_NoShow_Ownership_DR	0	5011	1	0	FALSE
+801594	6011_NoShow_Ownership_L	0	6011	2	0	FALSE
+801595	6011_NoShow_Ownership_D	0	6011	3	0	FALSE
+801596	6011_NoShow_Ownership_DR	0	6011	1	0	FALSE
+801597	6021_NoShow_Ownership_L	0	6021	2	0	FALSE
+801598	6021_NoShow_Ownership_D	0	6021	3	0	FALSE
+801599	6021_NoShow_Ownership_DR	0	6021	1	0	FALSE
+802456	LDF5_Fortress_7011_Owner_L	0	7011	2	0	FALSE
+802457	LDF5_Fortress_7011_Owner_D	0	7011	3	0	FALSE
+802458	LDF5_Fortress_7011_Owner_Da	0	7011	1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	0	7011on	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	1	7011off	1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	2	7011_Mercenary01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	3	7011_Mercenary02	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	4	7011_Mercenary03	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	5	7011_Mercenary04	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	6	7011_Mercenary05	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	7	7011_Mercenary06	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	8	7011_Mercenary07	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	9	gb01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	10	gb01_2	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	11	gb02	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	12	gb02_2	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	13	gb03	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	14	gb03_2	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	15	MistOn_Dragon	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	16	MistOn_LD	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	17	door01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	18	Barricade01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	19	gb01_ctrl	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	20	gb02_ctrl	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	21	gb03_ctrl	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	22	Da_heal01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	23	Li_heal01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	24	GH_Shield_On01	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	25	GH_Shield_On02	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	26	GH_Shield_On03	-1	0	FALSE
+802460	LDF5_Fortress_7011_Checker_Mist_Off	27	GH_Shield_Off01	-1	0	FALSE
+804537	LDF5_Fortress_7012_Owner_L	0	7012	2	0	FALSE
+804538	LDF5_Fortress_7012_Owner_D	0	7012	3	0	FALSE
+804539	LDF5_Fortress_7012_Owner_Dr	0	7012	1	0	FALSE
+804540	LDF5_Fortress_7013_Owner_L	0	7013	2	0	FALSE
+804541	LDF5_Fortress_7013_Owner_D	0	7013	3	0	FALSE
+804542	LDF5_Fortress_7013_Owner_Dr	0	7013	1	0	FALSE
+804543	LDF5_Fortress_7014_Owner_L	0	7014	2	0	FALSE
+804544	LDF5_Fortress_7014_Owner_D	0	7014	3	0	FALSE
+804545	LDF5_Fortress_7014_Owner_Dr	0	7014	1	0	FALSE
+804546	LDF5_Fortress_GuardBase_01_Owner_L	0	Li_Vil	-1	0	FALSE
+804547	LDF5_Fortress_GuardBase_01_Owner_D	0	Da_Vil	-1	0	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	0	gb01	1	0	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	1	gb02	1	0	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	2	gb03	1	0	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	3	MistOn_Dragon	1	0	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	4	door01	1	0	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	5	Da_heal01	0	1	FALSE
+804555	LDF5_Fortress_GuardBase_Setting	6	Li_heal01	0	1	FALSE
+804571	LDF5_Fortress_MistOn_LandD	0	MistOn_LD	1	0	FALSE
+804571	LDF5_Fortress_MistOn_LandD	1	Barricade01	1	0	FALSE
+804819	F5_DirectPotalMonster_Set_01	0	directpotal_p1	1	0	FALSE
+804819	F5_DirectPotalMonster_Set_01	1	directpotal_p2	1	0	FALSE
+804819	F5_DirectPotalMonster_Set_01	2	directpotal_i	1	0	FALSE
+831939	IDF5_TD_War_v07_lever_01_OFF	0	v07_BOMB_01	2	0	TRUE
+831940	IDF5_TD_War_v07_lever_02_OFF	0	v07_BOMB_02	2	0	TRUE
+831941	IDF5_TD_War_v08_lever_01_OFF	0	v08_BOMB_01	2	0	TRUE
+831942	IDF5_TD_War_v08_lever_02_OFF	0	v08_BOMB_02	2	0	TRUE
+831943	IDF5_TD_War_v08_lever_03_OFF	0	v08_BOMB_03	2	0	TRUE
+831970	IDF5_TD_War_S_01_01_lever_OFF	0	BOMB_S_01_01	2	0	TRUE
+831971	IDF5_TD_War_S_01_02_lever_OFF	0	BOMB_S_01_02	2	0	TRUE
+831972	IDF5_TD_War_S_02_01_lever_OFF	0	BOMB_S_02_01	2	0	TRUE
+831973	IDF5_TD_War_S_02_02_lever_OFF	0	BOMB_S_02_02	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	0	TIME_05	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	1	TIME_10	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	2	TIME_15	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	3	TIME_20	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	4	TIME_25	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	5	TIME_30	2	0	TRUE
+831974	IDF5_TD_War_Suffly_Con_OFF	6	TIME_35	2	0	TRUE
+832018	IDLDF4Re_01_Cond_1	0	cSet_1_1_1	0	1	FALSE
+832019	IDLDF4Re_01_Cond_2	0	cSet_1_1_2	0	1	FALSE
+832020	IDLDF4Re_01_Cond_3	0	cSet_1_1_3	0	1	FALSE
+832021	IDLDF4Re_01_Cond_4	0	cSet_1_1_4	0	1	FALSE
+832022	IDLDF4Re_01_Cond_5	0	cSet_1_1_5	0	1	FALSE
+832023	IDLDF4Re_01_Cond_6	0	cSet_1_1_6	0	1	FALSE
+832024	IDLDF4Re_01_Cond_7	0	cSet_1_1_7	0	1	FALSE
+832025	IDLDF4Re_01_Cond_8	0	cSet_1_1_8	0	1	FALSE
+832026	IDLDF4Re_01_Cond_9	0	cSet_1_1_9	0	1	FALSE
+832027	IDLDF4Re_01_Cond_10	0	cSet_1_1_10	0	1	FALSE
+832028	IDLDF4Re_01_Cond_11	0	cSet_1_1_11	0	1	FALSE
+832029	IDLDF4Re_01_Cond_12	0	cSet_1_1_12	0	1	FALSE
+832030	IDLDF4Re_01_Cond_13	0	cSet_1_1_13	0	1	FALSE
+832031	IDLDF4Re_01_Cond_14	0	cSet_1_1_14	0	1	FALSE
+832032	IDLDF4Re_01_Cond_15	0	cSet_1_1_15	0	1	FALSE
+832033	IDLDF4Re_01_Cond_16	0	cSet_1_1_16	0	1	FALSE
+832034	IDLDF4Re_01_Cond_17	0	cSet_1_1_17	0	1	FALSE
+832035	IDLDF4Re_01_Cond_18	0	cSet_1_1_18	0	1	FALSE
+832036	IDLDF4Re_01_Cond_19	0	cSet_1_1_19	0	1	FALSE
+832037	IDLDF4Re_01_Cond_20	0	cSet_1_1_20	0	1	FALSE
+832038	IDLDF4Re_01_Cond_21	0	cSet_1_1_21	0	1	FALSE
+832099	2014_LDF4_Li_Noshow_NPC	0	2014Artifact	2	0	FALSE
+832100	2014_LDF4_Da_Noshow_NPC	0	2014Artifact	3	0	FALSE
+832101	2024_LDF4_Li_Noshow_NPC	0	2024Artifact	2	0	FALSE
+832102	2024_LDF4_Da_Noshow_NPC	0	2024Artifact	3	0	FALSE
+832103	3014_LDF4_Li_Noshow_NPC	0	3014Artifact	2	0	FALSE
+832104	3014_LDF4_Da_Noshow_NPC	0	3014Artifact	3	0	FALSE
+832105	3024_LDF4_Li_Noshow_NPC	0	3024Artifact	2	0	FALSE
+832106	3024_LDF4_Da_Noshow_NPC	0	3024Artifact	3	0	FALSE
+832107	2011_LDF4_Dr_Noshow_NPC	0	2011Castle	1	0	FALSE
+832108	2011_LDF4_Li_Noshow_NPC	0	2011Castle	2	0	FALSE
+832109	2011_LDF4_Da_Noshow_NPC	0	2011Castle	3	0	FALSE
+832110	2021_LDF4_Dr_Noshow_NPC	0	2021Castle	1	0	FALSE
+832111	2021_LDF4_Li_Noshow_NPC	0	2021Castle	2	0	FALSE
+832112	2021_LDF4_Da_Noshow_NPC	0	2021Castle	3	0	FALSE
+832113	3011_LDF4_Dr_Noshow_NPC	0	3011Castle	3	0	FALSE
+832114	3011_LDF4_Li_Noshow_NPC	0	3011Castle	2	0	FALSE
+832115	3011_LDF4_Da_Noshow_NPC	0	3011Castle	3	0	FALSE
+832116	3021_LDF4_Dr_Noshow_NPC	0	3021Castle	1	0	FALSE
+832117	3021_LDF4_Li_Noshow_NPC	0	3021Castle	2	0	FALSE
+832118	3021_LDF4_Da_Noshow_NPC	0	3021Castle	3	0	FALSE
+832825	Ab1_Castle_Deep_1011_Hire_Li_01	0	1011_Mercenary01	-1	0	FALSE
+832825	Ab1_Castle_Deep_1011_Hire_Li_01	1	1011_Mercenary02	-1	0	FALSE
+832825	Ab1_Castle_Deep_1011_Hire_Li_01	2	1011_Mercenary03	-1	0	FALSE
+832825	Ab1_Castle_Deep_1011_Hire_Li_01	3	1011_Mercenary04	-1	0	FALSE
+855138	LDF4_Advance_condition_14	0	v01	1	0	FALSE
+855138	LDF4_Advance_condition_14	1	v02	1	0	FALSE
+855138	LDF4_Advance_condition_14	2	v03	1	0	FALSE
+855138	LDF4_Advance_condition_14	3	v04	1	0	FALSE
+855138	LDF4_Advance_condition_14	4	v05	1	0	FALSE
+855138	LDF4_Advance_condition_14	5	v06	1	0	FALSE
+855138	LDF4_Advance_condition_14	6	v07	1	0	FALSE
+855138	LDF4_Advance_condition_14	7	v08	1	0	FALSE
+855138	LDF4_Advance_condition_14	8	v09	1	0	FALSE
+855138	LDF4_Advance_condition_14	9	v10	1	0	FALSE
+855138	LDF4_Advance_condition_14	10	v11	1	0	FALSE
+855138	LDF4_Advance_condition_14	11	v12	1	0	FALSE
+855138	LDF4_Advance_condition_14	12	v13	1	0	FALSE
+855259	LDF4_Advance_condor_dr_named	0	cSet_1_1_22	1	0	FALSE
+855260	IDF5_U3_TEMP_05	0	N_WAVE_01	2	0	FALSE
+855260	IDF5_U3_TEMP_05	1	N_WAVE_02	2	0	FALSE
+855260	IDF5_U3_TEMP_05	2	N_WAVE_03	2	0	FALSE
+855260	IDF5_U3_TEMP_05	3	N_WAVE_04	2	0	FALSE
+855440	IDSeal_Temp_19	0	GUARDIAN_TIMER	11	0	FALSE
+855485	IDSeal_Wave_Checker	0	LEVEL_CHECK_3	0	1	FALSE
+855500	IDSeal_Immortal_Success	0	IMMORTAL	10	0	FALSE
+855500	IDSeal_Immortal_Success	1	IMMORTAL_TIMER	10	0	FALSE
+855500	IDSeal_Immortal_Success	2	WAKE_TIMER	10	0	FALSE
+855501	IDSeal_Immortal_Lv2_Failed	0	PLAY_LEVEL	1	0	FALSE
+855501	IDSeal_Immortal_Lv2_Failed	1	IMMORTAL	10	0	FALSE
+855501	IDSeal_Immortal_Lv2_Failed	2	IMMORTAL_TIMER	10	0	FALSE
+855501	IDSeal_Immortal_Lv2_Failed	3	WAKE_TIMER	10	0	FALSE
+855502	IDSeal_Immortal_Lv3_Failed	0	PLAY_LEVEL	2	0	FALSE
+855502	IDSeal_Immortal_Lv3_Failed	1	IMMORTAL	10	0	FALSE
+855502	IDSeal_Immortal_Lv3_Failed	2	IMMORTAL_TIMER	10	0	FALSE
+855502	IDSeal_Immortal_Lv3_Failed	3	WAKE_TIMER	10	0	FALSE
+855518	IDSeal_Twin_Success	0	TWIN_RESURRECT	10	0	FALSE
+855518	IDSeal_Twin_Success	1	SCENE	6	0	FALSE
+855518	IDSeal_Twin_Success	2	LEVEL_CHECK_1	10	0	FALSE
+855519	IDSeal_Twin_Failed	0	TWIN_RESURRECT	10	0	FALSE
+855519	IDSeal_Twin_Failed	1	PLAY_LEVEL	2	0	FALSE
+855519	IDSeal_Twin_Failed	2	SCENE	6	0	FALSE
+855519	IDSeal_Twin_Failed	3	LEVEL_CHECK_1	10	0	FALSE
+855521	IDSeal_Level_Select_1_Li	0	TWIN_P	10	0	FALSE
+855521	IDSeal_Level_Select_1_Li	1	TWIN_M	10	0	FALSE
+855521	IDSeal_Level_Select_1_Li	2	PLAY_LEVEL	2	0	FALSE
+855521	IDSeal_Level_Select_1_Li	3	LEVEL_CHECK_1	10	0	FALSE
+855522	IDSeal_Level_Select_1_Da	0	TWIN_P	10	0	FALSE
+855522	IDSeal_Level_Select_1_Da	1	TWIN_M	10	0	FALSE
+855522	IDSeal_Level_Select_1_Da	2	PLAY_LEVEL	2	0	FALSE
+855522	IDSeal_Level_Select_1_Da	3	LEVEL_CHECK_1	10	0	FALSE
+855523	IDSeal_Level_Select_2_Li	0	PLAY_LEVEL	2	0	FALSE
+855523	IDSeal_Level_Select_2_Li	1	LEVEL_CHECK_2	10	0	FALSE
+855524	IDSeal_Level_Select_2_Da	0	PLAY_LEVEL	2	0	FALSE
+855524	IDSeal_Level_Select_2_Da	1	LEVEL_CHECK_2	10	0	FALSE
+855525	IDSeal_Level_Select_3_Li	0	PLAY_LEVEL	1	0	FALSE
+855525	IDSeal_Level_Select_3_Li	1	LEVEL_CHECK_2	10	0	FALSE
+855526	IDSeal_Level_Select_3_Da	0	PLAY_LEVEL	1	0	FALSE
+855526	IDSeal_Level_Select_3_Da	1	LEVEL_CHECK_2	10	0	FALSE
+855527	IDSeal_Area1_Open	0	TWIN_P	9	0	FALSE
+855527	IDSeal_Area1_Open	1	TWIN_M	9	0	FALSE
+855527	IDSeal_Area1_Open	2	PLAY_LEVEL	3	0	FALSE
+855527	IDSeal_Area1_Open	3	VRITRA_TIMER_2	21	0	FALSE
+855527	IDSeal_Area1_Open	4	VRITRA_SUM_01	10	0	FALSE
+855527	IDSeal_Area1_Open	5	VRITRA_SUM_02	10	0	FALSE
+855527	IDSeal_Area1_Open	6	VRITRA_SUM_03	10	0	FALSE
+855527	IDSeal_Area1_Open	7	DEFENCE_WAVE	10	0	FALSE
+855527	IDSeal_Area1_Open	8	BOSS_ROOM	1	0	FALSE
+855527	IDSeal_Area1_Open	9	RANDOM_ROOM_01	1	0	FALSE
+855527	IDSeal_Area1_Open	10	RANDOM_ROOM_02	1	0	FALSE
+855527	IDSeal_Area1_Open	11	RANDOM_ROOM_03	1	0	FALSE
+855527	IDSeal_Area1_Open	12	SCENE	1	0	FALSE
+855527	IDSeal_Area1_Open	13	DARKSUN	1	0	FALSE
+855528	IDSeal_Area2_Open	0	IMMORTAL	1	0	FALSE
+855618	IDStation_info_01	0	tower_die	0	1	FALSE
+855952	IDYun_info_01	0	InvisibleWall2	1	0	FALSE
+855953	IDYun_info_02	0	dooropen	0	1	FALSE
+880750	Gab1_Vritra_02	0	v02ctrl	1	0	FALSE
+880754	Gab1_Vritra_06	0	v02ctrl	6	0	FALSE
+880758	Gab1_Boss_Noshow_04	0	v02ctrl	11	0	FALSE
+880762	Gab1_Msg_Noshow_04	0	v02ctrl	16	0	FALSE
+880766	Gab1_Vritra_03	0	v03ctrl	1	0	FALSE
+880770	Gab1_Vritra_07	0	v03ctrl	6	0	FALSE
+880774	Gab1_Boss_Noshow_05	0	v03ctrl	11	0	FALSE
+880778	Gab1_Msg_Noshow_05	0	v03ctrl	16	0	FALSE
+880782	Gab1_Vritra_04	0	v04ctrl	1	0	FALSE
+880786	Gab1_Vritra_08	0	v04ctrl	6	0	FALSE
+880790	Gab1_Msg_Noshow_02	0	v04ctrl	11	0	FALSE
+880794	Gab1_Msg_Noshow_06	0	v04ctrl	16	0	FALSE
