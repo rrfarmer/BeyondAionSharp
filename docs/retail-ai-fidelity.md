@@ -37787,3 +37787,72 @@ Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254
 `change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## `is_skill_count_left`, and a data gap it uncovered
+
+`Retail-AI-Pattern: skill-availability guards`
+
+832 uses, all naming a skill by `SKILLI_INDEX_n` — and in every one, the branch the guard protects
+goes on to cast that same skill. So it asks "can I use this now", answered from the skill's own
+cooldown.
+
+The index is per-npc, exactly as `use_skill` is, so it is carried through the parser and resolved
+against each owner's list alongside the casts. An owner whose list cannot answer a guard's index is
+dropped from the pattern, the same rule the casts already used — without that, the owner would keep
+the branch and answer the guard false forever, which reads as a mechanic that never fires rather
+than an npc that should not have had it.
+
+Patterns 2,447 -> **2,574**; npcs 17,028 -> **20,871**; 17,131 rows now carry the guard; 3,809 npcs
+newly bound. Adds backlog 211 -> **206** across 153 -> **148** encounters.
+
+### The pin failed and found something bigger than itself
+
+The first version asserted that the worm's own summon is available to the worm. It failed, and
+chasing why turned up a gap worth recording on its own:
+
+**This port's `npc_skills` data is far thinner than the retail dump the tables are read from.** Of
+the 7,103 npc-and-skill pairs these guards name, only **2,124** appear in it. Of the 74,792 pairs
+the table *casts*, only 15,661 do.
+
+Casting does not care. `PatternAi.CastSkillAt` builds a `QueuedNpcSkillTemplate` straight from the
+id and never consults the npc's list, so the skill goes out either way. **Only the new lookup
+cared** — and the version I wrote first answered "no entry, therefore not available".
+
+That would have been a serious silent regression: roughly 70% of these guards permanently false,
+killing branches whose cast would have worked perfectly well, and — because branch lists are
+first-match-wins — promoting the rungs beneath them into mechanics retail never runs. The intuitive
+answer was the dangerous one.
+
+So a missing entry answers **available**. That is the honest reading of "no reason to think it is
+unavailable", and it leaves behaviour exactly as it was before the guard existed for every pair the
+port cannot speak to, while the 2,124 it can speak to get the real cooldown.
+
+The pin now covers three cases, because the first two alone let a constant `true` through — a
+mutation proved it:
+
+| mutation | caught |
+|---|---|
+| unknown skill blocks its branch | yes |
+| cooldown ignored for a listed skill | yes |
+
+The third case marks a listed skill used and requires the guard to go false.
+
+### Still missing
+
+**The `npc_skills` gap itself is now the largest known fidelity hole in this area** and is not
+something more parsing can fix: 59,131 of 74,792 cast pairs have no port-side entry, so those npcs
+cast on retail's schedule with no cooldown, probability or hp-window data of their own. Closing it
+means porting npc skill lists out of the 5.8 dump into `game-server/data/static_data/npc_skills`,
+which is a data job, not an AI one.
+
+Next largest refused conditions: `flee_from` (67), `random_move` (57), `spawn_on_multi_target` (33),
+`is_distance_longer_than` (32). 102 `on_arrived_at_waypoint` handlers still drop on `MOVETYPE_RUN`;
+92 `on_see_friend_attacked` on `is_hp_lower_than` about somebody other than self.
+
+Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254,
+`on_enter_abnormal_state` 272, `on_damaged` 141, `on_hyperlink_clicked` 137,
+`on_most_hating_updated` 132 — none of which spawn or cast — `on_see_friend_attacking` 129,
+`on_friend_spelling` 106, `on_see_npc_move` 106), plus `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.

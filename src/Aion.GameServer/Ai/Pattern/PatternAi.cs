@@ -9,6 +9,7 @@ using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Utils;
@@ -334,6 +335,40 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary><c>is_last_waypoint</c> — true once the NPC has reached the final step of its route.</summary>
     internal bool AtRouteEnd =>
         GetOwner().GetMoveController().GetCurrentStep()?.IsLastStep() ?? false;
+
+    /// <summary>Whether <paramref name="skillId"/> is off cooldown for this NPC.</summary>
+    /// <remarks>
+    /// Backs <see cref="When.SkillReady"/>. <b>An NPC with no entry for the skill answers true, and
+    /// that is the opposite of what it looks like it should do.</b> The reasoning matters, because the
+    /// intuitive version — no entry, so not available — was written first and would have been a
+    /// serious silent regression.
+    /// <para>
+    /// This port's <c>npc_skills</c> data is far thinner than the retail dump the tables are read from:
+    /// of the 7,103 npc-and-skill pairs these guards name, only <b>2,124</b> appear in it. Casting does
+    /// not care — <see cref="CastSkillAt"/> builds a <c>QueuedNpcSkillTemplate</c> from the id and never
+    /// consults the list, so the skill goes out either way. Only this lookup cares.
+    /// </para>
+    /// <para>
+    /// So answering false for a missing entry would have turned roughly 70% of these guards
+    /// permanently false, silently killing branches whose action would have worked perfectly well —
+    /// and because branch lists are first-match-wins, promoting the rungs beneath them into mechanics
+    /// retail never runs. True means "no reason to think it is unavailable", which is the honest answer
+    /// when the cooldown data simply is not there, and it leaves behaviour exactly as it was before
+    /// this guard existed for every pair the port cannot speak to.
+    /// </para>
+    /// </remarks>
+    internal bool SkillAvailable(int skillId)
+    {
+        foreach (NpcSkillEntry entry in GetOwner().GetSkillList().GetNpcSkills())
+        {
+            if (entry.GetSkillId() == skillId)
+            {
+                return !entry.HasCooldown();
+            }
+        }
+
+        return true;
+    }
 
     protected override void HandleMoveArrived()
     {

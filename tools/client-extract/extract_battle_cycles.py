@@ -292,6 +292,13 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind == "is_skill_count_left":
+            # Retail names the skill by its place in this npc's own ordered list, exactly as `use_skill`
+            # does, so the index is carried here and resolved per npc alongside the casts.
+            index = re.search(r"SKILLI_INDEX_(\d+)", body)
+            if not index:
+                raise Unsayable("is_skill_count_left without an index")
+            out.append("skillready:" + index.group(1))
         elif kind in ("is_user", "is_npc"):
             # Is the creature in this role a player, or an npc? `OBJI_SELF` and `OBJI_FRIEND` are
             # refused: the first is definitionally true, which would be reasoning rather than porting,
@@ -671,6 +678,13 @@ def main() -> int:
             wanted = {action[1] for branches in [cycle, *armed.values()]
                       for _, _, _, actions in branches
                       for action in actions if action[0] in ("skill", "skill_at")}
+            # A guard naming a skill index counts too. Without this an owner missing the skill keeps
+            # the branch and answers the guard false forever, which reads as a mechanic that never
+            # fires rather than as an npc that should not have had the branch.
+            wanted |= {int(token.split(":")[1])
+                       for branches in [cycle, *armed.values()]
+                       for _, _, guards, _ in branches
+                       for token in guards if token.startswith("skillready:")}
             if wanted:
                 able = [n for n in owners if all(i in skills.get(n, {}) for i in wanted)]
                 refused_owners += len(owners) - len(able)
@@ -683,6 +697,9 @@ def main() -> int:
             for npc in owners:
                 for handler, branches in [("cycle", cycle), *armed.items()]:
                     for index, priority, guards, actions in branches:
+                        guards = [f"skillready:{skills[npc][int(g.split(':')[1])]}"
+                                  if g.startswith("skillready:") else g
+                                  for g in guards]
                         for order, action in enumerate(actions):
                             if action[0] in ("skill", "skill_at"):
                                 action = (action[0], skills[npc][action[1]]) + action[2:]

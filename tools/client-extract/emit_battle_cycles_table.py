@@ -215,6 +215,8 @@ def guard_code(token: str) -> str:
         return f"When.AtWaypoint({argument})"
     if kind == "last_waypoint":
         return "When.AtLastWaypoint"
+    if kind == "skillready":
+        return f"When.SkillReady({argument})"
     if kind == "who":
         # The parser already resolved the role to its condition name.
         return "When." + argument

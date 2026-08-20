@@ -247,6 +247,27 @@ public static class When
     /// </remarks>
     public static readonly PatternCondition AtLastWaypoint = ai => ai.AtRouteEnd;
 
+    /// <summary><c>is_skill_count_left</c> — the NPC still has this skill available to cast.</summary>
+    /// <remarks>
+    /// 832 uses, and in every one the branch it guards goes on to cast that same skill. So the
+    /// question is "can I use it now", and this port answers it with the skill's own cooldown:
+    /// <c>NpcSkillEntry.HasCooldown()</c> compares the template cooldown against when it was last
+    /// used. An entry the NPC does not have is not available.
+    /// <para>
+    /// <b>Retail's word is "count", not "cooldown", and the difference is worth stating.</b> If retail
+    /// means a per-fight budget rather than a recharge, this is a close reading and not an exact one —
+    /// a boss would get its skill back where retail had spent it for good. Nothing in this port models
+    /// a budget, so cooldown is the only truthful answer available, and it is the conservative one:
+    /// both readings agree that a skill just used is unavailable, and they differ only in how long.
+    /// </para>
+    /// <para>
+    /// The guard is not redundant against the cast path's own readiness check. Branch lists are
+    /// first-match-wins, so a branch taken on an unavailable skill silently swallows the branches below
+    /// it — the cast fails quietly and the NPC does nothing, where retail would have run the next rung.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition SkillReady(int skillId) => ai => ai.SkillAvailable(skillId);
+
     /// <summary><c>is_npc_state</c> — what the NPC is doing right now.</summary>
     /// <remarks>
     /// 2,834 uses in the 5.8 dump, every one of them asking about <c>NPCI_SELF</c>, which is why there

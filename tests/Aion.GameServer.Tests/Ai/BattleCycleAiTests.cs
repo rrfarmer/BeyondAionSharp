@@ -62,6 +62,15 @@ public sealed class BattleCycleAiTests
 	/// <summary>A plain attack skill, used to watch how a cast picks its creature.</summary>
 	private const int RaidSkill = 17063;
 
+	/// <summary><c>IDAbRe_CoreN_SummonWorms</c>: the worm's own skill in the retail dump.</summary>
+	/// <remarks>This port's <c>npc_skills</c> does not list it for the worm, which is the point.</remarks>
+	private const int WormSummon = 19143;
+
+	/// <summary>A guard the port's own <c>npc_skills</c> does cover, and one of its skills.</summary>
+	private const int SkilledGuard = 235617;
+
+	private const int GuardSkill = 17059;
+
 	/// <summary>
 	/// <c>ND2_FhO</c>'s own self-cast: a skill whose <c>first_target</c> is <c>TARGET</c>, aimed at
 	/// <c>ME</c>.
@@ -315,7 +324,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 59,826 casts across 17,028 npcs, none of them read by a human. The index they came from is only
+	/// 78,050 casts across 20,871 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -334,7 +343,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(59826, casts);
+		Assert.Equal(78050, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -375,7 +384,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(157, lowest);
+		Assert.Equal(420, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -776,7 +785,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1455, spawns);
+		Assert.Equal(1500, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1064,6 +1073,52 @@ public sealed class BattleCycleAiTests
 				["who:AttackedByPlayer"] = 1,
 			}.OrderBy(e => e.Key),
 			seen.OrderBy(e => e.Key));
+	}
+
+	/// <summary><b>A skill the port has no data for does not block the branch that casts it.</b></summary>
+	/// <remarks>
+	/// <c>is_skill_count_left</c> is 832 uses, and in every one the branch it guards goes on to cast
+	/// that same skill -- so it asks "can I use this now", answered here from the skill's own cooldown.
+	/// <para>
+	/// <b>The absent case answers available, which is not the obvious choice.</b> This port's
+	/// <c>npc_skills</c> data holds only 2,124 of the 7,103 npc-and-skill pairs these guards name.
+	/// Casting does not depend on it -- <c>CastSkillAt</c> queues by id and never reads the list -- so
+	/// answering "no entry, not available" would have turned about 70% of these guards permanently
+	/// false, killing branches whose cast would have worked and, because branch lists are
+	/// first-match-wins, promoting the rungs below them. The first version of this pin asserted the
+	/// opposite and failed on the worm's own summon, which is how the gap was found at all.
+	/// </para>
+	/// <para>
+	/// Retail's word is "count" rather than "cooldown", and if it means a per-fight budget this is a
+	/// close reading rather than an exact one -- see <see cref="When.SkillReady"/>. Nothing in this port
+	/// models a budget, and both readings agree a skill just used is unavailable.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AnUnknownSkillDoesNotBlockItsBranch()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		// The worm's own summon in the retail dump, which this port's npc_skills does not list for it.
+		// Unknown means available, so the branch behaves as it did before the guard existed.
+		Assert.True(When.SkillReady(WormSummon)(ai),
+			"a skill the port has no cooldown data for is blocking its branch");
+
+		// And an npc the port *does* have data for answers from that data rather than from the default.
+		Npc guard = harness.Spawn(SkilledGuard, 320f, 300f, 200f);
+		PatternAi guardAi = Assert.IsAssignableFrom<PatternAi>(guard.GetAi());
+		Assert.True(When.SkillReady(GuardSkill)(guardAi), "a listed, uncooled skill is not ready");
+
+		// And once it has been used, its cooldown must actually block the branch. Without this the
+		// condition could be a constant true and every assertion above would still pass -- which a
+		// mutation demonstrated.
+		Aion.GameServer.Model.Skill.NpcSkillEntry entry = Assert.Single(
+			guard.GetSkillList().GetNpcSkills().Where(e => e.GetSkillId() == GuardSkill));
+		entry.SetLastTimeUsed();
+		Assert.False(When.SkillReady(GuardSkill)(guardAi),
+			"a skill used a moment ago is still counted as ready");
 	}
 
 }
