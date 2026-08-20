@@ -34338,3 +34338,53 @@ and pinned together, and that is a piece of work rather than the tail of this on
   is the encounter reading that is owed.
 - The `use_skill` on the beacon wake-up rungs, and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`, both from the
   previous entry.
+
+## The rebirth doors are not a chain, and what actually blocks them
+
+The last entry deferred Panesterra's rebirth doors because they looked like a chain — each controller
+spawning the next, so porting one link would give a door that opens once. **Read whole, they are not a
+chain.** All five spawning patterns place the *same* npc, 702412, and its own pattern has no idle timer
+at all, so it spawns nothing further. The deferral was right for the wrong reason.
+
+What they are: twenty "soul anchor barrier" npcs on plain `aggressive`, each of which should wake, wait
+**600 seconds**, spawn a faction-balance npc on itself for ten seconds, and re-arm.
+
+### The real blocker, which is worth more than the doors
+
+The re-arm is `set_idle_timer delay=0`, and **this port has never settled what zero means.**
+
+| | |
+|---|---|
+| `set_idle_timer` uses in the dump | 6,093 |
+| carrying `delay=0` | **1,090** |
+| of those, inside `on_idle_timer` itself | **1,006** |
+| classes here that pass zero | **0** |
+
+`PatternAi.SetIdleTimer` documents zero as "next tick" and schedules rather than running inline. That
+reading has never been exercised — six classes use the timer and every one passes a real delay. **If it
+is right, each of those 1,006 rungs fires every tick forever**, and the ones in this port's backlog
+spawn an npc each time round, so the first class to port one would spin a running server rather than
+fail a test. Zero could as easily mean "stop", or "fall back to the engine's own idle period"; the dump
+does not say.
+
+`IdleTimerSemanticsTests.NoHandlerArmsTheIdleTimerWithZero` fails the moment anyone passes zero, so the
+question gets answered deliberately instead of discovered in production. The mutation that arms a beacon
+with zero dies against it.
+
+### What this opens up
+
+Splitting the 96 re-arming patterns from the previous entry by that delay changes the picture
+substantially:
+
+- **74 re-arm with a real delay — loops that are portable today**, and none of them needs the semantic.
+- **22 re-arm with `delay=0`** and are blocked, the rebirth doors among them.
+
+The audit prints the split, so the next person starts on the 74 rather than the head of an
+alphabetical list.
+
+### Still missing
+
+- **The zero-delay semantic**, which gates 22 patterns here and 1,006 rungs across the dump. Java's
+  `NpcAI` idle handling is the place to settle it, against the Java tree rather than the client.
+- **The 74 portable loops**, unstarted.
+- The beacon `use_skill` indices and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`, still open.

@@ -85,7 +85,12 @@ def main() -> int:
             at_self = sum(1 for s in spawns if "MY_POINT" in s)
             targets = [re.search(r"<npc_nameid>([^<]+)</npc_nameid>", s) for s in spawns]
             known = sum(1 for t in targets if t and dev.get(t.group(1)) in ai)
-            rearms = "set_idle_timer" in idle.group(1)
+            armed = [int(d) for d in
+                     re.findall(r"<set_idle_timer>\s*<delay>(\d+)</delay>", idle.group(1))]
+            # A re-arm with a real delay is portable today. One with delay=0 is not: retail uses that
+            # 1,006 times inside on_idle_timer and this port has never settled what zero means, so a
+            # class porting one could spin rather than repeat. See IdleTimerSemanticsTests.
+            rearms = "zero" if armed and all(d == 0 for d in armed) else bool(armed)
             rows.append((len(deaf), named.group(1), deaf, len(spawns), at_self, known, rearms))
 
     rows.sort(key=lambda r: (-r[0], -r[3]))
@@ -107,7 +112,9 @@ def main() -> int:
 
     portable = [r for r in rows if r[5] == r[3]]
     print(f"\n{len(portable)} of the {len(rows)} spawn only npcs this port has templates for")
-    print(f"{sum(1 for r in rows if r[6])} re-arm their own timer, so they are loops rather than one-shots")
+    print(f"{sum(1 for r in rows if r[6] is True)} re-arm with a real delay -- loops portable today")
+    print(f"{sum(1 for r in rows if r[6] == 'zero')} re-arm with delay=0, which this port has not "
+          f"settled and cannot port safely")
     return 0
 
 
