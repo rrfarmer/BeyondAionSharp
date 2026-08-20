@@ -33103,3 +33103,56 @@ AI classes turns out to be no. An afternoon is not needed there.
 `NoEventHandlerCarriesTwoUnconditionalBranches` now covers both generated tables — the killers and the
 protector calls — so the guard applies where the patterns are built by code and the sweep covered where
 they are written by hand.
+
+## The over-stated health, characterised and left alone
+
+The last entry left the 7,723 npcs whose health is *higher* here than retail's as owed reading. Read:
+
+| ratio | npcs |
+|---|---|
+| within 2× | 4,869 |
+| over 2× | 2,055 |
+| over 10× | 523 |
+| **over 100×** | **276** |
+
+**It is not a placeholder shape and must not be swept.** The extreme end is dominated by two categories
+that have every reason to differ:
+
+* **training dummies** — `training_dummy_2` and `_4` at 99,999,999 against retail's 4,190. A dummy that
+  cannot be killed is the point of a dummy, and that is a deliberate choice made here;
+* **player skill objects** — the `749xxx` block is ranger traps, spiritmaster servants and the like,
+  where retail's client value is **1** and ours is a few thousand. Retail's client `max_hp` is very
+  unlikely to be the server's authority for a summon that scales with its owner.
+
+One row does look wrong and is recorded rather than changed: `BLDF4_Dramata_ShieldObject` carries
+84,512,384 here against retail's 2,921. A shield object players are meant to break is a wall at that
+figure. It wants somebody who knows the encounter, not a sweep.
+
+So the placeholder repair stands as the whole of the automatic fix, and this direction stays manual.
+That is now a measured conclusion rather than a cautious one.
+
+## Two more families off the reverse audit
+
+**`Ab_AirBomb`** — 96 npcs on `siege_mine`, **18 on plain `general`**. The retail pattern is two lines:
+see an enemy, cast, despawn. An air bomb without the class is a mine that does not go off, and eighteen
+of the abyss fortress mines were scenery.
+
+**`Dread_Surkana`** — 42 on `surkana`, **15 on plain `aggressive`**.
+
+Both bound. Neither class is table-driven, so the binding is the whole fix. The reverse audit goes
+**176 rows to 143**.
+
+Pinned by resolving the class rather than driving the behaviour — the defect was the binding and both
+classes have their own behaviour suites — and stated so a new sibling is covered the day it appears.
+
+### Still missing
+
+- **143 rows left on the reverse audit**, headed by `base_protector` (20), `fortress_protector` (19),
+  `xdrakanpriest` (13) and `kerubiel_fighter` (8). Each wants the reading the medics, the chiefs and
+  these two got.
+- **`BLDF4_Dramata_ShieldObject`'s 84 million**, above.
+- **Every stat other than `max_hp`.** Our templates carry `maxHp` for 63,287 npcs and the combat stats
+  for only a few hundred each — attack, defence and the rest are computed from level and rating rather
+  than stored. Retail's `npcs.xml` specifies them per npc. Comparing them is worth doing, but the fix
+  would mean overriding a calculator rather than correcting data, so it is a design question and not a
+  sweep. That is why it has not been started.
