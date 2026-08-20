@@ -53,6 +53,9 @@ FAMILIES = ["ALPHA", "BETA", "DELTA", "EPSILON", "GAMMA", "ZETA"]
 #: The flag conditions this port can say. `is_flag_var` is **not** among them: retail's read-only test
 #: has no `When` helper here -- `PatternAi` exposes a flag read for diagnostics only -- and emitting a
 #: test-and-set in its place would consume a flag the rung only meant to look at.
+#: Retail's four counters, in the order it names them.
+COUNTERS = ["INTVARI_FIRST", "INTVARI_SECOND", "INTVARI_THIRD", "INTVARI_FOURTH"]
+
 FLAG_KINDS = ("set_flag_var", "unset_flag_var",
               "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var")
 
@@ -86,6 +89,18 @@ def read_guards(block: str) -> list[str] | None:
             if not percent:
                 return None
             out.append("chance:" + percent.group(1))
+        elif kind == "increase_intvar":
+            # A condition that increments as it tests, like the flag idiom. All 1,409 uses in the dump
+            # are conditions and none is an action; see `When.Counting`.
+            indicator = re.search(r"<intvar_indicator>([^<]+)</intvar_indicator>", body)
+            low = re.search(r"<lower_bound>(-?\d+)</lower_bound>", body)
+            high = re.search(r"<upper_bound>(-?\d+)</upper_bound>", body)
+            at_bound = re.search(r"<be_true_only_when_hit_the_bound>(\w+)</", body)
+            if not (indicator and low and high) or indicator.group(1).strip() not in COUNTERS:
+                return None
+            out.append("count:%d:%s:%s:%s" % (
+                COUNTERS.index(indicator.group(1).strip()), low.group(1), high.group(1),
+                "1" if at_bound and at_bound.group(1).upper() == "TRUE" else "0"))
         else:
             return None
     return out

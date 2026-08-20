@@ -60,12 +60,13 @@ GENERIC = {"aggressive", "general", "onedmg_aggressive", "aggressive_noloot", "d
 #: fits. Any injective mapping would do, because flags are per npc and never compared across patterns,
 #: but a stable one keeps generated output diffable.
 SPEAKABLE_CONDITIONS = {"set_flag_var", "unset_flag_var", "is_flag_var", "test_probability",
-                        "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var"}
+                        "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var",
+                        "increase_intvar"}
 SPEAKABLE_ACTIONS = {"spawn", "set_idle_timer", "set_condition_spawn_variable", "despawn_self",
                      "broadcast_message"}
 
 
-def report_vocabulary(patterns_dir, binders, ai, dev) -> int:
+def report_vocabulary(patterns_dir, binders, ai, dev, spoken_for) -> int:
     """Which unported patterns are expressible now, and what the rest are waiting on.
 
     The point is that the answer moves. When the conditional spawn engine was built,
@@ -112,9 +113,24 @@ def report_vocabulary(patterns_dir, binders, ai, dev) -> int:
 
             if missing:
                 blocked[missing] += 1
-            else:
-                speakable.add(named.group(1))
-                speakable_npcs.update(owners)
+                continue
+
+            # Vocabulary is not the only gate, and reporting it alone overstates what a new `Do.` or
+            # `When.` helper will buy. Adding `increase_intvar` made six patterns speakable and bound
+            # none of them: three name npcs a hand-ported class already models, and three spawn npcs
+            # this port has no template for.
+            owned = [n for n in owners if n in spoken_for]
+            if owned:
+                blocked["an encounter already models this npc"] += 1
+                continue
+
+            if any(dev.get(name) not in ai
+                   for name in re.findall(r"<npc_nameid>([^<]+)</npc_nameid>", idle.group(1))):
+                blocked["spawns an npc with no template here"] += 1
+                continue
+
+            speakable.add(named.group(1))
+            speakable_npcs.update(owners)
 
     print(f"{len(speakable)} patterns ({len(speakable_npcs)} npcs) are expressible with what this port "
           f"already has")
@@ -182,7 +198,12 @@ def main() -> int:
             rows.append((len(deaf), named.group(1), deaf, len(spawns), at_self, known, rearms))
 
     if args.vocabulary:
-        return report_vocabulary(args.patterns, binders, ai, dev)
+        spoken_for: set[int] = set()
+        for source in (REPO / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
+            for found in re.finditer(r"=\s*(\d{6})\s*;",
+                                     source.read_text(encoding="utf-8", errors="replace")):
+                spoken_for.add(int(found.group(1)))
+        return report_vocabulary(args.patterns, binders, ai, dev, spoken_for)
 
     rows.sort(key=lambda r: (-r[0], -r[3]))
     if args.pattern:

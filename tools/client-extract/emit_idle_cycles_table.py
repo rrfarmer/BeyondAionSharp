@@ -65,6 +65,9 @@ FOOTER = '''    };
 
 def guard_code(token: str) -> str:
     kind, _, argument = token.partition(":")
+    if kind == "count":
+        slot, low, high, at_bound = argument.split(":")
+        return f"When.Counting({slot}, {low}, {high}, {'true' if at_bound == '1' else 'false'})"
     if kind == "set_flag_var":
         return f"When.FirstTime({argument})"
     if kind == "unset_flag_var":

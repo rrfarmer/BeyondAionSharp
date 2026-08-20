@@ -35057,3 +35057,47 @@ outright, so the remark says so and the pins fix the behaviour either way.
   between them hold most of what is left.
 - **16 patterns with no wake-up delay** this port can find.
 - **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
+
+## Teaching the extractor `increase_intvar` bound nothing, and why the estimate was wrong
+
+The previous entry said the new condition would unblock 11 patterns. The extractor learned it, and the
+answer is **zero**.
+
+Six patterns became vocabulary-expressible. Of those:
+
+- **three name an npc a hand-ported class already models** — `IDTiamat_BurrowingWorm_BurrowDispel`
+  among them, the same dispel worm that broke three pins two entries ago;
+- **three spawn an npc this port has no template for** — the `F5_DirectPotalMonster_Ctrl_*` trio, whose
+  target `833526` does not exist here.
+
+Nothing new binds. The condition is still right — retail puts `increase_intvar` in conditions and this
+port had it as an action — and it is pinned. But the *reason for building it* was wrong again.
+
+### The estimate was wrong because the report only asked one question
+
+`--vocabulary` measured whether a pattern's conditions and actions could be **said**. Three other gates
+decide whether it can be **bound**: the npc must not already belong to an encounter, the npcs it spawns
+must exist here, and it needs a wake-up delay. The report now applies all of them, and immediately
+reads:
+
+```
+0 patterns (0 npcs) are expressible with what this port already has
+   22  action display_system_message
+   16  no wake delay to start the cycle
+    3  spawns an npc with no template here
+    3  an encounter already models this npc
+    2  action use_skill / say_to_all / despawn
+```
+
+**This is the second time in three entries that closing a vocabulary gap bought nothing.** The first was
+world flags. The lesson written down then — "a vocabulary gap is only worth closing if it is the last one
+for something" — was right, and the fix is not to remember it but to make the tool refuse to say
+otherwise.
+
+### Still missing
+
+- **`display_system_message`**, now the largest at 22 patterns: a string id this port has no table for.
+  It is worth checking whether those ids are already carried somewhere before assuming a new table.
+- **16 patterns with no wake-up delay** this port can find — the second largest, and unexamined: they
+  may start their cycle from an event other than `on_wake_up`.
+- **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
