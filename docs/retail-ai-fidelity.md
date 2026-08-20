@@ -36374,3 +36374,39 @@ not `idle_cycle_passive`, so the 67 dropped out of their own table on the next r
   class from a passive one, and each needed a different workaround.
 - **`GAb1_PvPStatus`**, **`control_door`**, **6,800 duplicate gated placements**, **177 encounters
   missing an add**, **retail cast timings.**
+
+## The harness could observe aggro all along
+
+The previous entry recorded that a mutation restoring the aggressive handler survived every pin, and
+blamed the harness: `CanThink()`, `AggroNotifier`, "neither reaches anything the harness stands up".
+**That was wrong, and wrong in the way this log keeps catching itself** -- an observation about the npc
+being used, written down as a fact about the tool.
+
+Probing it directly: an aggro list accepts hate only from a creature the npc is **hostile to**, and most
+wave controllers are not hostile to players at all. Swap in an npc that would actually fight one and
+both the direct hate and the full aggro event land, at once.
+
+So the pin is now decisive. The same npc is spawned twice, once under `idle_cycle_passive` and once
+under `aggressive`, and only the second takes the event -- one alone proves nothing, because a class
+that never aggros and a harness that never delivers aggro look identical. The mutation dies.
+
+### A second thing the first version got wrong
+
+Standing the two npcs twenty metres apart made the pin fail: an aggressive npc's aggro is **broadcast to
+nearby friends**, so the passive one joined the fight through the support path. `PassivePatternAi`
+overrides `HandleCreatureNeedsSupportByGuard` but not `HandleCreatureNeedsSupport`, which is faithful --
+`GeneralNpcAI` refuses both, `AggressiveNpcAI` only overrides the guard one -- so the passive npc
+answering a friend's call is correct behaviour and not a hole. They are simply far apart now, each with
+its own player.
+
+Three entries have now been written saying some form of "this cannot be observed here". Two of them were
+false. The reliable version of the sentence is **"I could not observe it with this npc"**, and the next
+step after it is to try a different npc rather than to write the limitation down.
+
+### Still missing
+
+- **207 patterns on `general` npcs that a passive pattern table could run** (295 with
+  `increase_intvar`). `PassivePatternAi` exists and is now pinned; the table does not exist.
+- **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), both blocked on evidence
+  the data does not contain.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**

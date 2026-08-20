@@ -26,9 +26,8 @@ public sealed class IdleCycleAiTests
 	/// <summary>The add it places, five then three.</summary>
 	private const int Add = 282190;
 
-	/// <summary>One of the 67 controllers retail keeps passive -- a MONSTER tribe, so a player standing
-	/// next to it would be aggroed by an aggressive class and is not by this one.</summary>
-	private const int PassiveController = 282528;
+	/// <summary>An npc hostile enough to players that the aggro event reaches its list.</summary>
+	private const int HostileEnough = 217307;
 
 	/// <summary>The one it places alongside the second wave.</summary>
 	private const int Leader = 282191;
@@ -184,40 +183,45 @@ public sealed class IdleCycleAiTests
 
 		Assert.Equal(0, harness.LiveNpcs().Count(npc => npc.GetNpcId() == Add));
 	}
-	/// <summary><b>A controller retail keeps passive does not attack anybody.</b></summary>
+	/// <summary><b>The passive class does not take the aggro event; the aggressive one does.</b></summary>
 	/// <remarks>
 	/// <b>67 of the 83 npcs this table drives were <c>general</c> before it bound them</b>, and the
-	/// class it bound them to descends from <c>AggressiveNpcAI</c>. For several entries they were
-	/// scenery that attacked on sight, and every pin in this file stayed green the whole time: the
-	/// waves still arrived on schedule, which is all any of them looked at.
+	/// class it bound them to descends from <c>AggressiveNpcAI</c>. For a dozen entries they were
+	/// scenery that attacked on sight, and every pin in this file stayed green: the waves still arrived
+	/// on schedule, which is all any of them looked at.
 	/// <para>
-	/// <b>This pin does not prove the passivity, and the difference is worth being clear about.</b> A
-	/// mutation restoring the aggressive handler survives it: <c>AggressiveNpcAI</c> guards that handler
-	/// on <c>CanThink()</c> and then defers through an <c>AggroNotifier</c>, and neither reaches
-	/// anything the harness stands up. What is pinned is that these npcs are bound to the passive class
-	/// and that nothing here hates anybody; the base class itself is asserted only by the binding.
+	/// Both halves are here because one alone proves nothing -- a class that never aggros and a harness
+	/// that never delivers aggro look identical. The same npc is spawned under each class, so the only
+	/// difference is the class.
 	/// </para>
 	/// <para>
-	/// The equivalent pin in the wake tables <i>is</i> decisive, because that class descends from
-	/// <c>GeneralNpcAI</c> and a type check settles it. This one cannot, because
-	/// <c>PassivePatternAi</c> inherits <c>AggressiveNpcAI</c> and puts its three handlers back.
+	/// The npc is a boss rather than one of the 67, and deliberately: hate is only accepted from a
+	/// creature the npc is hostile to, and most wave controllers are not hostile to players at all.
+	/// Two earlier attempts at this pin used a controller, watched nothing happen either way, and were
+	/// written off as the harness being unable to observe aggro. It can; the npc has to be one that
+	/// would fight a player in the first place.
 	/// </para>
 	/// </remarks>
 	[Fact]
-	public void APassiveControllerStaysPassive()
+	public void ThePassiveClassIgnoresAggroAndTheAggressiveOneDoesNot()
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc controller = harness.Spawn(PassiveController, 300f, 300f, 200f);
+		Npc passive = harness.SpawnWithAi(HostileEnough, "idle_cycle_passive", 300f, 300f, 200f);
+		// Far apart on purpose: an aggressive npc's aggro is broadcast to nearby friends, so a passive
+		// one standing beside it joins the fight through the support path and the pin proves nothing.
+		// The first version of this test had them twenty metres apart and failed for that reason.
+		Npc aggressive = harness.SpawnWithAi(HostileEnough, "aggressive", 900f, 900f, 200f);
 		Player player = harness.SpawnPlayer(302f, 300f, 200f);
-		BossAiHarness.MakeMutuallyKnown(controller, player);
+		Player other = harness.SpawnPlayer(902f, 900f, 200f);
+		BossAiHarness.MakeMutuallyKnown(passive, player);
+		BossAiHarness.MakeMutuallyKnown(aggressive, other);
 
-		controller.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureAggro, player);
+		passive.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureAggro, player);
+		aggressive.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureAggro, other);
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 
-		// Behaviour, not type: PassivePatternAi still inherits AggressiveNpcAI and puts the three
-		// handlers back the way GeneralNpcAI has them, so the class check that works for the wake
-		// tables says nothing here. What matters is that the aggro event moved nothing.
-		Assert.Empty(controller.GetAggroList().Stream());
-		Assert.False(controller.GetAi().IsInState(Aion.GameServer.Ai.AIState.FIGHT));
+		Assert.NotEmpty(aggressive.GetAggroList().Stream());
+		Assert.Empty(passive.GetAggroList().Stream());
 	}
+
 }
