@@ -42,6 +42,13 @@ import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 from client_npc_names import npc_names  # noqa: E402
 from extract_idle_cycles import read_actions, read_guards, string_ids  # noqa: E402
+from extract_battle_cycles import ROLES, TARGETS  # noqa: E402
+
+#: The skill targets this table can say: the hate-list ones plus retail's role targets, which the queue
+#: carries as a creature. The same map the battle table uses, so the two cannot disagree about what
+#: `OBJI_SELF` means -- and it is very nearly the only one that matters here, 2,387 of the 2,389 casts
+#: in these handlers being self-targeted.
+SKILL_TARGETS = dict(TARGETS) | {name: "@" + role for name, role in ROLES.items()}
 
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
@@ -78,7 +85,7 @@ def read_handler(body: str, name: str, dev, known, strings):
         actions: list[tuple] = []
         found = re.search(r"<actions>(.*?)</actions>", branch.group(1), re.S)
         if found:
-            actions = read_actions(found.group(1), dev, known, strings)
+            actions = read_actions(found.group(1), dev, known, strings, SKILL_TARGETS)
             if actions is None:
                 return None
         if not actions:
@@ -103,6 +110,37 @@ def main() -> int:
     dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
     strings = string_ids(args.repo)
 
+    # npc -> index -> skill id, castable here. Retail names a skill by its place in that npc's own list,
+    # so one pattern resolves differently for each npc running it.
+    skills: dict[int, dict[int, int]] = collections.defaultdict(dict)
+    for line in (args.repo / "tools/client-extract/out/npc_skill_lists.tsv").read_text(
+            encoding="utf-8").splitlines()[1:]:
+        fields = line.split("\t")
+        if fields[5] == "TRUE":
+            skills[int(fields[0])][int(fields[1])] = int(fields[3])
+
+    # An npc that a *rotation* places is an add somebody else owns for the length of a fight, and its
+    # own wake pattern -- often a cast and a despawn -- contradicts the encounter that placed it.
+    # Kasika's fourth-tier guard is the case: `SummonerAI` brings it as a guard, retail also gives it a
+    # hazard pattern, and both accounts cannot be authoritative. Death spawns are deliberately not
+    # listed: a relay placed by a dying npc has no other account of its behaviour, and excluding those
+    # puts back a bug this log already fixed once.
+    placed: set[int] = set()
+    for table, column in (("battle_cycles.tsv", "a1"), ("idle_cycles.tsv", "a1"),
+                          ("idle_spawns.tsv", "placed")):
+        source = args.repo / "tools/client-extract/out" / table
+        if not source.exists():
+            continue
+        lines = source.read_text(encoding="utf-8").splitlines()
+        head = {name: index for index, name in enumerate(lines[0].split("	"))}
+        for line in lines[1:]:
+            fields = line.split("	")
+            if "kind" not in head or fields[head["kind"]].startswith("spawn"):
+                try:
+                    placed.add(int(fields[head[column]]))
+                except (ValueError, KeyError):
+                    pass
+
     spoken_for: set[int] = set()
     for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
         for found in re.finditer(r"=\s*(\d{6})\s*;",
@@ -117,6 +155,7 @@ def main() -> int:
 
     rows: list[tuple] = []
     refused: collections.Counter = collections.Counter()
+    dropped_owners = 0
     patterns = 0
     for path in sorted(args.patterns_dir.rglob("NpcAIPatterns*.xml")):
         text = S.read_text(path)
@@ -129,7 +168,7 @@ def main() -> int:
                 continue
 
             owners = [n for n in binders.get(named.group(1), [])
-                      if ai.get(n) in GENERIC and n not in spoken_for]
+                      if ai.get(n) in GENERIC and n not in spoken_for and n not in placed]
             if not owners:
                 continue
 
@@ -145,6 +184,18 @@ def main() -> int:
             # rules have to be the same rule read from both ends, or the tables overlap and every npc
             # in the intersection is claimed twice -- which is how 390 of them ended up here when 93
             # had anything to gain.
+            # An owner whose skill list cannot answer every index is dropped, not the pattern: one
+            # npc missing a skill says nothing about the others running the same script.
+            wanted = {action[1] for rungs in read.values() for _, _, _, a in rungs
+                      for action in a if action[0] == "skill"}
+            if wanted:
+                able = [n for n in owners if all(i in skills.get(n, {}) for i in wanted)]
+                dropped_owners += len(owners) - len(able)
+                owners = able
+                if not owners:
+                    refused["no npc here whose skill list answers the indices"] += 1
+                    continue
+
             total = sum(len(a) for rungs in read.values() for _, _, _, a in rungs)
             writes = sum(1 for rungs in read.values() for _, _, _, a in rungs
                          for action in a if action[0] == "var")
@@ -159,7 +210,14 @@ def main() -> int:
             for npc in owners:
                 for handler in HANDLERS:
                     for index, priority, guards, actions in read[handler]:
+                        # A branch that casts and then removes the npc is a hazard, and the queued
+                        # path would lose the cast: the queue is drained by the attack loop and the npc
+                        # is gone first. Marked here so the emitter can choose the immediate helper.
+                        hazard = any(a[0] == "despawn_self" for a in actions)
                         for order, action in enumerate(actions):
+                            if action[0] == "skill":
+                                action = ("skill_now" if hazard and action[4] == "ME" else "skill",
+                                          skills[npc][action[1]]) + action[2:]
                             rows.append((npc, named.group(1), handler, index, priority,
                                          "|".join(guards), order) + action)
 
@@ -172,7 +230,9 @@ def main() -> int:
 
     npcs = {r[0] for r in rows}
     print(f"{patterns} passive patterns across {len(npcs)} npcs, {len(rows)} actions -> {args.out}")
-    for reason, count in refused.most_common(5):
+    if dropped_owners:
+        print(f"    {dropped_owners} npcs dropped from a pattern their skill list cannot answer")
+    for reason, count in refused.most_common(6):
         print(f"    {count:4d} refused: {reason}")
     return 0
 

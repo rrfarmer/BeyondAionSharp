@@ -1779,6 +1779,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
         lock (gate)
         {
+            spawnsMade++;
             if (untilFightEnds && !ending)
                 transientSpawns.Add(npc);
             if (!spawnGroups.TryGetValue(spawnId, out List<Npc>? group))

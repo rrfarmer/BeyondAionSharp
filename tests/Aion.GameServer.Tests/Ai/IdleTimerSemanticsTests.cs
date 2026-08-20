@@ -1,5 +1,6 @@
 using System;
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 
@@ -56,10 +57,12 @@ public sealed class IdleTimerSemanticsTests
 	{
 		using BossAiHarness harness = BossAiHarness.For(DragonLordsRefuge).WithWorldSize(4096)
 			.WithAi(typeof(TiamatBeaconAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
-		harness.Spawn(Beacon, 460f, 514f, 417f);
+		Npc beacon = harness.Spawn(Beacon, 460f, 514f, 417f);
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 
-		Assert.Equal(11, harness.LiveNpcs().Count(n => n.GetNpcId() == 283068));
+		// The question is whether the timer armed, and the beacon's own spawn count answers it. The
+		// breath npcs are hazards that cast and remove themselves, so counting them finds nothing.
+		Assert.Equal(11, ((PatternAi)beacon.GetAi()).SpawnCount);
 	}
 }

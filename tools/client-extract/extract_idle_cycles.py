@@ -194,6 +194,13 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 return None
             out.append(("skill", int(index.group(1)), 0, 0, skill_targets[who.group(1)],
                         0.0, 0.0, 0.0))
+        elif kind == "use_skill" and skill_targets is not None:
+            index = re.search(r"SKILLI_INDEX_(\d+)", body)
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not index or not who or who.group(1) not in skill_targets:
+                return None
+            out.append(("skill", int(index.group(1)), 0, 0, skill_targets[who.group(1)],
+                        0.0, 0.0, 0.0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "broadcast_message":

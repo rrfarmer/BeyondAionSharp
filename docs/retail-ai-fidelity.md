@@ -36734,3 +36734,45 @@ idle handlers until those two are understood. The tree is green and `regen_check
 - **`use_skill` in wake and idle handlers: 284 patterns**, behind both of the above.
 - **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
   **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## The hazards land, and the "unexplained" counter was a patch that never applied
+
+`SpawnCount` read zero for a beacon that plainly spawned, and the previous entry called it unexplained
+and stopped. It was **an edit that silently did not match**: the `spawnsMade++` line was written against
+surrounding text that had since changed, so the counter was declared and never incremented. The same
+class of failure as the three header-column drifts earlier in this log, and the same cause -- a
+scripted replacement whose anchor had moved. It now reads 11 where the live count read 11.
+
+With that fixed, `use_skill` lands in the wake and idle handlers:
+
+| | before | after |
+|---|---|---|
+| wake/idle patterns | 658 across 815 npcs | **830 across 1,319** |
+| hazard rungs using the immediate cast | 0 | **115** |
+
+`NLycan_SELC_S2` -- the tornado a Tiamat beacon lays -- now casts and removes itself, which is what
+retail says it does and what this port has never done.
+
+### Five encounters re-pinned, one rule found
+
+Four pins moved from counting what is left standing to counting what the spawner did, which is the
+question they were always asking; two stand-ins moved to npcs that are genuinely inert now.
+
+The seventh, Kasika's fourth-tier guard, gave up the rule the last three entries were groping for.
+`SummonerAI` brings that npc as a guard **and** retail gives it a hazard pattern that casts once and
+vanishes. Both accounts cannot be authoritative, so **an npc placed by a rotation gives up its own wake
+pattern**: the encounter that placed it owns it for the length of the fight.
+
+Death spawns are deliberately excluded from that rule. A relay placed by a dying npc has no other
+account of its behaviour, and listing them puts back a bug this log already fixed. The relay pin moved
+to `IDArena_Solo_InviNPC_3`, which nothing places at all.
+
+### Still missing
+
+- **The rule is a heuristic, not a reading of retail.** Retail runs both accounts; this port keeps the
+  hand-written one where they collide. Every npc it gives up is a pattern retail runs and we do not,
+  and nobody has counted them.
+- **381 patterns still refused** for a branch this port cannot say, unexamined since `use_skill` left
+  the list.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
+  **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**

@@ -1,4 +1,5 @@
 using System;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 
@@ -38,7 +39,11 @@ public sealed class TiamatBeaconAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 
-		Assert.Equal(11, harness.LiveNpcs().Count(n => n.GetNpcId() == 283068));
+		// What the beacon laid, not what is left standing. The breath npcs are hazards: their own
+		// retail pattern casts and removes them inside the tick, so the ground is empty a moment later
+		// however well the beacon worked. They used to stand there for ever, which is the only reason
+		// this could once be written as a count of the living.
+		Assert.Equal(11, ((PatternAi)beacon.GetAi()).SpawnCount);
 	}
 
 	/// <summary><b>And nothing lands before the count does.</b></summary>
@@ -65,9 +70,9 @@ public sealed class TiamatBeaconAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(2));
 
-		Npc hit = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == 283235));
-		Assert.Equal(beacon.GetX(), hit.GetX(), 1);
-		Assert.Equal(beacon.GetY(), hit.GetY(), 1);
+		// One hit laid, on the beacon's own two-second delay. Its position cannot be asserted after the
+		// fact any more, the hazard casting and going, so what is pinned is that exactly one was laid.
+		Assert.Equal(1, ((PatternAi)beacon.GetAi()).SpawnCount);
 	}
 
 	/// <summary><b>Every beacon in the table carries a damage npc and a delay.</b></summary>

@@ -19,8 +19,14 @@ public sealed class WakeIdlePatternAiTests
 {
 	private const int Map = 300520000;
 
-	/// <summary><c>IDDF3_BroadNPC_System</c>: shouts to fifty metres and removes itself.</summary>
-	private const int Relay = 282155;
+	/// <summary><c>IDArena_Solo_InviNPC_3</c>: broadcasts once and removes itself.</summary>
+	/// <remarks>
+	/// This was <c>IDDF3_BroadNPC_System</c> until that npc turned out to be placed by a battle
+	/// rotation, and the table now gives up npcs another rotation owns for the length of a fight --
+	/// their own wake pattern contradicts the encounter that placed them. This relay is placed by
+	/// nothing, so its pattern is the only account of what it does.
+	/// </remarks>
+	private const int Relay = 205691;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Map).WithWorldSize(4096)

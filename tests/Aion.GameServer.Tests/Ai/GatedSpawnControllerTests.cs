@@ -18,8 +18,14 @@ public sealed class GatedSpawnControllerTests
 {
 	private const int Map = 300520000;
 
-	/// <summary>Any npc with a template; what it does is irrelevant to the gate.</summary>
-	private const int Guard = 283069;
+	/// <summary>An npc with a template and no pattern of its own, so only the gate moves it.</summary>
+	/// <remarks>
+	/// This was 283069, a Tiamat tornado, which turned out to be a hazard: its retail pattern casts and
+	/// despawns it. Once that pattern ran the stand-in removed itself and these tests failed for a
+	/// reason with nothing to do with gates. "Any npc with a template" stopped meaning "inert" as the
+	/// pattern tables grew.
+	/// </remarks>
+	private const int Guard = 201077;
 
 	private static GatedSpawn Group(string gate, bool despawnAtOther = true, int npcId = Guard) =>
 		new GatedSpawn(npcId, 300f, 300f, 200f, 0, 0, despawnAtOther, SpawnCondition.Parse(gate));

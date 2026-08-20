@@ -43,11 +43,14 @@ public sealed class IdleSpawnerAiTests
 	public void AnAtTheNpcPlacementLandsOnTheSpawner()
 	{
 		using BossAiHarness harness = NewHarness();
-		Npc spawner = harness.Spawn(282447, 700f, 800f, 250f);
+		// 282447 places a Tiamat tornado, a hazard whose own pattern casts and removes it, so nothing
+		// is left to measure a moment later. This spawner places something that stays, which is what a
+		// geometry claim needs; the hazard's own behaviour is pinned in the wake/idle tests.
+		Npc spawner = harness.Spawn(855204, 700f, 800f, 250f);
 
-		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+		harness.Clock.Advance(TimeSpan.FromSeconds(6));
 
-		Npc placed = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == 283069));
+		Npc placed = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == 855206));
 		Assert.Equal(spawner.GetX(), placed.GetX(), 0);
 		Assert.Equal(spawner.GetY(), placed.GetY(), 0);
 	}
