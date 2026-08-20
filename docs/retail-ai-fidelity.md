@@ -36851,3 +36851,36 @@ pair inconsistent and the bindings pointing at a table that no longer holds the 
 - **`change_world_scene_status` (54)**, **`control_door` (37)**, **`enable_area` (31)**.
 - **17 npcs give up their patterns** to `spawn_helpers.xml`, each a known divergence.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## goto_waypoint: an index, not a path
+
+`goto_waypoint` was the largest refusal at 99 patterns. Reading it settled what it means: the
+`<waypoint>` is **an index into the npc's own route**, not the name of one, and **929 of its 1,112 uses
+ask for step 0**. `MoveController.SetWalkerTemplate` already took a starting step, so
+`WalkManager.StartRouteWalkingAt` is the ordinary route walk with that argument filled in rather than a
+second way of moving.
+
+| | before | after |
+|---|---|---|
+| wake/idle patterns | 919 across 1,441 npcs | **984 across 1,625** |
+
+**`move_type` is refused rather than approximated.** Retail distinguishes walking from running and this
+port's route walking has one speed, so the 210 uses asking for a run are turned away instead of quietly
+walked. Walking an npc retail runs is a small lie that no test would ever catch.
+
+The pin is about the case that will actually happen: retail's patterns are shared across npcs and not
+every one has the route the pattern assumes, so the rung has to be harmless on the ones that do not. A
+mutation dropping the path-walker check dies.
+
+**A mutation accepting a step past the end of the route survives** -- every npc in the table asks for
+step 0, and none has a route short enough to make an out-of-range index observable. The guard is there
+because a table that grows will eventually need it, and it is recorded as unpinned rather than assumed
+covered.
+
+### Still missing
+
+- **`change_world_scene_status` (54)** and **`control_door` (37)** -- the next refusals, and both are
+  world state rather than npc behaviour.
+- **`move_type` (210 runs)**, above.
+- **17 npcs give up their patterns** to `spawn_helpers.xml`.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**

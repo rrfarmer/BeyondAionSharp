@@ -1334,6 +1334,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary><c>goto_waypoint</c> — begin walking the route named on this NPC's spawn.</summary>
+    /// <summary>
+    /// <c>goto_waypoint</c>: walk this npc's own route from a given step.
+    /// </summary>
+    /// <remarks>
+    /// Retail's waypoint is an index into the npc's route rather than a named path, so this is the
+    /// ordinary route walk with a starting step. An npc that is not a path walker, or a step past the
+    /// end of its route, does nothing -- retail's patterns are shared across npcs and not every one of
+    /// them has the route the pattern assumes.
+    /// <para>
+    /// <b>Retail's <c>move_type</c> is not carried.</b> It distinguishes walking from running, and this
+    /// port's route walking has one speed; the extractor refuses the 210 uses that ask for a run rather
+    /// than quietly walking them. See docs/retail-ai-fidelity.md.
+    /// </para>
+    /// </remarks>
+    public void GotoWaypoint(int step)
+    {
+        if (!IsDead())
+            WalkManager.StartRouteWalkingAt(this, step);
+    }
+
     public void StartWalking()
     {
         if (GetOwner().IsPathWalker())

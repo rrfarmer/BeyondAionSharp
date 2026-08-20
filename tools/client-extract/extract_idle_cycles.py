@@ -201,6 +201,15 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 return None
             out.append(("skill", int(index.group(1)), 0, 0, skill_targets[who.group(1)],
                         0.0, 0.0, 0.0))
+        elif kind == "goto_waypoint":
+            # Retail's waypoint is an index into the npc's own route, not a named path. `move_type`
+            # says walk or run, and this port's route walking has one speed, so a rung asking for a run
+            # is refused rather than quietly walked -- 210 of the 1,112 uses.
+            step = re.search(r"<waypoint>(\d+)</waypoint>", body)
+            how = re.search(r"<move_type>(\w+)</move_type>", body)
+            if not step or (how and how.group(1) == "MOVETYPE_RUN"):
+                return None
+            out.append(("waypoint", int(step.group(1)), 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "do_nothing":
             # Carried rather than skipped: a branch list is first-match-wins, so a matching do-nothing
             # branch is retail saying "this case, and none of the ones below". Dropping it promotes the

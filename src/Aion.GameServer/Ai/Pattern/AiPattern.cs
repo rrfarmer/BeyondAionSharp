@@ -722,6 +722,9 @@ public static class Do
     /// </remarks>
     public static PatternAction Nothing() => static _ => { };
 
+    /// <summary><c>goto_waypoint</c>: walk the npc's own route from the given step.</summary>
+    public static PatternAction GotoWaypoint(int step) => ai => ai.GotoWaypoint(step);
+
     public static PatternAction StartWalking() => ai => ai.StartWalking();
 
     /// <summary><c>attack_most_hating</c> — end the march and engage.</summary>

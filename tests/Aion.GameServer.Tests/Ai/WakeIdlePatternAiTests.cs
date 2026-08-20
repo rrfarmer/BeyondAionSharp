@@ -80,6 +80,9 @@ public sealed class WakeIdlePatternAiTests
 		Assert.Empty(passive.GetAggroList().Stream());
 	}
 
+	/// <summary><c>ND2_WhG3</c>: its wake rung sends it to step 0 of its route.</summary>
+	private const int Waypointer = 214713;
+
 	/// <summary>The tornado a Tiamat beacon lays: casts once, then removes itself.</summary>
 	private const int Tornado = 283069;
 
@@ -186,7 +189,30 @@ public sealed class WakeIdlePatternAiTests
 
 		// Rungs, not actions: 58 do-nothing actions collapse into 39 branches, some rungs carrying the
 		// element more than once. The branch is the unit that blocks, so the branch is what is counted.
-		Assert.Equal(39, carried);
+		Assert.Equal(40, carried);
 		Assert.True(blocking > 0, "no do-nothing branch sits above another, so carrying them buys nothing");
+	}
+	/// <summary><b>A waypoint rung starts the npc on its own route.</b></summary>
+	/// <remarks>
+	/// Retail's <c>goto_waypoint</c> carries an index into the npc's route rather than a path name, and
+	/// 929 of its 1,112 uses ask for step 0. <c>SetWalkerTemplate</c> already took a starting step, so
+	/// the helper is the ordinary route walk with that argument filled in.
+	/// <para>
+	/// An npc that is not a path walker does nothing, which is the case pinned here: retail's patterns
+	/// are shared across npcs and not every one of them has the route the pattern assumes, so the rung
+	/// has to be safe on the ones that do not rather than throwing or walking somewhere arbitrary.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWaypointRungIsHarmlessOnAnNpcWithNoRoute()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc walker = harness.Spawn(Waypointer, 300f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.False(walker.GetAi().IsInState(Aion.GameServer.Ai.AIState.WALKING),
+			"an npc with no route was sent walking anyway");
+		Assert.Contains(harness.LiveNpcs(), npc => npc.GetNpcId() == Waypointer);
 	}
 }

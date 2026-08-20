@@ -42,6 +42,40 @@ public class WalkManager
         return true;
     }
 
+    /// <summary>
+    /// Retail's <c>goto_waypoint</c>: start this npc's route at a given step rather than where it left
+    /// off.
+    /// </summary>
+    /// <remarks>
+    /// The step index is retail's own -- its <c>&lt;waypoint&gt;</c> is a position in the npc's route,
+    /// not a route name, and 929 of its 1,112 uses ask for step 0. `SetWalkerTemplate` already takes a
+    /// starting step, so this is the ordinary route walk with that argument filled in rather than a
+    /// second way of moving.
+    /// </remarks>
+    public static bool StartRouteWalkingAt(NpcAI npcAI, int step)
+    {
+        if (!AIConfig.ACTIVE_NPC_MOVEMENT || !npcAI.GetOwner().IsSpawned())
+            return false;
+
+        Npc owner = npcAI.GetOwner();
+        if (!owner.IsPathWalker())
+            return false;
+
+        WalkerTemplate template = owner.GetMoveController().GetWalkerTemplate()
+            ?? DataManager.WALKER_DATA.GetWalkerTemplate(owner.GetSpawn().GetWalkerId());
+        if (template == null || step < 0 || step >= template.GetRouteSteps().Count)
+            return false;
+
+        owner.GetMoveController().SetWalkerTemplate(template, step);
+        if (!npcAI.SetStateIfNot(AIState.WALKING) || !npcAI.SetSubStateIfNot(AISubState.WALK_PATH))
+            return false;
+
+        owner.GetMoveController().SetRouteStep(FindNextRoutStep(owner));
+        EmoteManager.EmoteStartWalking(owner);
+        owner.GetMoveController().MoveToNextPoint();
+        return true;
+    }
+
     private static bool StartRouteWalking(NpcAI npcAI)
     {
         Npc owner = npcAI.GetOwner();
