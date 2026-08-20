@@ -58,46 +58,46 @@ internal static class BattleCycles
 {{
     /// <summary>What the npc does on entering combat -- normally arming the first timer.</summary>
     internal static PatternBranch[] ArmingRungsFor(int npcId)
-        => OnEnterAttackState.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnEnterAttackStateOf.TryGetValue(npcId, out int variant) ? OnEnterAttackStateVariants[variant] : [];
 
     /// <summary>Rungs that arm a timer when another npc sends a message.</summary>
     internal static PatternBranch[] MessageRungsFor(int npcId)
-        => OnMessage.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnMessageOf.TryGetValue(npcId, out int variant) ? OnMessageVariants[variant] : [];
 
     /// <summary>Rungs that arm a timer on being hit.</summary>
     internal static PatternBranch[] AttackedRungsFor(int npcId)
-        => OnAttacked.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnAttackedOf.TryGetValue(npcId, out int variant) ? OnAttackedVariants[variant] : [];
 
     /// <summary>Rungs that arm a timer on being spelled.</summary>
     internal static PatternBranch[] SpelledRungsFor(int npcId)
-        => OnSpelled.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnSpelledOf.TryGetValue(npcId, out int variant) ? OnSpelledVariants[variant] : [];
 
     /// <summary>Rungs that arm a timer on waking.</summary>
     internal static PatternBranch[] WakeRungsFor(int npcId)
-        => OnWakeUp.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnWakeUpOf.TryGetValue(npcId, out int variant) ? OnWakeUpVariants[variant] : [];
 
     /// <summary>Rungs that arm a timer on seeing another npc.</summary>
     internal static PatternBranch[] SeeNpcRungsFor(int npcId)
-        => OnSeeNpc.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnSeeNpcOf.TryGetValue(npcId, out int variant) ? OnSeeNpcVariants[variant] : [];
 
     /// <summary>Rungs that arm a timer on seeing a player.</summary>
     internal static PatternBranch[] SeeUserRungsFor(int npcId)
-        => OnSeeUser.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnSeeUserOf.TryGetValue(npcId, out int variant) ? OnSeeUserVariants[variant] : [];
 
     /// <summary>What the npc leaves behind when it dies.</summary>
     internal static PatternBranch[] DeathRungsFor(int npcId)
-        => OnDie.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnDieOf.TryGetValue(npcId, out int variant) ? OnDieVariants[variant] : [];
 
     /// <summary>What it does when the fight ends without it dying.</summary>
     internal static PatternBranch[] LeaveFightRungsFor(int npcId)
-        => OnLeaveAttack.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => OnLeaveAttackOf.TryGetValue(npcId, out int variant) ? OnLeaveAttackVariants[variant] : [];
 
     /// <summary>What each timer does when it fires, in retail's order.</summary>
     internal static PatternBranch[] CycleRungsFor(int npcId)
-        => Cycle.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+        => CycleOf.TryGetValue(npcId, out int variant) ? CycleVariants[variant] : [];
 
     /// <summary>Every npc this table drives.</summary>
-    internal static IEnumerable<int> Npcs => Cycle.Keys;
+    internal static IEnumerable<int> Npcs => CycleOf.Keys;
 
 '''
 
@@ -204,34 +204,64 @@ CHUNK = 100
 
 
 def write_table(out, field: str, summary: str, branches, meta, names) -> None:
-    npcs = sorted(branches)
-    chunks = [npcs[i:i + CHUNK] for i in range(0, len(npcs), CHUNK)] or [[]]
+    """Emit one handler as deduplicated variants plus an npc -> variant map.
+
+    **The rows were 6.7x redundant.** Retail keys a pattern by name and many npcs run the same one, so
+    emitting per npc wrote the same branch list once per owner: 166,639 rows for 24,923 distinct ones,
+    in a 15MB source file Roslyn chewed through on every build. That was affordable only while the
+    table stayed this size, and it is directly in the way of reading more handlers per npc.
+
+    Deduplication is on **the generated text of the branch array**, not on the fields we believe vary.
+    That distinction is the safety argument. A rule like "casts vary by npc, everything else is
+    pattern-level" happens to be true today -- measured: 0 of 14,921 non-cast sites differ between npcs
+    of one pattern -- but it is a claim about the data that a later extractor change could quietly
+    falsify. Two npcs share an entry only when the code emitted for them is byte-identical, so this
+    cannot lose a difference it failed to anticipate.
+    """
+    variants: dict[str, int] = {}
+    of: dict[int, int] = {}
+    for npc in sorted(branches):
+        body = []
+        for branch in sorted(branches[npc]):
+            priority, guards = meta[(npc, branch)]
+            tokens = [guard_code(t) for t in guards.split("|") if t]
+            condition = "When.Always" if not tokens else "[" + ", ".join(tokens) + "]"
+            actions = ",\n".join("                " + action_code(r) for r in branches[npc][branch])
+            body.append('            AiPattern.Branch(%d, "rung %d", %s,\n%s),\n'
+                        % (priority, branch, condition, actions))
+        of[npc] = variants.setdefault("".join(body), len(variants))
 
     out.write("    /// <summary>" + summary + "</summary>\n")
-    out.write("    private static readonly IReadOnlyDictionary<int, PatternBranch[]> "
-              + field + " =\n")
-    out.write("        Build" + field + "();\n\n")
-    out.write("    private static Dictionary<int, PatternBranch[]> Build" + field + "()\n")
-    out.write("    {\n")
-    out.write("        Dictionary<int, PatternBranch[]> rungs = "
-              "new Dictionary<int, PatternBranch[]>();\n")
+    out.write("    private static readonly PatternBranch[][] " + field
+              + "Variants = Build" + field + "Variants();\n\n")
+    ordered = sorted(variants.items(), key=lambda kv: kv[1])
+    chunks = [ordered[i:i + CHUNK] for i in range(0, len(ordered), CHUNK)] or [[]]
+    out.write("    private static PatternBranch[][] Build" + field + "Variants()\n    {\n")
+    out.write("        PatternBranch[][] variants = new PatternBranch[%d][];\n" % len(ordered))
     for index in range(len(chunks)):
-        out.write("        " + field + str(index) + "(rungs);\n")
-    out.write("        return rungs;\n    }\n\n")
-
+        out.write("        " + field + "Variants" + str(index) + "(variants);\n")
+    out.write("        return variants;\n    }\n\n")
     for index, chunk in enumerate(chunks):
-        out.write("    private static void " + field + str(index)
-                  + "(Dictionary<int, PatternBranch[]> rungs)\n    {\n")
+        out.write("    private static void " + field + "Variants" + str(index)
+                  + "(PatternBranch[][] variants)\n    {\n")
+        for text, slot in chunk:
+            out.write("        variants[%d] = [\n%s        ];\n" % (slot, text))
+        out.write("    }\n\n")
+
+    npcs = sorted(of)
+    maps = [npcs[i:i + 400] for i in range(0, len(npcs), 400)] or [[]]
+    out.write("    private static readonly IReadOnlyDictionary<int, int> " + field
+              + "Of = Build" + field + "Of();\n\n")
+    out.write("    private static Dictionary<int, int> Build" + field + "Of()\n    {\n")
+    out.write("        Dictionary<int, int> owners = new Dictionary<int, int>();\n")
+    for index in range(len(maps)):
+        out.write("        " + field + "Of" + str(index) + "(owners);\n")
+    out.write("        return owners;\n    }\n\n")
+    for index, chunk in enumerate(maps):
+        out.write("    private static void " + field + "Of" + str(index)
+                  + "(Dictionary<int, int> owners)\n    {\n")
         for npc in chunk:
-            out.write(f"        rungs[{npc}] = [  // {names[npc]}\n")
-            for branch in sorted(branches[npc]):
-                priority, guards = meta[(npc, branch)]
-                tokens = [guard_code(t) for t in guards.split("|") if t]
-                condition = "When.Always" if not tokens else "[" + ", ".join(tokens) + "]"
-                body = ",\n".join("                " + action_code(r) for r in branches[npc][branch])
-                out.write(f'            AiPattern.Branch({priority}, "rung {branch}", {condition},\n')
-                out.write(body + "),\n")
-            out.write("        ];\n")
+            out.write("        owners[%d] = %d;  // %s\n" % (npc, of[npc], names[npc]))
         out.write("    }\n\n")
 
 

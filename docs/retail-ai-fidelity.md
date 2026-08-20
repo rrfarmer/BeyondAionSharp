@@ -37130,3 +37130,42 @@ One npc-keyed table read by one pair of classes:
   or loses aggro by being rebound -- the same split `PatternAi` / `PassivePatternAi` already makes.
 
 Not yet started. The merged vocabulary it depends on landed in the previous commit.
+
+## The battle table was 6.7x redundant, and that was blocking step three
+
+Step three -- one npc-keyed table read by one class pair -- ran into a wall that was not about
+semantics at all. `BattleCycles.cs` was **15MB and 303,415 lines**, and the measurement in the
+previous commit says a unified table needs to read roughly ten thousand more npc-pattern pairs.
+Tripling a 15MB generated source file is not a thing Roslyn should be asked to do, and "the build
+got slower" is a bad reason to compromise on fidelity later.
+
+The file was that size because it emitted **per npc**. Retail keys a pattern by name and many npcs
+run the same one, so the same branch list was written out once per owner: 166,639 rows carrying
+**24,923 distinct ones**.
+
+So the table now emits deduplicated variants plus an npc -> variant map, per handler.
+
+**The dedup key is the generated text of the branch array, not the fields we believe vary.** That
+distinction is the entire safety argument and it was worth paying for. The tempting key is a rule
+about the data -- "casts vary per npc because retail names skills by index into the npc's own list,
+everything else is pattern-level" -- and that rule is *true*: measured, 0 of 14,921 non-cast sites
+differ between npcs of one pattern, and only 521 of 10,002 cast sites vary. But it is a claim about
+today's extractor output, and a later extractor change could falsify it silently, in a table nobody
+reads by hand. Keying on byte-identical emitted code means two npcs share an entry only when their
+code is the same, so this cannot lose a difference it failed to anticipate.
+
+15MB -> **3.3MB**; 303,415 lines -> **65,322**. Build back to ~16s.
+
+Losslessness is checked by a test that already existed rather than by a new one asserting the
+refactor did what the refactor says: `BattleCycleAiTests` walks `BattleCycles.Npcs` -- all 13,218
+of them, resolved individually -- and counts 56,571 casts and 932 spawns against the numbers taken
+from the TSV. Same npcs, same totals, so every npc still resolves to the rungs it had. The full
+suite is green and `regen_check` reproduces the file.
+
+### Still to do
+
+This is enabling work; no npc behaves differently. Step three itself -- the unified accepted-class
+set, the aggressive/passive split taken from the npc's pre-existing `ai=`, and the per-slot
+precedence that stops two tables both filling `on_wake_up` -- is still to do. The other three
+tables (4,646 / 1,895 / 1,607 rows) are small enough that deduplicating them buys nothing today,
+and they are deliberately left alone.
