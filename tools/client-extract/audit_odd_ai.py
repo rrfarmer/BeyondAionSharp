@@ -42,6 +42,10 @@ from client_npc_names import npc_names, unattackable_ids  # noqa: E402
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 
+#: An `ai` that expresses no opinion. Shared by both directions of the audit, which disagree about which
+#: side of the split is allowed to hold one.
+GENERIC = ("aggressive", "general", "noaction", "")
+
 
 def our_ai():
     """npc id -> the `ai` on its template here."""
@@ -67,6 +71,8 @@ def main():
                     help="how many npcs must agree before a minority is worth reporting")
     ap.add_argument("--max-siblings", type=int, default=8,
                     help="ignore patterns bound to more npcs than this; they are generic and say nothing")
+    ap.add_argument("--reverse", action="store_true",
+                    help="the mirror case: a SPECIALISED majority with a GENERIC minority")
     args = ap.parse_args()
 
     ai_of = our_ai()
@@ -91,11 +97,29 @@ def main():
         if agreed < args.min_majority:
             continue
 
+        if args.reverse:
+            # The mirror of everything below. Here the majority carries a real class and the odd one out
+            # carries none -- 280638 ran `aggressive` while the other three npcs on `Naga_Servant` ran
+            # `servant`, same pattern, same "sacred dragon relic" name. The default direction cannot see
+            # that: it requires the minority to be specialised, because a lone specialist among generic
+            # mooks is the ordinary case and drowned everything else out.
+            #
+            # This direction is safe to report for the same reason the other one is: the siblings are
+            # evidence about what the pattern means, and a family that agrees on a class while one member
+            # has none is a member that was missed rather than a member that is different.
+            if majority in GENERIC:
+                continue
+            odd = [n for n in npcs if ai_of[n] in GENERIC]
+            for npc_id in odd:
+                rows.append((pattern, majority, agreed, npc_id, ai_of[npc_id] or "(none)",
+                             devname.get(npc_id, "?"), npc_id in furniture))
+            continue
+
         # The majority must be a real class too. A family whose siblings are all plain `aggressive` and
         # one of which has a class is the ORDINARY case -- a boss among its mooks -- and it accounted
         # for nearly every row before this line existed. What Yamennes' gate looked like is different:
         # both sides specialised, disagreeing about which specialisation.
-        if majority in ("aggressive", "general", "noaction", ""):
+        if majority in GENERIC:
             continue
 
         # A generic ai is not a competing opinion, it is the absence of one -- those npcs are the
@@ -103,7 +127,7 @@ def main():
         # bury the real finding under hundreds of rows.
         odd = [n for n in npcs
                if ai_of[n] != majority
-               and ai_of[n] not in ("aggressive", "general", "noaction", "")]
+               and ai_of[n] not in GENERIC]
         for npc_id in odd:
             rows.append((pattern, majority, agreed, npc_id, ai_of[npc_id],
                          devname.get(npc_id, "?"), npc_id in furniture))

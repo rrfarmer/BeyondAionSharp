@@ -32280,3 +32280,73 @@ Nine pins, eight of eight mutations caught.
   indices resolve, that is a class worth writing rather than a generic aggressive.
 - **`Naga_PeA` medics still have no spawn points** in Heiron; that was the finding that led here, and it
   is unchanged. The class is now correct for when they are placed.
+
+## `audit_odd_ai.py --reverse`, and the seven medics the last commit missed
+
+The previous entry noted that the odd-ai audit is structurally blind to one direction: it reports a
+*specialised* minority against a specialised majority, and skips any npc whose own `ai` is generic —
+the filter that took its first run from 1,679 rows to 146. The mirror case is a family that agrees on a
+real class with one member carrying none, and that is a member that was **missed**, not one that is
+different.
+
+`--reverse` reports it. **126 rows**, and the second one was a hole in the commit immediately before:
+
+```
+235489  ai=aggressive   but 6 siblings on Naga_PeA3 use naga_medic
+```
+
+**Seven naga medics were missed** — 235432, 235433 (PeA1), 235485-235488 (PeA2), 235489 (PeA3). The
+"New" and "tune" revisions in Heiron and the sixth Brigade. They were invisible to the first pass for a
+precise reason: that pass grouped npcs **already carrying `ai="drakanmedic"`** and asked what retail
+said about each group. Anything already sitting on `aggressive` was never in the sample.
+
+> Starting from this port's class and asking what retail says finds npcs doing the wrong thing. Starting
+> from the retail pattern and asking what this port does finds npcs doing nothing. They are different
+> questions and the first one cannot answer the second.
+
+`NagaMedicAI` now covers twenty-nine npcs. Two more pins, and the tier-1 revision needed its own case —
+the first version pinned only the tier-3 one and the tier-1 mutation survived, which was a weak pin
+rather than an inert mutation for once.
+
+### What the other 125 rows are
+
+| class the family agrees on | npcs on a generic ai |
+|---|---|
+| `abyss_guard_call` | 28 |
+| `base_protector` | 23 |
+| `conquest_offering_aggressive` | 16 |
+| `panesterra_artifact_guard`, `onedmg_passive`, `munmun_warrior`, `macunbello` | 4 each |
+| twenty further classes | 1-3 each |
+
+### The 28 abyss guards are blocked, and the reason is worth knowing
+
+All twenty-eight are `DirectPortal_[LD]Guard_*` — eight symmetric pattern families across both races.
+Their retail patterns are unambiguously the 23000 mechanic (hear 23000, take the named enemy, plus
+23002/23003 heal-and-cleanse answers), so `abyss_guard_call` is the right class for every one of them.
+
+**Binding them would do nothing.** `AbyssGuardCallAI` is table-driven from `GuardCalls.ByGuard`, and the
+extractor that builds that table filters on `spawnable_npc_ids` — an npc with no spawn point anywhere in
+this port is not in the table, and a guard not in the table gets `AiPattern.Nothing`. None of the
+twenty-eight has a spawn point.
+
+And they are not a spawn-file gap either: **they do not appear in retail's `world.xml` for any map**.
+Searching the whole client tree finds them only in the npc definitions, the abyss monster list and the
+strings. Direct portals are created at runtime, so their guards are placed by the feature rather than by
+data — which means the missing piece here is the direct-portal system, not a row in a spawn file.
+
+That is a better answer than "28 guards are missing", and it is only reachable by checking all three
+places: the class, the spawn data, and retail's own placement.
+
+### Still missing
+
+- **`base_protector` (23) and `conquest_offering_aggressive` (16)** are the two largest untouched
+  families in the reverse audit. Both want the same reading the naga medics got: what the retail
+  patterns actually do, and whether the port's class matches it for every member rather than for the
+  ones somebody happened to bind.
+- **The direct-portal system**, which would place the 28 guards. Their classes and patterns are ready.
+- **`GuardCalls`' spawnable filter is load-bearing and undocumented at the call site.** A future session
+  that binds guards to `abyss_guard_call` and sees no behaviour change will look at the class, not at
+  the extractor. The filter is right — a table row for an npc that cannot appear is dead weight — but it
+  means *binding is not enough*, and nothing says so where it would be read.
+- **The remaining reverse-audit rows below three siblings.** `--min-majority` is still 3; lowering it
+  will surface pairs, at the cost of noise that has not been characterised.

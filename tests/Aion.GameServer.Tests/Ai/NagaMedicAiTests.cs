@@ -31,6 +31,18 @@ public sealed class NagaMedicAiTests
 	/// <summary><c>Naga_PeA4</c>, the single-npc tier that was missed on the first pass.</summary>
 	private const int MedicLv50 = 281300;
 
+	/// <summary>
+	/// <c>Naga_PeA3</c>, and one of the seven this class did not cover until the reverse audit.
+	/// </summary>
+	/// <remarks>
+	/// It sat on plain <c>aggressive</c>, so grouping by npcs that already carried
+	/// <c>ai="drakanmedic"</c> could not see it. Pinned by id because the binding is the fix.
+	/// </remarks>
+	private const int MedicLv48Revised = 235489;
+
+	/// <summary><c>Naga_PeA1</c>, another of the seven, and the tier the default case would swallow.</summary>
+	private const int MedicLv44Revised = 235432;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Reshanta).WithWorldSize(4096)
 			.WithAi(typeof(NagaMedicAI), typeof(ServantNpcAI), typeof(AggressiveNpcAI),
@@ -182,6 +194,8 @@ public sealed class NagaMedicAiTests
 	[InlineData(MedicLv44, NagaMedicAI.ServantLv44)]
 	[InlineData(MedicLv46, NagaMedicAI.ServantLv46)]
 	[InlineData(MedicLv50, NagaMedicAI.ServantLv50)]
+	[InlineData(MedicLv48Revised, NagaMedicAI.ServantLv48)]
+	[InlineData(MedicLv44Revised, NagaMedicAI.ServantLv44)]
 	public void EachTierCallsItsOwnServant(int medicId, int servantId)
 	{
 		using BossAiHarness harness = NewHarness();

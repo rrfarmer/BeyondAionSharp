@@ -7,7 +7,7 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// The twenty-two naga medics of retail patterns <c>Naga_PeA1</c> through <c>_PeA4</c>.
+/// The twenty-nine naga medics of retail patterns <c>Naga_PeA1</c> through <c>_PeA4</c>.
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md.
@@ -46,10 +46,17 @@ public class NagaMedicAI : PatternAi
 {
 	/// <summary>Retail's <c>BD3_Naga_Servant_44/46/48/50_Ae</c> — one per medic tier.</summary>
 	/// <remarks>
+	/// <b>Seven of these were found only by the reverse audit.</b> The first pass grouped by npcs already
+	/// carrying <c>ai="drakanmedic"</c>, so the seven that sat on plain <c>aggressive</c> -- the "New" and
+	/// "tune" revisions in Heiron and the sixth Brigade -- were invisible to it. Starting from the retail
+	/// pattern rather than from this port's class is the only way round that, and is what
+	/// <c>audit_odd_ai.py --reverse</c> does.
+	/// <para>
 	/// <b>There are four tiers, not three.</b> <c>Naga_PeA4</c> binds a single npc (281300) and was
 	/// missed on the first pass because the audit that found this family groups by how many npcs run a
 	/// pattern, and a pattern with one npc sorts to the bottom. It summons <c>BD3_Naga_Servant_50_Ae</c>
 	/// and is otherwise identical to the other three.
+	/// </para>
 	/// </remarks>
 	public const int ServantLv44 = 280638;
 	public const int ServantLv46 = 280639;
@@ -140,8 +147,8 @@ public class NagaMedicAI : PatternAi
 
 	protected override AiPattern Pattern => GetOwner().GetNpcId() switch
 	{
-		213676 or 213677 or 214012 or 280635 => Lv44,
-		213433 or 213497 or 214015 or 214123 or 214859 or 280637 => Lv48,
+		213676 or 213677 or 214012 or 280635 or 235432 or 235433 => Lv44,
+		213433 or 213497 or 214015 or 214123 or 214859 or 280637 or 235489 => Lv48,
 		281300 => Lv50,
 		_ => Lv46,
 	};
