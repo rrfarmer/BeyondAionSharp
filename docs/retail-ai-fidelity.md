@@ -32781,3 +32781,69 @@ the tests compile. That is worth knowing before writing a mutation against gener
 - **`FortressKillerAI` still stands where it spawned.** Retail moves it to its targets with
   `goto_waypoint`, and now that protectors actually call it, the walk is the next thing that would make
   the mechanic visible in play rather than merely correct in the message log.
+
+## The killers walk, and nineteen of them hunt
+
+`FortressKillerAI` had the three-message loop and nothing else, on the assumption that the rest of the
+killer patterns was skills. Reading them says otherwise — and says the killers are **not uniform**,
+which is the reason this became a fourth generated table rather than three constants in the class:
+
+* the wake call is fifty metres for the artifact killers and **twenty** for the village one;
+* **seventeen walk** — retail sends them off with `goto_waypoint` as they wake and `goto_next_waypoint`
+  when a fight ends. The rest stand where they spawned, in retail as here;
+* **nineteen hunt on sight**, and that is the finding.
+
+### `LDF4_Advance_Killer_43`
+
+Its `on_see_npc` rungs test a seen npc's race against `gchief_dragon`, `gchief_light` and `gchief_dark`
+and drop **a million hate** on it. That is what makes an Advance killer walk into a garrison and go for
+the chief rather than whoever is nearest — and it is the largest killer family in the game, nineteen
+npcs, none of which did anything but stand still.
+
+Three constants in the class would have been right for the artifact killers and wrong for these.
+
+### Three wrong turns, all of them mine and all instructive
+
+**1. The first pin's "killer" was the quarry.** 234164 is `LDF4_Advance_Vri_...` — `race="GCHIEF_DRAGON"`,
+`ai="aggressive"`, a *garrison chief*. It was picked from a pattern name rather than from the
+extractor's own output, and it read zero hate for the obvious reason. The ids in that file now come from
+the TSV.
+
+**2. The second one used a chief from the wrong war.** Retail's rung tests only `is_race gchief_light`,
+but `AddHate` here applies the aggro list's tribe check — which `FortressKillerAI`'s remark says is
+deliberate, the condition being carried rather than re-implemented. So Kaldor's `LDF5_V_CHIEF_L` takes
+nothing from an **Advance** killer however right its race is. The quarry has to be a chief the killer is
+actually at war with: `tribe="LDF4_ADVANCE_LGUARD"` against the killer's `LDF4_ADVANCE_DRGUARD`.
+
+**3. The third read exactly two million.** `MakeMutuallyKnown` fills the known lists and the engine
+raises `CreatureSee` off that, so introducing them *is* the sight event; raising it by hand as well fired
+the rung twice. **An exact multiple of the expected number is the tell for a doubled trigger** rather
+than a wrong constant, and it is worth recognising on sight.
+
+### And a self-referential pin, again
+
+The hunt pin first asserted `Assert.Equal(FortressKillers.ByNpc[AdvanceKiller].SightHate, hate)` — the
+table under test on both sides. Zeroing the table turns that into `Equal(0, 0)`, so the mutation that
+stops the killers hunting **survived**. It asserts retail's literal `1_000_000` now.
+
+This is the second time in this work: the same shape was caught on `GravityBombDamageAI.Reach` much
+earlier. A pin that reads its expected value out of the thing it is pinning is not a pin.
+
+Four pins, four of four mutations caught.
+
+### Still missing
+
+- **The battle-timer ladder.** Every killer has one and it is almost all `use_skill`. The one
+  translatable rung adds **200,000 hate to a current target that is a guardian chief**, every 28 seconds
+  or so — so a killer already fighting keeps choosing the chief over anything else that joins in. It
+  sits behind a race guard, which the timer walk written for 30002 refuses by design, so it needs a
+  variant that allows a guard and records which. That is the last translatable piece of this mechanic.
+- **`goto_next_waypoint` is translated as `StartWalking`**, which resumes the route rather than
+  advancing to the next point. For a killer leaving a fight the observable difference is small, but it
+  is a difference and it is not measured.
+- **Thirty-three of the thirty-seven killers are absent from `GuardCalls`**, so their 23000 send does
+  not happen — the same spawnable filter recorded three entries ago. Their `on_enter_attack` broadcasts
+  at twenty-five metres in retail.
+- **`LDF5_Fortress_Ctrl_01`** sends 30001 and answers nothing: a pure trigger, six npcs, and the class
+  gives it the walk and hunt fields it has no use for. Harmless, but it is in the table for uniformity
+  rather than because it needs to be.

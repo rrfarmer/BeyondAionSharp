@@ -71,10 +71,6 @@ public class FortressKillerAI : AbyssGuardCallAI
 
     private static readonly AiPattern Pattern_ = new AiPattern
     {
-        OnWakeUp = Of(
-            Branch(95, "tell the guards I am here", When.Always,
-                Do.Broadcast(KillerAwake, WakeCallRange))),
-
         OnMessage = Of(
             // Retail files the despawn at priority 100 — it outranks the fight.
             Branch(100, "a protector died; stand down", [When.Message(ProtectorDown)],
@@ -96,12 +92,25 @@ public class FortressKillerAI : AbyssGuardCallAI
     /// The base keys its pattern on the npc, so a killer that is also a listed guard keeps both; one
     /// that is not gets these three messages and nothing else.
     /// </remarks>
-    protected override AiPattern Pattern => Merge(base.Pattern, Pattern_);
+    protected override AiPattern Pattern =>
+        Merge(base.Pattern, Pattern_, FortressKillers.PatternFor(GetOwner().GetNpcId()));
 
-    private static AiPattern Merge(AiPattern guard, AiPattern killer) => new AiPattern
+    /// <summary>
+    /// Three sources, because a killer is three things at once.
+    /// </summary>
+    /// <remarks>
+    /// The base keys its pattern on the npc, so a killer that is also a listed guard keeps its 23000.
+    /// <see cref="Pattern_"/> is the message loop every killer shares. And
+    /// <see cref="FortressKillers"/> carries what differs per killer — the wake call's range, whether it
+    /// walks its route, and whether it hunts a garrison chief on sight — which three constants here
+    /// would have got wrong for two of the three patterns.
+    /// </remarks>
+    private static AiPattern Merge(AiPattern guard, AiPattern killer, AiPattern own) => new AiPattern
     {
-        OnWakeUp = [.. guard.OnWakeUp, .. killer.OnWakeUp],
+        OnWakeUp = [.. guard.OnWakeUp, .. killer.OnWakeUp, .. own.OnWakeUp],
         OnEnterAttack = guard.OnEnterAttack,
+        OnLeaveAttack = own.OnLeaveAttack,
+        OnSeeNpc = own.OnSeeNpc,
         OnMessage = [.. guard.OnMessage, .. killer.OnMessage],
     };
 }
