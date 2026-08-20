@@ -3,6 +3,7 @@
 //     Do not edit by hand; edit the extractor and re-run.
 // </auto-generated>
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Handlers.AI;
 

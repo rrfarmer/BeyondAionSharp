@@ -36692,3 +36692,45 @@ rule the emitter now has an observable to be held to.
   will stop persisting, and needs the counter or a spawn-side observable instead.
 - **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
   **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## The hazard machinery, without the expansion it is for
+
+Three pieces went in this entry; the expansion they exist for did not, and the reason is a new one.
+
+**The emitter rule.** A branch that casts and then despawns the npc is a hazard, and `Do.SkillOn` would
+lose the cast: the queue is drained by the attack loop and the npc is gone first. Those rungs now emit
+`Do.SkillOnSelfNow` instead. The rule is safe to state narrowly because retail's own data is narrow --
+**2,387 of the 2,389 casts in wake and idle handlers target `OBJI_SELF`**, and 159 of them sit beside a
+`despawn_self`.
+
+**Two counters.** `ImmediateCastCount` from the previous entry, and now `SpawnCount` beside it: what a
+spawner *placed*, rather than what is standing afterwards. A wave or beacon pin is a question about the
+spawner, and once the adds are hazards that cast and vanish, counting the ground answers a question
+about the add instead.
+
+### What stopped it, and it is not the same thing as last time
+
+With `use_skill` enabled the table reaches 886 patterns across 1,384 npcs, and five of the seven broken
+encounters re-pin cleanly on the counters and on inert stand-ins. Two do not, for a reason neither of
+the previous entries had reached:
+
+* **Kasika's guards are adds another rotation spawns** (`BattleCycles` places 280472), and the binder
+  moved them onto a pattern class. An add with its own pattern is fine; an add whose pattern the
+  encounter test counts is not, and the encounter's own account of the guard is the one under test.
+* **The beacon's `SpawnCount` reads zero** where the live count used to read eleven. The beacon kept its
+  own class, so this is not a stolen binding -- the counter is in `Track`, and something about that
+  beacon's path does not reach it. Unexplained, and not worth guessing at.
+
+So the infrastructure is committed and the tables are unchanged: `use_skill` stays out of the wake and
+idle handlers until those two are understood. The tree is green and `regen_check` reproduces.
+
+### Still missing
+
+- **Why `SpawnCount` is zero for a beacon that spawns.** The counter sits in `Track`; either that path
+  is not the one beacons take, or the count is being read from the wrong npc. One session with a
+  debugger settles it, and every wave pin in the project depends on the answer.
+- **Adds that other encounters count.** Kasika's guards say the rule is not "an npc two things own" but
+  "an npc whose behaviour another *test* asserts" -- which is about what those tests should be asking.
+- **`use_skill` in wake and idle handlers: 284 patterns**, behind both of the above.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
+  **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**

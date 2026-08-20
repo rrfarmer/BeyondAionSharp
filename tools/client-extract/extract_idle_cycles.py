@@ -126,8 +126,15 @@ def string_ids(repo: pathlib.Path) -> dict[str, int]:
 
 
 def read_actions(block: str, dev: dict[str, int], known: set[int],
-                 strings: dict[str, int]) -> list[tuple] | None:
-    """The branch's actions in order, or None if one cannot be said."""
+                 strings: dict[str, int], skill_targets: dict[str, str] | None = None
+                 ) -> list[tuple] | None:
+    """The branch's actions in order, or None if one cannot be said.
+
+    `skill_targets` opts a caller into `use_skill`. Retail names the skill by index into that npc's own
+    ordered list, which cannot be resolved here because one pattern serves many npcs, so the index is
+    carried and the caller resolves it. `IdleCycles` passes nothing and keeps refusing the action, so
+    its table is unchanged.
+    """
     out: list[tuple] = []
     for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
         kind, body = element.group(1), element.group(2)
@@ -180,6 +187,13 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             delay = re.search(r"<delay>(\d+)</delay>", body)
             out.append(("say" if kind == "say_to_all" else "sysmsg", message,
                         int(delay.group(1)) if delay else 0, 0, "", 0.0, 0.0, 0.0))
+        elif kind == "use_skill" and skill_targets is not None:
+            index = re.search(r"SKILLI_INDEX_(\d+)", body)
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not index or not who or who.group(1) not in skill_targets:
+                return None
+            out.append(("skill", int(index.group(1)), 0, 0, skill_targets[who.group(1)],
+                        0.0, 0.0, 0.0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "broadcast_message":

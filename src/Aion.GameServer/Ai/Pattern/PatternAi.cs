@@ -75,6 +75,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     private int immediateCasts;
 
+    private int spawnsMade;
+
+    /// <summary>
+    /// How many npcs this one has placed. For tests.
+    /// </summary>
+    /// <remarks>
+    /// The spawn-side twin of <see cref="ImmediateCastCount"/>, and needed for the same reason. What a
+    /// spawner places may be a hazard that casts and removes itself within the tick, so counting the
+    /// ground afterwards answers a question about the <i>add</i> rather than about the spawner. This
+    /// asks whether the spawner did its job, which is what a wave or beacon pin is actually about.
+    /// </remarks>
+    public int SpawnCount
+    {
+        get
+        {
+            lock (gate)
+                return spawnsMade;
+        }
+    }
+
     /// <summary>
     /// How many skills this npc has cast down the immediate path. For tests.
     /// </summary>
