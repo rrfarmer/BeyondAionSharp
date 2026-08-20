@@ -34248,3 +34248,48 @@ the dying phase the name suggests.
   way, but **nothing has checked which**, and that is the one open question this entry leaves.
 - The 25 classes unused in Java too — worth a pass one day to see whether any is a mechanic neither
   project ever bound.
+
+## Tiamat's breath had the warning and none of the damage
+
+The last entry left one open question — three add ids the Tiamat rebinding did not carry — and answering
+it found a whole mechanic missing.
+
+**Retail spawns all three, one level down.** `Tiamat_Uplift` comes from `BurrowingWorm_BurrowFX`, which
+this port already implements. The other two are `BeaconL8s_dmg` and `BeaconM8s_dmg`, and they are spawned
+by **the beacons themselves**:
+
+```
+IDTiamat_Tiamat_BeaconM8s
+  on_wake_up:   set_idle_timer delay=2000
+  on_idle_timer: spawn IDTiamat_Tiamat_BeaconM8s_dmg x11, live_time=2, despawn_at_attack_state=TRUE
+```
+
+So Tiamat's breath is a two-step telegraph: the rotation places the beacon a raid runs out of, and two
+seconds later the beacon lays the damage along the line it marked. **This port had the first half only.**
+Fifteen beacons exist here; **twelve were on plain `aggressive`**, which does nothing, and the other
+three had a class that casts a skill and never spawns. Every breath in the encounter landed harmlessly.
+
+`TiamatBeacons` is the sixth generated table of this shape — 65 placements across 15 beacons — and
+`TiamatBeaconAI` runs them. The twelve idle beacons are rebound; the three with a casting class keep it.
+
+### The bug the emitted table showed before it shipped
+
+The first table put eight of the fifteen breaths at **x=0, y=0, z=0**. Retail has two location types
+here and the extractor assumed one:
+
+| beacons | location | placements | live |
+|---|---|---|---|
+| middle (`*M4s`, `*M8s`) | `SPAWN_LOCATION_ABSOLUTE` | 11 in a line | 2s |
+| left/right (`*L*s`, `*R*s`) | `SPAWN_LOCATION_MY_POINT` | 1, on the marker | 3s |
+
+`MY_POINT` blocks carry no coordinates at all, so reading them as absolute yields the origin. Caught by
+reading the generated file rather than the row count — the count was right both times. The mutation that
+restores the wrong reading now dies against a pin that checks the hit lands **on the beacon**.
+
+### Still missing
+
+- **The `use_skill` on four of these wake-up rungs**, which is a skill index. `UltimateAtrocityAI`
+  already casts for the two beacons it owns; the twelve rebound here spawn without casting.
+- **`IDVritra_Base_Drakan_Gi_Nmd_Beacon`** has the same shape (2 spawns, `MY_POINT`, 5s) and is a
+  different encounter's beacon. It is in neither table; nothing checked whether its owner exists here.
+- The 25 AI classes unused in Java too, from the previous entry.
