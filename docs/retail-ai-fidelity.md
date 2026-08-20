@@ -34980,3 +34980,46 @@ The blocked list is now: 16 with no wake delay this port can find, 12 on `increa
 - **`increase_intvar`**, 12 patterns: a per-npc counter with a bounds test, which this port has no
   equivalent of. It is the largest single vocabulary gap left in this family.
 - **`GAb1_PvPStatus`**, the 6,800 duplicate placements, and **`[SAVE]` persistence**, all unchanged.
+
+## The multi-branch generator: 61 wave controllers that never ran
+
+`IdleSpawns` could say one unguarded rung. `IdleCycles` says the rest: **59 retail patterns across 61
+npcs, 969 actions**, every one of them on a class that does nothing with a timer. 747 of those actions
+are spawns — adds and hazards that simply never appeared.
+
+`IDForest_Wave_Phase1` is the shape in miniature and is what the pins measure: wake at three seconds,
+place five adds and re-arm at five, then place three more and a leader and **arm zero to stop**. Read
+the zero as "next tick" and it places three adds every tick forever.
+
+### The expectation going in was wrong
+
+The reason for building this was that these rungs hold the `set_condition_spawn_variable` writers the
+spawn engine is waiting for. **Of the 969 actions, exactly one is a spawn-variable write.** The writers
+sit in the 31 patterns refused for carrying `increase_intvar` or a string-id action. The engine's fuel
+is still not connected; what this delivers is the adds.
+
+### An npc an encounter already models must not be taken over
+
+The first binding rebound 64 npcs and broke three `KalindiShadowFlameTests` pins. **Kalindi's dispel
+worm was one of them** — its own retail pattern spawns an effect and removes itself after two seconds,
+while `CalindiFlamelordAI` gives it ten. Which is faithful is a real question, and rebinding answered it
+by accident.
+
+The extractor now skips npcs named as a constant in any `Handlers/AI` source: 22 patterns, left to their
+owners. A first attempt at that rule matched **any** six-digit number in a handler — coordinates and
+message ids included — and excluded everything, which the count made obvious immediately.
+
+### Two more of the same lesson
+
+* **`rows.sort()` reordered the actions inside a branch**, alphabetically by kind, so a rung that spawns
+  and then despawns itself came out despawning first. The extractor now carries an explicit sequence.
+* **`is_flag_var` is not speakable.** Retail's read-only flag test has no `When` helper here — the flag
+  read is diagnostics-only — and emitting `FirstTime` in its place would consume a flag the rung only
+  meant to look at. It is refused rather than approximated.
+
+### Still missing
+
+- **`increase_intvar`**, now the single largest gap in this family: a per-npc counter with a bounds
+  test, blocking the patterns that hold the spawn-variable writers.
+- **16 patterns with no wake-up delay** this port can find, and 31 with a branch it cannot say.
+- **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, and **`[SAVE]` persistence**, unchanged.
