@@ -35926,3 +35926,48 @@ excluded from what counts as armed.
   pattern-level refusals.
 - **Retail cast timings across 13,186 npcs.** Unchanged, and still the only item static work cannot
   close.
+
+## A table keyed on dying
+
+The previous entry ended with the plan: the 179 encounters still missing an add have no battle-timer
+rotation, so no rotation table can reach them, and a death spawn needs a table keyed on dying.
+`DeathSpawns` is that table -- **109 retail patterns across 265 npcs, 960 actions.**
+
+`DeathSpawnAI` already existed with nine npcs read by hand. Those keep their entries and are excluded
+from generation: they carry curated notes, and one encodes a judgement about a betrayer npc worth not
+regenerating over. The parsing is **imported** from `extract_battle_cycles` rather than rewritten, so
+the two tables cannot drift on what an action means.
+
+Retail splits `on_die` from `on_killed_by_user` -- the first fires however the npc died, the second only
+when a player did it. This port has one slot and `When.KilledByPlayer`, so the second is emitted as the
+first plus that guard. Getting it backwards is invisible in a spot check: the add still appears, and is
+simply wrong every time something else lands the blow. Both directions are pinned.
+
+| | before | after |
+|---|---|---|
+| fightable adds we never spawn | 266 | **242** |
+| encounters affected | 196 | **177** |
+
+**Note the 521 `set_condition_spawn_variable` writes** in this table -- more than half its actions. The
+conditional spawn engine was built long ago and its writers were never found; a good share of them are
+here, on death. Whether the gates they feed now open is not something this entry checked.
+
+### A bug this table exposed in last entry's work
+
+Both spawn pins failed at first. `on_die` evaluates immediately before the reset that sweeps
+fight-scoped adds, so a bequest carrying `despawn_at_attack_state` was **created and deleted in the same
+breath**. Retail's flag means the add lives as long as the fight; something the npc leaves *because* the
+fight ended is not that, whatever the flag on its spawn says, because there is no longer a fight for it
+to belong to. Ending handlers now suppress fight-scoping, and a mutation restoring the sweep dies.
+
+This was introduced two entries ago and no pin caught it, because nothing in the port spawned anything
+from `on_die` until now. **The feature that exposes a bug is often not the feature that contains it.**
+
+### Still missing
+
+- **177 encounters still missing an add**, now led by `on_battle_timer` (82, in patterns refused for
+  vocabulary) and `on_wake_up` (34).
+- **`control_door` (17 death patterns)** is the top refusal here and has no helper anywhere in the port.
+- **Whether the death-written spawn variables open any gate.** 521 writes landed; the reading half was
+  built long ago and the two have never been checked against each other.
+- **Retail cast timings across 13,186 npcs.** Unchanged.

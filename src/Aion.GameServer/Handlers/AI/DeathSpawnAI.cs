@@ -81,7 +81,12 @@ public class DeathSpawnAI : PatternAi
 	private static AiPattern Build(int npcId)
 	{
 		if (!Bequests.TryGetValue(npcId, out Bequest left))
-			return Nothing;
+		{
+			// Everything not hand-read comes from the generated table: 109 retail death patterns
+			// across 265 npcs that no rotation table could reach, because they have no rotation.
+			PatternBranch[] generated = DeathSpawns.RungsFor(npcId);
+			return generated.Length == 0 ? Nothing : new AiPattern { OnDie = Of(generated) };
+		}
 
 		PatternCondition[] guards = left.PlayerKillOnly ? [When.KilledByPlayer] : [];
 

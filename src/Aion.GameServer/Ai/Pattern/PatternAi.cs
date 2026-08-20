@@ -88,6 +88,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     private readonly List<Npc> transientSpawns = new List<Npc>();
 
+    /// <summary>True while a handler that ends the encounter is running.</summary>
+    /// <remarks>
+    /// <c>on_die</c> evaluates immediately before the reset that sweeps fight-scoped adds, so a bequest
+    /// placed there was being created and deleted in the same breath -- the death-spawn table's first
+    /// two pins failed on exactly that. Retail's <c>despawn_at_attack_state</c> means the add lives as
+    /// long as the fight; something the npc leaves <b>because</b> the fight ended is not that, whatever
+    /// the flag on its spawn says, because there is no longer a fight for it to belong to.
+    /// </remarks>
+    private bool ending;
+
     /// <summary>
     /// Everything the branch currently running has spawned, so a <c>broadcast_message</c> later in the
     /// same branch does not reach it.
@@ -283,7 +293,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     protected override void HandleDied()
     {
-        Evaluate(Pattern.OnDie);
+        ending = true;
+        try
+        {
+            Evaluate(Pattern.OnDie);
+        }
+        finally
+        {
+            ending = false;
+        }
+
         ResetPattern();
         base.HandleDied();
     }
@@ -395,7 +414,16 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     protected override void HandleDespawned()
     {
         // Before the reset, so a branch here still sees its timers, flags and spawn groups.
-        Evaluate(Pattern.OnDespawn);
+        ending = true;
+        try
+        {
+            Evaluate(Pattern.OnDespawn);
+        }
+        finally
+        {
+            ending = false;
+        }
+
         ResetPattern();
         base.HandleDespawned();
     }
@@ -1689,7 +1717,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
         lock (gate)
         {
-            if (untilFightEnds)
+            if (untilFightEnds && !ending)
                 transientSpawns.Add(npc);
             if (!spawnGroups.TryGetValue(spawnId, out List<Npc>? group))
                 spawnGroups[spawnId] = group = new List<Npc>();

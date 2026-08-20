@@ -1,0 +1,961 @@
+npc	pattern	handler	player_only	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
+213778	IDDF3_NamedNWi	on_die	FALSE	0	7		0	spawn	282155	1	10	for_the_fight_absolute	488.0	412.0	615.0	2
+213778	IDDF3_NamedNWi	on_die	FALSE	0	7		1	var	0	1	0	lastboss	0.0	0.0	0.0	0
+213778	IDDF3_NamedNWi	on_killed_by_user	TRUE	0	8		0	despawn	1	0	0		0.0	0.0	0.0	0
+213779	IDDF3_NamedNKn	on_die	FALSE	0	7		0	spawn	282155	1	10	for_the_fight_absolute	488.0	412.0	615.0	2
+213779	IDDF3_NamedNKn	on_die	FALSE	0	7		1	var	0	1	0	lastboss	0.0	0.0	0.0	0
+213802	IDDF3_NamedNCh	on_die	FALSE	0	7		0	spawn	282155	1	10	for_the_fight_absolute	488.0	412.0	615.0	2
+213802	IDDF3_NamedNCh	on_die	FALSE	0	7		1	var	0	1	0	lastboss	0.0	0.0	0.0	0
+213905	LF2A_TBox	on_killed_by_user	TRUE	0	1		0	say	341026	0	0		0.0	0.0	0.0	0
+213905	LF2A_TBox	on_killed_by_user	TRUE	0	1		1	spawn	280722	1	600	for_the_fight_self	0.0	0.0	0.0	1
+214024	LF2A_TBox	on_killed_by_user	TRUE	0	1		0	say	341026	0	0		0.0	0.0	0.0	0
+214024	LF2A_TBox	on_killed_by_user	TRUE	0	1		1	spawn	280722	1	600	for_the_fight_self	0.0	0.0	0.0	1
+214532	Event_Santa_L	on_killed_by_user	TRUE	0	3	chance:25	0	spawn	280820	1	18	for_the_fight_self	0.0	0.0	0.0	0
+214533	Event_Santa_D	on_killed_by_user	TRUE	0	3	chance:25	0	spawn	280821	1	18	for_the_fight_self	0.0	0.0	0.0	0
+215079	IDSlk_KK	on_die	FALSE	0	7		0	spawn	281197	1	6	for_the_fight_self	0.0	0.0	0.0	1
+215079	IDSlk_KK	on_die	FALSE	0	7		1	var	2	0	0	Lever	0.0	0.0	0.0	0
+217119	Cromede_Named_ScaredQ	on_die	FALSE	0	7		0	despawn	1	0	0		0.0	0.0	0.0	0
+217119	Cromede_Named_ScaredQ	on_die	FALSE	0	7		1	spawn	282115	1	60	for_the_fight_absolute	749.8	628.18	198.37	0
+217119	Cromede_Named_ScaredQ	on_die	FALSE	0	7		2	spawn	282115	1	60	for_the_fight_absolute	512.55	574.35	217.6	0
+217119	Cromede_Named_ScaredQ	on_die	FALSE	0	7		3	spawn	282115	1	60	for_the_fight_absolute	568.19	833.13	226.33	0
+217234	IDForest_Prime_Boss	on_die	FALSE	0	16		0	var	1	0	0	FARMER_DESPAWN	0.0	0.0	0.0	0
+217234	IDForest_Prime_Boss	on_die	FALSE	0	16		1	spawn	282983	1	10	for_the_fight_self	0.0	0.0	0.0	1
+217234	IDForest_Prime_Boss	on_die	FALSE	0	16		2	say	1500457	0	0		0.0	0.0	0.0	0
+217235	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		0	say	1500444	0	0		0.0	0.0	0.0	0
+217235	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		1	var	0	1	0	STONE_DESPAWN	0.0	0.0	0.0	0
+217235	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		2	spawn	205495	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217235	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		3	spawn	701009	1	0	for_the_fight_absolute	451.706	534.313	131.979	1
+217236	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		0	say	1500444	0	0		0.0	0.0	0.0	0
+217236	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		1	var	0	1	0	STONE_DESPAWN	0.0	0.0	0.0	0
+217236	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		2	spawn	205495	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217236	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		3	spawn	701009	1	0	for_the_fight_absolute	451.706	534.313	131.979	1
+217245	IDForest_Prime_Boss	on_die	FALSE	0	16		0	var	1	0	0	FARMER_DESPAWN	0.0	0.0	0.0	0
+217245	IDForest_Prime_Boss	on_die	FALSE	0	16		1	spawn	282983	1	10	for_the_fight_self	0.0	0.0	0.0	1
+217245	IDForest_Prime_Boss	on_die	FALSE	0	16		2	say	1500457	0	0		0.0	0.0	0.0	0
+217246	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		0	say	1500444	0	0		0.0	0.0	0.0	0
+217246	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		1	var	0	1	0	STONE_DESPAWN	0.0	0.0	0.0	0
+217246	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		2	spawn	205495	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217246	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		3	spawn	701009	1	0	for_the_fight_absolute	451.706	534.313	131.979	1
+217247	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		0	say	1500444	0	0		0.0	0.0	0.0	0
+217247	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		1	var	0	1	0	STONE_DESPAWN	0.0	0.0	0.0	0
+217247	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		2	spawn	205495	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217247	IDForest_Rollingstone_Boss	on_die	FALSE	0	12		3	spawn	701009	1	0	for_the_fight_absolute	451.706	534.313	131.979	1
+217263	IDForest_Nr_Golem_Ranger	on_die	FALSE	0	3		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0	1
+217263	IDForest_Nr_Golem_Ranger	on_die	FALSE	0	3		1	spawn	282441	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217279	Event_Santa_L	on_killed_by_user	TRUE	0	3	chance:25	0	spawn	280820	1	18	for_the_fight_self	0.0	0.0	0.0	0
+217280	Event_Santa_D	on_killed_by_user	TRUE	0	3	chance:25	0	spawn	280821	1	18	for_the_fight_self	0.0	0.0	0.0	0
+217301	IDYun_Temp_22	on_die	FALSE	0	1	chance:35	0	spawn	282384	3	30	for_the_fight_self	0.0	0.0	0.0	1
+217301	IDYun_Temp_22	on_die	FALSE	0	1	chance:35	1	spawn	282382	1	30	for_the_fight_self	0.0	0.0	0.0	1
+217314	IDYun_hiddennm	on_die	FALSE	0	7		0	spawn	701009	1	0	for_the_fight_self	0.0	0.0	0.0	0
+217327	IDYun_Temp_19	on_die	FALSE	0	1		0	spawn	282551	1	10	for_the_fight_self	0.0	0.0	0.0	1
+217371	Station_HugenNM	on_die	FALSE	0	15		0	say	1500583	0	0		0.0	0.0	0.0	0
+217371	Station_HugenNM	on_die	FALSE	0	15		1	spawn	730374	1	0	for_the_fight_self	0.0	0.0	0.0	0
+217371	Station_HugenNM	on_die	FALSE	0	15		2	spawn	730412	1	12	for_the_fight_self	0.0	0.0	0.0	0
+217553	IDArena_S4_Named_R3	on_die	FALSE	0	7		0	var	0	1	0	Condition_S5_D	0.0	0.0	0.0	0
+217553	IDArena_S4_Named_R3	on_die	FALSE	0	7		1	spawn	281197	1	6	for_the_fight_self	0.0	0.0	0.0	1
+217555	IDArena_S4_Named_R5	on_die	FALSE	0	7		0	var	0	1	0	Condition_S5_D	0.0	0.0	0.0	0
+217555	IDArena_S4_Named_R5	on_die	FALSE	0	7		1	spawn	281335	1	6	for_the_fight_absolute	0.0	0.0	0.0	2
+217568	IDArena_S6_Monster_1	on_die	FALSE	0	7		0	var	0	1	0	Condition_S6	0.0	0.0	0.0	0
+217568	IDArena_S6_Monster_1	on_die	FALSE	0	7		1	spawn	205413	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217569	IDArena_S6_Monster_2	on_die	FALSE	0	7		0	var	0	1	0	Condition_S6	0.0	0.0	0.0	0
+217569	IDArena_S6_Monster_2	on_die	FALSE	0	7		1	spawn	205414	1	0	for_the_fight_self	0.0	0.0	0.0	1
+217570	IDArena_S6_Monster_3	on_die	FALSE	0	7		0	var	0	1	0	Condition_S6	0.0	0.0	0.0	0
+217570	IDArena_S6_Monster_3	on_die	FALSE	0	7		1	spawn	217571	5	30	for_the_fight_self	0.0	0.0	0.0	1
+217592	IDArena_S8_Named_5	on_die	FALSE	0	7		0	var	0	1	0	Condition_S8	0.0	0.0	0.0	0
+217592	IDArena_S8_Named_5	on_killed_by_user	TRUE	0	14		0	say	341127	0	0		0.0	0.0	0.0	0
+217592	IDArena_S8_Named_5	on_killed_by_user	TRUE	0	14		1	spawn	280790	1	120	for_the_fight_self	0.0	0.0	0.0	1
+218616	IDCTH_Rudra	on_die	FALSE	0	7		0	spawn	730287	1	0	for_the_fight_absolute	564.0	1335.0	224.0	5
+218616	IDCTH_Rudra	on_die	FALSE	0	7		1	say	1500092	0	0		0.0	0.0	0.0	0
+218616	IDCTH_Rudra	on_die	FALSE	0	7		2	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
+218616	IDCTH_Rudra	on_die	FALSE	0	7		3	despawn	1	0	0		0.0	0.0	0.0	0
+218618	IDAbRe_Core_NamedA1	on_die	FALSE	0	9		0	spawn	282011	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
+218782	LDF4a_SandWarm_Monarch	on_die	FALSE	0	90		0	despawn	1	0	0		0.0	0.0	0.0	0
+218782	LDF4a_SandWarm_Monarch	on_die	FALSE	0	90		1	say	1500274	0	0		0.0	0.0	0.0	0
+218782	LDF4a_SandWarm_Monarch	on_die	FALSE	0	90		2	spawn	730497	1	0	for_the_fight_absolute	474.0	489.0	105.0	0
+218916	LDF4b_DragonTurret	on_die	FALSE	0	1		0	spawn	218921	1	6	for_the_fight_self	0.0	0.0	0.0	1
+218917	LDF4b_DragonTurret	on_die	FALSE	0	1		0	spawn	218921	1	6	for_the_fight_self	0.0	0.0	0.0	1
+218918	LDF4b_DragonTurret	on_die	FALSE	0	1		0	spawn	218921	1	6	for_the_fight_self	0.0	0.0	0.0	1
+218919	LDF4b_DragonTurret	on_die	FALSE	0	1		0	spawn	218921	1	6	for_the_fight_self	0.0	0.0	0.0	1
+218927	LDF4b_Cavalry_Pagati_Fighter_58	on_die	FALSE	0	9		0	spawn	282798	1	10	self	0.0	0.0	0.0	0
+218930	LDF4b_Cavalry_Pagati_Fighter_58	on_die	FALSE	0	9		0	spawn	282798	1	10	self	0.0	0.0	0.0	0
+219165	LDF4a_WindPath_Control_Monster	on_die	FALSE	0	7		0	spawn	207087	1	0	for_the_fight_self	0.0	0.0	0.0	0
+219165	LDF4a_WindPath_Control_Monster	on_die	FALSE	0	7		1	broadcast	7299	200	0		0.0	0.0	0.0	0
+219200	TDown_DrakanWi_Noble_60_Ae_Link	on_die	FALSE	0	7		0	spawn	282975	1	10	for_the_fight_self	0.0	0.0	0.0	1
+219200	TDown_DrakanWi_Noble_60_Ae_Link	on_die	FALSE	0	7		1	despawn	1	0	0		0.0	0.0	0.0	0
+219380	IDTiamat_S2_StealthUnit_60_Ae	on_die	FALSE	0	3		0	spawn	283046	1	5	for_the_fight_self	0.0	0.0	0.0	1
+219380	IDTiamat_S2_StealthUnit_60_Ae	on_die	FALSE	0	3		1	despawn	1	0	0		0.0	0.0	0.0	0
+219569	IDAbRe_Core_Summon6	on_die	FALSE	0	8		0	spawn	281925	1	10	for_the_fight_self	0.0	0.0	0.0	1
+219621	GM_Event_LDF4b_Golden_Gururu	on_die	FALSE	0	21		0	despawn	1	0	0		0.0	0.0	0.0	0
+219621	GM_Event_LDF4b_Golden_Gururu	on_die	FALSE	0	21		1	say	1500503	0	0		0.0	0.0	0.0	0
+219621	GM_Event_LDF4b_Golden_Gururu	on_die	FALSE	0	21		2	spawn	701652	24	600	for_the_fight_self	0.0	0.0	0.0	3
+230422	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	0	spawn	702659	1	0	for_the_fight_absolute	335.3	489.5	607.5	0
+230422	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	1	var	1	0	0	IDLDF5_Under_01_Entrance_Out	0.0	0.0	0.0	0
+230422	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	2	var	2	0	0	cBox	0.0	0.0	0.0	0
+230422	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	3	var	3	0	0	cWeapon	0.0	0.0	0.0	0
+230854	IDVritra_Base_Boss5	on_killed_by_user	TRUE	0	32		0	despawn	1	0	0		0.0	0.0	0.0	0
+230854	IDVritra_Base_Boss5	on_killed_by_user	TRUE	0	32		1	spawn	801967	1	0	for_the_fight_absolute	125.0	889.0	414.0	0
+230854	IDVritra_Base_Boss5	on_killed_by_user	TRUE	0	32		2	broadcast	22258	50	0		0.0	0.0	0.0	0
+230855	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		0	var	0	-1	0	BOSS2_SUM_01	0.0	0.0	0.0	0
+230855	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		1	var	0	-1	0	BOSS2_SUM_02	0.0	0.0	0.0	0
+230855	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		2	var	0	-1	0	BOSS2_SUM_03	0.0	0.0	0.0	0
+230855	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		3	spawn	801967	1	0	for_the_fight_absolute	321.0	886.0	414.0	0
+230855	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		4	broadcast	22258	50	0		0.0	0.0	0.0	0
+230856	IDVritra_Base_Boss3	on_killed_by_user	TRUE	0	32		0	spawn	801967	1	0	for_the_fight_absolute	519.0	889.0	414.0	0
+230856	IDVritra_Base_Boss3	on_killed_by_user	TRUE	0	32		1	broadcast	22258	50	0		0.0	0.0	0.0	0
+236283	IDYun_Drakan_ND3	on_die	FALSE	0	4		0	spawn	282528	1	10	for_the_fight_self	0.0	0.0	0.0	1
+236290	IDYun_info_07	on_die	FALSE	0	4		0	spawn	856481	1	10	for_the_fight_self	0.0	0.0	0.0	1
+251045	FD2_FrA_S	on_killed_by_user	TRUE	0	17		0	spawn	290116	1	20	for_the_fight_self	0.0	0.0	0.0	1
+260224	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+260224	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+260225	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+260225	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+260226	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+260226	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+263255	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+263255	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+263256	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+263256	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+263257	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+263257	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+263557	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+263557	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+263558	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+263558	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+263559	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+263559	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+264757	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+264757	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+264758	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+264758	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+264759	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+264759	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+266542	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+266542	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+266543	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+266543	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+266544	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+266544	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+268040	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+268040	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+268041	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+268041	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+268042	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+268042	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+269240	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+269240	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+269241	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+269241	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+269242	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+269242	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+270140	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+270140	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+270141	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+270141	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+270142	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+270142	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+271042	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+271042	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+271043	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+271043	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+271044	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+271044	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277400	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277401	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277402	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277403	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277404	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277405	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277406	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277407	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277408	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277409	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277410	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277411	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277412	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277413	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277414	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277415	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277416	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277417	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277418	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277419	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277420	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277421	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277422	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277423	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277424	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277425	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277426	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277427	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277428	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277429	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277430	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277431	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277432	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277433	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277434	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277435	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277436	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277437	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277438	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277439	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277440	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277441	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277442	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277443	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277444	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277445	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277446	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277447	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277448	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277449	BGuard_Chief_Gab1_L	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277450	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277451	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277452	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277453	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277454	BGuard_Chief_Gab1_D	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277455	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277456	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277457	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277458	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		0	spawn	295092	1	12	for_the_fight_self	0.0	0.0	0.0	1
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		1	var	22	0	0	v05	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		2	var	22	0	0	v06	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		3	var	22	0	0	v07	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		4	var	22	0	0	v08	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		5	var	22	0	0	v09	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
+277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	TRUE	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277548	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277549	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277550	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277551	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277552	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277553	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277554	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277555	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277556	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277557	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277558	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277559	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277560	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277561	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277562	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277563	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277564	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277565	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277566	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277567	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277572	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277573	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277574	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277575	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277904	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277905	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277906	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277907	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277908	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277909	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277910	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277911	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277912	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277913	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277914	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277915	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277916	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277917	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277918	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+277919	NoAction_AbyssDoor	on_killed_by_user	TRUE	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	0	6	chance:1|set_flag_var:0	0	spawn	211800	1	9600	for_the_fight_self	0.0	0.0	0.0	1
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	0	6	chance:1|set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0	0
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	1	5	chance:20|set_flag_var:0	0	spawn	211799	6	9600	for_the_fight_self	0.0	0.0	0.0	1
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	1	5	chance:20|set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0	0
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	2	4	chance:20|set_flag_var:0	0	spawn	211797	1	9600	for_the_fight_self	0.0	0.0	0.0	3
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	2	4	chance:20|set_flag_var:0	1	spawn	211796	1	9600	for_the_fight_self	0.0	0.0	0.0	3
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	2	4	chance:20|set_flag_var:0	2	spawn	211795	1	9600	for_the_fight_self	0.0	0.0	0.0	3
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	2	4	chance:20|set_flag_var:0	3	despawn_self	0	0	0		0.0	0.0	0.0	0
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	3	3	chance:20|set_flag_var:0	0	spawn	211794	1	9600	for_the_fight_self	0.0	0.0	0.0	2
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	3	3	chance:20|set_flag_var:0	1	spawn	211793	1	9600	for_the_fight_self	0.0	0.0	0.0	2
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	3	3	chance:20|set_flag_var:0	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	4	2	chance:9|set_flag_var:0	0	spawn	211798	1	9600	for_the_fight_self	0.0	0.0	0.0	1
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	4	2	chance:9|set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0	0
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	5	1	set_flag_var:0	0	spawn	211792	1	9600	for_the_fight_self	0.0	0.0	0.0	1
+280358	ND2_CheatboxSu	on_killed_by_user	TRUE	5	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0	0
+280695	BLehpar_FhA	on_killed_by_user	TRUE	0	14		0	say	341127	0	0		0.0	0.0	0.0	0
+280695	BLehpar_FhA	on_killed_by_user	TRUE	0	14		1	spawn	280714	1	120	for_the_fight_self	0.0	0.0	0.0	1
+280720	LF2A_TBox	on_killed_by_user	TRUE	0	1		0	say	341026	0	0		0.0	0.0	0.0	0
+280720	LF2A_TBox	on_killed_by_user	TRUE	0	1		1	spawn	280722	1	600	for_the_fight_self	0.0	0.0	0.0	1
+280789	NLehpar_BhA	on_killed_by_user	TRUE	0	14		0	say	341127	0	0		0.0	0.0	0.0	0
+280789	NLehpar_BhA	on_killed_by_user	TRUE	0	14		1	spawn	280790	1	120	for_the_fight_self	0.0	0.0	0.0	1
+280970	ND2_WhG	on_killed_by_user	TRUE	0	100		0	say	341563	0	0		0.0	0.0	0.0	0
+280970	ND2_WhG	on_killed_by_user	TRUE	0	100		1	spawn	281032	1	0	for_the_fight_absolute	392.28	754.11	190.0	1
+281117	Bionic_EhA	on_die	FALSE	0	21		0	despawn	1	0	0		0.0	0.0	0.0	0
+281117	Bionic_EhA	on_die	FALSE	0	21		1	despawn	2	0	0		0.0	0.0	0.0	0
+281117	Bionic_EhA	on_die	FALSE	0	21		2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
+281117	Bionic_EhA	on_killed_by_user	TRUE	0	20	hp_below:0	0	despawn	1	0	0		0.0	0.0	0.0	0
+281117	Bionic_EhA	on_killed_by_user	TRUE	0	20	hp_below:0	1	despawn	2	0	0		0.0	0.0	0.0	0
+281117	Bionic_EhA	on_killed_by_user	TRUE	0	20	hp_below:0	2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
+281124	IDSlk_KK	on_die	FALSE	0	7		0	spawn	281197	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281124	IDSlk_KK	on_die	FALSE	0	7		1	var	2	0	0	Lever	0.0	0.0	0.0	0
+281128	IDSlk_KKFoodA	on_killed_by_user	TRUE	0	7		0	spawn	281196	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281129	IDSlk_KKFoodB	on_killed_by_user	TRUE	0	7		0	spawn	281196	1	6	for_the_fight_self	0.0	0.0	0.0	1
+281211	IDSlk_Gunner	on_die	FALSE	0	7		0	spawn	281335	1	6	for_the_fight_absolute	0.0	0.0	0.0	2
+281257	Dragon_G1	on_killed_by_user	TRUE	0	23		0	despawn	1	0	0		0.0	0.0	0.0	0
+281257	Dragon_G1	on_killed_by_user	TRUE	0	23		1	despawn	2	0	0		0.0	0.0	0.0	0
+281257	Dragon_G1	on_killed_by_user	TRUE	0	23		2	despawn	3	0	0		0.0	0.0	0.0	0
+281257	Dragon_G1	on_killed_by_user	TRUE	0	23		3	spawn	281265	1	0	self	0.0	0.0	0.0	4
+281257	Dragon_G1	on_killed_by_user	TRUE	0	23		4	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
+281266	Dragon_G2	on_killed_by_user	TRUE	0	23		0	despawn	1	0	0		0.0	0.0	0.0	0
+281266	Dragon_G2	on_killed_by_user	TRUE	0	23		1	despawn	2	0	0		0.0	0.0	0.0	0
+281266	Dragon_G2	on_killed_by_user	TRUE	0	23		2	despawn	3	0	0		0.0	0.0	0.0	0
+281266	Dragon_G2	on_killed_by_user	TRUE	0	23		3	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	0	7	chance:33	0	despawn	1	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	0	7	chance:33	1	despawn	2	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	0	7	chance:33	2	despawn	3	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	0	7	chance:33	3	spawn	281928	1	12	for_the_fight_absolute	0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	0	7	chance:33	4	sysmsg	1500110	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	1	6	chance:66	0	despawn	1	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	1	6	chance:66	1	despawn	2	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	1	6	chance:66	2	despawn	3	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	1	6	chance:66	3	spawn	281928	1	12	for_the_fight_absolute	0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	1	6	chance:66	4	sysmsg	1500111	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	2	5		0	despawn	1	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	2	5		1	despawn	2	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	2	5		2	despawn	3	0	0		0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	2	5		3	spawn	281928	1	12	for_the_fight_absolute	0.0	0.0	0.0	0
+281450	LF4_Dramata	on_die	FALSE	2	5		4	sysmsg	1500112	0	0		0.0	0.0	0.0	0
+281768	IDCT_Rudra	on_die	FALSE	0	7		0	spawn	730287	1	0	for_the_fight_absolute	564.0	1335.0	224.0	5
+281768	IDCT_Rudra	on_die	FALSE	0	7		1	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
+281768	IDCT_Rudra	on_die	FALSE	0	7		2	say	1500092	0	0		0.0	0.0	0.0	0
+281768	IDCT_Rudra	on_die	FALSE	0	7		3	despawn	1	0	0		0.0	0.0	0.0	0
+281772	IDCTH_Rudra	on_die	FALSE	0	7		0	spawn	730287	1	0	for_the_fight_absolute	564.0	1335.0	224.0	5
+281772	IDCTH_Rudra	on_die	FALSE	0	7		1	say	1500092	0	0		0.0	0.0	0.0	0
+281772	IDCTH_Rudra	on_die	FALSE	0	7		2	spawn	702658	1	0	for_the_fight_self	0.0	0.0	0.0	0
+281772	IDCTH_Rudra	on_die	FALSE	0	7		3	despawn	1	0	0		0.0	0.0	0.0	0
+281897	IDAbRe_Core_NamedA1	on_die	FALSE	0	9		0	spawn	282011	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
+281898	IDAbRe_Core_NamedA2	on_die	FALSE	0	9		0	spawn	282012	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
+281899	IDAbRe_Core_NamedB	on_die	FALSE	0	7		0	var	0	1	0	NmdB_BoxSpawn	0.0	0.0	0.0	0
+281899	IDAbRe_Core_NamedB	on_die	FALSE	0	7		1	spawn	281926	1	10	for_the_fight_absolute	634.7	557.1	424.0	1
+281941	DF4_DramataG4	on_die	FALSE	0	7		0	spawn	281942	1	12	for_the_fight_absolute	0.0	0.0	0.0	1
+281974	Cromede_Torture	on_die	FALSE	0	100		0	say	1500153	0	0		0.0	0.0	0.0	0
+281974	Cromede_Torture	on_die	FALSE	0	100		1	spawn	282112	1	0	for_the_fight_absolute	662.28	774.47	216.85	0
+281994	Cromede_Assijudge	on_die	FALSE	0	20		0	say	342248	0	0		0.0	0.0	0.0	0
+281994	Cromede_Assijudge	on_die	FALSE	0	20		1	spawn	282114	1	60	for_the_fight_absolute	662.28	774.43	216.85	0
+281997	Cromede_Named_Scared	on_die	FALSE	0	7		0	despawn	1	0	0		0.0	0.0	0.0	0
+281997	Cromede_Named_Scared	on_die	FALSE	0	7		1	spawn	282115	1	60	for_the_fight_absolute	749.8	628.18	198.37	0
+281997	Cromede_Named_Scared	on_die	FALSE	0	7		2	spawn	282115	1	60	for_the_fight_absolute	512.55	574.35	217.6	0
+281997	Cromede_Named_Scared	on_die	FALSE	0	7		3	spawn	282115	1	60	for_the_fight_absolute	568.19	833.13	226.33	0
+281998	Cromede_Named_Angry	on_die	FALSE	0	7		0	spawn	282115	1	60	for_the_fight_absolute	749.8	628.18	198.37	0
+281998	Cromede_Named_Angry	on_die	FALSE	0	7		1	spawn	282115	1	60	for_the_fight_absolute	512.55	574.35	217.6	0
+281998	Cromede_Named_Angry	on_die	FALSE	0	7		2	spawn	282115	1	60	for_the_fight_absolute	568.19	833.13	226.33	0
+281998	Cromede_Named_Angry	on_die	FALSE	0	7		3	despawn	1	0	0		0.0	0.0	0.0	0
+281998	Cromede_Named_Angry	on_die	FALSE	0	7		4	despawn	2	0	0		0.0	0.0	0.0	0
+281998	Cromede_Named_Angry	on_die	FALSE	0	7		5	despawn	3	0	0		0.0	0.0	0.0	0
+282054	IDAbRe_Core_Egg2	on_die	FALSE	0	10	set_flag_var:0	0	spawn	281388	1	5	for_the_fight_self	0.0	0.0	0.0	1
+282055	IDAbRe_Core_Egg3	on_die	FALSE	0	10	set_flag_var:0	0	spawn	281388	1	5	for_the_fight_self	0.0	0.0	0.0	1
+282056	IDAbRe_Core_Egg4	on_die	FALSE	0	10	set_flag_var:0	0	spawn	281388	1	5	for_the_fight_self	0.0	0.0	0.0	1
+282165	IDForest_hidden	on_die	FALSE	0	7		0	spawn	701009	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282187	IDHouse_Zadra_Deform_Fire	on_die	FALSE	0	1		0	spawn	282188	1	0	for_the_fight_self	0.0	0.0	0.0	1
+282190	IDForest_Wave_Spaky_Normal	on_die	FALSE	0	2		0	spawn	282247	1	2	for_the_fight_self	0.0	0.0	0.0	1
+282194	IDForest_Wave_Laphilima_Normal	on_die	FALSE	0	2		0	spawn	282250	1	2	for_the_fight_self	0.0	0.0	0.0	1
+282198	IDForest_Wave_Wisp	on_die	FALSE	0	2		0	spawn	282199	1	2	for_the_fight_self	0.0	0.0	0.0	1
+282216	IDForest_hidden	on_die	FALSE	0	7		0	spawn	701009	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282261	IDElemental_Ex3	on_die	FALSE	0	7	chance:50	0	spawn	217235	1	0	for_the_fight_absolute	377.13	446.91	157.0	0
+282261	IDElemental_Ex3	on_die	FALSE	0	7	chance:50	1	spawn	217236	1	0	for_the_fight_absolute	383.57	440.75	157.0	0
+282261	IDElemental_Ex3	on_die	FALSE	1	6		0	spawn	217236	1	0	for_the_fight_absolute	377.13	445.91	157.0	0
+282261	IDElemental_Ex3	on_die	FALSE	1	6		1	spawn	217235	1	0	for_the_fight_absolute	383.57	445.91	157.0	0
+282262	IDElemental_Ex4	on_die	FALSE	0	7	chance:50	0	spawn	217246	1	0	for_the_fight_absolute	377.13	446.91	157.0	0
+282262	IDElemental_Ex4	on_die	FALSE	0	7	chance:50	1	spawn	217247	1	0	for_the_fight_absolute	383.57	440.75	157.0	0
+282262	IDElemental_Ex4	on_die	FALSE	1	6		0	spawn	217247	1	0	for_the_fight_absolute	377.13	445.91	157.0	0
+282262	IDElemental_Ex4	on_die	FALSE	1	6		1	spawn	217246	1	0	for_the_fight_absolute	383.57	445.91	157.0	0
+282265	IDHouse_Zadra_Phantom	on_die	FALSE	0	3		0	spawn	282252	1	5	for_the_fight_self	0.0	0.0	0.0	1
+282302	IDForest_ManduriT_Sum1	on_die	FALSE	0	5		0	spawn	282252	1	2	for_the_fight_self	0.0	0.0	0.0	1
+282303	IDForest_ManduriT_Sum2	on_die	FALSE	0	5		0	spawn	282252	1	2	for_the_fight_self	0.0	0.0	0.0	1
+282361	IDElemental_Ex6	on_die	FALSE	0	99		0	spawn	282252	1	5	for_the_fight_self	0.0	0.0	0.0	1
+282526	LDF4a_SandWarm_Monarch	on_die	FALSE	0	90		0	despawn	1	0	0		0.0	0.0	0.0	0
+282526	LDF4a_SandWarm_Monarch	on_die	FALSE	0	90		1	say	1500274	0	0		0.0	0.0	0.0	0
+282526	LDF4a_SandWarm_Monarch	on_die	FALSE	0	90		2	spawn	730497	1	0	for_the_fight_absolute	474.0	489.0	105.0	0
+282623	LDF4a_Owllau_Chieftain_001	on_die	FALSE	0	7		0	spawn	282622	1	0	for_the_fight_self	0.0	0.0	0.0	0
+282976	LDF4a_SandWarm_Monarch_Summon_1	on_die	FALSE	0	10		0	spawn	282539	1	30	for_the_fight_self	0.0	0.0	0.0	1
+283072	TiamatDown_TiamatAgent_SumBomb	on_die	FALSE	0	3		0	sysmsg	1401463	0	0		0.0	0.0	0.0	0
+283072	TiamatDown_TiamatAgent_SumBomb	on_die	FALSE	0	3		1	spawn	283073	1	5	for_the_fight_self	0.0	0.0	0.0	1
+283074	TiamatDown_TiamatAgent_SumBomb2	on_die	FALSE	0	3		0	sysmsg	1401463	0	0		0.0	0.0	0.0	0
+283074	TiamatDown_TiamatAgent_SumBomb2	on_die	FALSE	0	3		1	spawn	283073	1	5	for_the_fight_self	0.0	0.0	0.0	1
+283076	TiamatDown_TiamatAgent_SumBomb3	on_die	FALSE	0	3		0	sysmsg	1401463	0	0		0.0	0.0	0.0	0
+283076	TiamatDown_TiamatAgent_SumBomb3	on_die	FALSE	0	3		1	spawn	283073	1	5	for_the_fight_self	0.0	0.0	0.0	1
+283194	IDAbRe_Core_NamedA1	on_die	FALSE	0	9		0	spawn	282011	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
+283195	IDAbRe_Core_NamedA2	on_die	FALSE	0	9		0	spawn	282012	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
+283196	IDAbRe_Core_NamedB	on_die	FALSE	0	7		0	var	0	1	0	NmdB_BoxSpawn	0.0	0.0	0.0	0
+283196	IDAbRe_Core_NamedB	on_die	FALSE	0	7		1	spawn	281926	1	10	for_the_fight_absolute	634.7	557.1	424.0	1
+283199	IDAbRe_Core_Egg_02	on_die	FALSE	0	10	set_flag_var:0	0	spawn	281388	1	5	for_the_fight_self	0.0	0.0	0.0	1
+283225	IDAbRe_Core_Egg3_02	on_die	FALSE	0	10	set_flag_var:0	0	spawn	281388	1	5	for_the_fight_self	0.0	0.0	0.0	1
+283226	IDAbRe_Core_Egg4_02	on_die	FALSE	0	10	set_flag_var:0	0	spawn	281388	1	5	for_the_fight_self	0.0	0.0	0.0	1
+284263	Coffin_N_65_Ae	on_die	FALSE	0	7		0	spawn	284262	1	0	for_the_fight_self	0.0	0.0	0.0	1
+284263	Coffin_N_65_Ae	on_die	FALSE	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0	0
+284264	Coffin_N_65_Ae	on_die	FALSE	0	7		0	spawn	284262	1	0	for_the_fight_self	0.0	0.0	0.0	1
+284264	Coffin_N_65_Ae	on_die	FALSE	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0	0
+284265	Coffin_N_65_Ae	on_die	FALSE	0	7		0	spawn	284262	1	0	for_the_fight_self	0.0	0.0	0.0	1
+284265	Coffin_N_65_Ae	on_die	FALSE	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0	0
+284266	Coffin_N_65_Ae	on_die	FALSE	0	7		0	spawn	284262	1	0	for_the_fight_self	0.0	0.0	0.0	1
+284266	Coffin_N_65_Ae	on_die	FALSE	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0	0
+284267	Coffin_N_65_Ae	on_die	FALSE	0	7		0	spawn	284262	1	0	for_the_fight_self	0.0	0.0	0.0	1
+284267	Coffin_N_65_Ae	on_die	FALSE	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0	0
+284365	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	0	spawn	702659	1	0	for_the_fight_absolute	335.3	489.5	607.5	0
+284365	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	1	var	1	0	0	IDLDF5_Under_01_Entrance_Out	0.0	0.0	0.0	0
+284365	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	2	var	2	0	0	cBox	0.0	0.0	0.0	0
+284365	IDF5_Under_01_Boss	on_die	FALSE	0	97	set_world_flag_var:5	3	var	3	0	0	cWeapon	0.0	0.0	0.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	TRUE	0	58		0	say	1500778	0	0		0.0	0.0	0.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	TRUE	0	58		1	broadcast	22258	50	0		0.0	0.0	0.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	TRUE	0	58		2	spawn	801967	1	0	for_the_fight_absolute	916.0	889.0	414.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	TRUE	0	58		3	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	TRUE	0	58		4	despawn	1	0	0		0.0	0.0	0.0	0
+284430	IDVritra_Base_Boss1	on_killed_by_user	TRUE	0	58		5	despawn	2	0	0		0.0	0.0	0.0	0
+284431	IDVritra_Base_Boss2	on_killed_by_user	TRUE	0	43		0	despawn	1	0	0		0.0	0.0	0.0	0
+284431	IDVritra_Base_Boss2	on_killed_by_user	TRUE	0	43		1	spawn	801967	1	0	for_the_fight_absolute	719.0	889.0	414.0	0
+284431	IDVritra_Base_Boss2	on_killed_by_user	TRUE	0	43		2	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284431	IDVritra_Base_Boss2	on_killed_by_user	TRUE	0	43		3	broadcast	22258	50	0		0.0	0.0	0.0	0
+284432	IDVritra_Base_Boss3	on_killed_by_user	TRUE	0	32		0	spawn	801967	1	0	for_the_fight_absolute	519.0	889.0	414.0	0
+284432	IDVritra_Base_Boss3	on_killed_by_user	TRUE	0	32		1	broadcast	22258	50	0		0.0	0.0	0.0	0
+284433	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		0	var	0	-1	0	BOSS2_SUM_01	0.0	0.0	0.0	0
+284433	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		1	var	0	-1	0	BOSS2_SUM_02	0.0	0.0	0.0	0
+284433	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		2	var	0	-1	0	BOSS2_SUM_03	0.0	0.0	0.0	0
+284433	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		3	spawn	801967	1	0	for_the_fight_absolute	321.0	886.0	414.0	0
+284433	IDVritra_Base_Boss4	on_killed_by_user	TRUE	0	16		4	broadcast	22258	50	0		0.0	0.0	0.0	0
+284434	IDVritra_Base_Boss5	on_killed_by_user	TRUE	0	32		0	despawn	1	0	0		0.0	0.0	0.0	0
+284434	IDVritra_Base_Boss5	on_killed_by_user	TRUE	0	32		1	spawn	801967	1	0	for_the_fight_absolute	125.0	889.0	414.0	0
+284434	IDVritra_Base_Boss5	on_killed_by_user	TRUE	0	32		2	broadcast	22258	50	0		0.0	0.0	0.0	0
+284510	IDRuneWP_Main_Charger_65_e	on_die	FALSE	0	7		0	spawn	855001	1	40	absolute	107.04	137.37	133.0	2
+284858	BIDF5_U3_Boss	on_killed_by_user	TRUE	0	52		0	var	10	0	0	BOSS	0.0	0.0	0.0	0
+284858	BIDF5_U3_Boss	on_killed_by_user	TRUE	0	52		1	broadcast	22542	50	0		0.0	0.0	0.0	0
+284858	BIDF5_U3_Boss	on_killed_by_user	TRUE	0	52		2	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284858	BIDF5_U3_Boss	on_killed_by_user	TRUE	0	52		3	despawn	1	0	0		0.0	0.0	0.0	0
+284858	BIDF5_U3_Boss	on_killed_by_user	TRUE	0	52		4	despawn	2	0	0		0.0	0.0	0.0	0
+284858	BIDF5_U3_Boss	on_killed_by_user	TRUE	0	52		5	despawn	3	0	0		0.0	0.0	0.0	0
+284919	ND2_AhC_1	on_die	FALSE	0	7		0	say	341531	0	0		0.0	0.0	0.0	0
+284919	ND2_AhC_1	on_die	FALSE	0	7		1	spawn	214599	1	0	self	0.0	0.0	0.0	0
+286787	Bionic_EhA	on_die	FALSE	0	21		0	despawn	1	0	0		0.0	0.0	0.0	0
+286787	Bionic_EhA	on_die	FALSE	0	21		1	despawn	2	0	0		0.0	0.0	0.0	0
+286787	Bionic_EhA	on_die	FALSE	0	21		2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
+286787	Bionic_EhA	on_killed_by_user	TRUE	0	20	hp_below:0	0	despawn	1	0	0		0.0	0.0	0.0	0
+286787	Bionic_EhA	on_killed_by_user	TRUE	0	20	hp_below:0	1	despawn	2	0	0		0.0	0.0	0.0	0
+286787	Bionic_EhA	on_killed_by_user	TRUE	0	20	hp_below:0	2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
+286918	IDHouse_first_sum_general_EX	on_die	FALSE	0	7		0	spawn	211757	1	0	for_the_fight_self	0.0	0.0	0.0	0
+286934	Test_JM_Monster_9	on_die	FALSE	0	7		0	spawn	286935	1	0	for_the_fight_absolute	234.49	229.65	161.0	1
+286934	Test_JM_Monster_9	on_die	FALSE	0	7		1	var	3	0	0	condition_4	0.0	0.0	0.0	0
+286935	Test_JM_Monster_10	on_die	FALSE	0	7		0	var	3	0	0	condition_5	0.0	0.0	0.0	0
+286935	Test_JM_Monster_10	on_die	FALSE	0	7		1	spawn	286926	1	0	for_the_fight_self	0.0	0.0	0.0	1
+287015	Test_Basic_Monster_AI_KDG_2	on_die	FALSE	0	25		0	spawn	218724	1	0	for_the_fight_self	0.0	0.0	0.0	1
+287090	Test_Basic_Monster_AI_KMD_2	on_die	FALSE	0	7		0	spawn	287086	1	0	for_the_fight_self	0.0	0.0	0.0	1
+287217	Test_Monster_SNR_02	on_die	FALSE	0	7		0	spawn	287218	1	0	for_the_fight_self	0.0	0.0	0.0	0
+287224	Test_Monster_KYJ_02	on_die	FALSE	0	7		0	spawn	831574	1	0	for_the_fight_self	0.0	0.0	0.0	1
+290115	FD2_FrA	on_killed_by_user	TRUE	0	17		0	spawn	290116	1	20	for_the_fight_self	0.0	0.0	0.0	1
+294551	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+294551	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+294552	BGuard_BombMan	on_killed_by_user	TRUE	0	3		0	say	340926	0	0		0.0	0.0	0.0	0
+294552	BGuard_BombMan	on_killed_by_user	TRUE	0	3		1	spawn	294561	1	360	for_the_fight_self	0.0	0.0	0.0	0
+294555	LGuard_FhA_Officer	on_killed_by_user	TRUE	0	10		0	say	340925	0	0		0.0	0.0	0.0	0
+294555	LGuard_FhA_Officer	on_killed_by_user	TRUE	0	10		1	spawn	294564	1	360	for_the_fight_self	0.0	0.0	0.0	0
+294556	DGuard_FhA_Officer	on_killed_by_user	TRUE	0	10		0	say	340925	0	0		0.0	0.0	0.0	0
+294556	DGuard_FhA_Officer	on_killed_by_user	TRUE	0	10		1	spawn	294563	1	360	for_the_fight_self	0.0	0.0	0.0	0
+296437	DrGuard_FhB_F20	on_killed_by_user	TRUE	0	100		0	spawn	296443	1	48	for_the_fight_self	0.0	0.0	0.0	1
+701137	LDF4b_FOBJ_LavaRock1	on_die	FALSE	0	1		0	spawn	282751	1	10	for_the_fight_self	0.0	0.0	0.0	1
+701138	LDF4b_FOBJ_LavaRock1	on_die	FALSE	0	1		0	spawn	282751	1	10	for_the_fight_self	0.0	0.0	0.0	1
+701139	LDF4b_FOBJ_LavaRock1	on_die	FALSE	0	1		0	spawn	282751	1	10	for_the_fight_self	0.0	0.0	0.0	1
+701712	LDF5b_6021_Explosion_Box_04	on_die	FALSE	0	7		0	spawn	701777	1	0	for_the_fight_absolute	2718.0	2588.0	255.0	0
+701712	LDF5b_6021_Explosion_Box_04	on_die	FALSE	0	7		1	broadcast	31014	50	0		0.0	0.0	0.0	0
+701717	LDF5b_6021_Explosion_Box_09	on_die	FALSE	0	7		0	spawn	701778	1	0	for_the_fight_absolute	2601.0	2798.0	255.0	0
+701717	LDF5b_6021_Explosion_Box_09	on_die	FALSE	0	7		1	broadcast	31019	50	0		0.0	0.0	0.0	0
+831572	IDDF2Flying_event01_B_RatmanWarriorM_55_Ae	on_die	FALSE	0	7		0	spawn	831581	1	0	for_the_fight_self	0.0	0.0	0.0	1
+831572	IDDF2Flying_event01_B_RatmanWarriorM_55_Ae	on_die	FALSE	0	7		1	broadcast	1997	100	0		0.0	0.0	0.0	0
+855536	IDLDF5_Under_02_Summon03	on_die	FALSE	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
+855536	IDLDF5_Under_02_Summon03	on_killed_by_user	TRUE	0	1050		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855537	IDLDF5_Under_02_Summon04	on_die	FALSE	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
+855537	IDLDF5_Under_02_Summon04	on_killed_by_user	TRUE	0	1050		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855865	IDForest_Wave_Laphilima_Normal	on_die	FALSE	0	2		0	spawn	282250	1	2	for_the_fight_self	0.0	0.0	0.0	1
+856026	IDTiamat_Hard_Kalrindy	on_die	FALSE	0	16		0	spawn	283187	1	10	for_the_fight_absolute	467.8	514.3	418.0	1
+856026	IDTiamat_Hard_Kalrindy	on_die	FALSE	0	16		1	var	0	1	0	IDTIAMAT_TELEPORT_T2	0.0	0.0	0.0	0
+856026	IDTiamat_Hard_Kalrindy	on_die	FALSE	0	16		2	var	0	1	0	TIAMATSHEILD_SPAWN	0.0	0.0	0.0	0
+856026	IDTiamat_Hard_Kalrindy	on_die	FALSE	0	16		3	despawn	1	0	0		0.0	0.0	0.0	0
+856026	IDTiamat_Hard_Kalrindy	on_die	FALSE	0	16		4	despawn	2	0	0		0.0	0.0	0.0	0
+856026	IDTiamat_Hard_Kalrindy	on_die	FALSE	0	16		5	say	1500719	0	0		0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		0	var	0	1	0	TIAMAT_TREASUREBOX	0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		1	broadcast	201	100	0		0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		2	var	4	0	0	KAHRUN_SPAWN	0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		3	var	2	0	0	RELIC_SPAWN	0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		4	despawn	1	0	0		0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		5	spawn	283183	1	60	for_the_fight_absolute	478.0	514.0	418.0	1
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		6	say	1500734	0	0		0.0	0.0	0.0	0
+856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	FALSE	0	49		7	spawn	702659	1	0	for_the_fight_absolute	480.0	508.0	419.0	0
