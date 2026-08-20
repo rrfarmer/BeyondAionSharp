@@ -169,7 +169,13 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         base.HandleAttack(creature);
         if (EnterCombat())
+        {
+            // Only on the transition. Written on every swing this would simply become LastAttacker
+            // under another name, and the casts meant for whoever opened the fight would follow the
+            // tank around instead. A pin caught exactly that.
+            EventTarget = creature;
             Evaluate(Pattern.OnEnterAttack);
+        }
 
         // on_attacked runs on every hit. A branch that should only fire once carries its own flag
         // var, which is how retail writes them -- gating on the event instead would be a different
@@ -648,6 +654,19 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Whoever landed the blow being handled, or null outside an <c>on_attacked</c> branch.</summary>
+    /// <summary>The creature whose attack put this npc into the fight -- retail's <c>OBJI_EVENT_TARGET</c>.</summary>
+    /// <remarks>
+    /// Recorded rather than inferred. The obvious shortcut is to call it the most-hated creature, which
+    /// is true at the instant combat starts and false a moment later; the creature is right there at the
+    /// call site, so there is no reason to guess.
+    /// <para>
+    /// <b>Set on the transition into combat only.</b> Written on every attack it would simply become
+    /// <see cref="LastAttacker"/> under another name, and 1,912 casts meant for whoever opened the fight
+    /// would follow the tank around instead.
+    /// </para>
+    /// </remarks>
+    public Creature? EventTarget { get; private set; }
+
     public Creature? LastAttacker { get; private set; }
 
     /// <summary>Whoever cast the skill being handled, or null outside an <c>on_spelled</c> branch.</summary>
@@ -1067,6 +1086,29 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         if (!IsDead())
             NpcSkillCasting.QueueAtDataLevel(GetOwner(), skillId, target);
+    }
+
+    /// <summary>
+    /// Queues a skill at one particular creature: retail's role targets, which name the creature
+    /// involved in the event rather than a place in the hate list.
+    /// </summary>
+    /// <remarks>
+    /// The aim is taken now, when the branch runs, and travels with the queued entry -- see
+    /// <see cref="AimedSkillEntry"/>. Resolving it later out of the aggro list, which is all this port
+    /// could do before, finds whoever is convenient at drain time instead of the creature retail named.
+    /// <para>
+    /// A role with nobody in it does nothing. <c>on_spelled</c> can fire with no caster left, and a cast
+    /// with no target is not a cast at the most-hated creature -- it is a cast that does not happen.
+    /// </para>
+    /// </remarks>
+    public void CastSkillAt(Creature? aim, int skillId)
+    {
+        if (IsDead() || aim == null || aim.IsDead())
+            return;
+
+        int level = NpcSkillCasting.LevelOf(GetOwner(), skillId);
+        GetOwner().QueueSkill(new AimedSkillEntry(
+            new QueuedNpcSkillTemplate(skillId, level, 0, NpcSkillTargetAttribute.NONE), aim));
     }
 
     /// <summary>

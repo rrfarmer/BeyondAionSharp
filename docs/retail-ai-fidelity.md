@@ -35646,3 +35646,51 @@ behavioural decision and not a transcription, so those are counted instead.
 - **188 rotations re-arm only from within themselves; 147 arm nowhere.**
 - **Retail cast timings remain unobserved.** 1,272 rotations fire on the delays in the data and nobody
   has watched one in a live fight. Every pin here is about *who* and *what*, never *how it feels*.
+
+## The queue learns to carry a creature, and the table nearly doubles
+
+The last item on the list for four entries running: retail names a skill's target by its **role in the
+event** -- whoever started the fight, whoever just hit us, the creature a message was about -- and this
+port could say none of them. The reason was structural, not a missing name. `NpcSkillTargetAttribute`
+is resolved by `SkillAttackManager` *when the queue drains*, out of the aggro list, and these creatures
+are not on it by rank.
+
+So the queue now carries the creature instead of a rule for finding one. `AimedSkillEntry` subclasses
+the concrete queue entry -- **not** `NpcSkillEntry` and **not** the enum, both Java-parity types that
+would have to change for every npc skill in the game to serve one AI feature. Nothing that does not ask
+for an aim can tell the difference. The creature is captured when the branch runs, which is what retail
+means: the attacker is whoever hit us *at that moment*, not whoever happens to be hitting us later.
+
+`OBJI_EVENT_TARGET` alone is 1,912 uses, the largest single role, and nearly all of it sits in
+`on_enter_attack_state` -- a core handler, so those patterns were being refused whole.
+
+| | before | after |
+|---|---|---|
+| rotations | 1,272 | **1,704** |
+| npcs | 4,001 | **7,382** |
+| actions | 41,537 | **88,896** |
+| casts | 16,764 | **37,211** (3,716 of them aimed) |
+
+### The bug the pin caught
+
+`EventTarget` was first written on **every** `HandleAttack`, which quietly made it `LastAttacker` under
+another name -- so 1,912 casts meant for whoever opened the fight would have followed the tank around.
+It is now set only on the transition into combat. The pin that caught it engages with one player and
+then gives another far more hate, which is the ordinary shape of a raid and would have happened in the
+first pull of any of these fights.
+
+Three mutations die: ignoring the aim, overwriting the opener, and falling back to the most-hated
+creature when a role is empty. That last one matters -- `on_spelled` can run with no caster left, and a
+cast with no target is *a cast that does not happen*, not a cast at whoever is nearest.
+
+### Still missing
+
+- **`OBJI_TALKER`** (771 uses) is not wired: talking is not a combat event and no rotation in this table
+  has a talker. It would matter for quest npcs, which this table does not cover.
+- **198 `is_user_flying`** -- no condition here asks whether a player is airborne. Now the largest
+  single refusal reason.
+- **53 range-restricted attacker-indicator casts**; **429 optional arming handlers dropped**, by kind.
+- **188 rotations re-arm only from within themselves; 147 arm nowhere in the pattern.**
+- **Retail cast timings remain unobserved.** 1,704 rotations across 7,382 npcs now fire on the delays in
+  the data, and nobody has watched one in a live fight. That is a much larger surface than it was two
+  entries ago, and the caveat has not moved with it.

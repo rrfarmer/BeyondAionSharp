@@ -3,6 +3,8 @@ using System.IO;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
@@ -254,7 +256,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 16,764 casts across 4,001 npcs, none of them read by a human. The index they came from is only
+	/// 33,495 casts across 7,382 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -273,7 +275,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(16764, casts);
+		Assert.Equal(33495, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -314,7 +316,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(66, lowest);
+		Assert.Equal(149, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -488,6 +490,81 @@ public sealed class BattleCycleAiTests
 		Assert.Same(other, BossAiHarness.FireNextQueuedSkill(boss));
 	}
 
+	/// <summary><b>A cast aimed at one creature keeps it, whatever the hate list says.</b></summary>
+	/// <remarks>
+	/// The whole point of <c>AimedSkillEntry</c>. Retail's role targets name the creature involved in
+	/// the event -- whoever started the fight, whoever just hit us -- and this port could only resolve
+	/// a target when the queue drained, out of the aggro list, which finds whoever is convenient by
+	/// then. Here the tank is most-hated by a wide margin and the aim is somebody else entirely.
+	/// </remarks>
+	[Fact]
+	public void AnAimedCastKeepsItsCreature()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		Player other = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, other);
+		harness.Engage(boss, tank);
+		boss.GetAggroList().AddHate(tank, 5000);
+		Assert.Same(tank, boss.GetTarget());
+
+		((PatternAi)boss.GetAi()).CastSkillAt(other, RaidSkill);
+
+		Assert.Same(other, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>Whoever opened the fight is remembered, not re-derived.</b></summary>
+	/// <remarks>
+	/// <c>OBJI_EVENT_TARGET</c> is 1,912 uses and the single largest role in the dump. The tempting
+	/// shortcut is to call it the most-hated creature, which is true at the instant combat starts and
+	/// false a moment later; this pins that the npc still knows who opened on it after somebody else
+	/// has taken the top of the hate list.
+	/// </remarks>
+	[Fact]
+	public void TheOneWhoOpenedTheFightIsStillKnownLater()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player opener = harness.SpawnPlayer(302f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, opener);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+
+		harness.Engage(boss, opener);
+		// The tank takes over well after the pull. (Hate moves immediately; the npc's current target
+		// only follows on its next think, which is why this asserts the list rather than the target.)
+		boss.GetAggroList().AddHate(tank, 9000);
+		Assert.Same(tank, boss.GetAggroList().GetTarget(AggroTarget.MOST_HATED));
+
+		PatternAi ai = (PatternAi)boss.GetAi();
+		Assert.Same(opener, ai.EventTarget);
+
+		ai.CastSkillAt(ai.EventTarget, RaidSkill);
+		Assert.Same(opener, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>A role with nobody in it does not fall back to the tank.</b></summary>
+	/// <remarks>
+	/// <c>on_spelled</c> can run with no caster left. A cast with no target is not a cast at the
+	/// most-hated creature -- it is a cast that does not happen -- and quietly redirecting it would
+	/// turn a missing target into an attack on whoever is nearest.
+	/// </remarks>
+	[Fact]
+	public void ACastWithNobodyToAimAtDoesNotHappen()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		harness.Engage(boss, tank);
+
+		((PatternAi)boss.GetAi()).CastSkillAt(null, RaidSkill);
+
+		Assert.Null(BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
 	/// <remarks>
 	/// <see cref="PatternAi.ArmTimer"/> throws outside 0..29, so a bad indicator would take the npc
@@ -545,6 +622,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(480, spawns);
+		Assert.Equal(723, spawns);
 	}
 }

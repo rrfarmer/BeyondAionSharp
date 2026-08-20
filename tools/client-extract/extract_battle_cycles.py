@@ -83,6 +83,19 @@ from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
 #: `SkillAttackManager` -- a Java-parity enum and the engine around it, not data. See the doc entry.
 TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED", "OBJI_FRIEND": "FRIEND"}
 
+#: Retail's role targets: the creature involved in the event, rather than a place in the hate list.
+#: The queue now carries the creature itself (`AimedSkillEntry`), captured when the branch runs, so
+#: these say what retail says instead of re-deriving somebody at drain time.
+#:
+#: `OBJI_TALKER` is absent -- talking is not a combat event and no rotation here has a talker.
+ROLES = {
+    "OBJI_EVENT_TARGET": "EventTarget",
+    "OBJI_ATTACKER": "Attacker",
+    "OBJI_CASTER": "Caster",
+    "OBJI_MESSAGE_PARAM": "MessageParam",
+    "OBJI_MESSAGE_SENDER": "MessageSender",
+}
+
 #: Retail's attacker indicators: a creature picked by its place in the hate list, or by how hurt it is.
 #: `AggroTarget` names all six -- `LOWEST_HP` and `MOST_HP` were added to it for these very patterns --
 #: so target switching is an exact mapping with nothing inferred.
@@ -238,11 +251,15 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             # be bound to several npcs with different lists. Resolved per npc in main().
             index = re.search(r"SKILLI_INDEX_(\d+)", body)
             who = re.search(r"<target>(\w+)</target>", body)
-            if not index or not who or who.group(1) not in TARGETS:
-                raise Unsayable("use_skill at a target this port cannot name"
-                                if index else "use_skill without an index")
-            out.append(("skill", int(index.group(1)), 0, 0, TARGETS[who.group(1)],
-                        0.0, 0.0, 0.0, 0))
+            if not index:
+                raise Unsayable("use_skill without an index")
+            if not who or (who.group(1) not in TARGETS and who.group(1) not in ROLES):
+                raise Unsayable("use_skill at a target this port cannot name")
+            named = who.group(1)
+            if named in ROLES:
+                out.append(("skill_at", int(index.group(1)), 0, 0, ROLES[named], 0.0, 0.0, 0.0, 0))
+            else:
+                out.append(("skill", int(index.group(1)), 0, 0, TARGETS[named], 0.0, 0.0, 0.0, 0))
         elif kind == "switch_target_by_attacker_indicator":
             who = re.search(r"<target>(\w+)</target>", body)
             if not who or who.group(1) not in AGGRO:
@@ -443,7 +460,7 @@ def main() -> int:
             # answer every index the pattern uses is dropped -- not the whole pattern.
             wanted = {action[1] for branches in [cycle, *armed.values()]
                       for _, _, _, actions in branches
-                      for action in actions if action[0] == "skill"}
+                      for action in actions if action[0] in ("skill", "skill_at")}
             if wanted:
                 able = [n for n in owners if all(i in skills.get(n, {}) for i in wanted)]
                 refused_owners += len(owners) - len(able)
@@ -457,8 +474,8 @@ def main() -> int:
                 for handler, branches in [("cycle", cycle), *armed.items()]:
                     for index, priority, guards, actions in branches:
                         for order, action in enumerate(actions):
-                            if action[0] == "skill":
-                                action = ("skill", skills[npc][action[1]]) + action[2:]
+                            if action[0] in ("skill", "skill_at"):
+                                action = (action[0], skills[npc][action[1]]) + action[2:]
                             rows.append((npc, named.group(1), handler, index, priority,
                                          "|".join(guards), order) + action)
 

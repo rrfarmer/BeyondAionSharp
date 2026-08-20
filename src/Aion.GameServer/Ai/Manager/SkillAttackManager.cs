@@ -97,7 +97,12 @@ public class SkillAttackManager
             {
                 NpcSkillTemplate temp = skill.GetTemplate();
                 int range = template.GetProperties().GetFirstTargetRange() == 0 ? int.MaxValue : template.GetProperties().GetFirstTargetRange();
-                VisibleObject newTarget = temp.GetTarget() switch
+                // A cast aimed when its branch ran keeps that creature: retail's role targets name the
+                // one involved in the event, and re-deriving it from the hate list now would find
+                // whoever is convenient at drain time instead. See AimedSkillEntry.
+                VisibleObject newTarget = skill is IAimedSkill { Aim: Creature aimed } && !aimed.IsDead()
+                    ? aimed
+                    : temp.GetTarget() switch
                 {
                     NpcSkillTargetAttribute.FRIEND => owner.GetKnownList().FindObject(o => o.IsVisible() && o.Get() is Npc npc && !npc.IsDead() && !npc.GetLifeStats().IsAboutToDie() && !owner.IsEnemy(npc)
                             && PositionUtil.IsInRange(owner, npc, range, false) && GeoService.GetInstance().CanSee(owner, npc)),

@@ -570,6 +570,26 @@ public static class Do
     /// <summary><c>switch_target_by_attacker_indicator</c>.</summary>
     public static PatternAction SwitchTarget(AggroTarget which) => ai => ai.SwitchTarget(which);
 
+    /// <summary><c>use_skill target=OBJI_EVENT_TARGET</c>: at whoever started the fight.</summary>
+    public static PatternAction SkillOnEventTarget(int skillId)
+        => ai => ai.CastSkillAt(ai.EventTarget, skillId);
+
+    /// <summary><c>use_skill target=OBJI_ATTACKER</c>: at whoever just hit us.</summary>
+    public static PatternAction SkillOnAttacker(int skillId)
+        => ai => ai.CastSkillAt(ai.LastAttacker, skillId);
+
+    /// <summary><c>use_skill target=OBJI_CASTER</c>: at whoever just spelled us.</summary>
+    public static PatternAction SkillOnCaster(int skillId)
+        => ai => ai.CastSkillAt(ai.LastCaster, skillId);
+
+    /// <summary><c>use_skill target=OBJI_MESSAGE_PARAM</c>: at the creature a message was about.</summary>
+    public static PatternAction SkillOnMessageParam(int skillId)
+        => ai => ai.CastSkillAt(ai.MessageParam as Creature, skillId);
+
+    /// <summary><c>use_skill target=OBJI_MESSAGE_SENDER</c>: at the npc that called.</summary>
+    public static PatternAction SkillOnMessageSender(int skillId)
+        => ai => ai.CastSkillAt(ai.MessageSender, skillId);
+
     /// <summary><c>spawn</c> at <c>SPAWN_LOCATION_ABSOLUTE</c>, one per listed spot.</summary>
     public static PatternAction SpawnAt(int npcId, int spawnId, int liveSeconds, params SpawnSpot[] spots)
         => ai => ai.SpawnAt(npcId, spawnId, liveSeconds, spots);
