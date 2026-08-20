@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// What a retail npc leaves behind when it dies: 516 patterns across 1477 npcs, 3923 actions.
+/// What a retail npc leaves behind when it dies: 598 patterns across 1620 npcs, 4066 actions.
 /// </summary>
 /// <remarks>
 /// The encounters no rotation table can reach. <see cref="BattleCycles"/> reads <c>on_die</c> too, but
@@ -60,6 +60,8 @@ internal static class DeathSpawns
         Rungs12(rungs);
         Rungs13(rungs);
         Rungs14(rungs);
+        Rungs15(rungs);
+        Rungs16(rungs);
         return rungs;
     }
 
@@ -1659,6 +1661,38 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("cProtection04", 0, 1),
                 Do.Broadcast(21163, 50f)),
         ];
+        rungs[231598] = [  // LF2_1_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("LF2_1_Killer", -1, 0)),
+        ];
+        rungs[231599] = [  // LF2_2_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("LF2_2_Killer", -1, 0)),
+        ];
+        rungs[231600] = [  // DF2_1_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("DF2_1_Killer", -1, 0)),
+        ];
+        rungs[231601] = [  // DF2_2_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("DF2_2_Killer", -1, 0)),
+        ];
+        rungs[231602] = [  // LF3_1_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("LF3_1_Killer", -1, 0)),
+        ];
+        rungs[231603] = [  // LF3_2_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("LF3_2_Killer", -1, 0)),
+        ];
+        rungs[231604] = [  // DF3_1_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("DF3_1_Killer", -1, 0)),
+        ];
+        rungs[231605] = [  // DF3_2_KillerCtrl
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("DF3_2_Killer", -1, 0)),
+        ];
         rungs[231606] = [  // LF2_1_Village_Killer
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("LF2_1_Killer", -1, 0)),
@@ -1690,6 +1724,230 @@ internal static class DeathSpawns
         rungs[231613] = [  // DF3_2_Village_Killer
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("DF3_2_Killer", -1, 0)),
+        ];
+        rungs[231867] = [  // LDF5_Village_KillerCtrl01_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[231868] = [  // LDF5_Village_KillerCtrl01_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[231869] = [  // LDF5_Village_KillerCtrl01_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[231870] = [  // LDF5_Village_KillerCtrl02_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[231871] = [  // LDF5_Village_KillerCtrl02_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[231872] = [  // LDF5_Village_KillerCtrl02_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[231873] = [  // LDF5_Village_KillerCtrl03_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[231874] = [  // LDF5_Village_KillerCtrl03_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[231875] = [  // LDF5_Village_KillerCtrl03_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[231876] = [  // LDF5_Village_KillerCtrl04_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[231877] = [  // LDF5_Village_KillerCtrl04_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[231878] = [  // LDF5_Village_KillerCtrl04_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[231879] = [  // LDF5_Village_KillerCtrl05_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v05ctrl", -1, 0)),
+        ];
+        rungs[231880] = [  // LDF5_Village_KillerCtrl05_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v05ctrl", -1, 0)),
+        ];
+        rungs[231881] = [  // LDF5_Village_KillerCtrl05_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v05ctrl", -1, 0)),
+        ];
+        rungs[231882] = [  // LDF5_Village_KillerCtrl06_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v06ctrl", -1, 0)),
+        ];
+        rungs[231883] = [  // LDF5_Village_KillerCtrl06_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v06ctrl", -1, 0)),
+        ];
+        rungs[231884] = [  // LDF5_Village_KillerCtrl06_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v06ctrl", -1, 0)),
+        ];
+        rungs[231885] = [  // LDF5_Village_KillerCtrl07_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v07ctrl", -1, 0)),
+        ];
+        rungs[231886] = [  // LDF5_Village_KillerCtrl07_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v07ctrl", -1, 0)),
+        ];
+        rungs[231887] = [  // LDF5_Village_KillerCtrl07_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v07ctrl", -1, 0)),
+        ];
+        rungs[231888] = [  // LDF5_Village_KillerCtrl08_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v08ctrl", -1, 0)),
+        ];
+        rungs[231889] = [  // LDF5_Village_KillerCtrl08_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v08ctrl", -1, 0)),
+        ];
+        rungs[231890] = [  // LDF5_Village_KillerCtrl08_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v08ctrl", -1, 0)),
+        ];
+        rungs[231891] = [  // LDF5_Village_KillerCtrl09_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v09ctrl", -1, 0)),
+        ];
+        rungs[231892] = [  // LDF5_Village_KillerCtrl09_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v09ctrl", -1, 0)),
+        ];
+        rungs[231893] = [  // LDF5_Village_KillerCtrl09_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v09ctrl", -1, 0)),
+        ];
+        rungs[231894] = [  // LDF5_Village_KillerCtrl10_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v10ctrl", -1, 0)),
+        ];
+        rungs[231895] = [  // LDF5_Village_KillerCtrl10_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[231896] = [  // LDF5_Village_KillerCtrl10_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v10ctrl", -1, 0)),
+        ];
+        rungs[231897] = [  // LDF5_Village_KillerCtrl11_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v11ctrl", -1, 0)),
+        ];
+    }
+
+    private static void Rungs4(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[231898] = [  // LDF5_Village_KillerCtrl11_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v11ctrl", -1, 0)),
+        ];
+        rungs[231899] = [  // LDF5_Village_KillerCtrl11_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v11ctrl", -1, 0)),
+        ];
+        rungs[231900] = [  // LDF5_Village_KillerCtrl12_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v12ctrl", -1, 0)),
+        ];
+        rungs[231901] = [  // LDF5_Village_KillerCtrl12_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v12ctrl", -1, 0)),
+        ];
+        rungs[231902] = [  // LDF5_Village_KillerCtrl12_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v12ctrl", -1, 0)),
+        ];
+        rungs[231903] = [  // LDF5_Village_KillerCtrl13_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v13ctrl", -1, 0)),
+        ];
+        rungs[231904] = [  // LDF5_Village_KillerCtrl13_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v13ctrl", -1, 0)),
+        ];
+        rungs[231905] = [  // LDF5_Village_KillerCtrl13_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v13ctrl", -1, 0)),
+        ];
+        rungs[231906] = [  // LDF5_Village_KillerCtrl14_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v14ctrl", -1, 0)),
+        ];
+        rungs[231907] = [  // LDF5_Village_KillerCtrl14_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v14ctrl", -1, 0)),
+        ];
+        rungs[231908] = [  // LDF5_Village_KillerCtrl14_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v14ctrl", -1, 0)),
+        ];
+        rungs[231909] = [  // LDF5_Village_KillerCtrl15_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v15ctrl", -1, 0)),
+        ];
+        rungs[231910] = [  // LDF5_Village_KillerCtrl15_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v15ctrl", -1, 0)),
+        ];
+        rungs[231911] = [  // LDF5_Village_KillerCtrl15_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v15ctrl", -1, 0)),
+        ];
+        rungs[231912] = [  // LDF5_Village_KillerCtrl16_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v16ctrl", -1, 0)),
+        ];
+        rungs[231913] = [  // LDF5_Village_KillerCtrl16_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v16ctrl", -1, 0)),
+        ];
+        rungs[231914] = [  // LDF5_Village_KillerCtrl16_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v16ctrl", -1, 0)),
+        ];
+        rungs[231915] = [  // LDF5_Village_KillerCtrl17_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v17ctrl", -1, 0)),
+        ];
+        rungs[231916] = [  // LDF5_Village_KillerCtrl17_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v17ctrl", -1, 0)),
+        ];
+        rungs[231917] = [  // LDF5_Village_KillerCtrl17_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v17ctrl", -1, 0)),
+        ];
+        rungs[231920] = [  // LDF5_Village_KillerCtrl18_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v18ctrl", -1, 0)),
+        ];
+        rungs[231921] = [  // LDF5_Village_KillerCtrl19_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v19ctrl", -1, 0)),
+        ];
+        rungs[231922] = [  // LDF5_Village_KillerCtrl19_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v19ctrl", -1, 0)),
+        ];
+        rungs[231923] = [  // LDF5_Village_KillerCtrl19_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v19ctrl", -1, 0)),
         ];
         rungs[233086] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
             AiPattern.Branch(100, "on_die 0", When.Always,
@@ -1822,6 +2080,30 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Condition_S4", 0, 1)),
         ];
+        rungs[234128] = [  // LDF5_Village_KillerCtrl01_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[234129] = [  // LDF5_Village_KillerCtrl01_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[234130] = [  // LDF5_Village_KillerCtrl01_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[234131] = [  // LDF5_Village_KillerCtrl02_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[234132] = [  // LDF5_Village_KillerCtrl02_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[234133] = [  // LDF5_Village_KillerCtrl02_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
         rungs[235619] = [  // IDLDF5_Under_02_Boss_Wi
             AiPattern.Branch(1000, "on_die 0", When.Always,
                 Do.SetSpawnVariable("cSetPortal", 3, 0)),
@@ -1870,10 +2152,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Wave_A_01_Clear", 0, 1)),
         ];
-    }
-
-    private static void Rungs4(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[236014] = [  // Tames_Solo_A_normal_05
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Wave_A_Clear", 0, 1)),
@@ -2048,6 +2326,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296339, 0, 1, 0f, 12)),
         ];
+    }
+
+    private static void Rungs5(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[258272] = [  // BGuard_Teleporter
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296339, 0, 1, 0f, 12)),
@@ -2480,10 +2762,6 @@ internal static class DeathSpawns
                 Do.Say(340926, 0),
                 Do.SpawnNearForTheFight(294561, 0, 1, 0f, 360)),
         ];
-    }
-
-    private static void Rungs5(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[270143] = [  // LGuard_FhA_Officer
             AiPattern.Branch(10, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.Say(340925, 0),
@@ -2719,6 +2997,10 @@ internal static class DeathSpawns
                 Do.Say(340925, 0),
                 Do.SpawnNearForTheFight(294564, 0, 1, 0f, 360)),
         ];
+    }
+
+    private static void Rungs6(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[271850] = [  // LGuard_FhA_Officer
             AiPattern.Branch(10, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.Say(340925, 0),
@@ -2886,6 +3168,234 @@ internal static class DeathSpawns
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
+        ];
+        rungs[277126] = [  // LDF5_Village_KillerCtrl01_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277127] = [  // LDF5_Village_KillerCtrl02_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[277128] = [  // LDF5_Village_KillerCtrl03_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[277129] = [  // LDF5_Village_KillerCtrl04_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[277130] = [  // LDF5_Village_KillerCtrl05_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v05ctrl", -1, 0)),
+        ];
+        rungs[277131] = [  // LDF5_Village_KillerCtrl06_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v06ctrl", -1, 0)),
+        ];
+        rungs[277132] = [  // LDF5_Village_KillerCtrl07_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v07ctrl", -1, 0)),
+        ];
+        rungs[277133] = [  // LDF5_Village_KillerCtrl08_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v08ctrl", -1, 0)),
+        ];
+        rungs[277134] = [  // LDF5_Village_KillerCtrl09_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v09ctrl", -1, 0)),
+        ];
+        rungs[277135] = [  // LDF5_Village_KillerCtrl10_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v10ctrl", -1, 0)),
+        ];
+        rungs[277136] = [  // LDF5_Village_KillerCtrl11_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v11ctrl", -1, 0)),
+        ];
+        rungs[277137] = [  // LDF5_Village_KillerCtrl12_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v12ctrl", -1, 0)),
+        ];
+        rungs[277138] = [  // LDF5_Village_KillerCtrl13_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v13ctrl", -1, 0)),
+        ];
+        rungs[277139] = [  // LDF5_Village_KillerCtrl14_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v14ctrl", -1, 0)),
+        ];
+        rungs[277140] = [  // LDF5_Village_KillerCtrl15_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v15ctrl", -1, 0)),
+        ];
+        rungs[277141] = [  // LDF5_Village_KillerCtrl16_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v16ctrl", -1, 0)),
+        ];
+        rungs[277142] = [  // LDF5_Village_KillerCtrl17_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v17ctrl", -1, 0)),
+        ];
+        rungs[277143] = [  // LDF5_Village_KillerCtrl18_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v18ctrl", -1, 0)),
+        ];
+        rungs[277144] = [  // LDF5_Village_KillerCtrl19_DR
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v19ctrl", -1, 0)),
+        ];
+        rungs[277145] = [  // LDF5_Village_KillerCtrl01_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277146] = [  // LDF5_Village_KillerCtrl02_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[277147] = [  // LDF5_Village_KillerCtrl03_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[277148] = [  // LDF5_Village_KillerCtrl04_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[277149] = [  // LDF5_Village_KillerCtrl05_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v05ctrl", -1, 0)),
+        ];
+        rungs[277150] = [  // LDF5_Village_KillerCtrl06_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v06ctrl", -1, 0)),
+        ];
+        rungs[277151] = [  // LDF5_Village_KillerCtrl07_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v07ctrl", -1, 0)),
+        ];
+        rungs[277152] = [  // LDF5_Village_KillerCtrl08_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v08ctrl", -1, 0)),
+        ];
+        rungs[277153] = [  // LDF5_Village_KillerCtrl09_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v09ctrl", -1, 0)),
+        ];
+        rungs[277154] = [  // LDF5_Village_KillerCtrl10_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v10ctrl", -1, 0)),
+        ];
+        rungs[277155] = [  // LDF5_Village_KillerCtrl11_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v11ctrl", -1, 0)),
+        ];
+        rungs[277156] = [  // LDF5_Village_KillerCtrl12_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v12ctrl", -1, 0)),
+        ];
+        rungs[277157] = [  // LDF5_Village_KillerCtrl13_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v13ctrl", -1, 0)),
+        ];
+        rungs[277158] = [  // LDF5_Village_KillerCtrl14_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v14ctrl", -1, 0)),
+        ];
+        rungs[277159] = [  // LDF5_Village_KillerCtrl15_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v15ctrl", -1, 0)),
+        ];
+        rungs[277160] = [  // LDF5_Village_KillerCtrl16_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v16ctrl", -1, 0)),
+        ];
+        rungs[277161] = [  // LDF5_Village_KillerCtrl17_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v17ctrl", -1, 0)),
+        ];
+        rungs[277162] = [  // LDF5_Village_KillerCtrl18_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v18ctrl", -1, 0)),
+        ];
+        rungs[277163] = [  // LDF5_Village_KillerCtrl19_L
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v19ctrl", -1, 0)),
+        ];
+        rungs[277164] = [  // LDF5_Village_KillerCtrl01_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277165] = [  // LDF5_Village_KillerCtrl02_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[277166] = [  // LDF5_Village_KillerCtrl03_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[277167] = [  // LDF5_Village_KillerCtrl04_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[277168] = [  // LDF5_Village_KillerCtrl05_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v05ctrl", -1, 0)),
+        ];
+        rungs[277169] = [  // LDF5_Village_KillerCtrl06_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v06ctrl", -1, 0)),
+        ];
+        rungs[277170] = [  // LDF5_Village_KillerCtrl07_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v07ctrl", -1, 0)),
+        ];
+        rungs[277171] = [  // LDF5_Village_KillerCtrl08_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v08ctrl", -1, 0)),
+        ];
+        rungs[277172] = [  // LDF5_Village_KillerCtrl09_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v09ctrl", -1, 0)),
+        ];
+        rungs[277173] = [  // LDF5_Village_KillerCtrl10_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277174] = [  // LDF5_Village_KillerCtrl11_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v11ctrl", -1, 0)),
+        ];
+        rungs[277175] = [  // LDF5_Village_KillerCtrl12_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v12ctrl", -1, 0)),
+        ];
+        rungs[277176] = [  // LDF5_Village_KillerCtrl13_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v13ctrl", -1, 0)),
+        ];
+        rungs[277177] = [  // LDF5_Village_KillerCtrl14_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v14ctrl", -1, 0)),
+        ];
+        rungs[277178] = [  // LDF5_Village_KillerCtrl15_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v15ctrl", -1, 0)),
+        ];
+        rungs[277179] = [  // LDF5_Village_KillerCtrl16_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v16ctrl", -1, 0)),
+        ];
+        rungs[277180] = [  // LDF5_Village_KillerCtrl17_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v17ctrl", -1, 0)),
+        ];
+        rungs[277181] = [  // LDF5_Village_KillerCtrl18_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v18ctrl", -1, 0)),
+        ];
+        rungs[277182] = [  // LDF5_Village_KillerCtrl19_D
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("v19ctrl", -1, 0)),
         ];
         rungs[277400] = [  // BGuard_Chief_Gab1_L
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
@@ -3349,6 +3859,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
+    }
+
+    private static void Rungs7(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277421] = [  // BGuard_Chief_Gab1_D
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -3921,10 +4435,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
-    }
-
-    private static void Rungs6(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277447] = [  // BGuard_Chief_Gab1_L
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -4383,6 +4893,22 @@ internal static class DeathSpawns
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v01ctrl", -1, 0)),
         ];
+        rungs[277770] = [  // Gab1_Vritra_01
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277774] = [  // Gab1_Vritra_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277778] = [  // Gab1_Boss_Noshow_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[277782] = [  // Gab1_Msg_Noshow_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
         rungs[277904] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -4554,6 +5080,10 @@ internal static class DeathSpawns
                 Do.Say(341531, 0),
                 Do.SpawnNearForTheFight(280936, 0, 1, 0f, 0)),
         ];
+    }
+
+    private static void Rungs8(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[280936] = [  // NLehpar_BhB
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
                 Do.Despawn(1),
@@ -4759,10 +5289,6 @@ internal static class DeathSpawns
             AiPattern.Branch(4, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
         ];
-    }
-
-    private static void Rungs7(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281675] = [  // IDCT_Normal_LightSc
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
@@ -5094,6 +5620,10 @@ internal static class DeathSpawns
                 Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
                 Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
         ];
+    }
+
+    private static void Rungs9(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[283194] = [  // IDAbRe_Core_NamedA1
             AiPattern.Branch(9, "on_die 0", When.Always,
                 Do.SpawnAtForTheFight(282011, 1, 60, new SpawnSpot(448.99f, 694.32f, 433.06f))),
@@ -5238,10 +5768,6 @@ internal static class DeathSpawns
             AiPattern.Branch(3, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Wave_Z2_S2_02", 2, 0)),
         ];
-    }
-
-    private static void Rungs8(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284336] = [  // IDF5_TD_Wave_Pod_08
             AiPattern.Branch(3, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Wave_Z1_S5_02", 2, 0)),
@@ -5505,6 +6031,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("condition_5", 3, 0),
                 Do.SpawnNearForTheFight(286926, 1, 1, 0f, 0)),
         ];
+        rungs[286936] = [  // Test_JM_NoAction_1
+            AiPattern.Branch(7, "on_die 0", When.Always,
+                Do.SetSpawnVariable("condition_type", 2, 0)),
+        ];
         rungs[286946] = [  // IDArena_S1_Monster_1
             AiPattern.Branch(7, "on_die 0", [When.FirstTime(0)],
                 Do.SetSpawnVariable("Condition_S1_L", 0, 1)),
@@ -5585,6 +6115,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(831574, 1, 1, 0f, 0)),
         ];
+    }
+
+    private static void Rungs10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[287226] = [  // Test_Monster_Ssh_02
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(211738, 0, 1, 0f, 0)),
@@ -5788,10 +6322,6 @@ internal static class DeathSpawns
                 Do.SpawnNearForTheFight(296514, 1, 1, 0f, 18),
                 Do.SpawnNearForTheFight(296514, 1, 1, 0f, 18)),
         ];
-    }
-
-    private static void Rungs9(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297242] = [  // BGuard_Teleporter
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296339, 0, 1, 0f, 12)),
@@ -6187,6 +6717,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur29", 23, 0)),
         ];
+    }
+
+    private static void Rungs11(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832290] = [  // Gab1_TurretSwitch_18
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur30", 23, 0)),
@@ -6373,10 +6907,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur36", 23, 0)),
         ];
-    }
-
-    private static void Rungs10(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832321] = [  // Gab1_TurretSwitch_01
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur13", 23, 0)),
@@ -6791,6 +7321,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur33", 23, 0)),
         ];
+    }
+
+    private static void Rungs12(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832391] = [  // Gab1_TurretSwitch_22
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur34", 23, 0)),
@@ -6977,10 +7511,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur16", 23, 0)),
         ];
-    }
-
-    private static void Rungs11(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832422] = [  // Gab1_TurretSwitch_05
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur17", 23, 0)),
@@ -7395,6 +7925,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur13", 23, 0)),
         ];
+    }
+
+    private static void Rungs13(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832491] = [  // Gab1_TurretSwitch_02
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur14", 23, 0)),
@@ -7581,10 +8115,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur20", 23, 0)),
         ];
-    }
-
-    private static void Rungs12(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832522] = [  // Gab1_TurretSwitch_09
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur21", 23, 0)),
@@ -7999,6 +8529,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur17", 23, 0)),
         ];
+    }
+
+    private static void Rungs14(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832591] = [  // Gab1_TurretSwitch_06
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur18", 23, 0)),
@@ -8185,10 +8719,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur24", 23, 0)),
         ];
-    }
-
-    private static void Rungs13(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832622] = [  // Gab1_TurretSwitch_13
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur25", 23, 0)),
@@ -8603,6 +9133,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur21", 23, 0)),
         ];
+    }
+
+    private static void Rungs15(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832691] = [  // Gab1_TurretSwitch_10
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur22", 23, 0)),
@@ -8789,10 +9323,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur28", 23, 0)),
         ];
-    }
-
-    private static void Rungs14(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832722] = [  // Gab1_TurretSwitch_17
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur29", 23, 0)),
@@ -9230,6 +9760,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
         ];
+    }
+
+    private static void Rungs16(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[880127] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -9264,13 +9798,61 @@ internal static class DeathSpawns
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v01ctrl", -1, 0)),
         ];
+        rungs[880750] = [  // Gab1_Vritra_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[880754] = [  // Gab1_Vritra_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[880758] = [  // Gab1_Boss_Noshow_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
+        rungs[880762] = [  // Gab1_Msg_Noshow_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v02ctrl", -1, 0)),
+        ];
         rungs[880764] = [  // Gab1_VritraGuard_BossKiller_01_01
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v01ctrl", -1, 0)),
         ];
+        rungs[880766] = [  // Gab1_Vritra_03
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[880770] = [  // Gab1_Vritra_07
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[880774] = [  // Gab1_Boss_Noshow_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
+        rungs[880778] = [  // Gab1_Msg_Noshow_05
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v03ctrl", -1, 0)),
+        ];
         rungs[880780] = [  // Gab1_VritraGuard_BossKiller_01_01
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v01ctrl", -1, 0)),
+        ];
+        rungs[880782] = [  // Gab1_Vritra_04
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[880786] = [  // Gab1_Vritra_08
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[880790] = [  // Gab1_Msg_Noshow_02
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
+        ];
+        rungs[880794] = [  // Gab1_Msg_Noshow_06
+            AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
+                Do.SetSpawnVariable("v04ctrl", -1, 0)),
         ];
     }
 

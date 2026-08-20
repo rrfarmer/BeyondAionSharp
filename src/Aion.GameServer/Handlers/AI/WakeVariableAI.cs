@@ -1,4 +1,5 @@
 using Aion.GameServer.Ai;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Spawns;
@@ -26,14 +27,28 @@ namespace Aion.GameServer.Handlers.AI;
 /// class, for the mirror-image reason: it would take their aggression away. They need an aggressive
 /// variant or a home in one of the pattern tables. See docs/retail-ai-fidelity.md.
 /// </para>
+/// <para>
+/// <b>It is a pattern class now, and still passive.</b> It was written on <c>GeneralNpcAI</c> to keep
+/// these npcs from attacking on sight, and that reasoning was right -- but it also meant an npc bound
+/// here could hold nothing else, and 143 of them turned out to have real death rungs that never ran.
+/// <see cref="PassivePatternAi"/> is the base that resolves it: it is a <c>PatternAi</c>, so the slots
+/// exist, and it puts the three aggression overrides back the way <c>GeneralNpcAI</c> has them, so
+/// nothing here starts fighting. The variable write is untouched and still happens on spawn.
+/// </para>
 /// </remarks>
 [AIName("wake_variable")]
-public class WakeVariableAI : GeneralNpcAI
+public class WakeVariableAI : PassivePatternAi
 {
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId =
+		new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
+
 	public WakeVariableAI(Npc owner)
 		: base(owner)
 	{
 	}
+
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 
 	/// <summary>
 	/// Writes on spawn, which is where <c>PatternAi</c> evaluates <c>on_wake_up</c> too.
@@ -58,14 +73,24 @@ public class WakeVariableAI : GeneralNpcAI
 /// aggression -- the mirror of the reason that class exists at all. Two thin classes over one shared
 /// write is the whole of it; the alternative was a table that silently changed what a third of its npcs
 /// do in a fight.
+/// <para>
+/// Now a <see cref="PatternAi"/>, which is already aggressive, so these npcs keep the aggression this
+/// class exists to protect and gain the slots they were missing. Nothing about the write changes.
+/// </para>
 /// </remarks>
 [AIName("wake_variable_aggressive")]
-public class WakeVariableAggressiveAI : AggressiveNpcAI
+public class WakeVariableAggressiveAI : PatternAi
 {
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId =
+		new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
+
 	public WakeVariableAggressiveAI(Npc owner)
 		: base(owner)
 	{
 	}
+
+	protected override AiPattern Pattern =>
+		ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id => GeneratedPattern.For(id));
 
 	protected override void HandleSpawned()
 	{

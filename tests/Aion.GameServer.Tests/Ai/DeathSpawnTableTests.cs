@@ -143,7 +143,7 @@ public sealed class DeathSpawnTableTests
 	private static readonly string[] Composing =
 	[
 		"battle_cycle", "death_spawn", "idle_cycle", "idle_cycle_passive",
-		"aggressive_pattern", "passive_pattern",
+		"aggressive_pattern", "passive_pattern", "wake_variable", "wake_variable_aggressive",
 	];
 
 	[Fact]

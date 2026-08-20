@@ -92,7 +92,14 @@ public sealed class WakeVariableAiTests
 		// a player even if the class were the aggressive one, so a mutation swapping the base class
 		// survives every observation above. The invariant being protected is the class, so the class
 		// is what is asserted -- the 719 npcs on this table include ones whose tribe would.
-		Assert.IsNotAssignableFrom<AggressiveNpcAI>(flag.GetAi());
+		//
+		// It reads as `PassivePatternAi` rather than "not aggressive" because this class became a
+		// pattern class, so its npcs could hold the generated rows they had been missing. Passivity
+		// is no longer carried by the base type -- `PassivePatternAi` descends from `PatternAi` and
+		// therefore from `AggressiveNpcAI` -- but by the three handler overrides it puts back the way
+		// `GeneralNpcAI` has them. So the assertion names the class that performs the restoration.
+		// A mutation swapping this to plain `PatternAi` still fails here, which is the whole point.
+		Assert.IsAssignableFrom<Aion.GameServer.Ai.Pattern.PassivePatternAi>(flag.GetAi());
 	}
 
 	/// <summary><b>Every npc in the table is bound to one of the two classes that run it.</b></summary>

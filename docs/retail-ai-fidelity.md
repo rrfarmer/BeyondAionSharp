@@ -37248,3 +37248,62 @@ Unchanged refusals: `control_door` (38 patterns), `enable_area` (32), `change_wo
 `goto_waypoint` with `MOVETYPE_RUN`, `play_cutscene_by_user_indicator` (5), the `is_user` / `is_npc`
 conditions in the death family (22), `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and
 retail cast timings, which need play-testing rather than more parsing.
+
+## The 143 npcs the last commit gave up
+
+`Retail-AI-Pattern: the wake-variable classes become pattern classes`
+
+The previous entry set them aside and said why: `wake_variable` and `wake_variable_aggressive`
+descend from `GeneralNpcAI` and `AggressiveNpcAI`, not `PatternAi`, so they have no slots to compose
+into. 143 npcs bound there had real death rungs that could never run. It also named the way forward
+it expected -- make `extract_wake_variables` give those npcs up under its richer-wins rule, then
+rebind them -- and flagged that as carrying a subsumption claim to verify.
+
+**That turned out to be the wrong fix, and the claim it rested on is false.** These classes do not
+hold a *table* the pattern tables might subsume; they hold an **override**. `HandleSpawned` writes
+the npc's spawn variables and, for 75 patterns, despawns it afterwards. Nothing in the generated
+tables writes those variables for these npcs, so giving them up would have lost the writes. The
+richer-wins rule does not apply, because neither side is richer -- they are different things.
+
+The actual fix is smaller and loses nothing: **change the base class, keep the override.**
+`WakeVariableAI` becomes a `PassivePatternAi` and `WakeVariableAggressiveAI` a `PatternAi`. Both keep
+`HandleSpawned` exactly as it was, and both gain the slots, so their npcs read the generated tables
+like everything else. The accepted set in all three extractors takes the two class names back.
+
+Death table 1,477 -> **1,620 npcs**, the 143 restored.
+
+### The pin that caught this, and what had to change in it
+
+`TheFlagStaysPassiveWithAPlayerNextToIt` failed immediately, which is the pin doing its job. It
+asserts structurally -- `IsNotAssignableFrom<AggressiveNpcAI>` -- and its comment explains why:
+behaviour cannot see the difference for *that* npc, because its tribe would not aggro a player even
+if the class were the aggressive one, so a mutation swapping the base class had survived a purely
+behavioural pin once already.
+
+The invariant is intact but has moved. `PassivePatternAi` **is** a `PatternAi` and therefore an
+`AggressiveNpcAI`; it restores passivity by overriding the three handlers back to `GeneralNpcAI`'s
+behaviour, not by its position in the hierarchy. So the assertion now names the class that performs
+the restoration: `IsAssignableFrom<PassivePatternAi>`.
+
+That is a weakening if it is merely asserted, so it was checked. Two mutations, both caught:
+
+| mutation | caught by |
+|---|---|
+| passive base swapped for the aggressive one | `TheFlagStaysPassiveWithAPlayerNextToIt` |
+| spawn-time variable write dropped | `AnAggressiveWriterStillFights` |
+
+The second is the one worth having: it is what proves the override survived the base-class change,
+which is the entire claim this commit rests on.
+
+### Where the generated tables now stand
+
+Every npc any generated table has rows for is bound to a class that runs them -- **0 unbound**.
+2,441 npcs are fed by more than one table. Adds backlog unchanged at 216 across 157 encounters; the
+143 are death rungs on npcs whose adds we already place, so the count does not move, and saying it
+did would be the same mistake the vocabulary-merge entry warned about.
+
+Still missing, unchanged: `control_door` (38 patterns), `enable_area` (32),
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`,
+`play_cutscene_by_user_indicator` (5), the `is_user` / `is_npc` conditions in the death family (22),
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings, which need
+play-testing rather than more parsing.

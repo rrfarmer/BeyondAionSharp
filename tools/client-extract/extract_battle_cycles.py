@@ -160,14 +160,15 @@ BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 #: decides only one thing -- whether it fights -- which is why the generated class names are listed
 #: here too: rebinding must be idempotent, or a second run would drop everything the first run took.
 #:
-#: `wake_variable` and `wake_variable_aggressive` are **deliberately absent**, and it cost 143 npcs
-#: with real death rungs. Those two classes descend from `GeneralNpcAI` and `AggressiveNpcAI`, not
-#: from `PatternAi`, so they have no slots to compose into -- an npc bound there would carry rows that
-#: never run, which is the exact failure mode this whole change exists to remove. Folding them in means
-#: making `extract_wake_variables` give those npcs up under its own richer-wins rule and rebinding
-#: them, which is a separate change with its own thing to verify.
+#: `wake_variable` and `wake_variable_aggressive` are here, which they were not when the accepted set
+#: was first unified: they were held back because those classes descended from `GeneralNpcAI` and
+#: `AggressiveNpcAI` rather than `PatternAi`, so an npc bound there would carry rows that never ran.
+#: They are `PassivePatternAi` and `PatternAi` now, keeping the aggression each was written to protect,
+#: so the exclusion has no reason left. Their spawn-time variable write is an override and survives
+#: unchanged -- **the tables do not subsume it**, and nothing here claims they do.
 GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
-           "idle_cycle_passive", "aggressive_pattern", "passive_pattern"}
+           "idle_cycle_passive", "aggressive_pattern", "passive_pattern",
+           "wake_variable", "wake_variable_aggressive"}
 
 #: Retail's thirty battle-timer slots, named by index.
 TIMER_RE = re.compile(r"BTIMERI_INDEX_(\d+)")
