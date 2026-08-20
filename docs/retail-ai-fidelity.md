@@ -33156,3 +33156,67 @@ classes have their own behaviour suites — and stated so a new sibling is cover
   than stored. Retail's `npcs.xml` specifies them per npc. Comparing them is worth doing, but the fix
   would mean overriding a calculator rather than correcting data, so it is a design question and not a
   sweep. That is why it has not been started.
+
+## One faction's conquest rotation never ran
+
+`F4_Rotation_Normal_Monster` binds **152 npcs and 48 of them had the class.** The hundred and four that
+did not are the *same npcs with a `_D` on the end of the name*:
+
+```
+LF4_Rotation_Normal_01_01_65_An      conquest_offering_aggressive
+LF4_Rotation_Normal_01_01_65_An_D    aggressive
+```
+
+Same for `F4_Rotation_Party_Monster`, and for four smaller rotation patterns. **212 npcs**, taking the
+class from 112 to 324, and 12 more found afterwards for 336.
+
+That matters because this class's death rung *is* the loop: it leaves a time-reset npc where the monster
+fell, and that npc broadcasts the message re-arming the spawner's eight-minute clock. A rotation monster
+without the class kills the rotation it belongs to — so one faction's conquest rotations ran and the
+other's stopped after a single pass.
+
+### The rule that found them
+
+**The naming group, not the pattern.** The pattern-wide audit never reported these: 48 specialised
+against 104 generic fails any share test, and rightly — a pattern that is mostly generic says nothing.
+But grouped by faction-stripped name, each pair is one bound npc and its unbound twin, which is
+unanimous and is exactly the defect.
+
+So `--by-suffix` now uses a different rule from the pattern-wide mode: **a naming group's real classes
+must agree with each other, and then any generic member is owed that class.** A share test is meaningless
+on a group of two or three — one bound sibling and one unbound is fifty per cent, and it is also the
+whole finding.
+
+That mode now reports **1 row**, down from 14.
+
+### And two more families off the pattern-wide audit
+
+**`Ab_AirBomb`** — 18 abyss fortress mines that were scenery. **`Dread_Surkana`** — 15. Recorded in the
+entry above; the pattern-wide audit is at **143 rows**.
+
+### The one left, and why
+
+`IDLDF5Re_02_L_Cannon` sits generic beside `IDLDF5Re_02_Cannon` on `useitem`. **One of the family's four
+npcs is specialised**, which is not agreement, and `useitem` is what lets a player climb into a siege
+cannon — putting it on the wrong object is a player-facing change made on one sibling's evidence. Left
+alone deliberately.
+
+### A flake worth naming
+
+`MastoTheAncientAiTests.EveryBandHasItsOwnFlag` failed once during this work and passed in isolation and
+on every rerun since — three full suite runs green. It asserts `SwitchesOver(...) >= 3` over a rolled
+target switch, so it is probabilistic by construction. **Not caused by this change**, but it is the
+second flaky pin found in this project and the shape is the same both times: a count of rolled events
+with a threshold close to its expected value.
+
+### Still missing
+
+- **143 rows on the pattern-wide reverse audit**, headed by `base_protector` (20) and
+  `fortress_protector` (19). Those are fortress and garrison chiefs, and unlike the rotation monsters
+  their naming groups are *internally mixed* — the trio test does not resolve them, so they need reading
+  one family at a time.
+- **`BGuard_AbyssTower` is 130 npcs of which two carry a class.** The trio rule fixed the third member of
+  that pair's group; the other hundred and twenty-odd attack towers and air interceptors are all generic
+  and nothing in the data says what they should be. That is a question about the class, not the binding.
+- **The cannon**, above.
+- **`EveryBandHasItsOwnFlag`'s threshold**, which wants either more samples or a seeded roll.

@@ -98,7 +98,7 @@ def main():
 
     # A race-variant group holds two or three npcs, so the whole-pattern default would empty it.
     if args.min_majority == 0:
-        args.min_majority = 2 if args.by_suffix else 3
+        args.min_majority = 1 if args.by_suffix else 3
 
     ai_of = our_ai()
     runs = patterns_by_npc()
@@ -152,6 +152,25 @@ def main():
             # evidence about what the pattern means, and a family that agrees on a class while one member
             # has none is a member that was missed rather than a member that is different.
             if majority in GENERIC:
+                continue
+
+            # **A naming group is unanimous or it is nothing.** With --by-suffix the group is one npc's
+            # race variants, so it holds two or three members and a share test is meaningless -- one
+            # bound sibling and one unbound is 50%, and it is also exactly the defect. The conquest
+            # rotation monsters are the case: 152 npcs on one pattern, and the hundred and four that had
+            # no class were the `_D` twin of each of the forty-eight that did, one pair at a time.
+            #
+            # So the rule here is different from the pattern-wide one: the group's real classes must
+            # agree with each other, and then any generic member is owed that class.
+            if args.by_suffix:
+                real = {a for a in counts if a not in GENERIC}
+                if len(real) != 1:
+                    continue
+                majority = next(iter(real))
+                odd = [n for n in npcs if ai_of[n] in GENERIC]
+                for npc_id in odd:
+                    rows.append((pattern, majority, counts[majority], npc_id, ai_of[npc_id] or "(none)",
+                                 devname.get(npc_id, "?"), npc_id in furniture))
                 continue
 
             # **Plurality is not agreement, and dropping the sibling cap exposed the difference.**
