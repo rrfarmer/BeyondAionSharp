@@ -36611,3 +36611,45 @@ encounters to be re-pinned on **the cast** rather than on the add still standing
 - **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **177 encounters missing an add**,
   **retail cast timings.**
+
+## The hazard's cast is lost, and that is why the expansion cannot land yet
+
+The plan from the previous entry was: land `use_skill` in wake and idle handlers, then re-pin the five
+encounters on what the add does rather than on it still standing. Both halves were attempted and the
+second one failed for a reason that turns out to matter more than the tests.
+
+Re-pinning was tried three ways. The gate stand-in and the arena placement were straightforward -- both
+were using "any npc with a template" as scenery, and needed an npc that is actually inert now that the
+tables have grown. `harness.WatchNew` then failed on the beacons, because it samples once a second and
+the hazard appears and vanishes **inside a single tick**.
+
+Which exposes the real problem. `Do.SkillOn` **queues** a cast, the queue is drained by the attack loop,
+and an npc that despawns in the same rung is gone before that happens. `NpcSkillCasting` says so in a
+comment written long before this table existed:
+
+> the queue is drained by the attack loop and only while the NPC has a target it hates, so an NPC that
+> appears, casts once and leaves would queue its cast and never fire it
+
+So landing `use_skill` as it stands would give 284 patterns their casts on paper and change nothing in
+play for the hazards -- the exact failure this entry set out to fix, in a new place. The beacon would
+still deliver no damage; it would just deliver none through a cast that never fires instead of through
+an npc that never casts.
+
+The fix is specific and already half-built: a rung that casts **and** despawns itself has to use the
+immediate path (`NpcSkillCasting.UseOnSelfNow`, which exists for this and is used by
+`UseSkillAndDieAI`), not the queue. That is a change to how the emitter chooses between two `Do.`
+helpers, plus an observable to pin it by -- and until the cast is observable, re-pinning the beacons is
+guesswork.
+
+Nothing is committed but this note. The tree is green at the previous entry's state.
+
+### Still missing
+
+- **The immediate-cast path for hazards**, above. Everything else about `use_skill` in wake and idle
+  handlers is ready: the parser change, the per-npc index resolution, the emitter, the bindings.
+- **An observable for a cast that fires and leaves.** `DrainQueuedSkills` reads the queue, `WatchNew`
+  samples once a second, and neither sees a hazard. Without one, the beacons cannot be re-pinned
+  honestly.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **177 encounters missing an add**,
+  **retail cast timings.**
