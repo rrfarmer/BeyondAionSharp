@@ -35601,3 +35601,48 @@ keeps returning to: **a green test whose stated reason is untested is the same a
   themselves; 147 arm nowhere.**
 - Retail cast *timings* are still unobserved: the rotations fire on the delays the data gives, and
   nothing here has watched a real fight to confirm they feel right.
+
+## All eight skill targets pinned, and summons that land on a player
+
+With `FireNextQueuedSkill` in place the three remaining target modes cost almost nothing, and the two
+random ones did **not** need a deterministic roll seam after all -- the trick is to leave the pick no
+freedom. A random cast with one creature on the hate list has one answer. `RANDOM_EXCEPT_CURRENT_TARGET`
+with two creatures, one of them the current target, has one answer. Both mutations die.
+
+Every mode this port has is now pinned by behaviour:
+
+| mode | pinned by |
+|---|---|
+| `ME` | a self-cast stays on the caster |
+| `MOST_HATED` | still hits the tank when somebody else is nearly dead |
+| `SECOND_MOST_HATED`, `THIRD_MOST_HATED` | each picks its own place in the hate list |
+| `LOWEST_HP` | reaches past the tank for the one closest to dying |
+| `FRIEND` | finds the other npc, not the raid |
+| `RANDOM` | comes from the hate list |
+| `RANDOM_EXCEPT_CURRENT_TARGET` | really excludes the current target |
+
+`MOST_HP` is unpinned because **no rotation in the table uses it** -- 0 casts against 50 for `LOWEST_HP`.
+Retail has 58 uses of it across the dump, all in patterns refused for other reasons.
+
+### spawn_on_target
+
+Retail's summon-onto-a-creature, 896 uses. `OBJI_CUR_TARGET` (535) and `OBJI_SELF` (234) are the two
+creatures this port can name, and both already had helpers. The table grows to **1,272 rotations across
+4,001 npcs**, with 86 summons landing on the target and 41 on the caster.
+
+**`attack_target_after_spawn` with no hate points is refused.** The flag and `hatepoints_to_add` are one
+op here -- the hate is what makes the summon fight -- so TRUE with zero points says "attack" and gives
+nothing to attack with. Choosing a number would be choosing how hard it pulls, which is a real
+behavioural decision and not a transcription, so those are counted instead.
+
+### Still missing
+
+- **246 casts and ~90 summons at a role-named creature** (attacker, caster, message parameter, event
+  target). Unchanged and unchanged in kind: the queue resolves from the hate list, and these creatures
+  are not on it by rank. This is the last big vocabulary item and it needs the queue to carry a
+  creature reference.
+- **198 `is_user_flying`** -- no condition here asks whether a player is airborne.
+- **53 range-restricted attacker-indicator casts**; **336 optional arming handlers dropped**, by kind.
+- **188 rotations re-arm only from within themselves; 147 arm nowhere.**
+- **Retail cast timings remain unobserved.** 1,272 rotations fire on the delays in the data and nobody
+  has watched one in a live fight. Every pin here is about *who* and *what*, never *how it feels*.

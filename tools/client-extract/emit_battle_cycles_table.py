@@ -138,6 +138,11 @@ def action_code(row: dict) -> str:
         return f"Do.ArmTimer({row['a1']}, {row['a2']})"
     if kind == "despawn":
         return f"Do.Despawn({row['a1']})"
+    if kind == "spawn_on_target":
+        return (f"Do.SpawnOnTarget({row['a1']}, {row['group']}, {row['a2']}, {row['x']}f, "
+                f"{row['a3']}, {int(float(row['z']))}, {row['y']}f)")
+    if kind == "spawn_near":
+        return f"Do.SpawnNear({row['a1']}, {row['group']}, {row['a2']}, {row['x']}f, {row['a3']})"
     if kind == "switch_to":
         return f"Do.SwitchTarget(AggroTarget.{row['place']})"
     if kind == "hate":

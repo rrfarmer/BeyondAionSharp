@@ -829,6 +829,20 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 213909	ND2_FeB	cycle	3	2	timer:0|hp_between:36:99|set_flag_var:0	2	skill	17948	0	0	MOST_HATED	0.0	0.0	0.0	0
 213909	ND2_FeB	cycle	4	1	timer:1	0	arm	1	6000	0		0.0	0.0	0.0	0
 213909	ND2_FeB	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	0	5	timer:2|hp_below:35	0	arm	2	30000	0		0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	0	5	timer:2|hp_below:35	1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	0	arm	2	15000	0		0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	1	skill	17930	0	0	MOST_HATED	0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	2	skill	17942	0	0	MOST_HATED	0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	2	3	timer:1|hp_between:37:69|set_flag_var:1	0	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	1	arm	1	10000	0		0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	2	skill	17941	0	0	ME	0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	3	spawn_on_target	280734	2	0		3.0	50.0	0.0	1
+213930	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	4	broadcast	4201	50	0		0.0	0.0	0.0	0
+213930	ND2_EeD	cycle	4	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+213930	ND2_EeD	on_enter_attack_state	0	6		0	arm	0	6000	0		0.0	0.0	0.0	0
 214026	D2_AnD	cycle	0	7	timer:3	0	arm	3	25000	0		0.0	0.0	0.0	0
 214026	D2_AnD	cycle	0	7	timer:3	1	skill	17447	0	0	MOST_HATED	0.0	0.0	0.0	0
 214026	D2_AnD	cycle	0	7	timer:3	2	skill	16516	0	0	LOWEST_HP	0.0	0.0	0.0	0
@@ -2853,6 +2867,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 215806	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 215806	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 215806	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+215807	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+215807	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+215807	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+215807	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 215811	IDTP_Fanatic_ReB	cycle	0	8	timer:0	0	skill	18166	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
 215811	IDTP_Fanatic_ReB	cycle	0	8	timer:0	1	arm	0	10000	0		0.0	0.0	0.0	0
 215811	IDTP_Fanatic_ReB	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
@@ -2925,6 +2943,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 215855	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 215855	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 215855	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+215856	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+215856	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+215856	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+215856	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 215859	IDTP_Fanatic_KeB	cycle	0	8	timer:0	0	skill	16409	0	0	ME	0.0	0.0	0.0	0
 215859	IDTP_Fanatic_KeB	cycle	0	8	timer:0	1	arm	0	28000	0		0.0	0.0	0.0	0
 215859	IDTP_Fanatic_KeB	cycle	1	7	timer:1	0	skill	17293	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
@@ -3090,6 +3112,27 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216122	IDCT_DrakanWi	on_enter_attack_state	0	12		0	arm	0	6000	0		0.0	0.0	0.0	0
 216122	IDCT_DrakanWi	on_enter_attack_state	0	12		1	arm	1	7000	0		0.0	0.0	0.0	0
 216122	IDCT_DrakanWi	on_enter_attack_state	0	12		2	skill	16570	0	0	ME	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	0	10	timer:4|hp_below:35	0	arm	3	15000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	0	10	timer:4|hp_below:35	1	skill	18167	0	0	ME	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	1	9	timer:3	0	arm	4	19000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	1	9	timer:3	1	skill	16543	0	0	MOST_HATED	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	0	arm	0	6000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	1	arm	3	15000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	2	skill	18167	0	0	ME	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	3	say	341770	0	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	4	broadcast	3409	13	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	3	7	timer:2|hp_between:37:69	0	arm	2	17000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	3	7	timer:2|hp_between:37:69	1	skill	16543	0	0	MOST_HATED	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	1	arm	2	17000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	2	skill	18173	0	0	MOST_HATED	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	3	spawn_on_target	281804	1	0		5.0	50.0	0.0	1
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	4	say	341776	0	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	5	skill	17003	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	6	switch_to	0	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	cycle	5	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	on_enter_attack_state	0	12		0	arm	0	6000	0		0.0	0.0	0.0	0
+216126	XDrakan_ReG_ver40	on_enter_attack_state	0	12		1	arm	1	8000	0		0.0	0.0	0.0	0
 216127	XDrakan_WeB	cycle	0	11	timer:5|hp_below:35	0	arm	4	12000	0		0.0	0.0	0.0	0
 216127	XDrakan_WeB	cycle	0	11	timer:5|hp_below:35	1	skill	18157	0	0	ME	0.0	0.0	0.0	0
 216127	XDrakan_WeB	cycle	1	10	timer:4	0	arm	5	17000	0		0.0	0.0	0.0	0
@@ -3668,6 +3711,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216333	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 216333	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 216333	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+216334	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+216334	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+216334	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+216334	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 216337	IDTP_Fanatic_KeB	cycle	0	8	timer:0	0	skill	16409	0	0	ME	0.0	0.0	0.0	0
 216337	IDTP_Fanatic_KeB	cycle	0	8	timer:0	1	arm	0	28000	0		0.0	0.0	0.0	0
 216337	IDTP_Fanatic_KeB	cycle	1	7	timer:1	0	skill	17293	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
@@ -3699,6 +3746,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216341	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 216341	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 216341	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+216342	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+216342	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+216342	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+216342	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 216345	IDTP_Fanatic_KeB	cycle	0	8	timer:0	0	skill	16409	0	0	ME	0.0	0.0	0.0	0
 216345	IDTP_Fanatic_KeB	cycle	0	8	timer:0	1	arm	0	28000	0		0.0	0.0	0.0	0
 216345	IDTP_Fanatic_KeB	cycle	1	7	timer:1	0	skill	17293	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
@@ -3775,6 +3826,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216358	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 216358	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 216358	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+216359	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+216359	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+216359	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+216359	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 216363	IDTP_Fanatic_Summon1	cycle	0	4	timer:0	0	skill	16462	0	0	MOST_HATED	0.0	0.0	0.0	0
 216363	IDTP_Fanatic_Summon1	cycle	0	4	timer:0	1	arm	0	10000	0		0.0	0.0	0.0	0
 216363	IDTP_Fanatic_Summon1	on_enter_attack_state	0	6		0	arm	0	10000	0		0.0	0.0	0.0	0
@@ -3876,6 +3931,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216390	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 216390	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 216390	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+216391	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+216391	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+216391	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+216391	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 216394	IDTP_Fanatic_KeB	cycle	0	8	timer:0	0	skill	16409	0	0	ME	0.0	0.0	0.0	0
 216394	IDTP_Fanatic_KeB	cycle	0	8	timer:0	1	arm	0	28000	0		0.0	0.0	0.0	0
 216394	IDTP_Fanatic_KeB	cycle	1	7	timer:1	0	skill	17293	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
@@ -3907,6 +3966,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216398	IDTP_Fanatic_MeA	cycle	1	7	timer:1	1	arm	1	26000	0		0.0	0.0	0.0	0
 216398	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		0	arm	0	15000	0		0.0	0.0	0.0	0
 216398	IDTP_Fanatic_MeA	on_enter_attack_state	0	9		1	arm	1	12000	0		0.0	0.0	0.0	0
+216399	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+216399	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+216399	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+216399	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 216433	DF4_RaidRun	cycle	0	7	timer:0	0	arm	0	20000	0		0.0	0.0	0.0	0
 216433	DF4_RaidRun	cycle	0	7	timer:0	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 216433	DF4_RaidRun	on_enter_attack_state	0	7		0	arm	0	20000	0		0.0	0.0	0.0	0
@@ -4073,6 +4136,35 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216531	IDTP_NepTe1	on_enter_attack_state	0	6		0	broadcast	6955	10	0		0.0	0.0	0.0	0
 216531	IDTP_NepTe1	on_enter_attack_state	0	6		1	skill	18639	0	0	MOST_HATED	0.0	0.0	0.0	0
 216531	IDTP_NepTe1	on_enter_attack_state	0	6		2	arm	0	12000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	0	9	hp_below:30|timer:0|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	0	9	hp_below:30|timer:0|set_flag_var:1	1	say	342079	0	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	0	9	hp_below:30|timer:0|set_flag_var:1	2	spawn_on_target	281526	2	300		3.0	50.0	100.0	2
+216553	Owllau_PeN_ver40	cycle	0	9	hp_below:30|timer:0|set_flag_var:1	3	skill	18772	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	0	9	hp_below:30|timer:0|set_flag_var:1	4	skill	18773	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	0	9	hp_below:30|timer:0|set_flag_var:1	5	skill	18774	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	1	8	timer:0|hp_below:50|set_flag_var:2	0	arm	0	5000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	1	8	timer:0|hp_below:50|set_flag_var:2	1	skill	18770	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	1	8	timer:0|hp_below:50|set_flag_var:2	2	skill	18771	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	2	6	timer:1|hp_below:30	0	arm	1	15000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	2	6	timer:1|hp_below:30	1	skill	18773	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	2	6	timer:1|hp_below:30	2	skill	18775	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	3	5	timer:1|hp_between:32:49	0	arm	1	15000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	3	5	timer:1|hp_between:32:49	1	skill	18771	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	4	4	timer:1|hp_between:52:79	0	arm	1	15000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	4	4	timer:1|hp_between:52:79	1	skill	18774	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	5	2	timer:1|hp_between:82:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	5	2	timer:1|hp_between:82:99	1	skill	18767	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	0	12	chance:50	0	arm	0	5000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	0	12	chance:50	1	arm	1	15000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	0	12	chance:50	2	say	342078	0	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	0	12	chance:50	3	skill	18767	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	0	12	chance:50	4	skill	18768	0	0	MOST_HATED	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	1	11		0	arm	0	5000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	1	11		1	arm	1	15000	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	1	11		2	say	342078	0	0		0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	1	11		3	skill	18767	0	0	ME	0.0	0.0	0.0	0
+216553	Owllau_PeN_ver40	on_enter_attack_state	1	11		4	skill	18769	0	0	MOST_HATED	0.0	0.0	0.0	0
 216560	LycanDR_PnA	cycle	0	5	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 216560	LycanDR_PnA	cycle	0	5	timer:0|hp_below:30|set_flag_var:0	1	skill	16631	0	0	ME	0.0	0.0	0.0	0
 216560	LycanDR_PnA	cycle	0	5	timer:0|hp_below:30|set_flag_var:0	2	skill	16636	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -4593,6 +4685,27 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216819	IDCT_DrakanWi	on_enter_attack_state	0	12		0	arm	0	6000	0		0.0	0.0	0.0	0
 216819	IDCT_DrakanWi	on_enter_attack_state	0	12		1	arm	1	7000	0		0.0	0.0	0.0	0
 216819	IDCT_DrakanWi	on_enter_attack_state	0	12		2	skill	16570	0	0	ME	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	0	10	timer:4|hp_below:35	0	arm	3	15000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	0	10	timer:4|hp_below:35	1	skill	18167	0	0	ME	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	1	9	timer:3	0	arm	4	19000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	1	9	timer:3	1	skill	16543	0	0	MOST_HATED	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	0	arm	0	6000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	1	arm	3	15000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	2	skill	18167	0	0	ME	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	3	say	341770	0	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	2	8	hp_below:35|timer:0|set_flag_var:1	4	broadcast	3409	13	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	3	7	timer:2|hp_between:37:69	0	arm	2	17000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	3	7	timer:2|hp_between:37:69	1	skill	16543	0	0	MOST_HATED	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	1	arm	2	17000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	2	skill	18173	0	0	MOST_HATED	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	3	spawn_on_target	281804	1	0		5.0	50.0	0.0	1
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	4	say	341776	0	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	5	skill	17003	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	4	6	timer:0|hp_between:37:69|set_flag_var:0	6	switch_to	0	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	cycle	5	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	on_enter_attack_state	0	12		0	arm	0	6000	0		0.0	0.0	0.0	0
+216832	XDrakan_ReG_ver40	on_enter_attack_state	0	12		1	arm	1	8000	0		0.0	0.0	0.0	0
 216836	XDrakan_WeB	cycle	0	11	timer:5|hp_below:35	0	arm	4	12000	0		0.0	0.0	0.0	0
 216836	XDrakan_WeB	cycle	0	11	timer:5|hp_below:35	1	skill	18157	0	0	ME	0.0	0.0	0.0	0
 216836	XDrakan_WeB	cycle	1	10	timer:4	0	arm	5	17000	0		0.0	0.0	0.0	0
@@ -7869,6 +7982,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 217905	LDF4a_Mosbear	cycle	0	7	timer:0	1	skill	20128	0	0	ME	0.0	0.0	0.0	0
 217905	LDF4a_Mosbear	on_enter_attack_state	0	7		0	arm	0	15000	0		0.0	0.0	0.0	0
 217905	LDF4a_Mosbear	on_enter_attack_state	0	7		1	skill	19853	0	0	ME	0.0	0.0	0.0	0
+217906	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217906	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+217906	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+217906	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217906	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+217907	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217907	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+217907	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+217907	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217907	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 217908	LDF4a_Mosbear	cycle	0	7	timer:0	0	arm	0	30000	0		0.0	0.0	0.0	0
 217908	LDF4a_Mosbear	cycle	0	7	timer:0	1	skill	20129	0	0	ME	0.0	0.0	0.0	0
 217908	LDF4a_Mosbear	on_enter_attack_state	0	7		0	arm	0	15000	0		0.0	0.0	0.0	0
@@ -7886,6 +8009,14 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 217915	1Skill_Ev15s_UseSk1T	cycle	0	7	timer:0	0	arm	0	15000	0		0.0	0.0	0.0	0
 217915	1Skill_Ev15s_UseSk1T	cycle	0	7	timer:0	1	skill	19828	0	0	MOST_HATED	0.0	0.0	0.0	0
 217915	1Skill_Ev15s_UseSk1T	on_enter_attack_state	0	7		0	arm	0	15000	0		0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+217917	LDF4a_Sheluk_Nmd	cycle	1	7	timer:1	0	arm	1	12500	0		0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	cycle	1	7	timer:1	1	skill	19828	0	0	MOST_HATED	0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	cycle	2	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+217917	LDF4a_Sheluk_Nmd	on_enter_attack_state	0	7		1	arm	1	10000	0		0.0	0.0	0.0	0
 217920	LDF4a_Mosbear	cycle	0	7	timer:0	0	arm	0	30000	0		0.0	0.0	0.0	0
 217920	LDF4a_Mosbear	cycle	0	7	timer:0	1	skill	20128	0	0	ME	0.0	0.0	0.0	0
 217920	LDF4a_Mosbear	on_enter_attack_state	0	7		0	arm	0	15000	0		0.0	0.0	0.0	0
@@ -7906,6 +8037,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 217930	LDF4a_Mosbear	cycle	0	7	timer:0	1	skill	20129	0	0	ME	0.0	0.0	0.0	0
 217930	LDF4a_Mosbear	on_enter_attack_state	0	7		0	arm	0	15000	0		0.0	0.0	0.0	0
 217930	LDF4a_Mosbear	on_enter_attack_state	0	7		1	skill	19853	0	0	ME	0.0	0.0	0.0	0
+217931	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217931	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+217931	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+217931	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217931	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+217932	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217932	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+217932	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+217932	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+217932	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 217933	LDF4a_Owllau_Fighter	cycle	0	7	timer:0	0	arm	0	20000	0		0.0	0.0	0.0	0
 217933	LDF4a_Owllau_Fighter	cycle	0	7	timer:0	1	skill	20078	0	0	MOST_HATED	0.0	0.0	0.0	0
 217933	LDF4a_Owllau_Fighter	on_enter_attack_state	0	7		0	say	1500311	0	0		0.0	0.0	0.0	0
@@ -8198,6 +8339,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218004	LDF4a_Calydon_Priest	cycle	3	5	timer:1	0	arm	1	5000	0		0.0	0.0	0.0	0
 218004	LDF4a_Calydon_Priest	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218004	LDF4a_Calydon_Priest	on_enter_attack_state	0	7		1	arm	1	5000	0		0.0	0.0	0.0	0
+218008	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218008	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+218008	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+218008	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218008	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+218009	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218009	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+218009	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+218009	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218009	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218010	LDF4a_ForestSpider_Ranger	cycle	0	7	timer:0	0	arm	0	25000	0		0.0	0.0	0.0	0
 218010	LDF4a_ForestSpider_Ranger	cycle	0	7	timer:0	1	skill	19880	0	0	MOST_HATED	0.0	0.0	0.0	0
 218010	LDF4a_ForestSpider_Ranger	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -10685,6 +10836,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218518	LDF4b_C2_Enos_Named_60_Ae	on_enter_attack_state	0	5		1	arm	0	3000	0		0.0	0.0	0.0	0
 218518	LDF4b_C2_Enos_Named_60_Ae	on_enter_attack_state	0	5		2	arm	1	8000	0		0.0	0.0	0.0	0
 218518	LDF4b_C2_Enos_Named_60_Ae	on_enter_attack_state	0	5		3	arm	2	12000	0		0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	0	4	timer:1|hp_below:30|set_flag_var:0	0	skill	16522	0	0	ME	0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	0	4	timer:1|hp_below:30|set_flag_var:0	1	spawn_on_target	218627	2	0		5.0	50.0	0.0	1
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	1	3	timer:0|hp_below:49	0	arm	0	15000	0		0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	1	3	timer:0|hp_below:49	1	skill	20235	0	0	MOST_HATED	0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	2	2	timer:0|hp_between:51:99	0	arm	0	15000	0		0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	2	2	timer:0|hp_between:51:99	1	skill	20349	0	0	MOST_HATED	0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	cycle	3	1	timer:1	0	arm	1	8000	0		0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	on_enter_attack_state	0	7		0	arm	0	8000	0		0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	on_enter_attack_state	0	7		1	arm	1	8000	0		0.0	0.0	0.0	0
+218519	LDF4b_C2_Fethlot_ItemNamed_60_Ae	on_enter_attack_state	0	7		2	skill	20235	0	0	ME	0.0	0.0	0.0	0
 218520	LDF4b_C2_Comad_ItemNamed_60_Ae	cycle	0	7	timer:3|hp_below:30|set_flag_var:2	0	skill	20248	0	0	ME	0.0	0.0	0.0	0
 218520	LDF4b_C2_Comad_ItemNamed_60_Ae	cycle	1	6	timer:2|hp_below:50|set_flag_var:1	0	skill	20235	0	0	MOST_HATED	0.0	0.0	0.0	0
 218520	LDF4b_C2_Comad_ItemNamed_60_Ae	cycle	2	5	timer:1|hp_below:80|set_flag_var:0	0	skill	20235	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -13201,6 +13362,14 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 219312	TiamatDown_TiamatAgent	on_enter_attack_state	0	3		1	skill	20651	0	0	ME	0.0	0.0	0.0	0
 219312	TiamatDown_TiamatAgent	on_enter_attack_state	0	3		2	arm	0	25000	0		0.0	0.0	0.0	0
 219312	TiamatDown_TiamatAgent	on_enter_attack_state	0	3		3	arm	1	11000	0		0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	cycle	0	3	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	cycle	0	3	timer:2	1	spawn_near	219293	5	20		5.0	50.0	0.0	1
+219324	Event_Valentine_White_Mon_01	cycle	0	3	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	cycle	1	2	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	cycle	1	2	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219324	Event_Valentine_White_Mon_01	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
 219325	Housing_Agrint_spring_henchman	cycle	0	2	chance:50|timer:0	0	arm	0	9000	0		0.0	0.0	0.0	0
 219325	Housing_Agrint_spring_henchman	cycle	0	2	chance:50|timer:0	1	skill	16936	0	0	MOST_HATED	0.0	0.0	0.0	0
 219325	Housing_Agrint_spring_henchman	cycle	1	1	timer:0	0	arm	0	9000	0		0.0	0.0	0.0	0
@@ -13439,6 +13608,39 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 219620	GM_Event_TiamatDown_TiamatAgent	on_enter_attack_state	0	3		1	skill	20651	0	0	ME	0.0	0.0	0.0	0
 219620	GM_Event_TiamatDown_TiamatAgent	on_enter_attack_state	0	3		2	arm	0	25000	0		0.0	0.0	0.0	0
 219620	GM_Event_TiamatDown_TiamatAgent	on_enter_attack_state	0	3		3	arm	1	11000	0		0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	cycle	0	6	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	cycle	0	6	timer:2	1	spawn_near	219295	5	20		5.0	50.0	0.0	3
+219622	GM_Event_ChristMas_Light_Boss_24	cycle	0	6	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	cycle	1	5	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	cycle	1	5	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219622	GM_Event_ChristMas_Light_Boss_24	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	cycle	0	6	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	cycle	0	6	timer:2	1	spawn_near	219295	5	20		5.0	50.0	0.0	3
+219623	GM_Event_ChristMas_Light_Boss_12	cycle	0	6	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	cycle	1	5	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	cycle	1	5	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219623	GM_Event_ChristMas_Light_Boss_12	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	cycle	0	6	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	cycle	0	6	timer:2	1	spawn_near	219295	5	20		5.0	50.0	0.0	3
+219624	GM_Event_ChristMas_Light_Boss_6	cycle	0	6	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	cycle	1	5	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	cycle	1	5	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219624	GM_Event_ChristMas_Light_Boss_6	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	cycle	0	3	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	cycle	0	3	timer:2	1	spawn_near	219173	5	20		5.0	50.0	0.0	1
+219626	GM_Event_HLFP_AgrintWinter	cycle	0	3	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	cycle	1	2	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	cycle	1	2	timer:1	1	skill	19018	0	0	MOST_HATED	0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	cycle	1	2	timer:1	2	arm	1	50000	0		0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219626	GM_Event_HLFP_AgrintWinter	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
 219627	TiamatDown_TiamatAgent	cycle	0	2	timer:0	0	arm	0	25000	0		0.0	0.0	0.0	0
 219627	TiamatDown_TiamatAgent	cycle	0	2	timer:0	1	skill	20649	0	0	ME	0.0	0.0	0.0	0
 219627	TiamatDown_TiamatAgent	cycle	1	1	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -13447,6 +13649,39 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 219627	TiamatDown_TiamatAgent	on_enter_attack_state	0	3		1	skill	20651	0	0	ME	0.0	0.0	0.0	0
 219627	TiamatDown_TiamatAgent	on_enter_attack_state	0	3		2	arm	0	25000	0		0.0	0.0	0.0	0
 219627	TiamatDown_TiamatAgent	on_enter_attack_state	0	3		3	arm	1	11000	0		0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	cycle	0	3	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	cycle	0	3	timer:2	1	spawn_near	219293	5	20		5.0	50.0	0.0	1
+219629	ChristMas_Light_Boss	cycle	0	3	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	cycle	1	2	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	cycle	1	2	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219629	ChristMas_Light_Boss	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	cycle	0	3	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	cycle	0	3	timer:2	1	spawn_near	219293	5	20		5.0	50.0	0.0	1
+219630	ChristMas_Light_Boss	cycle	0	3	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	cycle	1	2	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	cycle	1	2	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219630	ChristMas_Light_Boss	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	cycle	0	3	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	cycle	0	3	timer:2	1	spawn_near	219293	5	20		5.0	50.0	0.0	1
+219631	ChristMas_Light_Boss	cycle	0	3	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	cycle	1	2	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	cycle	1	2	timer:1	1	arm	1	50000	0		0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219631	ChristMas_Light_Boss	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	cycle	0	3	timer:2	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	cycle	0	3	timer:2	1	spawn_near	219173	5	20		5.0	50.0	0.0	1
+219633	HLFP_AgrintWinter	cycle	0	3	timer:2	2	arm	2	200000	0		0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	cycle	1	2	timer:1	0	skill	19009	0	0	MOST_HATED	0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	cycle	1	2	timer:1	1	skill	19018	0	0	MOST_HATED	0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	cycle	1	2	timer:1	2	arm	1	50000	0		0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	on_enter_attack_state	0	7		0	arm	1	7000	0		0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	on_enter_attack_state	0	7		1	arm	2	30000	0		0.0	0.0	0.0	0
+219633	HLFP_AgrintWinter	on_enter_attack_state	0	7		2	skill	19718	0	0	ME	0.0	0.0	0.0	0
 219635	IDCT_DrakanWi	cycle	0	11	timer:2|hp_below:35	0	arm	3	12000	0		0.0	0.0	0.0	0
 219635	IDCT_DrakanWi	cycle	0	11	timer:2|hp_below:35	1	skill	18157	0	0	ME	0.0	0.0	0.0	0
 219635	IDCT_DrakanWi	cycle	1	10	timer:3	0	arm	2	17000	0		0.0	0.0	0.0	0
@@ -14456,6 +14691,17 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 230048	ShulackRose_Wi_DotD	cycle	2	100	timer:2	0	arm	1	15000	0		0.0	0.0	0.0	0
 230048	ShulackRose_Wi_DotD	cycle	2	100	timer:2	1	skill	16780	0	0	MOST_HATED	0.0	0.0	0.0	0
 230048	ShulackRose_Wi_DotD	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	0	22	timer:2	0	skill	19498	0	0	ME	0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	0	22	timer:2	1	say	342784	0	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	0	22	timer:2	2	spawn_on_target	230077	2	60		5.0	50.0	1000.0	1
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	1	21	timer:1	0	arm	2	2000	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	1	21	timer:1	1	say	342783	0	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	1	21	timer:1	2	skill	19498	0	0	ME	0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	2	20	timer:0	0	arm	1	2000	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	2	20	timer:0	1	say	342782	0	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	2	20	timer:0	2	skill	19498	0	0	ME	0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	on_enter_attack_state	0	80		0	say	342781	0	0		0.0	0.0	0.0	0
+230050	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	on_enter_attack_state	0	80		1	arm	0	3000	0		0.0	0.0	0.0	0
 230065	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	cycle	0	41	timer:2	0	arm	2	10000	0		0.0	0.0	0.0	0
 230065	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	cycle	0	41	timer:2	1	skill	17332	0	0	MOST_HATED	0.0	0.0	0.0	0
 230065	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	cycle	1	40	timer:0|hp_below:50|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
@@ -16288,6 +16534,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 230894	TR_Drakan_Pr_Heal_solo	cycle	1	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 230894	TR_Drakan_Pr_Heal_solo	cycle	1	6	timer:0	1	skill	20517	0	0	MOST_HATED	0.0	0.0	0.0	0
 230894	TR_Drakan_Pr_Heal_solo	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	0	9	timer:3	1	skill	20671	0	0	MOST_HATED	0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	1	8	timer:2	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	2	spawn_on_target	284131	1	0		5.0	50.0	200.0	1
+230896	TR_Drakan_El_Summon_solo	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	cycle	3	6	timer:0	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+230896	TR_Drakan_El_Summon_solo	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 230897	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
 230897	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 230897	TR_Drakan_Fi_Stun_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
@@ -16535,6 +16791,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 230925	TR_Drakan_Pr_Heal_Party	cycle	3	6	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 230925	TR_Drakan_Pr_Heal_Party	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 230925	TR_Drakan_Pr_Heal_Party	on_enter_attack_state	0	5		1	arm	1	7000	0		0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	0	10	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	0	10	timer:2	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	2	spawn_on_target	284131	2	0		5.0	20.0	300.0	1
+230928	TR_Drakan_Wi_Summon_Party	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	2	8	timer:1|set_flag_var:0	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	3	7	timer:1	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	cycle	4	6	timer:0	1	skill	18157	0	0	MOST_HATED	0.0	0.0	0.0	0
+230928	TR_Drakan_Wi_Summon_Party	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 230929	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	0	arm	0	8000	0		0.0	0.0	0.0	0
 230929	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	1	skill	18322	0	0	MOST_HATED	0.0	0.0	0.0	0
 230929	TR_Drakan_Fi_Stun_Party	cycle	1	8	timer:1|set_flag_var:0	0	arm	2	15000	0		0.0	0.0	0.0	0
@@ -16644,6 +16912,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 230946	TR_Drakan_Pr_Heal_solo_65	cycle	1	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 230946	TR_Drakan_Pr_Heal_solo_65	cycle	1	6	timer:0	1	skill	20517	0	0	MOST_HATED	0.0	0.0	0.0	0
 230946	TR_Drakan_Pr_Heal_solo_65	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	0	9	timer:3	1	skill	20671	0	0	ME	0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	1	8	timer:2	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	2	spawn_on_target	283598	1	0		5.0	50.0	200.0	1
+230948	TR_Drakan_El_Summon_solo_65	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	cycle	3	6	timer:0	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+230948	TR_Drakan_El_Summon_solo_65	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 230949	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
 230949	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 230949	TR_Drakan_Fi_Stun_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
@@ -16840,6 +17118,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 230977	TR_Drakan_Pr_Heal_Party_65	cycle	3	6	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 230977	TR_Drakan_Pr_Heal_Party_65	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 230977	TR_Drakan_Pr_Heal_Party_65	on_enter_attack_state	0	5		1	arm	1	7000	0		0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	0	10	timer:3	0	arm	0	10000	0		0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	0	10	timer:3	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	1	9	timer:2	2	spawn_on_target	283598	2	0		5.0	20.0	300.0	1
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	2	8	timer:1|set_flag_var:0	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	3	7	timer:1	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	cycle	4	6	timer:0	1	skill	18157	0	0	MOST_HATED	0.0	0.0	0.0	0
+230980	TR_Drakan_Wi_Summon_Party_65	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 230981	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	0	arm	0	8000	0		0.0	0.0	0.0	0
 230981	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	1	skill	18322	0	0	MOST_HATED	0.0	0.0	0.0	0
 230981	TR_Drakan_Fi_Stun_Party	cycle	1	8	timer:1|set_flag_var:0	0	arm	2	15000	0		0.0	0.0	0.0	0
@@ -18142,6 +18432,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 231376	TR_Drakan_As_Broad_Fourth_solo	cycle	3	6	timer:0	0	arm	1	7000	0		0.0	0.0	0.0	0
 231376	TR_Drakan_As_Broad_Fourth_solo	cycle	3	6	timer:0	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 231376	TR_Drakan_As_Broad_Fourth_solo	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	0	9	timer:3	1	skill	20671	0	0	ME	0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	1	8	timer:2	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	2	spawn_on_target	283598	1	0		5.0	50.0	200.0	1
+231377	TR_Drakan_El_Summon_solo_65	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	cycle	3	6	timer:0	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+231377	TR_Drakan_El_Summon_solo_65	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 231378	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
 231378	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 231378	TR_Drakan_Fi_Stun_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
@@ -18851,6 +19151,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 231499	God_MRArea_Li_Wi_N_65_Ae	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 231499	God_MRArea_Li_Wi_N_65_Ae	on_enter_attack_state	0	7		1	arm	1	5000	0		0.0	0.0	0.0	0
 231499	God_MRArea_Li_Wi_N_65_Ae	on_enter_attack_state	0	7		2	skill	17115	0	0	MOST_HATED	0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	0	10	timer:2|set_flag_var:0	0	arm	0	19000	0		0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	0	10	timer:2|set_flag_var:0	1	skill	20974	0	0	MOST_HATED	0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	0	10	timer:2|set_flag_var:0	2	spawn_near	284227	2	0		5.0	50.0	0.0	1
+231501	VriTR_Sum_El_N_65_Ae	cycle	1	8	timer:2	0	arm	0	13000	0		0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	1	8	timer:2	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	2	7	timer:1	0	arm	2	13000	0		0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	2	7	timer:1	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	3	6	timer:0	0	arm	1	13000	0		0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	cycle	3	6	timer:0	1	skill	19033	0	0	MOST_HATED	0.0	0.0	0.0	0
+231501	VriTR_Sum_El_N_65_Ae	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 231502	Guardian_Ch_N_65_Ah	cycle	0	101	timer:0|hp_below:50|set_flag_var:0	0	arm	5	5000	0		0.0	0.0	0.0	0
 231502	Guardian_Ch_N_65_Ah	cycle	1	100	timer:1|hp_between:52:99	0	arm	2	8000	0		0.0	0.0	0.0	0
 231502	Guardian_Ch_N_65_Ah	cycle	1	100	timer:1|hp_between:52:99	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -19016,6 +19326,52 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 231516	Vri_Post_Sumble_I_Fi_N_65_Ah	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 231516	Vri_Post_Sumble_I_Fi_N_65_Ah	on_enter_attack_state	0	7		1	broadcast	23035	20	0		0.0	0.0	0.0	0
 231516	Vri_Post_Sumble_I_Fi_N_65_Ah	on_enter_attack_state	0	7		2	skill	17386	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	0	100	timer:0|hp_between:77:99	0	arm	1	10000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	0	100	timer:0|hp_between:77:99	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	1	99	timer:1|hp_between:77:99	0	arm	2	15000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	1	99	timer:1|hp_between:77:99	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	2	98	timer:2|hp_between:77:99	0	arm	3	13000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	2	98	timer:2|hp_between:77:99	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	3	97	timer:3|hp_between:77:99	0	arm	4	13000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	3	97	timer:3|hp_between:77:99	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	4	96	timer:4|hp_between:77:99	0	arm	0	13000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	4	96	timer:4|hp_between:77:99	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	5	94	timer:0|hp_between:27:74	0	arm	1	20000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	5	94	timer:0|hp_between:27:74	1	skill	16846	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	6	93	timer:1|hp_between:27:74	0	arm	2	16000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	6	93	timer:1|hp_between:27:74	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	6	93	timer:1|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	7	92	timer:2|hp_between:27:74	0	arm	3	16000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	7	92	timer:2|hp_between:27:74	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	7	92	timer:2|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	8	91	timer:3|hp_between:27:74	0	arm	4	16000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	8	91	timer:3|hp_between:27:74	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	8	91	timer:3|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	9	90	timer:4|hp_between:27:74	0	arm	0	10000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	9	90	timer:4|hp_between:27:74	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	9	90	timer:4|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	0	arm	1	16000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	1	say	1500816	0	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	2	skill	17106	0	0	ME	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	3	spawn_on_target	283633	2	0		5.0	50.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	4	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	11	86	timer:1|hp_between:1:24	0	arm	2	20000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	11	86	timer:1|hp_between:1:24	1	skill	17034	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	11	86	timer:1|hp_between:1:24	2	skill	17034	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	12	85	timer:2|hp_between:1:24	0	arm	3	16000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	12	85	timer:2|hp_between:1:24	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	12	85	timer:2|hp_between:1:24	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	13	84	timer:3|hp_between:1:24	0	arm	4	8000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	13	84	timer:3|hp_between:1:24	1	skill	18549	0	0	ME	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	13	84	timer:3|hp_between:1:24	2	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	0	arm	0	20000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	3	skill	16813	0	0	MOST_HATED	0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		0	arm	0	3000	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		1	broadcast	23035	20	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		2	say	1500814	0	0		0.0	0.0	0.0	0
+231517	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		3	skill	18548	0	0	ME	0.0	0.0	0.0	0
 231518	Vri_Post_1st_Q_KN_N_65_Ah	cycle	0	100	timer:0|hp_between:77:99	0	arm	1	3000	0		0.0	0.0	0.0	0
 231518	Vri_Post_1st_Q_KN_N_65_Ah	cycle	0	100	timer:0|hp_between:77:99	1	skill	18743	0	0	MOST_HATED	0.0	0.0	0.0	0
 231518	Vri_Post_1st_Q_KN_N_65_Ah	cycle	1	99	timer:1|hp_between:77:99	0	arm	2	15000	0		0.0	0.0	0.0	0
@@ -19051,6 +19407,35 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 231518	Vri_Post_1st_Q_KN_N_65_Ah	on_enter_attack_state	0	7		1	broadcast	23035	20	0		0.0	0.0	0.0	0
 231518	Vri_Post_1st_Q_KN_N_65_Ah	on_enter_attack_state	0	7		2	say	1500808	0	0		0.0	0.0	0.0	0
 231518	Vri_Post_1st_Q_KN_N_65_Ah	on_enter_attack_state	0	7		3	skill	17384	0	0	ME	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	1	arm	1	10000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	2	say	342739	0	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	3	spawn_on_target	283629	1	0		5.0	50.0	0.0	1
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	4	broadcast	23016	50	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	1	99	timer:1|hp_between:52:99	0	arm	2	13000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	1	99	timer:1|hp_between:52:99	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	1	99	timer:1|hp_between:52:99	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	2	98	timer:2|hp_between:52:99	0	arm	3	13000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	2	98	timer:2|hp_between:52:99	1	skill	21260	0	0	MOST_HATED	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	2	98	timer:2|hp_between:52:99	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	3	97	timer:3|hp_between:52:99	0	arm	1	10000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	3	97	timer:3|hp_between:52:99	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	1	arm	4	10000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	2	say	342739	0	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	3	spawn_on_target	283635	1	0		5.0	50.0	0.0	1
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	4	broadcast	23016	50	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	5	49	timer:4	0	arm	5	13000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	5	49	timer:4	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	5	49	timer:4	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	6	48	timer:5	0	arm	6	13000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	6	48	timer:5	1	skill	21260	0	0	MOST_HATED	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	6	48	timer:5	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	7	47	timer:6	0	arm	4	10000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	7	47	timer:6	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	cycle	8	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+231520	Vri_Summon_Q_El_N_65_Ae	on_enter_attack_state	0	7		1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
 231521	Shulack_SuTank_N_65_Ae	cycle	0	100	timer:0	0	arm	1	15000	0		0.0	0.0	0.0	0
 231521	Shulack_SuTank_N_65_Ae	cycle	0	100	timer:0	1	skill	16536	0	0	ME	0.0	0.0	0.0	0
 231521	Shulack_SuTank_N_65_Ae	cycle	0	100	timer:0	2	skill	16532	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -23027,6 +23412,53 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 235619	IDLDF5_Under_02_Boss_Wi	cycle	11	10	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 235619	IDLDF5_Under_02_Boss_Wi	cycle	11	10	timer:0	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
 235619	IDLDF5_Under_02_Boss_Wi	on_enter_attack_state	0	1000		0	arm	0	5000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	0	arm	5	24000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	1	skill	21799	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	2	skill	19734	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	3	spawn_near	235623	3	0		5.0	50.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	4	skill	21778	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	5	skill	21789	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	1	230	timer:2|hp_between:1:29	0	arm	3	13000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	1	230	timer:2|hp_between:1:29	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	1	230	timer:2|hp_between:1:29	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	0	arm	2	24000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	1	skill	21799	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	2	skill	19734	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	3	spawn_near	235623	3	0		5.0	50.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	4	skill	21778	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	5	skill	21789	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	0	arm	0	8000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	3	var	0	0	0	Pr_reset01	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	4	150	timer:4|hp_between:32:69	0	arm	5	13000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	4	150	timer:4|hp_between:32:69	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	4	150	timer:4|hp_between:32:69	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	5	130	timer:2|hp_between:32:69	0	arm	3	8000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	5	130	timer:2|hp_between:32:69	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	5	130	timer:2|hp_between:32:69	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	6	120	timer:1|hp_between:32:69	0	arm	2	13000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	6	120	timer:1|hp_between:32:69	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	6	120	timer:1|hp_between:32:69	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	7	60	timer:5|hp_between:72:99	0	arm	0	8000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	7	60	timer:5|hp_between:72:99	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	7	60	timer:5|hp_between:72:99	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	8	50	timer:4|hp_between:72:99	0	arm	5	11000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	8	50	timer:4|hp_between:72:99	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	8	50	timer:4|hp_between:72:99	2	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	9	40	timer:3	0	arm	4	8500	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	9	40	timer:3	1	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	9	40	timer:3	2	var	0	0	0	Pr_reset01	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	10	30	timer:2|hp_between:72:99	0	arm	3	8000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	10	30	timer:2|hp_between:72:99	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	10	30	timer:2|hp_between:72:99	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	11	20	timer:1|hp_between:72:99	0	arm	2	11000	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	11	20	timer:1|hp_between:72:99	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	11	20	timer:1|hp_between:72:99	2	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	12	10	timer:0	0	arm	1	8500	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	12	10	timer:0	1	broadcast	25760	50	0		0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	cycle	12	10	timer:0	2	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235620	IDLDF5_Under_02_Boss_Pr	on_enter_attack_state	0	1000		0	arm	0	5000	0		0.0	0.0	0.0	0
 235621	IDLDF5_Under_02_Boss_As	cycle	0	250	timer:4|hp_between:1:39	0	arm	5	34000	0		0.0	0.0	0.0	0
 235621	IDLDF5_Under_02_Boss_As	cycle	0	250	timer:4|hp_between:1:39	1	skill	21800	0	0	MOST_HATED	0.0	0.0	0.0	0
 235621	IDLDF5_Under_02_Boss_As	cycle	0	250	timer:4|hp_between:1:39	2	skill	21801	0	0	ME	0.0	0.0	0.0	0
@@ -23090,6 +23522,51 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 235624	IDLDF5_Under_02_Summon04	cycle	11	10	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 235624	IDLDF5_Under_02_Summon04	cycle	11	10	timer:0	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
 235624	IDLDF5_Under_02_Summon04	on_enter_attack_state	0	1000		0	arm	0	5000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	0	250	timer:4|hp_between:1:29	0	arm	5	24000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	0	250	timer:4|hp_between:1:29	1	skill	21799	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	0	250	timer:4|hp_between:1:29	2	skill	19734	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	0	250	timer:4|hp_between:1:29	3	spawn_near	235628	3	0		5.0	50.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	0	250	timer:4|hp_between:1:29	4	skill	21778	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	0	250	timer:4|hp_between:1:29	5	skill	21789	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	1	230	timer:2|hp_between:1:29	0	arm	3	13000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	1	230	timer:2|hp_between:1:29	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	1	230	timer:2|hp_between:1:29	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	2	220	timer:1|hp_between:1:29	0	arm	2	24000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	2	220	timer:1|hp_between:1:29	1	skill	21799	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	2	220	timer:1|hp_between:1:29	2	skill	19734	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	2	220	timer:1|hp_between:1:29	3	spawn_near	235628	3	0		5.0	50.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	2	220	timer:1|hp_between:1:29	4	skill	21778	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	2	220	timer:1|hp_between:1:29	5	skill	21789	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	3	160	timer:5|hp_between:1:69	0	arm	0	8000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	3	160	timer:5|hp_between:1:69	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	3	160	timer:5|hp_between:1:69	2	spawn_near	235627	1	0		5.0	50.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	4	150	timer:4|hp_between:32:69	0	arm	5	13000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	4	150	timer:4|hp_between:32:69	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	4	150	timer:4|hp_between:32:69	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	5	130	timer:2|hp_between:32:69	0	arm	3	8000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	5	130	timer:2|hp_between:32:69	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	5	130	timer:2|hp_between:32:69	2	spawn_near	235627	1	0		5.0	50.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	6	120	timer:1|hp_between:32:69	0	arm	2	13000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	6	120	timer:1|hp_between:32:69	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	6	120	timer:1|hp_between:32:69	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	7	60	timer:5|hp_between:72:99	0	arm	0	8000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	7	60	timer:5|hp_between:72:99	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	7	60	timer:5|hp_between:72:99	2	spawn_near	235627	1	0		5.0	50.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	8	50	timer:4|hp_between:72:99	0	arm	5	11000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	8	50	timer:4|hp_between:72:99	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	8	50	timer:4|hp_between:72:99	2	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	9	40	timer:3	0	arm	4	8500	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	9	40	timer:3	1	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	10	30	timer:2|hp_between:72:99	0	arm	3	8000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	10	30	timer:2|hp_between:72:99	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	10	30	timer:2|hp_between:72:99	2	spawn_near	235627	1	0		5.0	50.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	11	20	timer:1|hp_between:72:99	0	arm	2	11000	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	11	20	timer:1|hp_between:72:99	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	11	20	timer:1|hp_between:72:99	2	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	12	10	timer:0	0	arm	1	8500	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	12	10	timer:0	1	broadcast	25760	50	0		0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	cycle	12	10	timer:0	2	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+235625	IDLDF5_Under_02_Summon05	on_enter_attack_state	0	1000		0	arm	0	5000	0		0.0	0.0	0.0	0
 235626	IDLDF5_Under_02_Summon03	cycle	0	250	timer:4|hp_between:1:39	0	arm	5	24000	0		0.0	0.0	0.0	0
 235626	IDLDF5_Under_02_Summon03	cycle	0	250	timer:4|hp_between:1:39	1	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
 235626	IDLDF5_Under_02_Summon03	cycle	0	250	timer:4|hp_between:1:39	2	attack	0	0	0		0.0	0.0	0.0	0
@@ -27526,6 +28003,45 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 280702	NTrap_B	on_message	0	4	message:6106	1	attack	0	0	0		0.0	0.0	0.0	0
 280702	NTrap_B	on_message	0	4	message:6106	2	arm	0	3000	0		0.0	0.0	0.0	0
 280702	NTrap_B	on_message	0	4	message:6106	3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	0	12	timer:7	0	arm	5	30000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	0	12	timer:7	1	skill	17920	0	0	MOST_HATED	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	1	11	timer:6|hp_below:20	0	arm	7	7000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	1	11	timer:6|hp_below:20	1	skill	17921	0	0	MOST_HATED	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	1	11	timer:6|hp_below:20	2	spawn_on_target	280715	1	120		2.0	50.0	0.0	1
+280704	ND2_WhA	cycle	1	11	timer:6|hp_below:20	3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	2	10	hp_below:20|timer:5	0	arm	6	7000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	2	10	hp_below:20|timer:5	1	skill	17921	0	0	MOST_HATED	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	2	10	hp_below:20|timer:5	2	spawn_on_target	280715	1	120		2.0	50.0	0.0	1
+280704	ND2_WhA	cycle	2	10	hp_below:20|timer:5	3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	3	9	hp_below:20|timer:1|set_flag_var:3	0	skill	17916	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	3	9	hp_below:20|timer:1|set_flag_var:3	1	arm	5	6000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	4	8	timer:4|hp_between:22:39	0	arm	4	27000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	4	8	timer:4|hp_between:22:39	1	skill	17919	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	4	8	timer:4|hp_between:22:39	2	broadcast	6506	50	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	4	8	timer:4|hp_between:22:39	3	skill	17918	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	5	7	timer:1|hp_between:22:39|set_flag_var:2	0	arm	1	7000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	5	7	timer:1|hp_between:22:39|set_flag_var:2	1	arm	4	14000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	5	7	timer:1|hp_between:22:39|set_flag_var:2	2	skill	17916	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	5	7	timer:1|hp_between:22:39|set_flag_var:2	3	spawn	280707	4	1800	self	0.0	0.0	0.0	1
+280704	ND2_WhA	cycle	6	6	timer:3|hp_between:42:59	0	arm	3	27000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	6	6	timer:3|hp_between:42:59	1	broadcast	6505	50	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	6	6	timer:3|hp_between:42:59	2	skill	17917	0	0	MOST_HATED	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	7	5	timer:1|hp_between:42:59|set_flag_var:1	0	arm	1	6000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	7	5	timer:1|hp_between:42:59|set_flag_var:1	1	arm	3	12000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	7	5	timer:1|hp_between:42:59|set_flag_var:1	2	skill	17916	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	7	5	timer:1|hp_between:42:59|set_flag_var:1	3	spawn	280706	3	1800	self	0.0	0.0	0.0	1
+280704	ND2_WhA	cycle	8	4	timer:1|hp_between:62:79|set_flag_var:0	0	arm	1	7000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	8	4	timer:1|hp_between:62:79|set_flag_var:0	1	skill	17916	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	8	4	timer:1|hp_between:62:79|set_flag_var:0	2	spawn	280705	2	1800	self	0.0	0.0	0.0	1
+280704	ND2_WhA	cycle	9	3	timer:2|hp_between:82:99	0	arm	2	20000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	9	3	timer:2|hp_between:82:99	1	skill	17917	0	0	MOST_HATED	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	10	2	timer:0	0	arm	1	6000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	10	2	timer:0	1	arm	2	20000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	10	2	timer:0	2	skill	17917	0	0	MOST_HATED	0.0	0.0	0.0	0
+280704	ND2_WhA	cycle	11	1	timer:1	0	arm	1	6000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	on_enter_attack_state	0	7		0	arm	0	6000	0		0.0	0.0	0.0	0
+280704	ND2_WhA	on_enter_attack_state	0	7		1	skill	17916	0	0	ME	0.0	0.0	0.0	0
+280704	ND2_WhA	on_enter_attack_state	0	7		2	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
 280707	ND2_WhA_Slave2	cycle	0	2	timer:0	0	skill	16593	0	0	MOST_HATED	0.0	0.0	0.0	0
 280707	ND2_WhA_Slave2	on_message	0	1	message:6506	0	arm	0	7000	0		0.0	0.0	0.0	0
 280707	ND2_WhA_Slave2	on_message	0	1	message:6506	1	skill	16724	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -27547,6 +28063,20 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 280729	ND2_FeB	cycle	3	2	timer:0|hp_between:36:99|set_flag_var:0	2	skill	17948	0	0	MOST_HATED	0.0	0.0	0.0	0
 280729	ND2_FeB	cycle	4	1	timer:1	0	arm	1	6000	0		0.0	0.0	0.0	0
 280729	ND2_FeB	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	0	5	timer:2|hp_below:35	0	arm	2	30000	0		0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	0	5	timer:2|hp_below:35	1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	0	arm	2	15000	0		0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	1	skill	17930	0	0	MOST_HATED	0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	2	skill	17942	0	0	MOST_HATED	0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	1	4	timer:0|hp_below:35|set_flag_var:2	3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	2	3	timer:1|hp_between:37:69|set_flag_var:1	0	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	1	arm	1	10000	0		0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	2	skill	17941	0	0	ME	0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	3	spawn_on_target	280734	2	0		3.0	50.0	0.0	1
+280733	ND2_EeD	cycle	3	2	timer:0|hp_between:37:69|set_flag_var:0	4	broadcast	4201	50	0		0.0	0.0	0.0	0
+280733	ND2_EeD	cycle	4	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+280733	ND2_EeD	on_enter_attack_state	0	6		0	arm	0	6000	0		0.0	0.0	0.0	0
 280735	ND2_EeE	cycle	0	4	timer:0|hp_below:35|set_flag_var:1	0	arm	0	6000	0		0.0	0.0	0.0	0
 280735	ND2_EeE	cycle	0	4	timer:0|hp_below:35|set_flag_var:1	1	arm	2	7000	0		0.0	0.0	0.0	0
 280735	ND2_EeE	cycle	0	4	timer:0|hp_below:35|set_flag_var:1	2	skill	17940	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -27722,6 +28252,150 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 280791	NLehpar_AeC	cycle	2	2	timer:0|hp_between:72:99|set_flag_var:0	1	skill	17977	0	0	ME	0.0	0.0	0.0	0
 280791	NLehpar_AeC	cycle	3	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
 280791	NLehpar_AeC	on_enter_attack_state	0	5		0	arm	0	6000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	0	13	timer:6|hp_below:20	0	arm	6	40000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	0	13	timer:6|hp_below:20	1	skill	18035	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	0	13	timer:6|hp_below:20	2	skill	17841	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	0	13	timer:6|hp_below:20	3	skill	17841	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	0	13	timer:6|hp_below:20	4	switch_to	0	0	0	THIRD_MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	0	arm	6	25000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	1	skill	18035	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	2	skill	17841	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	3	skill	17841	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	4	switch_to	0	0	0	THIRD_MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	0	arm	5	45000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	1	skill	17824	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	2	skill	18031	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	3	skill	18031	0	0	RANDOM	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	4	skill	18031	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	5	skill	17823	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	2	11	timer:5|hp_between:22:99	6	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	0	arm	0	15000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	1	arm	5	45000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	2	skill	17824	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	3	broadcast	6185	50	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	4	skill	18031	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	5	skill	18031	0	0	RANDOM	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	6	skill	18031	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	7	skill	17823	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	8	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	0	arm	4	30000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	1	say	341258	0	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	2	skill	17853	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	3	say	341262	0	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	4	spawn_on_target	280797	1	1200		3.0	50.0	0.0	1
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	5	skill	16797	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	6	broadcast	6186	50	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	4	9	timer:4|hp_between:42:59	7	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	0	arm	0	15000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	1	arm	4	30000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	2	say	341258	0	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	3	skill	17853	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	4	say	341262	0	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	5	spawn_on_target	280797	3	1200		7.0	50.0	0.0	1
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	6	skill	16797	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	7	broadcast	6186	50	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	8	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	6	7	timer:3|hp_between:62:74	0	arm	3	30000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	6	7	timer:3|hp_between:62:74	1	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	6	7	timer:3|hp_between:62:74	2	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	1	arm	3	30000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	2	skill	17985	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	3	skill	16641	0	0	RANDOM	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	4	skill	16641	0	0	MOST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	5	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	6	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	8	5	timer:2|hp_between:77:89	0	arm	2	15000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	8	5	timer:2|hp_between:77:89	1	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	8	5	timer:2|hp_between:77:89	2	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	0	arm	0	10000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	1	arm	2	30000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	2	skill	17985	0	0	ME	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	3	skill	16641	0	0	RANDOM	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	4	skill	16641	0	0	MOST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	5	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	6	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	10	3	timer:1|hp_between:92:99	0	arm	1	20000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	10	3	timer:1|hp_between:92:99	1	skill	16797	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	11	2	timer:0|hp_between:92:99|set_flag_var:0	0	arm	0	10000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	11	2	timer:0|hp_between:92:99|set_flag_var:0	1	arm	1	20000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	11	2	timer:0|hp_between:92:99|set_flag_var:0	2	skill	16797	0	0	MOST_HATED	0.0	0.0	0.0	0
+280796	Naga_WrF2	cycle	12	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	on_enter_attack_state	0	13		0	arm	0	10000	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	on_enter_attack_state	0	13		1	say	341257	0	0		0.0	0.0	0.0	0
+280796	Naga_WrF2	on_enter_attack_state	0	13		2	skill	17970	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	0	13	timer:6|hp_below:20	0	arm	6	25000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	0	13	timer:6|hp_below:20	1	skill	18035	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	0	13	timer:6|hp_below:20	2	skill	17841	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	0	13	timer:6|hp_below:20	3	skill	17841	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	0	13	timer:6|hp_below:20	4	switch_to	0	0	0	THIRD_MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	0	arm	6	25000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	1	skill	18035	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	2	skill	17841	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	3	skill	17841	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	1	12	timer:0|hp_below:20|set_flag_var:5	4	switch_to	0	0	0	THIRD_MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	0	arm	5	45000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	1	skill	17824	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	2	skill	18031	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	3	skill	18031	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	4	skill	18031	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	5	skill	17823	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	2	11	timer:5|hp_between:22:99	6	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	0	arm	5	45000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	1	arm	0	15000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	2	skill	17824	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	3	broadcast	6185	50	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	4	skill	18031	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	5	skill	18031	0	0	SECOND_MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	6	skill	18031	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	7	skill	17823	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	3	10	timer:0|hp_between:22:39|set_flag_var:4	8	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	0	arm	4	30000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	1	say	341258	0	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	2	skill	17853	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	3	say	341262	0	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	4	spawn_on_target	280799	1	1200		3.0	50.0	0.0	1
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	5	skill	16797	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	6	broadcast	6186	50	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	4	9	timer:4|hp_between:42:59	7	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	0	arm	0	15000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	1	arm	4	30000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	2	say	341258	0	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	3	skill	17853	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	4	say	341262	0	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	5	spawn_on_target	280799	3	1200		7.0	50.0	0.0	1
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	6	skill	16797	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	7	broadcast	6186	50	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	5	8	timer:0|hp_between:42:59|set_flag_var:3	8	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	6	7	timer:3|hp_between:62:74	0	arm	3	20000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	6	7	timer:3|hp_between:62:74	1	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	6	7	timer:3|hp_between:62:74	2	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	1	arm	3	30000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	2	skill	17985	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	3	skill	16641	0	0	RANDOM	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	4	skill	16641	0	0	MOST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	5	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	7	6	timer:0|hp_between:62:74|set_flag_var:2	6	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	8	5	timer:2|hp_between:77:89	0	arm	2	20000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	8	5	timer:2|hp_between:77:89	1	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	8	5	timer:2|hp_between:77:89	2	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	0	arm	0	10000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	1	arm	2	30000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	2	skill	17985	0	0	ME	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	3	skill	16641	0	0	RANDOM	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	4	skill	16641	0	0	MOST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	5	skill	16641	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	9	4	timer:0|hp_between:77:89|set_flag_var:1	6	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	10	3	timer:1|hp_between:92:99	0	arm	1	20000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	10	3	timer:1|hp_between:92:99	1	skill	16797	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	11	2	timer:0|hp_between:92:99|set_flag_var:0	0	arm	0	10000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	11	2	timer:0|hp_between:92:99|set_flag_var:0	1	arm	1	20000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	11	2	timer:0|hp_between:92:99|set_flag_var:0	2	skill	16797	0	0	MOST_HATED	0.0	0.0	0.0	0
+280798	Naga_WrF3	cycle	12	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	on_enter_attack_state	0	13		0	arm	0	10000	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	on_enter_attack_state	0	13		1	say	341257	0	0		0.0	0.0	0.0	0
+280798	Naga_WrF3	on_enter_attack_state	0	13		2	skill	17970	0	0	ME	0.0	0.0	0.0	0
 280812	ND2_EeE2	cycle	0	3	timer:0|hp_below:35|set_flag_var:1	0	skill	17940	0	0	MOST_HATED	0.0	0.0	0.0	0
 280812	ND2_EeE2	cycle	0	3	timer:0|hp_below:35|set_flag_var:1	1	skill	16540	0	0	LOWEST_HP	0.0	0.0	0.0	0
 280812	ND2_EeE2	cycle	0	3	timer:0|hp_below:35|set_flag_var:1	2	switch_to	0	0	0	LOWEST_HP	0.0	0.0	0.0	0
@@ -28742,6 +29416,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 281377	IDTP_Fanatic_MeB	cycle	1	1	timer:1	2	arm	1	26000	0		0.0	0.0	0.0	0
 281377	IDTP_Fanatic_MeB	on_enter_attack_state	0	10		0	arm	0	15000	0		0.0	0.0	0.0	0
 281377	IDTP_Fanatic_MeB	on_enter_attack_state	0	10		1	arm	1	10000	0		0.0	0.0	0.0	0
+281378	IDTP_Fanatic_EeA	cycle	0	4	timer:0	0	skill	18760	0	0	ME	0.0	0.0	0.0	0
+281378	IDTP_Fanatic_EeA	cycle	0	4	timer:0	1	arm	0	20000	0		0.0	0.0	0.0	0
+281378	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	0	spawn_near	281381	1	180		5.0	50.0	0.0	1
+281378	IDTP_Fanatic_EeA	on_enter_attack_state	0	6	set_flag_var:2	1	arm	0	10000	0		0.0	0.0	0.0	0
 281379	IDTP_Fanatic_EeB	cycle	0	3	timer:0	0	skill	18760	0	0	MOST_HATED	0.0	0.0	0.0	0
 281379	IDTP_Fanatic_EeB	cycle	0	3	timer:0	1	arm	0	18000	0		0.0	0.0	0.0	0
 281379	IDTP_Fanatic_EeB	cycle	1	2	timer:1	0	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
@@ -28804,6 +29482,31 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 281419	IDTP_NepBoss1	cycle	7	1	timer:3	0	arm	3	7000	0		0.0	0.0	0.0	0
 281419	IDTP_NepBoss1	cycle	8	1	timer:4	0	arm	4	7000	0		0.0	0.0	0.0	0
 281419	IDTP_NepBoss1	cycle	9	1	timer:5	0	arm	5	7000	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	0	11	hp_below:19|set_flag_var:7	0	say	341998	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	1	10	chance:10|hp_below:19	0	spawn_near	281421	3	0		5.0	50.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	2	9	hp_below:21|set_flag_var:6	0	skill	18630	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	2	9	hp_below:21|set_flag_var:6	1	say	341995	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	3	8	hp_below:31|set_flag_var:5	0	say	341996	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	3	8	hp_below:31|set_flag_var:5	1	skill	18633	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	3	8	hp_below:31|set_flag_var:5	2	skill	18635	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	4	7	hp_below:41|set_flag_var:4	0	say	341994	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	4	7	hp_below:41|set_flag_var:4	1	skill	18631	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	0	skill	18635	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	1	say	341997	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	2	skill	18636	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	3	spawn	281420	2	0	self	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	4	spawn	281420	2	0	self	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	5	spawn	281420	2	0	self	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	6	spawn	281420	1	0	self	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	7	broadcast	6955	50	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	5	6	hp_below:51|set_flag_var:3	8	arm	1	6000	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	6	5	hp_below:61|set_flag_var:2	0	say	341995	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	6	5	hp_below:61|set_flag_var:2	1	skill	18630	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	7	4	hp_below:71|set_flag_var:1	0	say	341996	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	7	4	hp_below:71|set_flag_var:1	1	skill	18633	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	7	4	hp_below:71|set_flag_var:1	2	skill	18635	0	0	ME	0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	8	3	hp_below:81|set_flag_var:0	0	say	341994	0	0		0.0	0.0	0.0	0
+281419	IDTP_NepBoss1	on_attacked	8	3	hp_below:81|set_flag_var:0	1	skill	18631	0	0	ME	0.0	0.0	0.0	0
 281419	IDTP_NepBoss1	on_enter_attack_state	0	1		0	arm	1	15000	0		0.0	0.0	0.0	0
 281419	IDTP_NepBoss1	on_enter_attack_state	0	1		1	arm	0	12000	0		0.0	0.0	0.0	0
 281419	IDTP_NepBoss1	on_enter_attack_state	0	1		2	arm	3	3500	0		0.0	0.0	0.0	0
@@ -28959,6 +29662,47 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 281520	Elim_Dionaea	cycle	1	7	timer:0|set_flag_var:0	1	skill	18826	0	0	MOST_HATED	0.0	0.0	0.0	0
 281520	Elim_Dionaea	cycle	2	6	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
 281520	Elim_Dionaea	on_enter_attack_state	0	9		0	arm	0	3000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	1	despawn	2	0	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	2	say	342080	0	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	3	spawn_on_target	281527	2	300		3.0	50.0	100.0	1
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	4	skill	18775	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	5	skill	18776	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	6	skill	18777	0	0	MOST_HATED	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	1	9	hp_below:50|timer:0|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	1	9	hp_below:50|timer:0|set_flag_var:1	1	say	342079	0	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	1	9	hp_below:50|timer:0|set_flag_var:1	2	spawn_on_target	281526	2	300		3.0	50.0	100.0	2
+281525	Owllau_PeN	cycle	1	9	hp_below:50|timer:0|set_flag_var:1	3	skill	18772	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	1	9	hp_below:50|timer:0|set_flag_var:1	4	skill	18773	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	1	9	hp_below:50|timer:0|set_flag_var:1	5	skill	18774	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	2	8	timer:0|hp_below:80|set_flag_var:2	0	arm	0	5000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	2	8	timer:0|hp_below:80|set_flag_var:2	1	skill	18770	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	2	8	timer:0|hp_below:80|set_flag_var:2	2	skill	18771	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	3	7	chance:50|timer:1|hp_below:30	0	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	3	7	chance:50|timer:1|hp_below:30	1	skill	18773	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	3	7	chance:50|timer:1|hp_below:30	2	skill	18771	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	4	6	timer:1|hp_below:30	0	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	4	6	timer:1|hp_below:30	1	skill	18773	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	4	6	timer:1|hp_below:30	2	skill	18775	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	5	5	timer:1|hp_between:32:49	0	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	5	5	timer:1|hp_between:32:49	1	skill	18771	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	6	4	timer:1|hp_between:52:79	0	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	6	4	timer:1|hp_between:52:79	1	skill	18774	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	7	3	chance:50|timer:1|hp_between:82:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	7	3	chance:50|timer:1|hp_between:82:99	1	skill	18768	0	0	MOST_HATED	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	8	2	timer:1|hp_between:82:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	8	2	timer:1|hp_between:82:99	1	skill	18767	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	cycle	9	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	0	12	chance:50	0	arm	0	5000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	0	12	chance:50	1	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	0	12	chance:50	2	say	342078	0	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	0	12	chance:50	3	skill	18767	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	0	12	chance:50	4	skill	18768	0	0	MOST_HATED	0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	1	11		0	arm	0	5000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	1	11		1	arm	1	15000	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	1	11		2	say	342078	0	0		0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	1	11		3	skill	18767	0	0	ME	0.0	0.0	0.0	0
+281525	Owllau_PeN	on_enter_attack_state	1	11		4	skill	18769	0	0	MOST_HATED	0.0	0.0	0.0	0
 281526	OWllau_PeN_SumB	cycle	0	4	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 281526	OWllau_PeN_SumB	cycle	0	4	timer:0|hp_below:30|set_flag_var:0	1	skill	18782	0	0	MOST_HATED	0.0	0.0	0.0	0
 281526	OWllau_PeN_SumB	cycle	0	4	timer:0|hp_below:30|set_flag_var:0	2	skill	18783	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -29690,6 +30434,22 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 281987	AD2_Wss0BT15st1	cycle	0	2	timer:0	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 281987	AD2_Wss0BT15st1	cycle	1	1	timer:0	0	arm	0	3000	0		0.0	0.0	0.0	0
 281987	AD2_Wss0BT15st1	on_enter_attack_state	0	3		0	arm	0	15000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	0	100	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	0	100	timer:0|hp_below:30|set_flag_var:0	1	say	1500158	0	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	0	100	timer:0|hp_below:30|set_flag_var:0	2	spawn	282113	1	60	absolute	662.28	774.47	216.85	0
+281992	Cromede_Wife	cycle	0	100	timer:0|hp_below:30|set_flag_var:0	3	despawn	1	0	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	0	100	timer:0|hp_below:30|set_flag_var:0	4	despawn_self	0	0	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	1	99	timer:0|hp_below:70|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	1	99	timer:0|hp_below:70|set_flag_var:1	1	say	1500157	0	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	1	99	timer:0|hp_below:70|set_flag_var:1	2	spawn_near	217110	6	0		2.0	50.0	0.0	1
+281992	Cromede_Wife	cycle	1	99	timer:0|hp_below:70|set_flag_var:1	3	skill	16405	0	0	ME	0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	2	98	timer:1	0	arm	1	20000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	2	98	timer:1	1	skill	16704	0	0	MOST_HATED	0.0	0.0	0.0	0
+281992	Cromede_Wife	cycle	3	97	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	on_enter_attack_state	0	7		1	arm	1	20000	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	on_enter_attack_state	0	7		2	say	1500156	0	0		0.0	0.0	0.0	0
+281992	Cromede_Wife	on_enter_attack_state	0	7		3	skill	16409	0	0	ME	0.0	0.0	0.0	0
 281999	Elim_Sheluk	cycle	0	6	timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
 281999	Elim_Sheluk	cycle	0	6	timer:0	1	skill	18824	0	0	MOST_HATED	0.0	0.0	0.0	0
 281999	Elim_Sheluk	cycle	1	5	timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
@@ -30240,6 +31000,23 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 282416	BDrakan_WeA	on_enter_attack_state	0	10		0	arm	0	3000	0		0.0	0.0	0.0	0
 282416	BDrakan_WeA	on_enter_attack_state	0	10		1	arm	1	5000	0		0.0	0.0	0.0	0
 282416	BDrakan_WeA	on_enter_attack_state	0	10		2	skill	17464	0	0	MOST_HATED	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	0	10	hp_below:70|timer:1|set_flag_var:0	0	arm	1	6000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	0	10	hp_below:70|timer:1|set_flag_var:0	1	skill	18626	0	0	ME	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	0	10	hp_below:70|timer:1|set_flag_var:0	2	skill	17319	0	0	MOST_HATED	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	1	9	timer:1|hp_below:50|set_flag_var:1	0	arm	1	6000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	1	9	timer:1|hp_below:50|set_flag_var:1	1	skill	17316	0	0	MOST_HATED	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	2	8	hp_below:25|timer:1|set_flag_var:2	0	skill	17683	0	0	ME	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	2	8	hp_below:25|timer:1|set_flag_var:2	1	spawn_on_target	281803	1	0		1.0	50.0	0.0	0
+282417	BDrakan_ReA	cycle	3	7	timer:1	0	arm	1	5000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	4	6	chance:20|timer:0	0	arm	0	12000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	4	6	chance:20|timer:0	1	skill	17319	0	0	MOST_HATED	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	5	5	chance:30|timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	5	5	chance:30|timer:0	1	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	6	4	timer:0	0	arm	0	8000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	cycle	6	4	timer:0	1	skill	16543	0	0	MOST_HATED	0.0	0.0	0.0	0
+282417	BDrakan_ReA	on_enter_attack_state	0	11		0	arm	0	3000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	on_enter_attack_state	0	11		1	arm	1	5000	0		0.0	0.0	0.0	0
+282417	BDrakan_ReA	on_enter_attack_state	0	11		2	skill	18173	0	0	MOST_HATED	0.0	0.0	0.0	0
 282419	BDrakan_MeA	cycle	0	9	timer:1|hp_below:70|set_flag_var:0	0	arm	1	6000	0		0.0	0.0	0.0	0
 282419	BDrakan_MeA	cycle	0	9	timer:1|hp_below:70|set_flag_var:0	1	skill	19018	0	0	MOST_HATED	0.0	0.0	0.0	0
 282419	BDrakan_MeA	cycle	0	9	timer:1|hp_below:70|set_flag_var:0	2	skill	19323	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -30385,6 +31162,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 282503	LDF4a_Calydon_Priest	cycle	3	5	timer:1	0	arm	1	5000	0		0.0	0.0	0.0	0
 282503	LDF4a_Calydon_Priest	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 282503	LDF4a_Calydon_Priest	on_enter_attack_state	0	7		1	arm	1	5000	0		0.0	0.0	0.0	0
+282505	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+282505	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	20133	0	0	MOST_HATED	0.0	0.0	0.0	0
+282505	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+282505	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+282505	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 282506	LDF4a_ForestSpider_Ranger	cycle	0	7	timer:0	0	arm	0	25000	0		0.0	0.0	0.0	0
 282506	LDF4a_ForestSpider_Ranger	cycle	0	7	timer:0	1	skill	19880	0	0	MOST_HATED	0.0	0.0	0.0	0
 282506	LDF4a_ForestSpider_Ranger	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -30589,6 +31371,19 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 282647	LDF4a_DrakanWorker_Bomber	cycle	2	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 282647	LDF4a_DrakanWorker_Bomber	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 282647	LDF4a_DrakanWorker_Bomber	on_enter_attack_state	0	7		1	arm	1	10000	0		0.0	0.0	0.0	0
+282650	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+282650	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+282650	LDF4a_ForestSpider_Fighter	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+282650	LDF4a_ForestSpider_Fighter	cycle	1	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+282650	LDF4a_ForestSpider_Fighter	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	1	skill	19851	0	0	MOST_HATED	0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	cycle	0	10	timer:0|hp_below:30|set_flag_var:0	2	spawn_on_target	282532	2	0		5.0	50.0	1.0	1
+282651	LDF4a_Sheluk_Nmd	cycle	1	7	timer:1	0	arm	1	12500	0		0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	cycle	1	7	timer:1	1	skill	19828	0	0	MOST_HATED	0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	cycle	2	5	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+282651	LDF4a_Sheluk_Nmd	on_enter_attack_state	0	7		1	arm	1	10000	0		0.0	0.0	0.0	0
 282653	LDF4a_ElementalLightM	cycle	0	10	timer:1|hp_below:30|set_flag_var:0	0	arm	1	5000	0		0.0	0.0	0.0	0
 282653	LDF4a_ElementalLightM	cycle	0	10	timer:1|hp_below:30|set_flag_var:0	1	skill	20128	0	0	ME	0.0	0.0	0.0	0
 282653	LDF4a_ElementalLightM	cycle	1	7	timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
@@ -31753,6 +32548,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 283562	TR_Drakan_Pr_Heal_solo_65	cycle	1	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 283562	TR_Drakan_Pr_Heal_solo_65	cycle	1	6	timer:0	1	skill	20517	0	0	MOST_HATED	0.0	0.0	0.0	0
 283562	TR_Drakan_Pr_Heal_solo_65	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	0	9	timer:3	1	skill	20671	0	0	ME	0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	1	8	timer:2	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	2	7	timer:1	2	spawn_on_target	283598	1	0		5.0	50.0	200.0	1
+283564	TR_Drakan_El_Summon_solo_65	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	cycle	3	6	timer:0	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+283564	TR_Drakan_El_Summon_solo_65	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 283565	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
 283565	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 283565	TR_Drakan_Fi_Stun_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
@@ -31965,6 +32770,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 283593	TR_Drakan_Pr_Heal_Party_65	cycle	3	6	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 283593	TR_Drakan_Pr_Heal_Party_65	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 283593	TR_Drakan_Pr_Heal_Party_65	on_enter_attack_state	0	5		1	arm	1	7000	0		0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	0	10	timer:3	0	arm	0	10000	0		0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	0	10	timer:3	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	1	9	timer:2	2	spawn_on_target	283598	2	0		5.0	20.0	300.0	1
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	2	8	timer:1|set_flag_var:0	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	3	7	timer:1	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	cycle	4	6	timer:0	1	skill	18157	0	0	MOST_HATED	0.0	0.0	0.0	0
+283596	TR_Drakan_Wi_Summon_Party_65	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 283597	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	0	arm	0	8000	0		0.0	0.0	0.0	0
 283597	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	1	skill	18322	0	0	MOST_HATED	0.0	0.0	0.0	0
 283597	TR_Drakan_Fi_Stun_Party	cycle	1	8	timer:1|set_flag_var:0	0	arm	2	15000	0		0.0	0.0	0.0	0
@@ -32216,12 +33033,63 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 283625	Britra_Party_As_Broad	cycle	6	93	timer:7	0	arm	2	9000	0		0.0	0.0	0.0	0
 283625	Britra_Party_As_Broad	cycle	6	93	timer:7	1	skill	17332	0	0	MOST_HATED	0.0	0.0	0.0	0
 283625	Britra_Party_As_Broad	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	0	100	timer:0|set_flag_var:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	0	100	timer:0|set_flag_var:0	1	say	342739	0	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	0	100	timer:0|set_flag_var:0	2	spawn_on_target	283635	1	0		5.0	50.0	0.0	1
+283627	Britra_Party_El_Summoner	cycle	1	99	timer:1	0	arm	2	18000	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	1	99	timer:1	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	1	99	timer:1	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	2	98	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	2	98	timer:2	1	skill	21298	0	0	MOST_HATED	0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	2	98	timer:2	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	3	97	timer:3	0	arm	1	13000	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	cycle	3	97	timer:3	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+283627	Britra_Party_El_Summoner	on_enter_attack_state	0	7		1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	0	100	timer:0|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	0	100	timer:0|set_flag_var:0	1	arm	1	10000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	0	100	timer:0|set_flag_var:0	2	say	342739	0	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	0	100	timer:0|set_flag_var:0	3	spawn_on_target	283629	1	0		5.0	50.0	0.0	1
+283628	Britra_Party_El_Summoner_LowNmd	cycle	1	99	timer:1|hp_between:52:99	0	arm	2	13000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	1	99	timer:1|hp_between:52:99	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	1	99	timer:1|hp_between:52:99	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	2	98	timer:2|hp_between:52:99	0	arm	3	13000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	2	98	timer:2|hp_between:52:99	1	skill	21288	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	2	98	timer:2|hp_between:52:99	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	3	97	timer:3|hp_between:52:99	0	arm	1	10000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	3	97	timer:3|hp_between:52:99	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	1	arm	4	10000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	2	say	342739	0	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	3	spawn_on_target	283635	1	0		5.0	50.0	0.0	1
+283628	Britra_Party_El_Summoner_LowNmd	cycle	5	49	timer:4	0	arm	5	13000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	5	49	timer:4	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	5	49	timer:4	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	6	48	timer:5	0	arm	6	13000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	6	48	timer:5	1	skill	21288	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	6	48	timer:5	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	7	47	timer:6	0	arm	4	10000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	7	47	timer:6	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	cycle	8	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+283628	Britra_Party_El_Summoner_LowNmd	on_enter_attack_state	0	7		1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
 283648	AD2_BT10st0	cycle	0	2	timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
 283648	AD2_BT10st0	cycle	0	2	timer:0	1	skill	17558	0	0	MOST_HATED	0.0	0.0	0.0	0
 283648	AD2_BT10st0	on_enter_attack_state	0	1		0	arm	0	10000	0		0.0	0.0	0.0	0
 283649	AD2_BT10st0	cycle	0	2	timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
 283649	AD2_BT10st0	cycle	0	2	timer:0	1	skill	17558	0	0	MOST_HATED	0.0	0.0	0.0	0
 283649	AD2_BT10st0	on_enter_attack_state	0	1		0	arm	0	10000	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	0	22	timer:2	0	skill	19498	0	0	ME	0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	0	22	timer:2	1	say	342784	0	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	0	22	timer:2	2	spawn_on_target	230077	2	60		5.0	50.0	1000.0	1
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	1	21	timer:1	0	arm	2	2000	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	1	21	timer:1	1	say	342783	0	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	1	21	timer:1	2	skill	19498	0	0	ME	0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	2	20	timer:0	0	arm	1	2000	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	2	20	timer:0	1	say	342782	0	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	cycle	2	20	timer:0	2	skill	19498	0	0	ME	0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	on_enter_attack_state	0	80		0	say	342781	0	0		0.0	0.0	0.0	0
+283804	IDLDF5Re_Solo_EvileyeAlert_Wn_Vritra43DrakanFi	on_enter_attack_state	0	80		1	arm	0	3000	0		0.0	0.0	0.0	0
 283808	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	cycle	0	41	timer:2	0	arm	2	10000	0		0.0	0.0	0.0	0
 283808	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	cycle	0	41	timer:2	1	skill	17332	0	0	MOST_HATED	0.0	0.0	0.0	0
 283808	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	cycle	1	40	timer:0|hp_below:50|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
@@ -32533,6 +33401,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 283849	TR_Drakan_Pr_Heal_solo	cycle	1	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 283849	TR_Drakan_Pr_Heal_solo	cycle	1	6	timer:0	1	skill	20517	0	0	MOST_HATED	0.0	0.0	0.0	0
 283849	TR_Drakan_Pr_Heal_solo	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	0	9	timer:3	1	skill	20671	0	0	MOST_HATED	0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	1	8	timer:2	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	2	spawn_on_target	284131	1	0		5.0	50.0	200.0	1
+283851	TR_Drakan_El_Summon_solo	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	cycle	3	6	timer:0	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+283851	TR_Drakan_El_Summon_solo	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 283852	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
 283852	TR_Drakan_Fi_Stun_solo	cycle	0	9	timer:3	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 283852	TR_Drakan_Fi_Stun_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
@@ -32753,6 +33631,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 283880	TR_Drakan_Pr_Heal_Party	cycle	3	6	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 283880	TR_Drakan_Pr_Heal_Party	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 283880	TR_Drakan_Pr_Heal_Party	on_enter_attack_state	0	5		1	arm	1	7000	0		0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	0	10	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	0	10	timer:2	1	skill	16641	0	0	MOST_HATED	0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	2	spawn_on_target	284131	2	0		5.0	20.0	300.0	1
+283883	TR_Drakan_Wi_Summon_Party	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	2	8	timer:1|set_flag_var:0	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	3	7	timer:1	1	skill	17548	0	0	MOST_HATED	0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	cycle	4	6	timer:0	1	skill	18157	0	0	MOST_HATED	0.0	0.0	0.0	0
+283883	TR_Drakan_Wi_Summon_Party	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 283884	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	0	arm	0	8000	0		0.0	0.0	0.0	0
 283884	TR_Drakan_Fi_Stun_Party	cycle	0	9	timer:2	1	skill	18322	0	0	MOST_HATED	0.0	0.0	0.0	0
 283884	TR_Drakan_Fi_Stun_Party	cycle	1	8	timer:1|set_flag_var:0	0	arm	2	15000	0		0.0	0.0	0.0	0
@@ -33068,6 +33958,17 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284053	IDF5_TD_Nor_Wi	cycle	3	3	timer:0	2	skill	20179	0	0	MOST_HATED	0.0	0.0	0.0	0
 284053	IDF5_TD_Nor_Wi	on_enter_attack_state	0	2		0	arm	0	9000	0		0.0	0.0	0.0	0
 284053	IDF5_TD_Nor_Wi	on_enter_attack_state	0	2		1	skill	17722	0	0	MOST_HATED	0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	0	100	timer:0|set_flag_var:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	0	100	timer:0|set_flag_var:0	1	say	342739	0	0		0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	0	100	timer:0|set_flag_var:0	2	spawn_on_target	284515	1	0		3.0	50.0	0.0	1
+284055	IDF5_TD_Nor_El	cycle	1	99	timer:1	0	arm	2	18000	0		0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	1	99	timer:1	1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	2	98	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	2	98	timer:2	1	skill	17520	0	0	MOST_HATED	0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	3	97	timer:3	0	arm	1	13000	0		0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	cycle	3	97	timer:3	1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+284055	IDF5_TD_Nor_El	on_enter_attack_state	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
 284058	IDF5_TD_Nor_Pr	cycle	0	6	timer:3	0	arm	0	10000	0		0.0	0.0	0.0	0
 284058	IDF5_TD_Nor_Pr	cycle	0	6	timer:3	1	skill	16638	0	0	MOST_HATED	0.0	0.0	0.0	0
 284058	IDF5_TD_Nor_Pr	cycle	1	5	timer:2	0	arm	3	10000	0		0.0	0.0	0.0	0
@@ -33251,6 +34152,46 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284118	TR_Drakan_Pr_Heal_solo_64	cycle	1	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 284118	TR_Drakan_Pr_Heal_solo_64	cycle	1	6	timer:0	1	skill	20517	0	0	MOST_HATED	0.0	0.0	0.0	0
 284118	TR_Drakan_Pr_Heal_solo_64	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	0	9	timer:3	1	skill	20671	0	0	MOST_HATED	0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	1	8	timer:2	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	2	7	timer:1	2	spawn_on_target	284131	1	0		5.0	50.0	200.0	1
+284119	TR_Drakan_El_Summon_solo	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	cycle	3	6	timer:0	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284119	TR_Drakan_El_Summon_solo	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	0	9	timer:3	1	skill	20671	0	0	ME	0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	1	8	timer:2	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	2	7	timer:1	2	spawn_on_target	284132	1	0		5.0	50.0	200.0	1
+284120	TR_Drakan_El_Summon_solo_62	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	cycle	3	6	timer:0	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284120	TR_Drakan_El_Summon_solo_62	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	0	9	timer:3	1	skill	20671	0	0	ME	0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	1	8	timer:2	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	2	7	timer:1	2	spawn_on_target	284133	1	0		5.0	50.0	200.0	1
+284121	TR_Drakan_El_Summon_solo_63	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	cycle	3	6	timer:0	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284121	TR_Drakan_El_Summon_solo_63	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	0	9	timer:3	0	arm	2	15000	0		0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	0	9	timer:3	1	skill	20671	0	0	ME	0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	1	8	timer:2	0	arm	3	15000	0		0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	1	8	timer:2	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	2	7	timer:1	0	arm	2	12000	0		0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	2	7	timer:1	1	skill	20657	0	0	ME	0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	2	7	timer:1	2	spawn_on_target	284134	1	0		5.0	50.0	200.0	1
+284122	TR_Drakan_El_Summon_solo_64	cycle	3	6	timer:0	0	arm	1	8000	0		0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	cycle	3	6	timer:0	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284122	TR_Drakan_El_Summon_solo_64	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
 284123	TR_Drakan_Pr_Heal_Party	cycle	0	9	timer:1	0	arm	1	10000	0		0.0	0.0	0.0	0
 284123	TR_Drakan_Pr_Heal_Party	cycle	0	9	timer:1	1	skill	20517	0	0	MOST_HATED	0.0	0.0	0.0	0
 284123	TR_Drakan_Pr_Heal_Party	cycle	1	8	timer:0|hp_between:41:69|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -33282,6 +34223,54 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284126	TR_Drakan_Pr_Heal_Party_64	cycle	1	7	timer:0|hp_below:40|set_flag_var:1	2	spawn	284138	1	0	self	0.0	0.0	0.0	1
 284126	TR_Drakan_Pr_Heal_Party_64	cycle	2	6	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 284126	TR_Drakan_Pr_Heal_Party_64	on_enter_attack_state	0	5		0	arm	0	5000	0		0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	0	10	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	0	10	timer:2	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	1	9	timer:2	2	spawn_on_target	284131	2	0		5.0	20.0	300.0	1
+284127	TR_Drakan_Wi_Summon_Party	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	2	8	timer:1|set_flag_var:0	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	3	7	timer:1	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	cycle	4	6	timer:0	1	skill	19033	0	0	MOST_HATED	0.0	0.0	0.0	0
+284127	TR_Drakan_Wi_Summon_Party	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	0	10	timer:3	0	arm	0	10000	0		0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	0	10	timer:3	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	1	9	timer:2	2	spawn_on_target	284132	2	0		5.0	20.0	300.0	1
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	2	8	timer:1|set_flag_var:0	0	arm	3	10000	0		0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	2	8	timer:1|set_flag_var:0	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	3	7	timer:1	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	cycle	4	6	timer:0	1	skill	19033	0	0	MOST_HATED	0.0	0.0	0.0	0
+284128	TR_Drakan_Wi_Summon_Party_62	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	0	10	timer:3	0	arm	0	10000	0		0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	0	10	timer:3	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	1	9	timer:2	2	spawn_on_target	284133	2	0		5.0	20.0	300.0	1
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	2	8	timer:1|set_flag_var:0	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	3	7	timer:1	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	cycle	4	6	timer:0	1	skill	19033	0	0	MOST_HATED	0.0	0.0	0.0	0
+284129	TR_Drakan_Wi_Summon_Party_63	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	0	10	timer:3	0	arm	0	10000	0		0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	0	10	timer:3	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	1	9	timer:2	0	arm	0	10000	0		0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	1	9	timer:2	1	skill	16471	0	0	ME	0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	1	9	timer:2	2	spawn_on_target	284134	2	0		5.0	20.0	300.0	1
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	2	8	timer:1|set_flag_var:0	0	arm	2	7000	0		0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	2	8	timer:1|set_flag_var:0	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	3	7	timer:1	0	arm	3	10000	0		0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	3	7	timer:1	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	4	6	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	cycle	4	6	timer:0	1	skill	19033	0	0	MOST_HATED	0.0	0.0	0.0	0
+284130	TR_Drakan_Wi_Summon_Party_64	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 284155	AD2_BT10st0	cycle	0	2	timer:0	0	arm	0	10000	0		0.0	0.0	0.0	0
 284155	AD2_BT10st0	cycle	0	2	timer:0	1	skill	17558	0	0	MOST_HATED	0.0	0.0	0.0	0
 284155	AD2_BT10st0	on_enter_attack_state	0	1		0	arm	0	10000	0		0.0	0.0	0.0	0
@@ -33341,6 +34330,52 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284197	Vri_Post_1st_Q_KN_N_65_Ah	on_enter_attack_state	0	7		1	broadcast	23035	20	0		0.0	0.0	0.0	0
 284197	Vri_Post_1st_Q_KN_N_65_Ah	on_enter_attack_state	0	7		2	say	1500808	0	0		0.0	0.0	0.0	0
 284197	Vri_Post_1st_Q_KN_N_65_Ah	on_enter_attack_state	0	7		3	skill	17384	0	0	ME	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	0	100	timer:0|hp_between:77:99	0	arm	1	10000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	0	100	timer:0|hp_between:77:99	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	1	99	timer:1|hp_between:77:99	0	arm	2	15000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	1	99	timer:1|hp_between:77:99	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	2	98	timer:2|hp_between:77:99	0	arm	3	13000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	2	98	timer:2|hp_between:77:99	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	3	97	timer:3|hp_between:77:99	0	arm	4	13000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	3	97	timer:3|hp_between:77:99	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	4	96	timer:4|hp_between:77:99	0	arm	0	13000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	4	96	timer:4|hp_between:77:99	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	5	94	timer:0|hp_between:27:74	0	arm	1	20000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	5	94	timer:0|hp_between:27:74	1	skill	16846	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	6	93	timer:1|hp_between:27:74	0	arm	2	16000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	6	93	timer:1|hp_between:27:74	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	6	93	timer:1|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	7	92	timer:2|hp_between:27:74	0	arm	3	16000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	7	92	timer:2|hp_between:27:74	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	7	92	timer:2|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	8	91	timer:3|hp_between:27:74	0	arm	4	16000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	8	91	timer:3|hp_between:27:74	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	8	91	timer:3|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	9	90	timer:4|hp_between:27:74	0	arm	0	10000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	9	90	timer:4|hp_between:27:74	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	9	90	timer:4|hp_between:27:74	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	0	arm	1	16000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	1	say	1500816	0	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	2	skill	17106	0	0	ME	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	3	spawn_on_target	283633	2	0		5.0	50.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	10	87	timer:0|hp_between:1:24	4	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	11	86	timer:1|hp_between:1:24	0	arm	2	20000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	11	86	timer:1|hp_between:1:24	1	skill	17034	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	11	86	timer:1|hp_between:1:24	2	skill	17034	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	12	85	timer:2|hp_between:1:24	0	arm	3	16000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	12	85	timer:2|hp_between:1:24	1	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	12	85	timer:2|hp_between:1:24	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	13	84	timer:3|hp_between:1:24	0	arm	4	8000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	13	84	timer:3|hp_between:1:24	1	skill	18549	0	0	ME	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	13	84	timer:3|hp_between:1:24	2	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	0	arm	0	20000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	2	skill	17317	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	cycle	14	83	timer:4|hp_between:1:24	3	skill	16813	0	0	MOST_HATED	0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		0	arm	0	3000	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		1	broadcast	23035	20	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		2	say	1500814	0	0		0.0	0.0	0.0	0
+284199	Vri_Post_3rd_Q_Ra_N_65_Ah	on_enter_attack_state	0	7		3	skill	18548	0	0	ME	0.0	0.0	0.0	0
 284200	Vri_Post_Mez_I_Wi_N_65_Ah	cycle	0	100	timer:0|hp_between:52:99	0	arm	1	18000	0		0.0	0.0	0.0	0
 284200	Vri_Post_Mez_I_Wi_N_65_Ah	cycle	0	100	timer:0|hp_between:52:99	1	skill	21288	0	0	MOST_HATED	0.0	0.0	0.0	0
 284200	Vri_Post_Mez_I_Wi_N_65_Ah	cycle	1	99	timer:1|hp_between:52:99	0	arm	2	13000	0		0.0	0.0	0.0	0
@@ -33386,6 +34421,35 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284201	Vri_Post_Sumble_I_Fi_N_65_Ah	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 284201	Vri_Post_Sumble_I_Fi_N_65_Ah	on_enter_attack_state	0	7		1	broadcast	23035	20	0		0.0	0.0	0.0	0
 284201	Vri_Post_Sumble_I_Fi_N_65_Ah	on_enter_attack_state	0	7		2	skill	17386	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	1	arm	1	10000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	2	say	342739	0	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	3	spawn_on_target	283629	1	0		5.0	50.0	0.0	1
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	0	100	timer:0|set_flag_var:0	4	broadcast	23016	50	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	1	99	timer:1|hp_between:52:99	0	arm	2	13000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	1	99	timer:1|hp_between:52:99	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	1	99	timer:1|hp_between:52:99	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	2	98	timer:2|hp_between:52:99	0	arm	3	13000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	2	98	timer:2|hp_between:52:99	1	skill	21260	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	2	98	timer:2|hp_between:52:99	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	3	97	timer:3|hp_between:52:99	0	arm	1	10000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	3	97	timer:3|hp_between:52:99	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	1	arm	4	10000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	2	say	342739	0	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	3	spawn_on_target	283635	1	0		5.0	50.0	0.0	1
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	4	50	timer:0|hp_below:50|set_flag_var:1	4	broadcast	23016	50	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	5	49	timer:4	0	arm	5	13000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	5	49	timer:4	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	5	49	timer:4	2	broadcast	23013	25	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	6	48	timer:5	0	arm	6	13000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	6	48	timer:5	1	skill	21260	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	6	48	timer:5	2	broadcast	23014	25	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	7	47	timer:6	0	arm	4	10000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	7	47	timer:6	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	cycle	8	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+284206	Vri_Summon_Q_El_N_65_Ae	on_enter_attack_state	0	7		1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
 284208	Vri_1stBoss_Q_Fi_N_65_Al	cycle	0	100	timer:0|hp_between:77:99	0	arm	1	18000	0		0.0	0.0	0.0	0
 284208	Vri_1stBoss_Q_Fi_N_65_Al	cycle	0	100	timer:0|hp_between:77:99	1	skill	18743	0	0	MOST_HATED	0.0	0.0	0.0	0
 284208	Vri_1stBoss_Q_Fi_N_65_Al	cycle	1	99	timer:1|hp_between:77:99	0	arm	2	13000	0		0.0	0.0	0.0	0
@@ -33451,6 +34515,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284219	VriTR_Stun_Q_Fi_N_60_Ae	cycle	3	6	timer:0	0	arm	1	11000	0		0.0	0.0	0.0	0
 284219	VriTR_Stun_Q_Fi_N_60_Ae	cycle	3	6	timer:0	1	skill	16519	0	0	MOST_HATED	0.0	0.0	0.0	0
 284219	VriTR_Stun_Q_Fi_N_60_Ae	on_enter_attack_state	0	5		0	arm	0	4000	0		0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	0	10	timer:2|set_flag_var:0	0	arm	0	19000	0		0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	0	10	timer:2|set_flag_var:0	1	skill	20974	0	0	MOST_HATED	0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	0	10	timer:2|set_flag_var:0	2	spawn_near	284227	2	0		5.0	50.0	0.0	1
+284221	VriTR_Sum_El_N_65_Ae	cycle	1	8	timer:2	0	arm	0	13000	0		0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	1	8	timer:2	1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	2	7	timer:1	0	arm	2	13000	0		0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	2	7	timer:1	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	3	6	timer:0	0	arm	1	13000	0		0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	cycle	3	6	timer:0	1	skill	19033	0	0	MOST_HATED	0.0	0.0	0.0	0
+284221	VriTR_Sum_El_N_65_Ae	on_enter_attack_state	0	5		0	arm	0	7000	0		0.0	0.0	0.0	0
 284222	VriTR_Mez_Wi_65_Ae	cycle	0	100	timer:1|hp_between:52:99	0	arm	2	13000	0		0.0	0.0	0.0	0
 284222	VriTR_Mez_Wi_65_Ae	cycle	0	100	timer:1|hp_between:52:99	1	skill	16881	0	0	MOST_HATED	0.0	0.0	0.0	0
 284222	VriTR_Mez_Wi_65_Ae	cycle	1	99	timer:2|hp_between:52:99	0	arm	1	13000	0		0.0	0.0	0.0	0
@@ -36646,9 +37720,19 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 287014	Test_Basic_Monster_AI_JKA_2	cycle	0	7	timer:0	0	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
 287014	Test_Basic_Monster_AI_JKA_2	cycle	0	7	timer:0	1	arm	0	6000	0		0.0	0.0	0.0	0
 287014	Test_Basic_Monster_AI_JKA_2	on_enter_attack_state	0	7	set_flag_var:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+287025	Test_Basic_Monster_AI_JKA_4	cycle	0	15	timer:0	0	skill	16571	0	0	MOST_HATED	0.0	0.0	0.0	0
+287025	Test_Basic_Monster_AI_JKA_4	cycle	0	15	timer:0	1	arm	0	15000	0		0.0	0.0	0.0	0
+287025	Test_Basic_Monster_AI_JKA_4	on_enter_attack_state	0	20		0	skill	16405	0	0	ME	0.0	0.0	0.0	0
+287025	Test_Basic_Monster_AI_JKA_4	on_enter_attack_state	0	20		1	spawn_near	287030	1	0		5.0	50.0	0.0	1
+287025	Test_Basic_Monster_AI_JKA_4	on_enter_attack_state	0	20		2	arm	0	15000	0		0.0	0.0	0.0	0
 287026	Test_Basic_Monster_AI_JKA_5	cycle	0	12	timer:0	0	skill	16571	0	0	MOST_HATED	0.0	0.0	0.0	0
 287026	Test_Basic_Monster_AI_JKA_5	cycle	0	12	timer:0	1	arm	0	30000	0		0.0	0.0	0.0	0
 287026	Test_Basic_Monster_AI_JKA_5	on_enter_attack_state	0	15		0	arm	0	30000	0		0.0	0.0	0.0	0
+287027	Test_Basic_Monster_AI_JKA_6	cycle	0	13	timer:0	0	skill	16531	0	0	MOST_HATED	0.0	0.0	0.0	0
+287027	Test_Basic_Monster_AI_JKA_6	cycle	0	13	timer:0	1	arm	0	15000	0		0.0	0.0	0.0	0
+287027	Test_Basic_Monster_AI_JKA_6	on_enter_attack_state	0	15	set_flag_var:0	0	skill	16536	0	0	ME	0.0	0.0	0.0	0
+287027	Test_Basic_Monster_AI_JKA_6	on_enter_attack_state	0	15	set_flag_var:0	1	spawn_on_target	287026	1	0		5.0	50.0	0.0	1
+287027	Test_Basic_Monster_AI_JKA_6	on_enter_attack_state	0	15	set_flag_var:0	2	arm	0	15000	0		0.0	0.0	0.0	0
 287028	Test_Basic_Monster_AI_JKA_7	cycle	0	18	timer:0	0	skill	18209	0	0	ME	0.0	0.0	0.0	0
 287028	Test_Basic_Monster_AI_JKA_7	cycle	0	18	timer:0	1	arm	0	9000	0		0.0	0.0	0.0	0
 287028	Test_Basic_Monster_AI_JKA_7	on_attacked	0	15	hp_below:60|set_flag_var:0	0	broadcast	1002	50	0		0.0	0.0	0.0	0
@@ -37242,6 +38326,44 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 296446	GwLGuard_FhA	on_enter_attack_state	0	1		1	arm	1	20000	0		0.0	0.0	0.0	0
 296446	GwLGuard_FhA	on_enter_attack_state	0	1		2	spawn	281472	1	50	self	0.0	0.0	0.0	0
 296446	GwLGuard_FhA	on_enter_attack_state	0	1		3	skill	16767	0	0	ME	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281475	1	60		2.0	50.0	0.0	0
+296447	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281476	1	60		2.0	50.0	0.0	0
+296447	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296447	GwLGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296447	GwLGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281473	1	60		2.0	50.0	0.0	0
+296447	GwLGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281475	1	60		2.0	50.0	0.0	0
+296448	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281476	1	60		2.0	50.0	0.0	0
+296448	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296448	GwLGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296448	GwLGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281473	1	60		2.0	50.0	0.0	0
+296448	GwLGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
 296454	GwDGuard_FhA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 296454	GwDGuard_FhA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	1	spawn	281485	1	60	self	0.0	0.0	0.0	0
 296454	GwDGuard_FhA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	2	skill	17297	0	0	ME	0.0	0.0	0.0	0
@@ -37278,6 +38400,44 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 296455	GwDGuard_FhA	on_enter_attack_state	0	1		1	arm	1	20000	0		0.0	0.0	0.0	0
 296455	GwDGuard_FhA	on_enter_attack_state	0	1		2	spawn	281482	1	60	self	0.0	0.0	0.0	0
 296455	GwDGuard_FhA	on_enter_attack_state	0	1		3	skill	16767	0	0	ME	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281485	1	60		2.0	50.0	0.0	0
+296456	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281486	1	60		2.0	50.0	0.0	0
+296456	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296456	GwDGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296456	GwDGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281483	1	60		2.0	50.0	0.0	0
+296456	GwDGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281485	1	60		2.0	50.0	0.0	0
+296457	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281486	1	60		2.0	50.0	0.0	0
+296457	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296457	GwDGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296457	GwDGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281483	1	60		2.0	50.0	0.0	0
+296457	GwDGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
 296468	LGuard_AsA	cycle	0	3	timer:0|hp_below:50|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 296468	LGuard_AsA	cycle	0	3	timer:0|hp_below:50|set_flag_var:0	1	skill	18918	0	0	MOST_HATED	0.0	0.0	0.0	0
 296468	LGuard_AsA	cycle	0	3	timer:0|hp_below:50|set_flag_var:0	2	skill	18919	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -37426,6 +38586,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 296889	GwLGuard_REA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
 296889	GwLGuard_REA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
 296889	GwLGuard_REA	on_enter_attack_state	0	1		2	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281475	1	60		2.0	50.0	0.0	0
+296890	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281476	1	60		2.0	50.0	0.0	0
+296890	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296890	GwLGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296890	GwLGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281473	1	60		2.0	50.0	0.0	0
+296890	GwLGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
 296891	GwLGuard_REA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 296891	GwLGuard_REA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
 296891	GwLGuard_REA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -37442,6 +38621,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 296891	GwLGuard_REA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
 296891	GwLGuard_REA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
 296891	GwLGuard_REA	on_enter_attack_state	0	1		2	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281475	1	60		2.0	50.0	0.0	0
+296892	GwLGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281476	1	60		2.0	50.0	0.0	0
+296892	GwLGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296892	GwLGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296892	GwLGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281473	1	60		2.0	50.0	0.0	0
+296892	GwLGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
 296893	GwLGuard_WEA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 296893	GwLGuard_WEA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	1	skill	18841	0	0	MOST_HATED	0.0	0.0	0.0	0
 296893	GwLGuard_WEA	cycle	1	5	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -37486,6 +38684,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 296897	GwDGuard_REA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
 296897	GwDGuard_REA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
 296897	GwDGuard_REA	on_enter_attack_state	0	1		2	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281485	1	60		2.0	50.0	0.0	0
+296898	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281486	1	60		2.0	50.0	0.0	0
+296898	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296898	GwDGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296898	GwDGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281483	1	60		2.0	50.0	0.0	0
+296898	GwDGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
 296899	GwDGuard_REA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 296899	GwDGuard_REA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
 296899	GwDGuard_REA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -37502,6 +38719,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 296899	GwDGuard_REA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
 296899	GwDGuard_REA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
 296899	GwDGuard_REA	on_enter_attack_state	0	1		2	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	spawn_on_target	281485	1	60		2.0	50.0	0.0	0
+296900	GwDGuard_RhA	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	18836	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	1	spawn_on_target	281486	1	60		2.0	50.0	0.0	0
+296900	GwDGuard_RhA	cycle	1	6	timer:0|hp_below:50|set_flag_var:1	2	skill	18835	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	0	arm	1	20000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	2	5	timer:1|hp_below:30	1	skill	18839	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	3	4	chance:50|timer:1|hp_between:32:69	1	skill	18657	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	0	arm	1	15000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	4	3	timer:1|hp_between:32:69	1	skill	18838	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	0	arm	1	15000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	5	2	timer:1|hp_between:72:99	1	skill	18837	0	0	MOST_HATED	0.0	0.0	0.0	0
+296900	GwDGuard_RhA	cycle	6	1	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	on_enter_attack_state	0	1		0	arm	0	5000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	on_enter_attack_state	0	1		1	arm	1	15000	0		0.0	0.0	0.0	0
+296900	GwDGuard_RhA	on_enter_attack_state	0	1		2	spawn_on_target	281483	1	60		2.0	50.0	0.0	0
+296900	GwDGuard_RhA	on_enter_attack_state	0	1		3	skill	18834	0	0	MOST_HATED	0.0	0.0	0.0	0
 296901	GwDGuard_WEA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 296901	GwDGuard_WEA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	1	skill	18841	0	0	MOST_HATED	0.0	0.0	0.0	0
 296901	GwDGuard_WEA	cycle	1	5	timer:0|hp_below:50|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -38582,6 +39818,53 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 855531	IDLDF5_Under_02_Boss_Wi	cycle	11	10	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 855531	IDLDF5_Under_02_Boss_Wi	cycle	11	10	timer:0	1	skill	17335	0	0	MOST_HATED	0.0	0.0	0.0	0
 855531	IDLDF5_Under_02_Boss_Wi	on_enter_attack_state	0	1000		0	arm	0	5000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	0	arm	5	24000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	1	skill	21799	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	2	skill	19734	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	3	spawn_near	235623	3	0		5.0	50.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	4	skill	21778	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	0	250	timer:4|hp_between:1:29	5	skill	21789	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	1	230	timer:2|hp_between:1:29	0	arm	3	13000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	1	230	timer:2|hp_between:1:29	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	1	230	timer:2|hp_between:1:29	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	0	arm	2	24000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	1	skill	21799	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	2	skill	19734	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	3	spawn_near	235623	3	0		5.0	50.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	4	skill	21778	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	2	220	timer:1|hp_between:1:29	5	skill	21789	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	0	arm	0	8000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	3	160	timer:5|hp_between:1:69	3	var	0	0	0	Pr_reset01	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	4	150	timer:4|hp_between:32:69	0	arm	5	13000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	4	150	timer:4|hp_between:32:69	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	4	150	timer:4|hp_between:32:69	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	5	130	timer:2|hp_between:32:69	0	arm	3	8000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	5	130	timer:2|hp_between:32:69	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	5	130	timer:2|hp_between:32:69	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	6	120	timer:1|hp_between:32:69	0	arm	2	13000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	6	120	timer:1|hp_between:32:69	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	6	120	timer:1|hp_between:32:69	2	skill	17700	0	0	RANDOM	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	7	60	timer:5|hp_between:72:99	0	arm	0	8000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	7	60	timer:5|hp_between:72:99	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	7	60	timer:5|hp_between:72:99	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	8	50	timer:4|hp_between:72:99	0	arm	5	11000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	8	50	timer:4|hp_between:72:99	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	8	50	timer:4|hp_between:72:99	2	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	9	40	timer:3	0	arm	4	8500	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	9	40	timer:3	1	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	9	40	timer:3	2	var	0	0	0	Pr_reset01	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	10	30	timer:2|hp_between:72:99	0	arm	3	8000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	10	30	timer:2|hp_between:72:99	1	skill	20481	0	0	ME	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	10	30	timer:2|hp_between:72:99	2	spawn_near	235622	1	0		5.0	50.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	11	20	timer:1|hp_between:72:99	0	arm	2	11000	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	11	20	timer:1|hp_between:72:99	1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	11	20	timer:1|hp_between:72:99	2	skill	17359	0	0	RANDOM	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	12	10	timer:0	0	arm	1	8500	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	12	10	timer:0	1	broadcast	25760	50	0		0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	cycle	12	10	timer:0	2	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+855532	IDLDF5_Under_02_Boss_Pr	on_enter_attack_state	0	1000		0	arm	0	5000	0		0.0	0.0	0.0	0
 855533	IDLDF5_Under_02_Boss_As	cycle	0	250	timer:4|hp_between:1:39	0	arm	5	34000	0		0.0	0.0	0.0	0
 855533	IDLDF5_Under_02_Boss_As	cycle	0	250	timer:4|hp_between:1:39	1	skill	21800	0	0	MOST_HATED	0.0	0.0	0.0	0
 855533	IDLDF5_Under_02_Boss_As	cycle	0	250	timer:4|hp_between:1:39	2	skill	21801	0	0	ME	0.0	0.0	0.0	0
@@ -38770,6 +40053,15 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 855889	IDYun_Temp_26	cycle	0	1	timer:0	0	skill	19913	0	0	ME	0.0	0.0	0.0	0
 855889	IDYun_Temp_26	cycle	0	1	timer:0	1	arm	0	3000	0		0.0	0.0	0.0	0
 855889	IDYun_Temp_26	on_enter_attack_state	0	2		0	arm	0	3000	0		0.0	0.0	0.0	0
+855890	IDYun_Temp_20	cycle	0	2	timer:1	0	skill	19917	0	0	ME	0.0	0.0	0.0	0
+855890	IDYun_Temp_20	cycle	1	1	timer:0	0	spawn	282465	1	6	self	0.0	0.0	0.0	1
+855890	IDYun_Temp_20	cycle	1	1	timer:0	1	skill	19915	0	0	ME	0.0	0.0	0.0	0
+855890	IDYun_Temp_20	cycle	1	1	timer:0	2	skill	19918	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
+855890	IDYun_Temp_20	cycle	1	1	timer:0	3	spawn	282465	1	6	self	0.0	0.0	0.0	1
+855890	IDYun_Temp_20	cycle	1	1	timer:0	4	arm	0	12000	0		0.0	0.0	0.0	0
+855890	IDYun_Temp_20	on_enter_attack_state	0	3		0	arm	0	8000	0		0.0	0.0	0.0	0
+855890	IDYun_Temp_20	on_enter_attack_state	0	3		1	arm	1	25000	0		0.0	0.0	0.0	0
+855890	IDYun_Temp_20	on_enter_attack_state	0	3		2	spawn_on_target	282465	1	6		0.0	50.0	0.0	1
 855892	IDYun_Drakan_ND1	cycle	0	1	timer:0	0	skill	19912	0	0	MOST_HATED	0.0	0.0	0.0	0
 855892	IDYun_Drakan_ND1	cycle	0	1	timer:0	1	arm	0	8000	0		0.0	0.0	0.0	0
 855892	IDYun_Drakan_ND1	on_enter_attack_state	0	2		0	arm	0	6000	0		0.0	0.0	0.0	0
@@ -38790,6 +40082,33 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 855896	IDYun_Temp_26	cycle	0	1	timer:0	0	skill	19913	0	0	ME	0.0	0.0	0.0	0
 855896	IDYun_Temp_26	cycle	0	1	timer:0	1	arm	0	3000	0		0.0	0.0	0.0	0
 855896	IDYun_Temp_26	on_enter_attack_state	0	2		0	arm	0	3000	0		0.0	0.0	0.0	0
+855897	IDYun_Temp_20	cycle	0	2	timer:1	0	skill	19917	0	0	ME	0.0	0.0	0.0	0
+855897	IDYun_Temp_20	cycle	1	1	timer:0	0	spawn	282465	1	6	self	0.0	0.0	0.0	1
+855897	IDYun_Temp_20	cycle	1	1	timer:0	1	skill	19915	0	0	ME	0.0	0.0	0.0	0
+855897	IDYun_Temp_20	cycle	1	1	timer:0	2	skill	19918	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
+855897	IDYun_Temp_20	cycle	1	1	timer:0	3	spawn	282465	1	6	self	0.0	0.0	0.0	1
+855897	IDYun_Temp_20	cycle	1	1	timer:0	4	arm	0	12000	0		0.0	0.0	0.0	0
+855897	IDYun_Temp_20	on_enter_attack_state	0	3		0	arm	0	8000	0		0.0	0.0	0.0	0
+855897	IDYun_Temp_20	on_enter_attack_state	0	3		1	arm	1	25000	0		0.0	0.0	0.0	0
+855897	IDYun_Temp_20	on_enter_attack_state	0	3		2	spawn_on_target	282465	1	6		0.0	50.0	0.0	1
+855899	IDYun_Nmd3	cycle	0	6	timer:1	0	skill	19657	0	0	ME	0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	0	6	timer:1	1	spawn_on_target	282390	3	15		4.0	100.0	0.0	1
+855899	IDYun_Nmd3	cycle	0	6	timer:1	2	arm	1	9000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	1	5	hp_below:85|timer:2|set_flag_var:0	0	say	1500389	0	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	1	5	hp_below:85|timer:2|set_flag_var:0	1	arm	2	6000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	1	5	hp_below:85|timer:2|set_flag_var:0	2	spawn	282606	1	0	self	0.0	0.0	0.0	1
+855899	IDYun_Nmd3	cycle	2	4	hp_below:65|timer:2|set_flag_var:1	0	say	1500389	0	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	2	4	hp_below:65|timer:2|set_flag_var:1	1	arm	2	6000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	2	4	hp_below:65|timer:2|set_flag_var:1	2	spawn	282606	1	0	self	0.0	0.0	0.0	1
+855899	IDYun_Nmd3	cycle	3	3	hp_below:45|timer:2|set_flag_var:2	0	say	1500389	0	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	3	3	hp_below:45|timer:2|set_flag_var:2	1	arm	2	6000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	3	3	hp_below:45|timer:2|set_flag_var:2	2	spawn	282606	1	0	self	0.0	0.0	0.0	1
+855899	IDYun_Nmd3	cycle	4	2	hp_below:20|timer:2|set_flag_var:3	0	say	1500389	0	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	4	2	hp_below:20|timer:2|set_flag_var:3	1	arm	2	6000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	cycle	4	2	hp_below:20|timer:2|set_flag_var:3	2	spawn	282606	1	0	self	0.0	0.0	0.0	1
+855899	IDYun_Nmd3	cycle	5	1	timer:2	0	arm	2	6000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	on_enter_attack_state	0	8		0	arm	1	6000	0		0.0	0.0	0.0	0
+855899	IDYun_Nmd3	on_enter_attack_state	0	8		1	arm	2	6000	0		0.0	0.0	0.0	0
 855902	IDYun_Nmd5	cycle	0	3	timer:0	0	say	1500398	0	0		0.0	0.0	0.0	0
 855902	IDYun_Nmd5	cycle	0	3	timer:0	1	arm	0	15000	0		0.0	0.0	0.0	0
 855902	IDYun_Nmd5	cycle	0	3	timer:0	2	skill	19660	0	0	ME	0.0	0.0	0.0	0
@@ -39045,6 +40364,33 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 855914	DF5_ItemNamed_6_Fi_01_SSH	cycle	7	23	timer:3|hp_below:49	1	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
 855914	DF5_ItemNamed_6_Fi_01_SSH	cycle	7	23	timer:3|hp_below:49	2	attack	0	0	0		0.0	0.0	0.0	0
 855914	DF5_ItemNamed_6_Fi_01_SSH	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	0	50	timer:0|hp_between:51:99	0	arm	1	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	0	50	timer:0|hp_between:51:99	1	skill	21300	0	0	MOST_HATED	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	1	49	timer:1|hp_between:51:99	0	arm	2	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	1	49	timer:1|hp_between:51:99	1	skill	21301	0	0	MOST_HATED	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	2	48	timer:2|hp_between:51:99	0	arm	3	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	2	48	timer:2|hp_between:51:99	1	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	2	48	timer:2|hp_between:51:99	2	attack	0	0	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	2	48	timer:2|hp_between:51:99	3	spawn_on_target	282390	2	15		2.0	100.0	0.0	1
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	3	47	timer:3|hp_between:51:99	0	arm	4	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	3	47	timer:3|hp_between:51:99	1	skill	21301	0	0	MOST_HATED	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	4	46	timer:4|hp_between:51:99	0	arm	0	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	4	46	timer:4|hp_between:51:99	1	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	4	46	timer:4|hp_between:51:99	2	attack	0	0	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	4	46	timer:4|hp_between:51:99	3	spawn_on_target	282390	2	15		2.0	100.0	0.0	1
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	5	30	timer:0|hp_below:49	0	arm	1	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	5	30	timer:0|hp_below:49	1	skill	21300	0	0	MOST_HATED	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	6	29	timer:1|hp_below:49	0	arm	2	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	6	29	timer:1|hp_below:49	1	skill	21301	0	0	MOST_HATED	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	7	28	timer:2|hp_below:49	0	arm	3	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	7	28	timer:2|hp_below:49	1	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	7	28	timer:2|hp_below:49	2	attack	0	0	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	7	28	timer:2|hp_below:49	3	spawn_on_target	282390	3	15		2.0	100.0	0.0	1
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	8	26	timer:3|hp_below:49	0	arm	0	10000	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	8	26	timer:3|hp_below:49	1	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	8	26	timer:3|hp_below:49	2	attack	0	0	0		0.0	0.0	0.0	0
+855915	DF5_ItemNamed_6_Wi_01_SSH	cycle	8	26	timer:3|hp_below:49	3	spawn_on_target	282390	3	15		2.0	100.0	0.0	1
+855915	DF5_ItemNamed_6_Wi_01_SSH	on_enter_attack_state	0	90		0	arm	0	6000	0		0.0	0.0	0.0	0
 855917	DF5_ItemNamed_6_Fi_02_SSH	cycle	0	50	timer:0|hp_between:51:99	0	arm	1	10000	0		0.0	0.0	0.0	0
 855917	DF5_ItemNamed_6_Fi_02_SSH	cycle	0	50	timer:0|hp_between:51:99	1	skill	21300	0	0	MOST_HATED	0.0	0.0	0.0	0
 855917	DF5_ItemNamed_6_Fi_02_SSH	cycle	1	49	timer:1|hp_between:51:99	0	arm	2	10000	0		0.0	0.0	0.0	0
@@ -39327,6 +40673,14 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 856014	IDYun_info_05	cycle	0	7	timer:0	0	arm	0	7000	0		0.0	0.0	0.0	0
 856014	IDYun_info_05	cycle	0	7	timer:0	1	skill	21909	0	0	MOST_HATED	0.0	0.0	0.0	0
 856014	IDYun_info_05	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
+856064	IDStation_info_10	cycle	0	7	timer:0	0	arm	1	5000	0		0.0	0.0	0.0	0
+856064	IDStation_info_10	cycle	0	7	timer:0	1	arm	2	6500	0		0.0	0.0	0.0	0
+856064	IDStation_info_10	cycle	0	7	timer:0	2	skill	19416	0	0	ME	0.0	0.0	0.0	0
+856064	IDStation_info_10	cycle	1	6	timer:1	0	spawn	856055	1	30	self	0.0	0.0	0.0	0
+856064	IDStation_info_10	cycle	1	6	timer:1	1	spawn_near	799657	1	7		0.0	50.0	0.0	0
+856064	IDStation_info_10	cycle	2	5	timer:2	0	despawn_self	0	0	0		0.0	0.0	0.0	0
+856064	IDStation_info_10	on_enter_attack_state	0	7		0	arm	0	2000	0		0.0	0.0	0.0	0
+856064	IDStation_info_10	on_enter_attack_state	0	7		1	say	1501197	0	0		0.0	0.0	0.0	0
 856084	IDLDF5Re_Solo_Vritra43CU_DrakanFn	cycle	0	41	timer:2	0	arm	2	10000	0		0.0	0.0	0.0	0
 856084	IDLDF5Re_Solo_Vritra43CU_DrakanFn	cycle	0	41	timer:2	1	skill	17294	0	0	MOST_HATED	0.0	0.0	0.0	0
 856084	IDLDF5Re_Solo_Vritra43CU_DrakanFn	cycle	1	40	timer:0|hp_below:50|set_flag_var:0	0	arm	2	10000	0		0.0	0.0	0.0	0

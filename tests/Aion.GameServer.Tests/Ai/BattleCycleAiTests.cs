@@ -254,7 +254,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 16,243 casts across 3,916 npcs, none of them read by a human. The index they came from is only
+	/// 16,764 casts across 4,001 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -273,7 +273,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(16243, casts);
+		Assert.Equal(16764, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -314,7 +314,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(50, lowest);
+		Assert.Equal(66, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -420,6 +420,74 @@ public sealed class BattleCycleAiTests
 		Assert.Same(boss, BossAiHarness.FireNextQueuedSkill(boss));
 	}
 
+	/// <summary><b>A friendly cast finds the other npc, not the raid attacking it.</b></summary>
+	/// <remarks>
+	/// The one mode that does not read the hate list at all -- it searches the known list for a living
+	/// npc the caster is not hostile to. Retail uses it for the buffs and heals a boss puts on its own
+	/// adds, so a mutation pointing it at the hate list would turn a heal into an attack.
+	/// </remarks>
+	[Fact]
+	public void AFriendlyCastFindsTheOtherNpc()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Npc ally = harness.Spawn(Caster, 303f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, ally);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		harness.Engage(boss, tank);
+
+		boss.QueueSkill(SelfCast, 1, 0, NpcSkillTargetAttribute.FRIEND);
+
+		Assert.Same(ally, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>A random cast still has to land on somebody in the fight.</b></summary>
+	/// <remarks>
+	/// Randomness does not have to make a pin vague. With exactly one creature on the hate list the
+	/// answer is forced, so this asserts the part that is not random: <b>a random pick comes from the
+	/// hate list</b>. A mutation returning the caster, or nobody, fails here without any roll seam.
+	/// </remarks>
+	[Fact]
+	public void ARandomCastComesFromTheHateList()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player only = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, only);
+		harness.Engage(boss, only);
+
+		boss.QueueSkill(RaidSkill, 1, 0, NpcSkillTargetAttribute.RANDOM);
+
+		Assert.Same(only, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>"Anyone but the one I am fighting" really excludes them.</b></summary>
+	/// <remarks>
+	/// The same trick with the exclusion made to carry the whole answer: two creatures hated, one of
+	/// them the current target, so the only admissible pick is the other. This is the mode retail uses
+	/// to make a boss spin onto somebody who is not the tank, and a mutation that ignores the exclusion
+	/// leaves it hitting the tank forever.
+	/// </remarks>
+	[Fact]
+	public void ARandomCastThatExcludesTheTargetPicksSomebodyElse()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		Player other = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, other);
+		harness.Engage(boss, tank);
+		boss.GetAggroList().AddHate(other, 100);
+		boss.GetAggroList().AddHate(tank, 500);
+		Assert.Same(tank, boss.GetTarget());
+
+		boss.QueueSkill(RaidSkill, 1, 0, NpcSkillTargetAttribute.RANDOM_EXCEPT_CURRENT_TARGET);
+
+		Assert.Same(other, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
 	/// <remarks>
 	/// <see cref="PatternAi.ArmTimer"/> throws outside 0..29, so a bad indicator would take the npc
@@ -477,6 +545,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(463, spawns);
+		Assert.Equal(480, spawns);
 	}
 }

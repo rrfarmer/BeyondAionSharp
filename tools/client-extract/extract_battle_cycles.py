@@ -274,6 +274,36 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                         int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "spawn_on_target":
+            named = re.search(r"<npc_nameid>([^<]+)</npc_nameid>", body)
+            npc_id = dev.get(named.group(1)) if named else None
+            if npc_id is None or npc_id not in known:
+                raise Unsayable("spawns an npc with no template here")
+            who = re.search(r"<target_obj>(\w+)</target_obj>", body)
+            where = who.group(1) if who else ""
+            if where not in ("OBJI_CUR_TARGET", "OBJI_SELF"):
+                raise Unsayable("spawn_on_target at a creature this port cannot name")
+            count = re.search(r"<num_to_spawn>(\d+)</", body)
+            live = re.search(r"<live_time>(\d+)</", body)
+            reach = re.search(r"<spawn_range>([-\d.]+)</", body)
+            valid = re.search(r"<valid_distance>([-\d.]+)</", body)
+            group = re.search(r"<spawn_id>SPAWN_ID_(\d+)</", body)
+            hate = re.search(r"<hatepoints_to_add>(\d+)</", body)
+            attacks = re.search(r"<attack_target_after_spawn>(\w+)</", body)
+            points = int(hate.group(1)) if hate else 0
+            # `attack_target_after_spawn` and `hatepoints_to_add` are one op here: the hate is what
+            # makes the summon fight. TRUE with no hate points says "attack" and gives nothing to
+            # attack with, and inventing a number would invent how hard it pulls, so it is refused.
+            if attacks and attacks.group(1).upper() == "TRUE" and points == 0:
+                raise Unsayable("spawn_on_target told to attack with no hate points")
+            if not (attacks and attacks.group(1).upper() == "TRUE"):
+                points = 0
+            out.append(("spawn_on_target" if where == "OBJI_CUR_TARGET" else "spawn_near",
+                        npc_id, int(count.group(1)) if count else 1,
+                        int(live.group(1)) if live else 0,
+                        "", float(reach.group(1)) if reach else 0.0,
+                        float(valid.group(1)) if valid else 0.0, float(points),
+                        int(group.group(1)) if group else 0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind in ("say_to_all", "display_system_message"):
