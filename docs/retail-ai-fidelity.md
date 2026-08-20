@@ -35509,3 +35509,48 @@ reproduce byte-for-byte, pass every data pin, and still be unloadable.** Nothing
 - **188 rotations re-arm only from within themselves; 147 arm nowhere.** Unchanged.
 - Still unverified against live play. 1,216 rotations now rest on the data and four structural pins,
   and the stack overflow is a reminder that those pins do not cover everything that can go wrong.
+
+## The enum decision, made under the rule that already covers it
+
+The previous three entries flagged the health-ranked skill target as a decision to be taken rather than
+made: `NpcSkillTargetAttribute` is Java-parity data, and adding to it is an engine change.
+
+**The project's own rule already permits it, with precedent in this repository.** NPC AI behaviour
+sourced from NCSoft's retail pattern data outranks aionemu, provided the change is logged here -- and
+`AggroTarget` carries `LOWEST_HP` and `MOST_HP` for exactly this reason, added in earlier work under
+exactly this rule. The skill-target enum is the same change to the neighbouring enum. Waiting for a
+decision that the rule had already made was the wrong call, three turns running.
+
+So a boss can now **cast** at whoever is closest to dying, not merely turn to face them. The two new
+members delegate to `AggroTarget`, so the ranking has one implementation rather than two, and they are
+**appended**: Java compares this enum by `ordinal()` and C# by integer value, so inserting anywhere but
+the end would keep every `npc_skills` entry's name and change its meaning.
+`TheSkillTargetEnumKeptItsOldNumbering` pins the eight that existed before, and kills a mutation that
+inserts a member in the middle.
+
+1,216 rotations -> **1,225**; 3,894 npcs -> **3,916**; 16,017 casts -> **16,243**. A small gain for the
+capability, because most of the 235 blocked uses sat in patterns refused for a second reason too --
+the fourth time this project has confirmed that a vocabulary gap only pays when it is the last one.
+
+### What is not pinned, precisely
+
+**A mutation that makes a weakest-target cast hit the most-hated creature instead survives.** The
+harness drains queued skills rather than executing them, so `SkillAttackManager`'s
+enum-to-`AggroTarget` mapping -- the two lines this change adds -- is not reached by any test here. The
+*ranking* those lines delegate to is covered, in `FrostmaneLestinAiTests`, through the target-switch
+path; the *mapping* is not. Both the test remark and this entry say so rather than leaving a green
+suite implying otherwise.
+
+Closing it needs a harness seam that runs a queued skill through `SkillAttackManager` instead of
+capturing it. That would also cover the six other target modes, none of which is pinned either.
+
+### Still missing
+
+- **A harness seam that executes queued skills.** Now the most valuable test-side gap: it would pin
+  all eight skill-target modes at once, including the two added here.
+- **246 casts at a role-named creature** -- the attacker, the caster, the message parameter. Unlike the
+  health-ranked pair these cannot delegate to `AggroTarget`, because the creature is not on the hate
+  list by rank; it would need the queue to carry a creature reference. Still open.
+- **53 range-restricted attacker-indicator casts**, **198 `is_user_flying`**, **67 `spawn_on_target`**.
+- **330 optional arming handlers dropped**, counted by kind.
+- **188 rotations re-arm only from within themselves; 147 arm nowhere.** Unchanged.

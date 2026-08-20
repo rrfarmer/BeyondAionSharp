@@ -95,11 +95,10 @@ AGGRO = {
     "ATTACKERI_HAS_MOST_HP": "MOST_HP",
 }
 
-#: The same indicators as a *skill* target. `NpcSkillTargetAttribute` is the narrower enum -- it has no
-#: health-ranked members -- so a cast aimed at whoever is closest to dying cannot be said even though
-#: a target *switch* to the same creature can. 235 uses are refused for that alone.
-SKILL_AGGRO = {name: value for name, value in AGGRO.items()
-               if value not in ("LOWEST_HP", "MOST_HP")}
+#: The same indicators as a *skill* target. `NpcSkillTargetAttribute` used to be the narrower enum,
+#: which meant a boss could **switch** to whoever was closest to dying but not **cast** at them; it now
+#: carries the health-ranked pair too, resolved by delegating to `AggroTarget`, so the six map alike.
+SKILL_AGGRO = dict(AGGRO)
 
 #: Where a battle timer can be armed. Retail does not only start a fight's chain from entering combat:
 #: of the 390 rotations with no `on_enter_attack_state` arming, 59 are started by a message from another

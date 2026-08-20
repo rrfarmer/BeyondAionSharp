@@ -238,7 +238,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 16,017 casts across 3,894 npcs, none of them read by a human. The index they came from is only
+	/// 16,243 casts across 3,916 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -257,7 +257,48 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(16017, casts);
+		Assert.Equal(16243, casts);
+	}
+
+	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
+	/// <remarks>
+	/// <c>LOWEST_HP</c> and <c>MOST_HP</c> were appended so a boss can cast at whoever is closest to
+	/// dying, not merely turn to face them. CLAUDE.md flags this exact hazard: Java compares this enum
+	/// by <c>ordinal()</c> and C# by its integer value, so inserting a member anywhere but the end
+	/// silently repoints every one after it -- npc_skills entries would keep their names and change
+	/// their meaning. This pins the members that existed before.
+	/// </remarks>
+	[Fact]
+	public void TheSkillTargetEnumKeptItsOldNumbering()
+	{
+		Assert.Equal(0, (int)NpcSkillTargetAttribute.FRIEND);
+		Assert.Equal(1, (int)NpcSkillTargetAttribute.ME);
+		Assert.Equal(2, (int)NpcSkillTargetAttribute.MOST_HATED);
+		Assert.Equal(3, (int)NpcSkillTargetAttribute.SECOND_MOST_HATED);
+		Assert.Equal(4, (int)NpcSkillTargetAttribute.THIRD_MOST_HATED);
+		Assert.Equal(5, (int)NpcSkillTargetAttribute.RANDOM);
+		Assert.Equal(6, (int)NpcSkillTargetAttribute.RANDOM_EXCEPT_CURRENT_TARGET);
+		Assert.Equal(7, (int)NpcSkillTargetAttribute.NONE);
+	}
+
+	/// <summary><b>A boss that retail aims at the weakest carries that target, not the most-hated.</b></summary>
+	/// <remarks>
+	/// <b>This pins the table, not the resolution.</b> The harness drains queued skills instead of
+	/// executing them, so <c>SkillAttackManager</c>'s enum-to-<c>AggroTarget</c> mapping -- the two
+	/// lines added for this -- is not reached by any pin here. The ranking those lines delegate to is
+	/// covered, in <c>FrostmaneLestinAiTests</c>, through the target-switch path.
+	/// </remarks>
+	[Fact]
+	public void AWeakestTargetCastKeepsThatTarget()
+	{
+		int lowest = 0;
+		foreach (string[] fields in Rows("skill"))
+		{
+			if (fields[2] == "LOWEST_HP")
+				lowest++;
+		}
+
+		Assert.Equal(50, lowest);
 	}
 
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
@@ -275,7 +316,7 @@ public sealed class BattleCycleAiTests
 		}
 	}
 
-	/// <summary>The (a1, a2) pair of every row of one action kind.</summary>
+	/// <summary>The (a1, a2, place) fields of every row of one action kind.</summary>
 	private static IEnumerable<string[]> Rows(string kind)
 	{
 		string path = Path.Combine(BossAiHarness.RepoRoot(),
@@ -285,12 +326,13 @@ public sealed class BattleCycleAiTests
 		int kindAt = Array.IndexOf(header, "kind");
 		int firstAt = Array.IndexOf(header, "a1");
 		int secondAt = Array.IndexOf(header, "a2");
+		int placeAt = Array.IndexOf(header, "place");
 
 		foreach (string line in lines.Skip(1))
 		{
 			string[] fields = line.Split('	');
 			if (fields[kindAt] == kind)
-				yield return [fields[firstAt], fields[secondAt]];
+				yield return [fields[firstAt], fields[secondAt], fields[placeAt]];
 		}
 	}
 
@@ -316,6 +358,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(459, spawns);
+		Assert.Equal(463, spawns);
 	}
 }

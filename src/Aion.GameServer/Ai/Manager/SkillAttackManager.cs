@@ -107,6 +107,8 @@ public class SkillAttackManager
                     NpcSkillTargetAttribute.THIRD_MOST_HATED => owner.GetAggroList().GetTarget(AggroTarget.THIRD_MOST_HATED),
                     NpcSkillTargetAttribute.RANDOM => owner.GetAggroList().GetTarget(AggroTarget.RANDOM, range),
                     NpcSkillTargetAttribute.RANDOM_EXCEPT_CURRENT_TARGET => owner.GetAggroList().GetTarget(AggroTarget.RANDOM_EXCEPT_CURRENT_TARGET, range),
+                    NpcSkillTargetAttribute.LOWEST_HP => owner.GetAggroList().GetTarget(AggroTarget.LOWEST_HP),
+                    NpcSkillTargetAttribute.MOST_HP => owner.GetAggroList().GetTarget(AggroTarget.MOST_HP),
                     NpcSkillTargetAttribute.NONE => null,
                     _ => null,
                 };
