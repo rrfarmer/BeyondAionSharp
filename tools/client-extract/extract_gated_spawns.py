@@ -39,6 +39,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 from client_npc_names import npc_names  # noqa: E402
+from extract_client_waypoints import map_ids_by_world  # noqa: E402
 
 INFO_RE = re.compile(r"<condition_info\b([^>]*)>(.*?)</condition_info>", re.S)
 NPC_RE = re.compile(r"<npc\b[^>]*>(.*?)</npc>", re.S)
@@ -57,14 +58,25 @@ def main() -> int:
     known = {int(m.group(1)) for m in re.finditer(r'<npc_template npc_id="(\d+)"', templates)}
     dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
 
+    # A retail world folder is not a map id. `world_maps.xml` carries the join as `cName`, and a world
+    # it does not name cannot be loaded at runtime however good its data is -- those are counted below
+    # rather than emitted with a name nothing can resolve.
+    maps = map_ids_by_world()
+
     rows: list[tuple] = []
     skipped_unknown = 0
     skipped_unnamed = 0
+    skipped_unmapped = 0
+    unmapped_worlds: set[str] = set()
     for world in sorted(args.worlds_dir.glob("*/world.xml")):
         try:
             text = S.read_text(world)
         except Exception:
             continue
+        map_id = maps.get(world.parent.name.lower())
+        if map_id is None:
+            unmapped_worlds.add(world.parent.name)
+
         for info in INFO_RE.finditer(text):
             gate = re.search(r"<extcondition>(.*?)</extcondition>", info.group(2), re.S)
             if not gate:
@@ -90,7 +102,10 @@ def main() -> int:
                     continue
                 heading = re.search(r"<dir>([-\d.]+)</dir>", block)
                 respawn = re.search(r"<spawn_time>(\d+)</spawn_time>", block)
-                rows.append((world.parent.name, npc_id,
+                if map_id is None:
+                    skipped_unmapped += 1
+                    continue
+                rows.append((map_id, world.parent.name, npc_id,
                              float(spot[0].group(1)), float(spot[1].group(1)), float(spot[2].group(1)),
                              int(float(heading.group(1))) if heading else 0,
                              int(respawn.group(1)) if respawn else 0,
@@ -98,13 +113,14 @@ def main() -> int:
 
     rows.sort()
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
-        out.write("world\tnpc\tx\ty\tz\tdir\trespawn\tdespawn_at_other\tgate\n")
+        out.write("map\tworld\tnpc\tx\ty\tz\tdir\trespawn\tdespawn_at_other\tgate\n")
         for row in rows:
             out.write("\t".join(str(f) for f in row) + "\n")
 
-    per = collections.Counter(r[0] for r in rows)
+    per = collections.Counter(r[1] for r in rows)
     print(f"{len(rows)} portable gated placements across {len(per)} worlds -> {args.out}")
     print(f"    {skipped_unknown} name an npc this port has no template for, and are dropped")
+    print(f"    {skipped_unmapped} are in {len(unmapped_worlds)} worlds world_maps.xml does not name")
     if skipped_unnamed:
         print(f"    {skipped_unnamed} carry no name at all")
     for world, count in per.most_common(6):

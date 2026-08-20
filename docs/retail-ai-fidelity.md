@@ -34718,3 +34718,42 @@ difference observable. **A property worth having is worth exposing enough to tes
 - **`[SAVE]` persistence** — 175 expressions, 2,600 gate uses, lifetime unknown.
 - **Instance scope** — the registry keys on map id, which is right for a world map and unverified for
   two simultaneous instances of one.
+
+## The gated spawns become data the server can read
+
+The engine ran but nothing fed it. This entry makes the 78,865 gated placements loadable, and the
+number that survives says most of what there is to say:
+
+| | placements |
+|---|---|
+| behind a gate in retail | 78,865 |
+| npc has a template here | 26,615 |
+| **and the world has a map id** | **21,096**, across 97 maps |
+| of those, gate parses | 21,092 (four sit behind two of retail's nine broken gates) |
+| **hold on an empty store** | **1,447** |
+
+**A retail world folder is not a map id.** `world_maps.xml` carries the join as `cName`, and 3,916
+placements are in 97 worlds it does not name — a world with no map id cannot be loaded however good its
+data is. The extractor now joins and counts the loss rather than emitting a name nothing resolves.
+
+**The opening count changed with it.** Measured at 1,525 before the join and 1,447 after, because some
+of the dropped worlds held on an empty store. The first number was right for the file it was measured
+on and wrong for the file that ships — worth noting because it is the kind of figure that gets quoted
+later.
+
+`GatedSpawnData` reads it, skipping the rows retail ships broken rather than guessing at them, and a
+missing file loads as nothing rather than throwing.
+
+**Tab-separated rather than XML**, which is this project's usual shape for game data. It is generated
+wholesale from the client and never hand-edited, the extractor is the schema, and twenty-one thousand
+rows of XML would be several megabytes to parse at every start for no gain.
+
+### Still missing
+
+- **The call site.** Nothing constructs a `GatedSpawnController` at world start yet. That is one wiring
+  point, and it will place about 1,447 npcs that are absent today — worth doing with the server in front
+  of you rather than blind at the end of a long session.
+- **The 738 server flags**, unchanged: a gate on `SpecialServer_Cond` reads zero, which is right for a
+  quiet server and wrong during a siege.
+- **`[SAVE]` persistence** and **instance scope**, unchanged.
+- **50,841 placements** whose npcs this port has no template for, and **3,916** in unnamed worlds.

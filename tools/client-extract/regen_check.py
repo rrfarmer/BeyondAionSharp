@@ -85,6 +85,10 @@ POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv"),
 # and cannot join POSITIONAL_OUT above.
 WORLD_EXTRACTORS = [("extract_spawn_conditions.py", "spawn_conditions.tsv")]
 
+# Writes into game-server data rather than out/, because the server reads it directly.
+GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",
+                         "game-server/data/static_data/spawns/gated/gated_spawns.tsv")]
+
 # (emitter, committed .cs, argv builder). The tiamat emitter takes the output path FIRST and its tables
 # as repeated --table switches, so it cannot share the others' shape.
 GEN = pathlib.Path("src/Aion.GameServer/Handlers/AI")
