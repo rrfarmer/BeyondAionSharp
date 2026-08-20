@@ -48,6 +48,12 @@ public sealed class FortressKillerHuntTests
 	/// </remarks>
 	private const int ElyosGarrisonChief = 234197;
 
+	/// <summary>
+	/// <c>LDF4_Advance_PvP_Guard_Li_Kn</c> — <c>race="ELYOS"</c>, same war, <b>not</b> a chief. An enemy
+	/// the killer will fight and must not focus.
+	/// </summary>
+	private const int OrdinaryAdvanceGuard = 233957;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Reshanta).WithWorldSize(4096)
 			.WithAi(typeof(FortressKillerAI), typeof(AbyssGuardSimpleAI), typeof(BaseProtectorAI),
@@ -128,24 +134,79 @@ public sealed class FortressKillerHuntTests
 	}
 
 	/// <summary>
+	/// <b>A killer already fighting keeps choosing the chief.</b> Retail's one translatable battle-timer
+	/// rung: hate on a current target that <em>is</em> a garrison chief — 900,000 every five seconds for
+	/// the Advance killers — so whoever else joins the fight does not pull them off it.
+	/// </summary>
+	/// <remarks>
+	/// <b>The previous entry said this could not be pinned, and that was wrong.</b> The claim was that
+	/// the harness cannot hold two NPCs in a fight; what actually happens is that the killer dies inside
+	/// the first tick, because it loads with 140 max HP against the chief's 32,215.
+	/// <see cref="BossAiHarness.HoldFight"/> is the fix and carries the detail.
+	/// </remarks>
+	[Fact]
+	public void AKillerAlreadyFightingKeepsChoosingTheChief()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc killer = harness.Spawn(AdvanceKiller, 300f, 300f, 200f);
+		Npc chief = harness.Spawn(ElyosGarrisonChief, 303f, 300f, 200f);
+		harness.Engage(killer, chief);
+		int before = killer.GetAggroList().GetHate(chief);
+
+		for (int second = 0; second < 12; second++)
+		{
+			BossAiHarness.HoldFight(killer, chief);
+			harness.Clock.Advance(System.TimeSpan.FromSeconds(1));
+		}
+
+		Assert.True(killer.GetAggroList().GetHate(chief) >= before + 900_000,
+			"the focus rung never landed, so the killer can be pulled off the chief");
+	}
+
+	/// <summary>
+	/// <b>And an ordinary enemy does not get it.</b> Retail guards the rung on the target's race; without
+	/// that the killer would pile nine hundred thousand onto whatever it happened to be hitting.
+	/// </summary>
+	[Fact]
+	public void AndAnOrdinaryEnemyDoesNotGetIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc killer = harness.Spawn(AdvanceKiller, 300f, 300f, 200f);
+		Npc bystander = harness.Spawn(OrdinaryAdvanceGuard, 303f, 300f, 200f);
+		harness.Engage(killer, bystander);
+		int before = killer.GetAggroList().GetHate(bystander);
+
+		for (int second = 0; second < 12; second++)
+		{
+			BossAiHarness.HoldFight(killer, bystander);
+			harness.Clock.Advance(System.TimeSpan.FromSeconds(1));
+		}
+
+		Assert.True(killer.GetAggroList().GetHate(bystander) < before + 900_000,
+			"a guard that is not a chief took the chief's focus hate");
+	}
+
+	/// <summary>
 	/// <b>The focus rung is read out of the ladder, and it is not the sight rung.</b> Retail's one
 	/// translatable battle-timer branch adds hate to a <em>current target</em> that is a garrison chief —
 	/// 200,000 every 28 seconds for the artifact killers, 900,000 every 5 for the Advance ones — so
 	/// whoever else joins the fight does not pull the killer off.
 	/// </summary>
 	/// <remarks>
-	/// <b>This pins the table, not the behaviour, and the distinction is deliberate.</b> Driving the rung
-	/// needs a killer held in combat <em>against an npc</em> for ten seconds, and the harness does not
-	/// support that: engaging npc-on-npc leaves the aggro list cleared and the enter-combat rung unarmed
-	/// by the time the clock has run, measured rather than assumed — a probe read
-	/// <c>armed=0 fired=0 target=null</c> after fourteen seconds with the hate back to zero. Whatever
-	/// clears it is upstream of this mechanic and worth its own look.
+	/// This pins the <em>numbers</em>; the two pins above exercise the rung itself.
 	/// <para>
-	/// <b>So the rung's wiring is not covered at all, by a pin or by a mutation.</b> Swapping
-	/// <c>Focused</c> back to <c>Hunted</c>, or dropping the table's half of the enter-combat merge, both
-	/// leave this suite green — checked, not assumed. What is covered is the part that was actually wrong
-	/// twice: the numbers, and that the focus race list is populated separately from the sight one.
-	/// Sharing a field made the rung test an empty array and never fire.
+	/// It is still worth having beside them, because it is the part that was wrong twice: the cadences,
+	/// and the focus race list being separate from the sight one.
+	/// <para>
+	/// <b>One mutation still survives: swapping the rung's race list back to <c>Hunted</c>.</b> It is a
+	/// no-op for the Advance killers the behaviour pins drive, whose two lists are the same three races,
+	/// and only the artifact killers tell them apart — they focus and hunt nobody, so <c>Hunted</c> is
+	/// empty for them. A pin driving an artifact killer through its eight-second focus rung was written
+	/// and did not fire for a reason not yet isolated, so it was removed rather than left red. That is
+	/// the gap, stated so it is not mistaken for coverage.
+	/// </para> Sharing a field made the rung test an
+	/// empty array and never fire — a mechanic wired and silently inert, which a behaviour pin catches
+	/// only once the behaviour can be driven at all.
 	/// </para>
 	/// </remarks>
 	[Fact]

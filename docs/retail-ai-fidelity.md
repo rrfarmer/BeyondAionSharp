@@ -32909,3 +32909,63 @@ the two race lists being separate.
 - **Thirty-three of thirty-seven killers are absent from `GuardCalls`**, so their 23000 send at
   twenty-five metres does not happen.
 - **The cast ladders**, unchanged: every killer and every protector fights with autoattack.
+
+## Correction: the harness can hold two NPCs in a fight
+
+The previous entry said it could not, and made that the headline blocker for two mechanics. **That was
+wrong, and the way it was wrong is the useful part.**
+
+What actually happens when two npcs are engaged in the harness is that **one of them dies inside the
+first tick**, and the reason is a stats mismatch, not the harness:
+
+```
+maxhp killer=140  chief=32215
+t0 FIGHT   t2 DIED   t4 DESPAWNED
+```
+
+A fortress killer loads with **140 max HP**. The pin then measured a corpse — `armed=0 fired=0
+target=null`, hate back to zero — and that reads exactly like an engine that will not hold a fight.
+
+`BossAiHarness.HoldFight(attacker, target)` is the fix: top the attacker up, clear the target's aggro
+and put it back to IDLE each tick. Topping HP alone is not enough because the killing blow lands
+*between* ticks. It is not a model of a real fight and does not try to be — the subject is what the
+attacker's pattern does while engaged, and a two-sided brawl is noise around it.
+
+With that, the focus rung fires exactly when the table says: **timer 0 at ten seconds** for the Advance
+killers, watched tick by tick.
+
+### And a second correction inside the first
+
+The previous entry also explained a failing pin by saying the artifact killer's tribe was not at war
+with a garrison chief. **It is** — checked directly, `IsEnemy` is true for all of 231630, 234197, 251467
+and 263002. That failure was the same 140-HP death as everything else, and the tribe reading was an
+explanation invented to fit a symptom rather than measured.
+
+> Two wrong diagnoses in a row, both plausible, both about *why* a pin could not be written rather than
+> about the mechanic. The tell in each case was that the explanation was never itself tested.
+
+### What this leaves
+
+Two real behaviour pins now drive the rung: an Advance killer piling 900,000 on a garrison chief while
+engaged, and the same killer leaving an ordinary Advance guard alone. Both mutations that were surviving
+last entry — dropping the table's half of the enter-combat merge, and the cadence swap — are caught now.
+
+**One mutation still survives, and it is stated in the test file rather than glossed.** Swapping the
+focus rung's race list back to `Hunted` is a no-op for the Advance killers the pins drive, because their
+sight and focus lists are the same three races. Only the artifact killers tell them apart — they focus
+and hunt nobody, so their `Hunted` is empty. A pin driving an artifact killer through its eight-second
+focus rung was written, did not fire for a reason not yet isolated, and was removed rather than left
+red.
+
+### Still missing
+
+- **Why an artifact killer's focus rung does not fire in the harness** while an Advance killer's does,
+  on the same helper and a longer window. The two differ in cadence (8s/28s against 10s/5s) and in
+  `Walks`, which puts `StartWalking` on their leave-combat rung. That is the next thing to isolate, and
+  it closes the last surviving mutation here.
+- **140 max HP on a fortress killer.** It smells like a default rather than a value. If it is one, every
+  npc-versus-npc mechanic in this port is being fought by npcs with the wrong health, and this is the
+  first place it has been visible. Worth checking against the Java stat loader before anything else in
+  this area.
+- **`goto_next_waypoint` is still `StartWalking`**, and **thirty-three of thirty-seven killers are absent
+  from `GuardCalls`**, both unchanged.

@@ -440,6 +440,36 @@ public sealed class BossAiHarness : IDisposable
 	/// </remarks>
 	public static void KeepAlive(Player player) => player.GetLifeStats().SetCurrentHpPercent(100);
 
+	/// <summary>
+	/// Holds an NPC-versus-NPC fight open for a tick: tops the attacker up and stops the target
+	/// swinging back.
+	/// </summary>
+	/// <remarks>
+	/// <b>An earlier session concluded this harness could not hold two NPCs in a fight, and wrote that
+	/// into the fidelity doc. It can.</b> What actually happens is that one of them dies almost at once,
+	/// and the reason is a stats mismatch rather than anything about the harness: a fortress killer loads
+	/// with <b>140 max HP</b> against a garrison chief's <b>32,215</b>, so the chief one-shots it inside
+	/// the first tick and the pin then measures a corpse.
+	/// <para>
+	/// Topping the attacker up is not enough on its own — the killing blow lands between ticks — so the
+	/// target's aggro is cleared and it is put back to IDLE each time round. That is not a model of a
+	/// real fight and is not meant to be: the subject of these pins is what the <em>attacker's</em>
+	/// pattern does while engaged, and a two-sided brawl is noise around it.
+	/// </para>
+	/// <para>
+	/// The 140 is worth a look of its own — see docs/retail-ai-fidelity.md. It smells like a default
+	/// rather than a value, and if it is one then every NPC-versus-NPC mechanic in this port is being
+	/// fought by npcs with the wrong health.
+	/// </para>
+	/// </remarks>
+	public static void HoldFight(Npc attacker, Npc target)
+	{
+		target.GetAggroList().Clear();
+		target.GetAi().SetStateIfNot(Aion.GameServer.Ai.AIState.IDLE);
+		SetHpPercent(attacker, 100);
+		Rehate(attacker, target);
+	}
+
 	/// <summary>What a <see cref="Watch"/> saw across its whole window.</summary>
 	/// <param name="Peak">The most alive at any one moment — the size of a wave.</param>
 	/// <param name="Total">
