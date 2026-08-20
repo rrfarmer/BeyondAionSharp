@@ -156,8 +156,28 @@ public class BaseProtectorAI : AggressiveNpcAI, INpcMessageListener
         return (BaseSpawnTemplate)base.GetSpawnTemplate();
     }
 
+    /// <summary>
+    /// Retail's <c>on_killed_by_user</c> / <c>on_killed_by_npc</c> pair, which for these npcs is a
+    /// <c>30003</c> at fifty metres.
+    /// </summary>
+    /// <remarks>
+    /// <b>The remark above used to list this as untranslated</b>, and the reason was that the broadcast
+    /// belongs to some of these npcs and not others: 69 of the base protectors carry it and the rest do
+    /// not, which is not something a class can decide for itself. <see cref="SiegeDeathCalls"/> is that
+    /// list, read out of the patterns.
+    /// <para>
+    /// Announced before <c>StopCalling</c> and the base capture, because both of those can return early
+    /// -- the capture bails when there is no active base -- and a chief dying outside a live base still
+    /// has to tell the killer hunting it to stand down.
+    /// </para>
+    /// <para>
+    /// Still untranslated on that rung: the two <c>set_condition_spawn_variable</c> calls recording
+    /// which of <c>pc_light</c>, <c>pc_dark</c> or <c>drakan</c> killed it.
+    /// </para>
+    /// </remarks>
     protected override void HandleDied()
     {
+        SiegeDeathCalls.Announce(GetOwner());
         StopCalling();
         base.HandleDied();
         Base @base = BaseService.GetInstance().GetActiveBase(GetSpawnTemplate().GetId());

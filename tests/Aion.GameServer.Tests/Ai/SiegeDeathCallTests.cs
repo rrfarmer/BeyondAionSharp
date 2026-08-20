@@ -35,6 +35,18 @@ public sealed class SiegeDeathCallTests
 	/// </summary>
 	private const int DiesQuietly = 251450;
 
+	/// <summary><c>LDF5_Village_chief01_L</c> — on <c>simple_abyssguard</c>, and its pattern has the rung.</summary>
+	private const int ElyosVillageChief = 277069;
+
+	/// <summary>An abyss guard on the same class whose pattern has no death rung.</summary>
+	private const int PlainAbyssGuard = 207556;
+
+	/// <summary><c>LDF5_chief_v01_L</c> — a base protector whose pattern carries the death rung.</summary>
+	private const int ChiefWhoAnnounces = 231630;
+
+	/// <summary><c>LF2_1_Lehpar_Chief</c> — a base protector whose pattern does not.</summary>
+	private const int ChiefWhoDoesNot = 231549;
+
 	/// <summary>
 	/// Kills a protector through its AI and returns every message that left it.
 	/// </summary>
@@ -129,4 +141,89 @@ public sealed class SiegeDeathCallTests
 	{
 		Assert.All(SiegeDeathCalls.ByNpc.Values, reach => Assert.Equal(50f, reach));
 	}
+
+	/// <summary>
+	/// <b>A village chief announces its death too, and it is not a siege protector.</b> Retail's
+	/// <c>LDF5_Village_chiefNN</c> broadcasts 30003 from <c>on_killed_by_user</c> and
+	/// <c>on_killed_by_npc</c>, and this port runs those npcs on <c>simple_abyssguard</c> — a class with
+	/// no death handler at all until now.
+	/// </summary>
+	/// <remarks>
+	/// The gate and this are opposite corrections and were deliberately committed apart: one removed a
+	/// broadcast from 877 npcs, this adds it to 57 and to 69 base protectors. The table is the same in
+	/// both directions, which is the argument for it being a table.
+	/// </remarks>
+	[Fact]
+	public void AVillageChiefAnnouncesItsDeathToo()
+	{
+		using BossAiHarness harness = BossAiHarness.For(600090000).WithWorldSize(4096)
+			.WithAi(typeof(AbyssGuardSimpleAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc chief = harness.Spawn(ElyosVillageChief, 300f, 300f, 200f);
+		var seen = new List<int>();
+
+		using (NpcMessageBusProbe probe = NpcMessageBusProbe.Watch(seen))
+			chief.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.Contains(AbstractSiegeProtectorAI.ProtectorDown, seen);
+	}
+
+	/// <summary>
+	/// <b>And an abyss guard that is not a chief still dies quietly,</b> which is what makes the line in
+	/// that class a table lookup rather than a broadcast.
+	/// </summary>
+	[Fact]
+	public void AndAnAbyssGuardThatIsNotAChiefStillDiesQuietly()
+	{
+		using BossAiHarness harness = BossAiHarness.For(600090000).WithWorldSize(4096)
+			.WithAi(typeof(AbyssGuardSimpleAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc guard = harness.Spawn(PlainAbyssGuard, 300f, 300f, 200f);
+		var seen = new List<int>();
+
+		using (NpcMessageBusProbe probe = NpcMessageBusProbe.Watch(seen))
+			guard.GetAi().OnGeneralEvent(AiEventType.Died);
+
+		Assert.DoesNotContain(AbstractSiegeProtectorAI.ProtectorDown, seen);
+	}
+
+	/// <summary>
+	/// <b>A base protector announces too, and the same class holds ones that do not.</b> 69 of the base
+	/// protectors carry the rung and the rest do not, which is the reason this is a table and not a line
+	/// in a death handler.
+	/// </summary>
+	/// <remarks>
+	/// <b>This pin calls the helper directly rather than killing the npc, and that is not laziness.</b>
+	/// The first version raised <c>Died</c> on a <see cref="BaseProtectorAI"/>, which reaches
+	/// <c>BaseService</c> — whose static initialiser cannot run without the server's data and throws.
+	/// **A failed type initialiser is cached for the life of the process**, so every later test that
+	/// touches <c>BaseService</c> inherits the corpse: two `GameServerBootstrapTests` began failing, and
+	/// they passed in isolation, which is the signature of exactly this.
+	/// <para>
+	/// <b>So <see cref="BaseProtectorAI"/>'s wiring is, honestly, not pinned.</b> Deleting the
+	/// <c>Announce</c> call from its <c>HandleDied</c> — or moving it below the capture — leaves this
+	/// suite green; both were verified caught while the death-path version of this pin existed, and both
+	/// survive now. What is pinned here is the decision that wiring depends on: which npcs the table says
+	/// should announce, and that a base protector is on both sides of it.
+	/// <para>
+	/// The two siege-protector pins above <em>do</em> exercise the death path, because that class reaches
+	/// its service through a cast that fails cleanly instead of through a static initialiser that
+	/// poisons the type. Closing the gap for base protectors needs a <c>BaseService</c> the suite can
+	/// stand up, which is a larger job than this change.
+	/// </para>
+	/// </remarks>
+	[Theory]
+	[InlineData(ChiefWhoAnnounces, true)]
+	[InlineData(ChiefWhoDoesNot, false)]
+	public void ABaseProtectorAnnouncesOnlyWhenItsPatternSaysSo(int npcId, bool expected)
+	{
+		using BossAiHarness harness = BossAiHarness.For(600090000).WithWorldSize(4096)
+			.WithAi(typeof(BaseProtectorAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc chief = harness.Spawn(npcId, 300f, 300f, 200f);
+		var seen = new List<int>();
+
+		using (NpcMessageBusProbe probe = NpcMessageBusProbe.Watch(seen))
+			SiegeDeathCalls.Announce(chief);
+
+		Assert.Equal(expected, seen.Contains(AbstractSiegeProtectorAI.ProtectorDown));
+	}
+
 }

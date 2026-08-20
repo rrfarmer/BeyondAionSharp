@@ -90,6 +90,8 @@ def main():
                     help="ignore patterns bound to more npcs than this; they are generic and say nothing")
     ap.add_argument("--reverse", action="store_true",
                     help="the mirror case: a SPECIALISED majority with a GENERIC minority")
+    ap.add_argument("--min-share", type=float, default=0.67,
+                    help="reverse mode: how much of the family the real class must hold (0-1)")
     ap.add_argument("--by-suffix", action="store_true",
                     help="compare an npc only against its own race variants, not the whole pattern")
     args = ap.parse_args()
@@ -121,7 +123,16 @@ def main():
     rows = []
     for key, npcs in by_pattern.items():
         pattern = key[0] if args.by_suffix else key
-        if len(npcs) > args.max_siblings:
+        # **The sibling cap does not apply in reverse.** Its premise is that a pattern bound to hundreds
+        # of npcs is generic and says nothing about any one of them -- true when the question is "does
+        # this specialist disagree with the mob", false when the question is "does this npc have the
+        # class the whole family has". `AB1_LDGuard_Artifact` binds 316 npcs and 310 of them carry
+        # `artifact_protector`; six sit on plain `aggressive`, and the cap hid all six. A large family
+        # agreeing on a real class is stronger evidence than a small one, not weaker.
+        #
+        # Nothing is lost by dropping it here, because the reverse direction already refuses to report a
+        # family whose majority is generic -- which is what the cap was standing in for.
+        if not args.reverse and len(npcs) > args.max_siblings:
             continue
         counts = collections.Counter(ai_of[n] for n in npcs)
         if len(counts) < 2:
@@ -142,6 +153,18 @@ def main():
             # has none is a member that was missed rather than a member that is different.
             if majority in GENERIC:
                 continue
+
+            # **Plurality is not agreement, and dropping the sibling cap exposed the difference.**
+            # `F5_PvPLight_DGuard_Kn_An` binds 60 npcs on `fortress_guard_answer`, 56 on `aggressive`
+            # and 37 on `general`: the real class leads, so `most_common` picks it, but 93 of the 153
+            # carry nothing and calling those a defect would be reading a coin-toss as evidence.
+            #
+            # A family that genuinely agrees looks like `AB1_LDGuard_Artifact` -- 302 of 316 on one real
+            # class and four stragglers. The share is what tells them apart, and the cap was standing in
+            # for it badly: it excluded the second family along with the first.
+            if agreed / len(npcs) < args.min_share:
+                continue
+
             odd = [n for n in npcs if ai_of[n] in GENERIC]
             for npc_id in odd:
                 rows.append((pattern, majority, agreed, npc_id, ai_of[npc_id] or "(none)",

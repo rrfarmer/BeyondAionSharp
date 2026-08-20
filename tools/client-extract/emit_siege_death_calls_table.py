@@ -47,6 +47,29 @@ internal static class SiegeDeathCalls
 '''
 
 FOOTER = '''    };
+
+    /// <summary>
+    /// Broadcasts retail's <c>30003</c> for <paramref name="dying"/>, if its pattern carries the rung.
+    /// </summary>
+    /// <remarks>
+    /// <b>Three unrelated classes own npcs in this table</b> -- the two siege protectors, the base
+    /// protectors and the simple abyss guards -- so the check lives with the data rather than being
+    /// copied into each death handler. An npc absent from the table is silent, which is the default and
+    /// the common case: 475 npcs in the whole dump announce their death and everything else dies quietly.
+    /// <para>
+    /// Call it <b>first</b> in a death handler. Retail puts the broadcast at the head of its rung, and
+    /// everything after it in these classes reaches a service -- siege, base capture -- that can fail
+    /// or return early, which would swallow the message.
+    /// </para>
+    /// </remarks>
+    internal static void Announce(Aion.GameServer.Model.GameObjects.Npc dying)
+    {
+        if (ByNpc.TryGetValue(dying.GetNpcId(), out float reach))
+        {
+            Aion.GameServer.Ai.NpcMessageBus.Broadcast(
+                dying, AbstractSiegeProtectorAI.ProtectorDown, dying, reach);
+        }
+    }
 }
 '''
 

@@ -28,6 +28,25 @@ public class AbyssGuardSimpleAI : PatternAi
 
     protected override AiPattern Pattern => Nothing;
 
+    /// <summary>
+    /// Retail's <c>on_killed_by_user</c> / <c>on_killed_by_npc</c>, for the guards that carry it.
+    /// </summary>
+    /// <remarks>
+    /// <b>57 npcs on this class announce their death and the rest do not</b>, so the rung cannot live in
+    /// the pattern above — it is per npc, and <see cref="SiegeDeathCalls"/> is the list. All 57 are
+    /// Kaldor's village chiefs: retail's <c>LDF5_Village_chiefNN</c> broadcasts 30003 at fifty metres
+    /// when the chief falls, and the killer hunting the village answers by standing down.
+    /// <para>
+    /// Announced before <c>base.HandleDied()</c> for the same reason every other caller does it: the
+    /// broadcast is the head of retail's rung, and what follows can end the fight before it is sent.
+    /// </para>
+    /// </remarks>
+    protected override void HandleDied()
+    {
+        SiegeDeathCalls.Announce(GetOwner());
+        base.HandleDied();
+    }
+
     public AbyssGuardSimpleAI(Npc owner)
         : base(owner)
     {

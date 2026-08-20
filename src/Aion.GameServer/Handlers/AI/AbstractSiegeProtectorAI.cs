@@ -105,8 +105,7 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
     /// </remarks>
     protected override void HandleDied()
     {
-        if (SiegeDeathCalls.ByNpc.TryGetValue(GetOwner().GetNpcId(), out float reach))
-            NpcMessageBus.Broadcast(GetOwner(), ProtectorDown, GetOwner(), reach);
+        SiegeDeathCalls.Announce(GetOwner());
 
         base.HandleDied();
         StopSiege((SiegeNpc)GetOwner());

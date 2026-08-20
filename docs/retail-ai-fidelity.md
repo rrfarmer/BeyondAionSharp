@@ -32570,3 +32570,68 @@ one would have been invisible.
   battle timer inside a cast chain, so it needs the timer built and the timer is skills.
 - **`FortressKillerAI`'s side of this was never measured.** It answers 30003 by standing down; whether
   the npcs it answers *for* are the right ones has not been checked the way the sending side just was.
+
+## The other half of the death call, and a pin that poisoned the process
+
+The previous entry gated 30003 for the siege protectors and left the inverse half explicitly undone:
+**126 npcs whose retail pattern broadcasts it run classes with no death handler at all.** This is that
+half.
+
+`SiegeDeathCalls.Announce(npc)` now lives with the table rather than being copied into three handlers —
+the two siege protectors, `BaseProtectorAI` (69 npcs) and `AbyssGuardSimpleAI` (57, all of them Kaldor's
+village chiefs). `BaseProtectorAI`'s own remark had listed the chiefs' `on_die` rung as untranslated
+since it was written; it is translated now, bar the two `set_condition_spawn_variable` calls beside it,
+which still have no equivalent here.
+
+### `--max-siblings` does not belong in reverse mode
+
+Six of the seven npcs that turned up in the table on plain `aggressive` were artifact bosses running
+`AB1_LDGuard_Artifact` — a pattern whose other **302 of 316** npcs carry `artifact_protector`. The
+reverse audit never reported them, because `--max-siblings 8` skips large families.
+
+That cap's premise is that a pattern bound to hundreds of npcs is generic and says nothing about any one
+of them. **True when the question is "does this specialist disagree with the mob"; false when the
+question is "does this npc have the class the whole family has".** A large family agreeing on a real
+class is stronger evidence, not weaker. The cap now applies only in the forward direction.
+
+Dropping it took the reverse audit from 126 rows to 785, and most of the new ones were noise for a
+reason worth recording: **plurality is not agreement.** `F5_PvPLight_DGuard_Kn_An` binds 60 npcs on
+`fortress_guard_answer`, 56 on `aggressive` and 37 on `general` — the real class leads, so it is the
+"majority", but 93 of 153 carry nothing and calling those a defect reads a coin-toss as evidence. A
+`--min-share` of two thirds separates that from `AB1_LDGuard_Artifact`'s 302-of-316, and brings the list
+to **190 rows** that mean what they say.
+
+### A pin that broke two unrelated tests, and why it looked impossible
+
+The first version of the base-protector pin raised `Died` on a `BaseProtectorAI`. That reaches
+`BaseService`, whose static initialiser cannot run without the server's data and throws.
+
+> **A failed type initialiser is cached for the life of the process.** Every later test touching
+> `BaseService` inherits the corpse. Two `GameServerBootstrapTests` began failing — and passed in
+> isolation, which is the signature of exactly this and of almost nothing else.
+
+The siege protectors are safe to kill in the harness because they reach their service through a *cast*
+that fails cleanly; the base protectors are not, because they reach theirs through a static constructor
+that fails permanently.
+
+**The honest consequence: `BaseProtectorAI`'s wiring is not pinned.** Deleting its `Announce` call
+leaves the suite green. It was verified caught while the death-path pin existed, and the remark in the
+test file now says plainly that it is no longer — an earlier draft of that remark claimed both mutations
+were still caught, which was true when written and false by the time it was committed. What is pinned is
+the decision the wiring depends on: which npcs the table says should announce.
+
+Eight pins overall; every mutation that a pin can reach is caught.
+
+### Still missing
+
+- **A `BaseService` the suite can stand up**, which is what closing that pin gap needs. Until then the
+  class-level wiring for 69 base protectors rests on a mutation run recorded here rather than on a
+  standing check.
+- **The six artifact bosses on `aggressive`** that the cap was hiding, and the rest of the 190-row
+  reverse list — `siege_mine` (18), `surkana` (15), `xdrakanpriest` (13) and the others. Each wants the
+  reading the medics and the chiefs got.
+- **The two `set_condition_spawn_variable` calls** on the chiefs' death rung, recording which of
+  `pc_light`, `pc_dark` or `drakan` killed them. Same blocker as everything else in that family: the
+  progression engine.
+- **`FortressKillerAI`'s receiving side** is still unmeasured, and now matters more: the set of npcs it
+  hears just changed twice.
