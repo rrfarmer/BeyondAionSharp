@@ -45,8 +45,10 @@ BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Classes that do nothing with a timer, plus the one this table feeds -- without which the extractor
 #: stops finding its own rows once they are bound and `regen_check` reports drift.
+#: Both classes this table feeds are listed, and the passive one is not optional: 67 of these npcs are
+#: on it, and leaving it out drops them from their own table on the next regeneration.
 GENERIC = {"aggressive", "general", "onedmg_aggressive", "aggressive_noloot", "dummy",
-           "no_interaction", "idle_cycle"}
+           "no_interaction", "idle_cycle", "idle_cycle_passive"}
 
 FAMILIES = ["ALPHA", "BETA", "DELTA", "EPSILON", "GAMMA", "ZETA"]
 

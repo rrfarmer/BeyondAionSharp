@@ -36332,3 +36332,45 @@ is the problem, not the attention paid to it.
 - **136 with a guarded branch**, 44 that spawn, 33 that cast.
 - **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), both blocked on evidence.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## 67 npcs this log made aggressive, and did not notice for a dozen entries
+
+Looking into whether a passive pattern class was worth building turned up the reason to build one:
+**`IdleCycles` bound 67 npcs that retail keeps on `general`, and `IdleCycleAI` descends from
+`AggressiveNpcAI`.** Wave controllers and scenery -- a vasharti butcher, a dozen sparkyn -- have been
+attacking on sight ever since that table landed.
+
+Every pin in this project stayed green throughout, and they would: the waves still arrived on schedule,
+the flags were still written, the counts were still exact. Nothing about the mechanic being ported shows
+the mistake. Only the base class does.
+
+The irony is that the rule was learned *from* this table and enforced everywhere afterwards -- the wake
+tables split into passive and aggressive classes for exactly this reason, and the battle table narrowed
+its generic set to `aggressive` alone. The first table was never revisited.
+
+`PassivePatternAi` is the fix and it adds nothing: `AggressiveNpcAI` puts three overrides over
+`GeneralNpcAI` -- seeing a creature, being aggroed, answering a guard -- and this puts all three back.
+The 67 are now on `idle_cycle_passive`; the 16 that really were `aggressive` keep `IdleCycleAI`.
+
+### What the pin does and does not say
+
+**A mutation restoring the aggressive handler survives.** `AggressiveNpcAI` guards it on `CanThink()`
+and then defers through an `AggroNotifier`, and neither reaches anything the harness stands up. So the
+pin asserts the binding and that nothing hates anybody; the base class is covered by the binding alone.
+
+The equivalent pin in the wake tables *is* decisive, because `WakeVariableAI` descends from
+`GeneralNpcAI` and a type check settles it. That option does not exist here --
+`PassivePatternAi` inherits `AggressiveNpcAI` and overrides its way back -- and pretending otherwise
+would be the third pin this session that passes for a reason other than the one written on it.
+
+`regen_check` then caught the follow-on immediately: the extractor's generic set listed `idle_cycle` but
+not `idle_cycle_passive`, so the 67 dropped out of their own table on the next regeneration.
+
+### Still missing
+
+- **207 patterns on `general` npcs that a passive pattern table could now run** (295 with
+  `increase_intvar`, which is already sayable). The class exists; the table does not.
+- **A harness that can observe aggro.** Three separate pins this session could not tell an aggressive
+  class from a passive one, and each needed a different workaround.
+- **`GAb1_PvPStatus`**, **`control_door`**, **6,800 duplicate gated placements**, **177 encounters
+  missing an add**, **retail cast timings.**

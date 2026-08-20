@@ -49,3 +49,33 @@ public class IdleCycleAI : PatternAi
 			OnIdleTimer = AiPattern.Of(IdleCycles.CycleRungsFor(id)),
 		});
 }
+
+/// <summary>
+/// The same cycle, on an npc retail keeps passive.
+/// </summary>
+/// <remarks>
+/// <b>67 of the 83 npcs this table drives were <c>general</c> before it bound them</b>, and
+/// <see cref="IdleCycleAI"/> descends from <c>AggressiveNpcAI</c> -- so binding them turned wave
+/// controllers and scenery into things that attack on sight. Every pin stayed green throughout: the
+/// waves still arrived, the flags were still written. The mistake is only visible in the base class,
+/// which is why the split exists here and in the wake tables.
+/// </remarks>
+[AIName("idle_cycle_passive")]
+public class IdleCyclePassiveAI : PassivePatternAi
+{
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId =
+		new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
+
+	public IdleCyclePassiveAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
+		new AiPattern
+		{
+			OnWakeUp = AiPattern.Of(IdleCycles.WakeRungFor(id)),
+			OnIdleTimer = AiPattern.Of(IdleCycles.CycleRungsFor(id)),
+		});
+
+}
