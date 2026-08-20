@@ -233,4 +233,65 @@ public sealed class GuardAnswersTests
 
 		Assert.Equal(1000, listener.GetAggroList().GetHate(player));
 	}
+
+	/// <summary>Talle: the one npc on <c>general</c> whose retail pattern answers 23100.</summary>
+	private const int Talle = 802383;
+
+	/// <summary>
+	/// <b>A non-aggressive npc can now hear a guard's call — and this one still cannot act on it.</b>
+	/// </summary>
+	/// <remarks>
+	/// Two separate things, and the pin asserts both rather than the one that looks like success.
+	/// <para>
+	/// <b>Fixed:</b> <c>GeneralNpcAI</c> did not implement <c>INpcMessageListener</c> at all, so a
+	/// message never reached it. It could not be rebound to an answering class instead: every one of
+	/// them descends from <c>AggressiveNpcAI</c>, and talle's retail pattern has no <c>on_see_user</c>
+	/// rung, so rebinding would have made a non-aggressive npc attack on sight in order to fix its
+	/// hearing. <see cref="GuardAnswers"/> gates the listening on the table, so every other npc on
+	/// <c>general</c> pays a dictionary miss and nothing else.
+	/// </para>
+	/// <para>
+	/// <b>Not fixed:</b> talle's tribe is <c>GENERAL</c>, so it is at war with nobody and the hate is
+	/// refused by <c>AggroList.IsAware</c> before it can land. That is <em>not</em> a defect to repair
+	/// here: Java gives it <c>GENERAL</c> too, and retail's own <c>npcs.xml</c> record for it carries no
+	/// <c>tribe</c> element at all. An earlier reading of this log said retail gave it
+	/// <c>ProtectGuard_Light</c>; that came from a neighbouring record found by pattern name, and it was
+	/// wrong. The answer reaches the npc, which is all this port can currently justify.
+	/// </para>
+	/// <para>
+	/// <b>So the hand-off itself is not mutation-tested.</b> Gutting the body of
+	/// <c>GeneralNpcAI.OnNpcMessage</c> leaves every assertion here standing, because the one npc the
+	/// change serves cannot act on the call anyway. The interface is pinned; the call inside it is not,
+	/// and it will not be until an npc on <c>general</c> both answers a call and has a tribe to fight
+	/// with. Said here rather than left for someone to discover from a green suite.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ANonAggressiveNpcHearsTheCallEvenThoughItCannotActOnIt()
+	{
+		using BossAiHarness harness = BossAiHarness.For(400010000).WithWorldSize(4096)
+			.WithAi(typeof(GeneralNpcAI), typeof(GarrisonGuardCallAI), typeof(AggressiveNpcAI))
+			.Build();
+		Npc crier = harness.Spawn(Talle, 300f, 300f, 200f);
+		Npc listener = harness.Spawn(Talle, 320f, 300f, 200f);
+		Player player = harness.SpawnPlayer(318f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(crier, listener);
+		BossAiHarness.MakeMutuallyKnown(listener, player);
+
+		// It listens now -- this is what the class could not do.
+		Assert.True(listener.GetAi() is INpcMessageListener);
+		Assert.True(GuardAnswers.AnswerCall(listener, crier, GarrisonGuardCallAI.ThisOne, player));
+
+		// And the hate does not land, because the npc is at war with nobody.
+		Assert.False(player.IsEnemy(listener));
+		Assert.Equal(0, listener.GetAggroList().GetHate(player));
+	}
+
+	/// <summary><b>And an ordinary general npc is untouched by the same call.</b></summary>
+	[Fact]
+	public void AnOrdinaryGeneralNpcIsUntouched()
+	{
+		Assert.Empty(GuardAnswers.RungsFor(203100));
+		Assert.False(GuardAnswers.ByNpc.ContainsKey(203100));
+	}
 }

@@ -10,9 +10,28 @@ using Aion.GameServer.Model.Skill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>Java parity: ai/GeneralNpcAI (ATracer).</summary>
+/// <remarks>
+/// <b>Listens for a guard's call for help, and nothing else changes.</b> One npc on this class --
+/// "talle", a siege-weapon guard -- answers <c>23100</c> in retail. It could not be rebound to
+/// <c>garrison_guard_answer</c> to get that: every answering class descends from
+/// <see cref="AggressiveNpcAI"/>, and talle's retail pattern has no <c>on_see_user</c> rung at all, so
+/// rebinding would have made a non-aggressive npc attack on sight to fix the fact that it could not
+/// hear. It fights when engaged -- its pattern has an enter-combat rung, battle timers and an HP-gated
+/// cast -- it simply does not start fights.
+/// <para>
+/// The table is the gate: <see cref="GuardAnswers"/> answers only for npcs whose own retail pattern
+/// carries the rung, so this costs every other npc on <c>general</c> a dictionary miss and nothing else.
+/// </para>
+/// </remarks>
 [AIName("general")]
-public class GeneralNpcAI : NpcAI
+public class GeneralNpcAI : NpcAI, INpcMessageListener
 {
+    /// <summary>Retail's answer to a guard's call for help, for npcs the table carries.</summary>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        GuardAnswers.AnswerCall(GetOwner(), sender, messageType, param);
+    }
+
     public GeneralNpcAI(Npc owner)
         : base(owner)
     {

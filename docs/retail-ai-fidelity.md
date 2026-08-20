@@ -33786,3 +33786,49 @@ is caught by exactly one pin, which is what a genuine catch looks like.
   and it needs a look at the pattern rather than a rebinding on the strength of one rung.
 - **`KistenianAI`** still hides `OnNpcMessage` without handing off.
 - `30003`, and the cast ladders throughout, still blocked on skill indices.
+
+## Tribe: the third place a mechanic can be missing
+
+This log has said twice that a mechanic can be missing in two places — the `ai` binding and the spawn
+point. `talle` (802383), the last `23100` straggler, is a third: **an npc can have the right class, the
+right pattern and a spawn, and still do nothing because it is at war with nobody.**
+
+### What was actually wrong, and what was not
+
+Talle could not answer for two independent reasons, and only one of them was a defect here.
+
+* **Fixed.** `GeneralNpcAI` did not implement `INpcMessageListener` at all, so a broadcast never reached
+  it. It could not simply be rebound to `garrison_guard_answer` either: **every answering class descends
+  from `AggressiveNpcAI`**, and talle's retail pattern has no `on_see_user` rung — so rebinding would
+  have made a non-aggressive npc attack on sight in order to fix the fact that it could not hear. It
+  listens on `general` now, gated by the table, which costs every other `general` npc a dictionary miss.
+* **Not fixed, and not a defect.** Its tribe is `GENERAL`, so `IsAware` refuses the hate. Java gives it
+  `GENERAL` too, and retail's `npcs.xml` record for it **carries no `tribe` element at all**.
+
+**A correction to this session's own reasoning:** I read retail as giving talle `ProtectGuard_Light`.
+That came from a neighbouring record located by *pattern* name rather than by the npc's dev name, and it
+was wrong. The tribe audit below is what a lookup by dev name gives, and talle is not in it.
+
+### The sweep, and why its headline number is not the useful one
+
+`audit_npc_tribe.py` compares our tribe against retail's for every npc, reporting only the direction that
+silently disables behaviour — neutral here, real in retail.
+
+- **317 npcs** are neutral here and have a real tribe in retail.
+- **118 of those are `GENERAL_DARK`** and most of the rest are `USEALL`, `FIELD_OBJECT_*` or
+  `GENERAL_DRAGON` — polymorph avatars, cash-shop pets, scenery. Neutral-for-neutral.
+- **Exactly one** intersects any of our call tables: **802377**, `GUARD_DRAGON` in retail.
+
+So the honest headline is one, not 317, and even that one is not repaired: 802377's template here is a
+placeholder — level 1, a blank name, `race="ELYOS"` against retail's balaur guard tribe. It needs more
+than a tribe, and guessing the rest would be worse than leaving it named.
+
+### Still missing
+
+- **802377**, above: bound to `garrison_guard_answer` already, answers `23100` in the table, and cannot
+  act because of a template that was never filled in.
+- **The `GeneralNpcAI` hand-off is not mutation-tested** — gutting it leaves the pins green, because the
+  only npc it serves cannot act on the call regardless. The interface is pinned; the call inside it is
+  not, and cannot be until a `general` npc both answers a call and has a tribe to fight with.
+- The other **316 tribe divergences**, if any of them ever turn out to matter.
+- `KistenianAI`'s hidden `OnNpcMessage`; `30003`; the cast ladders.
