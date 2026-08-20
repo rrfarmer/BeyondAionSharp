@@ -33515,3 +33515,50 @@ times it only surfaced because a mutation would not die.
   settling rather than leaving as two opinions in two files.
 - **`AddHate` on an idle npc in the harness**, which silently does nothing and cost this entry three
   attempts at one pin.
+
+## The sweep of the other four callers
+
+The previous entry left this owed: `HateMessageTarget` has callers in four more classes, and each needs
+its retail rung read for `add_hate_point` against `switch_target`. Read.
+
+**Retail is completely uniform on the 23000 answer**: across the whole dump, **85 busy rungs use
+`switch_target` and 85 idle rungs use `add_hate_point`.** No exceptions. That settles the question the
+last entry left as "two opinions in two files".
+
+| class | idle rung | verdict |
+|---|---|---|
+| `AnuhartCasterAI` | `HateMessageParam` | **correct already** — and its remark says why |
+| `AbyssGuardCallAI` | `HateMessageTarget` | **wrong**, same defect, 385 guards |
+| `AnuhartGuardAI` | `HateMessageTarget` on both rungs | its remark argues the switch is right here; the message is `BoosterUnderAttack`, not 23000, so the 85/85 evidence does not reach it and it needs its own reading |
+| `BlackClawLycanAI` | both forms in one branch | two actions in one retail rung; unread |
+
+### Why `AbyssGuardCallAI` was not changed
+
+**Its existing pins assert the guard turns** — `Assert.Same(player, listener.GetTarget())`, in four
+places. That is the behaviour the switching helper produces, so fixing the class would fail them, and
+they cannot simply be inverted: the guard-call mechanic's *positive* half — a guard hears the call and
+joins the fight — is the largest single mechanic in the dump by npc count, and replacing its pins with
+"does not turn" would leave it unpinned.
+
+Re-pinning it needs the plain form to be observable, and it is not:
+
+> An idle guard given `add_hate_point` through `Do.HateMessageParam` ends the broadcast with **zero
+> hate**, in a harness where `KnownList.Knows` is true, `IsEnemy` is true, and `AggroList.IsAware`'s
+> other clauses hold. Ruled out, in order: the known list, the enmity, the action mapping
+> (`Do.HateMessageParam` → `AddHateToMessageTarget` → `AddHate`), and the branch's own guards. The rung
+> is not running and the reason is not yet found.
+
+So the class keeps a defect this entry can name precisely and cannot yet fix safely. **That is worse than
+fixing it and worse than not knowing; it is written down so the next attempt starts from the fourth step
+rather than the first.**
+
+### Still missing
+
+- **The reason an idle npc's `add_hate_point` does not land in the harness.** Everything obvious is ruled
+  out above. It blocks `AbyssGuardCallAI`, it blocked a pin two entries ago, and it is now the single
+  thing standing between this mechanic and being correct.
+- **`AbyssGuardCallAI`'s idle rung**, once that is answered: `HateMessageParam(1)` and
+  `AttackMostHating()`, which is what retail's 85 idle rungs do.
+- **`AnuhartGuardAI` and `BlackClawLycanAI`**, both unread against their own messages.
+- **The busy rung's hate.** Retail's is `switch_target … percent_to_add=10 points_to_add=100`;
+  `AbyssGuardCallAI` uses `Do.TargetMessageParam()`, which turns without adding the hundred.
