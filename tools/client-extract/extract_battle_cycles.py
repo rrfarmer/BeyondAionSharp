@@ -1,0 +1,306 @@
+"""Retail's combat rotations: the adds a boss puts on the ground *during* the fight.
+
+WHY THIS EXISTS
+---------------
+`IdleCycles` covers `on_idle_timer` -- what an NPC does while nothing is happening. **The fights live
+somewhere else.** Retail bosses are not HP ladders: on entering combat a boss calls `add_battle_timer`
+with an indicator and a delay, and when that timer fires the branches guarded by
+`is_battle_timer_indicator` run and *re-arm the next link themselves*. A fight is a chain of timers.
+
+The scale of it, across the whole dump:
+
+| element | uses |
+|---|---|
+| `btimer_indicator` | 47,603 |
+| `use_skill` inside `on_battle_timer` | 24,250 |
+| `add_battle_timer` | 23,151 |
+| **patterns that `spawn` from `on_battle_timer`** | **810** |
+
+`PatternAi` has had the engine all along -- thirty battle-timer slots, combat-gated, cancelled on death,
+with `When.Timer` and `Do.ArmTimer`. What was missing was the data. This extracts it.
+
+WHAT IS LEFT OUT, AND WHY IT IS MOST OF IT
+------------------------------------------
+A pattern is taken only if **every** branch of both handlers is sayable in full. Dropping one
+unsayable action from an otherwise-portable branch is the shortcut that would make a boss spawn its
+adds and never cast, which is worse than not running it at all. Counted rather than emitted:
+
+* **`use_skill` -- 209 patterns.** By far the largest, and the one to fix next. Retail names skills by
+  index into the NPC's own list (`SKILLI_INDEX_1`), and this port has no resolver for that.
+* `control_door` (10), `increase_intvar` (5), and a long tail of one-offs -- `is_user_flying`,
+  `is_skill_count_left`, `despawn_by_nameid`, `switch_target_by_attacker_indicator`.
+* **82 rotations that nothing here arms.** They spawn from `on_battle_timer` but have no
+  `on_enter_attack_state`, because retail also arms battle timers from `on_message` (334 uses),
+  `on_attacked` (115) and `on_spelled` (110). Those handlers are a separate porting job.
+
+`set_idle_timer`, `attack_most_hating` and `spawn_on_target` all have `Do.` helpers and were added
+here on the theory that three more one-offs would pay. **They bought nothing** -- every pattern using
+them was refused for a second reason as well -- so they were taken back out rather than left as
+emitter paths no row exercises. A vocabulary gap is only worth closing when it is the last one.
+
+Two conditions need care rather than a helper:
+
+* **`is_hp_in_boundary` is exclusive at both ends**, and `When.HpBetween` is inclusive, so the bounds
+  are emitted as `low+1 .. high-1`. Percentages are integers, so that is exact rather than a rounding.
+* **`is_hp_lower_than` is only taken for `OBJI_SELF`** (6,048 of its 6,386 uses). The friend and target
+  forms ask about somebody else and have their own helpers; emitting `HpBelow` for them would silently
+  read the wrong creature's health.
+
+Unlike the idle table these rows carry **real spawn group ids**: `despawn` names a `SPAWN_ID_n`, so a
+rotation that cleans up after itself needs the group it spawned into, not `Untracked`.
+
+CLI:
+    python extract_battle_cycles.py <patterns_dir> <binding_tsv> <out.tsv> [--repo ..]
+"""
+from __future__ import annotations
+
+import argparse
+import collections
+import pathlib
+import re
+import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import summarize_pattern as S  # noqa: E402
+import audit_missing_adds as A  # noqa: E402
+from client_npc_names import npc_names  # noqa: E402
+from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
+
+BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
+
+#: Classes that do nothing with a battle timer, plus the one this table feeds.
+GENERIC = {"aggressive", "general", "onedmg_aggressive", "aggressive_noloot", "dummy",
+           "no_interaction", "battle_cycle"}
+
+#: Retail's thirty battle-timer slots, named by index.
+TIMER_RE = re.compile(r"BTIMERI_INDEX_(\d+)")
+
+
+def timer_slot(token: str) -> int | None:
+    found = TIMER_RE.search(token)
+    return int(found.group(1)) if found else None
+
+
+class Unsayable(Exception):
+    """The one element that stopped a rotation being ported, by name."""
+
+
+def read_guards(block: str) -> list[str] | None:
+    """The branch's conditions as tokens, or None if one cannot be said."""
+    out: list[str] = []
+    for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
+        kind, body = element.group(1), element.group(2)
+        if kind == "is_battle_timer_indicator":
+            slot = timer_slot(body)
+            if slot is None:
+                return None
+            out.append(f"timer:{slot}")
+        elif kind == "is_hp_lower_than":
+            who = re.search(r"<who>(\w+)</who>", body)
+            percent = re.search(r"<percent>(\d+)</percent>", body)
+            # Only the NPC's own health. OBJI_FRIEND and OBJI_CUR_TARGET ask about somebody else.
+            if not percent or not who or who.group(1) != "OBJI_SELF":
+                raise Unsayable("is_hp_lower_than about somebody else")
+            out.append(f"hp_below:{percent.group(1)}")
+        elif kind == "is_hp_in_boundary":
+            who = re.search(r"<who>(\w+)</who>", body)
+            low = re.search(r"<larger_than>(\d+)</larger_than>", body)
+            high = re.search(r"<less_than>(\d+)</less_than>", body)
+            if not (low and high) or not who or who.group(1) != "OBJI_SELF":
+                raise Unsayable("is_hp_in_boundary about somebody else")
+            # Exclusive at both ends in retail; When.HpBetween is inclusive.
+            out.append(f"hp_between:{int(low.group(1)) + 1}:{int(high.group(1)) - 1}")
+        elif kind in ("set_flag_var", "unset_flag_var",
+                      "set_world_flag_var", "unset_world_flag_var", "is_world_flag_var"):
+            slot = flag_slot(body)
+            if slot is None:
+                return None
+            out.append(f"{kind}:{slot}")
+        elif kind == "test_probability":
+            percent = re.search(r"<probability>(\d+)</probability>", body)
+            if not percent:
+                return None
+            out.append(f"chance:{percent.group(1)}")
+        else:
+            raise Unsayable(f"condition {kind}")
+    return out
+
+
+def read_actions(block: str, dev: dict[str, int], known: set[int],
+                 strings: dict[str, int]) -> list[tuple] | None:
+    """The branch's actions in retail's order, or None if one cannot be said."""
+    out: list[tuple] = []
+    for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
+        kind, body = element.group(1), element.group(2)
+        if kind == "spawn":
+            named = re.search(r"<npc_nameid>([^<]+)</npc_nameid>", body)
+            npc_id = dev.get(named.group(1)) if named else None
+            if npc_id is None or npc_id not in known:
+                raise Unsayable("spawns an npc with no template here")
+            where = re.search(r"<spawn_location_type>(\w+)</", body)
+            place = ("self" if where and where.group(1).endswith("MY_POINT")
+                     else "offset" if where and where.group(1).endswith("RELATIVE")
+                     else "absolute")
+            spot = [re.search(r"<%s>([-\d.]+)</%s>" % (axis, axis), body) for axis in "xyz"]
+            if place == "absolute" and not all(spot):
+                return None
+            count = re.search(r"<num_to_spawn>(\d+)</", body)
+            live = re.search(r"<live_time>(\d+)</", body)
+            group = re.search(r"<spawn_id>SPAWN_ID_(\d+)</", body)
+            out.append(("spawn", npc_id, int(count.group(1)) if count else 1,
+                        int(live.group(1)) if live else 0, place,
+                        float(spot[0].group(1)) if spot[0] else 0.0,
+                        float(spot[1].group(1)) if spot[1] else 0.0,
+                        float(spot[2].group(1)) if spot[2] else 0.0,
+                        int(group.group(1)) if group else 0))
+        elif kind == "add_battle_timer":
+            slot = timer_slot(body)
+            delay = re.search(r"<delay>(\d+)</delay>", body)
+            if slot is None:
+                return None
+            out.append(("arm", slot, int(delay.group(1)) if delay else 0, 0, "",
+                        0.0, 0.0, 0.0, 0))
+        elif kind == "despawn":
+            group = re.search(r"<spawn_id>SPAWN_ID_(\d+)</", body)
+            if not group:
+                return None
+            out.append(("despawn", int(group.group(1)), 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "despawn_self":
+            out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind in ("say_to_all", "display_system_message"):
+            named = re.search(r"<string_id>([^<]+)</string_id>", body)
+            message = strings.get(named.group(1).strip()) if named else None
+            if message is None:
+                return None
+            delay = re.search(r"<delay>(\d+)</delay>", body)
+            out.append(("say" if kind == "say_to_all" else "sysmsg", message,
+                        int(delay.group(1)) if delay else 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "set_condition_spawn_variable":
+            name = re.search(r"<string>([^<]*)</string>", body)
+            value = re.search(r"<set>(-?\d+)</set>", body)
+            modify = re.search(r"<modify>(-?\d+)</modify>", body)
+            if not name or not name.group(1).strip():
+                return None
+            out.append(("var", int(value.group(1)) if value else 0,
+                        int(modify.group(1)) if modify else 0, 0,
+                        name.group(1).strip(), 0.0, 0.0, 0.0, 0))
+        elif kind == "broadcast_message":
+            message = re.search(r"<message_type>(\d+)</message_type>", body)
+            reach = re.search(r"<range_as_meter>(\d+)</", body)
+            if not message:
+                return None
+            out.append(("broadcast", int(message.group(1)),
+                        int(reach.group(1)) if reach else 0, 0, "", 0.0, 0.0, 0.0, 0))
+        else:
+            raise Unsayable(f"action {kind}")
+    return out
+
+
+def read_handler(body: str, name: str, dev, known, strings):
+    """Every branch of one handler, or None if any part of it cannot be said."""
+    block = re.search(r"<%s>(.*?)</%s>" % (name, name), body, re.S)
+    if not block:
+        return []
+    branches = []
+    for index, branch in enumerate(BRANCH_RE.finditer(block.group(1))):
+        guards: list[str] = []
+        found = re.search(r"<conditions>(.*?)</conditions>", branch.group(1), re.S)
+        if found:
+            guards = read_guards(found.group(1))
+            if guards is None:
+                return None
+        actions: list[tuple] = []
+        found = re.search(r"<actions>(.*?)</actions>", branch.group(1), re.S)
+        if found:
+            actions = read_actions(found.group(1), dev, known, strings)
+            if actions is None:
+                return None
+        if not actions:
+            continue
+        priority = re.search(r"<priority>(\d+)</priority>", branch.group(1))
+        branches.append((index, int(priority.group(1)) if priority else 0, guards, actions))
+    return branches
+
+
+def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("patterns_dir", type=pathlib.Path)
+    ap.add_argument("binding", type=pathlib.Path)
+    ap.add_argument("out", type=pathlib.Path)
+    ap.add_argument("--repo", type=pathlib.Path, default=pathlib.Path(__file__).parents[2])
+    args = ap.parse_args()
+
+    templates = A.read_text(args.repo / "game-server/data/static_data/npcs/npc_templates.xml")
+    ai = {int(m.group(1)): m.group(2)
+          for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
+    dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
+    strings = string_ids(args.repo)
+
+    # An npc an encounter class already models must not be rebound to a generated table.
+    spoken_for: set[int] = set()
+    for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
+        for found in re.finditer(r"=\s*(\d{6})\s*;",
+                                 source.read_text(encoding="utf-8", errors="replace")):
+            spoken_for.add(int(found.group(1)))
+
+    binders: dict[str, list[int]] = collections.defaultdict(list)
+    for line in A.read_text(args.binding).splitlines():
+        fields = line.split("\t")
+        if len(fields) > 3 and fields[0].isdigit():
+            binders[fields[3]].append(int(fields[0]))
+
+    rows: list[tuple] = []
+    refused: collections.Counter = collections.Counter()
+    patterns = 0
+    for path in sorted(args.patterns_dir.rglob("NpcAIPatterns*.xml")):
+        text = S.read_text(path)
+        for match in S.PATTERN_RE.finditer(text):
+            body = match.group(1)
+            named = S.NAME_RE.search(body)
+            if not named:
+                continue
+            timer = re.search(r"<on_battle_timer>(.*?)</on_battle_timer>", body, re.S)
+            if not timer or "<spawn>" not in timer.group(1):
+                continue
+            owners = [n for n in binders.get(named.group(1), [])
+                      if ai.get(n) in GENERIC and n not in spoken_for]
+            if not owners:
+                refused["no npc here that is free to run it"] += 1
+                continue
+
+            try:
+                arming = read_handler(body, "on_enter_attack_state", dev, ai.keys(), strings)
+                cycle = read_handler(body, "on_battle_timer", dev, ai.keys(), strings)
+            except Unsayable as stopper:
+                refused[str(stopper)] += 1
+                continue
+            # Without an arming rung nothing ever starts the chain, and the whole rotation is inert.
+            if not arming or not cycle:
+                refused["nothing arms the first timer"] += 1
+                continue
+
+            patterns += 1
+            for npc in owners:
+                for handler, branches in (("arm", arming), ("cycle", cycle)):
+                    for index, priority, guards, actions in branches:
+                        for order, action in enumerate(actions):
+                            rows.append((npc, named.group(1), handler, index, priority,
+                                         "|".join(guards), order) + action)
+
+    rows.sort(key=lambda r: (r[0], r[2], r[3], r[6]))
+    with args.out.open("w", encoding="utf-8", newline="\n") as out:
+        out.write("npc\tpattern\thandler\tbranch\tpriority\tguards\torder\t"
+                  "kind\ta1\ta2\ta3\tplace\tx\ty\tz\tgroup\n")
+        for row in rows:
+            out.write("\t".join(str(f) for f in row) + "\n")
+
+    npcs = {r[0] for r in rows}
+    print(f"{patterns} battle rotations across {len(npcs)} npcs, {len(rows)} actions -> {args.out}")
+    for reason, count in refused.most_common():
+        print(f"    {count:4d} refused: {reason}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

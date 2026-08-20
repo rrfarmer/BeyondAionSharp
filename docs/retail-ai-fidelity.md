@@ -35178,3 +35178,65 @@ branch this port still cannot say — down from 31.
   resolvable, but only the 3 inside idle cycles are wired; the shouts several encounters in this log
   were written without are still absent.
 - **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
+
+## The fights were in a handler nothing here read
+
+`IdleCycles` covers `on_idle_timer` -- what an npc does while nothing is happening. Chasing where the
+`say_to_all` lines live turned up the answer to a different question: **the mechanics are in
+`on_battle_timer`**, and this port ran none of it.
+
+Retail bosses are not HP ladders. Entering combat calls `add_battle_timer` with an indicator and a
+delay; when that timer fires, the branches guarded by `is_battle_timer_indicator` run and **arm the
+next link themselves**. A fight is a chain of timers. The scale across the dump:
+
+| element | uses |
+|---|---|
+| `btimer_indicator` | 47,603 |
+| `use_skill` inside `on_battle_timer` | 24,250 |
+| `add_battle_timer` | 23,151 |
+| **patterns that `spawn` from `on_battle_timer`** | **810** |
+
+**The engine was already here** -- thirty battle-timer slots in `PatternAi`, armed by indicator,
+gated on being in combat, cancelled on death, with `When.Timer` and `Do.ArmTimer`. Only the data was
+missing. `BattleCycles` now carries **10 rotations across 15 npcs**, including Tiamat's Tahabata blaze,
+the Abyssal core summons and Zadra's blaze -- adds that appear *during* the fight.
+
+### Ten out of 810, counted rather than estimated
+
+| refused because | patterns |
+|---|---|
+| no npc here free to run it (already modelled, or unbound) | 510 |
+| **action `use_skill`** | **164** |
+| nothing in these two handlers arms the timer | 82 |
+| `control_door` | 10 |
+| `increase_intvar`, and a long tail of one-offs | ~20 |
+
+A pattern is taken only if **every** branch of both handlers is sayable in full. Dropping one
+unsayable action would leave a boss that spawns its adds and never casts -- worse than one that does
+nothing, because the mechanic would look ported.
+
+Two conditions needed care rather than a helper. **`is_hp_in_boundary` is exclusive at both ends** and
+`When.HpBetween` is inclusive, so bounds are emitted as `low+1 .. high-1` (exact, since percentages are
+integers). **`is_hp_lower_than` is taken only for `OBJI_SELF`** -- 6,048 of its 6,386 uses; the friend
+and target forms ask about somebody else, and `HpBelow` would have read the wrong creature's health.
+
+### A pin that passed for the wrong reason
+
+`NothingHappensWhileNobodyIsFighting` was written to pin the combat gate, and a mutation that **deletes
+the gate entirely still passed it**. Out of combat nothing ever arms the timer, so the gate is never
+reached -- the test was pinning the arming, not the gate, while its remark claimed otherwise. The fix
+was a second pin that arms the timer, drops out of combat with it still pending, and asserts silence.
+All three mutations now die. Worth remembering: a green test whose *stated* reason is untested is the
+same failure as no test, and only mutation showed the difference.
+
+### Still missing
+
+- **`use_skill` is now the single largest gap in this project.** 164 battle rotations here, 209 by the
+  looser audit, and every one blocked on the same thing: retail names skills by index into the npc's
+  own list (`SKILLI_INDEX_1`) and nothing here resolves that. Fixing it unblocks more encounter content
+  than any other single item.
+- **82 rotations armed from elsewhere** -- retail also calls `add_battle_timer` from `on_message` (334),
+  `on_attacked` (115) and `on_spelled` (110). The extractor reads only `on_enter_attack_state`.
+- `control_door` (10 patterns) has no helper here at all.
+- Unchanged from before: `GAb1_PvPStatus`, the 6,800 duplicate gated placements, `[SAVE]` persistence,
+  and the 16 idle cycles with no wake delay.
