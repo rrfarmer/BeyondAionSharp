@@ -263,6 +263,24 @@ public sealed class GameServerBootstrapService : IHostedService
 		// WorldNpcSpawnService GameEngine, which populated the reworked _objects store with struct WorldNpc.
 		Aion.GameServer.SpawnEngine.SpawnEngine.SpawnAll();
 
+		// The conditional spawn groups retail keeps in its world files, which nothing here has ever
+		// placed. Not Java parity -- aionemu has no equivalent -- but the sanctioned retail exception:
+		// 14,292 placements across 91 maps, of which about 619 hold before any pattern writes a
+		// variable, and the rest appear when one does. The ones this port already spawns
+		// unconditionally are filtered out of the data, so nothing is doubled. See
+		// docs/retail-ai-fidelity.md and World/Spawns/GatedSpawnService.
+		try
+		{
+			int gated = Aion.GameServer.World.Spawns.GatedSpawnService.Start();
+			_logger.LogInformation("Gated spawns: {Placed} groups placed", gated);
+		}
+		catch (Exception ex)
+		{
+			// A world this port cannot resolve must not stop the server booting; the gated groups are
+			// an addition to the world, not a prerequisite for it.
+			_logger.LogWarning(ex, "Gated spawns could not be loaded");
+		}
+
 		// Java parity: GameServer.main calls TownService.getInstance() right after SpawnEngine.spawnAll() (line 127),
 		// before FlyRingService. Its ctor loads per-race towns via TownDAO (try/catch-guarded: no DB => empty + logged)
 		// and, only when both are empty, seeds towns from HOUSE_DATA lands/addresses (live HOUSE_DATA/NPC_DATA holders).

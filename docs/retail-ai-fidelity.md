@@ -34805,3 +34805,40 @@ count assertion caught it; the parse assertion could not. The pin now says so at
 - **`SpecialServer_Cond` and `InterServer_Cond` need nothing**: both are 0/1 server-type flags, 0 is an
   ordinary server, and unset already reads zero — 2,843 gate uses that are already correct.
 - **`[SAVE]` persistence** and **instance scope**, unchanged.
+
+## The conditional spawn engine is wired to boot
+
+`GameServerBootstrapService` calls `GatedSpawnService.Start()` straight after `SpawnEngine.SpawnAll()`.
+Every non-instance map with groups gets a controller over its own variable store; about **619** groups
+go into the world at once and the rest wait for a pattern to write a counter.
+
+**Not Java parity** — aionemu has no equivalent — but the sanctioned retail exception, and it is guarded:
+a failure is logged and the server boots anyway, because the gated groups are an addition to the world
+rather than a prerequisite for it.
+
+**Instanced maps are skipped.** A map whose instances come and go needs a controller and a store per
+instance, and the scope measurement only ever reached map level. Instanced content behaves as it does
+today rather than getting a half-answer.
+
+### Two pins that passed while testing nothing
+
+* **"Has rows" is not "has groups to place."** The service pin was written against map `110010000`,
+  which the file carries rows for — and every one duplicates a static spawn, so the loader filters them
+  all and the map contributes nothing. It now uses `300090000`, which has 270.
+* **`Placed` cannot tell "unsubscribed" from "list cleared."** It sums over the live controllers, so a
+  mutation that dropped the `Dispose` and kept the `Clear` passed happily. The pin now opens the gates
+  again after stopping and counts the **npcs in the world**, which is the thing that actually goes
+  wrong.
+
+Both are the same mistake in different clothes: asserting on the bookkeeping rather than on the world.
+
+### Still missing
+
+- **`GAb1_PvPStatus`**, 6,006 gate uses, unwired. `== 1` guards artifact guards and warcaptains, `== 3`
+  teleporters and the four factions' scout infantry, `== 2` only 96 temple gates — strong for
+  1-versus-3, silent on 2, so `PanesterraService` is left alone.
+- **The 6,800 duplicates.** They are filtered so nothing doubles, which leaves those npcs permanently
+  present where retail would remove them. The repair is to delete the unconditional spawn and let the
+  gate own it, one world at a time.
+- **`[SAVE]` persistence**, **instance scope**, and the **50,841 placements** whose npcs have no
+  template here.
