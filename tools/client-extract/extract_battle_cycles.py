@@ -249,6 +249,21 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind == "is_waypoint_index":
+            # Which point of its own route the npc is standing on. The engine has had this since
+            # `When.AtWaypoint` was written for the hand-written classes -- `PatternAi.WaypointIndex`
+            # reads `GetCurrentStep().GetStepIndex()` -- and no extractor ever emitted it, so 143
+            # `on_arrived_at_waypoint` handlers were dropped on a condition the runtime could answer.
+            #
+            # Retail counts from one and this port's `RouteStep` from zero. The conversion lives in
+            # `When.AtWaypoint`, so retail's own number is carried here unchanged rather than shifted
+            # in two places.
+            index = re.search(r"<index>(\d+)</index>", body)
+            if not index:
+                raise Unsayable("is_waypoint_index with no index")
+            out.append(f"waypoint:{index.group(1)}")
+        elif kind == "is_last_waypoint":
+            out.append("last_waypoint:")
         elif kind == "increase_intvar":
             # A condition that increments as it tests, like the flag idiom. All 1,409 uses in the dump
             # are conditions and none is an action; see `When.Counting`.

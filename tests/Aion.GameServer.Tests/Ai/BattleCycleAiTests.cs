@@ -315,7 +315,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 59,393 casts across 14,600 npcs, none of them read by a human. The index they came from is only
+	/// 59,408 casts across 14,734 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -334,7 +334,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(59393, casts);
+		Assert.Equal(59408, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -804,6 +804,58 @@ public sealed class BattleCycleAiTests
 
 		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.BackHome);
 		Assert.Equal([ReturnBuff], BossAiHarness.DrainQueuedSkills(boss).Select(c => c.SkillId));
+	}
+
+	/// <summary><b>A waypoint guard reaches the runtime with retail's own number, converted once.</b></summary>
+	/// <remarks>
+	/// Retail counts route points from one and this port's <c>RouteStep</c> from zero, so somewhere a
+	/// one has to come off. <see cref="When.AtWaypoint"/> does it -- <c>ai.WaypointIndex == index - 1</c>
+	/// -- and the table therefore has to carry retail's number untouched. <b>Two conversions look
+	/// exactly like one until an npc stops at the wrong point</b>, and a patrol arriving a point early
+	/// or late still walks, still arrives, and still despawns; nothing about it reads as broken.
+	/// <para>
+	/// So this compares the numbers in the generated file against the numbers in the TSV directly. It
+	/// is deliberately not a behavioural pin: the harness has no route walking, and a pin that spawned
+	/// an npc with no route would assert against <c>WaypointIndex == -1</c> and pass for the wrong
+	/// reason -- the failure this project keeps finding by mutation.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void WaypointGuardsCarryRetailsOwnNumbering()
+	{
+		string tsv = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "battle_cycles.tsv");
+		string[] lines = File.ReadAllLines(tsv);
+		string[] header = lines[0].Split('	');
+		int guardsAt = Array.IndexOf(header, "guards");
+
+		HashSet<int> wanted = new HashSet<int>();
+		foreach (string line in lines.Skip(1))
+		{
+			foreach (Match token in Regex.Matches(line.Split('	')[guardsAt], @"waypoint:(\d+)"))
+			{
+				wanted.Add(int.Parse(token.Groups[1].Value));
+			}
+		}
+
+		Assert.NotEmpty(wanted);
+
+		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
+			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.cs"));
+		HashSet<int> emitted = new HashSet<int>();
+		foreach (Match call in Regex.Matches(generated, @"When\.AtWaypoint\((\d+)\)"))
+		{
+			emitted.Add(int.Parse(call.Groups[1].Value));
+		}
+
+		Assert.Equal(wanted.OrderBy(n => n), emitted.OrderBy(n => n));
+
+		// And the unnumbered half. Checking only the numbers left a hole a mutation walked straight
+		// through: replacing `When.AtLastWaypoint` with `When.Always` turns "despawn at the end of the
+		// route" into "despawn at the first point", and every assertion above still passed.
+		bool anyLast = lines.Skip(1).Any(line => line.Split('	')[guardsAt].Contains("last_waypoint:"));
+		Assert.True(anyLast, "the table no longer carries is_last_waypoint, so this pin proves nothing");
+		Assert.Contains("When.AtLastWaypoint", generated);
 	}
 
 }

@@ -37459,3 +37459,71 @@ Unchanged refusals: `control_door`, `enable_area`, `change_world_scene_status`, 
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, the `is_user` / `is_npc`
 conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail
 cast timings.
+
+## Correction: `is_waypoint_index` was never a movement gap
+
+`Retail-AI-Pattern: waypoint guards in the generated tables`
+
+The previous entry called the 143 dropped `on_arrived_at_waypoint` handlers "a movement-system gap,
+not a parsing one", on the grounds that route walking does not expose which point the npc is on.
+**That is wrong and the port has had the machinery all along.** `PatternAi.WaypointIndex` reads
+`GetMoveController().GetCurrentStep().GetStepIndex()`, and `When.AtWaypoint` and
+`When.AtLastWaypoint` have both existed since the hand-written patrol classes were written.
+
+What was missing was two clauses in one guard reader. No extractor had ever emitted either
+condition, so every branch carrying one was refused, and the refusal message -- `condition
+is_waypoint_index` -- said only that the parser did not know the word. I read that as the runtime
+not knowing it either, which the message does not say.
+
+Both are now read. Retail counts route points from one and this port's `RouteStep` from zero;
+`When.AtWaypoint` already did that subtraction, so the table carries **retail's own number
+untouched** rather than shifting it in a second place.
+
+Patterns 2,364 -> **2,396**; npcs 14,600 -> **14,734**; 154 branches now guarded on a waypoint. 108
+npcs were newly bound. Adds backlog unchanged at 211 across 153 -- these are patrols that despawn at
+the end of a route, not adds.
+
+### The pin, and the hole the first version had
+
+`WaypointGuardsCarryRetailsOwnNumbering` compares the numbers in the generated file against the
+numbers in the TSV. It is deliberately **not** behavioural: the harness has no route walking, so an
+npc spawned there has `WaypointIndex == -1`, and a pin written that way would assert against a
+missing route and pass for the wrong reason.
+
+**The first version of it had a real hole.** It checked only the numbered guard, so a mutation
+turning `When.AtLastWaypoint` into something else went straight through -- and "despawn at the end
+of the route" becoming "despawn at point one" is a patrol that still walks, still arrives and still
+vanishes, with nothing about it reading as broken. The pin now asserts the unnumbered half too.
+
+A second thing worth recording, because it nearly produced a false claim in this entry: the first
+mutation I tried for that hole -- replacing the guard with `When.Always` -- **does not compile**,
+because `When.Always` is a `PatternCondition[]` and a guard inside a list is a `PatternCondition`.
+My throwaway mutation script reported that as SURVIVED rather than DID NOT COMPILE, which reads as
+"the pin is weak" when it means "the mutant was never valid". `run_mutations.py` distinguishes the
+two; the ad-hoc loop did not. Rerun with mutants that compile, both are caught:
+
+| mutation | caught |
+|---|---|
+| last-waypoint guard becomes point one | yes |
+| waypoint index shifted by one | yes |
+
+### Still missing
+
+`goto_next_waypoint` is now the largest single loss in this handler -- 140 dropped. Its body is only
+`<move_type>MOVETYPE_WALK</move_type>`, so it means "walk to the next point on my route", and
+`PatternAi.GotoWaypoint(WaypointIndex + 1)` would express it. **It is deliberately not done here.**
+The port's `WalkManager` advances the route by itself on arrival, and these rungs fire from
+`on_arrived_at_waypoint`, so an explicit advance may double-step the patrol -- a march that skips
+every other point still walks its route and would not look wrong. Settling it means reading
+`WalkManager`'s arrival path, which is a separate piece of work with its own thing to verify.
+
+Also newly visible in this handler: `is_npc_state` blocks 94 `on_see_friend_attacked` handlers.
+
+Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254,
+`on_enter_abnormal_state` 272, `on_damaged` 141, `on_hyperlink_clicked` 137,
+`on_most_hating_updated` 132 -- none of which spawn or cast -- `on_see_friend_attacking` 129,
+`on_friend_spelling` 106, `on_see_npc_move` 106), plus `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+the `is_user` / `is_npc` conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.
