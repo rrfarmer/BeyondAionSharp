@@ -33470,3 +33470,48 @@ side.
 - **23201**, the guards' "protect the sender" answer: `use_skill` on the caller, so behind skill indices
   like everything else of that shape.
 - **Why thirty-eight guards call at ten metres** rather than twenty-five, unchanged from the last entry.
+
+## Correction: the helper was not over-reaching, the class picked the wrong one
+
+The previous entry said `HateMessageTarget`'s unconditional `SetTarget` was an over-reach in a shared
+helper, and listed splitting it as owed work. **That was wrong.** The port already has both forms, and
+`PatternAi` documents the distinction better than the entry did:
+
+* `AddHateToMessageTarget` (`Do.HateMessageParam`) — `add_hate_point`, hate without touching the target.
+* `HateMessageTarget` — `switch_target`, hate *and* turn.
+
+Its own remark records the ratio: **700 answering branches in the 5.8 files use the plain form against
+349 that switch**, and that having only the switching form had been a silent divergence when it was
+fixed.
+
+So there is nothing to split. `FortressGuardAnswerAI` was calling the switching helper on its **idle**
+rung, where retail has `add_hate_point 1` — the class had collapsed a distinction the helper below it
+had already been corrected to make. One line.
+
+> The finding was real and the diagnosis was one layer too low. The tell, in hindsight: a helper used by
+> a dozen classes is far less likely to be wrong than the one call site that looked odd.
+
+### What could be pinned, and what could not
+
+The idle rung's *hate* cannot be observed here: `AddHate` registers nothing for an idle npc in this
+harness even with the player in its known list, so the plain form leaves no measurable trace. The busy
+rung shows the same helper landing hate once the npc is in a fight, so it is a harness limit rather than
+a class one.
+
+What is pinned is the distinction itself — **the busy guard turns and the idle guard does not** — and
+the mutation that puts the switching helper back on the idle rung is caught.
+
+**An earlier version of that pin asserted the idle guard ended up targeting the player, and it passed.**
+It passed because the class was using the switching helper: the pin was pinning the defect. That is the
+second time in this work a pin has been written against behaviour that was itself the bug, and both
+times it only surfaced because a mutation would not die.
+
+### Still missing
+
+- **Whether other classes make the same substitution.** `HateMessageTarget` has callers in
+  `AbyssGuardCallAI`, `AnuhartCasterAI`, `AnuhartGuardAI` and `BlackClawLycanAI`; each needs its retail
+  rung read for `add_hate_point` against `switch_target`. `AnuhartGuardAI`'s remark already argues the
+  switch is right for an idle guard *there*, which is a different reading of the same choice and worth
+  settling rather than leaving as two opinions in two files.
+- **`AddHate` on an idle npc in the harness**, which silently does nothing and cost this entry three
+  attempts at one pin.

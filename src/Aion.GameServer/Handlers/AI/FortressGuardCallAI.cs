@@ -112,18 +112,14 @@ public class FortressGuardAnswerAI : PatternAi
 				[When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
 				Do.HateMessageTarget(Claim)),
 
-			// Retail's idle rung ends in `attack_most_hating`. Its visible half is redundant here for
-			// the same reason -- `HateMessageTarget` already sets the target -- but it also takes the
-			// npc out of WALKING, which nothing else on this rung does, so it stays.
-			//
-			// **And it exposes something about the helper.** Retail's idle rung is `add_hate_point 1`
-			// and NOT a switch: a guard with a real fight on its hands is meant to note the call, not
-			// drop everything. `HateMessageTarget` calls SetTarget unconditionally, so here it turns for
-			// one point. That over-reach belongs to the helper and is used by several classes, so it is
-			// recorded in docs/retail-ai-fidelity.md rather than changed underneath them.
+			// **The plain form, not the switching one.** Retail's idle rung is `add_hate_point 1`
+			// followed by `attack_most_hating`; `HateMessageTarget` is `switch_target` and turns the
+			// npc, which is the busy rung's action. Using it here made an idle guard turn for one point
+			// of hate -- and 700 of the game's answering branches are the plain form against 349 that
+			// switch, a distinction `PatternAi` documents and this class had collapsed.
 			Branch(1, "a call, and I am not",
 				[When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy],
-				Do.HateMessageTarget(Glance),
+				Do.HateMessageParam(Glance),
 				Do.AttackMostHating())),
 	};
 

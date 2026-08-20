@@ -38,23 +38,38 @@ public sealed class FortressGuardCallTests
 			.Build();
 
 	/// <summary>
-	/// <b>An idle guard hearing the call goes for the player named in it.</b> Retail's rung adds one
-	/// point of hate and then <c>attack_most_hating</c> — and the second half is what actually starts it
-	/// moving. One point on its own is a note the guard never acts on, which is what this class did.
+	/// <b>An idle guard hearing the call does not turn to the player.</b> Retail's rung is
+	/// <c>add_hate_point 1</c> then <c>attack_most_hating</c> — the plain form, which does <em>not</em>
+	/// turn the npc; that is the busy rung's <c>switch_target</c>.
 	/// </summary>
+	/// <remarks>
+	/// <b>The assertion is that it does NOT turn.</b> An earlier version asserted the guard ended up
+	/// targeting the player, and that passed only because the class was using the switching helper here
+	/// — the very thing that was wrong, so the pin was pinning the defect.
+	/// <para>
+	/// Asserting the hate instead would be better and does not work: <c>AddHate</c> registers nothing for
+	/// an idle npc in this harness, even with the player in its known list, so the plain form leaves no
+	/// measurable trace. That is a harness limit rather than a class one — the busy rung below shows the
+	/// same helper landing hate once the npc is in a fight — and it is recorded in the fidelity doc.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void AnIdleGuardHearingTheCallGoesForThePlayer()
+	public void AnIdleGuardHearingTheCallDoesNotTurn()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc crier = harness.Spawn(Answerer, 300f, 300f, 200f);
 		Npc listener = harness.Spawn(Answerer, 305f, 300f, 200f);
 		Player player = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ELYOS);
 		BossAiHarness.MakeMutuallyKnown(crier, listener);
+		// The listener has to be able to see the player. Retail's answerer is within twenty-five metres
+		// of the caller and so has the puller in its known list; the aggro list here silently drops hate
+		// on a creature the npc has never seen, which reads as a rung that did not fire.
+		BossAiHarness.MakeMutuallyKnown(listener, player);
 		Assert.Null(listener.GetTarget());
 
 		NpcMessageBus.Broadcast(crier, FortressGuardCallAI.ThisOne, player, 25f);
 
-		Assert.Same(player, listener.GetTarget());
+		Assert.Null(listener.GetTarget());
 	}
 
 	/// <summary>
@@ -70,6 +85,7 @@ public sealed class FortressGuardCallTests
 		Player busyWith = harness.SpawnPlayer(302f, 250f, 200f, race: Race.ELYOS);
 		Player named = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ELYOS);
 		BossAiHarness.MakeMutuallyKnown(crier, listener);
+		BossAiHarness.MakeMutuallyKnown(listener, named);
 		harness.Engage(listener, busyWith);
 		// Far more hate than the call's hundred points, so only an actual switch_target can move it.
 		listener.GetAggroList().AddHate(busyWith, 500_000);
