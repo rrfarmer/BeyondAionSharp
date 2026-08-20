@@ -36529,3 +36529,46 @@ npc alike, and running both extractors twice gives the same answer with no overl
 - **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), blocked on evidence the
   data does not contain.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## An expansion that was reverted, and the rule it is waiting on
+
+The 626 refusals were broken down by cause, which is the measurement this log keeps finding worthwhile:
+
+| first thing that stops the pattern | patterns |
+|---|---|
+| **`use_skill`** | **284** |
+| `goto_waypoint` | 79 |
+| `change_world_scene_status` | 54 |
+| `control_door` | 37 |
+
+`use_skill` needed nothing new -- the skill-index resolver has existed since the battle table -- and
+wiring it took the wake/idle table from 658 patterns across 815 npcs to **886 across 1,384**. It was
+then **reverted**, and the reason is worth more than the patterns were.
+
+### Why it could not land
+
+Binding those npcs broke seven encounters: Tiamat's beacons, Kasika's guards, the arena placements, the
+gate controller's stand-in. Every one is an npc **another encounter spawns**, and several of the new
+patterns despawn themselves on waking -- so the add vanished the moment the encounter placed it.
+
+Excluding npcs that other tables place fixed five of the seven and broke a pin from the previous entry:
+`IDDF3_BroadNPC_System`, the relay whose whole purpose is to announce itself and go, is placed by a
+death spawn. Excluding it puts back the exact bug that entry fixed.
+
+**Retail runs both.** The encounter places the npc, and the npc's own pattern decides what it does once
+placed, including removing itself. This port models the placing half by hand in a dozen encounter
+classes, and those classes assume the add stays until they say otherwise. The two accounts of one
+lifetime cannot both be authoritative, and no blunt rule -- exclude the placed, exclude the placers --
+gets it right, because which account wins differs per npc.
+
+That is a design question about ownership rather than a missing feature, so nothing was committed except
+this note and the refusal breakdown. The tree is at the previous entry's state and green.
+
+### Still missing
+
+- **A rule for npcs two things own.** Until it exists, `use_skill` in wake and idle handlers stays out,
+  and with it 284 patterns. This is now the largest blocked item in the pattern work.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)** -- the next
+  vocabulary gaps behind it.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **177 encounters missing an add**,
+  **retail cast timings.**
