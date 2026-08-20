@@ -76,7 +76,7 @@ POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv"),
                   ("extract_siege_death_calls.py", "siege_death_calls.tsv"),
                   ("extract_protector_calls.py", "protector_calls.tsv"),
                   ("extract_fortress_killers.py", "fortress_killers.tsv"),
-                  ("extract_panesterra_pulls.py", "panesterra_pulls.tsv")]
+                  ("extract_pull_calls.py", "pull_calls.tsv")]
 
 # (emitter, committed .cs, argv builder). The tiamat emitter takes the output path FIRST and its tables
 # as repeated --table switches, so it cannot share the others' shape.
@@ -90,8 +90,8 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "vritra_callers.tsv"), out]),
     ("emit_guard_calls_table.py", GEN / "GuardCalls.cs",
      lambda out: [str(HERE / "out" / "guard_calls.tsv"), out]),
-    ("emit_panesterra_pulls_table.py", GEN / "PanesterraPulls.cs",
-     lambda out: [str(HERE / "out" / "panesterra_pulls.tsv"), out]),
+    ("emit_pull_calls_table.py", GEN / "PullCalls.cs",
+     lambda out: [str(HERE / "out" / "pull_calls.tsv"), out]),
     ("emit_fortress_killers_table.py", GEN / "FortressKillers.cs",
      lambda out: [str(HERE / "out" / "fortress_killers.tsv"), out]),
     ("emit_protector_calls_table.py", GEN / "ProtectorCalls.cs",

@@ -809,18 +809,34 @@ internal static class ProtectorCalls
     /// </remarks>
     internal static AiPattern PatternFor(int npcId) => Built.GetOrAdd(npcId, static id =>
     {
+        // The pull call belongs in the SAME enter-combat branch, not behind it: branch lists are
+        // first-match-wins, so a second unconditional branch would be dead -- the bug found twice in the
+        // fortress killers. 557 siege protectors shout 23200 when pulled, naming the player to every
+        // guard around them, and this class had no part of that.
+        PatternBranch[] pull = PullCalls.RungFor(id);
+        PatternAction[] pullActions = pull.Length == 0 ? [] : pull[0].Actions;
+
         if (!ByNpc.TryGetValue(id, out Call call))
-            return Silent;
+        {
+            return pullActions.Length == 0
+                ? Silent
+                : new AiPattern
+                {
+                    OnEnterAttack = AiPattern.Of(
+                        AiPattern.Branch(7, "pulled -- tell the guards around me", When.Always,
+                            pullActions)),
+                };
+        }
 
         return new AiPattern
         {
             OnEnterAttack = AiPattern.Of(
                 call.First == 0
                     ? AiPattern.Branch(7, "call at once, then keep calling", When.Always,
-                        Do.BroadcastAboutSelf(AbstractSiegeProtectorAI.CallTheKiller, call.Range),
-                        Do.ArmTimer(0, call.Period))
+                        [Do.BroadcastAboutSelf(AbstractSiegeProtectorAI.CallTheKiller, call.Range),
+                         Do.ArmTimer(0, call.Period), .. pullActions])
                     : AiPattern.Branch(7, "start the chain that reaches the call", When.Always,
-                        Do.ArmTimer(0, call.First))),
+                        [Do.ArmTimer(0, call.First), .. pullActions])),
 
             OnBattleTimer = AiPattern.Of(
                 AiPattern.Branch(7, "call the killer to me", [When.Timer(0)],

@@ -42,12 +42,26 @@ public class FortressGuardCallAI : PatternAi
 			Do.Broadcast(ThisOne, CallReach, aboutTarget: true))),
 	};
 
+	/// <summary>
+	/// The rung this guard actually has, out of <see cref="PullCalls"/>.
+	/// </summary>
+	/// <remarks>
+	/// <b>The range is not the same for every guard.</b> 948 of them call at twenty-five metres and
+	/// <b>38 call at ten</b>, and <see cref="CallReach"/> was written when only the first kind was
+	/// bound. A constant would be wrong for the thirty-eight, so the branch comes from the table; a
+	/// guard absent from it keeps the pattern above, which is the shape this class was written for.
+	/// </remarks>
+	protected override AiPattern Pattern => byNpc;
+
+	private readonly AiPattern byNpc;
+
 	public FortressGuardCallAI(Npc owner)
 		: base(owner)
 	{
+		PatternBranch[] rung = PullCalls.RungFor(owner.GetNpcId());
+		byNpc = rung.Length == 0 ? Pattern_ : new AiPattern { OnEnterAttack = rung };
 	}
 
-	protected override AiPattern Pattern => Pattern_;
 }
 
 /// <summary>

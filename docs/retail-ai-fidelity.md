@@ -33376,3 +33376,50 @@ both and only one of them has a pull call.
 
 **Panesterra's pull mechanic is now complete on the sending side**: 474 npcs, every one shouting what its
 own retail rung says, across seven classes.
+
+## 23200: the fortress aggro call, and 946 npcs that never made it
+
+The last entry named this as the next mechanic of the same shape. It is the largest of them: **986 npcs
+broadcast 23200 when pulled** — naming the player to every guard within twenty-five metres, ten for
+thirty-eight of them — and **549 listen**. Forty of the senders had a class that sent it.
+
+Retail's fortress aggro mechanic, in one message: pull a guard and the guards around it come. Without it
+a raid picks a fortress apart one npc at a time, which is what this server did.
+
+### One table for all five calls
+
+`extract_panesterra_pulls.py` became `extract_pull_calls.py`, and `PanesterraPulls` became `PullCalls`.
+The mechanic is the same shape — an enter-combat broadcast, read from the *fallback* branch — so the
+Ashunatal calls and this one share a table: **1,460 npcs across five messages.**
+
+That is also the honest boundary. **178 distinct messages are broadcast on entering combat** across the
+5.8 files, and most are heard by nothing in the dump — shouts to the client rather than npc mechanics.
+These five have 549 to 552 listeners apiece. The other 173 are not worth a table on current evidence,
+and the extractor's own docstring says so rather than leaving the omission to look like an oversight.
+
+### Three ways in, because the senders are on three kinds of class
+
+* **389 generic npcs** were bound to `fortress_guard_call`, by what their own rung shouts — the same
+  rule the Ashunatal guards used.
+* **`FortressGuardCallAI` now reads its range from the table.** It hardcoded twenty-five, which is right
+  for 948 guards and wrong for the thirty-eight that call at ten.
+* **557 siege protectors keep their own class and gain the call.** `artifact_protector` and
+  `fortress_protector` have an enter-combat rung of their own, so the pull call is folded into **the same
+  branch** rather than appended behind it — first-match-wins would leave a second unconditional branch
+  dead, which is the bug found twice in the fortress killers. The pin checks both actions run.
+
+`AiPattern` is not a record, so the obvious `with` expression does not compile; the fold happens where
+the pattern is built, in `ProtectorCalls.PatternFor`, which is one place rather than a copy of nineteen
+handler properties.
+
+### Still missing
+
+- **351 npcs that should *hear* 23200 and do not** — 275 on `aggressive` and 76 on `general`, against
+  198 on `fortress_guard_answer`. This entry did the sending half. The answering half is the same
+  exercise and the class already exists.
+- **The 46 npcs at ten metres**: thirty-five are `fortress_protector` and three were generic. They are
+  handled by the table, but nothing yet explains *why* those particular guards call half as far —
+  probably an indoor or tower placement, and worth a look before anyone "corrects" the range.
+- **Two npcs in the table have a retail pattern and no template here.** A gap in the npc data rather
+  than the binding; the pin skips them and says so.
+- **The 173 unanswered enter-combat messages**, above.
