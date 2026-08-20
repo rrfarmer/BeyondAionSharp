@@ -128,12 +128,16 @@ def action_code(row: dict) -> str:
     if kind == "spawn":
         npc, count, live, group = row["a1"], row["a2"], row["a3"], row["group"]
         place, x, y, z = row["place"], row["x"], row["y"], row["z"]
+        # Retail's despawn_at_attack_state: the add goes when the fight does.
+        suffix = ""
+        if place.startswith("for_the_fight_"):
+            place, suffix = place[len("for_the_fight_"):], "ForTheFight"
         if place == "self":
-            return f"Do.SpawnNear({npc}, {group}, {count}, 0f, {live})"
+            return f"Do.SpawnNear{suffix}({npc}, {group}, {count}, 0f, {live})"
         if place == "offset":
-            return f"Do.SpawnOffset({npc}, {group}, {x}f, {y}f, {live}, {z}f)"
+            return f"Do.SpawnOffset{suffix}({npc}, {group}, {x}f, {y}f, {live}, {z}f)"
         spots = ", ".join(f"new SpawnSpot({x}f, {y}f, {z}f)" for _ in range(max(1, int(count))))
-        return f"Do.SpawnAt({npc}, {group}, {live}, {spots})"
+        return f"Do.SpawnAt{suffix}({npc}, {group}, {live}, {spots})"
     if kind == "skill":
         return f"Do.SkillOn(NpcSkillTargetAttribute.{row['place']}, {row['a1']})"
     if kind == "skill_at":

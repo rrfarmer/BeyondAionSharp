@@ -621,6 +621,21 @@ public static class Do
         => ai => ai.SpawnFacing(npcId, spawnId, degrees, liveSeconds);
 
     /// <summary><c>spawn</c> at <c>SPAWN_LOCATION_MY_POINT</c>, scattered within <paramref name="range"/>.</summary>
+    /// <summary>As <see cref="SpawnNear"/>, for adds retail marks <c>despawn_at_attack_state</c>.</summary>
+    public static PatternAction SpawnNearForTheFight(int npcId, int spawnId, int count = 1,
+        float range = 0f, int liveSeconds = 0)
+        => ai => ai.SpawnNear(npcId, spawnId, count, range, liveSeconds, untilFightEnds: true);
+
+    /// <summary>As <see cref="SpawnAt"/>, for adds retail marks <c>despawn_at_attack_state</c>.</summary>
+    public static PatternAction SpawnAtForTheFight(int npcId, int spawnId, int liveSeconds,
+        params SpawnSpot[] spots)
+        => ai => ai.SpawnAt(npcId, spawnId, liveSeconds, true, spots);
+
+    /// <summary>As <see cref="SpawnOffset"/>, for adds retail marks <c>despawn_at_attack_state</c>.</summary>
+    public static PatternAction SpawnOffsetForTheFight(int npcId, int spawnId, float dx, float dy,
+        int liveSeconds, float dz = 0f)
+        => ai => ai.SpawnOffset(npcId, spawnId, dx, dy, liveSeconds, dz, untilFightEnds: true);
+
     public static PatternAction SpawnNear(int npcId, int spawnId, int count = 1, float range = 0f, int liveSeconds = 0)
         => ai => ai.SpawnNear(npcId, spawnId, count, range, liveSeconds);
 

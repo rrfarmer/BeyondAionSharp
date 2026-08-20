@@ -35743,3 +35743,53 @@ what keep it loadable, and nothing here has a plan for it at ten times this size
 - **Retail cast timings remain unobserved, now across 13,186 npcs.** Every pin answers *who* and *what*.
   A play-test is the only thing that answers whether these fights feel right, and the surface has grown
   by 78% in one entry without that ever becoming less true.
+
+## Looking for runaway fights, and finding a leak instead
+
+The "retail cast timings are unobserved" caveat has been repeated for nine entries without anything
+being done about it. A play-test is still the only thing that answers whether a fight *feels* right,
+but one thing in the same family can be checked from here: whether a rotation places adds faster than
+they leave. So the emitted table was searched for repeating branches that spawn permanent
+(`live_time=0`) adds.
+
+**144 looked alarming; 12 across 7 npcs were real.** The rest sit behind a one-shot flag and cannot
+accumulate -- the first count did not read the guards. The worst genuine case is `D3_NeP_S` at one
+permanent add per second.
+
+And then the actual bug, which the audit only bumped into: **all 16 of those permanent spawns carry
+`despawn_at_attack_state="TRUE"`, and this port dropped the field entirely.**
+
+| `despawn_at_attack_state` | retail spawns |
+|---|---|
+| TRUE | **12,614** |
+| FALSE | 3,729 |
+| of the TRUE ones, permanent (`live_time=0`) | **7,690** |
+
+The flag says the add belongs to the encounter rather than to the world. Ignoring it means every one of
+those 7,690 stays on the ground forever once the boss resets -- and `ResetPattern` was *forgetting*
+spawn groups rather than despawning them, so nothing else was going to clean them up either. A summoner
+on a one-second timer, fought for ten minutes, left six hundred behind. On a live server that is a leak
+that compounds every pull.
+
+669 spawns in the table are now fight-scoped. `PatternAi` tracks them separately and deletes them on the
+three transitions out of attack state -- death, going home, despawning -- outside the lock, because
+deleting an npc runs its own controller.
+
+### Both halves pinned, because one of them is not a rule
+
+A mutation that ignored the flag and treated **every** add as fight-scoped survived the first pin: it
+only proved adds go away, not that the right ones do. `IDTP_Fanatic_Boss_EL` summons a permanent add
+retail marks `FALSE`, and killing the summoner leaves it standing. Both mutations now die.
+
+### Still missing
+
+- **The 12 genuinely unbounded branches are unchanged in behaviour** -- they were always retail's
+  intent, and now their adds at least leave with the fight. Whether one-per-second is survivable is a
+  play-test question, not a data one.
+- **`despawn_at_attack_state` is not read for the idle table.** `IdleCycles` spawns still ignore it;
+  those npcs are mostly out-of-combat wave controllers, so the flag rarely applies, but "rarely" is not
+  "never" and it has not been counted.
+- **`OBJI_TALKER` (771)**, **`USERI_EVENT_MAKER` (1)**, **53 range-restricted casts**, **453 optional
+  arming handlers dropped**, **188 self-arming rotations and 147 that arm nowhere.**
+- **Retail cast timings remain unobserved across 13,186 npcs.** Unchanged, and now the only item on
+  this list that no amount of static work can close.

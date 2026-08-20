@@ -47,6 +47,12 @@ public sealed class BattleCycleAiTests
 	/// <summary>The five adds his second timer places.</summary>
 	private const int Retinue = 217301;
 
+	/// <summary>A boss whose add retail does <i>not</i> scope to the fight.</summary>
+	private const int Fanatic = 281383;
+
+	/// <summary>The permanent add it summons.</summary>
+	private const int FanaticAdd = 281384;
+
 	/// <summary>A plain attack skill, used to watch how a cast picks its creature.</summary>
 	private const int RaidSkill = 17063;
 
@@ -600,6 +606,63 @@ public sealed class BattleCycleAiTests
 			// A zero-delay arm is only dangerous when it re-arms the slot whose firing ran this branch.
 			Assert.DoesNotContain($"timer:{fields[slotAt]}", fields[guardsAt].Split('|'));
 		}
+	}
+
+	/// <summary><b>Adds that belong to the fight are gone when the fight is.</b></summary>
+	/// <remarks>
+	/// Retail marks a spawn <c>despawn_at_attack_state</c> when the add belongs to the encounter rather
+	/// than to the world -- <b>12,614 of its 16,343 spawns, and 7,690 of those are permanent</b>. This
+	/// port dropped the field, so every one of them stayed on the ground forever once the boss reset. A
+	/// summoner on a one-second timer fought for ten minutes left six hundred behind.
+	/// <para>
+	/// The worm's three adds carry a live time, so this uses the fight ending rather than waiting them
+	/// out: they are alive, the fight stops, and they go with it.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AddsThatBelongToTheFightLeaveWithIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, player);
+		harness.Engage(worm, player);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(11));
+		Assert.Equal(2, Count(harness, Swarm));
+		Assert.Equal(1, Count(harness, Straggler));
+
+		// The fight ends well inside their sixty-second lifetime. Killing the boss is one of the three
+		// ways retail leaves attack state; going home and despawning are the others.
+		BossAiHarness.Kill(worm, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(0, Count(harness, Swarm));
+		Assert.Equal(0, Count(harness, Straggler));
+	}
+
+	/// <summary><b>And an add retail does not mark stays behind.</b></summary>
+	/// <remarks>
+	/// The other half, without which "remove them all" passes just as well as the real rule -- a
+	/// mutation that ignored the flag and treated every add as fight-scoped survived until this
+	/// existed. <c>IDTP_Fanatic_Boss_EL</c> summons a permanent add on entering combat and retail marks
+	/// it <c>FALSE</c>: it belongs to the world, and killing the summoner does not take it away.
+	/// </remarks>
+	[Fact]
+	public void AnAddRetailDoesNotMarkOutlivesItsSummoner()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Fanatic, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+		Assert.Equal(1, Count(harness, FanaticAdd));
+
+		BossAiHarness.Kill(boss, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(1, Count(harness, FanaticAdd));
 	}
 
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>

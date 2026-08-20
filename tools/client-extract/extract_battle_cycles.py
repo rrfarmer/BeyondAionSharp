@@ -235,6 +235,11 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             count = re.search(r"<num_to_spawn>(\d+)</", body)
             live = re.search(r"<live_time>(\d+)</", body)
             group = re.search(r"<spawn_id>SPAWN_ID_(\d+)</", body)
+            # `despawn_at_attack_state` says the add belongs to the fight and not to the world. 12,614
+            # of retail's 16,343 spawns carry it and 7,690 of those are permanent, so dropping it was
+            # every one of those staying on the ground once the fight ended.
+            transient = re.search(r"<despawn_at_attack_state>(\w+)</", body)
+            place = ("for_the_fight_" + place) if transient and transient.group(1).upper() == "TRUE"                 else place
             out.append(("spawn", npc_id, int(count.group(1)) if count else 1,
                         int(live.group(1)) if live else 0, place,
                         float(spot[0].group(1)) if spot[0] else 0.0,

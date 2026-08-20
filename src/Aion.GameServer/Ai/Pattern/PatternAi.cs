@@ -79,6 +79,15 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     private readonly int[] counters = new int[CounterSlots];
     private readonly Dictionary<int, List<Npc>> spawnGroups = new Dictionary<int, List<Npc>>();
 
+    /// <summary>Adds retail marks <c>despawn_at_attack_state</c>: they belong to the fight, not the world.</summary>
+    /// <remarks>
+    /// 12,614 of retail's 16,343 spawns carry the flag and <b>7,690 of those are permanent</b>
+    /// (<c>live_time=0</c>), so ignoring it is not a detail -- it is every one of those adds staying on
+    /// the ground forever once the fight is over. A boss that summons one a second and is fought for ten
+    /// minutes leaves six hundred behind.
+    /// </remarks>
+    private readonly List<Npc> transientSpawns = new List<Npc>();
+
     /// <summary>
     /// Everything the branch currently running has spawned, so a <c>broadcast_message</c> later in the
     /// same branch does not reach it.
@@ -443,6 +452,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     private void ResetPattern()
     {
+        List<Npc> leaving;
         lock (gate)
         {
             inCombat = false;
@@ -454,8 +464,14 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             CancelFlee();
             Array.Clear(flags);
             Array.Clear(counters);
+            leaving = new List<Npc>(transientSpawns);
+            transientSpawns.Clear();
             spawnGroups.Clear();
         }
+
+        // Outside the lock: deleting an npc runs its own controller, which takes other locks.
+        foreach (Npc npc in leaving)
+            Delete(npc);
     }
 
     // ---- branch evaluation -------------------------------------------------------------------
@@ -1258,9 +1274,14 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     /// <summary>Spawns one NPC per listed coordinate.</summary>
     public void SpawnAt(int npcId, int spawnId, int liveSeconds, params SpawnSpot[] spots)
+        => SpawnAt(npcId, spawnId, liveSeconds, false, spots);
+
+    /// <summary>As above, for a spawn retail marks <c>despawn_at_attack_state</c>.</summary>
+    public void SpawnAt(int npcId, int spawnId, int liveSeconds, bool untilFightEnds,
+        params SpawnSpot[] spots)
     {
         foreach (SpawnSpot spot in spots)
-            Track(spawnId, liveSeconds, Spawn(npcId, spot.X, spot.Y, spot.Z, spot.Heading));
+            Track(spawnId, liveSeconds, Spawn(npcId, spot.X, spot.Y, spot.Z, spot.Heading), untilFightEnds);
     }
 
     /// <summary>
@@ -1314,8 +1335,9 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Spawns around this NPC, scattered within <paramref name="range"/> metres.</summary>
-    public void SpawnNear(int npcId, int spawnId, int count, float range, int liveSeconds)
-        => SpawnAround(GetPosition(), npcId, spawnId, count, range, liveSeconds);
+    public void SpawnNear(int npcId, int spawnId, int count, float range, int liveSeconds,
+        bool untilFightEnds = false)
+        => SpawnAround(GetPosition(), npcId, spawnId, count, range, liveSeconds, untilFightEnds);
 
     /// <summary>
     /// <c>spawn ... SPAWN_LOCATION_MY_POINT</c> with retail's <c>dir</c>: at this NPC's feet, facing a
@@ -1623,19 +1645,21 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// had. Settling it needs observation of the live encounter, not more data.
     /// </para>
     /// </remarks>
-    public void SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds, float dz = 0f)
+    public void SpawnOffset(int npcId, int spawnId, float dx, float dy, int liveSeconds, float dz = 0f,
+        bool untilFightEnds = false)
     {
         WorldPosition at = GetPosition();
         Track(spawnId, liveSeconds,
             Spawn(npcId, at.GetX() + dx, at.GetY() + dy, at.GetZ() + dz, (sbyte)at.GetHeading()));
     }
 
-    private void SpawnAround(WorldPosition at, int npcId, int spawnId, int count, float range, int liveSeconds)
-        => SpawnAroundInto(null, at, npcId, spawnId, count, range, liveSeconds);
+    private void SpawnAround(WorldPosition at, int npcId, int spawnId, int count, float range,
+        int liveSeconds, bool untilFightEnds = false)
+        => SpawnAroundInto(null, at, npcId, spawnId, count, range, liveSeconds, untilFightEnds);
 
     /// <summary>The same, collecting what was placed for callers that have to do something with it.</summary>
     private void SpawnAroundInto(List<Npc>? placed, WorldPosition at, int npcId, int spawnId,
-        int count, float range, int liveSeconds)
+        int count, float range, int liveSeconds, bool untilFightEnds = false)
     {
         for (int i = 0; i < count; i++)
         {
@@ -1650,20 +1674,23 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             }
 
             VisibleObject? spawned = Spawn(npcId, x, y, at.GetZ(), (sbyte)at.GetHeading());
-            Track(spawnId, liveSeconds, spawned);
+            Track(spawnId, liveSeconds, spawned, untilFightEnds);
             if (placed != null && spawned is Npc npc)
                 placed.Add(npc);
         }
     }
 
     /// <summary>Files a spawn under its spawn id so a later <c>despawn</c> can find it.</summary>
-    private void Track(int spawnId, int liveSeconds, VisibleObject? spawned)
+    private void Track(int spawnId, int liveSeconds, VisibleObject? spawned,
+        bool untilFightEnds = false)
     {
         if (spawned is not Npc npc)
             return;
 
         lock (gate)
         {
+            if (untilFightEnds)
+                transientSpawns.Add(npc);
             if (!spawnGroups.TryGetValue(spawnId, out List<Npc>? group))
                 spawnGroups[spawnId] = group = new List<Npc>();
             group.Add(npc);
