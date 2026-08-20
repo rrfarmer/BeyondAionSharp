@@ -730,6 +730,13 @@ public static class Do
     /// <summary><c>say_to_all</c> / <c>broadcast_message</c>, by our own message id.</summary>
     public static PatternAction Say(int messageId, int delayMillis = 0) => ai => ai.Say(messageId, delayMillis);
 
+    /// <summary>
+    /// <c>display_system_message</c> — a line to everyone on the map instance. See
+    /// <see cref="PatternAi.SystemMessage"/> for why this is not <see cref="Say"/>.
+    /// </summary>
+    public static PatternAction SystemMessage(int messageId, int delayMillis = 0)
+        => ai => ai.SystemMessage(messageId, delayMillis);
+
     /// <summary><c>broadcast_message</c> — tells nearby NPCs of this encounter something happened.</summary>
     public static PatternAction Broadcast(int messageType, float range, bool aboutTarget = false,
         bool includeOwnSpawns = false)

@@ -106,7 +106,25 @@ def read_guards(block: str) -> list[str] | None:
     return out
 
 
-def read_actions(block: str, dev: dict[str, int], known: set[int]) -> list[tuple] | None:
+def string_ids(repo: pathlib.Path) -> dict[str, int]:
+    """Symbolic string id -> the number the client expects, from `out/string_ids.tsv`.
+
+    The client's own `strings.xml` resolves every one of the 3,492 the patterns use; this reads the
+    extracted subset rather than the 118MB original.
+    """
+    out: dict[str, int] = {}
+    path = repo / "tools/client-extract/out/string_ids.tsv"
+    if not path.exists():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines()[1:]:
+        fields = line.split("	")
+        if len(fields) >= 2 and fields[0].isdigit():
+            out[fields[1]] = int(fields[0])
+    return out
+
+
+def read_actions(block: str, dev: dict[str, int], known: set[int],
+                 strings: dict[str, int]) -> list[tuple] | None:
     """The branch's actions in order, or None if one cannot be said."""
     out: list[tuple] = []
     for element in re.finditer(r"<(\w+)>(.*?)</\1>", block, re.S):
@@ -142,6 +160,17 @@ def read_actions(block: str, dev: dict[str, int], known: set[int]) -> list[tuple
             out.append(("var", int(value.group(1)) if value else 0,
                         int(modify.group(1)) if modify else 0, 0,
                         name.group(1).strip(), 0.0, 0.0, 0.0))
+        elif kind in ("say_to_all", "display_system_message"):
+            # Both name a string symbolically; the client's table turns it into the number the packet
+            # carries. They are different packets -- a shout within fifty metres against a line to the
+            # whole instance -- and are kept apart.
+            named = re.search(r"<string_id>([^<]+)</string_id>", body)
+            message = strings.get(named.group(1).strip()) if named else None
+            if message is None:
+                return None
+            delay = re.search(r"<delay>(\d+)</delay>", body)
+            out.append(("say" if kind == "say_to_all" else "sysmsg", message,
+                        int(delay.group(1)) if delay else 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "broadcast_message":
@@ -170,6 +199,7 @@ def main() -> int:
           for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
     known = set(ai)
     dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
+    strings = string_ids(args.repo)
 
     # An npc some hand-ported encounter already models must not be taken over. Kalindi's dispel worm
     # is the case that proved it: its own retail pattern removes it after two seconds, `CalindiFlamelordAI`
@@ -222,7 +252,7 @@ def main() -> int:
                 if not actions_block:
                     continue
                 guards = read_guards(guards_block.group(1)) if guards_block else []
-                actions = read_actions(actions_block.group(1), dev, known)
+                actions = read_actions(actions_block.group(1), dev, known, strings)
                 if guards is None or actions is None or not actions:
                     # One branch this port cannot say makes the whole pattern unsafe: the branches are
                     # first-match-wins, so dropping a high-priority rung silently promotes the next.

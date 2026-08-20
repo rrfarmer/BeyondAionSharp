@@ -8,7 +8,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// A wave controller: wakes, waits, and then runs a guarded set of rungs on every tick of its cycle.
 /// </summary>
 /// <remarks>
-/// 59 retail patterns across 61 npcs, none of which ran here — every one was on a class that does
+/// 81 retail patterns across 83 npcs, none of which ran here — every one was on a class that does
 /// nothing with a timer. <see cref="IdleSpawns"/> covers the flat case, one unguarded rung that spawns
 /// and re-arms; these carry two to ten branches guarded by retail's flag idiom or a probability roll.
 /// <para>

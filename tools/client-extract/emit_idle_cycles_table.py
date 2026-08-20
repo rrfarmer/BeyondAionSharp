@@ -98,6 +98,10 @@ def action_code(row: dict) -> str:
         return f"Do.SetIdleTimer({row['a1']})"
     if kind == "var":
         return f'Do.SetSpawnVariable("{row["place"]}", {row["a1"]}, {row["a2"]})'
+    if kind == "say":
+        return f"Do.Say({row['a1']}, {row['a2']})"
+    if kind == "sysmsg":
+        return f"Do.SystemMessage({row['a1']}, {row['a2']})"
     if kind == "despawn_self":
         return "Do.DespawnSelf()"
     if kind == "broadcast":

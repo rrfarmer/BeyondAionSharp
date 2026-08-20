@@ -35140,3 +35140,41 @@ and the shouts that several encounters in this log were written without.
 - **Nothing consumes the table yet.** It is an artefact and a regen-checked one, but no emitter reads it.
 - **16 idle-cycle patterns with no wake-up delay**, unexamined.
 - **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.
+
+## The string table earns its keep: 22 more controllers, and 53 lines a raid should be reading
+
+With every string id resolved, the two message actions became sayable and the idle-cycle family jumped:
+
+| | before | after |
+|---|---|---|
+| patterns | 59 | **81** |
+| npcs | 61 | **83** |
+| actions | 969 | **1,607** |
+
+`display_system_message` needed one helper. This port already had both packets — `BroadcastMessage`
+(fifty metres, attributed to the NPC) and `BroadcastToMap` (the whole instance, attributed to nobody) —
+so `PatternAi.SystemMessage` is four lines beside `Say`. The controllers use the second far more:
+**53 system lines against 3 shouts**, which fits what they are. These are encounters telling a raid what
+just happened, not monsters talking.
+
+Remaining skips are 22 npcs an encounter already models, 16 with no wake-up delay, and **9** with a
+branch this port still cannot say — down from 31.
+
+### Two things not pinned, said plainly
+
+* **The difference between the two message forms.** A mutation that sends a system line as an NPC shout
+  **survives**: nothing in the harness observes packets, so the pins can only check that a message is
+  emitted with a resolved id, not which packet carries it. They are kept apart on the strength of the
+  retail elements being distinct.
+* **What a resolved id renders as.** The table carries no body text by design, so a wrong-but-valid id
+  would pin green. The pin that exists catches the failure that actually threatened — an unresolved name
+  emitting as zero and sending an empty line — because the extractor refuses the pattern instead.
+
+### Still missing
+
+- **9 patterns** with an unsayable branch, and **16** with no wake-up delay — the latter unexamined and
+  now the larger of the two.
+- **Nothing else reads `string_ids.tsv`.** The 932 `say_to_all` uses across the whole dump are now
+  resolvable, but only the 3 inside idle cycles are wired; the shouts several encounters in this log
+  were written without are still absent.
+- **`GAb1_PvPStatus`**, the **6,800 duplicate placements**, **`[SAVE]` persistence** — unchanged.

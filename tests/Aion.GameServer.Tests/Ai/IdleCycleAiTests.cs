@@ -1,3 +1,4 @@
+using System.IO;
 using System;
 using System.Linq;
 using Aion.GameServer.Handlers.AI;
@@ -9,7 +10,7 @@ namespace Aion.GameServer.Tests.Ai;
 /// Guarded, multi-branch idle cycles: the wave controllers that never ran here.
 /// </summary>
 /// <remarks>
-/// 59 retail patterns across 61 npcs, every one on a class that does nothing with a timer.
+/// 81 retail patterns across 83 npcs, every one on a class that does nothing with a timer.
 /// <c>IDForest_Wave_Phase1</c> below is the shape in miniature: retail's alternating-flag idiom, where
 /// each rung fires once and hands over to the next, and the last one arms zero to stop.
 /// </remarks>
@@ -102,7 +103,7 @@ public sealed class IdleCycleAiTests
 	[Fact]
 	public void EveryCycleHasBothHalves()
 	{
-		Assert.Equal(61, IdleCycles.WakeMillis.Count);
+		Assert.Equal(83, IdleCycles.WakeMillis.Count);
 
 		foreach ((int npcId, int delay) in IdleCycles.WakeMillis)
 		{
@@ -110,5 +111,44 @@ public sealed class IdleCycleAiTests
 			Assert.NotEmpty(IdleCycles.CycleRungsFor(npcId));
 			Assert.NotEmpty(IdleCycles.WakeRungFor(npcId));
 		}
+	}
+
+	/// <summary>
+	/// <b>Every message a cycle sends carries a real string id.</b>
+	/// </summary>
+	/// <remarks>
+	/// The ids come from the client's own <c>strings.xml</c> by way of
+	/// <c>tools/client-extract/out/string_ids.tsv</c>. A name that failed to resolve would emit as zero
+	/// and send an empty line rather than fail, which is the quiet failure worth a pin: the extractor
+	/// refuses the whole pattern instead, and this is what proves it.
+	/// </remarks>
+	[Fact]
+	public void EveryMessageCarriesARealStringId()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(), "tools", "client-extract", "out",
+			"idle_cycles.tsv");
+		int shouts = 0;
+		int systemLines = 0;
+
+		foreach (string line in File.ReadLines(path).Skip(1))
+		{
+			string[] fields = line.Split('	');
+			if (fields.Length < 15)
+				continue;
+
+			if (fields[6] is not ("say" or "sysmsg"))
+				continue;
+
+			Assert.True(int.Parse(fields[7]) > 0, $"unresolved string id in {fields[14]}");
+			if (fields[6] == "say")
+				shouts++;
+			else
+				systemLines++;
+		}
+
+		// A shout is spoken by the npc within fifty metres; a system line goes to the whole instance.
+		// Retail leans heavily on the second in these controllers.
+		Assert.Equal(3, shouts);
+		Assert.Equal(53, systemLines);
 	}
 }

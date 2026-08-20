@@ -1139,6 +1139,32 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             GetOwner().SetTarget(next);
     }
 
+    /// <summary>
+    /// <c>display_system_message</c> — a line to everyone on the map instance, not a line the NPC says.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from <see cref="Say"/> and not interchangeable with it. A shout is
+    /// <c>SM_SYSTEM_MESSAGE(ChatType.NPC, …)</c> broadcast within fifty metres and attributed to the
+    /// NPC; this is the plain form sent to the whole instance and attributed to nobody. Retail uses the
+    /// first 932 times and the second 375, and they read very differently in play: one is a monster
+    /// talking, the other is the encounter telling the raid what just happened.
+    /// <para>
+    /// The message ids come from the client's own <c>strings.xml</c> --
+    /// <c>tools/client-extract/out/string_ids.tsv</c> resolves all 3,492 the patterns use.
+    /// </para>
+    /// <para>
+    /// <b>The difference from <see cref="Say"/> is not pinned.</b> Swapping this for the shout form
+    /// changes which packet goes out and to whom, and nothing in the harness observes packets -- a
+    /// mutation that does exactly that survives. The two are kept apart on the strength of the retail
+    /// elements being distinct, not on a test, and that is worth knowing before trusting it.
+    /// </para>
+    /// </remarks>
+    public void SystemMessage(int messageId, int delayMillis = 0)
+    {
+        if (!IsDead())
+            PacketSendUtility.BroadcastToMap(GetOwner(), messageId, delayMillis);
+    }
+
     public void Say(int messageId, int delayMillis = 0)
     {
         if (!IsDead())
