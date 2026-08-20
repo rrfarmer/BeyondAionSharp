@@ -34388,3 +34388,41 @@ alphabetical list.
   `NpcAI` idle handling is the place to settle it, against the Java tree rather than the client.
 - **The 74 portable loops**, unstarted.
 - The beacon `use_skill` indices and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`, still open.
+
+## `set_idle_timer delay=0` means stop, and the first mechanic that needed the answer
+
+The previous entry guarded this question rather than answering it. Answered now, from the dump, because
+Java has no pattern engine to consult.
+
+### The evidence
+
+* **Retail has no cancel action.** The whole timer vocabulary is `add_battle_timer` and
+  `set_idle_timer`. If zero does not stop a cycle, nothing can.
+* **`Ab1_N_ControlNoShowNPC_08` settles it.** Two flag-guarded rungs each fire once and re-arm at 120
+  seconds; then an **unguarded** fallback prints the last message of a three-stage spawn alarm and arms
+  zero. Read as "next tick", that message repeats every tick for the life of the NPC — and **457 of the
+  1,006 zero re-arms are unguarded like it**.
+* **41 rungs carry zero as their only action.** A deliberate shutdown rung under this reading; a no-op
+  busy loop under the other.
+
+`PatternAi.SetIdleTimer` now disarms on a delay of zero, and its remark carries the evidence instead of
+the guess it had before. Two pins hold both directions, and the mutation restoring "next tick" dies.
+
+### The mechanic it was blocking
+
+**Twenty Panesterra soul anchor barriers**, all on plain `aggressive`. Each should wake, wait ten
+minutes, place a faction-balance npc on itself for ten seconds, and stop. `SoulAnchorBarrierAI` is the
+first class in this port to depend on the zero-delay answer: read the other way, every barrier in
+Panesterra would place one of these **per tick, forever**.
+
+A correction to two entries back: this was deferred as a *chain*, each controller spawning the next. It
+is not. All five retail patterns place the same npc — 702412 — whose own pattern has no idle timer, so
+nothing follows it. One wake, one wait, one spawn.
+
+### Still missing
+
+- **The other 21 zero-delay patterns**, now unblocked and unstarted, and the **74 real-delay loops**
+  from the previous entry.
+- The `use_skill` on the barrier wake-up rung, and its `on_attacked` system message — a string id this
+  port has no table for.
+- The beacon `use_skill` indices and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`, still open.

@@ -776,13 +776,30 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
 
     // ---- the idle timer ----------------------------------------------------------------------
 
-    /// <summary>Arms the single idle slot, replacing whatever was in it.</summary>
+    /// <summary>
+    /// Arms the single idle slot, replacing whatever was in it — or <b>disarms</b> it, for a delay of
+    /// zero.
+    /// </summary>
     /// <remarks>
     /// Deliberately not gated on combat, unlike <see cref="FireTimer"/>. Its whole purpose is the
     /// business around a fight rather than in it — a controller retiring once it has spawned its
-    /// wave, an orb calling out on a heartbeat — and half its uses are on NPCs that never fight at
-    /// all. A zero delay is retail's way of saying "next tick", so it is scheduled rather than run
-    /// inline; running it inline would evaluate a branch from inside the event that set it.
+    /// wave, an orb calling out on a heartbeat — and half its uses are on NPCs that never fight at all.
+    /// <para>
+    /// <b>A zero delay stops the timer.</b> This remark used to say it meant "next tick", which was a
+    /// guess, and it was wrong. Retail uses <c>set_idle_timer</c> 6,093 times; <b>1,090 carry
+    /// <c>delay=0</c> and 1,006 of those sit inside <c>on_idle_timer</c></b>, re-arming the timer that
+    /// just fired. Retail has no separate cancel action — only <c>add_battle_timer</c> and this — so
+    /// zero is the only way a pattern can stop a cycle it started.
+    /// </para>
+    /// <para>
+    /// What settles it is the shape of those rungs. <c>Ab1_N_ControlNoShowNPC_08</c> is a three-stage
+    /// spawn alarm: two flag-guarded rungs each fire once and re-arm at 120 seconds, and then an
+    /// <b>unguarded</b> fallback prints the last message and arms zero. Read as "next tick" that
+    /// message repeats every tick for the life of the NPC, and <b>457 of the 1,006 are unguarded like
+    /// it</b>. Read as "stop", the alarm ends after three stages, which is plainly what it is for.
+    /// A further 41 rungs carry zero as their <em>only</em> action, which is a deliberate shutdown rung
+    /// under this reading and a no-op busy loop under the other.
+    /// </para>
     /// </remarks>
     public void SetIdleTimer(int delayMillis)
     {
@@ -790,6 +807,10 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         {
             if (idleTimer != null && !idleTimer.IsDone())
                 idleTimer.Cancel(true);
+
+            idleTimer = null;
+            if (delayMillis <= 0)
+                return;
 
             idleTimer = ThreadPoolManager.GetInstance().Schedule(_ =>
             {
