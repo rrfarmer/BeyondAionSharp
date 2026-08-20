@@ -45,9 +45,14 @@ from extract_idle_cycles import read_actions, read_guards, string_ids  # noqa: E
 
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
-#: Only `general`, plus the class this table feeds. Everything else in the port either fights or is
-#: already spoken for, and the whole point of this table is npcs that do not fight.
-GENERIC = {"general", "passive_pattern"}
+#: `general`, the class this table feeds, and `wake_variable` -- which is `general` underneath.
+#:
+#: The wake table took the simple cases first, and **93 npcs on it were running a partial pattern**:
+#: their spawn-variable writes without the timer, message or despawn standing beside them. This table
+#: is authoritative wherever it can say more, and `extract_wake_variables` gives those patterns up.
+#: `wake_variable_aggressive` is deliberately absent -- those npcs fight, and there is no aggressive
+#: pattern class for them yet.
+GENERIC = {"general", "passive_pattern", "wake_variable"}
 
 HANDLERS = ["on_wake_up", "on_idle_timer"]
 
@@ -129,6 +134,20 @@ def main() -> int:
                 refused["a branch this port cannot say"] += 1
                 continue
             if not any(read.values()):
+                continue
+
+            # An npc already on the wake table only moves here if this says *more* about it. The two
+            # rules have to be the same rule read from both ends, or the tables overlap and every npc
+            # in the intersection is claimed twice -- which is how 390 of them ended up here when 93
+            # had anything to gain.
+            total = sum(len(a) for rungs in read.values() for _, _, _, a in rungs)
+            writes = sum(1 for rungs in read.values() for _, _, _, a in rungs
+                         for action in a if action[0] == "var")
+            # Unconditionally, not "unless the npc is currently on the wake table": both extractors
+            # have to reach the same verdict from the pattern alone, or the answer depends on which
+            # table happens to hold the npc today and a regeneration moves it back and forth.
+            if total <= writes:
+                refused["the wake table says as much about it"] += 1
                 continue
 
             patterns += 1

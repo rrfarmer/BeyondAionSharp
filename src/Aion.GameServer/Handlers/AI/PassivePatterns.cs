@@ -7,7 +7,7 @@ using Aion.GameServer.Ai.Pattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Full patterns for npcs that do not fight: 425 patterns across 462 npcs, 2062 actions.
+/// Full patterns for npcs that do not fight: 486 patterns across 548 npcs, 2355 actions.
 /// </summary>
 /// <remarks>
 /// Flags, wave controllers and scenery. <see cref="WakeVariables"/> took the ones whose whole behaviour
@@ -40,6 +40,7 @@ internal static class PassivePatterns
         OnWakeUp2(rungs);
         OnWakeUp3(rungs);
         OnWakeUp4(rungs);
+        OnWakeUp5(rungs);
         return rungs;
     }
 
@@ -49,6 +50,26 @@ internal static class PassivePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(342684, 0),
                 Do.Say(342685, 0)),
+        ];
+        rungs[205654] = [  // IDArena_Solo_RoundNPC_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2A", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[205655] = [  // IDArena_Solo_RoundNPC_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2B", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[205658] = [  // IDArena_Solo_RoundNPC_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S3A", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[205659] = [  // IDArena_Solo_RoundNPC_6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S3B", 1, 0),
+                Do.DespawnSelf()),
         ];
         rungs[205662] = [  // IDArena_Solo_RoundNPC_9
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -116,14 +137,39 @@ internal static class PassivePatterns
                 Do.Broadcast(7203, 100f),
                 Do.SetIdleTimer(5000)),
         ];
+        rungs[207106] = [  // IDArena_Team01_S2_Noshown_for_track_open
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("s2_track", 0, 1),
+                Do.DespawnSelf()),
+        ];
         rungs[207107] = [  // IDArena_Team01_S2_Noshown_for_track_close
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(13500, 50f),
                 Do.DespawnSelf()),
         ];
+        rungs[207110] = [  // IDArena_Team01_S2_Noshown_for_track_set
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("s2_track", 0, -3),
+                Do.DespawnSelf()),
+        ];
+        rungs[207113] = [  // IDArena_Team01_S1_Noshown_for_lever_open
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("s1_lever", 0, 1),
+                Do.DespawnSelf()),
+        ];
         rungs[207114] = [  // IDArena_Team01_S1_Noshown_for_lever_close
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(1013, 50f),
+                Do.DespawnSelf()),
+        ];
+        rungs[207115] = [  // IDArena_Team01_S1_Noshown_for_lever_set
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("s1_lever", 0, -1),
+                Do.DespawnSelf()),
+        ];
+        rungs[207124] = [  // IDF5_TD_Wave_NPC
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_Z1", 0, 1),
                 Do.DespawnSelf()),
         ];
         rungs[217372] = [  // Station_HugenNM_Sum2
@@ -597,6 +643,10 @@ internal static class PassivePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Broadcast(11302, 200f)),
         ];
+    }
+
+    private static void OnWakeUp1(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282251] = [  // wave_lapbomb_die
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Broadcast(11302, 200f)),
@@ -641,10 +691,6 @@ internal static class PassivePatterns
                 Do.SpawnNearForTheFight(282982, Untracked, 1, 0f, 120),
                 Do.DespawnSelf()),
         ];
-    }
-
-    private static void OnWakeUp1(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282538] = [  // IDYun_Temp_05
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(282983, Untracked, 1, 0f, 120),
@@ -1097,6 +1143,10 @@ internal static class PassivePatterns
                 Do.SetSpawnVariable("door01", 1, 0),
                 Do.Broadcast(25400, 50f)),
         ];
+    }
+
+    private static void OnWakeUp2(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297557] = [  // LDF5_Fortress_Barricade_Ctrl
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetIdleTimer(6000),
@@ -1141,10 +1191,6 @@ internal static class PassivePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SystemMessage(1402731, 0)),
         ];
-    }
-
-    private static void OnWakeUp2(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297592] = [  // AB1_DoorOpenObj_Li_02_KJS
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SystemMessage(1402731, 0)),
@@ -1243,6 +1289,168 @@ internal static class PassivePatterns
                 Do.SystemMessage(1402086, 0),
                 Do.SetIdleTimer(3000)),
         ];
+        rungs[702045] = [  // IDAB_Reward_Item_NoShowNPC_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tbox_01", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702046] = [  // IDAB_Reward_Item_NoShowNPC_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tbox_02", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702047] = [  // IDAB_Reward_Item_NoShowNPC_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tbox_03", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702048] = [  // IDAB_Reward_Item_NoShowNPC_04
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tbox_04", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702049] = [  // IDAB_Reward_Item_NoShowNPC_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tbox_05", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702096] = [  // AB1_Castle_1221_MistOn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_CASTLE_1221", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702097] = [  // AB1_Castle_1221_MistOff
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_CASTLE_1221", 2, 0),
+                Do.SetSpawnVariable("1221_Mercenary01", 2, 0),
+                Do.SetSpawnVariable("1221_Mercenary02", 2, 0),
+                Do.SetSpawnVariable("1221_Mercenary03", 2, 0),
+                Do.SetSpawnVariable("1221_Mercenary04", 2, 0),
+                Do.SetSpawnVariable("1221_Mercenary05", 2, 0),
+                Do.SetSpawnVariable("1221_Mercenary06", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702098] = [  // AB1_Castle_1231_MistOn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_CASTLE_1231", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702099] = [  // AB1_Castle_1231_MistOff
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_CASTLE_1231", 2, 0),
+                Do.SetSpawnVariable("1231_Mercenary01", 2, 0),
+                Do.SetSpawnVariable("1231_Mercenary02", 2, 0),
+                Do.SetSpawnVariable("1231_Mercenary03", 2, 0),
+                Do.SetSpawnVariable("1231_Mercenary04", 2, 0),
+                Do.SetSpawnVariable("1231_Mercenary05", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702100] = [  // AB1_Castle_1241_MistOn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_CASTLE_1241", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702101] = [  // AB1_Castle_1241_MistOff
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_CASTLE_1241", 2, 0),
+                Do.SetSpawnVariable("1241_Mercenary01", 2, 0),
+                Do.SetSpawnVariable("1241_Mercenary02", 2, 0),
+                Do.SetSpawnVariable("1241_Mercenary03", 2, 0),
+                Do.SetSpawnVariable("1241_Mercenary04", 2, 0),
+                Do.SetSpawnVariable("1241_Mercenary05", 2, 0),
+                Do.SetSpawnVariable("1241_Mercenary06", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702102] = [  // AB1_Artifact_1401_Light
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1401", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702103] = [  // AB1_Artifact_1401_Dark
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1401", 3, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702104] = [  // AB1_Artifact_1401_Dragon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1401", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702105] = [  // AB1_Artifact_1402_Light
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1402", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702106] = [  // AB1_Artifact_1402_Dark
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1402", 3, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702107] = [  // AB1_Artifact_1402_Dragon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1402", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702108] = [  // AB1_Artifact_1403_Light
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1403", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702109] = [  // AB1_Artifact_1403_Dark
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1403", 3, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702110] = [  // AB1_Artifact_1403_Dragon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("AB1_ARTIFACT_1403", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702111] = [  // AB1_Castle_1221_Occupy_Dragon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1221", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702112] = [  // AB1_Castle_1221_Occupy_Light
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1221", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702113] = [  // AB1_Castle_1221_Occupy_Dark
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1221", 3, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702114] = [  // AB1_Castle_1231_Occupy_Dragon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1231", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702115] = [  // AB1_Castle_1231_Occupy_Light
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1231", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702116] = [  // AB1_Castle_1231_Occupy_Dark
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1231", 3, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702117] = [  // AB1_Castle_1241_Occupy_Dragon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1241", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702118] = [  // AB1_Castle_1241_Occupy_Light
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1241", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702119] = [  // AB1_Castle_1241_Occupy_Dark
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("1241", 3, 0),
+                Do.DespawnSelf()),
+        ];
         rungs[702216] = [  // IDF5_U3_Boss_Portal_Destroy
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SystemMessage(1403146, 0)),
@@ -1250,6 +1458,62 @@ internal static class PassivePatterns
         rungs[702286] = [  // IDF5_U3_TEMP_10
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Broadcast(22598, 70f),
+                Do.DespawnSelf()),
+        ];
+        rungs[702307] = [  // Gab1_SetCond_Noshow_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tur13", 21, 0),
+                Do.SetSpawnVariable("Tur14", 21, 0),
+                Do.SetSpawnVariable("Tur15", 21, 0),
+                Do.SetSpawnVariable("Tur16", 21, 0),
+                Do.SetSpawnVariable("Tur17", 21, 0),
+                Do.SetSpawnVariable("Tur18", 21, 0),
+                Do.SetSpawnVariable("Tur19", 21, 0),
+                Do.SetSpawnVariable("Tur20", 21, 0),
+                Do.SetSpawnVariable("Tur21", 21, 0),
+                Do.SetSpawnVariable("Tur22", 21, 0),
+                Do.SetSpawnVariable("Tur23", 21, 0),
+                Do.SetSpawnVariable("Tur24", 21, 0),
+                Do.SetSpawnVariable("Tur25", 21, 0),
+                Do.SetSpawnVariable("Tur26", 21, 0),
+                Do.SetSpawnVariable("Tur27", 21, 0),
+                Do.SetSpawnVariable("Tur28", 21, 0),
+                Do.SetSpawnVariable("Tur29", 21, 0),
+                Do.SetSpawnVariable("Tur30", 21, 0),
+                Do.SetSpawnVariable("Tur31", 21, 0),
+                Do.SetSpawnVariable("Tur32", 21, 0),
+                Do.SetSpawnVariable("Tur33", 21, 0),
+                Do.SetSpawnVariable("Tur34", 21, 0),
+                Do.SetSpawnVariable("Tur35", 21, 0),
+                Do.SetSpawnVariable("Tur36", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702326] = [  // Gab1_SetCond_Noshow_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Tur13", 21, 0),
+                Do.SetSpawnVariable("Tur14", 21, 0),
+                Do.SetSpawnVariable("Tur15", 21, 0),
+                Do.SetSpawnVariable("Tur16", 21, 0),
+                Do.SetSpawnVariable("Tur17", 21, 0),
+                Do.SetSpawnVariable("Tur18", 21, 0),
+                Do.SetSpawnVariable("Tur19", 21, 0),
+                Do.SetSpawnVariable("Tur20", 21, 0),
+                Do.SetSpawnVariable("Tur21", 21, 0),
+                Do.SetSpawnVariable("Tur22", 21, 0),
+                Do.SetSpawnVariable("Tur23", 21, 0),
+                Do.SetSpawnVariable("Tur24", 21, 0),
+                Do.SetSpawnVariable("Tur25", 21, 0),
+                Do.SetSpawnVariable("Tur26", 21, 0),
+                Do.SetSpawnVariable("Tur27", 21, 0),
+                Do.SetSpawnVariable("Tur28", 21, 0),
+                Do.SetSpawnVariable("Tur29", 21, 0),
+                Do.SetSpawnVariable("Tur30", 21, 0),
+                Do.SetSpawnVariable("Tur31", 21, 0),
+                Do.SetSpawnVariable("Tur32", 21, 0),
+                Do.SetSpawnVariable("Tur33", 21, 0),
+                Do.SetSpawnVariable("Tur34", 21, 0),
+                Do.SetSpawnVariable("Tur35", 21, 0),
+                Do.SetSpawnVariable("Tur36", 21, 0),
                 Do.DespawnSelf()),
         ];
         rungs[702328] = [  // Gab1_Boss_Noshow_01
@@ -1363,6 +1627,46 @@ internal static class PassivePatterns
                 Do.SetSpawnVariable("WORLDRAID_09", 1, 0),
                 Do.SystemMessage(1402383, 0)),
         ];
+        rungs[702570] = [  // WorldRaid_CTRL_1_3_Initial
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("WORLDRAID_01", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_02", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_03", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702571] = [  // WorldRaid_CTRL_1_5_Initial
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("WORLDRAID_01", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_02", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_03", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_04", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_05", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702572] = [  // WorldRaid_CTRL_1_7_Initial
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("WORLDRAID_01", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_02", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_03", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_04", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_05", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_06", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_07", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[702573] = [  // WorldRaid_CTRL_1_9_Initial
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("WORLDRAID_01", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_02", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_03", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_04", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_05", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_06", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_07", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_08", 2, 0),
+                Do.SetSpawnVariable("WORLDRAID_09", 2, 0),
+                Do.DespawnSelf()),
+        ];
         rungs[702588] = [  // IDF5_U3_TEMP_06
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SystemMessage(1402202, 0)),
@@ -1406,6 +1710,170 @@ internal static class PassivePatterns
                 Do.SetSpawnVariable("IDF5_R2_Victim", 1, 0),
                 Do.SetIdleTimer(30000)),
         ];
+        rungs[731161] = [  // Gab1_Arti_Noshow_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v05", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731162] = [  // Gab1_Arti_Noshow_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v06", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731163] = [  // Gab1_Arti_Noshow_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v07", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731164] = [  // Gab1_Arti_Noshow_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731165] = [  // Gab1_Arti_Noshow_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v09", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731166] = [  // Gab1_Arti_Noshow_6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v10", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731167] = [  // Gab1_Arti_Noshow_7
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v11", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731168] = [  // Gab1_Arti_Noshow_8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v12", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731169] = [  // Gab1_Arti_Noshow_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v05", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731170] = [  // Gab1_Arti_Noshow_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v06", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731171] = [  // Gab1_Arti_Noshow_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v07", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731172] = [  // Gab1_Arti_Noshow_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731173] = [  // Gab1_Arti_Noshow_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v09", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731174] = [  // Gab1_Arti_Noshow_6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v10", 21, 0),
+                Do.DespawnSelf()),
+        ];
+    }
+
+    private static void OnWakeUp3(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[731175] = [  // Gab1_Arti_Noshow_7
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v11", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731176] = [  // Gab1_Arti_Noshow_8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v12", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731177] = [  // Gab1_Arti_Noshow_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v05", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731178] = [  // Gab1_Arti_Noshow_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v06", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731179] = [  // Gab1_Arti_Noshow_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v07", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731180] = [  // Gab1_Arti_Noshow_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731181] = [  // Gab1_Arti_Noshow_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v09", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731182] = [  // Gab1_Arti_Noshow_6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v10", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731183] = [  // Gab1_Arti_Noshow_7
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v11", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731184] = [  // Gab1_Arti_Noshow_8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v12", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731185] = [  // Gab1_Arti_Noshow_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v05", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731186] = [  // Gab1_Arti_Noshow_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v06", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731187] = [  // Gab1_Arti_Noshow_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v07", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731188] = [  // Gab1_Arti_Noshow_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731189] = [  // Gab1_Arti_Noshow_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v09", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731190] = [  // Gab1_Arti_Noshow_6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v10", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731191] = [  // Gab1_Arti_Noshow_7
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v11", 21, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[731192] = [  // Gab1_Arti_Noshow_8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v12", 21, 0),
+                Do.DespawnSelf()),
+        ];
         rungs[800160] = [  // LDF4b_Tiamat_Temp54
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SetIdleTimer(30000)),
@@ -1446,6 +1914,62 @@ internal static class PassivePatterns
         rungs[831748] = [  // IDASteria_IU_world_inviNPC01
             AiPattern.Branch(7, "rung 0", [When.FirstTime(5)],
                 Do.SetSpawnVariable("Condition_TALK", 0, 1),
+                Do.DespawnSelf()),
+        ];
+        rungs[831939] = [  // IDF5_TD_War_v07_lever_01_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v07_BOMB_01", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831940] = [  // IDF5_TD_War_v07_lever_02_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v07_BOMB_02", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831941] = [  // IDF5_TD_War_v08_lever_01_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08_BOMB_01", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831942] = [  // IDF5_TD_War_v08_lever_02_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08_BOMB_02", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831943] = [  // IDF5_TD_War_v08_lever_03_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("v08_BOMB_03", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831970] = [  // IDF5_TD_War_S_01_01_lever_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("BOMB_S_01_01", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831971] = [  // IDF5_TD_War_S_01_02_lever_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("BOMB_S_01_02", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831972] = [  // IDF5_TD_War_S_02_01_lever_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("BOMB_S_02_01", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831973] = [  // IDF5_TD_War_S_02_02_lever_OFF
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("BOMB_S_02_02", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        rungs[831974] = [  // IDF5_TD_War_Suffly_Con_OFF
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("TIME_05", 2, 0),
+                Do.SetSpawnVariable("TIME_10", 2, 0),
+                Do.SetSpawnVariable("TIME_15", 2, 0),
+                Do.SetSpawnVariable("TIME_20", 2, 0),
+                Do.SetSpawnVariable("TIME_25", 2, 0),
+                Do.SetSpawnVariable("TIME_30", 2, 0),
+                Do.SetSpawnVariable("TIME_35", 2, 0),
                 Do.DespawnSelf()),
         ];
         rungs[831975] = [  // IDF5_TD_War_SupplyTimer
@@ -1532,6 +2056,10 @@ internal static class PassivePatterns
         rungs[855230] = [  // Gab1_Sub_Temp_01
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SetIdleTimer(30000)),
+        ];
+        rungs[855259] = [  // LDF4_Advance_condor_dr_named
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSet_1_1_22", 1, 0)),
         ];
         rungs[855372] = [  // LDF4_Advance_Killer_01
             AiPattern.Branch(7, "rung 0", When.Always,
@@ -1712,10 +2240,6 @@ internal static class PassivePatterns
                 Do.Broadcast(30030, 50f),
                 Do.SetIdleTimer(13000)),
         ];
-    }
-
-    private static void OnWakeUp3(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855416] = [  // LDF4_Scorpion_LV2
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(30031, 50f),
@@ -1787,6 +2311,10 @@ internal static class PassivePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SetIdleTimer(60000)),
         ];
+    }
+
+    private static void OnWakeUp4(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855471] = [  // IDSeal_Guardian_Timer_11
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SetIdleTimer(60000)),
@@ -2438,10 +2966,6 @@ internal static class PassivePatterns
             AiPattern.Branch(600, "rung 4", [When.FirstTime(0)],
                 Do.SetIdleTimer(45000)),
         ];
-    }
-
-    private static void OnWakeUp4(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[856304] = [  // Legion_Scarecrow_SpawnNPC
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.SpawnAtForTheFight(856305, Untracked, 240, new SpawnSpot(0.0f, 0.0f, 0.0f)),
@@ -2554,6 +3078,10 @@ internal static class PassivePatterns
                 Do.SpawnAt(236669, Untracked, 600, new SpawnSpot(711.0f, 2031.0f, 341.0f)),
                 Do.SpawnAt(236670, Untracked, 600, new SpawnSpot(2063.0f, 1630.0f, 355.0f))),
         ];
+    }
+
+    private static void OnWakeUp5(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[856471] = [  // F4_Rotation_Treasure_Hide_Ctrl_L
             AiPattern.Branch(10, "rung 0", [When.Chance(20)],
                 Do.SpawnAt(236420, Untracked, 600, new SpawnSpot(812.0f, 454.0f, 529.0f)),
@@ -3405,12 +3933,6 @@ internal static class PassivePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(6161663, 30f)),
         ];
-        rungs[832906] = [  // IDLDF5_Under_02_Teleport_01
-            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
-                Do.SetSpawnVariable("cBox", 1, 0),
-                Do.SetSpawnVariable("cSetGameStart", 1, 0),
-                Do.SetSpawnVariable("chkSN", 1, 0)),
-        ];
         rungs[833488] = [  // Legion_02_312
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.Say(1501356, 0),
@@ -3425,6 +3947,49 @@ internal static class PassivePatterns
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.Say(1501160, 0),
                 Do.DespawnSelf()),
+        ];
+        rungs[855259] = [  // LDF4_Advance_condor_dr_named
+            AiPattern.Branch(20, "rung 0", [When.Counting(0, 1, 2, true)],
+                Do.SetIdleTimer(300000),
+                Do.SystemMessage(1402454, 0)),
+            AiPattern.Branch(19, "rung 1", [When.Counting(0, 2, 3, true)],
+                Do.SetIdleTimer(300000),
+                Do.SystemMessage(1402455, 0)),
+            AiPattern.Branch(18, "rung 2", [When.Counting(0, 3, 4, true)],
+                Do.SetIdleTimer(300000),
+                Do.SystemMessage(1402456, 0)),
+            AiPattern.Branch(17, "rung 3", [When.Counting(0, 4, 5, true)],
+                Do.SetIdleTimer(120000),
+                Do.SystemMessage(1402457, 0)),
+            AiPattern.Branch(16, "rung 4", [When.Counting(0, 5, 6, true)],
+                Do.SetIdleTimer(60000),
+                Do.SystemMessage(1402458, 0)),
+            AiPattern.Branch(15, "rung 5", [When.Counting(0, 6, 7, true)],
+                Do.SetIdleTimer(1000),
+                Do.SystemMessage(1402461, 0)),
+            AiPattern.Branch(14, "rung 6", [When.Counting(0, 7, 8, true)],
+                Do.SetSpawnVariable("cSet_1_1_1", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_2", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_3", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_4", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_5", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_6", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_7", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_8", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_9", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_10", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_11", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_12", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_13", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_14", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_15", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_16", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_17", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_18", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_19", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_20", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_21", 3, 0),
+                Do.SetSpawnVariable("cSet_1_1_22", 3, 0)),
         ];
         rungs[855372] = [  // LDF4_Advance_Killer_01
             AiPattern.Branch(7, "rung 0", [When.Counting(0, 0, 1, true)],

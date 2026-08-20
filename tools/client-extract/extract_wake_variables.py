@@ -51,11 +51,24 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 from audit_idle_spawns import flatten  # noqa: E402
+from client_npc_names import npc_names  # noqa: E402
+from extract_idle_cycles import string_ids  # noqa: E402
+import extract_passive_patterns as PP  # noqa: E402
 
 #: `general` and `aggressive`, each of which keeps what it is. The binder picks the class from the npc's
 #: current one -- `wake_variable` descends from `GeneralNpcAI` and `wake_variable_aggressive` from
 #: `AggressiveNpcAI` -- so neither group gains or loses aggression by acquiring a job.
-GENERIC = {"general", "aggressive", "wake_variable", "wake_variable_aggressive"}
+#: `passive_pattern` is listed too, so a re-run sees the npcs that table took and re-decides on the
+#: same evidence rather than on which table happens to hold them today. The split between the two is
+#: made by the "does the other table say more" rule below, and it has to reach the same answer whichever
+#: side the npc is sitting on, or a regeneration moves npcs back and forth for ever.
+GENERIC = {"general", "aggressive", "wake_variable", "wake_variable_aggressive", "passive_pattern"}
+
+#: The classes that fight. An npc on one of these keeps its writes here however rich its pattern is,
+#: because the passive pattern table would take its aggression away and there is no aggressive pattern
+#: class for it yet. Everything else is decided by the pattern rather than by whichever table currently
+#: holds the npc -- key the rule on the class and a regeneration moves npcs back and forth for ever.
+AGGRESSIVE_BASED = {"aggressive", "wake_variable_aggressive"}
 
 
 def main() -> int:
@@ -70,6 +83,9 @@ def main() -> int:
     templates = A.read_text(args.repo / "game-server/data/static_data/npcs/npc_templates.xml")
     ai = {int(m.group(1)): m.group(2)
           for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
+
+    dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
+    strings = string_ids(args.repo)
 
     spoken_for: set[int] = set()
     for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
@@ -136,8 +152,17 @@ def main() -> int:
             if not writes:
                 continue
 
+            # If the passive pattern table can say the whole pattern and that is more than these
+            # writes, it takes the npc: running the writes alone leaves the timer, the message or the
+            # despawn beside them unported, which reads as done and is not. Aggressive owners stay
+            # here regardless, there being no aggressive pattern class for them.
+            full = {h: PP.read_handler(body, h, dev, ai.keys(), strings) for h in PP.HANDLERS}
+            richer = (not any(v is None for v in full.values())
+                      and sum(len(a) for v in full.values() for _, _, _, a in v) > len(writes))
+
             owners = [n for n in binders.get(named.group(1), [])
-                      if ai.get(n) in GENERIC and n not in spoken_for]
+                      if ai.get(n) in GENERIC and n not in spoken_for
+                      and not (richer and ai.get(n) not in AGGRESSIVE_BASED)]
             if not owners:
                 # About our data rather than retail's: the npc is either absent here or already
                 # modelled by an encounter class that must keep it.

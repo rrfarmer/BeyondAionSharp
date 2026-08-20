@@ -5,7 +5,7 @@
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Spawn variables retail sets simply by an npc existing: 376 patterns, 724 npcs, 1067 writes.
+/// Spawn variables retail sets simply by an npc existing: 315 patterns, 637 npcs, 891 writes.
 /// </summary>
 /// <remarks>
 /// The conditional spawn engine reads 1,201 distinct variables across 21,096 gated placements, and the
@@ -37,17 +37,8 @@ internal static class WakeVariables
     private static readonly IReadOnlyDictionary<int, Write[]> ByNpc = new Dictionary<int, Write[]>
     {
         [205432] = [new Write("STAGE", 9, 0)],  // IDArena_S10_MC_Start
-        [205654] = [new Write("Condition_S2A", 1, 0)],  // IDArena_Solo_RoundNPC_1
-        [205655] = [new Write("Condition_S2B", 1, 0)],  // IDArena_Solo_RoundNPC_2
-        [205658] = [new Write("Condition_S3A", 1, 0)],  // IDArena_Solo_RoundNPC_5
-        [205659] = [new Write("Condition_S3B", 1, 0)],  // IDArena_Solo_RoundNPC_6
         [207011] = [new Write("5011_L", 1, 0)],  // Test_NPC_Jun01
         [207012] = [new Write("5011_L", -1, 0), new Write("5011_D", -1, 0)],  // Test_NPC_Jun02
-        [207106] = [new Write("s2_track", 0, 1)],  // IDArena_Team01_S2_Noshown_for_track_open
-        [207110] = [new Write("s2_track", 0, -3)],  // IDArena_Team01_S2_Noshown_for_track_set
-        [207113] = [new Write("s1_lever", 0, 1)],  // IDArena_Team01_S1_Noshown_for_lever_open
-        [207115] = [new Write("s1_lever", 0, -1)],  // IDArena_Team01_S1_Noshown_for_lever_set
-        [207124] = [new Write("Wave_Z1", 0, 1)],  // IDF5_TD_Wave_NPC
         [216846] = [new Write("DF4_D_WINDBOX_ON", 2, 0)],  // DF4_WindBox1
         [231598] = [new Write("LF2_1_Killer", 1, 0)],  // LF2_1_KillerCtrl
         [231599] = [new Write("LF2_2_Killer", 1, 0)],  // LF2_2_KillerCtrl
@@ -257,11 +248,6 @@ internal static class WakeVariables
         [702006] = [new Write("EastWest", 1, 0)],  // IDLDF5_Under_01_War_MSG_06
         [702007] = [new Write("Drakan", 1, 0)],  // IDLDF5_Under_01_War_MSG_07
         [702008] = [new Write("Drakan", 1, 0)],  // IDLDF5_Under_01_War_MSG_08
-        [702045] = [new Write("Tbox_01", 1, 0)],  // IDAB_Reward_Item_NoShowNPC_01
-        [702046] = [new Write("Tbox_02", 1, 0)],  // IDAB_Reward_Item_NoShowNPC_02
-        [702047] = [new Write("Tbox_03", 1, 0)],  // IDAB_Reward_Item_NoShowNPC_03
-        [702048] = [new Write("Tbox_04", 1, 0)],  // IDAB_Reward_Item_NoShowNPC_04
-        [702049] = [new Write("Tbox_05", 1, 0)],  // IDAB_Reward_Item_NoShowNPC_05
         [702054] = [new Write("RewardLight_1_3_05", 1, 0)],  // IDF5_U1_War_01_NoShowNPC_Base01_05_1
         [702055] = [new Write("RewardDark_1_3_05", 1, 0)],  // IDF5_U1_War_01_NoShowNPC_Base01_05_2
         [702056] = [new Write("RewardDrakan_1_3_05", 1, 0)],  // IDF5_U1_War_01_NoShowNPC_Base01_05_3
@@ -292,30 +278,6 @@ internal static class WakeVariables
         [702081] = [new Write("RewardLight_1_2_15", 1, 0)],  // IDF5_U1_War_01_NoShowNPC_Base01_15_10
         [702082] = [new Write("RewardDark_1_2_15", 1, 0)],  // IDF5_U1_War_01_NoShowNPC_Base01_15_11
         [702083] = [new Write("RewardDrakan_1_2_15", 1, 0)],  // IDF5_U1_War_01_NoShowNPC_Base01_15_12
-        [702096] = [new Write("AB1_CASTLE_1221", 1, 0)],  // AB1_Castle_1221_MistOn
-        [702097] = [new Write("AB1_CASTLE_1221", 2, 0), new Write("1221_Mercenary01", 2, 0), new Write("1221_Mercenary02", 2, 0), new Write("1221_Mercenary03", 2, 0), new Write("1221_Mercenary04", 2, 0), new Write("1221_Mercenary05", 2, 0), new Write("1221_Mercenary06", 2, 0)],  // AB1_Castle_1221_MistOff
-        [702098] = [new Write("AB1_CASTLE_1231", 1, 0)],  // AB1_Castle_1231_MistOn
-        [702099] = [new Write("AB1_CASTLE_1231", 2, 0), new Write("1231_Mercenary01", 2, 0), new Write("1231_Mercenary02", 2, 0), new Write("1231_Mercenary03", 2, 0), new Write("1231_Mercenary04", 2, 0), new Write("1231_Mercenary05", 2, 0)],  // AB1_Castle_1231_MistOff
-        [702100] = [new Write("AB1_CASTLE_1241", 1, 0)],  // AB1_Castle_1241_MistOn
-        [702101] = [new Write("AB1_CASTLE_1241", 2, 0), new Write("1241_Mercenary01", 2, 0), new Write("1241_Mercenary02", 2, 0), new Write("1241_Mercenary03", 2, 0), new Write("1241_Mercenary04", 2, 0), new Write("1241_Mercenary05", 2, 0), new Write("1241_Mercenary06", 2, 0)],  // AB1_Castle_1241_MistOff
-        [702102] = [new Write("AB1_ARTIFACT_1401", 2, 0)],  // AB1_Artifact_1401_Light
-        [702103] = [new Write("AB1_ARTIFACT_1401", 3, 0)],  // AB1_Artifact_1401_Dark
-        [702104] = [new Write("AB1_ARTIFACT_1401", 1, 0)],  // AB1_Artifact_1401_Dragon
-        [702105] = [new Write("AB1_ARTIFACT_1402", 2, 0)],  // AB1_Artifact_1402_Light
-        [702106] = [new Write("AB1_ARTIFACT_1402", 3, 0)],  // AB1_Artifact_1402_Dark
-        [702107] = [new Write("AB1_ARTIFACT_1402", 1, 0)],  // AB1_Artifact_1402_Dragon
-        [702108] = [new Write("AB1_ARTIFACT_1403", 2, 0)],  // AB1_Artifact_1403_Light
-        [702109] = [new Write("AB1_ARTIFACT_1403", 3, 0)],  // AB1_Artifact_1403_Dark
-        [702110] = [new Write("AB1_ARTIFACT_1403", 1, 0)],  // AB1_Artifact_1403_Dragon
-        [702111] = [new Write("1221", 1, 0)],  // AB1_Castle_1221_Occupy_Dragon
-        [702112] = [new Write("1221", 2, 0)],  // AB1_Castle_1221_Occupy_Light
-        [702113] = [new Write("1221", 3, 0)],  // AB1_Castle_1221_Occupy_Dark
-        [702114] = [new Write("1231", 1, 0)],  // AB1_Castle_1231_Occupy_Dragon
-        [702115] = [new Write("1231", 2, 0)],  // AB1_Castle_1231_Occupy_Light
-        [702116] = [new Write("1231", 3, 0)],  // AB1_Castle_1231_Occupy_Dark
-        [702117] = [new Write("1241", 1, 0)],  // AB1_Castle_1241_Occupy_Dragon
-        [702118] = [new Write("1241", 2, 0)],  // AB1_Castle_1241_Occupy_Light
-        [702119] = [new Write("1241", 3, 0)],  // AB1_Castle_1241_Occupy_Dark
         [702263] = [new Write("Wave_01_Boss", 0, 1)],  // IDF5_TD_Wave_01_Up
         [702264] = [new Write("Wave_02_Boss", 0, 1)],  // IDF5_TD_Wave_02_Up
         [702265] = [new Write("Wave_03_Boss", 0, 1)],  // IDF5_TD_Wave_03_Up
@@ -324,8 +286,6 @@ internal static class WakeVariables
         [702271] = [new Write("castle_gate_02_Bomb", 2, 0)],  // IDF5_TD_Castle_gate_02_Bomb
         [702272] = [new Write("castle_gate_03_Bomb", 1, 0)],  // IDF5_TD_Castle_gate_03_Bomb
         [702273] = [new Write("TimeWave_Down", 0, -1)],  // IDF5_TD_TimeWave_Down
-        [702307] = [new Write("Tur13", 21, 0), new Write("Tur14", 21, 0), new Write("Tur15", 21, 0), new Write("Tur16", 21, 0), new Write("Tur17", 21, 0), new Write("Tur18", 21, 0), new Write("Tur19", 21, 0), new Write("Tur20", 21, 0), new Write("Tur21", 21, 0), new Write("Tur22", 21, 0), new Write("Tur23", 21, 0), new Write("Tur24", 21, 0), new Write("Tur25", 21, 0), new Write("Tur26", 21, 0), new Write("Tur27", 21, 0), new Write("Tur28", 21, 0), new Write("Tur29", 21, 0), new Write("Tur30", 21, 0), new Write("Tur31", 21, 0), new Write("Tur32", 21, 0), new Write("Tur33", 21, 0), new Write("Tur34", 21, 0), new Write("Tur35", 21, 0), new Write("Tur36", 21, 0)],  // Gab1_SetCond_Noshow_01
-        [702326] = [new Write("Tur13", 21, 0), new Write("Tur14", 21, 0), new Write("Tur15", 21, 0), new Write("Tur16", 21, 0), new Write("Tur17", 21, 0), new Write("Tur18", 21, 0), new Write("Tur19", 21, 0), new Write("Tur20", 21, 0), new Write("Tur21", 21, 0), new Write("Tur22", 21, 0), new Write("Tur23", 21, 0), new Write("Tur24", 21, 0), new Write("Tur25", 21, 0), new Write("Tur26", 21, 0), new Write("Tur27", 21, 0), new Write("Tur28", 21, 0), new Write("Tur29", 21, 0), new Write("Tur30", 21, 0), new Write("Tur31", 21, 0), new Write("Tur32", 21, 0), new Write("Tur33", 21, 0), new Write("Tur34", 21, 0), new Write("Tur35", 21, 0), new Write("Tur36", 21, 0)],  // Gab1_SetCond_Noshow_01
         [702340] = [new Write("Tur13", 21, 0)],  // Gab1_TurretSwitch_RideOn_01
         [702341] = [new Write("Tur14", 21, 0)],  // Gab1_TurretSwitch_RideOn_02
         [702342] = [new Write("Tur15", 21, 0)],  // Gab1_TurretSwitch_RideOn_03
@@ -351,10 +311,6 @@ internal static class WakeVariables
         [702385] = [new Write("Tur35", 21, 0)],  // Gab1_TurretSwitch_RideOn_23
         [702386] = [new Write("Tur36", 21, 0)],  // Gab1_TurretSwitch_RideOn_24
         [702419] = [new Write("v01", 21, 0), new Write("v02", 21, 0), new Write("v03", 21, 0), new Write("v04", 21, 0), new Write("v05", 22, 0), new Write("v06", 22, 0), new Write("v07", 22, 0), new Write("v08", 22, 0), new Write("v09", 22, 0), new Write("v10", 22, 0), new Write("v11", 22, 0), new Write("v12", 22, 0)],  // Gab1_04_Guard_Noshow_01
-        [702570] = [new Write("WORLDRAID_01", 2, 0), new Write("WORLDRAID_02", 2, 0), new Write("WORLDRAID_03", 2, 0)],  // WorldRaid_CTRL_1_3_Initial
-        [702571] = [new Write("WORLDRAID_01", 2, 0), new Write("WORLDRAID_02", 2, 0), new Write("WORLDRAID_03", 2, 0), new Write("WORLDRAID_04", 2, 0), new Write("WORLDRAID_05", 2, 0)],  // WorldRaid_CTRL_1_5_Initial
-        [702572] = [new Write("WORLDRAID_01", 2, 0), new Write("WORLDRAID_02", 2, 0), new Write("WORLDRAID_03", 2, 0), new Write("WORLDRAID_04", 2, 0), new Write("WORLDRAID_05", 2, 0), new Write("WORLDRAID_06", 2, 0), new Write("WORLDRAID_07", 2, 0)],  // WorldRaid_CTRL_1_7_Initial
-        [702573] = [new Write("WORLDRAID_01", 2, 0), new Write("WORLDRAID_02", 2, 0), new Write("WORLDRAID_03", 2, 0), new Write("WORLDRAID_04", 2, 0), new Write("WORLDRAID_05", 2, 0), new Write("WORLDRAID_06", 2, 0), new Write("WORLDRAID_07", 2, 0), new Write("WORLDRAID_08", 2, 0), new Write("WORLDRAID_09", 2, 0)],  // WorldRaid_CTRL_1_9_Initial
         [702611] = [new Write("Li_Vil", 1, 0)],  // LDF5_Fortress_Block_FOBJ_01
         [702612] = [new Write("Da_Vil", 1, 0)],  // LDF5_Fortress_Block_FOBJ_02
         [702613] = [new Write("Li_Vil", -1, 0)],  // LDF5_Fortress_GuardBase_01_Owner_L
@@ -520,38 +476,6 @@ internal static class WakeVariables
         [731154] = [new Write("ArtiCoreRe_06", -1, 0)],  // Gab1_ArtiCore_06
         [731155] = [new Write("ArtiCoreRe_07", -1, 0)],  // Gab1_ArtiCore_07
         [731156] = [new Write("ArtiCoreRe_08", -1, 0)],  // Gab1_ArtiCore_08
-        [731161] = [new Write("v05", 21, 0)],  // Gab1_Arti_Noshow_1
-        [731162] = [new Write("v06", 21, 0)],  // Gab1_Arti_Noshow_2
-        [731163] = [new Write("v07", 21, 0)],  // Gab1_Arti_Noshow_3
-        [731164] = [new Write("v08", 21, 0)],  // Gab1_Arti_Noshow_4
-        [731165] = [new Write("v09", 21, 0)],  // Gab1_Arti_Noshow_5
-        [731166] = [new Write("v10", 21, 0)],  // Gab1_Arti_Noshow_6
-        [731167] = [new Write("v11", 21, 0)],  // Gab1_Arti_Noshow_7
-        [731168] = [new Write("v12", 21, 0)],  // Gab1_Arti_Noshow_8
-        [731169] = [new Write("v05", 21, 0)],  // Gab1_Arti_Noshow_1
-        [731170] = [new Write("v06", 21, 0)],  // Gab1_Arti_Noshow_2
-        [731171] = [new Write("v07", 21, 0)],  // Gab1_Arti_Noshow_3
-        [731172] = [new Write("v08", 21, 0)],  // Gab1_Arti_Noshow_4
-        [731173] = [new Write("v09", 21, 0)],  // Gab1_Arti_Noshow_5
-        [731174] = [new Write("v10", 21, 0)],  // Gab1_Arti_Noshow_6
-        [731175] = [new Write("v11", 21, 0)],  // Gab1_Arti_Noshow_7
-        [731176] = [new Write("v12", 21, 0)],  // Gab1_Arti_Noshow_8
-        [731177] = [new Write("v05", 21, 0)],  // Gab1_Arti_Noshow_1
-        [731178] = [new Write("v06", 21, 0)],  // Gab1_Arti_Noshow_2
-        [731179] = [new Write("v07", 21, 0)],  // Gab1_Arti_Noshow_3
-        [731180] = [new Write("v08", 21, 0)],  // Gab1_Arti_Noshow_4
-        [731181] = [new Write("v09", 21, 0)],  // Gab1_Arti_Noshow_5
-        [731182] = [new Write("v10", 21, 0)],  // Gab1_Arti_Noshow_6
-        [731183] = [new Write("v11", 21, 0)],  // Gab1_Arti_Noshow_7
-        [731184] = [new Write("v12", 21, 0)],  // Gab1_Arti_Noshow_8
-        [731185] = [new Write("v05", 21, 0)],  // Gab1_Arti_Noshow_1
-        [731186] = [new Write("v06", 21, 0)],  // Gab1_Arti_Noshow_2
-        [731187] = [new Write("v07", 21, 0)],  // Gab1_Arti_Noshow_3
-        [731188] = [new Write("v08", 21, 0)],  // Gab1_Arti_Noshow_4
-        [731189] = [new Write("v09", 21, 0)],  // Gab1_Arti_Noshow_5
-        [731190] = [new Write("v10", 21, 0)],  // Gab1_Arti_Noshow_6
-        [731191] = [new Write("v11", 21, 0)],  // Gab1_Arti_Noshow_7
-        [731192] = [new Write("v12", 21, 0)],  // Gab1_Arti_Noshow_8
         [731355] = [new Write("Tur13", 21, 0)],  // Gab1_TurretSwitch_RideOn_01
         [731356] = [new Write("Tur14", 21, 0)],  // Gab1_TurretSwitch_RideOn_02
         [731357] = [new Write("Tur15", 21, 0)],  // Gab1_TurretSwitch_RideOn_03
@@ -675,16 +599,6 @@ internal static class WakeVariables
         [804555] = [new Write("gb01", 1, 0), new Write("gb02", 1, 0), new Write("gb03", 1, 0), new Write("MistOn_Dragon", 1, 0), new Write("door01", 1, 0), new Write("Da_heal01", 0, 1), new Write("Li_heal01", 0, 1)],  // LDF5_Fortress_GuardBase_Setting
         [804571] = [new Write("MistOn_LD", 1, 0), new Write("Barricade01", 1, 0)],  // LDF5_Fortress_MistOn_LandD
         [804819] = [new Write("directpotal_p1", 1, 0), new Write("directpotal_p2", 1, 0), new Write("directpotal_i", 1, 0)],  // F5_DirectPotalMonster_Set_01
-        [831939] = [new Write("v07_BOMB_01", 2, 0)],  // IDF5_TD_War_v07_lever_01_OFF
-        [831940] = [new Write("v07_BOMB_02", 2, 0)],  // IDF5_TD_War_v07_lever_02_OFF
-        [831941] = [new Write("v08_BOMB_01", 2, 0)],  // IDF5_TD_War_v08_lever_01_OFF
-        [831942] = [new Write("v08_BOMB_02", 2, 0)],  // IDF5_TD_War_v08_lever_02_OFF
-        [831943] = [new Write("v08_BOMB_03", 2, 0)],  // IDF5_TD_War_v08_lever_03_OFF
-        [831970] = [new Write("BOMB_S_01_01", 2, 0)],  // IDF5_TD_War_S_01_01_lever_OFF
-        [831971] = [new Write("BOMB_S_01_02", 2, 0)],  // IDF5_TD_War_S_01_02_lever_OFF
-        [831972] = [new Write("BOMB_S_02_01", 2, 0)],  // IDF5_TD_War_S_02_01_lever_OFF
-        [831973] = [new Write("BOMB_S_02_02", 2, 0)],  // IDF5_TD_War_S_02_02_lever_OFF
-        [831974] = [new Write("TIME_05", 2, 0), new Write("TIME_10", 2, 0), new Write("TIME_15", 2, 0), new Write("TIME_20", 2, 0), new Write("TIME_25", 2, 0), new Write("TIME_30", 2, 0), new Write("TIME_35", 2, 0)],  // IDF5_TD_War_Suffly_Con_OFF
         [832018] = [new Write("cSet_1_1_1", 0, 1)],  // IDLDF4Re_01_Cond_1
         [832019] = [new Write("cSet_1_1_2", 0, 1)],  // IDLDF4Re_01_Cond_2
         [832020] = [new Write("cSet_1_1_3", 0, 1)],  // IDLDF4Re_01_Cond_3
@@ -728,7 +642,6 @@ internal static class WakeVariables
         [832118] = [new Write("3021Castle", 3, 0)],  // 3021_LDF4_Da_Noshow_NPC
         [832825] = [new Write("1011_Mercenary01", -1, 0), new Write("1011_Mercenary02", -1, 0), new Write("1011_Mercenary03", -1, 0), new Write("1011_Mercenary04", -1, 0)],  // Ab1_Castle_Deep_1011_Hire_Li_01
         [855138] = [new Write("v01", 1, 0), new Write("v02", 1, 0), new Write("v03", 1, 0), new Write("v04", 1, 0), new Write("v05", 1, 0), new Write("v06", 1, 0), new Write("v07", 1, 0), new Write("v08", 1, 0), new Write("v09", 1, 0), new Write("v10", 1, 0), new Write("v11", 1, 0), new Write("v12", 1, 0), new Write("v13", 1, 0)],  // LDF4_Advance_condition_14
-        [855259] = [new Write("cSet_1_1_22", 1, 0)],  // LDF4_Advance_condor_dr_named
         [855260] = [new Write("N_WAVE_01", 2, 0), new Write("N_WAVE_02", 2, 0), new Write("N_WAVE_03", 2, 0), new Write("N_WAVE_04", 2, 0)],  // IDF5_U3_TEMP_05
         [855440] = [new Write("GUARDIAN_TIMER", 11, 0)],  // IDSeal_Temp_19
         [855485] = [new Write("LEVEL_CHECK_3", 0, 1)],  // IDSeal_Wave_Checker
@@ -764,5 +677,5 @@ internal static class WakeVariables
 
     /// <summary>The npcs retail removes once they have written.</summary>
     private static readonly HashSet<int> Vanishing =
-        [205654, 205655, 205658, 205659, 207106, 207110, 207113, 207115, 207124, 277480, 277481, 277482, 277483, 702045, 702046, 702047, 702048, 702049, 702096, 702097, 702098, 702099, 702100, 702101, 702102, 702103, 702104, 702105, 702106, 702107, 702108, 702109, 702110, 702111, 702112, 702113, 702114, 702115, 702116, 702117, 702118, 702119, 702307, 702326, 702570, 702571, 702572, 702573, 731161, 731162, 731163, 731164, 731165, 731166, 731167, 731168, 731169, 731170, 731171, 731172, 731173, 731174, 731175, 731176, 731177, 731178, 731179, 731180, 731181, 731182, 731183, 731184, 731185, 731186, 731187, 731188, 731189, 731190, 731191, 731192, 831939, 831940, 831941, 831942, 831943, 831970, 831971, 831972, 831973, 831974];
+        [277480, 277481, 277482, 277483];
 }

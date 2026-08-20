@@ -36455,3 +36455,44 @@ and says nothing about why.
   run. Nobody has counted the overlap.
 - **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), blocked on evidence.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## Two tables claiming the same npcs, and the rule that settled it
+
+The wake table took the simple cases first, so **93 npcs were running a partial pattern**: their
+spawn-variable writes with the timer, message or despawn standing beside them unported. That reads as
+done and is not.
+
+Fixing it was harder than moving 93 rows, because each extractor decides what to take by looking at
+**what class the npc is bound to now** -- and the bindings follow the tables. The first attempt keyed
+the rule on the class, and the two tables claimed 390 npcs between them; adding the other's class to a
+generic set brought the overlap straight back.
+
+**The rule has to be read from the pattern, not from the binding.** An npc goes to the passive pattern
+table if that table says *more* than its writes, and to the wake table otherwise -- and both extractors
+compute exactly that, so they agree whichever table happens to hold the npc today. Running both twice in
+a row now gives the same answer: 548 npcs passive, 637 wake, **zero overlap**.
+
+Also caught while getting there: a `try/except Exception` written to make the new check safe swallowed a
+`NameError` from two undefined variables, so the check silently never ran and the wake table did not
+shrink at all. The bare except was the bug, not the safety.
+
+| | before | after |
+|---|---|---|
+| passive patterns | 425 across 462 npcs | **486 across 548** |
+| wake writes | 376 across 724 npcs | 315 across 637 |
+| gated placements with every variable ours | 5,861 | **7,673** |
+| gated placements out of reach entirely | 7,184 | **5,751** |
+
+The reach jumped because `audit_gate_reach.py` did not know about the passive table at all -- it lists
+the tables that write variables, and a new one is invisible until it is added. For one run it reported a
+*regression* while the port had in fact improved. Any audit that enumerates its own inputs has this
+failure mode, and the fix is a line in a list; noticing is the hard part.
+
+### Still missing
+
+- **282 patterns refused for a branch this port cannot say**, unexamined by kind.
+- **172 npcs on `wake_variable_aggressive` are still write-only**, however rich their patterns are:
+  they fight, and there is no aggressive pattern class. `PassivePatternAi`'s mirror image would settle
+  it and does not exist.
+- **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), blocked on evidence.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
