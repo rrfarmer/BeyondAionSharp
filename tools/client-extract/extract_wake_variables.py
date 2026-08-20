@@ -25,9 +25,10 @@ a pattern class would make a passive npc attack players on sight -- the behaviou
 has refused four times already. `WakeVariableAI` extends `GeneralNpcAI` instead and does exactly one
 thing, which is all these patterns do.
 
-The 197 npcs on `aggressive` are **left alone** for the mirror-image reason: binding them to a
-`GeneralNpcAI` subclass would take their aggression away. They need either an aggressive variant of this
-class or a home in one of the pattern tables, and that is recorded rather than guessed at.
+The npcs on `aggressive` get `WakeVariableAggressiveAI`, which descends from `AggressiveNpcAI` and
+shares the same write. Binding them to the passive class would have taken their aggression away, which
+is the mirror of the reason the passive class exists; two thin classes over one shared write is cheaper
+than either mistake.
 
 WHAT IS LEFT OUT
 ----------------
@@ -51,8 +52,10 @@ import summarize_pattern as S  # noqa: E402
 import audit_missing_adds as A  # noqa: E402
 from audit_idle_spawns import flatten  # noqa: E402
 
-#: Only `general`. See the module docstring: anything else changes what the npc does in a fight.
-GENERIC = {"general", "wake_variable"}
+#: `general` and `aggressive`, each of which keeps what it is. The binder picks the class from the npc's
+#: current one -- `wake_variable` descends from `GeneralNpcAI` and `wake_variable_aggressive` from
+#: `AggressiveNpcAI` -- so neither group gains or loses aggression by acquiring a job.
+GENERIC = {"general", "aggressive", "wake_variable", "wake_variable_aggressive"}
 
 
 def main() -> int:
@@ -129,8 +132,8 @@ def main() -> int:
             owners = [n for n in binders.get(named.group(1), [])
                       if ai.get(n) in GENERIC and n not in spoken_for]
             if not owners:
-                # Counted apart, because this is the one refusal that is about our data rather than
-                # retail's: an `aggressive` npc here cannot take a non-aggressive class.
+                # About our data rather than retail's: the npc is either absent here or already
+                # modelled by an encounter class that must keep it.
                 refused["no npc here that is free to run it"] += 1
                 continue
 

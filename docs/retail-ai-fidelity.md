@@ -36062,3 +36062,47 @@ class, or a home in one of the pattern tables. Recorded, not guessed at.
 - **566 gate variables no retail pattern ever writes** -- server flags set at boot, quest state, or
   something nobody has identified. They are the floor on what this approach can reach.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## The aggressive half of the same job, and three pins that were not testing what they said
+
+The previous entry ported the passive wake-writers and left the 197 on `aggressive` alone, because
+`WakeVariableAI` descends from `GeneralNpcAI` and would have taken their aggression away. The fix is two
+thin classes over one shared write: `WakeVariableAggressiveAI` descends from `AggressiveNpcAI`, and the
+binder picks by what the npc already is, so neither group gains or loses aggression by acquiring a job.
+
+| | before | after |
+|---|---|---|
+| wake patterns | 209 | **315** |
+| npcs | 466 | **634** (466 passive, 168 aggressive) |
+| variables written across all tables | 318 | **375** |
+| gated placements reachable | 11,271 | **12,150 of 21,096** |
+
+### The pins were the hard part
+
+Two mutations -- swapping each class's base -- **survived every pin written for them**. The passive pin
+advanced the clock with a player standing next to the flag and asserted it never entered combat; the
+aggressive pin used `Engage`, which forces the state whatever the base class is. Neither observation
+touched the thing being protected.
+
+The difference between the two base classes is one method: `AggressiveNpcAI` handles the creature-aggro
+event and `GeneralNpcAI` ignores it. **Nothing in the harness raises that event on its own**, so no
+amount of advancing the clock reaches it. Firing it explicitly kills the aggressive mutation.
+
+The passive one needed something else again. That npc's tribe would not aggro a player *even as an
+aggressive class*, so the mutation is behaviourally invisible for it -- the pin now asserts
+`IsNotAssignableFrom<AggressiveNpcAI>` outright. Structural, and deliberately so: the invariant being
+protected is the class, and the honest thing is to assert the invariant rather than a consequence that
+this particular npc does not have.
+
+Third time this session a green pin turned out to be passing for a reason other than the one written on
+it, and every one was found by mutation rather than by reading.
+
+### Still missing
+
+- **488 wake patterns that also do something else**, and 136 with a guarded branch -- a message, a
+  broadcast, a timer. Those belong in a pattern table.
+- **`on_killed_by_npc` (9,280 placements)**: no slot here at all. This port has `OnDie` and
+  `When.KilledByPlayer`, and no way to say "killed by something that was not a player" -- which is a
+  one-condition gap, and the largest single one left in the gate work.
+- **566 gate variables no retail pattern ever writes.** The floor on this approach.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**

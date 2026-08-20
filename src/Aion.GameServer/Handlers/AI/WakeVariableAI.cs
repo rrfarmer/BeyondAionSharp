@@ -43,10 +43,46 @@ public class WakeVariableAI : GeneralNpcAI
 	protected override void HandleSpawned()
 	{
 		base.HandleSpawned();
+		WakeVariableWrites.Apply(GetOwner());
+	}
+}
 
-		SpawnVariables store = SpawnVariableRegistry.For(GetOwner().GetWorldId(),
-			GetOwner().GetInstanceId());
-		foreach (WakeVariables.Write write in WakeVariables.For(GetOwner().GetNpcId()))
+/// <summary>
+/// The same job, for an npc that fights.
+/// </summary>
+/// <remarks>
+/// 197 of these patterns belong to npcs on <c>aggressive</c>. They cannot take
+/// <see cref="WakeVariableAI"/>, which descends from <c>GeneralNpcAI</c> and would quietly remove their
+/// aggression -- the mirror of the reason that class exists at all. Two thin classes over one shared
+/// write is the whole of it; the alternative was a table that silently changed what a third of its npcs
+/// do in a fight.
+/// </remarks>
+[AIName("wake_variable_aggressive")]
+public class WakeVariableAggressiveAI : AggressiveNpcAI
+{
+	public WakeVariableAggressiveAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override void HandleSpawned()
+	{
+		base.HandleSpawned();
+		WakeVariableWrites.Apply(GetOwner());
+	}
+}
+
+/// <summary>The write itself, so the passive and aggressive classes cannot drift apart.</summary>
+internal static class WakeVariableWrites
+{
+	/// <summary>
+	/// Scoped to this npc's own world and instance, so two copies of an instance do not open each
+	/// other's gates -- the registry is keyed on both.
+	/// </summary>
+	internal static void Apply(Npc owner)
+	{
+		SpawnVariables store = SpawnVariableRegistry.For(owner.GetWorldId(), owner.GetInstanceId());
+		foreach (WakeVariables.Write write in WakeVariables.For(owner.GetNpcId()))
 			store.Write(write.Name, write.Set, write.Modify);
 	}
 }
