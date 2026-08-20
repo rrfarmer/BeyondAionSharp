@@ -36884,3 +36884,34 @@ covered.
 - **`move_type` (210 runs)**, above.
 - **17 npcs give up their patterns** to `spawn_helpers.xml`.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## Two elements, one line, and two that stay blocked
+
+`change_world_scene_status` (54 patterns) carries a six-digit scene id and nothing else. **Neither this
+port nor the Java tree has any packet for it** -- it is client-side world scene state, and inventing an
+opcode is not porting. Blocked, and not for want of effort.
+
+`send_system_msg` (702 uses) carries a bare string id, exactly like `display_system_message`, and is now
+emitted as the same map-wide line. **Retail has two elements here and this port has one.** Nothing in
+the dump separates their audience: both carry only a string id and both appear across the same handlers.
+What differs is flavour -- `send_system_msg` reads as announcements, spawn notices and invasion bonuses,
+which is why map-wide is the better reading for it -- and the merge is written into the extractor rather
+than left implicit, because it is a guess about who hears the line.
+
+The tables after it, and after the shared parser change rippled through all five:
+
+| table | patterns | npcs |
+|---|---|---|
+| wake/idle | **1,009** | **1,653** |
+| battle rotations | 1,827 | 13,186 |
+| death spawns | 267 | 497 |
+
+### Still missing
+
+- **`control_door` (37)** -- still one coin flip short of a method mapping, unchanged since the entry
+  that looked for evidence and found none.
+- **`change_world_scene_status` (54)** -- needs a packet nobody has.
+- **`goto_waypoint` (35)** -- the `MOVETYPE_RUN` uses, refused rather than walked.
+- **`enable_area` (31)** -- quest-script areas, a system this port does not model at all.
+- **17 npcs give up their patterns** to `spawn_helpers.xml`.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**

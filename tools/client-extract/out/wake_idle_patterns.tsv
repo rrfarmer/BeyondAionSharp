@@ -1630,6 +1630,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284637	IDF5_U2_BrownieM_party_65_An	on_wake_up	0	90		0	skill	20557	0	0	ME	0.0	0.0	0.0
 284637	IDF5_U2_BrownieM_party_65_An	on_wake_up	0	90		1	waypoint	0	0	0		0.0	0.0	0.0
 284643	BIDF5_R2_Victim_FxMon	on_wake_up	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+284644	Rune_FrostNmd_AttackDirection_NoShow_Sum3	on_idle_timer	0	7		0	timer	0	0	0		0.0	0.0	0.0
+284644	Rune_FrostNmd_AttackDirection_NoShow_Sum3	on_idle_timer	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+284644	Rune_FrostNmd_AttackDirection_NoShow_Sum3	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+284644	Rune_FrostNmd_AttackDirection_NoShow_Sum3	on_wake_up	0	7		1	sysmsg	1401893	0	0		0.0	0.0	0.0
+284644	Rune_FrostNmd_AttackDirection_NoShow_Sum3	on_wake_up	0	7		2	skill	21199	0	0	ME	0.0	0.0	0.0
 284645	Rune_FrostNmd_PazeCheck_NoShow2	on_wake_up	0	7		0	sysmsg	1401840	0	0		0.0	0.0	0.0
 284646	Rune_FrostNmd_PazeCheck_NoShow3	on_wake_up	0	7		0	sysmsg	1401841	0	0		0.0	0.0	0.0
 284647	Rune_FrostNmd_PazeCheck_NoShow4	on_wake_up	0	7		0	sysmsg	1401842	0	0		0.0	0.0	0.0
@@ -1668,6 +1673,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	2	4	count:1:1:2:1	0	timer	10000	0	0		0.0	0.0	0.0
 284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	3	3	count:1:0:1:1	0	sysmsg	1401790	0	0		0.0	0.0	0.0
 284656	BIDRuneWP_CtrlLimitTime_NoShowNPC	on_idle_timer	3	3	count:1:0:1:1	1	timer	5000	0	0		0.0	0.0	0.0
+284658	BIDF5Re_03_CtrlLimitTime02_NoShowNPC	on_idle_timer	0	4	count:0:18:30:1	0	timer	0	0	0		0.0	0.0	0.0
+284658	BIDF5Re_03_CtrlLimitTime02_NoShowNPC	on_idle_timer	0	4	count:0:18:30:1	1	despawn_self	0	0	0		0.0	0.0	0.0
+284658	BIDF5Re_03_CtrlLimitTime02_NoShowNPC	on_idle_timer	1	3	count:0:15:18:1	0	sysmsg	1401807	0	0		0.0	0.0	0.0
+284658	BIDF5Re_03_CtrlLimitTime02_NoShowNPC	on_idle_timer	2	2	count:0:0:15:1	0	sysmsg	1401806	0	0		0.0	0.0	0.0
+284658	BIDF5Re_03_CtrlLimitTime02_NoShowNPC	on_wake_up	0	1	set_world_flag_var:6	0	sysmsg	1401805	0	0		0.0	0.0	0.0
+284658	BIDF5Re_03_CtrlLimitTime02_NoShowNPC	on_wake_up	0	1	set_world_flag_var:6	1	timer	60000	0	0		0.0	0.0	0.0
 284668	IDVritra_Base_Boss_StartNPC	on_idle_timer	0	100	set_flag_var:6	0	timer	120000	0	0		0.0	0.0	0.0
 284668	IDVritra_Base_Boss_StartNPC	on_idle_timer	0	100	set_flag_var:6	1	broadcast	22255	50	0		0.0	0.0	0.0
 284668	IDVritra_Base_Boss_StartNPC	on_idle_timer	1	90	set_flag_var:7	0	timer	80000	0	0		0.0	0.0	0.0
@@ -1850,6 +1861,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 287151	Test_Basic_Monster_AI_GW_6	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
 287152	Test_Basic_Monster_AI_GW_6	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
 287156	Test_Basic_Monster_AI_GW_6	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
+287158	Test_Basic_Monster_AI_GW_8	on_wake_up	0	7	set_flag_var:0	0	sysmsg	1401431	0	0		0.0	0.0	0.0
+287158	Test_Basic_Monster_AI_GW_8	on_wake_up	0	7	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
 287193	Test_Basic_Monster_AI_CYS_3	on_wake_up	0	7	set_flag_var:0	0	timer	5000	0	0		0.0	0.0	0.0
 287193	Test_Basic_Monster_AI_CYS_3	on_wake_up	0	7	set_flag_var:0	1	skill	19708	0	0	ME	0.0	0.0	0.0
 287199	Test_Basic_Monster_AI_CYS_4	on_idle_timer	0	7	set_flag_var:2	0	spawn	287199	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -2214,6 +2227,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		15	var	1	0	0	C_WaveReTake_4	0.0	0.0	0.0
 701645	IDF5_Under_01_Bridge_Ctrl	on_wake_up	0	7		16	timer	5000	0	0		0.0	0.0	0.0
 701648	IDF5_Under_01_PcTank_Ctrl	on_wake_up	0	90		0	broadcast	21201	50	0		0.0	0.0	0.0
+701665	Underpass_IDUnderpassRe_msg	on_wake_up	0	7	set_flag_var:0	0	sysmsg	1401605	0	0		0.0	0.0	0.0
 701670	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
 701671	IDF5_Under_01_PcTank	on_idle_timer	0	2	unset_flag_var:0	0	timer	0	0	0		0.0	0.0	0.0
 701703	LDF5b_6021_Out_Door_Killer_01	on_idle_timer	0	5		0	timer	0	0	0		0.0	0.0	0.0
@@ -2643,6 +2657,134 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 702627	WorldRaid_CTRL_Selcet_3	on_wake_up	0	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
 702628	WorldRaid_CTRL_Selcet_4	on_wake_up	0	1		0	var	1	0	0	WORLDRAID_04	0.0	0.0	0.0
 702628	WorldRaid_CTRL_Selcet_4	on_wake_up	0	1		1	sysmsg	1402383	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_1	0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	0	20	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	0	20	chance:25	1	var	1	0	0	boss_1	0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	1	19	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	1	19	chance:25	1	var	2	0	0	boss_1	0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	2	18	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	2	18	chance:25	1	var	3	0	0	boss_1	0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	3	16		0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	3	16		1	var	4	0	0	boss_1	0.0	0.0	0.0
+702629	LDF4_Advance_Named_Summon_01	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_2	0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	0	20	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	0	20	chance:25	1	var	1	0	0	boss_2	0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	1	19	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	1	19	chance:25	1	var	2	0	0	boss_2	0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	2	18	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	2	18	chance:25	1	var	3	0	0	boss_2	0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	3	16		0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	3	16		1	var	4	0	0	boss_2	0.0	0.0	0.0
+702630	LDF4_Advance_Named_Summon_02	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_3	0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	0	20	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	0	20	chance:25	1	var	1	0	0	boss_3	0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	1	19	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	1	19	chance:25	1	var	2	0	0	boss_3	0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	2	18	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	2	18	chance:25	1	var	3	0	0	boss_3	0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	3	16		0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	3	16		1	var	4	0	0	boss_3	0.0	0.0	0.0
+702631	LDF4_Advance_Named_Summon_03	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_4	0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	0	20	chance:25	0	var	1	0	0	boss_4	0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	0	20	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	1	19	chance:25	0	var	2	0	0	boss_4	0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	1	19	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	2	18	chance:25	0	var	3	0	0	boss_4	0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	2	18	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	3	16		0	var	4	0	0	boss_4	0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	3	16		1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702632	LDF4_Advance_Named_Summon_04	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_5	0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	0	20	chance:25	0	var	1	0	0	boss_5	0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	0	20	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	1	19	chance:25	0	var	2	0	0	boss_5	0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	1	19	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	2	18	chance:25	0	var	3	0	0	boss_5	0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	2	18	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	3	16		0	var	4	0	0	boss_5	0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	3	16		1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702633	LDF4_Advance_Named_Summon_05	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_6	0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	0	20	chance:25	0	var	1	0	0	boss_6	0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	0	20	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	1	19	chance:25	0	var	2	0	0	boss_6	0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	1	19	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	2	18	chance:25	0	var	3	0	0	boss_6	0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	2	18	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	3	16		0	var	4	0	0	boss_6	0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	3	16		1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702634	LDF4_Advance_Named_Summon_06	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_7	0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	0	20	chance:25	0	var	1	0	0	boss_7	0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	0	20	chance:25	1	sysmsg	1402540	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	1	19	chance:25	0	var	2	0	0	boss_7	0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	1	19	chance:25	1	timer	540000	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	1	19	chance:25	2	sysmsg	1402540	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	2	18	chance:25	0	var	3	0	0	boss_7	0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	2	18	chance:25	1	timer	540000	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	2	18	chance:25	2	sysmsg	1402540	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	3	16		0	var	4	0	0	boss_7	0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	3	16		1	timer	540000	0	0		0.0	0.0	0.0
+702635	LDF4_Advance_Named_Summon_07	on_wake_up	3	16		2	sysmsg	1402540	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_idle_timer	0	7	count:0:0:1:1	0	sysmsg	1402602	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_idle_timer	0	7	count:0:0:1:1	1	var	10	0	0	boss_8	0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_idle_timer	0	7	count:0:0:1:1	2	timer	6000	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_idle_timer	1	6	count:0:1:2:1	0	despawn_self	0	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	0	20	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	0	20	chance:25	1	var	1	0	0	boss_8	0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	0	20	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	1	19	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	1	19	chance:25	1	var	2	0	0	boss_8	0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	1	19	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	2	18	chance:25	0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	2	18	chance:25	1	var	3	0	0	boss_8	0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	2	18	chance:25	2	timer	540000	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	3	16		0	sysmsg	1402540	0	0		0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	3	16		1	var	4	0	0	boss_8	0.0	0.0	0.0
+702636	LDF4_Advance_Named_Summon_08	on_wake_up	3	16		2	timer	540000	0	0		0.0	0.0	0.0
 702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	0	7	set_flag_var:0	0	timer	240000	0	0		0.0	0.0	0.0
 702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	0	7	set_flag_var:0	1	sysmsg	1402609	0	0		0.0	0.0	0.0
 702645	Gab1_TimeStartCheck_Noshow_1	on_idle_timer	1	6	set_flag_var:1	0	timer	30000	0	0		0.0	0.0	0.0
@@ -2676,6 +2818,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 702647	Gab1_TimeStartCheck_Noshow_3	on_idle_timer	3	4	set_flag_var:3	1	despawn_self	0	0	0		0.0	0.0	0.0
 702647	Gab1_TimeStartCheck_Noshow_3	on_wake_up	0	7		0	timer	120000	0	0		0.0	0.0	0.0
 702647	Gab1_TimeStartCheck_Noshow_3	on_wake_up	0	7		1	sysmsg	1402620	0	0		0.0	0.0	0.0
+702657	IDStation_info_05	on_wake_up	0	7		0	var	0	1	0	door_02	0.0	0.0	0.0
+702657	IDStation_info_05	on_wake_up	0	7		1	sysmsg	1402739	0	0		0.0	0.0	0.0
 702689	IDRaksha_Solo_A_Door_Open_Trigger_02	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 702693	IDRaksha_Solo_A_Door_Open_Trigger_03	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 702719	IDSeal_Wave_Door_Destroyer	on_idle_timer	0	2		0	broadcast	22760	100	0		0.0	0.0	0.0
@@ -3000,10 +3144,50 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 831052	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
 831053	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
 831054	Elim_MercenaryFe	on_wake_up	0	7	set_flag_var:0	0	say	390510	0	0		0.0	0.0	0.0
+831098	IDDF2Flying_event01_inviNPC05	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401607	0	0		0.0	0.0	0.0
+831098	IDDF2Flying_event01_inviNPC05	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831098	IDDF2Flying_event01_inviNPC05	on_wake_up	0	2		0	sysmsg	1401586	0	0		0.0	0.0	0.0
+831098	IDDF2Flying_event01_inviNPC05	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831099	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401671	0	0		0.0	0.0	0.0
+831099	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831099	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		0	sysmsg	1401670	0	0		0.0	0.0	0.0
+831099	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831308	IDDF2Flying_event01_inviNPC01	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401665	0	0		0.0	0.0	0.0
+831308	IDDF2Flying_event01_inviNPC01	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831308	IDDF2Flying_event01_inviNPC01	on_wake_up	0	2		0	sysmsg	1401664	0	0		0.0	0.0	0.0
+831308	IDDF2Flying_event01_inviNPC01	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831309	IDDF2Flying_event01_inviNPC02	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401667	0	0		0.0	0.0	0.0
+831309	IDDF2Flying_event01_inviNPC02	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831309	IDDF2Flying_event01_inviNPC02	on_wake_up	0	2		0	sysmsg	1401666	0	0		0.0	0.0	0.0
+831309	IDDF2Flying_event01_inviNPC02	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831310	IDDF2Flying_event01_inviNPC03	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401669	0	0		0.0	0.0	0.0
+831310	IDDF2Flying_event01_inviNPC03	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831310	IDDF2Flying_event01_inviNPC03	on_wake_up	0	2		0	sysmsg	1401668	0	0		0.0	0.0	0.0
+831310	IDDF2Flying_event01_inviNPC03	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831311	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401671	0	0		0.0	0.0	0.0
+831311	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831311	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		0	sysmsg	1401670	0	0		0.0	0.0	0.0
+831311	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831353	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401671	0	0		0.0	0.0	0.0
+831353	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831353	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		0	sysmsg	1401670	0	0		0.0	0.0	0.0
+831353	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
+831354	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	0	sysmsg	1401671	0	0		0.0	0.0	0.0
+831354	IDDF2Flying_event01_inviNPC06	on_idle_timer	0	1	set_flag_var:0	1	despawn_self	0	0	0		0.0	0.0	0.0
+831354	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		0	sysmsg	1401670	0	0		0.0	0.0	0.0
+831354	IDDF2Flying_event01_inviNPC06	on_wake_up	0	2		1	timer	5000	0	0		0.0	0.0	0.0
 831415	IDDF2Flying_event01_D_Towermonster09	on_idle_timer	0	6		0	spawn	831417	5	0	for_the_fight_self	0.0	0.0	0.0
 831416	IDDF2Flying_event01_D_Towermonster10	on_idle_timer	0	6		0	spawn	831418	5	0	for_the_fight_self	0.0	0.0	0.0
 831748	IDASteria_IU_world_inviNPC01	on_wake_up	0	7	set_flag_var:5	0	var	0	1	0	Condition_TALK	0.0	0.0	0.0
 831748	IDASteria_IU_world_inviNPC01	on_wake_up	0	7	set_flag_var:5	1	despawn_self	0	0	0		0.0	0.0	0.0
+831749	IDASteria_IU_world_inviNPC02	on_idle_timer	0	7	set_flag_var:6	0	broadcast	2013	200	0		0.0	0.0	0.0
+831749	IDASteria_IU_world_inviNPC02	on_idle_timer	0	7	set_flag_var:6	1	despawn_self	0	0	0		0.0	0.0	0.0
+831749	IDASteria_IU_world_inviNPC02	on_wake_up	0	9	set_flag_var:5	0	timer	10000	0	0		0.0	0.0	0.0
+831749	IDASteria_IU_world_inviNPC02	on_wake_up	0	9	set_flag_var:5	1	sysmsg	1501123	0	0		0.0	0.0	0.0
+831750	IDASteria_IU_world_inviNPC03	on_idle_timer	0	7	set_flag_var:6	0	broadcast	2014	200	0		0.0	0.0	0.0
+831750	IDASteria_IU_world_inviNPC03	on_idle_timer	0	7	set_flag_var:6	1	despawn_self	0	0	0		0.0	0.0	0.0
+831750	IDASteria_IU_world_inviNPC03	on_wake_up	0	9	set_flag_var:5	0	timer	10000	0	0		0.0	0.0	0.0
+831750	IDASteria_IU_world_inviNPC03	on_wake_up	0	9	set_flag_var:5	1	sysmsg	1501131	0	0		0.0	0.0	0.0
 831754	IDASteria_IU_world_inviNPC07	on_wake_up	0	7	set_flag_var:5	0	skill_now	21466	0	0	ME	0.0	0.0	0.0
 831754	IDASteria_IU_world_inviNPC07	on_wake_up	0	7	set_flag_var:5	1	despawn_self	0	0	0		0.0	0.0	0.0
 831939	IDF5_TD_War_v07_lever_01_OFF	on_wake_up	0	7		0	var	2	0	0	v07_BOMB_01	0.0	0.0	0.0
@@ -3071,10 +3255,20 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 832271	LDF4_Noshow_Artifact_02_01	on_wake_up	0	7		1	timer	60000	0	0		0.0	0.0	0.0
 832733	Gab1_03_Guard_Noshow_01	on_wake_up	0	7		0	skill_now	21746	0	0	ME	0.0	0.0	0.0
 832733	Gab1_03_Guard_Noshow_01	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+832939	IDSweep_inviNPC02	on_wake_up	0	7		0	sysmsg	1402678	0	0		0.0	0.0	0.0
+832939	IDSweep_inviNPC02	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+832940	IDSweep_inviNPC03	on_wake_up	0	7		0	sysmsg	1402679	0	0		0.0	0.0	0.0
+832940	IDSweep_inviNPC03	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+832941	IDSweep_inviNPC04	on_wake_up	0	7		0	sysmsg	1402680	0	0		0.0	0.0	0.0
+832941	IDSweep_inviNPC04	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 832953	IDSweep_NPC07	on_wake_up	0	7		0	broadcast	30002	50	0		0.0	0.0	0.0
 832953	IDSweep_NPC07	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 832954	IDSweep_NPC08	on_wake_up	0	7		0	broadcast	30003	50	0		0.0	0.0	0.0
 832954	IDSweep_NPC08	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+832955	IDSweep_NPC09	on_wake_up	0	7		0	sysmsg	1402743	0	0		0.0	0.0	0.0
+832955	IDSweep_NPC09	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
+832956	IDSweep_NPC10	on_wake_up	0	7		0	sysmsg	1402681	0	0		0.0	0.0	0.0
+832956	IDSweep_NPC10	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 833019	LF4_Rotation_Hidden_Portal	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 833019	LF4_Rotation_Hidden_Portal	on_wake_up	0	1000		0	timer	180000	0	0		0.0	0.0	0.0
 833022	DF4_Rotation_Hidden_Portal	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0

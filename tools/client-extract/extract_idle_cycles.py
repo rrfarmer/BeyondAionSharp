@@ -176,7 +176,7 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             out.append(("var", int(value.group(1)) if value else 0,
                         int(modify.group(1)) if modify else 0, 0,
                         name.group(1).strip(), 0.0, 0.0, 0.0))
-        elif kind in ("say_to_all", "display_system_message"):
+        elif kind in ("say_to_all", "display_system_message", "send_system_msg"):
             # Both name a string symbolically; the client's table turns it into the number the packet
             # carries. They are different packets -- a shout within fifty metres against a line to the
             # whole instance -- and are kept apart.
@@ -185,6 +185,12 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             if message is None:
                 return None
             delay = re.search(r"<delay>(\d+)</delay>", body)
+            # `send_system_msg` is emitted as the same map-wide line as `display_system_message`.
+            # **Retail has two elements and this port has one**, and nothing in the dump separates
+            # their audience: both carry a bare string id, and both appear across the same handlers.
+            # The strings differ in flavour -- send_system_msg reads as announcements, spawn notices and
+            # invasion bonuses -- which is why map-wide is the better reading for it, and the merge is
+            # recorded here rather than hidden because it is a guess about who hears the line.
             out.append(("say" if kind == "say_to_all" else "sysmsg", message,
                         int(delay.group(1)) if delay else 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "use_skill" and skill_targets is not None:
