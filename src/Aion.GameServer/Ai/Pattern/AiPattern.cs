@@ -521,6 +521,35 @@ public static class When
     public static PatternCondition MessageParamIsEnemy
         => ai => ai.MessageParam is Creature named && named.IsEnemy(ai.GetOwner());
 
+    /// <summary><c>is_enemy</c> for the other six roles retail asks about.</summary>
+    /// <remarks>
+    /// 1,156 uses in the 5.8 dump, and <b>the extractor refused every one of them</b> — including the
+    /// 1,121 whose condition was already sitting here. <see cref="MessageParamIsEnemy"/>,
+    /// <see cref="Enemy"/>, <see cref="TargetIsEnemy"/> and <see cref="CasterIsEnemy"/> were all
+    /// written for hand-written classes and none had ever been emitted into a generated table. Only
+    /// the attacker, the message sender and the event target genuinely needed adding, and they are the
+    /// 35 rarest uses. This is the same miss as <c>is_waypoint_index</c>: a refusal message naming an
+    /// element the parser does not know, read as an element the runtime cannot answer.
+    /// <para>
+    /// All six read a role <see cref="PatternAi"/> already tracks and all six use the same hostility
+    /// test as the two that came before — <c>Creature.IsEnemy</c> — so nothing here decides what
+    /// "enemy" means. A null role is not hostile, which matters because these fire from handlers where
+    /// the role may legitimately be empty: an <c>on_spelled</c> branch asking about the caster runs
+    /// again later when the caster has been forgotten.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>is_enemy who=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerIsEnemy
+        => ai => ai.LastAttacker is Creature role && role.IsEnemy(ai.GetOwner());
+
+    /// <summary><c>is_enemy who=OBJI_MESSAGE_SENDER</c>.</summary>
+    public static PatternCondition MessageSenderIsEnemy
+        => ai => ai.MessageSender is Creature role && role.IsEnemy(ai.GetOwner());
+
+    /// <summary><c>is_enemy who=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternCondition EventTargetIsEnemy
+        => ai => ai.EventTarget is Creature role && role.IsEnemy(ai.GetOwner());
+
     public static PatternCondition SeenRace(params Race[] races)
         => ai => ai.SeenCreature is Creature seen && races.Contains(seen.GetRace());
 

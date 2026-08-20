@@ -173,6 +173,17 @@ NPC_STATES = {
     "NPC_STATE_USE_SKILL": "casting",
 }
 
+#: Retail's `is_enemy` subjects, and the condition each becomes.
+ENEMY_ROLES = {
+    "OBJI_MESSAGE_PARAM": "MessageParamIsEnemy",
+    "OBJI_CASTER": "CasterIsEnemy",
+    "OBJI_SEEN": "Enemy",
+    "OBJI_CUR_TARGET": "TargetIsEnemy",
+    "OBJI_ATTACKER": "AttackerIsEnemy",
+    "OBJI_MESSAGE_SENDER": "MessageSenderIsEnemy",
+    "OBJI_EVENT_TARGET": "EventTargetIsEnemy",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -260,6 +271,14 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind == "is_enemy":
+            # Is whoever is in this role hostile to me? Every role retail asks about is one `PatternAi`
+            # already tracks, so all 1,156 uses are sayable and none needs a new notion of hostility --
+            # `Creature.IsEnemy` answers all of them, as it already did for the fortress guards.
+            who = re.search(r"<who>(\w+)</who>", body)
+            if not who or who.group(1) not in ENEMY_ROLES:
+                raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
+            out.append("enemy:" + ENEMY_ROLES[who.group(1)])
         elif kind == "is_npc_state":
             # What the npc is doing right now. Every one of the 2,834 uses asks about NPCI_SELF, but
             # the subject is checked rather than assumed -- a pattern asking about somebody else would

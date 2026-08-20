@@ -315,7 +315,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 59,706 casts across 14,823 npcs, none of them read by a human. The index they came from is only
+	/// 59,785 casts across 17,011 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -334,7 +334,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(59706, casts);
+		Assert.Equal(59785, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -776,7 +776,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1452, spawns);
+		Assert.Equal(1454, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -964,6 +964,51 @@ public sealed class BattleCycleAiTests
 		worm.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.WALK_PATH);
 		Assert.True(When.WalkingItsRoute(ai), "a routed npc did not count as walking its route");
 		Assert.False(When.WanderingAtRandom(ai), "a routed npc counted as wandering");
+	}
+
+	/// <summary><b>An empty role is not an enemy, and a real attacker is.</b></summary>
+	/// <remarks>
+	/// <c>is_enemy</c> is 1,156 uses and the extractor refused all of them, including the 1,121 whose
+	/// condition was already written for a hand-written class. Only three roles needed adding, and the
+	/// attacker is the one this can drive.
+	/// <para>
+	/// <b>The empty half is the half worth pinning.</b> Most of these roles are scoped to the handler
+	/// that sets them -- <c>LastAttacker</c> is assigned, the branch is evaluated, and a <c>finally</c>
+	/// clears it -- so outside that window they are null, and the conditions have to answer "not
+	/// hostile" rather than throw or treat an absent creature as satisfying the guard. A version
+	/// reading <c>role?.IsEnemy(...) ?? true</c> would look entirely reasonable and fire every one of
+	/// these branches whenever nothing had happened.
+	/// </para>
+	/// <para>
+	/// The positive half uses the current target, which is the one role that is <i>not</i> scoped --
+	/// it reads <c>GetOwner().GetTarget()</c> and so can be observed from outside a branch. Asserting
+	/// the scoped ones positively would mean driving a branch that acts, which pins the branch rather
+	/// than the condition.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AnEmptyRoleIsNotAnEnemyAndARealAttackerIs()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		// Nothing has happened to it yet, so every role is empty.
+		Assert.False(When.AttackerIsEnemy(ai), "an npc nobody has touched has a hostile attacker");
+		Assert.False(When.CasterIsEnemy(ai), "an npc nobody has cast on has a hostile caster");
+		Assert.False(When.EventTargetIsEnemy(ai), "an npc with no event has a hostile event target");
+		Assert.False(When.MessageSenderIsEnemy(ai), "an npc sent no message has a hostile sender");
+
+		Assert.False(When.TargetIsEnemy(ai), "an npc with no target has a hostile target");
+
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, player);
+
+		Assert.True(player.IsEnemy(worm),
+			"the pair this pin relies on is not hostile, so nothing it asserts means anything");
+
+		worm.SetTarget(player);
+		Assert.True(When.TargetIsEnemy(ai), "the hostile player it is targeting is not counted");
 	}
 
 }

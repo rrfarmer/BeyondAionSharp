@@ -37654,3 +37654,69 @@ Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 the `is_user` / `is_npc` conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## `is_enemy`: the condition that was already written
+
+`Retail-AI-Pattern: is_enemy for every role retail asks about`
+
+Named last entry as the largest blocked condition, at 76 `on_spelled` handlers. Across the dump it
+is **1,156 uses** — caster 688, message param 328, seen 75, current target 30, attacker 20, message
+sender 12, event target 3.
+
+**The extractor refused all 1,156, and 1,121 of them had their condition sitting in `AiPattern`
+already.** `MessageParamIsEnemy` was written for the fortress guards, and `Enemy`, `TargetIsEnemy`
+and `CasterIsEnemy` for other hand-written classes. None had ever been emitted into a generated
+table. Only the attacker, the message sender and the event target genuinely needed adding, and they
+are the 35 rarest uses.
+
+This is the same miss as `is_waypoint_index` two entries ago, and worth naming as a pattern rather
+than as two coincidences: **a refusal message names what the parser does not know, and I keep
+reading it as what the runtime cannot do.** The two are unrelated, and the hand-written classes are
+where the runtime's real vocabulary has been accumulating.
+
+Patterns 2,428 -> **2,434**; npcs 14,823 -> **17,011**, the largest single jump this work has
+produced; 3,221 rows now carry an enemy guard. 2,188 npcs newly bound. Adds backlog unchanged at 211
+across 153 — these are guards on branches, not new spawners.
+
+### What the pin found about how roles work
+
+The first version asserted that an npc wounded by a hostile player satisfies `AttackerIsEnemy`. It
+fails, and the reason is a design fact worth recording: **most of these roles are scoped to the
+handler that sets them.** `PatternAi.HandleAttack` assigns `LastAttacker`, evaluates
+`Pattern.OnAttacked`, and clears it in a `finally`. Outside that window the role is null — which is
+correct, and is exactly why the conditions must answer "not hostile" for an empty role rather than
+throw or, worse, treat absence as satisfying the guard. A version reading
+`role?.IsEnemy(...) ?? true` looks entirely reasonable and would fire every one of these branches
+whenever nothing had happened.
+
+So the pin asserts the empty case on four scoped roles, and takes its positive case from the current
+target, which is the one role that is *not* scoped — it reads `GetOwner().GetTarget()` and can be
+observed from outside a branch. Asserting a scoped role positively would mean driving a branch that
+acts, which pins the branch rather than the condition.
+
+| mutation | caught |
+|---|---|
+| absent role treated as hostile | yes |
+| target hostility check dropped | yes |
+
+### Still missing
+
+`is_user` (1,369 uses) and `is_npc` (184) are the same shape of question — is the creature in this
+role a player, or an npc — and are **not** done here. They are not simply more of the same: their
+two biggest subjects are `OBJI_TALKER` (729) and `OBJI_KILLER` (163 and 69), and this port tracks
+neither as a creature. The death table knows a killer's *kind* (`When.KilledByPlayer`) but not who
+it was, and nothing holds the talker at all. Doing the shared roles and refusing those two would
+land less than half of `is_user`, so it needs the two roles added to `PatternAi` first.
+
+`on_talked_by_user` now shows 70 handlers dropped on `is_user`, which is that same gap seen from the
+handler side.
+
+102 `on_arrived_at_waypoint` handlers still drop on `MOVETYPE_RUN` — one route speed, a real gap.
+
+Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254,
+`on_enter_abnormal_state` 272, `on_damaged` 141, `on_hyperlink_clicked` 137,
+`on_most_hating_updated` 132 — none of which spawn or cast — `on_see_friend_attacking` 129,
+`on_friend_spelling` 106, `on_see_npc_move` 106), plus `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
