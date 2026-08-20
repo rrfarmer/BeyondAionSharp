@@ -256,7 +256,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 33,495 casts across 7,382 npcs, none of them read by a human. The index they came from is only
+	/// 55,006 casts across 13,186 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -275,7 +275,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(33495, casts);
+		Assert.Equal(55006, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -565,6 +565,43 @@ public sealed class BattleCycleAiTests
 		Assert.Null(BossAiHarness.FireNextQueuedSkill(boss));
 	}
 
+	/// <summary><b>No rung re-arms, with no delay, the very timer that fired it.</b></summary>
+	/// <remarks>
+	/// The one shape that spins. <c>ArmTimer</c> with a zero delay fires on the next pool tick, so a
+	/// branch guarded by timer N that arms N with zero would re-enter itself as fast as the pool
+	/// allows, taking a thread with it. Retail does write zero delays -- 5 of its 31,442
+	/// <c>add_battle_timer</c> uses, 10 rows here -- and today every one of them either arms a
+	/// <i>different</i> slot or sits behind a one-shot flag, so none of them spins.
+	/// <para>
+	/// <b>That is luck, not a rule</b>, which is why it is pinned. The table is regenerated whenever
+	/// the extractor changes, and this is the check that says whether the next regeneration introduced
+	/// something that will hang a live server rather than fail a test.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void NoRungReArmsItsOwnTimerWithNoDelay()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "battle_cycles.tsv");
+		string[] lines = File.ReadAllLines(path);
+		string[] header = lines[0].Split('	');
+		int kindAt = Array.IndexOf(header, "kind");
+		int guardsAt = Array.IndexOf(header, "guards");
+		int slotAt = Array.IndexOf(header, "a1");
+		int delayAt = Array.IndexOf(header, "a2");
+		int npcAt = Array.IndexOf(header, "npc");
+
+		foreach (string line in lines.Skip(1))
+		{
+			string[] fields = line.Split('	');
+			if (fields[kindAt] != "arm" || fields[delayAt] != "0")
+				continue;
+
+			// A zero-delay arm is only dangerous when it re-arms the slot whose firing ran this branch.
+			Assert.DoesNotContain($"timer:{fields[slotAt]}", fields[guardsAt].Split('|'));
+		}
+	}
+
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
 	/// <remarks>
 	/// <see cref="PatternAi.ArmTimer"/> throws outside 0..29, so a bad indicator would take the npc
@@ -622,6 +659,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(723, spawns);
+		Assert.Equal(759, spawns);
 	}
 }

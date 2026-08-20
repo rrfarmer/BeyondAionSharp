@@ -357,6 +357,18 @@ public static class When
     /// </remarks>
     public static PatternCondition KilledByPlayer => ai => ai.Killer != null;
 
+    /// <summary><c>is_user_flying user=USERI_EVENT_TARGET</c>: whoever opened the fight is airborne.</summary>
+    public static PatternCondition EventTargetFlying => ai => ai.IsAirborne(ai.EventTarget);
+
+    /// <summary><c>is_user_flying user=USERI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerFlying => ai => ai.IsAirborne(ai.LastAttacker);
+
+    /// <summary><c>is_user_flying user=USERI_CASTER</c>.</summary>
+    public static PatternCondition CasterFlying => ai => ai.IsAirborne(ai.LastCaster);
+
+    /// <summary><c>is_user_flying user=USERI_SEEN</c>.</summary>
+    public static PatternCondition SeenFlying => ai => ai.IsAirborne(ai.SeenCreature as Creature);
+
     public static PatternCondition Fighting => ai => ai.InCombat;
 
     /// <summary><c>is_npc_state(NPCI_SELF, NPC_STATE_IDLE)</c> — standing about.</summary>

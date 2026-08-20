@@ -35694,3 +35694,52 @@ cast with no target is *a cast that does not happen*, not a cast at whoever is n
 - **Retail cast timings remain unobserved.** 1,704 rotations across 7,382 npcs now fire on the delays in
   the data, and nobody has watched one in a live fight. That is a much larger surface than it was two
   entries ago, and the caveat has not moved with it.
+
+## Flying, and a spin that has not happened yet
+
+`is_user_flying` was the largest remaining refusal, and it needed no new machinery: `Player` already
+distinguishes flying, and 579 of its 663 uses ask about `USERI_EVENT_TARGET` -- the creature that opened
+the fight, which this port only started tracking in the previous entry. A boss behaving differently
+against someone who pulled it from the air is the mechanic, and the two pieces met.
+
+**Gliding is not counted.** This port separates `FLYING` from `GLIDING`; retail's condition names
+flying, and whether its own engine folded gliding in is not something the pattern data says. The
+narrower reading is taken and recorded, not guessed wide.
+
+| | before | after |
+|---|---|---|
+| rotations | 1,704 | **1,827** |
+| npcs | 7,382 | **13,186** |
+| actions | 88,896 | **163,325** |
+
+### The zero-delay audit
+
+`ArmTimer` with a zero delay fires on the next pool tick, so a branch guarded by timer N that arms N
+with zero would re-enter itself as fast as the pool allows and take a thread with it. Retail does write
+zero delays -- 5 of its 31,442 `add_battle_timer` uses, 10 rows here.
+
+**None of them spins**: every one either arms a *different* slot or sits behind a one-shot flag. That is
+luck rather than a rule, so `NoRungReArmsItsOwnTimerWithNoDelay` now pins the shape. The table is
+regenerated whenever the extractor changes, and this is the check that says whether the next
+regeneration introduced something that hangs a live server rather than failing a test -- the same class
+of problem as the type-initializer overflow two entries ago, which no data pin would have caught either.
+
+Note this is a *different* answer from `set_idle_timer`, where zero means stop. Battle timers are added
+rather than set, retail has no cancel op for them, and 5 uses is too thin to infer a special meaning
+from -- so zero is read as "due now", which is what adding a timer with no delay plainly says.
+
+### Scale
+
+The generated table is now **294,240 lines and 15MB**, building in about nine seconds. It is fine, and
+it is worth writing down that it is being watched: the chunked initializers from two entries ago are
+what keep it loadable, and nothing here has a plan for it at ten times this size.
+
+### Still missing
+
+- **`OBJI_TALKER` (771 uses)** and **`USERI_EVENT_MAKER` (1)** -- roles this table has no creature for.
+- **53 range-restricted attacker-indicator casts**; **453 optional arming handlers dropped**, by kind.
+- **188 rotations re-arm only from within themselves; 147 arm nowhere in the pattern.** These need an
+  entry point that lives outside the pattern, and inventing one would be invention.
+- **Retail cast timings remain unobserved, now across 13,186 npcs.** Every pin answers *who* and *what*.
+  A play-test is the only thing that answers whether these fights feel right, and the surface has grown
+  by 78% in one entry without that ever becoming less true.

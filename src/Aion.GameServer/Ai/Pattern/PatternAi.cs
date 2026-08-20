@@ -1101,6 +1101,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// with no target is not a cast at the most-hated creature -- it is a cast that does not happen.
     /// </para>
     /// </remarks>
+    /// <summary><c>is_user_flying</c>: whether a particular creature is in the air.</summary>
+    /// <remarks>
+    /// Retail asks this 663 times, overwhelmingly about the creature that opened the fight -- a boss
+    /// that behaves differently against someone who pulled it from the air and cannot be reached the
+    /// usual way.
+    /// <para>
+    /// <b>Gliding does not count.</b> This port distinguishes <c>FLYING</c> from <c>GLIDING</c>, and
+    /// retail's condition names flying; whether its own engine folded gliding in is not something the
+    /// pattern data says, so the narrower reading is taken and recorded here rather than guessed wide.
+    /// </para>
+    /// </remarks>
+    public bool IsAirborne(Creature? who)
+        => who is Player player && player.IsInFlyState(Model.GameObjects.State.FlyState.FLYING);
+
     public void CastSkillAt(Creature? aim, int skillId)
     {
         if (IsDead() || aim == null || aim.IsDead())

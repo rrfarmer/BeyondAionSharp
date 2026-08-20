@@ -116,6 +116,8 @@ def guard_code(token: str) -> str:
         return f"When.WorldFlagSet({argument})"
     if kind == "message":
         return f"When.Message({argument})"
+    if kind == "flying":
+        return f"When.{argument}Flying"
     if kind == "chance":
         return f"When.Chance({argument})"
     raise ValueError(f"unknown guard {token}")

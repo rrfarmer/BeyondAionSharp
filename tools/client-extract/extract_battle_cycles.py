@@ -197,6 +197,13 @@ def read_guards(block: str) -> list[str]:
             if not number:
                 raise Unsayable("is_message with no message type")
             out.append(f"message:{number.group(1)}")
+        elif kind == "is_user_flying":
+            who = re.search(r"<user>(\w+)</user>", body)
+            roles = {"USERI_EVENT_TARGET": "EventTarget", "USERI_ATTACKER": "Attacker",
+                     "USERI_CASTER": "Caster", "USERI_SEEN": "Seen"}
+            if not who or who.group(1) not in roles:
+                raise Unsayable("is_user_flying about a creature this port cannot name")
+            out.append("flying:" + roles[who.group(1)])
         elif kind == "test_probability":
             percent = re.search(r"<percent>(\d+)</percent>", body)
             if not percent:
