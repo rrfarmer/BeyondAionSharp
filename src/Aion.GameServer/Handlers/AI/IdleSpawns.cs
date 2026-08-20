@@ -33,9 +33,9 @@ internal static class IdleSpawns
         Offset,
     }
 
-    /// <summary>One thing an npc places.</summary>
+    /// <summary>One thing an npc places. <c>Scoped</c> is retail's <c>despawn_at_attack_state</c>.</summary>
     internal readonly record struct Placement(int Npc, int Count, int LiveSeconds, Where Place,
-        float X, float Y, float Z);
+        float X, float Y, float Z, bool Scoped);
 
     /// <summary>One npc's whole behaviour. <c>ReArmMillis</c> is -1 when the rung does not re-arm.</summary>
     internal readonly record struct Cycle(int WakeMillis, int ReArmMillis, Placement[] Places);
@@ -43,27 +43,27 @@ internal static class IdleSpawns
     /// <summary>Every spawner, by npc id.</summary>
     internal static readonly IReadOnlyDictionary<int, Cycle> ByNpc = new Dictionary<int, Cycle>
     {
-        [217575] = new Cycle(5000, -1, [new Placement(282436, 1, 10, Where.Absolute, 1629.0f, 154.0f, 130.0f)]),  // IDArena_S6_Named_2
-        [282414] = new Cycle(5000, -1, [new Placement(282415, 1, 20, Where.Offset, -1.0f, -1.0f, 0.0f), new Placement(282415, 1, 20, Where.Offset, -1.0f, 1.0f, 0.0f), new Placement(282415, 1, 20, Where.Offset, 1.0f, -1.0f, 0.0f), new Placement(282415, 1, 20, Where.Offset, 1.0f, 1.0f, 0.0f)]),  // IDArena_Sum_Monster_06
-        [282447] = new Cycle(2000, -1, [new Placement(283069, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDRaksha_NoshowNPC_03
-        [282547] = new Cycle(2000, 0, [new Placement(282544, 1, 0, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDYun_Temp_15
-        [282548] = new Cycle(3000, 0, [new Placement(282545, 2, 0, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDYun_Temp_16
-        [282733] = new Cycle(2000, -1, [new Placement(282734, 1, 2, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // LDF4b_Tiamat_Temp07
-        [282977] = new Cycle(4000, -1, [new Placement(282978, 1, 6, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // LDF4b_Tiamat_Temp32
-        [282979] = new Cycle(4000, -1, [new Placement(282980, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // LDF4b_Tiamat_Temp33
-        [282986] = new Cycle(3000, -1, [new Placement(282987, 1, 2, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDYun_Temp_67
-        [283079] = new Cycle(2000, -1, [new Placement(283069, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDRaksha_NoshowNPC_03
-        [701431] = new Cycle(3000, 20000, [new Placement(282541, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // LDF4b_Tiamat_Temp55
-        [702411] = new Cycle(600000, 0, [new Placement(702412, 1, 10, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // Gab1_02_Guard_Noshow_01
-        [833465] = new Cycle(3000, 0, [new Placement(220037, 1, 0, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // DF5_QuestMonster_24
-        [855204] = new Cycle(5000, 30000, [new Placement(855206, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f), new Placement(855207, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f), new Placement(855208, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // WorldRaid_Wave_Pod_01
-        [855205] = new Cycle(5000, 30000, [new Placement(855206, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f), new Placement(855207, 2, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f), new Placement(855208, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // WorldRaid_Wave_Pod_07
-        [855233] = new Cycle(5000, 30000, [new Placement(855206, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f), new Placement(855207, 2, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f), new Placement(855208, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // WorldRaid_Wave_Pod_07
-        [856034] = new Cycle(2000, -1, [new Placement(856035, 1, 2, Where.Absolute, 445.0f, 550.7f, 417.4f)]),  // IDTiamat_Hard_Breath_Centarl_00
-        [856036] = new Cycle(2000, -1, [new Placement(856037, 1, 2, Where.Absolute, 457.8f, 514.7f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 462.3f, 514.6f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 466.6f, 514.6f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 469.7f, 514.5f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 473.6f, 514.5f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 475.8f, 514.4f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 479.3f, 514.4f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 482.7f, 514.3f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 485.2f, 514.3f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 488.1f, 514.3f, 417.4f), new Placement(856037, 1, 2, Where.Absolute, 491.2f, 514.2f, 417.4f)]),  // IDTiamat_Hard_Breath_Right_00
-        [856038] = new Cycle(2000, -1, [new Placement(856039, 1, 2, Where.Absolute, 454.1f, 474.9f, 417.4f)]),  // IDTiamat_Hard_Breath_Left_00
-        [856078] = new Cycle(4000, -1, [new Placement(856079, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDTiamat_Hard_Temp_11
-        [856080] = new Cycle(2000, -1, [new Placement(856081, 1, 2, Where.AtTheNpc, 0.0f, 0.0f, 0.0f)]),  // IDTiamat_Hard_Temp_13
+        [217575] = new Cycle(5000, -1, [new Placement(282436, 1, 10, Where.Absolute, 1629.0f, 154.0f, 130.0f, true)]),  // IDArena_S6_Named_2
+        [282414] = new Cycle(5000, -1, [new Placement(282415, 1, 20, Where.Offset, -1.0f, -1.0f, 0.0f, true), new Placement(282415, 1, 20, Where.Offset, -1.0f, 1.0f, 0.0f, true), new Placement(282415, 1, 20, Where.Offset, 1.0f, -1.0f, 0.0f, true), new Placement(282415, 1, 20, Where.Offset, 1.0f, 1.0f, 0.0f, true)]),  // IDArena_Sum_Monster_06
+        [282447] = new Cycle(2000, -1, [new Placement(283069, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDRaksha_NoshowNPC_03
+        [282547] = new Cycle(2000, 0, [new Placement(282544, 1, 0, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDYun_Temp_15
+        [282548] = new Cycle(3000, 0, [new Placement(282545, 2, 0, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDYun_Temp_16
+        [282733] = new Cycle(2000, -1, [new Placement(282734, 1, 2, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // LDF4b_Tiamat_Temp07
+        [282977] = new Cycle(4000, -1, [new Placement(282978, 1, 6, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // LDF4b_Tiamat_Temp32
+        [282979] = new Cycle(4000, -1, [new Placement(282980, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // LDF4b_Tiamat_Temp33
+        [282986] = new Cycle(3000, -1, [new Placement(282987, 1, 2, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDYun_Temp_67
+        [283079] = new Cycle(2000, -1, [new Placement(283069, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDRaksha_NoshowNPC_03
+        [701431] = new Cycle(3000, 20000, [new Placement(282541, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // LDF4b_Tiamat_Temp55
+        [702411] = new Cycle(600000, 0, [new Placement(702412, 1, 10, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // Gab1_02_Guard_Noshow_01
+        [833465] = new Cycle(3000, 0, [new Placement(220037, 1, 0, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // DF5_QuestMonster_24
+        [855204] = new Cycle(5000, 30000, [new Placement(855206, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true), new Placement(855207, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true), new Placement(855208, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // WorldRaid_Wave_Pod_01
+        [855205] = new Cycle(5000, 30000, [new Placement(855206, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true), new Placement(855207, 2, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true), new Placement(855208, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // WorldRaid_Wave_Pod_07
+        [855233] = new Cycle(5000, 30000, [new Placement(855206, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true), new Placement(855207, 2, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true), new Placement(855208, 1, 55, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // WorldRaid_Wave_Pod_07
+        [856034] = new Cycle(2000, -1, [new Placement(856035, 1, 2, Where.Absolute, 445.0f, 550.7f, 417.4f, true)]),  // IDTiamat_Hard_Breath_Centarl_00
+        [856036] = new Cycle(2000, -1, [new Placement(856037, 1, 2, Where.Absolute, 457.8f, 514.7f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 462.3f, 514.6f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 466.6f, 514.6f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 469.7f, 514.5f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 473.6f, 514.5f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 475.8f, 514.4f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 479.3f, 514.4f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 482.7f, 514.3f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 485.2f, 514.3f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 488.1f, 514.3f, 417.4f, true), new Placement(856037, 1, 2, Where.Absolute, 491.2f, 514.2f, 417.4f, true)]),  // IDTiamat_Hard_Breath_Right_00
+        [856038] = new Cycle(2000, -1, [new Placement(856039, 1, 2, Where.Absolute, 454.1f, 474.9f, 417.4f, true)]),  // IDTiamat_Hard_Breath_Left_00
+        [856078] = new Cycle(4000, -1, [new Placement(856079, 1, 3, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDTiamat_Hard_Temp_11
+        [856080] = new Cycle(2000, -1, [new Placement(856081, 1, 2, Where.AtTheNpc, 0.0f, 0.0f, 0.0f, true)]),  // IDTiamat_Hard_Temp_13
     };
 
     /// <summary>Retail's <c>SPAWN_ID_NONE</c> on these rungs: the spawner does not track what it placed.</summary>
@@ -89,11 +89,21 @@ internal static class IdleSpawns
         List<PatternAction> actions = new List<PatternAction>(cycle.Places.Length + 1);
         foreach (Placement place in cycle.Places)
         {
-            actions.Add(place.Place switch
+            // Scoped placements belong to the npc that made it: killing the spawner takes them away.
+            // All 36 of retail's here are scoped and three are permanent, which is the leak this
+            // closes -- but the flag is read per placement rather than assumed for the table.
+            actions.Add((place.Place, place.Scoped) switch
             {
-                Where.AtTheNpc => Do.SpawnNear(place.Npc, Untracked, place.Count, 0f, place.LiveSeconds),
-                Where.Offset => Do.SpawnOffset(place.Npc, Untracked, place.X, place.Y,
+                (Where.AtTheNpc, true) => Do.SpawnNearForTheFight(place.Npc, Untracked, place.Count,
+                    0f, place.LiveSeconds),
+                (Where.AtTheNpc, false) => Do.SpawnNear(place.Npc, Untracked, place.Count, 0f,
+                    place.LiveSeconds),
+                (Where.Offset, true) => Do.SpawnOffsetForTheFight(place.Npc, Untracked, place.X,
+                    place.Y, place.LiveSeconds, place.Z),
+                (Where.Offset, false) => Do.SpawnOffset(place.Npc, Untracked, place.X, place.Y,
                     place.LiveSeconds, place.Z),
+                (_, true) => Do.SpawnAtForTheFight(place.Npc, Untracked, place.LiveSeconds,
+                    new SpawnSpot(place.X, place.Y, place.Z)),
                 _ => Do.SpawnAt(place.Npc, Untracked, place.LiveSeconds,
                     new SpawnSpot(place.X, place.Y, place.Z)),
             });

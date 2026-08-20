@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -105,5 +106,28 @@ public sealed class IdleSpawnerAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(31));
 
 		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == 283069);
+	}
+	/// <summary><b>A permanent placement still goes when its spawner does.</b></summary>
+	/// <remarks>
+	/// All 40 placements in this table carry retail's <c>despawn_at_attack_state</c>, and three of them
+	/// have no live time at all -- <c>IDYun_Temp_15</c> below is one. Those three are the leak: without
+	/// the flag they stand on the ground forever, and nothing else was ever going to remove them,
+	/// because the spawner does not track what it placed (<c>SPAWN_ID_NONE</c>) so no despawn branch
+	/// can name them either.
+	/// </remarks>
+	[Fact]
+	public void APermanentPlacementLeavesWithItsSpawner()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc spawner = harness.Spawn(282547, 300f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		Assert.Equal(1, harness.LiveNpcs().Count(npc => npc.GetNpcId() == 282544));
+
+		Player player = harness.SpawnPlayer(900f, 900f, 200f);
+		BossAiHarness.Kill(spawner, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(0, harness.LiveNpcs().Count(npc => npc.GetNpcId() == 282544));
 	}
 }

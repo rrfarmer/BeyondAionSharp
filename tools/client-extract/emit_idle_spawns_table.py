@@ -40,9 +40,9 @@ internal static class IdleSpawns
         Offset,
     }}
 
-    /// <summary>One thing an npc places.</summary>
+    /// <summary>One thing an npc places. <c>Scoped</c> is retail's <c>despawn_at_attack_state</c>.</summary>
     internal readonly record struct Placement(int Npc, int Count, int LiveSeconds, Where Place,
-        float X, float Y, float Z);
+        float X, float Y, float Z, bool Scoped);
 
     /// <summary>One npc's whole behaviour. <c>ReArmMillis</c> is -1 when the rung does not re-arm.</summary>
     internal readonly record struct Cycle(int WakeMillis, int ReArmMillis, Placement[] Places);
@@ -77,11 +77,21 @@ FOOTER = '''    };
         List<PatternAction> actions = new List<PatternAction>(cycle.Places.Length + 1);
         foreach (Placement place in cycle.Places)
         {
-            actions.Add(place.Place switch
+            // Scoped placements belong to the npc that made it: killing the spawner takes them away.
+            // All 36 of retail's here are scoped and three are permanent, which is the leak this
+            // closes -- but the flag is read per placement rather than assumed for the table.
+            actions.Add((place.Place, place.Scoped) switch
             {
-                Where.AtTheNpc => Do.SpawnNear(place.Npc, Untracked, place.Count, 0f, place.LiveSeconds),
-                Where.Offset => Do.SpawnOffset(place.Npc, Untracked, place.X, place.Y,
+                (Where.AtTheNpc, true) => Do.SpawnNearForTheFight(place.Npc, Untracked, place.Count,
+                    0f, place.LiveSeconds),
+                (Where.AtTheNpc, false) => Do.SpawnNear(place.Npc, Untracked, place.Count, 0f,
+                    place.LiveSeconds),
+                (Where.Offset, true) => Do.SpawnOffsetForTheFight(place.Npc, Untracked, place.X,
+                    place.Y, place.LiveSeconds, place.Z),
+                (Where.Offset, false) => Do.SpawnOffset(place.Npc, Untracked, place.X, place.Y,
                     place.LiveSeconds, place.Z),
+                (_, true) => Do.SpawnAtForTheFight(place.Npc, Untracked, place.LiveSeconds,
+                    new SpawnSpot(place.X, place.Y, place.Z)),
                 _ => Do.SpawnAt(place.Npc, Untracked, place.LiveSeconds,
                     new SpawnSpot(place.X, place.Y, place.Z)),
             });
@@ -106,10 +116,10 @@ def main() -> None:
     meta: dict[int, tuple] = {}
     names: dict[int, str] = {}
     for line in args.tsv.read_text(encoding="utf-8").splitlines()[1:]:
-        npc, wake, rearm, placed, count, live, place, x, y, z, pattern = (
-            line.split("\t") + [""] * 11)[:11]
+        npc, wake, rearm, placed, count, live, place, x, y, z, scoped, pattern = (
+            line.split("\t") + [""] * 12)[:12]
         places[int(npc)].append((int(placed), int(count), int(live), place,
-                                 float(x), float(y), float(z)))
+                                 float(x), float(y), float(z), scoped == "TRUE"))
         meta[int(npc)] = (int(wake), int(rearm))
         names[int(npc)] = pattern
 
@@ -120,8 +130,8 @@ def main() -> None:
             wake, rearm = meta[npc]
             spots = ", ".join(
                 f"new Placement({p}, {c}, {l}, Where.{ {'self': 'AtTheNpc', 'offset': 'Offset'}.get(s, 'Absolute') }, "
-                f"{x}f, {y}f, {z}f)"
-                for p, c, l, s, x, y, z in places[npc])
+                f"{x}f, {y}f, {z}f, {'true' if scoped else 'false'})"
+                for p, c, l, s, x, y, z, scoped in places[npc])
             out.write(f"        [{npc}] = new Cycle({wake}, {rearm}, [{spots}]),  // {names[npc]}\n")
         out.write(FOOTER)
 

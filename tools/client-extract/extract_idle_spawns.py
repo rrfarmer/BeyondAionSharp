@@ -127,6 +127,11 @@ def main() -> int:
                          else "absolute")
                 count = re.search(r"<num_to_spawn>(\d+)</", block)
                 seconds = re.search(r"<live_time>(\d+)</", block)
+                # `despawn_at_attack_state`: the placement belongs to the npc that made it, so killing
+                # the spawner takes it away. All 36 placements these patterns carry are TRUE and three
+                # are permanent, which is the leak; the column is carried rather than assumed so a
+                # FALSE appearing later is handled instead of silently scoped.
+                scoped = re.search(r"<despawn_at_attack_state>(\w+)</", block)
                 spot = [re.search(r"<%s>([-\d.]+)</%s>" % (axis, axis), block) for axis in "xyz"]
                 for owner in owners:
                     rows.append((owner, int(waited.group(1)),
@@ -136,11 +141,12 @@ def main() -> int:
                                  float(spot[0].group(1)) if spot[0] else 0.0,
                                  float(spot[1].group(1)) if spot[1] else 0.0,
                                  float(spot[2].group(1)) if spot[2] else 0.0,
+                                 "TRUE" if scoped and scoped.group(1).upper() == "TRUE" else "FALSE",
                                  named.group(1)))
 
     rows.sort()
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
-        out.write("npc\twake_ms\trearm_ms\tplaced\tcount\tlive\tplace\tx\ty\tz\tpattern\n")
+        out.write("npc\twake_ms\trearm_ms\tplaced\tcount\tlive\tplace\tx\ty\tz\tscoped\tpattern\n")
         for row in rows:
             out.write("\t".join(str(f) for f in row) + "\n")
 
