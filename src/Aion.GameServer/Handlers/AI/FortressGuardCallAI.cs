@@ -104,13 +104,27 @@ public class FortressGuardAnswerAI : PatternAi
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(
+			// Retail's busy rung is a switch_target with a hundred points. `HateMessageTarget` is
+			// already both -- it adds the hate AND calls SetTarget -- so an explicit TargetMessageParam
+			// beside it is dead weight; it was added here and removed again when the mutation that
+			// deleted it could not be caught at any hate ratio.
 			Branch(2, "a call, and I am already fighting",
-				[When.MessageParamIsEnemy, When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
+				[When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
 				Do.HateMessageTarget(Claim)),
 
+			// Retail's idle rung ends in `attack_most_hating`. Its visible half is redundant here for
+			// the same reason -- `HateMessageTarget` already sets the target -- but it also takes the
+			// npc out of WALKING, which nothing else on this rung does, so it stays.
+			//
+			// **And it exposes something about the helper.** Retail's idle rung is `add_hate_point 1`
+			// and NOT a switch: a guard with a real fight on its hands is meant to note the call, not
+			// drop everything. `HateMessageTarget` calls SetTarget unconditionally, so here it turns for
+			// one point. That over-reach belongs to the helper and is used by several classes, so it is
+			// recorded in docs/retail-ai-fidelity.md rather than changed underneath them.
 			Branch(1, "a call, and I am not",
-				[When.MessageParamIsEnemy, When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy],
-				Do.HateMessageTarget(Glance))),
+				[When.Message(FortressGuardCallAI.ThisOne), When.MessageParamIsEnemy],
+				Do.HateMessageTarget(Glance),
+				Do.AttackMostHating())),
 	};
 
 	public FortressGuardAnswerAI(Npc owner)

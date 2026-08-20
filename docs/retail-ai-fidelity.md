@@ -33423,3 +33423,50 @@ handler properties.
 - **Two npcs in the table have a retail pattern and no template here.** A gap in the npc data rather
   than the binding; the pin skips them and says so.
 - **The 173 unanswered enter-combat messages**, above.
+
+## The answering half of 23200, and what it exposed about a helper
+
+**183 guards could not hear the fortress call.** 282 npcs answer 23200 in retail; ninety-nine did here.
+Bound to `fortress_guard_answer`, which is self-contained, so the binding is the whole fix.
+
+**Senders and hearers are disjoint** — 992 and 282, no overlap — so the sender binding of the previous
+entry could not have cost any npc its answer. Checked rather than assumed, because binding a sender to
+a class that only sends would have done exactly that.
+
+### The class was an approximation, and one half of the correction was dead weight
+
+Retail's two rungs are `switch_target … points_to_add=100` when the guard is already fighting, and
+`add_hate_point … 1` followed by `attack_most_hating` when it is not. The class had a hate add on each
+and neither of the other actions, so both were added — and then one was taken out again.
+
+**`Do.HateMessageTarget` is already a switch.** It adds the hate *and* calls `SetTarget`
+unconditionally. The mutation that deleted the explicit `TargetMessageParam` could not be caught at any
+hate ratio — five hundred thousand points on the current target and the guard still turned — because the
+helper had done it. So that action was removed rather than left in as inert code.
+
+`AttackMostHating` stays: its visible half is redundant for the same reason, but it also takes the npc
+out of WALKING, which nothing else on the rung does.
+
+### What that says about the helper, recorded rather than changed
+
+**Retail's idle rung is not a switch.** `add_hate_point 1` is a note — a guard with a real fight on its
+hands is meant to hear the call and keep fighting. `HateMessageTarget` calling `SetTarget`
+unconditionally makes it turn for one point, which is a different mechanic.
+
+That over-reach is in a helper used by several classes — `AbyssGuardCallAI`'s 23000 answer among them —
+so changing it here would change all of them silently. It is written down instead.
+
+> Two mutations survived and the right response was different for each: one action removed because the
+> port already did it, one kept because the port does only half of it. Neither is "add a pin".
+
+Three pins, and the enmity trap caught this project **for the third time**: 231233 is an Asmodian guard,
+so a pin written with the default Asmodian player measures a guard correctly refusing to attack its own
+side.
+
+### Still missing
+
+- **`HateMessageTarget`'s unconditional `SetTarget`**, above. Splitting it into a note and a switch is a
+  small change to a shared helper and wants its own pass with pins on every caller.
+- **23201**, the guards' "protect the sender" answer: `use_skill` on the caller, so behind skill indices
+  like everything else of that shape.
+- **Why thirty-eight guards call at ten metres** rather than twenty-five, unchanged from the last entry.
