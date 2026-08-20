@@ -47,6 +47,23 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 GENERIC = ("aggressive", "general", "noaction", "")
 
 
+#: The faction tokens retail puts in a dev name. `Li`/`Da`/`Dr` and their short forms `L`/`D`/`DR` mark
+#: the Elyos-held, Asmodian-held and balaur-held version of one npc. `An`/`Ae`/`Ah` look similar and are
+#: NOT faction -- they appear 18,567 / 10,639 / 3,304 times and are part of the npc's identity, so
+#: stripping them would merge npcs that are genuinely different.
+FACTIONS = {"L", "D", "DR", "Li", "Da", "Dr", "Lig", "Drk"}
+
+
+def stem(devname):
+    """A dev name with its faction token removed, so one npc's race variants share a key.
+
+    `LDF5_Village_chief01_L`, `_D` and `_DR` all become `LDF5_Village_chief01`; `LDF5_chief_v01_L_61_An`
+    becomes `LDF5_chief_v01_61_An`. Those are two different npcs that share a retail pattern, and keeping
+    them apart is the entire point.
+    """
+    return "_".join(part for part in devname.split("_") if part not in FACTIONS)
+
+
 def our_ai():
     """npc id -> the `ai` on its template here."""
     path = REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml"
@@ -67,27 +84,43 @@ def patterns_by_npc():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--xml", default="D:/Aion58ServerTesting/Server/Map/XML")
-    ap.add_argument("--min-majority", type=int, default=3,
+    ap.add_argument("--min-majority", type=int, default=0,
                     help="how many npcs must agree before a minority is worth reporting")
     ap.add_argument("--max-siblings", type=int, default=8,
                     help="ignore patterns bound to more npcs than this; they are generic and say nothing")
     ap.add_argument("--reverse", action="store_true",
                     help="the mirror case: a SPECIALISED majority with a GENERIC minority")
+    ap.add_argument("--by-suffix", action="store_true",
+                    help="compare an npc only against its own race variants, not the whole pattern")
     args = ap.parse_args()
+
+    # A race-variant group holds two or three npcs, so the whole-pattern default would empty it.
+    if args.min_majority == 0:
+        args.min_majority = 2 if args.by_suffix else 3
 
     ai_of = our_ai()
     runs = patterns_by_npc()
     devname = {npc_id: name for name, npc_id in npc_names(args.xml).items()}
     furniture = unattackable_ids(args.xml)
 
-    # Group our npcs by the retail pattern they run.
+    # Group our npcs by the retail pattern they run -- or, with --by-suffix, by the pattern AND the
+    # npc's own name with its faction token stripped.
+    #
+    # **Why the narrower grouping exists.** Kaldor's balaur village chief was reported against
+    # `base_protector` because its retail pattern binds three unrelated trios and six of its nine
+    # siblings use that class. The right answer was `simple_abyssguard`, which is what its own two race
+    # variants use -- outvoted by npcs that merely share a pattern. A retail pattern is not always one
+    # npc's behaviour, and where it binds several named groups the majority across it is the wrong
+    # denominator.
     by_pattern = collections.defaultdict(list)
     for npc_id, pattern in runs.items():
         if npc_id in ai_of:
-            by_pattern[pattern].append(npc_id)
+            key = (pattern, stem(devname.get(npc_id, npc_id))) if args.by_suffix else pattern
+            by_pattern[key].append(npc_id)
 
     rows = []
-    for pattern, npcs in by_pattern.items():
+    for key, npcs in by_pattern.items():
+        pattern = key[0] if args.by_suffix else key
         if len(npcs) > args.max_siblings:
             continue
         counts = collections.Counter(ai_of[n] for n in npcs)

@@ -32428,3 +32428,75 @@ before writing another data-binding pin.
   the argument for it: the correct denominator here was the `_L`/`_D`/`_DR` trio, and the tool cannot
   see trios. A `--by-suffix` mode that groups an npc's siblings by shared dev-name stem would have given
   the right answer directly instead of a majority that had to be overruled by hand.
+
+## `--by-suffix`, and why the balaur guards were left alone
+
+The previous entry argued for grouping an npc against its own race variants rather than against every
+npc on its retail pattern, because the whole-pattern majority gave the wrong answer for Kaldor's village
+chiefs. `audit_odd_ai.py --by-suffix` does it: a dev name has its faction token stripped — `Li`, `Da`,
+`Dr` and the short forms `L`, `D`, `DR` — so one npc's race variants share a key.
+
+`An`, `Ae` and `Ah` look like faction tokens and are **not**: they appear 18,567, 10,639 and 3,304 times
+and are part of the npc's identity. Stripping them would merge npcs that are genuinely different, so the
+list is explicit rather than a pattern.
+
+**126 rows become 6**, and they are the same shape every time: the balaur variant of a guard on plain
+`aggressive` while its Elyos and Asmodian twins share a real class. The mode also correctly stops
+reporting the nineteen village chiefs, which are now fixed.
+
+### The wider family, and the reason nothing was bound
+
+Scanning every `Ab1_<artifact>_Boss_<faction>_<grade>` group directly — 185 of them — found **26 that
+disagree internally**, well past the 6 the audit reports, because those six are only the ones whose
+variants also share a retail pattern. Nineteen have the balaur variant on a generic `ai` while Elyos and
+Asmodian agree.
+
+**Fourteen of the nineteen do not share their siblings' retail pattern.** Retail gives the balaur guards
+their own: `AB1_DrGuard_Artifact` against `AB1_LDGuard_Artifact`, and `BGuard_ChiefA_Renew_Dr` against
+`_Li`. So the sibling's class is not automatically the right answer, and reading the two patterns side
+by side shows why it matters:
+
+| | `AB1_LDGuard_Artifact` | `AB1_DrGuard_Artifact` |
+|---|---|---|
+| answers 30001 / 23100 | yes | yes |
+| spawns `BAb1_GuardChief_Despawn` on death | yes | yes |
+| **broadcasts 30003 on death** | **yes** | **no** |
+| HP-check timer and a below-35 rung | yes | no |
+
+The balaur guard is a reduced version of the same guard. **This port's
+`AbstractSiegeProtectorAI.HandleDied` broadcasts 30003 unconditionally**, so binding the balaur variants
+to `artifact_protector` would hand them a death call retail explicitly withholds — trading a missing
+class for a wrong one. Nothing was bound.
+
+## The 30003 death call is unconditional here and conditional in retail
+
+Following that thread past the balaur guards turned up something larger.
+
+**1,219 npcs are bound to `artifact_protector` or `fortress_protector`. They run 93 distinct retail
+patterns, and exactly 2 of those 93 broadcast 30003 on death.** So **877 of the 1,219 announce their own
+death to every siege npc within fifty metres, and retail does not.**
+
+30003 is the protector-down order, and `FortressKillerAI` answers it — so this is not a cosmetic extra
+message: fortress killers are being told to stand down by 877 npcs that should die quietly.
+
+This is not a regression introduced here; it is how the Java-parity class has always worked, and it is
+invisible from the C# because the class is faithful to Java and Java is faithful to nothing in
+particular on this point. It only shows up when the death handler is compared against the patterns of
+the npcs actually bound to it.
+
+### Still missing
+
+- **The 30003 gate.** The fix has the shape `GuardCalls` already uses: a generated table of npc ids
+  whose retail pattern broadcasts 30003 on death, and a `HandleDied` that consults it. The extractor,
+  the table, the class change and its pins are a self-contained piece of work and the next thing to do
+  here.
+- **The nineteen balaur variants**, which become bindable once the death call is gated — at that point
+  `artifact_protector` and `fortress_protector` stop carrying a broadcast their pattern lacks, and the
+  only remaining difference is the HP-check timer, which is skills this port cannot cast anyway.
+- **The seven balaur variants carrying a *different* specialised class** (`guard_reinforcement` where
+  their twins use `fortress_protector`, and one `artifact_protector` among `fortress_protector`s). Those
+  are the forward audit's territory and want their own reading; they are recorded here so the family is
+  fully accounted for rather than half-checked.
+- **`--by-suffix` still requires a shared pattern.** That is what kept it to 6 rows out of 26 real
+  disagreements. Relaxing it would need a different safety, because dev-name similarity alone is a
+  weaker claim than a shared pattern; the direct family scan used here was written by hand instead.
