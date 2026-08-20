@@ -33971,3 +33971,45 @@ The compiler had been reporting every one of these as CS0108 all along.
 - The 23100 gap report still counts `artifact_protector` npcs as unbound when they answer through the
   `ProtectorCalls` fold, so its headline overstates. The `--gaps` flag no longer crashes on `3000x`.
 - The cast ladders, still blocked on skill indices.
+
+## The call family is closed, and the report that said otherwise was wrong
+
+`--gaps` has been reporting a **717-npc shortfall on `23100`**, 512 of them `artifact_protector`. That
+number is wrong and this entry's first job was finding out why.
+
+The report asked *"is this npc bound to the one class that answers this call"*. There are **four** ways
+an answer reaches an npc now, and it knew one:
+
+1. the npc's class declares no `OnNpcMessage` and inherits `GeneralNpcAI`'s, which consults the table;
+2. it declares one and hands off to the inherited one;
+3. it applies the rungs itself through `GuardAnswers.AnswerCall`;
+4. its class folds the rungs into its own pattern — which is exactly what the 512 artifact protectors do.
+
+`delivering_ai_names` now derives the answer from the source: 707 AI names can deliver, 18 swallow.
+Measured that way:
+
+> **All 3,499 player-targeted answers reach the npc. None do not.**
+
+The mechanic is finished. A report that asserts a single expected class invents work that is already
+done, and this one invented 717 npcs' worth.
+
+### The 18 that swallow
+
+`anuhart_medic`, `complete_trap`, `conquest_offering_spawner`, `conquest_offering_spot`,
+`conquest_offering_time_reset`, `danuar_summon_order`, `distortedspace`, `elemental_wave`,
+`exedil_ghost`, `gravity_tornado`, `idsweep_stage_add`, `macunbello`, `orissans_summon`,
+`seal_delay_keeper`, `sematariux_thunder_shield`, `twin_failure_display`, `twin_font`,
+`watchman_hokuruki`.
+
+Each declares `OnNpcMessage` and neither hands off nor consults the table. **None owns an npc the table
+answers for**, so all eighteen are latent, and `NoClassHidesTheMessageHandlerAndKeepsTableNpcs` fails the
+moment one does.
+
+### Still missing
+
+- **The eighteen above**, if any of their npcs is ever bound to a call. The pin catches it; the fix is
+  one line each.
+- **`30001`'s answerers are bounded but never widened.** 698 npcs answer it in retail. Two protector
+  classes are now held to that list, but nothing checks whether npcs *outside* those classes should
+  answer and cannot — the same question this entry just settled for the player-targeted half.
+- The cast ladders on every chain in this family, still blocked on skill indices.

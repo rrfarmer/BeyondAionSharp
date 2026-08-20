@@ -9,8 +9,7 @@ using Aion.GameServer.Model.GameObjects;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Who answers a guard's call for help, and with what weight: 4242 answers across 3696 spawnable
-/// npcs.
+/// Who answers a guard's call for help, and with what weight: 4242 answers across 3696 npcs.
 /// </summary>
 /// <remarks>
 /// The answering half of the whole call family. Retail gives it exactly two rungs and no third:
@@ -18,9 +17,9 @@ namespace Aion.GameServer.Handlers.AI;
 /// <c>add_hate_point</c> followed by <c>attack_most_hating</c>. 3465 of the 4242 answers carry
 /// the common 1/100 pair; the 777 that do not are carried at their own values rather than flattened.
 /// <para>
-/// A table rather than a constant because <b>which</b> call an npc answers is per npc, not per class:
-/// 102 artifact protectors answer <c>23100</c> while keeping a class that has no
-/// <c>on_message</c> of its own, which is why <see cref="ProtectorCalls"/> folds these rungs in.
+/// A table rather than a constant because <b>which</b> call an npc answers is per npc, not per class,
+/// and because it is also the <b>bound</b>: two protector classes answered the npc-versus-npc wake-up
+/// call for every npc they held, where retail names a subset.
 /// </para>
 /// </remarks>
 internal static class GuardAnswers

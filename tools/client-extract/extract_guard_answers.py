@@ -18,17 +18,21 @@ common value would be inventing uniformity the dump does not have.
 
 WHAT IT IS FOR
 --------------
-Measured against our spawnable npcs, the family divides cleanly:
+Every npc this port defines whose retail pattern answers one of these calls:
 
-| call | spawnable answerers | on a class that answers here |
-|---|---|---|
-| `23200` | 102 | 102 |
-| `23000` | 385 | 361 |
-| `23100` | 154 | 47 |
+| call | answerers |
+|---|---|
+| `23000` | 2,451 |
+| `23100` | 766 |
+| `23200` | 282 |
+| `30001` | 698 |
+| `30002` | 33 |
+| `30003` | 12 |
 
-`23200` is done. The `23100` shortfall is 107 npcs, **102 of them `artifact_protector`** -- a class with
-its own pattern and no `on_message` at all, so the answering rungs fold in additively. The remaining
-24 on `23000` sit on five bespoke classes and are listed by `--gaps` rather than bound here.
+**All 3,499 player-targeted answers now reach the npc**, by one of four routes -- an inherited listener,
+a hand-off, `AnswerCall` applied directly, or rungs folded into a class's own pattern. `--gaps` checks
+that rather than asserting a single expected class, because an earlier version did the latter and
+reported a 717-npc shortfall on `23100` of which 512 were already answering through the fold.
 
 CLI:
     python extract_guard_answers.py <patterns_dir> <binding_tsv> <out.tsv> [--repo ..] [--gaps]
@@ -49,12 +53,12 @@ import audit_missing_adds as A  # noqa: E402
 #: actions are empty in the dump, so they are read and dropped rather than emitted as no-ops.
 #:
 #: `30001` and `30002` are the npc-versus-npc half of the family and are here for a different reason:
-#: not to bind new listeners -- every one of retail's 135 is already on a protector class -- but to
-#: bound the ones we have. `AbstractSiegeProtectorAI` answered `30001` for **every** npc on the class,
-#: 282 of them, so 147 protectors that retail leaves standing dropped everything and charged a waking
-#: killer. `30003` is carried for membership only: its answer is `despawn_self`, not a hate rung, so it
-#: has no points and emits no rung. Its four listeners are exactly the four npcs on the killer class --
-#: which was exact by coincidence rather than by construction until this table could say so.
+#: not to bind new listeners but to **bound** the ones we have. Two classes answered `30001` for every
+#: npc they held -- `AbstractSiegeProtectorAI` and `BaseProtectorAI` -- where retail names a subset, so
+#: protectors it leaves at their posts charged every waking killer. `30003` is carried for membership
+#: only: its answer is `despawn_self`, not a hate rung, so it has no points and emits no rung. It is
+#: what shows that the advance village killer answers `30002` and not `30003`, which its class had
+#: given it anyway.
 CALLS = {"23000", "23100", "23200", "30001", "30002", "30003"}
 
 MSG_RE = re.compile(r"<on_message>(.*?)</on_message>", re.S)
@@ -164,25 +168,70 @@ def main() -> int:
             out.write("\t".join(str(field) for field in row) + "\n")
 
     per_call = collections.Counter(r[1] for r in ordered)
-    print(f"{len(ordered)} answers across {len({r[0] for r in ordered})} spawnable npcs -> {args.out}")
+    print(f"{len(ordered)} answers across {len({r[0] for r in ordered})} npcs -> {args.out}")
     for call, count in sorted(per_call.items()):
         print(f"    {count:5d} answer {call}")
 
     if args.gaps:
-        templates = A.read_text(args.repo / "game-server/data/static_data/npcs/npc_templates.xml")
-        bound = {int(m.group(1)): m.group(2)
-                 for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
-        # Only the player-targeted calls have a single class that answers them. `3000x` is answered by
-        # several classes through `GuardAnswers.Answers`, so "not on class X" says nothing about it.
-        answers = {"23000": "abyss_guard_call", "23100": "garrison_guard_answer",
-                   "23200": "fortress_guard_answer"}
-        for call in sorted(c for c in per_call if str(c) in answers):
-            deaf = collections.Counter(bound.get(r[0], "<none>") for r in ordered
-                                       if r[1] == call and bound.get(r[0]) != answers[str(call)])
-            print(f"\n  {call}: {sum(deaf.values())} answer in retail and are not on {answers[str(call)]}")
-            for name, count in deaf.most_common(10):
-                print(f"      {count:5d}  {name}")
+        report_gaps(args.repo, ordered)
     return 0
+
+
+def delivering_ai_names(repo: pathlib.Path) -> tuple[set[str], set[str]]:
+    """AI names that can deliver a table answer, and the ones that swallow it.
+
+    **Not "is it bound to the answering class".** An earlier version of this report asked exactly that
+    and claimed a 717-npc shortfall on `23100`, of which 512 were `artifact_protector` -- a class that
+    answers perfectly well, through rungs folded into `ProtectorCalls`. Four ways an answer reaches an
+    NPC now, and a report that knows only one of them invents work that is already done.
+
+    A class delivers if it does **not** declare `OnNpcMessage` at all (it inherits `GeneralNpcAI`'s,
+    which consults the table), or hands off to the inherited one, or applies the rungs itself through
+    `AnswerCall`, or folds them into its pattern. Anything else declares the method and swallows every
+    message the table holds -- which is the defect this project hit three times.
+    """
+    delivers: set[str] = set()
+    swallows: set[str] = set()
+    for path in (repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        named = re.findall(r'AIName\("([\w_]+)"\)', text)
+        if not named:
+            continue
+        reaches = ("void OnNpcMessage" not in text
+                   or "base.OnNpcMessage" in text
+                   or "GuardAnswers.AnswerCall" in text
+                   or "GuardAnswers.RungsFor" in text
+                   or "ProtectorCalls.PatternFor" in text)
+        (delivers if reaches else swallows).update(named)
+    return delivers, swallows
+
+
+def report_gaps(repo: pathlib.Path, ordered) -> None:
+    templates = A.read_text(repo / "game-server/data/static_data/npcs/npc_templates.xml")
+    bound = {int(m.group(1)): m.group(2)
+             for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
+    delivers, swallows = delivering_ai_names(repo)
+
+    # `3000x` names the caller and is answered by class-owned actions gated on `GuardAnswers.Answers`,
+    # so "can this class deliver a rung" is not the question for it and it is reported separately.
+    deaf: collections.Counter = collections.Counter()
+    covered = 0
+    for npc_id, call, _idle, _busy, _sender, _pattern in ordered:
+        if call >= 30000:
+            continue
+        name = bound.get(npc_id, "<none>")
+        if name in delivers:
+            covered += 1
+        else:
+            deaf[(call, name)] += 1
+
+    print(f"\n  player-targeted answers: {covered} reach the npc, {sum(deaf.values())} do not")
+    for (call, name), count in deaf.most_common(12):
+        print(f"      {count:5d}  {call} on {name}")
+    if not deaf:
+        print("      -- every npc whose retail pattern answers a guard call is on a class that can")
+    print(f"\n  {len(swallows)} AI names declare OnNpcMessage and swallow it: "
+          + ", ".join(sorted(swallows)))
 
 
 if __name__ == "__main__":
