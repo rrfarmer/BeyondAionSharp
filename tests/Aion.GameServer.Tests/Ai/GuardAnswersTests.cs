@@ -68,8 +68,8 @@ public sealed class GuardAnswersTests
 	}
 
 	/// <summary>
-	/// <b>Every answer in the table carries retail's two rungs, or says why not.</b> Four npcs answer
-	/// with a thousand points and no fighting rung at all; the rest are the uniform 1/100 pair.
+	/// <b>Every player-targeted answer carries retail's two rungs, or says why not.</b> Four npcs
+	/// answer with a thousand points and no fighting rung at all; the rest are the uniform 1/100 pair.
 	/// </summary>
 	[Fact]
 	public void TheTableIsRetailsTwoRungsAndItsFourExceptions()
@@ -79,6 +79,11 @@ public sealed class GuardAnswersTests
 		{
 			foreach (GuardAnswers.Answer answer in answers)
 			{
+				// The npc-versus-npc half is a different mechanic with a different target and a
+				// millionfold hate value; it is counted by its own pin below.
+				if (answer.AimsAtSender)
+					continue;
+
 				Assert.True(answer.Idle >= 0);
 				if (answer.Idle != 1 || answer.Busy != 100)
 					odd++;
@@ -293,5 +298,57 @@ public sealed class GuardAnswersTests
 	{
 		Assert.Empty(GuardAnswers.RungsFor(203100));
 		Assert.False(GuardAnswers.ByNpc.ContainsKey(203100));
+	}
+
+	/// <summary>An upright lieutenant: retail gives it the killer's wake-up call.</summary>
+	private const int AnsweringProtector = 251467;
+
+	/// <summary>An initiate protector: on the same class, and retail leaves it standing.</summary>
+	private const int SilentProtector = 263601;
+
+	/// <summary>A dread remnant artifact killer, and one of the four that answer 30003.</summary>
+	private const int ArtifactKiller = 251160;
+
+	/// <summary>
+	/// <b>A protector answers a waking killer only if retail says it does.</b> 282 npcs sat on the
+	/// classes that answered <c>30001</c>; retail gives the rung to 135 of them.
+	/// </summary>
+	/// <remarks>
+	/// The message is npc-versus-npc and carries <c>points_to_add=1000000</c> — a killer wakes, shouts
+	/// once at fifty metres, and everything that answers drops what it is doing and comes. Answering it
+	/// on the whole class meant 147 protectors that retail leaves at their posts abandoned them every
+	/// time a killer spawned. Same defect as the one <c>SiegeDeathCalls</c> fixed for <c>30003</c>, one
+	/// message over: the class was the population, where retail's population is per npc.
+	/// </remarks>
+	[Fact]
+	public void OnlyTheProtectorsRetailNamesAnswerAWakingKiller()
+	{
+		Assert.True(GuardAnswers.Answers(AnsweringProtector, FortressKillerAI.KillerAwake));
+		Assert.False(GuardAnswers.Answers(SilentProtector, FortressKillerAI.KillerAwake));
+	}
+
+	/// <summary><b>And the silent one really does stay put when the call goes out.</b></summary>
+	[Fact]
+	public void ASilentProtectorStaysAtItsPost()
+	{
+		using BossAiHarness harness = BossAiHarness.For(400010000).WithWorldSize(4096)
+			.WithAi(typeof(ArtifactProtectorAI), typeof(FortressKillerAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		Npc killer = harness.Spawn(ArtifactKiller, 300f, 300f, 200f);
+		Npc answers = harness.Spawn(AnsweringProtector, 305f, 300f, 200f);
+		Npc silent = harness.Spawn(SilentProtector, 306f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(killer, answers);
+		BossAiHarness.MakeMutuallyKnown(killer, silent);
+
+		// Both are at war with the killer, so the difference below is the table and nothing else.
+		Assert.True(killer.IsEnemy(answers));
+		Assert.True(killer.IsEnemy(silent));
+
+		NpcMessageBus.Broadcast(killer, FortressKillerAI.KillerAwake, killer,
+			FortressKillerAI.WakeCallRange);
+
+		Assert.True(answers.GetAggroList().GetHate(killer) > 0);
+		Assert.Equal(0, silent.GetAggroList().GetHate(killer));
 	}
 }

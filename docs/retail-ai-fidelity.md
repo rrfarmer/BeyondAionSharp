@@ -33832,3 +33832,47 @@ than a tribe, and guessing the rest would be worse than leaving it named.
   not, and cannot be until a `general` npc both answers a call and has a tribe to fight with.
 - The other **316 tribe divergences**, if any of them ever turn out to matter.
 - `KistenianAI`'s hidden `OnNpcMessage`; `30003`; the cast ladders.
+
+## 147 protectors that abandoned their posts, and three claims in this log that were false
+
+This entry set out to build `30003`, which the backlog has listed as "nowhere" for several entries.
+**It was already built, and pinned on both halves.** So were `30001` and `30002`. The claim was stale,
+and `AbyssGuardCallAI`'s own remark still said *"None of the three is implemented anywhere in this
+port"* — in the source, not just the log. Both are corrected.
+
+Measuring the family properly instead turned up a real defect one message over.
+
+### The defect
+
+`AbstractSiegeProtectorAI` answered `30001` — a killer's wake-up shout, `points_to_add=1000000` at fifty
+metres — **for every npc on the class**. 282 spawnable protectors, against retail's **135**.
+
+So 147 protectors that retail leaves standing at their posts dropped everything and charged, every time
+a fortress killer spawned. It is the same defect `SiegeDeathCalls` was built to fix for `30003`, one
+message over and never re-checked: **the class was the population, where retail's population is per
+npc.** Every one of retail's 135 is already on a protector class, so the table binds nothing new here —
+it only stops the surplus.
+
+### One table for the whole family, with the two targets kept apart
+
+`GuardAnswers` now carries `30001` and `30002` alongside the `23xxx` calls, and records **what the rung
+aims at**, because the two halves differ and it is not incidental:
+
+| calls | target | points |
+|---|---|---|
+| `23000`, `23100`, `23200` | `OBJI_MESSAGE_PARAM` — a player | 1 idle / 100 busy |
+| `30001`, `30002` | `OBJI_MESSAGE_SENDER` — the caller | 1,000,000 |
+
+Sender-targeted answers are deliberately **not** emitted as pattern rungs: the classes that answer them
+already carry the actions, and applying a player-targeted rung to a sender-targeted call would put a
+million points of hate on the wrong creature. They are in the table to *bound* who answers, through
+`GuardAnswers.Answers`. `30003` stays out entirely — its answer is `despawn_self`, not a hate rung, and
+its four listeners are already exact.
+
+### Still missing
+
+- **`30002` is answered by the killer class for all 4 of its npcs, which happens to match retail's 4** —
+  exact today, and exact by coincidence rather than by construction. If a fifth killer is ever bound,
+  nothing will notice. The table now carries the answer, so gating it is a one-line change.
+- **`KistenianAI`** still hides `OnNpcMessage` without handing off.
+- The cast ladders on every one of these chains, still blocked on skill indices.

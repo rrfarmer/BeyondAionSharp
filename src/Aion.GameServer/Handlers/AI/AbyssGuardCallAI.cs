@@ -63,8 +63,11 @@ namespace Aion.GameServer.Handlers.AI;
 /// carries 1. A million is not a nudge — whoever hears it drops what it is doing and goes for the
 /// caller, because these are npc-versus-npc: an artifact guard shouts 30002 and the fortress killer
 /// comes for it; the killer shouts 30001 on waking and every guard within fifty metres turns on the
-/// killer. <c>30003</c> is a despawn order. <b>None of the three is implemented anywhere in this
-/// port</b>, so a fortress currently changes hands without any of it happening.
+/// killer. <c>30003</c> is a despawn order. <b>All three are implemented</b> —
+/// <see cref="ProtectorCalls"/> sends 30002, <see cref="SiegeDeathCalls"/> sends 30003,
+/// <see cref="FortressKillerAI"/> answers both, and <see cref="AbstractSiegeProtectorAI"/> answers
+/// 30001 for the 135 npcs <see cref="GuardAnswers"/> names. This remark claimed none of them were, and
+/// went on claiming it for several entries after they had been built.
 /// </para>
 /// </remarks>
 [AIName("abyss_guard_call")]

@@ -106,7 +106,13 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
 
         if (messageType == KillerAwake)
         {
-            SummonOrder.Take(GetOwner(), sender, DropEverything);
+            // Bounded by the table, not by the class. This answered for every npc on the class -- 282
+            // of them against retail's 135 -- so 147 protectors that retail leaves standing dropped
+            // everything and charged a waking killer. Every one of retail's 135 is already on a
+            // protector class, so the table binds nothing new here; it only stops the surplus.
+            if (GuardAnswers.Answers(GetNpcId(), KillerAwake))
+                SummonOrder.Take(GetOwner(), sender, DropEverything);
+
             return;
         }
 

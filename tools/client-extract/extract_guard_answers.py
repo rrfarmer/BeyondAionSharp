@@ -47,25 +47,37 @@ import audit_missing_adds as A  # noqa: E402
 
 #: The calls with an answering half worth binding. `23101` and `23109` have answering rungs whose
 #: actions are empty in the dump, so they are read and dropped rather than emitted as no-ops.
-CALLS = {"23000", "23100", "23200"}
+#:
+#: `30001` and `30002` are the npc-versus-npc half of the family and are here for a different reason:
+#: not to bind new listeners -- every one of retail's 135 is already on a protector class -- but to
+#: bound the ones we have. `AbstractSiegeProtectorAI` answered `30001` for **every** npc on the class,
+#: 282 of them, so 147 protectors that retail leaves standing dropped everything and charged a waking
+#: killer. `30003` is excluded: its answer is `despawn_self`, not a hate rung, and it is already exact.
+CALLS = {"23000", "23100", "23200", "30001", "30002"}
 
 MSG_RE = re.compile(r"<on_message>(.*?)</on_message>", re.S)
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 
-def rung(body: str) -> tuple[str, int] | None:
-    """The one action pair a rung answers with: ('switch'|'add'|'nothing', points)."""
+def rung(body: str) -> tuple[str, int, bool] | None:
+    """The action pair a rung answers with: ('switch'|'add'|'nothing', points, targets_the_sender).
+
+    The two halves of the family aim at different objects and it is not incidental: `23xxx` names a
+    player in `OBJI_MESSAGE_PARAM`, `3000x` names the caller in `OBJI_MESSAGE_SENDER`. Applying one
+    with the other's target would put hate on the wrong creature entirely.
+    """
     actions = re.search(r"<actions>(.*?)</actions>", body, re.S)
     if actions is None:
         return None
     text = actions.group(1)
     points = re.search(r"<point[s]?_to_add>(-?\d+)</", text)
+    sender = "OBJI_MESSAGE_SENDER" in text
     if "<switch_target>" in text:
-        return ("switch", int(points.group(1)) if points else 0)
+        return ("switch", int(points.group(1)) if points else 0, sender)
     if "<add_hate_point>" in text:
-        return ("add", int(points.group(1)) if points else 0)
+        return ("add", int(points.group(1)) if points else 0, sender)
     if "<do_nothing>" in text:
-        return ("nothing", 0)
+        return ("nothing", 0, sender)
     return None
 
 
@@ -86,7 +98,7 @@ def main() -> int:
         if len(fields) > 3:
             binders[fields[3]].append(fields[0])
 
-    rows: set[tuple[int, int, int, int, str]] = set()
+    rows: set[tuple[int, int, int, int, int, str]] = set()
     for path in sorted(args.patterns_dir.rglob("*.xml")):
         try:
             text = S.read_text(path)
@@ -107,6 +119,7 @@ def main() -> int:
             # call -> (idle points, busy points). A missing half stays -1, which is not the same as a
             # zero: `do_nothing` answers with nothing and is recorded as 0.
             found: dict[str, list[int]] = {}
+            aims: dict[str, bool] = {}
             for branch in BRANCH_RE.finditer(handler.group(1)):
                 conditions = re.search(r"<conditions>(.*?)</conditions>", branch.group(1), re.S)
                 if not conditions:
@@ -120,10 +133,12 @@ def main() -> int:
                 busy = "NPC_STATE_ATTACK" in conditions.group(1)
                 slot = found.setdefault(kind.group(1), [-1, -1])
                 slot[1 if busy else 0] = answer[1]
+                aims[kind.group(1)] = aims.get(kind.group(1), False) or answer[2]
 
             for call, (idle, busy) in found.items():
                 for npc in owners:
-                    rows.add((int(npc), int(call), idle, busy, named.group(1)))
+                    rows.add((int(npc), int(call), idle, busy,
+                              1 if aims.get(call) else 0, named.group(1)))
 
     ordered = sorted(rows)
     with args.out.open("w", encoding="utf-8", newline="\n") as out:

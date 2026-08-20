@@ -33,7 +33,7 @@ namespace Aion.GameServer.Handlers.AI;
 internal static class GuardAnswers
 {{
     /// <summary>One call an npc answers. <c>Busy</c> is -1 when retail gives it no fighting rung.</summary>
-    internal readonly record struct Answer(int Call, int Idle, int Busy);
+    internal readonly record struct Answer(int Call, int Idle, int Busy, bool AimsAtSender);
 
     /// <summary>Every answer, by npc id.</summary>
     internal static readonly IReadOnlyDictionary<int, Answer[]> ByNpc = new Dictionary<int, Answer[]>
@@ -59,6 +59,12 @@ FOOTER = '''    };
         int priority = answers.Length * 2;
         foreach (Answer answer in answers)
         {
+            // Sender-targeted answers are deliberately not emitted as pattern rungs. 30001 and 30002
+            // name the caller rather than a player, and the classes that answer them already carry
+            // their own actions; this table bounds WHICH npcs may, through Answers below.
+            if (answer.AimsAtSender)
+                continue;
+
             if (answer.Busy >= 0)
             {
                 rungs.Add(AiPattern.Branch(priority--, "a call, and I am already fighting",
@@ -93,6 +99,18 @@ FOOTER = '''    };
     /// whether or not the named player is the one it now hates most.
     /// </para>
     /// </remarks>
+    /// <summary>Whether retail gives this npc an answer to this message at all.</summary>
+    /// <remarks>
+    /// The gate for answers whose actions live in a class rather than in a rung here. It exists because
+    /// <c>AbstractSiegeProtectorAI</c> answered <c>30001</c> for every npc on the class -- 282 of them
+    /// against retail's 135 -- so 147 protectors that retail leaves standing dropped everything and
+    /// charged a waking killer. Every one of retail's 135 was already on a protector class, so this
+    /// binds nothing new: it only bounds what is there.
+    /// </remarks>
+    internal static bool Answers(int npcId, int messageType)
+        => ByNpc.TryGetValue(npcId, out Answer[]? answers)
+            && Array.Exists(answers, answer => answer.Call == messageType);
+
     /// <returns>true if this npc had an answer for the message, whether or not it landed.</returns>
     internal static bool AnswerCall(Npc listener, Npc sender, int messageType, VisibleObject? param)
     {
@@ -107,8 +125,11 @@ FOOTER = '''    };
             if (answer.Call != messageType)
                 continue;
 
+            // 23xxx names a player in the message parameter; 3000x names the caller itself.
+            Creature? aim = answer.AimsAtSender ? sender : param as Creature;
+
             // is_enemy, in the direction the pattern conditions use.
-            if (param is not Creature named || named.IsDead() || !named.IsEnemy(listener))
+            if (aim is not { } named || named.IsDead() || !named.IsEnemy(listener))
                 return true;
 
             if (answer.Busy >= 0 && listener.GetAi().IsInState(AIState.FIGHT))
@@ -141,10 +162,10 @@ def main() -> None:
     common = odd = 0
     protectors = 0
     for line in args.tsv.read_text(encoding="utf-8").splitlines()[1:]:
-        npc, call, idle, busy, pattern = (line.split("\t") + [""] * 5)[:5]
-        by_npc[int(npc)].append((int(call), int(idle), int(busy)))
+        npc, call, idle, busy, sender, pattern = (line.split("\t") + [""] * 6)[:6]
+        by_npc[int(npc)].append((int(call), int(idle), int(busy), int(sender)))
         names[int(npc)] = pattern
-        if (int(idle), int(busy)) == (1, 100):
+        if (int(idle), int(busy)) == (1, 100) and int(call) < 30000:
             common += 1
         else:
             odd += 1
@@ -155,7 +176,8 @@ def main() -> None:
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
         out.write(HEADER.format(rows=rows, npcs=len(by_npc), common=common, odd=odd, protectors=102))
         for npc in sorted(by_npc):
-            answers = ", ".join(f"new Answer({c}, {i}, {b})" for c, i, b in sorted(by_npc[npc]))
+            answers = ", ".join(f"new Answer({c}, {i}, {b}, {'true' if s else 'false'})"
+                            for c, i, b, s in sorted(by_npc[npc]))
             out.write(f"        [{npc}] = [{answers}],  // {names[npc]}\n")
         out.write(FOOTER)
 
