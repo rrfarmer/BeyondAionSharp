@@ -33246,3 +33246,53 @@ share the fourth band's flag is caught.
 …)` — a boolean rather than a count, so a repeated pick only hides a switch if *every* pick in the window
 repeats. Much less likely, and both pass consistently. Left alone, but recorded: they are the same proxy,
 and if either ever flakes this is the reason and `CountSwitches` is the fix.
+
+## Three of Panesterra's four garrisons had no captain
+
+Retail's `Gab1_LGuard_Boss_01` gives every npc on it the same `on_enter_attack_state` rung: **broadcast
+41101 at thirteen metres naming the target**, which is the captain's order the guards around it answer.
+
+**Sixty-five npcs run that pattern and four implemented it** — garrison 01's chiefs 01 through 04. The
+same four chiefs in garrisons **02, 03 and 04** sat on plain `aggressive` and gave no order at all, so
+three quarters of Panesterra's garrison fights had a captain who never spoke.
+
+Twelve npcs bound. Two pins: one that every garrison's captains resolve to the class, and one that the
+order actually leaves them, because the binding is only worth having if the broadcast follows.
+
+### Why this took reading rather than a sweep
+
+The family looked ambiguous three different ways before it resolved:
+
+* **The pattern-wide majority says `base_protector`** — 48 of 65. Following it would have given twelve
+  captains a base-capture class instead of the order they owe.
+* **The naming-group rule does not fire either.** Chief 01 of garrison 01 is a warcaptain and chief 01 of
+  garrison 02 is generic, but they are different *garrisons*, not race variants of one npc, so the stem
+  grouping never puts them together.
+* **The dark side suggests the opposite split.** On `DR` it is chief 01 alone that carries
+  `panesterra_dreadcaptain`, with chiefs 02-04 on `base_protector` — in all four garrisons. Read by
+  symmetry, that says garrison 01's *four* light warcaptains are the anomaly and the answer is one
+  captain per garrison.
+
+What settled it was neither the port's shape nor symmetry, but **retail's own binding: all eight light
+chiefs of every garrison run one pattern, and that pattern carries the 41101 rung.** So every one of them
+should give the order, and the question of which are "captains" is a distinction this port invented.
+Binding the twelve is strictly closer to retail than leaving them aggressive, whatever the eventual
+answer about the other 49.
+
+### Still missing, and this is the larger half
+
+**Forty-eight chiefs on `base_protector` and one still generic do not broadcast 41101 either**, and their
+retail pattern says they should. `base_protector` has no such rung, so the fix is not a rebind — it is
+giving that class the order for the npcs whose pattern carries it, which is another per-npc table of the
+kind `ProtectorCalls` and `SiegeDeathCalls` already are.
+
+That is the real size of this family: twelve npcs were doing nothing and are now doing something, and
+forty-nine more are doing the wrong half.
+
+- **`Gab1_Guard_BossYn_Kn_65_An`** (297442) is the one remaining generic npc on the pattern and is not a
+  numbered chief; left alone.
+- **The dark side's chiefs 02-04**, on `base_protector` across all four garrisons, are in the same
+  position as the light side's 05-08.
+- **The death fan-out** — six broadcasts behind `is_tribe` guards on the killer, one per Panesterra
+  faction — remains untranslated on both captain classes, and is base-capture bookkeeping rather than an
+  AI action. It was already recorded; nothing here changes it.
