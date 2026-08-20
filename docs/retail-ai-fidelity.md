@@ -34013,3 +34013,49 @@ moment one does.
   classes are now held to that list, but nothing checks whether npcs *outside* those classes should
   answer and cannot — the same question this entry just settled for the player-targeted half.
 - The cast ladders on every chain in this family, still blocked on skill indices.
+
+## 57 village chiefs that never answered, and `new` without the interface
+
+The last entry closed the player-targeted half and named the remaining question: `30001`'s answerers are
+*bounded* but never *widened* — does anything answer it in retail and fail to here? It does.
+
+**57 Kaldor village chiefs on `simple_abyssguard` answer `30001` with a million points and could not.**
+A killer woke beside a village and nothing came.
+
+The class already had the other two thirds of the same loop — these very npcs call their killer with
+`30002` and announce their death with `30003`. Only the answer was missing, and it could not come from
+the pattern: `RungsFor` deliberately skips sender-targeted answers, because `30001` names the *caller*
+rather than a player and a player-targeted rung would put a million points of hate on the wrong
+creature. Only the two siege protector classes handled it in code, and this was not one of them.
+
+### `public new` is not enough, and the failure is silent
+
+The obvious fix — a `public new void OnNpcMessage` handling the call and handing off — **did nothing**.
+The table said the npc answers, the class listened, both were at war, and the hate stayed at zero.
+
+`new` hides the inherited method for callers that see the derived type. **It does not re-map the
+interface.** `NpcMessageBus` calls through `INpcMessageListener`, which was still bound to `PatternAi`'s
+implementation, so the override was dead code. A class takes the call over only by naming
+`INpcMessageListener` in its own declaration — which is why `AbstractSiegeProtectorAI` and
+`BaseProtectorAI` work and this did not.
+
+`NoClassHidesTheMessageHandlerAndKeepsTableNpcs` now fails on any class that declares
+`new void OnNpcMessage` without re-declaring the interface. The mutation that removes the interface from
+`AbyssGuardSimpleAI` dies against the behavioural pin as well.
+
+### A pairing that could not be pinned, and the one that could
+
+The obvious pin — a chief and the artifact killer that wakes near it — cannot work. The killers are on
+`GUARD_DRAGON`, Kaldor's chiefs are on `GUARD`, and **`tribe_relations.xml` declares no hostility
+between those two**, so `IsEnemy` is false and the hate is refused whatever the AI says. The pin uses an
+`XDRAKAN` killer, whose `<aggro>` list names `GUARD` outright, so it measures the mechanic rather than
+the relations.
+
+### Still missing
+
+- **Whether a Kaldor chief can fight its own killer at all.** `GUARD` versus `GUARD_DRAGON` is not
+  hostile in our data, and every `30001` sender is a dragon-guard tribe. The answer is wired and the
+  relations may not let it land in play. This is the *third place a mechanic can be missing* again, and
+  it wants the retail tribe relations rather than a guess.
+- **The 18 classes that swallow `OnNpcMessage`** — unchanged, still latent, now also checked for the
+  interface trap.

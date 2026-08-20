@@ -509,12 +509,23 @@ public sealed class GuardAnswersTests
 		}
 
 		List<string> offenders = new List<string>();
+		List<string> unwired = new List<string>();
 		string root = Path.Combine(BossAiHarness.RepoRoot(), "src", "Aion.GameServer", "Handlers", "AI");
 		foreach (string file in Directory.EnumerateFiles(root, "*.cs"))
 		{
 			string text = File.ReadAllText(file);
 			if (!text.Contains("void OnNpcMessage"))
 				continue;
+
+			// Declaring the method with `new` HIDES the inherited one but does not re-map the
+			// interface, so the bus keeps calling the base and the override is dead code. A class only
+			// takes the call over by naming INpcMessageListener in its own declaration. This cost an
+			// hour on AbyssGuardSimpleAI: the table said yes, the class listened, and nothing landed.
+			if (text.Contains("new void OnNpcMessage") && !text.Contains(": PatternAi, INpcMessageListener")
+				&& !Regex.IsMatch(text, @"class \w+ : \w+, INpcMessageListener"))
+			{
+				unwired.Add(Path.GetFileName(file));
+			}
 			// Only two things actually deliver a table answer: handing off to the inherited method, or
 			// applying the rungs directly. Calling `GuardAnswers.Answers` is a *gate* on one message and
 			// delivers nothing, so it must not excuse a class from this check.
@@ -532,5 +543,59 @@ public sealed class GuardAnswersTests
 		}
 
 		Assert.Empty(offenders);
+	}
+
+	/// <summary>An elyos village chief on Kaldor: calls its killer, and now answers it too.</summary>
+	private const int VillageChief = 277069;
+
+	/// <summary>
+	/// A killer on <c>XDRAKAN</c>, which our tribe data makes aggressive toward <c>GUARD</c>.
+	/// </summary>
+	/// <remarks>
+	/// The obvious pairing does not work and the reason is worth recording: the artifact killers are on
+	/// <c>GUARD_DRAGON</c>, and Kaldor's chiefs are on <c>GUARD</c>, and our <c>tribe_relations.xml</c>
+	/// declares no hostility between those two — so a chief cannot fight the killer that wakes beside it
+	/// whatever its AI says. This one is hostile by the data, so the pin measures the mechanic rather
+	/// than the relations.
+	/// </remarks>
+	private const int XdrakanKiller = 286956;
+
+	/// <summary>"Oz": the same class, and retail gives it no answer to the wake-up call.</summary>
+	private const int SilentSimpleGuard = 203081;
+
+	/// <summary>
+	/// <b>A village chief comes when its killer wakes.</b> The third side of a loop this class already
+	/// had two of.
+	/// </summary>
+	/// <remarks>
+	/// These same 57 chiefs call their killer with <c>30002</c> and announce their death with
+	/// <c>30003</c>, and could not answer <c>30001</c> — so a killer spawned beside a village and nothing
+	/// came. It cannot come from the pattern: <c>RungsFor</c> skips sender-targeted answers, because
+	/// <c>30001</c> names the caller and a player-targeted rung would put a million points of hate on the
+	/// wrong creature. Only the two siege protector classes handled it in code, and this was not one.
+	/// </remarks>
+	[Fact]
+	public void AVillageChiefComesWhenItsKillerWakes()
+	{
+		using BossAiHarness harness = BossAiHarness.For(220070000).WithWorldSize(4096)
+			.WithAi(typeof(AbyssGuardSimpleAI), typeof(FortressKillerAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		Npc killer = harness.Spawn(XdrakanKiller, 300f, 300f, 200f);
+		Npc chief = harness.Spawn(VillageChief, 305f, 300f, 200f);
+		Npc quiet = harness.Spawn(SilentSimpleGuard, 306f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(killer, chief);
+		BossAiHarness.MakeMutuallyKnown(killer, quiet);
+
+		// Both are at war with the killer, so the difference is the table and nothing else.
+		Assert.True(killer.IsEnemy(chief));
+		Assert.True(killer.IsEnemy(quiet));
+
+		NpcMessageBus.Broadcast(killer, FortressKillerAI.KillerAwake, killer,
+			FortressKillerAI.WakeCallRange);
+
+		// Retail's million: the chief drops everything.
+		Assert.Equal(AbstractSiegeProtectorAI.DropEverything, chief.GetAggroList().GetHate(killer));
+		Assert.Equal(0, quiet.GetAggroList().GetHate(killer));
 	}
 }

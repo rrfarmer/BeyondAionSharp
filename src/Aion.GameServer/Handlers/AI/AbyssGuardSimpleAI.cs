@@ -21,7 +21,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// </para>
 /// </remarks>
 [AIName("simple_abyssguard")]
-public class AbyssGuardSimpleAI : PatternAi
+public class AbyssGuardSimpleAI : PatternAi, INpcMessageListener
 {
     /// <summary>
     /// Retail's <c>30002</c> chain for the guards that have one, and nothing for the rest.
@@ -33,6 +33,38 @@ public class AbyssGuardSimpleAI : PatternAi
     /// call, and none of them is in the table.
     /// </remarks>
     protected override AiPattern Pattern => ProtectorCalls.PatternFor(GetOwner().GetNpcId());
+
+    /// <summary>
+    /// Retail's <c>on_message 30001</c>: the killer has woken, and the chief goes for it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The third side of a loop this class already had two of.</b> These same 57 Kaldor village
+    /// chiefs call their killer with 30002 and announce their death with 30003, and could not answer the
+    /// killer's own wake-up shout — so a killer spawned beside a village and nothing came.
+    /// <para>
+    /// It cannot come from the pattern. <see cref="GuardAnswers"/>.<c>RungsFor</c> deliberately skips
+    /// sender-targeted answers, because <c>30001</c> names the <em>caller</em> rather than a player and a
+    /// rung built for the player-targeted calls would put a million points of hate on the wrong
+    /// creature. Only the two siege protector classes handled it in code, and this one was not among
+    /// them. <see cref="SummonOrder"/> is retail's <c>add_hate_point</c> + <c>attack_most_hating</c>,
+    /// which is what the rung is.
+    /// </para>
+    /// </remarks>
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        if (IsDead() || sender == GetOwner())
+            return;
+
+        if (messageType == FortressKillerAI.KillerAwake)
+        {
+            if (GuardAnswers.Answers(GetNpcId(), FortressKillerAI.KillerAwake))
+                SummonOrder.Take(GetOwner(), sender, AbstractSiegeProtectorAI.DropEverything);
+
+            return;
+        }
+
+        base.OnNpcMessage(sender, messageType, param);
+    }
 
     /// <summary>
     /// Retail's <c>on_killed_by_user</c> / <c>on_killed_by_npc</c>, for the guards that carry it.
