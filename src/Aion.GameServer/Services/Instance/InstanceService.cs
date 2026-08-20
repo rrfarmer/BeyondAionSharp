@@ -50,6 +50,11 @@ public class InstanceService
         }
         instance.GetInstanceHandler().OnInstanceCreate();
 
+        // The conditional spawn groups for this map, per instance. Half the patterns that write a spawn
+        // variable have their npcs only on instance maps, so an instance without a controller runs half
+        // the mechanic. See World/Spawns/GatedSpawnService.
+        Aion.GameServer.World.Spawns.GatedSpawnService.AttachInstance(worldId, instance.GetInstanceId());
+
         // finally start the checker
         if (autoDestroy)
         {
@@ -92,6 +97,10 @@ public class InstanceService
         int instanceId = instance.GetInstanceId();
 
         map.RemoveWorldMapInstance(instanceId);
+
+        // Drops this instance's gated controller and its spawn counters. Counters left behind would be
+        // inherited by the next instance to take the same id.
+        Aion.GameServer.World.Spawns.GatedSpawnService.DetachInstance(worldId, instanceId);
 
         log.LogInformation("Destroying " + instance);
 

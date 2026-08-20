@@ -87,4 +87,62 @@ public sealed class GatedSpawnServiceTests : IDisposable
 		Assert.Equal(0, GatedSpawnService.Placed);
 		Assert.Equal(afterStop, harness.LiveNpcs().Count);
 	}
+
+	/// <summary>An instance map with 764 non-duplicate gated groups, all of them skipped until now.</summary>
+	private const int InstanceMap = 301370000;
+
+	/// <summary>
+	/// <b>An instance gets its own controller.</b> 63 instance maps carry gated groups and the service
+	/// used to skip every one of them.
+	/// </summary>
+	[Fact]
+	public void AnInstanceGetsItsOwnController()
+	{
+		using BossAiHarness harness = BossAiHarness.For(InstanceMap).WithWorldSize(4096).Build();
+		GatedSpawnService.Start(BossAiHarness.RepoRoot());
+
+		GatedSpawnService.AttachInstance(InstanceMap, harness.InstanceId);
+
+		// This map's gates are its wave counters -- N_WAVE_01 through _04, 185 groups on the first
+		// alone. Written first with SpecialServer_Cond, which this map's gates never read, so nothing
+		// moved and the pin failed for the reason it was testing rather than the one it was written for.
+		SpawnVariables store = SpawnVariableRegistry.For(InstanceMap, harness.InstanceId);
+		int before = GatedSpawnService.Placed;
+
+		store.Write("N_WAVE_01", 1, 0);
+
+		Assert.True(GatedSpawnService.Placed > before,
+			$"wave one opened no gate: {before} -> {GatedSpawnService.Placed}");
+	}
+
+	/// <summary>
+	/// <b>Detaching drops the controller and the instance's counters.</b> Counters left behind would be
+	/// inherited by the next instance to take the same id.
+	/// </summary>
+	[Fact]
+	public void DetachingForgetsTheInstance()
+	{
+		using BossAiHarness harness = BossAiHarness.For(InstanceMap).WithWorldSize(4096).Build();
+		GatedSpawnService.Start(BossAiHarness.RepoRoot());
+		GatedSpawnService.AttachInstance(InstanceMap, harness.InstanceId);
+		SpawnVariableRegistry.For(InstanceMap, harness.InstanceId).Write("WAVE_COUNT", 4, 0);
+
+		GatedSpawnService.DetachInstance(InstanceMap, harness.InstanceId);
+
+		Assert.Equal(0, SpawnVariableRegistry.For(InstanceMap, harness.InstanceId)["WAVE_COUNT"]);
+	}
+
+	/// <summary><b>Attaching twice does not double the groups.</b></summary>
+	[Fact]
+	public void AttachingTwiceIsNotTwoControllers()
+	{
+		using BossAiHarness harness = BossAiHarness.For(InstanceMap).WithWorldSize(4096).Build();
+		GatedSpawnService.Start(BossAiHarness.RepoRoot());
+		GatedSpawnService.AttachInstance(InstanceMap, harness.InstanceId);
+		int once = GatedSpawnService.Placed;
+
+		GatedSpawnService.AttachInstance(InstanceMap, harness.InstanceId);
+
+		Assert.Equal(once, GatedSpawnService.Placed);
+	}
 }

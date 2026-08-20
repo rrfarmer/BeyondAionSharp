@@ -34877,3 +34877,37 @@ it is per instance. The measurement was available each time and the answer was n
   account, character, world or server.
 - **Gated groups on instance maps are still skipped** by the service. The store is now per instance, so
   the remaining question is only when to build and tear down a controller with the instance itself.
+
+## Instances get their gated groups, which is half the mechanic
+
+The service placed groups on world maps and skipped every instance. With the store already per instance,
+what remained was building and tearing down a controller with the instance itself — and it is not a
+small remainder:
+
+> **63 instance maps carry gated groups**, up to **764** on one, and none of them ran.
+
+`InstanceService` now attaches a controller once an instance is built and its own spawns are in, and
+detaches it on destroy along with that instance's counters. Both halves of the detach matter: a
+controller left subscribed listens to a store nobody reads, and **counters left behind are inherited by
+the next instance to take the same id** — a boss counted down by one group unlocking for the next.
+
+Attaching twice is a no-op, because an instance handler calling it again would otherwise double every
+group in the instance.
+
+### A pin that failed for the right reason
+
+`AnInstanceGetsItsOwnController` was written against `SpecialServer_Cond`, the commonest gate variable in
+the dump — which **that map's gates never read**. Nothing moved, and the test failed. Map `301370000`
+gates on its own wave counters, `N_WAVE_01` through `_04`, 185 groups on the first alone. The commonest
+variable overall is not the commonest variable anywhere in particular.
+
+### Still missing
+
+- **`GAb1_PvPStatus`**, 6,006 gate uses, unwired: strong for 1-versus-3, silent on 2.
+- **The 6,800 duplicate placements**, filtered so nothing doubles, leaving those npcs permanently present
+  where retail would remove them.
+- **`[SAVE]` persistence** — the last piece of the engine with no answer at all. 175 expressions and
+  2,600 gate uses, and nothing measured distinguishes account, character, world or server.
+- **Nothing writes the wave counters yet.** The gates are live and the store is live, but the patterns
+  that would move `N_WAVE_01` are among the 113 idle-spawn patterns still unported — which is where
+  105 of the `set_condition_spawn_variable` writers live.

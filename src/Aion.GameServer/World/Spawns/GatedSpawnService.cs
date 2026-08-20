@@ -27,6 +27,10 @@ public static class GatedSpawnService
 {
 	private static readonly List<GatedSpawnController> Live = new();
 
+	private static readonly Dictionary<(int Map, int Instance), GatedSpawnController> ByInstance = new();
+
+	private static IReadOnlyDictionary<int, IReadOnlyList<GatedSpawn>>? loaded;
+
 	private static readonly Lock Gate = new();
 
 	/// <summary>How many groups are in the world right now because their gate holds.</summary>
@@ -80,6 +84,7 @@ public static class GatedSpawnService
 		IReadOnlyDictionary<int, IReadOnlyList<GatedSpawn>> byMap = GatedSpawnData.Load(path);
 		lock (Gate)
 		{
+			loaded = byMap;
 			foreach ((int mapId, IReadOnlyList<GatedSpawn> groups) in byMap)
 			{
 				WorldMap map = World.GetInstance().GetWorldMap(mapId);
@@ -103,6 +108,53 @@ public static class GatedSpawnService
 		}
 	}
 
+	/// <summary>
+	/// Gives one freshly created instance its own controller, if its map has any gated groups.
+	/// </summary>
+	/// <remarks>
+	/// Called from <c>InstanceService</c> once the instance is built and its own spawns are in. Doing it
+	/// earlier would evaluate gates against a world that is not there yet.
+	/// </remarks>
+	public static void AttachInstance(int mapId, int instanceId)
+	{
+		lock (Gate)
+		{
+			if (loaded is null || !loaded.TryGetValue(mapId, out IReadOnlyList<GatedSpawn>? groups))
+				return;
+
+			if (ByInstance.ContainsKey((mapId, instanceId)))
+				return;
+
+			var controller = new GatedSpawnController(mapId, instanceId,
+				SpawnVariableRegistry.For(mapId, instanceId), groups);
+			controller.Refresh();
+			ByInstance[(mapId, instanceId)] = controller;
+			Live.Add(controller);
+		}
+	}
+
+	/// <summary>
+	/// Drops an instance's controller and its counters, for an instance being destroyed.
+	/// </summary>
+	/// <remarks>
+	/// Both halves matter. A controller left subscribed keeps listening to a store nobody reads, and
+	/// counters left behind would be inherited by the next instance to take the same id — a boss counted
+	/// down by one group unlocking for the next.
+	/// </remarks>
+	public static void DetachInstance(int mapId, int instanceId)
+	{
+		lock (Gate)
+		{
+			if (ByInstance.Remove((mapId, instanceId), out GatedSpawnController? controller))
+			{
+				controller.Dispose();
+				Live.Remove(controller);
+			}
+		}
+
+		SpawnVariableRegistry.Forget(mapId, instanceId);
+	}
+
 	/// <summary>Stops every controller, for a restart or a test.</summary>
 	public static void Stop()
 	{
@@ -112,6 +164,7 @@ public static class GatedSpawnService
 				controller.Dispose();
 
 			Live.Clear();
+			ByInstance.Clear();
 		}
 	}
 }
