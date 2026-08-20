@@ -34683,3 +34683,38 @@ Four placements are refused, behind two of retail's own nine broken gates.
 - **`[SAVE]` persistence** and **instance scope**, unchanged.
 - **50,841 placements dropped** for having no template here — worth revisiting only if this port ever
   gains that content.
+
+## The conditional spawn engine runs
+
+The last structural piece. `GatedSpawnController` holds a map's gated groups, puts them in when their
+gate holds and takes them out again when it stops — and a pattern moving a counter is enough on its own:
+
+```
+PatternAi.SetSpawnVariable  ->  SpawnVariables.Changed  ->  gates that read it  ->  spawn / despawn
+```
+
+All four halves now exist and meet: the parser (7,137 of retail's 7,146 gates), the store (one per map
+over shared server flags), the writer rule (assign or add, settled by the fact that no use in 12,446
+carries both), and this.
+
+### Two things it is careful about
+
+* **`despawnAtOther` is honoured, not assumed.** A group without the flag is placed once its condition
+  is met and stays. Removing it anyway would be a mechanic retail does not have, and a mutation that
+  does so dies.
+* **A write re-checks only the gates that read that variable.** A gate names its own variables, so a
+  fortress counter ticking touches one gate rather than every gate in the world.
+
+The second needed a counter on the controller to pin at all: with two closed gates, re-checking one or
+re-checking both places exactly the same nothing, so the mutation survived until `Evaluations` made the
+difference observable. **A property worth having is worth exposing enough to test.**
+
+### Still missing
+
+- **Loading.** `gated_spawns.tsv` has 25,012 portable placements with their gates; nothing reads it into
+  a controller at world start. That is data plumbing rather than mechanism now.
+- **The 738 server flags**, still supplied by nothing, so a gate on `SpecialServer_Cond` reads zero.
+  Siege and PvP status exist in this port under other names and are the two largest.
+- **`[SAVE]` persistence** — 175 expressions, 2,600 gate uses, lifetime unknown.
+- **Instance scope** — the registry keys on map id, which is right for a world map and unverified for
+  two simultaneous instances of one.

@@ -609,6 +609,16 @@ public sealed class BossAiHarness : IDisposable
 	}
 
 	/// <summary>Every NPC currently alive in the harness map instance, boss included.</summary>
+	/// <summary>
+	/// The instance every harness spawn lands in, for code that takes one explicitly.
+	/// </summary>
+	/// <remarks>
+	/// <c>SpawnEngine.SpawnObject</c> needs an instance id, and the gated spawn controller is the first
+	/// thing under test that calls it directly rather than through an AI.
+	/// </remarks>
+	internal int InstanceId =>
+		World.GetWorldMap(_mapId).GetMainWorldMapInstance().GetInstanceId();
+
 	public List<Npc> LiveNpcs()
 	{
 		var found = new List<Npc>();
