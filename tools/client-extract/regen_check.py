@@ -89,7 +89,8 @@ WORLD_EXTRACTORS = [("extract_spawn_conditions.py", "spawn_conditions.tsv")]
 
 # Reads strings.xml beside the pattern dump, so it takes the XML directory rather than a
 # patterns/binding pair.
-STRING_EXTRACTORS = [("extract_string_ids.py", "string_ids.tsv")]
+STRING_EXTRACTORS = [("extract_string_ids.py", "string_ids.tsv"),
+                     ("extract_npc_skill_lists.py", "npc_skill_lists.tsv")]
 
 # Writes into game-server data rather than out/, because the server reads it directly.
 GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",

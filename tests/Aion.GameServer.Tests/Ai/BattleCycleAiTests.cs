@@ -5,6 +5,7 @@ using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -35,6 +36,12 @@ public sealed class BattleCycleAiTests
 	private const int Swarm = 283215;
 
 	private const int Straggler = 283216;
+
+	/// <summary><c>IDYun_Nmd1</c>: two timers, one that casts and one that summons.</summary>
+	private const int Caster = 217307;
+
+	/// <summary>The five adds his second timer places.</summary>
+	private const int Retinue = 217301;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(AnyMap).WithWorldSize(4096)
@@ -127,6 +134,57 @@ public sealed class BattleCycleAiTests
 		Assert.Equal(2, Count(harness, Straggler));
 	}
 
+	/// <summary><b>Two timers run at once without disturbing each other.</b></summary>
+	/// <remarks>
+	/// The indicator is the whole point of retail's design and the thing an HP-ladder port cannot
+	/// express. <c>IDYun_Nmd1</c> arms two: timer 0 shouts and casts at fifteen seconds, timer 1 shouts
+	/// and places five adds at twenty, and each re-arms on its own schedule. A port that collapsed them
+	/// into one clock would fire both together and look plausible while being wrong.
+	/// <para>
+	/// The casts are the part that was impossible until this week: <c>SKILLI_INDEX</c> resolves against
+	/// the npc's own skill list, which was only found in the 5.8 server dump.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TwoTimersKeepTheirOwnSchedules()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		// Timer 0 is due at fifteen seconds, timer 1 not until twenty.
+		harness.Clock.Advance(TimeSpan.FromSeconds(16));
+		Assert.Equal([19698, 19695], BossAiHarness.DrainQueuedSkills(boss).Select(c => c.SkillId));
+		Assert.Equal(0, Count(harness, Retinue));
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(5));
+		Assert.Equal(5, Count(harness, Retinue));
+		Assert.Empty(BossAiHarness.DrainQueuedSkills(boss));
+	}
+
+	/// <summary><b>A cast names the creature retail named.</b></summary>
+	/// <remarks>
+	/// Retail says <c>OBJI_CUR_TARGET</c> for the first and <c>OBJI_SELF</c> for the second, and a
+	/// rotation that self-buffed with its attack would still pass a test that only counted casts.
+	/// </remarks>
+	[Fact]
+	public void EachCastKeepsRetailsTarget()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, player);
+		harness.Engage(boss, player);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(16));
+
+		Assert.Equal(
+			[NpcSkillTargetAttribute.MOST_HATED, NpcSkillTargetAttribute.ME],
+			BossAiHarness.DrainQueuedSkills(boss).Select(cast => cast.Target));
+	}
+
 	/// <summary><b>The table only carries rotations something arms.</b></summary>
 	/// <remarks>
 	/// A cycle rung whose timer is never armed is inert, and a table full of them would look ported
@@ -162,6 +220,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(21, spawns);
+		Assert.Equal(29, spawns);
 	}
 }

@@ -66,6 +66,11 @@ import audit_missing_adds as A  # noqa: E402
 from client_npc_names import npc_names  # noqa: E402
 from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
 
+#: Retail's skill targets, and the two this port can say. `OBJI_SELF` and `OBJI_CUR_TARGET` are 88% of
+#: all uses; the rest -- the event target, the talker, a friend, the message sender -- name a creature
+#: this table has no way to point at, and are refused rather than approximated with the most-hated one.
+TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED"}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Classes that do nothing with a battle timer, plus the one this table feeds.
@@ -165,6 +170,16 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             if not group:
                 return None
             out.append(("despawn", int(group.group(1)), 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "use_skill":
+            # Left unresolved here: the index is into *the npc's own* skill list, and one pattern can
+            # be bound to several npcs with different lists. Resolved per npc in main().
+            index = re.search(r"SKILLI_INDEX_(\d+)", body)
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not index or not who or who.group(1) not in TARGETS:
+                raise Unsayable("use_skill at a target this port cannot name"
+                                if index else "use_skill without an index")
+            out.append(("skill", int(index.group(1)), 0, 0, TARGETS[who.group(1)],
+                        0.0, 0.0, 0.0, 0))
         elif kind == "despawn_self":
             out.append(("despawn_self", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind in ("say_to_all", "display_system_message"):
@@ -237,6 +252,14 @@ def main() -> int:
     dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
     strings = string_ids(args.repo)
 
+    # npc -> index -> skill id, but only entries this port can actually cast.
+    skills: dict[int, dict[int, int]] = collections.defaultdict(dict)
+    for line in (args.repo / "tools/client-extract/out/npc_skill_lists.tsv").read_text(
+            encoding="utf-8").splitlines()[1:]:
+        fields = line.split("	")
+        if fields[5] == "TRUE":
+            skills[int(fields[0])][int(fields[1])] = int(fields[3])
+
     # An npc an encounter class already models must not be rebound to a generated table.
     spoken_for: set[int] = set()
     for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
@@ -252,6 +275,7 @@ def main() -> int:
 
     rows: list[tuple] = []
     refused: collections.Counter = collections.Counter()
+    refused_owners = 0
     patterns = 0
     for path in sorted(args.patterns_dir.rglob("NpcAIPatterns*.xml")):
         text = S.read_text(path)
@@ -280,11 +304,26 @@ def main() -> int:
                 refused["nothing arms the first timer"] += 1
                 continue
 
+            # A skill index is only meaningful against one npc's list, so an owner whose list cannot
+            # answer every index the pattern uses is dropped -- not the whole pattern.
+            wanted = {action[1] for branches in (arming, cycle)
+                      for _, _, _, actions in branches
+                      for action in actions if action[0] == "skill"}
+            if wanted:
+                able = [n for n in owners if all(i in skills.get(n, {}) for i in wanted)]
+                refused_owners += len(owners) - len(able)
+                owners = able
+            if not owners:
+                refused["no npc here whose skill list answers the indices"] += 1
+                continue
+
             patterns += 1
             for npc in owners:
                 for handler, branches in (("arm", arming), ("cycle", cycle)):
                     for index, priority, guards, actions in branches:
                         for order, action in enumerate(actions):
+                            if action[0] == "skill":
+                                action = ("skill", skills[npc][action[1]]) + action[2:]
                             rows.append((npc, named.group(1), handler, index, priority,
                                          "|".join(guards), order) + action)
 
@@ -297,6 +336,8 @@ def main() -> int:
 
     npcs = {r[0] for r in rows}
     print(f"{patterns} battle rotations across {len(npcs)} npcs, {len(rows)} actions -> {args.out}")
+    if refused_owners:
+        print(f"    {refused_owners} npcs dropped from a pattern their skill list cannot answer")
     for reason, count in refused.most_common():
         print(f"    {count:4d} refused: {reason}")
     return 0

@@ -3,11 +3,12 @@
 //     Do not edit by hand; edit the extractor and re-run.
 // </auto-generated>
 using Aion.GameServer.Ai.Pattern;
+using Aion.GameServer.Model.Templates.Npcskill;
 
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 10 retail patterns across 15 npcs, 50 actions.
+/// Combat rotations: 16 retail patterns across 23 npcs, 96 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -18,6 +19,12 @@ namespace Aion.GameServer.Handlers.AI;
 /// are guarded by its indicator, so two rotations on different indicators do not disturb each other.
 /// <see cref="PatternAi"/> cancels every timer when the fight ends, which is why nothing here needs to
 /// clean up after itself.
+/// </para>
+/// <para>
+/// <b>The skills are real too.</b> Retail names them by index into the npc's own ordered list, which
+/// this port could not resolve until that list was found in the 5.8 server dump; see
+/// <c>extract_npc_skill_lists.py</c>. A rotation is only taken if the owning npc's list answers every
+/// index it uses, so a boss here never casts a skill picked by position out of the wrong list.
 /// </para>
 /// <para>
 /// <b>Spawn groups are real here.</b> The idle table spawns into <c>Untracked</c> because nothing there
@@ -41,6 +48,17 @@ internal static class BattleCycles
     private static readonly IReadOnlyDictionary<int, PatternBranch[]> Arming =
         new Dictionary<int, PatternBranch[]>
     {
+        [217307] = [  // IDYun_Nmd1
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.ArmTimer(0, 15000),
+                Do.ArmTimer(1, 20000),
+                Do.Say(1500381, 0)),
+        ],
+        [219390] = [  // IDTiamat_S4_Evileye_60_Ae
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.Say(342310, 0),
+                Do.ArmTimer(0, 2000)),
+        ],
         [219549] = [  // IDAbRe_Core_FlyingWorm_02
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
@@ -49,9 +67,17 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
         ],
+        [219577] = [  // IDAbRe_Core_Decoration3
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000)),
+        ],
         [280968] = [  // ND2_GKSum1
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000)),
+        ],
+        [281923] = [  // IDAbRe_Core_Decoration3
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000)),
         ],
         [282141] = [  // IDAbRe_Core_Summon4
             AiPattern.Branch(2, "rung 0", When.Always,
@@ -82,6 +108,13 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
         ],
+        [282469] = [  // LDF4a_B2_OdNucleus1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ArmTimer(0, 2000),
+                Do.ArmTimer(1, 60000),
+                Do.ArmTimer(2, 3000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20265)),
+        ],
         [283106] = [  // IDTiamat_Tahabata_Blaze
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000)),
@@ -89,6 +122,10 @@ internal static class BattleCycles
         [283107] = [  // IDTiamat_Tahabata_Blaze
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000)),
+        ],
+        [283220] = [  // IDAbRe_Core_Decoration3
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.ArmTimer(0, 5000)),
         ],
         [283230] = [  // IDAbRe_Core_Summon4
             AiPattern.Branch(2, "rung 0", When.Always,
@@ -102,12 +139,41 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
         ],
+        [287045] = [  // Test_Basic_Monster_AI_KSG_7
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.ArmTimer(0, 1000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19857),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20489)),
+        ],
+        [287046] = [  // Test_Basic_Monster_AI_KSG_8
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.ArmTimer(0, 1000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20110),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18199)),
+        ],
     };
 
     /// <summary>The rotation itself, chosen by which timer fired.</summary>
     private static readonly IReadOnlyDictionary<int, PatternBranch[]> Cycle =
         new Dictionary<int, PatternBranch[]>
     {
+        [217307] = [  // IDYun_Nmd1
+            AiPattern.Branch(2, "rung 0", [When.Timer(0)],
+                Do.Say(1500382, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19698),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19695),
+                Do.ArmTimer(0, 30000)),
+            AiPattern.Branch(1, "rung 1", [When.Timer(1)],
+                Do.Say(1500383, 0),
+                Do.SpawnNear(217301, 1, 5, 0f, 0),
+                Do.ArmTimer(1, 25000)),
+        ],
+        [219390] = [  // IDTiamat_S4_Evileye_60_Ae
+            AiPattern.Branch(1, "rung 0", [When.Timer(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20592),
+                Do.SpawnNear(219411, 1, 2, 0f, 60),
+                Do.DespawnSelf()),
+        ],
         [219549] = [  // IDAbRe_Core_FlyingWorm_02
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.SpawnNear(283215, 1, 1, 0f, 60),
@@ -122,9 +188,23 @@ internal static class BattleCycles
                 Do.SpawnNear(283216, 1, 1, 0f, 60),
                 Do.ArmTimer(0, 15000)),
         ],
+        [219577] = [  // IDAbRe_Core_Decoration3
+            AiPattern.Branch(1, "rung 0", [When.Timer(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19090),
+                Do.Broadcast(11110, 50f),
+                Do.SpawnAt(281920, 1, 0, new SpawnSpot(644.71f, 148.5f, 447.43f)),
+                Do.ArmTimer(0, 20000)),
+        ],
         [280968] = [  // ND2_GKSum1
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SpawnNear(280969, 1, 2, 0f, 60)),
+        ],
+        [281923] = [  // IDAbRe_Core_Decoration3
+            AiPattern.Branch(1, "rung 0", [When.Timer(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19090),
+                Do.Broadcast(11110, 50f),
+                Do.SpawnAt(281920, 1, 0, new SpawnSpot(644.71f, 148.5f, 447.43f)),
+                Do.ArmTimer(0, 20000)),
         ],
         [282141] = [  // IDAbRe_Core_Summon4
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
@@ -162,6 +242,14 @@ internal static class BattleCycles
                 Do.SpawnNear(282308, 1, 1, 0f, 0),
                 Do.DespawnSelf()),
         ],
+        [282469] = [  // LDF4a_B2_OdNucleus1
+            AiPattern.Branch(20, "rung 0", [When.Timer(1)],
+                Do.SpawnNear(282749, 0, 1, 0f, 0),
+                Do.DespawnSelf()),
+            AiPattern.Branch(10, "rung 1", [When.Timer(0)],
+                Do.ArmTimer(0, 2000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20265)),
+        ],
         [283106] = [  // IDTiamat_Tahabata_Blaze
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 1000),
@@ -171,6 +259,13 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 1000),
                 Do.SpawnNear(283108, 1, 1, 0f, 3)),
+        ],
+        [283220] = [  // IDAbRe_Core_Decoration3
+            AiPattern.Branch(1, "rung 0", [When.Timer(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19090),
+                Do.Broadcast(11110, 50f),
+                Do.SpawnAt(281920, 1, 0, new SpawnSpot(644.71f, 148.5f, 447.43f)),
+                Do.ArmTimer(0, 20000)),
         ],
         [283230] = [  // IDAbRe_Core_Summon4
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
@@ -186,6 +281,14 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.SpawnAt(281903, 1, 70, new SpawnSpot(348.55f, 741.76f, 212.93f)),
                 Do.ArmTimer(0, 12000)),
+        ],
+        [287045] = [  // Test_Basic_Monster_AI_KSG_7
+            AiPattern.Branch(3, "rung 0", [When.Timer(0)],
+                Do.SpawnNear(287042, 0, 10, 0f, 0)),
+        ],
+        [287046] = [  // Test_Basic_Monster_AI_KSG_8
+            AiPattern.Branch(3, "rung 0", [When.Timer(0)],
+                Do.SpawnNear(287042, 0, 10, 0f, 0)),
         ],
     };
 

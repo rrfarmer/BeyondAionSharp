@@ -35240,3 +35240,61 @@ same failure as no test, and only mutation showed the difference.
 - `control_door` (10 patterns) has no helper here at all.
 - Unchanged from before: `GAb1_PvPStatus`, the 6,800 duplicate gated placements, `[SAVE]` persistence,
   and the 16 idle cycles with no wake delay.
+
+## SKILLI_INDEX is resolved: the list was in a file nobody had opened
+
+`use_skill` has been the project's largest blocker. Retail names skills as `SKILLI_INDEX_1` -- a
+0-based index into the npc's **own ordered skill list** -- and the record here said that list was
+server-side data we do not have, verified by indexing all 525,657 entries of the client pak.
+
+**That check was against the client. The list is in the 5.8 server dump.** Every `<npc>` in `npcs.xml`
+carries a `<skills>` block of `<skill_name>` entries in order, and `skill_base.xml` joins names to ids.
+The chain closes:
+
+    SKILLI_INDEX_N  ->  npcs.xml <skills> entry N  ->  skill_base.xml <name>  ->  skill id
+
+**267,128 entries across 59,058 npcs**, of which 233,784 resolve to a skill this port can cast.
+
+### Why this is believed, rather than merely plausible
+
+The thing it replaces -- reading our own `npc_skills.xml` by position -- also produces plausible
+answers and is known to be wrong. So the resolver was checked two ways before being used.
+
+**Two independent joins, zero disagreements.** `skill_base.xml` gives retail's id for a name; this
+port's `skill_templates.xml` separately carries the same retail name in its `stack=` attribute. They
+agree on **220,592 entries and disagree on none**, so 5.8 and 4.8 number these skills alike.
+
+**Both facts established earlier, by other means, reproduce exactly:**
+
+| npc | earlier finding, and how | this table |
+|---|---|---|
+| Tiamat's avatars (219365) | 0=20145, 1=20146, 2=20105, from `stack=` names matching branch comments | identical |
+| Haramel's Hameroon (216922) | index 1 = 19210, from shout `skill_no="2"` | identical |
+
+The Tiamat case is the load-bearing one: **our `npc_skills.xml` lists those same three as 20105, 20145,
+20146**, so reading it by position opens the fight with a root instead of the heavy hit. The dump
+disagrees with our file and agrees with the independent reading.
+
+### What it unblocked immediately
+
+`use_skill` went from the top refusal to zero. Battle rotations: **10 -> 16 patterns, 15 -> 23 npcs,
+50 -> 96 actions**, now including 12 real casts. `IDYun_Nmd1` is the shape worth seeing -- two timers at
+once, one shouting and casting at fifteen seconds, the other shouting and placing five adds at twenty,
+each re-arming on its own schedule. That is what an HP-ladder port cannot express.
+
+Across the whole dump the reach is far larger: **30,304 of 38,101 `use_skill` uses resolve**, and
+**4,962 patterns have every one of theirs resolve**. Almost none of that is ported yet.
+
+### Still missing
+
+- **4,962 patterns are now resolvable and unported.** The resolver is the unlock; the porting is not
+  done. This is the largest single opportunity in the project and it did not exist last week.
+- **85 rotations use a skill target this port cannot name** -- `OBJI_EVENT_TARGET`, `OBJI_TALKER`,
+  `OBJI_FRIEND`, `OBJI_MESSAGE_PARAM`. Only `ME` and `MOST_HATED` are wired, which is 88% of uses.
+  The event target in particular looks like the most-hated creature at fight start, but "looks like"
+  is not evidence, so it is refused rather than approximated.
+- **4,862 uses resolve to a skill that postdates 4.8** and 2,928 name an npc with no list in the dump.
+- **122 rotations armed from `on_message`, `on_attacked` or `on_spelled`** -- up from 82, because more
+  patterns now get far enough to be refused for this instead.
+- One bound npc is `Test_Basic_Monster_AI_KSG_7` (287045), a developer test pattern in retail's own
+  data. Harmless, but it is not content.

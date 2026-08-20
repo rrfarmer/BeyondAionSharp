@@ -1,4 +1,19 @@
 npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
+217307	IDYun_Nmd1	arm	0	6		0	arm	0	15000	0		0.0	0.0	0.0	0
+217307	IDYun_Nmd1	arm	0	6		1	arm	1	20000	0		0.0	0.0	0.0	0
+217307	IDYun_Nmd1	arm	0	6		2	say	1500381	0	0		0.0	0.0	0.0	0
+217307	IDYun_Nmd1	cycle	0	2	timer:0	0	say	1500382	0	0		0.0	0.0	0.0	0
+217307	IDYun_Nmd1	cycle	0	2	timer:0	1	skill	19698	0	0	MOST_HATED	0.0	0.0	0.0	0
+217307	IDYun_Nmd1	cycle	0	2	timer:0	2	skill	19695	0	0	ME	0.0	0.0	0.0	0
+217307	IDYun_Nmd1	cycle	0	2	timer:0	3	arm	0	30000	0		0.0	0.0	0.0	0
+217307	IDYun_Nmd1	cycle	1	1	timer:1	0	say	1500383	0	0		0.0	0.0	0.0	0
+217307	IDYun_Nmd1	cycle	1	1	timer:1	1	spawn	217301	5	0	self	0.0	0.0	0.0	1
+217307	IDYun_Nmd1	cycle	1	1	timer:1	2	arm	1	25000	0		0.0	0.0	0.0	0
+219390	IDTiamat_S4_Evileye_60_Ae	arm	0	2		0	say	342310	0	0		0.0	0.0	0.0	0
+219390	IDTiamat_S4_Evileye_60_Ae	arm	0	2		1	arm	0	2000	0		0.0	0.0	0.0	0
+219390	IDTiamat_S4_Evileye_60_Ae	cycle	0	1	timer:0	0	skill	20592	0	0	ME	0.0	0.0	0.0	0
+219390	IDTiamat_S4_Evileye_60_Ae	cycle	0	1	timer:0	1	spawn	219411	2	60	self	0.0	0.0	0.0	1
+219390	IDTiamat_S4_Evileye_60_Ae	cycle	0	1	timer:0	2	despawn_self	0	0	0		0.0	0.0	0.0	0
 219549	IDAbRe_Core_FlyingWorm_02	arm	0	2		0	arm	0	10000	0		0.0	0.0	0.0	0
 219549	IDAbRe_Core_FlyingWorm_02	cycle	0	1	timer:0	0	spawn	283215	1	60	self	0.0	0.0	0.0	1
 219549	IDAbRe_Core_FlyingWorm_02	cycle	0	1	timer:0	1	spawn	283215	1	60	self	0.0	0.0	0.0	1
@@ -9,8 +24,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 219560	IDAbRe_Core_FlyingWorm_02	cycle	0	1	timer:0	1	spawn	283215	1	60	self	0.0	0.0	0.0	1
 219560	IDAbRe_Core_FlyingWorm_02	cycle	0	1	timer:0	2	spawn	283216	1	60	self	0.0	0.0	0.0	1
 219560	IDAbRe_Core_FlyingWorm_02	cycle	0	1	timer:0	3	arm	0	15000	0		0.0	0.0	0.0	0
+219577	IDAbRe_Core_Decoration3	arm	0	2		0	arm	0	5000	0		0.0	0.0	0.0	0
+219577	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	0	skill	19090	0	0	ME	0.0	0.0	0.0	0
+219577	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	1	broadcast	11110	50	0		0.0	0.0	0.0	0
+219577	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	2	spawn	281920	1	0	absolute	644.71	148.5	447.43	1
+219577	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	3	arm	0	20000	0		0.0	0.0	0.0	0
 280968	ND2_GKSum1	arm	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 280968	ND2_GKSum1	cycle	0	7	timer:0	0	spawn	280969	2	60	self	0.0	0.0	0.0	1
+281923	IDAbRe_Core_Decoration3	arm	0	2		0	arm	0	5000	0		0.0	0.0	0.0	0
+281923	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	0	skill	19090	0	0	ME	0.0	0.0	0.0	0
+281923	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	1	broadcast	11110	50	0		0.0	0.0	0.0	0
+281923	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	2	spawn	281920	1	0	absolute	644.71	148.5	447.43	1
+281923	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	3	arm	0	20000	0		0.0	0.0	0.0	0
 282141	IDAbRe_Core_Summon4	arm	0	2		0	arm	0	3000	0		0.0	0.0	0.0	0
 282141	IDAbRe_Core_Summon4	cycle	0	1	timer:0	0	spawn	281903	1	70	absolute	309.95	738.02	217.12	1
 282141	IDAbRe_Core_Summon4	cycle	0	1	timer:0	1	arm	0	12000	0		0.0	0.0	0.0	0
@@ -34,12 +59,25 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 282307	IDForest_Prime_Sum1	cycle	0	1	timer:0	0	spawn	282465	1	6	self	0.0	0.0	0.0	1
 282307	IDForest_Prime_Sum1	cycle	0	1	timer:0	1	spawn	282308	1	0	self	0.0	0.0	0.0	1
 282307	IDForest_Prime_Sum1	cycle	0	1	timer:0	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	arm	0	7		0	arm	0	2000	0		0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	arm	0	7		1	arm	1	60000	0		0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	arm	0	7		2	arm	2	3000	0		0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	arm	0	7		3	skill	20265	0	0	ME	0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	cycle	0	20	timer:1	0	spawn	282749	1	0	self	0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	cycle	0	20	timer:1	1	despawn_self	0	0	0		0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	cycle	1	10	timer:0	0	arm	0	2000	0		0.0	0.0	0.0	0
+282469	LDF4a_B2_OdNucleus1	cycle	1	10	timer:0	1	skill	20265	0	0	ME	0.0	0.0	0.0	0
 283106	IDTiamat_Tahabata_Blaze	arm	0	2		0	arm	0	2000	0		0.0	0.0	0.0	0
 283106	IDTiamat_Tahabata_Blaze	cycle	0	1	timer:0	0	arm	0	1000	0		0.0	0.0	0.0	0
 283106	IDTiamat_Tahabata_Blaze	cycle	0	1	timer:0	1	spawn	283108	1	3	self	0.0	0.0	0.0	1
 283107	IDTiamat_Tahabata_Blaze	arm	0	2		0	arm	0	2000	0		0.0	0.0	0.0	0
 283107	IDTiamat_Tahabata_Blaze	cycle	0	1	timer:0	0	arm	0	1000	0		0.0	0.0	0.0	0
 283107	IDTiamat_Tahabata_Blaze	cycle	0	1	timer:0	1	spawn	283108	1	3	self	0.0	0.0	0.0	1
+283220	IDAbRe_Core_Decoration3	arm	0	2		0	arm	0	5000	0		0.0	0.0	0.0	0
+283220	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	0	skill	19090	0	0	ME	0.0	0.0	0.0	0
+283220	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	1	broadcast	11110	50	0		0.0	0.0	0.0	0
+283220	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	2	spawn	281920	1	0	absolute	644.71	148.5	447.43	1
+283220	IDAbRe_Core_Decoration3	cycle	0	1	timer:0	3	arm	0	20000	0		0.0	0.0	0.0	0
 283230	IDAbRe_Core_Summon4	arm	0	2		0	arm	0	3000	0		0.0	0.0	0.0	0
 283230	IDAbRe_Core_Summon4	cycle	0	1	timer:0	0	spawn	281903	1	70	absolute	309.95	738.02	217.12	1
 283230	IDAbRe_Core_Summon4	cycle	0	1	timer:0	1	arm	0	12000	0		0.0	0.0	0.0	0
@@ -49,3 +87,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 283232	IDAbRe_Core_Summon4_6	arm	0	2		0	arm	0	3000	0		0.0	0.0	0.0	0
 283232	IDAbRe_Core_Summon4_6	cycle	0	1	timer:0	0	spawn	281903	1	70	absolute	348.55	741.76	212.93	1
 283232	IDAbRe_Core_Summon4_6	cycle	0	1	timer:0	1	arm	0	12000	0		0.0	0.0	0.0	0
+287045	Test_Basic_Monster_AI_KSG_7	arm	0	2		0	arm	0	1000	0		0.0	0.0	0.0	0
+287045	Test_Basic_Monster_AI_KSG_7	arm	0	2		1	skill	19857	0	0	ME	0.0	0.0	0.0	0
+287045	Test_Basic_Monster_AI_KSG_7	arm	0	2		2	skill	20489	0	0	ME	0.0	0.0	0.0	0
+287045	Test_Basic_Monster_AI_KSG_7	cycle	0	3	timer:0	0	spawn	287042	10	0	self	0.0	0.0	0.0	0
+287046	Test_Basic_Monster_AI_KSG_8	arm	0	2		0	arm	0	1000	0		0.0	0.0	0.0	0
+287046	Test_Basic_Monster_AI_KSG_8	arm	0	2		1	skill	20110	0	0	ME	0.0	0.0	0.0	0
+287046	Test_Basic_Monster_AI_KSG_8	arm	0	2		2	skill	18199	0	0	MOST_HATED	0.0	0.0	0.0	0
+287046	Test_Basic_Monster_AI_KSG_8	cycle	0	3	timer:0	0	spawn	287042	10	0	self	0.0	0.0	0.0	0
