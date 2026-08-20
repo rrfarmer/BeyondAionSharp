@@ -749,6 +749,31 @@ public static class Do
     /// <summary><c>goto_waypoint</c>: walk the npc's own route from the given step.</summary>
     public static PatternAction GotoWaypoint(int step) => ai => ai.GotoWaypoint(step);
 
+    /// <summary><c>goto_next_waypoint</c> — carry on to the next point of the route.</summary>
+    /// <remarks>
+    /// <b>Deliberately does nothing, and the nothing is the point.</b> This port already advances the
+    /// route by itself: arriving fires <c>MoveEventHandler.OnMoveArrived</c> ->
+    /// <c>TargetEventHandler.OnTargetReached</c> -> <c>WalkManager.TargetReached</c> ->
+    /// <c>ChooseNextRouteStep</c>, all of it ported from the Java. <see cref="PatternAi"/> evaluates
+    /// <c>OnArrivedAtWaypoint</c> <i>before</i> the base handler, so a rung that advanced the route
+    /// itself would advance it a second time and the patrol would visit every other point.
+    /// <para>
+    /// <b>Which leaves the question of why read it at all, and the first answer was wrong.</b> The
+    /// obvious argument is the <c>do_nothing</c> one — branch lists are first-match-wins, so a
+    /// "keep going" branch blocks the ones below it. That is not what the data says. All 45 branches
+    /// whose only action is this are the <i>last</i> branch of their handler, and 39 of those are the
+    /// only branch; they block nothing whatsoever.
+    /// </para>
+    /// <para>
+    /// The real gain is that a branch is all-or-nothing. 142 branches carry this element <i>alongside</i>
+    /// real actions — 106 casts, 62 spawns, 44 shouts, 19 despawns — and refusing the element dropped
+    /// every one of those branches whole, taking the mechanics with it. Reading it as a no-op is what
+    /// lets the rest of the branch through. It is named rather than folded into <see cref="Nothing"/>
+    /// so the table still records which retail element was there.
+    /// </para>
+    /// </remarks>
+    public static PatternAction ContinueRoute() => static ai => { };
+
     public static PatternAction StartWalking() => ai => ai.StartWalking();
 
     /// <summary><c>attack_most_hating</c> — end the march and engage.</summary>

@@ -371,6 +371,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 204794	nlycan_HeA	on_message	0	5	message:7008	0	arm	0	20000	0		0.0	0.0	0.0	0
 204794	nlycan_HeA	on_message	0	5	message:7008	1	arm	1	7000	0		0.0	0.0	0.0	0
 204794	nlycan_HeA	on_message	0	5	message:7008	2	skill_at	16622	0	0	MessageParam	0.0	0.0	0.0	0
+205436	IDF4Re_Drana_NPC_Gossip_01	on_arrived_at_waypoint	0	7	waypoint:1	0	say	1500238	0	0		0.0	0.0	0.0	0
+205436	IDF4Re_Drana_NPC_Gossip_01	on_arrived_at_waypoint	0	7	waypoint:1	1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 205498	IDHouse_Zadra_Deform_Air	on_arrived_at_waypoint	0	2	waypoint:4	0	despawn_self	0	0	0		0.0	0.0	0.0	0
 206360	LGuard_AnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 206360	LGuard_AnA	cycle	0	4	chance:35|timer:1	1	skill	17168	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -6770,6 +6772,99 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 214583	ND2_WhE	on_enter_attack_state	0	11		4	skill_at	18459	0	0	EventTarget	0.0	0.0	0.0	0
 214604	ND2_SwellFishPathA	cycle	0	2	timer:0	0	arm	0	15000	0		0.0	0.0	0.0	0
 214604	ND2_SwellFishPathA	cycle	0	2	timer:0	1	skill	16540	0	0	MOST_HATED	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	0	1	waypoint:155	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	0	1	waypoint:155	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	0	1	waypoint:155	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	1	1	waypoint:150	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	1	1	waypoint:150	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	1	1	waypoint:150	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	2	1	waypoint:145	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	2	1	waypoint:145	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	2	1	waypoint:145	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	3	1	waypoint:140	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	3	1	waypoint:140	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	3	1	waypoint:140	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	4	1	waypoint:135	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	4	1	waypoint:135	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	4	1	waypoint:135	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	5	1	waypoint:130	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	5	1	waypoint:130	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	5	1	waypoint:130	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	6	1	waypoint:125	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	6	1	waypoint:125	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	6	1	waypoint:125	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	7	1	waypoint:120	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	7	1	waypoint:120	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	7	1	waypoint:120	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	8	1	waypoint:115	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	8	1	waypoint:115	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	8	1	waypoint:115	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	9	1	waypoint:110	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	9	1	waypoint:110	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	9	1	waypoint:110	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	10	1	waypoint:105	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	10	1	waypoint:105	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	10	1	waypoint:105	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	11	1	waypoint:100	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	11	1	waypoint:100	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	11	1	waypoint:100	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	12	1	waypoint:95	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	12	1	waypoint:95	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	12	1	waypoint:95	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	13	1	waypoint:90	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	13	1	waypoint:90	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	13	1	waypoint:90	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	14	1	waypoint:85	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	14	1	waypoint:85	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	14	1	waypoint:85	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	15	1	waypoint:80	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	15	1	waypoint:80	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	15	1	waypoint:80	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	16	1	waypoint:75	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	16	1	waypoint:75	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	16	1	waypoint:75	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	17	1	waypoint:70	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	17	1	waypoint:70	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	17	1	waypoint:70	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	18	1	waypoint:65	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	18	1	waypoint:65	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	18	1	waypoint:65	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	19	1	waypoint:60	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	19	1	waypoint:60	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	19	1	waypoint:60	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	20	1	waypoint:55	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	20	1	waypoint:55	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	20	1	waypoint:55	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	21	1	waypoint:50	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	21	1	waypoint:50	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	21	1	waypoint:50	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	22	1	waypoint:45	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	22	1	waypoint:45	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	22	1	waypoint:45	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	23	1	waypoint:40	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	23	1	waypoint:40	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	23	1	waypoint:40	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	24	1	waypoint:35	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	24	1	waypoint:35	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	24	1	waypoint:35	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	25	1	waypoint:30	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	25	1	waypoint:30	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	25	1	waypoint:30	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	26	1	waypoint:25	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	26	1	waypoint:25	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	26	1	waypoint:25	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	27	1	waypoint:20	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	27	1	waypoint:20	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	27	1	waypoint:20	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	28	1	waypoint:15	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	28	1	waypoint:15	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	28	1	waypoint:15	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	29	1	waypoint:10	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	29	1	waypoint:10	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	29	1	waypoint:10	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	30	1	waypoint:5	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	30	1	waypoint:5	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+214604	ND2_SwellFishPathA	on_arrived_at_waypoint	30	1	waypoint:5	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 214604	ND2_SwellFishPathA	on_enter_attack_state	0	3		0	arm	0	16000	0		0.0	0.0	0.0	0
 214604	ND2_SwellFishPathA	on_enter_attack_state	0	3		1	say	340703	0	0		0.0	0.0	0.0	0
 214604	ND2_SwellFishPathA	on_enter_attack_state	0	3		2	skill_at	16550	0	0	EventTarget	0.0	0.0	0.0	0
@@ -6783,6 +6878,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 214605	ND2_CheruPathA	cycle	2	2	hp_between:52:99|timer:1	1	arm	1	15000	0		0.0	0.0	0.0	0
 214605	ND2_CheruPathA	cycle	2	2	hp_between:52:99|timer:1	2	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 214605	ND2_CheruPathA	cycle	3	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+214605	ND2_CheruPathA	on_arrived_at_waypoint	0	2	chance:10	0	skill	18473	0	0	ME	0.0	0.0	0.0	0
+214605	ND2_CheruPathA	on_arrived_at_waypoint	0	2	chance:10	1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214605	ND2_CheruPathA	on_arrived_at_waypoint	1	1		0	skill	18472	0	0	ME	0.0	0.0	0.0	0
+214605	ND2_CheruPathA	on_arrived_at_waypoint	1	1		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 214605	ND2_CheruPathA	on_enter_attack_state	0	7		0	arm	0	6000	0		0.0	0.0	0.0	0
 214605	ND2_CheruPathA	on_enter_attack_state	0	7		1	arm	1	15000	0		0.0	0.0	0.0	0
 214605	ND2_CheruPathA	on_enter_attack_state	0	7		2	skill	16742	0	0	ME	0.0	0.0	0.0	0
@@ -7624,6 +7723,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 214699	ND2_Bst_24	on_enter_attack_state	0	8		0	arm	0	5000	0		0.0	0.0	0.0	0
 214699	ND2_Bst_24	on_enter_attack_state	0	8		1	arm	1	20000	0		0.0	0.0	0.0	0
 214699	ND2_Bst_24	on_enter_attack_state	0	8		2	skill_at	16519	0	0	EventTarget	0.0	0.0	0.0	0
+214713	ND2_WhG3	on_arrived_at_waypoint	0	100	waypoint:14|unset_flag_var:0	0	say	341568	0	0		0.0	0.0	0.0	0
+214713	ND2_WhG3	on_arrived_at_waypoint	0	100	waypoint:14|unset_flag_var:0	1	skill	18482	0	0	ME	0.0	0.0	0.0	0
+214713	ND2_WhG3	on_arrived_at_waypoint	0	100	waypoint:14|unset_flag_var:0	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 214720	ND2_Bst_29	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 214720	ND2_Bst_29	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	1	arm	2	20000	0		0.0	0.0	0.0	0
 214720	ND2_Bst_29	cycle	0	7	timer:0|hp_below:30|set_flag_var:0	2	skill	17941	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -8353,6 +8455,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 214892	XDrakan_WeB	on_enter_attack_state	0	12		0	arm	0	6000	0		0.0	0.0	0.0	0
 214892	XDrakan_WeB	on_enter_attack_state	0	12		1	arm	1	7000	0		0.0	0.0	0.0	0
 214892	XDrakan_WeB	on_enter_attack_state	0	12		2	skill	18174	0	0	ME	0.0	0.0	0.0	0
+214898	IDLF1_GCore	on_arrived_at_waypoint	0	11		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214899	IDLF1_GCore	on_arrived_at_waypoint	0	11		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214900	IDLF1_GCore	on_arrived_at_waypoint	0	11		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214901	IDLF1_GCore	on_arrived_at_waypoint	0	11		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214902	IDLF1_GCore	on_arrived_at_waypoint	0	11		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+214903	IDLF1_GCore_Sum	on_arrived_at_waypoint	0	21		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 214905	Shulack_FeA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 214905	Shulack_FeA	cycle	0	6	timer:0|hp_below:30|set_flag_var:0	1	skill	18540	0	0	ME	0.0	0.0	0.0	0
 214905	Shulack_FeA	cycle	1	5	timer:0|hp_between:32:74|set_flag_var:1	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -14975,12 +15083,15 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 216433	DF4_RaidRun	cycle	0	7	timer:0	0	arm	0	20000	0		0.0	0.0	0.0	0
 216433	DF4_RaidRun	cycle	0	7	timer:0	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 216433	DF4_RaidRun	on_enter_attack_state	0	7		0	arm	0	20000	0		0.0	0.0	0.0	0
+216433	DF4_RaidRun	on_stop_to_flee	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 216434	DF4_RaidRun	cycle	0	7	timer:0	0	arm	0	20000	0		0.0	0.0	0.0	0
 216434	DF4_RaidRun	cycle	0	7	timer:0	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 216434	DF4_RaidRun	on_enter_attack_state	0	7		0	arm	0	20000	0		0.0	0.0	0.0	0
+216434	DF4_RaidRun	on_stop_to_flee	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 216435	DF4_RaidRun	cycle	0	7	timer:0	0	arm	0	20000	0		0.0	0.0	0.0	0
 216435	DF4_RaidRun	cycle	0	7	timer:0	1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 216435	DF4_RaidRun	on_enter_attack_state	0	7		0	arm	0	20000	0		0.0	0.0	0.0	0
+216435	DF4_RaidRun	on_stop_to_flee	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 216436	IDTP_Fanatic_FeB	cycle	0	6	timer:0	0	skill	18759	0	0	MOST_HATED	0.0	0.0	0.0	0
 216436	IDTP_Fanatic_FeB	cycle	0	6	timer:0	1	broadcast	6932	15	0		0.0	0.0	0.0	0
 216436	IDTP_Fanatic_FeB	cycle	0	6	timer:0	2	arm	0	16000	0		0.0	0.0	0.0	0
@@ -26547,6 +26658,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218680	IDDramata_Drakan_M_As	on_enter_attack_state	0	11		4	skill_at	16812	0	0	EventTarget	0.0	0.0	0.0	0
 218683	IDArena_pvp01_S3_LycanWarriorS_01	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218683	IDArena_pvp01_S3_LycanWarriorS_01	cycle	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
+218683	IDArena_pvp01_S3_LycanWarriorS_01	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218683	IDArena_pvp01_S3_LycanWarriorS_01	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218683	IDArena_pvp01_S3_LycanWarriorS_01	on_enter_attack_state	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	0	50	timer:0|hp_below:20|set_flag_var:3	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -26558,22 +26670,29 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	0	arm	1	10000	0		0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	1	skill	16673	0	0	MOST_HATED	0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	4	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		1	arm	1	15000	0		0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		2	skill	18156	0	0	MOST_HATED	0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		3	skill	18171	0	0	MOST_HATED	0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0	0
 218684	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		1	waypoint	0	0	0		0.0	0.0	0.0	0
+218686	IDArena_pvp01_S5_BansheeR3_01	on_arrived_at_waypoint	0	10	waypoint:1	0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+218686	IDArena_pvp01_S5_BansheeR3_01	on_arrived_at_waypoint	0	10	waypoint:1	1	skill	20231	0	0	ME	0.0	0.0	0.0	0
+218686	IDArena_pvp01_S5_BansheeR3_01	on_arrived_at_waypoint	1	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218686	IDArena_pvp01_S5_BansheeR3_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
+218687	IDArena_pvp01_S5_maid_01	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218687	IDArena_pvp01_S5_maid_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 218688	IDArena_pvp01_S5_Butler_01	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218688	IDArena_pvp01_S5_Butler_01	cycle	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+218688	IDArena_pvp01_S5_Butler_01	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218688	IDArena_pvp01_S5_Butler_01	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218688	IDArena_pvp01_S5_Butler_01	on_enter_attack_state	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
 218688	IDArena_pvp01_S5_Butler_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 218689	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	0	arm	0	5000	0		0.0	0.0	0.0	0
 218689	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	1	skill	16699	0	0	ME	0.0	0.0	0.0	0
 218689	IDArena_pvp01_S5_Lich_01	cycle	1	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218689	IDArena_pvp01_S5_Lich_01	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218689	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218689	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
 218689	IDArena_pvp01_S5_Lich_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
@@ -26599,6 +26718,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218693	IDArena_pvp02_S3_Tog_01	on_message	2	1	message:2001	0	switch	10000	0	0		0.0	0.0	0.0	0
 218696	IDArena_pvp01_S3_LycanWarriorS_02	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218696	IDArena_pvp01_S3_LycanWarriorS_02	cycle	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
+218696	IDArena_pvp01_S3_LycanWarriorS_02	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218696	IDArena_pvp01_S3_LycanWarriorS_02	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218696	IDArena_pvp01_S3_LycanWarriorS_02	on_enter_attack_state	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	0	50	timer:0|hp_below:20|set_flag_var:3	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -26610,22 +26730,29 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	0	arm	1	10000	0		0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	1	skill	16673	0	0	MOST_HATED	0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	4	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		1	arm	1	15000	0		0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		2	skill	18156	0	0	MOST_HATED	0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		3	skill	18171	0	0	MOST_HATED	0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0	0
 218697	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		1	waypoint	0	0	0		0.0	0.0	0.0	0
+218699	IDArena_pvp01_S5_BansheeR3_02	on_arrived_at_waypoint	0	10	waypoint:1	0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+218699	IDArena_pvp01_S5_BansheeR3_02	on_arrived_at_waypoint	0	10	waypoint:1	1	skill	20231	0	0	ME	0.0	0.0	0.0	0
+218699	IDArena_pvp01_S5_BansheeR3_02	on_arrived_at_waypoint	1	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218699	IDArena_pvp01_S5_BansheeR3_02	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
+218700	IDArena_pvp01_S5_maid_02	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218700	IDArena_pvp01_S5_maid_02	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 218701	IDArena_pvp01_S5_Butler_02	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218701	IDArena_pvp01_S5_Butler_02	cycle	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+218701	IDArena_pvp01_S5_Butler_02	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218701	IDArena_pvp01_S5_Butler_02	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218701	IDArena_pvp01_S5_Butler_02	on_enter_attack_state	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
 218701	IDArena_pvp01_S5_Butler_02	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 218702	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	0	arm	0	5000	0		0.0	0.0	0.0	0
 218702	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	1	skill	16699	0	0	ME	0.0	0.0	0.0	0
 218702	IDArena_pvp01_S5_Lich_01	cycle	1	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218702	IDArena_pvp01_S5_Lich_01	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218702	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218702	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
 218702	IDArena_pvp01_S5_Lich_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
@@ -26651,6 +26778,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218706	IDArena_pvp02_S3_Tog_02	on_message	2	1	message:2001	0	switch	10000	0	0		0.0	0.0	0.0	0
 218709	IDArena_pvp01_S3_LycanWarriorS_03	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218709	IDArena_pvp01_S3_LycanWarriorS_03	cycle	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
+218709	IDArena_pvp01_S3_LycanWarriorS_03	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218709	IDArena_pvp01_S3_LycanWarriorS_03	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218709	IDArena_pvp01_S3_LycanWarriorS_03	on_enter_attack_state	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	0	50	timer:0|hp_below:20|set_flag_var:3	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -26662,22 +26790,29 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	0	arm	1	10000	0		0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	1	skill	16673	0	0	MOST_HATED	0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	4	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		1	arm	1	15000	0		0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		2	skill	18156	0	0	MOST_HATED	0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		3	skill	18171	0	0	MOST_HATED	0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0	0
 218710	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		1	waypoint	0	0	0		0.0	0.0	0.0	0
+218712	IDArena_pvp01_S5_BansheeR3_03	on_arrived_at_waypoint	0	10	waypoint:1	0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+218712	IDArena_pvp01_S5_BansheeR3_03	on_arrived_at_waypoint	0	10	waypoint:1	1	skill	20231	0	0	ME	0.0	0.0	0.0	0
+218712	IDArena_pvp01_S5_BansheeR3_03	on_arrived_at_waypoint	1	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218712	IDArena_pvp01_S5_BansheeR3_03	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
+218713	IDArena_pvp01_S5_maid_03	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218713	IDArena_pvp01_S5_maid_03	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 218714	IDArena_pvp01_S5_Butler_03	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218714	IDArena_pvp01_S5_Butler_03	cycle	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+218714	IDArena_pvp01_S5_Butler_03	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218714	IDArena_pvp01_S5_Butler_03	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 218714	IDArena_pvp01_S5_Butler_03	on_enter_attack_state	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
 218714	IDArena_pvp01_S5_Butler_03	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 218715	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	0	arm	0	5000	0		0.0	0.0	0.0	0
 218715	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	1	skill	16699	0	0	ME	0.0	0.0	0.0	0
 218715	IDArena_pvp01_S5_Lich_01	cycle	1	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218715	IDArena_pvp01_S5_Lich_01	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218715	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218715	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
 218715	IDArena_pvp01_S5_Lich_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
@@ -26980,6 +27115,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218806	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 218806	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	1	skill	16714	0	0	ME	0.0	0.0	0.0	0
 218806	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	1	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218806	IDArena_pvp01_S4_VaranusAlligatorD_02	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218806	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218806	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		1	skill	16591	0	0	MOST_HATED	0.0	0.0	0.0	0
 218806	IDArena_pvp01_S4_VaranusAlligatorD_02	on_leave_attack_state	0	7		0	skill	16591	0	0	ME	0.0	0.0	0.0	0
@@ -26987,6 +27123,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218807	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 218807	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	1	skill	16714	0	0	ME	0.0	0.0	0.0	0
 218807	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	1	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218807	IDArena_pvp01_S4_VaranusAlligatorD_02	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218807	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218807	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		1	skill	16591	0	0	MOST_HATED	0.0	0.0	0.0	0
 218807	IDArena_pvp01_S4_VaranusAlligatorD_02	on_leave_attack_state	0	7		0	skill	16591	0	0	ME	0.0	0.0	0.0	0
@@ -26994,6 +27131,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 218808	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 218808	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	1	skill	16714	0	0	ME	0.0	0.0	0.0	0
 218808	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	1	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+218808	IDArena_pvp01_S4_VaranusAlligatorD_02	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 218808	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 218808	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		1	skill	16591	0	0	MOST_HATED	0.0	0.0	0.0	0
 218808	IDArena_pvp01_S4_VaranusAlligatorD_02	on_leave_attack_state	0	7		0	skill	16591	0	0	ME	0.0	0.0	0.0	0
@@ -33959,40 +34097,94 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 230755	IDF5_TD_Nor_Pr	cycle	3	3	timer:0	1	skill	17700	0	0	MOST_HATED	0.0	0.0	0.0	0
 230755	IDF5_TD_Nor_Pr	on_enter_attack_state	0	2		0	arm	0	10000	0		0.0	0.0	0.0	0
 230755	IDF5_TD_Nor_Pr	on_enter_attack_state	0	2		1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+230758	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230758	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230758	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230758	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230758	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230759	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230759	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230759	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230759	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230759	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230760	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230760	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230760	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230760	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230760	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230761	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230761	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230761	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230761	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230761	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230762	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230762	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230762	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230762	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230762	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230763	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230763	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230763	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230763	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230763	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230764	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230764	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230764	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230764	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230764	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230765	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230765	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230765	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230765	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230765	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230766	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230766	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230766	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230766	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230766	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230767	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230767	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230767	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230767	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230767	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230768	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230768	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230768	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230768	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230768	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230769	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230769	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230769	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230769	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230769	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230770	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230770	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230770	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230770	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230770	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230771	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230771	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230771	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230771	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230771	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230772	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230772	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230772	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230772	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230772	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230773	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	16405	0	0	ME	0.0	0.0	0.0	0
+230773	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230773	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230773	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	16405	0	0	ME	0.0	0.0	0.0	0
 230773	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230774	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230774	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230774	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230774	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230774	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230775	IDF5_TD_Basic	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+230775	IDF5_TD_Basic	on_enter_idle_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
+230775	IDF5_TD_Basic	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 230775	IDF5_TD_Basic	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
 230775	IDF5_TD_Basic	on_leave_attack_state	0	1		1	despawn	1	0	0		0.0	0.0	0.0	0
 230779	IDF5_TD_Wave_Pod_01	on_enter_idle_state	0	2		0	var	1	0	0	Wave_Z1_S3_01	0.0	0.0	0.0	0
@@ -54286,6 +54478,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 233045	Britra_As_Hide	on_leave_attack_state	0	7		1	skill	16822	0	0	ME	0.0	0.0	0.0	0
 233047	IDArena_pvp01_S3_LycanWarriorS_03	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 233047	IDArena_pvp01_S3_LycanWarriorS_03	cycle	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
+233047	IDArena_pvp01_S3_LycanWarriorS_03	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233047	IDArena_pvp01_S3_LycanWarriorS_03	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 233047	IDArena_pvp01_S3_LycanWarriorS_03	on_enter_attack_state	0	7		1	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	0	50	timer:0|hp_below:20|set_flag_var:3	0	arm	0	5000	0		0.0	0.0	0.0	0
@@ -54297,22 +54490,29 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	0	arm	1	10000	0		0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	3	21	timer:1	1	skill	16673	0	0	MOST_HATED	0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	cycle	4	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		1	arm	1	15000	0		0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		2	skill	18156	0	0	MOST_HATED	0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_enter_attack_state	0	7		3	skill	18171	0	0	MOST_HATED	0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		0	skill	18168	0	0	ME	0.0	0.0	0.0	0
 233048	IDArena_pvp01_S4_VaranusAlligatorD_01	on_leave_attack_state	0	7		1	waypoint	0	0	0		0.0	0.0	0.0	0
+233050	IDArena_pvp01_S5_BansheeR3_03	on_arrived_at_waypoint	0	10	waypoint:1	0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+233050	IDArena_pvp01_S5_BansheeR3_03	on_arrived_at_waypoint	0	10	waypoint:1	1	skill	20231	0	0	ME	0.0	0.0	0.0	0
+233050	IDArena_pvp01_S5_BansheeR3_03	on_arrived_at_waypoint	1	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233050	IDArena_pvp01_S5_BansheeR3_03	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
+233051	IDArena_pvp01_S5_maid_03	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233051	IDArena_pvp01_S5_maid_03	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 233052	IDArena_pvp01_S5_Butler_03	cycle	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 233052	IDArena_pvp01_S5_Butler_03	cycle	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
+233052	IDArena_pvp01_S5_Butler_03	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233052	IDArena_pvp01_S5_Butler_03	on_enter_attack_state	0	7		0	arm	0	10000	0		0.0	0.0	0.0	0
 233052	IDArena_pvp01_S5_Butler_03	on_enter_attack_state	0	7		1	skill	16570	0	0	MOST_HATED	0.0	0.0	0.0	0
 233052	IDArena_pvp01_S5_Butler_03	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
 233053	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	0	arm	0	5000	0		0.0	0.0	0.0	0
 233053	IDArena_pvp01_S5_Lich_01	cycle	0	10	timer:0|hp_below:50	1	skill	16699	0	0	ME	0.0	0.0	0.0	0
 233053	IDArena_pvp01_S5_Lich_01	cycle	1	7	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+233053	IDArena_pvp01_S5_Lich_01	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233053	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 233053	IDArena_pvp01_S5_Lich_01	on_enter_attack_state	0	7		1	skill	16574	0	0	MOST_HATED	0.0	0.0	0.0	0
 233053	IDArena_pvp01_S5_Lich_01	on_leave_attack_state	0	7		0	waypoint	0	0	0		0.0	0.0	0.0	0
@@ -54324,6 +54524,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 233056	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	0	arm	0	5000	0		0.0	0.0	0.0	0
 233056	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	0	20	timer:0|hp_between:2:49|set_flag_var:0	1	skill	16714	0	0	ME	0.0	0.0	0.0	0
 233056	IDArena_pvp01_S4_VaranusAlligatorD_02	cycle	1	10	timer:0	0	arm	0	5000	0		0.0	0.0	0.0	0
+233056	IDArena_pvp01_S4_VaranusAlligatorD_02	on_arrived_at_waypoint	0	20		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233056	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		0	arm	0	5000	0		0.0	0.0	0.0	0
 233056	IDArena_pvp01_S4_VaranusAlligatorD_02	on_enter_attack_state	0	7		1	skill	16591	0	0	MOST_HATED	0.0	0.0	0.0	0
 233056	IDArena_pvp01_S4_VaranusAlligatorD_02	on_leave_attack_state	0	7		0	skill	16591	0	0	ME	0.0	0.0	0.0	0
@@ -59295,6 +59496,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 233891	IDLDF4_Re_01_Golem	cycle	3	1	timer:0	1	skill	16526	0	0	MOST_HATED	0.0	0.0	0.0	0
 233891	IDLDF4_Re_01_Golem	on_enter_attack_state	0	7		0	skill	16526	0	0	MOST_HATED	0.0	0.0	0.0	0
 233891	IDLDF4_Re_01_Golem	on_enter_attack_state	0	7		1	arm	0	8000	0		0.0	0.0	0.0	0
+233895	IDLDF4R_Re_01_Stone	on_enter_idle_state	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 233909	LDF4_Advance_DrakanTiamat_WI	on_leave_attack_state	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0	0
 233910	LDF4_Advance_DrakanTiamat_WI	on_leave_attack_state	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0	0
 233911	LDF4_Advance_DrakanTiamat_WI	on_leave_attack_state	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0	0
@@ -88727,6 +88929,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 260228	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 260228	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 260228	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+260230	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+260230	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+260230	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+260230	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+260230	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+260231	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+260231	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+260231	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+260231	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+260231	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 260252	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 260252	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 260252	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -93373,6 +93585,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 263259	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 263259	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 263259	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+263261	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+263261	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+263261	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+263261	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+263261	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+263262	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+263262	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+263262	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+263262	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+263262	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 263268	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 263268	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 263268	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -94209,6 +94431,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 263561	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 263561	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 263561	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+263563	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+263563	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+263563	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+263563	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+263563	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+263564	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+263564	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+263564	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+263564	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+263564	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 263570	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 263570	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 263570	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -96395,6 +96627,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 264761	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 264761	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 264761	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+264763	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+264763	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+264763	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+264763	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+264763	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+264764	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+264764	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+264764	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+264764	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+264764	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 264770	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 264770	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 264770	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -99481,6 +99723,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 266546	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 266546	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 266546	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+266548	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+266548	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+266548	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+266548	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+266548	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+266549	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+266549	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+266549	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+266549	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+266549	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 266555	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 266555	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 266555	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -101967,6 +102219,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 268044	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 268044	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 268044	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+268046	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+268046	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+268046	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+268046	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+268046	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+268047	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+268047	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+268047	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+268047	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+268047	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 268053	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 268053	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 268053	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -104153,6 +104415,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 269244	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 269244	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 269244	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+269246	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	0	say	340927	0	0		0.0	0.0	0.0	0
+269246	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+269246	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+269246	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+269246	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+269247	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	0	say	340927	0	0		0.0	0.0	0.0	0
+269247	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+269247	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+269247	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+269247	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 269253	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 269253	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 269253	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -105739,6 +106011,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 270144	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 270144	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 270144	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+270146	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+270146	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+270146	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+270146	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+270146	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+270147	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+270147	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+270147	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+270147	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+270147	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 270153	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 270153	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 270153	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -107325,6 +107607,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 271046	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 271046	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 271046	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+271048	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+271048	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+271048	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+271048	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+271048	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+271049	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+271049	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+271049	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+271049	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+271049	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 271055	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 271055	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 271055	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -132059,6 +132351,99 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 280936	NLehpar_BhB	on_leave_attack_state	0	7		3	despawn	4	0	0		0.0	0.0	0.0	0
 280945	ND2_SwellFishPathA	cycle	0	2	timer:0	0	arm	0	15000	0		0.0	0.0	0.0	0
 280945	ND2_SwellFishPathA	cycle	0	2	timer:0	1	skill	16540	0	0	MOST_HATED	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	0	1	waypoint:155	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	0	1	waypoint:155	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	0	1	waypoint:155	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	1	1	waypoint:150	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	1	1	waypoint:150	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	1	1	waypoint:150	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	2	1	waypoint:145	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	2	1	waypoint:145	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	2	1	waypoint:145	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	3	1	waypoint:140	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	3	1	waypoint:140	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	3	1	waypoint:140	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	4	1	waypoint:135	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	4	1	waypoint:135	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	4	1	waypoint:135	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	5	1	waypoint:130	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	5	1	waypoint:130	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	5	1	waypoint:130	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	6	1	waypoint:125	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	6	1	waypoint:125	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	6	1	waypoint:125	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	7	1	waypoint:120	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	7	1	waypoint:120	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	7	1	waypoint:120	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	8	1	waypoint:115	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	8	1	waypoint:115	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	8	1	waypoint:115	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	9	1	waypoint:110	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	9	1	waypoint:110	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	9	1	waypoint:110	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	10	1	waypoint:105	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	10	1	waypoint:105	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	10	1	waypoint:105	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	11	1	waypoint:100	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	11	1	waypoint:100	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	11	1	waypoint:100	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	12	1	waypoint:95	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	12	1	waypoint:95	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	12	1	waypoint:95	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	13	1	waypoint:90	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	13	1	waypoint:90	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	13	1	waypoint:90	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	14	1	waypoint:85	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	14	1	waypoint:85	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	14	1	waypoint:85	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	15	1	waypoint:80	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	15	1	waypoint:80	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	15	1	waypoint:80	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	16	1	waypoint:75	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	16	1	waypoint:75	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	16	1	waypoint:75	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	17	1	waypoint:70	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	17	1	waypoint:70	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	17	1	waypoint:70	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	18	1	waypoint:65	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	18	1	waypoint:65	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	18	1	waypoint:65	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	19	1	waypoint:60	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	19	1	waypoint:60	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	19	1	waypoint:60	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	20	1	waypoint:55	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	20	1	waypoint:55	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	20	1	waypoint:55	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	21	1	waypoint:50	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	21	1	waypoint:50	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	21	1	waypoint:50	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	22	1	waypoint:45	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	22	1	waypoint:45	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	22	1	waypoint:45	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	23	1	waypoint:40	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	23	1	waypoint:40	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	23	1	waypoint:40	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	24	1	waypoint:35	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	24	1	waypoint:35	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	24	1	waypoint:35	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	25	1	waypoint:30	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	25	1	waypoint:30	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	25	1	waypoint:30	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	26	1	waypoint:25	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	26	1	waypoint:25	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	26	1	waypoint:25	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	27	1	waypoint:20	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	27	1	waypoint:20	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	27	1	waypoint:20	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	28	1	waypoint:15	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	28	1	waypoint:15	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	28	1	waypoint:15	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	29	1	waypoint:10	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	29	1	waypoint:10	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	29	1	waypoint:10	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	30	1	waypoint:5	0	skill	18474	0	0	ME	0.0	0.0	0.0	0
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	30	1	waypoint:5	1	spawn	280946	2	20	for_the_fight_self	0.0	0.0	0.0	1
+280945	ND2_SwellFishPathA	on_arrived_at_waypoint	30	1	waypoint:5	2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 280945	ND2_SwellFishPathA	on_enter_attack_state	0	3		0	arm	0	16000	0		0.0	0.0	0.0	0
 280945	ND2_SwellFishPathA	on_enter_attack_state	0	3		1	say	340703	0	0		0.0	0.0	0.0	0
 280945	ND2_SwellFishPathA	on_enter_attack_state	0	3		2	skill_at	16550	0	0	EventTarget	0.0	0.0	0.0	0
@@ -132072,6 +132457,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 280948	ND2_CheruPathA	cycle	2	2	hp_between:52:99|timer:1	1	arm	1	15000	0		0.0	0.0	0.0	0
 280948	ND2_CheruPathA	cycle	2	2	hp_between:52:99|timer:1	2	skill	16516	0	0	MOST_HATED	0.0	0.0	0.0	0
 280948	ND2_CheruPathA	cycle	3	1	timer:0	0	arm	0	6000	0		0.0	0.0	0.0	0
+280948	ND2_CheruPathA	on_arrived_at_waypoint	0	2	chance:10	0	skill	18473	0	0	ME	0.0	0.0	0.0	0
+280948	ND2_CheruPathA	on_arrived_at_waypoint	0	2	chance:10	1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+280948	ND2_CheruPathA	on_arrived_at_waypoint	1	1		0	skill	18472	0	0	ME	0.0	0.0	0.0	0
+280948	ND2_CheruPathA	on_arrived_at_waypoint	1	1		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 280948	ND2_CheruPathA	on_enter_attack_state	0	7		0	arm	0	6000	0		0.0	0.0	0.0	0
 280948	ND2_CheruPathA	on_enter_attack_state	0	7		1	arm	1	15000	0		0.0	0.0	0.0	0
 280948	ND2_CheruPathA	on_enter_attack_state	0	7		2	skill	16742	0	0	ME	0.0	0.0	0.0	0
@@ -143864,6 +144253,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284345	IDF5_TD_Wave2_Boss2	on_enter_attack_state	0	2		2	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
 284345	IDF5_TD_Wave2_Boss2	on_enter_attack_state	0	2		3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
 284345	IDF5_TD_Wave2_Boss2	on_enter_attack_state	0	2		4	say	1501092	0	0		0.0	0.0	0.0	0
+284345	IDF5_TD_Wave2_Boss2	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+284345	IDF5_TD_Wave2_Boss2	on_enter_idle_state	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0	0
+284345	IDF5_TD_Wave2_Boss2	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+284345	IDF5_TD_Wave2_Boss2	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+284345	IDF5_TD_Wave2_Boss2	on_leave_attack_state	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0	0
+284345	IDF5_TD_Wave2_Boss2	on_leave_attack_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 284346	IDF5_TD_Wave2_Boss3	cycle	0	14	timer:9	0	arm	5	8000	0		0.0	0.0	0.0	0
 284346	IDF5_TD_Wave2_Boss3	cycle	0	14	timer:9	1	skill	19021	0	0	MOST_HATED	0.0	0.0	0.0	0
 284346	IDF5_TD_Wave2_Boss3	cycle	1	13	timer:8	0	arm	9	8000	0		0.0	0.0	0.0	0
@@ -143900,6 +144295,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284346	IDF5_TD_Wave2_Boss3	on_enter_attack_state	0	2		2	skill	17313	0	0	MOST_HATED	0.0	0.0	0.0	0
 284346	IDF5_TD_Wave2_Boss3	on_enter_attack_state	0	2		3	switch_to	0	0	0	RANDOM	0.0	0.0	0.0	0
 284346	IDF5_TD_Wave2_Boss3	on_enter_attack_state	0	2		4	say	1501092	0	0		0.0	0.0	0.0	0
+284346	IDF5_TD_Wave2_Boss3	on_enter_idle_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+284346	IDF5_TD_Wave2_Boss3	on_enter_idle_state	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0	0
+284346	IDF5_TD_Wave2_Boss3	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+284346	IDF5_TD_Wave2_Boss3	on_leave_attack_state	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+284346	IDF5_TD_Wave2_Boss3	on_leave_attack_state	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0	0
+284346	IDF5_TD_Wave2_Boss3	on_leave_attack_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 284347	IDF5_TD_Wave3_Boss1	cycle	0	14	timer:8	0	arm	5	8000	0		0.0	0.0	0.0	0
 284347	IDF5_TD_Wave3_Boss1	cycle	0	14	timer:8	1	skill	20704	0	0	MOST_HATED	0.0	0.0	0.0	0
 284347	IDF5_TD_Wave3_Boss1	cycle	1	13	timer:7	0	arm	8	8000	0		0.0	0.0	0.0	0
@@ -146799,6 +147200,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284850	BIDF5_U3_hard_Vri_Pr	cycle	3	11	timer:0	1	skill	17700	0	0	MOST_HATED	0.0	0.0	0.0	0
 284850	BIDF5_U3_hard_Vri_Pr	on_enter_attack_state	0	10		0	arm	0	10000	0		0.0	0.0	0.0	0
 284850	BIDF5_U3_hard_Vri_Pr	on_enter_attack_state	0	10		1	skill	17359	0	0	MOST_HATED	0.0	0.0	0.0	0
+284850	BIDF5_U3_hard_Vri_Pr	on_leave_attack_state	0	4		0	skill	20700	0	0	ME	0.0	0.0	0.0	0
+284850	BIDF5_U3_hard_Vri_Pr	on_leave_attack_state	0	4		1	despawn	1	0	0		0.0	0.0	0.0	0
+284850	BIDF5_U3_hard_Vri_Pr	on_leave_attack_state	0	4		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 284851	BIDF5_U3_hard_Vri_Ra	cycle	0	100	timer:0	0	arm	1	10000	0		0.0	0.0	0.0	0
 284851	BIDF5_U3_hard_Vri_Ra	cycle	0	100	timer:0	1	skill	17314	0	0	MOST_HATED	0.0	0.0	0.0	0
 284851	BIDF5_U3_hard_Vri_Ra	cycle	1	99	timer:1	0	arm	2	10000	0		0.0	0.0	0.0	0
@@ -146862,6 +147266,11 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284854	BIDF5_U3_SemiNmd_Vri_Fi	on_enter_attack_state	0	10		2	skill	20700	0	0	ME	0.0	0.0	0.0	0
 284854	BIDF5_U3_SemiNmd_Vri_Fi	on_enter_attack_state	0	10		3	skill	18166	0	0	MOST_HATED	0.0	0.0	0.0	0
 284854	BIDF5_U3_SemiNmd_Vri_Fi	on_enter_attack_state	0	10		4	skill	21285	0	0	MOST_HATED	0.0	0.0	0.0	0
+284854	BIDF5_U3_SemiNmd_Vri_Fi	on_enter_idle_state	0	1		0	skill	16391	0	0	ME	0.0	0.0	0.0	0
+284854	BIDF5_U3_SemiNmd_Vri_Fi	on_enter_idle_state	0	1		1	skill	20700	0	0	ME	0.0	0.0	0.0	0
+284854	BIDF5_U3_SemiNmd_Vri_Fi	on_enter_idle_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+284854	BIDF5_U3_SemiNmd_Vri_Fi	on_leave_attack_state	0	1		0	skill	16391	0	0	ME	0.0	0.0	0.0	0
+284854	BIDF5_U3_SemiNmd_Vri_Fi	on_leave_attack_state	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 284856	BIDF5_U3_SemiNmd_Vri_Wi	cycle	0	22	timer:8	0	arm	5	14000	0		0.0	0.0	0.0	0
 284856	BIDF5_U3_SemiNmd_Vri_Wi	cycle	0	22	timer:8	1	skill	21451	0	0	MOST_HATED	0.0	0.0	0.0	0
 284856	BIDF5_U3_SemiNmd_Vri_Wi	cycle	0	22	timer:8	2	switch_to	0	0	0	RANDOM_EXCEPT_CURRENT_TARGET	0.0	0.0	0.0	0
@@ -146895,6 +147304,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284856	BIDF5_U3_SemiNmd_Vri_Wi	on_enter_attack_state	0	10		1	arm	1	8000	0		0.0	0.0	0.0	0
 284856	BIDF5_U3_SemiNmd_Vri_Wi	on_enter_attack_state	0	10		2	skill	20700	0	0	ME	0.0	0.0	0.0	0
 284856	BIDF5_U3_SemiNmd_Vri_Wi	on_enter_attack_state	0	10		3	skill	21451	0	0	MOST_HATED	0.0	0.0	0.0	0
+284856	BIDF5_U3_SemiNmd_Vri_Wi	on_leave_attack_state	0	1		0	skill	16391	0	0	ME	0.0	0.0	0.0	0
+284856	BIDF5_U3_SemiNmd_Vri_Wi	on_leave_attack_state	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 284902	Britra_As_Poison_LowNmd	cycle	0	100	timer:0	0	arm	1	7000	0		0.0	0.0	0.0	0
 284902	Britra_As_Poison_LowNmd	cycle	0	100	timer:0	1	skill	16678	0	0	MOST_HATED	0.0	0.0	0.0	0
 284902	Britra_As_Poison_LowNmd	cycle	1	99	timer:1	0	arm	2	7000	0		0.0	0.0	0.0	0
@@ -147151,6 +147562,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 284968	IDLDF4_Re_01_Golem	cycle	3	1	timer:0	1	skill	16526	0	0	MOST_HATED	0.0	0.0	0.0	0
 284968	IDLDF4_Re_01_Golem	on_enter_attack_state	0	7		0	skill	16526	0	0	MOST_HATED	0.0	0.0	0.0	0
 284968	IDLDF4_Re_01_Golem	on_enter_attack_state	0	7		1	arm	0	8000	0		0.0	0.0	0.0	0
+284972	IDLDF4R_Re_01_Stone	on_enter_idle_state	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 284996	ND2_AnM	on_enter_idle_state	0	1	set_flag_var:29	0	skill	16822	0	0	ME	0.0	0.0	0.0	0
 285098	Krall_PeB	cycle	0	3	timer:0|hp_below:40|set_flag_var:0	0	arm	0	6000	0		0.0	0.0	0.0	0
 285098	Krall_PeB	cycle	0	3	timer:0|hp_below:40|set_flag_var:0	1	skill	17404	0	0	ME	0.0	0.0	0.0	0
@@ -149422,6 +149834,14 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 294554	DGuard_FhA_Officer	on_enter_attack_state	1	8		2	say	340923	0	0		0.0	0.0	0.0	0
 294554	DGuard_FhA_Officer	on_enter_attack_state	1	8		3	skill_at	17061	0	0	EventTarget	0.0	0.0	0.0	0
 294554	DGuard_FhA_Officer	on_enter_attack_state	1	8		4	skill	18143	0	0	ME	0.0	0.0	0.0	0
+294559	Ab_QuarterMaster	on_arrived_at_waypoint	0	3	waypoint:14	0	say	340927	0	0		0.0	0.0	0.0	0
+294559	Ab_QuarterMaster	on_arrived_at_waypoint	0	3	waypoint:14	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294559	Ab_QuarterMaster	on_arrived_at_waypoint	0	3	waypoint:14	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294559	Ab_QuarterMaster	on_arrived_at_waypoint	1	2		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294560	Ab_QuarterMaster	on_arrived_at_waypoint	0	3	waypoint:14	0	say	340927	0	0		0.0	0.0	0.0	0
+294560	Ab_QuarterMaster	on_arrived_at_waypoint	0	3	waypoint:14	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294560	Ab_QuarterMaster	on_arrived_at_waypoint	0	3	waypoint:14	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294560	Ab_QuarterMaster	on_arrived_at_waypoint	1	2		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 294569	LGuard_FnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 294569	LGuard_FnA	cycle	0	4	chance:35|timer:1	1	skill	17078	0	0	MOST_HATED	0.0	0.0	0.0	0
 294569	LGuard_FnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -150527,6 +150947,126 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 294923	DrGuard_FhA_WarpA_W25	on_arrived_at_waypoint	0	3	waypoint:25	0	nothing	0	0	0		0.0	0.0	0.0	0
 294924	DrGuard_FhA_WarpA_W30	on_arrived_at_waypoint	0	3	waypoint:30	0	nothing	0	0	0		0.0	0.0	0.0	0
 294925	DrGuard_FhA_WarpA_W35	on_arrived_at_waypoint	0	3	waypoint:35	0	nothing	0	0	0		0.0	0.0	0.0	0
+294926	Ab_QuarterMaster_W5	on_arrived_at_waypoint	0	3	waypoint:5	0	say	340927	0	0		0.0	0.0	0.0	0
+294926	Ab_QuarterMaster_W5	on_arrived_at_waypoint	0	3	waypoint:5	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294926	Ab_QuarterMaster_W5	on_arrived_at_waypoint	0	3	waypoint:5	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294926	Ab_QuarterMaster_W5	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294926	Ab_QuarterMaster_W5	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294927	Ab_QuarterMaster_W10	on_arrived_at_waypoint	0	3	waypoint:10	0	say	340927	0	0		0.0	0.0	0.0	0
+294927	Ab_QuarterMaster_W10	on_arrived_at_waypoint	0	3	waypoint:10	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294927	Ab_QuarterMaster_W10	on_arrived_at_waypoint	0	3	waypoint:10	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294927	Ab_QuarterMaster_W10	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294927	Ab_QuarterMaster_W10	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294928	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+294928	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294928	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294928	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294928	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294929	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	0	say	340927	0	0		0.0	0.0	0.0	0
+294929	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294929	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294929	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294929	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294930	Ab_QuarterMaster_W25	on_arrived_at_waypoint	0	3	waypoint:25	0	say	340927	0	0		0.0	0.0	0.0	0
+294930	Ab_QuarterMaster_W25	on_arrived_at_waypoint	0	3	waypoint:25	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294930	Ab_QuarterMaster_W25	on_arrived_at_waypoint	0	3	waypoint:25	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294930	Ab_QuarterMaster_W25	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294930	Ab_QuarterMaster_W25	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294931	Ab_QuarterMaster_W30	on_arrived_at_waypoint	0	3	waypoint:30	0	say	340927	0	0		0.0	0.0	0.0	0
+294931	Ab_QuarterMaster_W30	on_arrived_at_waypoint	0	3	waypoint:30	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294931	Ab_QuarterMaster_W30	on_arrived_at_waypoint	0	3	waypoint:30	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294931	Ab_QuarterMaster_W30	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294931	Ab_QuarterMaster_W30	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294932	Ab_QuarterMaster_W35	on_arrived_at_waypoint	0	3	waypoint:35	0	say	340927	0	0		0.0	0.0	0.0	0
+294932	Ab_QuarterMaster_W35	on_arrived_at_waypoint	0	3	waypoint:35	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294932	Ab_QuarterMaster_W35	on_arrived_at_waypoint	0	3	waypoint:35	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294932	Ab_QuarterMaster_W35	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294932	Ab_QuarterMaster_W35	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294933	Ab_QuarterMaster_W40	on_arrived_at_waypoint	0	3	waypoint:40	0	say	340927	0	0		0.0	0.0	0.0	0
+294933	Ab_QuarterMaster_W40	on_arrived_at_waypoint	0	3	waypoint:40	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294933	Ab_QuarterMaster_W40	on_arrived_at_waypoint	0	3	waypoint:40	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294933	Ab_QuarterMaster_W40	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294933	Ab_QuarterMaster_W40	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294934	Ab_QuarterMaster_W45	on_arrived_at_waypoint	0	3	waypoint:45	0	say	340927	0	0		0.0	0.0	0.0	0
+294934	Ab_QuarterMaster_W45	on_arrived_at_waypoint	0	3	waypoint:45	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294934	Ab_QuarterMaster_W45	on_arrived_at_waypoint	0	3	waypoint:45	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294934	Ab_QuarterMaster_W45	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294934	Ab_QuarterMaster_W45	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294935	Ab_QuarterMaster_W50	on_arrived_at_waypoint	0	3	waypoint:50	0	say	340927	0	0		0.0	0.0	0.0	0
+294935	Ab_QuarterMaster_W50	on_arrived_at_waypoint	0	3	waypoint:50	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294935	Ab_QuarterMaster_W50	on_arrived_at_waypoint	0	3	waypoint:50	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294935	Ab_QuarterMaster_W50	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294935	Ab_QuarterMaster_W50	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294936	Ab_QuarterMaster_W55	on_arrived_at_waypoint	0	3	waypoint:55	0	say	340927	0	0		0.0	0.0	0.0	0
+294936	Ab_QuarterMaster_W55	on_arrived_at_waypoint	0	3	waypoint:55	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294936	Ab_QuarterMaster_W55	on_arrived_at_waypoint	0	3	waypoint:55	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294936	Ab_QuarterMaster_W55	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294936	Ab_QuarterMaster_W55	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294937	Ab_QuarterMaster_W60	on_arrived_at_waypoint	0	3	waypoint:60	0	say	340927	0	0		0.0	0.0	0.0	0
+294937	Ab_QuarterMaster_W60	on_arrived_at_waypoint	0	3	waypoint:60	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294937	Ab_QuarterMaster_W60	on_arrived_at_waypoint	0	3	waypoint:60	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294937	Ab_QuarterMaster_W60	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294937	Ab_QuarterMaster_W60	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294938	Ab_QuarterMaster_W5	on_arrived_at_waypoint	0	3	waypoint:5	0	say	340927	0	0		0.0	0.0	0.0	0
+294938	Ab_QuarterMaster_W5	on_arrived_at_waypoint	0	3	waypoint:5	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294938	Ab_QuarterMaster_W5	on_arrived_at_waypoint	0	3	waypoint:5	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294938	Ab_QuarterMaster_W5	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294938	Ab_QuarterMaster_W5	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294939	Ab_QuarterMaster_W10	on_arrived_at_waypoint	0	3	waypoint:10	0	say	340927	0	0		0.0	0.0	0.0	0
+294939	Ab_QuarterMaster_W10	on_arrived_at_waypoint	0	3	waypoint:10	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294939	Ab_QuarterMaster_W10	on_arrived_at_waypoint	0	3	waypoint:10	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294939	Ab_QuarterMaster_W10	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294939	Ab_QuarterMaster_W10	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294940	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	0	say	340927	0	0		0.0	0.0	0.0	0
+294940	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294940	Ab_QuarterMaster_W15	on_arrived_at_waypoint	0	3	waypoint:15	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294940	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294940	Ab_QuarterMaster_W15	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294941	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	0	say	340927	0	0		0.0	0.0	0.0	0
+294941	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294941	Ab_QuarterMaster_W20	on_arrived_at_waypoint	0	3	waypoint:20	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294941	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294941	Ab_QuarterMaster_W20	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294942	Ab_QuarterMaster_W25	on_arrived_at_waypoint	0	3	waypoint:25	0	say	340927	0	0		0.0	0.0	0.0	0
+294942	Ab_QuarterMaster_W25	on_arrived_at_waypoint	0	3	waypoint:25	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294942	Ab_QuarterMaster_W25	on_arrived_at_waypoint	0	3	waypoint:25	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294942	Ab_QuarterMaster_W25	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294942	Ab_QuarterMaster_W25	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294943	Ab_QuarterMaster_W30	on_arrived_at_waypoint	0	3	waypoint:30	0	say	340927	0	0		0.0	0.0	0.0	0
+294943	Ab_QuarterMaster_W30	on_arrived_at_waypoint	0	3	waypoint:30	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294943	Ab_QuarterMaster_W30	on_arrived_at_waypoint	0	3	waypoint:30	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294943	Ab_QuarterMaster_W30	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294943	Ab_QuarterMaster_W30	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294944	Ab_QuarterMaster_W35	on_arrived_at_waypoint	0	3	waypoint:35	0	say	340927	0	0		0.0	0.0	0.0	0
+294944	Ab_QuarterMaster_W35	on_arrived_at_waypoint	0	3	waypoint:35	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294944	Ab_QuarterMaster_W35	on_arrived_at_waypoint	0	3	waypoint:35	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294944	Ab_QuarterMaster_W35	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294944	Ab_QuarterMaster_W35	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294945	Ab_QuarterMaster_W40	on_arrived_at_waypoint	0	3	waypoint:40	0	say	340927	0	0		0.0	0.0	0.0	0
+294945	Ab_QuarterMaster_W40	on_arrived_at_waypoint	0	3	waypoint:40	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294945	Ab_QuarterMaster_W40	on_arrived_at_waypoint	0	3	waypoint:40	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294945	Ab_QuarterMaster_W40	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294945	Ab_QuarterMaster_W40	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294946	Ab_QuarterMaster_W45	on_arrived_at_waypoint	0	3	waypoint:45	0	say	340927	0	0		0.0	0.0	0.0	0
+294946	Ab_QuarterMaster_W45	on_arrived_at_waypoint	0	3	waypoint:45	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294946	Ab_QuarterMaster_W45	on_arrived_at_waypoint	0	3	waypoint:45	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294946	Ab_QuarterMaster_W45	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294946	Ab_QuarterMaster_W45	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294947	Ab_QuarterMaster_W50	on_arrived_at_waypoint	0	3	waypoint:50	0	say	340927	0	0		0.0	0.0	0.0	0
+294947	Ab_QuarterMaster_W50	on_arrived_at_waypoint	0	3	waypoint:50	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294947	Ab_QuarterMaster_W50	on_arrived_at_waypoint	0	3	waypoint:50	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294947	Ab_QuarterMaster_W50	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294947	Ab_QuarterMaster_W50	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294948	Ab_QuarterMaster_W55	on_arrived_at_waypoint	0	3	waypoint:55	0	say	340927	0	0		0.0	0.0	0.0	0
+294948	Ab_QuarterMaster_W55	on_arrived_at_waypoint	0	3	waypoint:55	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294948	Ab_QuarterMaster_W55	on_arrived_at_waypoint	0	3	waypoint:55	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294948	Ab_QuarterMaster_W55	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294948	Ab_QuarterMaster_W55	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
+294949	Ab_QuarterMaster_W60	on_arrived_at_waypoint	0	3	waypoint:60	0	say	340927	0	0		0.0	0.0	0.0	0
+294949	Ab_QuarterMaster_W60	on_arrived_at_waypoint	0	3	waypoint:60	1	skill	18145	0	0	ME	0.0	0.0	0.0	0
+294949	Ab_QuarterMaster_W60	on_arrived_at_waypoint	0	3	waypoint:60	2	despawn_self	0	0	0		0.0	0.0	0.0	0
+294949	Ab_QuarterMaster_W60	on_arrived_at_waypoint	1	2		0	say	341120	0	0		0.0	0.0	0.0	0
+294949	Ab_QuarterMaster_W60	on_arrived_at_waypoint	1	2		1	next_waypoint	0	0	0		0.0	0.0	0.0	0
 294950	LGuard_RnA	cycle	0	4	chance:35|timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
 294950	LGuard_RnA	cycle	0	4	chance:35|timer:1	1	skill	17099	0	0	MOST_HATED	0.0	0.0	0.0	0
 294950	LGuard_RnA	cycle	1	3	timer:1	0	arm	1	15000	0		0.0	0.0	0.0	0
@@ -157329,6 +157869,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 297179	LDF5_DisputeRvR_Hide_As	cycle	7	11	timer:0	2	skill	21598	0	0	MOST_HATED	0.0	0.0	0.0	0
 297179	LDF5_DisputeRvR_Hide_As	on_enter_attack_state	0	1		0	arm	0	6000	0		0.0	0.0	0.0	0
 297179	LDF5_DisputeRvR_Hide_As	on_enter_attack_state	0	1		1	skill_at	18159	0	0	EventTarget	0.0	0.0	0.0	0
+297179	LDF5_DisputeRvR_Hide_As	on_leave_attack_state	0	1		0	skill	20664	0	0	ME	0.0	0.0	0.0	0
+297179	LDF5_DisputeRvR_Hide_As	on_leave_attack_state	0	1		1	skill	21432	0	0	ME	0.0	0.0	0.0	0
+297179	LDF5_DisputeRvR_Hide_As	on_leave_attack_state	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
+297179	LDF5_DisputeRvR_Hide_As	on_leave_return_sp	0	1		0	skill	20664	0	0	ME	0.0	0.0	0.0	0
+297179	LDF5_DisputeRvR_Hide_As	on_leave_return_sp	0	1		1	skill	21432	0	0	ME	0.0	0.0	0.0	0
+297179	LDF5_DisputeRvR_Hide_As	on_leave_return_sp	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0	0
 297180	LDF5_DisputeRvR_Stumble_Ri	cycle	0	19	timer:4|hp_below:35|set_flag_var:0	0	arm	0	12000	0		0.0	0.0	0.0	0
 297180	LDF5_DisputeRvR_Stumble_Ri	cycle	0	19	timer:4|hp_below:35|set_flag_var:0	1	skill	21296	0	0	MOST_HATED	0.0	0.0	0.0	0
 297180	LDF5_DisputeRvR_Stumble_Ri	cycle	0	19	timer:4|hp_below:35|set_flag_var:0	2	skill	20704	0	0	MOST_HATED	0.0	0.0	0.0	0
@@ -160842,9 +161388,13 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z	group
 799528	Elim_Mercenary2	on_die	0	7	set_flag_var:3	2	despawn_self	0	0	0		0.0	0.0	0.0	0
 799528	Elim_Mercenary2	on_enter_attack_state	0	7		0	arm	0	7000	0		0.0	0.0	0.0	0
 799528	Elim_Mercenary2	on_leave_attack_state	0	7	set_flag_var:2	0	say	390499	0	0		0.0	0.0	0.0	0
+799576	IDF4Re_Shulack_1	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 799576	IDF4Re_Shulack_1	on_stop_to_flee	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0	0
+799577	IDF4Re_Shulack_2	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 799577	IDF4Re_Shulack_2	on_stop_to_flee	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0	0
+799578	IDF4Re_Shulack_3	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 799578	IDF4Re_Shulack_3	on_stop_to_flee	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0	0
+799579	IDF4Re_Shulack_4	on_arrived_at_waypoint	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0	0
 799579	IDF4Re_Shulack_4	on_stop_to_flee	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0	0
 799580	IDF4Re_Shulack_H1	on_stop_to_flee	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0	0
 799648	IDYun_Soldier_ND1	cycle	0	2	timer:0	0	skill	19365	0	0	MOST_HATED	0.0	0.0	0.0	0

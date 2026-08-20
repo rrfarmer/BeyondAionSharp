@@ -315,7 +315,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 59,408 casts across 14,734 npcs, none of them read by a human. The index they came from is only
+	/// 59,558 casts across 14,788 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -334,7 +334,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(59408, casts);
+		Assert.Equal(59558, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -776,7 +776,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1385, spawns);
+		Assert.Equal(1447, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -856,6 +856,70 @@ public sealed class BattleCycleAiTests
 		bool anyLast = lines.Skip(1).Any(line => line.Split('	')[guardsAt].Contains("last_waypoint:"));
 		Assert.True(anyLast, "the table no longer carries is_last_waypoint, so this pin proves nothing");
 		Assert.Contains("When.AtLastWaypoint", generated);
+	}
+
+	/// <summary><b>A "keep going" rung is carried, and it blocks the branches below it.</b></summary>
+	/// <remarks>
+	/// Retail's <c>goto_next_waypoint</c> asks the npc to carry on to the next point of its route, and
+	/// <b>this port already does that by itself</b> -- arriving runs <c>WalkManager.TargetReached</c> ->
+	/// <c>ChooseNextRouteStep</c>, ported from the Java. <see cref="PatternAi"/> evaluates
+	/// <c>OnArrivedAtWaypoint</c> before the base handler, so a rung that advanced the route itself
+	/// would advance it twice and the patrol would visit every other point -- while still walking,
+	/// still arriving, and looking entirely normal.
+	/// <para>
+	/// So the action is a no-op, and what is pinned is that the <b>branches carrying it survive</b>.
+	/// <para>
+	/// The first version of this pin asserted the <c>do_nothing</c> argument -- that a "keep going"
+	/// branch blocks the ones below it -- and <b>failed, because that is not true here</b>. All 45
+	/// branches whose only action is this are the last branch of their handler and 39 are the only
+	/// branch; they block nothing. The reason to read the element is different: a branch is
+	/// all-or-nothing, 142 branches carry it beside real actions, and refusing it dropped those
+	/// branches whole -- 106 casts, 62 spawns, 44 shouts and 19 despawns thrown away with them.
+	/// </para>
+	/// <para>
+	/// Checked against the table because the harness has no route walking to observe.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ContinueRouteBranchesAreCarriedAndBlockTheOnesBelow()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "battle_cycles.tsv");
+		string[] lines = File.ReadAllLines(path);
+		string[] header = lines[0].Split('	');
+		int npcAt = Array.IndexOf(header, "npc");
+		int handlerAt = Array.IndexOf(header, "handler");
+		int branchAt = Array.IndexOf(header, "branch");
+		int kindAt = Array.IndexOf(header, "kind");
+
+		Dictionary<(string, string, string), List<string>> byRung = new();
+		Dictionary<(string, string), int> lastBranch = new();
+		foreach (string line in lines.Skip(1))
+		{
+			string[] f = line.Split('	');
+			var rung = (f[npcAt], f[handlerAt], f[branchAt]);
+			if (!byRung.TryGetValue(rung, out List<string>? kinds))
+				byRung[rung] = kinds = new List<string>();
+			kinds.Add(f[kindAt]);
+
+			var owner = (f[npcAt], f[handlerAt]);
+			int branch = int.Parse(f[branchAt]);
+			lastBranch[owner] = Math.Max(lastBranch.TryGetValue(owner, out int seen) ? seen : 0, branch);
+		}
+
+		int carried = byRung.Count(rung => rung.Value.Any(k => k == "next_waypoint"));
+		int alongsideRealWork = byRung.Count(rung => rung.Value.Any(k => k == "next_waypoint")
+			&& rung.Value.Any(k => k is "skill" or "spawn" or "say" or "despawn"));
+
+		Assert.True(carried > 0, "the table no longer carries goto_next_waypoint at all");
+		Assert.True(alongsideRealWork > 100,
+			$"only {alongsideRealWork} branches pair keep-going with a real action, so reading the "
+			+ "element is no longer rescuing the mechanics that justified it");
+
+		// And it reaches the generated code as the named no-op rather than being quietly folded away.
+		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
+			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.cs"));
+		Assert.Contains("Do.ContinueRoute()", generated);
 	}
 
 }

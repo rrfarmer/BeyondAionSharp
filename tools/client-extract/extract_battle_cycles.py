@@ -410,6 +410,14 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             # Carried rather than skipped: branch lists are first-match-wins, so a matching do-nothing
             # branch is retail saying "this case, and none of the ones below".
             out.append(("nothing", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "goto_next_waypoint":
+            # 669 uses, all of them carrying nothing but a move type. A run is refused for the same
+            # reason `goto_waypoint` refuses one -- this port's route walking has a single speed --
+            # which costs 186 of them; the other 483 walk or leave it unspecified.
+            how = re.search(r"<move_type>(\w+)</move_type>", body)
+            if how and how.group(1) == "MOVETYPE_RUN":
+                raise Unsayable("goto_next_waypoint asking for a run")
+            out.append(("next_waypoint", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "goto_waypoint":
             # Retail's waypoint is an index into the npc's own route, not a named path. `move_type`
             # says walk or run and this port's route walking has one speed, so a rung asking for a run

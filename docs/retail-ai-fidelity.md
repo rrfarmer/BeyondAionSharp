@@ -37527,3 +37527,58 @@ Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 the `is_user` / `is_npc` conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## `goto_next_waypoint`, and a justification the pin refused
+
+`Retail-AI-Pattern: goto_next_waypoint as a no-op`
+
+The previous entry left this as the largest loss in `on_arrived_at_waypoint` (140 dropped) and named
+the thing to settle: does this port advance the route by itself, in which case an explicit advance
+would double-step the patrol? Reading the path settles it — **it does**, and the whole chain is
+ported from the Java: `MoveEventHandler.OnMoveArrived` -> `TargetEventHandler.OnTargetReached` ->
+`WalkManager.TargetReached` -> `ChooseNextRouteStep`. `PatternAi` evaluates `OnArrivedAtWaypoint`
+*before* the base handler, so a rung that advanced the route itself would advance it twice, and a
+patrol visiting every other point still walks, still arrives, and looks entirely normal.
+
+So `Do.ContinueRoute()` does nothing, deliberately. 669 uses in the dump carry nothing but a move
+type; 186 ask for `MOVETYPE_RUN` and are refused for the same reason `goto_waypoint` refuses one —
+this port's route walking has a single speed. The other 483 are read.
+
+### The pin failed, and it was right to
+
+The obvious justification is the `do_nothing` one from the vocabulary merge: branch lists are
+first-match-wins, so a "keep going" branch is retail saying *this case and none below*. I wrote that
+into the code, into the pin, and had this entry half-written around it.
+
+**The data says otherwise.** All 45 branches whose only action is `goto_next_waypoint` are the
+*last* branch of their handler, and 39 are the *only* branch. They block nothing at all. Had the pin
+been written to match the code rather than to check it, this would have shipped as a confident and
+wrong explanation of why the element matters.
+
+The real reason is different and better: **a branch is all-or-nothing.** 142 branches carry this
+element *beside* real actions — 106 casts, 62 spawns, 44 shouts, 19 despawns — and refusing the
+element dropped every one of those branches whole, taking the mechanics with it. Reading it as a
+no-op is what lets the rest of the branch through. The rationale in `AiPattern.ContinueRoute` and in
+the pin now say that, and the pin asserts it: more than a hundred branches must pair keep-going with
+a real action, or reading the element has stopped earning its place.
+
+Patterns 2,396 -> **2,414**; npcs 14,734 -> **14,788**; 187 rows. Two mutations, both caught:
+refusing the element again, and quietly walking the run-speed ones. Adds backlog unchanged at 211
+across 153 — the 62 rescued spawns are adds we already place from other rungs.
+
+### Still missing
+
+`on_arrived_at_waypoint` still drops 102 handlers, all of them `goto_next_waypoint` asking for
+`MOVETYPE_RUN`. That is now a movement-system gap in the literal sense — this port has one route
+speed — and unlike the last time I used that phrase, the machinery genuinely is not there.
+
+`is_npc_state` blocks 94 `on_see_friend_attacked` handlers and is the next largest single condition.
+
+Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254,
+`on_enter_abnormal_state` 272, `on_damaged` 141, `on_hyperlink_clicked` 137,
+`on_most_hating_updated` 132 — none of which spawn or cast — `on_see_friend_attacking` 129,
+`on_friend_spelling` 106, `on_see_npc_move` 106), plus `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+the `is_user` / `is_npc` conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.
