@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
@@ -438,5 +439,98 @@ public sealed class GuardAnswersTests
 		NpcMessageBus.Broadcast(guard, FortressKillerAI.ProtectorDown, guard, 50f);
 
 		Assert.Contains(killer, harness.LiveNpcs());
+	}
+
+	/// <summary>A south warden garrison warcaptain: retail sends it when a killer wakes.</summary>
+	private const int AnsweringWarcaptain = 234199;
+
+	/// <summary>A north warden warcaptain: same class, same tribe, and retail leaves it standing.</summary>
+	private const int SilentWarcaptain = 234196;
+
+	/// <summary>
+	/// <b>A base protector answers a waking killer only if retail says it does.</b> 253 npcs sit on the
+	/// class; retail names 117.
+	/// </summary>
+	/// <remarks>
+	/// The same defect as the siege protectors', in a second class that was not checked when the first
+	/// was fixed — 136 village and outpost warcaptains left their posts every time a killer spawned.
+	/// The two npcs here are the same class and the same tribe and differ only in the table.
+	/// </remarks>
+	[Fact]
+	public void OnlyTheBaseProtectorsRetailNamesAnswerAWakingKiller()
+	{
+		Assert.True(GuardAnswers.Answers(AnsweringWarcaptain, FortressKillerAI.KillerAwake));
+		Assert.False(GuardAnswers.Answers(SilentWarcaptain, FortressKillerAI.KillerAwake));
+
+		using BossAiHarness harness = BossAiHarness.For(220070000).WithWorldSize(4096)
+			.WithAi(typeof(BaseProtectorAI), typeof(FortressKillerAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		Npc killer = harness.Spawn(235543, 300f, 300f, 200f);
+		Npc answers = harness.Spawn(AnsweringWarcaptain, 305f, 300f, 200f);
+		Npc silent = harness.Spawn(SilentWarcaptain, 306f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(killer, answers);
+		BossAiHarness.MakeMutuallyKnown(killer, silent);
+
+		// Both are at war with the killer, so the difference is the table and nothing else.
+		Assert.True(killer.IsEnemy(answers));
+		Assert.True(killer.IsEnemy(silent));
+
+		NpcMessageBus.Broadcast(killer, FortressKillerAI.KillerAwake, killer,
+			FortressKillerAI.WakeCallRange);
+
+		Assert.True(answers.GetAggroList().GetHate(killer) > 0);
+		Assert.Equal(0, silent.GetAggroList().GetHate(killer));
+	}
+
+	/// <summary>
+	/// <b>No AI class may declare <c>OnNpcMessage</c>, skip the hand-off, and own npcs the table
+	/// answers for.</b>
+	/// </summary>
+	/// <remarks>
+	/// Declaring the method <em>hides</em> the inherited one, so a class that neither calls
+	/// <c>base.OnNpcMessage</c> nor consults <see cref="GuardAnswers"/> itself silently drops every
+	/// answer the table holds for its npcs. That is how <c>AbstractSiegeProtectorAI</c> stayed deaf to
+	/// everything but one message while the artifact protectors' folded-in rungs sat inert, and how
+	/// <c>BaseProtectorAI</c> did the same after it. The compiler reports the hiding as CS0108, in a
+	/// warning list nobody reads; this fails a test instead.
+	/// </remarks>
+	[Fact]
+	public void NoClassHidesTheMessageHandlerAndKeepsTableNpcs()
+	{
+		string templates = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
+			"game-server", "data", "static_data", "npcs", "npc_templates.xml"));
+		Dictionary<string, List<int>> byAiName = new Dictionary<string, List<int>>();
+		foreach (Match bound in Regex.Matches(templates, @"npc_id=""(\d+)""[^>]*?\bai=""([\w_]+)"""))
+		{
+			if (!byAiName.TryGetValue(bound.Groups[2].Value, out List<int>? ids))
+				byAiName[bound.Groups[2].Value] = ids = new List<int>();
+			ids.Add(int.Parse(bound.Groups[1].Value));
+		}
+
+		List<string> offenders = new List<string>();
+		string root = Path.Combine(BossAiHarness.RepoRoot(), "src", "Aion.GameServer", "Handlers", "AI");
+		foreach (string file in Directory.EnumerateFiles(root, "*.cs"))
+		{
+			string text = File.ReadAllText(file);
+			if (!text.Contains("void OnNpcMessage"))
+				continue;
+			// Only two things actually deliver a table answer: handing off to the inherited method, or
+			// applying the rungs directly. Calling `GuardAnswers.Answers` is a *gate* on one message and
+			// delivers nothing, so it must not excuse a class from this check.
+			if (text.Contains("base.OnNpcMessage") || text.Contains("GuardAnswers.AnswerCall"))
+				continue;
+
+			foreach (Match named in Regex.Matches(text, @"AIName\(""([\w_]+)""\)"))
+			{
+				if (byAiName.TryGetValue(named.Groups[1].Value, out List<int>? ids)
+					&& ids.Any(GuardAnswers.Knows))
+				{
+					offenders.Add($"{Path.GetFileName(file)} ({named.Groups[1].Value})");
+				}
+			}
+		}
+
+		Assert.Empty(offenders);
 	}
 }

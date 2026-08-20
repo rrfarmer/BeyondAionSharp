@@ -33925,3 +33925,49 @@ cannot demonstrate a missing mechanic — and the wrong one for *deciding what a
 - **The widened table binds far more npcs than before** (4,242 answers across 3,696 npcs, against 641).
   Every one is retail-sourced, but only the handful under pins here has been exercised.
 - The cast ladders, still blocked on skill indices.
+
+## The same denominator bug in a second class, and a test that will not let it happen again
+
+Last entry found `spawnable_npc_ids` used as a **gate** and fixed it in one extractor. First job this
+entry: check whether anything else does the same. Thirteen tools use that filter and **twelve are
+`audit_*`/`triage_*` reporters, where it is exactly right** — an npc nothing spawns cannot demonstrate a
+missing mechanic. Only `extract_guard_calls.py` is an extractor whose table gates behaviour, and every
+npc bound to its class is already in it, so nothing is silenced there today.
+
+### The real find
+
+`BaseProtectorAI` had **both** of the defects the siege protectors had, and was not checked when those
+were fixed:
+
+* It answered `30001` for every npc on the class — 253 against retail's **117**, so **136 village and
+  outpost warcaptains left their posts** every time a killer spawned.
+* It declares `OnNpcMessage`, which **hides** the inherited one, and never handed off.
+
+### A correction to this entry's own reasoning
+
+The sweep that found it counted npcs on hiding classes that appear anywhere in `GuardAnswers`, and
+reported 117 base protectors "deaf to guard calls". That was wrong: all 117 entries are `30001`, which
+the class answers itself. **The hand-off fixes nothing today** — it is defensive, like `GeneralNpcAI`'s
+and `KistenianAI`'s. The gating is the change that alters behaviour, and it is the 136.
+
+### The structural pin
+
+`NoClassHidesTheMessageHandlerAndKeepsTableNpcs` sweeps every class in `Handlers/AI` that declares
+`OnNpcMessage`, and fails if one neither hands off nor applies the rungs itself while owning npcs the
+table answers for.
+
+Its first version skipped any class that so much as mentioned `GuardAnswers`, which would have let
+`BaseProtectorAI` pass without the hand-off — the mutation survived and said so. **Calling
+`GuardAnswers.Answers` is a gate on one message and delivers nothing**; only `base.OnNpcMessage` or
+`GuardAnswers.AnswerCall` delivers. The check now names those two and the mutation dies.
+
+The compiler had been reporting every one of these as CS0108 all along.
+
+### Still missing
+
+- **Seventeen classes still declare `OnNpcMessage` without handing off.** None owns npcs in the table
+  today, so the pin passes and they are latent rather than broken. Binding any of their npcs to a call
+  will now fail a test rather than silently do nothing.
+- The 23100 gap report still counts `artifact_protector` npcs as unbound when they answer through the
+  `ProtectorCalls` fold, so its headline overstates. The `--gaps` flag no longer crashes on `3000x`.
+- The cast ladders, still blocked on skill indices.

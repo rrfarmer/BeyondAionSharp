@@ -91,12 +91,33 @@ public class BaseProtectorAI : AggressiveNpcAI, INpcMessageListener
     /// <summary>
     /// Retail's <c>on_message</c> rung: hate on the <b>sender</b>, not on anything it names.
     /// </summary>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    /// <remarks>
+    /// Two corrections, both the same shape as <see cref="AbstractSiegeProtectorAI"/>'s.
+    /// <para>
+    /// This method <b>hides</b> the one it inherits, so returning early for everything but 30001 made
+    /// 117 npcs on this class deaf to the guard calls <see cref="GuardAnswers"/> says they answer. It
+    /// hands off now.
+    /// </para>
+    /// <para>
+    /// And the 30001 answer itself is bounded by the table rather than by the class, for the reason the
+    /// protectors were: retail names the npcs that come when a killer wakes, and this answered for all
+    /// of them.
+    /// </para>
+    /// </remarks>
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
-        if (messageType != KillerAwake || IsDead() || sender == GetOwner())
+        if (IsDead() || sender == GetOwner())
             return;
 
-        SummonOrder.Take(GetOwner(), sender, DropEverything);
+        if (messageType == KillerAwake)
+        {
+            if (GuardAnswers.Answers(GetNpcId(), KillerAwake))
+                SummonOrder.Take(GetOwner(), sender, DropEverything);
+
+            return;
+        }
+
+        base.OnNpcMessage(sender, messageType, param);
     }
 
     /// <summary>

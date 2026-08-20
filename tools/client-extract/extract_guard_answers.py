@@ -172,9 +172,11 @@ def main() -> int:
         templates = A.read_text(args.repo / "game-server/data/static_data/npcs/npc_templates.xml")
         bound = {int(m.group(1)): m.group(2)
                  for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
+        # Only the player-targeted calls have a single class that answers them. `3000x` is answered by
+        # several classes through `GuardAnswers.Answers`, so "not on class X" says nothing about it.
         answers = {"23000": "abyss_guard_call", "23100": "garrison_guard_answer",
                    "23200": "fortress_guard_answer"}
-        for call in sorted(per_call):
+        for call in sorted(c for c in per_call if str(c) in answers):
             deaf = collections.Counter(bound.get(r[0], "<none>") for r in ordered
                                        if r[1] == call and bound.get(r[0]) != answers[str(call)])
             print(f"\n  {call}: {sum(deaf.values())} answer in retail and are not on {answers[str(call)]}")
