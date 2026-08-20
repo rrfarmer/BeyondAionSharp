@@ -35554,3 +35554,50 @@ capturing it. That would also cover the six other target modes, none of which is
 - **53 range-restricted attacker-indicator casts**, **198 `is_user_flying`**, **67 `spawn_on_target`**.
 - **330 optional arming handlers dropped**, counted by kind.
 - **188 rotations re-arm only from within themselves; 147 arm nowhere.** Unchanged.
+
+## Closing the gap the last entry admitted: casts now land on somebody
+
+The previous entry recorded that a mutation aiming a weakest-target cast at the most-hated creature
+**survived the whole suite**, because the harness drained queued skills instead of executing them. Every
+pin here could see *what* a rotation asked for and none could see *who* it hit.
+
+`BossAiHarness.FireNextQueuedSkill` closes it. It stages a cast exactly as `GeneralNpcAI.ChooseSkillAttack`
+does -- take the head of the queue, make it the last skill, remove it -- and then goes through the same
+public `PerformAttack` the attack loop uses, so the answer comes from the real
+`SkillAttackManager` rather than a reimplementation of it. It returns the creature the cast ended up on.
+
+Four target modes are now pinned by behaviour, and every mutation against them dies:
+
+| pin | kills |
+|---|---|
+| weakest-target cast reaches past the tank | `LOWEST_HP` -> most-hated |
+| most-hated cast still hits the tank | most-hated -> `LOWEST_HP` |
+| second and third pick their own place in the hate list | the two swapped |
+| a self-cast stays on the caster | `ME` -> most-hated |
+
+### Two pins that passed for the wrong reason, caught by mutation and not by reading
+
+* **The most-hated pin had only one creature on the hate list.** The wounded player was in the world and
+  hurt, but never hated, so both modes resolved to the tank and the pin proved nothing. Being *in the
+  fight* is what makes two target modes able to disagree.
+* **The self-cast pin used a skill whose `first_target` is already `ME`.** Those never reach the target
+  switch -- an earlier branch points them at the caster -- so the pin exercised a different line
+  entirely. It now uses 16858, which retail's `ND2_FhO` really does cast on itself and whose
+  `first_target` is `TARGET`, so it goes through the switch.
+
+Both were found by mutation. Neither was visible by reading the test, and both had the shape this log
+keeps returning to: **a green test whose stated reason is untested is the same as no test.**
+
+### Still missing
+
+- **`FRIEND`, `RANDOM` and `RANDOM_EXCEPT_CURRENT_TARGET` are still unpinned** -- three of the eight
+  modes. `FRIEND` searches the known list rather than the hate list and needs a second npc; the two
+  random modes need the roll seam to be deterministic before a pin can assert anything exact.
+- **246 casts at a role-named creature** (attacker, caster, message parameter). Unchanged, and unlike
+  the health-ranked pair these cannot delegate to `AggroTarget` -- the creature is not on the hate list
+  by rank, so the queue would have to carry a creature reference.
+- **53 range-restricted attacker-indicator casts**, **198 `is_user_flying`**, **67 `spawn_on_target`**.
+- **330 optional arming handlers dropped**, counted by kind; **188 rotations re-arm only from within
+  themselves; 147 arm nowhere.**
+- Retail cast *timings* are still unobserved: the rotations fire on the delays the data gives, and
+  nothing here has watched a real fight to confirm they feel right.

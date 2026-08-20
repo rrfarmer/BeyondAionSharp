@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
+using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
@@ -590,6 +591,38 @@ public sealed class BossAiHarness : IDisposable
 		}
 
 		return new Watched(peak, everSeen.Count - alreadyThere);
+	}
+
+	/// <summary>
+	/// Fires the NPC's next queued skill for real and returns the creature it ended up aimed at.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="DrainQueuedSkills"/> reads the queue and throws the entries away, which pins <i>what</i>
+	/// a rotation asked for and never <i>who</i> it hits. Everything interesting about a skill target
+	/// happens afterwards: <c>SkillAttackManager</c> turns the <see cref="NpcSkillTargetAttribute"/> into
+	/// an actual creature when the cast runs. Until this existed, a mutation that aimed a
+	/// weakest-target cast at the most-hated creature instead survived the whole suite.
+	/// <para>
+	/// The staging mirrors <c>GeneralNpcAI.ChooseSkillAttack</c> exactly -- take the head of the queue,
+	/// make it the last skill, remove it -- and then goes through the same public
+	/// <c>PerformAttack</c> the attack loop uses. It is the real path, not a reimplementation of it,
+	/// which is the only reason its answer is worth anything.
+	/// </para>
+	/// </remarks>
+	public static VisibleObject? FireNextQueuedSkill(Npc npc)
+	{
+		NpcSkillEntry? next = npc.GetNextQueuedSkill();
+		if (next == null)
+			return null;
+
+		npc.GetGameStats().SetLastSkill(next);
+		npc.RemoveNextQueuedSkill(next);
+		if (npc.GetAi() is not NpcAI ai)
+			return null;
+
+		ai.SetSubStateIfNot(AISubState.NONE);
+		SkillAttackManager.PerformAttack(ai, 0);
+		return npc.GetTarget();
 	}
 
 	/// <summary>Removes and returns everything the NPC has queued since the last drain, in cast order.</summary>

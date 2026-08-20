@@ -45,6 +45,22 @@ public sealed class BattleCycleAiTests
 	/// <summary>The five adds his second timer places.</summary>
 	private const int Retinue = 217301;
 
+	/// <summary>A plain attack skill, used to watch how a cast picks its creature.</summary>
+	private const int RaidSkill = 17063;
+
+	/// <summary>
+	/// <c>ND2_FhO</c>'s own self-cast: a skill whose <c>first_target</c> is <c>TARGET</c>, aimed at
+	/// <c>ME</c>.
+	/// </summary>
+	/// <remarks>
+	/// The combination matters. A skill whose <c>first_target</c> is already <c>ME</c> never reaches the
+	/// target switch at all -- an earlier branch points it at the caster -- so pinning one of those
+	/// proves nothing about <see cref="NpcSkillTargetAttribute.ME"/>. A mutation aiming self-casts at
+	/// the tank survived a pin written with such a skill. This one is 16858, which retail's
+	/// <c>ND2_FhO</c> really does cast on itself, and it does go through the switch.
+	/// </remarks>
+	private const int SelfCast = 16858;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(AnyMap).WithWorldSize(4096)
 			.WithAi(typeof(BattleCycleAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
@@ -299,6 +315,109 @@ public sealed class BattleCycleAiTests
 		}
 
 		Assert.Equal(50, lowest);
+	}
+
+	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
+	/// <remarks>
+	/// The pin the previous entry could not write. <see cref="BossAiHarness.FireNextQueuedSkill"/> runs
+	/// the queued cast through the real <c>SkillAttackManager</c>, so the
+	/// <see cref="NpcSkillTargetAttribute"/> is turned into an actual creature the way it is in a fight.
+	/// <para>
+	/// The tank is the one being fought and is <b>not</b> the answer: the boss must leave the creature
+	/// holding it and reach past for the one closest to dying. A mutation pointing this at the
+	/// most-hated creature used to survive the entire suite.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AWeakestTargetCastPicksTheWeakestCreature()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		Player wounded = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, wounded);
+		harness.Engage(boss, tank);
+		BossAiHarness.Rehate(boss, wounded);
+		BossAiHarness.Rehate(boss, tank);
+
+		// The tank holds it; somebody else is nearly dead.
+		BossAiHarness.SetExactPercent(wounded, 5);
+		Assert.Same(tank, boss.GetTarget());
+
+		boss.QueueSkill(RaidSkill, 1, 0, NpcSkillTargetAttribute.LOWEST_HP);
+
+		Assert.Same(wounded, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>And a most-hated cast still lands on the tank.</b></summary>
+	/// <remarks>
+	/// The other half. Without it the pin above passes for a resolver that always answers "whoever is
+	/// most hurt", which would be just as wrong in the other direction.
+	/// </remarks>
+	[Fact]
+	public void AMostHatedCastStillPicksTheTank()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		Player wounded = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		BossAiHarness.MakeMutuallyKnown(boss, wounded);
+		harness.Engage(boss, tank);
+		// Both must be on the hate list, or the two target modes cannot disagree and this pins nothing:
+		// a mutation swapping most-hated for weakest survived until the wounded one was really in the fight.
+		BossAiHarness.Rehate(boss, wounded);
+		BossAiHarness.Rehate(boss, tank);
+		BossAiHarness.SetExactPercent(wounded, 5);
+
+		boss.QueueSkill(RaidSkill, 1, 0, NpcSkillTargetAttribute.MOST_HATED);
+
+		Assert.Same(tank, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>The hate-ranked modes each pick their own place in the list.</b></summary>
+	/// <remarks>
+	/// Second and third exist because retail's <c>ATTACKERI_SECOND_HATING</c> and <c>THIRD_HATING</c>
+	/// are 725 and 281 uses across the dump -- a boss reaching past the tank for the healer behind him.
+	/// Ranked by hate, so the order is built explicitly here rather than assumed from spawn order.
+	/// </remarks>
+	[Fact]
+	public void TheHateRankedModesEachPickTheirOwnPlace()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player first = harness.SpawnPlayer(302f, 300f, 200f);
+		Player second = harness.SpawnPlayer(303f, 300f, 200f);
+		Player third = harness.SpawnPlayer(304f, 300f, 200f);
+		foreach (Player who in new[] { first, second, third })
+			BossAiHarness.MakeMutuallyKnown(boss, who);
+
+		harness.Engage(boss, first);
+		boss.GetAggroList().AddHate(third, 100);
+		boss.GetAggroList().AddHate(second, 200);
+		boss.GetAggroList().AddHate(first, 300);
+
+		boss.QueueSkill(RaidSkill, 1, 0, NpcSkillTargetAttribute.SECOND_MOST_HATED);
+		Assert.Same(second, BossAiHarness.FireNextQueuedSkill(boss));
+
+		boss.QueueSkill(RaidSkill, 1, 0, NpcSkillTargetAttribute.THIRD_MOST_HATED);
+		Assert.Same(third, BossAiHarness.FireNextQueuedSkill(boss));
+	}
+
+	/// <summary><b>A cast on itself does not wander onto the raid.</b></summary>
+	[Fact]
+	public void ASelfCastStaysOnTheCaster()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc boss = harness.Spawn(Caster, 300f, 300f, 200f);
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(boss, tank);
+		harness.Engage(boss, tank);
+
+		boss.QueueSkill(SelfCast, 1, 0, NpcSkillTargetAttribute.ME);
+
+		Assert.Same(boss, BossAiHarness.FireNextQueuedSkill(boss));
 	}
 
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
