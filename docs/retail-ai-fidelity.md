@@ -35971,3 +35971,44 @@ from `on_die` until now. **The feature that exposes a bug is often not the featu
 - **Whether the death-written spawn variables open any gate.** 521 writes landed; the reading half was
   built long ago and the two have never been checked against each other.
 - **Retail cast timings across 13,186 npcs.** Unchanged.
+
+## The conditional spawn engine finally has both halves
+
+The engine's reading half was built long ago: `SpawnCondition` parses the gates, `SpawnVariables` holds
+the counters, `GatedSpawnController` places the groups. Its writers were never found. An earlier entry
+went looking in the idle cycles and reported the disappointment plainly -- of 984 actions, **exactly
+one** was a `set_condition_spawn_variable`.
+
+They were in the death handlers. **521 of the death table's 960 actions are spawn-variable writes**, more
+than half of it, and the join to the gates is real rather than nominal:
+
+| | |
+|---|---|
+| distinct variables our tables write | 101 |
+| of those, read by a real gate | **82** |
+| retail gated placements they cover | **5,082 of 21,096** |
+
+A quarter of the conditional spawn content in the game is now reachable by something that actually
+happens.
+
+### Pinned end to end, with no hand-written store
+
+`IDTiamat_Hard_Tiamat_Dragon_Dying` writes `KAHRUN_SPAWN = 4` as it dies, and retail gates **70
+placements** on that variable -- Tiamat's death bringing Kahrun in. The pin runs the real pattern into
+the real `SpawnVariableRegistry` and asks a real `GatedSpawnController` what appeared. Every earlier
+gate test wrote its store by hand, because nothing in the port wrote one; this is the first time the two
+halves are joined by an npc dying.
+
+Two mutations die: writing the wrong value (`4` -> `3`), and writing to the wrong instance -- the second
+matters because the registry is keyed per world *and* instance, and a write landing in the neighbouring
+instance would open a gate in somebody else's copy of the fight while leaving this one shut.
+
+### Still missing
+
+- **The other 16,014 gated placements** are gated on variables nothing here writes -- 1,201 distinct
+  names read, 101 written. Some are server flags supplied at boot, some belong to handlers still
+  unported, and nobody has separated the two.
+- **6,800 duplicate gated placements** were filtered so nothing doubles, leaving those npcs permanently
+  present where retail would remove them. Unchanged and still the oldest open item here.
+- **177 encounters still missing an add**; `control_door` (17) has no helper anywhere.
+- **Retail cast timings across 13,186 npcs.**

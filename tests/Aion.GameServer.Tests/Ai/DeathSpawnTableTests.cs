@@ -4,6 +4,7 @@ using System.Linq;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.World.Spawns;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -34,6 +35,9 @@ public sealed class DeathSpawnTableTests
 	private const int AnyDeath = 213778;
 
 	private const int AnyDeathLeaves = 282155;
+
+	/// <summary>Tiamat, whose death writes the variable 70 retail placements are gated on.</summary>
+	private const int Tiamat = 856029;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(AnyMap).WithWorldSize(4096)
@@ -119,5 +123,37 @@ public sealed class DeathSpawnTableTests
 			int end = templates.IndexOf('>', at);
 			Assert.Contains("ai=\"death_spawn\"", templates[at..end]);
 		}
+	}
+	/// <summary><b>Tiamat's death opens the gate that brings Kahrun in.</b></summary>
+	/// <remarks>
+	/// The two halves of the conditional spawn engine, finally joined. The reading half --
+	/// <see cref="GatedSpawnController"/> -- was built long ago and tested against a store written by
+	/// hand, because nothing in the port wrote one. The writers turn out to live largely on death:
+	/// <b>521 of this table's 960 actions are <c>set_condition_spawn_variable</c></b>, and 82 of the
+	/// 101 variables they write are read by real gates, covering 5,082 of retail's 21,096 gated
+	/// placements.
+	/// <para>
+	/// <c>IDTiamat_Hard_Tiamat_Dragon_Dying</c> writes <c>KAHRUN_SPAWN = 4</c> as it dies, and retail
+	/// gates <b>70 placements</b> on it. This pin runs the real pattern into the real registry and asks
+	/// the real controller what appeared -- no hand-written store anywhere in it.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TiamatsDeathOpensTheGateThatBringsKahrunIn()
+	{
+		using BossAiHarness harness = NewHarness();
+		SpawnVariables store = SpawnVariableRegistry.For(AnyMap, harness.InstanceId);
+		using var gated = new GatedSpawnController(AnyMap, harness.InstanceId, store,
+			[new GatedSpawn(AnyDeathLeaves, 500f, 500f, 200f, 0, 0, true,
+				SpawnCondition.Parse("KAHRUN_SPAWN == 4"))]);
+		gated.Refresh();
+		Assert.Equal(0, gated.Placed);
+
+		Npc tiamat = harness.Spawn(Tiamat, 300f, 300f, 200f);
+		tiamat.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(4, store["KAHRUN_SPAWN"]);
+		Assert.Equal(1, gated.Placed);
 	}
 }
