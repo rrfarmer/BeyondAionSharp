@@ -52,8 +52,10 @@ import audit_missing_adds as A  # noqa: E402
 #: not to bind new listeners -- every one of retail's 135 is already on a protector class -- but to
 #: bound the ones we have. `AbstractSiegeProtectorAI` answered `30001` for **every** npc on the class,
 #: 282 of them, so 147 protectors that retail leaves standing dropped everything and charged a waking
-#: killer. `30003` is excluded: its answer is `despawn_self`, not a hate rung, and it is already exact.
-CALLS = {"23000", "23100", "23200", "30001", "30002"}
+#: killer. `30003` is carried for membership only: its answer is `despawn_self`, not a hate rung, so it
+#: has no points and emits no rung. Its four listeners are exactly the four npcs on the killer class --
+#: which was exact by coincidence rather than by construction until this table could say so.
+CALLS = {"23000", "23100", "23200", "30001", "30002", "30003"}
 
 MSG_RE = re.compile(r"<on_message>(.*?)</on_message>", re.S)
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
@@ -77,7 +79,14 @@ def rung(body: str) -> tuple[str, int, bool] | None:
     if "<add_hate_point>" in text:
         return ("add", int(points.group(1)) if points else 0, sender)
     if "<do_nothing>" in text:
-        return ("nothing", 0, sender)
+        # A guard that hears the call and deliberately ignores it. Recorded as "no points" rather than
+        # "zero points": zero would emit a rung, and `AggroInfo.AddHate` floors hate at 1, so the npc
+        # retail tells to stand still would join the fight with a single point and attack.
+        return ("nothing", -1, sender)
+    if "<despawn_self>" in text:
+        # No hate at all: `30003` is answered by standing down. Recorded so the table can say WHO
+        # answers it -- the rung itself belongs to the killer class, which already has it.
+        return ("despawn", -1, sender)
     return None
 
 
@@ -91,7 +100,14 @@ def main() -> int:
     ap.add_argument("--gaps", action="store_true", help="print the npcs that answer and are not bound")
     args = ap.parse_args()
 
-    live = {str(n) for n in A.spawnable_npc_ids(args.repo)}
+    # Every npc this port defines, NOT just the ones with a static spawn point. The distinction is
+    # load-bearing: fortress protectors and their killers are placed by the siege system rather than by
+    # world spawns, so `spawnable_npc_ids` cannot see them. Filtering on it built a table that named 4
+    # killers where retail names 34, and that table was then used as a GATE -- which silenced 504
+    # protectors that retail does give the rung. A table used to bound behaviour must be filtered on
+    # whether the npc exists, not on whether this port happens to place it.
+    live = set(re.findall(r'<npc_template npc_id="(\d+)"',
+                          A.read_text(args.repo / "game-server/data/static_data/npcs/npc_templates.xml")))
     binders: dict[str, list[str]] = collections.defaultdict(list)
     for line in A.read_text(args.binding_tsv).splitlines():
         fields = line.split("\t")
@@ -132,7 +148,8 @@ def main() -> int:
                     continue
                 busy = "NPC_STATE_ATTACK" in conditions.group(1)
                 slot = found.setdefault(kind.group(1), [-1, -1])
-                slot[1 if busy else 0] = answer[1]
+                if answer[1] >= 0:
+                    slot[1 if busy else 0] = answer[1]
                 aims[kind.group(1)] = aims.get(kind.group(1), False) or answer[2]
 
             for call, (idle, busy) in found.items():
@@ -142,7 +159,7 @@ def main() -> int:
 
     ordered = sorted(rows)
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
-        out.write("npc_id\tcall\tidle_points\tbusy_points\tpattern\n")
+        out.write("npc_id\tcall\tidle_points\tbusy_points\taims_at_sender\tpattern\n")
         for row in ordered:
             out.write("\t".join(str(field) for field in row) + "\n")
 

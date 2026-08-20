@@ -70,16 +70,37 @@ public class FortressKillerAI : AbyssGuardCallAI
     /// </summary>
     public const int DropEverything = 1_000_000;
 
-    private static readonly AiPattern Pattern_ = new AiPattern
-    {
-        OnMessage = Of(
-            // Retail files the despawn at priority 100 — it outranks the fight.
-            Branch(100, "a protector died; stand down", [When.Message(ProtectorDown)],
-                Do.DespawnSelf()),
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> Messages =
+        new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
 
-            Branch(5, "a protector called; go for it", [When.Message(ProtectorCalls)],
-                Do.HateMessageSender(DropEverything))),
-    };
+    /// <summary>
+    /// The two npc-versus-npc rungs, for the killers retail actually gives them to.
+    /// </summary>
+    /// <remarks>
+    /// Four npcs sit on this class and retail names four listeners for each message, so this changes
+    /// nothing today — and that was the problem. It was exact by coincidence, not by construction: a
+    /// fifth killer bound to the class would have answered both messages with nothing to notice. The
+    /// same shape, unchecked one message over, is what left 147 protectors charging a waking killer.
+    /// </remarks>
+    private static AiPattern MessagesFor(int npcId)
+    {
+        List<PatternBranch> rungs = new List<PatternBranch>(2);
+
+        // Retail files the despawn at priority 100 — it outranks the fight.
+        if (GuardAnswers.Answers(npcId, ProtectorDown))
+        {
+            rungs.Add(Branch(100, "a protector died; stand down", [When.Message(ProtectorDown)],
+                Do.DespawnSelf()));
+        }
+
+        if (GuardAnswers.Answers(npcId, ProtectorCalls))
+        {
+            rungs.Add(Branch(5, "a protector called; go for it", [When.Message(ProtectorCalls)],
+                Do.HateMessageSender(DropEverything)));
+        }
+
+        return new AiPattern { OnMessage = Of([.. rungs]) };
+    }
 
     public FortressKillerAI(Npc owner)
         : base(owner)
@@ -94,7 +115,8 @@ public class FortressKillerAI : AbyssGuardCallAI
     /// that is not gets these three messages and nothing else.
     /// </remarks>
     protected override AiPattern Pattern =>
-        Merge(base.Pattern, Pattern_, FortressKillers.PatternFor(GetOwner().GetNpcId()));
+        Merge(base.Pattern, Messages.GetOrAdd(GetOwner().GetNpcId(), static id => MessagesFor(id)),
+            FortressKillers.PatternFor(GetOwner().GetNpcId()));
 
     /// <summary>
     /// Three sources, because a killer is three things at once.

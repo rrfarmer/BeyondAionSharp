@@ -85,13 +85,34 @@ FOOTER = '''    };
     }
 
     /// <summary>
+    /// Whether the table carries this npc at all — distinct from whether it produces any rung.
+    /// </summary>
+    /// <remarks>
+    /// An npc whose retail answer is <c>do_nothing</c> is in the table and produces <b>no</b> rung, and
+    /// that is not the same as an npc the table has never heard of. Classes fall back to their own
+    /// constants only for the second kind; falling back on an empty rung list would answer for exactly
+    /// the guards retail tells to stand still.
+    /// </remarks>
+    internal static bool Knows(int npcId) => ByNpc.ContainsKey(npcId);
+
+    /// <summary>Whether retail gives this npc an answer to this message at all.</summary>
+    /// <remarks>
+    /// The gate for answers whose actions live in a class rather than in a rung here. It exists because
+    /// <c>AbstractSiegeProtectorAI</c> answered <c>30001</c> for every npc on the class where retail
+    /// names a subset, so protectors retail leaves standing dropped everything and charged a waking
+    /// killer.
+    /// </remarks>
+    internal static bool Answers(int npcId, int messageType)
+        => ByNpc.TryGetValue(npcId, out Answer[]? answers)
+            && Array.Exists(answers, answer => answer.Call == messageType);
+
+    /// <summary>
     /// The same two rungs for a listener that is <b>not</b> pattern-driven, applied directly.
     /// </summary>
     /// <remarks>
-    /// Sixteen Ahserion npcs and four others answer <c>23000</c> in retail on classes that run plain
-    /// <c>aggressive</c> with cast rotations this work cannot resolve, so there is no pattern to fold
-    /// the rungs into. This is the same shape as <see cref="PullCalls"/>.<c>Shout</c>, which exists for
-    /// the sending half and for the same reason.
+    /// Some npcs answer on classes that run plain <c>aggressive</c> with cast rotations this work
+    /// cannot resolve, so there is no pattern to fold the rungs into. This is the same shape as
+    /// <see cref="PullCalls"/>.<c>Shout</c>, which exists for the sending half and for the same reason.
     /// <para>
     /// The idle rung goes through <see cref="SummonOrder"/>, which <b>is</b> <c>add_hate_point</c>
     /// followed by <c>attack_most_hating</c> -- the same pair, already written and already reasoned
@@ -99,18 +120,6 @@ FOOTER = '''    };
     /// whether or not the named player is the one it now hates most.
     /// </para>
     /// </remarks>
-    /// <summary>Whether retail gives this npc an answer to this message at all.</summary>
-    /// <remarks>
-    /// The gate for answers whose actions live in a class rather than in a rung here. It exists because
-    /// <c>AbstractSiegeProtectorAI</c> answered <c>30001</c> for every npc on the class -- 282 of them
-    /// against retail's 135 -- so 147 protectors that retail leaves standing dropped everything and
-    /// charged a waking killer. Every one of retail's 135 was already on a protector class, so this
-    /// binds nothing new: it only bounds what is there.
-    /// </remarks>
-    internal static bool Answers(int npcId, int messageType)
-        => ByNpc.TryGetValue(npcId, out Answer[]? answers)
-            && Array.Exists(answers, answer => answer.Call == messageType);
-
     /// <returns>true if this npc had an answer for the message, whether or not it landed.</returns>
     internal static bool AnswerCall(Npc listener, Npc sender, int messageType, VisibleObject? param)
     {

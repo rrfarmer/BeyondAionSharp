@@ -33876,3 +33876,52 @@ its four listeners are already exact.
   nothing will notice. The table now carries the answer, so gating it is a one-line change.
 - **`KistenianAI`** still hides `OnNpcMessage` without handing off.
 - The cast ladders on every one of these chains, still blocked on skill indices.
+
+## The denominator was wrong, and it broke three working mechanics before the pins caught it
+
+The previous entry gated `30001` on `GuardAnswers` and reported 147 protectors stopped from charging a
+waking killer. This entry set out to do the same for the killer's own two messages — and the pins
+refused it, for a reason that invalidates part of the previous entry too.
+
+### What was wrong
+
+`extract_guard_answers.py` filtered to `spawnable_npc_ids` — npcs with a **static world spawn point**.
+
+**Fortress protectors and their killers do not have one.** They are placed by the siege system, and
+artifact killers are summoned outright. So the filter excluded exactly the npcs this family is about:
+
+| | filtered to spawnable | filtered to "exists" |
+|---|---|---|
+| `30001` answerers | 135 | **698** |
+| `30002` answerers | 4 | **33** |
+| `30003` answerers | 4 | **12** |
+
+Gating the killer on that table switched off two mechanics that already worked, and three existing pins
+failed immediately — `AProtectorsDeathSendsTheKillerHome` and two village-killer call pins. The same
+flaw was already live in the committed `30001` gate: it silenced **504** protectors that retail does
+give the rung, while correctly stopping the surplus.
+
+**A table used to bound behaviour must be filtered on whether the npc exists, not on whether this port
+happens to place it.** Spawnability is the right filter for *reporting a gap* — an npc nothing spawns
+cannot demonstrate a missing mechanic — and the wrong one for *deciding what an npc may do*.
+
+### What the corrected table then exposed
+
+- **`do_nothing` was being emitted as a rung with zero points.** `AggroInfo.AddHate` floors hate at 1,
+  so all 22 guards retail tells to *ignore* the call would have joined the fight with one point and
+  attacked. They are now recorded as carrying **no** points, and emit nothing.
+- **Falling back on an empty rung list is wrong**, for the same reason: an npc whose answer is
+  `do_nothing` is in the table and answers with nothing, which is not the same as an npc the table has
+  never heard of. The classes now key their fallback on `GuardAnswers.Knows`.
+- **The advance village killer answers `30002` and not `30003`.** It comes when a protector calls and
+  does not stand down when one dies; the class gave it both.
+
+### Still missing
+
+- **Extractor mutations are inert** — `run_mutations.py` does not regenerate the tables, so a mutation
+  to a `.py` extractor cannot be caught by the C# suite. `regen_check.py` is what guards that
+  correspondence, and it is a separate step that a pin cannot enforce. The denominator mutation above
+  survived for exactly this reason and is recorded rather than counted as covered.
+- **The widened table binds far more npcs than before** (4,242 answers across 3,696 npcs, against 641).
+  Every one is retail-sourced, but only the handful under pins here has been exercised.
+- The cast ladders, still blocked on skill indices.

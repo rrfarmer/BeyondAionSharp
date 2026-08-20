@@ -143,8 +143,13 @@ public class FortressGuardAnswerAI : PatternAi
 	/// </remarks>
 	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
 	{
-		PatternBranch[] rungs = GuardAnswers.RungsFor(id);
-		return rungs.Length == 0 ? Pattern_ : new AiPattern { OnMessage = Of(rungs) };
+		// Keyed on whether the table KNOWS the npc, not on whether it produced a rung: a guard whose
+		// retail answer is do_nothing is in the table and answers with nothing, and falling back to
+		// the constants there would answer for exactly the guards retail tells to stand still.
+		if (!GuardAnswers.Knows(id))
+			return Pattern_;
+
+		return new AiPattern { OnMessage = Of(GuardAnswers.RungsFor(id)) };
 	});
 }
 
@@ -243,7 +248,12 @@ public class GarrisonGuardAnswerAI : PatternAi
 	/// </remarks>
 	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
 	{
-		PatternBranch[] rungs = GuardAnswers.RungsFor(id);
-		return rungs.Length == 0 ? Pattern_ : new AiPattern { OnMessage = Of(rungs) };
+		// Keyed on whether the table KNOWS the npc, not on whether it produced a rung: a guard whose
+		// retail answer is do_nothing is in the table and answers with nothing, and falling back to
+		// the constants there would answer for exactly the guards retail tells to stand still.
+		if (!GuardAnswers.Knows(id))
+			return Pattern_;
+
+		return new AiPattern { OnMessage = Of(GuardAnswers.RungsFor(id)) };
 	});
 }

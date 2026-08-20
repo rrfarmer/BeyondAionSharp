@@ -104,20 +104,33 @@ public class KistenianAI : AbyssGuardSimpleAI, INpcMessageListener
     /// The two halves of the loop. A spirit calling for more brings a fresh pair out on whoever he is
     /// facing; the effect a dying spirit leaves hands him another flame.
     /// </summary>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    /// <remarks>
+    /// <b>Hands anything else to the base.</b> This method hides <c>PatternAi.OnNpcMessage</c>, so
+    /// without the last line the pattern this class inherits could never see a message — the same
+    /// defect that made <c>AbstractSiegeProtectorAI</c> deaf to everything but 30001 and left the
+    /// artifact protectors' folded-in answers inert. The one npc on this class is in none of the
+    /// tables, so nothing changes today; the rule is that a <c>PatternAi</c> subclass declaring this
+    /// method must hand off.
+    /// </remarks>
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
-        if (IsDead() || !engaged)
+        if (IsDead())
             return;
 
-        switch (messageType)
+        if (engaged)
         {
-            case KistenianPetAI.CallForMore:
-                SendSpirits();
-                break;
-            case LightAnotherFlame:
-                LightFlame();
-                break;
+            switch (messageType)
+            {
+                case KistenianPetAI.CallForMore:
+                    SendSpirits();
+                    return;
+                case LightAnotherFlame:
+                    LightFlame();
+                    return;
+            }
         }
+
+        base.OnNpcMessage(sender, messageType, param);
     }
 
     private void SendSpirits()

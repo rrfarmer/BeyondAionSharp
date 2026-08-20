@@ -110,8 +110,8 @@ public class AbyssGuardCallAI : PatternAi
 			// The table's own values where it has them; the constants below are the fallback for npcs it
 			// does not carry. 637 of 641 answers are the common 1/100 pair, and the four that are not
 			// would be silently flattened by a constant.
-			OnMessage = GuardAnswers.RungsFor(npcId) is { Length: > 0 } measured
-				? Of(measured)
+			OnMessage = GuardAnswers.Knows(npcId)
+				? Of(GuardAnswers.RungsFor(npcId))
 				: !call.Answers
 				? Of()
 				: Of(

@@ -68,29 +68,96 @@ public sealed class GuardAnswersTests
 	}
 
 	/// <summary>
-	/// <b>Every player-targeted answer carries retail's two rungs, or says why not.</b> Four npcs
-	/// answer with a thousand points and no fighting rung at all; the rest are the uniform 1/100 pair.
+	/// <b>Every player-targeted answer is retail's common pair, or one of its two named exceptions.</b>
 	/// </summary>
+	/// <remarks>
+	/// 22 npcs answer with <c>do_nothing</c> — they hear the call and deliberately stand still — and 12
+	/// answer with a thousand points and no fighting rung. Both are carried at their own values.
+	/// <para>
+	/// <c>do_nothing</c> is recorded as <b>no</b> points rather than zero, and that is not pedantry:
+	/// <c>AggroInfo.AddHate</c> floors hate at 1, so a rung emitted with zero would put the guard retail
+	/// tells to stand still into the fight with a single point and send it at the player.
+	/// </para>
+	/// </remarks>
 	[Fact]
-	public void TheTableIsRetailsTwoRungsAndItsFourExceptions()
+	public void EveryPlayerTargetedAnswerIsThePairOrANamedException()
 	{
-		int odd = 0;
+		int silent = 0;
+		int heavy = 0;
 		foreach ((int _, GuardAnswers.Answer[] answers) in GuardAnswers.ByNpc)
 		{
 			foreach (GuardAnswers.Answer answer in answers)
 			{
-				// The npc-versus-npc half is a different mechanic with a different target and a
-				// millionfold hate value; it is counted by its own pin below.
-				if (answer.AimsAtSender)
+				// The npc-versus-npc half is a different mechanic -- a different target, a millionfold
+				// hate value, and in 30003's case no hate at all -- and has its own pins.
+				if (answer.Call >= 30000)
 					continue;
 
-				Assert.True(answer.Idle >= 0);
-				if (answer.Idle != 1 || answer.Busy != 100)
-					odd++;
+				if (answer.Idle == 1 && answer.Busy == 100)
+					continue;
+
+				if (answer.Idle < 0 && answer.Busy < 0)
+					silent++;
+				else if (answer.Idle == 1000 && answer.Busy < 0)
+					heavy++;
+				else
+					Assert.Fail($"unclassified answer {answer.Call} {answer.Idle}/{answer.Busy}");
 			}
 		}
 
-		Assert.Equal(4, odd);
+		Assert.Equal(22, silent);
+		Assert.Equal(12, heavy);
+	}
+
+	/// <summary><b>And a do_nothing answer emits no rung, while staying in the table.</b></summary>
+	[Fact]
+	public void ADoNothingAnswerEmitsNoRung()
+	{
+		int quiet = 0;
+		foreach ((int npcId, GuardAnswers.Answer[] answers) in GuardAnswers.ByNpc)
+		{
+			if (answers.Length != 1 || answers[0].Call >= 30000)
+				continue;
+			if (answers[0].Idle >= 0 || answers[0].Busy >= 0)
+				continue;
+
+			quiet++;
+			Assert.Empty(GuardAnswers.RungsFor(npcId));
+
+			// Still known, so its class does not fall back to the constants and answer anyway.
+			Assert.True(GuardAnswers.Knows(npcId));
+		}
+
+		Assert.True(quiet > 0);
+	}
+
+	/// <summary>
+	/// <b>The killer's npc-versus-npc rungs are bounded by the table, not by the class.</b>
+	/// </summary>
+	/// <remarks>
+	/// The first attempt at this gated on a table filtered to npcs with a static spawn point, and both
+	/// of this port's artifact killers are <em>summoned</em> — so the table named four killers where
+	/// retail names 33, and the gate switched off two mechanics that already worked. Three pins caught
+	/// it. The table is filtered on whether an npc exists now, not on whether we place it.
+	/// </remarks>
+	[Fact]
+	public void TheKillersRetailNamesAnswerTheProtectorMessages()
+	{
+		// All three come when a protector calls.
+		foreach (int killer in new[] { 235543, 251463, 251160 })
+			Assert.True(GuardAnswers.Answers(killer, FortressKillerAI.ProtectorCalls));
+
+		// Only the artifact killers stand down when one dies. The advance village killer does not, and
+		// the class used to give it that rung anyway.
+		Assert.True(GuardAnswers.Answers(251463, FortressKillerAI.ProtectorDown));
+		Assert.True(GuardAnswers.Answers(251160, FortressKillerAI.ProtectorDown));
+		Assert.False(GuardAnswers.Answers(235543, FortressKillerAI.ProtectorDown));
+
+		// The despawn order is membership only: no hate, and no rung.
+		GuardAnswers.Answer down = Assert.Single(
+			GuardAnswers.ByNpc[251160], a => a.Call == FortressKillerAI.ProtectorDown);
+		Assert.Equal(-1, down.Idle);
+		Assert.Equal(-1, down.Busy);
 	}
 
 	/// <summary>An ahserion pod npc that answers 23000 and runs no pattern.</summary>
@@ -350,5 +417,26 @@ public sealed class GuardAnswersTests
 
 		Assert.True(answers.GetAggroList().GetHate(killer) > 0);
 		Assert.Equal(0, silent.GetAggroList().GetHate(killer));
+	}
+
+	/// <summary>
+	/// <b>An advance village killer does not stand down when a protector dies.</b> Retail gives it the
+	/// 30002 answer and not the 30003 one; the class gave it both.
+	/// </summary>
+	[Fact]
+	public void TheVillageKillerDoesNotStandDown()
+	{
+		using BossAiHarness harness = BossAiHarness.For(220070000).WithWorldSize(4096)
+			.WithAi(typeof(FortressKillerAI), typeof(BaseProtectorAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		Npc killer = harness.Spawn(235543, 300f, 300f, 200f);
+		Npc guard = harness.Spawn(234199, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(guard, killer);
+		Assert.Contains(killer, harness.LiveNpcs());
+
+		NpcMessageBus.Broadcast(guard, FortressKillerAI.ProtectorDown, guard, 50f);
+
+		Assert.Contains(killer, harness.LiveNpcs());
 	}
 }
