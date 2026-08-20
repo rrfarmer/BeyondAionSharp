@@ -34059,3 +34059,51 @@ the relations.
   it wants the retail tribe relations rather than a guess.
 - **The 18 classes that swallow `OnNpcMessage`** — unchanged, still latent, now also checked for the
   interface trap.
+
+## The tribe table, and a parser bug that nearly wrote 27 duplicate rows
+
+Two entries have now stopped at the same wall: `talle`, and Kaldor's village chiefs, which answer a
+killer's wake-up call and are not hostile to any npc that sends one. Both times the answer was "tribe",
+and both times it was left as a guess. **The client ships the whole table** — `npc_tribe_relation.xml`,
+950 tribes — so it is answerable.
+
+`audit_tribe_relations.py` compares it against ours. The formats share nothing but intent: retail writes
+`<tribe Tribe="guard_Dragon">` with comma-separated lists in mixed case, ours writes
+`<tribe name="GUARD_DRAGON" base="...">` with space-separated lists in upper.
+
+### What it settled
+
+**The pair that started it is declared in neither.** Retail's `guard` and `guard_Dragon` each carry a
+`friendly` list and nothing else — exactly as ours do. So our data is not missing a row: the hostility a
+Kaldor chief needs comes from whatever the engine does with an **undeclared pair**, and ours treats it as
+not hostile. That is a question about the default, and it is now written down instead of re-derived.
+
+Beyond that the two files agree closely. 237 tribes retail declares and we do not; 5 the reverse; and
+among shared tribes only 57 `friendly`, 45 `none`, 11 `aggressive` and 4 `hostile` entries differ.
+
+### The parser bug, and the data change that was reverted
+
+The audit's first answer was that **787 npcs sat on 28 tribes with no entry at all**, and `--apply`
+duly added 27 of them from retail. The suite stayed green. The data was then **27 duplicate tribes**.
+
+`<tribe .../>` is legal in our file and **29 tribes use the self-closing form**. A body pattern of
+`<tribe ...>(.*?)</tribe>` cannot match those, and worse, its non-greedy body runs on to the *next*
+closing tag — so each self-closing tribe hid the one after it. 690 parsed where the file has 719.
+
+Reverted, parser fixed, re-measured: **every tribe our npcs use is already declared, and `--apply` now
+finds nothing to add.** The 237 missing tribes are for npcs this port has no template for.
+
+The pins kept from that detour assert what is actually true — that `TRICON` and `TAURIC` reach `IsEnemy`
+against `GUARD`, and that they are *not* at war with each other, which is the pin that breaks if anyone
+answers the undeclared-pair question by making everything hostile.
+
+**A green suite is not evidence that a data change was correct.** It was green with 27 duplicate rows.
+
+### Still missing
+
+- **What the engine should do with an undeclared tribe pair.** Every `30001` sender is a dragon-guard
+  tribe and Kaldor's chiefs are `GUARD`; neither file relates them, so the chiefs' answer is wired and
+  may never fire in play. Java's `TribeRelationService` is the place to settle it, against the Java tree
+  rather than the client.
+- **The 237 tribes retail declares and we do not**, if this port ever gains templates that use them.
+- The 57/45/11/4 relation differences among shared tribes, unexamined one by one.
