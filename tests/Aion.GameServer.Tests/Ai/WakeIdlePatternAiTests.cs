@@ -15,7 +15,7 @@ namespace Aion.GameServer.Tests.Ai;
 /// a spawn as well.
 /// </remarks>
 [Collection("GoldenDataManager")]
-public sealed class PassivePatternAiTests
+public sealed class WakeIdlePatternAiTests
 {
 	private const int Map = 300520000;
 
@@ -73,4 +73,35 @@ public sealed class PassivePatternAiTests
 
 	/// <summary>An npc hostile enough to players that the aggro event reaches its list.</summary>
 	private const int Hostile = 217307;
+
+	/// <summary><b>The aggressive half of the same table keeps its aggression.</b></summary>
+	/// <remarks>
+	/// 267 npcs run these patterns through <c>AggressivePatternAI</c> rather than the passive class,
+	/// because retail keeps them on <c>aggressive</c>. 172 of them were write-only until it existed --
+	/// their patterns said more and nothing could run it, since the only pattern class that would take
+	/// them was passive and would have removed their aggression.
+	/// <para>
+	/// The same npc under both classes, as above, so the only difference is the class.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheAggressiveHalfOfTheTableStillFights()
+	{
+		using BossAiHarness harness = BossAiHarness.For(Map).WithWorldSize(4096)
+			.WithAi(typeof(AggressivePatternAI), typeof(PassivePatternAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI)).Build();
+		Npc fighter = harness.SpawnWithAi(Hostile, "aggressive_pattern", 300f, 300f, 200f);
+		Npc passive = harness.SpawnWithAi(Hostile, "passive_pattern", 900f, 900f, 200f);
+		Player near = harness.SpawnPlayer(302f, 300f, 200f);
+		Player far = harness.SpawnPlayer(902f, 900f, 200f);
+		BossAiHarness.MakeMutuallyKnown(fighter, near);
+		BossAiHarness.MakeMutuallyKnown(passive, far);
+
+		fighter.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureAggro, near);
+		passive.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureAggro, far);
+		harness.Clock.Advance(TimeSpan.FromSeconds(2));
+
+		Assert.NotEmpty(fighter.GetAggroList().Stream());
+		Assert.Empty(passive.GetAggroList().Stream());
+	}
 }

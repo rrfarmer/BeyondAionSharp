@@ -33,7 +33,41 @@ public class PassivePatternAI : PassivePatternAi
 	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
 		new AiPattern
 		{
-			OnWakeUp = AiPattern.Of(PassivePatterns.OnWakeUpFor(id)),
-			OnIdleTimer = AiPattern.Of(PassivePatterns.OnIdleTimerFor(id)),
+			OnWakeUp = AiPattern.Of(WakeIdlePatterns.OnWakeUpFor(id)),
+			OnIdleTimer = AiPattern.Of(WakeIdlePatterns.OnIdleTimerFor(id)),
 		});
+}
+
+/// <summary>
+/// The same wake and idle patterns, on an npc that fights.
+/// </summary>
+/// <remarks>
+/// 172 npcs sat on <c>wake_variable_aggressive</c> running only their spawn-variable writes, however
+/// much their patterns said, because the passive class would have taken their aggression away and
+/// nothing else could run them. This is that mirror image: <see cref="PatternAi"/> unchanged, which is
+/// already aggressive, driven from the same table.
+/// <para>
+/// The table is pattern data and says nothing about fighting. Which class an npc gets is decided by
+/// what it already was -- the same rule the wake tables use, and the reason neither group gains nor
+/// loses aggression by acquiring a pattern.
+/// </para>
+/// </remarks>
+[AIName("aggressive_pattern")]
+public class AggressivePatternAI : PatternAi
+{
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId =
+		new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
+
+	public AggressivePatternAI(Npc owner)
+		: base(owner)
+	{
+	}
+
+	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
+		new AiPattern
+		{
+			OnWakeUp = AiPattern.Of(WakeIdlePatterns.OnWakeUpFor(id)),
+			OnIdleTimer = AiPattern.Of(WakeIdlePatterns.OnIdleTimerFor(id)),
+		});
+
 }

@@ -44,7 +44,7 @@ import warnings
 #: Every table that writes a spawn variable. Missing one understates the reach silently -- adding
 #: `passive_patterns` moved the answer by 363 placements, in a direction that looked like a regression.
 TABLES = [("death_spawns.tsv", "place"), ("battle_cycles.tsv", "place"),
-          ("idle_cycles.tsv", "place"), ("passive_patterns.tsv", "place"),
+          ("idle_cycles.tsv", "place"), ("wake_idle_patterns.tsv", "place"),
           ("wake_variables.tsv", "name")]
 
 NAME = re.compile(r"(?:\[SAVE\])?[A-Za-z_][A-Za-z_0-9]*")

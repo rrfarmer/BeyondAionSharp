@@ -27,7 +27,7 @@ branch lists are first-match-wins and dropping a rung promotes the next. Npcs al
 table keep it, so nothing is bound twice.
 
 CLI:
-    python extract_passive_patterns.py <patterns_dir> <binding_tsv> <out.tsv> [--repo ..]
+    python extract_wake_idle_patterns.py <patterns_dir> <binding_tsv> <out.tsv> [--repo ..]
 """
 from __future__ import annotations
 
@@ -45,14 +45,19 @@ from extract_idle_cycles import read_actions, read_guards, string_ids  # noqa: E
 
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
-#: `general`, the class this table feeds, and `wake_variable` -- which is `general` underneath.
+#: Every class whose npcs this table can take. It drives **two** AI classes, not one:
+#: `PassivePatternAI` for the npcs retail keeps on `general`, and `AggressivePatternAI` for the ones it
+#: keeps on `aggressive`. The table itself is pattern data and says nothing about fighting; the binder
+#: picks the class from what the npc already was, so nothing gains or loses aggression by acquiring a
+#: pattern. That is the same split the wake tables use and for the same reason.
 #:
 #: The wake table took the simple cases first, and **93 npcs on it were running a partial pattern**:
 #: their spawn-variable writes without the timer, message or despawn standing beside them. This table
 #: is authoritative wherever it can say more, and `extract_wake_variables` gives those patterns up.
 #: `wake_variable_aggressive` is deliberately absent -- those npcs fight, and there is no aggressive
 #: pattern class for them yet.
-GENERIC = {"general", "passive_pattern", "wake_variable"}
+GENERIC = {"general", "passive_pattern", "wake_variable",
+           "aggressive", "aggressive_pattern", "wake_variable_aggressive"}
 
 HANDLERS = ["on_wake_up", "on_idle_timer"]
 

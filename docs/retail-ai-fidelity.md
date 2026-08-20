@@ -36496,3 +36496,36 @@ failure mode, and the fix is a line in a list; noticing is the hard part.
   it and does not exist.
 - **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), blocked on evidence.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## One table, two classes, and a name that had stopped being true
+
+172 npcs sat on `wake_variable_aggressive` running only their spawn-variable writes however much their
+patterns said, because the only pattern class that would take them was passive and would have removed
+their aggression. `AggressivePatternAI` is that mirror image -- `PatternAi` unchanged, which is already
+aggressive -- driven from the same table.
+
+Which meant the table was no longer about passive npcs, so it is no longer called `PassivePatterns`.
+**`WakeIdlePatterns` is pattern data and says nothing about fighting**; the binder picks the class from
+what the npc already was, which is the same rule the wake tables use. Renaming a generated file and two
+tools is cheap; a name that quietly lies about what a table holds is how the wrong class gets picked six
+entries later, which this log has already paid for once.
+
+Removing the exemption mattered too. The wake table had been keeping fighting npcs regardless of how
+much the pattern table could say, because nothing could run them; with the aggressive class in place
+that rule is simply wrong, and it left **6 npcs claimed by both tables**. The rule now applies to every
+npc alike, and running both extractors twice gives the same answer with no overlap.
+
+| | before | after |
+|---|---|---|
+| wake/idle patterns | 486 across 548 npcs | **658 across 815** |
+| of which aggressive | 0 | **267** |
+| still write-only on the wake table | 724 | 631 |
+| gated placements with every variable ours | 7,673 | **7,705** |
+
+### Still missing
+
+- **626 patterns refused for a branch this port cannot say** -- risen with the table's reach and still
+  unexamined by kind. The largest single item here now.
+- **`GAb1_PvPStatus`** (6,070 placements) and **`control_door`** (691 uses), blocked on evidence the
+  data does not contain.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**

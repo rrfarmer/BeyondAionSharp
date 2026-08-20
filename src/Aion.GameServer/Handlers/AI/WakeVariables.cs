@@ -5,7 +5,7 @@
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Spawn variables retail sets simply by an npc existing: 315 patterns, 637 npcs, 891 writes.
+/// Spawn variables retail sets simply by an npc existing: 313 patterns, 631 npcs, 793 writes.
 /// </summary>
 /// <remarks>
 /// The conditional spawn engine reads 1,201 distinct variables across 21,096 gated placements, and the
@@ -197,18 +197,12 @@ internal static class WakeVariables
         [277180] = [new Write("v17ctrl", 3, 0)],  // LDF5_Village_KillerCtrl17_D
         [277181] = [new Write("v18ctrl", 3, 0)],  // LDF5_Village_KillerCtrl18_D
         [277182] = [new Write("v19ctrl", 3, 0)],  // LDF5_Village_KillerCtrl19_D
-        [277480] = [new Write("Tur13", 21, 0), new Write("Tur14", 21, 0), new Write("Tur15", 21, 0), new Write("Tur16", 21, 0), new Write("Tur17", 21, 0), new Write("Tur18", 21, 0), new Write("Tur19", 21, 0), new Write("Tur20", 21, 0), new Write("Tur21", 21, 0), new Write("Tur22", 21, 0), new Write("Tur23", 21, 0), new Write("Tur24", 21, 0), new Write("Tur25", 21, 0), new Write("Tur26", 21, 0), new Write("Tur27", 21, 0), new Write("Tur28", 21, 0), new Write("Tur29", 21, 0), new Write("Tur30", 21, 0), new Write("Tur31", 21, 0), new Write("Tur32", 21, 0), new Write("Tur33", 21, 0), new Write("Tur34", 21, 0), new Write("Tur35", 21, 0), new Write("Tur36", 21, 0)],  // Gab1_SetCond_Noshow_01
-        [277481] = [new Write("Tur13", 21, 0), new Write("Tur14", 21, 0), new Write("Tur15", 21, 0), new Write("Tur16", 21, 0), new Write("Tur17", 21, 0), new Write("Tur18", 21, 0), new Write("Tur19", 21, 0), new Write("Tur20", 21, 0), new Write("Tur21", 21, 0), new Write("Tur22", 21, 0), new Write("Tur23", 21, 0), new Write("Tur24", 21, 0), new Write("Tur25", 21, 0), new Write("Tur26", 21, 0), new Write("Tur27", 21, 0), new Write("Tur28", 21, 0), new Write("Tur29", 21, 0), new Write("Tur30", 21, 0), new Write("Tur31", 21, 0), new Write("Tur32", 21, 0), new Write("Tur33", 21, 0), new Write("Tur34", 21, 0), new Write("Tur35", 21, 0), new Write("Tur36", 21, 0)],  // Gab1_SetCond_Noshow_01
-        [277482] = [new Write("Tur13", 21, 0), new Write("Tur14", 21, 0), new Write("Tur15", 21, 0), new Write("Tur16", 21, 0), new Write("Tur17", 21, 0), new Write("Tur18", 21, 0), new Write("Tur19", 21, 0), new Write("Tur20", 21, 0), new Write("Tur21", 21, 0), new Write("Tur22", 21, 0), new Write("Tur23", 21, 0), new Write("Tur24", 21, 0), new Write("Tur25", 21, 0), new Write("Tur26", 21, 0), new Write("Tur27", 21, 0), new Write("Tur28", 21, 0), new Write("Tur29", 21, 0), new Write("Tur30", 21, 0), new Write("Tur31", 21, 0), new Write("Tur32", 21, 0), new Write("Tur33", 21, 0), new Write("Tur34", 21, 0), new Write("Tur35", 21, 0), new Write("Tur36", 21, 0)],  // Gab1_SetCond_Noshow_01
-        [277483] = [new Write("Tur13", 21, 0), new Write("Tur14", 21, 0), new Write("Tur15", 21, 0), new Write("Tur16", 21, 0), new Write("Tur17", 21, 0), new Write("Tur18", 21, 0), new Write("Tur19", 21, 0), new Write("Tur20", 21, 0), new Write("Tur21", 21, 0), new Write("Tur22", 21, 0), new Write("Tur23", 21, 0), new Write("Tur24", 21, 0), new Write("Tur25", 21, 0), new Write("Tur26", 21, 0), new Write("Tur27", 21, 0), new Write("Tur28", 21, 0), new Write("Tur29", 21, 0), new Write("Tur30", 21, 0), new Write("Tur31", 21, 0), new Write("Tur32", 21, 0), new Write("Tur33", 21, 0), new Write("Tur34", 21, 0), new Write("Tur35", 21, 0), new Write("Tur36", 21, 0)],  // Gab1_SetCond_Noshow_01
         [277770] = [new Write("v01ctrl", 1, 0)],  // Gab1_Vritra_01
         [277774] = [new Write("v01ctrl", 6, 0)],  // Gab1_Vritra_05
         [277778] = [new Write("v01ctrl", 11, 0)],  // Gab1_Boss_Noshow_03
         [277782] = [new Write("v01ctrl", 16, 0)],  // Gab1_Msg_Noshow_03
         [281822] = [new Write("DRAMATA_ENTERABLE", 2, 0), new Write("LDF4_GHArtifactA", 3, 0), new Write("LDF4_GHArtifactB", 3, 0)],  // BLDF4_Dramata_SpawnCloseDoor
-        [282590] = [new Write("CrowdController", 1, 0)],  // IDYun_Temp_56
         [282625] = [new Write("idraksha_dust2", 1, 0)],  // IDRaksha_NoshowNPC_30
-        [282627] = [new Write("CrowdController", 1, 0)],  // IDYun_Temp_56
         [282955] = [new Write("EnemySpawnL", 0, 1)],  // LDF4b_Tiamat_Temp26
         [282956] = [new Write("YunSpawnL", 0, 1)],  // LDF4b_Tiamat_Temp27
         [282957] = [new Write("DrakanSpawnL", 0, 1)],  // LDF4b_Tiamat_Temp28
@@ -677,5 +671,5 @@ internal static class WakeVariables
 
     /// <summary>The npcs retail removes once they have written.</summary>
     private static readonly HashSet<int> Vanishing =
-        [277480, 277481, 277482, 277483];
+        [];
 }

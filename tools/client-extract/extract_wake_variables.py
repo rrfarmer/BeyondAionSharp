@@ -53,7 +53,7 @@ import audit_missing_adds as A  # noqa: E402
 from audit_idle_spawns import flatten  # noqa: E402
 from client_npc_names import npc_names  # noqa: E402
 from extract_idle_cycles import string_ids  # noqa: E402
-import extract_passive_patterns as PP  # noqa: E402
+import extract_wake_idle_patterns as PP  # noqa: E402
 
 #: `general` and `aggressive`, each of which keeps what it is. The binder picks the class from the npc's
 #: current one -- `wake_variable` descends from `GeneralNpcAI` and `wake_variable_aggressive` from
@@ -64,11 +64,10 @@ import extract_passive_patterns as PP  # noqa: E402
 #: side the npc is sitting on, or a regeneration moves npcs back and forth for ever.
 GENERIC = {"general", "aggressive", "wake_variable", "wake_variable_aggressive", "passive_pattern"}
 
-#: The classes that fight. An npc on one of these keeps its writes here however rich its pattern is,
-#: because the passive pattern table would take its aggression away and there is no aggressive pattern
-#: class for it yet. Everything else is decided by the pattern rather than by whichever table currently
-#: holds the npc -- key the rule on the class and a regeneration moves npcs back and forth for ever.
-AGGRESSIVE_BASED = {"aggressive", "wake_variable_aggressive"}
+#: Kept for the record: this used to exempt fighting npcs from the "the other table says more" rule,
+#: because the only pattern class that could take them was passive and would have removed their
+#: aggression. `AggressivePatternAI` closed that, so the exemption is gone and the rule applies to
+#: every npc alike -- which is what makes the two tables disjoint whichever one currently holds it.
 
 
 def main() -> int:
@@ -162,7 +161,7 @@ def main() -> int:
 
             owners = [n for n in binders.get(named.group(1), [])
                       if ai.get(n) in GENERIC and n not in spoken_for
-                      and not (richer and ai.get(n) not in AGGRESSIVE_BASED)]
+                      and not richer]
             if not owners:
                 # About our data rather than retail's: the npc is either absent here or already
                 # modelled by an encounter class that must keep it.
