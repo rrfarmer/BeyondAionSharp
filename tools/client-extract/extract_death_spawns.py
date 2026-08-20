@@ -21,12 +21,13 @@ death handler off. A death spawn is not part of a rotation; it needs a table key
 they carry curated comments and one of them (`ND2_ReA_1`) encodes a judgement about a betrayer npc that
 is worth not regenerating over. Everything else comes from here.
 
-TWO HANDLERS, ONE SLOT
-----------------------
-Retail splits `on_die` from `on_killed_by_user`: the first fires however the npc died, the second only
-when a player did it. This port has one `OnDie` slot and `When.KilledByPlayer`, which is exactly the
-distinction, so the second handler is emitted as the first plus that guard. `DeathSpawnAI`'s hand table
-draws the same line with its `PlayerKillOnly` flag.
+THREE HANDLERS, ONE SLOT
+------------------------
+Retail splits `on_die` from `on_killed_by_user` and `on_killed_by_npc`: the first fires however the npc
+died, the other two ask who did it. This port has one `OnDie` slot plus `When.KilledByPlayer` and
+`When.KilledByNpc`, which is exactly the distinction, so each handler is emitted as `OnDie` with its
+guard. `DeathSpawnAI`'s hand table drew the same line with a `PlayerKillOnly` flag before there was a
+third case to carry.
 
 WHAT IS LEFT OUT
 ----------------
@@ -58,8 +59,14 @@ from extract_battle_cycles import Unsayable, read_handler  # noqa: E402
 #: would make it attack players. Same rule, same reason, as the rotation table.
 GENERIC = {"aggressive", "death_spawn"}
 
-#: Retail's two death handlers. The second only fires when a player landed the blow.
-HANDLERS = [("on_die", False), ("on_killed_by_user", True)]
+#: Retail's three death handlers, and the guard each one becomes here. `on_die` fires however the npc
+#: died; the other two ask who did it. Carrying the guard by name rather than as a flag is what let the
+#: third be added without touching the shape of anything.
+#:
+#: `on_killed_by_npc` was worth adding on its own: variables written there gate **9,280** of retail's
+#: placements, and this port had no way to say it until `When.KilledByNpc` existed.
+HANDLERS = [("on_die", ""), ("on_killed_by_user", "KilledByPlayer"),
+            ("on_killed_by_npc", "KilledByNpc")]
 
 
 def main() -> int:
@@ -102,9 +109,13 @@ def main() -> int:
             named = S.NAME_RE.search(body)
             if not named:
                 continue
-            if not any("<spawn>" in re.search(r"<%s>(.*?)</%s>" % (h, h), body, re.S).group(1)
+            # A spawn or a spawn-variable write is enough to be worth taking: the writes are what
+            # feed the conditional spawn engine, and this handler family is where 9,280 placements'
+            # worth of them live.
+            interesting = ("<spawn>", "<set_condition_spawn_variable>")
+            if not any(any(k in found.group(1) for k in interesting)
                        for h, _ in HANDLERS
-                       if re.search(r"<%s>(.*?)</%s>" % (h, h), body, re.S)):
+                       for found in [re.search(r"<%s>(.*?)</%s>" % (h, h), body, re.S)] if found):
                 continue
 
             owners = [n for n in binders.get(named.group(1), [])
@@ -125,16 +136,15 @@ def main() -> int:
 
             patterns += 1
             for npc in owners:
-                for handler, player_only in HANDLERS:
+                for handler, killer in HANDLERS:
                     for index, priority, guards, actions in read[handler]:
                         for order, action in enumerate(actions):
-                            rows.append((npc, named.group(1), handler,
-                                         "TRUE" if player_only else "FALSE",
+                            rows.append((npc, named.group(1), handler, killer or "ANY",
                                          index, priority, "|".join(guards), order) + action)
 
     rows.sort(key=lambda r: (r[0], r[2], r[4], r[7]))
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
-        out.write("npc\tpattern\thandler\tplayer_only\tbranch\tpriority\tguards\torder\t"
+        out.write("npc\tpattern\thandler\tkiller\tbranch\tpriority\tguards\torder\t"
                   "kind\ta1\ta2\ta3\tplace\tx\ty\tz\tgroup\n")
         for row in rows:
             out.write("\t".join(str(f) for f in row) + "\n")

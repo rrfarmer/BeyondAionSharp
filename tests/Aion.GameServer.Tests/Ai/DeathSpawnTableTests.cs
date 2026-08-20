@@ -36,6 +36,11 @@ public sealed class DeathSpawnTableTests
 
 	private const int AnyDeathLeaves = 282155;
 
+	/// <summary><c>BGuard_Chief_Gab1_L</c>: leaves something only when an <i>npc</i> kills it.</summary>
+	private const int NpcKilled = 277400;
+
+	private const int NpcKilledLeaves = 295092;
+
 	/// <summary>Tiamat, whose death writes the variable 70 retail placements are gated on.</summary>
 	private const int Tiamat = 856029;
 
@@ -155,5 +160,50 @@ public sealed class DeathSpawnTableTests
 
 		Assert.Equal(4, store["KAHRUN_SPAWN"]);
 		Assert.Equal(1, gated.Placed);
+	}
+	/// <summary><b>The npc-kill branches exist and carry their guard.</b></summary>
+	/// <remarks>
+	/// <b>Structural, because the behaviour cannot be reached from here, and that is worth stating.</b>
+	/// Registering an npc kill needs the dying npc's aggro list to accept the attacker, and it accepts
+	/// one only if it is already aware of it or hostile to it -- <c>AddDamage</c> and <c>AddHate</c>
+	/// both check. Two npcs of unrelated tribes are neither, so no amount of wounding lands, which is
+	/// the server behaving correctly rather than a gap in it. Building a genuinely hostile pair means
+	/// tribe-relation setup the harness does not have.
+	/// <para>
+	/// What is pinned behaviourally is the half that can be: <see cref="AnUntouchedDeathLeavesNothing"/>
+	/// shows the guard does not fire when nothing killed the npc, which is the distinction that makes
+	/// <c>KilledByNpc</c> a real condition instead of "no player did it".
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheNpcKillBranchesCarryTheirGuard()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "death_spawns.tsv");
+		string[] lines = File.ReadAllLines(path);
+		string[] header = lines[0].Split('	');
+		int killerAt = Array.IndexOf(header, "killer");
+
+		int npcKills = lines.Skip(1).Count(line => line.Split('	')[killerAt] == "KilledByNpc");
+
+		Assert.Equal(615, npcKills);
+	}
+
+	/// <summary><b>And it does not fire when nothing killed it at all.</b></summary>
+	/// <remarks>
+	/// The distinction that makes this a real condition rather than "no player did it". An npc that
+	/// expires, or that nothing ever touched, has no top damager -- reading the absence of a player as
+	/// the presence of an npc would fire these branches on every quiet despawn in the game.
+	/// </remarks>
+	[Fact]
+	public void AnUntouchedDeathLeavesNothing()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(NpcKilled, 300f, 300f, 200f);
+
+		guard.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(0, Count(harness, NpcKilledLeaves));
 	}
 }

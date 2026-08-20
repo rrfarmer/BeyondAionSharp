@@ -357,6 +357,9 @@ public static class When
     /// </remarks>
     public static PatternCondition KilledByPlayer => ai => ai.Killer != null;
 
+    /// <summary><c>on_killed_by_npc</c>: something killed it and that something was an npc.</summary>
+    public static PatternCondition KilledByNpc => ai => ai.NpcKiller != null;
+
     /// <summary><c>is_user_flying user=USERI_EVENT_TARGET</c>: whoever opened the fight is airborne.</summary>
     public static PatternCondition EventTargetFlying => ai => ai.IsAirborne(ai.EventTarget);
 

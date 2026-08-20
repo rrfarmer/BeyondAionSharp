@@ -28,9 +28,12 @@ namespace Aion.GameServer.Handlers.AI;
 /// rotation at all</b> -- there is nothing there to hang a death handler off. A death spawn is not part
 /// of a rotation; it needs a table keyed on dying, which is this one.
 /// <para>
-/// Retail splits <c>on_die</c> from <c>on_killed_by_user</c>: the first fires however the npc died, the
-/// second only when a player did it. This port has one slot and <see cref="When.KilledByPlayer"/>,
-/// which is exactly that distinction, so the second is emitted as the first plus that guard.
+/// Retail splits <c>on_die</c> from <c>on_killed_by_user</c> and <c>on_killed_by_npc</c>: the first
+/// fires however the npc died, the other two ask who did it. This port has one slot plus
+/// <see cref="When.KilledByPlayer"/> and <see cref="When.KilledByNpc"/>, which is exactly that
+/// distinction, so each is emitted as <c>OnDie</c> with its guard.
+/// <b>Killed-by-npc was worth the condition on its own</b>: variables written there gate 9,280 of
+/// retail's placements, and nothing here could say it before.
 /// </para>
 /// <para>
 /// <see cref="DeathSpawnAI"/>'s own nine hand-read npcs are excluded from generation and keep their
@@ -63,7 +66,7 @@ def main() -> None:
     header = lines[0].split("\t")
     branches: dict[int, dict[tuple[str, int], list[dict]]] = collections.defaultdict(
         lambda: collections.defaultdict(list))
-    meta: dict[tuple[int, str, int], tuple[int, str, bool]] = {}
+    meta: dict[tuple[int, str, int], tuple[int, str, str]] = {}
     names: dict[int, str] = {}
     actions = 0
     for line in lines[1:]:
@@ -71,8 +74,7 @@ def main() -> None:
         npc, branch = int(row["npc"]), int(row["branch"])
         key = (row["handler"], branch)
         names[npc] = row["pattern"]
-        meta[(npc, row["handler"], branch)] = (int(row["priority"]), row["guards"],
-                                               row["player_only"] == "TRUE")
+        meta[(npc, row["handler"], branch)] = (int(row["priority"]), row["guards"], row["killer"])
         branches[npc][key].append(row)
         actions += 1
 
@@ -96,11 +98,11 @@ def main() -> None:
             for npc in chunk:
                 out.write(f"        rungs[{npc}] = [  // {names[npc]}\n")
                 for handler, branch in sorted(branches[npc]):
-                    priority, guards, player_only = meta[(npc, handler, branch)]
+                    priority, guards, killer = meta[(npc, handler, branch)]
                     tokens = [guard_code(t) for t in guards.split("|") if t]
-                    # on_killed_by_user is on_die plus "a player did it".
-                    if player_only:
-                        tokens.insert(0, "When.KilledByPlayer")
+                    # The killer handlers are on_die plus a question about who did it.
+                    if killer != "ANY":
+                        tokens.insert(0, f"When.{killer}")
                     condition = "When.Always" if not tokens else "[" + ", ".join(tokens) + "]"
                     body = ",\n".join("                " + action_code(r)
                                       for r in branches[npc][(handler, branch)])

@@ -165,6 +165,19 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     public Player? Killer => GetAggroList().GetMostPlayerDamage();
 
+    /// <summary>Retail's <c>on_killed_by_npc</c>: whatever killed this, it was not a player.</summary>
+    /// <remarks>
+    /// Read from the same list as <see cref="Killer"/> and by the same rule -- whoever dealt the most
+    /// damage -- so the two are exclusive by construction rather than by two implementations agreeing.
+    /// <para>
+    /// <b>Not the same as "no player killed it".</b> An npc that expires, or that nothing ever hit, has
+    /// no top damager at all, and retail's handler is about an npc having done it. Reading the absence
+    /// of a player as the presence of an npc would fire these branches on every quiet despawn.
+    /// </para>
+    /// </remarks>
+    public Npc? NpcKiller
+        => GetAggroList().GetFinalDamageList().GetMostDamage()?.GetAttacker() as Npc;
+
     /// <summary>Where a flee is heading, or null when this NPC is not running from anything.</summary>
     /// <remarks>
     /// Exposed for pinning. Our harness has no movement, so the only thing a test can read about a

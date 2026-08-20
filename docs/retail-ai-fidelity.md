@@ -36106,3 +36106,48 @@ it, and every one was found by mutation rather than by reading.
   one-condition gap, and the largest single one left in the gate work.
 - **566 gate variables no retail pattern ever writes.** The floor on this approach.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## The third death handler
+
+`on_killed_by_npc` was the largest single item left in the gate work -- variables written there gate
+**9,280** placements -- and this port had no way to say it. It is one condition:
+`GetFinalDamageList().GetMostDamage()`, the same list `KilledByPlayer` already reads, asking whether the
+top damager was an npc.
+
+**Deliberately not "no player killed it".** An npc that expires, or that nothing ever touched, has no
+top damager at all; reading the absence of a player as the presence of an npc would fire these branches
+on every quiet despawn in the game. A pin covers exactly that case.
+
+The death table now carries all three handlers -- 507 branches on `on_die`, 771 on `on_killed_by_user`,
+**615 on `on_killed_by_npc`** -- and grew from 109 patterns to **267 across 497 npcs**. Carrying the
+guard by name rather than as a `PlayerKillOnly` flag is what let the third case be added without
+reshaping anything.
+
+| | before | after |
+|---|---|---|
+| death patterns | 109 | **267** |
+| npcs | 265 | **497** |
+| gated placements reachable | 12,150 | **12,586 of 21,096** |
+
+### What is pinned, and what is structural, and why
+
+The positive npc-kill path **cannot be reached from the harness**, and the reason is the server being
+right rather than a gap in it: a dying npc's aggro list accepts an attacker only if it is already aware
+of it or hostile to it -- `AddDamage` and `AddHate` both check -- so two npcs of unrelated tribes cannot
+register a kill however hard one hits the other. Building a genuinely hostile pair needs tribe-relation
+setup the harness does not have.
+
+So that half is a structural pin over the table, said plainly in the test, and the half that *can* be
+observed -- the guard not firing when nothing killed the npc -- is behavioural.
+
+Also caught here: the header line was left naming `player_only` while the rows had gained a `killer`
+column. Same column drift as two entries ago, found this time by looking rather than by a `KeyError`.
+
+### Still missing
+
+- **The positive npc-kill path**, above. A harness helper that makes two npcs hostile would close it and
+  several other things besides.
+- **488 wake patterns that also do something else**, 136 with a guarded branch.
+- **566 gate variables no retail pattern ever writes** -- the floor on this approach.
+- **26 death patterns need `control_door`**, which has no helper anywhere in the port.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
