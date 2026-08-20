@@ -73,6 +73,31 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             return timerFires[index];
     }
 
+    private int immediateCasts;
+
+    /// <summary>
+    /// How many skills this npc has cast down the immediate path. For tests.
+    /// </summary>
+    /// <remarks>
+    /// <b>The only way to see a hazard work.</b> A hazard casts and despawns in the same rung, and the
+    /// harness deliberately leaves out the skill engine's execution side, so nothing downstream of the
+    /// cast is observable: no effect lands, no damage is dealt, and the npc is gone before the next
+    /// sample. <c>DrainQueuedSkills</c> cannot see it either, because the immediate path is precisely
+    /// the one that does not use the queue.
+    /// <para>
+    /// Counted rather than inferred, and in the same spirit as the timer counters above: a question
+    /// about whether the runtime did the thing, when the thing itself leaves no trace here.
+    /// </para>
+    /// </remarks>
+    public int ImmediateCastCount
+    {
+        get
+        {
+            lock (gate)
+                return immediateCasts;
+        }
+    }
+
     /// <summary>Retail names four: <c>INTVARI_FIRST</c> through <c>INTVARI_FOURTH</c>.</summary>
     private const int CounterSlots = 4;
 
@@ -1201,8 +1226,12 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     public void CastSkillNow(int skillId)
     {
-        if (!IsDead())
-            NpcSkillCasting.UseOnSelfNow(GetOwner(), skillId);
+        if (IsDead())
+            return;
+
+        lock (gate)
+            immediateCasts++;
+        NpcSkillCasting.UseOnSelfNow(GetOwner(), skillId);
     }
 
     /// <summary>

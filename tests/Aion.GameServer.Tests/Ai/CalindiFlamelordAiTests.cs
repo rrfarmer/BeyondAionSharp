@@ -1,4 +1,5 @@
 using Aion.GameServer.Ai.Event;
+using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -249,5 +250,34 @@ public sealed class CalindiFlamelordAiTests
 
 		Assert.Equal(0, Count(harness, WormSpot));
 		Assert.Equal(0, Count(harness, FlameCenter));
+	}
+	/// <summary><b>A summon spot casts down the immediate path, not the queue.</b></summary>
+	/// <remarks>
+	/// The observable a hazard needs. A spot appears, casts once and is gone, and the queued path is
+	/// drained by the attack loop only while the npc has somebody to hate -- so a queued cast from an
+	/// npc like this never fires at all, which <c>NpcSkillCasting</c> has said in a comment since long
+	/// before any of these tables existed.
+	/// <para>
+	/// Nothing downstream of the cast is visible here: the harness leaves out the skill engine's
+	/// execution side, so no effect lands and no damage is dealt, and the npc despawns before the next
+	/// sample anyway. <see cref="PatternAi.ImmediateCastCount"/> is the only thing that can answer
+	/// whether the runtime did it, which is why it exists.
+	/// </para>
+	/// <para>
+	/// <b>And it proves only that.</b> A mutation that increments the counter and skips the cast
+	/// survives this pin, because there is nothing downstream to check -- the skill engine is not
+	/// stood up here at all. What is pinned is the choice between the queued path and the immediate
+	/// one, which is the choice that was getting made wrongly; whether the skill then lands is a
+	/// question this harness cannot ask of any cast, hazard or not.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ASummonSpotCastsImmediatelyRatherThanQueueing()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc spot = harness.Spawn(WormSpot, 300f, 300f, 200f);
+
+		Assert.Equal(1, ((PatternAi)spot.GetAi()).ImmediateCastCount);
+		Assert.Empty(BossAiHarness.DrainQueuedSkills(spot));
 	}
 }

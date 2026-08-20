@@ -36653,3 +36653,42 @@ Nothing is committed but this note. The tree is green at the previous entry's st
 - **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **177 encounters missing an add**,
   **retail cast timings.**
+
+## An observable for a cast that fires and leaves
+
+The previous entry stopped because a hazard's cast could not be seen. Three ways were tried and the
+first two are dead ends worth recording:
+
+* **The effect it applies.** `NpcSkillCasting.UseOnSelfNow` on a real hazard skill leaves nothing --
+  no abnormal effect, no damage -- because `BossAiHarness` deliberately leaves out the skill engine's
+  execution side. Its own remark says so; the probe merely confirmed it.
+* **Sampling the world.** `WatchNew` looks once a second and a hazard appears and vanishes inside one
+  tick, so it never sees the npc at all.
+* **Counting the decision.** `PatternAi` already keeps `TimerArmCount` and `TimerFireCount` "for tests"
+  -- questions about whether the runtime did a thing, asked where the thing itself leaves no trace.
+  `ImmediateCastCount` is the same shape and is what the hazard work needed.
+
+It is pinned on `CalindiSummonSpotAI`, which has used `Do.SkillOnSelfNow` since long before these
+tables: a spot appears, casts once and goes. A mutation switching that rung to the **queued** helper
+dies, which is exactly the distinction that was getting made wrongly.
+
+**What it does not prove**: a mutation that increments the counter and skips the cast survives, because
+there is nothing downstream to check. The pin covers the choice between the queued and immediate paths,
+not whether the skill lands -- and that limit applies to every cast in this suite, hazard or not.
+
+`CastSkillNow` already carried the design note for this, written earlier: switching to the immediate
+path whenever an npc is out of combat "looked tidier and was wrong", because bosses self-buff from
+`on_wake_up` too, so **a table asks for the immediate path explicitly or does not get it.** That is the
+rule the emitter now has an observable to be held to.
+
+### Still missing
+
+- **The emitter rule itself**: a rung that casts *and* despawns itself should emit `Do.SkillOnSelfNow`
+  rather than `Do.SkillOn`. The observable exists now; the rule does not.
+- **`use_skill` in wake and idle handlers: 284 patterns**, waiting on that rule -- landing it without
+  the rule gives the hazards casts that never fire.
+- **Re-pinning the beacons.** Two of the five encounters are already fixed (the gate stand-in and the
+  arena placement needed npcs that are genuinely inert now); the beacon pair still counts npcs that
+  will stop persisting, and needs the counter or a spawn-side observable instead.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**,
+  **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
