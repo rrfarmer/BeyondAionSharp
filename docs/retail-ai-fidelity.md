@@ -34293,3 +34293,48 @@ restores the wrong reading now dies against a pin that checks the hit lands **on
 - **`IDVritra_Base_Drakan_Gi_Nmd_Beacon`** has the same shape (2 spawns, `MY_POINT`, 5s) and is a
   different encounter's beacon. It is in neither table; nothing checked whether its owner exists here.
 - The 25 AI classes unused in Java too, from the previous entry.
+
+## 153 more npcs that wait on a timer and place nothing
+
+The beacon entry found Tiamat's breath missing because each beacon's own pattern spawns the damage from
+`on_idle_timer`, and twelve of the fifteen beacons ran a class that does nothing with a timer. The
+obvious question is whether that shape is unique to Tiamat. It is not.
+
+`audit_idle_spawns.py` sweeps for it:
+
+> **132 retail patterns spawn from `on_idle_timer`, and 153 of the npcs bound to them run a generic
+> class here.** Each is an add, a hazard or a controller that retail places on a delay and this port
+> does not place at all.
+
+| | |
+|---|---|
+| patterns | 132 |
+| npcs on `aggressive`/`general`/similar | 153 |
+| spawn **only** npcs this port has templates for | **129** |
+| **re-arm their own timer** — loops, not one-shots | **96** |
+
+The columns exist because each is a way to get the port wrong, and two of them already bit this project
+once: `at_self` marks `SPAWN_LOCATION_MY_POINT`, which carries no coordinates and lands at the world
+origin if read as absolute — the beacon table did exactly that before it was caught — and `rearms` marks
+a rung ending in another `set_idle_timer`, where dropping the re-arm gives one wave of a mechanic that
+should repeat.
+
+The largest family is Panesterra's rebirth doors: `Gab1_0*_Guard_Noshow_0*`, twenty-one npcs across five
+patterns, each spawning the next controller in a chain at its own position with a 600-second period.
+
+### Why nothing was implemented from it this entry
+
+The head of the list is a **chain**: `Guard_Noshow_01` spawns `Guard_Noshow_02`, which spawns the next,
+each re-arming. Porting one link without the rest produces a door that opens once and never again, which
+is worse than a door that never opens because it looks correct in a test. It needs the whole chain read
+and pinned together, and that is a piece of work rather than the tail of this one.
+
+### Still missing
+
+- **The 129 portable patterns**, in priority order in the audit's own output. The three that are not
+  portable name an npc with no template here and are counted rather than emitted.
+- **The chain semantics**: `set_idle_timer delay=0` means "next tick", and `AiPattern.SetIdleTimer`
+  already schedules rather than running inline for exactly that reason — so the machinery exists and it
+  is the encounter reading that is owed.
+- The `use_skill` on the beacon wake-up rungs, and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`, both from the
+  previous entry.
