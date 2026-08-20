@@ -215,6 +215,10 @@ def guard_code(token: str) -> str:
         return f"When.AtWaypoint({argument})"
     if kind == "last_waypoint":
         return "When.AtLastWaypoint"
+    if kind == "state":
+        return "When." + {"fight": "Fighting", "idle": "Idling", "route": "WalkingItsRoute",
+                          "wander": "WanderingAtRandom", "point": "MovingToAPoint",
+                          "casting": "Casting"}[argument]
     if kind == "count":
         # `increase_intvar`, which the idle parser brought when the two merged: a condition that
         # increments as it tests.

@@ -247,6 +247,49 @@ public static class When
     /// </remarks>
     public static readonly PatternCondition AtLastWaypoint = ai => ai.AtRouteEnd;
 
+    /// <summary><c>is_npc_state</c> — what the NPC is doing right now.</summary>
+    /// <remarks>
+    /// 2,834 uses in the 5.8 dump, every one of them asking about <c>NPCI_SELF</c>, which is why there
+    /// is no subject parameter here. Retail leans on this to keep a branch from firing out of context:
+    /// a friend-attacked rung that should only answer while the NPC is patrolling, a shout that should
+    /// only happen mid-fight.
+    /// <para>
+    /// <b>Two of retail's eight states are deliberately not here.</b> <c>NPC_STATE_WAKE_UP</c> (336
+    /// uses) is a state this port does not have — waking is a moment in <c>HandleSpawned</c>, not a
+    /// condition an NPC sits in, so there is nothing truthful to test. <c>NPC_STATE_FLEE</c> (21) has
+    /// <c>AIState.FEAR</c> nearby, but fear here is the abnormal effect, and equating "running away at
+    /// low health" with "feared by a skill" would be a guess dressed as a mapping. Both are refused by
+    /// the extractor rather than approximated.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>NPC_STATE_IDLE</c> — standing about, as retail means it.</summary>
+    /// <remarks>
+    /// <b>Not the same predicate as <see cref="Idle"/>, which is why both exist.</b> <c>Idle</c> is
+    /// <c>!InCombat</c>, written for the hand-written classes that only ever ask "fighting or not";
+    /// an NPC walking its route satisfies it. Retail's <c>NPC_STATE_IDLE</c> does not — patrolling is
+    /// <c>NPC_STATE_GOTO_WAYPOINT</c>, a different state — so a table using the loose one would fire
+    /// 16 branches at patrolling NPCs that retail keeps for NPCs standing still.
+    /// <para>
+    /// <c>Idle</c> is left as it is rather than tightened: four hand-written classes lean on it, and
+    /// narrowing a condition underneath them would change encounters this commit is not about.
+    /// </para>
+    /// </remarks>
+    public static readonly PatternCondition Idling = ai => ai.IsInState(AIState.IDLE);
+
+    /// <summary><c>NPC_STATE_GOTO_WAYPOINT</c> — walking its own route.</summary>
+    public static readonly PatternCondition WalkingItsRoute =
+        ai => ai.IsInState(AIState.WALKING) && ai.IsInSubState(AISubState.WALK_PATH);
+
+    /// <summary><c>NPC_STATE_RANDOM_MOVE</c> — wandering rather than following a route.</summary>
+    public static readonly PatternCondition WanderingAtRandom =
+        ai => ai.IsInState(AIState.WALKING) && ai.IsInSubState(AISubState.WALK_RANDOM);
+
+    /// <summary><c>NPC_STATE_GOTO_POINT</c> — sent to one place, off its route.</summary>
+    public static readonly PatternCondition MovingToAPoint = ai => ai.IsInState(AIState.FORCED_WALKING);
+
+    /// <summary><c>NPC_STATE_USE_SKILL</c> — mid-cast.</summary>
+    public static readonly PatternCondition Casting = ai => ai.IsInSubState(AISubState.CAST);
+
     /// <summary><c>is_hp_lower_than</c> — true on every evaluation below the threshold, not just the first.</summary>
     public static PatternCondition HpBelow(int percent) => ai => ai.HpPercent < percent;
 

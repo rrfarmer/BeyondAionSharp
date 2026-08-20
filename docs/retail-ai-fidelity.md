@@ -37582,3 +37582,75 @@ Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 the `is_user` / `is_npc` conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## `is_npc_state`: asking the npc what it is doing
+
+`Retail-AI-Pattern: six of retail's eight npc states`
+
+Named as the next largest single condition last entry, at 94 blocked `on_see_friend_attacked`
+handlers. Counting it across the whole dump rather than one handler: **2,834 uses**, every one of
+them about `NPCI_SELF`. Retail leans on it to keep a branch from firing out of context — a
+friend-attacked rung that should only answer while patrolling, a shout that belongs mid-fight.
+
+Eight distinct states appear. Six are answered:
+
+| retail state | uses | this port |
+|---|---|---|
+| `NPC_STATE_GOTO_WAYPOINT` | 1,456 | `WALKING` + `WALK_PATH` |
+| `NPC_STATE_ATTACK` | 822 | `InCombat` |
+| `NPC_STATE_IDLE` | 146 | `AIState.IDLE` |
+| `NPC_STATE_GOTO_POINT` | 44 | `FORCED_WALKING` |
+| `NPC_STATE_RANDOM_MOVE` | 4 | `WALKING` + `WALK_RANDOM` |
+| `NPC_STATE_USE_SKILL` | 5 | `AISubState.CAST` |
+
+Two are refused rather than approximated. `NPC_STATE_WAKE_UP` (336) is not a state this port has —
+waking is a moment inside `HandleSpawned`, not something an npc sits in, so there is nothing
+truthful to test. `NPC_STATE_FLEE` (21) has `AIState.FEAR` sitting invitingly nearby, but fear here
+is the abnormal effect; equating "running away at low health" with "feared by a skill" would be a
+guess wearing a mapping's clothes.
+
+### The condition that already existed, and was looser than it looked
+
+`When.Fighting` and `When.Idle` were already there, documented against `is_npc_state`, and used by
+four hand-written classes. `Fighting` is `InCombat` — the same flag the battle timers gate on — so
+`NPC_STATE_ATTACK` reuses it rather than adding a second way to ask.
+
+**`Idle` is `!InCombat`, and that is not what retail's `NPC_STATE_IDLE` means.** An npc walking its
+route is not in combat and is emphatically not idle; retail calls that `NPC_STATE_GOTO_WAYPOINT`.
+Reusing it would have fired 16 branches at patrolling npcs that retail keeps for npcs standing
+still — and every one would have looked like an npc doing its job a little too eagerly, which is
+precisely the class of error that survives play-testing. So `When.Idling` is separate and exact.
+
+`Idle` is deliberately left alone rather than tightened underneath the four classes that use it;
+narrowing a shared condition would change encounters this work is not about.
+
+Patterns 2,414 -> **2,428**; npcs 14,788 -> **14,823**; 223 rows across 148 branches now carry a
+state guard. Adds backlog unchanged at 211 across 153.
+
+### The pin, and the half it missed first
+
+It evaluates the conditions side by side on one npc and requires them to disagree, rather than
+describing the difference in a comment. First version covered only idle-versus-not-fighting, and a
+mutation dropping the substate check from `WalkingItsRoute` **survived** — walking a route and
+wandering are both `AIState.WALKING` here, so a condition checking the state alone answers true for
+both, and 84 route-guarded rows would have fired for wandering npcs. Extended, both are caught:
+
+| mutation | caught |
+|---|---|
+| precise idle loosened to not-fighting | yes |
+| route state ignores the substate | yes |
+
+### Still missing
+
+`is_enemy` on `on_spelled` (76) is now the largest single blocked condition. Then 102
+`on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`, which stays a real movement gap — this port has
+one route speed.
+
+Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254,
+`on_enter_abnormal_state` 272, `on_damaged` 141, `on_hyperlink_clicked` 137,
+`on_most_hating_updated` 132 — none of which spawn or cast — `on_see_friend_attacking` 129,
+`on_friend_spelling` 106, `on_see_npc_move` 106), plus `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+the `is_user` / `is_npc` conditions in the death family, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.

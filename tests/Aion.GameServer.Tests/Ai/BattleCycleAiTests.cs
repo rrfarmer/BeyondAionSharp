@@ -315,7 +315,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 59,558 casts across 14,788 npcs, none of them read by a human. The index they came from is only
+	/// 59,706 casts across 14,823 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -334,7 +334,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(59558, casts);
+		Assert.Equal(59706, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -776,7 +776,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1447, spawns);
+		Assert.Equal(1452, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -920,6 +920,50 @@ public sealed class BattleCycleAiTests
 		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
 			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.cs"));
 		Assert.Contains("Do.ContinueRoute()", generated);
+	}
+
+	/// <summary><b>A patrolling npc is not idle, however much it is also not fighting.</b></summary>
+	/// <remarks>
+	/// Retail's <c>is_npc_state</c> has eight states and this port answers six of them. The one that
+	/// needed care is <c>NPC_STATE_IDLE</c>, because <see cref="When.Idle"/> already existed and means
+	/// something looser -- <c>!InCombat</c> -- written for the hand-written classes that only ever ask
+	/// "fighting or not". An npc walking its route satisfies that and is emphatically not idle in
+	/// retail's vocabulary, where patrolling is <c>NPC_STATE_GOTO_WAYPOINT</c>.
+	/// <para>
+	/// Reusing the loose one would have fired 16 branches at patrolling npcs that retail keeps for npcs
+	/// standing still, and every one of them would have looked like an npc doing its job slightly too
+	/// often. So <see cref="When.Idling"/> is separate, and this pins the difference rather than
+	/// describing it -- the two conditions are evaluated side by side on the same npc in the same
+	/// state, and they must disagree.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ThePreciseIdleStateIsNotJustNotFighting()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		worm.GetAi().SetStateIfNot(Aion.GameServer.Ai.AIState.WALKING);
+
+		Assert.False(When.Idling(ai), "a walking npc counted as idle");
+		Assert.True(When.Idle(ai), "the loose condition changed meaning, so this pin compares nothing");
+
+		worm.GetAi().SetStateIfNot(Aion.GameServer.Ai.AIState.IDLE);
+		Assert.True(When.Idling(ai), "an idle npc did not count as idle");
+
+		// The other pair that collapses if the substate is ignored. Retail separates walking a route
+		// from wandering, and both are AIState.WALKING here -- only the substate tells them apart, so
+		// a condition that checks the state alone answers true for both. A mutation dropping the
+		// substate check survived the first version of this pin.
+		worm.GetAi().SetStateIfNot(Aion.GameServer.Ai.AIState.WALKING);
+		worm.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.WALK_RANDOM);
+		Assert.False(When.WalkingItsRoute(ai), "a wandering npc counted as walking its route");
+		Assert.True(When.WanderingAtRandom(ai), "a wandering npc did not count as wandering");
+
+		worm.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.WALK_PATH);
+		Assert.True(When.WalkingItsRoute(ai), "a routed npc did not count as walking its route");
+		Assert.False(When.WanderingAtRandom(ai), "a routed npc counted as wandering");
 	}
 
 }

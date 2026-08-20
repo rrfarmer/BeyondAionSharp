@@ -162,6 +162,17 @@ SIGNALS = ["on_enter_idle_state", "on_talked_by_user", "on_see_friend_attacked",
 #: that trigger. What is given up is counted, never silent.
 CORE = {"on_enter_attack_state"}
 
+#: Retail's npc states, and the six this port can answer truthfully. See `When.Fighting` for why
+#: `NPC_STATE_WAKE_UP` and `NPC_STATE_FLEE` are absent.
+NPC_STATES = {
+    "NPC_STATE_ATTACK": "fight",
+    "NPC_STATE_IDLE": "idle",
+    "NPC_STATE_GOTO_WAYPOINT": "route",
+    "NPC_STATE_RANDOM_MOVE": "wander",
+    "NPC_STATE_GOTO_POINT": "point",
+    "NPC_STATE_USE_SKILL": "casting",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -249,6 +260,22 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind == "is_npc_state":
+            # What the npc is doing right now. Every one of the 2,834 uses asks about NPCI_SELF, but
+            # the subject is checked rather than assumed -- a pattern asking about somebody else would
+            # otherwise be silently answered about this npc.
+            #
+            # `NPC_STATE_WAKE_UP` (336) and `NPC_STATE_FLEE` (21) are refused. Waking is a moment in
+            # `HandleSpawned` here, not a state an npc sits in, and this port's `AIState.FEAR` is the
+            # abnormal effect rather than retail's low-health flight. Approximating either would put a
+            # branch on the ground that fires at the wrong time, which is worse than not having it.
+            who = re.search(r"<who>(\w+)</who>", body)
+            state = re.search(r"<state>(\w+)</state>", body)
+            if not who or who.group(1) != "NPCI_SELF":
+                raise Unsayable("is_npc_state about somebody other than itself")
+            if not state or state.group(1) not in NPC_STATES:
+                raise Unsayable(f"is_npc_state {state.group(1) if state else '?'}")
+            out.append("state:" + NPC_STATES[state.group(1)])
         elif kind == "is_waypoint_index":
             # Which point of its own route the npc is standing on. The engine has had this since
             # `When.AtWaypoint` was written for the hand-written classes -- `PatternAi.WaypointIndex`
