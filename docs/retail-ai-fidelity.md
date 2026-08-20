@@ -36966,3 +36966,47 @@ it is the honest next step rather than a sixth family-shaped table.
 - **`control_door` (37)**, **`change_world_scene_status` (54)**, **`enable_area` (31)**,
   **`goto_waypoint` runs (35)** -- all blocked on evidence or on systems this port lacks.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## What the unified table needs first: one parser, not two
+
+The previous entry named the next step -- a table keyed by npc across every handler, so the five
+family-shaped tables and their ownership rules collapse into one. It was attempted here and stopped at
+a specific obstacle worth writing down, because it is the whole of the remaining work.
+
+**There are two parsers, and their vocabularies are disjoint.** `extract_idle_cycles` and
+`extract_battle_cycles` grew separately, each learning what its own handlers needed:
+
+| | conditions | actions |
+|---|---|---|
+| only the idle parser | `increase_intvar` | `do_nothing`, `goto_waypoint`, `send_system_msg`, `set_idle_timer` |
+| only the battle parser | `is_battle_timer_indicator`, `is_message`, `is_hp_lower_than`, `is_hp_in_boundary`, `is_user_flying` | `add_battle_timer`, `add_hate_point`, `switch_target`, `despawn`, `spawn_on_target`, the two `*_by_attacker_indicator` forms |
+
+A unified reader built on either one refuses most of what the other says: driving it from the idle
+parser refused 2,250 patterns on `add_battle_timer` alone, 574 on `is_message`, 202 on `is_hp_lower_than`.
+
+They do not conflict -- **every element belongs to exactly one of them** -- so the merge is a union
+rather than a reconciliation. The one real seam is the row shape: the battle parser carries a ninth
+field for the spawn group a `despawn` refers back to, and the idle parser has eight. Unifying on the
+nine-field shape is mechanical and touches every emitter.
+
+That is a bigger change than an entry should attempt at the end of its budget, and half a parser merge
+in the tree is worse than none, so nothing was committed but this specification.
+
+### The order it wants doing in
+
+1. **Merge the two parsers** into one module with the union vocabulary and the nine-field row.
+2. **Re-point the five extractors at it** and confirm all five tables regenerate byte-identically --
+   the merge is only correct if nothing moves.
+3. **Then** the unified table, which becomes a matter of reading every handler instead of a family.
+
+Step 2 is what makes the rest safe: `regen_check` already compares committed output, so a parser merge
+that changes any table announces itself immediately.
+
+### Still missing
+
+- **The parser merge**, above, and the unified table behind it -- 33 encounters and the end of the
+  ownership rules between tables.
+- **105 encounters whose hand-written class is short an add.**
+- **`control_door` (37)**, **`change_world_scene_status` (54)**, **`enable_area` (31)**,
+  **`goto_waypoint` runs (35)**, **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**,
+  **retail cast timings.**
