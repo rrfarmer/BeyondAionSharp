@@ -548,17 +548,6 @@ public sealed class GuardAnswersTests
 	/// <summary>An elyos village chief on Kaldor: calls its killer, and now answers it too.</summary>
 	private const int VillageChief = 277069;
 
-	/// <summary>
-	/// A killer on <c>XDRAKAN</c>, which our tribe data makes aggressive toward <c>GUARD</c>.
-	/// </summary>
-	/// <remarks>
-	/// The obvious pairing does not work and the reason is worth recording: the artifact killers are on
-	/// <c>GUARD_DRAGON</c>, and Kaldor's chiefs are on <c>GUARD</c>, and our <c>tribe_relations.xml</c>
-	/// declares no hostility between those two — so a chief cannot fight the killer that wakes beside it
-	/// whatever its AI says. This one is hostile by the data, so the pin measures the mechanic rather
-	/// than the relations.
-	/// </remarks>
-	private const int XdrakanKiller = 286956;
 
 	/// <summary>"Oz": the same class, and retail gives it no answer to the wake-up call.</summary>
 	private const int SilentSimpleGuard = 203081;
@@ -573,7 +562,14 @@ public sealed class GuardAnswersTests
 	/// came. It cannot come from the pattern: <c>RungsFor</c> skips sender-targeted answers, because
 	/// <c>30001</c> names the caller and a player-targeted rung would put a million points of hate on the
 	/// wrong creature. Only the two siege protector classes handled it in code, and this was not one.
-	/// </remarks>
+	/// <para>
+	/// The chief and the killer are hostile through <c>TribeRelationService</c>, not through
+	/// <c>tribe_relations.xml</c>: neither that file nor retail's own table relates <c>GUARD</c> to
+	/// <c>GUARD_DRAGON</c>, and both this port and Java hardcode guard-versus-guard aggression by base
+	/// tribe. An earlier version of this pin used an <c>XDRAKAN</c> killer on the belief that the real
+	/// one could not be fought, which was a misreading of a failure whose actual cause was the interface
+	/// trap above.
+	/// </para>
 	[Fact]
 	public void AVillageChiefComesWhenItsKillerWakes()
 	{
@@ -581,7 +577,7 @@ public sealed class GuardAnswersTests
 			.WithAi(typeof(AbyssGuardSimpleAI), typeof(FortressKillerAI), typeof(AggressiveNpcAI),
 				typeof(GeneralNpcAI))
 			.Build();
-		Npc killer = harness.Spawn(XdrakanKiller, 300f, 300f, 200f);
+		Npc killer = harness.Spawn(ArtifactKiller, 300f, 300f, 200f);
 		Npc chief = harness.Spawn(VillageChief, 305f, 300f, 200f);
 		Npc quiet = harness.Spawn(SilentSimpleGuard, 306f, 300f, 200f);
 		BossAiHarness.MakeMutuallyKnown(killer, chief);

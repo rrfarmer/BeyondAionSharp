@@ -4,9 +4,8 @@ WHY THIS EXISTS
 ---------------
 Tribe is the third place a mechanic can be missing, after the `ai` binding and the spawn point: an npc
 can have the right class, the right pattern and a spawn and still do nothing, because `IsAware` refuses
-hate toward something it is not at war with. Two entries have now stopped at that wall -- `talle`, and
-Kaldor's village chiefs, which answer a killer's wake-up call and are not hostile to any npc that sends
-one.
+hate toward something it is not at war with. `talle` is the case that proved it -- `tribe="GENERAL"`, at
+war with nobody, in Java and in our data alike.
 
 Retail ships the whole relation table and this port has its own copy, so the question is answerable
 rather than a guess. **The formats differ and the comparison is not a diff:**
@@ -20,10 +19,11 @@ rather than a guess. **The formats differ and the comparison is not a diff:**
 
 WHAT IT FOUND
 -------------
-The pair that started it -- `guard` versus `guard_Dragon` -- is declared in **neither**. Both files give
-those two tribes a `friendly` list and nothing else, so our data matches retail and the hostility a
-Kaldor chief needs comes from whatever the engine does with an *undeclared* pair. That is a question
-about the default, not about missing rows, and this tool exists so the next person does not re-derive it.
+**The relation table is not where guard hostility lives, and that is the thing to know before reading a
+diff of it.** `guard` versus `guard_Dragon` is declared in neither file -- both give those tribes a
+`friendly` list and nothing else -- and the two are enemies anyway, because `TribeRelationService`
+hardcodes guard-versus-guard aggression by *base tribe*, in this port and in Java identically. A tribe
+missing from this table is therefore not automatically an npc that cannot fight.
 
 CLI:
     python audit_tribe_relations.py [--retail <npc_tribe_relation.xml>] [--limit N]
@@ -80,14 +80,18 @@ def our_relations(path: pathlib.Path) -> dict[str, dict[str, set[str]]]:
 def apply_missing(retail, ours) -> int:
     """Add the tribes our own npcs are bound to and our relations file never declared.
 
-    **Only the ones in use.** Retail declares 265 tribes we do not, and most are for npcs this port has
-    no template for; adding all of them would be a large change nothing exercises. 28 tribes are named
-    by `tribe=` on our own npc templates and have no entry at all, which is 787 npcs with no relations
-    whatsoever, and 27 of those 28 are declared by retail.
+    **It currently finds nothing, and that is the answer rather than a bug.** Every tribe named by
+    `tribe=` on our npc templates is already declared; the 237 retail declares and we do not are for
+    npcs this port has no template for, so adding them would be a large change nothing exercises.
 
-    **References are filtered to tribes we know.** Retail's lists name tribes from the 265 we do not
-    carry, and a relation pointing at a tribe the loader has never heard of is not a relation -- it is a
-    parse risk for no gain. What is dropped is counted and printed rather than left silent.
+    Kept because the first run of it was wrong in a way worth guarding against. `our_relations` could
+    not see self-closing `<tribe .../>` entries, so it reported 28 tribes missing and this function
+    duly appended 27 that the file already had. The full test suite passed with the duplicates in
+    place. **Only the ones in use, and only when they are genuinely absent.**
+
+    **References are filtered to tribes we know.** Retail's lists name tribes we do not carry, and a
+    relation pointing at a tribe the loader has never heard of is not a relation -- it is a parse risk
+    for no gain. What is dropped is counted and printed rather than left silent.
     """
     templates = (REPO / "game-server" / "data" / "static_data" / "npcs" / "npc_templates.xml").read_text(
         encoding="utf-8", errors="replace")

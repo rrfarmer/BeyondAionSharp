@@ -34107,3 +34107,41 @@ answers the undeclared-pair question by making everything hostile.
   rather than the client.
 - **The 237 tribes retail declares and we do not**, if this port ever gains templates that use them.
 - The 57/45/11/4 relation differences among shared tribes, unexamined one by one.
+
+## A correction: the village chiefs can fight their killer, and always could
+
+The last two entries left an open question and stated it as a finding: that Kaldor's chiefs are not
+hostile to any npc that sends the wake-up call, because `tribe_relations.xml` relates `GUARD` to nothing
+dragon-side. **That is wrong.** Measured directly:
+
+```
+killerTribe=GUARD_DRAGON killerBase=GUARD_DRAGON  chiefTribe=GUARD chiefBase=GUARD
+aggr(chief,killer)=True  aggr(killer,chief)=True  isEnemy=True
+```
+
+**Guard hostility does not live in the relation table.** `TribeRelationService.IsAggressive` switches on
+*base tribe* and hardcodes `GUARD` → `GUARD_DRAGON`, `GUARD_DARK` → `GUARD`, and the rest of that
+lattice — in this port and in Java identically, and `Tribe.getBase()` returns the tribe's own name when
+no `base` is declared, in both. So the two are enemies with no row relating them.
+
+The chief pin now uses the artifact killer that actually hunts villages, rather than the `XDRAKAN` test
+monster it was switched to. That switch was made on a misreading: the failure it was working around had
+nothing to do with tribes — it was the interface trap, which the same entry then found and fixed. **The
+workaround outlived the bug it was written for, and would have read as evidence that the real pairing
+does not work.**
+
+### What this closes
+
+The "undeclared tribe pair" question is answered and struck from the backlog: an undeclared pair is not
+hostile *by the table*, and the guard lattice never went through the table. A tribe missing from
+`tribe_relations.xml` is not automatically an npc that cannot fight, which is what the previous two
+entries assumed.
+
+`talle` is unaffected and remains the real case: `tribe="GENERAL"` is not a guard tribe, so no hardcoded
+lattice reaches it, and Java gives it the same tribe.
+
+### Still missing
+
+- **The 237 tribes retail declares and we do not**, if templates ever use them. None do today.
+- The 57/45/11/4 relation differences among shared tribes, unexamined one by one.
+- `talle` itself: it hears the call and cannot act on it, and nothing in Java or retail says it should.
