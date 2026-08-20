@@ -41,6 +41,17 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
     public const int KillerAwake = 30001;
 
     /// <summary>Retail's <c>on_die</c> broadcast, and its range.</summary>
+    /// <remarks>
+    /// <b>Only a minority of protectors send it.</b> This class is bound to 1,219 npcs running 93
+    /// distinct retail patterns, and two of those patterns carry the broadcast; counting the village
+    /// chiefs and the arena, 475 npcs in the whole dump announce their death this way. The rest die
+    /// quietly, and since <see cref="FortressKillerAI"/> answers 30003 by standing down, sending it for
+    /// all 1,219 was calling fortress killers off fights retail leaves running.
+    /// <para>
+    /// <see cref="DeathCallRange"/> is kept for the callers that still name it, but the range actually
+    /// used comes from <see cref="SiegeDeathCalls"/>, per npc, out of the pattern.
+    /// </para>
+    /// </remarks>
     public const int ProtectorDown = 30003;
     public const float DeathCallRange = 50f;
 
@@ -77,16 +88,26 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
         GetAggroList().Clear(); // make sure old damages aren't counted in stopSiege
     }
 
-    /// <summary>Retail's <c>on_die</c>: tell the fifty metres around it that this one is gone.</summary>
-    /// <summary>Retail's <c>on_die</c>: tell the fifty metres around it that this one is gone.</summary>
+    /// <summary>
+    /// Retail's <c>on_die</c>: tell the fifty metres around it that this one is gone — <b>if this npc is
+    /// one of the ones that does.</b>
+    /// </summary>
     /// <remarks>
     /// <b>Broadcast first.</b> It is retail's own order — the broadcast is the first action in the
     /// rung — and it also matters here: everything after it reaches the siege services, and a protector
     /// dying outside a live siege must still tell the killer hunting it to stand down.
+    /// <para>
+    /// <b>And only for the npcs whose pattern carries it.</b> See <see cref="SiegeDeathCalls"/>: the
+    /// unconditional version of this line was a faithful port of the Java class and wrong against
+    /// retail for 877 of the 1,219 npcs bound here, which is invisible from the C# because nothing in
+    /// the C# is inconsistent — the check has to be made against the patterns of the npcs bound to it.
+    /// </para>
     /// </remarks>
     protected override void HandleDied()
     {
-        NpcMessageBus.Broadcast(GetOwner(), ProtectorDown, GetOwner(), DeathCallRange);
+        if (SiegeDeathCalls.ByNpc.TryGetValue(GetOwner().GetNpcId(), out float reach))
+            NpcMessageBus.Broadcast(GetOwner(), ProtectorDown, GetOwner(), reach);
+
         base.HandleDied();
         StopSiege((SiegeNpc)GetOwner());
     }

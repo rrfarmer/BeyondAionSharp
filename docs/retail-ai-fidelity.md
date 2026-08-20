@@ -32500,3 +32500,73 @@ the npcs actually bound to it.
 - **`--by-suffix` still requires a shared pattern.** That is what kept it to 6 rows out of 26 real
   disagreements. Relaxing it would need a different safety, because dev-name similarity alone is a
   weaker claim than a shared pattern; the direct family scan used here was written by hand instead.
+
+## Gating the protector-down call, and the balaur guards it unblocked
+
+The previous entry sized the problem: `AbstractSiegeProtectorAI.HandleDied` broadcast **30003** from
+every death it handled — 1,219 npcs across 93 retail patterns — where only a minority carry it. This is
+the gate.
+
+### The table
+
+`extract_siege_death_calls.py` → `out/siege_death_calls.tsv` → `SiegeDeathCalls.cs`. **475 npcs across
+24 patterns** announce their own death in the whole 5.8 dump. Of the 1,219 bound to the two siege
+protector classes, **342 should and 877 should not.**
+
+Two things the extractor is careful about:
+
+* **Retail spells the trigger three ways.** `on_die` (the artifact guards) and the pair
+  `on_killed_by_user` / `on_killed_by_npc` (the village chiefs). Collecting only `on_die` would have
+  found the guards and missed every chief.
+* **Listening is not sending.** Several patterns mention 30003 because they *answer* it — that is what
+  the killers do. Counting them would have handed the message to the npcs meant to receive it, which is
+  the same mistake in the opposite direction.
+
+The range is a column rather than a constant even though it is fifty in all 475 rows. A hard-coded range
+in this project has been wrong twice; carrying the real one costs nothing and there is a pin on it.
+
+Registered in `regen_check.py`, so the extractor and the emitter are both checked against the committed
+table like every other generator here.
+
+### The pins, and the one that pins an ordering claim
+
+Four. The **negative** one is written first and is the one that matters: a message sent too often is the
+hardest kind of defect to notice, because a protector announcing its death behaves plausibly and a
+fortress killer standing down looks like the mechanic working rather than a killer being called off a
+fight retail leaves running.
+
+They kill the protector through its AI, and **the cast in `StopSiege` throws** — the harness spawns a
+plain `Npc` and a `SiegeNpc` needs a siege spawn template and a live `SiegeService`. The throw is caught
+deliberately, and it is safe *because of the ordering the class documents*: the broadcast is the first
+action in the rung, so by the time the cast fails the message has already been sent or already been
+skipped.
+
+**That is a claim, so it is mutated.** Moving the broadcast after `StopSiege` is one of the three
+mutations, and it is caught — the reasoning holds rather than merely sounding right. All three caught.
+
+### Nineteen balaur guards, now bound
+
+With the death call gated, the only difference between `AB1_DrGuard_Artifact` and its Elyos twin that
+this port could express is gone — what remains is an HP-check timer made of skill indices, which is not
+expressible either way. So the nineteen balaur artifact and fortress guards that were left on
+`aggressive` last entry are now on `artifact_protector` and `fortress_protector` with their Elyos and
+Asmodian variants.
+
+**This is why that binding waited.** Doing it before the gate would have given each of them a death call
+retail explicitly removed from their pattern — trading a missing class for a wrong one, and the wrong
+one would have been invisible.
+
+### Still missing
+
+- **The village chiefs send 30003 in retail and cannot here.** All nineteen chief patterns broadcast it
+  from `on_killed_by_user` / `on_killed_by_npc`, and the chiefs run `simple_abyssguard`, which has no
+  death handler at all. They are in `SiegeDeathCalls` — the table is npc-wide, not siege-only — so the
+  fix is to have `AbyssGuardSimpleAI` consult the same table on death. Small, and deliberately not done
+  in the same change as the gate: one commit that both removes a broadcast from 877 npcs and adds it to
+  57 is two claims wearing one coat.
+- **The seven balaur variants on a *different* specialised class** (`guard_reinforcement` where their
+  twins use `fortress_protector`) are still unread. The forward audit's territory.
+- **30002**, the protectors' own mid-fight broadcast, is still untranslated: retail sends it from a
+  battle timer inside a cast chain, so it needs the timer built and the timer is skills.
+- **`FortressKillerAI`'s side of this was never measured.** It answers 30003 by standing down; whether
+  the npcs it answers *for* are the right ones has not been checked the way the sending side just was.

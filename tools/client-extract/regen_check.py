@@ -72,7 +72,8 @@ GENERATORS = [
 ]
 
 # Same job, different CLI: it takes the output path positionally and has no --out.
-POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv")]
+POSITIONAL_OUT = [("extract_guard_calls.py", "guard_calls.tsv"),
+                  ("extract_siege_death_calls.py", "siege_death_calls.tsv")]
 
 # (emitter, committed .cs, argv builder). The tiamat emitter takes the output path FIRST and its tables
 # as repeated --table switches, so it cannot share the others' shape.
@@ -86,6 +87,8 @@ EMITTERS = [
      lambda out: [str(HERE / "out" / "vritra_callers.tsv"), out]),
     ("emit_guard_calls_table.py", GEN / "GuardCalls.cs",
      lambda out: [str(HERE / "out" / "guard_calls.tsv"), out]),
+    ("emit_siege_death_calls_table.py", GEN / "SiegeDeathCalls.cs",
+     lambda out: [str(HERE / "out" / "siege_death_calls.tsv"), out]),
     ("emit_tiamat_table.py", GEN / "TiamatRotation.cs",
      lambda out: [out,
                   "--table", f"219362={HERE / 'out' / 'tiamat_rotation.tsv'}",
