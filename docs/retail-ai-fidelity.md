@@ -34205,3 +34205,46 @@ exit status, never on a grep of its output.
 one flake class before — `BaseService`'s static initialiser poisoning the process for every later test
 in the same run, which shows up as unrelated failures that pass in isolation. That is the first thing to
 check if it returns.
+
+## Two data threads closed by measurement, and an audit for orphaned AI classes
+
+### npc health: our file is Java plus the documented repairs
+
+`audit_npc_health` reports 7,723 npcs whose health is higher than retail's and 6,462 lower, and that has
+sat in the backlog as if it were 14,000 defects. Compared against the Java tree instead:
+
+> **Our `npc_templates.xml` differs from Java's in exactly 4,241 maxHp values — the same 4,241 this log
+> records repairing**, where Java carried a placeholder (~100–128) and retail had the real number.
+> Everything else is identical, in both directions, with no npc in one file and not the other.
+
+So the divergence from retail is Java's, in data Java is the spec for. Training dummies at 99,999,999
+against retail's 4,190, `BLDF4_Dramata_ShieldObject` at 84,512,384 against 2,921 — Java says the same.
+Nothing to fix, and the backlog line was measuring the wrong pair of files.
+
+### AI classes bound to no npc
+
+`audit_orphan_ai.py` lists them and — the part that matters — classifies them against Java:
+
+| | count |
+|---|---|
+| **lost bindings** (Java binds them, we do not) | **0** |
+| replaced on purpose by a retail-sourced class | 3 |
+| unused in Java too (event AIs, runtime-bound helpers) | 25 |
+
+28 of 725 AI names are unused, and a raw list cannot tell a dead class from a mechanic that silently
+stopped running. The three replacements are `wave_attacker` → `seal_wave_attacker`/`seal_wave_leader`,
+and both Tiamat classes → `tiamat_dying_rotation`. Each now says so in its own remark, because the
+failure mode is someone "restoring" a binding and undoing retail-sourced work.
+
+**`tiamat_weakened_dragon` was flagged as a lost binding and is not one.** Its npc 219362 runs
+`tiamat_dying_rotation`, whose generated steps cover bands `76-100` down to `0-25` — the whole fight, not
+the dying phase the name suggests.
+
+### Still missing
+
+- **Three adds the Tiamat swap did not carry.** The old class spawns eight npc ids; retail's rotation
+  names five. `283135` (the gravity crusher, placed at a computed offset), `283237` and `283241` appear
+  nowhere in the retail steps. Most likely aionemu approximating a mechanic retail expresses another
+  way, but **nothing has checked which**, and that is the one open question this entry leaves.
+- The 25 classes unused in Java too — worth a pass one day to see whether any is a mechanic neither
+  project ever bound.

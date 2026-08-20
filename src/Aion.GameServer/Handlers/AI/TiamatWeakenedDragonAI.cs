@@ -14,6 +14,19 @@ using Aion.GameServer.World;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>Java parity: ai/instance/dragonLordsRefuge/TiamatWeakenedDragonAI (Cheatkiller, Luzien, Estrayl).</summary>
+/// <remarks>
+/// <b>Superseded, and bound to nothing on purpose.</b> Java binds npc 219362 (tiamat) here; this port
+/// runs it on <c>tiamat_dying_rotation</c>, whose steps come from the retail pattern and cover the whole
+/// fight — the generated table carries bands <c>76-100</c> down to <c>0-25</c>, not just the dying phase
+/// the class name suggests. The sanctioned exception in CLAUDE.md, logged in retail-ai-fidelity.md.
+/// <para>
+/// <b>What the swap did not carry:</b> this class spawns eight add ids and retail's rotation names five
+/// of them. <c>283135</c> (the gravity crusher, placed at a computed offset by
+/// <c>SpawnGravityCrusher</c>), <c>283237</c> and <c>283241</c> appear nowhere in the retail steps. They
+/// are aionemu's approximation of a mechanic retail expresses differently, not adds retail forgot — but
+/// nothing has checked which, so they are named here rather than left for someone to rediscover.
+/// </para>
+/// </remarks>
 [AIName("tiamat_weakened_dragon")]
 public class TiamatWeakenedDragonAI : AggressiveNpcAI, HpPhases.PhaseHandler
 {

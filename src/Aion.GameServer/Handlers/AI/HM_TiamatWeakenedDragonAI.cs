@@ -11,6 +11,12 @@ using Aion.GameServer.World;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>Java parity: ai/instance/dragonLordsRefuge/HM_TiamatWeakenedDragonAI (Estrayl).</summary>
+/// <remarks>
+/// <b>Superseded, and bound to nothing on purpose.</b> Java binds npc 236277 (tiamat) here; this port
+/// runs it on <c>tiamat_dying_rotation</c>, built from the retail cast rotation. Kept as the reference
+/// the replacement was measured against — an audit flagging it as unused is reporting the intended
+/// state, not a lost binding.
+/// </remarks>
 [AIName("hm_tiamat_weakened_dragon")]
 public class HM_TiamatWeakenedDragonAI : TiamatWeakenedDragonAI
 {
