@@ -35298,3 +35298,58 @@ Across the whole dump the reach is far larger: **30,304 of 38,101 `use_skill` us
   patterns now get far enough to be refused for this instead.
 - One bound npc is `Test_Basic_Monster_AI_KSG_7` (287045), a developer test pattern in retail's own
   data. Harmless, but it is not content.
+
+## With skills resolved, most boss mechanics turn out to be a cast on a timer
+
+`BattleCycles` was built spawn-only -- a rotation had to place an add to be taken -- because `use_skill`
+could not be said, and a skill rotation with its skills stripped out is nothing at all. With
+`SKILLI_INDEX` resolved that restriction had no reason to exist, and lifting it is the largest single
+content change in this log:
+
+| | before | after |
+|---|---|---|
+| rotations | 16 | **545** |
+| npcs | 23 | **1,858** |
+| actions | 96 | **11,604** |
+| of which casts | 12 | **4,810** |
+
+Most retail boss mechanics are a cast on a timer, not a spawn. The spawn-only filter was hiding 97% of
+them.
+
+### The check that mattered more than the count
+
+`BattleCycleAI` extends `AggressiveNpcAI`, so rebinding an `aggressive` npc is **purely additive**:
+same aggro, same melee, plus the rotation. Rebinding anything else is not, and the extractor's generic
+set had inherited five more classes from the idle table. A `general` npc would have started attacking
+players on sight; `aggressive_noloot` would have started dropping loot; `onedmg_aggressive` would have
+lost its damage rule. The set is now **`aggressive` only**, which gives up 19 npcs and avoids shipping a
+behaviour change dressed as a port. The binding pass re-checks every npc and refuses any that is not
+already `aggressive`, so the rule cannot quietly rot.
+
+All 1,835 newly bound npcs were `aggressive`, and the other 2,834 tests were unmoved by the rebinding.
+
+### Pins for a table nobody will read
+
+At 11,604 actions the hand-checked encounters (`IDYun_Nmd1`, the Abyssal core worm) stop being
+coverage. Three structural pins hold the rest: every cast names a skill this port can load, every timer
+sits in one of retail's thirty slots, every spawn names a placeable npc.
+
+**None of them argues the indices are right** -- a resolver bug would not produce nonsense, it would
+produce *a real skill belonging to another npc*, which passes every one of these. That argument lives
+in `NpcSkillListTests` and rests on the two independently-proven orders, which is worth remembering
+before treating a green suite here as proof the rotations are faithful.
+
+### Still missing
+
+- **582 rotations name a skill target this port cannot say** -- now the top refusal, ahead of the 735
+  armed from handlers this does not read. `OBJI_EVENT_TARGET`, `OBJI_TALKER`, `OBJI_FRIEND` and
+  `OBJI_MESSAGE_PARAM` are the four; the event target is the common one and is refused rather than
+  approximated as the most-hated creature.
+- **735 rotations armed from `on_message`, `on_attacked` or `on_spelled`.** Reading those handlers is
+  now the single biggest remaining lever on this table.
+- **198 refused on `is_user_flying`**, 95 on `use_skill_by_attacker_indicator`, 95 on
+  `switch_target_by_attacker_indicator`.
+- **The rotations are unverified against live play.** 545 rotations went in on the strength of the data
+  and three structural pins. Retail cast *timings* in particular have never been observed here.
+- Unchanged: `GAb1_PvPStatus`, the 6,800 duplicate gated placements, `[SAVE]` persistence, the 16 idle
+  cycles with no wake delay.

@@ -14,7 +14,12 @@ The scale of it, across the whole dump:
 | `btimer_indicator` | 47,603 |
 | `use_skill` inside `on_battle_timer` | 24,250 |
 | `add_battle_timer` | 23,151 |
-| **patterns that `spawn` from `on_battle_timer`** | **810** |
+| **patterns with an `on_battle_timer`** | **2,600+** |
+
+This started as spawn-only -- rotations that place adds -- because `use_skill` could not be said and a
+skill rotation with its skills removed is nothing at all. With `SKILLI_INDEX` resolved
+(`extract_npc_skill_lists.py`) that restriction was lifted, and the table grew from 16 patterns to
+545: most boss mechanics are a cast on a timer, not a spawn.
 
 `PatternAi` has had the engine all along -- thirty battle-timer slots, combat-gated, cancelled on death,
 with `When.Timer` and `Do.ArmTimer`. What was missing was the data. This extracts it.
@@ -73,9 +78,13 @@ TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED"}
 
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
-#: Classes that do nothing with a battle timer, plus the one this table feeds.
-GENERIC = {"aggressive", "general", "onedmg_aggressive", "aggressive_noloot", "dummy",
-           "no_interaction", "battle_cycle"}
+#: **Only `aggressive`**, plus the class this table feeds. This is narrower than the set the idle
+#: table uses, and deliberately so: `BattleCycleAI` extends `AggressiveNpcAI`, so rebinding an
+#: `aggressive` npc is purely additive -- same aggro and melee, plus the rotation. Rebinding anything
+#: else is not. A `general` npc would start attacking players, `aggressive_noloot` would start
+#: dropping loot, and `onedmg_aggressive` would lose its damage rule. 19 npcs on `general` are given
+#: up for that reason; taking them would be a behaviour change dressed up as a port.
+GENERIC = {"aggressive", "battle_cycle"}
 
 #: Retail's thirty battle-timer slots, named by index.
 TIMER_RE = re.compile(r"BTIMERI_INDEX_(\d+)")
@@ -285,7 +294,7 @@ def main() -> int:
             if not named:
                 continue
             timer = re.search(r"<on_battle_timer>(.*?)</on_battle_timer>", body, re.S)
-            if not timer or "<spawn>" not in timer.group(1):
+            if not timer:
                 continue
             owners = [n for n in binders.get(named.group(1), [])
                       if ai.get(n) in GENERIC and n not in spoken_for]

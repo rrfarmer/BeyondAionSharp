@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System;
 using System.Linq;
@@ -198,6 +199,64 @@ public sealed class BattleCycleAiTests
 			Assert.NotEmpty(BattleCycles.ArmingRungsFor(npc));
 	}
 
+	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
+	/// <remarks>
+	/// 4,810 casts across 1,858 npcs, none of them read by a human. The index they came from is only
+	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
+	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
+	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
+	/// argues the indices are the right ones.
+	/// </remarks>
+	[Fact]
+	public void EveryCastNamesAKnownSkill()
+	{
+		using BossAiHarness harness = NewHarness();
+		int casts = 0;
+		foreach (string[] fields in Rows("skill"))
+		{
+			casts++;
+			int skill = int.Parse(fields[0]);
+			Assert.True(DataManager.SKILL_DATA.GetSkillTemplate(skill) != null,
+				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
+		}
+
+		Assert.Equal(4810, casts);
+	}
+
+	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
+	/// <remarks>
+	/// <see cref="PatternAi.ArmTimer"/> throws outside 0..29, so a bad indicator would take the npc
+	/// down mid-fight rather than misbehave quietly. Cheaper to catch here than in a raid.
+	/// </remarks>
+	[Fact]
+	public void EveryTimerSlotIsOneRetailHas()
+	{
+		foreach (string[] fields in Rows("arm"))
+		{
+			int slot = int.Parse(fields[0]);
+			Assert.InRange(slot, 0, 29);
+		}
+	}
+
+	/// <summary>The (a1, a2) pair of every row of one action kind.</summary>
+	private static IEnumerable<string[]> Rows(string kind)
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "battle_cycles.tsv");
+		string[] lines = File.ReadAllLines(path);
+		string[] header = lines[0].Split('	');
+		int kindAt = Array.IndexOf(header, "kind");
+		int firstAt = Array.IndexOf(header, "a1");
+		int secondAt = Array.IndexOf(header, "a2");
+
+		foreach (string line in lines.Skip(1))
+		{
+			string[] fields = line.Split('	');
+			if (fields[kindAt] == kind)
+				yield return [fields[firstAt], fields[secondAt]];
+		}
+	}
+
 	/// <summary><b>Every spawn names an npc this port can actually place.</b></summary>
 	[Fact]
 	public void EverySpawnNamesAKnownNpc()
@@ -220,6 +279,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(29, spawns);
+		Assert.Equal(34, spawns);
 	}
 }
