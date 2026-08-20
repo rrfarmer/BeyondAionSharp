@@ -36915,3 +36915,54 @@ The tables after it, and after the shared parser change rippled through all five
 - **`enable_area` (31)** -- quest-script areas, a system this port does not model at all.
 - **17 npcs give up their patterns** to `spawn_helpers.xml`.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
+
+## Where the adds backlog stands, and the wall it has hit
+
+`audit_missing_adds.py` is the audit this work began from. Re-running it:
+
+| | at the start | now |
+|---|---|---|
+| fightable retail adds we never spawn | 812 | **226** |
+| encounters affected | 518 | **166** |
+
+Down 72%. The remaining 166 split cleanly, and the split says what kind of work is left:
+
+* **105 belong to npcs that already have a hand-written class.** The encounter is modelled here and the
+  class simply does not place the add retail places. That is the original problem, one encounter at a
+  time, and no table reaches it.
+* **61 are on generic classes**, blocked by vocabulary or by a table rule.
+
+### The wall: one npc, one AI class
+
+**33 of the 166 are npcs our own tables already drive.** They are short an add because the add comes
+from a handler *that class never reads*:
+
+| class | handler it does not read | encounters |
+|---|---|---|
+| `aggressive_pattern` | `on_battle_timer` | 12 |
+| `death_spawn` | `on_leave_attack_state` | 10 |
+| `death_spawn` | `on_battle_timer` | 10 |
+| `aggressive_pattern` | `on_enter_attack_state` | 6 |
+| `battle_cycle` | `on_killed_by_user` | 3 |
+
+`Bionic_EhA` is the shape of it: bound to `death_spawn` for its death bequest, and its rotation and its
+leave-fight spawn are simply not read, because that class does not read them.
+
+**This is structural.** An npc has exactly one `ai=` binding, and the tables are organised by handler
+family -- wake and idle here, rotations there, deaths in a third. An npc whose retail pattern spans
+families gets whichever family claimed it first, and the rest of its pattern is silently dropped. Every
+table's ownership rule compares only the handlers *it* reads, so none of them can even see the loss.
+
+The fix is a table keyed by npc across **all** handlers, with one class behind it -- which is what the
+five tables would collapse into. That is a bigger change than any single entry here has attempted, and
+it is the honest next step rather than a sixth family-shaped table.
+
+### Still missing
+
+- **A pattern table keyed by npc rather than by handler family**, above. 33 encounters immediately, and
+  it removes the ownership rules between tables entirely.
+- **105 encounters whose hand-written class is short an add** -- per-encounter work, unchanged in kind
+  since this began.
+- **`control_door` (37)**, **`change_world_scene_status` (54)**, **`enable_area` (31)**,
+  **`goto_waypoint` runs (35)** -- all blocked on evidence or on systems this port lacks.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **retail cast timings.**
