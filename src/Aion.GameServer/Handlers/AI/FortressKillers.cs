@@ -31,55 +31,66 @@ internal static class FortressKillers
     /// <param name="Walks">Whether retail puts it on its route.</param>
     /// <param name="SightHate">Hate dropped on a garrison chief it sees, or 0 for a killer that waits.</param>
     /// <param name="Hunted">The chief races it reacts to.</param>
-    internal readonly record struct Killer(float WakeRange, bool Walks, int SightHate, Race[] Hunted);
+    /// <param name="FocusFirst">Milliseconds into a fight before the chief-focus rung first lands.</param>
+    /// <param name="FocusPeriod">Milliseconds between focus rungs thereafter.</param>
+    /// <param name="FocusHate">Hate it adds to a current target that is a chief. 0 for killers with no such rung.</param>
+    /// <param name="Focused">
+    /// The chief races the focus rung tests. <b>Not the same list as <paramref name="Hunted"/></b>: the
+    /// artifact killers focus on light and dark chiefs and hunt nobody on sight, so their sight list is
+    /// empty and their focus list is not. Sharing one field made the focus rung test an empty array and
+    /// never fire.
+    /// </param>
+    internal readonly record struct Killer(float WakeRange, bool Walks, int SightHate, Race[] Hunted,
+                                           int FocusFirst, int FocusPeriod, int FocusHate,
+                                           Race[] Focused);
 
     internal static readonly IReadOnlyDictionary<int, Killer> ByNpc = new Dictionary<int, Killer>
     {
-        [235543] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235544] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235545] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235546] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235547] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235548] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235549] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235550] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235551] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235552] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235553] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235554] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235555] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235556] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235557] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235558] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235559] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235560] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [235561] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
-        [251160] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [251463] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [251506] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [251549] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [251821] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [252431] = new Killer(50f, true, 0, []),  // LDF5_Fortress_DrGuard_Artifact_Killer
-        [252432] = new Killer(50f, true, 0, []),  // LDF5_Fortress_DrGuard_Artifact_Killer
-        [252433] = new Killer(50f, true, 0, []),  // LDF5_Fortress_DrGuard_Artifact_Killer
-        [258259] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [286956] = new Killer(20f, false, 0, []),  // Test_Monster_Jun02
-        [286957] = new Killer(20f, false, 0, []),  // Test_Monster_Jun03
-        [297157] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [297202] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [297515] = new Killer(50f, true, 0, []),  // LDF5_Fortress_DrGuard_Artifact_Killer
-        [297570] = new Killer(50f, false, 0, []),  // LDF5_Fortress_Ctrl_01
-        [832947] = new Killer(100f, false, 0, []),  // IDSweep_NPC03
-        [882861] = new Killer(50f, false, 0, []),  // LDF5_Fortress_Ctrl_01
-        [882862] = new Killer(50f, false, 0, []),  // LDF5_Fortress_Ctrl_01
-        [882863] = new Killer(50f, false, 0, []),  // LDF5_Fortress_Ctrl_01
-        [882864] = new Killer(50f, false, 0, []),  // LDF5_Fortress_Ctrl_01
-        [882865] = new Killer(50f, false, 0, []),  // LDF5_Fortress_Ctrl_01
-        [885153] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [885154] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [885155] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [885156] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
-        [885157] = new Killer(50f, true, 0, []),  // AB1_DrGuard_Artifact_Killer
+        [235543] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235544] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235545] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235546] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235547] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235548] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235549] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235550] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235551] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235552] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235553] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235554] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235555] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235556] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235557] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235558] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235559] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235560] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [235561] = new Killer(50f, false, 1000000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT], 10000, 5000, 900000, [Race.GCHIEF_DARK, Race.GCHIEF_DRAGON, Race.GCHIEF_LIGHT]),  // LDF4_Advance_Killer_43
+        [251160] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [251463] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [251506] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [251549] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [251821] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [252431] = new Killer(50f, true, 0, [], 6000, 22000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // LDF5_Fortress_DrGuard_Artifact_Killer
+        [252432] = new Killer(50f, true, 0, [], 6000, 22000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // LDF5_Fortress_DrGuard_Artifact_Killer
+        [252433] = new Killer(50f, true, 0, [], 6000, 22000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // LDF5_Fortress_DrGuard_Artifact_Killer
+        [258259] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [286956] = new Killer(20f, false, 0, [], 0, 0, 0, []),  // Test_Monster_Jun02
+        [286957] = new Killer(20f, false, 0, [], 0, 0, 0, []),  // Test_Monster_Jun03
+        [297157] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [297202] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [297515] = new Killer(50f, true, 0, [], 6000, 22000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // LDF5_Fortress_DrGuard_Artifact_Killer
+        [297570] = new Killer(50f, false, 0, [], 0, 0, 0, []),  // LDF5_Fortress_Ctrl_01
+        [832947] = new Killer(100f, false, 0, [], 0, 0, 0, []),  // IDSweep_NPC03
+        [882861] = new Killer(50f, false, 0, [], 0, 0, 0, []),  // LDF5_Fortress_Ctrl_01
+        [882862] = new Killer(50f, false, 0, [], 0, 0, 0, []),  // LDF5_Fortress_Ctrl_01
+        [882863] = new Killer(50f, false, 0, [], 0, 0, 0, []),  // LDF5_Fortress_Ctrl_01
+        [882864] = new Killer(50f, false, 0, [], 0, 0, 0, []),  // LDF5_Fortress_Ctrl_01
+        [882865] = new Killer(50f, false, 0, [], 0, 0, 0, []),  // LDF5_Fortress_Ctrl_01
+        [885153] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [885154] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [885155] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [885156] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
+        [885157] = new Killer(50f, true, 0, [], 8000, 28000, 200000, [Race.GCHIEF_DARK, Race.GCHIEF_LIGHT]),  // AB1_DrGuard_Artifact_Killer
     };
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> Built =
@@ -106,9 +117,25 @@ internal static class FortressKillers
         if (killer.Walks)
             waking.Add(AiPattern.Branch(94, "and set off", When.Always, Do.StartWalking()));
 
+        List<PatternBranch> onTimer = [];
+        if (killer.FocusHate > 0)
+        {
+            onTimer.Add(AiPattern.Branch(7, "keep choosing the chief over whoever else joined in",
+                [When.Timer(0), When.TargetRace(killer.Focused)],
+                Do.HateTarget(killer.FocusHate),
+                Do.ArmTimer(0, killer.FocusPeriod)));
+        }
+
         return new AiPattern
         {
             OnWakeUp = [.. waking],
+
+            OnEnterAttack = killer.FocusHate == 0
+                ? AiPattern.Of()
+                : AiPattern.Of(AiPattern.Branch(7, "start the focus clock", When.Always,
+                    Do.ArmTimer(0, killer.FocusFirst))),
+
+            OnBattleTimer = [.. onTimer],
 
             OnLeaveAttack = killer.Walks
                 ? AiPattern.Of(AiPattern.Branch(94, "back to the route", When.Always, Do.StartWalking()))

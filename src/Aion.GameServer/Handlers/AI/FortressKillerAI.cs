@@ -108,7 +108,11 @@ public class FortressKillerAI : AbyssGuardCallAI
     private static AiPattern Merge(AiPattern guard, AiPattern killer, AiPattern own) => new AiPattern
     {
         OnWakeUp = [.. guard.OnWakeUp, .. killer.OnWakeUp, .. own.OnWakeUp],
-        OnEnterAttack = guard.OnEnterAttack,
+        // Both halves of entering combat: the base's 23000 shout for killers that are also listed
+        // guards, and the table's rung that starts the chief-focus clock. Keeping only the base's --
+        // which this did at first -- left the focus timer unarmed and the rung below unreachable.
+        OnEnterAttack = [.. guard.OnEnterAttack, .. own.OnEnterAttack],
+        OnBattleTimer = own.OnBattleTimer,
         OnLeaveAttack = own.OnLeaveAttack,
         OnSeeNpc = own.OnSeeNpc,
         OnMessage = [.. guard.OnMessage, .. killer.OnMessage],

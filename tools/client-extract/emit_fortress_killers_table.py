@@ -42,7 +42,18 @@ internal static class FortressKillers
     /// <param name="Walks">Whether retail puts it on its route.</param>
     /// <param name="SightHate">Hate dropped on a garrison chief it sees, or 0 for a killer that waits.</param>
     /// <param name="Hunted">The chief races it reacts to.</param>
-    internal readonly record struct Killer(float WakeRange, bool Walks, int SightHate, Race[] Hunted);
+    /// <param name="FocusFirst">Milliseconds into a fight before the chief-focus rung first lands.</param>
+    /// <param name="FocusPeriod">Milliseconds between focus rungs thereafter.</param>
+    /// <param name="FocusHate">Hate it adds to a current target that is a chief. 0 for killers with no such rung.</param>
+    /// <param name="Focused">
+    /// The chief races the focus rung tests. <b>Not the same list as <paramref name="Hunted"/></b>: the
+    /// artifact killers focus on light and dark chiefs and hunt nobody on sight, so their sight list is
+    /// empty and their focus list is not. Sharing one field made the focus rung test an empty array and
+    /// never fire.
+    /// </param>
+    internal readonly record struct Killer(float WakeRange, bool Walks, int SightHate, Race[] Hunted,
+                                           int FocusFirst, int FocusPeriod, int FocusHate,
+                                           Race[] Focused);
 
     internal static readonly IReadOnlyDictionary<int, Killer> ByNpc = new Dictionary<int, Killer>
     {{
@@ -74,9 +85,25 @@ FOOTER = '''    };
         if (killer.Walks)
             waking.Add(AiPattern.Branch(94, "and set off", When.Always, Do.StartWalking()));
 
+        List<PatternBranch> onTimer = [];
+        if (killer.FocusHate > 0)
+        {
+            onTimer.Add(AiPattern.Branch(7, "keep choosing the chief over whoever else joined in",
+                [When.Timer(0), When.TargetRace(killer.Focused)],
+                Do.HateTarget(killer.FocusHate),
+                Do.ArmTimer(0, killer.FocusPeriod)));
+        }
+
         return new AiPattern
         {
             OnWakeUp = [.. waking],
+
+            OnEnterAttack = killer.FocusHate == 0
+                ? AiPattern.Of()
+                : AiPattern.Of(AiPattern.Branch(7, "start the focus clock", When.Always,
+                    Do.ArmTimer(0, killer.FocusFirst))),
+
+            OnBattleTimer = [.. onTimer],
 
             OnLeaveAttack = killer.Walks
                 ? AiPattern.Of(AiPattern.Branch(94, "back to the route", When.Always, Do.StartWalking()))
@@ -103,8 +130,9 @@ def main() -> None:
     patterns: set[str] = set()
     shapes: collections.Counter[str] = collections.Counter()
     for line in args.tsv.read_text(encoding="utf-8").splitlines()[1:]:
-        npc, reach, walks, hate, races, pattern = line.split("\t")
-        rows.append((int(npc), int(reach), walks, int(hate), races, pattern))
+        npc, reach, walks, hate, races, first, period, fhate, fraces, pattern = line.split("\t")
+        rows.append((int(npc), int(reach), walks, int(hate), races,
+                     int(first), int(period), int(fhate), fraces, pattern))
         patterns.add(pattern)
         shapes[f"{reach}m wake call"] += 1
 
@@ -113,10 +141,11 @@ def main() -> None:
 
     with args.out.open("w", encoding="utf-8", newline="\n") as out:
         out.write(header)
-        for npc, reach, walks, hate, races, pattern in rows:
+        for npc, reach, walks, hate, races, first, period, fhate, fraces, pattern in rows:
             hunted = ", ".join(f"Race.{r}" for r in races.split("|") if r)
-            out.write(f"        [{npc}] = new Killer({reach}f, {walks}, {hate}, [{hunted}]),"
-                      f"  // {pattern}\n")
+            focused = ", ".join(f"Race.{r}" for r in fraces.split("|") if r)
+            out.write(f"        [{npc}] = new Killer({reach}f, {walks}, {hate}, [{hunted}], "
+                      f"{first}, {period}, {fhate}, [{focused}]),  // {pattern}\n")
         out.write(FOOTER)
 
     print(f"{len(rows)} rows -> {args.out}")

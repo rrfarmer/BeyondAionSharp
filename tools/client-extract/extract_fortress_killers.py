@@ -18,9 +18,11 @@ Three constants in a class would have been wrong for two of the three, which is 
 
 WHAT IT LEAVES ALONE
 --------------------
-The battle-timer ladder. Every killer has one and it is almost entirely `use_skill`; the one translatable
-rung on it adds 200,000 hate to a *current target* that is a guardian chief, and it sits behind a race
-guard, so the timer walk used for 30002 refuses it by design. Recorded in the docs, not here.
+The cast ladders. Every killer's battle timers interleave `use_skill` with the hand-offs and none of the
+casts is translated -- but the **one** translatable rung on that ladder is read: it adds 200,000 hate to
+a current target that is a guardian chief, so a killer already fighting keeps choosing the chief over
+whatever else joins in. It sits behind a race guard, which the timer walk written for 30002 refuses by
+design, so this file walks the chain itself through each timer's unguarded fallback rung.
 
 Usage:  python extract_fortress_killers.py <patterns-dir> <ai_binding.tsv> <out.tsv>
 """
@@ -41,6 +43,27 @@ WAKE_CALL = "30001"
 CHIEF_RACES = {"gchief_light": "GCHIEF_LIGHT",
                "gchief_dark": "GCHIEF_DARK",
                "gchief_dragon": "GCHIEF_DRAGON"}
+
+
+TIMER_RE = re.compile(r"BTIMERI_INDEX_(\d+)")
+
+
+def timer_of(node):
+    """The battle-timer index a condition or action names, or None."""
+    found = TIMER_RE.search("".join(node.itertext())) if node is not None else None
+    return int(found.group(1)) if found else None
+
+
+def arms(branch):
+    """Every (timer index, delay) this branch sets."""
+    out = []
+    for action in list(branch.find("actions") or []):
+        if action.tag == "add_battle_timer":
+            index = timer_of(action)
+            delay = action.find("delay")
+            if index is not None and delay is not None:
+                out.append((index, int(delay.text)))
+    return out
 
 
 def branches(handlers, name):
@@ -94,6 +117,96 @@ def hunts_on_sight(handlers):
     return (hate, sorted(races)) if races else None
 
 
+def hate_rung(handlers):
+    """(first delay, period, hate, races) for the timer rung that piles hate on a garrison chief.
+
+    **This is the one translatable rung on a killer's battle-timer ladder**, and it is guarded by a race
+    test, so the plain timer walk written for 30002 refuses it by design. Here the race guard is exactly
+    what is being looked for, so it is allowed -- and the chain is followed through the *unguarded*
+    fallback rung on each timer, which retail provides beside the guarded ones and which arms the same
+    next timer with the same delay. Following the fallback and reading the guarded twin is what keeps
+    "when does it come round" separate from "what does it do when it lands".
+    """
+    on_timer = handlers.find("on_battle_timer")
+    entering = handlers.find("on_enter_attack_state")
+    if on_timer is None or entering is None:
+        return None
+
+    ordered = sorted(on_timer.findall("pattern"), key=lambda b: -int(b.findtext("priority", "0")))
+    chain, focus = {}, {}
+    for branch in ordered:
+        conditions = list(branch.find("conditions") or [])
+        kinds = [c.tag for c in conditions]
+        index = timer_of(branch.find("conditions")) if branch.find("conditions") is not None else None
+        if index is None:
+            continue
+        if kinds == ["is_battle_timer_indicator"] and index not in chain:
+            chain[index] = branch
+        elif "is_race" in kinds:
+            for condition in conditions:
+                if condition.tag != "is_race":
+                    continue
+                race = condition.findtext("race_type", "").strip()
+                if race not in CHIEF_RACES:
+                    continue
+                for action in list(branch.find("actions") or []):
+                    if action.tag == "add_hate_point" and "OBJI_CUR_TARGET" in "".join(action.itertext()):
+                        points = action.findtext("point_to_add")
+                        if points:
+                            hate, races, again = focus.get(index, (0, set(), 0))
+                            # The rung may carry the loop itself: LDF4_Advance_Killer_43 has no
+                            # unguarded fallback on its first timer, so every rung for it is race-
+                            # guarded and each re-arms its own timer at five seconds. While the target
+                            # is a chief it comes round every five; the moment it is not, nothing
+                            # re-arms and the ladder stops. That is the behaviour, not a gap in it.
+                            mine = [d for i, d in arms(branch) if i == index]
+                            focus[index] = (max(hate, int(points)),
+                                            races | {CHIEF_RACES[race]},
+                                            max(again, mine[0] if mine else 0))
+    if not focus:
+        return None
+
+    for branch in sorted(entering.findall("pattern"), key=lambda b: -int(b.findtext("priority", "0"))):
+        if [c.tag for c in list(branch.find("conditions") or [])] not in ([], ["is_battle_timer_indicator"]):
+            continue
+        for start, first in arms(branch):
+            elapsed, at, seen = first, start, set()
+            while at is not None and at not in seen:
+                seen.add(at)
+                if at in focus:
+                    hate, races, again = focus[at]
+                    return elapsed, again or loop_length(chain, at), hate, sorted(races)
+                branch_at = chain.get(at)
+                if branch_at is None:
+                    break
+                following = arms(branch_at)
+                if not following:
+                    break
+                at, delay = following[0]
+                elapsed += delay
+        break
+    return None
+
+
+def loop_length(chain, target):
+    """Milliseconds from one visit to a timer back round to it."""
+    total, at, seen = 0, target, set()
+    while True:
+        branch = chain.get(at)
+        if branch is None:
+            return 0
+        following = arms(branch)
+        if not following:
+            return 0
+        at, delay = following[0]
+        total += delay
+        if at == target:
+            return total
+        if at in seen:
+            return 0
+        seen.add(at)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("patterns_dir", type=pathlib.Path)
@@ -133,10 +246,15 @@ def main():
                 continue                       # hears 30001, does not send it: not a killer
 
             hunt = hunts_on_sight(handlers)
+            focus = hate_rung(handlers)
             for npc_id in binders.get(named.group(1), []):
                 rows.append((int(npc_id), reach, "true" if walks(handlers) else "false",
                              hunt[0] if hunt else 0,
                              "|".join(hunt[1]) if hunt else "",
+                             focus[0] if focus else 0,
+                             focus[1] if focus else 0,
+                             focus[2] if focus else 0,
+                             "|".join(focus[3]) if focus else "",
                              named.group(1)))
 
     rows.sort()
@@ -148,7 +266,9 @@ def main():
     hunters = sum(1 for r in rows if r[3])
     walkers = sum(1 for r in rows if r[2] == "true")
     print(f"{len(rows)} fortress killers -> {args.out}")
-    print(f"    {walkers} walk their route, {hunters} hunt a garrison chief on sight")
+    focused = sum(1 for r in rows if r[7])
+    print(f"    {walkers} walk their route, {hunters} hunt a garrison chief on sight, "
+          f"{focused} keep piling hate on one while they fight")
     return 0
 
 

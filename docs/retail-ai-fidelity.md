@@ -32847,3 +32847,65 @@ Four pins, four of four mutations caught.
 - **`LDF5_Fortress_Ctrl_01`** sends 30001 and answers nothing: a pure trigger, six npcs, and the class
   gives it the walk and hunt fields it has no use for. Harmless, but it is in the table for uniformity
   rather than because it needs to be.
+
+## The killers' focus rung, and a pin that could not be written
+
+The previous entry left one translatable piece: the battle-timer rung that adds hate to a **current
+target that is a garrison chief**, so a killer already fighting is not pulled off by whoever joins in.
+It is now read and wired, and this entry is mostly about the three things that went wrong doing it.
+
+### Walking a chain the 30002 walker refuses
+
+That rung is guarded by a race test, and the timer walk written for 30002 refuses any chain reaching its
+broadcast through a guard — deliberately, because a guarded chain has more than one cadence. Here the
+guard is the thing being looked for, so this extractor walks the chain through **each timer's unguarded
+fallback rung** and reads the guarded twin beside it. That keeps "when does it come round" separate from
+"what does it do when it lands".
+
+Three cadences again, and one of them broke the model:
+
+| | first | then every | hate |
+|---|---|---|---|
+| `AB1_DrGuard_Artifact_Killer` | 8s | 28s | 200,000 |
+| `LDF5_Fortress_DrGuard_Artifact_Killer` | 6s | 22s | 200,000 |
+| `LDF4_Advance_Killer_43` | 10s | **5s** | **900,000** |
+
+**The Advance ladder has no unguarded fallback at all.** Every rung on its first timer is race-guarded,
+and each re-arms *its own* timer at five seconds. So the loop lives on the guarded rung: while the target
+is a chief it comes round every five seconds, and the moment it is not, nothing re-arms and the ladder
+stops. The first version of the walker read `period = 0` for all nineteen of them, which is the shape of
+a loop that could not be found rather than one that does not exist.
+
+### The focus list is not the sight list
+
+The artifact killers **hunt nobody on sight and focus on light and dark chiefs**. Sharing one race field
+between the two rungs made the focus rung test an empty array and never fire — a whole mechanic wired
+and silently inert. They are two fields now, and the pin checks exactly that.
+
+### And a pin that could not be written
+
+Driving the rung needs a killer held in combat *against an npc* for ten seconds, and the harness does
+not support it. Measured rather than guessed: a probe read `armed=0 fired=0 target=null` after fourteen
+seconds, with the hate back to zero from over a million. Whatever clears npc-on-npc aggro is upstream of
+this mechanic.
+
+Two earlier attempts failed for a different reason worth keeping — **the quarry has to be from the right
+war.** Retail's rung tests only `is_race`, but `AddHate` applies the aggro list's tribe check, which
+this class deliberately relies on. An artifact killer (`GUARD_DRAGON`) takes no hate against an *Advance*
+chief (`LDF4_ADVANCE_LGUARD`) however right the race is, and neither does the reverse. That caught me on
+the hunt pin last entry and again here, one family along.
+
+**So the wiring is not covered — by a pin or by a mutation.** Swapping `Focused` back to `Hunted`, and
+dropping the table's half of the enter-combat merge, both leave the suite green; that is checked, not
+assumed, and the test file says so. What is covered is the part that was wrong twice: the numbers, and
+the two race lists being separate.
+
+### Still missing
+
+- **A harness that can hold two npcs in a fight.** It blocks this pin, and it blocked the base
+  protectors' death call two entries ago for a different reason. Two mechanics now rest on mutation
+  runs recorded in prose rather than on standing checks, which is one more than is comfortable.
+- **`goto_next_waypoint` is still `StartWalking`**, which resumes rather than advances.
+- **Thirty-three of thirty-seven killers are absent from `GuardCalls`**, so their 23000 send at
+  twenty-five metres does not happen.
+- **The cast ladders**, unchanged: every killer and every protector fights with autoattack.

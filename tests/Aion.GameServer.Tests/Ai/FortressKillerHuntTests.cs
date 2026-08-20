@@ -5,6 +5,7 @@ using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -124,5 +125,45 @@ public sealed class FortressKillerHuntTests
 		Assert.InRange(walkers, 1, FortressKillers.ByNpc.Count - 1);
 		Assert.True(FortressKillers.ByNpc.Values.Select(k => k.WakeRange).Distinct().Count() > 1,
 			"every killer shouts at the same range, so the range did not need reading");
+	}
+
+	/// <summary>
+	/// <b>The focus rung is read out of the ladder, and it is not the sight rung.</b> Retail's one
+	/// translatable battle-timer branch adds hate to a <em>current target</em> that is a garrison chief —
+	/// 200,000 every 28 seconds for the artifact killers, 900,000 every 5 for the Advance ones — so
+	/// whoever else joins the fight does not pull the killer off.
+	/// </summary>
+	/// <remarks>
+	/// <b>This pins the table, not the behaviour, and the distinction is deliberate.</b> Driving the rung
+	/// needs a killer held in combat <em>against an npc</em> for ten seconds, and the harness does not
+	/// support that: engaging npc-on-npc leaves the aggro list cleared and the enter-combat rung unarmed
+	/// by the time the clock has run, measured rather than assumed — a probe read
+	/// <c>armed=0 fired=0 target=null</c> after fourteen seconds with the hate back to zero. Whatever
+	/// clears it is upstream of this mechanic and worth its own look.
+	/// <para>
+	/// <b>So the rung's wiring is not covered at all, by a pin or by a mutation.</b> Swapping
+	/// <c>Focused</c> back to <c>Hunted</c>, or dropping the table's half of the enter-combat merge, both
+	/// leave this suite green — checked, not assumed. What is covered is the part that was actually wrong
+	/// twice: the numbers, and that the focus race list is populated separately from the sight one.
+	/// Sharing a field made the rung test an empty array and never fire.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheFocusRungIsReadOutOfTheLadderAndIsNotTheSightRung()
+	{
+		FortressKillers.Killer artifact = FortressKillers.ByNpc[ArtifactKiller];
+		FortressKillers.Killer advance = FortressKillers.ByNpc[AdvanceKiller];
+
+		// The artifact killer hunts nobody on sight and still focuses: two lists, not one.
+		Assert.Empty(artifact.Hunted);
+		Assert.NotEmpty(artifact.Focused);
+		Assert.Equal(200_000, artifact.FocusHate);
+		Assert.Equal(28_000, artifact.FocusPeriod);
+
+		// The Advance killer's ladder has no unguarded rung, so its period comes off the guarded one.
+		Assert.Equal(900_000, advance.FocusHate);
+		Assert.Equal(5_000, advance.FocusPeriod);
+
+		Assert.NotEqual(artifact.FocusPeriod, advance.FocusPeriod);
 	}
 }
