@@ -34516,3 +34516,46 @@ guessed at, and the twelve spawn groups behind them stay ungated.
 - **The writer half** entirely: `set_condition_spawn_variable`'s three `<modify>` modes are unread —
   0 appears 10,895 times, 1 appears 1,190, and −1, 2, 7 and 4 make up the rest.
 - The 113 remaining idle-spawn patterns, which is where 105 of those writers live.
+
+## The conditional spawn engine, half two: the writers, settled by complementarity
+
+The gate side parses. This entry reads the other half — `set_condition_spawn_variable`, 12,446 uses
+across the patterns over 2,122 names — and its rule turned out to be decidable from the data rather
+than inferred.
+
+Every use carries three fields: a `<string>` name, a `<set>` value, and a `<modify>` value.
+
+> **Across all 12,446 uses there is not one where both value fields are non-zero.**
+
+That is what settles it. `modify` is zero in 10,895 and `set` then carries the value to assign; in the
+other 1,551 `set` is zero and `modify` carries a delta — **1** in 1,190 of them, **−1** in 174, and the
+rest spread from −48 to 350. So:
+
+```
+modify == 0  ->  assign set
+otherwise    ->  add modify
+```
+
+**Twenty-three uses carry zero in both**, which under that rule is an assignment of zero — a deliberate
+reset. Reading them as "no change" would leave a counter retail clears running on, so they have their
+own pin.
+
+`SpawnVariables` is that rule and the store behind it. An unwritten name reads as **zero**, matching
+`SpawnCondition`, so a gate written before its writer exists behaves as retail's `== 0` gates expect —
+and a write that changes nothing raises nothing, so a heartbeat re-assigning the same number does not
+churn every gate in the world.
+
+### What is deliberately not decided
+
+**Scope.** The store is a plain object its owner keeps. Whether retail's variables live per world, per
+instance, per faction or globally is unanswered, and `[SAVE]` persistence is a further question on top
+of it. Guessing would bake an assumption into every caller; the class asserts none.
+
+### Still missing
+
+- **Scope and lifetime**, above — the thing to settle before wiring anything to it.
+- **Group activation**: applying a parsed gate at spawn time, re-checking it on `Changed`, and
+  honouring `despawnAtOther="true"` by removing the group again.
+- **The pattern action**: `Do.SetSpawnVariable` cannot exist until a `PatternAi` can reach a store,
+  which is the scope question again.
+- The 113 remaining idle-spawn patterns, where 105 of these writers live.
