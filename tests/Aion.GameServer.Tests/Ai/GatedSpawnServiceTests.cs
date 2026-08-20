@@ -57,7 +57,7 @@ public sealed class GatedSpawnServiceTests : IDisposable
 		int before = GatedSpawnService.Placed;
 
 		// Most of this map's gates are `SpecialServer_Cond == 0`, so setting it to 1 closes them.
-		SpawnVariableRegistry.For(Map).Write("SpecialServer_Cond", 1, 0);
+		SpawnVariableRegistry.For(Map, harness.InstanceId).Write("SpecialServer_Cond", 1, 0);
 
 		Assert.NotEqual(before, GatedSpawnService.Placed);
 	}
@@ -75,7 +75,7 @@ public sealed class GatedSpawnServiceTests : IDisposable
 	public void StoppingUnsubscribes()
 	{
 		using BossAiHarness harness = BossAiHarness.For(Map).WithWorldSize(4096).Build();
-		SpawnVariables store = SpawnVariableRegistry.For(Map);
+		SpawnVariables store = SpawnVariableRegistry.For(Map, harness.InstanceId);
 		store.Write("SpecialServer_Cond", 1, 0);
 		GatedSpawnService.Start(BossAiHarness.RepoRoot());
 		GatedSpawnService.Stop();

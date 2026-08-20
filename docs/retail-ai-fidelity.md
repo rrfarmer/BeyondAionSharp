@@ -34842,3 +34842,38 @@ Both are the same mistake in different clothes: asserting on the bookkeeping rat
   gate own it, one world at a time.
 - **`[SAVE]` persistence**, **instance scope**, and the **50,841 placements** whose npcs have no
   template here.
+
+## Instance scope, settled: half the writers are in instances
+
+The registry keyed on map id, with the limit written down each time: the scope measurement had reached
+maps and said nothing about two simultaneous instances of one. Measured now, by asking where the
+*writing* patterns' npcs are spawned:
+
+| patterns that write a spawn variable | |
+|---|---|
+| npcs only on **instance** maps | **234** |
+| npcs only on world maps | 231 |
+| both | 1 |
+
+**Half of them are instance content.** Keyed on the map alone, two groups running the same instance
+share one set of counters — one group's wave progress opens the other group's gates, and a boss counted
+down by one party unlocks for the next. 110 of this port's 161 maps are instance-type.
+
+`SpawnVariableRegistry.For(mapId, instanceId)` now, with `Forget(mapId, instanceId)` for an instance
+being destroyed. A world map has a single instance, so nothing changes for one. `PatternAi` writes into
+its own npc's instance, and `GatedSpawnService` gives each instance its own store.
+
+**This is the fourth open question in this engine settled by measuring where npcs live** rather than by
+choosing a design: what a gate means, what a writer means, whether a store is per map, and now whether
+it is per instance. The measurement was available each time and the answer was never the tidy one.
+
+### Still missing
+
+- **`GAb1_PvPStatus`**, 6,006 gate uses. `== 1` guards artifact guards and warcaptains, `== 3`
+  teleporters and scout infantry, `== 2` only 96 temple gates: strong for 1-versus-3, silent on 2.
+- **The 6,800 duplicate placements**, filtered so nothing doubles, which leaves those npcs permanently
+  present where retail would remove them.
+- **`[SAVE]` persistence** — 175 expressions, 2,600 gate uses, and nothing measured distinguishes
+  account, character, world or server.
+- **Gated groups on instance maps are still skipped** by the service. The store is now per instance, so
+  the remaining question is only when to build and tear down a controller with the instance itself.

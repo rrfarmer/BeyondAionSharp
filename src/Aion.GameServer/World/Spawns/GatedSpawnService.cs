@@ -89,7 +89,7 @@ public static class GatedSpawnService
 				map.ForEach(instance =>
 				{
 					var controller = new GatedSpawnController(mapId, instance.GetInstanceId(),
-						SpawnVariableRegistry.For(mapId), groups);
+						SpawnVariableRegistry.For(mapId, instance.GetInstanceId()), groups);
 					controller.Refresh();
 					Live.Add(controller);
 				});

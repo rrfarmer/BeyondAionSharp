@@ -783,14 +783,17 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// carries a non-zero <c>set</c> and a non-zero <c>modify</c> together: a <paramref name="modify"/>
     /// of zero assigns <paramref name="set"/>, and anything else adds <paramref name="modify"/>.
     /// <para>
-    /// The counter belongs to this NPC's map. <see cref="Spawns.SpawnVariableRegistry"/> has the
-    /// measurement behind that; the short version is that generic names like <c>v01</c> are written by
-    /// patterns in nine unrelated maps, so one store for the server would have them corrupting each
-    /// other.
+    /// The counter belongs to this NPC's own instance of its map. <see cref="Spawns.SpawnVariableRegistry"/>
+    /// has the measurements: generic names like <c>v01</c> are written by patterns in nine unrelated
+    /// maps, so one store for the server would have them corrupting each other — and 234 of the writing
+    /// patterns have their npcs only on instance maps, so one store per map would have two groups
+    /// running the same instance sharing a counter.
     /// </para>
     /// </remarks>
     public void SetSpawnVariable(string name, int set, int modify)
-        => Spawns.SpawnVariableRegistry.For(GetOwner().GetWorldId()).Write(name, set, modify);
+        => Spawns.SpawnVariableRegistry
+            .For(GetOwner().GetWorldId(), GetOwner().GetInstanceId())
+            .Write(name, set, modify);
 
     // ---- the idle timer ----------------------------------------------------------------------
 

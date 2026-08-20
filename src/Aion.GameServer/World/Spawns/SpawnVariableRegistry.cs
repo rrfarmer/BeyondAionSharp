@@ -22,13 +22,25 @@ namespace Aion.GameServer.World.Spawns;
 /// </remarks>
 public static class SpawnVariableRegistry
 {
-	private static readonly ConcurrentDictionary<int, SpawnVariables> ByMap = new();
+	private static readonly ConcurrentDictionary<(int Map, int Instance), SpawnVariables> ByInstance = new();
 
 	private static readonly ConcurrentDictionary<string, int> ServerFlags = new(StringComparer.Ordinal);
 
-	/// <summary>The store for one map, created on first use.</summary>
-	public static SpawnVariables For(int mapId)
-		=> ByMap.GetOrAdd(mapId, static _ => new SpawnVariables(ServerFlags));
+	/// <summary>The store for one running instance of one map, created on first use.</summary>
+	/// <remarks>
+	/// <b>Keyed on the instance, not just the map, and that was measured rather than assumed.</b> Of the
+	/// patterns that write a spawn variable, <b>234 have their npcs only on instance maps</b> against 231
+	/// only on world maps. Keyed on the map alone, two groups running the same instance would share one
+	/// set of counters — one group's wave progress would open the other group's gates.
+	/// <para>
+	/// A world map has a single instance, so nothing changes for one.
+	/// </para>
+	/// </remarks>
+	public static SpawnVariables For(int mapId, int instanceId)
+		=> ByInstance.GetOrAdd((mapId, instanceId), static _ => new SpawnVariables(ServerFlags));
+
+	/// <summary>Forgets one instance's counters, for an instance being destroyed or reused.</summary>
+	public static void Forget(int mapId, int instanceId) => ByInstance.TryRemove((mapId, instanceId), out _);
 
 	/// <summary>
 	/// Sets one of the variables no pattern writes — siege and PvP status, portal wiring — which every
@@ -52,7 +64,7 @@ public static class SpawnVariableRegistry
 	/// <summary>Forgets every map's counters and the server flags, for a test or a restart.</summary>
 	public static void Clear()
 	{
-		ByMap.Clear();
+		ByInstance.Clear();
 		ServerFlags.Clear();
 	}
 }

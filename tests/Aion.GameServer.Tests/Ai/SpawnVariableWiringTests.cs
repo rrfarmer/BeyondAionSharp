@@ -32,6 +32,9 @@ public sealed class SpawnVariableWiringTests : IDisposable
 
 	private const string Flag = "WIRE_SERVER_FLAG";
 
+	/// <summary>This test needs no world, only two distinct store keys.</summary>
+	private const int AnyInstance = 1;
+
 	/// <remarks>
 	/// The registry is process-wide, so every test here uses <b>its own variable name</b> rather than
 	/// relying on this to have run. Clearing between tests is tidiness; the names are the isolation.
@@ -50,8 +53,8 @@ public sealed class SpawnVariableWiringTests : IDisposable
 
 		((PatternAi)npc.GetAi()).SetSpawnVariable(WaveOne, 1, 0);
 
-		Assert.Equal(1, SpawnVariableRegistry.For(OneMap)[WaveOne]);
-		Assert.Equal(0, SpawnVariableRegistry.For(AnotherMap)[WaveOne]);
+		Assert.Equal(1, SpawnVariableRegistry.For(OneMap, harness.InstanceId)[WaveOne]);
+		Assert.Equal(0, SpawnVariableRegistry.For(AnotherMap, harness.InstanceId)[WaveOne]);
 	}
 
 	/// <summary><b>And the gate for that map then holds.</b></summary>
@@ -64,12 +67,12 @@ public sealed class SpawnVariableWiringTests : IDisposable
 
 		// The dump's own shape: a wave counter against the server's siege flag.
 		SpawnCondition gate = SpawnCondition.Parse("(WIRE_WAVE_ONE == 1) && (SpecialServer_Cond == 0)");
-		Assert.False(gate.Holds(SpawnVariableRegistry.For(OneMap).Snapshot()));
+		Assert.False(gate.Holds(SpawnVariableRegistry.For(OneMap, harness.InstanceId).Snapshot()));
 
 		((PatternAi)npc.GetAi()).SetSpawnVariable(WaveOne, 1, 0);
 
-		Assert.True(gate.Holds(SpawnVariableRegistry.For(OneMap).Snapshot()));
-		Assert.False(gate.Holds(SpawnVariableRegistry.For(AnotherMap).Snapshot()));
+		Assert.True(gate.Holds(SpawnVariableRegistry.For(OneMap, harness.InstanceId).Snapshot()));
+		Assert.False(gate.Holds(SpawnVariableRegistry.For(AnotherMap, harness.InstanceId).Snapshot()));
 	}
 
 	/// <summary><b>The counting form works through the same wire.</b></summary>
@@ -84,7 +87,7 @@ public sealed class SpawnVariableWiringTests : IDisposable
 		ai.SetSpawnVariable(Counter, 0, 1);
 		ai.SetSpawnVariable(Counter, 0, 1);
 
-		Assert.True(SpawnCondition.Parse($"{Counter} >= 3").Holds(SpawnVariableRegistry.For(OneMap).Snapshot()));
+		Assert.True(SpawnCondition.Parse($"{Counter} >= 3").Holds(SpawnVariableRegistry.For(OneMap, harness.InstanceId).Snapshot()));
 	}
 
 	/// <summary>
@@ -96,12 +99,45 @@ public sealed class SpawnVariableWiringTests : IDisposable
 	{
 		SpawnVariableRegistry.Supply(Flag, 1);
 
-		Assert.Equal(1, SpawnVariableRegistry.For(OneMap)[Flag]);
-		Assert.Equal(1, SpawnVariableRegistry.For(AnotherMap)[Flag]);
+		Assert.Equal(1, SpawnVariableRegistry.For(OneMap, AnyInstance)[Flag]);
+		Assert.Equal(1, SpawnVariableRegistry.For(AnotherMap, AnyInstance)[Flag]);
 
-		SpawnVariableRegistry.For(OneMap).Write(Flag, 7, 0);
+		SpawnVariableRegistry.For(OneMap, AnyInstance).Write(Flag, 7, 0);
 
-		Assert.Equal(7, SpawnVariableRegistry.For(OneMap)[Flag]);
-		Assert.Equal(1, SpawnVariableRegistry.For(AnotherMap)[Flag]);
+		Assert.Equal(7, SpawnVariableRegistry.For(OneMap, AnyInstance)[Flag]);
+		Assert.Equal(1, SpawnVariableRegistry.For(AnotherMap, AnyInstance)[Flag]);
+	}
+
+	/// <summary>
+	/// <b>Two instances of one map do not share a counter.</b>
+	/// </summary>
+	/// <remarks>
+	/// Measured rather than assumed: of the patterns that write a spawn variable, <b>234 have their
+	/// npcs only on instance maps</b> against 231 only on world maps. Keyed on the map alone, two groups
+	/// running the same instance would share one set of counters and one group's wave progress would
+	/// open the other group's gates. A world map has a single instance, so nothing changes for one.
+	/// </remarks>
+	[Fact]
+	public void TwoInstancesOfOneMapDoNotShareACounter()
+	{
+		SpawnVariables first = SpawnVariableRegistry.For(OneMap, 1);
+		SpawnVariables second = SpawnVariableRegistry.For(OneMap, 2);
+
+		first.Write("WIRE_INSTANCE_WAVE", 3, 0);
+
+		Assert.Equal(3, first["WIRE_INSTANCE_WAVE"]);
+		Assert.Equal(0, second["WIRE_INSTANCE_WAVE"]);
+	}
+
+	/// <summary><b>And an instance can be forgotten when it closes.</b></summary>
+	[Fact]
+	public void AnInstanceCanBeForgotten()
+	{
+		SpawnVariableRegistry.For(OneMap, 7).Write("WIRE_CLOSED", 1, 0);
+		Assert.Equal(1, SpawnVariableRegistry.For(OneMap, 7)["WIRE_CLOSED"]);
+
+		SpawnVariableRegistry.Forget(OneMap, 7);
+
+		Assert.Equal(0, SpawnVariableRegistry.For(OneMap, 7)["WIRE_CLOSED"]);
 	}
 }
