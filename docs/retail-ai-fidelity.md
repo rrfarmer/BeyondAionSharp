@@ -32635,3 +32635,78 @@ Eight pins overall; every mutation that a pin can reach is caught.
   progression engine.
 - **`FortressKillerAI`'s receiving side** is still unmeasured, and now matters more: the set of npcs it
   hears just changed twice.
+
+## Auditing the three-message siege loop end to end
+
+`FortressKillerAI`'s receiving side had been flagged as unmeasured twice. Measuring it means asking, for
+each of retail's three messages, which npcs **send** it and which **hear** it, and whether this port
+binds each of them to a class that participates.
+
+| | patterns | npcs | on a participating class |
+|---|---|---|---|
+| 30001 sends | 12 | 36 | 35 |
+| 30001 hears | 59 | 699 | 688 |
+| 30002 sends | 68 | 753 | 729 |
+| 30002 hears | 11 | 34 | 34 |
+| 30003 sends | 25 | 476 | 474 |
+| 30003 hears | 7 | 14 | 13 |
+
+The coverage is good, and the gaps are small enough to name individually.
+
+### Fourteen more balaur guards
+
+Eight npcs on `AB1_DrGuard_Artifact` and `LDF5_Fortress_DrGuard_Artifact` **hear 30001 in retail** and
+sat on plain `aggressive`, against 151 and 15 siblings on `artifact_protector`. They are the same balaur
+family as last entry's nineteen, under different names — `LDF4_Renew_Artifact_Boss_Ra_Dr`,
+`DF4_3014_Boss_Dr_2`, `BAb1_Artifact_Boss_Ra_Dr` — which is why the grade-based scan did not reach them.
+
+Six more, found through the death-call table rather than the audit, were the `_Ra_` and `_Fi_` class
+variants on `AB1_LDGuard_Artifact` (302 of 316 siblings specialised) and `LDF5_Fortress_LDGuard_Artifact`
+(30 of 32).
+
+All fourteen are bound now. **They could not have been before the death call was gated** — every one
+would have gained a 30003 its pattern does not carry.
+
+The reverse audit is at **176 rows**, from 190.
+
+### The middle message of the loop is sent by nothing
+
+**753 npcs broadcast 30002 in retail. Nothing in this port sends it.** So of the three-message loop, the
+first and third work and the second does not: a killer wakes and pulls the protectors (30001), and a
+dying protector calls it off (30003), but **no protector ever calls the killer to itself**, which is the
+message that makes the fight move.
+
+`FortressKillerAI` answers 30002 — that answer has never been reachable.
+
+It is untranslated because it comes off a battle timer inside a cast chain, and the class it belongs to
+is not a `PatternAi`. Both halves of that are now measured rather than assumed:
+
+**The chain reduces.** For the artifact guards it is `on_enter_attack` arming BT1 at 7000, then
+BT1→BT2 at 8500, BT2→BT3 at 6000, and BT3 broadcasting 30002 and re-arming BT1 at 7500. With the skills
+absent — and they are absent either way — the observable behaviour is **first call at 21.5 seconds, then
+every 22**. That is a faithful reduction, not an approximation of one.
+
+**But not uniformly.** `BGuard_ChiefA_Renew_Li` runs its chain on timer indices 6, 8, 11, 12 and 13 with
+30 and 60 second delays, so a two-number model fitted to the artifact guards would be wrong for it. The
+extractor has to walk the timer graph per pattern: build timer → (next timer, delay) edges, find the
+path from `on_enter_attack` to the rung that broadcasts, and emit the first delay and the loop period.
+
+**And the class needs rebasing.** `SiegeNpcAI` extends `AggressiveNpcAI`; so does `PatternAi`. Moving
+`SiegeNpcAI` onto `PatternAi` is the same one-line change already made for `AbyssGuardSimpleAI`, whose
+remark records that `PatternAi` adds nothing when the table is empty. `AbstractSiegeProtectorAI` can then
+carry a per-npc pattern the way `AbyssGuardCallAI` does.
+
+### Still missing
+
+- **30002, as specified above.** Extractor that walks the timer graph, a table of (first delay, period,
+  range) per npc, `SiegeNpcAI` rebased onto `PatternAi`, and pins. It is the largest remaining piece of
+  this mechanic and the design is no longer guesswork.
+- **`234162` heard from again.** The Vritra named attacker left alone two entries ago **hears 30001 in
+  its retail pattern**, which is evidence it participates whatever its flavour says. It is still not
+  bound, because `BaseProtectorAI` casts its spawn template to a `BaseSpawnTemplate` and a "Strong
+  Named" is unlikely to be base-spawned — a throw where there is currently only a missing answer. The
+  new evidence is recorded rather than acted on.
+- **Four stragglers in other encounters**: a chest and an `IDSweep_inviNPC` hearing 30001, an arena round
+  controller hearing 30003. Those are instance-handler territory, not siege.
+- **Ten npcs on `AB1_LDGuard_Artifact` carry `fortress_protector` where 302 carry
+  `artifact_protector`** — a *specialised* minority, so the forward audit's territory, and unexamined.
