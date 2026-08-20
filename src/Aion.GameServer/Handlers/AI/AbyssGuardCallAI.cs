@@ -73,8 +73,18 @@ public class AbyssGuardCallAI : PatternAi
 	/// <summary>Retail's <c>23000</c>: "this one is on me".</summary>
 	public const int CallForHelp = 23000;
 
-	/// <summary>Retail's <c>point_to_add</c>, and it is 1 in every one of the forty-seven patterns.</summary>
+	/// <summary>
+	/// Retail's <c>point_to_add</c> on the idle answer, and it is 1 in all 85 of them. A nudge: enough
+	/// to put the player on the list, not enough to outrank whoever the guard is already owed.
+	/// </summary>
 	private const int JustEnoughToJoin = 1;
+
+	/// <summary>
+	/// Retail's <c>point_to_add</c> on the busy answer, and it is 100 in all 85 of them. The old code
+	/// switched target and added <b>no</b> hate at all, so the guard turned to face a player it had no
+	/// standing quarrel with and drifted back the moment anything else scored a hit.
+	/// </summary>
+	private const int EnoughToOutrank = 100;
 
 	/// <summary>One pattern per guard, because the send range differs and a fortress holds hundreds.</summary>
 	private static readonly ConcurrentDictionary<int, AiPattern> ByNpcId = new ConcurrentDictionary<int, AiPattern>();
@@ -97,12 +107,18 @@ public class AbyssGuardCallAI : PatternAi
 			OnMessage = !call.Answers
 				? Of()
 				: Of(
-					// Already fighting: it turns, and its own attacker keeps its hate.
+					// Already fighting (retail guards this rung with is_npc_state NPC_STATE_ATTACK): it
+					// turns, and carries a hundred points with it so the switch survives the next hit.
 					Branch(2, "", [When.MessageParamIsEnemy, When.Message(CallForHelp), When.Fighting],
-						Do.TargetMessageParam()),
+						Do.HateMessageTarget(EnoughToOutrank)),
 
+					// Idle: one point of hate, then go for whoever it now hates most. That is retail's pair
+					// -- add_hate_point followed by attack_most_hating, in all 85 -- and the difference
+					// from the rung above is real: the guard joins on the hate list rather than being
+					// dragged round to face the named player, so anyone it already owed keeps its place.
 					Branch(1, "", [When.MessageParamIsEnemy, When.Message(CallForHelp)],
-						Do.HateMessageTarget(JustEnoughToJoin))),
+						Do.HateMessageParam(JustEnoughToJoin),
+						Do.AttackMostHating())),
 		};
 	}
 

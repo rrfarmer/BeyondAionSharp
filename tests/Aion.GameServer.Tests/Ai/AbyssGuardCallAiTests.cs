@@ -58,13 +58,13 @@ public sealed class AbyssGuardCallAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc crier = harness.Spawn(Crier, 300f, 300f, 200f);
 		Npc listener = harness.Spawn(Listener, 320f, 300f, 200f);
-		Player player = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player player = harness.SpawnPlayer(318f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(crier, listener);
-		Assert.Null(listener.GetTarget());
+		Assert.Equal(0, listener.GetAggroList().GetHate(player));
 
 		harness.Engage(crier, player);
 
-		Assert.Same(player, listener.GetTarget());
+		Assert.True(listener.GetAggroList().GetHate(player) > 0);
 	}
 
 	/// <summary><b>And only within its own range.</b> The ranger's cry carries twenty-five metres.</summary>
@@ -75,14 +75,14 @@ public sealed class AbyssGuardCallAiTests
 		Npc crier = harness.Spawn(Crier, 300f, 300f, 200f);
 		Npc near = harness.Spawn(Listener, 320f, 300f, 200f);
 		Npc far = harness.Spawn(SecondListener, 340f, 300f, 200f);
-		Player player = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player player = harness.SpawnPlayer(318f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(crier, near);
 		BossAiHarness.MakeMutuallyKnown(crier, far);
 
 		harness.Engage(crier, player);
 
-		Assert.Same(player, near.GetTarget());
-		Assert.Null(far.GetTarget());
+		Assert.True(near.GetAggroList().GetHate(player) > 0);
+		Assert.Equal(0, far.GetAggroList().GetHate(player));
 	}
 
 	/// <summary>
@@ -100,12 +100,12 @@ public sealed class AbyssGuardCallAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc crier = harness.Spawn(FarCrier, 300f, 300f, 200f);
 		Npc listener = harness.Spawn(Listener, 340f, 300f, 200f);
-		Player player = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player player = harness.SpawnPlayer(338f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(crier, listener);
 
 		harness.Engage(crier, player);
 
-		Assert.Same(player, listener.GetTarget());
+		Assert.True(listener.GetAggroList().GetHate(player) > 0);
 	}
 
 	/// <summary><b>A guard that only listens never cries.</b> Most of them are of that kind.</summary>
@@ -115,58 +115,74 @@ public sealed class AbyssGuardCallAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc pulled = harness.Spawn(Listener, 300f, 300f, 200f);
 		Npc beside = harness.Spawn(SecondListener, 310f, 300f, 200f);
-		Player player = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player player = harness.SpawnPlayer(302f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(pulled, beside);
 
 		harness.Engage(pulled, player);
 
-		Assert.Null(beside.GetTarget());
+		Assert.Equal(0, beside.GetAggroList().GetHate(player));
 	}
 
 	/// <summary>
-	/// <b>An idle guard answers the call by turning on the player named.</b>
+	/// <b>An idle guard answers the call with hate, not by turning.</b> Retail's idle rung is
+	/// <c>add_hate_point points_to_add=1</c> followed by <c>attack_most_hating</c> — never
+	/// <c>switch_target</c> — in all 85 of the answering patterns.
 	/// </summary>
 	/// <remarks>
-	/// Retail's <c>point_to_add</c> here is <c>1</c> in every one of the forty-seven answering
-	/// patterns, and <b>that one point is not pinned, because our engine will not keep it.</b> A guard
-	/// given a single hate point and nothing else has no reason to stay in the fight: it goes home on
-	/// the next think and <c>AggroList</c> clears itself on the way, so the value is gone before any
-	/// assertion can read it. That is arguably retail's intent expressed by our engine — one point is a
-	/// nudge to join, not a claim on the player, and a guard with no other reason to fight will drift
-	/// back — but it is a behaviour we inferred rather than one we measured, and it is written up in
-	/// the log as such.
+	/// Retail's one point is a nudge to join, not a claim on the player: the guard goes for whoever it
+	/// hates most, which is not necessarily the player just named. That is the whole difference from the
+	/// busy rung, which turns unconditionally.
 	/// <para>
-	/// The call is delivered by hand from a guard that is not fighting, because a real pull puts the
-	/// listener into combat first — our engine's own see-a-friend-attacked does that before the message
-	/// arrives — and then retail's <em>fighting</em> half runs instead.
+	/// An earlier version of this pin asserted that the guard <em>turns</em>, which passed only because
+	/// the class used <c>switch_target</c> — so the pin was pinning the defect. The note it carried, that
+	/// "our engine will not keep" the single point, was an inference and it was wrong: the point is kept.
+	/// It vanished because the player stood fifty metres from the listener, and <c>CheckGiveupDistance</c>
+	/// fires inside the add — <c>AddHate</c> → <c>OnAddHate</c> → attack event → target-too-far →
+	/// giveup → <c>StopHating</c>, all before the assertion runs. Within a real call radius it holds.
+	/// </para>
+	/// <para>
+	/// <b>What this pin cannot check:</b> that the guard does not <em>turn</em>. Adding hate raises the
+	/// attack event, and the engine then targets whoever it hates most — which, for a guard that was
+	/// idle and so had no hate at all, is the player just named. Plain and switching forms are therefore
+	/// indistinguishable here, and a mutation back to <c>switch_target</c> on this rung does not die. The
+	/// correction rests on retail's 85 patterns, not on this pin; the busy rung below is the half that
+	/// mutation testing can hold.
 	/// </para>
 	/// </remarks>
 	[Fact]
-	public void AnIdleGuardTurnsOnThePlayerNamed()
+	public void AnIdleGuardTakesHateWithoutTurning()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc crier = harness.Spawn(Crier, 300f, 300f, 200f);
 		Npc listener = harness.Spawn(Listener, 320f, 300f, 200f);
-		Player player = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player player = harness.SpawnPlayer(318f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(crier, listener);
+		BossAiHarness.MakeMutuallyKnown(listener, player);
 		Assert.Null(listener.GetTarget());
 
 		NpcMessageBus.Broadcast(crier, AbyssGuardCallAI.CallForHelp, player, 25f);
 
-		Assert.Same(player, listener.GetTarget());
+		// The one point retail gives it, and nothing more.
+		Assert.Equal(1, listener.GetAggroList().GetHate(player));
 	}
 
 	/// <summary>
-	/// <b>A guard already fighting only turns.</b> Retail splits the answer on npc state, and the
-	/// fighting half takes no hate at all — so the player it was already on keeps it.
+	/// <b>A guard already fighting turns, and carries a hundred points with it.</b> Retail guards this
+	/// rung with <c>is_npc_state NPC_STATE_ATTACK</c> and answers with
+	/// <c>switch_target points_to_add=100</c> in all 85 of them.
 	/// </summary>
+	/// <remarks>
+	/// The old code switched with <b>no</b> hate at all, so the guard faced a player it had no standing
+	/// quarrel with and drifted back to its own attacker on the next hit. A hundred points is what makes
+	/// the switch survive.
+	/// </remarks>
 	[Fact]
-	public void AGuardAlreadyFightingOnlyTurns()
+	public void AGuardAlreadyFightingTurnsAndOutranks()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc crier = harness.Spawn(Crier, 300f, 300f, 200f);
 		Npc listener = harness.Spawn(Listener, 320f, 300f, 200f);
-		Player pulled = harness.SpawnPlayer(300f, 250f, 200f, race: Race.ASMODIANS);
+		Player pulled = harness.SpawnPlayer(319f, 300f, 200f, race: Race.ASMODIANS);
 		Player itsOwn = harness.SpawnPlayer(322f, 300f, 200f, race: Race.ASMODIANS);
 		BossAiHarness.MakeMutuallyKnown(crier, listener);
 
@@ -174,9 +190,8 @@ public sealed class AbyssGuardCallAiTests
 		harness.Engage(listener, itsOwn);
 		harness.Engage(crier, pulled);
 
-		// It turns — and the turn carried no hate at all, so its own fight is untouched.
 		Assert.Same(pulled, listener.GetTarget());
-		Assert.Equal(0, listener.GetAggroList().GetHate(pulled));
+		Assert.Equal(100, listener.GetAggroList().GetHate(pulled));
 		Assert.True(listener.GetAggroList().GetHate(itsOwn) > 0);
 	}
 }

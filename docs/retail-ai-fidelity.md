@@ -33562,3 +33562,76 @@ rather than the first.**
 - **`AnuhartGuardAI` and `BlackClawLycanAI`**, both unread against their own messages.
 - **The busy rung's hate.** Retail's is `switch_target … percent_to_add=10 points_to_add=100`;
   `AbyssGuardCallAI` uses `Do.TargetMessageParam()`, which turns without adding the hundred.
+
+## The call answer, settled: why a guard's hate vanished, and 470 guards that answered wrong
+
+The last entry left one thing blocking this mechanic and named it precisely: an idle NPC given
+`add_hate_point` ended the broadcast with **zero hate**, in a harness where `Knows` was true, `IsEnemy`
+was true, and the branch's guards held. It said the rung was not running and the reason was not found.
+
+**The rung was running.** That was the wrong half to suspect, and the entry said to start from the
+fourth step rather than the first — so this one did.
+
+### The cause
+
+Probing the branch itself (a temporary `Do.Broadcast` inside the rung) showed it firing. Moving the
+probe *after* the hate action showed no exception. A direct `AddHate` outside the pattern entirely
+still gave zero, with `IsAware` true by reflection — which ruled the pattern out completely and put the
+fault inside `AggroList`. A static probe queue (console output is not captured by the runner, which had
+made three earlier readings look like "never called") caught the add succeeding and then:
+
+```
+AddHate -> AddDamageAndHate -> OnAddHate -> AI attack event -> ChooseAttack -> PerformAttack
+        -> AttackAction -> TargetTooFar -> OnTargetGiveup -> StopHating   (hate = 0)
+```
+
+**Adding hate raises the NPC's own attack event, and the whole giveup path runs synchronously inside
+the add.** The pin stood the player fifty metres from the listener, `CheckGiveupDistance` fired, and the
+hate was zeroed before the assertion could read it. Standing the player inside the call radius, it
+holds. Not a product defect — harness geometry — but the same distance check does fire in production,
+so a guard nudged about someone genuinely far away forgets immediately, which is what retail's one
+point means anyway.
+
+### What it unblocked, and what was wrong beyond the known defect
+
+Measuring the whole message family rather than just the one class — 23000, 23100, 23101, 23200 — gives
+one shape with no exceptions worth the name:
+
+| rung | guard | actions | points |
+|---|---|---|---|
+| busy | `is_npc_state NPC_STATE_ATTACK` | `switch_target` | **100** |
+| idle | none | `add_hate_point` + `attack_most_hating` | **1** |
+
+85 of each for 23000, 12 for 23100, 6 for 23200, plus a handful at 1000/5000 and some `do_nothing`.
+
+Three corrections, not the one that was expected:
+
+* **`AbyssGuardCallAI` idle** (385 guards) — was `switch_target`. Now the plain pair.
+* **`AbyssGuardCallAI` busy** — was `Do.TargetMessageParam()`, which turns and adds **no hate at all**,
+  so the guard faced a player it had no quarrel with and drifted back on the next hit. Now
+  `switch_target` with its hundred points. This was the `points_to_add=100` the log has been carrying
+  as "not translated" for several entries.
+* **`GarrisonGuardAnswerAI` idle** (23100) — same defect as the abyss guards, and not previously
+  suspected. Its busy rung was already right.
+
+### A measurement error worth recording
+
+The first sweep concluded the idle rung was a *bare* `add_hate_point` with no attack action, and this
+document nearly said so. The regex looked for `select_attack_target`; retail's element is
+`attack_most_hating`. Listing **every** action element in the matched rungs — rather than the three
+that were expected — showed 94 of them, one per `add_hate_point`. It also retroactively confirmed
+`FortressGuardAnswerAI`, which already had the pair and would have been "corrected" into being wrong.
+**When checking whether an action is absent, enumerate what is there.**
+
+### Still missing
+
+- **The idle rung's plain-vs-switching choice is not observable in this engine**, so a mutation back to
+  `switch_target` on it does not die. Adding hate raises the attack event, and the engine then targets
+  whoever it hates most — which, for a guard that was idle and had no hate, is the player just named.
+  The correction rests on the 85 retail patterns; only the busy half is mutation-tested. Making it
+  observable needs an idle NPC with pre-existing hate, which this engine treats as being in combat.
+- **The 1000- and 5000-point outliers** (four rungs) and the **sixteen `do_nothing` answers** — guards
+  that hear the call and deliberately ignore it. Both are flattened to the common value here.
+- **`BlackClawLycanAI`**, still unread, and **`AnuhartGuardAI`**, which answers `BoosterUnderAttack`
+  rather than 23000 so this evidence does not reach it.
+- `30001`/`30002`/`30003`, the NPC-versus-NPC call family, remain unimplemented everywhere.

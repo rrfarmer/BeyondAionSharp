@@ -198,9 +198,12 @@ public class GarrisonGuardAnswerAI : PatternAi
 				[When.MessageParamIsEnemy, When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy, When.Fighting],
 				Do.HateMessageTarget(Claim)),
 
+			// Retail's idle rung across this whole message family is add_hate_point followed by
+			// attack_most_hating, never switch_target: 23100 has twelve of them and not one turns.
 			Branch(1, "a call, and I am not",
-				[When.MessageParamIsEnemy, When.Message(GarrisonGuardCallAI.ThisOne), When.MessageParamIsEnemy],
-				Do.HateMessageTarget(Glance))),
+				[When.MessageParamIsEnemy, When.Message(GarrisonGuardCallAI.ThisOne)],
+				Do.HateMessageParam(Glance),
+				Do.AttackMostHating())),
 	};
 
 	public GarrisonGuardAnswerAI(Npc owner)
