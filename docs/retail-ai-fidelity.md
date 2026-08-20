@@ -33220,3 +33220,29 @@ with a threshold close to its expected value.
   and nothing in the data says what they should be. That is a question about the class, not the binding.
 - **The cannon**, above.
 - **`EveryBandHasItsOwnFlag`'s threshold**, which wants either more samples or a seeded roll.
+
+## The flaky pin, fixed at the seam that already existed
+
+`MastoTheAncientAiTests` counted target *changes* — comparing the boss's target each second against the
+second before. **`AggroTarget.RANDOM` can re-pick the creature already targeted**, so a switch whose dice
+repeated was invisible, and a threshold of three over a raid of that size is close enough to the expected
+count to fail occasionally. It did, once, and passed on every rerun.
+
+`BossAiHarness.CountSwitches` exists for exactly this and its own remark says so — it counts the calls
+rather than the changes, through `TargetPickOverride`, and lets the selection run so the boss still ends
+up where it would have. The Archmagus pins were moved onto it earlier in this project and Masto's were
+missed.
+
+Converted. Three consecutive runs green, and the pin still bites: the mutation that makes the bottom band
+share the fourth band's flag is caught.
+
+> **The shape to recognise: a count of rolled events with a threshold near its expected value.** That is
+> now twice in this project. Both times the fix was to count what the branch *did* rather than what could
+> be observed afterwards.
+
+### The same family elsewhere, unfixed
+
+`DarkbladeOvanukaAiTests` and `IdeanObscuraAiTests` carry `turned |= !ReferenceEquals(boss.GetTarget(),
+…)` — a boolean rather than a count, so a repeated pick only hides a switch if *every* pick in the window
+repeats. Much less likely, and both pass consistently. Left alone, but recorded: they are the same proxy,
+and if either ever flakes this is the reason and `CountSwitches` is the fix.

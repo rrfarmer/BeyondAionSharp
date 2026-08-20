@@ -1,3 +1,4 @@
+using System;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -64,21 +65,25 @@ public sealed class MastoTheAncientAiTests
 		return (harness, boss, [tank, offTank, third]);
 	}
 
-	/// <summary>Counts the seconds on which the boss's target differs from the second before.</summary>
+	/// <summary>
+	/// Counts every target switch the boss makes over <paramref name="seconds"/>.
+	/// </summary>
+	/// <remarks>
+	/// <b>Counts the switches, not the changes.</b> This used to compare the boss's target each second
+	/// against the second before, and <c>AggroTarget.RANDOM</c> can re-pick the creature already
+	/// targeted — so a fire whose dice repeated was invisible. With a threshold of three over a raid of
+	/// this size that is not a rare event: <c>EveryBandHasItsOwnFlag</c> failed once in this project's
+	/// history and passed on every rerun, which is the signature of a count that is nearly always right.
+	/// <para>
+	/// <see cref="BossAiHarness.CountSwitches"/> exists for exactly this and its own remark says so; the
+	/// Archmagus pins were moved onto it earlier and these were missed.
+	/// </para>
+	/// </remarks>
 	private static int SwitchesOver(BossAiHarness harness, Npc boss, int seconds)
 	{
-		VisibleObject? last = boss.GetTarget();
-		int switches = 0;
-		harness.Watch(seconds, () =>
-		{
-			VisibleObject? now = boss.GetTarget();
-			if (!ReferenceEquals(now, last))
-			{
-				switches++;
-				last = now;
-			}
-		});
-		return switches;
+		Func<int> switches = BossAiHarness.CountSwitches(boss);
+		harness.Watch(seconds, null);
+		return switches();
 	}
 
 	/// <summary>
