@@ -33742,3 +33742,47 @@ half where it really is redundant.**
 - **`KistenianAI`** still hides `OnNpcMessage` without handing off, as recorded last entry.
 - The `30003` despawn order remains unimplemented, and the cast ladders hung off all of these chains
   are still blocked on skill indices.
+
+## The four outliers, and why one shared pattern could not hold them
+
+The `23100` stragglers from last entry, checked one at a time:
+
+| npc | class | retail answer | outcome |
+|---|---|---|---|
+| 232857, 232858 | `kamarbosses` | 1 / 100 | **already closed** — that class gained `AnswerCall` last entry |
+| 233127, 233128 | `aggressive` | **1000 / no fighting rung** | rebound, and they forced the change below |
+| 802383 | `general` | 1 / 100 | still open, on purpose |
+
+### The three answering classes stopped sharing a pattern
+
+`FortressGuardAnswerAI`, `GarrisonGuardAnswerAI` and `AbyssGuardCallAI` each built **one static pattern**
+from the constants `Glance = 1` and `Claim = 100`. That was right for every npc they held, which is why
+nothing had caught it. It stops being right the moment an npc that answers with **1000 points and no
+fighting rung at all** is bound to one of them — a shared pattern would have quietly handed it a
+hundredth of retail's hate and a target switch retail never wrote for it.
+
+All three now take their rungs from `GuardAnswers.RungsFor(npcId)` and fall back to the constants only
+for npcs the table does not carry. The constants stayed, demoted from the rule to the fallback.
+
+This is the same lesson as `PullCalls` and `ProtectorCalls` — **the per-npc value is the mechanic, and a
+class constant is a guess that happens to be right until it is not** — but it is the first time the
+class was already correct for its entire population and the table was needed for npcs joining it.
+
+### A false catch, recorded so the next one is not believed
+
+The first mutation for the rebinding inserted a second `ai=` attribute, as several mutations in this log
+do. It was "caught" by three unrelated tests, which is the tell: the duplicate attribute makes the XML
+malformed and the template load fails, so **every** test fails and the mutation looks lethal without
+exercising anything. A no-op rename mutation confirmed the harness does not fail on arbitrary XML edits,
+and the real mutation — flipping `ai="garrison_guard_answer"` to `ai="aggressive"` on that npc alone —
+is caught by exactly one pin, which is what a genuine catch looks like.
+
+**A mutation caught by tests that have nothing to do with it has usually broken the data load.**
+
+### Still missing
+
+- **802383 "talle"**, on `general`, answers `23100` in retail. Rebinding it would turn a non-combat npc
+  into a combatant, and nothing here says whether retail's `general` equivalent fights. It is one npc
+  and it needs a look at the pattern rather than a rebinding on the strength of one rung.
+- **`KistenianAI`** still hides `OnNpcMessage` without handing off.
+- `30003`, and the cast ladders throughout, still blocked on skill indices.

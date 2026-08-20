@@ -104,7 +104,12 @@ public class AbyssGuardCallAI : PatternAi
 				: Of(Branch(7, "", When.Always,
 					Do.Broadcast(CallForHelp, call.SendRange, aboutTarget: true))),
 
-			OnMessage = !call.Answers
+			// The table's own values where it has them; the constants below are the fallback for npcs it
+			// does not carry. 637 of 641 answers are the common 1/100 pair, and the four that are not
+			// would be silently flattened by a constant.
+			OnMessage = GuardAnswers.RungsFor(npcId) is { Length: > 0 } measured
+				? Of(measured)
+				: !call.Answers
 				? Of()
 				: Of(
 					// Already fighting (retail guards this rung with is_npc_state NPC_STATE_ATTACK): it

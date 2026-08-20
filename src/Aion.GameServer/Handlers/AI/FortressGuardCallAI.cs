@@ -101,6 +101,9 @@ public class FortressGuardAnswerAI : PatternAi
 	/// <summary>Retail's <c>points_to_add</c> on the busy answer.</summary>
 	private const int Claim = 100;
 
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId =
+		new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
+
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(
@@ -128,7 +131,21 @@ public class FortressGuardAnswerAI : PatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => Pattern_;
+	/// <summary>
+	/// The rungs this npc actually answers with, from <see cref="GuardAnswers"/>, or the common pair for
+	/// one the table does not carry.
+	/// </summary>
+	/// <remarks>
+	/// The constants above are retail's overwhelming majority and were right for every npc this class
+	/// held -- until two <c>23100</c> answerers turned up carrying <b>1000</b> points and no fighting
+	/// rung at all. A shared static pattern cannot express that, so the pattern is per npc, and the
+	/// constants are the fallback for npcs outside the table rather than the rule.
+	/// </remarks>
+	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
+	{
+		PatternBranch[] rungs = GuardAnswers.RungsFor(id);
+		return rungs.Length == 0 ? Pattern_ : new AiPattern { OnMessage = Of(rungs) };
+	});
 }
 
 /// <summary>
@@ -191,6 +208,9 @@ public class GarrisonGuardAnswerAI : PatternAi
 
 	private const int Claim = 100;
 
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern> ByNpcId =
+		new System.Collections.Concurrent.ConcurrentDictionary<int, AiPattern>();
+
 	private static readonly AiPattern Pattern_ = new AiPattern
 	{
 		OnMessage = Of(
@@ -211,5 +231,19 @@ public class GarrisonGuardAnswerAI : PatternAi
 	{
 	}
 
-	protected override AiPattern Pattern => Pattern_;
+	/// <summary>
+	/// The rungs this npc actually answers with, from <see cref="GuardAnswers"/>, or the common pair for
+	/// one the table does not carry.
+	/// </summary>
+	/// <remarks>
+	/// The constants above are retail's overwhelming majority and were right for every npc this class
+	/// held -- until two <c>23100</c> answerers turned up carrying <b>1000</b> points and no fighting
+	/// rung at all. A shared static pattern cannot express that, so the pattern is per npc, and the
+	/// constants are the fallback for npcs outside the table rather than the rule.
+	/// </remarks>
+	protected override AiPattern Pattern => ByNpcId.GetOrAdd(GetOwner().GetNpcId(), static id =>
+	{
+		PatternBranch[] rungs = GuardAnswers.RungsFor(id);
+		return rungs.Length == 0 ? Pattern_ : new AiPattern { OnMessage = Of(rungs) };
+	});
 }

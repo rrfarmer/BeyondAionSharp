@@ -185,4 +185,52 @@ public sealed class GuardAnswersTests
 
 		Assert.Same(player, listener.GetTarget());
 	}
+
+	/// <summary>A guardian veteran spellcaster: answers 23100 with a thousand points and never turns.</summary>
+	private const int Outlier = 233127;
+
+	/// <summary>
+	/// <b>An npc whose retail answer is not the common pair gets its own numbers.</b> Two 23100
+	/// answerers carry <c>points_to_add=1000</c> and have no fighting rung at all.
+	/// </summary>
+	/// <remarks>
+	/// This is why the answering classes stopped sharing one static pattern. They hardcoded 1/100, which
+	/// was right for every npc they held until these two were bound to them -- a shared pattern would
+	/// have quietly given them a hundredth of retail's hate and a target switch retail never wrote.
+	/// </remarks>
+	[Fact]
+	public void AnOutlierKeepsItsOwnNumbers()
+	{
+		GuardAnswers.Answer[] answers = GuardAnswers.ByNpc[Outlier];
+
+		GuardAnswers.Answer only = Assert.Single(answers);
+		Assert.Equal(23100, only.Call);
+		Assert.Equal(1000, only.Idle);
+		Assert.Equal(-1, only.Busy);
+
+		// One rung, not two: retail gives it no fighting answer.
+		Assert.Single(GuardAnswers.RungsFor(Outlier));
+	}
+
+	/// <summary>
+	/// <b>And it answers with that thousand in a live fight.</b> The npc is bound to
+	/// <c>garrison_guard_answer</c>, whose constants say 1.
+	/// </summary>
+	[Fact]
+	public void AndTheOutlierAnswersWithItsOwnValue()
+	{
+		using BossAiHarness harness = BossAiHarness.For(400010000).WithWorldSize(4096)
+			.WithAi(typeof(GarrisonGuardAnswerAI), typeof(GarrisonGuardCallAI), typeof(AggressiveNpcAI),
+				typeof(GeneralNpcAI))
+			.Build();
+		Npc crier = harness.Spawn(Outlier, 300f, 300f, 200f);
+		Npc listener = harness.Spawn(Outlier, 320f, 300f, 200f);
+		Player player = harness.SpawnPlayer(318f, 300f, 200f, race: Race.ASMODIANS);
+		BossAiHarness.MakeMutuallyKnown(crier, listener);
+		BossAiHarness.MakeMutuallyKnown(listener, player);
+
+		NpcMessageBus.Broadcast(crier, GarrisonGuardCallAI.ThisOne, player, 25f);
+
+		Assert.Equal(1000, listener.GetAggroList().GetHate(player));
+	}
 }
