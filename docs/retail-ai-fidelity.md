@@ -35405,3 +35405,58 @@ That is a pin behaving correctly.
 - **`on_see_npc` (11), `on_see_user_move` (9), `on_see_user` (3)** also arm timers and are not read.
 - Still unverified against live play: 793 rotations rest on the data plus four structural pins, and
   retail cast timings have never been observed on this server.
+
+## An asymmetry worth naming: the rotation is all-or-nothing, the ways in are not
+
+Adding three more arming handlers made the table **smaller** -- 793 rotations to 784. Reading a handler
+means refusing the whole pattern if any of its branches is unsayable, so choosing to read one can cost
+rotations that were fine without it. Nine were lost that way.
+
+The rule that fixes it is a real distinction, not a convenience:
+
+* **`on_battle_timer` and `on_enter_attack_state` are the rotation.** An unsayable branch refuses the
+  pattern whole, because branch lists are first-match-wins and dropping a rung silently promotes the
+  next one.
+* **Every other arming handler is a way in, not the rotation.** An unsayable branch drops *that
+  handler* and keeps the rotation. The npc then lacks that one trigger -- exactly the state it was in
+  when the handler was not read at all -- instead of losing the fight's mechanics entirely.
+
+267 optional handlers were dropped this way, each counted and printed by kind (34 `on_wake_up` need
+`goto_waypoint`, 17 `on_spelled` need `is_enemy`, and so on). Nothing is silently discarded.
+
+| | before | after |
+|---|---|---|
+| rotations | 793 | **961** |
+| npcs | 2,619 | **3,197** |
+| actions | 20,657 | **25,563** |
+| casts | 8,288 | **10,318** |
+
+### Why the role-targeted casts are still refused
+
+246 rotations cast at `OBJI_ATTACKER`, `OBJI_CASTER`, `OBJI_MESSAGE_PARAM`, `OBJI_MESSAGE_SENDER` or
+`OBJI_EVENT_TARGET`. **`PatternAi` tracks every one of those creatures**, so it is tempting to read this
+as a small gap. It is not a naming problem. The skill queue resolves its target *when it drains*, from
+the aggro list, via `NpcSkillTargetAttribute`; a cast aimed at one particular creature needs a new case
+in that enum and in `SkillAttackManager`. That enum is Java-parity data, so this is an engine change
+with parity consequences, not a table change, and it is left for a decision rather than done quietly.
+
+Retail says these are overwhelmingly `PLANNED` (queued) rather than `INSTANT`, so casting them
+immediately through the skill engine -- the one path that does accept a creature -- would fire them at
+the wrong time. That is why the obvious workaround is not taken.
+
+`OBJI_FRIEND` **is** now wired, because this port's `FRIEND` means the same thing and needs no
+inference. It unblocked nothing on its own -- every pattern using it was refused for a second target as
+well -- which is worth recording as another instance of the rule that a vocabulary gap only pays when
+it is the last one.
+
+### Still missing
+
+- **The role-targeted casts (246 rotations)** -- needs the enum decision above. Biggest single item.
+- **306 `use_skill_by_attacker_indicator`, 275 `switch_target_by_attacker_indicator`** -- now the top
+  two refusals outright, and both are about picking a creature by its position in the hate list.
+- **198 `is_user_flying`**, 67 `spawn_on_target`.
+- **`on_see_user_move` is not read at all**: this port raises no "a player moved nearby" event, and
+  `AiPattern` keeps seeing an npc and seeing a user apart deliberately, so folding it into either would
+  be a guess. 10 rows given up.
+- **188 rotations re-arm only from within themselves; 147 arm nowhere in the pattern.** Unchanged.
+- Still unverified against live play: retail cast timings have never been observed on this server.

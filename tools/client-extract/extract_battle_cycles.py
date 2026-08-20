@@ -74,7 +74,14 @@ from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
 #: Retail's skill targets, and the two this port can say. `OBJI_SELF` and `OBJI_CUR_TARGET` are 88% of
 #: all uses; the rest -- the event target, the talker, a friend, the message sender -- name a creature
 #: this table has no way to point at, and are refused rather than approximated with the most-hated one.
-TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED"}
+#: `OBJI_FRIEND` is here because this port's `FRIEND` means the same thing -- a known, living npc the
+#: caster is not hostile to -- so it needs no inference. The rest of retail's targets name a creature
+#: by its role in the event (the attacker, the caster, the message parameter, the one that started the
+#: fight). Those are **not** refused for lack of a name: `PatternAi` tracks every one of them. They are
+#: refused because the skill queue resolves its target from the aggro list when it drains, so a cast
+#: aimed at a particular creature would mean adding a case to `NpcSkillTargetAttribute` and to
+#: `SkillAttackManager` -- a Java-parity enum and the engine around it, not data. See the doc entry.
+TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED", "OBJI_FRIEND": "FRIEND"}
 
 #: Where a battle timer can be armed. Retail does not only start a fight's chain from entering combat:
 #: of the 390 rotations with no `on_enter_attack_state` arming, 59 are started by a message from another
@@ -83,7 +90,22 @@ TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED"}
 #:
 #: `on_battle_timer` is deliberately absent: 188 rotations re-arm only from inside themselves, which is
 #: a chain with no first link *in the pattern*, and guessing an entry point for those would be invention.
-ARMING = ["on_enter_attack_state", "on_message", "on_attacked", "on_spelled", "on_wake_up"]
+#: `on_see_user_move` is deliberately absent: this port raises no "a player moved nearby" event, and
+#: `AiPattern` keeps seeing an npc and seeing a user apart on purpose, so folding it into either would
+#: be a guess. 10 rows are given up for it.
+ARMING = ["on_enter_attack_state", "on_message", "on_attacked", "on_spelled", "on_wake_up",
+          "on_see_npc", "on_see_user"]
+
+#: `on_battle_timer` and `on_enter_attack_state` are the rotation, and an unsayable branch in either
+#: refuses the whole pattern -- dropping a rung there silently promotes the next one, because branch
+#: lists are first-match-wins.
+#:
+#: **The other arming handlers are best-effort, and that is a deliberate asymmetry.** They are extra
+#: ways in, not the rotation itself, so an unsayable branch drops *that handler* and keeps the
+#: rotation. Refusing the whole pattern instead cost nine rotations the first time these were added --
+#: strictly worse than the status quo, where the handler was not read at all and the npc simply lacked
+#: that trigger. What is given up is counted, never silent.
+CORE = {"on_enter_attack_state"}
 
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
@@ -310,6 +332,7 @@ def main() -> int:
     rows: list[tuple] = []
     refused: collections.Counter = collections.Counter()
     refused_owners = 0
+    dropped: collections.Counter = collections.Counter()
     patterns = 0
     for path in sorted(args.patterns_dir.rglob("NpcAIPatterns*.xml")):
         text = S.read_text(path)
@@ -327,9 +350,18 @@ def main() -> int:
                 refused["no npc here that is free to run it"] += 1
                 continue
 
+            arming = {}
             try:
-                arming = {h: read_handler(body, h, dev, ai.keys(), strings) for h in ARMING}
                 cycle = read_handler(body, "on_battle_timer", dev, ai.keys(), strings)
+                for handler in ARMING:
+                    if handler in CORE:
+                        arming[handler] = read_handler(body, handler, dev, ai.keys(), strings)
+                        continue
+                    try:
+                        arming[handler] = read_handler(body, handler, dev, ai.keys(), strings)
+                    except Unsayable as stopper:
+                        # Keep the rotation, lose this way in.
+                        dropped[f"{handler}: {stopper}"] += 1
             except Unsayable as stopper:
                 refused[str(stopper)] += 1
                 continue
@@ -373,6 +405,10 @@ def main() -> int:
 
     npcs = {r[0] for r in rows}
     print(f"{patterns} battle rotations across {len(npcs)} npcs, {len(rows)} actions -> {args.out}")
+    if dropped:
+        print(f"    {sum(dropped.values())} optional arming handlers dropped, rotation kept:")
+        for reason, count in dropped.most_common(5):
+            print(f"        {count:4d}  {reason}")
     if refused_owners:
         print(f"    {refused_owners} npcs dropped from a pattern their skill list cannot answer")
     for reason, count in refused.most_common():

@@ -191,7 +191,7 @@ public sealed class BattleCycleAiTests
 	/// <remarks>
 	/// A cycle rung whose timer is never armed is inert, and a table full of them would look ported
 	/// while doing nothing. Entering combat is the usual trigger but not the only one -- retail also
-	/// starts a chain from a message, a hit, a spell or waking -- so this accepts any of the five.
+	/// starts a chain from a message, a hit, a spell or waking -- so this accepts any of the seven.
 	/// It is deliberately not <c>ArmingRungsFor</c> alone: that version passed only because the
 	/// extractor read one handler, and it failed the moment the others were added, which is what a
 	/// pin should do.
@@ -206,7 +206,9 @@ public sealed class BattleCycleAiTests
 				|| BattleCycles.MessageRungsFor(npc).Length > 0
 				|| BattleCycles.AttackedRungsFor(npc).Length > 0
 				|| BattleCycles.SpelledRungsFor(npc).Length > 0
-				|| BattleCycles.WakeRungsFor(npc).Length > 0,
+				|| BattleCycles.WakeRungsFor(npc).Length > 0
+				|| BattleCycles.SeeNpcRungsFor(npc).Length > 0
+				|| BattleCycles.SeeUserRungsFor(npc).Length > 0,
 				$"npc {npc} has a rotation but nothing that arms it");
 		}
 	}
@@ -236,7 +238,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 8,288 casts across 2,619 npcs, none of them read by a human. The index they came from is only
+	/// 10,318 casts across 3,197 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -255,7 +257,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(8288, casts);
+		Assert.Equal(10318, casts);
 	}
 
 	/// <summary><b>Every timer sits in one of retail's thirty slots.</b></summary>
@@ -314,6 +316,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(178, spawns);
+		Assert.Equal(203, spawns);
 	}
 }
