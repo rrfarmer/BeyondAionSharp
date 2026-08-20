@@ -36572,3 +36572,42 @@ this note and the refusal breakdown. The tree is at the previous entry's state a
   vocabulary gaps behind it.
 - **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **177 encounters missing an add**,
   **retail cast timings.**
+
+## What the seven broken encounters actually were
+
+The previous entry left "a rule for npcs two things own" as the blocker. Three candidate rules were
+tried and all three fail:
+
+* **Exclude npcs another table places.** Fixes five of seven and breaks the relay pin: the relay whose
+  whole purpose is to announce itself and go is itself placed by a death spawn.
+* **Let the placer own it when it sets a `live_time`.** Does not separate them -- the relay is placed
+  with `live_time=10`, exactly like the adds that broke.
+* **Let a hand-written encounter class own it.** Does not apply: none of the four npcs involved is named
+  by a hand-written class at all. They are placed by *generated* tables.
+
+So the blocker is not ownership. Reading what those adds' patterns actually say settles it:
+
+| npc | its retail pattern |
+|---|---|
+| `NLycan_SELC_S2` (283069, the tornado a beacon lays) | **use a skill, then despawn itself** |
+| `IDTiamat_NagaQueen_UpDraft_NoShowNpc` (282436) | **use a skill, then despawn itself** |
+
+**They are hazards.** The npc exists to deliver one cast and leave, and the skill is the mechanic. Bound
+to inert `aggressive` as they are today, they never cast and they linger -- so Tiamat's beacon currently
+produces a standing npc and no effect at all, and the tests count that npc.
+
+That inverts the conclusion. Running these patterns is **more** faithful, not less; the seven tests were
+pinning the shape of a missing feature. What the expansion needs is not an ownership rule but for those
+encounters to be re-pinned on **the cast** rather than on the add still standing there a second later.
+
+### Still missing
+
+- **`use_skill` in wake and idle handlers: 284 patterns**, and with it the hazard mechanic above. The
+  work is now specific: land the parser change, then re-pin `TiamatBeaconAiTests`,
+  `GrandChieftainKasikaAiTests`, `IdleSpawnerAiTests`, `IdleTimerSemanticsTests` and
+  `GatedSpawnControllerTests` on what the add does rather than on it being there.
+- **Whether our port delivers a hazard's damage at all.** The add casts; nothing here has checked that
+  the cast lands, and the beacon's whole purpose is that damage.
+- **`goto_waypoint` (79)**, **`change_world_scene_status` (54)**, **`control_door` (37)**.
+- **`GAb1_PvPStatus`**, **6,800 duplicate gated placements**, **177 encounters missing an add**,
+  **retail cast timings.**
