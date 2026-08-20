@@ -315,7 +315,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 59,785 casts across 17,011 npcs, none of them read by a human. The index they came from is only
+	/// 59,826 casts across 17,028 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -334,7 +334,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(59785, casts);
+		Assert.Equal(59826, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -776,7 +776,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1454, spawns);
+		Assert.Equal(1455, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1009,6 +1009,61 @@ public sealed class BattleCycleAiTests
 
 		worm.SetTarget(player);
 		Assert.True(When.TargetIsEnemy(ai), "the hostile player it is targeting is not counted");
+
+		// The identity guards on the same role, which are what `is_user` and `is_npc` become. They
+		// have to disagree with each other: a mutation reducing TargetIsPlayer to "there is a target"
+		// survived a version of this file that only counted rows in the table.
+		Assert.True(When.TargetIsPlayer(ai), "a targeted player is not counted as a player");
+		Assert.False(When.TargetIsNpc(ai), "a targeted player is counted as an npc");
+
+		Npc other = harness.Spawn(Straggler, 305f, 300f, 200f);
+		worm.SetTarget(other);
+		Assert.True(When.TargetIsNpc(ai), "a targeted npc is not counted as an npc");
+		Assert.False(When.TargetIsPlayer(ai), "a targeted npc is counted as a player");
+	}
+
+	/// <summary><b>Which identity guards the table actually carries, written down.</b></summary>
+	/// <remarks>
+	/// <c>is_user</c> and <c>is_npc</c> are 1,553 uses between them, and reading them added nine
+	/// conditions. <b>Only three of the nine currently match anything.</b> The rest name roles that do
+	/// appear in the dump but only inside patterns this table does not take -- <c>OBJI_TALKER</c> is
+	/// 621 patterns and 532 of its uses sit in <c>on_talked_by_user</c> on npcs that are spoken for by
+	/// hand-written classes, so it resolves correctly and matches nothing.
+	/// <para>
+	/// That is a fine state for a mapping to be in and a bad state to leave undocumented, because the
+	/// obvious reading of "is_user is now supported" is that 1,553 uses landed. 74 rows did. This pins
+	/// the real number so the claim cannot drift, and so a future widening that makes one of the six
+	/// reachable shows up as a deliberate change here rather than as silence.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void TheIdentityGuardsTheTableCarriesAreTheOnesClaimed()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "battle_cycles.tsv");
+		string[] lines = File.ReadAllLines(path);
+		int guardsAt = Array.IndexOf(lines[0].Split('	'), "guards");
+
+		Dictionary<string, int> seen = new Dictionary<string, int>();
+		foreach (string line in lines.Skip(1))
+		{
+			foreach (string token in line.Split('	')[guardsAt].Split('|'))
+			{
+				if (!token.StartsWith("who:", StringComparison.Ordinal))
+					continue;
+				seen[token] = seen.TryGetValue(token, out int n) ? n + 1 : 1;
+			}
+		}
+
+		Assert.Equal(
+			new Dictionary<string, int>
+			{
+				["who:TargetIsPlayer"] = 59,
+				["who:EventTargetIsPlayer"] = 10,
+				["who:TargetIsNpc"] = 4,
+				["who:AttackedByPlayer"] = 1,
+			}.OrderBy(e => e.Key),
+			seen.OrderBy(e => e.Key));
 	}
 
 }

@@ -591,6 +591,53 @@ public static class When
     /// <summary><c>is_user</c> on <c>on_spelled</c> — the spell came from a player, not an NPC.</summary>
     public static PatternCondition SpelledByPlayer => ai => ai.LastCaster is Player;
 
+    /// <summary><c>is_user</c> / <c>is_npc</c> for the roles that had no condition yet.</summary>
+    /// <remarks>
+    /// 1,553 uses between the two elements, and much of the vocabulary was already here:
+    /// <see cref="AttackedByPlayer"/>, <see cref="SpelledByPlayer"/>, <see cref="KilledByPlayer"/> and
+    /// <see cref="KilledByNpc"/> cover the attacker, the caster and the killer. What was missing was
+    /// the talker, the creature seen, the current target and the event target.
+    /// <para>
+    /// <b>Every one of these is null outside the handler that sets it</b>, and that is what makes them
+    /// worth having rather than tautologies. <see cref="PatternAi.Talker"/> is assigned in
+    /// <c>HandleDialogStart</c> and cleared in a <c>finally</c>, so <see cref="TalkerIsPlayer"/> is not
+    /// "somebody is talking to npcs somewhere" but "this branch is running because a player opened
+    /// dialogue with <i>this</i> npc, right now". A branch carrying it in another handler correctly
+    /// never fires.
+    /// </para>
+    /// <para>
+    /// <c>OBJI_SELF</c> (13 uses of <c>is_npc</c>) and <c>OBJI_FRIEND</c> (22 across both) are refused
+    /// by the extractor. The first is definitionally true and emitting <c>When.Always</c> for it would
+    /// be reasoning rather than porting; the second names a role this port does not resolve to a
+    /// creature.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition TalkerIsPlayer => ai => ai.Talker != null;
+
+    /// <summary><c>is_user obj_indicator=OBJI_SEEN</c>.</summary>
+    public static PatternCondition SeenIsPlayer => ai => ai.SeenCreature is Player;
+
+    /// <summary><c>is_user obj_indicator=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternCondition TargetIsPlayer => ai => ai.CurrentTarget is Player;
+
+    /// <summary><c>is_user obj_indicator=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternCondition EventTargetIsPlayer => ai => ai.EventTarget is Player;
+
+    /// <summary><c>is_npc obj_indicator=OBJI_SEEN</c>.</summary>
+    public static PatternCondition SeenIsNpc => ai => ai.SeenCreature is Npc;
+
+    /// <summary><c>is_npc obj_indicator=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternCondition TargetIsNpc => ai => ai.CurrentTarget is Npc;
+
+    /// <summary><c>is_npc obj_indicator=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerIsNpc => ai => ai.LastAttacker is Npc;
+
+    /// <summary><c>is_npc obj_indicator=OBJI_CASTER</c>.</summary>
+    public static PatternCondition CasterIsNpc => ai => ai.LastCaster is Npc;
+
+    /// <summary><c>is_npc obj_indicator=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternCondition EventTargetIsNpc => ai => ai.EventTarget is Npc;
+
     /// <summary>
     /// <c>is_tribe target=OBJI_MESSAGE_SENDER tribe_name=...</c> — who is talking, by role rather than
     /// by NPC id.

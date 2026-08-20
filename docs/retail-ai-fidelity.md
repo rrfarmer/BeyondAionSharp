@@ -37720,3 +37720,70 @@ Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254
 `change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## `is_user` / `is_npc`, and being honest about what landed
+
+`Retail-AI-Pattern: player-or-npc guards for the roles that resolve`
+
+Last entry deferred these two because their biggest subjects — `OBJI_TALKER` (729) and `OBJI_KILLER`
+(163 and 69) — looked like roles this port does not track. **That was wrong in the same way as the
+previous two entries.** `PatternAi.Talker` is assigned in `HandleDialogStart`, `Killer` and
+`NpcKiller` read the aggro list, and `AttackedByPlayer`, `SpelledByPlayer`, `KilledByPlayer` and
+`KilledByNpc` were all already written. Every role except `OBJI_FRIEND` was there.
+
+Nine conditions were added for the roles that genuinely had none: the talker, the creature seen, the
+current target and the event target, in player and npc flavours. `OBJI_SELF` (13 uses of `is_npc`)
+and `OBJI_FRIEND` (22 across both) are refused — the first is definitionally true and emitting
+`When.Always` for it would be reasoning rather than porting; the second names a role this port does
+not resolve to a creature.
+
+### Only three of the nine match anything, and that is written down
+
+**1,553 uses; 74 rows landed.** The rest name roles that appear only inside patterns this table does
+not take. `OBJI_TALKER` is the clearest case: 621 patterns use it, 532 of those uses sit in
+`on_talked_by_user`, and every one of those npcs is spoken for by a hand-written class — so
+`TalkerIsPlayer` resolves correctly and matches nothing.
+
+That is a fine state for a mapping and a bad state to leave implicit, because the natural reading of
+"is_user is supported now" is that 1,553 uses landed. `TheIdentityGuardsTheTableCarriesAreTheOnesClaimed`
+pins the actual census — `TargetIsPlayer` 59, `EventTargetIsPlayer` 10, `TargetIsNpc` 4,
+`AttackedByPlayer` 1 — so the claim cannot drift, and a future widening that makes one of the other
+six reachable shows up as a deliberate change rather than as silence.
+
+Patterns 2,434 -> **2,447**; npcs 17,011 -> **17,028**. The death table also moved, 1,620 -> **1,640
+npcs**, because it shares this parser — caught by `regen_check` rather than noticed, which is what it
+is for.
+
+### Two mutations, and only one of them was a real hole
+
+| mutation | result |
+|---|---|
+| player check dropped from the target role | **survived** at first |
+| `is_npc` answered from the `is_user` table | survived, and correctly so |
+
+The first was a genuine gap: the census pin counts rows in the TSV and says nothing about what the
+conditions *do*, so reducing `TargetIsPlayer` to "there is a target" changed no row. The behavioural
+pin now drives both flavours against the same role and requires them to disagree — a targeted player
+is a player and not an npc, a targeted npc the reverse.
+
+The second is not a hole and should not be recorded as one. It mutates the extractor, so it changes
+what the TSV *would* contain, not the committed artefact the suite reads. `regen_check.py` is the
+thing that catches extractor drift, and it does. Filing it as a surviving mutant would have been the
+same mistake as the `When.Always` mutant two entries ago: confusing "this harness does not exercise
+it" with "nothing does".
+
+### Still missing
+
+`is_skill_count_left` (181) is now the largest refused condition, then `flee_from` (67),
+`random_move` (57), `spawn_on_multi_target` (33), `is_distance_longer_than` (32).
+
+102 `on_arrived_at_waypoint` handlers still drop on `MOVETYPE_RUN`; 78 `on_see_friend_attacked` on
+`is_hp_lower_than` about somebody other than self.
+
+Unchanged: the eight retail handlers with no engine slot (`on_see_user_move` 254,
+`on_enter_abnormal_state` 272, `on_damaged` 141, `on_hyperlink_clicked` 137,
+`on_most_hating_updated` 132 — none of which spawn or cast — `on_see_friend_attacking` 129,
+`on_friend_spelling` 106, `on_see_npc_move` 106), plus `control_door`, `enable_area`,
+`change_world_scene_status`, `goto_waypoint` with `MOVETYPE_RUN`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.

@@ -454,8 +454,32 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 219631	ChristMas_Light_Boss	on_die	ANY	0	7		0	spawn	701457	20	600	for_the_fight_self	0.0	0.0	0.0	1
 219633	HLFP_AgrintWinter	on_die	ANY	0	7		0	spawn	218880	48	600	for_the_fight_self	0.0	0.0	0.0	1
 219633	HLFP_AgrintWinter	on_die	ANY	0	7		1	say	1500556	0	0		0.0	0.0	0.0	0
+219972	IDF5_Mini_01_B_Prisoner_Fi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219972	IDF5_Mini_01_B_Prisoner_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219973	IDF5_Mini_01_B_Prisoner_Fi02	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219973	IDF5_Mini_01_B_Prisoner_Fi02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219974	IDF5_Mini_01_B_Prisoner_Kn	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219974	IDF5_Mini_01_B_Prisoner_Kn	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219975	IDF5_Mini_01_B_Prisoner_As	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219975	IDF5_Mini_01_B_Prisoner_As	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219976	IDF5_Mini_01_B_Prisoner_El	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219976	IDF5_Mini_01_B_Prisoner_El	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219977	IDF5_Mini_01_B_Prisoner_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219977	IDF5_Mini_01_B_Prisoner_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:0	0	var	0	1	0	game2score	0.0	0.0	0.0	0
+219978	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	boss2die	0.0	0.0	0.0	0
+219978	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	1	var	1	0	0	bossdie2	0.0	0.0	0.0	0
+219978	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	2	var	2	0	0	timeout	0.0	0.0	0.0	0
+219978	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	boss2die	0.0	0.0	0.0	0
+219978	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	1	var	1	0	0	bossdie2	0.0	0.0	0.0	0
+219978	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	2	var	2	0	0	timeout	0.0	0.0	0.0	0
 219979	IDRaksha_Solo_C_Crtstal_65_An	on_die	ANY	0	7	set_flag_var:20	0	var	0	1	0	game3score	0.0	0.0	0.0	0
 219979	IDRaksha_Solo_C_Crtstal_65_An	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:20	0	var	0	1	0	game3score	0.0	0.0	0.0	0
+219987	IDF5_Mini_01_C_Boss_Fi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	bossdie3	0.0	0.0	0.0	0
+219987	IDF5_Mini_01_C_Boss_Fi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	1	var	1	0	0	boss3die	0.0	0.0	0.0	0
+219987	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	bossdie3	0.0	0.0	0.0	0
+219987	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	1	var	2	0	0	timeout	0.0	0.0	0.0	0
+219987	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	2	var	1	0	0	boss3die	0.0	0.0	0.0	0
+219987	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	3	var	2	0	0	crystal	0.0	0.0	0.0	0
 220020	TiamatDown_TiamatAgent	on_die	ANY	0	6		0	var	2	0	0	Agent_Sum_Spawn	0.0	0.0	0.0	0
 230082	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
 230083	IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae	on_die	ANY	0	7		0	var	1	0	0	IDF5_EscapePortal	0.0	0.0	0.0	0
@@ -640,6 +664,12 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 235624	IDLDF5_Under_02_Summon04	on_killed_by_user	KilledByPlayer	0	1050		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
 235626	IDLDF5_Under_02_Summon03	on_die	ANY	0	1000		0	var	3	0	0	cSetPortal	0.0	0.0	0.0	0
 235626	IDLDF5_Under_02_Summon03	on_killed_by_user	KilledByPlayer	0	1050		0	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
+235679	IDSweep_Gold_PIG_A	on_killed_by_npc	KilledByNpc	0	7	who:KilledByNpc	0	var	0	1	0	REWARD_LARGE_A	0.0	0.0	0.0	0
+235679	IDSweep_Gold_PIG_A	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer	0	var	0	1	0	REWARD_LARGE_A	0.0	0.0	0.0	0
+235686	IDSweep_Gold_PIG_B	on_killed_by_npc	KilledByNpc	0	7	who:KilledByNpc	0	var	0	1	0	REWARD_LARGE_B	0.0	0.0	0.0	0
+235686	IDSweep_Gold_PIG_B	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer	0	var	0	1	0	REWARD_LARGE_B	0.0	0.0	0.0	0
+235687	IDSweep_Gold_PIG_C	on_killed_by_npc	KilledByNpc	0	7	who:KilledByNpc	0	var	0	1	0	REWARD_LARGE_C	0.0	0.0	0.0	0
+235687	IDSweep_Gold_PIG_C	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer	0	var	0	1	0	REWARD_LARGE_C	0.0	0.0	0.0	0
 235970	TiamatDown_TiamatAgent	on_die	ANY	0	6		0	var	2	0	0	Agent_Sum_Spawn	0.0	0.0	0.0	0
 236010	Tames_Solo_A_normal_01	on_killed_by_npc	KilledByNpc	0	7		0	var	0	1	0	Wave_A_01_Clear	0.0	0.0	0.0	0
 236010	Tames_Solo_A_normal_01	on_killed_by_user	KilledByPlayer	0	7		0	var	0	1	0	Wave_A_01_Clear	0.0	0.0	0.0	0
@@ -2231,6 +2261,18 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	KilledByPlayer	0	100		6	var	22	0	0	v10	0.0	0.0	0.0	0
 277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	KilledByPlayer	0	100		7	var	22	0	0	v11	0.0	0.0	0.0	0
 277459	BGuard_Chief_Gab1_Dr	on_killed_by_user	KilledByPlayer	0	100		8	var	22	0	0	v12	0.0	0.0	0.0	0
+277460	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277460	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	1	sysmsg	1402643	0	0		0.0	0.0	0.0	0
+277460	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	1	5	who:KilledByPlayer	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277465	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277465	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	1	sysmsg	1402643	0	0		0.0	0.0	0.0	0
+277465	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	1	5	who:KilledByPlayer	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277470	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277470	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	1	sysmsg	1402643	0	0		0.0	0.0	0.0	0
+277470	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	1	5	who:KilledByPlayer	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277475	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
+277475	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_world_flag_var:24	1	sysmsg	1402643	0	0		0.0	0.0	0.0	0
+277475	Gab1_Boss_Noshow_02	on_killed_by_user	KilledByPlayer	1	5	who:KilledByPlayer	0	var	0	1	0	Rebirth	0.0	0.0	0.0	0
 277540	NoAction_AbyssDoor	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
 277540	NoAction_AbyssDoor	on_killed_by_user	KilledByPlayer	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
 277541	NoAction_AbyssDoor	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
@@ -2719,6 +2761,8 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 284736	IDDreadgion_03_DrakanCl_Semiboss_Ae	on_die	ANY	0	7		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 284740	IDDreadgion_03_DrakanFiNamedFA_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
 284741	IDDreadgion_03_DrakanFiNamedFB_60_Ae	on_die	ANY	0	5		0	var	0	1	0	Namedkilled	0.0	0.0	0.0	0
+284808	IDF5_TD_War_Vri_Cannon	on_killed_by_user	KilledByPlayer	0	5	who:KilledByPlayer	0	spawn	284802	1	0	for_the_fight_self	0.0	0.0	0.0	0
+284809	IDF5_TD_War_Vri_DirectGun	on_killed_by_user	KilledByPlayer	0	5	who:KilledByPlayer	0	spawn	284803	1	0	for_the_fight_self	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		0	var	10	0	0	BOSS	0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		1	broadcast	22542	50	0		0.0	0.0	0.0	0
 284858	BIDF5_U3_Boss	on_killed_by_user	KilledByPlayer	0	52		2	spawn	702659	1	0	for_the_fight_self	0.0	0.0	0.0	0
@@ -2758,6 +2802,7 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 287090	Test_Basic_Monster_AI_KMD_2	on_die	ANY	0	7		0	spawn	287086	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287181	Test_Basic_Monster_AI_GW_4	on_die	ANY	0	7	set_flag_var:2	0	var	0	-1	0	trap_test	0.0	0.0	0.0	0
 287189	Test_Basic_Monster_AI_GHB_2	on_die	ANY	0	7		0	spawn	280699	1	0	for_the_fight_self	0.0	0.0	0.0	0
+287192	Test_Basic_Monster_AI_CYS_2	on_die	ANY	0	7	who:TargetIsPlayer	0	spawn	287193	1	0	for_the_fight_self	0.0	0.0	0.0	0
 287204	Test_GHB_Nepilim_65_N	on_die	ANY	0	7		0	broadcast	8888	1000	0		0.0	0.0	0.0	0
 287204	Test_GHB_Nepilim_65_N	on_killed_by_user	KilledByPlayer	0	7		0	spawn	287209	1	0	for_the_fight_self	0.0	0.0	0.0	1
 287209	Test_GHB_EdCube_65_N	on_die	ANY	0	7		0	spawn	287210	1	0	for_the_fight_self	0.0	0.0	0.0	1
@@ -3984,8 +4029,20 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		5	spawn	283183	1	60	for_the_fight_absolute	478.0	514.0	418.0	1
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		6	say	1500734	0	0		0.0	0.0	0.0	0
 856029	IDTiamat_Hard_Tiamat_Dragon_Dying	on_die	ANY	0	49		7	spawn	702659	1	0	for_the_fight_absolute	480.0	508.0	419.0	0
+856102	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	boss2die	0.0	0.0	0.0	0
+856102	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	1	var	1	0	0	bossdie2	0.0	0.0	0.0	0
+856102	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	2	var	2	0	0	timeout	0.0	0.0	0.0	0
+856102	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	boss2die	0.0	0.0	0.0	0
+856102	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	1	var	1	0	0	bossdie2	0.0	0.0	0.0	0
+856102	IDF5_Mini_01_B_Prisoner_Boss_Wi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	2	var	2	0	0	timeout	0.0	0.0	0.0	0
 856103	IDRaksha_Solo_C_Crtstal_65_An	on_die	ANY	0	7	set_flag_var:20	0	var	0	1	0	game3score	0.0	0.0	0.0	0
 856103	IDRaksha_Solo_C_Crtstal_65_An	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:20	0	var	0	1	0	game3score	0.0	0.0	0.0	0
+856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	bossdie3	0.0	0.0	0.0	0
+856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_npc	KilledByNpc	0	7	who:KilledByPlayer|set_flag_var:20	1	var	1	0	0	boss3die	0.0	0.0	0.0	0
+856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	0	var	1	0	0	bossdie3	0.0	0.0	0.0	0
+856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	1	var	2	0	0	timeout	0.0	0.0	0.0	0
+856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	2	var	1	0	0	boss3die	0.0	0.0	0.0	0
+856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	3	var	2	0	0	crystal	0.0	0.0	0.0	0
 880088	NoAction_AbyssDoor	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
 880088	NoAction_AbyssDoor	on_killed_by_user	KilledByPlayer	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
 880089	NoAction_AbyssDoor	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0

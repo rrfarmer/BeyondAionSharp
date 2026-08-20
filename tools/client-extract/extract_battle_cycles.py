@@ -184,6 +184,27 @@ ENEMY_ROLES = {
     "OBJI_EVENT_TARGET": "EventTargetIsEnemy",
 }
 
+#: Retail's `is_user` subjects, and the condition each becomes.
+USER_ROLES = {
+    "OBJI_TALKER": "TalkerIsPlayer",
+    "OBJI_KILLER": "KilledByPlayer",
+    "OBJI_ATTACKER": "AttackedByPlayer",
+    "OBJI_CASTER": "SpelledByPlayer",
+    "OBJI_SEEN": "SeenIsPlayer",
+    "OBJI_CUR_TARGET": "TargetIsPlayer",
+    "OBJI_EVENT_TARGET": "EventTargetIsPlayer",
+}
+
+#: The same for `is_npc`.
+NPC_ROLES = {
+    "OBJI_KILLER": "KilledByNpc",
+    "OBJI_CUR_TARGET": "TargetIsNpc",
+    "OBJI_ATTACKER": "AttackerIsNpc",
+    "OBJI_CASTER": "CasterIsNpc",
+    "OBJI_EVENT_TARGET": "EventTargetIsNpc",
+    "OBJI_SEEN": "SeenIsNpc",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -271,6 +292,15 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind in ("is_user", "is_npc"):
+            # Is the creature in this role a player, or an npc? `OBJI_SELF` and `OBJI_FRIEND` are
+            # refused: the first is definitionally true, which would be reasoning rather than porting,
+            # and the second names a role this port does not resolve to a creature.
+            table = USER_ROLES if kind == "is_user" else NPC_ROLES
+            who = re.search(r"<obj_indicator>(\w+)</obj_indicator>", body)
+            if not who or who.group(1) not in table:
+                raise Unsayable(f"{kind} about {who.group(1) if who else '?'}")
+            out.append("who:" + table[who.group(1)])
         elif kind == "is_enemy":
             # Is whoever is in this role hostile to me? Every role retail asks about is one `PatternAi`
             # already tracks, so all 1,156 uses are sayable and none needs a new notion of hostility --
