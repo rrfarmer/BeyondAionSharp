@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.World.Spawns;
 
@@ -40,6 +41,9 @@ public sealed class DeathSpawnTableTests
 	private const int NpcKilled = 277400;
 
 	private const int NpcKilledLeaves = 295092;
+
+	/// <summary>An npc of a tribe the guard's own tribe data marks hostile.</summary>
+	private const int HostileToTheGuard = 277234;
 
 	/// <summary>Tiamat, whose death writes the variable 70 retail placements are gated on.</summary>
 	private const int Tiamat = 856029;
@@ -161,19 +165,42 @@ public sealed class DeathSpawnTableTests
 		Assert.Equal(4, store["KAHRUN_SPAWN"]);
 		Assert.Equal(1, gated.Placed);
 	}
+	/// <summary><b>An npc kill leaves what retail leaves for an npc kill.</b></summary>
+	/// <remarks>
+	/// The previous entry recorded this as unreachable from the harness, because a dying npc's aggro
+	/// list only accepts an attacker it is aware of or hostile to, and two npcs of unrelated tribes are
+	/// neither. That was true of the pair being used, not of the harness: <b>the tribe data contains
+	/// real hostile pairs</b>, and one of them is this very guard. <c>GAB1_SUB_DEST_70</c> is hostile to
+	/// <c>GAB1_01_POINT_01</c>, so the damage lands and the branch fires.
+	/// <para>
+	/// The hostility is asserted rather than assumed. If the tribe relations change, this fails saying
+	/// the pair is no longer hostile instead of quietly becoming a test that proves nothing -- which is
+	/// what it would have been had the pairing been left implicit.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AnNpcKillLeavesTheNpcKillAdd()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(NpcKilled, 300f, 300f, 200f);
+		Npc slayer = harness.Spawn(HostileToTheGuard, 303f, 300f, 200f);
+		Assert.True(
+			DataManager.TRIBE_RELATIONS_DATA.IsHostileRelation(guard.GetTribe(), slayer.GetTribe()),
+			"the pair this pin relies on is no longer hostile, so nothing it asserts means anything");
+
+		BossAiHarness.MakeMutuallyKnown(guard, slayer);
+		BossAiHarness.Wound(guard, slayer);
+		guard.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(1, Count(harness, NpcKilledLeaves));
+	}
+
 	/// <summary><b>The npc-kill branches exist and carry their guard.</b></summary>
 	/// <remarks>
-	/// <b>Structural, because the behaviour cannot be reached from here, and that is worth stating.</b>
-	/// Registering an npc kill needs the dying npc's aggro list to accept the attacker, and it accepts
-	/// one only if it is already aware of it or hostile to it -- <c>AddDamage</c> and <c>AddHate</c>
-	/// both check. Two npcs of unrelated tribes are neither, so no amount of wounding lands, which is
-	/// the server behaving correctly rather than a gap in it. Building a genuinely hostile pair means
-	/// tribe-relation setup the harness does not have.
-	/// <para>
-	/// What is pinned behaviourally is the half that can be: <see cref="AnUntouchedDeathLeavesNothing"/>
-	/// shows the guard does not fire when nothing killed the npc, which is the distinction that makes
-	/// <c>KilledByNpc</c> a real condition instead of "no player did it".
-	/// </para>
+	/// The count, over the whole table, beside the two behavioural pins that show one branch firing and
+	/// one correctly not. A table that quietly lost its npc-kill branches would still pass those two if
+	/// the one npc they use kept its own.
 	/// </remarks>
 	[Fact]
 	public void TheNpcKillBranchesCarryTheirGuard()
@@ -205,5 +232,26 @@ public sealed class DeathSpawnTableTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(1));
 
 		Assert.Equal(0, Count(harness, NpcKilledLeaves));
+	}
+	/// <summary><b>The harness can find an enemy for an npc without one being named by hand.</b></summary>
+	/// <remarks>
+	/// <see cref="AnNpcKillLeavesTheNpcKillAdd"/> names its slayer, which is clearer for that pin and
+	/// useless for the next one. This checks the general route works, so the next npc-kill pin does not
+	/// have to repeat the search through the tribe data that this entry did by hand.
+	/// </remarks>
+	[Fact]
+	public void TheHarnessFindsAnEnemyOnItsOwn()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc guard = harness.Spawn(NpcKilled, 300f, 300f, 200f);
+
+		Npc enemy = harness.SpawnEnemyOf(guard, 305f, 300f, 200f);
+
+		Assert.NotEqual(guard.GetTribe(), enemy.GetTribe());
+		BossAiHarness.Wound(guard, enemy);
+		guard.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(1, Count(harness, NpcKilledLeaves));
 	}
 }

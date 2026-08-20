@@ -36151,3 +36151,36 @@ column. Same column drift as two entries ago, found this time by looking rather 
 - **566 gate variables no retail pattern ever writes** -- the floor on this approach.
 - **26 death patterns need `control_door`**, which has no helper anywhere in the port.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
+
+## The unreachable pin was reachable
+
+The previous entry recorded the positive npc-kill path as unreachable from the harness, with what looked
+like a solid reason: a dying npc's aggro list accepts an attacker only if it is aware of it or hostile
+to it, so two npcs of unrelated tribes cannot register a kill however hard one hits the other.
+
+**The reasoning was right and the conclusion was wrong.** That is a fact about the *pair being used*,
+not about the harness. `tribe_relations.xml` carries real hostile pairs, and one of them is the very
+guard the pin needed: `GAB1_SUB_DEST_70` is hostile to `GAB1_01_POINT_01`. The damage lands, the branch
+fires, and both mutations against `KilledByNpc` die.
+
+The lesson is narrower than "check harder". The evidence was *"I could not make these two npcs fight"*,
+and it got written down as *"npcs cannot be made to fight here"* -- a claim about the tool rather than
+about the attempt. Those are different sentences and only the first one was supported.
+
+### The helper that should have existed first
+
+`BossAiHarness.SpawnEnemyOf` looks a hostile npc up in the same table the server uses and spawns it, so
+the next pin about one npc killing another does not repeat the search through the tribe data that this
+entry did by hand. The pin that names its slayer keeps doing so -- it is clearer for that one encounter
+-- and asserts the hostility rather than assuming it, so a change to the relations fails loudly instead
+of quietly turning the test into one that proves nothing.
+
+### Still missing
+
+- **488 wake patterns that also do something else**, 136 with a guarded branch.
+- **566 gate variables no retail pattern ever writes** -- server flags, quest state, or unidentified.
+  The floor on the whole gate approach, and nobody has separated the three.
+- **26 death patterns need `control_door`**, which has no helper anywhere in the port.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**.
+- **Retail cast timings across 13,186 npcs.** Still the only item static work cannot close, and now
+  visibly the oldest one on the list.

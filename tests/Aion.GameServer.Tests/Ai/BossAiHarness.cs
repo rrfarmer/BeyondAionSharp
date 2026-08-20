@@ -14,6 +14,7 @@ using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Knownlist;
 using Aion.GameServer.Model.Skill;
+using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Model.Templates.World;
@@ -623,6 +624,40 @@ public sealed class BossAiHarness : IDisposable
 		ai.SetSubStateIfNot(AISubState.NONE);
 		SkillAttackManager.PerformAttack(ai, 0);
 		return npc.GetTarget();
+	}
+
+	/// <summary>
+	/// Spawns an npc the given one is genuinely hostile to, or says why it could not.
+	/// </summary>
+	/// <remarks>
+	/// An npc's aggro list refuses damage from a creature it is neither aware of nor hostile to --
+	/// <c>AddDamage</c> and <c>AddHate</c> both check -- so any pin about one npc killing another needs
+	/// a real enemy, and two npcs picked for convenience will silently register nothing at all. An
+	/// entry in this log claimed such a pin was unreachable from the harness on exactly that evidence;
+	/// the tribe data had a hostile pair for that very npc all along.
+	/// <para>
+	/// The hostility is looked up in the same table the server uses rather than arranged, so a pin
+	/// built on it fails loudly if the relations change instead of quietly proving nothing.
+	/// </para>
+	/// </remarks>
+	public Npc SpawnEnemyOf(Npc npc, float x = 983f, float y = 135f, float z = 242f)
+	{
+		foreach (NpcTemplate candidate in DataManager.NPC_DATA.GetNpcData())
+		{
+			if (candidate.GetTribe() == npc.GetTribe()
+				|| !DataManager.TRIBE_RELATIONS_DATA.IsHostileRelation(npc.GetTribe(),
+					candidate.GetTribe()))
+			{
+				continue;
+			}
+
+			Npc enemy = Spawn(candidate.GetTemplateId(), x, y, z);
+			MakeMutuallyKnown(npc, enemy);
+			return enemy;
+		}
+
+		throw new InvalidOperationException(
+			$"no npc template is hostile to tribe {npc.GetTribe()}; a kill pin cannot be built on it");
 	}
 
 	/// <summary>Removes and returns everything the NPC has queued since the last drain, in cast order.</summary>
