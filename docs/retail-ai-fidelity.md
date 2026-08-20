@@ -36232,3 +36232,55 @@ than guessed at. Both were open questions in earlier entries.
 - **488 wake patterns that also do something else**, 136 with a guarded branch.
 - **`control_door`** (26 death patterns), **6,800 duplicate gated placements**, **177 encounters missing
   an add**, **retail cast timings.**
+
+## Two items that turned out to need evidence the data does not contain
+
+Both remaining large items were investigated this entry and **neither was ported**, for the same reason
+in two different shapes. Recording what was learned so the next attempt starts further along.
+
+### `GAb1_PvPStatus` -- 6,070 placements, and no way to know what the numbers mean
+
+The value is read three ways and what each gates is clear enough:
+
+| value | placements | what sits behind it |
+|---|---|---|
+| 1 | 3,740 | artifact master trackers and physicians, warcaptains, warmages, ridable anti-aircraft guns |
+| 3 | 2,234 | teleporters, scout infantry of five named companies |
+| 2 | 96 | the four temple gates, mirage dance, chaos wind |
+
+What is *not* available is which number is peace and which is war. The obvious tell would be a compound
+gate naming it -- the dump does contain names like `GAB1_LIGHT_TELEPORTER_IN_PEACE_10111` -- and
+**`GAb1_PvPStatus` never co-occurs with one**. Its compound gates pair only with `v01` at 1, 6, 11 and
+16, which look like fortress or team indices and say nothing about state.
+
+`PanesterraService` exists here with a full fortress-siege lifecycle, so the wiring is not the problem.
+Guessing the mapping is: 1 and 3 differ by 6,000 placements, and getting them the wrong way round puts
+artifact guards on the field during peace and teleporters up during a siege.
+
+### `control_door` -- 691 uses, one coin flip short
+
+Doors work in this port (`door.SetOpen`, `OpenDoor(staticId)`), and retail's action is just an id and a
+`method`. The methods are 1 (590 uses), 2 (94) and 0 (7), and their distribution is suggestive:
+
+| handler | methods |
+|---|---|
+| `on_enter_attack_state` | **2** (38) over 1 (17) |
+| `on_die` | **1** (92) over 2 (17) |
+| `on_killed_by_user` | **1** (34) |
+
+A fight starting closes a door and a boss dying opens it is a coherent reading, and it makes 1 = open.
+**It is still an inference**, so it was checked against something independent: this port's instance
+handlers already open 78 npc-to-door pairs by hand. **None of those npcs has a `control_door` in its
+retail pattern** -- in retail that logic lives in the instance script too -- so the cross-check yields
+nothing and the reading stands unconfirmed.
+
+A door mapped backwards locks a raid into an empty room or opens the boss chamber early, which is worse
+than a door that never moves. Left unported.
+
+### Still missing
+
+- **`GAb1_PvPStatus`'s state mapping** and **`control_door`'s method mapping** -- both above, both
+  blocked on evidence rather than on effort. The client's own siege UI or a retail video would settle
+  either in a minute.
+- **488 wake patterns that also do something else**, 136 with a guarded branch.
+- **6,800 duplicate gated placements**, **177 encounters missing an add**, **retail cast timings.**
