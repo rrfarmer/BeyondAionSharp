@@ -34426,3 +34426,46 @@ nothing follows it. One wake, one wait, one spawn.
 - The `use_skill` on the barrier wake-up rung, and its `on_attacked` system message — a string id this
   port has no table for.
 - The beacon `use_skill` indices and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`, still open.
+
+## Twenty-one npcs that wake, wait, and place something — and three ways to put it in the wrong place
+
+With the zero-delay semantic settled, the family the last two entries measured could be worked. Of the
+132 patterns, **nineteen are expressible exactly** — one unguarded rung, a wake-up delay, and nothing in
+it but spawns and the timer — covering **21 npcs**, every one of which ran a generic class and did
+nothing at all: arena summoners, Tiamat's hard-mode breath markers, world-raid wave pods.
+
+`IdleSpawns` is the seventh generated table of this shape and `IdleSpawnerAI` runs it. Nothing is
+constant across the set, so nothing is a constant: the wait runs 2 seconds to 10 minutes, the placements
+1 to 11, and the re-arm is absent, zero, or a real period.
+
+### Retail has three spawn locations, and this entry got two of them wrong first
+
+| | carries | reading it as absolute gives |
+|---|---|---|
+| `SPAWN_LOCATION_ABSOLUTE` | world coordinates | — |
+| `SPAWN_LOCATION_MY_POINT` | **nothing** | the world origin |
+| `SPAWN_LOCATION_RELATIVE` | an **offset** from the npc | the corner of the map |
+
+Both mistakes were made and both were caught by reading the emitted table rather than the row count,
+which was right every time. `MY_POINT` was the beacon bug one entry ago; `RELATIVE` put four arena adds
+at x=1, y=1 in this one. Each has its own pin now.
+
+### Three process notes, because each cost a cycle
+
+* **A generated table must keep finding its own rows.** The extractor searched for npcs on a *generic*
+  class, so binding the 21 removed them from its own search: the next run emitted nothing and
+  `regen_check` reported the committed table as drift. The class it feeds is now in the search set.
+* **An inert mutation is not a caught one.** Changing `ReArmMillis >= 0` to `>= -1` emits
+  `SetIdleTimer(-1)`, which disarms exactly like zero — the mutation changed nothing and survived
+  honestly. Replaced with one that turns a one-shot into a 30-second heartbeat.
+* **A periodic spawn is invisible most of the time.** That heartbeat mutation still survived, because
+  the pin sampled at a five-minute mark and the add lives three seconds in every thirty. Sampling just
+  after a heartbeat would fire catches it.
+
+### Still missing
+
+- **The other 113 patterns in the family.** They need flag guards, several branches, or actions this
+  port has no answer for — `set_condition_spawn_variable` is the largest at 105 uses, and **the
+  conditional spawn engine behind it is still unbuilt**, which is the single biggest missing mechanic
+  this log has named.
+- The beacon and barrier `use_skill` indices, and `IDVritra_Base_Drakan_Gi_Nmd_Beacon`.
