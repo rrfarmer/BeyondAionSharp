@@ -83,6 +83,24 @@ from extract_idle_cycles import slot as flag_slot, string_ids  # noqa: E402
 #: `SkillAttackManager` -- a Java-parity enum and the engine around it, not data. See the doc entry.
 TARGETS = {"OBJI_SELF": "ME", "OBJI_CUR_TARGET": "MOST_HATED", "OBJI_FRIEND": "FRIEND"}
 
+#: Retail's attacker indicators: a creature picked by its place in the hate list, or by how hurt it is.
+#: `AggroTarget` names all six -- `LOWEST_HP` and `MOST_HP` were added to it for these very patterns --
+#: so target switching is an exact mapping with nothing inferred.
+AGGRO = {
+    "ATTACKERI_RANDOM_ONE": "RANDOM",
+    "ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET": "RANDOM_EXCEPT_CURRENT_TARGET",
+    "ATTACKERI_SECOND_HATING": "SECOND_MOST_HATED",
+    "ATTACKERI_THIRD_HATING": "THIRD_MOST_HATED",
+    "ATTACKERI_HAS_LOWEST_HP": "LOWEST_HP",
+    "ATTACKERI_HAS_MOST_HP": "MOST_HP",
+}
+
+#: The same indicators as a *skill* target. `NpcSkillTargetAttribute` is the narrower enum -- it has no
+#: health-ranked members -- so a cast aimed at whoever is closest to dying cannot be said even though
+#: a target *switch* to the same creature can. 235 uses are refused for that alone.
+SKILL_AGGRO = {name: value for name, value in AGGRO.items()
+               if value not in ("LOWEST_HP", "MOST_HP")}
+
 #: Where a battle timer can be armed. Retail does not only start a fight's chain from entering combat:
 #: of the 390 rotations with no `on_enter_attack_state` arming, 59 are started by a message from another
 #: npc, 21 by being attacked, 18 by being spelled and 10 on waking. Reading only the first handler left
@@ -225,6 +243,25 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 raise Unsayable("use_skill at a target this port cannot name"
                                 if index else "use_skill without an index")
             out.append(("skill", int(index.group(1)), 0, 0, TARGETS[who.group(1)],
+                        0.0, 0.0, 0.0, 0))
+        elif kind == "switch_target_by_attacker_indicator":
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not who or who.group(1) not in AGGRO:
+                raise Unsayable("switch_target_by_attacker_indicator at an indicator this port lacks")
+            out.append(("switch_to", 0, 0, 0, AGGRO[who.group(1)], 0.0, 0.0, 0.0, 0))
+        elif kind == "use_skill_by_attacker_indicator":
+            index = re.search(r"SKILLI_INDEX_(\d+)", body)
+            who = re.search(r"<target>(\w+)</target>", body)
+            ranged = re.search(r"<restricted_range>(\w+)</restricted_range>", body)
+            if not index or not who or who.group(1) not in SKILL_AGGRO:
+                raise Unsayable("use_skill_by_attacker_indicator at an indicator this port lacks"
+                                if index else "use_skill_by_attacker_indicator without an index")
+            # `restricted_range` narrows the candidates to those within reach. The queue picks its
+            # target when it drains and takes no such bound from here, so the 53 uses that set it are
+            # refused rather than cast at somebody out of range.
+            if ranged and ranged.group(1).upper() == "TRUE":
+                raise Unsayable("use_skill_by_attacker_indicator restricted to a range")
+            out.append(("skill", int(index.group(1)), 0, 0, SKILL_AGGRO[who.group(1)],
                         0.0, 0.0, 0.0, 0))
         elif kind in ("add_hate_point", "switch_target"):
             # Only the message parameter: these name a creature by role, and the message param is the

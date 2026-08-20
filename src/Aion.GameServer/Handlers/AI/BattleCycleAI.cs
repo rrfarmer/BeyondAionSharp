@@ -8,7 +8,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// A combat rotation: arms a timer when the fight starts, and puts adds on the ground when it fires.
 /// </summary>
 /// <remarks>
-/// 961 retail patterns across 3,197 npcs, none of which ran here. <see cref="IdleCycleAI"/> covers what an
+/// 1,216 retail patterns across 3,894 npcs, none of which ran here. <see cref="IdleCycleAI"/> covers what an
 /// npc does while nothing is happening; this covers what a boss does <b>during</b> the fight, which is
 /// where retail keeps most of its mechanics.
 /// <para>

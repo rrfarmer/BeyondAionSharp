@@ -35460,3 +35460,52 @@ it is the last one.
   be a guess. 10 rows given up.
 - **188 rotations re-arm only from within themselves; 147 arm nowhere in the pattern.** Unchanged.
 - Still unverified against live play: retail cast timings have never been observed on this server.
+
+## The attacker indicators, and a generated table that crashed the server
+
+`use_skill_by_attacker_indicator` and `switch_target_by_attacker_indicator` were the top two refusals.
+They pick a creature by its place in the hate list, or by how hurt it is, and **`AggroTarget` already
+names all six** -- `LOWEST_HP` and `MOST_HP` were added to it for these very patterns in earlier work.
+So target switching is an exact mapping with nothing inferred:
+
+| retail | here |
+|---|---|
+| `ATTACKERI_RANDOM_ONE` | `RANDOM` |
+| `ATTACKERI_RANDOM_ONE_EXCEPT_CURRENT_TARGET` | `RANDOM_EXCEPT_CURRENT_TARGET` |
+| `ATTACKERI_SECOND_HATING` / `THIRD_HATING` | `SECOND_MOST_HATED` / `THIRD_MOST_HATED` |
+| `ATTACKERI_HAS_LOWEST_HP` / `HAS_MOST_HP` | `LOWEST_HP` / `MOST_HP` |
+
+Casting at one is narrower: `NpcSkillTargetAttribute` has no health-ranked members, so a boss can
+**switch** to whoever is closest to dying but cannot **cast** at them. 235 uses are refused for that
+alone -- the same enum question as the role targets, in a different coat.
+
+| | before | after |
+|---|---|---|
+| rotations | 961 | **1,216** |
+| npcs | 3,197 | **3,894** |
+| actions | 25,563 | **39,709** |
+| casts | 10,318 | **16,017** |
+
+### The table got big enough to break the runtime
+
+At 39,709 actions the generated class **overflowed the stack in its own type initializer**. The suite
+caught it as a test-host crash after 679 tests, but this was not a harness artifact: the initializer
+runs the first time any bound npc enters combat, so a live server would have died the same way, with
+3,894 npcs able to trigger it.
+
+The table is now built by a chain of small methods, 100 npcs each, instead of one initializer holding
+everything. Worth remembering as a property of generated code in general: **a table can be correct,
+reproduce byte-for-byte, pass every data pin, and still be unloadable.** Nothing about the data said so.
+
+### Still missing
+
+- **235 casts at a health-ranked or role-named creature.** Needs a case added to
+  `NpcSkillTargetAttribute` and `SkillAttackManager` -- a Java-parity enum and the engine around it.
+  This is now the single decision blocking the most content, and it has come up three times.
+- **53 `use_skill_by_attacker_indicator` set `restricted_range`**, narrowing candidates to those in
+  reach. The queue takes no such bound, so they are refused rather than aimed at someone out of range.
+- **198 `is_user_flying`**, 67 `spawn_on_target`.
+- **333 optional arming handlers dropped** (48 want `goto_waypoint`, 23 `is_npc_state`, 18 `is_enemy`).
+- **188 rotations re-arm only from within themselves; 147 arm nowhere.** Unchanged.
+- Still unverified against live play. 1,216 rotations now rest on the data and four structural pins,
+  and the stack overflow is a reminder that those pins do not cover everything that can go wrong.
