@@ -8,7 +8,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// A combat rotation: arms a timer when the fight starts, and puts adds on the ground when it fires.
 /// </summary>
 /// <remarks>
-/// 1,827 retail patterns across 13,186 npcs, none of which ran here. <see cref="IdleCycleAI"/> covers what an
+/// 1,829 retail patterns across 13,188 npcs, none of which ran here. <see cref="IdleCycleAI"/> covers what an
 /// npc does while nothing is happening; this covers what a boss does <b>during</b> the fight, which is
 /// where retail keeps most of its mechanics.
 /// <para>
@@ -54,6 +54,8 @@ public class BattleCycleAI : PatternAi
 			OnWakeUp = AiPattern.Of(BattleCycles.WakeRungsFor(id)),
 			OnSeeNpc = AiPattern.Of(BattleCycles.SeeNpcRungsFor(id)),
 			OnSeeUser = AiPattern.Of(BattleCycles.SeeUserRungsFor(id)),
+			OnDie = AiPattern.Of(BattleCycles.DeathRungsFor(id)),
+			OnLeaveAttack = AiPattern.Of(BattleCycles.LeaveFightRungsFor(id)),
 			OnBattleTimer = AiPattern.Of(BattleCycles.CycleRungsFor(id)),
 		});
 }

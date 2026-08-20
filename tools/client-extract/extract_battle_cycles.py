@@ -126,6 +126,14 @@ SKILL_AGGRO = dict(AGGRO)
 ARMING = ["on_enter_attack_state", "on_message", "on_attacked", "on_spelled", "on_wake_up",
           "on_see_npc", "on_see_user"]
 
+#: Handlers that are not about arming anything -- they are what the encounter does when it ends.
+#:
+#: `on_die` is where 77 of the 196 encounters still missing an add place it, second only to the battle
+#: timer itself, and this table read none of it. `on_leave_attack_state` is another 39. They are
+#: best-effort for the same reason the optional arming handlers are: an unsayable branch costs that
+#: handler, not the rotation.
+ENDINGS = ["on_die", "on_leave_attack_state"]
+
 #: `on_battle_timer` and `on_enter_attack_state` are the rotation, and an unsayable branch in either
 #: refuses the whole pattern -- dropping a rung there silently promotes the next one, because branch
 #: lists are first-match-wins.
@@ -448,7 +456,7 @@ def main() -> int:
             arming = {}
             try:
                 cycle = read_handler(body, "on_battle_timer", dev, ai.keys(), strings)
-                for handler in ARMING:
+                for handler in ARMING + ENDINGS:
                     if handler in CORE:
                         arming[handler] = read_handler(body, handler, dev, ai.keys(), strings)
                         continue
@@ -462,8 +470,14 @@ def main() -> int:
                 continue
             # Without a rung that arms a timer nothing starts the chain and the rotation is inert.
             # A handler that merely exists is not enough -- it has to actually arm one.
+            # An ending handler can carry an `arm`, but arming a battle timer as you die is not a way
+            # into a rotation -- the npc is gone before it fires. They are kept for their spawns and
+            # excluded from what counts as armed.
             armed = {h: rungs for h, rungs in arming.items()
-                     if any(action[0] == "arm" for _, _, _, actions in rungs for action in actions)}
+                     if h in ENDINGS
+                     or any(action[0] == "arm" for _, _, _, actions in rungs for action in actions)}
+            if not any(h not in ENDINGS for h in armed):
+                armed = {}
             if not armed or not cycle:
                 refused["nothing arms the first timer"] += 1
                 continue

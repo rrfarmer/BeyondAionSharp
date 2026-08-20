@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 1827 retail patterns across 13186 npcs, 163325 actions.
+/// Combat rotations: 1827 retail patterns across 13186 npcs, 165813 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -61,6 +61,14 @@ internal static class BattleCycles
     /// <summary>Rungs that arm a timer on seeing a player.</summary>
     internal static PatternBranch[] SeeUserRungsFor(int npcId)
         => OnSeeUser.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+
+    /// <summary>What the npc leaves behind when it dies.</summary>
+    internal static PatternBranch[] DeathRungsFor(int npcId)
+        => OnDie.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
+
+    /// <summary>What it does when the fight ends without it dying.</summary>
+    internal static PatternBranch[] LeaveFightRungsFor(int npcId)
+        => OnLeaveAttack.TryGetValue(npcId, out PatternBranch[]? rungs) ? rungs : [];
 
     /// <summary>What each timer does when it fires, in retail's order.</summary>
     internal static PatternBranch[] CycleRungsFor(int npcId)
@@ -294234,6 +294242,7586 @@ internal static class BattleCycles
                 Do.Broadcast(7106, 30f),
                 Do.ArmTimer(0, 6000),
                 Do.SystemMessage(1401028, 0)),
+        ];
+    }
+
+    /// <summary>What the encounter leaves behind when it dies.</summary>
+    private static readonly IReadOnlyDictionary<int, PatternBranch[]> OnDie =
+        BuildOnDie();
+
+    private static Dictionary<int, PatternBranch[]> BuildOnDie()
+    {
+        Dictionary<int, PatternBranch[]> rungs = new Dictionary<int, PatternBranch[]>();
+        OnDie0(rungs);
+        OnDie1(rungs);
+        OnDie2(rungs);
+        OnDie3(rungs);
+        OnDie4(rungs);
+        OnDie5(rungs);
+        OnDie6(rungs);
+        return rungs;
+    }
+
+    private static void OnDie0(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[213776] = [  // IDDF3_NamedLFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(282155, 2, 10, new SpawnSpot(488.0f, 412.0f, 615.0f)),
+                Do.SetSpawnVariable("lastboss", 0, 1)),
+        ];
+        rungs[214028] = [  // XLehpar_IDLF3LP2_PrNmd
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(341551, 0)),
+        ];
+        rungs[215135] = [  // BGuard_ChiefD_Minor
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(496.0f, 847.0f, 200.0f), new SpawnSpot(496.0f, 847.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(529.0f, 874.0f, 200.0f), new SpawnSpot(529.0f, 874.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(554.0f, 850.0f, 200.0f), new SpawnSpot(554.0f, 850.0f, 200.0f))),
+        ];
+        rungs[215178] = [  // BGuard_ChiefD_Minor
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(496.0f, 847.0f, 200.0f), new SpawnSpot(496.0f, 847.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(529.0f, 874.0f, 200.0f), new SpawnSpot(529.0f, 874.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(554.0f, 850.0f, 200.0f), new SpawnSpot(554.0f, 850.0f, 200.0f))),
+        ];
+        rungs[215221] = [  // BGuard_ChiefD_Minor
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(496.0f, 847.0f, 200.0f), new SpawnSpot(496.0f, 847.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(529.0f, 874.0f, 200.0f), new SpawnSpot(529.0f, 874.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(554.0f, 850.0f, 200.0f), new SpawnSpot(554.0f, 850.0f, 200.0f))),
+        ];
+        rungs[215423] = [  // IDSlk_Madam
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[215457] = [  // Elim_Octaside_Door
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_1F_StartRush", 2, 0)),
+        ];
+        rungs[215483] = [  // Elim_ComadFe2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[215484] = [  // Elim_ComadFe2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[215783] = [  // IDTP_FanaFiNm
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500027, 0),
+                Do.SetSpawnVariable("Teleporter_Spawn", 0, 1)),
+        ];
+        rungs[215785] = [  // IDTP_Fanatic_FeC
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(341988, 0)),
+        ];
+        rungs[215807] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[215813] = [  // IDTP_Fanatic_EeB
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(2)),
+        ];
+        rungs[215856] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216161] = [  // IDCTH_UnTiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500053, 0)),
+        ];
+        rungs[216162] = [  // IDCTH_Boss_TiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500057, 0)),
+        ];
+        rungs[216206] = [  // IDCT_Normal_LightFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216207] = [  // IDCT_Hard_LightWi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216208] = [  // IDCT_Normal_LightSc
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216209] = [  // IDCT_Hard_LightPr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216210] = [  // IDCT_Normal_DarkFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216211] = [  // IDCT_Hard_DarkWi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216212] = [  // IDCT_Normal_DarkSc
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216213] = [  // IDCT_Hard_DarkPr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216242] = [  // IDCTN_UnTiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500053, 0)),
+        ];
+        rungs[216243] = [  // IDCT_Boss_TiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500057, 0)),
+        ];
+        rungs[216287] = [  // IDCT_Normal_LightFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216288] = [  // IDCT_Normal_LightWi
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216289] = [  // IDCT_Normal_LightSc
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216290] = [  // IDCT_Normal_LightPr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216291] = [  // IDCT_Normal_DarkFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216292] = [  // IDCT_Normal_DarkWi
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216293] = [  // IDCT_Normal_DarkSc
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216294] = [  // IDCT_Normal_DarkPr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216326] = [  // IDTP_Fanatic_EeB
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(2)),
+        ];
+        rungs[216334] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216342] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216350] = [  // IDTP_Fanatic_EeB
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(2)),
+        ];
+        rungs[216359] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216383] = [  // IDTP_Fanatic_EeB
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(2)),
+        ];
+        rungs[216391] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216399] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216504] = [  // Shulack_VChief
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216525] = [  // IDCT_Boss_Hidden_Hard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216526] = [  // IDCT_Boss_Hidden
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216553] = [  // Owllau_PeN_ver40
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[216583] = [  // IDCT_Lichkey1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("lichkey1", 0, 1),
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216584] = [  // IDCT_Lichkey2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("lichkey2", 0, 1)),
+        ];
+        rungs[216585] = [  // IDCT_Lichkey3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("lichkey3", 0, 1),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(955.0f, 469.0f, 222.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(925.0f, 470.0f, 226.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(808.0f, 465.0f, 222.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(790.0f, 460.0f, 222.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(797.0f, 320.0f, 221.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(784.0f, 226.0f, 225.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(769.3f, 278.7f, 222.0f))),
+        ];
+        rungs[216587] = [  // IDCT_Lichkey1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("lichkey1", 0, 1),
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[216588] = [  // IDCT_Lichkey2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("lichkey2", 0, 1)),
+        ];
+        rungs[216589] = [  // IDCT_Lichkey3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("lichkey3", 0, 1),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(955.0f, 469.0f, 222.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(925.0f, 470.0f, 226.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(808.0f, 465.0f, 222.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(790.0f, 460.0f, 222.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(797.0f, 320.0f, 221.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(784.0f, 226.0f, 225.0f)),
+                Do.SpawnAtForTheFight(281388, 1, 10, new SpawnSpot(769.3f, 278.7f, 222.0f))),
+        ];
+        rungs[216937] = [  // Elim_ComadFe2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[216938] = [  // Elim_ComadFe2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[216942] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[216954] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[217186] = [  // IDF4Re_Drana_golem
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282379, 1, 1, 0f, 5),
+                Do.Broadcast(10, 30f)),
+        ];
+        rungs[217196] = [  // IDF4Re_Drana_golem
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282379, 1, 1, 0f, 5),
+                Do.Broadcast(10, 30f)),
+        ];
+        rungs[217204] = [  // IDF4Re_Drana_Named_C
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500199, 0),
+                Do.SpawnAtForTheFight(282435, 2, 10, new SpawnSpot(1311.0f, 1174.0f, 192.0f)),
+                Do.SetSpawnVariable("IDF4Re_Dra_03_Boss_Kill", 1, 0)),
+        ];
+        rungs[217292] = [  // IDYun_Temp_31
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282551, 1, 1, 0f, 10)),
+        ];
+        rungs[217299] = [  // IDYun_Drakan_ND3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282528, 1, 1, 0f, 10)),
+        ];
+        rungs[217330] = [  // IDYun_Drakan_ND3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282528, 1, 1, 0f, 10)),
+        ];
+        rungs[217359] = [  // Station_Shu_AS
+            AiPattern.Branch(7, "rung 0", [When.Chance(50)],
+                Do.Say(342340, 0)),
+        ];
+        rungs[217399] = [  // Raksha_KerosAS_Nmd
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.Broadcast(12007, 100f)),
+        ];
+        rungs[217400] = [  // Raksha_KerosKN_Nmd
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.Broadcast(12007, 100f)),
+        ];
+        rungs[217454] = [  // Raksha_EvileyeLight
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SystemMessage(1401160, 0),
+                Do.SetSpawnVariable("idraksha_evileyenamedspawn", 0, 1)),
+        ];
+        rungs[217455] = [  // Raksha_EvileyeLight
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SystemMessage(1401160, 0),
+                Do.SetSpawnVariable("idraksha_evileyenamedspawn", 0, 1)),
+        ];
+        rungs[217480] = [  // IDArena_S1_Monster_2
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("Condition_S1_L", 0, 1)),
+        ];
+        rungs[217482] = [  // IDArena_S1_Monster_5
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("Condition_S1_L", 0, 1)),
+        ];
+        rungs[217483] = [  // IDArena_S1_Monster_3
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("Condition_S1_L", 0, 1)),
+        ];
+        rungs[217489] = [  // IDArena_S1_D_Monster_2
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("Condition_S1_D", 0, 1)),
+        ];
+        rungs[217491] = [  // IDArena_S1_D_Monster_5
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("Condition_S1_D", 0, 1)),
+        ];
+        rungs[217492] = [  // IDArena_S1_D_Monster_3
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("Condition_S1_D", 0, 1)),
+        ];
+        rungs[217497] = [  // IDArena_S2_Monster_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2_L", 0, 1)),
+        ];
+        rungs[217505] = [  // IDArena_S2_Monster_R4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2_D", 0, 1)),
+        ];
+        rungs[217506] = [  // IDArena_S2_Monster_R5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2_D", 0, 1)),
+        ];
+        rungs[217507] = [  // IDArena_S2_Monster_R6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2_D", 0, 1)),
+        ];
+        rungs[217509] = [  // IDArena_S2_Monster_R8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2_D", 0, 1)),
+        ];
+        rungs[217545] = [  // IDArena_S4_Monster_R1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217546] = [  // IDArena_S4_Monster_R2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217547] = [  // IDArena_S4_Monster_R3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217550] = [  // IDArena_S4_Monster_R6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217551] = [  // IDArena_S4_Named_R1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217552] = [  // IDArena_S4_Named_R2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1),
+                Do.Despawn(1)),
+        ];
+        rungs[217554] = [  // IDArena_S4_Named_R4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217572] = [  // IDArena_S6_Named_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S6", 0, 1),
+                Do.SpawnNearForTheFight(217573, 1, 1, 0f, 0)),
+        ];
+        rungs[217584] = [  // IDArena_S7_D_Named_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Say(1500218, 0),
+                Do.SetSpawnVariable("Condition_S7_D", 0, 1)),
+        ];
+        rungs[217585] = [  // IDArena_S7_D_Named_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Say(1500222, 0),
+                Do.SetSpawnVariable("Condition_S7_D", 0, 1),
+                Do.SpawnNearForTheFight(282435, 0, 1, 0f, 5)),
+        ];
+        rungs[217588] = [  // IDArena_S8_Named_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S8", 0, 1)),
+        ];
+        rungs[217591] = [  // IDArena_S8_Named_4
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S8", 0, 1),
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.SpawnAtForTheFight(204655, 5, 0, new SpawnSpot(1001.0f, 2828.0f, 235.66f))),
+        ];
+        rungs[217594] = [  // IDArena_S9_Named_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S9", 0, 1)),
+        ];
+        rungs[217598] = [  // IDArena_S9_Named_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S9", 0, 1)),
+        ];
+        rungs[217603] = [  // IDArena_S10_Monster_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S10", 0, 1)),
+        ];
+        rungs[217605] = [  // IDArena_S10_Monster_6
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S10", 0, 1)),
+        ];
+        rungs[217607] = [  // IDArena_S10_Named_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SetSpawnVariable("Condition_S10", 0, 1)),
+        ];
+        rungs[217640] = [  // Raksha_EvileyeLight
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SystemMessage(1401160, 0),
+                Do.SetSpawnVariable("idraksha_evileyenamedspawn", 0, 1)),
+        ];
+        rungs[217648] = [  // IDF4Re_Drana_golem
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282379, 1, 1, 0f, 5),
+                Do.Broadcast(10, 30f)),
+        ];
+        rungs[217649] = [  // IDF4Re_Drana_Named_H
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(282379, 1, 5, new SpawnSpot(1037.0f, 986.0f, 328.0f))),
+        ];
+        rungs[217786] = [  // IDArena_Solo_S2_Nor1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S4A", 0, 1)),
+        ];
+        rungs[217788] = [  // IDArena_Solo_S2_MuMu
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342150, 0),
+                Do.SetSpawnVariable("Condition_S4A", 0, 1)),
+        ];
+    }
+
+    private static void OnDie1(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[217789] = [  // IDArena_Solo_S2_Nuki
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342151, 0),
+                Do.SetSpawnVariable("Condition_S4A", 0, 1)),
+        ];
+        rungs[217790] = [  // IDArena_Solo_S2_Kaki
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342149, 0),
+                Do.SetSpawnVariable("Condition_S4A", 0, 1)),
+        ];
+        rungs[217791] = [  // IDArena_Solo_S2_Wir
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342420, 0),
+                Do.SetSpawnVariable("Condition_S4B", 0, 1)),
+        ];
+        rungs[217797] = [  // IDArena_Solo_S3_Tiara
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2A", 0, 1)),
+        ];
+        rungs[217798] = [  // IDArena_Solo_S3_Kara
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S2A", 0, 1)),
+        ];
+        rungs[217800] = [  // IDArena_Solo_S3_Sprigg
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(1001, 100f),
+                Do.SetSpawnVariable("Condition_S2B", 0, 1)),
+        ];
+        rungs[217801] = [  // IDArena_Solo_S3_Cherubim
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(1002, 100f),
+                Do.SetSpawnVariable("Condition_S2B", 0, 1)),
+        ];
+        rungs[217807] = [  // IDArena_Solo_S5_Fi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342404, 0),
+                Do.SetSpawnVariable("Condition_S5_L", 0, 1)),
+        ];
+        rungs[217811] = [  // IDArena_Solo_S5_Fi_D
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342438, 0),
+                Do.SetSpawnVariable("Condition_S5_D", 0, 1)),
+        ];
+        rungs[217842] = [  // IDArena_Solo_S4_Kalnif
+            AiPattern.Branch(30, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S3A", 0, 1)),
+        ];
+        rungs[217843] = [  // IDArena_Solo_S4_KalnifR
+            AiPattern.Branch(22, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S3", 0, 1)),
+        ];
+        rungs[217844] = [  // IDArena_Solo_S4_Zaif
+            AiPattern.Branch(30, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S3B", 0, 1)),
+        ];
+        rungs[217845] = [  // IDArena_Solo_S4_ZaifR
+            AiPattern.Branch(18, "rung 0", When.Always,
+                Do.SetSpawnVariable("Condition_S3", 0, 1)),
+        ];
+        rungs[218054] = [  // Station_Shu_AS
+            AiPattern.Branch(7, "rung 0", [When.Chance(50)],
+                Do.Say(342340, 0)),
+        ];
+        rungs[218185] = [  // IDArena_Solo_H1_DrakanAs_noble
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("STAGE6_OVER", 1, 0),
+                Do.Say(342455, 0)),
+        ];
+        rungs[218188] = [  // IDArena_Solo_H1_TempleL_Kn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(340016, 0)),
+        ];
+        rungs[218189] = [  // IDArena_Solo_H1_TempleL_As
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342456, 0)),
+        ];
+        rungs[218190] = [  // IDArena_Solo_H1_TempleL_Kn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(340016, 0)),
+        ];
+        rungs[218191] = [  // IDArena_Solo_H1_TempleL_As
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342456, 0)),
+        ];
+        rungs[218192] = [  // IDArena_Solo_H2_TempleL_Fi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("STAGE6_OVER", 1, 0)),
+        ];
+        rungs[218200] = [  // IDArena_Solo_H2_TempleD_Fi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("STAGE6_OVER", 1, 0)),
+        ];
+        rungs[218215] = [  // LDF4b_T1_Twister_Crack_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282717, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218222] = [  // LDF4b_T1_Fungy_An
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNear(282750, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282722, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218229] = [  // LDF4b_Cavalry_Pagati_Fighter
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SpawnNear(282797, 0, 1, 0f, 10)),
+        ];
+        rungs[218230] = [  // LDF4b_Cavalry_Pagati_Fighter_58
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SpawnNear(282798, 0, 1, 0f, 10)),
+        ];
+        rungs[218241] = [  // LDF4b_TiamatDrakan_cleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218245] = [  // LDF4b_TiamatDrakan_Noblecleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218255] = [  // LDF4b_T1_Fungy_Named_58_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNear(282750, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282722, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218264] = [  // LDF4b_T2_Millipede_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218265] = [  // LDF4b_T2_Millipede_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218268] = [  // LDF4b_T2_Guardian_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218269] = [  // LDF4b_T2_Guardian_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218302] = [  // LDF4b_TiamatDrakan_cleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218306] = [  // LDF4b_TiamatDrakan_Noblecleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218320] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218324] = [  // TDown_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218346] = [  // LDF4b_T3_ElementalFire1_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218347] = [  // LDF4b_T3_ElementalFire1_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218348] = [  // LDF4b_T3_ElementalFire2_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218349] = [  // LDF4b_T3_ElementalFire2_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218350] = [  // LDF4b_T3_ElementalFire3_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218351] = [  // LDF4b_T3_ElementalFire3_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218368] = [  // LDF4b_T3_Corn_Spring_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.SpawnOnTarget(282724, 1, 1, 1.0f, 5, 1, 50.0f)),
+        ];
+        rungs[218369] = [  // LDF4b_T3_Corn_Spring_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.SpawnOnTarget(282724, 1, 1, 1.0f, 5, 1, 50.0f)),
+        ];
+        rungs[218370] = [  // LDF4b_T3_Starturtle_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.Broadcast(13003, 10f),
+                Do.SpawnOnTarget(282725, 1, 1, 1.0f, 5, 1, 50.0f)),
+            AiPattern.Branch(6, "rung 1", When.Always,
+                Do.Broadcast(13003, 10f)),
+        ];
+        rungs[218371] = [  // LDF4b_T3_Starturtle_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.Broadcast(13003, 10f),
+                Do.SpawnOnTarget(282725, 1, 1, 1.0f, 5, 1, 50.0f)),
+            AiPattern.Branch(6, "rung 1", When.Always,
+                Do.Broadcast(13003, 10f)),
+        ];
+        rungs[218377] = [  // LDF4b_T3_Starfish_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.SpawnOnTarget(282726, 1, 1, 1.0f, 5, 1, 50.0f)),
+        ];
+        rungs[218382] = [  // LDF4b_TiamatDrakan_cleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218386] = [  // LDF4b_TiamatDrakan_Noblecleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218407] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218411] = [  // TDown_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218420] = [  // LDF4b_T3_Starturtle_ItemNamed_59_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.Broadcast(13003, 10f),
+                Do.SpawnOnTarget(282725, 1, 1, 1.0f, 5, 1, 50.0f)),
+            AiPattern.Branch(6, "rung 1", When.Always,
+                Do.Broadcast(13003, 10f)),
+        ];
+        rungs[218429] = [  // LDF4b_T4_Fungy_Red_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282963, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282721, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218430] = [  // LDF4b_T4_Fungy_Blue_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282964, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282722, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218431] = [  // LDF4b_T4_Fungus_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282965, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282723, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218436] = [  // LDF4b_T4_Twister_Aurora_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282720, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218444] = [  // LDF4b_TiamatDrakan_cleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218448] = [  // LDF4b_TiamatDrakan_Noblecleric
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218452] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218456] = [  // TDown_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218460] = [  // LDF4b_T4_Fungy_Red_ItemNamed_60_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNear(282963, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282721, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218461] = [  // LDF4b_T4_Fungy_Crystal_Named_60_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNear(282964, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282722, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218462] = [  // LDF4b_T4_Fungus_Named_60_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282965, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282723, 2, 1, 0.0f, 10)),
+        ];
+        rungs[218519] = [  // LDF4b_C2_Fethlot_ItemNamed_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218526] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218530] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218534] = [  // TDown_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218573] = [  // IDStation_Darkan_3F_Room3_P1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDStation_Score", 0, 1)),
+        ];
+        rungs[218574] = [  // IDStation_Darkan_3F_Room3_P1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDStation_Score", 0, 1)),
+        ];
+        rungs[218575] = [  // IDStation_Darkan_3F_Room3_P1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDStation_Score", 0, 1)),
+        ];
+        rungs[218576] = [  // IDStation_Darkan_3F_Room3_P2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDStation_Score", 0, 1)),
+        ];
+        rungs[218577] = [  // IDStation_IronGolem_Named
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDStation_Score", 0, 1)),
+        ];
+        rungs[218659] = [  // Station_Shu_AS
+            AiPattern.Branch(7, "rung 0", [When.Chance(50)],
+                Do.Say(342340, 0)),
+        ];
+        rungs[218670] = [  // IDDramata_Drakan_G_Fi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(282704, 1, 5, new SpawnSpot(565.0f, 242.0f, 68.0f))),
+        ];
+        rungs[218671] = [  // IDDramata_Drakan_G_Wi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(282704, 1, 5, new SpawnSpot(565.0f, 242.0f, 68.0f))),
+        ];
+        rungs[218672] = [  // IDDramata_Drakan_G_As
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(282704, 1, 5, new SpawnSpot(565.0f, 242.0f, 68.0f))),
+        ];
+        rungs[218673] = [  // IDDramata_Drakan_G_As
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(282704, 1, 5, new SpawnSpot(565.0f, 242.0f, 68.0f))),
+        ];
+        rungs[218724] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218729] = [  // LDF4b_T2_Agrint_Gravity_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218730] = [  // LDF4b_T2_Agrint_Gravity_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218767] = [  // LDF4b_T2_Guardian_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[218907] = [  // LDF4b_Portal_DrakanStrider
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(218914, 1, 1, 0f, 5)),
+        ];
+        rungs[218925] = [  // TDown_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219181] = [  // IDYun_Temp_62
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Broadcast(900, 25f)),
+        ];
+        rungs[219182] = [  // IDYun_Temp_62
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Broadcast(900, 25f)),
+        ];
+        rungs[219199] = [  // TDown_DrakanSc_Noble_60_Ae_Link
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282975, 1, 1, 0f, 10),
+                Do.Despawn(1)),
+        ];
+        rungs[219201] = [  // TDown_DrakanCl_Noble_60_Ae_Link
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282975, 1, 1, 0f, 10),
+                Do.Despawn(1)),
+        ];
+        rungs[219205] = [  // Tdown_DrakanGiant_Invincible
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219248] = [  // IDDreadgion_03_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219252] = [  // IDDreadgion_03_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219256] = [  // IDDreadgion_03_DrakanFiNamedAA_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219257] = [  // IDDreadgion_03_DrakanFiNamedAB_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219258] = [  // IDDreadgion_03_DrakanRaNamedBA_60_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219259] = [  // IDDreadgion_03_DrakanRaNamedBB_60_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219260] = [  // IDDreadgion_03_DrakanPrNamedCA_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219261] = [  // IDDreadgion_03_DrakanPrNamedCB_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219262] = [  // IDDreadgion_03_DrakanPrNamedD_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219263] = [  // IDDreadgion_03_DrakanCl_Semiboss_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219267] = [  // IDDreadgion_03_DrakanFiNamedFA_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[219268] = [  // IDDreadgion_03_DrakanFiNamedFB_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+    }
+
+    private static void OnDie2(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[219310] = [  // 4BReward_Drakan_CL
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219311] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
+        ];
+        rungs[219312] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
+        ];
+        rungs[219324] = [  // Event_Valentine_White_Mon_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701477, 1, 10, 0f, 600)),
+        ];
+        rungs[219478] = [  // LDF4b_T4_Twister_Aurora_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282720, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[219557] = [  // IDAbRe_Core_Cannon_02
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701587, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[219570] = [  // IDAbRe_Core_Summon7
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(281926, 1, 1, 0f, 10)),
+        ];
+        rungs[219620] = [  // GM_Event_TiamatDown_TiamatAgent
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SetSpawnVariable("Agent_sum_Spawn", 2, 0),
+                Do.SpawnNearForTheFight(701651, 1, 24, 0f, 600)),
+        ];
+        rungs[219622] = [  // GM_Event_ChristMas_Light_Boss_24
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701653, 1, 12, 0f, 600),
+                Do.SpawnNearForTheFight(701654, 2, 24, 0f, 600)),
+        ];
+        rungs[219623] = [  // GM_Event_ChristMas_Light_Boss_12
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701653, 1, 6, 0f, 600),
+                Do.SpawnNearForTheFight(701654, 2, 12, 0f, 600)),
+        ];
+        rungs[219624] = [  // GM_Event_ChristMas_Light_Boss_6
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701653, 1, 3, 0f, 600),
+                Do.SpawnNearForTheFight(701654, 2, 6, 0f, 600)),
+        ];
+        rungs[219625] = [  // GM_Event_BGuard_ChiefF4_Dr_1
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701655, 5, 24, 0f, 600)),
+        ];
+        rungs[219626] = [  // GM_Event_HLFP_AgrintWinter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701656, 1, 48, 0f, 600),
+                Do.Say(1500556, 0)),
+        ];
+        rungs[219627] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
+        ];
+        rungs[219629] = [  // ChristMas_Light_Boss
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701457, 1, 20, 0f, 600)),
+        ];
+        rungs[219630] = [  // ChristMas_Light_Boss
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701457, 1, 20, 0f, 600)),
+        ];
+        rungs[219631] = [  // ChristMas_Light_Boss
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(701457, 1, 20, 0f, 600)),
+        ];
+        rungs[219633] = [  // HLFP_AgrintWinter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(218880, 1, 48, 0f, 600),
+                Do.Say(1500556, 0)),
+        ];
+        rungs[219641] = [  // IDDF2Flying_event01_D_Towermonster07
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Broadcast(292513, 100f)),
+        ];
+        rungs[219642] = [  // IDDF2Flying_event01_D_RatmanWarriorM_55_Ae
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Broadcast(292513, 100f)),
+        ];
+        rungs[220020] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
+        ];
+        rungs[230002] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230004] = [  // ShulackRose_As_Broad
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230006] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230009] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230012] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230015] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230018] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230021] = [  // ShulackRose_Fi_Move_party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230022] = [  // ShulackRose_Fi_Tanker_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230023] = [  // ShulackRose_As_DotDD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230024] = [  // ShulackRose_As_Broad_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230025] = [  // ShulackRose_Wi_DotD_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230026] = [  // ShulackRose_Rid_StunTank_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230027] = [  // ShulackRose_Gun_DDTower
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230029] = [  // ShulackRose_Fi_Tanker_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230031] = [  // ShulackRose_Wi_DotD_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230032] = [  // ShulackRose_Rid_StunTank_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230033] = [  // ShulackRose_Gun_DDTower
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230035] = [  // ShulackRose_Fi_Tanker_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230037] = [  // ShulackRose_Wi_DotD_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230038] = [  // ShulackRose_Rid_StunTank_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230039] = [  // ShulackRose_Gun_DDTower
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[230042] = [  // ShulackRose_Wi_Mez
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342603, 0)),
+        ];
+        rungs[230044] = [  // ShulackRose_Wi_Mez
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342603, 0)),
+        ];
+        rungs[230046] = [  // ShulackRose_Wi_Mez
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342603, 0)),
+        ];
+        rungs[230048] = [  // ShulackRose_Wi_DotD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230082] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
+        ];
+        rungs[230083] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
+        ];
+        rungs[230090] = [  // IDLDF5Re_03_N_Vritra43IU_Drakan_NoReflect_Wi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(21051, 50f)),
+        ];
+        rungs[230092] = [  // IDLDF5Re_03_N_Vritra43CU_Officer_Drakan_NoDrain_Fi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(21051, 50f)),
+        ];
+        rungs[230257] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230337] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230353] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230363] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[230651] = [  // IDRose_M_KrallKeeper_Fi_S_Key_An
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(230650, 1, 0, new SpawnSpot(726.14f, 541.15f, 943.88f))),
+        ];
+        rungs[230652] = [  // IDRose_H_ShulackF_Fi_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230653] = [  // IDRose_H_ShulackF_As_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230654] = [  // IDRose_H_ShulackF_Gu_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230655] = [  // IDRose_H_ShulackF_Mu_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230726] = [  // IDRose_M_KrallKeeper_Fi_P_Key_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(230725, 1, 0, new SpawnSpot(726.14f, 541.15f, 943.88f))),
+        ];
+        rungs[230727] = [  // IDRose_H_ShulackF_Fi_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230728] = [  // IDRose_H_ShulackF_As_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230729] = [  // IDRose_H_ShulackF_Gu_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230730] = [  // IDRose_H_ShulackF_Mu_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDRose_3F_Nmd", 0, 1)),
+        ];
+        rungs[230995] = [  // Vri_5th_Q_Wi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500921, 0)),
+        ];
+        rungs[231075] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection01", 0, 1),
+                Do.Broadcast(21131, 50f)),
+        ];
+        rungs[231076] = [  // IDRuneWP_A1_VriCU_Fi_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection01", 0, 1),
+                Do.Broadcast(21132, 50f)),
+        ];
+        rungs[231077] = [  // IDRuneWP_A1_VriCU_Pr_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection01", 0, 1),
+                Do.Broadcast(21133, 50f)),
+        ];
+        rungs[231081] = [  // IDRuneWP_A2_VriCU_Pr_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection02", 0, 1),
+                Do.Broadcast(21143, 50f)),
+        ];
+        rungs[231084] = [  // IDRuneWP_A3_VriCU_Fi_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection03", 0, 1),
+                Do.Broadcast(21152, 50f)),
+        ];
+        rungs[231085] = [  // IDRuneWP_A3_VriCU_Pr_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection03", 0, 1),
+                Do.Broadcast(21153, 50f)),
+        ];
+        rungs[231087] = [  // IDRuneWP_A4_VriIU_As_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection04", 0, 1),
+                Do.Broadcast(21161, 50f)),
+        ];
+        rungs[231088] = [  // IDRuneWP_A4_VriCU_Fi_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection04", 0, 1),
+                Do.Broadcast(21162, 50f)),
+        ];
+        rungs[231089] = [  // IDRuneWP_A4_VriCU_Ra_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection04", 0, 1),
+                Do.Broadcast(21163, 50f)),
+        ];
+        rungs[231476] = [  // Frillfaimam_As_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[231480] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[231490] = [  // Vri_1stBoss_Q_Fi_N_65_Al
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500818, 0)),
+        ];
+        rungs[231501] = [  // VriTR_Sum_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20974)),
+        ];
+        rungs[231502] = [  // Guardian_Ch_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[231517] = [  // Vri_Post_3rd_Q_Ra_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500815, 0)),
+        ];
+        rungs[231518] = [  // Vri_Post_1st_Q_KN_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500809, 0)),
+        ];
+        rungs[231520] = [  // Vri_Summon_Q_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[232925] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[232926] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[232927] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[232928] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[232929] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[232930] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[232996] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[233027] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[233039] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[233086] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 0, 1)),
+        ];
+        rungs[233089] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("cSetPortal", 0, 1),
+                Do.Despawn(1)),
+        ];
+        rungs[233193] = [  // BIDF5_R2_KeyMonster
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Say(1500959, 0)),
+        ];
+        rungs[233253] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
+        ];
+        rungs[233254] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
+        ];
+        rungs[233266] = [  // BIDF5_R2_KeyMonster
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Say(1500959, 0)),
+        ];
+        rungs[233279] = [  // IDLDF5Re_03_N_Vritra43CU_Officer_Drakan_NoDrain_Fi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(21051, 50f)),
+        ];
+        rungs[233302] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+    }
+
+    private static void OnDie3(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[233303] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[233304] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[233305] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[233327] = [  // IDKamar_LightGeneral_Nmd_D1_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("D1", 0, 0)),
+        ];
+        rungs[233328] = [  // IDKamar_DarkGeneral_Nmd_D1_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("D1", -1, 0)),
+        ];
+        rungs[233329] = [  // IDKamar_LightGeneral_Nmd_D2_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("D2", -1, 0)),
+        ];
+        rungs[233330] = [  // IDKamar_DarkGeneral_Nmd_D2_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("D2", -1, 0)),
+        ];
+        rungs[233355] = [  // IDDreadgion_03_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[233359] = [  // IDDreadgion_03_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[233363] = [  // IDDreadgion_03_DrakanFiNamedAA_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233364] = [  // IDDreadgion_03_DrakanFiNamedAB_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233365] = [  // IDDreadgion_03_DrakanRaNamedBA_60_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233366] = [  // IDDreadgion_03_DrakanRaNamedBB_60_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233367] = [  // IDDreadgion_03_DrakanPrNamedCA_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233368] = [  // IDDreadgion_03_DrakanPrNamedCB_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233369] = [  // IDDreadgion_03_DrakanPrNamedD_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233370] = [  // IDDreadgion_03_DrakanCl_Semiboss_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233374] = [  // IDDreadgion_03_DrakanFiNamedFA_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233375] = [  // IDDreadgion_03_DrakanFiNamedFB_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[233380] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("cSetPortal", 0, 1),
+                Do.Despawn(1)),
+        ];
+        rungs[233382] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 0, 1)),
+        ];
+        rungs[233383] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("cSetPortal", 0, 1),
+                Do.Despawn(1)),
+        ];
+        rungs[233385] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 0, 1)),
+        ];
+        rungs[233491] = [  // IDF5_U1_War_Vri_PVPNamed_Wi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(20)],
+                Do.ArmTimer(18, 5000)),
+        ];
+        rungs[235619] = [  // IDLDF5_Under_02_Boss_Wi
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 3, 0)),
+        ];
+        rungs[235621] = [  // IDLDF5_Under_02_Boss_As
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 3, 0)),
+        ];
+        rungs[235624] = [  // IDLDF5_Under_02_Summon04
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 3, 0)),
+        ];
+        rungs[235626] = [  // IDLDF5_Under_02_Summon03
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 3, 0)),
+        ];
+        rungs[235970] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SetSpawnVariable("Agent_Sum_Spawn", 2, 0)),
+        ];
+        rungs[236267] = [  // IDYun_Temp_31
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282551, 1, 1, 0f, 10)),
+        ];
+        rungs[236707] = [  // IDYun_Temp_31
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282551, 1, 1, 0f, 10)),
+        ];
+        rungs[259200] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259201] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259202] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259203] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259204] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259205] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259206] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259207] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259208] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259209] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259210] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259211] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259212] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259213] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259214] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500492, 0)),
+        ];
+        rungs[259600] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259601] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259602] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259603] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259604] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259605] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259606] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259607] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259608] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259609] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259610] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259611] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259612] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[259613] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(701237, 1, 300, new SpawnSpot(2804.0f, 2715.0f, 360.5f)),
+                Do.Despawn(1),
+                Do.Broadcast(9999, 100f),
+                Do.Say(1500498, 0)),
+        ];
+        rungs[277834] = [  // Gab1_DArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277835] = [  // Gab1_DArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277836] = [  // Gab1_DArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277837] = [  // Gab1_DArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277838] = [  // Gab1_DArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277864] = [  // Gab1_LArtiGuard_Boss_02_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277865] = [  // Gab1_LArtiGuard_Boss_02_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277866] = [  // Gab1_LArtiGuard_Boss_02_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277867] = [  // Gab1_LArtiGuard_Boss_02_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277868] = [  // Gab1_LArtiGuard_Boss_02_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277894] = [  // Gab1_BossSum_Vritra_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277895] = [  // Gab1_BossSum_Vritra_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277896] = [  // Gab1_BossSum_Vritra_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277897] = [  // Gab1_BossSum_Vritra_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277898] = [  // Gab1_BossSum_Vritra_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277935] = [  // Gab1_DArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277936] = [  // Gab1_DArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277937] = [  // Gab1_DArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277938] = [  // Gab1_DArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277939] = [  // Gab1_DArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277940] = [  // Gab1_LArtiGuard_Boss_01_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277941] = [  // Gab1_LArtiGuard_Boss_01_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277942] = [  // Gab1_LArtiGuard_Boss_01_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277943] = [  // Gab1_LArtiGuard_Boss_01_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277944] = [  // Gab1_LArtiGuard_Boss_01_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277945] = [  // Gab1_LArtiGuard_Boss_01_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277946] = [  // Gab1_LArtiGuard_Boss_01_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277947] = [  // Gab1_LArtiGuard_Boss_01_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277948] = [  // Gab1_LArtiGuard_Boss_01_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277949] = [  // Gab1_LArtiGuard_Boss_01_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277950] = [  // Gab1_LArtiGuard_Boss_03_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277951] = [  // Gab1_LArtiGuard_Boss_03_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277952] = [  // Gab1_LArtiGuard_Boss_03_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277953] = [  // Gab1_LArtiGuard_Boss_03_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277954] = [  // Gab1_LArtiGuard_Boss_03_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277955] = [  // Gab1_LArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277956] = [  // Gab1_LArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277957] = [  // Gab1_LArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277958] = [  // Gab1_LArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277959] = [  // Gab1_LArtiGuard_Boss_03_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+    }
+
+    private static void OnDie4(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[277960] = [  // Gab1_LArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277961] = [  // Gab1_LArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277962] = [  // Gab1_LArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277963] = [  // Gab1_LArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277964] = [  // Gab1_LArtiGuard_Boss_04_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277965] = [  // Gab1_BossSum_Vritra_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277966] = [  // Gab1_BossSum_Vritra_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277967] = [  // Gab1_BossSum_Vritra_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277968] = [  // Gab1_BossSum_Vritra_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277969] = [  // Gab1_BossSum_Vritra_03
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277970] = [  // Gab1_BossSum_Vritra_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277971] = [  // Gab1_BossSum_Vritra_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277972] = [  // Gab1_BossSum_Vritra_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277973] = [  // Gab1_BossSum_Vritra_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277974] = [  // Gab1_BossSum_Vritra_05
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277975] = [  // Gab1_BossSum_Vritra_07
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277976] = [  // Gab1_BossSum_Vritra_07
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277977] = [  // Gab1_BossSum_Vritra_07
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277978] = [  // Gab1_BossSum_Vritra_07
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[277979] = [  // Gab1_BossSum_Vritra_07
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[280929] = [  // ND2_WeE
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNear(280930, 1, 1, 0f, 3600)),
+        ];
+        rungs[280931] = [  // ND2_FhW
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(6601, 100f),
+                Do.SpawnAtForTheFight(281044, 2, 12, new SpawnSpot(600.0f, 745.0f, 200.0f))),
+        ];
+        rungs[280935] = [  // ND2_AhC
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(341531, 0),
+                Do.SpawnNearForTheFight(280936, 0, 1, 0f, 0)),
+        ];
+        rungs[281195] = [  // ND2_H50_3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnAt(215453, 3, 300, new SpawnSpot(310.0f, 983.0f, 111.0f)),
+                Do.SpawnAt(215451, 4, 300, new SpawnSpot(312.0f, 986.0f, 111.0f)),
+                Do.Broadcast(3409, 10f)),
+        ];
+        rungs[281214] = [  // IDSlk_Madam
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281225] = [  // BGuard_ChiefD_Minor
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(496.0f, 847.0f, 200.0f), new SpawnSpot(496.0f, 847.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(529.0f, 874.0f, 200.0f), new SpawnSpot(529.0f, 874.0f, 200.0f)),
+                Do.SpawnAtForTheFight(296339, 5, 18, new SpawnSpot(554.0f, 850.0f, 200.0f), new SpawnSpot(554.0f, 850.0f, 200.0f))),
+        ];
+        rungs[281297] = [  // ND2_H50_3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnAt(215453, 3, 300, new SpawnSpot(310.0f, 983.0f, 111.0f)),
+                Do.SpawnAt(215451, 4, 300, new SpawnSpot(312.0f, 986.0f, 111.0f)),
+                Do.Broadcast(3409, 10f)),
+        ];
+        rungs[281378] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281379] = [  // IDTP_Fanatic_EeB
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(2)),
+        ];
+        rungs[281383] = [  // IDTP_Fanatic_Boss_EL
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SetSpawnVariable("FanaticElNBoss", 0, 1),
+                Do.Despawn(3),
+                Do.SystemMessage(1400442, 0),
+                Do.Say(1500024, 0)),
+        ];
+        rungs[281385] = [  // IDTP_FanaFiNm
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500027, 0),
+                Do.SetSpawnVariable("Teleporter_Spawn", 0, 1)),
+        ];
+        rungs[281387] = [  // IDTP_DrakanFiNm
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500033, 0),
+                Do.SpawnNearForTheFight(702658, 0, 1, 0f, 0),
+                Do.Despawn(5)),
+        ];
+        rungs[281416] = [  // IDTP_Keeper1
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(281418, 0, 1, 0f, 0),
+                Do.SpawnNearForTheFight(281418, 0, 4, 0f, 0),
+                Do.Say(1500041, 0)),
+        ];
+        rungs[281423] = [  // IDTP_NepEx1
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(281418, 0, 1, 0f, 0),
+                Do.SpawnNearForTheFight(281418, 0, 4, 0f, 0),
+                Do.Say(1500037, 0)),
+        ];
+        rungs[281499] = [  // LF4_FieldRaid_SumD
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(281764, 0, 1, 0f, 10)),
+        ];
+        rungs[281500] = [  // LF4_FieldRaid_SumE
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(281764, 0, 1, 0f, 10)),
+        ];
+        rungs[281525] = [  // Owllau_PeN
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[281536] = [  // IDCT_Boss_DeathKnight
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("DOORWALL_SPAWN", 0, 1),
+                Do.SpawnNearForTheFight(281773, 1, 1, 0f, 10)),
+        ];
+        rungs[281648] = [  // IDCT_Boss_Shulack_Mage
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Say(342032, 0)),
+        ];
+        rungs[281662] = [  // IDCT_Boss_Shulack
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SpawnAt(216527, 2, 0, new SpawnSpot(1155.08f, 1210.43f, 284.0f))),
+        ];
+        rungs[281663] = [  // IDCT_Boss_Hidden
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281673] = [  // IDCT_Normal_LightFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281674] = [  // IDCT_Normal_LightWi
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281675] = [  // IDCT_Normal_LightSc
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281676] = [  // IDCT_Normal_LightPr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281677] = [  // IDCT_Normal_DarkFi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281678] = [  // IDCT_Normal_DarkWi
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281679] = [  // IDCT_Normal_DarkSc
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281680] = [  // IDCT_Normal_DarkPr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("debufflich", 0, 1)),
+        ];
+        rungs[281765] = [  // IDCT_Boss_TiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500057, 0)),
+        ];
+        rungs[281769] = [  // IDCTH_Boss_TiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500057, 0)),
+        ];
+        rungs[281776] = [  // IDCTN_UnTiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500053, 0)),
+        ];
+        rungs[281777] = [  // IDCTH_UnTiamatDrakan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500053, 0)),
+        ];
+        rungs[281813] = [  // Shulack_VChief
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281891] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[281913] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[281914] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[281938] = [  // DF4_DramataG1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(281942, 1, 12, new SpawnSpot(0.0f, 0.0f, 0.0f))),
+        ];
+        rungs[281939] = [  // DF4_DramataG2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(281942, 1, 12, new SpawnSpot(0.0f, 0.0f, 0.0f))),
+        ];
+        rungs[281940] = [  // DF4_DramataG3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(281942, 1, 12, new SpawnSpot(0.0f, 0.0f, 0.0f))),
+        ];
+        rungs[281960] = [  // Cromede_Hierarch
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[281992] = [  // Cromede_Wife
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.Say(1500158, 0),
+                Do.SpawnAtForTheFight(282113, 0, 60, new SpawnSpot(662.28f, 774.47f, 216.85f)),
+                Do.Despawn(1)),
+        ];
+        rungs[282004] = [  // Elim_Octaside_Door
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_1F_StartRush", 2, 0)),
+        ];
+        rungs[282060] = [  // Elim_ComadFe2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[282062] = [  // Elim_ComadFe2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDElim_3F_Heal_Plant_Giant", 0, 1)),
+        ];
+        rungs[282068] = [  // LF4_NeutQueen
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282072] = [  // XDrakan_Raztah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282075] = [  // XDrakan_Garbasa
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282078] = [  // LF4_Zitan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282141] = [  // IDAbRe_Core_Summon4
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282142] = [  // IDAbRe_Core_Summon4_3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282143] = [  // IDAbRe_Core_Summon4_6
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282144] = [  // IDAbRe_Core_Summon4_Low
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282191] = [  // IDForest_Wave_Spaky_Bomb
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282192, 1, 1, 0f, 2),
+                Do.SpawnNearForTheFight(282248, 1, 1, 0f, 2)),
+        ];
+        rungs[282193] = [  // IDForest_Wave_Spaky_Boss
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282249, 1, 1, 0f, 2)),
+        ];
+        rungs[282195] = [  // IDForest_Wave_Laphilima_Bomb
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282196, 1, 1, 0f, 2),
+                Do.SpawnNearForTheFight(282251, 1, 1, 0f, 2)),
+        ];
+        rungs[282197] = [  // IDForest_Wave_Laphilima_Boss
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282252, 1, 1, 0f, 2)),
+        ];
+        rungs[282201] = [  // IDForest_Wave_Trico_Summon
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282276] = [  // Station_Shu_AS
+            AiPattern.Branch(7, "rung 0", [When.Chance(50)],
+                Do.Say(342340, 0)),
+        ];
+        rungs[282307] = [  // IDForest_Prime_Sum1
+            AiPattern.Branch(1, "rung 0", [When.FirstTime(0)],
+                Do.SpawnNearForTheFight(282465, 1, 1, 0f, 10),
+                Do.SpawnNearForTheFight(282308, 1, 1, 0f, 0)),
+        ];
+        rungs[282321] = [  // Raksha_DrakanStatuePoison
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(12010, 50f)),
+        ];
+        rungs[282322] = [  // Raksha_DrakanStatueEarth
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(12010, 50f)),
+        ];
+        rungs[282328] = [  // Raksha_EvileyeLight
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SystemMessage(1401160, 0),
+                Do.SetSpawnVariable("idraksha_evileyenamedspawn", 0, 1)),
+        ];
+        rungs[282469] = [  // LDF4a_B2_OdNucleus1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282749, 0, 1, 0f, 0)),
+        ];
+        rungs[282535] = [  // LDF4a_SandWarm_Monarch_Summon_1
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282539, 1, 1, 0f, 30)),
+        ];
+        rungs[282712] = [  // IDDramata_SumDrakan_G_Fi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342468, 0),
+                Do.Broadcast(400, 30f)),
+        ];
+        rungs[282713] = [  // IDDramata_SumDrakan_G_Wi
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342468, 0),
+                Do.Broadcast(400, 30f)),
+        ];
+        rungs[282714] = [  // IDDramata_SumDrakan_G_As
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342468, 0),
+                Do.Broadcast(400, 30f)),
+        ];
+        rungs[282785] = [  // Station_Shu_AS
+            AiPattern.Branch(7, "rung 0", [When.Chance(50)],
+                Do.Say(342340, 0)),
+        ];
+        rungs[282804] = [  // LDF4b_T1_Twister_Crack_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282717, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[282811] = [  // LDF4b_T1_Fungy_An
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNear(282750, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282722, 2, 1, 0.0f, 10)),
+        ];
+        rungs[282816] = [  // LDF4b_T2_Agrint_Gravity_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[282821] = [  // LDF4b_T2_Millipede_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[282823] = [  // LDF4b_T2_Guardian_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282718, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[282845] = [  // LDF4b_T3_ElementalFire1_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[282846] = [  // LDF4b_T3_ElementalFire2_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282719, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+        rungs[282852] = [  // LDF4b_T3_Corn_Spring_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.SpawnOnTarget(282724, 1, 1, 1.0f, 5, 1, 50.0f)),
+        ];
+        rungs[282853] = [  // LDF4b_T3_Starturtle_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.Broadcast(13003, 10f),
+                Do.SpawnOnTarget(282725, 1, 1, 1.0f, 5, 1, 50.0f)),
+            AiPattern.Branch(6, "rung 1", When.Always,
+                Do.Broadcast(13003, 10f)),
+        ];
+        rungs[282856] = [  // LDF4b_T3_Starfish_An
+            AiPattern.Branch(7, "rung 0", [When.Chance(15)],
+                Do.SpawnOnTarget(282726, 1, 1, 1.0f, 5, 1, 50.0f)),
+        ];
+        rungs[282858] = [  // LDF4b_T4_Twister_Aurora_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(282720, 1, 1, 0.0f, 5, 100, 50.0f)),
+        ];
+    }
+
+    private static void OnDie5(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[282868] = [  // LDF4b_T4_Fungy_Red_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282963, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282721, 2, 1, 0.0f, 10)),
+        ];
+        rungs[282869] = [  // LDF4b_T4_Fungy_Blue_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282964, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282722, 2, 1, 0.0f, 10)),
+        ];
+        rungs[282870] = [  // LDF4b_T4_Fungus_An
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNear(282965, 1, 1, 0.0f, 10),
+                Do.SpawnNear(282723, 2, 1, 0.0f, 10)),
+        ];
+        rungs[283085] = [  // IDTiamat_Kumbanda_Avatar
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnOnTarget(283036, 1, 1, 0.0f, 5, 2147483647, 100.0f)),
+        ];
+        rungs[283188] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[283230] = [  // IDAbRe_Core_Summon4
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283231] = [  // IDAbRe_Core_Summon4_3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283232] = [  // IDAbRe_Core_Summon4_6
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283501] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283503] = [  // ShulackRose_As_Broad
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283505] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283508] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283511] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283514] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283517] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283520] = [  // ShulackRose_Fi_Move_party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283521] = [  // ShulackRose_Fi_Tanker_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283522] = [  // ShulackRose_As_DotDD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283523] = [  // ShulackRose_As_Broad_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283524] = [  // ShulackRose_Wi_DotD_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283525] = [  // ShulackRose_Rid_StunTank_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283526] = [  // ShulackRose_Gun_DDTower
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283528] = [  // ShulackRose_Fi_Tanker_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283530] = [  // ShulackRose_Wi_DotD_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283531] = [  // ShulackRose_Rid_StunTank_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283532] = [  // ShulackRose_Gun_DDTower
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283534] = [  // ShulackRose_Fi_Tanker_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283536] = [  // ShulackRose_Wi_DotD_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283537] = [  // ShulackRose_Rid_StunTank_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283538] = [  // ShulackRose_Gun_DDTower
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342606, 0)),
+        ];
+        rungs[283541] = [  // ShulackRose_Wi_Mez
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342603, 0)),
+        ];
+        rungs[283543] = [  // ShulackRose_Wi_Mez
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342603, 0)),
+        ];
+        rungs[283545] = [  // ShulackRose_Wi_Mez
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342603, 0)),
+        ];
+        rungs[283547] = [  // ShulackRose_Wi_DotD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[283627] = [  // Britra_Party_El_Summoner
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283628] = [  // Britra_Party_El_Summoner_LowNmd
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283818] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
+        ];
+        rungs[283819] = [  // IDLDF5Re_Solo_Vritra43IU_MutantDR_DrakanFi_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_EscapePortal", 1, 0)),
+        ];
+        rungs[283825] = [  // IDLDF5Re_03_N_Vritra43IU_Drakan_NoReflect_Wi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(21051, 50f)),
+        ];
+        rungs[283827] = [  // IDLDF5Re_03_N_Vritra43CU_Officer_Drakan_NoDrain_Fi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(21051, 50f)),
+        ];
+        rungs[283916] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[284011] = [  // ShulackRose_Fi_Tanker
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[284012] = [  // ShulackRose_Rid_StunTank
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342605, 0)),
+        ];
+        rungs[284055] = [  // IDF5_TD_Nor_El
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284060] = [  // IDF5_TD_Wave5_Boss
+            AiPattern.Branch(45, "rung 0", When.Always,
+                Do.Say(1500759, 0)),
+        ];
+        rungs[284197] = [  // Vri_Post_1st_Q_KN_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500809, 0)),
+        ];
+        rungs[284199] = [  // Vri_Post_3rd_Q_Ra_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500815, 0)),
+        ];
+        rungs[284206] = [  // Vri_Summon_Q_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284208] = [  // Vri_1stBoss_Q_Fi_N_65_Al
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500818, 0)),
+        ];
+        rungs[284214] = [  // Vri_Sum_Sum_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(23021, 25f)),
+        ];
+        rungs[284215] = [  // Vri_Sum_Sum_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(23021, 25f)),
+        ];
+        rungs[284216] = [  // Vri_Sum_Sum_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(23021, 25f)),
+        ];
+        rungs[284217] = [  // Vri_Sum_Sum_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(23021, 25f)),
+        ];
+        rungs[284218] = [  // Vri_Sum_Sum_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(23021, 25f)),
+        ];
+        rungs[284221] = [  // VriTR_Sum_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20974)),
+        ];
+        rungs[284268] = [  // NeutQueen_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284287] = [  // Guardian_Ch_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284289] = [  // Frillfaimam_As_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284295] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284341] = [  // IDF5_TD_Wave1_Boss1
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_01_Boss", 0, 1),
+                Do.Say(1501085, 0)),
+        ];
+        rungs[284342] = [  // IDF5_TD_Wave1_Boss2
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_01_Boss", 0, 1),
+                Do.Say(1501085, 0)),
+        ];
+        rungs[284345] = [  // IDF5_TD_Wave2_Boss2
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_02_Boss", 0, 1),
+                Do.Say(1501094, 0)),
+        ];
+        rungs[284346] = [  // IDF5_TD_Wave2_Boss3
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_02_Boss", 0, 1),
+                Do.Say(1501094, 0)),
+        ];
+        rungs[284347] = [  // IDF5_TD_Wave3_Boss1
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_03_Boss", 0, 1),
+                Do.Say(1501097, 0)),
+        ];
+        rungs[284348] = [  // IDF5_TD_Wave3_Boss2
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_03_Boss", 0, 1),
+                Do.Say(1501097, 0)),
+        ];
+        rungs[284349] = [  // IDF5_TD_Wave3_Boss3
+            AiPattern.Branch(16, "rung 0", When.Always,
+                Do.SetSpawnVariable("Wave_03_Boss", 0, 1),
+                Do.Say(1501101, 0)),
+        ];
+        rungs[284502] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection01", 0, 1),
+                Do.Broadcast(21131, 50f)),
+        ];
+        rungs[284507] = [  // IDRuneWP_A1_VriCU_Pr_65_Ae
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cProtection01", 0, 1),
+                Do.Broadcast(21133, 50f)),
+        ];
+        rungs[284605] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 0, 1)),
+        ];
+        rungs[284608] = [  // IDF5_U2_VriRP_Ri_party_N_65_Ae2
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(702659, 0, 1, 0f, 0),
+                Do.SetSpawnVariable("cSetPortal", 0, 1),
+                Do.Despawn(1)),
+        ];
+        rungs[284721] = [  // IDDreadgion_03_DrakanCl_Noble_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284725] = [  // IDDreadgion_03_DrakanCl_Tiamat_60_Ae
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284729] = [  // IDDreadgion_03_DrakanFiNamedAA_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284730] = [  // IDDreadgion_03_DrakanFiNamedAB_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284731] = [  // IDDreadgion_03_DrakanRaNamedBA_60_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284732] = [  // IDDreadgion_03_DrakanRaNamedBB_60_Ae
+            AiPattern.Branch(99, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284733] = [  // IDDreadgion_03_DrakanPrNamedCA_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284734] = [  // IDDreadgion_03_DrakanPrNamedCB_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284735] = [  // IDDreadgion_03_DrakanPrNamedD_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284736] = [  // IDDreadgion_03_DrakanCl_Semiboss_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284740] = [  // IDDreadgion_03_DrakanFiNamedFA_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284741] = [  // IDDreadgion_03_DrakanFiNamedFB_60_Ae
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SetSpawnVariable("Namedkilled", 0, 1)),
+        ];
+        rungs[284833] = [  // IDF5_U1_War_Vri_PVPNamed_Wi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(20)],
+                Do.ArmTimer(18, 5000)),
+        ];
+        rungs[286907] = [  // testai63
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(286905, 0, 1, 0f, 0)),
+        ];
+        rungs[286920] = [  // TestAI68
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(211174, 0, 1, 0f, 0)),
+        ];
+        rungs[286953] = [  // SYSTEM1_TestSample_Krall02
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(286953, 0, 1, 0f, 0)),
+        ];
+        rungs[286968] = [  // SYSTEM1_TestSample_Krall02
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(286953, 0, 1, 0f, 0)),
+        ];
+        rungs[287014] = [  // Test_Basic_Monster_AI_JKA_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(211737, 1, 1, 0f, 0)),
+        ];
+        rungs[287025] = [  // Test_Basic_Monster_AI_JKA_4
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(287027, 2, 1, 0f, 0),
+                Do.Broadcast(1005, 100f)),
+        ];
+        rungs[287028] = [  // Test_Basic_Monster_AI_JKA_7
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(1004, 70f),
+                Do.Say(1500197, 0)),
+        ];
+        rungs[287029] = [  // Test_Basic_Monster_AI_JKA_8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnOnTarget(216148, 1, 1, 5.0f, 0, 0, 50.0f)),
+        ];
+        rungs[287036] = [  // Test_Basic_Monster_AI_LHJ_4
+            AiPattern.Branch(25, "rung 0", When.Always,
+                Do.Broadcast(33333, 50f),
+                Do.Say(340097, 0)),
+        ];
+        rungs[287045] = [  // Test_Basic_Monster_AI_KSG_7
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(1001, 100f),
+                Do.Say(1500110, 0)),
+        ];
+        rungs[287046] = [  // Test_Basic_Monster_AI_KSG_8
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(1001, 100f),
+                Do.Say(1500110, 0)),
+        ];
+        rungs[287086] = [  // Test_Basic_Monster_AI_KMD_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(8282, 200f)),
+        ];
+        rungs[287096] = [  // Test_Basic_Monster_AI_KMD_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(8282, 200f)),
+        ];
+        rungs[287097] = [  // Test_Basic_Monster_AI_KMD_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(1004, 200f)),
+        ];
+        rungs[287189] = [  // Test_Basic_Monster_AI_GHB_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(280699, 0, 1, 0f, 0)),
+        ];
+        rungs[287220] = [  // TEST_MONSTER_JSJ_01
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(50002, 100f)),
+        ];
+        rungs[287221] = [  // TEST_MONSTER_JSJ_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(213832, 0, 1, 0f, 0)),
+        ];
+    }
+
+    private static void OnDie6(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[287222] = [  // TEST_MONSTER_JSJ_03
+            AiPattern.Branch(6, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(50003, 100f)),
+        ];
+        rungs[287226] = [  // Test_Monster_Ssh_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(211738, 0, 1, 0f, 0)),
+        ];
+        rungs[287227] = [  // Test_Monster_Ssh_03
+            AiPattern.Branch(1, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(40002, 50f)),
+        ];
+        rungs[287267] = [  // IDF4Re_Drana_Named_C
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500199, 0),
+                Do.SpawnAtForTheFight(282435, 2, 10, new SpawnSpot(1311.0f, 1174.0f, 192.0f)),
+                Do.SetSpawnVariable("IDF4Re_Dra_03_Boss_Kill", 1, 0)),
+        ];
+        rungs[297519] = [  // LDF5_Fortress_VGuardBoss_Fi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("gb01_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On01", -1, 0)),
+        ];
+        rungs[297520] = [  // LDF5_Fortress_VGuardBoss_Ra
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("gb02_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On02", -1, 0)),
+        ];
+        rungs[297521] = [  // LDF5_Fortress_VGuardBoss_Wi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("gb03_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On03", -1, 0)),
+        ];
+        rungs[297522] = [  // LDF5_Fortress_LGuardBoss_Fi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("Li_heal01", 0, -1)),
+        ];
+        rungs[297523] = [  // LDF5_Fortress_LGuardBoss_Ra
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("Li_heal01", 0, -1)),
+        ];
+        rungs[297524] = [  // LDF5_Fortress_LGuardBoss_Wi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("Li_heal01", 0, -1)),
+        ];
+        rungs[297525] = [  // LDF5_Fortress_DGuardBoss_Fi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("Da_heal01", 0, -1)),
+        ];
+        rungs[297526] = [  // LDF5_Fortress_DGuardBoss_Ra
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("Da_heal01", 0, -1)),
+        ];
+        rungs[297527] = [  // LDF5_Fortress_DGuardBoss_Wi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("Da_heal01", 0, -1)),
+        ];
+        rungs[799528] = [  // Elim_Mercenary2
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(3)],
+                Do.Say(390498, 0),
+                Do.Broadcast(6762, 20f),
+                Do.DespawnSelf()),
+        ];
+        rungs[855424] = [  // Station_Shu_AS
+            AiPattern.Branch(7, "rung 0", [When.Chance(50)],
+                Do.Say(342340, 0)),
+        ];
+        rungs[855531] = [  // IDLDF5_Under_02_Boss_Wi
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 3, 0)),
+        ];
+        rungs[855533] = [  // IDLDF5_Under_02_Boss_As
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.SetSpawnVariable("cSetPortal", 3, 0)),
+        ];
+        rungs[855535] = [  // IDLDF5_Under_02_Summon02
+            AiPattern.Branch(1500, "rung 0", When.Always,
+                Do.SetSpawnVariable("Pr_reset01", 0, 1)),
+        ];
+        rungs[855876] = [  // IDAbRe_Core_Cannon
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
+                Do.SpawnNearForTheFight(282106, 1, 1, 0f, 3)),
+        ];
+        rungs[855886] = [  // IDYun_Drakan_ND3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282528, 1, 1, 0f, 10)),
+        ];
+        rungs[855887] = [  // IDYun_Temp_62
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Broadcast(900, 25f)),
+        ];
+        rungs[855888] = [  // IDYun_Temp_62
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Broadcast(900, 25f)),
+        ];
+        rungs[855893] = [  // IDYun_Drakan_ND3
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282528, 1, 1, 0f, 10)),
+        ];
+        rungs[855894] = [  // IDYun_Temp_62
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Broadcast(900, 25f)),
+        ];
+        rungs[855895] = [  // IDYun_Temp_62
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.Broadcast(900, 25f)),
+        ];
+        rungs[855899] = [  // IDYun_Nmd3
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Say(1500390, 0),
+                Do.SpawnNearForTheFight(217310, 2, 1, 0f, 0),
+                Do.Despawn(1)),
+        ];
+        rungs[880000] = [  // Gab1_DArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880001] = [  // Gab1_DArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880002] = [  // Gab1_DArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880003] = [  // Gab1_DArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880004] = [  // Gab1_DArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880005] = [  // Gab1_DArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880006] = [  // Gab1_DArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880007] = [  // Gab1_DArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880008] = [  // Gab1_DArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880009] = [  // Gab1_DArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880010] = [  // Gab1_LArtiGuard_Boss_01_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880011] = [  // Gab1_LArtiGuard_Boss_01_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880012] = [  // Gab1_LArtiGuard_Boss_01_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880013] = [  // Gab1_LArtiGuard_Boss_01_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880014] = [  // Gab1_LArtiGuard_Boss_01_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880015] = [  // Gab1_LArtiGuard_Boss_02_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880016] = [  // Gab1_LArtiGuard_Boss_02_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880017] = [  // Gab1_LArtiGuard_Boss_02_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880018] = [  // Gab1_LArtiGuard_Boss_02_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880019] = [  // Gab1_LArtiGuard_Boss_02_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880020] = [  // Gab1_LArtiGuard_Boss_02_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880021] = [  // Gab1_LArtiGuard_Boss_02_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880022] = [  // Gab1_LArtiGuard_Boss_02_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880023] = [  // Gab1_LArtiGuard_Boss_02_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880024] = [  // Gab1_LArtiGuard_Boss_02_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880025] = [  // Gab1_LArtiGuard_Boss_03_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880026] = [  // Gab1_LArtiGuard_Boss_03_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880027] = [  // Gab1_LArtiGuard_Boss_03_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880028] = [  // Gab1_LArtiGuard_Boss_03_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880029] = [  // Gab1_LArtiGuard_Boss_03_01_3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880030] = [  // Gab1_LArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880031] = [  // Gab1_LArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880032] = [  // Gab1_LArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880033] = [  // Gab1_LArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880034] = [  // Gab1_LArtiGuard_Boss_04_01_2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880035] = [  // Gab1_LArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880036] = [  // Gab1_LArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880037] = [  // Gab1_LArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880038] = [  // Gab1_LArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880039] = [  // Gab1_LArtiGuard_Boss_04_01_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880040] = [  // Gab1_BossSum_Vritra_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880041] = [  // Gab1_BossSum_Vritra_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880042] = [  // Gab1_BossSum_Vritra_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880043] = [  // Gab1_BossSum_Vritra_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880044] = [  // Gab1_BossSum_Vritra_02
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880045] = [  // Gab1_BossSum_Vritra_04
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880046] = [  // Gab1_BossSum_Vritra_04
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880047] = [  // Gab1_BossSum_Vritra_04
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880048] = [  // Gab1_BossSum_Vritra_04
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880049] = [  // Gab1_BossSum_Vritra_04
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880050] = [  // Gab1_BossSum_Vritra_06
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880051] = [  // Gab1_BossSum_Vritra_06
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880052] = [  // Gab1_BossSum_Vritra_06
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880053] = [  // Gab1_BossSum_Vritra_06
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880054] = [  // Gab1_BossSum_Vritra_06
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880055] = [  // Gab1_BossSum_Vritra_08
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880056] = [  // Gab1_BossSum_Vritra_08
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880057] = [  // Gab1_BossSum_Vritra_08
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880058] = [  // Gab1_BossSum_Vritra_08
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[880059] = [  // Gab1_BossSum_Vritra_08
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(4440444, 50f)),
+        ];
+        rungs[882298] = [  // LDF5_Fortress_VGuardBoss_Fi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("gb01_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On01", -1, 0)),
+        ];
+        rungs[882299] = [  // LDF5_Fortress_VGuardBoss_Ra
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("gb02_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On02", -1, 0)),
+        ];
+        rungs[882300] = [  // LDF5_Fortress_VGuardBoss_Wi
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SetSpawnVariable("gb03_ctrl", 1, 0),
+                Do.SetSpawnVariable("GH_Shield_On03", -1, 0)),
+        ];
+    }
+
+    /// <summary>What it does when the fight ends without dying.</summary>
+    private static readonly IReadOnlyDictionary<int, PatternBranch[]> OnLeaveAttack =
+        BuildOnLeaveAttack();
+
+    private static Dictionary<int, PatternBranch[]> BuildOnLeaveAttack()
+    {
+        Dictionary<int, PatternBranch[]> rungs = new Dictionary<int, PatternBranch[]>();
+        OnLeaveAttack0(rungs);
+        OnLeaveAttack1(rungs);
+        OnLeaveAttack2(rungs);
+        OnLeaveAttack3(rungs);
+        OnLeaveAttack4(rungs);
+        OnLeaveAttack5(rungs);
+        OnLeaveAttack6(rungs);
+        OnLeaveAttack7(rungs);
+        OnLeaveAttack8(rungs);
+        OnLeaveAttack9(rungs);
+        return rungs;
+    }
+
+    private static void OnLeaveAttack0(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[207528] = [  // BGuard_FrostPillar
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[210929] = [  // ND2_QeenNeut
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[211032] = [  // NLehpar_KhA
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[211088] = [  // ND2_ChC
+            AiPattern.Branch(12, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[211653] = [  // ND2_QeenNeut
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[212847] = [  // ND2_NeutQueen2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[212848] = [  // NLehpar_KhA
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[213587] = [  // Slime_Bo1
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[213910] = [  // ND2_PeB
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[213927] = [  // LF2A_LehparBeeder
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[213930] = [  // ND2_EeD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[214036] = [  // ND2_WhC
+            AiPattern.Branch(14, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[214691] = [  // ND2_FeH
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(6607, 50f)),
+        ];
+        rungs[214863] = [  // AD2_Wss0Bst1BT10st3H30st2
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[215069] = [  // IDSlk_Mate
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[215423] = [  // IDSlk_Madam
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[215807] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[215856] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216220] = [  // IDCT_Normal_Stalker03
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[216230] = [  // IDCT_Normal_ShulackAs
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[216301] = [  // IDCT_Normal_Stalker03
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[216311] = [  // IDCT_Normal_ShulackAs
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[216334] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216342] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216359] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216391] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216399] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216504] = [  // Shulack_VChief
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[216525] = [  // IDCT_Boss_Hidden_Hard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217199] = [  // IDF4Re_Drana_Drakan_Vil_Pr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217207] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217288] = [  // IDF4Re_Drana_Drakan_Vil_Pr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217307] = [  // IDYun_Nmd1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217312] = [  // IDYun_Nmd5
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217552] = [  // IDArena_S4_Named_R2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217572] = [  // IDArena_S6_Named_1
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(281044, 1, 12, new SpawnSpot(600.0f, 745.0f, 200.0f))),
+        ];
+        rungs[217585] = [  // IDArena_S7_D_Named_4
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[217586] = [  // IDArena_S7_Named_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500224, 0)),
+        ];
+        rungs[217587] = [  // IDArena_S7_D_Named_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(1500227, 0)),
+        ];
+        rungs[217591] = [  // IDArena_S8_Named_4
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[217594] = [  // IDArena_S9_Named_1
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19160)),
+        ];
+        rungs[217598] = [  // IDArena_S9_Named_5
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19160)),
+        ];
+        rungs[217794] = [  // IDArena_Solo_S2_Hameroon
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[217857] = [  // LDF4a_Neut_Queen_Nmd
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217906] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217907] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217916] = [  // LDF4a_Locust
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217931] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217932] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217956] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217957] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217958] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217959] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[217964] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218008] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218009] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[218188] = [  // IDArena_Solo_H1_TempleL_Kn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[218189] = [  // IDArena_Solo_H1_TempleL_As
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[218190] = [  // IDArena_Solo_H1_TempleL_Kn
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[218191] = [  // IDArena_Solo_H1_TempleL_As
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[218943] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[218944] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[219111] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[219296] = [  // 4BReward_Named_Key_L
+            AiPattern.Branch(40, "rung 0", When.Always,
+                Do.Say(1500525, 0)),
+        ];
+        rungs[219301] = [  // 4BReward_Named_Key_R
+            AiPattern.Branch(40, "rung 0", When.Always,
+                Do.Say(1500525, 0)),
+        ];
+        rungs[219311] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20652)),
+        ];
+        rungs[219312] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20652)),
+        ];
+        rungs[219604] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219620] = [  // GM_Event_TiamatDown_TiamatAgent
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20652)),
+        ];
+        rungs[219627] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20652)),
+        ];
+        rungs[219638] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[219852] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[220020] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20652)),
+        ];
+        rungs[220101] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[220102] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[220103] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[220104] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[220105] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[220107] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[230065] = [  // IDLDF5Re_Solo_Vritra43IU_DrakanHideAn
+            AiPattern.Branch(95, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[230108] = [  // BIDF5_R2_Sync2_A1
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_R2_Sync2_Sum", 3, 0)),
+        ];
+        rungs[230651] = [  // IDRose_M_KrallKeeper_Fi_S_Key_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[230663] = [  // IDRose_M_KrallKeeper_Fi_S_SN_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[230726] = [  // IDRose_M_KrallKeeper_Fi_P_Key_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[230738] = [  // IDRose_M_KrallKeeper_Fi_P_SN_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[230898] = [  // Britra_Party_Ri_OpenAerial_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[230899] = [  // Britra_Party_Wi_MpDrain_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[230995] = [  // Vri_5th_Q_Wi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[230997] = [  // VriTR_Stun_Q_Fi_N_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[230998] = [  // BigClodwo_Acid_As_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[230999] = [  // DeathKnight_Ri_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231000] = [  // ZombieButcher_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231001] = [  // GraveWitch_Mu_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231019] = [  // IDRose_H_ShulackF_Fi_BossGuard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[231020] = [  // IDRose_H_ShulackF_Gu_BossGuard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[231021] = [  // IDRose_H_ShulackF_Ri_BossGuard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[231022] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231023] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231024] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231025] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+    }
+
+    private static void OnLeaveAttack1(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[231026] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231027] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231028] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231029] = [  // IDF5_U1_Vri_Def_Wi_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231030] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231031] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231032] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231033] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231034] = [  // IDF5_U1_Vri_Def_Ri_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231035] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231036] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231037] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231038] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231039] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231040] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231041] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231042] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231043] = [  // IDF5_U1_Vri_Def_Fi_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231044] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231045] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231046] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231047] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231048] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231049] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231052] = [  // IDF5_U1_Vri_DefWP_Wi_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231053] = [  // IDF5_U1_Vri_DefWP_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231054] = [  // IDF5_U1_Vri_DefWP_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231075] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231076] = [  // IDRuneWP_A1_VriCU_Fi_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231077] = [  // IDRuneWP_A1_VriCU_Pr_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231081] = [  // IDRuneWP_A2_VriCU_Pr_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231084] = [  // IDRuneWP_A3_VriCU_Fi_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231085] = [  // IDRuneWP_A3_VriCU_Pr_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231087] = [  // IDRuneWP_A4_VriIU_As_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231088] = [  // IDRuneWP_A4_VriCU_Fi_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231089] = [  // IDRuneWP_A4_VriCU_Ra_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231182] = [  // IDF5_U1_Vri_DefWP_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231183] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[231184] = [  // IDF5_U1_Vri_SpRt_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231186] = [  // IDF5_U1_Vri_SpRt_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231187] = [  // IDF5_U1_Vri_SpRt_As_65_Ae
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[231191] = [  // IDF5_U1_Vri_Fence_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231192] = [  // IDF5_U1_Vri_Fence_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231193] = [  // IDF5_U1_Vri_Ambush_As_65_An
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231194] = [  // IDF5_U1_Vri_Ambush_As_65_An
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231202] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231203] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231207] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231208] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231306] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231307] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231312] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231313] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231320] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231321] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231327] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231328] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231334] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231335] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231342] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231343] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231348] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231349] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231354] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231355] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231360] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231361] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231413] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231416] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231473] = [  // Nebilim_Ri_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231474] = [  // RottenTree_Mu_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231475] = [  // RottenTree_Mu_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231476] = [  // Frillfaimam_As_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231479] = [  // Ghost_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231480] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231481] = [  // Manduri_Ch_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231482] = [  // DireBeast_Fi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231486] = [  // Post_DG_Watch_Ra_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[231487] = [  // Vri_StHpDr_Q_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231488] = [  // Vri_Post_Mez_I_Wi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231490] = [  // Vri_1stBoss_Q_Fi_N_65_Al
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231495] = [  // Vri_FanaChief_Wi_65_N_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[231496] = [  // Vri_FanaCheif_Kn_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[231500] = [  // Post_LG_Watch_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[231501] = [  // VriTR_Sum_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[231502] = [  // Guardian_Ch_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231504] = [  // Agrint_CH_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231505] = [  // Vri_Zombie_Id_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231506] = [  // ElemetalLightF_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231511] = [  // Elewater4_Curse_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[231513] = [  // Vri_DotDisPar_Q_As_N_65_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231514] = [  // Vri_OpenAe_Q_Kn_N_65_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231516] = [  // Vri_Post_Sumble_I_Fi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231517] = [  // Vri_Post_3rd_Q_Ra_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231518] = [  // Vri_Post_1st_Q_KN_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231520] = [  // Vri_Summon_Q_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231521] = [  // Shulack_SuTank_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[231524] = [  // Vri_FanaRBoss_El_65_N_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[231525] = [  // Vri_FanaSeChief_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[231527] = [  // VriTR_Mez_Wi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+    }
+
+    private static void OnLeaveAttack2(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[231529] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231530] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231537] = [  // Vri_FanaRBoss_El_65_N_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[231541] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231542] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231548] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[231809] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[231814] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[231834] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[231839] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[231859] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[231864] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232047] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232048] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232049] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232050] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232051] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232052] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232053] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232054] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232055] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232056] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232057] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232058] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232059] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232060] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232061] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232075] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232076] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232077] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232078] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232079] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232080] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232098] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232103] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232123] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232128] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[232136] = [  // NLehpar_KhA
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[232847] = [  // IDKamar_Britra_Party_Fi_StunHpDrain_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[232848] = [  // IDKamar_Britra_Party_Wi_MpDrain_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[232851] = [  // IDKamar_Britra_Party_Ri_OpenAerial_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233040] = [  // CatacombT1_El_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[233041] = [  // CatacombT2_El_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[233045] = [  // Britra_As_Hide
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[233072] = [  // IDF5_U2_VriRP_As_solo_Hide_65_An
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[233086] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233193] = [  // BIDF5_R2_KeyMonster
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233260] = [  // Britra_As_Hide
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[233261] = [  // Britra_As_Hide_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[233266] = [  // BIDF5_R2_KeyMonster
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233269] = [  // BIDF5_R2_Sync2_A1
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_R2_Sync2_Sum", 3, 0)),
+        ];
+        rungs[233302] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[233303] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[233304] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[233305] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[233321] = [  // IDKamar_DrakanGeneral_Nmd_C1_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233322] = [  // IDKamar_DrakanGeneral_Nmd_C2_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233323] = [  // IDKamar_DrakanGeneral_Nmd_C3_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233324] = [  // IDKamar_DrakanOfficer_Nmd_C1_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233325] = [  // IDKamar_DrakanOfficer_Nmd_C2_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233326] = [  // IDKamar_DrakanOfficer_Nmd_C3_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233327] = [  // IDKamar_LightGeneral_Nmd_D1_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[233328] = [  // IDKamar_DarkGeneral_Nmd_D1_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[233329] = [  // IDKamar_LightGeneral_Nmd_D2_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[233330] = [  // IDKamar_DarkGeneral_Nmd_D2_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[233382] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233385] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233414] = [  // IDF5_U2_VriRP_As_solo_Hide_65_An
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[233490] = [  // IDF5_U1_Vri_Def_Ri_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[233864] = [  // ND2_ElementalSu2
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(3),
+                Do.Despawn(2),
+                Do.Despawn(1)),
+        ];
+        rungs[233872] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233875] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233885] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233886] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[233914] = [  // LDF4_Advance_DrakanTiamat_Pr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[233915] = [  // LDF4_Advance_DrakanTiamat_Pr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[233974] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[233981] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[233988] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234165] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234547] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234549] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234551] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234553] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234555] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234557] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234601] = [  // WorldRaid_MagTurret_Hard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[234608] = [  // WorldRaid_MagTurret_Normal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[234609] = [  // WorldRaid_MagTurret_Hard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[234647] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[234648] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[234649] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[234650] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[234699] = [  // LDF4_Advance_DrakanTiamat_Pr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[234700] = [  // LDF4_Advance_DrakanTiamat_Pr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[234771] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234789] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234807] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234819] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234831] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+    }
+
+    private static void OnLeaveAttack3(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[234843] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234855] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234867] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234879] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234891] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[234903] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[235721] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235722] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235723] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235724] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235725] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235726] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235727] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235728] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235729] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235730] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235731] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235732] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235733] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235734] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235735] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235736] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235737] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235738] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235739] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235740] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235741] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235742] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235743] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235744] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235745] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235746] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235747] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235748] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235749] = [  // BIDF5_U01_Monster_02
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235750] = [  // BIDF5_U01_Monster_03
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235751] = [  // BIDF5_U01_Monster_04
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235752] = [  // BIDF5_U01_Monster_05
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235753] = [  // BIDF5_U01_Monster_06
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235754] = [  // BIDF5_U01_Monster_07
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235755] = [  // BIDF5_U01_Monster_08
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235970] = [  // TiamatDown_TiamatAgent
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20652)),
+        ];
+        rungs[235977] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235978] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235979] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235980] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235981] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235982] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235983] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235984] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235985] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235986] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235987] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235988] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235989] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235990] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235991] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235992] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235993] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235994] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235995] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[235996] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235997] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235998] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[235999] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[236000] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[236001] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[236002] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[236003] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[236004] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[236008] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[236450] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[236476] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[236508] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[236509] = [  // IDCT_DrakanPr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[251056] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251057] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251072] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251073] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251088] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251089] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251104] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251105] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251120] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251121] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251333] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251334] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251335] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251336] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251337] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251338] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251339] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251340] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251341] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251342] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251399] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251400] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251401] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251402] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251403] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+    }
+
+    private static void OnLeaveAttack4(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[251404] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251405] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251406] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251407] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251408] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251613] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251614] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251615] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251616] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251617] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251618] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251619] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251620] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251621] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251622] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251673] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251674] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251675] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251676] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251677] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251678] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251679] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251680] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251681] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251682] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251785] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251786] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251787] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251793] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251799] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251805] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[251808] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252090] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252091] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252092] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252093] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252094] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252097] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252098] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252099] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252100] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252101] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252102] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252103] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252104] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252105] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252106] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252107] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252108] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252109] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[252352] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252357] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252362] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252367] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252372] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252377] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252382] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252387] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252392] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252397] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252402] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252407] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252412] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252417] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252422] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[252427] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[253698] = [  // AD2_KnNb
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
+        ];
+        rungs[253699] = [  // AD2_KnNb
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
+        ];
+        rungs[253700] = [  // AD2_KnNb
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
+        ];
+        rungs[253701] = [  // AD2_KnNb
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
+        ];
+        rungs[253707] = [  // AD2_Xipeto2a
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253708] = [  // AD2_Xipeto2a
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253709] = [  // AD2_Xipeto2a
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253710] = [  // AD2_Xipeto2b
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253711] = [  // AD2_Xipeto2b
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253712] = [  // AD2_Xipeto2b
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253713] = [  // AD2_Xipeto2b
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[253714] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[253715] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[253717] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[253718] = [  // AD2_KnPa
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[253719] = [  // AD2_KnPa
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[253720] = [  // AD2_KnPa
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[253721] = [  // AD2_KnPa
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[255155] = [  // AD2_NeutQueen
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[257077] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257092] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257377] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257392] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257632] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257647] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257932] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[257947] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[258238] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17293),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17328)),
+        ];
+        rungs[259200] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259201] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259202] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259203] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259204] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259205] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+    }
+
+    private static void OnLeaveAttack5(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[259206] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259207] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259208] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259209] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259210] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259211] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259212] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259213] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259214] = [  // LDF4b_Tiamat_Gravity
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259600] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259601] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259602] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259603] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259604] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259605] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259606] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259607] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259608] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259609] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259610] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259611] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259612] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[259613] = [  // LDF4b_Tiamat_Lapidification
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20144),
+                Do.Despawn(1)),
+        ];
+        rungs[272025] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272026] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272027] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272028] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272029] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272065] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272066] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272067] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272068] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272069] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272185] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272186] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272187] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272188] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272189] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272225] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272226] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272227] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272228] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272229] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272525] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272526] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272527] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272528] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272529] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272565] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272566] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272567] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272568] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272569] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272685] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272686] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272687] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272688] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272689] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272725] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272726] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272727] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272728] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[272729] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273025] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273026] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273027] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273028] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273029] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273065] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273066] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273067] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273068] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273069] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273185] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273186] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273187] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273188] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273189] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273225] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273226] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273227] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273228] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273229] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273255] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273256] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273257] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273258] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273259] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273260] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273261] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273262] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273263] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273264] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273265] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273266] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273267] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273268] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273269] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273270] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273271] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+    }
+
+    private static void OnLeaveAttack6(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[273272] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273273] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273274] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273275] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273276] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273277] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273278] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273279] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273280] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273281] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273282] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273283] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[273284] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[277243] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279079] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279080] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279081] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279082] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279083] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279084] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279085] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279086] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279087] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279088] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279177] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279178] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279179] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279180] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279181] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279182] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279183] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279184] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279185] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279186] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279275] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279276] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279277] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279278] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279279] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279280] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279281] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279282] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279283] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279284] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279373] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279374] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279375] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279376] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279377] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279378] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279379] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279380] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279381] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279382] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279471] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279472] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279473] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279474] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279475] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279476] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279477] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279478] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279479] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279480] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279569] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279570] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279571] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279572] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279573] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279574] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279575] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279576] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279577] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279578] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279667] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279668] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279669] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279670] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279671] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279672] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279673] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279674] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279675] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279676] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279764] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279765] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279766] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279767] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279768] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279769] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279770] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279771] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279772] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279773] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279861] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279862] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279863] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279864] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279865] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279866] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+    }
+
+    private static void OnLeaveAttack7(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[279867] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279868] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279869] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279870] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279946] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279947] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279962] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279963] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279978] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279979] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279994] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[279995] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[280098] = [  // D2_SouST_Su
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280323] = [  // NLehpar_KhA
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280325] = [  // ND2_QeenNeut
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[280355] = [  // NKrall_WhA
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.Despawn(2),
+                Do.Despawn(1)),
+        ];
+        rungs[280474] = [  // NLehpar_KhA
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280480] = [  // ND2_NeutQueen2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[280488] = [  // ND2_ElementalSu2
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(3),
+                Do.Despawn(2),
+                Do.Despawn(1)),
+        ];
+        rungs[280498] = [  // NKrall_WhA
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.Despawn(2),
+                Do.Despawn(1)),
+        ];
+        rungs[280677] = [  // Slime_Bo1
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280696] = [  // ND2_FhM
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280700] = [  // Slime_Bo1
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280704] = [  // ND2_WhA
+            AiPattern.Branch(14, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280717] = [  // LF2A_LehparBeeder
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280730] = [  // ND2_PeB
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280733] = [  // ND2_EeD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280746] = [  // ND2_SoulCollector
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280748] = [  // ND2_CaptinDF3
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280759] = [  // ND2_KeE
+            AiPattern.Branch(19, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280773] = [  // ND2_PhA
+            AiPattern.Branch(12, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3)),
+        ];
+        rungs[280779] = [  // ND2_ChC
+            AiPattern.Branch(12, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280788] = [  // ND2_AhB
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280796] = [  // Naga_WrF2
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280798] = [  // Naga_WrF3
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280805] = [  // ND2_WhB
+            AiPattern.Branch(14, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[280808] = [  // ND2_WhC
+            AiPattern.Branch(14, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[280925] = [  // ND2_FhV
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3),
+                Do.Despawn(4)),
+        ];
+        rungs[280931] = [  // ND2_FhW
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SpawnAtForTheFight(281044, 1, 12, new SpawnSpot(600.0f, 745.0f, 200.0f)),
+                Do.Broadcast(6601, 100f)),
+        ];
+        rungs[280936] = [  // NLehpar_BhB
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3),
+                Do.Despawn(4)),
+        ];
+        rungs[280960] = [  // ND2_FeH
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Broadcast(6607, 50f)),
+        ];
+        rungs[280964] = [  // ND2_WeH
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280965] = [  // ND2_AeD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280966] = [  // ND2_PeD
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[280967] = [  // ND2_FeJ
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281099] = [  // AD2_Wss0Bst1BT10st3H30st2
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[281168] = [  // XDrakan_EeB_W_50
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281169] = [  // XDrakan_EeB_E_50
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281170] = [  // XDrakan_EeB_A_50
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281205] = [  // Naga_WhA
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.Despawn(2)),
+        ];
+        rungs[281214] = [  // IDSlk_Madam
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281215] = [  // IDSlk_Mate
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281248] = [  // XDrakan_LastBoss
+            AiPattern.Branch(12, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281274] = [  // Dragon_G3
+            AiPattern.Branch(23, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18168),
+                Do.Despawn(1),
+                Do.Despawn(2),
+                Do.Despawn(3)),
+        ];
+        rungs[281378] = [  // IDTP_Fanatic_EeA
+            AiPattern.Branch(11, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281381] = [  // IDTP_Fanatic_Summon2
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281382] = [  // IDTP_Fanatic_Summon3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281383] = [  // IDTP_Fanatic_Boss_EL
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Despawn(3)),
+        ];
+        rungs[281384] = [  // IDTP_Fanatic_Elementalearth4
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281387] = [  // IDTP_DrakanFiNm
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(5)),
+        ];
+        rungs[281502] = [  // IDTP_SumFanaAs
+            AiPattern.Branch(30, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281535] = [  // IDCT_Boss_TombsDrakan
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281662] = [  // IDCT_Boss_Shulack
+            AiPattern.Branch(12, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281683] = [  // IDCT_Normal_Stalker03
+            AiPattern.Branch(3, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[281693] = [  // IDCT_Normal_ShulackAs
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
+        ];
+        rungs[281813] = [  // Shulack_VChief
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[281815] = [  // IDTP_Fanatic_Summon2
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281816] = [  // IDTP_Fanatic_Summon3
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281828] = [  // BGuard_FrostPillar
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[281960] = [  // Cromede_Hierarch
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.Despawn(2)),
+        ];
+        rungs[281987] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19275)),
+        ];
+        rungs[282068] = [  // LF4_NeutQueen
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282072] = [  // XDrakan_Raztah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282075] = [  // XDrakan_Garbasa
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282078] = [  // LF4_Zitan
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282482] = [  // LDF4a_Locust
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282496] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282505] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282535] = [  // LDF4a_SandWarm_Monarch_Summon_1
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[282619] = [  // IDDramata_Drakan_Pr
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282631] = [  // LDF4a_Locust
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282648] = [  // LDF4a_Neut_Queen_Nmd
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282650] = [  // LDF4a_ForestSpider_Fighter
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[282690] = [  // LDF4a_Owllau_Elementalist
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283600] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[283601] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[283615] = [  // Britra_Party_Fi_StunHpDrain_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[283617] = [  // Britra_Party_Ri_OpenAerial_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[283619] = [  // Britra_Party_As_DotDiseaseParrel_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[283622] = [  // Britra_Party_Wi_MpDrain_LowNmd
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[283627] = [  // Britra_Party_El_Summoner
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[283628] = [  // Britra_Party_El_Summoner_LowNmd
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[283808] = [  // IDLDF5Re_Solo_Vritra43IU_DrakanHideAn
+            AiPattern.Branch(95, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[284016] = [  // BIDF5_R2_Sync2_A1
+            AiPattern.Branch(9, "rung 0", When.Always,
+                Do.SetSpawnVariable("IDF5_R2_Sync2_Sum", 3, 0)),
+        ];
+        rungs[284088] = [  // Vri_DotDisPar_Q_As_N_65_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284089] = [  // Vri_StHpDr_Q_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284090] = [  // Vri_OpenAe_Q_Kn_N_65_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284197] = [  // Vri_Post_1st_Q_KN_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284199] = [  // Vri_Post_3rd_Q_Ra_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284200] = [  // Vri_Post_Mez_I_Wi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+    }
+
+    private static void OnLeaveAttack8(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[284201] = [  // Vri_Post_Sumble_I_Fi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284206] = [  // Vri_Summon_Q_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284208] = [  // Vri_1stBoss_Q_Fi_N_65_Al
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21135),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284219] = [  // VriTR_Stun_Q_Fi_N_60_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[284221] = [  // VriTR_Sum_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[284222] = [  // VriTR_Mez_Wi_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[284230] = [  // Post_DG_Watch_Ra_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[284231] = [  // Post_LG_Watch_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[284242] = [  // Shulack_SuTank_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
+        ];
+        rungs[284243] = [  // Vri_FanaChief_Wi_65_N_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[284244] = [  // Vri_FanaSeChief_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[284245] = [  // Vri_FanaCheif_Kn_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[284246] = [  // Vri_FanaRBoss_El_65_N_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20962)),
+        ];
+        rungs[284252] = [  // BigClodwo_Acid_As_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284253] = [  // Agrint_CH_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284254] = [  // RottenTree_Mu_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284255] = [  // Nebilim_Ri_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284256] = [  // Vri_Zombie_Id_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284257] = [  // Elewater4_Curse_El_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284258] = [  // ElemetalLightF_Fi_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284259] = [  // DeathKnight_Ri_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284260] = [  // ZombieButcher_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284261] = [  // Ghost_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284262] = [  // GraveWitch_Mu_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284268] = [  // NeutQueen_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284279] = [  // DireBeast_Fi_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284280] = [  // Manduri_Ch_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284287] = [  // Guardian_Ch_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284289] = [  // Frillfaimam_As_N_65_Ah
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284295] = [  // GhostRune_As_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284341] = [  // IDF5_TD_Wave1_Boss1
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284342] = [  // IDF5_TD_Wave1_Boss2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284347] = [  // IDF5_TD_Wave3_Boss1
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284348] = [  // IDF5_TD_Wave3_Boss2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284349] = [  // IDF5_TD_Wave3_Boss3
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284366] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284367] = [  // IDF5_U1_Vri_Def_Wi_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284368] = [  // IDF5_U1_Vri_Def_Ri_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284369] = [  // IDF5_U1_Vri_Def_Fi_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284370] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284371] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284372] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284373] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284502] = [  // IDRuneWP_A1_VriIU_Wi_SN_65_Ah
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284507] = [  // IDRuneWP_A1_VriCU_Pr_65_Ae
+            AiPattern.Branch(90, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284516] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284518] = [  // IDF5_U1_Vri_DefWP_Wi_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284519] = [  // IDF5_U1_Vri_DefWP_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284520] = [  // IDF5_U1_Vri_DefWP_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284521] = [  // IDF5_U1_Vri_DefWP_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284522] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284523] = [  // IDF5_U1_Vri_SpRt_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284524] = [  // IDF5_U1_Vri_SpRt_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284525] = [  // IDF5_U1_Vri_SpRt_As_65_Ae
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[284526] = [  // IDF5_U1_Vri_Fence_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284527] = [  // IDF5_U1_Vri_Ambush_As_65_An
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284573] = [  // Britra_As_Hide_Party
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[284574] = [  // Britra_As_Hide
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[284578] = [  // CatacombT1_El_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284579] = [  // CatacombT2_El_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284593] = [  // IDF5_U2_VriRP_As_solo_Hide_65_An
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822)),
+        ];
+        rungs[284605] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
+            AiPattern.Branch(91, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[284717] = [  // IDDreadgion_03_DrakanPr_Vil_60_Ae
+            AiPattern.Branch(13, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[284906] = [  // ND2_ElementalSu2
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.Despawn(3),
+                Do.Despawn(2),
+                Do.Despawn(1)),
+        ];
+        rungs[284914] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284917] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[284936] = [  // LDF4_Advance_DrakanTiamat_Pr
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20656)),
+        ];
+        rungs[290024] = [  // AD2_Xipeto2a
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[290025] = [  // AD2_Xipeto2b
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[290029] = [  // AD2_Wss0BT15st1
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[290030] = [  // AD2_KnPa
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16921)),
+        ];
+        rungs[290038] = [  // AD2_KnNb
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
+        ];
+        rungs[290117] = [  // AD2_NeutQueen
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.Broadcast(6197, 50f),
+                Do.Despawn(1)),
+        ];
+        rungs[295075] = [  // BGuard_FrostPillar
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[295178] = [  // DGuard_Kistenian
+            AiPattern.Branch(17, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[296470] = [  // BGuard_FrostPillar
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[296483] = [  // BGuard_FrostPillar
+            AiPattern.Branch(8, "rung 0", When.Always,
+                Do.DespawnSelf()),
+        ];
+        rungs[296979] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[296994] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297004] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297005] = [  // F5_RvR_LGuard_As_Ae_HideBroad
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297013] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297059] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297060] = [  // LDF5_LGuard_DisputePvP_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297069] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297070] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297138] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297145] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297152] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297163] = [  // BGuard_TowerChiefF4A_Ver47
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(10032, 50f),
+                Do.DespawnSelf()),
+        ];
+        rungs[297165] = [  // BGuard_TowerChiefF4B_Ver47
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(10032, 50f),
+                Do.DespawnSelf()),
+        ];
+        rungs[297168] = [  // BGuard_TowerChiefF4A_Ver47
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(10032, 50f),
+                Do.DespawnSelf()),
+        ];
+        rungs[297170] = [  // BGuard_TowerChiefF4B_Ver47
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Broadcast(10032, 50f),
+                Do.DespawnSelf()),
+        ];
+        rungs[297222] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297228] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297233] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297234] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297235] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297249] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297253] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+    }
+
+    private static void OnLeaveAttack9(Dictionary<int, PatternBranch[]> rungs)
+    {
+        rungs[297257] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297264] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297269] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297292] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297297] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297298] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297301] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297366] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297375] = [  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[297541] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[799528] = [  // Elim_Mercenary2
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(2)],
+                Do.Say(390499, 0)),
+        ];
+        rungs[801026] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
+        ];
+        rungs[855061] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855062] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855155] = [  // WorldRaid_MagTurret_Normal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[855156] = [  // WorldRaid_MagTurret_Hard
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[855159] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855161] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855163] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855165] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855167] = [  // F5_PvP_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855169] = [  // F5_PvP_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855228] = [  // Gab1_Named_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[855246] = [  // Rune_FrostNmd_RealImitaion_3_ver47
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21181)),
+        ];
+        rungs[855247] = [  // Rune_FrostNmd_FakeImitaion_ver47
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21181)),
+        ];
+        rungs[855250] = [  // Rune_FrostNmd_MagCircle_NoShow2
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[855251] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[855253] = [  // Britra_Table
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[855339] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855345] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[855873] = [  // GraveWitch_Mu_N_65_An
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[855874] = [  // DeathKnight_Ri_N_65_Ae
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[855890] = [  // IDYun_Temp_20
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282465, 1, 1, 0f, 6),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19915)),
+        ];
+        rungs[855897] = [  // IDYun_Temp_20
+            AiPattern.Branch(5, "rung 0", When.Always,
+                Do.SpawnNearForTheFight(282465, 1, 1, 0f, 6),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19915)),
+        ];
+        rungs[855899] = [  // IDYun_Nmd3
+            AiPattern.Branch(15, "rung 0", When.Always,
+                Do.Broadcast(500, 100f),
+                Do.Despawn(1)),
+        ];
+        rungs[855902] = [  // IDYun_Nmd5
+            AiPattern.Branch(6, "rung 0", When.Always,
+                Do.Despawn(1)),
+        ];
+        rungs[856007] = [  // IDF5_U1_Vri_Def_Fi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[856008] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[856009] = [  // IDF5_U1_Vri_DefWP_Ri_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[856010] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[856011] = [  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701)),
+        ];
+        rungs[856012] = [  // IDF5_U1_Vri_Def_Wi_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[856013] = [  // IDF5_U1_Vri_Def_As_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[856395] = [  // IDF5_U1_Vri_Def_Pr_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[856396] = [  // IDF5_U1_Vri_Def_Ba_65_Ae
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
+        ];
+        rungs[881410] = [  // Gab1_Named_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[881418] = [  // Gab1_Named_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[881426] = [  // Gab1_Named_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[881434] = [  // Gab1_Named_01
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[881558] = [  // LDF5_Fortress_Guard_As
+            AiPattern.Branch(100, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
+        ];
+        rungs[881559] = [  // F5_RvR_LGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881560] = [  // F5_RvR_DGuard_As_Ae_Hide
+            AiPattern.Branch(94, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881648] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881649] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881650] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881651] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881652] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881668] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881669] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881670] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881671] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881672] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881688] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881689] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881690] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881691] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881692] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881708] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881709] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881710] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881711] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
+        ];
+        rungs[881712] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+            AiPattern.Branch(10, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
     }
 

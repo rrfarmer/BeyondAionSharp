@@ -35870,3 +35870,59 @@ recorded here as currently unexercised rather than pretended to be covered.
 - **Retail cast timings across 13,186 npcs.** With this entry every spawn table in the port honours
   `despawn_at_attack_state`, and the timing question is now the only thing left on this list that
   static work cannot close.
+
+## Where the whole effort stands, measured against the audit that started it
+
+`audit_missing_adds.py` is the audit this work began from: retail encounter adds that exist as npc
+templates here and that nothing in our data or code ever spawns. When it was written it found **812
+adds across 518 encounters**. Re-running it now:
+
+| | then | now |
+|---|---|---|
+| fightable retail adds we never spawn | 812 | **266** |
+| encounters affected | 518 | **196** |
+
+A two-thirds cut, almost entirely from the rotation tables.
+
+### What the remaining 196 are waiting on
+
+They were classified by the handler retail uses to place the add, which turns a list into a plan:
+
+| handler | encounters |
+|---|---|
+| `on_battle_timer` | 82 |
+| **`on_die`** | **77** |
+| `on_leave_attack_state` | 39 |
+| `on_wake_up` | 34 |
+| `on_killed_by_user` | 30 |
+
+`on_die` and `on_leave_attack_state` are now read by this table, which cost almost nothing since the
+machinery was there. It bought almost nothing either: **179 of the 196 encounters are not in the battle
+table at all**, because they have no battle-timer rotation for the table to hang off. Reading a death
+handler from inside a rotation table cannot reach an npc that has no rotation.
+
+**The next piece of work is therefore a death-spawn table of its own**, keyed on `on_die` rather than on
+a timer chain, covering the 179. That is a new pipeline rather than an extension of this one, and it is
+the single largest remaining item in the adds backlog.
+
+### A pin that failed because the port got more faithful
+
+`AnAddRetailDoesNotMarkOutlivesItsSummoner` used `IDTP_Fanatic_Boss_EL`, whose add is unflagged and so
+should outlive the boss. Reading `on_die` revealed that its pattern **despawns that add explicitly on
+death** -- so the add correctly stopped outliving its summoner, and the pin correctly failed. The fix
+was a different npc (`GwLGuard_FhA`, which really does leave one behind), not a weaker assertion. Worth
+recording because a failing pin after a fidelity improvement is easy to "fix" by loosening it.
+
+Also fixed: an ending handler can carry an `add_battle_timer`, and arming a battle timer as you die is
+not a way into a rotation -- the npc is gone before it fires. Endings are kept for their spawns and
+excluded from what counts as armed.
+
+### Still missing
+
+- **179 encounters needing a death-spawn table** -- the largest item, described above.
+- **`on_die: control_door` (17)**, **`on_wake_up: goto_waypoint` (89)**, **`is_enemy` (82 across
+  `on_message` and `on_spelled`)** -- the top three reasons an optional handler is dropped.
+- **`is_skill_count_left` (180)**, **`flee_from` (67)**, **`random_move` (55)** now lead the
+  pattern-level refusals.
+- **Retail cast timings across 13,186 npcs.** Unchanged, and still the only item static work cannot
+  close.

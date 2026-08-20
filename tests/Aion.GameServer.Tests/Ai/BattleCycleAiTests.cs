@@ -47,11 +47,17 @@ public sealed class BattleCycleAiTests
 	/// <summary>The five adds his second timer places.</summary>
 	private const int Retinue = 217301;
 
-	/// <summary>A boss whose add retail does <i>not</i> scope to the fight.</summary>
-	private const int Fanatic = 281383;
+	/// <summary>An npc whose add retail does <i>not</i> scope to the fight, and never despawns.</summary>
+	/// <remarks>
+	/// This pin used to use <c>IDTP_Fanatic_Boss_EL</c>, until reading <c>on_die</c> revealed that its
+	/// pattern despawns that add explicitly on death. The add did start outliving its summoner and
+	/// stopped, correctly, because the table became more faithful -- so the pin needed an npc whose
+	/// pattern really does leave one behind, not a different assertion.
+	/// </remarks>
+	private const int Fanatic = 296445;
 
-	/// <summary>The permanent add it summons.</summary>
-	private const int FanaticAdd = 281384;
+	/// <summary>The add it summons and never takes away.</summary>
+	private const int FanaticAdd = 281472;
 
 	/// <summary>A plain attack skill, used to watch how a cast picks its creature.</summary>
 	private const int RaidSkill = 17063;
@@ -262,7 +268,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 55,006 casts across 13,186 npcs, none of them read by a human. The index they came from is only
+	/// 56,318 casts across 13,186 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -281,7 +287,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(55006, casts);
+		Assert.Equal(56318, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -659,6 +665,7 @@ public sealed class BattleCycleAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(1));
 		Assert.Equal(1, Count(harness, FanaticAdd));
 
+		// Fifty seconds of life left, and no branch that removes it.
 		BossAiHarness.Kill(boss, player);
 		harness.Clock.Advance(TimeSpan.FromSeconds(1));
 
@@ -722,6 +729,6 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(759, spawns);
+		Assert.Equal(906, spawns);
 	}
 }
