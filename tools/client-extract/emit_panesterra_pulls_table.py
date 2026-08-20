@@ -75,6 +75,30 @@ FOOTER = '''    };
 
         return [new PatternBranch(7, "pulled -- tell the guards around me", [], actions)];
     });
+
+    /// <summary>
+    /// Broadcasts this npc's pull calls directly, for classes that are not <c>PatternAi</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Sixty of these npcs are garrison chiefs on <c>BaseProtectorAI</c></b>, which derives from
+    /// <c>AggressiveNpcAI</c> and cannot be handed a pattern branch. Its <c>HandleCreatureAggro</c>
+    /// already latches -- it broadcasts 30002 there once per fight -- so the call goes beside that one.
+    /// <para>
+    /// Call it from a latched hook. Retail's rung is <c>on_enter_attack_state</c>, which fires once when
+    /// a fight starts; an aggro hook without a latch fires per creature and would shout the whole fight.
+    /// </para>
+    /// </remarks>
+    internal static void Shout(Aion.GameServer.Model.GameObjects.Npc guard)
+    {
+        if (!ByNpc.TryGetValue(guard.GetNpcId(), out Pull[] calls))
+            return;
+
+        foreach (Pull call in calls)
+        {
+            Aion.GameServer.Ai.NpcMessageBus.Broadcast(
+                guard, call.Call, guard.GetTarget(), call.Range);
+        }
+    }
 }
 '''
 

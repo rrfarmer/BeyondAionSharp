@@ -1,6 +1,7 @@
 using Aion.GameServer.Handlers.AI;
 using System.Collections.Generic;
 using System.Linq;
+using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -31,6 +32,12 @@ public sealed class PanesterraChiefBindingTests
 
 	/// <summary>Chief 01 of garrisons 02, 03 and 04, which did not.</summary>
 	private static readonly int[] WereMissing = [277581, 277586, 277591];
+
+	/// <summary><c>GAb1_01_chief05_L</c> — a chief whose class is <c>base_protector</c>.</summary>
+	private const int ChiefOnBaseProtector = 880132;
+
+	/// <summary><c>LDF5_chief_v01_L</c> — a Kaldor village chief, same class, no pull call.</summary>
+	private const int KaldorVillageChief = 231630;
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Aspida).WithWorldSize(4096)
@@ -67,5 +74,59 @@ public sealed class PanesterraChiefBindingTests
 			harness.Engage(chief, player);
 
 		Assert.Contains(PanesterraCalls.LightCaptain, seen);
+	}
+
+	/// <summary>
+	/// <b>A garrison chief on <c>base_protector</c> gives the order too.</b> Forty-eight chiefs shout
+	/// 41101 in retail and twelve more shout 41001, and that class had no rung for either.
+	/// </summary>
+	/// <remarks>
+	/// <b>It could not take the generated branch.</b> <c>BaseProtectorAI</c> derives from
+	/// <c>AggressiveNpcAI</c>, not <c>PatternAi</c>, so the call is made from its
+	/// <c>HandleCreatureAggro</c> — which already latches, because it broadcasts 30002 there once per
+	/// fight. Retail's rung is <c>on_enter_attack_state</c> and fires once; an unlatched aggro hook would
+	/// shout for the whole fight.
+	/// </remarks>
+	[Fact]
+	public void AGarrisonChiefOnBaseProtectorGivesTheOrderToo()
+	{
+		using BossAiHarness harness = BossAiHarness.For(Aspida).WithWorldSize(4096)
+			.WithAi(typeof(BaseProtectorAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc chief = harness.Spawn(ChiefOnBaseProtector, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(300f, 290f, 200f, race: Race.ASMODIANS);
+		var seen = new List<int>();
+
+		// CreatureAggro, not Engage: BaseProtectorAI answers the aggro event, and Engage raises Attack.
+		// The two are different doors into a fight and this class only listens at one of them.
+		using (NpcMessageBusProbe probe = NpcMessageBusProbe.Watch(seen))
+		{
+			harness.Engage(chief, player);
+			chief.GetAi().OnCreatureEvent(AiEventType.CreatureAggro, player);
+		}
+
+		Assert.Contains(PanesterraCalls.LightCaptain, seen);
+	}
+
+	/// <summary>
+	/// <b>And a base protector outside Panesterra stays quiet.</b> The class covers village chiefs in
+	/// Kaldor and garrison chiefs in Ashunatal; only the second kind has a pull call, which is why this
+	/// is a table lookup and not a line in the handler.
+	/// </summary>
+	[Fact]
+	public void AndABaseProtectorOutsidePanesterraStaysQuiet()
+	{
+		using BossAiHarness harness = BossAiHarness.For(Aspida).WithWorldSize(4096)
+			.WithAi(typeof(BaseProtectorAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI)).Build();
+		Npc chief = harness.Spawn(KaldorVillageChief, 300f, 300f, 200f);
+		Player player = harness.SpawnPlayer(300f, 290f, 200f, race: Race.ASMODIANS);
+		var seen = new List<int>();
+
+		using (NpcMessageBusProbe probe = NpcMessageBusProbe.Watch(seen))
+		{
+			harness.Engage(chief, player);
+			chief.GetAi().OnCreatureEvent(AiEventType.CreatureAggro, player);
+		}
+
+		Assert.DoesNotContain(PanesterraCalls.LightCaptain, seen);
 	}
 }

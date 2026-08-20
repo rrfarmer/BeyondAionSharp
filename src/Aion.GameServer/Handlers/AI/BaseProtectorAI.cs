@@ -108,6 +108,12 @@ public class BaseProtectorAI : AggressiveNpcAI, INpcMessageListener
         if (!calling.CompareAndSet(false, true))
             return;
 
+        // Retail gives sixty of these npcs a second rung in the same handler: Ashunatal's pull call,
+        // 41101 for a garrison chief and 41001 for its Vritra counterpart, which the guards around it
+        // answer by turning. See PanesterraPulls -- the range is per npc, so it cannot be a constant
+        // here, and this class cannot take the generated branch because it is not a PatternAi.
+        PanesterraPulls.Shout(GetOwner());
+
         float range = CallRangeFor(GetOwner().GetObjectTemplate().GetTribe());
 
         // Retail's rung broadcasts and *then* arms the timer, so the first call is part of entering

@@ -33354,3 +33354,25 @@ constant** and none of them needed changing.
   549 listen. Nothing here has been checked against it. It is the next mechanic of this shape.
 - **The 173 other enter-combat broadcasts** are mostly unanswered by anything in the dump — shouts to
   the client rather than npc mechanics — and are not worth a table on current evidence.
+
+### The last sixty, and the door they listen at
+
+`BaseProtectorAI` now shouts too. Forty-eight garrison chiefs send **41101** and twelve send **41001**,
+and the class had no rung for either.
+
+**It could not take the generated branch.** The class derives from `AggressiveNpcAI`, not `PatternAi`,
+so `PanesterraPulls.Shout` is called from its `HandleCreatureAggro` — which already latches, because it
+broadcasts 30002 there once per fight. Retail's rung is `on_enter_attack_state` and fires once; an
+unlatched aggro hook would shout for the whole fight.
+
+**The pin failed first for a reason worth keeping: `Engage` raises `Attack`, not `CreatureAggro`.** Those
+are two different doors into a fight and this class only listens at one of them. Every pattern-driven pin
+in this suite uses `Engage`, so the habit is to reach for it — and here it produced a silent npc that
+looked like a missing call.
+
+Both mutations caught: dropping the call, and making `Shout` fire for npcs that are not in the table —
+the second is what the Kaldor village chief pin is for, since that class covers Kaldor and Ashunatal
+both and only one of them has a pull call.
+
+**Panesterra's pull mechanic is now complete on the sending side**: 474 npcs, every one shouting what its
+own retail rung says, across seven classes.
