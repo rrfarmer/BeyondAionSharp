@@ -143,6 +143,13 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 return None
             count = re.search(r"<num_to_spawn>(\d+)</", body)
             live = re.search(r"<live_time>(\d+)</", body)
+            # `despawn_at_attack_state`: the add is the controller's, not the world's. 3,129 of the
+            # 3,294 spawns inside `on_idle_timer` carry it and 2,267 of those are permanent. A wave
+            # controller rarely fights, so this fires when it dies or despawns -- killing the thing
+            # that placed a wave takes the wave with it, which is exactly what it is for.
+            transient = re.search(r"<despawn_at_attack_state>(\w+)</", body)
+            if transient and transient.group(1).upper() == "TRUE":
+                place = "for_the_fight_" + place
             out.append(("spawn", npc_id, int(count.group(1)) if count else 1,
                         int(live.group(1)) if live else 0, place,
                         float(spot[0].group(1)) if spot[0] else 0.0,

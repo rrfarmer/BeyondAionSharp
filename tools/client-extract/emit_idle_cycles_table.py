@@ -88,12 +88,16 @@ def action_code(row: dict) -> str:
     if kind == "spawn":
         npc, count, live = row["a1"], row["a2"], row["a3"]
         place, x, y, z = row["place"], row["x"], row["y"], row["z"]
+        # Retail's despawn_at_attack_state: the wave belongs to whoever placed it.
+        suffix = ""
+        if place.startswith("for_the_fight_"):
+            place, suffix = place[len("for_the_fight_"):], "ForTheFight"
         if place == "self":
-            return f"Do.SpawnNear({npc}, Untracked, {count}, 0f, {live})"
+            return f"Do.SpawnNear{suffix}({npc}, Untracked, {count}, 0f, {live})"
         if place == "offset":
-            return f"Do.SpawnOffset({npc}, Untracked, {x}f, {y}f, {live}, {z}f)"
+            return f"Do.SpawnOffset{suffix}({npc}, Untracked, {x}f, {y}f, {live}, {z}f)"
         spots = ", ".join(f"new SpawnSpot({x}f, {y}f, {z}f)" for _ in range(max(1, int(count))))
-        return f"Do.SpawnAt({npc}, Untracked, {live}, {spots})"
+        return f"Do.SpawnAt{suffix}({npc}, Untracked, {live}, {spots})"
     if kind == "timer":
         return f"Do.SetIdleTimer({row['a1']})"
     if kind == "var":

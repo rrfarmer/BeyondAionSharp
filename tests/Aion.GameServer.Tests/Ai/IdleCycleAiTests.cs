@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Tests.Ai;
 
@@ -150,5 +151,32 @@ public sealed class IdleCycleAiTests
 		// Retail leans heavily on the second in these controllers.
 		Assert.Equal(3, shouts);
 		Assert.Equal(53, systemLines);
+	}
+	/// <summary><b>Killing the controller takes its wave with it.</b></summary>
+	/// <remarks>
+	/// Retail marks these spawns <c>despawn_at_attack_state</c> -- 3,129 of the 3,294 inside
+	/// <c>on_idle_timer</c>, and 2,267 of those are permanent. An earlier entry guessed the flag
+	/// "rarely applies" to wave controllers because they seldom fight; the count says otherwise, and
+	/// the transition that matters for them is not a fight ending but the controller being killed or
+	/// removed. Without this the adds outlive whatever placed them, forever.
+	/// </remarks>
+	[Fact]
+	public void KillingTheControllerClearsItsWave()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc controller = harness.Spawn(Controller, 300f, 300f, 200f);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(3));
+		Assert.Equal(5, harness.LiveNpcs().Count(npc => npc.GetNpcId() == Add));
+
+		// The player arrives only to land the killing blow; spawning one next to the controller before
+		// the wave pulls it into combat and the cycle never runs.
+		Player player = harness.SpawnPlayer(900f, 900f, 200f);
+
+		// Well inside the adds' sixty-second lifetime.
+		BossAiHarness.Kill(controller, player);
+		harness.Clock.Advance(TimeSpan.FromSeconds(1));
+
+		Assert.Equal(0, harness.LiveNpcs().Count(npc => npc.GetNpcId() == Add));
 	}
 }

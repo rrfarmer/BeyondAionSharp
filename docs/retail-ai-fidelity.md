@@ -35793,3 +35793,42 @@ retail marks `FALSE`, and killing the summoner leaves it standing. Both mutation
   arming handlers dropped**, **188 self-arming rotations and 147 that arm nowhere.**
 - **Retail cast timings remain unobserved across 13,186 npcs.** Unchanged, and now the only item on
   this list that no amount of static work can close.
+
+## "Rarely applies" was wrong by a factor of nineteen
+
+The previous entry wired `despawn_at_attack_state` for battle rotations and left the idle table alone,
+guessing the flag "rarely applies" to wave controllers because they seldom fight. The count says
+otherwise:
+
+| spawns inside `on_idle_timer` | |
+|---|---|
+| carrying the flag | **3,129** |
+| not carrying it | 165 |
+| of the flagged ones, permanent (`live_time=0`) | **2,267** |
+
+Nineteen out of twenty. The guess was about the wrong transition: a wave controller does rarely enter
+combat, but `ResetPattern` also runs when it **dies or despawns**, and that is the case that matters —
+killing the thing that placed a wave should take the wave with it. Without the flag those adds outlive
+whatever summoned them, permanently, and the idle table is where the long-lived wave controllers are.
+
+1,109 of the idle table's 1,121 spawns are now scoped to their controller.
+
+### A mutation that proved nothing, and the one that did
+
+The first attempt mutated the **emitter** — and survived, because mutating a generator does not
+regenerate the table it produces. That property is already known here and guarded by `regen_check`, and
+it is worth restating as a rule for anyone testing generated code: **a mutation has to land on the
+generated artefact, not on the thing that writes it.** Mutating the emitted
+`Do.SpawnNearForTheFight(282190, ...)` back to `Do.SpawnNear` kills the pin immediately.
+
+### Still missing
+
+- **`IdleSpawns`** — the flat 40-row table — still ignores the flag. It is small and its rows are
+  mostly hazards with short lifetimes, but this is the same guess that was just wrong once, so it is
+  recorded as uncounted rather than dismissed.
+- **The 12 unbounded battle branches** are unchanged; retail intends them, and their adds now leave
+  with the fight.
+- **`OBJI_TALKER` (771)**, **`USERI_EVENT_MAKER` (1)**, **53 range-restricted casts**, **453 optional
+  arming handlers dropped**, **188 self-arming rotations and 147 that arm nowhere.**
+- **Retail cast timings remain unobserved across 13,186 npcs.** Still the only item here that static
+  work cannot close.
