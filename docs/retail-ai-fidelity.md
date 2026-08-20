@@ -36184,3 +36184,51 @@ of quietly turning the test into one that proves nothing.
 - **6,800 duplicate gated placements**, **177 encounters missing an add**.
 - **Retail cast timings across 13,186 npcs.** Still the only item static work cannot close, and now
   visibly the oldest one on the list.
+
+## "Reachable" was the wrong word, and the number was wrong in both directions
+
+Several entries here quote a count of reachable gated placements, and it meant *gated on a variable one
+of our tables writes*. That is not the same as *can appear*, and the gap runs both ways:
+
+* **A gate reading a variable nobody writes is not necessarily shut.** A missing variable reads as
+  **0**, so `SpecialServer_Cond == 0` -- 1,380 placements -- has been satisfied since the day the engine
+  was built. The plan to "supply the server flags" would have been a no-op for the two `*_Cond` names.
+* **A gate mentioning a variable we write is not necessarily openable.** There are 9,360 `&&` uses; one
+  writable name among three opens nothing.
+
+`audit_gate_reach.py` now evaluates every gate rather than matching names:
+
+| | placements |
+|---|---|
+| open at cold start | **1,476** |
+| shut, every variable is one we write | **5,501** |
+| shut, some of the variables are ours | 6,931 |
+| shut, none of them are ours | 7,184 |
+| retail's own text will not parse | 4 |
+
+So the honest headline is **5,501 placements this port can open on its own**, plus 1,476 already open --
+not the 12,646 the previous entry implied.
+
+### What the ceiling is made of
+
+The 7,184 nothing here can reach are dominated by three names, and all three are **server flags rather
+than anything an npc writes**: `GAb1_PvPStatus` (6,070 placements across 4 worlds), `SpecialServer_Cond`
+(1,484 across 35) and `InterServer_Cond` (216 across 13).
+
+`SpawnVariables` already accepts a server-flag dictionary and `SpawnVariableRegistry.Supply` exists to
+fill it. **Nothing calls it, and for two of those three that does not matter** -- their common case is
+`== 0` and zero is what a missing name already reads. For `GAb1_PvPStatus` it matters entirely: its
+gates test 1, 2 and 3, its value belongs to abyss siege state, and until a siege service sets it those
+6,070 placements are shut no matter what the AI does.
+
+Also confirmed rather than assumed: the `[SAVE]` marker parses here (it is part of the name), and the
+handful of gates retail pasted into themselves are refused by `GatedSpawnData` with a comment rather
+than guessed at. Both were open questions in earlier entries.
+
+### Still missing
+
+- **A siege service that sets `GAb1_PvPStatus`.** Single largest item in the gate work at 6,070
+  placements, and it is not an AI problem at all.
+- **488 wake patterns that also do something else**, 136 with a guarded branch.
+- **`control_door`** (26 death patterns), **6,800 duplicate gated placements**, **177 encounters missing
+  an add**, **retail cast timings.**
