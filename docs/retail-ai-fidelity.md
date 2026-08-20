@@ -34189,3 +34189,19 @@ hostility. The tribe table was worth checking and was right all along.
   is the same story as the 112: later-version content.
 - The 6 tribes we declare and retail does not, unexamined — the reverse direction, which cannot disable
   anything and would need its own argument.
+
+### A flake, and a shell mistake that let it through
+
+The run that accompanied the entry above reported **1 failure out of 2,744**, and the commit went in
+anyway. Three subsequent full runs are clean, so it is intermittent rather than a break — but two things
+are worth writing down.
+
+**The commit should not have happened.** The command was
+`dotnet test ... | grep -E "Passed!|Failed!" | tail -1 && git commit ...`. `grep` exits 0 when it *finds*
+a match, and "Failed!" is a match, so the `&&` fired on a failing suite. Gate on the test command's own
+exit status, never on a grep of its output.
+
+**The failure's name was discarded** by the same pipeline, so it cannot be chased. This project has seen
+one flake class before — `BaseService`'s static initialiser poisoning the process for every later test
+in the same run, which shows up as unrelated failures that pass in isolation. That is the first thing to
+check if it returns.
