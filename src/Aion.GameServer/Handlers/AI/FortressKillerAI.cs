@@ -1,3 +1,4 @@
+using System.Linq;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Model.GameObjects;
@@ -105,13 +106,42 @@ public class FortressKillerAI : AbyssGuardCallAI
     /// walks its route, and whether it hunts a garrison chief on sight — which three constants here
     /// would have got wrong for two of the three patterns.
     /// </remarks>
+    /// <summary>
+    /// Folds two unconditional branch lists into one branch, so neither is lost to first-match-wins.
+    /// </summary>
+    /// <remarks>
+    /// Only safe because both sides here are <see cref="AiPattern.When.Always"/>: a guarded branch must
+    /// keep its own place in the ladder, and this refuses to touch one.
+    /// </remarks>
+    private static PatternBranch[] MergeUnconditional(PatternBranch[] first, PatternBranch[] second)
+    {
+        if (first.Length == 0)
+            return second;
+        if (second.Length == 0)
+            return first;
+        if (first.Any(b => b.Conditions.Length > 0) || second.Any(b => b.Conditions.Length > 0))
+            return [.. first, .. second];
+
+        PatternAction[] actions = [.. first.SelectMany(b => b.Actions),
+                                   .. second.SelectMany(b => b.Actions)];
+        return [new PatternBranch(first[0].Priority, "the guard call and the focus clock, as one rung",
+                                  [], actions)];
+    }
+
     private static AiPattern Merge(AiPattern guard, AiPattern killer, AiPattern own) => new AiPattern
     {
         OnWakeUp = [.. guard.OnWakeUp, .. killer.OnWakeUp, .. own.OnWakeUp],
-        // Both halves of entering combat: the base's 23000 shout for killers that are also listed
-        // guards, and the table's rung that starts the chief-focus clock. Keeping only the base's --
-        // which this did at first -- left the focus timer unarmed and the rung below unreachable.
-        OnEnterAttack = [.. guard.OnEnterAttack, .. own.OnEnterAttack],
+        // Both halves of entering combat, in ONE branch.
+        //
+        // **Concatenating them does not work and looked like it did.** Branch lists are first-match-wins,
+        // so a killer that is also a listed guard ran the base's unconditional 23000 branch and never
+        // reached the table's unconditional timer branch behind it -- `armed=0` for every artifact
+        // killer, while the Advance killers worked because they are absent from GuardCalls and had no
+        // first branch to lose to.
+        //
+        // Retail writes one rung that does both: `add_battle_timer`, `broadcast_message 23000`,
+        // `use_skill`. So the actions are merged, which is what the data says anyway.
+        OnEnterAttack = MergeUnconditional(guard.OnEnterAttack, own.OnEnterAttack),
         OnBattleTimer = own.OnBattleTimer,
         OnLeaveAttack = own.OnLeaveAttack,
         OnSeeNpc = own.OnSeeNpc,

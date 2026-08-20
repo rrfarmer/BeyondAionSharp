@@ -164,6 +164,37 @@ public sealed class FortressKillerHuntTests
 	}
 
 	/// <summary>
+	/// <b>An artifact killer focuses too, and it hunts nobody on sight.</b> That pair is why the focus
+	/// race list is a separate field: <c>Hunted</c> is empty for these and <c>Focused</c> is not, so a
+	/// rung reading the sight list would test an empty array and never fire.
+	/// </summary>
+	/// <remarks>
+	/// <b>This pin could not be written until the health data was repaired.</b> The artifact killer
+	/// carried 140-odd HP against its quarry's thirty thousand and died inside the first tick whatever
+	/// the harness did; it has retail's 3,377,604 now. The earlier entry blamed the harness, then blamed
+	/// the tribe relation, and both were explanations fitted to a symptom.
+	/// </remarks>
+	[Fact]
+	public void AnArtifactKillerFocusesTooAndHuntsNobodyOnSight()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc killer = harness.Spawn(ArtifactKiller, 300f, 300f, 200f);
+		Npc chief = harness.Spawn(ElyosGarrisonChief, 303f, 300f, 200f);
+		harness.Engage(killer, chief);
+		int before = killer.GetAggroList().GetHate(chief);
+
+		// Retail puts its first focus rung at eight seconds; fifteen holds it comfortably.
+		for (int second = 0; second < 15; second++)
+		{
+			BossAiHarness.HoldFight(killer, chief);
+			harness.Clock.Advance(System.TimeSpan.FromSeconds(1));
+		}
+
+		Assert.True(killer.GetAggroList().GetHate(chief) >= before + 200_000,
+			"the artifact killer's focus rung never landed");
+	}
+
+	/// <summary>
 	/// <b>And an ordinary enemy does not get it.</b> Retail guards the rung on the target's race; without
 	/// that the killer would pile nine hundred thousand onto whatever it happened to be hitting.
 	/// </summary>

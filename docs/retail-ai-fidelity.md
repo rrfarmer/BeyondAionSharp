@@ -32969,3 +32969,74 @@ red.
   this area.
 - **`goto_next_waypoint` is still `StartWalking`**, and **thirty-three of thirty-seven killers are absent
   from `GuardCalls`**, both unchanged.
+
+## 4,241 npcs had placeholder health, and a fortress boss had 128 HP
+
+The 140-HP fortress killer from the last entry was not a loader default. `<stats maxHp="140">` is in the
+data explicitly — a value, and wrong by a factor of two thousand. **Retail gives that npc 327,127.**
+
+Retail's `npcs.xml` carries `<max_hp>` for every npc in the game. `audit_npc_health.py` streams it (the
+file is 518 MB) and compares:
+
+| | |
+|---|---|
+| comparable npcs | 62,592 |
+| **identical** | **39,512** |
+| ours less than half retail's | 10,703 |
+| ours higher | 7,723 |
+| within half | 4,652 |
+
+So the bulk imported correctly and a large minority did not — and **4,241 of the understated sit at 200
+HP or less**, clustering the way a spread of placeholders does: about a hundred npcs each at 100, 105,
+110, 114, 128, 130, 135, 145.
+
+The worst are not small npcs:
+
+```
+BLDF5_Fortress_GuardianHead   ours 128   retail 290,150,400
+BGAB1_Door_Li_4_lv65_BigHP    ours 113   retail 168,000,000
+BGAB1_LGuardianChief_65_Al    ours 108   retail 156,553,560
+AB1_DrGuard_Artifact_Killer   ours 140   retail   3,377,604
+```
+
+**A fortress boss with 128 HP is not a balance choice.** A siege against one is over before it starts,
+and every npc-versus-npc mechanic in the abyss — all of the 30001/30002/30003 work of the last several
+entries — was being fought by npcs that could not survive a hit.
+
+`--apply` rewrote exactly the unambiguous case: **ours at 200 or less against a retail value of at least
+a thousand.** It deliberately left the 7,723 where ours is *higher* (not a placeholder shape, and
+possibly deliberate here) and everything between half and one (a real scaling decision looks like that,
+and this tool cannot tell one from an import that rounded).
+
+Six pins, and they compare **proportionally**: a chief written as 156,553,560 arrives as 156,553,568,
+eight out in a hundred and fifty-six million, which is the stat pipeline's float arithmetic and not the
+data. An exact assertion would have pinned the rounding.
+
+## The merge bug the health fix uncovered
+
+With health repaired, the artifact-killer focus pin *still* failed — so health was not that cause
+either. The probe said `armed=0`: its enter-combat rung never armed the focus timer.
+
+**Branch lists are first-match-wins, and the merge was concatenating.** A killer that is also a listed
+guard ran the base's unconditional 23000 branch and never reached the table's unconditional timer branch
+behind it. The Advance killers worked precisely because they are *absent* from `GuardCalls` and so had
+no first branch to lose to — which is why the bug looked like a property of the artifact family.
+
+Retail writes one rung that does both: `add_battle_timer`, `broadcast_message 23000`, `use_skill`. So
+`MergeUnconditional` folds two unconditional branch lists into a single branch, and refuses to touch a
+guarded one — a guarded branch must keep its place in the ladder.
+
+That closes the mutation that had been surviving for two entries. The artifact-killer pin now runs, and
+with it the only case where the focus race list and the sight race list differ.
+
+### Still missing
+
+- **The 7,723 npcs whose health is *higher* here than retail's.** Untouched on purpose. Some will be the
+  same import problem in the other direction and some will be deliberate; they need reading in groups,
+  not a sweep.
+- **The 4,652 within half of retail.** Same reasoning.
+- **Whether `MergeUnconditional`'s problem exists elsewhere.** Any class that merges a base pattern with
+  its own has the same first-match-wins trap, and `FortressKillerAI` is the only one checked. It is
+  worth a look at every `Merge` in the tree before assuming this was the only instance.
+- **The other stats.** Only `max_hp` was compared. Retail's `npcs.xml` carries physical attack, defence,
+  magic resist and a dozen more per npc, and none of them has been checked against ours.
