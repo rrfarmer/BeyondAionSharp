@@ -8,7 +8,7 @@ namespace Aion.GameServer.Handlers.AI;
 /// @author Cheatkiller
 /// </summary>
 [AIName("kamarbosses")]
-public class KamarBossesAI : AggressiveNpcAI
+public class KamarBossesAI : AggressiveNpcAI, INpcMessageListener
 {
     private Npc flag;
 
@@ -76,5 +76,15 @@ public class KamarBossesAI : AggressiveNpcAI
         }
         if (flag != null)
             flag.GetController().Delete();
+    }
+
+    /// <summary>
+    /// Retail's answer to a guard's call for help. one npc(s) on <c>kamarbosses</c> answer
+    /// <c>23000</c>, and this class had no message handling at all -- see <see cref="GuardAnswers"/>
+    /// for the table and for why these cannot use a pattern.
+    /// </summary>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        GuardAnswers.AnswerCall(GetOwner(), sender, messageType, param);
     }
 }

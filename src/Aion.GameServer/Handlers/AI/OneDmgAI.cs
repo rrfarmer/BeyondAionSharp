@@ -8,7 +8,7 @@ namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>Java parity: ai/OneDmgAI (xTz, Neon).</summary>
 [AIName("onedmg_aggressive")]
-public class OneDmgAI : AggressiveNpcAI
+public class OneDmgAI : AggressiveNpcAI, INpcMessageListener
 {
     public OneDmgAI(Npc owner)
         : base(owner)
@@ -35,5 +35,15 @@ public class OneDmgAI : AggressiveNpcAI
                 stat.SetBonus(0);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Retail's answer to a guard's call for help. three npc(s) on <c>onedmg_aggressive</c> answer
+    /// <c>23000</c>, and this class had no message handling at all -- see <see cref="GuardAnswers"/>
+    /// for the table and for why these cannot use a pattern.
+    /// </summary>
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    {
+        GuardAnswers.AnswerCall(GetOwner(), sender, messageType, param);
     }
 }

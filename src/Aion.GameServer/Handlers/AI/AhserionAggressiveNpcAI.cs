@@ -21,16 +21,17 @@ namespace Aion.GameServer.Handlers.AI;
 /// the opposite of what an ambush pod is for.
 /// </para>
 /// <para>
-/// <b>Scoped to that npc on purpose.</b> Several unrelated npcs share this AI name and their retail
-/// patterns do not answer 23000; message numbers are per encounter, so a listener that acted on the
-/// number alone would pull in bystanders.
+/// <b>It was scoped to that one npc, and that was wrong.</b> The remark here used to say that other
+/// npcs sharing this AI name "do not answer 23000" and that acting on the number alone would pull in
+/// bystanders. Measured, <b>sixteen</b> npcs on this name and its sorcerer subclass answer 23000 in
+/// retail. The worry was sound and the answer to it is per-npc data, not a hardcoded id:
+/// <see cref="GuardAnswers"/> answers only for npcs whose own retail pattern has the rung, so a
+/// bystander that genuinely does not answer still does not.
 /// </para>
 /// <para>
-/// <b>Simplified:</b> retail has two rungs — a pod already fighting does <c>switch_target</c> with 100
-/// points, one that is not does <c>add_hate_point 1</c> and <c>attack_most_hating</c>. Both go through
-/// <see cref="SummonOrder"/> here, with the hate value from the matching rung. That is weaker than a
-/// forced switch for the fighting case, which is the safer direction: it will not drag a pod off a
-/// player it has genuinely built hate on.
+/// The two rungs are no longer simplified either. A pod already fighting does a real
+/// <c>switch_target</c> with 100 points; one that is not does <c>add_hate_point 1</c> and
+/// <c>attack_most_hating</c>. Both live in <see cref="GuardAnswers"/> now.
 /// </para>
 /// </remarks>
 [AIName("ahserion_aggressive_npc")]
@@ -49,11 +50,10 @@ public class AhserionAggressiveNpcAI : AggressiveNoLootNpcAI, INpcMessageListene
     /// </summary>
     public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
-        if (messageType != DestroyerCall || GetNpcId() != PodAssassin || IsDead())
+        if (IsDead())
             return;
 
-        SummonOrder.Take(GetOwner(), param,
-            GetOwner().GetAi().IsInState(AIState.FIGHT) ? SwitchPoints : SummonOrder.OnePoint);
+        GuardAnswers.AnswerCall(GetOwner(), sender, messageType, param);
     }
 
     public AhserionAggressiveNpcAI(Npc owner)

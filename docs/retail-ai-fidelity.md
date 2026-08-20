@@ -33690,3 +33690,55 @@ along, as CS0108, in a warning list nobody was reading.
   dropped rather than emitted as no-ops.
 - The `30001`/`30002`/`30003` family is still only half-built: `30002` now sends, `30001` is answered by
   the protectors, and `30003` (a despawn order) is nowhere.
+
+## The last twenty answerers, and a hardcoded npc id that was hiding fifteen more
+
+The previous entry closed `23100` for the artifact protectors and listed **24 npcs on `23000`** as still
+deaf, across five bespoke classes. Checking each rather than trusting the class name: **the count was
+20.** The four `fortress_killer` npcs derive from `AbyssGuardCallAI` and are in `GuardCalls` with the
+answer flag, so they already answered — the gap was measured by the `ai` attribute and inheritance does
+not show up there.
+
+### A direct entry point, because these npcs have no pattern
+
+The remaining twenty run plain `aggressive` with cast rotations this work cannot resolve, so there is no
+pattern to fold rungs into. `GuardAnswers.AnswerCall` applies the same two rungs directly — the same
+shape as `PullCalls.Shout` for the sending half. The idle rung goes through `SummonOrder`, which
+*already is* `add_hate_point` + `attack_most_hating`; the fighting rung cannot, because
+`switch_target` turns the npc whether or not the named player is the one it now hates most.
+
+### The find: `DestroyerCall` was 23000 all along
+
+`AhserionAggressiveNpcAI` answered a message it called `DestroyerCall`, **scoped to one hardcoded npc
+id**, and its remark defended the scoping:
+
+> "Several unrelated npcs share this AI name and their retail patterns do not answer 23000; message
+> numbers are per encounter, so a listener that acted on the number alone would pull in bystanders."
+
+`DestroyerCall` is `23000` — the guard call for help — and **sixteen** npcs on that AI name and its
+sorcerer subclass answer it in retail. The worry was sound; the fix for it was a guess where data was
+available. `GuardAnswers` answers only for npcs whose own retail pattern carries the rung, so a genuine
+bystander still does not answer, and the other fifteen now do.
+
+A pin asserted the bystander ignored the call. It was pinning the scoping, and it is now the opposite
+assertion — the third pin in this log found to be holding a defect in place. The class's other
+simplification is also gone: the fighting rung is a real `switch_target` with 100 points rather than a
+weaker `SummonOrder` hand-off.
+
+### A redundant guard, and the pin that had to be built to prove it
+
+A mutation removing the enmity check from `AnswerCall` **survived**. It is genuinely redundant on the
+idle rung: `AggroList.AddHate` refuses a non-enemy through `IsAware` regardless. It is *not* redundant
+on the fighting rung, which calls `SetTarget` whether or not the hate lands — so without it a guard
+swings round to face something it cannot fight. That is what the new pin measures, and the mutation now
+dies. **A surviving mutation on a guard that looks redundant usually means the pin is aimed at the
+half where it really is redundant.**
+
+### Still missing
+
+- **The five stragglers on `23100`** — 2 `kamarbosses`, 2 `aggressive`, 1 `general`. `kamarbosses` now
+  answers `23000` and would pick these up by adding their ids; the `general` one would turn a
+  non-combat npc into a combatant and still wants a look.
+- **`KistenianAI`** still hides `OnNpcMessage` without handing off, as recorded last entry.
+- The `30003` despawn order remains unimplemented, and the cast ladders hung off all of these chains
+  are still blocked on skill indices.

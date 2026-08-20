@@ -88,17 +88,20 @@ public sealed class AhserionPodAssassinTests
 	/// pulled every one of them onto the caller's target.
 	/// </remarks>
 	[Fact]
-	public void AndABystanderOnTheSameAiNameIgnoresIt()
+	public void AndABystanderOnTheSameAiNameAnswersItToo()
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc caller = harness.Spawn(Destroyer, 300f, 300f, 200f);
 		Npc bystander = harness.Spawn(277242, 305f, 295f, 200f);
-		Player player = harness.SpawnPlayer(340f, 300f, 200f);
+		Player player = harness.SpawnPlayer(307f, 295f, 200f);
 		BossAiHarness.MakeMutuallyKnown(bystander, player);
 
 		NpcMessageBus.Broadcast(caller, AhserionAggressiveNpcAI.DestroyerCall, player, 20f);
 
-		Assert.Null(bystander.GetTarget());
+		// This pin used to assert the bystander ignored the call, which is what the class did: it
+		// answered for one hardcoded npc id. 23000 is the guard call for help, and 277242 answers it
+		// in retail like the other fifteen npcs on this AI name.
+		Assert.Equal(1, bystander.GetAggroList().GetHate(player));
 	}
 
 	/// <summary>
