@@ -13,6 +13,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
+using Spawns = Aion.GameServer.World.Spawns;
 
 namespace Aion.GameServer.Ai.Pattern;
 
@@ -773,6 +774,23 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         GetAggroList().AddHate(target, hate);
         GetOwner().SetTarget(target);
     }
+
+    /// <summary>
+    /// <c>set_condition_spawn_variable</c> — moves one of the counters the world's spawn gates read.
+    /// </summary>
+    /// <remarks>
+    /// Retail's own rule, settled by the fact that across all 12,446 uses in the dump <b>not one</b>
+    /// carries a non-zero <c>set</c> and a non-zero <c>modify</c> together: a <paramref name="modify"/>
+    /// of zero assigns <paramref name="set"/>, and anything else adds <paramref name="modify"/>.
+    /// <para>
+    /// The counter belongs to this NPC's map. <see cref="Spawns.SpawnVariableRegistry"/> has the
+    /// measurement behind that; the short version is that generic names like <c>v01</c> are written by
+    /// patterns in nine unrelated maps, so one store for the server would have them corrupting each
+    /// other.
+    /// </para>
+    /// </remarks>
+    public void SetSpawnVariable(string name, int set, int modify)
+        => Spawns.SpawnVariableRegistry.For(GetOwner().GetWorldId()).Write(name, set, modify);
 
     // ---- the idle timer ----------------------------------------------------------------------
 

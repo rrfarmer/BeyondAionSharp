@@ -34606,3 +34606,39 @@ supply them from somewhere and the list is the specification for what.
 - **Group activation** — applying a gate at spawn time, re-checking on `Changed`, honouring
   `despawnAtOther` — and the `Do.SetSpawnVariable` action, which can now be written because a
   `PatternAi` knows its map.
+
+## The two halves joined: a pattern can now move a spawn gate
+
+Scope settled last entry, so the wire could be built. `SpawnVariableRegistry` keeps one
+`SpawnVariables` per map over a shared set of server flags, `PatternAi.SetSpawnVariable` writes into the
+NPC's own map, and `Do.SetSpawnVariable` is the action a rung can carry. A pattern's write is now visible
+to a gate for that map and invisible to every other, and a server flag reaches all of them and is written
+back by none.
+
+**Keyed on map id, not instance id.** That is the honest limit of the measurement: the evidence places
+writers in maps and says nothing about two simultaneous instances of the same map. For a world map they
+are the same thing; for an instance they are not, and it is the first place to look if an instanced
+encounter behaves as though another group had already done it.
+
+### A flake, caught and removed rather than re-run
+
+The suite failed once on `AServerFlagReachesEveryMap` and passed on every rerun, filtered or full. The
+cause was in the test, not the engine: four tests in one class shared the name `SpecialServer_Cond`
+through a **process-wide** registry, with `Clear()` between them for isolation. Clearing is ordering, and
+ordering is what flakes.
+
+Each test now uses **its own variable name** — `WIRE_WAVE_ONE`, `WIRE_COUNTER`, `WIRE_SERVER_FLAG` —
+so no other test can move what it reads. Three consecutive full runs green afterwards. **A test that
+passes filtered and fails in the suite is sharing something; the fix is to stop sharing it, not to run
+it again.**
+
+### Still missing
+
+- **Group activation**, which is now the only structural piece left: read each `condition_info` from the
+  world data, parse its gate, spawn the group when it holds, and remove it again on `Changed` when
+  `despawnAtOther="true"`.
+- **Nothing supplies the 738 server flags yet**, so every gate reading one still sees zero. The list is
+  `tools/client-extract/out/spawn_inputs.tsv`; siege and PvP status are the two largest and both already
+  exist in this port under other names.
+- **`[SAVE]` persistence**, unchanged: 175 expressions and 2,600 gate uses whose lifetime is unknown.
+- **Instance scope**, above.

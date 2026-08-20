@@ -670,6 +670,13 @@ public static class Do
     public static PatternAction SetIdleTimer(int delayMillis) => ai => ai.SetIdleTimer(delayMillis);
 
     /// <summary>
+    /// <c>set_condition_spawn_variable</c> — moves a counter the world's spawn gates read. A
+    /// <paramref name="modify"/> of zero assigns <paramref name="set"/>; anything else adds it.
+    /// </summary>
+    public static PatternAction SetSpawnVariable(string name, int set = 0, int modify = 0)
+        => ai => ai.SetSpawnVariable(name, set, modify);
+
+    /// <summary>
     /// <c>despawn_by_nameid</c> — clear up to <paramref name="maxCount"/> NPCs of one kind within
     /// <paramref name="radius"/> metres. The kind is retail's client devname, resolved to an npc id
     /// at porting time.
