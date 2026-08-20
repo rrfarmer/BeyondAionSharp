@@ -34911,3 +34911,44 @@ variable overall is not the commonest variable anywhere in particular.
 - **Nothing writes the wave counters yet.** The gates are live and the store is live, but the patterns
   that would move `N_WAVE_01` are among the 113 idle-spawn patterns still unported — which is where
   105 of the `set_condition_spawn_variable` writers live.
+
+## What the spawn engine unblocked, measured rather than assumed
+
+The last entry ended with "nothing writes the wave counters yet — 105 of the writers live in the 113
+unported idle-spawn patterns". The obvious inference was that building `Do.SetSpawnVariable` had
+unblocked them. Measured:
+
+> **It unblocked exactly one pattern.**
+
+The 105 uses of `set_condition_spawn_variable` are in rungs blocked by **branch structure**, not by the
+action: two to ten branches, or a flag guard. Building the action was necessary and nowhere near
+sufficient, and assuming otherwise would have been a wasted port.
+
+### What would actually unblock them
+
+`audit_idle_spawns.py --vocabulary` asks the useful question instead — which patterns are expressible
+with what this port already has, and what the rest are each waiting on:
+
+| | |
+|---|---|
+| **expressible today** | **65 patterns, 67 npcs** |
+| waiting on a wake delay this port can find | 16 |
+| `increase_intvar` (a counter condition) | 11 |
+| `display_system_message` (a string id) | 10 |
+| `use_skill`, `despawn`, `say_to_all`, world flag vars | 7 |
+
+The 65 need no new vocabulary at all — their conditions are `set_flag_var` and `test_probability`, both
+of which this port has, and their actions are spawns, timers, spawn variables, `despawn_self` and
+broadcasts. **What they need is a generator that can emit a multi-branch guarded rung**, where
+`IdleSpawns` emits a flat one. That is the next real piece of work in this thread.
+
+A correction to my own arithmetic: an ad-hoc count said 84. It was counting a pattern once per file it
+appears in; the dump carries some patterns twice. 65 is distinct names.
+
+### Still missing
+
+- **The generator for those 65**, above.
+- **`GAb1_PvPStatus`**, 6,006 gate uses: strong for 1-versus-3, silent on 2.
+- **The 6,800 duplicate placements**, filtered so nothing doubles, leaving those npcs permanently
+  present where retail would remove them.
+- **`[SAVE]` persistence**, still with no evidence either way.

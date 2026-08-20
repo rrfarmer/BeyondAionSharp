@@ -50,7 +50,7 @@ GENERIC = {"aggressive", "general", "onedmg_aggressive", "aggressive_noloot", "d
 def top_level(block: str) -> list[str]:
     """Action names at depth one. Nested children are stripped first.
 
-    Matching `<(\w+)>` against the raw block returns the *spawn block's own children* -- `npc_nameid`,
+    Matching a bare element pattern against the raw block returns the *spawn block's own children* -- `npc_nameid`,
     `spawn_location_type` and the rest -- and reads as a rung full of unknown actions. That mistake put
     the count of portable patterns at zero on the first pass.
     """
