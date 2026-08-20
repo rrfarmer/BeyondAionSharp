@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 namespace Aion.GameServer.Tests.Ai;
 
 /// <summary>
-/// Pins for <see cref="SealWaveLeaderAI"/> — Idgel Dome's five wave leaders
+/// Pins for <see cref="SealWaveLeaderAI"/> — Drakenspire Depths' five wave leaders
 /// (see <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
 /// <remarks>

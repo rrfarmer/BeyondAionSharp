@@ -462,7 +462,7 @@ public static class When
     /// asks a different question: who did the most damage over the whole fight, rather than who swung
     /// last.
     /// <para>
-    /// Retail leans on this to keep NPC-on-NPC scuffles from setting off crowd behaviour. Idgel Dome's
+    /// Retail leans on this to keep NPC-on-NPC scuffles from setting off crowd behaviour. Drakenspire Depths'
     /// wave attackers call for help at two health bands, and this guard is what stops the raid's own
     /// forward guards triggering that call while they trade blows with the wave.
     /// </para>
@@ -482,7 +482,7 @@ public static class When
     /// printed as a bare argumentless guard — exactly the way <c>is_race</c> did before <c>race_type</c>
     /// was added to that list.
     /// <para>
-    /// It matters because retail addresses a whole role at once rather than an NPC id. Idgel Dome's wave
+    /// It matters because retail addresses a whole role at once rather than an NPC id. Drakenspire Depths' wave
     /// healer and its wave assassin both broadcast 22755; only the healer's call makes the tanks peel
     /// off, and <c>tribe_name=IDSeal_Wave_Healer</c> is the entire difference between the two.
     /// </para>

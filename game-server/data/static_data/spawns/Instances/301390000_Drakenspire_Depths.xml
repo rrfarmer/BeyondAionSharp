@@ -260,5 +260,49 @@
 			<spot x="479.40" y="125.50" z="1684.07" h="60" />
 			<spot x="478.60" y="238.00" z="1684.07" h="60" />
 		</spawn>
+		<!-- Retail Worlds/IDSeal/world.xml, ungated territories: placed by nothing else. -->
+		<!-- IDSeal_BossCutScene_Sensory -->
+		<spawn npc_id="206404">
+			<spot x="635.66" y="948.80" z="1616.68" h="0" />
+		</spawn>
+		<!-- IDSeal_Immortal_Enter_Sensory -->
+		<spawn npc_id="206406">
+			<spot x="819.48" y="497.66" z="1712.98" h="0" />
+		</spawn>
+		<!-- IDSeal_Twin_Enter_Sensory -->
+		<spawn npc_id="206407">
+			<spot x="486.96" y="183.02" z="1687.89" h="0" />
+		</spawn>
+		<!-- IDSeal_WindPath_Sensory -->
+		<spawn npc_id="206412">
+			<spot x="807.87" y="610.40" z="1704.40" h="0" />
+		</spawn>
+		<!-- BIDSeal_Area1_Open -->
+		<spawn npc_id="855527">
+			<spot x="328.49" y="182.96" z="1688.30" h="0" />
+			<spot x="352.03" y="182.60" z="1685.41" h="0" />
+		</spawn>
+		<!-- BIDSeal_Glacier_Broken_Summon_01 -->
+		<spawn npc_id="855603">
+			<spot x="802.69" y="576.64" z="1703.82" h="0" />
+			<spot x="811.64" y="587.69" z="1705.01" h="0" />
+			<spot x="802.47" y="557.92" z="1703.82" h="0" />
+			<spot x="832.78" y="567.57" z="1703.82" h="0" />
+			<spot x="811.98" y="545.48" z="1705.01" h="0" />
+			<spot x="820.30" y="557.92" z="1703.82" h="0" />
+			<spot x="820.46" y="576.37" z="1703.82" h="0" />
+			<spot x="790.70" y="567.72" z="1703.82" h="0" />
+		</spawn>
+		<!-- BIDSeal_Glacier_Broken_Summon_02 -->
+		<spawn npc_id="855604">
+			<spot x="796.99" y="551.99" z="1705.01" h="0" />
+			<spot x="825.90" y="582.07" z="1705.01" h="0" />
+			<spot x="826.05" y="551.24" z="1705.01" h="0" />
+			<spot x="797.06" y="583.13" z="1705.01" h="0" />
+		</spawn>
+		<!-- BIDSeal_Glacier_Reflect_Summon -->
+		<spawn npc_id="855606">
+			<spot x="811.79" y="567.87" z="1705.01" h="0" />
+		</spawn>
 	</spawn_map>
 </spawns>

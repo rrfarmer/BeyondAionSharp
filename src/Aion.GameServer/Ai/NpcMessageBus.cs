@@ -51,7 +51,7 @@ public static class NpcMessageBus
     /// Test seam: every broadcast, whether or not anything hears it.
     /// </summary>
     /// <remarks>
-    /// <b>Some NPCs exist only to talk.</b> Idgel Dome's five wave leaders are the case that forced this:
+    /// <b>Some NPCs exist only to talk.</b> Drakenspire Depths' five wave leaders are the case that forced this:
     /// their whole contribution is 22750 and 22757, and <em>both</em> answers in the retail data are
     /// <c>use_skill SKILLI_INDEX_n</c>, which this port cannot resolve. So there is no listener that can
     /// be made to react, and without a seam the entire sending half of the encounter is unpinnable — a

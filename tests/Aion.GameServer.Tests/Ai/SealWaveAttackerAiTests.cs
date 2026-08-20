@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 namespace Aion.GameServer.Tests.Ai;
 
 /// <summary>
-/// Pins for <see cref="SealWaveAttackerAI"/> — Idgel Dome's wave conversation
+/// Pins for <see cref="SealWaveAttackerAI"/> — Drakenspire Depths' wave conversation
 /// (see <c>docs/retail-ai-fidelity.md</c>).
 /// </summary>
 /// <remarks>

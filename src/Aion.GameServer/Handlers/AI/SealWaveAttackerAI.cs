@@ -10,7 +10,7 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Idgel Dome's seventeen rank-and-file wave attackers — retail patterns <c>IDSeal_Wave_Fi</c>,
+/// Drakenspire Depths' seventeen rank-and-file wave attackers — retail patterns <c>IDSeal_Wave_Fi</c>,
 /// <c>_As</c>, <c>_Ra</c>, <c>_Wi</c> and <c>_Pr</c>.
 /// </summary>
 /// <remarks>

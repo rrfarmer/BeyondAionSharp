@@ -843,7 +843,7 @@ can be: 81-100, 56-80, 26-55, below 25, with a 20s low-health chain on timer 6.
 **Verification.** Full suite 1,073 passing and 1 skipped, two new pins, all five
 mutations caught — including moving the first step by a single point.
 
-### Idgel Dome — Destroyer Kunax (287249)
+### Drakenspire Depths — Destroyer Kunax (287249)
 
 Pattern `IDLDF5_Fortress_Re_Vritra_01`. The simplest shape in the corpus and the
 clearest win: his entire fight is **one fixed chain of eight skills, ten seconds
@@ -31771,7 +31771,7 @@ jurdin; `is_aerial_spawn`; the 33 named death-spawn rows; `is_user` pinned one s
 `despawn_at_attack_state` on an enter-combat spawn; the `<summons>` schema's four owed attributes; the
 258203/258207 family decision; the 59 stranded guards; Dynatoum's mine web; Pashid's `npc_skills`.
 
-## Idgel Dome's wave: seventeen attackers that never spoke
+## Drakenspire Depths' wave: seventeen attackers that never spoke
 
 `SealWaveAttackerAI` — retail patterns `IDSeal_Wave_Fi`, `_As`, `_Ra`, `_Wi`, `_Pr`.
 Npcs 236204-236215 and 855844-855848.
@@ -32002,3 +32002,102 @@ like one that broadcasts correctly.
 - **`WaveAttackerAI` now has no users.** Left in place rather than deleted — it is a Java-parity class
   and removing it is a judgement about the Java tree, not a translation. Flagged here so it does not sit
   unnoticed as the inert-code shape this project keeps finding.
+
+## Correction: the wave instance is Drakenspire Depths, not Idgel Dome
+
+The three preceding sections were written calling `IDSeal` "Idgel Dome". **It is
+`Drakenspire_Depths`, map 301390000** — `world_maps.xml` gives the cName plainly, and
+`WaveAttackerAI`'s own summary had said `ai/instance/drakenspire/WaveAttackerAI` in the first file read
+that session. Idgel Dome is a different instance entirely (301310000, and it has its own handler here).
+Every occurrence in the source, the pins and this document is corrected; the three commit messages
+cannot be, so this note stands in for them.
+
+Nothing about the mechanics changes — the patterns, ids and pins were all read from `IDSeal` data
+throughout. Only the name was wrong.
+
+## The third place an encounter can be missing: it never spawns
+
+Drakenspire Depths' whole wave system was ported — twenty-seven npcs, three AI classes, forty-two pins
+— and **not one of those npcs has a spawn entry**. The port's `301390000_Drakenspire_Depths.xml` names
+fifty-six npcs, and none of them is a wave attacker, a wave leader, a forward guard, the arrow target or
+the darkness. All of that work was unreachable in game the moment it was written.
+
+> This project had been auditing two of the three places an encounter can be missing. A missing class is
+> visible in the `ai` attribute and `audit_odd_ai.py` finds it; a missing add is visible in the summon
+> data and `audit_summon_ids.py` finds it. **A missing spawn point is visible in neither**, and an npc
+> that never appears looks exactly like one whose AI is wrong.
+
+`tools/client-extract/audit_world_spawns.py` is the third audit. Retail's `Worlds/<name>/world.xml`
+holds every spawn point in the game with exact coordinates, and — the part that matters — the condition
+that gates it.
+
+### The conditional spawn engine, which this port does not have
+
+A `territory` carries a `condition_info_list`; each `condition_info` holds an `extcondition`, a boolean
+expression over named spawn variables:
+
+```
+(PLAY_LEVEL == 3) && (WAVE_LEADER == 5) && (LEVEL_CHECK_3 == 5)
+```
+
+Those variables are written by AI patterns through `set_condition_spawn_variable` — **12,446 of them
+across the 5.8 files, over 2,122 distinct names** — and read *only* here. That pairing is the entire
+instance-progression system: an npc dies, a counter goes up, and a spawn group that was waiting on the
+counter appears.
+
+**Neither half exists in this port.** The pattern DSL has no vocabulary for
+`set_condition_spawn_variable`, and the spawn loader has no notion of a gated group. The scale:
+
+| | |
+|---|---|
+| gated spawn groups in the 5.8 data | **54,388** |
+| worlds containing them | **163** |
+| distinct variable names | 2,122 |
+| operators used | `==` 68,163 · `&&` 25,225 · `\|\|` 2,756 · `!=` 1,504 |
+
+The expression language is small — equality, inequality, and two connectives over integer variables —
+so an evaluator is a modest piece of work. The engine around it is not: spawn groups must appear and
+disappear as variables change, and `condition_info` carries `despawnAtOther` to say which.
+
+**`BIDSeal_Area1_Open` (855527) is the keystone and it was missing.** Its retail pattern is one
+`on_wake_up` rung that seeds every variable in the instance — `PLAY_LEVEL 3`, `TWIN_P 9`, `TWIN_M 9`,
+`DEFENCE_WAVE 10`, `SCENE 1`, `BOSS_ROOM 1` and a dozen more. Without it every variable would start at
+zero and even a complete engine would sit idle. It is now placed.
+
+### What was added
+
+Eight npcs, nineteen spawn points, straight from retail's ungated territories, emitted by the tool
+rather than hand-copied:
+
+* the four sensory trigger volumes (`BossCutScene`, `Immortal_Enter`, `Twin_Enter`, `WindPath`)
+* `BIDSeal_Area1_Open` ×2 — the initialiser above
+* the Glacier ring: eight `Broken_Summon_01` in a circle, four `Broken_Summon_02` on the diagonals, and
+  one `Reflect_Summon` at its centre (811.79, 567.87)
+
+### What was deliberately held back, and why the tool holds it
+
+Eight `BIDSeal_Skill_RapidBreath` npcs, stacked in a vertical column in the boss room at
+(151.91, 518.59) from z 1752.75 to 1757.70. Retail places them ungated, and **every one is unattackable
+in the client** — they are controllers whose retail pattern is nothing but `on_message`.
+
+Here they carry `ai="aggressive_no_loot"`, and they are LEGENDARY "beritra". Placed as they stand, eight
+of them would acquire and attack the raid from the moment the instance opened, **and the client would
+not let a player target them back**. That is strictly worse than leaving them out.
+
+So `--emit` skips any npc the client marks unattackable that still carries an aggressive `ai` here, and
+names it on stderr instead. The rule is general, not a special case for this instance.
+
+### Still missing
+
+- **The progression engine**, both halves, as above. This is the single largest missing mechanic found
+  so far — larger than any boss — and it gates 193 of Drakenspire Depths' 202 gated npcs alone.
+- **The eight RapidBreath controllers' `ai`.** Their retail pattern answers 22600/22601 by taking a
+  hundred million hate on the sender and casting a skill index, so they *are* meant to attack, but only
+  when told. A faithful class needs the skill indices; until then the choice is between `general`
+  (inert, safe) and leaving them unplaced. Left unplaced, because an inert class in the room is a claim
+  that the mechanic is handled.
+- **The 194 conditions of this instance**, listed by `--gated`. The largest families are
+  `(PLAY_LEVEL == n) && (DEFENCE_WAVE == 2) && (RACE == n)` at eight points each, the `SCENE == n`
+  pairs, and `ORITSA_SUMMON == n`.
+- **`audit_world_spawns.py` has only been run against one world.** The other 162 are unexamined, and
+  the Drakenspire result suggests the ungated-and-absent count alone will be worth having everywhere.

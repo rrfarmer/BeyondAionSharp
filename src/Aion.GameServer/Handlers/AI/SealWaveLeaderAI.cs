@@ -7,7 +7,7 @@ using static Aion.GameServer.Ai.Pattern.AiPattern;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Idgel Dome's five wave leaders — retail <c>IDSeal_Wave1..5_Leader_Lv3</c>, npcs 236239-236243.
+/// Drakenspire Depths' five wave leaders — retail <c>IDSeal_Wave1..5_Leader_Lv3</c>, npcs 236239-236243.
 /// </summary>
 /// <remarks>
 /// Retail-sourced; see docs/retail-ai-fidelity.md.
