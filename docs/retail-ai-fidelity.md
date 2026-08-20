@@ -36127,7 +36127,7 @@ reshaping anything.
 |---|---|---|
 | death patterns | 109 | **267** |
 | npcs | 265 | **497** |
-| gated placements reachable | 12,150 | **12,586 of 21,096** |
+| gated placements reachable | 12,150 | **12,646 of 21,096** |
 
 ### What is pinned, and what is structural, and why
 
