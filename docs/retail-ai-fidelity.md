@@ -37074,3 +37074,59 @@ Still refused, unchanged: `control_door` (37 placements, method mapping unknown)
 with `MOVETYPE_RUN` (35), `GAb1_PvPStatus` (6,070 placements, state mapping unknown), 6,800
 duplicate gated placements, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings,
 which need play-testing rather than more parsing.
+
+## The wall, measured rather than described
+
+Previous commits named the one-binding-per-npc wall. This measures it, because "some encounters
+lose adds" is not something you can build against.
+
+Every generated table claims npcs **exclusively** -- each extractor skips npcs an earlier one took,
+so the four handler-carrying tables have **zero npc overlap** (13,218 battle + 1,653 wake/idle +
+498 death + 83 idle, no npc in two). That is not a coincidence to be cleaned up; it is the
+invariant that keeps `ai=` single-valued. The cost is that a pattern's handlers are read only by
+whichever table won it, and the tables read different handler sets.
+
+Counting handlers that are present in a claimed pattern and read by none of its owners:
+
+| handler | patterns lost | of which spawn or cast |
+|---|---|---|
+| `on_message` | 319 | 266 |
+| `on_enter_attack_state` | 290 | 182 |
+| `on_battle_timer` | 246 | 240 |
+| `on_killed_by_user` | 242 | 213 |
+| `on_enter_idle_state` | 219 | 183 |
+| `on_see_friend_attacked` | 196 | 154 |
+| `on_friend_spelled` | 165 | 135 |
+| `on_wake_up` | 164 | 87 |
+| `on_leave_attack_state` | 139 | 119 |
+| `on_enter_abnormal_state` | 139 | 10 |
+
+`on_battle_timer` is the sharpest case and worth stating on its own: **533 npcs have a complete
+retail combat rotation that we already know how to parse, sitting in a pattern whose owning table
+cannot read it.** By their current binding: 354 `aggressive_pattern`, 164 `death_spawn`, 14
+`passive_pattern`, 1 `idle_cycle`.
+
+The reason is not an oversight. `BattleCycleAI` extends `AggressiveNpcAI`, so the battle table
+restricts itself to `aggressive` npcs, because rebinding a `passive_pattern` npc to it would hand
+a passive npc an aggro radius it never had in retail. That restriction is correct. It is the
+*binding mechanism* that is wrong -- one npc, one class, so a class must be the union of
+everything that npc needs, and our classes are family-shaped instead.
+
+**This is why step three is a table and not a trade.** The tempting shortcut is to widen the
+battle table's accepted `ai=` set and let it take the 354 `aggressive_pattern` npcs; they are
+already aggressive, so the base class is safe. That would gain 354 rotations and *lose* those
+npcs' wake and idle rungs, because they would stop being read by the table that currently has
+them. Swapping one set of dropped handlers for another is not progress, and it would be easy to
+report as if it were.
+
+### What step three has to be
+
+One npc-keyed table read by one pair of classes:
+
+- an extractor that reads **every** handler of a pattern with the merged vocabulary from the
+  previous commit, rather than the subset one table happens to want;
+- rows keyed by npc and tagged with handler, so a single class dispatches all of them;
+- an `aggressive` / `passive` split chosen from the npc's **pre-existing** `ai=`, so no npc gains
+  or loses aggro by being rebound -- the same split `PatternAi` / `PassivePatternAi` already makes.
+
+Not yet started. The merged vocabulary it depends on landed in the previous commit.
