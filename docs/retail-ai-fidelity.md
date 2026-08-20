@@ -33635,3 +33635,58 @@ that were expected — showed 94 of them, one per `add_hate_point`. It also retr
 - **`BlackClawLycanAI`**, still unread, and **`AnuhartGuardAI`**, which answers `BoosterUnderAttack`
   rather than 23000 so this evidence does not reach it.
 - `30001`/`30002`/`30003`, the NPC-versus-NPC call family, remain unimplemented everywhere.
+
+## The answering half of the call family, and a hidden method that swallowed it
+
+The previous entry fixed *how* a guard answers. This one is *who* answers at all — and it corrects a
+number this log has carried for several entries.
+
+### The stale claim
+
+The log said **"351 npcs that should hear 23200 and do not — 275 on `aggressive` and 76 on `general`
+against 198 on `fortress_guard_answer`."** Measured now against npcs that actually have a spawn point:
+**102 answer 23200 in retail and all 102 are bound.** That gap is closed and the entry was stale — it
+counted npcs with no spawn point, which cannot hear anything. `extract_guard_answers.py --gaps` prints
+the cross-tab so it stays honest.
+
+### The real gaps
+
+| call | spawnable answerers | on a class that answers | shortfall |
+|---|---|---|---|
+| `23200` | 102 | 102 | — |
+| `23000` | 385 | 361 | 24, on five bespoke classes |
+| `23100` | 154 | 47 | **107, of which 102 are `artifact_protector`** |
+
+`GuardAnswers` is the fifth generated table of this shape, and carries the values per npc rather than as
+constants: 637 of the 641 answers are retail's uniform 1/100 pair, and the four that are not (1000
+points, no fighting rung) are carried at their own values rather than flattened.
+
+### The bug that made the fix inert
+
+Folding the rungs into `ProtectorCalls.PatternFor` changed nothing at first, and the reason is worth
+recording. `AbstractSiegeProtectorAI` declares its own `OnNpcMessage` and **hides `PatternAi`'s**:
+
+```csharp
+if (messageType != KillerAwake || IsDead() || sender == GetOwner())
+    return;                       // everything that is not 30001 is dropped here
+```
+
+So a siege protector heard exactly one message and no pattern rung it owned could ever run. The method
+now handles 30001 and hands everything else to `base.OnNpcMessage`. The compiler had been saying so all
+along, as CS0108, in a warning list nobody was reading.
+
+### Still missing
+
+- **`KistenianAI` hides the same method and never calls base** (CS0108 names it). No npc of that class
+  is in the answers table, so it is latent rather than active — but any pattern message rung on a
+  Kistenian npc is silently dropped today. Fixed by the same one line, and deliberately not applied
+  here: changing a boss's message dispatch with no npc affected and no evidence to pin it against is
+  the wrong trade. **Anything deriving from `PatternAi` that declares `OnNpcMessage` must hand off.**
+- **The 24 npcs on `23000`** — 13 `ahserion_aggressive_npc`, 4 `fortress_killer`, 3 `ahserion_sorcerer`,
+  3 `onedmg_aggressive`, 1 `kamarbosses`. Each needs the same fold into its own class.
+- **The 5 remaining on `23100`** — 2 `kamarbosses`, 2 `aggressive`, 1 `general`. The two on `aggressive`
+  are a rebinding; the `general` one would turn a non-combat npc into a combatant and wants a look first.
+- **`23101` and `23109`** have answering rungs whose action lists are empty in the dump. Read and
+  dropped rather than emitted as no-ops.
+- The `30001`/`30002`/`30003` family is still only half-built: `30002` now sends, `30001` is answered by
+  the protectors, and `30003` (a despawn order) is nowhere.

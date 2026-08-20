@@ -99,12 +99,21 @@ public abstract class AbstractSiegeProtectorAI : SiegeNpcAI, INpcMessageListener
     /// rungs land in the same place — whoever is then most-hated is the caller either way — which is
     /// exactly why retail can afford to write them as one number and two guards.
     /// </remarks>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
-        if (messageType != KillerAwake || IsDead() || sender == GetOwner())
+        if (IsDead() || sender == GetOwner())
             return;
 
-        SummonOrder.Take(GetOwner(), sender, DropEverything);
+        if (messageType == KillerAwake)
+        {
+            SummonOrder.Take(GetOwner(), sender, DropEverything);
+            return;
+        }
+
+        // Everything else is the pattern's business. This method hides `PatternAi`'s, so without the
+        // hand-off a protector heard 30001 and nothing else -- which is why folding the guard-call
+        // answers into the pattern was inert until this line existed. 102 of these answer 23100.
+        base.OnNpcMessage(sender, messageType, param);
     }
 
     protected override void HandleBackHome()

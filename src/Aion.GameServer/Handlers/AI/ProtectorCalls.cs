@@ -816,20 +816,30 @@ internal static class ProtectorCalls
         PatternBranch[] pull = PullCalls.RungFor(id);
         PatternAction[] pullActions = pull.Length == 0 ? [] : pull[0].Actions;
 
+        // The answering half of the same family. 102 artifact protectors answer 23100 in retail and this
+        // class had no `on_message` at all, so these fold in additively -- unlike the pull call above,
+        // which had to join an existing branch rather than sit behind it.
+        PatternBranch[] answers = GuardAnswers.RungsFor(id);
+
         if (!ByNpc.TryGetValue(id, out Call call))
         {
-            return pullActions.Length == 0
+            return pullActions.Length == 0 && answers.Length == 0
                 ? Silent
                 : new AiPattern
                 {
-                    OnEnterAttack = AiPattern.Of(
-                        AiPattern.Branch(7, "pulled -- tell the guards around me", When.Always,
-                            pullActions)),
+                    OnMessage = AiPattern.Of(answers),
+                    OnEnterAttack = pullActions.Length == 0
+                        ? AiPattern.Of()
+                        : AiPattern.Of(
+                            AiPattern.Branch(7, "pulled -- tell the guards around me", When.Always,
+                                pullActions)),
                 };
         }
 
         return new AiPattern
         {
+            OnMessage = AiPattern.Of(answers),
+
             OnEnterAttack = AiPattern.Of(
                 call.First == 0
                     ? AiPattern.Branch(7, "call at once, then keep calling", When.Always,
