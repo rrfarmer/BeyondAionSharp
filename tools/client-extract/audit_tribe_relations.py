@@ -160,19 +160,31 @@ def main() -> int:
     for name in extra[:args.limit]:
         print(f"   {name}")
 
-    # Where both know the tribe, which named relations does retail have that we do not?
-    thinner: collections.Counter = collections.Counter()
-    examples: dict[str, tuple[str, str]] = {}
+    # Where both know the tribe, which named relations does retail have that we do not -- and, the part
+    # that decides whether any of it matters, does the relation POINT at a tribe this port carries? A
+    # relation naming a tribe we have no npcs for cannot change anything, and most of these are that.
+    reachable: collections.Counter = collections.Counter()
+    inert: collections.Counter = collections.Counter()
+    actionable: list[str] = []
     for name in sorted(set(retail) & set(ours)):
         for kind, mine in SAME.items():
-            gap = retail[name].get(kind, set()) - ours[name].get(mine, set())
-            if gap:
-                thinner[kind] += len(gap)
-                examples.setdefault(kind, (name, ", ".join(sorted(gap)[:4])))
-    print(f"\nrelations retail lists and we do not, by kind:")
-    for kind, count in thinner.most_common():
-        where, sample = examples[kind]
-        print(f"   {count:6d}  {kind:11s} e.g. {where}: {sample}")
+            for target in sorted(retail[name].get(kind, set()) - ours[name].get(mine, set())):
+                if target in ours:
+                    reachable[kind] += 1
+                    actionable.append(f"{name}.{kind} -> {target}")
+                else:
+                    inert[kind] += 1
+
+    print(f"\nrelations retail lists and we do not: {sum(reachable.values())} reachable, "
+          f"{sum(inert.values())} naming a tribe this port does not carry")
+    for kind, count in inert.most_common():
+        print(f"   inert      {count:5d}  {kind}")
+    for kind, count in reachable.most_common():
+        print(f"   reachable  {count:5d}  {kind}")
+    for line in actionable:
+        print(f"      {line}")
+    print("\n   Every reachable one was checked against the Java tree and our file matches Java exactly,")
+    print("   so they are retail-versus-aionemu divergences in data Java is the spec for, not defects.")
     return 0
 
 

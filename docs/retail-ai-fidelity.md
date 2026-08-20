@@ -34145,3 +34145,47 @@ lattice reaches it, and Java gives it the same tribe.
 - **The 237 tribes retail declares and we do not**, if templates ever use them. None do today.
 - The 57/45/11/4 relation differences among shared tribes, unexamined one by one.
 - `talle` itself: it hears the call and cannot act on it, and nothing in Java or retail says it should.
+
+## The tribe table, closed: 112 of 121 differences cannot matter, and the other 9 are Java's
+
+The previous entry left "the 57/45/11/4 relation differences among shared tribes, unexamined one by
+one". Examined. **The count was the wrong shape to reason about**, because it does not distinguish a
+relation that could change behaviour from one that names a tribe this port has no npcs for.
+
+Split that way, of 121 entries retail lists and we do not:
+
+| | count |
+|---|---|
+| naming a tribe we do not carry — **inert** | **112** |
+| naming a tribe we do carry — reachable | **9** |
+
+Every one of the 11 `aggressive` and 4 `hostile` differences is inert: they point at
+`IDSWEEP_POLYMORPHLD`, the `F6_EVENT_*` siege-event tribes, and Eternal Bastion's `IDAB1_ERE_*` — none
+declared here, and **zero npcs on any of them**. This is later-version content the port has no templates
+for, not missing aggression.
+
+### The nine that could matter are not defects
+
+All nine are `friendly` or `none`, and **every one was checked against the Java tree, which matches our
+file exactly**:
+
+```
+GUARD.friendly -> LIGHT_MOB          java: <friend>DUMMY DUMMY2</friend>
+PC.friendly    -> LIGHT_MOB          java: <friend>LIGHT_SUR_MOB LIGHT_LICH</friend>
+IDLDF4_RE_01_GUARD.none -> PC_DARK   java: <aggro>...</aggro><support>PC</support>
+```
+
+So these are retail-versus-aionemu divergences in **data Java is the spec for** — not AI pattern data,
+where the sanctioned exception would apply. Java wins, and nothing changes. The audit now prints the
+split and this conclusion, so the next reader does not re-derive it from a raw count.
+
+**No data change: the whole thread ends with the file untouched.** Two entries ago the same thread nearly
+wrote 27 duplicate rows on a parser bug, and one entry ago it produced a wrong claim about guard
+hostility. The tribe table was worth checking and was right all along.
+
+### Still missing
+
+- **The 237 tribes retail declares and we do not**, if this port ever gains templates that use them. It
+  is the same story as the 112: later-version content.
+- The 6 tribes we declare and retail does not, unexamined — the reverse direction, which cannot disable
+  anything and would need its own argument.
