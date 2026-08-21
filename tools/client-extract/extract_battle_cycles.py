@@ -1082,7 +1082,7 @@ def main() -> int:
             # A pattern is taken if it has a rotation **or** anything sayable in an ending or a signal.
             timer = re.search(r"<on_battle_timer>(.*?)</on_battle_timer>", body, re.S)
             if not timer and not any(re.search(r"<%s>" % handler, body)
-                                     for handler in ENDINGS + SIGNALS):
+                                     for handler in ENDINGS + SIGNALS + ARMING):
                 continue
             owners = [n for n in binders.get(named.group(1), [])
                       if ai.get(n) in GENERIC and n not in spoken_for]
@@ -1127,12 +1127,27 @@ def main() -> int:
                     refused["nothing arms the first timer"] += 1
                     continue
             else:
-                # No rotation, so nothing needs arming and the arming handlers have nothing to arm.
-                # Only the standalone handlers mean anything here, and one of them has to say something.
+                # No rotation. The arming handlers have no timer to arm -- but **they are not only
+                # arming handlers**, and reading them as if they were skipped 4,491 patterns carrying
+                # 9,113 spawn actions.
+                #
+                # `DrGuard_WhA_L48` is the shape: its whole pattern is one `on_enter_attack_state`
+                # that arms two timers, casts three times and places two adds. The timers are inert
+                # without a rotation and retail states them anyway; the casts and the adds are the
+                # encounter. Requiring an ending or a signal threw all three away because the rung
+                # happened to also contain an `arm`.
+                #
+                # **`on_wake_up` is excluded here and that exclusion is load-bearing.** With no
+                # rotation this table has no more context than the wake table, which already owns that
+                # handler -- and `GeneratedPattern` prefers this one, so claiming it *displaces* a
+                # reading made with the spawn-ownership and hazard rules `extract_wake_idle_patterns`
+                # applies. The traps are the case that proved it: `NTrap_A`'s single wake branch casts
+                # on itself and despawns, so a trap read here fired and vanished the instant it was
+                # placed, and two death bequests went from leaving a trap to leaving nothing.
                 armed = {h: rungs for h, rungs in arming.items()
-                         if (h in ENDINGS or h in SIGNALS) and rungs}
+                         if rungs and h != "on_wake_up"}
                 if not armed:
-                    refused["no rotation and nothing sayable in an ending or signal"] += 1
+                    refused["no rotation and nothing sayable outside waking"] += 1
                     continue
 
             # A skill index is only meaningful against one npc's list, so an owner whose list cannot

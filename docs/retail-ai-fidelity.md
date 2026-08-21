@@ -39344,3 +39344,65 @@ check that it landed correctly rather than an obstacle to route around.
    engine slot.
 6. **16 waypoint paths** -- searched exhaustively, absent from dump and client.
 7. **3,291 patterns whose npcs this port does not have** -- a version boundary.
+
+## The rotation-less patterns, taken on the third attempt
+
+`Retail-AI-Pattern: patterns whose content is all in arming handlers`
+
+Two entries ago this change was made and reverted: 4,491 patterns skipped for having no
+`on_battle_timer`, worth 9,113 spawn actions, and taking them turned six encounter pins red. The
+previous entry found the first cause -- the battle table had no hazard rule -- and fixed it. This
+retry found the second, and it is the more interesting of the two.
+
+### With hazards fixed, four of the six pins went green and two did not
+
+The remaining failures were both death bequests, and the npcs were the traps `NTrap_A` places. Their
+whole retail pattern is one `on_wake_up` branch:
+
+> if the skill has a count left: cast `SKILLI_INDEX_0` on myself, then `despawn_self`.
+
+Read by this table, that fires the moment the trap is placed. The trap casts into an empty room and
+removes itself, so a bequest that should leave a trap on the ground leaves nothing -- which is what
+the two pins were reporting.
+
+**`on_wake_up` is now excluded when a pattern has no rotation**, and the exclusion is the point rather
+than a workaround. `extract_wake_idle_patterns.py` **owns** that handler: it carries the spawn-helper
+ownership rules and the hazard rule, and it is the table that has been reading wake behaviour all
+along. `GeneratedPattern` prefers the battle table's reading, so a rotation-less pattern claiming
+`on_wake_up` **displaces** a better-informed one with a worse one. With a rotation the battle table
+has context the wake table does not; without one it has none, and should not take the handler.
+
+The guard on that branch is `is_skill_count_left`, and `When.SkillReady` answers **true** for a skill
+this port has no cooldown data for -- a decision taken deliberately several entries ago and still
+right for the reason given there. It cannot tell "charged" from "unknown", and for a hazard on waking
+that difference is the whole mechanic. Worth knowing if these traps are ever revisited.
+
+### What landed
+
+Patterns 2,892 -> **3,828**; npcs 22,824 -> **29,780**; spawn rows 2,059 -> **2,462**; casts
+95,032 -> **105,340**. 6,578 npcs newly bound.
+
+**Adds backlog 183 -> 174 across 128 -> 122 encounters**, and the audit's own breakdown improves with
+it: fully self-contained 170 -> 161.
+
+The identity-guard census tells the same story from another angle: **six of its nine conditions had
+no data at all** before this, and now do -- `SeenIsPlayer` 45, `AttackedByPlayer` 107,
+`SpelledByPlayer` 100. Those mappings were right when written; the patterns carrying them were being
+skipped before anything was read.
+
+### What is left of it
+
+Excluding `on_wake_up` costs 847 of the 4,491 patterns. Those are patterns whose *only* content is a
+wake handler, and the wake table is where they belong -- so the question for them is why
+`extract_wake_idle_patterns` refuses them, not how to make this table take them.
+
+### Still missing, in order
+
+1. **847 rotation-less, wake-only patterns** -- ask the wake table, not this one.
+2. `control_door` (691 uses + 10 lost adds) -- one in-game observation.
+3. `random_move` (187; 11 lost adds behind the same `MOVETYPE_RUN` gap).
+4. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+5. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; the eight handlers with no
+   engine slot.
+6. **16 waypoint paths** -- searched exhaustively, absent from dump and client.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary.

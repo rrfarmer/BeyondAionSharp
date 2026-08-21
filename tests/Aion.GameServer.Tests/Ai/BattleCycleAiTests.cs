@@ -329,7 +329,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 95,032 casts across 22,824 npcs, none of them read by a human. The index they came from is only
+	/// 105,340 casts across 29,780 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -350,7 +350,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(95032, casts);
+		Assert.Equal(105340, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -393,7 +393,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(566, lowest);
+		Assert.Equal(572, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -794,7 +794,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(2059, spawns);
+		Assert.Equal(2462, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1076,27 +1076,18 @@ public sealed class BattleCycleAiTests
 		Assert.Equal(
 			new Dictionary<string, int>
 			{
-				["who:TargetIsPlayer"] = 152,
-				["who:EventTargetIsPlayer"] = 10,
-				["who:TargetIsNpc"] = 58,
-
-				// Was a mapping with no data until `add_hate_point` and `is_distance_shorter_than`
-				// were read, which brought in patterns carrying it alongside those. Five of the nine
-				// conditions have data now; four still do not.
-				["who:EventTargetIsNpc"] = 37,
-
-				// And this one when `switch_target` learned the rest of its subjects. Six of the nine
-				// have data now.
+				// Reading the rotation-less patterns gave six of the nine conditions data for the
+				// first time: the mappings were right and the patterns carrying them were skipped
+				// before anything was read.
+				["who:TargetIsPlayer"] = 153,
+				["who:AttackedByPlayer"] = 107,
+				["who:SpelledByPlayer"] = 100,
+				["who:TargetIsNpc"] = 60,
+				["who:SeenIsPlayer"] = 45,
+				["who:EventTargetIsNpc"] = 41,
 				["who:KilledByPlayer"] = 34,
-
-				// These three arrived as other elements were read, not as a change to `is_user`
-				// itself: `TalkerIsPlayer` when `flee_from` landed, and the attacked/spelled pair when
-				// `is_hp_lower_than` about a friend did. Each time a refused element is read, patterns
-				// that carried it *and* an identity guard come in together. That is the pin doing its
-				// job -- the numbers move as visible edits here rather than as silence.
 				["who:TalkerIsPlayer"] = 22,
-				["who:AttackedByPlayer"] = 24,
-				["who:SpelledByPlayer"] = 23,
+				["who:EventTargetIsPlayer"] = 10,
 			}.OrderBy(e => e.Key),
 			seen.OrderBy(e => e.Key));
 	}
