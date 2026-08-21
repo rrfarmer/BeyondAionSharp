@@ -100,6 +100,24 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		0	var	0	1	0	Wave_Z1	0.0	0.0	0.0
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 207127	IDSeal_RandomRoom_Bomb	on_wake_up	0	1		0	spawn	856459	1	0	for_the_fight_self	0.0	0.0	0.0
+209706	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
+209721	IDSeal_Scene_16_Bomber_Li	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+209723	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		0	var	3	0	0	DEFENCE_WAVE	0.0	0.0	0.0
+209723	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		1	say	1501320	0	0		0.0	0.0	0.0
+209723	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		2	timer	0	0	0		0.0	0.0	0.0
+209723	IDSeal_Scene_17_QuestNPC	on_wake_up	0	1		0	skill	20839	0	0	ME	0.0	0.0	0.0
+209723	IDSeal_Scene_17_QuestNPC	on_wake_up	0	1		1	timer	15000	0	0		0.0	0.0	0.0
+209730	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		0	broadcast	22770	100	0		0.0	0.0	0.0
+209730	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		1	skill	20839	0	0	ME	0.0	0.0	0.0
+209771	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
+209786	IDSeal_Scene_16_Bomber_Da	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+209788	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		0	var	3	0	0	DEFENCE_WAVE	0.0	0.0	0.0
+209788	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		1	say	1501320	0	0		0.0	0.0	0.0
+209788	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		2	timer	0	0	0		0.0	0.0	0.0
+209788	IDSeal_Scene_17_QuestNPC	on_wake_up	0	1		0	skill	20839	0	0	ME	0.0	0.0	0.0
+209788	IDSeal_Scene_17_QuestNPC	on_wake_up	0	1		1	timer	15000	0	0		0.0	0.0	0.0
+209795	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		0	broadcast	22770	100	0		0.0	0.0	0.0
+209795	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		1	skill	20839	0	0	ME	0.0	0.0	0.0
 213776	IDDF3_NamedLFi	on_wake_up	0	7		0	spawn	282154	1	0	for_the_fight_absolute	467.25	421.38	615.0
 213776	IDDF3_NamedLFi	on_wake_up	0	7		1	spawn	282156	1	0	for_the_fight_absolute	488.44	412.74	615.0
 213776	IDDF3_NamedLFi	on_wake_up	0	7		2	waypoint	0	0	0		0.0	0.0	0.0
@@ -1581,6 +1599,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 233428	IDF5_U2_VriRP_As_party_Hide_65_Ae	on_wake_up	0	91		0	skill	20700	0	0	ME	0.0	0.0	0.0
 233428	IDF5_U2_VriRP_As_party_Hide_65_Ae	on_wake_up	0	91		1	skill	16822	0	0	ME	0.0	0.0	0.0
 233428	IDF5_U2_VriRP_As_party_Hide_65_Ae	on_wake_up	0	91		2	waypoint	0	0	0		0.0	0.0	0.0
+233466	IDAsteria_IU_world_RatmanWarriorM_03	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+233469	IDAsteria_IU_world_RatmanWarriorM_03	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
 233473	IDF5_U1_War_Vri_Def00_NoRe_Fi_65_Ae	on_wake_up	0	90		0	waypoint	0	0	0		0.0	0.0	0.0
 233473	IDF5_U1_War_Vri_Def00_NoRe_Fi_65_Ae	on_wake_up	0	90		1	skill	20700	0	0	ME	0.0	0.0	0.0
 233473	IDF5_U1_War_Vri_Def00_NoRe_Fi_65_Ae	on_wake_up	0	90		2	var	1	0	0	v01	0.0	0.0	0.0
@@ -1609,12 +1629,24 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 233583	IDLDF5_Under_01_War_MSG_04	on_wake_up	0	7		1	timer	3000	0	0		0.0	0.0	0.0
 233590	IDF5_U1_War_Vri_Def01_Re_As_65_Ae	on_wake_up	0	90		0	waypoint	0	0	0		0.0	0.0	0.0
 233590	IDF5_U1_War_Vri_Def01_Re_As_65_Ae	on_wake_up	0	90		1	skill	20700	0	0	ME	0.0	0.0	0.0
+233736	BIDF5_U3_SemiNmd_Vri_Fi	on_wake_up	0	1		0	waypoint	0	0	0		0.0	0.0	0.0
+233737	BIDF5_U3_SemiNmd_Vri_As	on_wake_up	0	1		0	skill	21432	0	0	ME	0.0	0.0	0.0
+233737	BIDF5_U3_SemiNmd_Vri_As	on_wake_up	0	1		1	waypoint	0	0	0		0.0	0.0	0.0
+233738	BIDF5_U3_SemiNmd_Vri_Wi	on_wake_up	0	1		0	waypoint	0	0	0		0.0	0.0	0.0
+233739	BIDF5_U3_SemiNmd_Vri_Pr	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+233739	BIDF5_U3_SemiNmd_Vri_Pr	on_wake_up	0	1		1	waypoint	0	0	0		0.0	0.0	0.0
 233859	IDdreadgion04_NoShownpc_Broad_01	on_wake_up	0	7		0	var	0	1	0	cBossFlag	0.0	0.0	0.0
 233859	IDdreadgion04_NoShownpc_Broad_01	on_wake_up	0	7		1	broadcast	21111	50	0		0.0	0.0	0.0
 233872	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
 233872	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
 233875	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
 233875	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
+233882	BIDF5_U3_Nor_Vri_As_hide	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+233882	BIDF5_U3_Nor_Vri_As_hide	on_wake_up	0	1		1	skill	21432	0	0	ME	0.0	0.0	0.0
+233882	BIDF5_U3_Nor_Vri_As_hide	on_wake_up	0	1		2	waypoint	0	0	0		0.0	0.0	0.0
+233883	BIDF5_U3_hard_Vri_As_hide	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+233883	BIDF5_U3_hard_Vri_As_hide	on_wake_up	0	1		1	skill	21432	0	0	ME	0.0	0.0	0.0
+233883	BIDF5_U3_hard_Vri_As_hide	on_wake_up	0	1		2	waypoint	0	0	0		0.0	0.0	0.0
 233884	IDArena_S5_Named_1	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
 233885	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
 233885	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
@@ -1657,6 +1689,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 234146	RuneWeapon_NoShow_NPC_01	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 234165	LDF5_LGuard_DisputePvP_Hide_PM_Ae	on_wake_up	0	99		0	skill	20664	0	0	ME	0.0	0.0	0.0
 234165	LDF5_LGuard_DisputePvP_Hide_PM_Ae	on_wake_up	0	99		1	skill	18762	0	0	ME	0.0	0.0	0.0
+234186	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234186	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
+234187	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234187	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
+234190	IDLDF5_Fortress_Re_Boss	on_wake_up	0	7		0	sysmsg	1402367	0	0		0.0	0.0	0.0
+234190	IDLDF5_Fortress_Re_Boss	on_wake_up	0	7		1	skill	21744	0	0	ME	0.0	0.0	0.0
 234219	LDF4_Advance_DrakanTiamat_Fi	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 234229	LDF4_Advance_DrakanTiamat_Fi	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 234428	LDF5_LGuard_DisputePvP_Defend_PM_Kn	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
@@ -1788,11 +1826,27 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 234680	IDLDF4_Re_01_DrakanRa	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
 234681	IDLDF4_Re_01_DrakanFi	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
 234681	IDLDF4_Re_01_DrakanFi	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
+234682	BIDF5_U3_SemiNmd_Vri_Fi	on_wake_up	0	1		0	waypoint	0	0	0		0.0	0.0	0.0
+234683	BIDF5_U3_SemiNmd_Vri_As	on_wake_up	0	1		0	skill	21432	0	0	ME	0.0	0.0	0.0
+234683	BIDF5_U3_SemiNmd_Vri_As	on_wake_up	0	1		1	waypoint	0	0	0		0.0	0.0	0.0
+234684	BIDF5_U3_SemiNmd_Vri_Wi	on_wake_up	0	1		0	waypoint	0	0	0		0.0	0.0	0.0
+234685	BIDF5_U3_SemiNmd_Vri_Pr	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234685	BIDF5_U3_SemiNmd_Vri_Pr	on_wake_up	0	1		1	waypoint	0	0	0		0.0	0.0	0.0
 234694	LDF4_Advance_DrakanTiamat_WI	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 234695	LDF4_Advance_DrakanTiamat_WI	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 234696	LDF4_Advance_DrakanTiamat_WI	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 234699	LDF4_Advance_DrakanTiamat_Pr	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
 234700	LDF4_Advance_DrakanTiamat_Pr	on_wake_up	0	7		0	skill	20656	0	0	ME	0.0	0.0	0.0
+234736	BIDF5_U3_Nor_Vri_As_hide	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234736	BIDF5_U3_Nor_Vri_As_hide	on_wake_up	0	1		1	skill	21432	0	0	ME	0.0	0.0	0.0
+234736	BIDF5_U3_Nor_Vri_As_hide	on_wake_up	0	1		2	waypoint	0	0	0		0.0	0.0	0.0
+234737	BIDF5_U3_hard_Vri_As_hide	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234737	BIDF5_U3_hard_Vri_As_hide	on_wake_up	0	1		1	skill	21432	0	0	ME	0.0	0.0	0.0
+234737	BIDF5_U3_hard_Vri_As_hide	on_wake_up	0	1		2	waypoint	0	0	0		0.0	0.0	0.0
+234751	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234751	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
+234752	Britra_Table	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+234752	Britra_Table	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
 234771	LDF5_LGuard_DisputePvP_Hide_PM_Ae	on_wake_up	0	99		0	skill	20664	0	0	ME	0.0	0.0	0.0
 234771	LDF5_LGuard_DisputePvP_Hide_PM_Ae	on_wake_up	0	99		1	skill	18762	0	0	ME	0.0	0.0	0.0
 234772	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		0	skill	20664	0	0	ME	0.0	0.0	0.0
@@ -2129,6 +2183,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 236065	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		1	skill	18762	0	0	ME	0.0	0.0	0.0
 236071	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		0	skill	20664	0	0	ME	0.0	0.0	0.0
 236071	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		1	skill	18762	0	0	ME	0.0	0.0	0.0
+236221	IDSeal_A_PhysicalMob_SN_65_Ah	on_wake_up	0	1		0	skill	20769	0	0	ME	0.0	0.0	0.0
+236222	IDSeal_A_MagicalMob_SN_65_Ah	on_wake_up	0	1		0	skill	20770	0	0	ME	0.0	0.0	0.0
 236266	LF5_Quest_Nmd_Oritsa_Fi	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
 236267	IDYun_Temp_31	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
 236268	IDYun_Temp_32	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
@@ -3854,6 +3910,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283122	IDTiamat_Drakan_Leader_Beacon	on_wake_up	0	1		0	broadcast	10	100	0		0.0	0.0	0.0
 283145	IDAbRe_Core_Decoration5	on_wake_up	0	1		0	skill	19506	0	0	ME	0.0	0.0	0.0
 283162	IDTiamat_Temp10	on_wake_up	0	1		0	broadcast	2000	100	0		0.0	0.0	0.0
+283163	IDTiamat_Temp16	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
+283164	IDTiamat_Temp17	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
+283165	IDTiamat_Temp18	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
+283166	IDTiamat_Temp19	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
 283167	IDTiamat_Temp20	on_wake_up	0	1		0	skill_now	20993	0	0	ME	0.0	0.0	0.0
 283167	IDTiamat_Temp20	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 283168	IDTiamat_Temp21	on_wake_up	0	1		0	skill_now	20994	0	0	ME	0.0	0.0	0.0
@@ -7266,6 +7326,31 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855609	IDSeal_Glacier_Spread_Summon_03	on_idle_timer	0	8		1	timer	0	0	0		0.0	0.0	0.0
 855610	IDSeal_Glacier_Spread_Summon_04	on_idle_timer	0	8		0	broadcast	22741	50	0		0.0	0.0	0.0
 855610	IDSeal_Glacier_Spread_Summon_04	on_idle_timer	0	8		1	timer	0	0	0		0.0	0.0	0.0
+855706	IDSeal_Glacier_Spread	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+855706	IDSeal_Glacier_Spread	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+855706	IDSeal_Glacier_Spread	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855710	IDSeal_Twin_P_Spawn	on_idle_timer	0	2		0	broadcast	22700	50	0		0.0	0.0	0.0
+855710	IDSeal_Twin_P_Spawn	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855710	IDSeal_Twin_P_Spawn	on_wake_up	0	1		1	broadcast	22700	50	0		0.0	0.0	0.0
+855711	IDSeal_Twin_M_Spawn	on_idle_timer	0	2		0	broadcast	22701	50	0		0.0	0.0	0.0
+855711	IDSeal_Twin_M_Spawn	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855711	IDSeal_Twin_M_Spawn	on_wake_up	0	1		1	broadcast	22701	50	0		0.0	0.0	0.0
+855713	IDSeal_Twin_P_Failed_Spawn	on_idle_timer	0	2		0	broadcast	22706	50	0		0.0	0.0	0.0
+855713	IDSeal_Twin_P_Failed_Spawn	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855713	IDSeal_Twin_P_Failed_Spawn	on_wake_up	0	1		1	broadcast	22706	50	0		0.0	0.0	0.0
+855714	IDSeal_Twin_M_Failed_Spawn	on_idle_timer	0	2		0	broadcast	22707	50	0		0.0	0.0	0.0
+855714	IDSeal_Twin_M_Failed_Spawn	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855714	IDSeal_Twin_M_Failed_Spawn	on_wake_up	0	1		1	broadcast	22707	50	0		0.0	0.0	0.0
+855715	IDSeal_Twin_P_Success	on_idle_timer	0	2		0	broadcast	22708	50	0		0.0	0.0	0.0
+855715	IDSeal_Twin_P_Success	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855715	IDSeal_Twin_P_Success	on_wake_up	0	1		1	broadcast	22708	50	0		0.0	0.0	0.0
+855716	IDSeal_Twin_M_Success	on_idle_timer	0	2		0	broadcast	22709	50	0		0.0	0.0	0.0
+855716	IDSeal_Twin_M_Success	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
+855716	IDSeal_Twin_M_Success	on_wake_up	0	1		1	broadcast	22709	50	0		0.0	0.0	0.0
+855719	IDSeal_HalfWake_Lv3_Return	on_wake_up	0	1		0	broadcast	22733	100	0		0.0	0.0	0.0
+855720	IDSeal_HalfWake_Lv3_Wake	on_wake_up	0	1		0	broadcast	22733	100	0		0.0	0.0	0.0
+855723	IDSeal_HalfWake_Lv2_Return	on_wake_up	0	1		0	broadcast	22733	100	0		0.0	0.0	0.0
+855724	IDSeal_HalfWake_Lv2_Wake	on_wake_up	0	1		0	broadcast	22733	100	0		0.0	0.0	0.0
 855727	LF5_ItemNamed_24_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855729	LF5_ItemNamed_12_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855731	LF5_ItemNamed_6_Ra_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
@@ -7276,6 +7361,31 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855734	LF5_ItemNamed_6_Fi_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855735	LF5_ItemNamed_6_Wi_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855736	LF5_ItemNamed_6_As1_KJS	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
+855745	IDSeal_Skill_RapidBreath_Target_01	on_wake_up	0	1		0	broadcast	22601	50	0		0.0	0.0	0.0
+855746	IDSeal_Skill_RapidBreath_Target_02	on_wake_up	0	1		0	broadcast	22602	50	0		0.0	0.0	0.0
+855747	IDSeal_Skill_RapidBreath_Target_03	on_wake_up	0	1		0	broadcast	22603	50	0		0.0	0.0	0.0
+855748	IDSeal_Skill_RapidBreath_Target_04	on_wake_up	0	1		0	broadcast	22604	50	0		0.0	0.0	0.0
+855749	IDSeal_Skill_RapidBreath_Target_05	on_wake_up	0	1		0	broadcast	22605	50	0		0.0	0.0	0.0
+855750	IDSeal_Skill_RapidBreath_Target_06	on_wake_up	0	1		0	broadcast	22606	50	0		0.0	0.0	0.0
+855751	IDSeal_Skill_RapidBreath_Target_07	on_wake_up	0	1		0	broadcast	22607	50	0		0.0	0.0	0.0
+855752	IDSeal_Skill_RapidBreath_Target_08	on_wake_up	0	1		0	broadcast	22608	50	0		0.0	0.0	0.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	0	5	chance:25	0	spawn	855745	1	0	for_the_fight_absolute	136.6	496.7	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	0	5	chance:25	1	spawn	855747	1	0	for_the_fight_absolute	137.5	534.4	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	0	5	chance:25	2	spawn	855750	1	0	for_the_fight_absolute	180.9	515.4	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	0	5	chance:25	3	despawn_self	0	0	0		0.0	0.0	0.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	1	4	chance:33	0	spawn	855746	1	0	for_the_fight_absolute	129.6	516.2	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	1	4	chance:33	1	spawn	855749	1	0	for_the_fight_absolute	173.7	534.0	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	1	4	chance:33	2	spawn	855751	1	0	for_the_fight_absolute	174.3	498.2	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	1	4	chance:33	3	despawn_self	0	0	0		0.0	0.0	0.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	2	3	chance:50	0	spawn	855747	1	0	for_the_fight_absolute	137.5	534.4	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	2	3	chance:50	1	spawn	855749	1	0	for_the_fight_absolute	173.7	534.0	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	2	3	chance:50	2	spawn	855752	1	0	for_the_fight_absolute	156.4	490.2	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	2	3	chance:50	3	despawn_self	0	0	0		0.0	0.0	0.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	3	2		0	spawn	855745	1	0	for_the_fight_absolute	136.6	496.7	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	3	2		1	spawn	855748	1	0	for_the_fight_absolute	154.6	540.7	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	3	2		2	spawn	855751	1	0	for_the_fight_absolute	174.3	498.2	1755.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_idle_timer	3	2		3	despawn_self	0	0	0		0.0	0.0	0.0
+855753	IDSeal_Skill_RapidBreath_CTRL	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
 855755	Legion_01_132	on_idle_timer	0	1000	chance:33|set_flag_var:1	0	timer	60000	0	0		0.0	0.0	0.0
 855755	Legion_01_132	on_idle_timer	0	1000	chance:33|set_flag_var:1	1	spawn	855773	14	0	for_the_fight_absolute	231.0	278.0	96.0
 855755	Legion_01_132	on_idle_timer	0	1000	chance:33|set_flag_var:1	2	spawn	855773	13	0	for_the_fight_absolute	221.0	256.0	96.0
@@ -8386,6 +8496,23 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856058	BIDF5_U01_Ctrl_03	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 856059	BIDF5_U01_Ctrl_04	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 856060	BIDF5_U01_Ctrl_05	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	0	5	chance:25	0	spawn	855745	1	0	for_the_fight_absolute	136.6	496.7	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	0	5	chance:25	1	spawn	855747	1	0	for_the_fight_absolute	137.5	534.4	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	0	5	chance:25	2	spawn	855750	1	0	for_the_fight_absolute	180.9	515.4	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	0	5	chance:25	3	despawn_self	0	0	0		0.0	0.0	0.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	1	4	chance:33	0	spawn	855746	1	0	for_the_fight_absolute	129.6	516.2	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	1	4	chance:33	1	spawn	855749	1	0	for_the_fight_absolute	173.7	534.0	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	1	4	chance:33	2	spawn	855751	1	0	for_the_fight_absolute	174.3	498.2	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	1	4	chance:33	3	despawn_self	0	0	0		0.0	0.0	0.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	2	3	chance:50	0	spawn	855747	1	0	for_the_fight_absolute	137.5	534.4	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	2	3	chance:50	1	spawn	855749	1	0	for_the_fight_absolute	173.7	534.0	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	2	3	chance:50	2	spawn	855752	1	0	for_the_fight_absolute	156.4	490.2	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	2	3	chance:50	3	despawn_self	0	0	0		0.0	0.0	0.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	3	2		0	spawn	855745	1	0	for_the_fight_absolute	136.6	496.7	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	3	2		1	spawn	855748	1	0	for_the_fight_absolute	154.6	540.7	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	3	2		2	spawn	855751	1	0	for_the_fight_absolute	174.3	498.2	1755.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_idle_timer	3	2		3	despawn_self	0	0	0		0.0	0.0	0.0
+856061	IDSeal_Skill_RapidBreath_CTRL2	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
 856069	IDTiamat_Hard_Temp_02	on_wake_up	0	1		0	skill_now	20172	0	0	ME	0.0	0.0	0.0
 856069	IDTiamat_Hard_Temp_02	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856071	IDTiamat_Hard_Temp_04	on_wake_up	0	1		0	skill_now	20173	0	0	ME	0.0	0.0	0.0
@@ -8502,6 +8629,24 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856304	Legion_Scarecrow_SpawnNPC	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 856304	Legion_Scarecrow_SpawnNPC	on_wake_up	0	1000		0	spawn	856305	1	240	for_the_fight_absolute	0.0	0.0	0.0
 856304	Legion_Scarecrow_SpawnNPC	on_wake_up	0	1000		1	timer	5000	0	0		0.0	0.0	0.0
+856306	IDSeal_Glacier_Spread_02	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+856306	IDSeal_Glacier_Spread_02	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+856306	IDSeal_Glacier_Spread_02	on_wake_up	0	1		0	timer	4500	0	0		0.0	0.0	0.0
+856307	IDSeal_Glacier_Spread_03	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+856307	IDSeal_Glacier_Spread_03	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+856307	IDSeal_Glacier_Spread_03	on_wake_up	0	1		0	timer	6000	0	0		0.0	0.0	0.0
+856308	IDSeal_Glacier_Spread_04	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+856308	IDSeal_Glacier_Spread_04	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+856308	IDSeal_Glacier_Spread_04	on_wake_up	0	1		0	timer	7500	0	0		0.0	0.0	0.0
+856309	IDSeal_Glacier_Spread_02	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+856309	IDSeal_Glacier_Spread_02	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+856309	IDSeal_Glacier_Spread_02	on_wake_up	0	1		0	timer	4500	0	0		0.0	0.0	0.0
+856310	IDSeal_Glacier_Spread_03	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+856310	IDSeal_Glacier_Spread_03	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+856310	IDSeal_Glacier_Spread_03	on_wake_up	0	1		0	timer	6000	0	0		0.0	0.0	0.0
+856311	IDSeal_Glacier_Spread_04	on_idle_timer	0	2		0	say	1501302	0	0		0.0	0.0	0.0
+856311	IDSeal_Glacier_Spread_04	on_idle_timer	0	2		1	timer	0	0	0		0.0	0.0	0.0
+856311	IDSeal_Glacier_Spread_04	on_wake_up	0	1		0	timer	7500	0	0		0.0	0.0	0.0
 856312	Legion_End_Check	on_idle_timer	0	1000		0	despawn_self	0	0	0		0.0	0.0	0.0
 856312	Legion_End_Check	on_wake_up	0	1000	set_flag_var:0	0	sysmsg	1402900	0	0		0.0	0.0	0.0
 856312	Legion_End_Check	on_wake_up	0	1000	set_flag_var:0	1	skill	18705	0	0	ME	0.0	0.0	0.0
@@ -8526,12 +8671,186 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	3	7	chance:25	1	timer	6000	0	0		0.0	0.0	0.0
 856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	4	6		0	spawn	856451	1	20	for_the_fight_self	0.0	0.0	0.0
 856341	F4_Rotation_Treasure_Ctrl_02	on_wake_up	4	6		1	timer	6000	0	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	0	12	count:0:10:11:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	0	12	count:0:10:11:1	1	var	10	0	0	VRITRA_SUM_TIMER	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	0	12	count:0:10:11:1	2	despawn_self	0	0	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	1	11	count:0:9:10:1	0	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	1	11	count:0:9:10:1	1	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	1	11	count:0:9:10:1	2	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	2	10	count:0:8:9:1	0	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	2	10	count:0:8:9:1	1	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	2	10	count:0:8:9:1	2	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	3	9	count:0:7:8:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	4	8	count:0:6:7:1	0	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	4	8	count:0:6:7:1	1	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	4	8	count:0:6:7:1	2	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	5	7	count:0:5:6:1	0	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	5	7	count:0:5:6:1	1	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	5	7	count:0:5:6:1	2	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	6	6	count:0:4:5:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	7	5	count:0:3:4:1	0	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	7	5	count:0:3:4:1	1	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	7	5	count:0:3:4:1	2	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	8	4	count:0:2:3:1	0	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	8	4	count:0:2:3:1	1	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	8	4	count:0:2:3:1	2	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	9	3	count:0:1:2:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	10	2	count:0:0:1:1	0	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	10	2	count:0:0:1:1	1	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_idle_timer	10	2	count:0:0:1:1	2	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_wake_up	0	1		0	timer	10000	0	0		0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_wake_up	0	1		1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_wake_up	0	1		2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856342	IDSeal_TrueBoss_Sum_01_Resurrect	on_wake_up	0	1		3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	0	12	count:0:10:11:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	0	12	count:0:10:11:1	1	var	10	0	0	VRITRA_SUM_TIMER	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	0	12	count:0:10:11:1	2	despawn_self	0	0	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	1	11	count:0:9:10:1	0	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	1	11	count:0:9:10:1	1	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	1	11	count:0:9:10:1	2	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	2	10	count:0:8:9:1	0	broadcast	22615	100	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	2	10	count:0:8:9:1	1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	2	10	count:0:8:9:1	2	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	2	10	count:0:8:9:1	3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	3	9	count:0:7:8:1	0	broadcast	22614	50	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	4	8	count:0:6:7:1	0	var	2	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	4	8	count:0:6:7:1	1	var	2	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	4	8	count:0:6:7:1	2	var	2	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	5	7	count:0:5:6:1	0	broadcast	22615	100	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	5	7	count:0:5:6:1	1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	5	7	count:0:5:6:1	2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	5	7	count:0:5:6:1	3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	6	6	count:0:4:5:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	7	5	count:0:3:4:1	0	var	2	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	7	5	count:0:3:4:1	1	var	2	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	7	5	count:0:3:4:1	2	var	2	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	8	4	count:0:2:3:1	0	broadcast	22615	100	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	8	4	count:0:2:3:1	1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	8	4	count:0:2:3:1	2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	8	4	count:0:2:3:1	3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	9	3	count:0:1:2:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	10	2	count:0:0:1:1	0	var	2	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	10	2	count:0:0:1:1	1	var	2	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_idle_timer	10	2	count:0:0:1:1	2	var	2	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_wake_up	0	1		0	timer	10000	0	0		0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_wake_up	0	1		1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_wake_up	0	1		2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856343	IDSeal_TrueBoss_Sum_02_Resurrect	on_wake_up	0	1		3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	0	12	count:0:10:11:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	0	12	count:0:10:11:1	1	var	10	0	0	VRITRA_SUM_TIMER	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	0	12	count:0:10:11:1	2	despawn_self	0	0	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	1	11	count:0:9:10:1	0	broadcast	22616	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	1	11	count:0:9:10:1	1	var	10	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	1	11	count:0:9:10:1	2	var	10	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	1	11	count:0:9:10:1	3	var	10	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	2	10	count:0:8:9:1	0	broadcast	22615	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	2	10	count:0:8:9:1	1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	2	10	count:0:8:9:1	2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	2	10	count:0:8:9:1	3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	3	9	count:0:7:8:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	3	9	count:0:7:8:1	1	var	1	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	3	9	count:0:7:8:1	2	var	1	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	3	9	count:0:7:8:1	3	var	1	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	4	8	count:0:6:7:1	0	broadcast	22616	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	4	8	count:0:6:7:1	1	var	2	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	4	8	count:0:6:7:1	2	var	2	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	4	8	count:0:6:7:1	3	var	2	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	5	7	count:0:5:6:1	0	broadcast	22615	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	5	7	count:0:5:6:1	1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	5	7	count:0:5:6:1	2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	5	7	count:0:5:6:1	3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	6	6	count:0:4:5:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	6	6	count:0:4:5:1	1	var	1	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	6	6	count:0:4:5:1	2	var	1	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	6	6	count:0:4:5:1	3	var	1	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	7	5	count:0:3:4:1	0	broadcast	22616	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	7	5	count:0:3:4:1	1	var	2	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	7	5	count:0:3:4:1	2	var	2	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	7	5	count:0:3:4:1	3	var	2	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	8	4	count:0:2:3:1	0	broadcast	22615	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	8	4	count:0:2:3:1	1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	8	4	count:0:2:3:1	2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	8	4	count:0:2:3:1	3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	9	3	count:0:1:2:1	0	broadcast	22614	100	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	9	3	count:0:1:2:1	1	var	1	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	9	3	count:0:1:2:1	2	var	1	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	9	3	count:0:1:2:1	3	var	1	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	10	2	count:0:0:1:1	0	var	2	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	10	2	count:0:0:1:1	1	var	2	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_idle_timer	10	2	count:0:0:1:1	2	var	2	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_wake_up	0	1		0	timer	10000	0	0		0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_wake_up	0	1		1	var	3	0	0	VRITRA_SUM_01	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_wake_up	0	1		2	var	3	0	0	VRITRA_SUM_02	0.0	0.0	0.0
+856344	IDSeal_TrueBoss_Sum_03_Resurrect	on_wake_up	0	1		3	var	3	0	0	VRITRA_SUM_03	0.0	0.0	0.0
+856345	IDYun_Vasharti_Glove_AreaAtk_Red	on_wake_up	0	1		0	broadcast	9011	5	0		0.0	0.0	0.0
+856345	IDYun_Vasharti_Glove_AreaAtk_Red	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+856346	IDYun_Vasharti_Glove_AreaAtk_Blue	on_wake_up	0	1		0	broadcast	9012	5	0		0.0	0.0	0.0
+856346	IDYun_Vasharti_Glove_AreaAtk_Blue	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_idle_timer	0	2		0	var	27	0	0	SCENE	0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_idle_timer	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_wake_up	0	1		1	var	10	0	0	VRITRA_TIMER	0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_wake_up	0	1		2	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_wake_up	0	1		3	spawn	855538	1	0	for_the_fight_self	0.0	0.0	0.0
+856348	IDSeal_Boss_Lv2_Success	on_wake_up	0	1		4	var	10	0	0	DARKSUN	0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_idle_timer	0	2		0	var	28	0	0	SCENE	0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_idle_timer	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_wake_up	0	1		1	var	10	0	0	VRITRA_TIMER	0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_wake_up	0	1		2	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_wake_up	0	1		3	spawn	855538	1	0	for_the_fight_self	0.0	0.0	0.0
+856349	IDSeal_Boss_Lv1_Success	on_wake_up	0	1		4	var	10	0	0	DARKSUN	0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_idle_timer	0	2		0	var	29	0	0	SCENE	0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_idle_timer	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_wake_up	0	1		0	timer	5000	0	0		0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_wake_up	0	1		1	var	10	0	0	VRITRA_TIMER	0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_wake_up	0	1		2	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_wake_up	0	1		3	var	21	0	0	VRITRA_TIMER_2	0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_wake_up	0	1		4	spawn	855539	1	20	for_the_fight_self	0.0	0.0	0.0
+856350	IDSeal_Boss_Failed	on_wake_up	0	1		5	var	10	0	0	DARKSUN	0.0	0.0	0.0
 856351	BIDYun_Vasharti_Glove_ControllerA	on_wake_up	0	7		0	spawn	856491	1	40	for_the_fight_absolute	188.33	414.61	260.61
 856351	BIDYun_Vasharti_Glove_ControllerA	on_wake_up	0	7		1	spawn	283010	1	40	for_the_fight_absolute	188.33	414.61	260.61
 856352	BIDYun_Vasharti_Glove_ControllerC	on_wake_up	0	7		0	spawn	856491	1	40	for_the_fight_absolute	188.33	414.61	260.61
 856352	BIDYun_Vasharti_Glove_ControllerC	on_wake_up	0	7		1	spawn	283011	1	40	for_the_fight_absolute	188.33	414.61	260.61
 856353	BIDYun_Vasharti_Glove_ControllerE	on_wake_up	0	7		0	spawn	856491	1	45	for_the_fight_absolute	188.33	414.61	260.61
 856353	BIDYun_Vasharti_Glove_ControllerE	on_wake_up	0	7		1	spawn	283012	1	45	for_the_fight_absolute	188.33	414.61	260.61
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	0	8	count:0:5:6:1	0	var	10	0	0	VRITRA	0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	0	8	count:0:5:6:1	1	spawn	856350	1	0	for_the_fight_self	0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	0	8	count:0:5:6:1	2	despawn_self	0	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	1	7	count:0:4:5:1	0	timer	13000	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	1	7	count:0:4:5:1	1	sysmsg	1402720	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	1	7	count:0:4:5:1	2	broadcast	22633	100	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	1	7	count:0:4:5:1	3	spawn	855538	1	0	for_the_fight_self	0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	2	6	count:0:3:4:1	0	broadcast	22632	100	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	2	6	count:0:3:4:1	1	sysmsg	1402719	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	3	5	count:0:2:3:1	0	timer	300000	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	3	5	count:0:2:3:1	1	broadcast	22631	100	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	4	4	count:0:1:2:1	0	sysmsg	1402719	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	4	4	count:0:1:2:1	1	timer	60000	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	5	2	count:0:0:1:1	0	sysmsg	1402717	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_idle_timer	5	2	count:0:0:1:1	1	timer	294000	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_wake_up	0	1		0	sysmsg	1402716	0	0		0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_wake_up	0	1		1	var	1	0	0	BOSS_CUTSCENE	0.0	0.0	0.0
+856378	IDSeal_Boss_Lv2_Timer	on_wake_up	0	1		2	timer	6000	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	0	8	count:0:5:6:1	0	var	10	0	0	VRITRA	0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	0	8	count:0:5:6:1	1	spawn	856350	1	0	for_the_fight_self	0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	0	8	count:0:5:6:1	2	despawn_self	0	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	1	7	count:0:4:5:1	0	timer	13000	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	1	7	count:0:4:5:1	1	sysmsg	1402720	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	1	7	count:0:4:5:1	2	broadcast	22633	100	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	1	7	count:0:4:5:1	3	var	10	0	0	GUARDIAN_TIMER	0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	1	7	count:0:4:5:1	4	spawn	855538	1	0	for_the_fight_self	0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	2	6	count:0:3:4:1	0	broadcast	22632	100	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	2	6	count:0:3:4:1	1	sysmsg	1402719	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	3	5	count:0:2:3:1	0	timer	300000	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	3	5	count:0:2:3:1	1	broadcast	22631	100	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	4	4	count:0:1:2:1	0	sysmsg	1402719	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	4	4	count:0:1:2:1	1	timer	60000	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	5	2	count:0:0:1:1	0	sysmsg	1402717	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_idle_timer	5	2	count:0:0:1:1	1	timer	294000	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_wake_up	0	1		0	sysmsg	1402716	0	0		0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_wake_up	0	1		1	var	1	0	0	BOSS_CUTSCENE	0.0	0.0	0.0
+856379	IDSeal_Boss_Lv1_Timer	on_wake_up	0	1		2	timer	6000	0	0		0.0	0.0	0.0
 856380	IDSeal_Scene_24_Li_Message	on_wake_up	0	7		0	broadcast	22634	100	0		0.0	0.0	0.0
 856381	IDSeal_Scene_24_Da_Message	on_wake_up	0	7		0	broadcast	22635	100	0		0.0	0.0	0.0
 856382	IDSeal_Scene_25_Li_Message	on_wake_up	0	7		0	broadcast	22636	100	0		0.0	0.0	0.0
@@ -9132,6 +9451,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856481	IDYun_info_08	on_idle_timer	0	1	set_flag_var:0	0	spawn	236270	1	0	for_the_fight_self	0.0	0.0	0.0
 856481	IDYun_info_08	on_idle_timer	0	1	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
 856481	IDYun_info_08	on_wake_up	0	2		0	timer	2500	0	0		0.0	0.0	0.0
+856483	IDTiamat_Temp16	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
+856484	IDTiamat_Temp17	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
+856485	IDTiamat_Temp18	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
+856486	IDTiamat_Temp19	on_wake_up	0	1		0	skill	20997	0	0	ME	0.0	0.0	0.0
 856491	BIDYun_Vasharti_Glove_Buffer	on_wake_up	0	1		0	skill_now	20538	0	0	ME	0.0	0.0	0.0
 856491	BIDYun_Vasharti_Glove_Buffer	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 880816	Gab1_CastGaurd_Hide_PM_Ae_02	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0

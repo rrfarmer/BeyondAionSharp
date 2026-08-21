@@ -305,6 +305,7 @@ public sealed class BattleCycleAiTests
 	[
 		"battle_cycle", "death_spawn", "idle_cycle", "idle_cycle_passive",
 		"aggressive_pattern", "passive_pattern", "wake_variable", "wake_variable_aggressive",
+		"aggressive_no_loot",
 	];
 
 	[Fact]
@@ -328,7 +329,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 94,331 casts across 22,682 npcs, none of them read by a human. The index they came from is only
+	/// 95,032 casts across 22,824 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +348,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(94331, casts);
+		Assert.Equal(95032, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -789,7 +790,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(2049, spawns);
+		Assert.Equal(2059, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1073,7 +1074,7 @@ public sealed class BattleCycleAiTests
 			{
 				["who:TargetIsPlayer"] = 152,
 				["who:EventTargetIsPlayer"] = 10,
-				["who:TargetIsNpc"] = 42,
+				["who:TargetIsNpc"] = 58,
 
 				// Was a mapping with no data until `add_hate_point` and `is_distance_shorter_than`
 				// were read, which brought in patterns carrying it alongside those. Five of the nine
@@ -1082,7 +1083,7 @@ public sealed class BattleCycleAiTests
 
 				// And this one when `switch_target` learned the rest of its subjects. Six of the nine
 				// have data now.
-				["who:KilledByPlayer"] = 26,
+				["who:KilledByPlayer"] = 34,
 
 				// These three arrived as other elements were read, not as a change to `is_user`
 				// itself: `TalkerIsPlayer` when `flee_from` landed, and the attacked/spelled pair when
@@ -1090,8 +1091,8 @@ public sealed class BattleCycleAiTests
 				// that carried it *and* an identity guard come in together. That is the pin doing its
 				// job -- the numbers move as visible edits here rather than as silence.
 				["who:TalkerIsPlayer"] = 22,
-				["who:AttackedByPlayer"] = 18,
-				["who:SpelledByPlayer"] = 17,
+				["who:AttackedByPlayer"] = 24,
+				["who:SpelledByPlayer"] = 23,
 			}.OrderBy(e => e.Key),
 			seen.OrderBy(e => e.Key));
 	}

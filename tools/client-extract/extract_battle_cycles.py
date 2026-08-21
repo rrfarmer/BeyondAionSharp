@@ -457,7 +457,7 @@ BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 #: unchanged -- **the tables do not subsume it**, and nothing here claims they do.
 GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
            "idle_cycle_passive", "aggressive_pattern", "passive_pattern",
-           "wake_variable", "wake_variable_aggressive"}
+           "wake_variable", "wake_variable_aggressive", "aggressive_no_loot"}
 
 #: Retail's thirty battle-timer slots, named by index.
 TIMER_RE = re.compile(r"BTIMERI_INDEX_(\d+)")

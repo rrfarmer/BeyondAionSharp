@@ -187,9 +187,9 @@ public sealed class WakeIdlePatternAiTests
 		int blocking = byRung.Count(rung => rung.Value.All(k => k == "nothing")
 			&& int.Parse(rung.Key.Item3) < lastBranch[(rung.Key.Item1, rung.Key.Item2)]);
 
-		// Rungs, not actions: 80 do-nothing actions collapse into 61 branches, some rungs carrying the
+		// Rungs, not actions: 84 do-nothing actions collapse into 63 branches, some rungs carrying the
 		// element more than once. The branch is the unit that blocks, so the branch is what is counted.
-		Assert.Equal(61, carried);
+		Assert.Equal(63, carried);
 		Assert.True(blocking > 0, "no do-nothing branch sits above another, so carrying them buys nothing");
 	}
 	/// <summary><b>A waypoint rung starts the npc on its own route.</b></summary>

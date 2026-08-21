@@ -75,7 +75,7 @@ from extract_battle_cycles import Unsayable, read_handler  # noqa: E402
 #: unchanged -- **the tables do not subsume it**, and nothing here claims they do.
 GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
            "idle_cycle_passive", "aggressive_pattern", "passive_pattern",
-           "wake_variable", "wake_variable_aggressive"}
+           "wake_variable", "wake_variable_aggressive", "aggressive_no_loot"}
 
 #: Retail's three death handlers, and the guard each one becomes here. `on_die` fires however the npc
 #: died; the other two ask who did it. Carrying the guard by name rather than as a flag is what let the

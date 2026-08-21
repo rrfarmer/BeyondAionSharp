@@ -144,6 +144,7 @@ public sealed class DeathSpawnTableTests
 	[
 		"battle_cycle", "death_spawn", "idle_cycle", "idle_cycle_passive",
 		"aggressive_pattern", "passive_pattern", "wake_variable", "wake_variable_aggressive",
+		"aggressive_no_loot",
 	];
 
 	[Fact]
@@ -245,7 +246,7 @@ public sealed class DeathSpawnTableTests
 
 		int npcKills = lines.Skip(1).Count(line => line.Split('	')[killerAt] == "KilledByNpc");
 
-		Assert.Equal(1766, npcKills);
+		Assert.Equal(1778, npcKills);
 	}
 
 	/// <summary><b>And it does not fire when nothing killed it at all.</b></summary>

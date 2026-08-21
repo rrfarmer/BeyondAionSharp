@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// What a retail npc leaves behind when it dies: 670 patterns across 1911 npcs, 5213 actions.
+/// What a retail npc leaves behind when it dies: 678 patterns across 1927 npcs, 5253 actions.
 /// </summary>
 /// <remarks>
 /// The encounters no rotation table can reach. <see cref="BattleCycles"/> reads <c>on_die</c> too, but
@@ -3745,6 +3745,34 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Wave_C_02_Clear", 0, 1)),
         ];
+        rungs[236235] = [  // IDSeal_Wave1_Leader_Lv1
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 22, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 22, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+        ];
+        rungs[236236] = [  // IDSeal_Wave1_Leader_Lv2
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 5, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 5, 0)),
+        ];
+        rungs[236237] = [  // IDSeal_Wave2_Leader_Lv2
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 6, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 6, 0)),
+        ];
+        rungs[236238] = [  // IDSeal_Wave3_Leader_Lv2
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 21, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 21, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+        ];
         rungs[236267] = [  // IDYun_Temp_31
             AiPattern.Branch(1, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(282551, 1, 1, 0f, 10)),
@@ -4054,6 +4082,10 @@ internal static class DeathSpawns
                 Do.Say(340926, 0),
                 Do.SpawnNearForTheFight(294561, 0, 1, 0f, 360)),
         ];
+    }
+
+    private static void Rungs7(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[263558] = [  // BGuard_BombMan
             AiPattern.Branch(3, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.Say(340926, 0),
@@ -4080,10 +4112,6 @@ internal static class DeathSpawns
                 Do.Say(340925, 0),
                 Do.SpawnNearForTheFight(294563, 0, 1, 0f, 360)),
         ];
-    }
-
-    private static void Rungs7(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[264722] = [  // BGuard_Teleporter
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296339, 0, 1, 0f, 12)),
@@ -4726,6 +4754,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v10ctrl", -1, 0)),
         ];
+    }
+
+    private static void Rungs8(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277136] = [  // LDF5_Village_KillerCtrl11_DR
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v11ctrl", -1, 0)),
@@ -4742,10 +4774,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v14ctrl", -1, 0)),
         ];
-    }
-
-    private static void Rungs8(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277140] = [  // LDF5_Village_KillerCtrl15_DR
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("v15ctrl", -1, 0)),
@@ -6084,6 +6112,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
+    }
+
+    private static void Rungs9(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[277453] = [  // BGuard_Chief_Gab1_D
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -6172,10 +6204,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("v11", 22, 0),
                 Do.SetSpawnVariable("v12", 22, 0)),
         ];
-    }
-
-    private static void Rungs9(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[277457] = [  // BGuard_Chief_Gab1_Dr
             AiPattern.Branch(100, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(295092, 1, 1, 0f, 12),
@@ -6812,6 +6840,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
         ];
+    }
+
+    private static void Rungs10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281676] = [  // IDCT_Normal_LightPr
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
@@ -6828,10 +6860,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
         ];
-    }
-
-    private static void Rungs10(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281680] = [  // IDCT_Normal_DarkPr
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SetSpawnVariable("debufflich", 0, 1)),
@@ -7168,6 +7196,26 @@ internal static class DeathSpawns
                 Do.SystemMessage(1401463, 0),
                 Do.SpawnNearForTheFight(283073, 1, 1, 0f, 5)),
         ];
+        rungs[283163] = [  // IDTiamat_Temp16
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283167, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
+        rungs[283164] = [  // IDTiamat_Temp17
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283168, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
+        rungs[283165] = [  // IDTiamat_Temp18
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283169, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
+        rungs[283166] = [  // IDTiamat_Temp19
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283170, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
         rungs[283188] = [  // IDAbRe_Core_Cannon
             AiPattern.Branch(5, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(700863, 1, 5, 0f, 0),
@@ -7292,6 +7340,10 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("Wave_04_Boss", 0, 1),
                 Do.SetSpawnVariable("Wave_Z1_S4_04", 2, 0)),
         ];
+    }
+
+    private static void Rungs11(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284328] = [  // IDF5_TD_Wave4_Boss5
             AiPattern.Branch(4, "on_die 0", When.Always,
                 Do.SetSpawnVariable("Wave_04_Boss", 0, 1),
@@ -7325,10 +7377,6 @@ internal static class DeathSpawns
             AiPattern.Branch(3, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Wave_Z2_S3_01", 2, 0)),
         ];
-    }
-
-    private static void Rungs11(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284338] = [  // IDF5_TD_Wave_Pod_10
             AiPattern.Branch(2, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Wave_Z2_S3_02", 2, 0)),
@@ -7880,6 +7928,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(211737, 1, 1, 0f, 0)),
         ];
+    }
+
+    private static void Rungs12(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[287015] = [  // Test_Basic_Monster_AI_KDG_2
             AiPattern.Branch(25, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(218724, 1, 1, 0f, 0)),
@@ -7915,10 +7967,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(287210, 1, 1, 0f, 0)),
         ];
-    }
-
-    private static void Rungs12(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[287214] = [  // Test_GHB_ONControl_NPC
             AiPattern.Branch(7, "on_die 0", When.Always,
                 Do.SpawnAtForTheFight(287204, 1, 0, new SpawnSpot(249.0f, 244.0f, 20.0f)),
@@ -8575,6 +8623,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur36", 23, 0)),
         ];
+    }
+
+    private static void Rungs13(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[702656] = [  // IDStation_B_ZONE_FOBJ_01
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.KillerRace(Race.ELYOS)],
                 Do.SpawnNearForTheFight(702657, 0, 1, 0f, 20)),
@@ -8618,10 +8670,6 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("TSWITCH_2_DESTROYED", 1, 0),
                 Do.SystemMessage(1401418, 0)),
         ];
-    }
-
-    private static void Rungs13(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[802003] = [  // Dread03_Closedoor01
             AiPattern.Branch(1, "on_die 0", When.Always,
                 Do.SetSpawnVariable("DSWITCH_1_DESTROYED", 1, 0),
@@ -9171,6 +9219,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur29", 23, 0)),
         ];
+    }
+
+    private static void Rungs14(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832362] = [  // Gab1_TurretSwitch_18
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur30", 23, 0)),
@@ -9219,10 +9271,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur13", 23, 0)),
         ];
-    }
-
-    private static void Rungs14(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832371] = [  // Gab1_TurretSwitch_02
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur14", 23, 0)),
@@ -9775,6 +9823,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur33", 23, 0)),
         ];
+    }
+
+    private static void Rungs15(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832463] = [  // Gab1_TurretSwitch_22
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur34", 23, 0)),
@@ -9823,10 +9875,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur17", 23, 0)),
         ];
-    }
-
-    private static void Rungs15(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832471] = [  // Gab1_TurretSwitch_06
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur18", 23, 0)),
@@ -10379,6 +10427,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur13", 23, 0)),
         ];
+    }
+
+    private static void Rungs16(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832563] = [  // Gab1_TurretSwitch_02
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur14", 23, 0)),
@@ -10427,10 +10479,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur21", 23, 0)),
         ];
-    }
-
-    private static void Rungs16(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832571] = [  // Gab1_TurretSwitch_10
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur22", 23, 0)),
@@ -10983,6 +11031,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur17", 23, 0)),
         ];
+    }
+
+    private static void Rungs17(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[832663] = [  // Gab1_TurretSwitch_06
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur18", 23, 0)),
@@ -11031,10 +11083,6 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("Tur25", 23, 0)),
         ];
-    }
-
-    private static void Rungs17(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[832671] = [  // Gab1_TurretSwitch_14
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SetSpawnVariable("Tur26", 23, 0)),
@@ -11719,6 +11767,10 @@ internal static class DeathSpawns
             AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
                 Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
         ];
+    }
+
+    private static void Rungs18(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855300] = [  // LDF4_Advance_Killer_Li
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
                 Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
@@ -11799,10 +11851,6 @@ internal static class DeathSpawns
             AiPattern.Branch(6, "on_killed_by_user 1", [When.KilledByPlayer, When.KillerRace(Race.ASMODIANS)],
                 Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
         ];
-    }
-
-    private static void Rungs18(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855308] = [  // LDF4_Advance_Killer_Li
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc, When.KillerRace(Race.ELYOS)],
                 Do.SpawnNearForTheFight(855372, 0, 1, 0f, 0)),
@@ -12119,6 +12167,34 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(18)],
                 Do.SetSpawnVariable("idraksha_clear", 1, 0)),
         ];
+        rungs[855855] = [  // IDSeal_Wave1_Leader_Lv2
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 5, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 5, 0)),
+        ];
+        rungs[855856] = [  // IDSeal_Wave2_Leader_Lv2
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 6, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("DEFENCE_WAVE", 6, 0)),
+        ];
+        rungs[855857] = [  // IDSeal_Wave3_Leader_Lv2
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 21, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 21, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+        ];
+        rungs[855858] = [  // IDSeal_Wave1_Leader_Lv1
+            AiPattern.Branch(98, "on_killed_by_npc 0", [When.KilledByNpc, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 22, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+            AiPattern.Branch(99, "on_killed_by_user 0", [When.KilledByPlayer, When.FirstTime(5)],
+                Do.SetSpawnVariable("SCENE", 22, 0),
+                Do.SpawnNearForTheFight(702769, 0, 1, 0f, 0)),
+        ];
         rungs[855865] = [  // IDForest_Wave_Laphilima_Normal
             AiPattern.Branch(2, "on_die 0", When.Always,
                 Do.SpawnNearForTheFight(282250, 1, 1, 0f, 2)),
@@ -12266,6 +12342,26 @@ internal static class DeathSpawns
                 Do.SetSpawnVariable("boss3die", 1, 0),
                 Do.SetSpawnVariable("crystal", 2, 0)),
         ];
+        rungs[856483] = [  // IDTiamat_Temp16
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283167, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
+        rungs[856484] = [  // IDTiamat_Temp17
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283168, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
+        rungs[856485] = [  // IDTiamat_Temp18
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283169, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
+        rungs[856486] = [  // IDTiamat_Temp19
+            AiPattern.Branch(2, "on_die 0", When.Always,
+                Do.SpawnAtForTheFight(283170, 1, 4, new SpawnSpot(482.3f, 514.6f, 418.0f)),
+                Do.SystemMessage(1401551, 0)),
+        ];
         rungs[880088] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -12404,6 +12500,10 @@ internal static class DeathSpawns
             AiPattern.Branch(7, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
         ];
+    }
+
+    private static void Rungs19(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[880123] = [  // NoAction_AbyssDoor
             AiPattern.Branch(7, "on_killed_by_npc 0", [When.KilledByNpc],
                 Do.SpawnNearForTheFight(296337, 0, 1, 0f, 12)),
@@ -12486,10 +12586,6 @@ internal static class DeathSpawns
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v03ctrl", -1, 0)),
         ];
-    }
-
-    private static void Rungs19(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[880770] = [  // Gab1_Vritra_07
             AiPattern.Branch(10, "on_killed_by_user 0", [When.KilledByPlayer],
                 Do.SetSpawnVariable("v03ctrl", -1, 0)),

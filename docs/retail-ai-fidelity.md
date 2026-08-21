@@ -38980,3 +38980,53 @@ sweep -- which is why this entry stops at the measurement rather than starting i
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## One generic class, and why the other three stay out
+
+`Retail-AI-Pattern: aggressive_no_loot reads the pattern tables`
+
+The previous entry measured 1,708 patterns gated by a hand-written class and said telling the
+generic variants from the modelled ones is a judgement per class rather than a sweep. This does the
+first one and records why the neighbouring candidates are not it.
+
+**The codebase's own signal did not separate them.** `spoken_for` treats a hardcoded npc id as
+evidence that a class models an encounter, and **none** of the eighteen classes gating the most
+patterns carries one. So the question had to be answered by reading each class.
+
+Of the four small enough to be plausible:
+
+| class | patterns | what it is | verdict |
+|---|---|---|---|
+| `aggressive_no_loot` | 109 | `AggressiveNpcAI` + one answer about loot, 24 lines | **generic** |
+| `noaction` | 66 | `NpcAI` + a `HandleAttack` that does not react | modelled inaction |
+| `onedmg_passive` | 22 | `NpcAI` + damage and stat overrides | modelled |
+| `aggressive_stonespear` | 22 | its own `HandleSpawned` and `HandleDied` | modelled |
+
+`noaction` is the one worth naming. It exists **so that its npcs do not react**, and a pattern table
+is a list of reactions -- giving it one would not add a mechanic, it would undo a deliberate
+absence. Class size suggested it was safe and reading it said otherwise.
+
+The `PatternAi`-based classes higher up the list -- `guard_reinforcement`, `gate_squad`,
+`panesterra_artifact_protector` -- are excluded on a different ground: they already have generated
+tables of their own, so composing a second one would double their mechanics rather than add any.
+
+So `AggressiveNoLootNpcAI` changes base from `AggressiveNpcAI` to `PatternAi`, which *is* an
+`AggressiveNpcAI`, so nothing about aggression moves; the `Ask` override is untouched.
+
+Patterns 2,852 -> **2,892**; npcs 22,682 -> **22,824**; casts 94,331 -> **95,032**; spawn rows
+2,049 -> **2,059**. **Adds backlog 185 -> 183 across 130 -> 128 encounters.**
+
+### Still missing, in order
+
+1. **~1,600 patterns still gated by a hand-written class.** Each needs the same reading. The four
+   above took one pass; the remaining classes are larger and mostly siege or fortress machinery,
+   where a second table is more likely to conflict than to help.
+2. **170 fully self-contained adds** across ~128 encounters -- ordinary porting, no blocker.
+3. **16 waypoint paths** absent from the walker file (172 spawn uses, 5 backlog adds).
+4. `control_door` (691) -- one in-game observation away.
+5. `random_move` (187); the abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **3,291 patterns whose npcs this port does not have** -- a version boundary, not a backlog.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.

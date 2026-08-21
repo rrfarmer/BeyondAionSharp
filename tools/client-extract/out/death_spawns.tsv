@@ -1296,6 +1296,18 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 236096	Tames_Solo_C_normal_03	on_killed_by_user	KilledByPlayer	0	7		0	var	0	1	0	Wave_C_02_Clear	0.0	0.0	0.0	0
 236097	Tames_Solo_C_normal_04	on_killed_by_npc	KilledByNpc	0	7		0	var	0	1	0	Wave_C_02_Clear	0.0	0.0	0.0	0
 236097	Tames_Solo_C_normal_04	on_killed_by_user	KilledByPlayer	0	7		0	var	0	1	0	Wave_C_02_Clear	0.0	0.0	0.0	0
+236235	IDSeal_Wave1_Leader_Lv1	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	22	0	0	SCENE	0.0	0.0	0.0	0
+236235	IDSeal_Wave1_Leader_Lv1	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
+236235	IDSeal_Wave1_Leader_Lv1	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	22	0	0	SCENE	0.0	0.0	0.0	0
+236235	IDSeal_Wave1_Leader_Lv1	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
+236236	IDSeal_Wave1_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	5	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+236236	IDSeal_Wave1_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	5	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+236237	IDSeal_Wave2_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	6	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+236237	IDSeal_Wave2_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	6	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+236238	IDSeal_Wave3_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	21	0	0	SCENE	0.0	0.0	0.0	0
+236238	IDSeal_Wave3_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
+236238	IDSeal_Wave3_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	21	0	0	SCENE	0.0	0.0	0.0	0
+236238	IDSeal_Wave3_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
 236267	IDYun_Temp_31	on_die	ANY	0	1		0	spawn	282551	1	10	for_the_fight_self	0.0	0.0	0.0	1
 236283	IDYun_Drakan_ND3	on_die	ANY	0	4		0	spawn	282528	1	10	for_the_fight_self	0.0	0.0	0.0	1
 236290	IDYun_info_07	on_die	ANY	0	4		0	spawn	856481	1	10	for_the_fight_self	0.0	0.0	0.0	1
@@ -3211,6 +3223,14 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 283074	TiamatDown_TiamatAgent_SumBomb2	on_die	ANY	0	3		1	spawn	283073	1	5	for_the_fight_self	0.0	0.0	0.0	1
 283076	TiamatDown_TiamatAgent_SumBomb3	on_die	ANY	0	3		0	sysmsg	1401463	0	0		0.0	0.0	0.0	0
 283076	TiamatDown_TiamatAgent_SumBomb3	on_die	ANY	0	3		1	spawn	283073	1	5	for_the_fight_self	0.0	0.0	0.0	1
+283163	IDTiamat_Temp16	on_die	ANY	0	2		0	spawn	283167	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+283163	IDTiamat_Temp16	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
+283164	IDTiamat_Temp17	on_die	ANY	0	2		0	spawn	283168	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+283164	IDTiamat_Temp17	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
+283165	IDTiamat_Temp18	on_die	ANY	0	2		0	spawn	283169	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+283165	IDTiamat_Temp18	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
+283166	IDTiamat_Temp19	on_die	ANY	0	2		0	spawn	283170	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+283166	IDTiamat_Temp19	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
 283188	IDAbRe_Core_Cannon	on_die	ANY	0	5		0	spawn	700863	5	0	for_the_fight_self	0.0	0.0	0.0	1
 283188	IDAbRe_Core_Cannon	on_die	ANY	0	5		1	spawn	282106	1	3	for_the_fight_self	0.0	0.0	0.0	1
 283194	IDAbRe_Core_NamedA1	on_die	ANY	0	9		0	spawn	282011	1	60	for_the_fight_absolute	448.99	694.32	433.06	1
@@ -5043,6 +5063,18 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 855617	Station_Shu_PR_B	on_killed_by_user	KilledByPlayer	1	99	race:KillerRace:ASMODIANS	0	spawn	702655	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855853	IDRaksha_Re_Boss_KJS	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 855853	IDRaksha_Re_Boss_KJS	on_killed_by_user	KilledByPlayer	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
+855855	IDSeal_Wave1_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	5	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+855855	IDSeal_Wave1_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	5	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+855856	IDSeal_Wave2_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	6	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+855856	IDSeal_Wave2_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	6	0	0	DEFENCE_WAVE	0.0	0.0	0.0	0
+855857	IDSeal_Wave3_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	21	0	0	SCENE	0.0	0.0	0.0	0
+855857	IDSeal_Wave3_Leader_Lv2	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855857	IDSeal_Wave3_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	21	0	0	SCENE	0.0	0.0	0.0	0
+855857	IDSeal_Wave3_Leader_Lv2	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855858	IDSeal_Wave1_Leader_Lv1	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	0	var	22	0	0	SCENE	0.0	0.0	0.0	0
+855858	IDSeal_Wave1_Leader_Lv1	on_killed_by_npc	KilledByNpc	0	98	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
+855858	IDSeal_Wave1_Leader_Lv1	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	0	var	22	0	0	SCENE	0.0	0.0	0.0	0
+855858	IDSeal_Wave1_Leader_Lv1	on_killed_by_user	KilledByPlayer	0	99	set_flag_var:5	1	spawn	702769	1	0	for_the_fight_self	0.0	0.0	0.0	0
 855865	IDForest_Wave_Laphilima_Normal	on_die	ANY	0	2		0	spawn	282250	1	2	for_the_fight_self	0.0	0.0	0.0	1
 855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		0	say	1500450	0	0		0.0	0.0	0.0	0
 855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		1	despawn	1	0	0		0.0	0.0	0.0	0
@@ -5115,6 +5147,14 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	1	var	2	0	0	timeout	0.0	0.0	0.0	0
 856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	2	var	1	0	0	boss3die	0.0	0.0	0.0	0
 856111	IDF5_Mini_01_C_Boss_Fi	on_killed_by_user	KilledByPlayer	0	7	who:KilledByPlayer|set_flag_var:20	3	var	2	0	0	crystal	0.0	0.0	0.0	0
+856483	IDTiamat_Temp16	on_die	ANY	0	2		0	spawn	283167	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+856483	IDTiamat_Temp16	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
+856484	IDTiamat_Temp17	on_die	ANY	0	2		0	spawn	283168	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+856484	IDTiamat_Temp17	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
+856485	IDTiamat_Temp18	on_die	ANY	0	2		0	spawn	283169	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+856485	IDTiamat_Temp18	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
+856486	IDTiamat_Temp19	on_die	ANY	0	2		0	spawn	283170	1	4	for_the_fight_absolute	482.3	514.6	418.0	1
+856486	IDTiamat_Temp19	on_die	ANY	0	2		1	sysmsg	1401551	0	0		0.0	0.0	0.0	0
 880088	NoAction_AbyssDoor	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
 880088	NoAction_AbyssDoor	on_killed_by_user	KilledByPlayer	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
 880089	NoAction_AbyssDoor	on_killed_by_npc	KilledByNpc	0	7		0	spawn	296337	1	12	for_the_fight_self	0.0	0.0	0.0	0
