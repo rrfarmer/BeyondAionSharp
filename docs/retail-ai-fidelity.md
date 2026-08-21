@@ -38043,3 +38043,70 @@ Unchanged: `random_move` (187, needs timed wandering), 102 `on_arrived_at_waypoi
 `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
 `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## `reset_hatepoints`, and a claim I should have checked
+
+`Retail-AI-Pattern: hate resets`
+
+The previous entry said this and `use_skill_by_attacker_indicator` were "the first in a while that
+would need new engine work rather than a mapping". **That was asserted rather than checked, and for
+`reset_hatepoints` it is wrong.** `AggroList` has had `Clear`, `AddHate`, `GetHate` and
+`GetTarget(AggroTarget)` all along, which is everything this needs. Having just written that the
+runtime check belongs at the *front* of reading an element, I then wrote a forward-looking claim
+without doing it.
+
+214 uses, in two forms:
+
+* **Plain reset** (169) — drop the whole hate list. `AggroList.Clear` empties it and cancels the
+  hate-reduction task without touching AI state, so the NPC re-acquires from whoever hits it next,
+  which is what an aggressive NPC with an empty list does anyway. Retail resets hate to make a boss
+  re-pick, not to end a fight, and that is what happens here.
+* **Keep the most-hated** (45) — a different mechanic rather than a variation: the boss sheds the
+  healers and the adds without letting go of the tank.
+
+`volatile_hatepoint_only` (4 uses) asks for retail's split between hate that decays and hate that does
+not. This port keeps one number per creature, so there is no volatile half to clear on its own, and
+those are refused rather than turned into a full reset — which would drop hate retail keeps.
+
+Patterns 2,723 -> **2,738**; npcs 22,308 -> **22,341**; 40 reset rows.
+**Adds backlog 192 -> 189 across 135 -> 133 encounters.**
+
+### Keeping the creature is not keeping the mechanic
+
+The retained hate value is restored, not just the creature. An implementation that kept the tank on
+the list at zero hate, or re-added it with some fixed number, would look right to every spawn or cast
+pin — the tank is still the target, the fight goes on — while quietly rewriting how much threat the
+rest of the raid must build to pull it. So the pin asserts the *value*, and a mutation dropping it to
+1 is caught.
+
+Two other things the pins caught, both about the test rather than the feature:
+
+* **`BossAiHarness.Wound` adds damage and no hate.** It passes `notifyAttack: false`, and `AddDamage`
+  only converts damage to hate when that is true. A setup built on it leaves every player on zero
+  hate, and the "is the tank actually the most hated" guard was the only thing that noticed. Written
+  without that guard, the pin would have compared zero to zero and passed.
+* **A pin must go through `Do.`, not the method.** Calling `ai.ResetHateExceptMostHated()` directly
+  let a mutation pointing `Do.ResetHateExceptTop` at the plain reset survive. The table emits the
+  action, so the action is what has to be exercised.
+
+| mutation | caught |
+|---|---|
+| kept tank loses its hate value | yes |
+| except-most-hating clears everyone | yes |
+
+### Still missing
+
+`use_skill_by_attacker_indicator` restricted to a range (28) is the next refused element, and this
+time the claim is checked: `Do.SkillOn` and `AggroList.GetTarget(AggroTarget, float)` both exist, so
+the range-limited form is probably reachable — it is unfinished here for time, not for want of
+machinery, and should be read the same way the unrestricted form already is.
+
+The `npc_skills` data gap remains the largest known hole: 59,131 of 74,792 cast pairs have no
+port-side entry, and retail's `npcs.xml` cannot close it (`skill_name`, `skill_level`, `skill_rate`
+only). That needs a decision about what to synthesise, not more extraction.
+
+Unchanged: `random_move` (187, needs timed wandering), 102 `on_arrived_at_waypoint` handlers on
+`MOVETYPE_RUN`, the eight retail handlers with no engine slot, `control_door`, `enable_area`,
+`change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
+`set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.

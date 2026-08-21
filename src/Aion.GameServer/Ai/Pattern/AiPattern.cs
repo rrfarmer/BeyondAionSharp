@@ -1162,6 +1162,12 @@ public static class Do
     /// <summary><c>switch_target target=OBJI_ATTACKER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateAttacker(int hate) => ai => ai.HateAttacker(hate);
 
+    /// <summary><c>reset_hatepoints</c> — drop the whole hate list.</summary>
+    public static PatternAction ResetHate() => static ai => ai.ResetHate();
+
+    /// <summary><c>reset_hatepoints is_except_most_hating=TRUE</c> — drop it apart from the tank.</summary>
+    public static PatternAction ResetHateExceptTop() => static ai => ai.ResetHateExceptMostHated();
+
     /// <summary><c>add_hate_point target=OBJI_CUR_TARGET</c>.</summary>
     public static PatternAction HateTarget(int hate) => ai => ai.HateTarget(hate);
 

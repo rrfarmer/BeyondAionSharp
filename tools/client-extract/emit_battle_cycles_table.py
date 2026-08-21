@@ -290,6 +290,10 @@ def action_code(row: dict) -> str:
     if kind.startswith("flee_"):
         # The parser resolved the role to its action name.
         return f"Do.{kind[len('flee_'):]}({row['a1']})"
+    if kind == "reset_hate":
+        return "Do.ResetHate()"
+    if kind == "reset_hate_top":
+        return "Do.ResetHateExceptTop()"
     if kind == "nothing":
         return "Do.Nothing()"
     if kind == "next_waypoint":

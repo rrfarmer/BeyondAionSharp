@@ -324,7 +324,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 89,796 casts across 22,308 npcs, none of them read by a human. The index they came from is only
+	/// 90,025 casts across 22,341 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -343,7 +343,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(89796, casts);
+		Assert.Equal(90025, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -384,7 +384,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(568, lowest);
+		Assert.Equal(570, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -785,7 +785,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1764, spawns);
+		Assert.Equal(1779, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1245,6 +1245,52 @@ public sealed class BattleCycleAiTests
 		worm.SetTarget(far);
 		Assert.True(When.TargetBeyond(10)(ai), "a player forty metres away did not count as beyond ten");
 		Assert.False(When.TargetWithin(10)(ai), "the mirror condition disagrees at range too");
+	}
+
+	/// <summary><b>A hate reset keeps the tank, and keeps how much it is hated.</b></summary>
+	/// <remarks>
+	/// <c>reset_hatepoints</c> is 214 uses. Retail resets hate to make a boss re-pick rather than to
+	/// end a fight, and 45 of those keep the most-hated creature: the boss sheds the healers and the
+	/// adds without letting go of the tank.
+	/// <para>
+	/// <b>Keeping the creature is not the same as keeping the mechanic.</b> An implementation that kept
+	/// the tank on the list but dropped its hate to zero, or re-added it with some fixed number, would
+	/// look right in every way a spawn or cast pin can see -- the tank is still the target, the fight
+	/// continues -- and would have quietly rewritten how much threat the rest of the raid has to build
+	/// to take it away. So the retained hate value is asserted, not just the retained creature.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AHateResetKeepsTheTankAndItsHate()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		Player healer = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, tank);
+		BossAiHarness.MakeMutuallyKnown(worm, healer);
+		// AddHate rather than Wound: the harness's Wound passes notifyAttack:false, which records
+		// damage and no hate at all, so a setup built on it would leave both players on zero and the
+		// guard below would be the only thing that noticed.
+		worm.GetAggroList().AddHate(tank, 900);
+		worm.GetAggroList().AddHate(healer, 100);
+
+		int tankHate = worm.GetAggroList().GetHate(tank);
+		Assert.True(tankHate > worm.GetAggroList().GetHate(healer),
+			"the tank is not the most hated, so this pin is not testing what it says");
+
+		// Through `Do.` rather than the method: the table emits the action, and a mutation pointing
+		// the action at the wrong method survives a pin that calls the method itself.
+		Do.ResetHateExceptTop()(ai);
+
+		Assert.Equal(tankHate, worm.GetAggroList().GetHate(tank));
+		Assert.Equal(0, worm.GetAggroList().GetHate(healer));
+
+		// And the plain form drops everyone, including the tank.
+		Do.ResetHate()(ai);
+		Assert.Empty(worm.GetAggroList().Stream());
 	}
 
 }

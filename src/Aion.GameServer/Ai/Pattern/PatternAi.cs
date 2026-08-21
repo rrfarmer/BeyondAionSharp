@@ -881,6 +881,38 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Puts hate on whoever just hit this NPC and turns to face them.</summary>
+    /// <summary><c>reset_hatepoints</c> — forget everyone on the hate list.</summary>
+    /// <remarks>
+    /// 214 uses. Retail resets hate to make a boss re-pick rather than to end the fight, and that is
+    /// what happens here too: <c>AggroList.Clear</c> empties the list and cancels the hate-reduction
+    /// task without touching the AI's state, so the NPC re-acquires from whoever hits it next, exactly
+    /// as an aggressive NPC with an empty list does.
+    /// </remarks>
+    public void ResetHate() => GetAggroList().Clear();
+
+    /// <summary><c>reset_hatepoints is_except_most_hating=TRUE</c> — forget everyone but the tank.</summary>
+    /// <remarks>
+    /// 45 of the 214, and a different mechanic from the plain reset rather than a variation on it:
+    /// the boss keeps the creature it is fighting and drops the rest of the room, which is how retail
+    /// sheds accumulated hate from healers and adds without letting go of the tank.
+    /// <para>
+    /// The kept creature's hate is put back at the value it had. Reading it before the clear and
+    /// restoring it after is deliberate — an implementation that removed the others one by one would
+    /// leave the hate-reduction task running against a list it no longer matches, and
+    /// <c>AggroList.Clear</c> is the only thing that cancels it.
+    /// </para>
+    /// </remarks>
+    public void ResetHateExceptMostHated()
+    {
+        Creature? keep = GetAggroList().GetTarget(AggroTarget.MOST_HATED);
+        int hate = keep == null ? 0 : GetAggroList().GetHate(keep);
+        GetAggroList().Clear();
+        if (keep != null && hate > 0)
+        {
+            GetAggroList().AddHate(keep, hate);
+        }
+    }
+
     public void HateAttacker(int hate)
     {
         if (LastAttacker is not Creature hitter || hitter.IsDead())

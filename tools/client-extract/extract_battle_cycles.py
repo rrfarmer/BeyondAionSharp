@@ -592,6 +592,17 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             # Carried rather than skipped: branch lists are first-match-wins, so a matching do-nothing
             # branch is retail saying "this case, and none of the ones below".
             out.append(("nothing", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "reset_hatepoints":
+            # `volatile_hatepoint_only` asks for retail's split between hate that decays and hate that
+            # does not. This port keeps one number per creature, so there is no volatile half to clear
+            # on its own; the 4 uses that ask for it are refused rather than turned into a full reset,
+            # which would drop hate retail keeps.
+            volatile_only = re.search(r"<volatile_hatepoint_only>(\w+)</", body)
+            if volatile_only and volatile_only.group(1).upper() == "TRUE":
+                raise Unsayable("reset_hatepoints of the volatile hate only")
+            keep_top = re.search(r"<is_except_most_hating>(\w+)</", body)
+            out.append(("reset_hate_top" if keep_top and keep_top.group(1).upper() == "TRUE"
+                        else "reset_hate", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "flee_from":
             # `push_state` is carried by retail on every one of these and is **not modelled**: this
             # port has a single flee behaviour that runs for the given time and then stops, and there
