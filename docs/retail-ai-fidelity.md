@@ -40163,3 +40163,80 @@ cannot reach it; it is left alone.
 8. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 9. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## Kingspin's webs are decorative, and why every marker's clock stops
+
+**Nothing in this entry is built.** The work was reverted at a clean point and the findings written down
+instead; each is measured, and together they are the largest single mechanic this log has found unbuilt
+in some time.
+
+It started from the loose end left last entry: `settled` was **1** after twenty-five seconds at eighty
+percent health, when the opening throw puts three webs on players. That number turned out to be the
+symptom of three separate things.
+
+### 1. The webs never root anybody
+
+Retail's `IDTP_Web` casts `SKILLI_INDEX_0` on **both** of its catch paths. For npc 281391 that index
+resolves to **18607 `BNWI_Root_Spider`**, level 45, a skill this port has a template for.
+
+`KingspinWebAI` casts nothing on either path. It broadcasts and despawns. **Kingspin's webs have never
+rooted anyone in this port** — they are scenery that makes a noise.
+
+### 2. Two thirds of the web's pattern is missing
+
+| retail | here |
+|---|---|
+| `on_wake_up` sets `ALPHA_1`, arms `INDEX_0` at 2500ms **and** `INDEX_5` at 8000ms | arms only the 8000ms fuse |
+| `on_see_user` behind `ALPHA_1`: cast index 0 at the seen player, cry, despawn | cry, despawn — no cast |
+| `on_battle_timer` `INDEX_0` + **`unset_flag_var ALPHA_1`** → arm `INDEX_1` at 1500ms | absent |
+| `on_battle_timer` `INDEX_1` + **`is_distance_shorter_than(CUR_TARGET, 2)`** → arm `INDEX_2`, cast index 0 at the target, cry, despawn | absent |
+| `on_battle_timer` `INDEX_5` → despawn | present |
+
+**One flag doing two jobs is the design.** `ALPHA_1` is set on waking, which keeps the sight rung quiet
+while the web settles; the 2.5-second timer unsets it, which is what arms the web; the catch sets it
+again so a web catches once.
+
+**And the sweep is the actual mechanic.** A web is dropped within **one** metre of a player
+(`spawn_range=1`, confirmed against retail) and its own sight is **one** metre (`srange="1"`), so
+whether it ever sees them is a coin flip — which is exactly why one of three webs cried, and why a pin
+counting cries flaked for so long. Retail does not depend on sight at all: it sweeps for anybody within
+**two** metres a second and a half after arming.
+
+### 3. The engine cancelled the clocks anyway — and this is the wide one
+
+Building the above and measuring it produced the real finding. The web armed its timers
+(`TimerArmCount(0) == 1`) and **they never fired**; the scheduled entries disappeared within a second.
+
+`ResetPattern()` — which cancels every battle timer, pending spawn and flee — runs from
+`HandleBackHome`, and **an npc reaches "back home" the moment it settles after spawning, having never
+fought anybody.** So any marker that arms a clock in `on_wake_up` loses it before it can fire.
+
+Guarding that reset with `if (inCombat)` makes the settle timer fire, which confirms the diagnosis:
+`ResetPattern` exists to end a *fight*, and an npc that never fought has no fight to end.
+
+**This is not a Kingspin problem.** Every marker in the game that arms a clock on waking has the same
+hole, and the shape of the failure — the npc appears, does nothing, despawns on schedule — reads as a
+working prop rather than a broken one.
+
+### What is left to work out
+
+With the reset guarded, the settle timer fires but **the sweep is still never armed**:
+`TimerFireCount(0) == 1` while `TimerArmCount(1) == 0`, so the rung
+`[When.Timer(Settle), When.Consuming(Armed)]` did not match on that firing. Either `When.Timer` does not
+mean "this is the slot that just fired" the way the branch assumes, or `Consuming` found the flag
+already clear. **That is the next thing to measure, and it is where this stopped.**
+
+### Still missing, in order
+
+1. **The three findings above**, in order: the back-home reset guard is the widest and wants its own
+   full-suite run; the web's missing rungs and its root are the encounter; the unarmed sweep is the
+   open question.
+2. **An aimed immediate cast.** The catch branches cast and despawn in the same breath, so a queued
+   cast is never drained — the hazard this log already records. `NpcSkillCasting.UseOnSelfNow` already
+   hands `GetSkill` a target, so the aimed twin is small, but it is not written.
+3. **The other 65 move-rung patterns**; **the runner encounter** (no spawn rows, no routes);
+   **Kaidan's low-health rung**; **the 18 `--implemented` candidates**; **the guards' two broadcasts**.
+4. `control_door` (691); `enable_area` (575); `change_world_scene_status` (101).
+5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
