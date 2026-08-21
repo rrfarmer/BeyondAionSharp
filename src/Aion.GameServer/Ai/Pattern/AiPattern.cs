@@ -1163,6 +1163,12 @@ public static class Do
     public static PatternAction HateAttacker(int hate) => ai => ai.HateAttacker(hate);
 
     /// <summary><c>reset_hatepoints</c> — drop the whole hate list.</summary>
+    /// <summary>
+    /// <c>use_skill_by_attacker_indicator restricted_range=TRUE</c> — rank only who is in reach.
+    /// </summary>
+    public static PatternAction SkillOnRankedInReach(AggroTarget which, int skillId)
+        => ai => ai.CastSkillOnRankedInReach(which, skillId);
+
     public static PatternAction ResetHate() => static ai => ai.ResetHate();
 
     /// <summary><c>reset_hatepoints is_except_most_hating=TRUE</c> — drop it apart from the tank.</summary>

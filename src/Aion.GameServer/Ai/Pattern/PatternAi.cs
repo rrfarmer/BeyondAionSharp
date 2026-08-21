@@ -10,6 +10,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Skill;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Utils;
@@ -1294,6 +1295,45 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </remarks>
     public bool IsAirborne(Creature? who)
         => who is Player player && player.IsInFlyState(Model.GameObjects.State.FlyState.FLYING);
+
+    /// <summary>
+    /// <c>use_skill_by_attacker_indicator restricted_range=TRUE</c> — rank the hate list, but only
+    /// among the creatures the skill can actually reach.
+    /// </summary>
+    /// <remarks>
+    /// 53 uses, refused until now on the grounds that the skill queue picks its target when it drains
+    /// and takes no range bound. That is true of the <i>unaimed</i> path; <see cref="CastSkillAt"/>
+    /// resolves a creature now and sends it with the entry, which is exactly what this needs.
+    /// <para>
+    /// <b>Retail states no distance</b> — <c>restricted_range</c> is a bare TRUE — so the reach is the
+    /// skill's own <c>first_target_range</c>. A skill with no template, or one declaring no range,
+    /// falls back to the <i>unrestricted</i> pick rather than passing zero through, on the same
+    /// principle as <see cref="When.SkillReady"/>: where this port has no data, it does not invent a
+    /// bound. Passing zero would not mean "nobody" in any case — <c>PositionUtil.IsInRange</c> is
+    /// called center-to-center=false here, so both bound radii are added and a zero range still
+    /// reaches anything touching a large boss. Falling back is about not inventing a number, not about
+    /// avoiding an empty result.
+    /// </para>
+    /// <para>
+    /// The difference this makes is the whole point of the element. <c>ATTACKERI_RANDOM_ONE</c> over
+    /// the whole hate list picks the healer standing at the back as often as the tank; restricted, it
+    /// picks among whoever is actually close enough to be hit.
+    /// </para>
+    /// </remarks>
+    public void CastSkillOnRankedInReach(AggroTarget which, int skillId)
+    {
+        if (IsDead())
+        {
+            return;
+        }
+
+        SkillTemplate? template = DataManager.SKILL_DATA.GetSkillTemplate(skillId);
+        int reach = template?.GetProperties()?.firstTargetRange ?? 0;
+        Creature? aim = reach > 0
+            ? GetAggroList().GetTarget(which, reach)
+            : GetAggroList().GetTarget(which);
+        CastSkillAt(aim, skillId);
+    }
 
     public void CastSkillAt(Creature? aim, int skillId)
     {

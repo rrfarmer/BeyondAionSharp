@@ -38110,3 +38110,63 @@ Unchanged: `random_move` (187, needs timed wandering), 102 `on_arrived_at_waypoi
 `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
 `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## Casting at whoever is actually in reach
+
+`Retail-AI-Pattern: range-restricted attacker picks`
+
+`use_skill_by_attacker_indicator` with `restricted_range=TRUE` is 53 uses, refused since the element
+was first read on the grounds that "the queue picks its target when it drains and takes no such
+bound". **That was true of the unaimed path only.** `CastSkillAt` resolves a creature immediately and
+sends it with the entry — `AimedSkillEntry` exists precisely so a cast can name its creature — so the
+bound can be applied where retail applies it.
+
+Retail states no distance; `restricted_range` is a bare TRUE. So the reach is the skill's own
+`first_target_range`, and `AggroList.GetTarget(AggroTarget, float)` already took a range.
+
+The element exists to change who gets picked: unrestricted, `ATTACKERI_RANDOM_ONE` takes the healer
+at the back as readily as the tank in front.
+
+Patterns 2,738 -> **2,756**; npcs 22,341 -> **22,391**; 57 range-restricted cast rows. Backlog
+unchanged at 189 across 133 — these are casts, not adds.
+
+### Three things the pin had to be corrected about
+
+**`DrainQueuedSkills` cannot answer "who".** It returns skill id, level and target *attribute*, and
+its own doc says it throws the aim away. A pin built on it found an empty collection and looked like
+a broken feature. `FireNextQueuedSkill` returns the creature actually hit, and is the real path.
+
+**`BossAiHarness.Wound` adds no hate** — the same trap as the previous entry, met again from a
+different direction. The setup uses `AggroList.AddHate` directly.
+
+**A claim in the code comment was wrong, and the mutation that survived is what exposed it.** I wrote
+that falling back to reach zero would mean "nobody is in reach", so the branch would cast at nothing
+and swallow the rungs below it. `AggroList` calls `PositionUtil.IsInRange` with
+`centerToCenter: false`, which **adds both bound radii to the range** — a zero reach still reaches
+anything touching a large boss. The fallback to the unrestricted pick is still right, but for the
+plainer reason that this port should not invent a bound where it has no data, exactly as
+`When.SkillReady` does not invent a cooldown. The comment now says that, and the pin says explicitly
+which mutation it does *not* cover and why:
+
+| mutation | result |
+|---|---|
+| range bound dropped from the pick | caught |
+| template-less skill passes reach zero through | survives, correctly — the readings agree at close quarters |
+
+Recording a surviving mutation as acceptable, with the reason, is the honest option here. Quietly
+dropping it from the table would leave the impression the pin is tighter than it is.
+
+### Still missing
+
+The `npc_skills` data gap remains the largest known hole: 59,131 of 74,792 cast pairs have no
+port-side entry, and retail's `npcs.xml` cannot close it (`skill_name`, `skill_level`, `skill_rate`
+only). It needs a decision about what to synthesise, not more extraction.
+
+Next refused elements, in order: `random_move` (187, needs timed wandering this port has no machinery
+for), `switch_target_by_class_indicator` (21), `say_to_all_str` (19), `is_race` (16). 102
+`on_arrived_at_waypoint` handlers still drop on `MOVETYPE_RUN`.
+
+Unchanged: the eight retail handlers with no engine slot, `control_door`, `enable_area`,
+`change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
+`set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.

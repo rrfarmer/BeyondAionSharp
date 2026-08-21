@@ -258,6 +258,8 @@ def action_code(row: dict) -> str:
         return f"Do.SpawnAt{suffix}({npc}, {group}, {live}, {spots})"
     if kind == "skill":
         return f"Do.SkillOn(NpcSkillTargetAttribute.{row['place']}, {row['a1']})"
+    if kind == "skill_in_reach":
+        return f"Do.SkillOnRankedInReach(AggroTarget.{row['place']}, {row['a1']})"
     if kind == "skill_at":
         return f"Do.SkillOn{row['place']}({row['a1']})"
     if kind == "arm":

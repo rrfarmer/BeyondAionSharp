@@ -497,12 +497,13 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             if not index or not who or who.group(1) not in SKILL_AGGRO:
                 raise Unsayable("use_skill_by_attacker_indicator at an indicator this port lacks"
                                 if index else "use_skill_by_attacker_indicator without an index")
-            # `restricted_range` narrows the candidates to those within reach. The queue picks its
-            # target when it drains and takes no such bound from here, so the 53 uses that set it are
-            # refused rather than cast at somebody out of range.
-            if ranged and ranged.group(1).upper() == "TRUE":
-                raise Unsayable("use_skill_by_attacker_indicator restricted to a range")
-            out.append(("skill", int(index.group(1)), 0, 0, SKILL_AGGRO[who.group(1)],
+            # `restricted_range` narrows the candidates to those within reach. It was refused on the
+            # grounds that the queue picks its target at drain time and takes no bound -- true of the
+            # unaimed path, but `CastSkillAt` resolves a creature now and sends it with the entry, so
+            # the bound can be applied where retail applies it. Retail states no distance, so the reach
+            # is the skill's own `first_target_range`; see `CastSkillOnRankedInReach`.
+            out.append(("skill_in_reach" if ranged and ranged.group(1).upper() == "TRUE" else "skill",
+                        int(index.group(1)), 0, 0, SKILL_AGGRO[who.group(1)],
                         0.0, 0.0, 0.0, 0))
         elif kind in ("add_hate_point", "switch_target"):
             # Only the message parameter: these name a creature by role, and the message param is the
@@ -815,7 +816,7 @@ def main() -> int:
             # answer every index the pattern uses is dropped -- not the whole pattern.
             wanted = {action[1] for branches in [cycle, *armed.values()]
                       for _, _, _, actions in branches
-                      for action in actions if action[0] in ("skill", "skill_at")}
+                      for action in actions if action[0] in ("skill", "skill_at", "skill_in_reach")}
             # A guard naming a skill index counts too. Without this an owner missing the skill keeps
             # the branch and answers the guard false forever, which reads as a mechanic that never
             # fires rather than as an npc that should not have had the branch.
@@ -839,7 +840,7 @@ def main() -> int:
                                   if g.startswith("skillready:") else g
                                   for g in guards]
                         for order, action in enumerate(actions):
-                            if action[0] in ("skill", "skill_at"):
+                            if action[0] in ("skill", "skill_at", "skill_in_reach"):
                                 action = (action[0], skills[npc][action[1]]) + action[2:]
                             rows.append((npc, named.group(1), handler, index, priority,
                                          "|".join(guards), order) + action)

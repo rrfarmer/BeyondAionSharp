@@ -66,6 +66,9 @@ public sealed class BattleCycleAiTests
 	/// <remarks>This port's <c>npc_skills</c> does not list it for the worm, which is the point.</remarks>
 	private const int WormSummon = 19143;
 
+	/// <summary>An id no skill template answers to, for the no-template fallback.</summary>
+	private const int NoSuchSkill = 999999;
+
 	/// <summary>A guard the port's own <c>npc_skills</c> does cover, and one of its skills.</summary>
 	private const int SkilledGuard = 235617;
 
@@ -324,7 +327,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 90,025 casts across 22,341 npcs, none of them read by a human. The index they came from is only
+	/// 90,194 casts across 22,391 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -343,7 +346,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(90025, casts);
+		Assert.Equal(90194, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -785,7 +788,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1779, spawns);
+		Assert.Equal(1782, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1067,7 +1070,7 @@ public sealed class BattleCycleAiTests
 		Assert.Equal(
 			new Dictionary<string, int>
 			{
-				["who:TargetIsPlayer"] = 59,
+				["who:TargetIsPlayer"] = 95,
 				["who:EventTargetIsPlayer"] = 10,
 				["who:TargetIsNpc"] = 4,
 
@@ -1291,6 +1294,77 @@ public sealed class BattleCycleAiTests
 		// And the plain form drops everyone, including the tank.
 		Do.ResetHate()(ai);
 		Assert.Empty(worm.GetAggroList().Stream());
+	}
+
+	/// <summary><b>A range-restricted pick ignores the healer standing at the back.</b></summary>
+	/// <remarks>
+	/// <c>use_skill_by_attacker_indicator</c> with <c>restricted_range</c> is 53 uses, refused until
+	/// now because the skill queue picks its target when it drains and takes no bound. That is true of
+	/// the unaimed path only -- <c>CastSkillAt</c> resolves a creature immediately and sends it with
+	/// the entry, which is where the bound belongs.
+	/// <para>
+	/// <b>Retail states no distance</b>, so the reach is the skill's own <c>first_target_range</c>. The
+	/// element exists precisely to change who gets picked: unrestricted, <c>ATTACKERI_RANDOM_ONE</c>
+	/// takes the healer at the back as readily as the tank in front. So this pin puts one player in
+	/// reach and one far outside it and requires the far one never to be chosen -- checked over enough
+	/// draws that a random pick would have taken it many times over.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ARangeRestrictedPickSkipsWhoeverIsOutOfReach()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		Player near = harness.SpawnPlayer(301f, 300f, 200f);
+		Player far = harness.SpawnPlayer(600f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, near);
+		BossAiHarness.MakeMutuallyKnown(worm, far);
+		worm.GetAggroList().AddHate(near, 100);
+		worm.GetAggroList().AddHate(far, 100);
+
+		// Both are on the hate list, so an unrestricted random pick would reach the far one.
+		Assert.Equal(2, worm.GetAggroList().Stream().Count());
+
+		// The reach has to be a real number or the action falls back to the unrestricted pick and
+		// this pin would prove nothing.
+		int reach = Aion.GameServer.Dataholders.DataManager.SKILL_DATA
+			.GetSkillTemplate(RaidSkill)!.GetProperties()!.firstTargetRange;
+		Assert.True(reach > 0, $"the pinned skill declares no first_target_range ({reach})");
+		Assert.True(reach < 200, $"the pinned skill reaches {reach}, far enough to include both players");
+
+		// Fired rather than drained: DrainQueuedSkills returns what was cast and deliberately throws
+		// the aim away, so it cannot answer "who". FireNextQueuedSkill returns the creature hit.
+		var aimed = new List<VisibleObject?>();
+		for (int draw = 0; draw < 40; draw++)
+		{
+			Do.SkillOnRankedInReach(AggroTarget.RANDOM, RaidSkill)(ai);
+			aimed.Add(BossAiHarness.FireNextQueuedSkill(worm));
+		}
+
+		Assert.NotEmpty(aimed.Where(a => a != null));
+		Assert.DoesNotContain(far, aimed);
+		Assert.Contains(near, aimed);
+
+		// And a skill this port has no template for still resolves somebody: with no declared reach
+		// the action falls back to the unrestricted pick rather than inventing a bound.
+		//
+		// Worth being precise about what this does *not* show. A zero reach would not mean "nobody" --
+		// AggroList calls IsInRange center-to-center=false, so both bound radii are added and zero
+		// still reaches anything touching a large boss. So a mutation passing zero straight through
+		// survives this pin, correctly: the two readings genuinely agree at close quarters, and the
+		// fallback is about not inventing a number rather than about avoiding an empty result.
+		// Observed by looking at the queue rather than by firing: CastSkillAt queues nothing when it
+		// resolves nobody, so a queued entry is proof an aim was found. Firing is not an option here
+		// -- SkillAttackManager dereferences the template, so a skill that has none throws, which is
+		// pre-existing behaviour and not what this pin is about.
+		Assert.Null(Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(NoSuchSkill));
+		BossAiHarness.DrainQueuedSkills(worm);
+		Assert.Null(worm.GetNextQueuedSkill());
+
+		Do.SkillOnRankedInReach(AggroTarget.MOST_HATED, NoSuchSkill)(ai);
+		Assert.NotNull(worm.GetNextQueuedSkill());
 	}
 
 }
