@@ -38401,3 +38401,82 @@ casting. Everything else about the "gap" is noise.
 Unchanged refusals: `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`,
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## Retail's own skill lists, and settling `skill_rate` by measurement
+
+`Retail-AI-Pattern: autonomous npc skill lists`
+
+The previous entry ended by saying this was one question -- what scale is `skill_rate` -- and that
+answering it unblocks 24,822 npcs. This answers it, and the answer is **per mille**, established
+three independent ways rather than assumed:
+
+1. **The port's own hand-tuned numbers.** 40,717 (npc, skill) pairs exist in both trees. Most carry
+   aionemu's default `prob="25"` and say nothing, but where somebody chose a value the dominant
+   agreement is `prob=100` against `rate=1000` -- 104 pairs. An independent author reading the same
+   encounter arrived at "always", and 1000 per mille is always.
+2. **They are not weights.** If `skill_rate` were a pick-one-of-N weight it would normalise. Of the
+   8,094 npcs with more than one autonomously-cast skill, the rates sum to 1000 in **63** of them.
+   0.8%. They are independent probabilities.
+3. **Only per mille makes the whole value set coherent.** The commonest configuration is three skills
+   summing to 300. Per mille that is 10% each -- a sane cast rate. As percentages it would be three
+   *guaranteed* casts every time the npc could act.
+
+Check 2 is the one that mattered most, because it could have falsified the reading outright rather
+than merely supporting it.
+
+### What landed
+
+`retail_autonomous.xml`: **30,453 npcs, 142,065 skills, 11,605 of them casting at least one skill on
+their own** where they previously cast nothing but what a pattern asked for.
+
+Npcs with a port-side skill list: 11,937 -> **42,390**. `SkillReady` pairs answered from real data:
+2,786 -> **7,876**, with the fallback down from 5,636 to **546**.
+
+Rate-0 skills are emitted at `prob="0"`. They are never chosen -- `Rnd.Chance()` is never below zero
+-- and they are there because they put the npc's real ordered list in front of `When.SkillReady`.
+
+**Nothing is overwritten.** Npcs the port already had an entry for are skipped entirely: those carry
+aionemu's own tuning, and both files load into the same list, so a duplicate would not error -- the
+npc would quietly end up holding one skill twice at two different probabilities. A pin asserts no
+overlap with any other file in that directory.
+
+`prob=100` with `cd=0` does not mean constant casting: `CanUseNextSkill` paces skills 3-9 seconds
+apart when the template names no interval, so the engine's own throttle stands behind this.
+
+### Three things that went wrong, all caught
+
+**1,924 tests failed on the first run.** The generated XML's comment header contained `--`, which XML
+forbids inside a comment, so `DataManager` failed to load and took every harness test with it. A
+mechanical fault, but worth recording: a data file this size fails all-or-nothing, and the failure
+looks like a catastrophe rather than like a bad row.
+
+**The `npc_ids` attribute is whitespace-separated, not space-separated.** The existing files use tabs
+too, and the overlap pin's first version split on `' '` and threw on `"236231\t236234"`. Found by the
+pin on its first run.
+
+**A prob above 100 is the failure this data is most likely to have**, and it would look like npcs
+casting constantly rather than like a parse error -- so it is pinned directly, along with the
+opposite: if the conversion collapsed everything to zero, the npcs would have skills and never use
+them, which is equally quiet. Both bounds are asserted.
+
+The full suite passes with 11,605 npcs newly casting, which is the result worth having: no existing
+encounter pin noticed, so the change is additive rather than disruptive.
+
+### Still missing
+
+`random_move` (187 uses) needs timed wandering. `say_to_all_str` (19) carries a literal string where
+this port sends string ids, and needs somewhere for an unlocalised string to go.
+`is_obj_in_abnormal_state` (12) and `add_intvar` (9) are unread. 102 `on_arrived_at_waypoint`
+handlers drop on `MOVETYPE_RUN` -- one route speed.
+
+16,688 npcs in the retail lists have no template in this port at all, and 439 skills resolve to
+something this port cannot cast; both are 4.8-versus-5.8 gaps rather than porting work.
+
+**The per-mille reading is evidence-backed, not proven.** Three checks agree and one of them could
+have refuted it, but the decisive confirmation is play-testing: an npc that should cast roughly one
+skill in ten. That is the thing to watch first if this data ever looks wrong.
+
+Unchanged: the eight retail handlers with no engine slot, `control_door`, `enable_area`,
+`change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
+`set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.

@@ -93,7 +93,8 @@ WORLD_EXTRACTORS = [("extract_spawn_conditions.py", "spawn_conditions.tsv")]
 # Reads strings.xml beside the pattern dump, so it takes the XML directory rather than a
 # patterns/binding pair.
 STRING_EXTRACTORS = [("extract_string_ids.py", "string_ids.tsv"),
-                     ("extract_npc_skill_lists.py", "npc_skill_lists.tsv")]
+                     ("extract_npc_skill_lists.py", "npc_skill_lists.tsv"),
+                     ("extract_npc_autonomous_skills.py", "npc_autonomous_skills.tsv")]
 
 # Writes into game-server data rather than out/, because the server reads it directly.
 GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",
@@ -103,6 +104,11 @@ GAME_DATA_EXTRACTORS = [("extract_gated_spawns.py",
 # as repeated --table switches, so it cannot share the others' shape.
 GEN = pathlib.Path("src/Aion.GameServer/Handlers/AI")
 EMITTERS = [
+    # Writes game data rather than C#, but it is an emitter in every other respect and drifts the
+    # same way, so it is checked here rather than trusted.
+    ("emit_npc_autonomous_skills.py",
+     pathlib.Path("game-server/data/static_data/npc_skills/retail_autonomous.xml"),
+     lambda out: [str(HERE / "out" / "npc_autonomous_skills.tsv"), out]),
     ("emit_guard_table.py", GEN / "GuardReinforcements.cs",
      lambda out: [str(HERE / "out" / "guard_reinforcements.tsv"), out]),
     ("emit_gate_table.py", GEN / "GateSquads.cs",
