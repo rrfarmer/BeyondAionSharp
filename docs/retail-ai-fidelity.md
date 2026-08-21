@@ -39215,3 +39215,70 @@ encounter, so a single missing group accounts for three quarters of the cost.
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## 4,491 patterns are skipped for having no rotation, and taking them regresses six pins
+
+`Retail-AI-Pattern: none — a change made, measured, and reverted`
+
+Chasing the actionable slice of the adds backlog -- the encounters on plain `aggressive` whose
+pattern is refused -- found the largest single gap in the extractor, and then found why it cannot
+simply be closed.
+
+### The gap
+
+`DrGuard_WhA_L48` is the shape of it. Its **entire pattern is one `on_enter_attack_state`** that arms
+two timers, casts three times and places two adds. It has no `on_battle_timer`.
+
+The entry test takes a pattern if it has a rotation *or* anything in an ending or a signal handler.
+Arming handlers are in neither list, so a pattern whose only content is an arming handler is skipped
+before anything is read. Counted across the dump: **4,491 patterns, carrying 9,113 spawn actions and
+2,521 casts.**
+
+The timers those rungs arm are inert without a rotation. The casts and the adds are the encounter.
+
+### What happened when the rule was relaxed
+
+Accepting a pattern when any arming handler has content, and treating those handlers as the pattern's
+content when there is no rotation:
+
+* patterns **2,892 -> 4,675**, npcs **22,824 -> 31,032**, spawn rows **2,059 -> 3,030**, casts
+  95,032 -> **105,700**
+* 4,755 npcs rebound from `aggressive`, 1,824 from `general`
+* **and six encounter pins went red**
+
+The failures are the point. `GrandChieftainKasikaAiTests.AllFourTiersAreReachable` lost its fourth
+tier; `DeathSpawnAiTests.EveryOneLeavesWhatRetailLeaves` expected one add and saw none. **Adding
+patterns removed adds**, which is not what a purely additive change does.
+
+The likely cause, not yet confirmed: the *adds themselves* are npcs, and many of them now acquire
+arming-handler rungs of their own. An add whose `on_wake_up` carries a `despawn_self` removes itself
+the moment it is placed, so the spawner works and the add is gone before anything can count it. That
+would explain both shapes -- a tier that never appears and a bequest that leaves nothing.
+
+**Reverted.** The tree is back to 2,892 patterns with the suite green, `regen_check` clean.
+
+### Why it was reverted rather than pinned around
+
+Six red pins on encounters somebody hand-verified is a signal that the change is wrong somewhere, not
+that the pins are stale. Every previous entry in this document that moved a number moved it in a
+direction the pins agreed with; this one did not, and the honest reading is that 9,113 spawns arriving
+at once includes some that should not fire yet.
+
+**This is the largest known gain available and it is one investigation away.** The next attempt should
+start by taking the relaxed rule, running only the six failing pins, and finding whether the adds are
+despawning themselves -- the hypothesis above is checkable in one run.
+
+### Still missing, in order
+
+1. **The arming-only patterns** (4,491 patterns, 9,113 spawns) -- above. Largest available gain.
+2. `control_door` (691 uses + 10 lost adds) -- one in-game observation.
+3. `random_move` (187; 11 lost adds behind the same `MOVETYPE_RUN` gap).
+4. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+5. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; the eight handlers with no
+   engine slot.
+6. **16 waypoint paths** -- searched exhaustively, not in this dump or the client.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary.
+
+Of the 17 encounters on plain `aggressive`, **7 are npcs a hand-written class already names** --
+`CaptainXastaAI`, `InfiltratorsAI`, `GeneralChunapaAI` -- so those are the per-encounter question, not
+extractor work. The other 10 are arming-only patterns and are covered by item 1.
