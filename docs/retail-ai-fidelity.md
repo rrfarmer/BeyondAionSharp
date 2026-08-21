@@ -38788,3 +38788,67 @@ The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fa
 Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
 conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## 139 adds were spawning at the corner of the world
+
+`Retail-AI-Pattern: waypoint-start spawns`
+
+Going back to the actual goal -- the adds backlog -- rather than the vocabulary list turned up a bug
+that has been in the table since spawns were first read.
+
+Retail's `SPAWN_LOCATION_WAY_POINT_START` places an add at the first step of a named designer path.
+The element carries `<x>0</x><y>0</y><z>0</z>`, because the position comes from the path and not from
+the element. The extractor's location switch has three cases -- at the spawner, at an offset, at
+coordinates -- and everything else fell through to the third. So those zeroes were read as
+coordinates, and **139 rows across 20 npcs placed their add at (0, 0, 0)**.
+
+It never looked like a bug. The add existed, the rotation fired, the count was right, and nothing in
+the suite asserts positions. Only the place was wrong, and it was wrong by the width of a map.
+
+### The paths were already here
+
+Four entries of this document, and `audit_missing_adds.py` itself, record these as blocked: *"those
+paths were server-side data and appear in neither the client's level files nor our repos."* That was
+true when it was written and is not true now.
+`game-server/data/static_data/npc_walker/retail_pattern_paths.xml` holds **344 routes**, and **225 of
+the 241 paths these spawns name are in it** -- 708 of 880 uses. Extracted by earlier work in this
+project, never wired to the thing that needed them.
+
+The lesson is the one this stretch keeps repeating from a new angle: the note said *the data does not
+exist*, and the check that would have falsified it was one grep. Two entries ago the same shape of
+claim was wrong about `skill_base.xml`'s cooldowns.
+
+So a waypoint spawn now resolves its path to that route's first step and places the add there. A path
+the file does not carry is **refused** rather than defaulted -- an add at the origin is not a placed
+add, and pretending otherwise is what hid this for so long.
+
+### The backlog went up, and that is the honest direction
+
+**184 -> 185 adds across 129 -> 130 encounters.** Sixteen paths are missing from the walker file, so
+their spawns are now refused instead of emitted at the origin. The count going up reflects the table
+telling the truth about something it was previously getting wrong silently.
+
+Spawn rows 2,071 -> **2,049**; patterns 2,854 -> **2,852**; npcs 22,684 -> **22,682**.
+
+`NoSpawnLandsAtTheWorldOrigin` asserts the census directly, because the distinguishing feature of
+this failure is a position and no behavioural pin here reads one: an add at exactly the origin is not
+a placement, it is a fallback that fired.
+
+### Still missing, in order
+
+1. **16 waypoint paths** absent from `retail_pattern_paths.xml`, costing 172 uses -- the biggest are
+   `NPCPathIDSweep_1` through `_4` at 32 uses each. Whoever extracted the other 225 will know where
+   they came from.
+2. `control_door` (691) -- one in-game observation away; see the previous entry.
+3. `random_move` (187) -- a combat reposition this port has no notion of.
+4. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+5. `switch_target_by_class_indicator` (53) -- groups *and* the percent-hate unknown.
+6. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`; the eight handlers with no engine slot;
+   `SANCTUARY`, `INVISIBLE`, `DEFORM`, absent from `AbnormalState`.
+
+**`audit_missing_adds.py` still calls these placements blocked and should be corrected**, but its
+`BLOCKED_LOCATION` note now understates what is available rather than overstating it, so it is left
+for the entry that revisits the audit rather than patched in passing.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.

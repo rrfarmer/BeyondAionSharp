@@ -328,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 94,364 casts across 22,684 npcs, none of them read by a human. The index they came from is only
+	/// 94,331 casts across 22,682 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(94364, casts);
+		Assert.Equal(94331, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -388,7 +388,7 @@ public sealed class BattleCycleAiTests
 				lowest++;
 		}
 
-		Assert.Equal(570, lowest);
+		Assert.Equal(566, lowest);
 	}
 
 	/// <summary><b>A weakest-target cast actually lands on the weakest creature.</b></summary>
@@ -789,7 +789,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(2071, spawns);
+		Assert.Equal(2049, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1574,6 +1574,44 @@ public sealed class BattleCycleAiTests
 		Assert.Equal(1, ai.IntVar(1));
 		Assert.True(When.Counting(1, 0, 2)(ai));
 		Assert.Equal(2, ai.IntVar(1));
+	}
+
+	/// <summary><b>No add is placed at the corner of the map.</b></summary>
+	/// <remarks>
+	/// Retail's <c>SPAWN_LOCATION_WAY_POINT_START</c> puts an add at the first step of a named
+	/// designer path, and the element carries <c>&lt;x&gt;0&lt;/x&gt;</c> because its position comes
+	/// from the path rather than from the element. The extractor's <c>absolute</c> fallback read those
+	/// zeroes as coordinates, so <b>139 rows across 20 npcs spawned their add at (0, 0, 0)</b> -- the
+	/// corner of the world, nowhere near the fight.
+	/// <para>
+	/// It never looked like a bug from a pin. The add existed, the rotation fired, the count was
+	/// right; only its position was wrong, and nothing here asserts positions. So this asserts the one
+	/// thing that distinguishes it: an add placed at exactly the origin is not a placement, it is a
+	/// fallback that fired.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void NoSpawnLandsAtTheWorldOrigin()
+	{
+		string path = Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "out", "battle_cycles.tsv");
+		string[] lines = File.ReadAllLines(path);
+		string[] header = lines[0].Split('	');
+		int kindAt = Array.IndexOf(header, "kind");
+		int placeAt = Array.IndexOf(header, "place");
+		int xAt = Array.IndexOf(header, "x");
+
+		var atOrigin = new List<string>();
+		foreach (string line in lines.Skip(1))
+		{
+			string[] f = line.Split('	');
+			if (f[kindAt] != "spawn" || !f[placeAt].Contains("absolute"))
+				continue;
+			if (f[xAt] == "0.0" && f[xAt + 1] == "0.0" && f[xAt + 2] == "0.0")
+				atOrigin.Add(line.Split('	')[0]);
+		}
+
+		Assert.Empty(atOrigin);
 	}
 
 }

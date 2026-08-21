@@ -427,6 +427,13 @@ CLASS_GROUPS = {
     "CLERIC_GROUP": ("PRIEST", "CLERIC", "CHANTER"),
 }
 
+#: Retail path name -> the first step of that route, filled in by `main` from the walker data this
+#: port already carries. `SPAWN_LOCATION_WAY_POINT_START` puts the add at the start of a named
+#: designer path, and 225 of the 241 paths the patterns name are in
+#: `game-server/data/static_data/npc_walker/retail_pattern_paths.xml`.
+WAYPOINT_STARTS: dict[str, tuple[float, float, float]] = {}
+
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -690,7 +697,18 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                      else "offset" if where and where.group(1).endswith("RELATIVE")
                      else "absolute")
             spot = [re.search(r"<%s>([-\d.]+)</%s>" % (axis, axis), body) for axis in "xyz"]
-            if place == "absolute" and not all(spot):
+            at_path = None
+            if where and where.group(1) == "SPAWN_LOCATION_WAY_POINT_START":
+                # **This used to land at the world origin.** A waypoint spawn carries `<x>0</x>` and
+                # so on, because its position comes from the named path rather than from the element,
+                # and the `absolute` fallback read those zeroes as coordinates -- so 139 rows across
+                # 20 npcs placed their add at the corner of the map. The path start is the position.
+                named = re.search(r"<pathname>([^<]*)</pathname>", body)
+                key = named.group(1).strip() if named else ""
+                at_path = WAYPOINT_STARTS.get(key)
+                if at_path is None:
+                    raise Unsayable("spawn at a waypoint path this port does not have")
+            if place == "absolute" and at_path is None and not all(spot):
                 return None
             count = re.search(r"<num_to_spawn>(\d+)</", body)
             live = re.search(r"<live_time>(\d+)</", body)
@@ -700,11 +718,11 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             # every one of those staying on the ground once the fight ended.
             transient = re.search(r"<despawn_at_attack_state>(\w+)</", body)
             place = ("for_the_fight_" + place) if transient and transient.group(1).upper() == "TRUE"                 else place
+            here = (at_path if at_path is not None
+                    else tuple(float(s.group(1)) if s else 0.0 for s in spot))
             out.append(("spawn", npc_id, int(count.group(1)) if count else 1,
                         int(live.group(1)) if live else 0, place,
-                        float(spot[0].group(1)) if spot[0] else 0.0,
-                        float(spot[1].group(1)) if spot[1] else 0.0,
-                        float(spot[2].group(1)) if spot[2] else 0.0,
+                        here[0], here[1], here[2],
                         int(group.group(1)) if group else 0))
         elif kind == "add_battle_timer":
             slot = timer_slot(body)
@@ -1010,6 +1028,19 @@ def main() -> int:
           for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
     dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
     strings = string_ids(args.repo)
+
+    # The named designer paths. Earlier entries recorded these as server-side data present in neither
+    # the client nor this repo; they are in fact already extracted here, and reading them is what
+    # stops a waypoint spawn landing at (0, 0, 0).
+    paths = args.repo / "game-server/data/static_data/npc_walker/retail_pattern_paths.xml"
+    if paths.exists():
+        for route in re.finditer(r'<walker_template route_id="([^"]+)"(.*?)</walker_template>',
+                                 A.read_text(paths), re.S):
+            first = re.search(r'<routestep x="([-\d.]+)" y="([-\d.]+)" z="([-\d.]+)"',
+                              route.group(2))
+            if first:
+                WAYPOINT_STARTS[route.group(1)] = (float(first.group(1)), float(first.group(2)),
+                                                   float(first.group(3)))
 
     # npc -> index -> skill id, but only entries this port can actually cast.
     skills: dict[int, dict[int, int]] = collections.defaultdict(dict)

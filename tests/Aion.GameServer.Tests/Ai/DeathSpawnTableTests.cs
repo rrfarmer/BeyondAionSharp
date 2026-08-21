@@ -245,7 +245,7 @@ public sealed class DeathSpawnTableTests
 
 		int npcKills = lines.Skip(1).Count(line => line.Split('	')[killerAt] == "KilledByNpc");
 
-		Assert.Equal(1769, npcKills);
+		Assert.Equal(1766, npcKills);
 	}
 
 	/// <summary><b>And it does not fire when nothing killed it at all.</b></summary>

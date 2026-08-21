@@ -237,8 +237,6 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217553	IDArena_S4_Named_R3	on_die	ANY	0	7		0	var	0	1	0	Condition_S5_D	0.0	0.0	0.0	0
 217553	IDArena_S4_Named_R3	on_die	ANY	0	7		1	spawn	281197	1	6	for_the_fight_self	0.0	0.0	0.0	1
 217554	IDArena_S4_Named_R4	on_die	ANY	0	7		0	var	0	1	0	Condition_S5_D	0.0	0.0	0.0	0
-217555	IDArena_S4_Named_R5	on_die	ANY	0	7		0	var	0	1	0	Condition_S5_D	0.0	0.0	0.0	0
-217555	IDArena_S4_Named_R5	on_die	ANY	0	7		1	spawn	281335	1	6	for_the_fight_absolute	0.0	0.0	0.0	2
 217557	IDArena_S5_Monster_1	on_die	ANY	0	7		0	var	0	1	0	Condition_S4	0.0	0.0	0.0	0
 217558	IDArena_S5_Monster_2	on_die	ANY	0	7		0	var	0	1	0	Condition_S4	0.0	0.0	0.0	0
 217559	IDArena_S5_Monster_3	on_die	ANY	0	7		0	var	0	1	0	Condition_S4	0.0	0.0	0.0	0
@@ -3013,12 +3011,6 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 280970	ND2_WhG	on_killed_by_npc	KilledByNpc	0	100		1	spawn	281032	1	0	for_the_fight_absolute	392.28	754.11	190.0	1
 280970	ND2_WhG	on_killed_by_user	KilledByPlayer	0	100		0	say	341563	0	0		0.0	0.0	0.0	0
 280970	ND2_WhG	on_killed_by_user	KilledByPlayer	0	100		1	spawn	281032	1	0	for_the_fight_absolute	392.28	754.11	190.0	1
-281085	IDLF1_Generator	on_killed_by_npc	KilledByNpc	0	21		0	spawn	281089	1	0	for_the_fight_absolute	0.0	0.0	0.0	1
-281085	IDLF1_Generator	on_killed_by_user	KilledByPlayer	0	22		0	spawn	281089	1	0	for_the_fight_absolute	0.0	0.0	0.0	1
-281086	IDLF1_Gener_02	on_killed_by_npc	KilledByNpc	0	19		0	spawn	281091	1	0	for_the_fight_absolute	0.0	0.0	0.0	1
-281086	IDLF1_Gener_02	on_killed_by_user	KilledByPlayer	0	20		0	spawn	281091	1	0	for_the_fight_absolute	0.0	0.0	0.0	1
-281087	IDLF1_Gener_03	on_killed_by_npc	KilledByNpc	0	19		0	spawn	281093	1	0	for_the_fight_absolute	0.0	0.0	0.0	1
-281087	IDLF1_Gener_03	on_killed_by_user	KilledByPlayer	0	20		0	spawn	281093	1	0	for_the_fight_absolute	0.0	0.0	0.0	1
 281117	Bionic_EhA	on_die	ANY	0	21		0	despawn	1	0	0		0.0	0.0	0.0	0
 281117	Bionic_EhA	on_die	ANY	0	21		1	despawn	2	0	0		0.0	0.0	0.0	0
 281117	Bionic_EhA	on_die	ANY	0	21		2	spawn	281230	1	0	for_the_fight_absolute	227.0	420.0	107.0	3
@@ -3041,7 +3033,6 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281195	ND2_H50_3	on_die	ANY	0	4		0	spawn	215453	1	300	absolute	310.0	983.0	111.0	3
 281195	ND2_H50_3	on_die	ANY	0	4		1	spawn	215451	1	300	absolute	312.0	986.0	111.0	4
 281195	ND2_H50_3	on_die	ANY	0	4		2	broadcast	3409	10	0		0.0	0.0	0.0	0
-281211	IDSlk_Gunner	on_die	ANY	0	7		0	spawn	281335	1	6	for_the_fight_absolute	0.0	0.0	0.0	2
 281216	IDSlk_MateSum	on_killed_by_npc	KilledByNpc	0	7		0	spawn	281241	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281216	IDSlk_MateSum	on_killed_by_user	KilledByPlayer	0	7		0	spawn	281241	1	6	for_the_fight_self	0.0	0.0	0.0	1
 281225	BGuard_ChiefD_Minor	on_die	ANY	0	7		0	spawn	296339	2	18	for_the_fight_absolute	496.0	847.0	200.0	5
@@ -3074,21 +3065,6 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281423	IDTP_NepEx1	on_die	ANY	0	9		0	spawn	281418	1	0	for_the_fight_self	0.0	0.0	0.0	0
 281423	IDTP_NepEx1	on_die	ANY	0	9		1	spawn	281418	4	0	for_the_fight_self	0.0	0.0	0.0	0
 281423	IDTP_NepEx1	on_die	ANY	0	9		2	say	1500037	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	0	7	chance:33	0	despawn	1	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	0	7	chance:33	1	despawn	2	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	0	7	chance:33	2	despawn	3	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	0	7	chance:33	3	spawn	281928	1	12	for_the_fight_absolute	0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	0	7	chance:33	4	sysmsg	1500110	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	1	6	chance:66	0	despawn	1	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	1	6	chance:66	1	despawn	2	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	1	6	chance:66	2	despawn	3	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	1	6	chance:66	3	spawn	281928	1	12	for_the_fight_absolute	0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	1	6	chance:66	4	sysmsg	1500111	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	2	5		0	despawn	1	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	2	5		1	despawn	2	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	2	5		2	despawn	3	0	0		0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	2	5		3	spawn	281928	1	12	for_the_fight_absolute	0.0	0.0	0.0	0
-281450	LF4_Dramata	on_die	ANY	2	5		4	sysmsg	1500112	0	0		0.0	0.0	0.0	0
 281454	IDDramata_Dramata	on_die	ANY	0	7		0	var	1	0	0	Phage	0.0	0.0	0.0	0
 281454	IDDramata_Dramata	on_die	ANY	0	7		1	var	1	0	0	Phage2	0.0	0.0	0.0	0
 281454	IDDramata_Dramata	on_die	ANY	0	7		2	var	1	0	0	Phage3	0.0	0.0	0.0	0
@@ -3142,10 +3118,6 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 281913	IDAbRe_Core_Cannon	on_die	ANY	0	5		1	spawn	282106	1	3	for_the_fight_self	0.0	0.0	0.0	1
 281914	IDAbRe_Core_Cannon	on_die	ANY	0	5		0	spawn	700863	5	0	for_the_fight_self	0.0	0.0	0.0	1
 281914	IDAbRe_Core_Cannon	on_die	ANY	0	5		1	spawn	282106	1	3	for_the_fight_self	0.0	0.0	0.0	1
-281938	DF4_DramataG1	on_die	ANY	0	7		0	spawn	281942	1	12	for_the_fight_absolute	0.0	0.0	0.0	1
-281939	DF4_DramataG2	on_die	ANY	0	7		0	spawn	281942	1	12	for_the_fight_absolute	0.0	0.0	0.0	1
-281940	DF4_DramataG3	on_die	ANY	0	7		0	spawn	281942	1	12	for_the_fight_absolute	0.0	0.0	0.0	1
-281941	DF4_DramataG4	on_die	ANY	0	7		0	spawn	281942	1	12	for_the_fight_absolute	0.0	0.0	0.0	1
 281974	Cromede_Torture	on_die	ANY	0	100		0	say	1500153	0	0		0.0	0.0	0.0	0
 281974	Cromede_Torture	on_die	ANY	0	100		1	spawn	282112	1	0	for_the_fight_absolute	662.28	774.47	216.85	0
 281991	Cromede_Relic3_Noshow	on_die	ANY	0	7		0	var	2	0	0	Cromede_Butler	0.0	0.0	0.0	0
