@@ -30,9 +30,23 @@ public class TiamatDragonAI : AggressiveNpcAI
     /// single nineteen-second wait would put the line in the wrong place if it is ported later.
     /// </para>
     /// <para>
-    /// <b>The rush wave that follows is not built.</b> Retail's other spawn branch sends roughly twenty
-    /// drakan along <c>path_tiamatdrakan_*</c> walker paths, and this port has no waypoint support in
-    /// either AI layer — the same gap that blocks the silikor dismissal.
+    /// <b>The rush wave that follows is not built, and the reason once given for that is no longer
+    /// true.</b> This used to read "this port has no waypoint support in either AI layer". It has
+    /// both halves now: all twelve <c>path_tiamatdrakan_*</c> routes are in
+    /// <c>npc_walker/retail_pattern_paths.xml</c>, and the pattern layer can place a spawn at a
+    /// route's first step and start an npc down it walking or running
+    /// (<see cref="AiPattern"/>'s <c>Do.GotoWaypoint</c> and <c>Do.GotoWaypointRunning</c>).
+    /// <para>
+    /// What retail's branch actually sends: four <c>NobleDrakanFi</c>, four <c>SardhaDrakanFi</c>,
+    /// three <c>NobleDrakanSc</c>, three <c>NobleDrakanWi</c>, two <c>NobleDrakanCl</c> and one each
+    /// of the three remaining Sardha classes — eighteen drakan spread over the twelve routes, two to
+    /// a route on seven of them.
+    /// </para>
+    /// <para>
+    /// It stays unbuilt because npc 219361 is bound to this class, so the generated tables do not
+    /// speak for it; porting the wave means writing those rungs here. That is per-encounter work, not
+    /// a missing capability. Found by <c>audit_stale_claims.py</c> once it was widened past the AI
+    /// classes — the claim had outlived its reason by several months.
     /// </para>
     /// </remarks>
     private static readonly (int NpcId, float X, float Y, float Z, byte Heading)[] Mages =

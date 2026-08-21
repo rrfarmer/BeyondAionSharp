@@ -39519,3 +39519,53 @@ sit in handlers that had other refusals too.
 5. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
 6. **Widen `audit_stale_claims.py` beyond the AI classes.** Four stale "we cannot do X" notes in this
    stretch were in extractors and in this document, which it does not read.
+
+## The stale-claim audit now reads more than the AI classes
+
+`Retail-AI-Pattern: none — tooling, plus one claim corrected`
+
+Four entries in a row have ended by finding that a "this port cannot do X" note was false. The tool
+written for exactly that failure -- `audit_stale_claims.py`, whose own docstring says *"a stale claim
+reads as a decision somebody already made"* -- reported clean through every one of them, because it
+reads `src/**.cs` and nothing else. **None of the four was in an AI class.** Two were extractor
+comments, one was in `audit_missing_adds.py`, one was in this document.
+
+So it reads the extractors and this file now, and its vocabulary has grown to match the sentences
+that actually got written:
+
+* `this port cannot`, `this port has no`, `no vocabulary`, `cannot be said`
+* `appear(s) in neither` -- the walk-paths claim
+* `has one speed` -- the `MOVETYPE_RUN` claim
+* `no such helper/packet/machinery/notion`
+
+Claims counted: **37 -> 304**. That number is the honest state of the tree, not a regression: those
+sentences were always there and nothing was looking at them.
+
+### It found one immediately
+
+`TiamatDragonAI` carried this: *"Retail's other spawn branch sends roughly twenty drakan along
+`path_tiamatdrakan_*` walker paths, and this port has no waypoint support in either AI layer."*
+
+Both halves are now false. All **twelve** `path_tiamatdrakan_*` routes are in
+`retail_pattern_paths.xml`, and the pattern layer can place a spawn at a route's first step and send
+an npc down it at either pace. The note had outlived its reason by months and would have stopped
+anyone who read it.
+
+The wave is still unbuilt, so the comment now says the true thing instead: what retail actually sends
+-- four `NobleDrakanFi`, four `SardhaDrakanFi`, three `NobleDrakanSc`, three `NobleDrakanWi`, two
+`NobleDrakanCl`, one each of three Sardha classes, **eighteen drakan across the twelve routes** -- and
+why it is still missing, which is that npc 219361 is bound to a hand-written class so the generated
+tables do not speak for it. **Per-encounter work, not a missing capability.**
+
+### Still missing, in order
+
+1. **304 absence claims** now visible, of which the audit can decide only the route-shaped ones
+   (clean). The rest need reading, and the four found by accident suggest the hit rate is not low.
+2. **Tiamat's rush wave** -- eighteen drakan, all routes present, needs the rungs written into
+   `TiamatDragonAI`.
+3. `control_door` (691 uses + 10 lost adds + 38 wake patterns) -- one in-game observation.
+4. `enable_area` (575) -- needs runtime zone toggling; `change_world_scene_status` (101) -- checked,
+   no runtime packet in either tree.
+5. `random_move` (187); the abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** -- both boundaries,
+   searched and settled.

@@ -48,7 +48,15 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 ABSENCE = re.compile(
     r"(we do not have|which we do not|we have no|have no route|no route for|"
     r"not in our data|nothing in our|spawned by nothing|binding to nothing|"
-    r"we lack|do not carry|is absent from our)", re.I)
+    r"we lack|do not carry|is absent from our|"
+    # Added after four stale claims in a row that none of the above matched. Each was a sentence
+    # asserting a limit of the port rather than a missing file, and each was false by the time it was
+    # read: "this port's route walking has one speed" (it does not), "those paths appear in neither
+    # the client's level files nor our repos" (they were in npc_walker), and two of the form
+    # "this port cannot answer X" about conditions the runtime already had.
+    r"this port cannot|this port has no|port has no|cannot be said|no vocabulary|"
+    r"appear in neither|appears in neither|has one speed|does not exist here|"
+    r"no such (?:helper|packet|machinery|notion))", re.I)
 
 ROUTEISH = re.compile(r"(route|path)", re.I)
 
@@ -110,13 +118,23 @@ def paths_in_patterns(xml_dir):
 def claims():
     """(file, line number, text) for every absence claim in a comment."""
     out = []
-    for f in sorted((REPO / "src").rglob("*.cs")):
+    # **Not only the AI classes.** The audit was written for `<remarks>` blocks and read `src/**.cs`
+    # alone, and four stale claims in a row lived somewhere else: two in extractor comments, one in
+    # `audit_missing_adds.py` itself, one in the fidelity doc. A claim misleads wherever it is written,
+    # and the extractors are where the refusals are decided.
+    scanned = list((REPO / "src").rglob("*.cs"))
+    scanned += (REPO / "tools" / "client-extract").glob("*.py")
+    scanned += [REPO / "docs" / "retail-ai-fidelity.md"]
+    for f in sorted(p for p in scanned if p.exists()):
         if "/obj/" in f.as_posix() or "/bin/" in f.as_posix():
             continue
+        prose = f.suffix in (".py", ".md")
         lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
-            if not (stripped.startswith("///") or stripped.startswith("//")):
+            # C# carries claims in comments; a Python module or a markdown entry is prose throughout,
+            # so every line counts.
+            if not prose and not (stripped.startswith("///") or stripped.startswith("//")):
                 continue
             if not ABSENCE.search(stripped):
                 continue
