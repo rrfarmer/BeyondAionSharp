@@ -191,6 +191,10 @@ def guard_code(token: str) -> str:
     kind, _, argument = token.partition(":")
     if kind == "timer":
         return f"When.Timer({argument})"
+    if kind == "class":
+        name, classes = argument.split(":")
+        listed = ", ".join(f"PlayerClass.{c}" for c in classes.split("+"))
+        return f"When.{name}({listed})"
     if kind == "abnormal":
         name, state = argument.split(":")
         return f"When.{name}(AbnormalState.{state})"

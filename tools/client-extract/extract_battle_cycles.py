@@ -387,6 +387,46 @@ PORT_ABNORMALS = {
     "SPIN",
 }
 
+#: Retail's `is_user_class` subjects, and the condition each becomes.
+CLASS_SUBJECTS = {
+    "USERI_SEEN": "SeenClass",
+    "USERI_ATTACKER": "AttackerClass",
+    "USERI_CASTER": "CasterClass",
+    "USERI_EVENT_TARGET": "EventTargetClass",
+    "USERI_TALKER": "TalkerClass",
+}
+
+#: Retail's class names for this port's. The renames are the client's own, recorded in the enum's
+#: comments -- `TEMPLAR, // knight` beside `GLADIATOR, // fighter` and `SORCERER, // wizard`.
+CLASS_NAMES = {
+    "KNIGHT": "TEMPLAR",
+    "FIGHTER": "GLADIATOR",
+    "WIZARD": "SORCERER",
+    "ELEMENTALIST": "SPIRIT_MASTER",
+    "ASSASSIN": "ASSASSIN",
+    "RANGER": "RANGER",
+    "PRIEST": "PRIEST",
+    "CHANTER": "CHANTER",
+    "CLERIC": "CLERIC",
+    "RIDER": "RIDER",
+    "GUNNER": "GUNNER",
+    "BARD": "BARD",
+    "ARTIST": "ARTIST",
+}
+
+#: Retail's class groups, resolved through the branch each class starts in. This is the class tree
+#: `PlayerClassExtensions.StartingClass` already carries, not a taxonomy invented here.
+#:
+#: `CASTER_GROUP` (30 uses) and `MELEE_GROUP` (29) are deliberately absent: nothing in this port says
+#: whether a cleric is a caster or a ranger is melee, both readings are defensible, and a guard that
+#: admits one class too many fires for a player retail ignores. `NONE` (6) names no class at all.
+CLASS_GROUPS = {
+    "WARRIOR_GROUP": ("WARRIOR", "GLADIATOR", "TEMPLAR"),
+    "SCOUT_GROUP": ("SCOUT", "ASSASSIN", "RANGER"),
+    "MAGE_GROUP": ("MAGE", "SORCERER", "SPIRIT_MASTER"),
+    "CLERIC_GROUP": ("PRIEST", "CLERIC", "CHANTER"),
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -505,6 +545,25 @@ def read_guards(block: str) -> list[str]:
             if not who or who.group(1) not in ENEMY_ROLES:
                 raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
             out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+        elif kind == "is_user_class":
+            # Retail's class groups resolve through `StartingClass`, which this port already holds;
+            # `CLASSI_CASTER_GROUP` and `CLASSI_MELEE_GROUP` have no such source and are refused. See
+            # `When.SeenClass`.
+            user = re.search(r"<user>(\w+)</user>", body)
+            named = re.findall(r"<class>CLASSI_(\w+)</class>", body)
+            if not user or not named:
+                raise Unsayable("is_user_class with no subject or class")
+            if user.group(1) not in CLASS_SUBJECTS:
+                raise Unsayable(f"is_user_class about {user.group(1)}")
+            classes: list[str] = []
+            for one in named:
+                if one in CLASS_GROUPS:
+                    classes.extend(CLASS_GROUPS[one])
+                elif one in CLASS_NAMES:
+                    classes.append(CLASS_NAMES[one])
+                else:
+                    raise Unsayable(f"is_user_class of CLASSI_{one}")
+            out.append("class:" + CLASS_SUBJECTS[user.group(1)] + ":" + "+".join(sorted(set(classes))))
         elif kind == "is_obj_in_abnormal_state":
             # Only the states this port names exactly. Retail's group indicators are refused: see
             # `When.InAbnormalState` for why deciding what "physical" or "mental" covers would be

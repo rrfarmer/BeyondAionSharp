@@ -765,6 +765,45 @@ public static class When
     public static PatternCondition AttackerClass(params PlayerClass[] classes)
         => ai => ai.LastAttacker is Player hitter && classes.Contains(hitter.GetPlayerClass());
 
+    /// <summary><c>is_user_class</c> for the other subjects retail names.</summary>
+    /// <remarks>
+    /// 185 uses across five subjects, of which <see cref="AttackerClass"/> covered one. Retail asks it
+    /// of the creature seen (61), the attacker (54), the caster (44), the event target (22) and the
+    /// talker (4).
+    /// <para>
+    /// <b>Retail's class *groups* are the interesting half, and three of them are derivable rather
+    /// than guessed.</b> <c>PlayerClassExtensions</c> carries <c>StartingClass</c>, so
+    /// <c>CLASSI_MAGE_GROUP</c> is exactly the classes whose starting class is <see cref="PlayerClass.MAGE"/>
+    /// -- mage, sorcerer, spirit master -- and the same for the warrior, scout and cleric branches.
+    /// That is reading the class tree this port already holds, not inventing one.
+    /// </para>
+    /// <para>
+    /// <b><c>CLASSI_CASTER_GROUP</c> (30) and <c>CLASSI_MELEE_GROUP</c> (29) are refused.</b> Nothing
+    /// here says whether a cleric is a caster or a ranger is melee, and both readings are defensible
+    /// -- which is exactly the problem. A guard that admits one class too many fires for a player it
+    /// should ignore, and a boss that answers a chanter as if it were a sorcerer looks like a boss
+    /// working. <c>CLASSI_NONE</c> (6) is refused too: it names no class at all.
+    /// </para>
+    /// <para>
+    /// Only a player has a class, so an NPC in the role fails these rather than matching a default.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>is_user_class user=USERI_SEEN</c>.</summary>
+    public static PatternCondition SeenClass(params PlayerClass[] classes)
+        => ai => ai.SeenCreature is Player who && classes.Contains(who.GetPlayerClass());
+
+    /// <summary><c>is_user_class user=USERI_CASTER</c>.</summary>
+    public static PatternCondition CasterClass(params PlayerClass[] classes)
+        => ai => ai.LastCaster is Player who && classes.Contains(who.GetPlayerClass());
+
+    /// <summary><c>is_user_class user=USERI_EVENT_TARGET</c>.</summary>
+    public static PatternCondition EventTargetClass(params PlayerClass[] classes)
+        => ai => ai.EventTarget is Player who && classes.Contains(who.GetPlayerClass());
+
+    /// <summary><c>is_user_class user=USERI_TALKER</c>.</summary>
+    public static PatternCondition TalkerClass(params PlayerClass[] classes)
+        => ai => ai.Talker is Player who && classes.Contains(who.GetPlayerClass());
+
     /// <summary><c>is_obj_in_abnormal_state</c> — the named creature is under this effect.</summary>
     /// <remarks>
     /// 157 uses, and <b>only 25 of them name a state this port has</b>. The rest are retail's *group*

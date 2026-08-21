@@ -328,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 94,336 casts across 22,668 npcs, none of them read by a human. The index they came from is only
+	/// 94,346 casts across 22,675 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(94336, casts);
+		Assert.Equal(94346, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -789,7 +789,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(2072, spawns);
+		Assert.Equal(2071, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1502,6 +1502,46 @@ public sealed class BattleCycleAiTests
 		Do.TargetKiller()(ai);
 
 		Assert.Equal(alive, worm.GetTarget());
+	}
+
+	/// <summary><b>A class group is the branch of the class tree, not a guess at one.</b></summary>
+	/// <remarks>
+	/// <c>is_user_class</c> is 185 uses across five subjects, of which only the attacker had a
+	/// condition. Retail names single classes and <i>groups</i>, and the groups are what mattered:
+	/// <c>PlayerClassExtensions</c> carries <c>StartingClass</c>, so <c>CLASSI_MAGE_GROUP</c> is
+	/// exactly the classes whose branch is <see cref="PlayerClass.MAGE"/>. That is reading the tree
+	/// this port already holds.
+	/// <para>
+	/// <b><c>CASTER_GROUP</c> (30) and <c>MELEE_GROUP</c> (29) are refused</b>, and this pin exists to
+	/// stop somebody quietly filling them in. Nothing here says whether a cleric is a caster or a
+	/// ranger is melee. A guard admitting one class too many fires for a player retail ignores, and a
+	/// boss answering a chanter as if it were a sorcerer looks exactly like a boss working.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ClassGroupsFollowTheClassTree()
+	{
+		// The three-class branches, straight off StartingClass rather than out of a list somebody typed.
+		foreach ((PlayerClass branch, PlayerClass[] members) in new[]
+		{
+			(PlayerClass.WARRIOR, new[] { PlayerClass.WARRIOR, PlayerClass.GLADIATOR, PlayerClass.TEMPLAR }),
+			(PlayerClass.SCOUT, new[] { PlayerClass.SCOUT, PlayerClass.ASSASSIN, PlayerClass.RANGER }),
+			(PlayerClass.MAGE, new[] { PlayerClass.MAGE, PlayerClass.SORCERER, PlayerClass.SPIRIT_MASTER }),
+			(PlayerClass.PRIEST, new[] { PlayerClass.PRIEST, PlayerClass.CLERIC, PlayerClass.CHANTER }),
+		})
+		{
+			Assert.All(members, c => Assert.Equal(branch, c.GetStartingClass()));
+		}
+
+		// And the extractor's groups say the same thing, so the two cannot drift apart.
+		string extractor = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
+			"tools", "client-extract", "extract_battle_cycles.py"));
+		Assert.Contains("\"MAGE_GROUP\": (\"MAGE\", \"SORCERER\", \"SPIRIT_MASTER\")", extractor);
+		Assert.Contains("\"CLERIC_GROUP\": (\"PRIEST\", \"CLERIC\", \"CHANTER\")", extractor);
+
+		// The two with no source must stay out of it.
+		Assert.DoesNotContain("CASTER_GROUP\":", extractor);
+		Assert.DoesNotContain("MELEE_GROUP\":", extractor);
 	}
 
 }

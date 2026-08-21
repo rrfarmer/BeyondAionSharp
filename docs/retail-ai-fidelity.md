@@ -38590,3 +38590,65 @@ The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fa
 Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
 conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## Class groups, resolved from the tree this port already holds
+
+`Retail-AI-Pattern: is_user_class for every subject, and the derivable class groups`
+
+The previous entry named retail's group indicators as the coherent remaining gap and said the class
+groups were three quarters derivable. This does that half.
+
+**The element that mattered was not the one that surfaced the problem.** `switch_target_by_class_indicator`
+is where class groups were first noticed, and it stays blocked -- it carries `percent_to_add` as well,
+and what a 5% hate add is a percentage *of* is stated nowhere. But `is_user_class` is **185 uses** of
+the same vocabulary, is a plain condition, and had no such second unknown. Looking for where else the
+blocked vocabulary appears was worth more than pushing on the element that raised it.
+
+Five subjects: the creature seen (61), the attacker (54), the caster (44), the event target (22) and
+the talker (4). Only the attacker had a condition; the other four are one line each.
+
+### What is derivable and what is not
+
+`PlayerClassExtensions` carries `StartingClass`, so `CLASSI_MAGE_GROUP` is exactly the classes whose
+branch is `MAGE` -- mage, sorcerer, spirit master -- and the same for warrior, scout and cleric.
+**That is reading the class tree this port already holds, not inventing a taxonomy.** A pin asserts
+the four branches against `GetStartingClass()` *and* against the extractor's own table, so the two
+cannot drift apart.
+
+`CLASSI_CASTER_GROUP` (30) and `CLASSI_MELEE_GROUP` (29) are refused, and the pin asserts they stay
+refused. Nothing here says whether a cleric is a caster or a ranger is melee. Both readings are
+defensible, which is the problem: a guard admitting one class too many fires for a player retail
+ignores, and a boss answering a chanter as if it were a sorcerer looks exactly like a boss working.
+`CLASSI_NONE` (6) names no class at all.
+
+The single classes need no interpretation: the renames are the client's own, recorded in the enum's
+comments -- `TEMPLAR, // knight` beside `GLADIATOR, // fighter` and `SORCERER, // wizard`.
+
+### What landed, honestly
+
+**16 rows.** Patterns 2,844 -> **2,845**, npcs 22,668 -> **22,675**.
+
+That is a small return for the work, and the reason is worth stating rather than hiding: the other
+169 uses sit in patterns still refused for some *other* element. The mapping is correct and will
+light up as those are read -- the same thing happened with `is_user`, whose conditions went from no
+data to 22 and then 26 rows as neighbouring elements landed. Reading a refused element is rarely a
+self-contained win.
+
+### Still missing, in order
+
+1. **`CASTER_GROUP` and `MELEE_GROUP`** (59 uses) -- need a source for retail's groupings, or a
+   decision recorded as one.
+2. **The abnormal-state groups** (108 uses) -- `PHYSICAL_GROUP`, `MENTAL_GROUP`, `CANNOT_ACT_GROUP`.
+   No source at all; strictly worse than the class case.
+3. `random_move` (187) -- a combat reposition, not a wander.
+4. `switch_target_by_class_indicator` (53) -- groups *and* the percent-hate unknown.
+5. `say_to_all_str` (19), `control_door` (19), `add_intvar` (11).
+6. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`; the eight handlers with no engine slot;
+   `SANCTUARY`, `INVISIBLE` and `DEFORM`, which `AbnormalState` does not carry.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fallback at 546 pairs,
+**per-mille reading evidence-backed but wanting play-testing**.
+
+Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
+conceded to `spawn_helpers.xml`, and retail cast timings.
