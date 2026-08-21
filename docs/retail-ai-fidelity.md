@@ -37920,3 +37920,68 @@ Unchanged: the eight retail handlers with no engine slot, `control_door`, `enabl
 `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`,
 `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast
 timings.
+
+## Whose health is it: `is_hp_lower_than` about somebody else
+
+`Retail-AI-Pattern: health checks on the creature the event names`
+
+`is_hp_lower_than` is 6,386 uses. 6,048 ask about `OBJI_SELF` and were always read; the other 338 ask
+about a creature the event names and were refused. The refusal was right — emitting `HpBelow` for them
+would have read this NPC's health instead of theirs, which is a guard that answers plausibly and
+wrongly.
+
+**`OBJI_FRIEND` is 314 of the 338**, and it lives entirely in `on_see_friend_attacked` (165) and
+`on_friend_spelled` (149): a healer deciding whether the friend is hurt enough to be worth helping.
+`PatternAi.Friend` is set for exactly the span of those two handlers, so the question is answerable
+precisely where retail asks it and nowhere else.
+
+**`When.FriendHpBelow` was already written**, for a hand-written class. That is the sixth time in this
+stretch of work that the runtime turned out to know a word the parser refused, and it is no longer
+worth being surprised by — the check belongs at the front of reading any refused element, not after.
+
+Patterns 2,671 -> **2,672**; npcs 21,716 -> **21,725**; **1,539 rows** now carry a friend-health guard,
+and casts 81,589 -> 82,944. The module docstring that said this element is "only taken for
+`OBJI_SELF`" is corrected rather than left to mislead.
+
+`OBJI_PARTY_MEMBER` (2 uses) is refused: this port has no party-member role on an NPC pattern, and the
+nearest creature to hand would be a guess.
+
+### An absent role answers false here, and true two entries ago
+
+Both are deliberate and the difference is the point. `When.SkillReady` answers **true** for a skill the
+port has no entry for, because a missing entry means *this port lacks cooldown data* — blocking the
+branch would destroy a mechanic that works. `When.FriendHpBelow` answers **false** for an absent
+friend, because a missing role means *the event has no such creature*, and "somebody who is not there
+is below 30% health" is not a true statement about anything. Answering true would fire every healer's
+rescue rung continuously, at nobody.
+
+The pin exercises the second, and its threshold is chosen rather than round: it asserts
+`FriendHpBelow(101)` is false. At full health a version reading the NPC's *own* health answers false
+at 100 and true at 101, so a 100 written out of habit lets the swap through — which a mutation
+demonstrated before the number was changed.
+
+| mutation | caught |
+|---|---|
+| absent friend counted as hurt | yes |
+| friend health read as the npc's own | yes |
+
+### Still missing
+
+The identity-guard census moved again — `AttackedByPlayer` 1 -> 18, `SpelledByPlayer` 0 -> 17 — not
+because `is_user` changed but because reading a refused element brings in patterns that carried it
+*and* an identity guard. Each move is a visible edit in the pin rather than silence, which is what it
+is for.
+
+`spawn_on_multi_target` (33), `is_distance_longer_than` (32), `use_skill_by_attacker_indicator`
+restricted to a range (28) and `reset_hatepoints` (25) are the next refused elements. 102
+`on_arrived_at_waypoint` handlers still drop on `MOVETYPE_RUN`.
+
+The `npc_skills` data gap is unchanged and remains the largest known hole: 59,131 of 74,792 cast pairs
+have no port-side entry. Retail's `npcs.xml` cannot close it — its `<skills>` block carries only
+`skill_name`, `skill_level` and `skill_rate`, with no cooldown or hp window — so this needs a decision
+about what to synthesise, not more extraction.
+
+Unchanged: `random_move` (187, needs timed wandering), the eight retail handlers with no engine slot,
+`control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
+conceded to `spawn_helpers.xml`, and retail cast timings.

@@ -317,6 +317,52 @@ public static class When
     /// <summary><c>is_hp_in_boundary</c> — inclusive at both ends, which is how retail's regimes tile.</summary>
     public static PatternCondition HpBetween(int low, int high) => ai => ai.HpPercent >= low && ai.HpPercent <= high;
 
+    /// <summary><c>is_hp_lower_than</c> about somebody other than this NPC.</summary>
+    /// <remarks>
+    /// <c>is_hp_lower_than</c> is 6,386 uses and 6,048 of them ask about <c>OBJI_SELF</c>, which
+    /// <see cref="HpBelow"/> has always answered. The other 338 ask about a creature the event names,
+    /// and the extractor refused them — correctly, since emitting <c>HpBelow</c> would have read this
+    /// NPC's health instead of theirs.
+    /// <para>
+    /// <b><c>OBJI_FRIEND</c> is 314 of the 338</b>, and it lives entirely in <c>on_see_friend_attacked</c>
+    /// (165) and <c>on_friend_spelled</c> (149) — a healer deciding whether the friend is hurt enough to
+    /// be worth helping. <see cref="PatternAi.Friend"/> is set for exactly the span of those two
+    /// handlers, so the question is answerable precisely where retail asks it and nowhere else — and
+    /// <see cref="FriendHpBelow"/> was already written for a hand-written class, which is the sixth
+    /// time in this stretch of work that the runtime turned out to know a word the parser refused.
+    /// </para>
+    /// <para>
+    /// A role that is not set answers <b>false</b>, which is the opposite of the choice
+    /// <see cref="SkillReady"/> makes and for a different reason. There, an absent entry meant "this
+    /// port has no cooldown data", so blocking the branch would have destroyed a working mechanic.
+    /// Here an absent role means the event genuinely has no such creature, and "somebody who is not
+    /// there is below 30% health" is not a true statement about anything.
+    /// </para>
+    /// <para>
+    /// <c>OBJI_PARTY_MEMBER</c> (2 uses) is refused: this port has no party-member role on an NPC
+    /// pattern, and the nearest creature to hand would be a guess.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>is_hp_lower_than who=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternCondition TargetHpBelow(int percent)
+        => ai => ai.CurrentTarget is Creature who && who.GetLifeStats().GetHpPercentage() < percent;
+
+    /// <summary><c>is_hp_lower_than who=OBJI_SEEN</c>.</summary>
+    public static PatternCondition SeenHpBelow(int percent)
+        => ai => ai.SeenCreature is Creature who && who.GetLifeStats().GetHpPercentage() < percent;
+
+    /// <summary><c>is_hp_lower_than who=OBJI_CASTER</c>.</summary>
+    public static PatternCondition CasterHpBelow(int percent)
+        => ai => ai.LastCaster is Creature who && who.GetLifeStats().GetHpPercentage() < percent;
+
+    /// <summary><c>is_hp_lower_than who=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerHpBelow(int percent)
+        => ai => ai.LastAttacker is Creature who && who.GetLifeStats().GetHpPercentage() < percent;
+
+    /// <summary><c>is_hp_lower_than who=OBJI_MESSAGE_SENDER</c>.</summary>
+    public static PatternCondition MessageSenderHpBelow(int percent)
+        => ai => ai.MessageSender is Creature who && who.GetLifeStats().GetHpPercentage() < percent;
+
     /// <summary>
     /// <c>set_flag_var</c> in a branch's conditions: passes only the first time, and consumes the flag.
     /// </summary>

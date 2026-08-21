@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 2671 retail patterns across 21716 npcs, 258086 actions.
+/// Combat rotations: 2672 retail patterns across 21725 npcs, 259589 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -152,7 +152,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildCycleVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[1925][];
+        PatternBranch[][] variants = new PatternBranch[1924][];
         CycleVariants0(variants);
         CycleVariants1(variants);
         CycleVariants2(variants);
@@ -29587,45 +29587,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21292)),
         ];
         variants[1755] = [
-            AiPattern.Branch(21, "rung 0", [When.Timer(8)],
-                Do.ArmTimer(5, 12000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18166),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20702)),
-            AiPattern.Branch(20, "rung 1", [When.Timer(7), When.Consuming(2)],
-                Do.ArmTimer(8, 8000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
-            AiPattern.Branch(19, "rung 2", [When.Timer(7), When.FirstTime(2)],
-                Do.ArmTimer(8, 12000),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 21417),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21285),
-                Do.SwitchTarget(AggroTarget.RANDOM)),
-            AiPattern.Branch(18, "rung 3", [When.Timer(6)],
-                Do.ArmTimer(7, 8000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21284)),
-            AiPattern.Branch(17, "rung 4", [When.Timer(5)],
-                Do.ArmTimer(6, 8000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
-            AiPattern.Branch(16, "rung 5", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
-                Do.ArmTimer(5, 10000),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20702)),
-            AiPattern.Branch(15, "rung 6", [When.Timer(4), When.HpBetween(52, 99)],
-                Do.ArmTimer(1, 6000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18166),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21285)),
-            AiPattern.Branch(14, "rung 7", [When.Timer(3), When.HpBetween(52, 99)],
-                Do.ArmTimer(4, 8000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
-            AiPattern.Branch(13, "rung 8", [When.Timer(2), When.HpBetween(52, 99)],
-                Do.ArmTimer(3, 8000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21284)),
-            AiPattern.Branch(12, "rung 9", [When.Timer(1), When.HpBetween(52, 99)],
-                Do.ArmTimer(2, 8000),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
-            AiPattern.Branch(11, "rung 10", [When.Timer(0)],
-                Do.ArmTimer(0, 3000)),
-        ];
-        variants[1756] = [
             AiPattern.Branch(22, "rung 0", [When.Timer(8)],
                 Do.ArmTimer(5, 14000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21451),
@@ -29667,7 +29628,7 @@ internal static class BattleCycles
             AiPattern.Branch(11, "rung 10", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1757] = [
+        variants[1756] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.HpBelow(40), When.FirstTime(0)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17404)),
@@ -29677,7 +29638,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1758] = [
+        variants[1757] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(1)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16443),
@@ -29689,7 +29650,7 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1759] = [
+        variants[1758] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.HpBelow(35), When.SkillReady(16603)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16603),
@@ -29701,7 +29662,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1760] = [
+        variants[1759] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(0), When.HpBelow(35), When.SkillReady(16603)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16603),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16608)),
@@ -29714,7 +29675,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1761] = [
+        variants[1760] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(0), When.HpBelow(35), When.FirstTime(1)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16635),
@@ -29726,7 +29687,7 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1762] = [
+        variants[1761] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(45), When.FirstTime(2)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16635),
@@ -29742,7 +29703,7 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1763] = [
+        variants[1762] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.HpBelow(35), When.SkillReady(16641)],
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16641),
@@ -29753,14 +29714,14 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 4000)),
         ];
-        variants[1764] = [
+        variants[1763] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0), When.HpBelow(40), When.FirstTime(0)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16633)),
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1765] = [
+        variants[1764] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.HpBelow(40), When.FirstTime(0)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16633)),
@@ -29770,7 +29731,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1766] = [
+        variants[1765] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17163),
@@ -29779,107 +29740,107 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16519)),
         ];
-        variants[1767] = [
+        variants[1766] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0)],
                 Do.Broadcast(6815, 50f),
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1768] = [
+        variants[1767] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17167)),
         ];
-        variants[1769] = [
+        variants[1768] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16549)),
         ];
-        variants[1770] = [
+        variants[1769] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16829)),
         ];
-        variants[1771] = [
+        variants[1770] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18478)),
         ];
-        variants[1772] = [
+        variants[1771] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17405)),
         ];
-        variants[1773] = [
+        variants[1772] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17123)),
         ];
-        variants[1774] = [
+        variants[1773] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16557)),
         ];
-        variants[1775] = [
+        variants[1774] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16762)),
         ];
-        variants[1776] = [
+        variants[1775] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16714)),
         ];
-        variants[1777] = [
+        variants[1776] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16585)),
         ];
-        variants[1778] = [
+        variants[1777] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17498)),
         ];
-        variants[1779] = [
+        variants[1778] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16521)),
         ];
-        variants[1780] = [
+        variants[1779] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16492)),
         ];
-        variants[1781] = [
+        variants[1780] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16422)),
         ];
-        variants[1782] = [
+        variants[1781] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16520)),
         ];
-        variants[1783] = [
+        variants[1782] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17066)),
         ];
-        variants[1784] = [
+        variants[1783] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16784)),
         ];
-        variants[1785] = [
+        variants[1784] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16523)),
         ];
-        variants[1786] = [
+        variants[1785] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16554)),
         ];
-        variants[1787] = [
+        variants[1786] = [
             AiPattern.Branch(20, "rung 0", [When.Timer(0), When.HpBelow(25), When.FirstTime(0)],
                 Do.Despawn(2),
                 Do.ArmTimer(0, 5000),
@@ -29947,7 +29908,7 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 13", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1788] = [
+        variants[1787] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.HpBetween(52, 99)],
                 Do.ArmTimer(2, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16519)),
@@ -29961,7 +29922,7 @@ internal static class BattleCycles
             AiPattern.Branch(4, "rung 3", [When.Timer(0), When.HpBetween(1, 49)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18491)),
         ];
-        variants[1789] = [
+        variants[1788] = [
             AiPattern.Branch(6, "rung 0", [When.HpBetween(52, 99), When.Timer(0)],
                 Do.Say(340695, 0),
                 Do.ArmTimer(0, 15000),
@@ -29981,7 +29942,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 20000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16532)),
         ];
-        variants[1790] = [
+        variants[1789] = [
             AiPattern.Branch(7, "rung 0", [When.HpBetween(52, 99), When.Timer(0), When.SkillReady(17230)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17230)),
@@ -29995,12 +29956,12 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17322)),
         ];
-        variants[1791] = [
+        variants[1790] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19338)),
         ];
-        variants[1792] = [
+        variants[1791] = [
             AiPattern.Branch(24, "rung 0", [When.Timer(1), When.HpBelow(10), When.FirstTime(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19310),
@@ -30028,7 +29989,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
-        variants[1793] = [
+        variants[1792] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18812),
                 Do.ArmTimer(0, 1500)),
@@ -30039,106 +30000,106 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18543),
                 Do.ArmTimer(2, 2000)),
         ];
-        variants[1794] = [
+        variants[1793] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16791)),
         ];
-        variants[1795] = [
+        variants[1794] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.Broadcast(6464, 50f)),
         ];
-        variants[1796] = [
+        variants[1795] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16574),
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1797] = [
+        variants[1796] = [
             AiPattern.Branch(15, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16571),
                 Do.ArmTimer(0, 15000)),
         ];
-        variants[1798] = [
+        variants[1797] = [
             AiPattern.Branch(12, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16571),
                 Do.ArmTimer(0, 30000)),
         ];
-        variants[1799] = [
+        variants[1798] = [
             AiPattern.Branch(13, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16531),
                 Do.ArmTimer(0, 15000)),
+        ];
+        variants[1799] = [
+            AiPattern.Branch(18, "rung 0", [When.Timer(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18209),
+                Do.ArmTimer(0, 9000)),
         ];
     }
 
     private static void CycleVariants18(PatternBranch[][] variants)
     {
         variants[1800] = [
-            AiPattern.Branch(18, "rung 0", [When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18209),
-                Do.ArmTimer(0, 9000)),
-        ];
-        variants[1801] = [
             AiPattern.Branch(19, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17879),
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1802] = [
+        variants[1801] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(5)],
                 Do.Broadcast(88888, 50f),
                 Do.ArmTimer(5, 7000)),
         ];
-        variants[1803] = [
+        variants[1802] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(20)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19053),
                 Do.ArmTimer(20, 5000)),
         ];
-        variants[1804] = [
+        variants[1803] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0)],
                 Do.SpawnNearForTheFight(287042, 0, 10, 0f, 0)),
         ];
-        variants[1805] = [
+        variants[1804] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.FirstTime(4)],
                 Do.SpawnNearForTheFight(287086, 0, 1, 0f, 0)),
         ];
-        variants[1806] = [
+        variants[1805] = [
             AiPattern.Branch(31, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17143),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-        variants[1807] = [
+        variants[1806] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.Consuming(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20019),
                 Do.ArmTimer(0, 3000)),
         ];
-        variants[1808] = [
+        variants[1807] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21300),
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1809] = [
+        variants[1808] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18995),
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1810] = [
+        variants[1809] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.FirstTime(0)],
                 Do.SpawnNearForTheFight(287222, 0, 1, 0f, 0),
                 Do.Broadcast(50001, 100f)),
         ];
-        variants[1811] = [
+        variants[1810] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16519)),
             AiPattern.Branch(7, "rung 1", [When.Timer(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16520),
                 Do.ArmTimer(1, 10000)),
         ];
-        variants[1812] = [
+        variants[1811] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0), When.FirstTime(0)],
                 Do.SpawnNearForTheFight(287220, 0, 1, 0f, 0),
                 Do.Broadcast(50001, 100f)),
         ];
-        variants[1813] = [
+        variants[1812] = [
             AiPattern.Branch(30, "rung 0", [When.Timer(1), When.HpBelow(60), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18111)),
             AiPattern.Branch(26, "rung 1", [When.Timer(1)],
@@ -30152,12 +30113,12 @@ internal static class BattleCycles
             AiPattern.Branch(6, "rung 4", [When.Timer(4)],
                 Do.ArmTimer(3, 5000)),
         ];
-        variants[1814] = [
+        variants[1813] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(0), When.FirstTime(0)],
                 Do.SpawnNearForTheFight(287223, 0, 1, 0f, 0),
                 Do.Broadcast(40003, 100f)),
         ];
-        variants[1815] = [
+        variants[1814] = [
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19428),
                 Do.DespawnSelf()),
@@ -30166,7 +30127,7 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 6000)),
         ];
-        variants[1816] = [
+        variants[1815] = [
             AiPattern.Branch(20, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(2, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21545)),
@@ -30189,7 +30150,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21547)),
         ];
-        variants[1817] = [
+        variants[1816] = [
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21463),
                 Do.DespawnSelf()),
@@ -30198,17 +30159,17 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(1)],
                 Do.ArmTimer(1, 6000)),
         ];
-        variants[1818] = [
+        variants[1817] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17483)),
         ];
-        variants[1819] = [
+        variants[1818] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17364)),
         ];
-        variants[1820] = [
+        variants[1819] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21667)),
@@ -30242,7 +30203,7 @@ internal static class BattleCycles
             AiPattern.Branch(0, "rung 10", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1821] = [
+        variants[1820] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21673)),
@@ -30276,7 +30237,7 @@ internal static class BattleCycles
             AiPattern.Branch(0, "rung 10", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1822] = [
+        variants[1821] = [
             AiPattern.Branch(21, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21710)),
@@ -30316,7 +30277,7 @@ internal static class BattleCycles
             AiPattern.Branch(0, "rung 12", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1823] = [
+        variants[1822] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21683)),
@@ -30344,7 +30305,7 @@ internal static class BattleCycles
             AiPattern.Branch(0, "rung 8", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1824] = [
+        variants[1823] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21692)),
@@ -30375,7 +30336,7 @@ internal static class BattleCycles
             AiPattern.Branch(0, "rung 9", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1825] = [
+        variants[1824] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21701)),
@@ -30406,14 +30367,14 @@ internal static class BattleCycles
             AiPattern.Branch(0, "rung 9", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1826] = [
+        variants[1825] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOnEventTarget(21709)),
             AiPattern.Branch(0, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1827] = [
+        variants[1826] = [
             AiPattern.Branch(14, "rung 0", [When.Timer(12)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21626)),
@@ -30456,7 +30417,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21600)),
         ];
-        variants[1828] = [
+        variants[1827] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(8)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21635)),
@@ -30485,7 +30446,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21630)),
         ];
-        variants[1829] = [
+        variants[1828] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21301)),
@@ -30510,7 +30471,7 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1830] = [
+        variants[1829] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19549)),
@@ -30529,7 +30490,7 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1831] = [
+        variants[1830] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16669)),
@@ -30554,7 +30515,7 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1832] = [
+        variants[1831] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19555)),
@@ -30573,12 +30534,12 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1833] = [
+        variants[1832] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516)),
         ];
-        variants[1834] = [
+        variants[1833] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(1), When.HpBelow(50), When.SkillReady(17454)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17454),
@@ -30591,7 +30552,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
-        variants[1835] = [
+        variants[1834] = [
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16570)),
@@ -30603,7 +30564,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(1)],
                 Do.ArmTimer(1, 5000)),
         ];
-        variants[1836] = [
+        variants[1835] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17470)),
@@ -30623,7 +30584,7 @@ internal static class BattleCycles
             AiPattern.Branch(3, "rung 4", [When.Timer(1)],
                 Do.ArmTimer(1, 6000)),
         ];
-        variants[1837] = [
+        variants[1836] = [
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17297)),
@@ -30635,7 +30596,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1838] = [
+        variants[1837] = [
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17317)),
@@ -30647,7 +30608,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1839] = [
+        variants[1838] = [
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(1)],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17336)),
@@ -30659,7 +30620,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1840] = [
+        variants[1839] = [
             AiPattern.Branch(4, "rung 0", [When.Chance(50), When.Timer(1), When.HpBelow(50)],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17364)),
@@ -30671,7 +30632,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1841] = [
+        variants[1840] = [
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 20000),
                 Do.ArmTimer(1, 1000)),
@@ -30695,7 +30656,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 7", [When.Timer(0)],
                 Do.ArmTimer(0, 3000)),
         ];
-        variants[1842] = [
+        variants[1841] = [
             AiPattern.Branch(16, "rung 0", [When.Timer(9)],
                 Do.ArmTimer(9, 3000),
                 Do.Broadcast(10014, 75f)),
@@ -30741,7 +30702,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 15", [When.Timer(1)],
                 Do.ArmTimer(1, 1000)),
         ];
-        variants[1843] = [
+        variants[1842] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18453)),
@@ -30749,7 +30710,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16918)),
         ];
-        variants[1844] = [
+        variants[1843] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SpawnNear(281474, 0, 1, 0f, 50),
@@ -30771,7 +30732,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1845] = [
+        variants[1844] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SpawnOnTarget(281475, 0, 1, 2.0f, 60, 0, 50.0f),
@@ -30795,7 +30756,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1846] = [
+        variants[1845] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SpawnNear(281485, 0, 1, 0f, 60),
@@ -30817,7 +30778,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1847] = [
+        variants[1846] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SpawnOnTarget(281485, 0, 1, 2.0f, 60, 0, 50.0f),
@@ -30841,7 +30802,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1848] = [
+        variants[1847] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18939)),
@@ -30852,7 +30813,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18939),
                 Do.DespawnSelf()),
         ];
-        variants[1849] = [
+        variants[1848] = [
             AiPattern.Branch(9, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(2, 30000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19008)),
@@ -30867,7 +30828,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(10026, 15f)),
         ];
-        variants[1850] = [
+        variants[1849] = [
             AiPattern.Branch(7, "rung 0", [When.Chance(50), When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16723)),
@@ -30875,17 +30836,17 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16592)),
         ];
-        variants[1851] = [
+        variants[1850] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16595)),
         ];
-        variants[1852] = [
+        variants[1851] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19112)),
         ];
-        variants[1853] = [
+        variants[1852] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18836)),
@@ -30907,7 +30868,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 6", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1854] = [
+        variants[1853] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(30), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18841)),
@@ -30926,28 +30887,28 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1855] = [
+        variants[1854] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20672),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21263)),
         ];
-        variants[1856] = [
+        variants[1855] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20542)),
         ];
-        variants[1857] = [
+        variants[1856] = [
             AiPattern.Branch(10, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20548)),
         ];
-        variants[1858] = [
+        variants[1857] = [
             AiPattern.Branch(21, "rung 0", [When.Timer(1)],
                 Do.ArmTimer(1, 11500),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18346)),
         ];
-        variants[1859] = [
+        variants[1858] = [
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(1, 7000),
                 Do.Broadcast(23002, 25f),
@@ -30970,23 +30931,23 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17083)),
         ];
-        variants[1860] = [
+        variants[1859] = [
             AiPattern.Branch(20, "rung 0", [When.HpBelow(30), When.FirstTime(6)],
                 Do.SystemMessage(1401494, 0)),
             AiPattern.Branch(19, "rung 1", [When.HpBetween(31, 99)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1861] = [
+        variants[1860] = [
             AiPattern.Branch(21, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
-        variants[1862] = [
+        variants[1861] = [
             AiPattern.Branch(21, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17317)),
         ];
-        variants[1863] = [
+        variants[1862] = [
             AiPattern.Branch(32, "rung 0", [When.HpBelow(50), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(5, 4000),
                 Do.Broadcast(23002, 25f),
@@ -31034,7 +30995,7 @@ internal static class BattleCycles
                 Do.Broadcast(23008, 15f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20707)),
         ];
-        variants[1864] = [
+        variants[1863] = [
             AiPattern.Branch(23, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18346)),
@@ -31042,7 +31003,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18342)),
         ];
-        variants[1865] = [
+        variants[1864] = [
             AiPattern.Branch(13, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19105)),
@@ -31077,7 +31038,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19108)),
         ];
-        variants[1866] = [
+        variants[1865] = [
             AiPattern.Branch(51, "rung 0", [When.Timer(8)],
                 Do.ArmTimer(0, 30000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19108),
@@ -31089,13 +31050,13 @@ internal static class BattleCycles
                 Do.Broadcast(23411, 50f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21509)),
         ];
-        variants[1867] = [
+        variants[1866] = [
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19112),
                 Do.Broadcast(9999, 50f)),
         ];
-        variants[1868] = [
+        variants[1867] = [
             AiPattern.Branch(24, "rung 0", [When.Timer(3), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(23002, 25f),
@@ -31133,7 +31094,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21598)),
         ];
-        variants[1869] = [
+        variants[1868] = [
             AiPattern.Branch(24, "rung 0", [When.Timer(3), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(0, 6000),
                 Do.Broadcast(23002, 25f),
@@ -31171,7 +31132,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21598)),
         ];
-        variants[1870] = [
+        variants[1869] = [
             AiPattern.Branch(19, "rung 0", [When.Timer(4), When.HpBelow(35), When.FirstTime(0)],
                 Do.ArmTimer(0, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21296),
@@ -31212,7 +31173,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21294)),
         ];
-        variants[1871] = [
+        variants[1870] = [
             AiPattern.Branch(25, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21597),
@@ -31232,7 +31193,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
         ];
-        variants[1872] = [
+        variants[1871] = [
             AiPattern.Branch(26, "rung 0", [When.HpBelow(35), When.Timer(2), When.FirstTime(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21597),
@@ -31258,7 +31219,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 20960)),
         ];
-        variants[1873] = [
+        variants[1872] = [
             AiPattern.Branch(22, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
@@ -31269,39 +31230,39 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17359)),
         ];
-        variants[1874] = [
+        variants[1873] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42101, 30f)),
         ];
-        variants[1875] = [
+        variants[1874] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42001, 30f)),
         ];
-        variants[1876] = [
+        variants[1875] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17166)),
         ];
-        variants[1877] = [
+        variants[1876] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17294)),
         ];
-        variants[1878] = [
+        variants[1877] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18417)),
         ];
-        variants[1879] = [
+        variants[1878] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.TargetIsPlayer, When.TargetIsEnemy],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21664)),
             AiPattern.Branch(2, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1880] = [
+        variants[1879] = [
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 8000),
                 Do.Broadcast(23000, 50f),
@@ -31312,7 +31273,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18525),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20702)),
         ];
-        variants[1881] = [
+        variants[1880] = [
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 8500),
                 Do.Broadcast(23000, 50f),
@@ -31328,7 +31289,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18902),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18902)),
         ];
-        variants[1882] = [
+        variants[1881] = [
             AiPattern.Branch(25, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 8500),
                 Do.Broadcast(23000, 50f),
@@ -31340,7 +31301,7 @@ internal static class BattleCycles
                 Do.AttackMostHating(),
                 Do.AttackMostHating()),
         ];
-        variants[1883] = [
+        variants[1882] = [
             AiPattern.Branch(30, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(2, 6000),
                 Do.Broadcast(25300, 50f),
@@ -31355,7 +31316,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18525),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20702)),
         ];
-        variants[1884] = [
+        variants[1883] = [
             AiPattern.Branch(30, "rung 0", [When.Timer(3)],
                 Do.ArmTimer(3, 6000),
                 Do.Broadcast(25300, 50f),
@@ -31375,7 +31336,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18902),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18902)),
         ];
-        variants[1885] = [
+        variants[1884] = [
             AiPattern.Branch(30, "rung 0", [When.Timer(2)],
                 Do.ArmTimer(2, 6000),
                 Do.Broadcast(25300, 50f),
@@ -31391,35 +31352,35 @@ internal static class BattleCycles
                 Do.AttackMostHating(),
                 Do.AttackMostHating()),
         ];
+        variants[1885] = [
+            AiPattern.Branch(4, "rung 0", [When.Timer(2)],
+                Do.Broadcast(6811, 50f),
+                Do.ArmTimer(0, 16000)),
+            AiPattern.Branch(3, "rung 1", [When.Timer(1)],
+                Do.Broadcast(6812, 50f),
+                Do.ArmTimer(2, 16000)),
+            AiPattern.Branch(2, "rung 2", [When.Timer(0)],
+                Do.Broadcast(6810, 50f),
+                Do.ArmTimer(1, 16000)),
+        ];
         variants[1886] = [
             AiPattern.Branch(4, "rung 0", [When.Timer(2)],
                 Do.Broadcast(6811, 50f),
                 Do.ArmTimer(0, 16000)),
             AiPattern.Branch(3, "rung 1", [When.Timer(1)],
-                Do.Broadcast(6812, 50f),
+                Do.Broadcast(6810, 50f),
                 Do.ArmTimer(2, 16000)),
             AiPattern.Branch(2, "rung 2", [When.Timer(0)],
-                Do.Broadcast(6810, 50f),
+                Do.Broadcast(6812, 50f),
                 Do.ArmTimer(1, 16000)),
         ];
         variants[1887] = [
-            AiPattern.Branch(4, "rung 0", [When.Timer(2)],
-                Do.Broadcast(6811, 50f),
-                Do.ArmTimer(0, 16000)),
-            AiPattern.Branch(3, "rung 1", [When.Timer(1)],
-                Do.Broadcast(6810, 50f),
-                Do.ArmTimer(2, 16000)),
-            AiPattern.Branch(2, "rung 2", [When.Timer(0)],
-                Do.Broadcast(6812, 50f),
-                Do.ArmTimer(1, 16000)),
-        ];
-        variants[1888] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0), When.TargetIsEnemy],
                 Do.ArmTimer(0, 8000)),
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 8000)),
         ];
-        variants[1889] = [
+        variants[1888] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(1)],
                 Do.ArmTimer(0, 7000),
                 Do.Say(390497, 0)),
@@ -31427,7 +31388,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.Say(390496, 0)),
         ];
-        variants[1890] = [
+        variants[1889] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19365),
                 Do.ArmTimer(0, 10000)),
@@ -31435,17 +31396,17 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19366),
                 Do.ArmTimer(1, 50000)),
         ];
-        variants[1891] = [
+        variants[1890] = [
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19359),
                 Do.ArmTimer(0, 9000)),
         ];
-        variants[1892] = [
+        variants[1891] = [
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19360),
                 Do.ArmTimer(0, 15000)),
         ];
-        variants[1893] = [
+        variants[1892] = [
             AiPattern.Branch(5, "rung 0", [When.Timer(0), When.FirstTime(0)],
                 Do.ArmTimer(0, 15000),
                 Do.Say(390573, 0)),
@@ -31461,7 +31422,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 4", [When.Timer(0), When.Consuming(0), When.Consuming(1), When.Consuming(2), When.Consuming(3)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1894] = [
+        variants[1893] = [
             AiPattern.Branch(40, "rung 0", [When.HpBelow(35), When.Timer(0), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17079)),
             AiPattern.Branch(34, "rung 1", [When.Timer(2), When.EventTargetFlying],
@@ -31479,17 +31440,17 @@ internal static class BattleCycles
             AiPattern.Branch(21, "rung 5", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1895] = [
+        variants[1894] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 1000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21648)),
         ];
-        variants[1896] = [
+        variants[1895] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21657)),
         ];
-        variants[1897] = [
+        variants[1896] = [
             AiPattern.Branch(101, "rung 0", [When.Timer(0), When.HpBelow(50), When.FirstTime(0)],
                 Do.ArmTimer(5, 6000)),
             AiPattern.Branch(100, "rung 1", [When.Timer(1), When.HpBetween(52, 99)],
@@ -31522,7 +31483,7 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 9", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1898] = [
+        variants[1897] = [
             AiPattern.Branch(50, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 13000),
                 Do.Broadcast(1000911, 100f)),
@@ -31541,7 +31502,7 @@ internal static class BattleCycles
                 Do.ArmTimer(13, 6000),
                 Do.Broadcast(1000400, 100f)),
         ];
-        variants[1899] = [
+        variants[1898] = [
             AiPattern.Branch(11, "rung 0", [When.Timer(4), When.HpBelow(49)],
                 Do.ArmTimer(0, 10000),
                 Do.SwitchTarget(AggroTarget.RANDOM),
@@ -31581,11 +31542,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 10", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-    }
-
-    private static void CycleVariants19(PatternBranch[][] variants)
-    {
-        variants[1900] = [
+        variants[1899] = [
             AiPattern.Branch(14, "rung 0", [When.HpBelow(30), When.Timer(8), When.FirstTime(1)],
                 Do.ArmTimer(8, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19557)),
@@ -31622,7 +31579,11 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 11", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1901] = [
+    }
+
+    private static void CycleVariants19(PatternBranch[][] variants)
+    {
+        variants[1900] = [
             AiPattern.Branch(26, "rung 0", [When.Timer(4), When.HpBelow(70), When.FirstTime(2)],
                 Do.ArmTimer(0, 6000),
                 Do.Broadcast(22757, 100f),
@@ -31648,7 +31609,7 @@ internal static class BattleCycles
             AiPattern.Branch(19, "rung 5", [When.Timer(4)],
                 Do.ArmTimer(4, 6000)),
         ];
-        variants[1902] = [
+        variants[1901] = [
             AiPattern.Branch(26, "rung 0", [When.Timer(4), When.HpBelow(70), When.FirstTime(2)],
                 Do.Broadcast(22757, 100f),
                 Do.Say(1501221, 0)),
@@ -31672,7 +31633,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17340)),
         ];
-        variants[1903] = [
+        variants[1902] = [
             AiPattern.Branch(13, "rung 0", [When.Timer(3), When.HpBelow(50)],
                 Do.ArmTimer(3, 30000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21844),
@@ -31690,12 +31651,12 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 13000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
         ];
-        variants[1904] = [
+        variants[1903] = [
             AiPattern.Branch(11, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
                 Do.Broadcast(22760, 20f)),
         ];
-        variants[1905] = [
+        variants[1904] = [
             AiPattern.Branch(99, "rung 0", [When.Timer(4), When.FirstTime(5)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21636),
                 Do.Broadcast(22743, 100f),
@@ -31770,7 +31731,7 @@ internal static class BattleCycles
                 Do.SwitchTarget(AggroTarget.RANDOM),
                 Do.AttackMostHating()),
         ];
-        variants[1906] = [
+        variants[1905] = [
             AiPattern.Branch(99, "rung 0", [When.Timer(4), When.FirstTime(5)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21636),
                 Do.Say(1501305, 0),
@@ -31845,7 +31806,7 @@ internal static class BattleCycles
                 Do.SwitchTarget(AggroTarget.RANDOM),
                 Do.AttackMostHating()),
         ];
-        variants[1907] = [
+        variants[1906] = [
             AiPattern.Branch(1000, "rung 0", [When.Timer(10)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21760)),
             AiPattern.Branch(41, "rung 1", [When.Timer(2)],
@@ -31860,18 +31821,18 @@ internal static class BattleCycles
             AiPattern.Branch(20, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1908] = [
+        variants[1907] = [
             AiPattern.Branch(11, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21821)),
         ];
-        variants[1909] = [
+        variants[1908] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21180),
                 Do.DespawnSelf()),
         ];
-        variants[1910] = [
+        variants[1909] = [
             AiPattern.Branch(1000, "rung 0", [When.Timer(0), When.HpBelow(75), When.FirstTime(0)],
                 Do.ArmTimer(1, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20702),
@@ -31889,7 +31850,7 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(1, 5000)),
         ];
-        variants[1911] = [
+        variants[1910] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19917)),
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
@@ -31899,7 +31860,7 @@ internal static class BattleCycles
                 Do.SpawnNearForTheFight(282465, 1, 1, 0f, 6),
                 Do.ArmTimer(0, 12000)),
         ];
-        variants[1912] = [
+        variants[1911] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(1)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19657),
                 Do.SpawnOnTarget(282390, 1, 3, 4.0f, 15, 0, 100.0f),
@@ -31923,7 +31884,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 5", [When.Timer(2)],
                 Do.ArmTimer(2, 6000)),
         ];
-        variants[1913] = [
+        variants[1912] = [
             AiPattern.Branch(50, "rung 0", [When.Timer(0), When.HpBetween(86, 99)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16516)),
@@ -32006,7 +31967,7 @@ internal static class BattleCycles
                 Do.ArmTimer(10, 3000),
                 Do.Broadcast(100001, 50f)),
         ];
-        variants[1914] = [
+        variants[1913] = [
             AiPattern.Branch(70, "rung 0", [When.Timer(15)],
                 Do.Broadcast(60000, 50f)),
             AiPattern.Branch(50, "rung 1", [When.Timer(0), When.HpBetween(81, 99)],
@@ -32127,7 +32088,7 @@ internal static class BattleCycles
                 Do.SwitchTarget(AggroTarget.RANDOM),
                 Do.AttackMostHating()),
         ];
-        variants[1915] = [
+        variants[1914] = [
             AiPattern.Branch(50, "rung 0", [When.Timer(0), When.HpBetween(51, 99)],
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21300)),
@@ -32164,7 +32125,7 @@ internal static class BattleCycles
                 Do.AttackMostHating(),
                 Do.SpawnOnTarget(282390, 1, 3, 2.0f, 15, 0, 100.0f)),
         ];
-        variants[1916] = [
+        variants[1915] = [
             AiPattern.Branch(22, "rung 0", [When.Timer(3), When.FirstTime(0)],
                 Do.ArmTimer(4, 4000),
                 Do.Broadcast(60004, 10f)),
@@ -32183,16 +32144,16 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 5", [When.Timer(3)],
                 Do.ArmTimer(3, 3000)),
         ];
-        variants[1917] = [
+        variants[1916] = [
             AiPattern.Branch(6, "rung 0", [When.Timer(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19497)),
         ];
-        variants[1918] = [
+        variants[1917] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21909)),
         ];
-        variants[1919] = [
+        variants[1918] = [
             AiPattern.Branch(45, "rung 0", [When.Timer(0), When.HpBetween(77, 99)],
                 Do.ArmTimer(1, 18000),
                 Do.SpawnAtForTheFight(856036, 1, 7, new SpawnSpot(458.5f, 514.7f, 417.4f)),
@@ -32572,7 +32533,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 44", [When.Timer(0)],
                 Do.ArmTimer(0, 3000)),
         ];
-        variants[1920] = [
+        variants[1919] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 5000),
                 Do.ArmTimer(2, 6500),
@@ -32583,22 +32544,22 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(2)],
                 Do.DespawnSelf()),
         ];
-        variants[1921] = [
+        variants[1920] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 22667)),
         ];
-        variants[1922] = [
+        variants[1921] = [
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20520)),
         ];
-        variants[1923] = [
+        variants[1922] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
-        variants[1924] = [
+        variants[1923] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.TargetIsPlayer, When.TargetIsEnemy],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21792)),
@@ -48687,8 +48648,7 @@ internal static class BattleCycles
         owners[284851] = 1753;  // BIDF5_U3_hard_Vri_Ra
         owners[284852] = 1754;  // BIDF5_U3_hard_Vri_Gu
         owners[284853] = 1044;  // BIDF5_U3_hard_Vri_Ba
-        owners[284854] = 1755;  // BIDF5_U3_SemiNmd_Vri_Fi
-        owners[284856] = 1756;  // BIDF5_U3_SemiNmd_Vri_Wi
+        owners[284856] = 1755;  // BIDF5_U3_SemiNmd_Vri_Wi
         owners[284902] = 980;  // Britra_As_Poison_LowNmd
         owners[284903] = 980;  // Britra_As_Poison_LowNmd
         owners[284906] = 1260;  // ND2_ElementalSu2
@@ -48711,14 +48671,14 @@ internal static class BattleCycles
         owners[284966] = 1263;  // IDLDF4_Re_01_DrakanAs
         owners[284967] = 1264;  // IDLDF4_Re_01_DrakanFi
         owners[284968] = 1265;  // IDLDF4_Re_01_Golem
-        owners[285098] = 1757;  // Krall_PeB
-        owners[285153] = 1758;  // Lycan_KeA
-        owners[285156] = 1757;  // Lycan_PeB
+        owners[285098] = 1756;  // Krall_PeB
+        owners[285153] = 1757;  // Lycan_KeA
+        owners[285156] = 1756;  // Lycan_PeB
         owners[285721] = 84;  // D2_FnM
-        owners[285727] = 1759;  // Lycan_FeA
-        owners[285728] = 1760;  // Lycan_FeB
-        owners[285732] = 1761;  // Lycan_KeA
-        owners[285733] = 1762;  // Lycan_KeB
+        owners[285727] = 1758;  // Lycan_FeA
+        owners[285728] = 1759;  // Lycan_FeB
+        owners[285732] = 1760;  // Lycan_KeA
+        owners[285733] = 1761;  // Lycan_KeB
         owners[285734] = 73;  // Lycan_RnA
         owners[285735] = 91;  // Lycan_ReA
         owners[285736] = 75;  // Lycan_ReB
@@ -48726,20 +48686,20 @@ internal static class BattleCycles
         owners[285738] = 1420;  // Lycan_HeA
         owners[285739] = 1421;  // Lycan_HeB
         owners[285740] = 12;  // Lycan_WeA
-        owners[285741] = 1763;  // Lycan_WeB
-        owners[285742] = 1764;  // Lycan_PeA
-        owners[285743] = 1765;  // Lycan_PeB
+        owners[285741] = 1762;  // Lycan_WeB
+        owners[285742] = 1763;  // Lycan_PeA
+        owners[285743] = 1764;  // Lycan_PeB
         owners[285874] = 1396;  // Carrier_Main_A
         owners[285875] = 1396;  // Carrier_Main_A
         owners[285876] = 1396;  // Carrier_Main_A
         owners[285880] = 1397;  // Carrier_Attack_A
         owners[285881] = 1397;  // Carrier_Attack_A
-        owners[286417] = 1766;  // ND2_FnW
-        owners[286418] = 1766;  // ND2_FnW
-        owners[286419] = 1766;  // ND2_FnW
-        owners[286420] = 1766;  // ND2_FnW
-        owners[286421] = 1766;  // ND2_FnW
-        owners[286609] = 1767;  // TestAI47
+        owners[286417] = 1765;  // ND2_FnW
+        owners[286418] = 1765;  // ND2_FnW
+        owners[286419] = 1765;  // ND2_FnW
+        owners[286420] = 1765;  // ND2_FnW
+        owners[286421] = 1765;  // ND2_FnW
+        owners[286609] = 1766;  // TestAI47
         owners[286684] = 164;  // Lizardman_FeB
         owners[286685] = 164;  // Lizardman_FeB
         owners[286686] = 164;  // Lizardman_FeB
@@ -48750,26 +48710,26 @@ internal static class BattleCycles
         owners[286691] = 164;  // Lizardman_FeB
         owners[286692] = 164;  // Lizardman_FeB
         owners[286706] = 146;  // D2_AnD
-        owners[286759] = 1768;  // AD2_BT10st0
-        owners[286760] = 1769;  // AD2_BT10st0
-        owners[286761] = 1770;  // AD2_BT10st0
-        owners[286762] = 1771;  // AD2_BT10st0
-        owners[286763] = 1772;  // AD2_BT10st0
-        owners[286764] = 1773;  // AD2_BT10st0
-        owners[286765] = 1774;  // AD2_BT10st0
-        owners[286766] = 1775;  // AD2_BT10st0
-        owners[286767] = 1776;  // AD2_BT10st0
-        owners[286768] = 1777;  // AD2_BT10st0
-        owners[286769] = 1778;  // AD2_BT10st0
-        owners[286770] = 1779;  // AD2_BT10st0
-        owners[286771] = 1780;  // AD2_BT10st0
-        owners[286772] = 1781;  // AD2_BT10st0
-        owners[286773] = 1782;  // AD2_BT10st0
-        owners[286774] = 1783;  // AD2_BT10st0
-        owners[286775] = 1784;  // AD2_BT10st0
-        owners[286776] = 1785;  // AD2_BT10st0
-        owners[286777] = 1786;  // AD2_BT10st0
-        owners[286791] = 1787;  // LF4_FieldRaid
+        owners[286759] = 1767;  // AD2_BT10st0
+        owners[286760] = 1768;  // AD2_BT10st0
+        owners[286761] = 1769;  // AD2_BT10st0
+        owners[286762] = 1770;  // AD2_BT10st0
+        owners[286763] = 1771;  // AD2_BT10st0
+        owners[286764] = 1772;  // AD2_BT10st0
+        owners[286765] = 1773;  // AD2_BT10st0
+        owners[286766] = 1774;  // AD2_BT10st0
+        owners[286767] = 1775;  // AD2_BT10st0
+        owners[286768] = 1776;  // AD2_BT10st0
+        owners[286769] = 1777;  // AD2_BT10st0
+        owners[286770] = 1778;  // AD2_BT10st0
+        owners[286771] = 1779;  // AD2_BT10st0
+        owners[286772] = 1780;  // AD2_BT10st0
+        owners[286773] = 1781;  // AD2_BT10st0
+        owners[286774] = 1782;  // AD2_BT10st0
+        owners[286775] = 1783;  // AD2_BT10st0
+        owners[286776] = 1784;  // AD2_BT10st0
+        owners[286777] = 1785;  // AD2_BT10st0
+        owners[286791] = 1786;  // LF4_FieldRaid
         owners[286880] = 306;  // XDrakan_FeB
         owners[286881] = 306;  // XDrakan_FeB
         owners[286882] = 306;  // XDrakan_FeB
@@ -48794,41 +48754,41 @@ internal static class BattleCycles
         owners[286901] = 308;  // XDrakan_WeB
         owners[286902] = 308;  // XDrakan_WeB
         owners[286903] = 308;  // XDrakan_WeB
-        owners[286907] = 1788;  // testai63
-        owners[286920] = 1789;  // TestAI68
-        owners[286921] = 1790;  // TestAI69
-        owners[286926] = 1791;  // Test_JM_Monster_1
-        owners[286949] = 1792;  // IDArena_S1_Named_1
-        owners[286953] = 1793;  // SYSTEM1_TestSample_Krall02
-        owners[286968] = 1793;  // SYSTEM1_TestSample_Krall02
+        owners[286907] = 1787;  // testai63
+        owners[286920] = 1788;  // TestAI68
+        owners[286921] = 1789;  // TestAI69
+        owners[286926] = 1790;  // Test_JM_Monster_1
+        owners[286949] = 1791;  // IDArena_S1_Named_1
+        owners[286953] = 1792;  // SYSTEM1_TestSample_Krall02
+        owners[286968] = 1792;  // SYSTEM1_TestSample_Krall02
         owners[286986] = 306;  // XDrakan_FeB
         owners[286987] = 308;  // XDrakan_WeB
-        owners[286990] = 1794;  // Test_Monster_AI_KSJ_03
-        owners[286995] = 1795;  // Test_Monster_AI_KSJ_04
-        owners[287014] = 1796;  // Test_Basic_Monster_AI_JKA_2
-        owners[287025] = 1797;  // Test_Basic_Monster_AI_JKA_4
-        owners[287026] = 1798;  // Test_Basic_Monster_AI_JKA_5
-        owners[287027] = 1799;  // Test_Basic_Monster_AI_JKA_6
-        owners[287028] = 1800;  // Test_Basic_Monster_AI_JKA_7
-        owners[287029] = 1801;  // Test_Basic_Monster_AI_JKA_8
-        owners[287036] = 1802;  // Test_Basic_Monster_AI_LHJ_4
-        owners[287037] = 1803;  // Test_Basic_Monster_AI_LHJ_5
-        owners[287045] = 1804;  // Test_Basic_Monster_AI_KSG_7
-        owners[287046] = 1804;  // Test_Basic_Monster_AI_KSG_8
-        owners[287086] = 1805;  // Test_Basic_Monster_AI_KMD_1
-        owners[287096] = 1805;  // Test_Basic_Monster_AI_KMD_1
-        owners[287097] = 1805;  // Test_Basic_Monster_AI_KMD_3
+        owners[286990] = 1793;  // Test_Monster_AI_KSJ_03
+        owners[286995] = 1794;  // Test_Monster_AI_KSJ_04
+        owners[287014] = 1795;  // Test_Basic_Monster_AI_JKA_2
+        owners[287025] = 1796;  // Test_Basic_Monster_AI_JKA_4
+        owners[287026] = 1797;  // Test_Basic_Monster_AI_JKA_5
+        owners[287027] = 1798;  // Test_Basic_Monster_AI_JKA_6
+        owners[287028] = 1799;  // Test_Basic_Monster_AI_JKA_7
+        owners[287029] = 1800;  // Test_Basic_Monster_AI_JKA_8
+        owners[287036] = 1801;  // Test_Basic_Monster_AI_LHJ_4
+        owners[287037] = 1802;  // Test_Basic_Monster_AI_LHJ_5
+        owners[287045] = 1803;  // Test_Basic_Monster_AI_KSG_7
+        owners[287046] = 1803;  // Test_Basic_Monster_AI_KSG_8
+        owners[287086] = 1804;  // Test_Basic_Monster_AI_KMD_1
+        owners[287096] = 1804;  // Test_Basic_Monster_AI_KMD_1
+        owners[287097] = 1804;  // Test_Basic_Monster_AI_KMD_3
         owners[287135] = 1418;  // F5_RvR_LGuard_Fi_Ae
         owners[287136] = 63;  // F5_RvR_LGuard_Wi_Ae
         owners[287137] = 1259;  // F5_RvR_LGuard_Pr_Ae
         owners[287138] = 1310;  // F5_RvR_LGuard_Gu_Ae
         owners[287139] = 1418;  // F5_RvR_LGuard_Fi_Ae
         owners[287140] = 63;  // F5_RvR_LGuard_Wi_Ae
+        owners[287141] = 1259;  // F5_RvR_LGuard_Pr_Ae
     }
 
     private static void CycleOf40(Dictionary<int, int> owners)
     {
-        owners[287141] = 1259;  // F5_RvR_LGuard_Pr_Ae
         owners[287142] = 1310;  // F5_RvR_LGuard_Gu_Ae
         owners[287143] = 1418;  // F5_RvR_LGuard_Fi_Ae
         owners[287144] = 63;  // F5_RvR_LGuard_Wi_Ae
@@ -48837,36 +48797,36 @@ internal static class BattleCycles
         owners[287147] = 1418;  // F5_RvR_LGuard_Fi_Ae
         owners[287148] = 63;  // F5_RvR_LGuard_Wi_Ae
         owners[287149] = 1259;  // F5_RvR_LGuard_Pr_Ae
-        owners[287150] = 1806;  // F5_RvR_LGuard_Gu_Ae
-        owners[287164] = 1807;  // Test_Basic_Monster_AI_MJ_8
+        owners[287150] = 1805;  // F5_RvR_LGuard_Gu_Ae
+        owners[287164] = 1806;  // Test_Basic_Monster_AI_MJ_8
         owners[287184] = 306;  // XDrakan_FeB
         owners[287185] = 308;  // XDrakan_WeB
-        owners[287189] = 1808;  // Test_Basic_Monster_AI_GHB_2
-        owners[287192] = 1809;  // Test_Basic_Monster_AI_CYS_2
-        owners[287220] = 1810;  // TEST_MONSTER_JSJ_01
-        owners[287221] = 1811;  // TEST_MONSTER_JSJ_02
-        owners[287222] = 1812;  // TEST_MONSTER_JSJ_03
-        owners[287226] = 1813;  // Test_Monster_Ssh_02
-        owners[287227] = 1814;  // Test_Monster_Ssh_03
-        owners[287248] = 1815;  // Test_Basic_Monster_AI_KJH02
-        owners[287250] = 1816;  // IDLDF4_Re_01_MagBoss
-        owners[287252] = 1817;  // Test_Basic_Monster_AI_KJH02
-        owners[287253] = 1818;  // Test_Basic_Monster_AI_KJH03
-        owners[287254] = 1819;  // Test_Basic_Monster_AI_KJH04
-        owners[287255] = 1820;  // LDF4_Advance_Killer_01_Li
-        owners[287256] = 1821;  // LDF4_Advance_Killer_02_Li
-        owners[287257] = 1822;  // LDF4_Advance_Killer_03_Li
-        owners[287258] = 1823;  // LDF4_Advance_Killer_04_Li
-        owners[287259] = 1824;  // LDF4_Advance_Killer_05_Li
-        owners[287260] = 1825;  // LDF4_Advance_Killer_06_Da
-        owners[287261] = 1826;  // LDF4_Advance_Killer_07_Da
+        owners[287189] = 1807;  // Test_Basic_Monster_AI_GHB_2
+        owners[287192] = 1808;  // Test_Basic_Monster_AI_CYS_2
+        owners[287220] = 1809;  // TEST_MONSTER_JSJ_01
+        owners[287221] = 1810;  // TEST_MONSTER_JSJ_02
+        owners[287222] = 1811;  // TEST_MONSTER_JSJ_03
+        owners[287226] = 1812;  // Test_Monster_Ssh_02
+        owners[287227] = 1813;  // Test_Monster_Ssh_03
+        owners[287248] = 1814;  // Test_Basic_Monster_AI_KJH02
+        owners[287250] = 1815;  // IDLDF4_Re_01_MagBoss
+        owners[287252] = 1816;  // Test_Basic_Monster_AI_KJH02
+        owners[287253] = 1817;  // Test_Basic_Monster_AI_KJH03
+        owners[287254] = 1818;  // Test_Basic_Monster_AI_KJH04
+        owners[287255] = 1819;  // LDF4_Advance_Killer_01_Li
+        owners[287256] = 1820;  // LDF4_Advance_Killer_02_Li
+        owners[287257] = 1821;  // LDF4_Advance_Killer_03_Li
+        owners[287258] = 1822;  // LDF4_Advance_Killer_04_Li
+        owners[287259] = 1823;  // LDF4_Advance_Killer_05_Li
+        owners[287260] = 1824;  // LDF4_Advance_Killer_06_Da
+        owners[287261] = 1825;  // LDF4_Advance_Killer_07_Da
         owners[287267] = 488;  // IDF4Re_Drana_Named_C
-        owners[287272] = 1827;  // Test_Basic_Monster_AI_YJH_1
-        owners[287273] = 1828;  // Test_Basic_Monster_AI_YJH_2
-        owners[287276] = 1829;  // LDF4_kalnif_horn_LV2
-        owners[287277] = 1830;  // LDF4_kalnif_horn_LV3
-        owners[287278] = 1831;  // LDF4_RottentreeRe_LV1
-        owners[287279] = 1832;  // LDF4_RottentreeRe_LV2
+        owners[287272] = 1826;  // Test_Basic_Monster_AI_YJH_1
+        owners[287273] = 1827;  // Test_Basic_Monster_AI_YJH_2
+        owners[287276] = 1828;  // LDF4_kalnif_horn_LV2
+        owners[287277] = 1829;  // LDF4_kalnif_horn_LV3
+        owners[287278] = 1830;  // LDF4_RottentreeRe_LV1
+        owners[287279] = 1831;  // LDF4_RottentreeRe_LV2
         owners[290000] = 1337;  // AD2_BT15st0H50st1
         owners[290001] = 1338;  // AD2_Bst0BT15st1H50st2
         owners[290002] = 1340;  // AD2_Bst0BT15st1H50st2ss3
@@ -48889,7 +48849,7 @@ internal static class BattleCycles
         owners[290020] = 293;  // DrGuard_FnA
         owners[290024] = 1333;  // AD2_Xipeto2a
         owners[290025] = 1334;  // AD2_Xipeto2b
-        owners[290026] = 1833;  // AD2_BT15st0
+        owners[290026] = 1832;  // AD2_BT15st0
         owners[290029] = 1335;  // AD2_Wss0BT15st1
         owners[290030] = 1336;  // AD2_KnPa
         owners[290031] = 1325;  // AD2_BT15st0
@@ -48916,7 +48876,7 @@ internal static class BattleCycles
         owners[290079] = 225;  // Lizardman_RnA
         owners[290081] = 1355;  // AD2_Wss0BT15p50st1st2H50ss3
         owners[290082] = 1356;  // AD2_Wss0BT15p50st1st2H50ss3ss4
-        owners[290083] = 1834;  // AD2_Bss0BT15st1H50st2st3
+        owners[290083] = 1833;  // AD2_Bss0BT15st1H50st2st3
         owners[290085] = 1373;  // AD2_BT15st0H50ss1
         owners[290086] = 1372;  // AD2_BT15p50st0st1
         owners[290087] = 1369;  // AD2_BT15p50st0st1
@@ -48937,8 +48897,8 @@ internal static class BattleCycles
         owners[290104] = 1298;  // AD2_Wss0BT15st1H50ss2
         owners[290106] = 1296;  // AD2_Bst0st1BT15p50st2st3
         owners[290107] = 1299;  // AD2_Wss0BT15st1H50st2
-        owners[290109] = 1835;  // AD2_BT15p50st0st1
-        owners[290111] = 1836;  // Lizardman_FeF
+        owners[290109] = 1834;  // AD2_BT15p50st0st1
+        owners[290111] = 1835;  // Lizardman_FeF
         owners[290117] = 1354;  // AD2_NeutQueen
         owners[290120] = 1371;  // Lizardman_PeF
         owners[290123] = 1362;  // FD2_AnB
@@ -49130,10 +49090,10 @@ internal static class BattleCycles
         owners[294885] = 35;  // BGuard_GateRa
         owners[294886] = 36;  // BGuard_GateWi
         owners[294887] = 37;  // BGuard_GatePr
-        owners[294888] = 1837;  // BGuard_GateFi
-        owners[294889] = 1838;  // BGuard_GateRa
-        owners[294890] = 1839;  // BGuard_GateWi
-        owners[294891] = 1840;  // BGuard_GatePr
+        owners[294888] = 1836;  // BGuard_GateFi
+        owners[294889] = 1837;  // BGuard_GateRa
+        owners[294890] = 1838;  // BGuard_GateWi
+        owners[294891] = 1839;  // BGuard_GatePr
         owners[294895] = 28;  // LGuard_RnA
         owners[294896] = 15;  // LGuard_ReB
         owners[294899] = 29;  // LGuard_WnA
@@ -49181,7 +49141,7 @@ internal static class BattleCycles
         owners[295110] = 38;  // LGuard_WhB
         owners[295115] = 38;  // DGuard_WhB
         owners[295117] = 346;  // DrGuard_FhB
-        owners[295119] = 1841;  // DrGuard_AhB
+        owners[295119] = 1840;  // DrGuard_AhB
         owners[295120] = 1388;  // DrGuard_WhB
         owners[295133] = 39;  // BGuard_AhAPetA
         owners[295134] = 40;  // BGuard_AhAPetB
@@ -49198,13 +49158,13 @@ internal static class BattleCycles
         owners[295156] = 1470;  // DrGuard_WhAPet
         owners[295158] = 1471;  // AD2_BT15ss0
         owners[295177] = 20;  // BGuard_Maximus
-        owners[295178] = 1842;  // DGuard_Kistenian
+        owners[295178] = 1841;  // DGuard_Kistenian
         owners[295182] = 2;  // LGuard_GriffonPet
         owners[295183] = 16;  // DGuard_ZaifPet
         owners[295188] = 38;  // LGuard_WhB
         owners[295193] = 38;  // DGuard_WhB
         owners[295195] = 346;  // DrGuard_FhB
-        owners[295197] = 1841;  // DrGuard_AhB
+        owners[295197] = 1840;  // DrGuard_AhB
         owners[295198] = 1388;  // DrGuard_WhB
         owners[295200] = 34;  // BGuard_GateFi
         owners[295201] = 35;  // BGuard_GateRa
@@ -49214,10 +49174,10 @@ internal static class BattleCycles
         owners[295205] = 35;  // BGuard_GateRa
         owners[295206] = 36;  // BGuard_GateWi
         owners[295207] = 37;  // BGuard_GatePr
-        owners[295208] = 1837;  // BGuard_GateFi
-        owners[295209] = 1838;  // BGuard_GateRa
-        owners[295210] = 1839;  // BGuard_GateWi
-        owners[295211] = 1840;  // BGuard_GatePr
+        owners[295208] = 1836;  // BGuard_GateFi
+        owners[295209] = 1837;  // BGuard_GateRa
+        owners[295210] = 1838;  // BGuard_GateWi
+        owners[295211] = 1839;  // BGuard_GatePr
         owners[295280] = 27;  // LGuard_FnA
         owners[295281] = 9;  // LGuard_FeB
         owners[295282] = 3;  // LGuard_FeA
@@ -49228,11 +49188,11 @@ internal static class BattleCycles
         owners[295289] = 15;  // LGuard_ReB
         owners[295292] = 1;  // LGuard_AnA
         owners[295296] = 29;  // LGuard_WnA
+        owners[295297] = 31;  // LGuard_WeB
     }
 
     private static void CycleOf41(Dictionary<int, int> owners)
     {
-        owners[295297] = 31;  // LGuard_WeB
         owners[295298] = 24;  // LGuard_WeA
         owners[295300] = 29;  // LGuard_WnA
         owners[295301] = 31;  // LGuard_WeB
@@ -49537,7 +49497,7 @@ internal static class BattleCycles
         owners[296028] = 38;  // LGuard_WhB
         owners[296033] = 38;  // DGuard_WhB
         owners[296035] = 346;  // DrGuard_FhB
-        owners[296037] = 1841;  // DrGuard_AhB
+        owners[296037] = 1840;  // DrGuard_AhB
         owners[296038] = 1388;  // DrGuard_WhB
         owners[296040] = 34;  // BGuard_GateFi
         owners[296041] = 35;  // BGuard_GateRa
@@ -49547,10 +49507,10 @@ internal static class BattleCycles
         owners[296045] = 35;  // BGuard_GateRa
         owners[296046] = 36;  // BGuard_GateWi
         owners[296047] = 37;  // BGuard_GatePr
-        owners[296048] = 1837;  // BGuard_GateFi
-        owners[296049] = 1838;  // BGuard_GateRa
-        owners[296050] = 1839;  // BGuard_GateWi
-        owners[296051] = 1840;  // BGuard_GatePr
+        owners[296048] = 1836;  // BGuard_GateFi
+        owners[296049] = 1837;  // BGuard_GateRa
+        owners[296050] = 1838;  // BGuard_GateWi
+        owners[296051] = 1839;  // BGuard_GatePr
         owners[296063] = 39;  // BGuard_AhAPetA
         owners[296064] = 40;  // BGuard_AhAPetB
         owners[296066] = 34;  // BGuard_GateFi
@@ -49611,7 +49571,7 @@ internal static class BattleCycles
         owners[296394] = 38;  // LGuard_WhB
         owners[296399] = 38;  // DGuard_WhB
         owners[296401] = 346;  // DrGuard_FhB
-        owners[296403] = 1841;  // DrGuard_AhB
+        owners[296403] = 1840;  // DrGuard_AhB
         owners[296404] = 1388;  // DrGuard_WhB
         owners[296406] = 8;  // LGuard_FhA
         owners[296411] = 8;  // DGuard_FhA
@@ -49619,40 +49579,40 @@ internal static class BattleCycles
         owners[296424] = 38;  // LGuard_WhB
         owners[296429] = 38;  // DGuard_WhB
         owners[296431] = 346;  // DrGuard_FhB
-        owners[296433] = 1841;  // DrGuard_AhB
+        owners[296433] = 1840;  // DrGuard_AhB
         owners[296434] = 1388;  // DrGuard_WhB
-        owners[296443] = 1843;  // BGuard_ChiefSum_B
-        owners[296445] = 1844;  // GwLGuard_FhA
-        owners[296446] = 1844;  // GwLGuard_FhA
-        owners[296447] = 1845;  // GwLGuard_RhA
-        owners[296448] = 1845;  // GwLGuard_RhA
-        owners[296454] = 1846;  // GwDGuard_FhA
-        owners[296455] = 1846;  // GwDGuard_FhA
-        owners[296456] = 1847;  // GwDGuard_RhA
-        owners[296457] = 1847;  // GwDGuard_RhA
+        owners[296443] = 1842;  // BGuard_ChiefSum_B
+        owners[296445] = 1843;  // GwLGuard_FhA
+        owners[296446] = 1843;  // GwLGuard_FhA
+        owners[296447] = 1844;  // GwLGuard_RhA
+        owners[296448] = 1844;  // GwLGuard_RhA
+        owners[296454] = 1845;  // GwDGuard_FhA
+        owners[296455] = 1845;  // GwDGuard_FhA
+        owners[296456] = 1846;  // GwDGuard_RhA
+        owners[296457] = 1846;  // GwDGuard_RhA
         owners[296462] = 1384;  // LGuard_FsA
         owners[296468] = 1386;  // LGuard_AsA
+        owners[296470] = 1847;  // BGuard_FrostPillar
     }
 
     private static void CycleOf42(Dictionary<int, int> owners)
     {
-        owners[296470] = 1848;  // BGuard_FrostPillar
         owners[296475] = 1384;  // DGuard_FsA
         owners[296481] = 1386;  // DGuard_AsA
-        owners[296483] = 1848;  // BGuard_FrostPillar
+        owners[296483] = 1847;  // BGuard_FrostPillar
         owners[296496] = 1385;  // DrGuard_FsA
-        owners[296497] = 1849;  // DrGuard_FsA_Officer
+        owners[296497] = 1848;  // DrGuard_FsA_Officer
         owners[296502] = 1387;  // DrGuard_AsA
-        owners[296504] = 1850;  // DrGuard_WsAPetA
+        owners[296504] = 1849;  // DrGuard_WsAPetA
         owners[296505] = 1390;  // DrGuard_WsB
-        owners[296507] = 1850;  // DrGuard_PsAPetA
-        owners[296508] = 1851;  // DrGuard_PsAPetB
-        owners[296511] = 1852;  // BGuard_TowerChiefF4A
-        owners[296513] = 1852;  // BGuard_TowerChiefF4B
-        owners[296516] = 1852;  // BGuard_TowerChiefF4A
-        owners[296518] = 1852;  // BGuard_TowerChiefF4B
-        owners[296521] = 1852;  // BGuard_TowerChiefF4A
-        owners[296523] = 1852;  // BGuard_TowerChiefF4B
+        owners[296507] = 1849;  // DrGuard_PsAPetA
+        owners[296508] = 1850;  // DrGuard_PsAPetB
+        owners[296511] = 1851;  // BGuard_TowerChiefF4A
+        owners[296513] = 1851;  // BGuard_TowerChiefF4B
+        owners[296516] = 1851;  // BGuard_TowerChiefF4A
+        owners[296518] = 1851;  // BGuard_TowerChiefF4B
+        owners[296521] = 1851;  // BGuard_TowerChiefF4A
+        owners[296523] = 1851;  // BGuard_TowerChiefF4B
         owners[296528] = 1384;  // LGuard_FsA
         owners[296530] = 1386;  // LGuard_AsA
         owners[296535] = 1384;  // DGuard_FsA
@@ -49794,7 +49754,7 @@ internal static class BattleCycles
         owners[296835] = 1403;  // DrGuard_ReB
         owners[296839] = 294;  // DrGuard_AnA
         owners[296841] = 250;  // DrGuard_AeA
-        owners[296842] = 1841;  // DrGuard_AhB
+        owners[296842] = 1840;  // DrGuard_AhB
         owners[296843] = 252;  // DrGuard_AhA
         owners[296844] = 1389;  // DrGuard_WnA
         owners[296845] = 345;  // DrGuard_WeB
@@ -49819,24 +49779,24 @@ internal static class BattleCycles
         owners[296882] = 37;  // BGuard_GatePr
         owners[296886] = 1470;  // DrGuard_WhAPet
         owners[296888] = 1471;  // AD2_BT15ss0
-        owners[296889] = 1853;  // GwLGuard_REA
-        owners[296890] = 1845;  // GwLGuard_RhA
-        owners[296891] = 1853;  // GwLGuard_REA
-        owners[296892] = 1845;  // GwLGuard_RhA
-        owners[296893] = 1854;  // GwLGuard_WEA
-        owners[296895] = 1854;  // GwLGuard_WEA
-        owners[296897] = 1853;  // GwDGuard_REA
-        owners[296898] = 1847;  // GwDGuard_RhA
-        owners[296899] = 1853;  // GwDGuard_REA
-        owners[296900] = 1847;  // GwDGuard_RhA
-        owners[296901] = 1854;  // GwDGuard_WEA
-        owners[296903] = 1854;  // GwDGuard_WEA
+        owners[296889] = 1852;  // GwLGuard_REA
+        owners[296890] = 1844;  // GwLGuard_RhA
+        owners[296891] = 1852;  // GwLGuard_REA
+        owners[296892] = 1844;  // GwLGuard_RhA
+        owners[296893] = 1853;  // GwLGuard_WEA
+        owners[296895] = 1853;  // GwLGuard_WEA
+        owners[296897] = 1852;  // GwDGuard_REA
+        owners[296898] = 1846;  // GwDGuard_RhA
+        owners[296899] = 1852;  // GwDGuard_REA
+        owners[296900] = 1846;  // GwDGuard_RhA
+        owners[296901] = 1853;  // GwDGuard_WEA
+        owners[296903] = 1853;  // GwDGuard_WEA
         owners[296965] = 56;  // F5_Safety_LGuard_Fi_An
         owners[296966] = 57;  // F5_Safety_LGuard_Ra_An_Broad
         owners[296967] = 56;  // F5_Safety_DGuard_Fi_An
-        owners[296969] = 1855;  // BF5_NeutralGuard_Shu_Fi
-        owners[296970] = 1856;  // BF5_NeutralGuard_Shu_Gu
-        owners[296971] = 1857;  // BF5_NeutralGuard_Shu_Wi
+        owners[296969] = 1854;  // BF5_NeutralGuard_Shu_Fi
+        owners[296970] = 1855;  // BF5_NeutralGuard_Shu_Gu
+        owners[296971] = 1856;  // BF5_NeutralGuard_Shu_Wi
         owners[296972] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[296973] = 58;  // F5_PvPLight_LGuard_Fi_An
         owners[296974] = 59;  // F5_PvPLight_LGuard_Ra_An_Broad
@@ -49849,7 +49809,7 @@ internal static class BattleCycles
         owners[296982] = 65;  // F5_PvP_LGuard_Gu_Ae
         owners[296983] = 69;  // F5_PvP_LGuard_Wi_Ae
         owners[296984] = 1188;  // F5_PvP_LGuard_Pr_Ae
-        owners[296986] = 1858;  // F5_PvP_LGuard_ElementalFire_Ae
+        owners[296986] = 1857;  // F5_PvP_LGuard_ElementalFire_Ae
         owners[296988] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[296990] = 60;  // F5_PvPLight_DGuard_Wi_An
         owners[296991] = 1123;  // F5_PvPLight_DGuard_Pr_An
@@ -49891,13 +49851,13 @@ internal static class BattleCycles
         owners[297035] = 44;  // LDF5_DGuard_DisputeRvRLight_Charge_PM_Fe
         owners[297036] = 45;  // LDF5_DGuard_DisputeRvRLight_Support_Heal_Pe
         owners[297037] = 46;  // LDF5_DGuard_DisputeRvRLight_Support_Deform_Ee
-        owners[297040] = 1859;  // DirectPortal_LGuard_Charge_PM_Fe
+        owners[297040] = 1858;  // DirectPortal_LGuard_Charge_PM_Fe
         owners[297041] = 49;  // DirectPortal_LGuard_Charge_PM_Fe
-        owners[297043] = 1859;  // DirectPortal_DGuard_Charge_PM_Fe
+        owners[297043] = 1858;  // DirectPortal_DGuard_Charge_PM_Fe
         owners[297044] = 49;  // DirectPortal_DGuard_Charge_PM_Fe
-        owners[297047] = 1860;  // InvadePortal_TestKeeper03
-        owners[297050] = 1861;  // LDF5_LGuard_Safety_Chase_Fn
-        owners[297051] = 1862;  // LDF5_LGuard_Safety_Hold_Rn
+        owners[297047] = 1859;  // InvadePortal_TestKeeper03
+        owners[297050] = 1860;  // LDF5_LGuard_Safety_Chase_Fn
+        owners[297051] = 1861;  // LDF5_LGuard_Safety_Hold_Rn
         owners[297052] = 1190;  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
         owners[297053] = 1189;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[297054] = 1192;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
@@ -49911,8 +49871,8 @@ internal static class BattleCycles
         owners[297062] = 1200;  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
         owners[297063] = 1198;  // LDF5_LGuard_DisputePvP_Strike_MRArea_We
         owners[297064] = 1196;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
-        owners[297065] = 1863;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
-        owners[297066] = 1864;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
+        owners[297065] = 1862;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
+        owners[297066] = 1863;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
         owners[297067] = 1308;  // LDF5_LGuard_DisputeRvR_Defend_PM_Ke
         owners[297068] = 1303;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
         owners[297069] = 1304;  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
@@ -49924,13 +49884,13 @@ internal static class BattleCycles
         owners[297075] = 1312;  // LDF5_LGuard_DisputeRvR_Support_Deform_Ee
         owners[297082] = 67;  // BF5_NeutralGuard_Yun_Fi
         owners[297083] = 68;  // BF5_NeutralGuard_Yun_Ra
-        owners[297084] = 1865;  // BGuard_CommanderF5_L
-        owners[297085] = 1865;  // BGuard_CommanderF5_D
-        owners[297086] = 1865;  // BGuard_CommanderF5_Dr
+        owners[297084] = 1864;  // BGuard_CommanderF5_L
+        owners[297085] = 1864;  // BGuard_CommanderF5_D
+        owners[297086] = 1864;  // BGuard_CommanderF5_Dr
         owners[297088] = 1402;  // BGuard_ChiefA_Renew_Dr
         owners[297089] = 1402;  // BGuard_ChiefA_Renew_Dr
-        owners[297091] = 1866;  // BGuard_ChiefA_Renew_Li
-        owners[297092] = 1866;  // BGuard_ChiefA_Renew_Li
+        owners[297091] = 1865;  // BGuard_ChiefA_Renew_Li
+        owners[297092] = 1865;  // BGuard_ChiefA_Renew_Li
         owners[297111] = 1418;  // F5_RvR_LGuard_Fi_Ae
         owners[297112] = 1311;  // F5_RvR_LGuard_El_Ae
         owners[297113] = 1418;  // F5_RvR_DGuard_Fi_Ae
@@ -49967,18 +49927,18 @@ internal static class BattleCycles
         owners[297154] = 65;  // F5_PvP_DGuard_Gu_Ae
         owners[297155] = 69;  // F5_PvP_DGuard_Wi_Ae
         owners[297156] = 1188;  // F5_PvP_DGuard_Pr_Ae
-        owners[297163] = 1867;  // BGuard_TowerChiefF4A_Ver47
-        owners[297165] = 1867;  // BGuard_TowerChiefF4B_Ver47
-        owners[297168] = 1867;  // BGuard_TowerChiefF4A_Ver47
-        owners[297170] = 1867;  // BGuard_TowerChiefF4B_Ver47
-        owners[297173] = 1867;  // BGuard_TowerChiefF4A_Ver47
-        owners[297175] = 1867;  // BGuard_TowerChiefF4B_Ver47
-        owners[297178] = 1868;  // LDF5_DisputeRvR_Strike_As
-        owners[297179] = 1869;  // LDF5_DisputeRvR_Hide_As
-        owners[297180] = 1870;  // LDF5_DisputeRvR_Stumble_Ri
-        owners[297181] = 1871;  // LDF5_DisputeRvR_Debuff_Ba
+        owners[297163] = 1866;  // BGuard_TowerChiefF4A_Ver47
+        owners[297165] = 1866;  // BGuard_TowerChiefF4B_Ver47
+        owners[297168] = 1866;  // BGuard_TowerChiefF4A_Ver47
+        owners[297170] = 1866;  // BGuard_TowerChiefF4B_Ver47
+        owners[297173] = 1866;  // BGuard_TowerChiefF4A_Ver47
+        owners[297175] = 1866;  // BGuard_TowerChiefF4B_Ver47
+        owners[297178] = 1867;  // LDF5_DisputeRvR_Strike_As
+        owners[297179] = 1868;  // LDF5_DisputeRvR_Hide_As
+        owners[297180] = 1869;  // LDF5_DisputeRvR_Stumble_Ri
+        owners[297181] = 1870;  // LDF5_DisputeRvR_Debuff_Ba
         owners[297182] = 1412;  // LDF5_DisputePvP_Strike_Gu
-        owners[297183] = 1872;  // LDF5_DisputePvP_Debuff_Ba
+        owners[297183] = 1871;  // LDF5_DisputePvP_Debuff_Ba
         owners[297221] = 1267;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[297222] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[297223] = 1196;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
@@ -50036,11 +49996,11 @@ internal static class BattleCycles
         owners[297337] = 52;  // DirectPortal_LGuard_Charge_PM_Fe2
         owners[297338] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297339] = 52;  // DirectPortal_LGuard_Charge_PM_Fe2
+        owners[297340] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
     }
 
     private static void CycleOf43(Dictionary<int, int> owners)
     {
-        owners[297340] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297341] = 52;  // DirectPortal_LGuard_Charge_PM_Fe2
         owners[297342] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297343] = 1189;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
@@ -50052,8 +50012,8 @@ internal static class BattleCycles
         owners[297349] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297350] = 52;  // DirectPortal_LGuard_Charge_PM_Fe2
         owners[297351] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
-        owners[297357] = 1861;  // LDF5_LGuard_Safety_Chase_Fn
-        owners[297358] = 1862;  // LDF5_LGuard_Safety_Hold_Rn
+        owners[297357] = 1860;  // LDF5_LGuard_Safety_Chase_Fn
+        owners[297358] = 1861;  // LDF5_LGuard_Safety_Hold_Rn
         owners[297359] = 1190;  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
         owners[297360] = 1189;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[297361] = 1192;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
@@ -50066,8 +50026,8 @@ internal static class BattleCycles
         owners[297368] = 1200;  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
         owners[297369] = 1198;  // LDF5_LGuard_DisputePvP_Strike_MRArea_We
         owners[297370] = 1196;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
-        owners[297371] = 1863;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
-        owners[297372] = 1864;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
+        owners[297371] = 1862;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
+        owners[297372] = 1863;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
         owners[297373] = 1308;  // LDF5_LGuard_DisputeRvR_Defend_PM_Ke
         owners[297374] = 1303;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
         owners[297375] = 1304;  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
@@ -50128,42 +50088,42 @@ internal static class BattleCycles
         owners[297430] = 52;  // DirectPortal_LGuard_Charge_PM_Fe2
         owners[297431] = 52;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297437] = 1413;  // Gab1_Gaurd_Defend_PM_Kn
-        owners[297438] = 1873;  // Gab1_Gaurd_Support_HBuff_Pn
+        owners[297438] = 1872;  // Gab1_Gaurd_Support_HBuff_Pn
         owners[297439] = 1414;  // Gab1_Gaurd_Charge_PM_Fn
-        owners[297452] = 1874;  // Gab1_LGuard_Boss_02
-        owners[297453] = 1875;  // Gab1_VritraGuard_Boss_02
+        owners[297452] = 1873;  // Gab1_LGuard_Boss_02
+        owners[297453] = 1874;  // Gab1_VritraGuard_Boss_02
         owners[297476] = 1267;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[297477] = 61;  // F5_PvP_DGuard_Fi_Ae
         owners[297478] = 61;  // F5_PvP_DGuard_Fi_Ae
-        owners[297483] = 1876;  // Gab1_DGuard_05
-        owners[297503] = 1877;  // Gab1_VritraGuard_BossKiller_01
-        owners[297504] = 1878;  // Gab1_VritraGuard_BossKiller_02
-        owners[297505] = 1879;  // F5_RvR_Trap
-        owners[297506] = 1879;  // F5_RvR_Trap
+        owners[297483] = 1875;  // Gab1_DGuard_05
+        owners[297503] = 1876;  // Gab1_VritraGuard_BossKiller_01
+        owners[297504] = 1877;  // Gab1_VritraGuard_BossKiller_02
+        owners[297505] = 1878;  // F5_RvR_Trap
+        owners[297506] = 1878;  // F5_RvR_Trap
         owners[297507] = 1301;  // F5_RvR_LGuard_Ra_Ae
         owners[297508] = 1301;  // F5_RvR_DGuard_Ra_Ae
         owners[297509] = 1302;  // LDF5_DisputeRvR_Watch_NoBroad_Ra
         owners[297510] = 1413;  // Gab1_Gaurd_Defend_PM_Kn
-        owners[297511] = 1873;  // Gab1_Gaurd_Support_HBuff_Pn
+        owners[297511] = 1872;  // Gab1_Gaurd_Support_HBuff_Pn
         owners[297512] = 1414;  // Gab1_Gaurd_Charge_PM_Fn
-        owners[297519] = 1880;  // LDF5_Fortress_VGuardBoss_Fi
-        owners[297520] = 1881;  // LDF5_Fortress_VGuardBoss_Ra
-        owners[297521] = 1882;  // LDF5_Fortress_VGuardBoss_Wi
-        owners[297522] = 1883;  // LDF5_Fortress_LGuardBoss_Fi
-        owners[297523] = 1884;  // LDF5_Fortress_LGuardBoss_Ra
-        owners[297524] = 1885;  // LDF5_Fortress_LGuardBoss_Wi
-        owners[297525] = 1883;  // LDF5_Fortress_DGuardBoss_Fi
-        owners[297526] = 1884;  // LDF5_Fortress_DGuardBoss_Ra
-        owners[297527] = 1885;  // LDF5_Fortress_DGuardBoss_Wi
+        owners[297519] = 1879;  // LDF5_Fortress_VGuardBoss_Fi
+        owners[297520] = 1880;  // LDF5_Fortress_VGuardBoss_Ra
+        owners[297521] = 1881;  // LDF5_Fortress_VGuardBoss_Wi
+        owners[297522] = 1882;  // LDF5_Fortress_LGuardBoss_Fi
+        owners[297523] = 1883;  // LDF5_Fortress_LGuardBoss_Ra
+        owners[297524] = 1884;  // LDF5_Fortress_LGuardBoss_Wi
+        owners[297525] = 1882;  // LDF5_Fortress_DGuardBoss_Fi
+        owners[297526] = 1883;  // LDF5_Fortress_DGuardBoss_Ra
+        owners[297527] = 1884;  // LDF5_Fortress_DGuardBoss_Wi
         owners[297541] = 1304;  // LDF5_Fortress_Guard_As
-        owners[700448] = 1886;  // ND2_WhHC1
-        owners[700449] = 1887;  // ND2_WhHC2
-        owners[702230] = 1888;  // LDF5_LFunc_Combat
-        owners[702231] = 1888;  // LDF5_DFunc_Combat
-        owners[702234] = 1888;  // LDF5_LFunc_Combat
-        owners[702235] = 1888;  // LDF5_DFunc_Combat
-        owners[702238] = 1888;  // LDF5_LFunc_Combat
-        owners[702239] = 1888;  // LDF5_DFunc_Combat
+        owners[700448] = 1885;  // ND2_WhHC1
+        owners[700449] = 1886;  // ND2_WhHC2
+        owners[702230] = 1887;  // LDF5_LFunc_Combat
+        owners[702231] = 1887;  // LDF5_DFunc_Combat
+        owners[702234] = 1887;  // LDF5_LFunc_Combat
+        owners[702235] = 1887;  // LDF5_DFunc_Combat
+        owners[702238] = 1887;  // LDF5_LFunc_Combat
+        owners[702239] = 1887;  // LDF5_DFunc_Combat
         owners[702521] = 3;  // DGuard_FeA
         owners[702522] = 3;  // DGuard_FeA
         owners[702527] = 3;  // DGuard_FeA
@@ -50440,11 +50400,11 @@ internal static class BattleCycles
         owners[799309] = 3;  // DGuard_FeA
         owners[799310] = 5;  // DFunction
         owners[799312] = 5;  // DFunction
+        owners[799313] = 5;  // DFunction
     }
 
     private static void CycleOf44(Dictionary<int, int> owners)
     {
-        owners[799313] = 5;  // DFunction
         owners[799315] = 3;  // DGuard_FeA
         owners[799319] = 3;  // DGuard_FeA
         owners[799320] = 24;  // DGuard_WeA
@@ -50466,13 +50426,13 @@ internal static class BattleCycles
         owners[799362] = 24;  // DGuard_WeA
         owners[799370] = 5;  // DFunction
         owners[799406] = 31;  // DGuard_WeB
-        owners[799528] = 1889;  // Elim_Mercenary2
-        owners[799648] = 1890;  // IDYun_Soldier_ND1
-        owners[799652] = 1891;  // IDYun_Soldier_ND2
-        owners[799653] = 1892;  // IDYun_Soldier_ND3
-        owners[799654] = 1890;  // IDYun_Soldier_ND1
-        owners[799655] = 1891;  // IDYun_Soldier_ND2
-        owners[799656] = 1892;  // IDYun_Soldier_ND3
+        owners[799528] = 1888;  // Elim_Mercenary2
+        owners[799648] = 1889;  // IDYun_Soldier_ND1
+        owners[799652] = 1890;  // IDYun_Soldier_ND2
+        owners[799653] = 1891;  // IDYun_Soldier_ND3
+        owners[799654] = 1889;  // IDYun_Soldier_ND1
+        owners[799655] = 1890;  // IDYun_Soldier_ND2
+        owners[799656] = 1891;  // IDYun_Soldier_ND3
         owners[799882] = 5;  // DFunction
         owners[799883] = 5;  // DFunction
         owners[799884] = 5;  // DFunction
@@ -50526,22 +50486,22 @@ internal static class BattleCycles
         owners[800149] = 3;  // DGuard_FeA
         owners[800150] = 3;  // DGuard_FeA
         owners[800151] = 3;  // DGuard_FeA
-        owners[800175] = 1893;  // LDF4b_Tiamat_Temp53
+        owners[800175] = 1892;  // LDF4b_Tiamat_Temp53
         owners[800206] = 0;  // LFunction
         owners[800207] = 0;  // LFunction
         owners[800208] = 0;  // LFunction
         owners[800209] = 0;  // LFunction
         owners[800210] = 0;  // LFunction
         owners[800245] = 0;  // LFunction
-        owners[800285] = 1890;  // IDYun_Soldier_ND1
-        owners[800286] = 1891;  // IDYun_Soldier_ND2
-        owners[800287] = 1892;  // IDYun_Soldier_ND3
-        owners[800288] = 1890;  // IDYun_Soldier_ND1
-        owners[800289] = 1891;  // IDYun_Soldier_ND2
-        owners[800290] = 1892;  // IDYun_Soldier_ND3
-        owners[800291] = 1890;  // IDYun_Soldier_ND1
-        owners[800292] = 1891;  // IDYun_Soldier_ND2
-        owners[800293] = 1892;  // IDYun_Soldier_ND3
+        owners[800285] = 1889;  // IDYun_Soldier_ND1
+        owners[800286] = 1890;  // IDYun_Soldier_ND2
+        owners[800287] = 1891;  // IDYun_Soldier_ND3
+        owners[800288] = 1889;  // IDYun_Soldier_ND1
+        owners[800289] = 1890;  // IDYun_Soldier_ND2
+        owners[800290] = 1891;  // IDYun_Soldier_ND3
+        owners[800291] = 1889;  // IDYun_Soldier_ND1
+        owners[800292] = 1890;  // IDYun_Soldier_ND2
+        owners[800293] = 1891;  // IDYun_Soldier_ND3
         owners[800307] = 0;  // LFunction
         owners[800308] = 0;  // LFunction
         owners[800309] = 0;  // LFunction
@@ -50573,18 +50533,18 @@ internal static class BattleCycles
         owners[800515] = 0;  // LFunction
         owners[800516] = 5;  // DFunction
         owners[800517] = 5;  // DFunction
-        owners[800522] = 1888;  // LDF5_LFunc_Combat
-        owners[800523] = 1888;  // LDF5_LFunc_Combat
-        owners[800524] = 1888;  // LDF5_DFunc_Combat
-        owners[800525] = 1888;  // LDF5_DFunc_Combat
+        owners[800522] = 1887;  // LDF5_LFunc_Combat
+        owners[800523] = 1887;  // LDF5_LFunc_Combat
+        owners[800524] = 1887;  // LDF5_DFunc_Combat
+        owners[800525] = 1887;  // LDF5_DFunc_Combat
         owners[800526] = 1123;  // F5_PvPLight_LGuard_Pr_An
-        owners[800527] = 1865;  // BGuard_CommanderF5_L
+        owners[800527] = 1864;  // BGuard_CommanderF5_L
         owners[800528] = 1123;  // F5_PvPLight_DGuard_Pr_An
-        owners[800529] = 1865;  // BGuard_CommanderF5_D
+        owners[800529] = 1864;  // BGuard_CommanderF5_D
         owners[800530] = 58;  // F5_PvPLight_LGuard_Fi_An
         owners[800531] = 61;  // F5_PvP_DGuard_Fi_Ae
         owners[800535] = 1132;  // F5_PvPLight_LGuard_Kn_An
-        owners[800537] = 1894;  // F5_PvP_DGuard_Fi_Ae
+        owners[800537] = 1893;  // F5_PvP_DGuard_Fi_Ae
         owners[800540] = 64;  // F5_PvP_LGuard_Kn_Ae
         owners[800541] = 64;  // F5_PvP_LGuard_Kn_Ae
         owners[800542] = 64;  // F5_PvP_LGuard_Kn_Ae
@@ -50600,322 +50560,322 @@ internal static class BattleCycles
         owners[800564] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[800566] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[800567] = 66;  // F5_PvPLight_DGuard_Fi_An
-        owners[800569] = 1888;  // LDF5_LFunc_Combat
-        owners[800570] = 1888;  // LDF5_LFunc_Combat
-        owners[800571] = 1888;  // LDF5_DFunc_Combat
-        owners[800572] = 1888;  // LDF5_DFunc_Combat
-        owners[800578] = 1888;  // LDF5_LFunc_Combat
-        owners[800579] = 1888;  // LDF5_LFunc_Combat
-        owners[800580] = 1888;  // LDF5_LFunc_Combat
-        owners[800581] = 1888;  // LDF5_LFunc_Combat
-        owners[800582] = 1888;  // LDF5_LFunc_Combat
-        owners[800584] = 1888;  // LDF5_LFunc_Combat
-        owners[800585] = 1888;  // LDF5_LFunc_Combat
-        owners[800586] = 1888;  // LDF5_LFunc_Combat
-        owners[800587] = 1888;  // LDF5_LMerc_Combat
-        owners[800588] = 1888;  // LDF5_LMerc_Combat
-        owners[800589] = 1888;  // LDF5_LMerc_Combat
-        owners[800590] = 1888;  // LDF5_LMerc_Combat
-        owners[800591] = 1888;  // LDF5_LMerc_Combat
-        owners[800592] = 1888;  // LDF5_LMerc_Combat
-        owners[800593] = 1888;  // LDF5_LMerc_Combat
-        owners[800594] = 1888;  // LDF5_LMerc_Combat
-        owners[800595] = 1888;  // LDF5_LMerc_Combat
-        owners[800596] = 1888;  // LDF5_LMerc_Combat
-        owners[800597] = 1888;  // LDF5_LMerc_Combat
-        owners[800598] = 1888;  // LDF5_LMerc_Combat
-        owners[800599] = 1888;  // LDF5_LMerc_Combat
-        owners[800600] = 1888;  // LDF5_LMerc_Combat
-        owners[800601] = 1888;  // LDF5_DFunc_Combat
-        owners[800602] = 1888;  // LDF5_DFunc_Combat
-        owners[800603] = 1888;  // LDF5_DFunc_Combat
-        owners[800604] = 1888;  // LDF5_DFunc_Combat
-        owners[800605] = 1888;  // LDF5_DFunc_Combat
-        owners[800606] = 1888;  // LDF5_DFunc_Combat
-        owners[800607] = 1888;  // LDF5_DFunc_Combat
-        owners[800608] = 1888;  // LDF5_DFunc_Combat
-        owners[800609] = 1888;  // LDF5_DFunc_Combat
-        owners[800610] = 1888;  // LDF5_DMerc_Combat
-        owners[800611] = 1888;  // LDF5_DMerc_Combat
-        owners[800612] = 1888;  // LDF5_DMerc_Combat
-        owners[800613] = 1888;  // LDF5_DMerc_Combat
-        owners[800614] = 1888;  // LDF5_DMerc_Combat
-        owners[800615] = 1888;  // LDF5_DMerc_Combat
-        owners[800616] = 1888;  // LDF5_DMerc_Combat
-        owners[800617] = 1888;  // LDF5_DMerc_Combat
-        owners[800618] = 1888;  // LDF5_DMerc_Combat
-        owners[800619] = 1888;  // LDF5_DMerc_Combat
-        owners[800620] = 1888;  // LDF5_DMerc_Combat
-        owners[800621] = 1888;  // LDF5_DMerc_Combat
-        owners[800622] = 1888;  // LDF5_DMerc_Combat
-        owners[800623] = 1888;  // LDF5_DMerc_Combat
-        owners[800624] = 1888;  // LDF5_LFunc_Combat
-        owners[800625] = 1888;  // LDF5_DFunc_Combat
-        owners[800626] = 1888;  // LDF5_LFunc_Combat
-        owners[800627] = 1888;  // LDF5_LFunc_Combat
-        owners[800628] = 1888;  // LDF5_LFunc_Combat
-        owners[800629] = 1888;  // LDF5_LFunc_Combat
-        owners[800630] = 1888;  // LDF5_LMerc_Combat
-        owners[800631] = 1888;  // LDF5_LMerc_Combat
-        owners[800632] = 1888;  // LDF5_LMerc_Combat
-        owners[800633] = 1888;  // LDF5_DFunc_Combat
-        owners[800634] = 1888;  // LDF5_DFunc_Combat
-        owners[800635] = 1888;  // LDF5_DMerc_Combat
-        owners[800636] = 1888;  // LDF5_DMerc_Combat
-        owners[800637] = 1888;  // LDF5_DMerc_Combat
-        owners[800638] = 1888;  // LDF5_LFunc_Combat
-        owners[800639] = 1888;  // LDF5_LFunc_Combat
-        owners[800640] = 1888;  // LDF5_LFunc_Combat
-        owners[800641] = 1888;  // LDF5_LMerc_Combat
-        owners[800642] = 1888;  // LDF5_LMerc_Combat
-        owners[800643] = 1888;  // LDF5_DFunc_Combat
-        owners[800644] = 1888;  // LDF5_DFunc_Combat
-        owners[800645] = 1888;  // LDF5_DFunc_Combat
-        owners[800646] = 1888;  // LDF5_DMerc_Combat
-        owners[800647] = 1888;  // LDF5_DMerc_Combat
-        owners[800648] = 1888;  // LDF5_LFunc_Combat
-        owners[800649] = 1888;  // LDF5_LMerc_Combat
-        owners[800650] = 1888;  // LDF5_LMerc_Combat
-        owners[800651] = 1888;  // LDF5_LMerc_Combat
-        owners[800652] = 1888;  // LDF5_DFunc_Combat
-        owners[800653] = 1888;  // LDF5_DMerc_Combat
-        owners[800654] = 1888;  // LDF5_DMerc_Combat
-        owners[800655] = 1888;  // LDF5_DMerc_Combat
-        owners[800656] = 1888;  // LDF5_LFunc_Combat
-        owners[800657] = 1888;  // LDF5_LMerc_Combat
-        owners[800658] = 1888;  // LDF5_LMerc_Combat
-        owners[800659] = 1888;  // LDF5_LMerc_Combat
-        owners[800660] = 1888;  // LDF5_DFunc_Combat
-        owners[800661] = 1888;  // LDF5_DMerc_Combat
-        owners[800662] = 1888;  // LDF5_DMerc_Combat
-        owners[800663] = 1888;  // LDF5_DMerc_Combat
-        owners[800664] = 1888;  // LDF5_LFunc_Combat
-        owners[800665] = 1888;  // LDF5_LMerc_Combat
-        owners[800666] = 1888;  // LDF5_LMerc_Combat
-        owners[800667] = 1888;  // LDF5_LMerc_Combat
-        owners[800668] = 1888;  // LDF5_LMerc_Combat
-        owners[800669] = 1888;  // LDF5_LMerc_Combat
-        owners[800670] = 1888;  // LDF5_DFunc_Combat
-        owners[800671] = 1888;  // LDF5_DMerc_Combat
-        owners[800672] = 1888;  // LDF5_DMerc_Combat
-        owners[800673] = 1888;  // LDF5_DMerc_Combat
-        owners[800674] = 1888;  // LDF5_DMerc_Combat
-        owners[800675] = 1888;  // LDF5_DMerc_Combat
-        owners[800676] = 1888;  // LDF5_LFunc_Combat
-        owners[800677] = 1888;  // LDF5_LMerc_Combat
-        owners[800678] = 1888;  // LDF5_LMerc_Combat
-        owners[800679] = 1888;  // LDF5_LMerc_Combat
-        owners[800680] = 1888;  // LDF5_LMerc_Combat
-        owners[800681] = 1888;  // LDF5_LMerc_Combat
-        owners[800682] = 1888;  // LDF5_DFunc_Combat
-        owners[800683] = 1888;  // LDF5_DMerc_Combat
-        owners[800684] = 1888;  // LDF5_DMerc_Combat
-        owners[800685] = 1888;  // LDF5_DMerc_Combat
-        owners[800686] = 1888;  // LDF5_DMerc_Combat
-        owners[800687] = 1888;  // LDF5_DMerc_Combat
-        owners[800688] = 1888;  // LDF5_LFunc_Combat
-        owners[800689] = 1888;  // LDF5_LMerc_Combat
-        owners[800690] = 1888;  // LDF5_LMerc_Combat
-        owners[800691] = 1888;  // LDF5_LMerc_Combat
-        owners[800692] = 1888;  // LDF5_LMerc_Combat
-        owners[800693] = 1888;  // LDF5_DFunc_Combat
-        owners[800694] = 1888;  // LDF5_DMerc_Combat
-        owners[800695] = 1888;  // LDF5_DMerc_Combat
-        owners[800696] = 1888;  // LDF5_DMerc_Combat
-        owners[800697] = 1888;  // LDF5_DMerc_Combat
-        owners[800698] = 1888;  // LDF5_LFunc_Combat
-        owners[800699] = 1888;  // LDF5_LMerc_Combat
-        owners[800700] = 1888;  // LDF5_LMerc_Combat
-        owners[800701] = 1888;  // LDF5_LMerc_Combat
-        owners[800702] = 1888;  // LDF5_LMerc_Combat
-        owners[800703] = 1888;  // LDF5_DFunc_Combat
-        owners[800704] = 1888;  // LDF5_DMerc_Combat
-        owners[800705] = 1888;  // LDF5_DMerc_Combat
-        owners[800706] = 1888;  // LDF5_DMerc_Combat
-        owners[800707] = 1888;  // LDF5_DMerc_Combat
-        owners[800708] = 1888;  // LDF5_LFunc_Combat
-        owners[800709] = 1888;  // LDF5_LMerc_Combat
-        owners[800710] = 1888;  // LDF5_LMerc_Combat
-        owners[800711] = 1888;  // LDF5_LMerc_Combat
-        owners[800712] = 1888;  // LDF5_LMerc_Combat
-        owners[800713] = 1888;  // LDF5_DFunc_Combat
-        owners[800714] = 1888;  // LDF5_DMerc_Combat
-        owners[800715] = 1888;  // LDF5_DMerc_Combat
-        owners[800716] = 1888;  // LDF5_DMerc_Combat
-        owners[800717] = 1888;  // LDF5_DMerc_Combat
-        owners[800718] = 1888;  // LDF5_LFunc_Combat
-        owners[800719] = 1888;  // LDF5_LMerc_Combat
-        owners[800720] = 1888;  // LDF5_LMerc_Combat
-        owners[800721] = 1888;  // LDF5_LMerc_Combat
-        owners[800722] = 1888;  // LDF5_DFunc_Combat
-        owners[800723] = 1888;  // LDF5_DFunc_Combat
-        owners[800724] = 1888;  // LDF5_DMerc_Combat
-        owners[800725] = 1888;  // LDF5_DMerc_Combat
-        owners[800726] = 1888;  // LDF5_LFunc_Combat
-        owners[800727] = 1888;  // LDF5_LMerc_Combat
-        owners[800728] = 1888;  // LDF5_LMerc_Combat
-        owners[800729] = 1888;  // LDF5_LMerc_Combat
-        owners[800730] = 1888;  // LDF5_DFunc_Combat
-        owners[800731] = 1888;  // LDF5_DMerc_Combat
-        owners[800732] = 1888;  // LDF5_DMerc_Combat
-        owners[800733] = 1888;  // LDF5_DMerc_Combat
-        owners[800734] = 1888;  // LDF5_LFunc_Combat
-        owners[800736] = 1888;  // LDF5_LMerc_Combat
-        owners[800737] = 1888;  // LDF5_LMerc_Combat
-        owners[800738] = 1888;  // LDF5_LMerc_Combat
-        owners[800739] = 1888;  // LDF5_DFunc_Combat
-        owners[800741] = 1888;  // LDF5_DMerc_Combat
-        owners[800742] = 1888;  // LDF5_DMerc_Combat
-        owners[800743] = 1888;  // LDF5_DMerc_Combat
-        owners[800744] = 1888;  // LDF5_LFunc_Combat
-        owners[800745] = 1888;  // LDF5_LFunc_Combat
-        owners[800746] = 1888;  // LDF5_LMerc_Combat
-        owners[800747] = 1888;  // LDF5_DFunc_Combat
-        owners[800748] = 1888;  // LDF5_DFunc_Combat
-        owners[800749] = 1888;  // LDF5_DMerc_Combat
-        owners[800750] = 1888;  // LDF5_LFunc_Combat
-        owners[800751] = 1888;  // LDF5_LMerc_Combat
-        owners[800752] = 1888;  // LDF5_LMerc_Combat
-        owners[800753] = 1888;  // LDF5_LMerc_Combat
-        owners[800754] = 1888;  // LDF5_LMerc_Combat
-        owners[800755] = 1888;  // LDF5_DFunc_Combat
-        owners[800756] = 1888;  // LDF5_DMerc_Combat
-        owners[800757] = 1888;  // LDF5_DMerc_Combat
-        owners[800758] = 1888;  // LDF5_DMerc_Combat
-        owners[800759] = 1888;  // LDF5_DMerc_Combat
-        owners[800760] = 1888;  // LDF5_LFunc_Combat
-        owners[800761] = 1888;  // LDF5_LFunc_Combat
-        owners[800762] = 1888;  // LDF5_LFunc_Combat
-        owners[800763] = 1888;  // LDF5_LMerc_Combat
-        owners[800764] = 1888;  // LDF5_LMerc_Combat
-        owners[800765] = 1888;  // LDF5_DFunc_Combat
-        owners[800766] = 1888;  // LDF5_DFunc_Combat
-        owners[800767] = 1888;  // LDF5_DFunc_Combat
-        owners[800768] = 1888;  // LDF5_DMerc_Combat
-        owners[800769] = 1888;  // LDF5_DMerc_Combat
-        owners[800770] = 1888;  // LDF5_LFunc_Combat
-        owners[800771] = 1888;  // LDF5_LMerc_Combat
-        owners[800772] = 1888;  // LDF5_LMerc_Combat
-        owners[800773] = 1888;  // LDF5_DFunc_Combat
-        owners[800774] = 1888;  // LDF5_DMerc_Combat
-        owners[800775] = 1888;  // LDF5_DMerc_Combat
-        owners[800776] = 1888;  // LDF5_LFunc_Combat
-        owners[800777] = 1888;  // LDF5_LFunc_Combat
-        owners[800778] = 1888;  // LDF5_LMerc_Combat
-        owners[800779] = 1888;  // LDF5_LMerc_Combat
-        owners[800780] = 1888;  // LDF5_DFunc_Combat
-        owners[800781] = 1888;  // LDF5_DFunc_Combat
-        owners[800782] = 1888;  // LDF5_DMerc_Combat
-        owners[800783] = 1888;  // LDF5_DMerc_Combat
-        owners[800784] = 1888;  // LDF5_LFunc_Combat
-        owners[800785] = 1888;  // LDF5_LMerc_Combat
-        owners[800786] = 1888;  // LDF5_LMerc_Combat
-        owners[800787] = 1888;  // LDF5_DFunc_Combat
-        owners[800788] = 1888;  // LDF5_DFunc_Combat
-        owners[800789] = 1888;  // LDF5_DMerc_Combat
-        owners[800790] = 1888;  // LDF5_LFunc_Combat
-        owners[800791] = 1888;  // LDF5_LMerc_Combat
-        owners[800792] = 1888;  // LDF5_LMerc_Combat
-        owners[800793] = 1888;  // LDF5_LMerc_Combat
-        owners[800794] = 1888;  // LDF5_DFunc_Combat
-        owners[800795] = 1888;  // LDF5_DMerc_Combat
-        owners[800796] = 1888;  // LDF5_DMerc_Combat
-        owners[800797] = 1888;  // LDF5_DMerc_Combat
-        owners[800798] = 1888;  // LDF5_LFunc_Combat
-        owners[800799] = 1888;  // LDF5_LFunc_Combat
-        owners[800800] = 1888;  // LDF5_LMerc_Combat
-        owners[800801] = 1888;  // LDF5_LMerc_Combat
-        owners[800802] = 1888;  // LDF5_LMerc_Combat
-        owners[800803] = 1888;  // LDF5_DFunc_Combat
-        owners[800804] = 1888;  // LDF5_DFunc_Combat
-        owners[800805] = 1888;  // LDF5_DMerc_Combat
-        owners[800806] = 1888;  // LDF5_DMerc_Combat
-        owners[800807] = 1888;  // LDF5_DMerc_Combat
-        owners[800808] = 1888;  // LDF5_LFunc_Combat
-        owners[800809] = 1888;  // LDF5_LMerc_Combat
-        owners[800810] = 1888;  // LDF5_LMerc_Combat
-        owners[800811] = 1888;  // LDF5_LMerc_Combat
-        owners[800812] = 1888;  // LDF5_DFunc_Combat
-        owners[800813] = 1888;  // LDF5_DMerc_Combat
-        owners[800814] = 1888;  // LDF5_DMerc_Combat
-        owners[800815] = 1888;  // LDF5_DMerc_Combat
+        owners[800569] = 1887;  // LDF5_LFunc_Combat
+        owners[800570] = 1887;  // LDF5_LFunc_Combat
+        owners[800571] = 1887;  // LDF5_DFunc_Combat
+        owners[800572] = 1887;  // LDF5_DFunc_Combat
+        owners[800578] = 1887;  // LDF5_LFunc_Combat
+        owners[800579] = 1887;  // LDF5_LFunc_Combat
+        owners[800580] = 1887;  // LDF5_LFunc_Combat
+        owners[800581] = 1887;  // LDF5_LFunc_Combat
+        owners[800582] = 1887;  // LDF5_LFunc_Combat
+        owners[800584] = 1887;  // LDF5_LFunc_Combat
+        owners[800585] = 1887;  // LDF5_LFunc_Combat
+        owners[800586] = 1887;  // LDF5_LFunc_Combat
+        owners[800587] = 1887;  // LDF5_LMerc_Combat
+        owners[800588] = 1887;  // LDF5_LMerc_Combat
+        owners[800589] = 1887;  // LDF5_LMerc_Combat
+        owners[800590] = 1887;  // LDF5_LMerc_Combat
+        owners[800591] = 1887;  // LDF5_LMerc_Combat
+        owners[800592] = 1887;  // LDF5_LMerc_Combat
+        owners[800593] = 1887;  // LDF5_LMerc_Combat
+        owners[800594] = 1887;  // LDF5_LMerc_Combat
+        owners[800595] = 1887;  // LDF5_LMerc_Combat
+        owners[800596] = 1887;  // LDF5_LMerc_Combat
+        owners[800597] = 1887;  // LDF5_LMerc_Combat
+        owners[800598] = 1887;  // LDF5_LMerc_Combat
+        owners[800599] = 1887;  // LDF5_LMerc_Combat
+        owners[800600] = 1887;  // LDF5_LMerc_Combat
+        owners[800601] = 1887;  // LDF5_DFunc_Combat
+        owners[800602] = 1887;  // LDF5_DFunc_Combat
+        owners[800603] = 1887;  // LDF5_DFunc_Combat
+        owners[800604] = 1887;  // LDF5_DFunc_Combat
+        owners[800605] = 1887;  // LDF5_DFunc_Combat
+        owners[800606] = 1887;  // LDF5_DFunc_Combat
+        owners[800607] = 1887;  // LDF5_DFunc_Combat
+        owners[800608] = 1887;  // LDF5_DFunc_Combat
+        owners[800609] = 1887;  // LDF5_DFunc_Combat
+        owners[800610] = 1887;  // LDF5_DMerc_Combat
+        owners[800611] = 1887;  // LDF5_DMerc_Combat
+        owners[800612] = 1887;  // LDF5_DMerc_Combat
+        owners[800613] = 1887;  // LDF5_DMerc_Combat
+        owners[800614] = 1887;  // LDF5_DMerc_Combat
+        owners[800615] = 1887;  // LDF5_DMerc_Combat
+        owners[800616] = 1887;  // LDF5_DMerc_Combat
+        owners[800617] = 1887;  // LDF5_DMerc_Combat
+        owners[800618] = 1887;  // LDF5_DMerc_Combat
+        owners[800619] = 1887;  // LDF5_DMerc_Combat
+        owners[800620] = 1887;  // LDF5_DMerc_Combat
+        owners[800621] = 1887;  // LDF5_DMerc_Combat
+        owners[800622] = 1887;  // LDF5_DMerc_Combat
+        owners[800623] = 1887;  // LDF5_DMerc_Combat
+        owners[800624] = 1887;  // LDF5_LFunc_Combat
+        owners[800625] = 1887;  // LDF5_DFunc_Combat
+        owners[800626] = 1887;  // LDF5_LFunc_Combat
+        owners[800627] = 1887;  // LDF5_LFunc_Combat
+        owners[800628] = 1887;  // LDF5_LFunc_Combat
+        owners[800629] = 1887;  // LDF5_LFunc_Combat
+        owners[800630] = 1887;  // LDF5_LMerc_Combat
+        owners[800631] = 1887;  // LDF5_LMerc_Combat
+        owners[800632] = 1887;  // LDF5_LMerc_Combat
+        owners[800633] = 1887;  // LDF5_DFunc_Combat
+        owners[800634] = 1887;  // LDF5_DFunc_Combat
+        owners[800635] = 1887;  // LDF5_DMerc_Combat
+        owners[800636] = 1887;  // LDF5_DMerc_Combat
+        owners[800637] = 1887;  // LDF5_DMerc_Combat
+        owners[800638] = 1887;  // LDF5_LFunc_Combat
+        owners[800639] = 1887;  // LDF5_LFunc_Combat
+        owners[800640] = 1887;  // LDF5_LFunc_Combat
+        owners[800641] = 1887;  // LDF5_LMerc_Combat
+        owners[800642] = 1887;  // LDF5_LMerc_Combat
+        owners[800643] = 1887;  // LDF5_DFunc_Combat
+        owners[800644] = 1887;  // LDF5_DFunc_Combat
+        owners[800645] = 1887;  // LDF5_DFunc_Combat
+        owners[800646] = 1887;  // LDF5_DMerc_Combat
+        owners[800647] = 1887;  // LDF5_DMerc_Combat
+        owners[800648] = 1887;  // LDF5_LFunc_Combat
+        owners[800649] = 1887;  // LDF5_LMerc_Combat
+        owners[800650] = 1887;  // LDF5_LMerc_Combat
+        owners[800651] = 1887;  // LDF5_LMerc_Combat
+        owners[800652] = 1887;  // LDF5_DFunc_Combat
+        owners[800653] = 1887;  // LDF5_DMerc_Combat
+        owners[800654] = 1887;  // LDF5_DMerc_Combat
+        owners[800655] = 1887;  // LDF5_DMerc_Combat
+        owners[800656] = 1887;  // LDF5_LFunc_Combat
+        owners[800657] = 1887;  // LDF5_LMerc_Combat
+        owners[800658] = 1887;  // LDF5_LMerc_Combat
+        owners[800659] = 1887;  // LDF5_LMerc_Combat
+        owners[800660] = 1887;  // LDF5_DFunc_Combat
+        owners[800661] = 1887;  // LDF5_DMerc_Combat
+        owners[800662] = 1887;  // LDF5_DMerc_Combat
+        owners[800663] = 1887;  // LDF5_DMerc_Combat
+        owners[800664] = 1887;  // LDF5_LFunc_Combat
+        owners[800665] = 1887;  // LDF5_LMerc_Combat
+        owners[800666] = 1887;  // LDF5_LMerc_Combat
+        owners[800667] = 1887;  // LDF5_LMerc_Combat
+        owners[800668] = 1887;  // LDF5_LMerc_Combat
+        owners[800669] = 1887;  // LDF5_LMerc_Combat
+        owners[800670] = 1887;  // LDF5_DFunc_Combat
+        owners[800671] = 1887;  // LDF5_DMerc_Combat
+        owners[800672] = 1887;  // LDF5_DMerc_Combat
+        owners[800673] = 1887;  // LDF5_DMerc_Combat
+        owners[800674] = 1887;  // LDF5_DMerc_Combat
+        owners[800675] = 1887;  // LDF5_DMerc_Combat
+        owners[800676] = 1887;  // LDF5_LFunc_Combat
+        owners[800677] = 1887;  // LDF5_LMerc_Combat
+        owners[800678] = 1887;  // LDF5_LMerc_Combat
+        owners[800679] = 1887;  // LDF5_LMerc_Combat
+        owners[800680] = 1887;  // LDF5_LMerc_Combat
+        owners[800681] = 1887;  // LDF5_LMerc_Combat
+        owners[800682] = 1887;  // LDF5_DFunc_Combat
+        owners[800683] = 1887;  // LDF5_DMerc_Combat
+        owners[800684] = 1887;  // LDF5_DMerc_Combat
+        owners[800685] = 1887;  // LDF5_DMerc_Combat
+        owners[800686] = 1887;  // LDF5_DMerc_Combat
+        owners[800687] = 1887;  // LDF5_DMerc_Combat
+        owners[800688] = 1887;  // LDF5_LFunc_Combat
+        owners[800689] = 1887;  // LDF5_LMerc_Combat
+        owners[800690] = 1887;  // LDF5_LMerc_Combat
+        owners[800691] = 1887;  // LDF5_LMerc_Combat
+        owners[800692] = 1887;  // LDF5_LMerc_Combat
+        owners[800693] = 1887;  // LDF5_DFunc_Combat
+        owners[800694] = 1887;  // LDF5_DMerc_Combat
+        owners[800695] = 1887;  // LDF5_DMerc_Combat
+        owners[800696] = 1887;  // LDF5_DMerc_Combat
+        owners[800697] = 1887;  // LDF5_DMerc_Combat
+        owners[800698] = 1887;  // LDF5_LFunc_Combat
+        owners[800699] = 1887;  // LDF5_LMerc_Combat
+        owners[800700] = 1887;  // LDF5_LMerc_Combat
+        owners[800701] = 1887;  // LDF5_LMerc_Combat
+        owners[800702] = 1887;  // LDF5_LMerc_Combat
+        owners[800703] = 1887;  // LDF5_DFunc_Combat
+        owners[800704] = 1887;  // LDF5_DMerc_Combat
+        owners[800705] = 1887;  // LDF5_DMerc_Combat
+        owners[800706] = 1887;  // LDF5_DMerc_Combat
+        owners[800707] = 1887;  // LDF5_DMerc_Combat
+        owners[800708] = 1887;  // LDF5_LFunc_Combat
+        owners[800709] = 1887;  // LDF5_LMerc_Combat
+        owners[800710] = 1887;  // LDF5_LMerc_Combat
+        owners[800711] = 1887;  // LDF5_LMerc_Combat
+        owners[800712] = 1887;  // LDF5_LMerc_Combat
+        owners[800713] = 1887;  // LDF5_DFunc_Combat
+        owners[800714] = 1887;  // LDF5_DMerc_Combat
+        owners[800715] = 1887;  // LDF5_DMerc_Combat
+        owners[800716] = 1887;  // LDF5_DMerc_Combat
+        owners[800717] = 1887;  // LDF5_DMerc_Combat
+        owners[800718] = 1887;  // LDF5_LFunc_Combat
+        owners[800719] = 1887;  // LDF5_LMerc_Combat
+        owners[800720] = 1887;  // LDF5_LMerc_Combat
+        owners[800721] = 1887;  // LDF5_LMerc_Combat
+        owners[800722] = 1887;  // LDF5_DFunc_Combat
+        owners[800723] = 1887;  // LDF5_DFunc_Combat
+        owners[800724] = 1887;  // LDF5_DMerc_Combat
+        owners[800725] = 1887;  // LDF5_DMerc_Combat
+        owners[800726] = 1887;  // LDF5_LFunc_Combat
+        owners[800727] = 1887;  // LDF5_LMerc_Combat
+        owners[800728] = 1887;  // LDF5_LMerc_Combat
+        owners[800729] = 1887;  // LDF5_LMerc_Combat
+        owners[800730] = 1887;  // LDF5_DFunc_Combat
+        owners[800731] = 1887;  // LDF5_DMerc_Combat
+        owners[800732] = 1887;  // LDF5_DMerc_Combat
+        owners[800733] = 1887;  // LDF5_DMerc_Combat
+        owners[800734] = 1887;  // LDF5_LFunc_Combat
+        owners[800736] = 1887;  // LDF5_LMerc_Combat
+        owners[800737] = 1887;  // LDF5_LMerc_Combat
+        owners[800738] = 1887;  // LDF5_LMerc_Combat
+        owners[800739] = 1887;  // LDF5_DFunc_Combat
+        owners[800741] = 1887;  // LDF5_DMerc_Combat
+        owners[800742] = 1887;  // LDF5_DMerc_Combat
+        owners[800743] = 1887;  // LDF5_DMerc_Combat
+        owners[800744] = 1887;  // LDF5_LFunc_Combat
+        owners[800745] = 1887;  // LDF5_LFunc_Combat
+        owners[800746] = 1887;  // LDF5_LMerc_Combat
+        owners[800747] = 1887;  // LDF5_DFunc_Combat
+        owners[800748] = 1887;  // LDF5_DFunc_Combat
+        owners[800749] = 1887;  // LDF5_DMerc_Combat
+        owners[800750] = 1887;  // LDF5_LFunc_Combat
+        owners[800751] = 1887;  // LDF5_LMerc_Combat
+        owners[800752] = 1887;  // LDF5_LMerc_Combat
+        owners[800753] = 1887;  // LDF5_LMerc_Combat
+        owners[800754] = 1887;  // LDF5_LMerc_Combat
+        owners[800755] = 1887;  // LDF5_DFunc_Combat
+        owners[800756] = 1887;  // LDF5_DMerc_Combat
+        owners[800757] = 1887;  // LDF5_DMerc_Combat
+        owners[800758] = 1887;  // LDF5_DMerc_Combat
+        owners[800759] = 1887;  // LDF5_DMerc_Combat
+        owners[800760] = 1887;  // LDF5_LFunc_Combat
+        owners[800761] = 1887;  // LDF5_LFunc_Combat
+        owners[800762] = 1887;  // LDF5_LFunc_Combat
+        owners[800763] = 1887;  // LDF5_LMerc_Combat
+        owners[800764] = 1887;  // LDF5_LMerc_Combat
+        owners[800765] = 1887;  // LDF5_DFunc_Combat
+        owners[800766] = 1887;  // LDF5_DFunc_Combat
+        owners[800767] = 1887;  // LDF5_DFunc_Combat
+        owners[800768] = 1887;  // LDF5_DMerc_Combat
+        owners[800769] = 1887;  // LDF5_DMerc_Combat
+        owners[800770] = 1887;  // LDF5_LFunc_Combat
+        owners[800771] = 1887;  // LDF5_LMerc_Combat
+        owners[800772] = 1887;  // LDF5_LMerc_Combat
+        owners[800773] = 1887;  // LDF5_DFunc_Combat
+        owners[800774] = 1887;  // LDF5_DMerc_Combat
+        owners[800775] = 1887;  // LDF5_DMerc_Combat
+        owners[800776] = 1887;  // LDF5_LFunc_Combat
+        owners[800777] = 1887;  // LDF5_LFunc_Combat
+        owners[800778] = 1887;  // LDF5_LMerc_Combat
+        owners[800779] = 1887;  // LDF5_LMerc_Combat
+        owners[800780] = 1887;  // LDF5_DFunc_Combat
+        owners[800781] = 1887;  // LDF5_DFunc_Combat
+        owners[800782] = 1887;  // LDF5_DMerc_Combat
+        owners[800783] = 1887;  // LDF5_DMerc_Combat
+        owners[800784] = 1887;  // LDF5_LFunc_Combat
+        owners[800785] = 1887;  // LDF5_LMerc_Combat
+        owners[800786] = 1887;  // LDF5_LMerc_Combat
+        owners[800787] = 1887;  // LDF5_DFunc_Combat
+        owners[800788] = 1887;  // LDF5_DFunc_Combat
+        owners[800789] = 1887;  // LDF5_DMerc_Combat
+        owners[800790] = 1887;  // LDF5_LFunc_Combat
+        owners[800791] = 1887;  // LDF5_LMerc_Combat
+        owners[800792] = 1887;  // LDF5_LMerc_Combat
+        owners[800793] = 1887;  // LDF5_LMerc_Combat
+        owners[800794] = 1887;  // LDF5_DFunc_Combat
+        owners[800795] = 1887;  // LDF5_DMerc_Combat
+        owners[800796] = 1887;  // LDF5_DMerc_Combat
+        owners[800797] = 1887;  // LDF5_DMerc_Combat
+        owners[800798] = 1887;  // LDF5_LFunc_Combat
+        owners[800799] = 1887;  // LDF5_LFunc_Combat
+        owners[800800] = 1887;  // LDF5_LMerc_Combat
+        owners[800801] = 1887;  // LDF5_LMerc_Combat
+        owners[800802] = 1887;  // LDF5_LMerc_Combat
+        owners[800803] = 1887;  // LDF5_DFunc_Combat
+        owners[800804] = 1887;  // LDF5_DFunc_Combat
+        owners[800805] = 1887;  // LDF5_DMerc_Combat
+        owners[800806] = 1887;  // LDF5_DMerc_Combat
+        owners[800807] = 1887;  // LDF5_DMerc_Combat
+        owners[800808] = 1887;  // LDF5_LFunc_Combat
+        owners[800809] = 1887;  // LDF5_LMerc_Combat
+        owners[800810] = 1887;  // LDF5_LMerc_Combat
+        owners[800811] = 1887;  // LDF5_LMerc_Combat
+        owners[800812] = 1887;  // LDF5_DFunc_Combat
+        owners[800813] = 1887;  // LDF5_DMerc_Combat
+        owners[800814] = 1887;  // LDF5_DMerc_Combat
+        owners[800815] = 1887;  // LDF5_DMerc_Combat
         owners[800816] = 58;  // F5_PvPLight_LGuard_Fi_An
         owners[800821] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[800825] = 66;  // F5_PvPLight_DGuard_Fi_An
-        owners[800849] = 1888;  // LDF5_LFunc_Combat
-        owners[800850] = 1888;  // LDF5_LMerc_Combat
+        owners[800849] = 1887;  // LDF5_LFunc_Combat
+        owners[800850] = 1887;  // LDF5_LMerc_Combat
+        owners[800851] = 1887;  // LDF5_LMerc_Combat
     }
 
     private static void CycleOf45(Dictionary<int, int> owners)
     {
-        owners[800851] = 1888;  // LDF5_LMerc_Combat
-        owners[800852] = 1888;  // LDF5_LFunc_Combat
-        owners[800853] = 1888;  // LDF5_LFunc_Combat
-        owners[800854] = 1888;  // LDF5_LMerc_Combat
-        owners[800855] = 1888;  // LDF5_LMerc_Combat
-        owners[800856] = 1888;  // LDF5_LMerc_Combat
-        owners[800857] = 1888;  // LDF5_LMerc_Combat
-        owners[800858] = 1888;  // LDF5_LMerc_Combat
-        owners[800859] = 1888;  // LDF5_LMerc_Combat
-        owners[800860] = 1888;  // LDF5_DFunc_Combat
-        owners[800861] = 1888;  // LDF5_DMerc_Combat
-        owners[800862] = 1888;  // LDF5_DMerc_Combat
-        owners[800863] = 1888;  // LDF5_DFunc_Combat
-        owners[800864] = 1888;  // LDF5_DFunc_Combat
-        owners[800865] = 1888;  // LDF5_DMerc_Combat
-        owners[800866] = 1888;  // LDF5_DMerc_Combat
-        owners[800867] = 1888;  // LDF5_DMerc_Combat
-        owners[800868] = 1888;  // LDF5_DMerc_Combat
-        owners[800869] = 1888;  // LDF5_DMerc_Combat
-        owners[800870] = 1888;  // LDF5_DMerc_Combat
-        owners[800871] = 1888;  // LDF5_LFunc_Combat
-        owners[800872] = 1888;  // LDF5_LFunc_Combat
-        owners[800873] = 1888;  // LDF5_LFunc_Combat
-        owners[800874] = 1888;  // LDF5_LFunc_Combat
-        owners[800875] = 1888;  // LDF5_LFunc_Combat
-        owners[800877] = 1888;  // LDF5_LMerc_Combat
-        owners[800878] = 1888;  // LDF5_LMerc_Combat
-        owners[800879] = 1888;  // LDF5_LMerc_Combat
-        owners[800880] = 1888;  // LDF5_LMerc_Combat
-        owners[800881] = 1888;  // LDF5_LMerc_Combat
-        owners[800882] = 1888;  // LDF5_DFunc_Combat
-        owners[800883] = 1888;  // LDF5_DFunc_Combat
-        owners[800884] = 1888;  // LDF5_DFunc_Combat
-        owners[800885] = 1888;  // LDF5_DFunc_Combat
-        owners[800886] = 1888;  // LDF5_DFunc_Combat
-        owners[800888] = 1888;  // LDF5_DMerc_Combat
-        owners[800889] = 1888;  // LDF5_DMerc_Combat
-        owners[800890] = 1888;  // LDF5_DMerc_Combat
-        owners[800891] = 1888;  // LDF5_DMerc_Combat
-        owners[800892] = 1888;  // LDF5_DMerc_Combat
-        owners[800893] = 1888;  // LDF5_LFunc_Combat
-        owners[800894] = 1888;  // LDF5_LMerc_Combat
-        owners[800895] = 1888;  // LDF5_LMerc_Combat
-        owners[800896] = 1888;  // LDF5_LFunc_Combat
-        owners[800897] = 1888;  // LDF5_LFunc_Combat
-        owners[800898] = 1888;  // LDF5_LMerc_Combat
-        owners[800899] = 1888;  // LDF5_LMerc_Combat
-        owners[800900] = 1888;  // LDF5_LMerc_Combat
-        owners[800901] = 1888;  // LDF5_LMerc_Combat
-        owners[800902] = 1888;  // LDF5_LMerc_Combat
-        owners[800903] = 1888;  // LDF5_LMerc_Combat
-        owners[800904] = 1888;  // LDF5_DFunc_Combat
-        owners[800905] = 1888;  // LDF5_DMerc_Combat
-        owners[800906] = 1888;  // LDF5_DMerc_Combat
-        owners[800907] = 1888;  // LDF5_DFunc_Combat
-        owners[800908] = 1888;  // LDF5_DFunc_Combat
-        owners[800909] = 1888;  // LDF5_DMerc_Combat
-        owners[800910] = 1888;  // LDF5_DMerc_Combat
-        owners[800911] = 1888;  // LDF5_DMerc_Combat
-        owners[800912] = 1888;  // LDF5_DMerc_Combat
-        owners[800913] = 1888;  // LDF5_DMerc_Combat
-        owners[800914] = 1888;  // LDF5_DMerc_Combat
-        owners[800915] = 1888;  // LDF5_LFunc_Combat
-        owners[800916] = 1888;  // LDF5_LFunc_Combat
-        owners[800917] = 1888;  // LDF5_LFunc_Combat
-        owners[800918] = 1888;  // LDF5_DFunc_Combat
-        owners[800919] = 1888;  // LDF5_DFunc_Combat
-        owners[800920] = 1888;  // LDF5_DFunc_Combat
+        owners[800852] = 1887;  // LDF5_LFunc_Combat
+        owners[800853] = 1887;  // LDF5_LFunc_Combat
+        owners[800854] = 1887;  // LDF5_LMerc_Combat
+        owners[800855] = 1887;  // LDF5_LMerc_Combat
+        owners[800856] = 1887;  // LDF5_LMerc_Combat
+        owners[800857] = 1887;  // LDF5_LMerc_Combat
+        owners[800858] = 1887;  // LDF5_LMerc_Combat
+        owners[800859] = 1887;  // LDF5_LMerc_Combat
+        owners[800860] = 1887;  // LDF5_DFunc_Combat
+        owners[800861] = 1887;  // LDF5_DMerc_Combat
+        owners[800862] = 1887;  // LDF5_DMerc_Combat
+        owners[800863] = 1887;  // LDF5_DFunc_Combat
+        owners[800864] = 1887;  // LDF5_DFunc_Combat
+        owners[800865] = 1887;  // LDF5_DMerc_Combat
+        owners[800866] = 1887;  // LDF5_DMerc_Combat
+        owners[800867] = 1887;  // LDF5_DMerc_Combat
+        owners[800868] = 1887;  // LDF5_DMerc_Combat
+        owners[800869] = 1887;  // LDF5_DMerc_Combat
+        owners[800870] = 1887;  // LDF5_DMerc_Combat
+        owners[800871] = 1887;  // LDF5_LFunc_Combat
+        owners[800872] = 1887;  // LDF5_LFunc_Combat
+        owners[800873] = 1887;  // LDF5_LFunc_Combat
+        owners[800874] = 1887;  // LDF5_LFunc_Combat
+        owners[800875] = 1887;  // LDF5_LFunc_Combat
+        owners[800877] = 1887;  // LDF5_LMerc_Combat
+        owners[800878] = 1887;  // LDF5_LMerc_Combat
+        owners[800879] = 1887;  // LDF5_LMerc_Combat
+        owners[800880] = 1887;  // LDF5_LMerc_Combat
+        owners[800881] = 1887;  // LDF5_LMerc_Combat
+        owners[800882] = 1887;  // LDF5_DFunc_Combat
+        owners[800883] = 1887;  // LDF5_DFunc_Combat
+        owners[800884] = 1887;  // LDF5_DFunc_Combat
+        owners[800885] = 1887;  // LDF5_DFunc_Combat
+        owners[800886] = 1887;  // LDF5_DFunc_Combat
+        owners[800888] = 1887;  // LDF5_DMerc_Combat
+        owners[800889] = 1887;  // LDF5_DMerc_Combat
+        owners[800890] = 1887;  // LDF5_DMerc_Combat
+        owners[800891] = 1887;  // LDF5_DMerc_Combat
+        owners[800892] = 1887;  // LDF5_DMerc_Combat
+        owners[800893] = 1887;  // LDF5_LFunc_Combat
+        owners[800894] = 1887;  // LDF5_LMerc_Combat
+        owners[800895] = 1887;  // LDF5_LMerc_Combat
+        owners[800896] = 1887;  // LDF5_LFunc_Combat
+        owners[800897] = 1887;  // LDF5_LFunc_Combat
+        owners[800898] = 1887;  // LDF5_LMerc_Combat
+        owners[800899] = 1887;  // LDF5_LMerc_Combat
+        owners[800900] = 1887;  // LDF5_LMerc_Combat
+        owners[800901] = 1887;  // LDF5_LMerc_Combat
+        owners[800902] = 1887;  // LDF5_LMerc_Combat
+        owners[800903] = 1887;  // LDF5_LMerc_Combat
+        owners[800904] = 1887;  // LDF5_DFunc_Combat
+        owners[800905] = 1887;  // LDF5_DMerc_Combat
+        owners[800906] = 1887;  // LDF5_DMerc_Combat
+        owners[800907] = 1887;  // LDF5_DFunc_Combat
+        owners[800908] = 1887;  // LDF5_DFunc_Combat
+        owners[800909] = 1887;  // LDF5_DMerc_Combat
+        owners[800910] = 1887;  // LDF5_DMerc_Combat
+        owners[800911] = 1887;  // LDF5_DMerc_Combat
+        owners[800912] = 1887;  // LDF5_DMerc_Combat
+        owners[800913] = 1887;  // LDF5_DMerc_Combat
+        owners[800914] = 1887;  // LDF5_DMerc_Combat
+        owners[800915] = 1887;  // LDF5_LFunc_Combat
+        owners[800916] = 1887;  // LDF5_LFunc_Combat
+        owners[800917] = 1887;  // LDF5_LFunc_Combat
+        owners[800918] = 1887;  // LDF5_DFunc_Combat
+        owners[800919] = 1887;  // LDF5_DFunc_Combat
+        owners[800920] = 1887;  // LDF5_DFunc_Combat
         owners[800939] = 0;  // LFunction
         owners[800942] = 5;  // DFunction
         owners[800945] = 0;  // LFunction
@@ -51070,218 +51030,218 @@ internal static class BattleCycles
         owners[801275] = 1123;  // F5_PvPLight_LGuard_Pr_An
         owners[801276] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[801277] = 58;  // F5_PvPLight_LGuard_Fi_An
-        owners[801293] = 1888;  // LDF5_LFunc_Combat
-        owners[801294] = 1888;  // LDF5_DFunc_Combat
-        owners[801338] = 1888;  // LDF5_DMerc_Combat
-        owners[801339] = 1888;  // LDF5_DMerc_Combat
-        owners[801340] = 1888;  // LDF5_DMerc_Combat
-        owners[801341] = 1888;  // LDF5_DMerc_Combat
-        owners[801342] = 1888;  // LDF5_DMerc_Combat
-        owners[801343] = 1888;  // LDF5_DMerc_Combat
-        owners[801345] = 1888;  // LDF5_DMerc_Combat
-        owners[801346] = 1888;  // LDF5_LMerc_Combat
-        owners[801347] = 1888;  // LDF5_LMerc_Combat
-        owners[801348] = 1888;  // LDF5_LMerc_Combat
-        owners[801349] = 1888;  // LDF5_LMerc_Combat
-        owners[801350] = 1888;  // LDF5_LMerc_Combat
-        owners[801351] = 1888;  // LDF5_LMerc_Combat
-        owners[801353] = 1888;  // LDF5_LMerc_Combat
-        owners[801354] = 1888;  // LDF5_DMerc_Combat
-        owners[801355] = 1888;  // LDF5_DMerc_Combat
-        owners[801356] = 1888;  // LDF5_DMerc_Combat
-        owners[801357] = 1888;  // LDF5_DMerc_Combat
-        owners[801358] = 1888;  // LDF5_DMerc_Combat
-        owners[801359] = 1888;  // LDF5_DMerc_Combat
-        owners[801361] = 1888;  // LDF5_DMerc_Combat
-        owners[801362] = 1888;  // LDF5_LMerc_Combat
-        owners[801363] = 1888;  // LDF5_LMerc_Combat
-        owners[801364] = 1888;  // LDF5_LMerc_Combat
-        owners[801365] = 1888;  // LDF5_LMerc_Combat
-        owners[801366] = 1888;  // LDF5_LMerc_Combat
-        owners[801367] = 1888;  // LDF5_LMerc_Combat
-        owners[801369] = 1888;  // LDF5_LMerc_Combat
-        owners[801370] = 1888;  // LDF5_DMerc_Combat
-        owners[801371] = 1888;  // LDF5_DMerc_Combat
-        owners[801372] = 1888;  // LDF5_DMerc_Combat
-        owners[801373] = 1888;  // LDF5_DMerc_Combat
-        owners[801374] = 1888;  // LDF5_DMerc_Combat
-        owners[801375] = 1888;  // LDF5_DMerc_Combat
-        owners[801377] = 1888;  // LDF5_DMerc_Combat
-        owners[801378] = 1888;  // LDF5_LMerc_Combat
-        owners[801379] = 1888;  // LDF5_LMerc_Combat
-        owners[801380] = 1888;  // LDF5_LMerc_Combat
-        owners[801381] = 1888;  // LDF5_LMerc_Combat
-        owners[801382] = 1888;  // LDF5_LMerc_Combat
-        owners[801383] = 1888;  // LDF5_LMerc_Combat
-        owners[801385] = 1888;  // LDF5_LMerc_Combat
-        owners[801386] = 1888;  // LDF5_DMerc_Combat
-        owners[801387] = 1888;  // LDF5_DMerc_Combat
-        owners[801388] = 1888;  // LDF5_DMerc_Combat
-        owners[801389] = 1888;  // LDF5_DMerc_Combat
-        owners[801390] = 1888;  // LDF5_DMerc_Combat
-        owners[801391] = 1888;  // LDF5_DMerc_Combat
-        owners[801392] = 1888;  // LDF5_DFunc_Combat
-        owners[801393] = 1888;  // LDF5_DFunc_Combat
-        owners[801394] = 1888;  // LDF5_DMerc_Combat
-        owners[801395] = 1888;  // LDF5_DMerc_Combat
-        owners[801396] = 1888;  // LDF5_DMerc_Combat
-        owners[801397] = 1888;  // LDF5_DMerc_Combat
-        owners[801398] = 1888;  // LDF5_DMerc_Combat
-        owners[801400] = 1888;  // LDF5_DFunc_Combat
-        owners[801401] = 1888;  // LDF5_DMerc_Combat
-        owners[801402] = 1888;  // LDF5_LMerc_Combat
-        owners[801403] = 1888;  // LDF5_DMerc_Combat
-        owners[801404] = 1888;  // LDF5_LMerc_Combat
-        owners[801405] = 1888;  // LDF5_DFunc_Combat
-        owners[801406] = 1888;  // LDF5_LFunc_Combat
-        owners[801407] = 1888;  // LDF5_DMerc_Combat
-        owners[801408] = 1888;  // LDF5_LMerc_Combat
-        owners[801409] = 1888;  // LDF5_DMerc_Combat
-        owners[801410] = 1888;  // LDF5_LMerc_Combat
-        owners[801411] = 1888;  // LDF5_DMerc_Combat
-        owners[801412] = 1888;  // LDF5_LMerc_Combat
-        owners[801413] = 1888;  // LDF5_DMerc_Combat
-        owners[801414] = 1888;  // LDF5_LMerc_Combat
-        owners[801415] = 1888;  // LDF5_DFunc_Combat
-        owners[801416] = 1888;  // LDF5_DMerc_Combat
-        owners[801417] = 1888;  // LDF5_LMerc_Combat
-        owners[801418] = 1888;  // LDF5_DMerc_Combat
-        owners[801419] = 1888;  // LDF5_LMerc_Combat
-        owners[801420] = 1888;  // LDF5_DMerc_Combat
-        owners[801421] = 1888;  // LDF5_LMerc_Combat
-        owners[801422] = 1888;  // LDF5_DMerc_Combat
-        owners[801423] = 1888;  // LDF5_LMerc_Combat
-        owners[801424] = 1888;  // LDF5_DMerc_Combat
-        owners[801425] = 1888;  // LDF5_LMerc_Combat
-        owners[801426] = 1888;  // LDF5_DMerc_Combat
-        owners[801427] = 1888;  // LDF5_LMerc_Combat
-        owners[801428] = 1888;  // LDF5_DMerc_Combat
-        owners[801429] = 1888;  // LDF5_LMerc_Combat
-        owners[801430] = 1888;  // LDF5_DMerc_Combat
-        owners[801431] = 1888;  // LDF5_LMerc_Combat
-        owners[801432] = 1888;  // LDF5_DMerc_Combat
-        owners[801433] = 1888;  // LDF5_LMerc_Combat
-        owners[801434] = 1888;  // LDF5_DMerc_Combat
-        owners[801435] = 1888;  // LDF5_LMerc_Combat
-        owners[801436] = 1888;  // LDF5_DMerc_Combat
-        owners[801437] = 1888;  // LDF5_LMerc_Combat
-        owners[801438] = 1888;  // LDF5_DMerc_Combat
-        owners[801439] = 1888;  // LDF5_LMerc_Combat
-        owners[801440] = 1888;  // LDF5_DMerc_Combat
-        owners[801441] = 1888;  // LDF5_LMerc_Combat
-        owners[801442] = 1888;  // LDF5_DMerc_Combat
-        owners[801443] = 1888;  // LDF5_LMerc_Combat
-        owners[801444] = 1888;  // LDF5_DFunc_Combat
-        owners[801445] = 1888;  // LDF5_LFunc_Combat
-        owners[801446] = 1888;  // LDF5_DMerc_Combat
-        owners[801447] = 1888;  // LDF5_LMerc_Combat
-        owners[801448] = 1888;  // LDF5_DFunc_Combat
-        owners[801449] = 1888;  // LDF5_LFunc_Combat
-        owners[801450] = 1888;  // LDF5_DMerc_Combat
-        owners[801451] = 1888;  // LDF5_LMerc_Combat
-        owners[801452] = 1888;  // LDF5_LMerc_Combat
-        owners[801453] = 1888;  // LDF5_LMerc_Combat
-        owners[801454] = 1888;  // LDF5_LMerc_Combat
-        owners[801455] = 1888;  // LDF5_LMerc_Combat
-        owners[801456] = 1888;  // LDF5_LMerc_Combat
-        owners[801457] = 1888;  // LDF5_LMerc_Combat
-        owners[801458] = 1888;  // LDF5_LFunc_Combat
-        owners[801459] = 1888;  // LDF5_LFunc_Combat
-        owners[801460] = 1888;  // LDF5_LFunc_Combat
-        owners[801461] = 1888;  // LDF5_LMerc_Combat
-        owners[801462] = 1888;  // LDF5_LMerc_Combat
-        owners[801463] = 1888;  // LDF5_LMerc_Combat
-        owners[801464] = 1888;  // LDF5_LMerc_Combat
-        owners[801465] = 1888;  // LDF5_LMerc_Combat
-        owners[801467] = 1888;  // LDF5_LFunc_Combat
-        owners[801468] = 1888;  // LDF5_LFunc_Combat
-        owners[801470] = 1888;  // LDF5_DMerc_Combat
-        owners[801471] = 1888;  // LDF5_DMerc_Combat
-        owners[801472] = 1888;  // LDF5_LMerc_Combat
-        owners[801473] = 1888;  // LDF5_DMerc_Combat
-        owners[801474] = 1888;  // LDF5_LMerc_Combat
-        owners[801475] = 1888;  // LDF5_DMerc_Combat
-        owners[801476] = 1888;  // LDF5_LMerc_Combat
-        owners[801477] = 1888;  // LDF5_DMerc_Combat
-        owners[801478] = 1888;  // LDF5_LMerc_Combat
-        owners[801481] = 1888;  // LDF5_DMerc_Combat
-        owners[801482] = 1888;  // LDF5_LMerc_Combat
-        owners[801483] = 1888;  // LDF5_DMerc_Combat
-        owners[801484] = 1888;  // LDF5_LMerc_Combat
-        owners[801485] = 1888;  // LDF5_DMerc_Combat
-        owners[801486] = 1888;  // LDF5_LMerc_Combat
-        owners[801487] = 1888;  // LDF5_DMerc_Combat
-        owners[801488] = 1888;  // LDF5_LMerc_Combat
-        owners[801489] = 1888;  // LDF5_DMerc_Combat
-        owners[801492] = 1888;  // LDF5_DMerc_Combat
-        owners[801493] = 1888;  // LDF5_LMerc_Combat
-        owners[801494] = 1888;  // LDF5_DMerc_Combat
-        owners[801495] = 1888;  // LDF5_LMerc_Combat
-        owners[801497] = 1888;  // LDF5_LFunc_Combat
-        owners[801504] = 1888;  // LDF5_DFunc_Combat
-        owners[801505] = 1888;  // LDF5_LFunc_Combat
-        owners[801506] = 1888;  // LDF5_DMerc_Combat
-        owners[801507] = 1888;  // LDF5_LMerc_Combat
-        owners[801509] = 1888;  // LDF5_DMerc_Combat
-        owners[801510] = 1888;  // LDF5_LMerc_Combat
-        owners[801513] = 1888;  // LDF5_DMerc_Combat
-        owners[801514] = 1888;  // LDF5_LMerc_Combat
-        owners[801515] = 1888;  // LDF5_DMerc_Combat
-        owners[801516] = 1888;  // LDF5_LMerc_Combat
-        owners[801518] = 1888;  // LDF5_DMerc_Combat
-        owners[801519] = 1888;  // LDF5_LMerc_Combat
-        owners[801524] = 1888;  // LDF5_DFunc_Combat
-        owners[801525] = 1888;  // LDF5_LFunc_Combat
-        owners[801529] = 1888;  // LDF5_DFunc_Combat
-        owners[801530] = 1888;  // LDF5_LFunc_Combat
-        owners[801535] = 1888;  // LDF5_DMerc_Combat
-        owners[801536] = 1888;  // LDF5_LMerc_Combat
-        owners[801537] = 1888;  // LDF5_DMerc_Combat
-        owners[801538] = 1888;  // LDF5_LMerc_Combat
-        owners[801539] = 1888;  // LDF5_LMerc_Combat
-        owners[801555] = 1888;  // LDF5_DMerc_Combat
-        owners[801556] = 1888;  // LDF5_LMerc_Combat
-        owners[801558] = 1888;  // LDF5_DMerc_Combat
-        owners[801559] = 1888;  // LDF5_LMerc_Combat
-        owners[801560] = 1888;  // LDF5_DMerc_Combat
-        owners[801561] = 1888;  // LDF5_LMerc_Combat
-        owners[801562] = 1888;  // LDF5_DMerc_Combat
-        owners[801563] = 1888;  // LDF5_LMerc_Combat
-        owners[801566] = 1888;  // LDF5_DMerc_Combat
+        owners[801293] = 1887;  // LDF5_LFunc_Combat
+        owners[801294] = 1887;  // LDF5_DFunc_Combat
+        owners[801338] = 1887;  // LDF5_DMerc_Combat
+        owners[801339] = 1887;  // LDF5_DMerc_Combat
+        owners[801340] = 1887;  // LDF5_DMerc_Combat
+        owners[801341] = 1887;  // LDF5_DMerc_Combat
+        owners[801342] = 1887;  // LDF5_DMerc_Combat
+        owners[801343] = 1887;  // LDF5_DMerc_Combat
+        owners[801345] = 1887;  // LDF5_DMerc_Combat
+        owners[801346] = 1887;  // LDF5_LMerc_Combat
+        owners[801347] = 1887;  // LDF5_LMerc_Combat
+        owners[801348] = 1887;  // LDF5_LMerc_Combat
+        owners[801349] = 1887;  // LDF5_LMerc_Combat
+        owners[801350] = 1887;  // LDF5_LMerc_Combat
+        owners[801351] = 1887;  // LDF5_LMerc_Combat
+        owners[801353] = 1887;  // LDF5_LMerc_Combat
+        owners[801354] = 1887;  // LDF5_DMerc_Combat
+        owners[801355] = 1887;  // LDF5_DMerc_Combat
+        owners[801356] = 1887;  // LDF5_DMerc_Combat
+        owners[801357] = 1887;  // LDF5_DMerc_Combat
+        owners[801358] = 1887;  // LDF5_DMerc_Combat
+        owners[801359] = 1887;  // LDF5_DMerc_Combat
+        owners[801361] = 1887;  // LDF5_DMerc_Combat
+        owners[801362] = 1887;  // LDF5_LMerc_Combat
+        owners[801363] = 1887;  // LDF5_LMerc_Combat
+        owners[801364] = 1887;  // LDF5_LMerc_Combat
+        owners[801365] = 1887;  // LDF5_LMerc_Combat
+        owners[801366] = 1887;  // LDF5_LMerc_Combat
+        owners[801367] = 1887;  // LDF5_LMerc_Combat
+        owners[801369] = 1887;  // LDF5_LMerc_Combat
+        owners[801370] = 1887;  // LDF5_DMerc_Combat
+        owners[801371] = 1887;  // LDF5_DMerc_Combat
+        owners[801372] = 1887;  // LDF5_DMerc_Combat
+        owners[801373] = 1887;  // LDF5_DMerc_Combat
+        owners[801374] = 1887;  // LDF5_DMerc_Combat
+        owners[801375] = 1887;  // LDF5_DMerc_Combat
+        owners[801377] = 1887;  // LDF5_DMerc_Combat
+        owners[801378] = 1887;  // LDF5_LMerc_Combat
+        owners[801379] = 1887;  // LDF5_LMerc_Combat
+        owners[801380] = 1887;  // LDF5_LMerc_Combat
+        owners[801381] = 1887;  // LDF5_LMerc_Combat
+        owners[801382] = 1887;  // LDF5_LMerc_Combat
+        owners[801383] = 1887;  // LDF5_LMerc_Combat
+        owners[801385] = 1887;  // LDF5_LMerc_Combat
+        owners[801386] = 1887;  // LDF5_DMerc_Combat
+        owners[801387] = 1887;  // LDF5_DMerc_Combat
+        owners[801388] = 1887;  // LDF5_DMerc_Combat
+        owners[801389] = 1887;  // LDF5_DMerc_Combat
+        owners[801390] = 1887;  // LDF5_DMerc_Combat
+        owners[801391] = 1887;  // LDF5_DMerc_Combat
+        owners[801392] = 1887;  // LDF5_DFunc_Combat
+        owners[801393] = 1887;  // LDF5_DFunc_Combat
+        owners[801394] = 1887;  // LDF5_DMerc_Combat
+        owners[801395] = 1887;  // LDF5_DMerc_Combat
+        owners[801396] = 1887;  // LDF5_DMerc_Combat
+        owners[801397] = 1887;  // LDF5_DMerc_Combat
+        owners[801398] = 1887;  // LDF5_DMerc_Combat
+        owners[801400] = 1887;  // LDF5_DFunc_Combat
+        owners[801401] = 1887;  // LDF5_DMerc_Combat
+        owners[801402] = 1887;  // LDF5_LMerc_Combat
+        owners[801403] = 1887;  // LDF5_DMerc_Combat
+        owners[801404] = 1887;  // LDF5_LMerc_Combat
+        owners[801405] = 1887;  // LDF5_DFunc_Combat
+        owners[801406] = 1887;  // LDF5_LFunc_Combat
+        owners[801407] = 1887;  // LDF5_DMerc_Combat
+        owners[801408] = 1887;  // LDF5_LMerc_Combat
+        owners[801409] = 1887;  // LDF5_DMerc_Combat
+        owners[801410] = 1887;  // LDF5_LMerc_Combat
+        owners[801411] = 1887;  // LDF5_DMerc_Combat
+        owners[801412] = 1887;  // LDF5_LMerc_Combat
+        owners[801413] = 1887;  // LDF5_DMerc_Combat
+        owners[801414] = 1887;  // LDF5_LMerc_Combat
+        owners[801415] = 1887;  // LDF5_DFunc_Combat
+        owners[801416] = 1887;  // LDF5_DMerc_Combat
+        owners[801417] = 1887;  // LDF5_LMerc_Combat
+        owners[801418] = 1887;  // LDF5_DMerc_Combat
+        owners[801419] = 1887;  // LDF5_LMerc_Combat
+        owners[801420] = 1887;  // LDF5_DMerc_Combat
+        owners[801421] = 1887;  // LDF5_LMerc_Combat
+        owners[801422] = 1887;  // LDF5_DMerc_Combat
+        owners[801423] = 1887;  // LDF5_LMerc_Combat
+        owners[801424] = 1887;  // LDF5_DMerc_Combat
+        owners[801425] = 1887;  // LDF5_LMerc_Combat
+        owners[801426] = 1887;  // LDF5_DMerc_Combat
+        owners[801427] = 1887;  // LDF5_LMerc_Combat
+        owners[801428] = 1887;  // LDF5_DMerc_Combat
+        owners[801429] = 1887;  // LDF5_LMerc_Combat
+        owners[801430] = 1887;  // LDF5_DMerc_Combat
+        owners[801431] = 1887;  // LDF5_LMerc_Combat
+        owners[801432] = 1887;  // LDF5_DMerc_Combat
+        owners[801433] = 1887;  // LDF5_LMerc_Combat
+        owners[801434] = 1887;  // LDF5_DMerc_Combat
+        owners[801435] = 1887;  // LDF5_LMerc_Combat
+        owners[801436] = 1887;  // LDF5_DMerc_Combat
+        owners[801437] = 1887;  // LDF5_LMerc_Combat
+        owners[801438] = 1887;  // LDF5_DMerc_Combat
+        owners[801439] = 1887;  // LDF5_LMerc_Combat
+        owners[801440] = 1887;  // LDF5_DMerc_Combat
+        owners[801441] = 1887;  // LDF5_LMerc_Combat
+        owners[801442] = 1887;  // LDF5_DMerc_Combat
+        owners[801443] = 1887;  // LDF5_LMerc_Combat
+        owners[801444] = 1887;  // LDF5_DFunc_Combat
+        owners[801445] = 1887;  // LDF5_LFunc_Combat
+        owners[801446] = 1887;  // LDF5_DMerc_Combat
+        owners[801447] = 1887;  // LDF5_LMerc_Combat
+        owners[801448] = 1887;  // LDF5_DFunc_Combat
+        owners[801449] = 1887;  // LDF5_LFunc_Combat
+        owners[801450] = 1887;  // LDF5_DMerc_Combat
+        owners[801451] = 1887;  // LDF5_LMerc_Combat
+        owners[801452] = 1887;  // LDF5_LMerc_Combat
+        owners[801453] = 1887;  // LDF5_LMerc_Combat
+        owners[801454] = 1887;  // LDF5_LMerc_Combat
+        owners[801455] = 1887;  // LDF5_LMerc_Combat
+        owners[801456] = 1887;  // LDF5_LMerc_Combat
+        owners[801457] = 1887;  // LDF5_LMerc_Combat
+        owners[801458] = 1887;  // LDF5_LFunc_Combat
+        owners[801459] = 1887;  // LDF5_LFunc_Combat
+        owners[801460] = 1887;  // LDF5_LFunc_Combat
+        owners[801461] = 1887;  // LDF5_LMerc_Combat
+        owners[801462] = 1887;  // LDF5_LMerc_Combat
+        owners[801463] = 1887;  // LDF5_LMerc_Combat
+        owners[801464] = 1887;  // LDF5_LMerc_Combat
+        owners[801465] = 1887;  // LDF5_LMerc_Combat
+        owners[801467] = 1887;  // LDF5_LFunc_Combat
+        owners[801468] = 1887;  // LDF5_LFunc_Combat
+        owners[801470] = 1887;  // LDF5_DMerc_Combat
+        owners[801471] = 1887;  // LDF5_DMerc_Combat
+        owners[801472] = 1887;  // LDF5_LMerc_Combat
+        owners[801473] = 1887;  // LDF5_DMerc_Combat
+        owners[801474] = 1887;  // LDF5_LMerc_Combat
+        owners[801475] = 1887;  // LDF5_DMerc_Combat
+        owners[801476] = 1887;  // LDF5_LMerc_Combat
+        owners[801477] = 1887;  // LDF5_DMerc_Combat
+        owners[801478] = 1887;  // LDF5_LMerc_Combat
+        owners[801481] = 1887;  // LDF5_DMerc_Combat
+        owners[801482] = 1887;  // LDF5_LMerc_Combat
+        owners[801483] = 1887;  // LDF5_DMerc_Combat
+        owners[801484] = 1887;  // LDF5_LMerc_Combat
+        owners[801485] = 1887;  // LDF5_DMerc_Combat
+        owners[801486] = 1887;  // LDF5_LMerc_Combat
+        owners[801487] = 1887;  // LDF5_DMerc_Combat
+        owners[801488] = 1887;  // LDF5_LMerc_Combat
+        owners[801489] = 1887;  // LDF5_DMerc_Combat
+        owners[801492] = 1887;  // LDF5_DMerc_Combat
+        owners[801493] = 1887;  // LDF5_LMerc_Combat
+        owners[801494] = 1887;  // LDF5_DMerc_Combat
+        owners[801495] = 1887;  // LDF5_LMerc_Combat
+        owners[801497] = 1887;  // LDF5_LFunc_Combat
+        owners[801504] = 1887;  // LDF5_DFunc_Combat
+        owners[801505] = 1887;  // LDF5_LFunc_Combat
+        owners[801506] = 1887;  // LDF5_DMerc_Combat
+        owners[801507] = 1887;  // LDF5_LMerc_Combat
+        owners[801509] = 1887;  // LDF5_DMerc_Combat
+        owners[801510] = 1887;  // LDF5_LMerc_Combat
+        owners[801513] = 1887;  // LDF5_DMerc_Combat
+        owners[801514] = 1887;  // LDF5_LMerc_Combat
+        owners[801515] = 1887;  // LDF5_DMerc_Combat
+        owners[801516] = 1887;  // LDF5_LMerc_Combat
+        owners[801518] = 1887;  // LDF5_DMerc_Combat
+        owners[801519] = 1887;  // LDF5_LMerc_Combat
+        owners[801524] = 1887;  // LDF5_DFunc_Combat
+        owners[801525] = 1887;  // LDF5_LFunc_Combat
+        owners[801529] = 1887;  // LDF5_DFunc_Combat
+        owners[801530] = 1887;  // LDF5_LFunc_Combat
+        owners[801535] = 1887;  // LDF5_DMerc_Combat
+        owners[801536] = 1887;  // LDF5_LMerc_Combat
+        owners[801537] = 1887;  // LDF5_DMerc_Combat
+        owners[801538] = 1887;  // LDF5_LMerc_Combat
+        owners[801539] = 1887;  // LDF5_LMerc_Combat
+        owners[801555] = 1887;  // LDF5_DMerc_Combat
+        owners[801556] = 1887;  // LDF5_LMerc_Combat
+        owners[801558] = 1887;  // LDF5_DMerc_Combat
+        owners[801559] = 1887;  // LDF5_LMerc_Combat
+        owners[801560] = 1887;  // LDF5_DMerc_Combat
+        owners[801561] = 1887;  // LDF5_LMerc_Combat
+        owners[801562] = 1887;  // LDF5_DMerc_Combat
+        owners[801563] = 1887;  // LDF5_LMerc_Combat
+        owners[801566] = 1887;  // LDF5_DMerc_Combat
+        owners[801567] = 1887;  // LDF5_LMerc_Combat
     }
 
     private static void CycleOf46(Dictionary<int, int> owners)
     {
-        owners[801567] = 1888;  // LDF5_LMerc_Combat
-        owners[801568] = 1888;  // LDF5_DMerc_Combat
-        owners[801569] = 1888;  // LDF5_DMerc_Combat
-        owners[801570] = 1888;  // LDF5_LMerc_Combat
-        owners[801571] = 1888;  // LDF5_LMerc_Combat
-        owners[801657] = 1888;  // LDF5_DMerc_Combat
+        owners[801568] = 1887;  // LDF5_DMerc_Combat
+        owners[801569] = 1887;  // LDF5_DMerc_Combat
+        owners[801570] = 1887;  // LDF5_LMerc_Combat
+        owners[801571] = 1887;  // LDF5_LMerc_Combat
+        owners[801657] = 1887;  // LDF5_DMerc_Combat
         owners[801667] = 0;  // LFunction
         owners[801668] = 5;  // DFunction
         owners[801669] = 0;  // LFunction
         owners[801670] = 5;  // DFunction
-        owners[801678] = 1888;  // LDF5_DFunc_Combat
-        owners[801679] = 1888;  // LDF5_LFunc_Combat
-        owners[801680] = 1888;  // LDF5_DFunc_Combat
-        owners[801681] = 1888;  // LDF5_LFunc_Combat
-        owners[801682] = 1888;  // LDF5_DFunc_Combat
-        owners[801683] = 1888;  // LDF5_LFunc_Combat
-        owners[801684] = 1888;  // LDF5_DFunc_Combat
-        owners[801685] = 1888;  // LDF5_LFunc_Combat
-        owners[801686] = 1888;  // LDF5_DFunc_Combat
-        owners[801687] = 1888;  // LDF5_LFunc_Combat
-        owners[801688] = 1888;  // LDF5_DFunc_Combat
-        owners[801689] = 1888;  // LDF5_LFunc_Combat
-        owners[801690] = 1888;  // LDF5_DFunc_Combat
-        owners[801691] = 1888;  // LDF5_LFunc_Combat
-        owners[801692] = 1888;  // LDF5_DFunc_Combat
-        owners[801693] = 1888;  // LDF5_LFunc_Combat
-        owners[801694] = 1888;  // LDF5_DFunc_Combat
-        owners[801695] = 1888;  // LDF5_LFunc_Combat
-        owners[801696] = 1888;  // LDF5_DFunc_Combat
-        owners[801697] = 1888;  // LDF5_LFunc_Combat
+        owners[801678] = 1887;  // LDF5_DFunc_Combat
+        owners[801679] = 1887;  // LDF5_LFunc_Combat
+        owners[801680] = 1887;  // LDF5_DFunc_Combat
+        owners[801681] = 1887;  // LDF5_LFunc_Combat
+        owners[801682] = 1887;  // LDF5_DFunc_Combat
+        owners[801683] = 1887;  // LDF5_LFunc_Combat
+        owners[801684] = 1887;  // LDF5_DFunc_Combat
+        owners[801685] = 1887;  // LDF5_LFunc_Combat
+        owners[801686] = 1887;  // LDF5_DFunc_Combat
+        owners[801687] = 1887;  // LDF5_LFunc_Combat
+        owners[801688] = 1887;  // LDF5_DFunc_Combat
+        owners[801689] = 1887;  // LDF5_LFunc_Combat
+        owners[801690] = 1887;  // LDF5_DFunc_Combat
+        owners[801691] = 1887;  // LDF5_LFunc_Combat
+        owners[801692] = 1887;  // LDF5_DFunc_Combat
+        owners[801693] = 1887;  // LDF5_LFunc_Combat
+        owners[801694] = 1887;  // LDF5_DFunc_Combat
+        owners[801695] = 1887;  // LDF5_LFunc_Combat
+        owners[801696] = 1887;  // LDF5_DFunc_Combat
+        owners[801697] = 1887;  // LDF5_LFunc_Combat
         owners[801698] = 5;  // DFunction
         owners[801699] = 0;  // LFunction
         owners[801700] = 5;  // DFunction
@@ -51330,43 +51290,43 @@ internal static class BattleCycles
         owners[801743] = 0;  // LFunction
         owners[801744] = 5;  // DFunction
         owners[801745] = 0;  // LFunction
-        owners[801747] = 1888;  // LDF5_DFunc_Combat
-        owners[801749] = 1888;  // LDF5_LMerc_Combat
-        owners[801750] = 1888;  // LDF5_DMerc_Combat
-        owners[801754] = 1888;  // LDF5_LMerc_Combat
+        owners[801747] = 1887;  // LDF5_DFunc_Combat
+        owners[801749] = 1887;  // LDF5_LMerc_Combat
+        owners[801750] = 1887;  // LDF5_DMerc_Combat
+        owners[801754] = 1887;  // LDF5_LMerc_Combat
         owners[801756] = 5;  // DFunction
         owners[801757] = 0;  // LFunction
-        owners[801781] = 1888;  // LDF5_DMerc_Combat
-        owners[801782] = 1888;  // LDF5_DMerc_Combat
-        owners[801783] = 1888;  // LDF5_DMerc_Combat
-        owners[801784] = 1888;  // LDF5_DMerc_Combat
-        owners[801785] = 1888;  // LDF5_LMerc_Combat
-        owners[801786] = 1888;  // LDF5_LMerc_Combat
-        owners[801787] = 1888;  // LDF5_LMerc_Combat
-        owners[801788] = 1888;  // LDF5_LMerc_Combat
-        owners[801968] = 1888;  // LDF5_LMerc_Combat
-        owners[801969] = 1888;  // LDF5_DMerc_Combat
-        owners[801970] = 1888;  // LDF5_LMerc_Combat
-        owners[801971] = 1888;  // LDF5_DMerc_Combat
+        owners[801781] = 1887;  // LDF5_DMerc_Combat
+        owners[801782] = 1887;  // LDF5_DMerc_Combat
+        owners[801783] = 1887;  // LDF5_DMerc_Combat
+        owners[801784] = 1887;  // LDF5_DMerc_Combat
+        owners[801785] = 1887;  // LDF5_LMerc_Combat
+        owners[801786] = 1887;  // LDF5_LMerc_Combat
+        owners[801787] = 1887;  // LDF5_LMerc_Combat
+        owners[801788] = 1887;  // LDF5_LMerc_Combat
+        owners[801968] = 1887;  // LDF5_LMerc_Combat
+        owners[801969] = 1887;  // LDF5_DMerc_Combat
+        owners[801970] = 1887;  // LDF5_LMerc_Combat
+        owners[801971] = 1887;  // LDF5_DMerc_Combat
         owners[802009] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802055] = 1132;  // F5_PvPLight_LGuard_Kn_An
-        owners[802056] = 1888;  // LDF5_LMerc_Combat
-        owners[802057] = 1888;  // LDF5_DMerc_Combat
+        owners[802056] = 1887;  // LDF5_LMerc_Combat
+        owners[802057] = 1887;  // LDF5_DMerc_Combat
         owners[802186] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802187] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802188] = 1132;  // F5_PvPLight_LGuard_Kn_An
-        owners[802211] = 1888;  // LDF5_LMerc_Combat
-        owners[802212] = 1888;  // LDF5_DMerc_Combat
-        owners[802213] = 1888;  // LDF5_LMerc_Combat
-        owners[802214] = 1888;  // LDF5_DMerc_Combat
-        owners[802215] = 1888;  // LDF5_LMerc_Combat
-        owners[802216] = 1888;  // LDF5_LMerc_Combat
-        owners[802217] = 1888;  // LDF5_DMerc_Combat
-        owners[802218] = 1888;  // LDF5_DMerc_Combat
-        owners[802227] = 1888;  // LDF5_DMerc_Combat
-        owners[802228] = 1888;  // LDF5_LMerc_Combat
-        owners[802229] = 1888;  // LDF5_DMerc_Combat
-        owners[802230] = 1888;  // LDF5_LMerc_Combat
+        owners[802211] = 1887;  // LDF5_LMerc_Combat
+        owners[802212] = 1887;  // LDF5_DMerc_Combat
+        owners[802213] = 1887;  // LDF5_LMerc_Combat
+        owners[802214] = 1887;  // LDF5_DMerc_Combat
+        owners[802215] = 1887;  // LDF5_LMerc_Combat
+        owners[802216] = 1887;  // LDF5_LMerc_Combat
+        owners[802217] = 1887;  // LDF5_DMerc_Combat
+        owners[802218] = 1887;  // LDF5_DMerc_Combat
+        owners[802227] = 1887;  // LDF5_DMerc_Combat
+        owners[802228] = 1887;  // LDF5_LMerc_Combat
+        owners[802229] = 1887;  // LDF5_DMerc_Combat
+        owners[802230] = 1887;  // LDF5_LMerc_Combat
         owners[802231] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802232] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802233] = 1132;  // F5_PvPLight_LGuard_Kn_An
@@ -51374,48 +51334,48 @@ internal static class BattleCycles
         owners[802378] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802379] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802383] = 1132;  // F5_PvPLight_LGuard_Kn_An
-        owners[802385] = 1888;  // LDF5_LMerc_Combat
-        owners[802386] = 1888;  // LDF5_DMerc_Combat
-        owners[802387] = 1888;  // LDF5_LMerc_Combat
-        owners[802388] = 1888;  // LDF5_DMerc_Combat
-        owners[802389] = 1888;  // LDF5_LMerc_Combat
-        owners[802390] = 1888;  // LDF5_DFunc_Combat
-        owners[802391] = 1888;  // LDF5_LMerc_Combat
-        owners[802392] = 1888;  // LDF5_DMerc_Combat
-        owners[802393] = 1888;  // LDF5_LMerc_Combat
-        owners[802394] = 1888;  // LDF5_DMerc_Combat
-        owners[802395] = 1888;  // LDF5_LMerc_Combat
-        owners[802396] = 1888;  // LDF5_DMerc_Combat
-        owners[802397] = 1888;  // LDF5_LMerc_Combat
-        owners[802398] = 1888;  // LDF5_DMerc_Combat
-        owners[802399] = 1888;  // LDF5_LMerc_Combat
-        owners[802400] = 1888;  // LDF5_DFunc_Combat
-        owners[802401] = 1888;  // LDF5_LMerc_Combat
-        owners[802402] = 1888;  // LDF5_DMerc_Combat
-        owners[802403] = 1888;  // LDF5_LMerc_Combat
-        owners[802404] = 1888;  // LDF5_DMerc_Combat
-        owners[802405] = 1888;  // LDF5_LFunc_Combat
-        owners[802406] = 1888;  // LDF5_DFunc_Combat
-        owners[802407] = 1888;  // LDF5_LMerc_Combat
-        owners[802408] = 1888;  // LDF5_DMerc_Combat
-        owners[802409] = 1888;  // LDF5_LMerc_Combat
-        owners[802410] = 1888;  // LDF5_DMerc_Combat
-        owners[802411] = 1888;  // LDF5_LMerc_Combat
-        owners[802412] = 1888;  // LDF5_DMerc_Combat
-        owners[802413] = 1888;  // LDF5_LMerc_Combat
-        owners[802414] = 1888;  // LDF5_DMerc_Combat
-        owners[802415] = 1888;  // LDF5_LMerc_Combat
-        owners[802416] = 1888;  // LDF5_DMerc_Combat
-        owners[802417] = 1888;  // LDF5_LFunc_Combat
-        owners[802418] = 1888;  // LDF5_DFunc_Combat
-        owners[802419] = 1888;  // LDF5_LMerc_Combat
-        owners[802420] = 1888;  // LDF5_DMerc_Combat
-        owners[802421] = 1888;  // LDF5_LMerc_Combat
-        owners[802422] = 1888;  // LDF5_DMerc_Combat
-        owners[802423] = 1888;  // LDF5_LFunc_Combat
-        owners[802424] = 1888;  // LDF5_DFunc_Combat
-        owners[802425] = 1888;  // LDF5_LMerc_Combat
-        owners[802426] = 1888;  // LDF5_DMerc_Combat
+        owners[802385] = 1887;  // LDF5_LMerc_Combat
+        owners[802386] = 1887;  // LDF5_DMerc_Combat
+        owners[802387] = 1887;  // LDF5_LMerc_Combat
+        owners[802388] = 1887;  // LDF5_DMerc_Combat
+        owners[802389] = 1887;  // LDF5_LMerc_Combat
+        owners[802390] = 1887;  // LDF5_DFunc_Combat
+        owners[802391] = 1887;  // LDF5_LMerc_Combat
+        owners[802392] = 1887;  // LDF5_DMerc_Combat
+        owners[802393] = 1887;  // LDF5_LMerc_Combat
+        owners[802394] = 1887;  // LDF5_DMerc_Combat
+        owners[802395] = 1887;  // LDF5_LMerc_Combat
+        owners[802396] = 1887;  // LDF5_DMerc_Combat
+        owners[802397] = 1887;  // LDF5_LMerc_Combat
+        owners[802398] = 1887;  // LDF5_DMerc_Combat
+        owners[802399] = 1887;  // LDF5_LMerc_Combat
+        owners[802400] = 1887;  // LDF5_DFunc_Combat
+        owners[802401] = 1887;  // LDF5_LMerc_Combat
+        owners[802402] = 1887;  // LDF5_DMerc_Combat
+        owners[802403] = 1887;  // LDF5_LMerc_Combat
+        owners[802404] = 1887;  // LDF5_DMerc_Combat
+        owners[802405] = 1887;  // LDF5_LFunc_Combat
+        owners[802406] = 1887;  // LDF5_DFunc_Combat
+        owners[802407] = 1887;  // LDF5_LMerc_Combat
+        owners[802408] = 1887;  // LDF5_DMerc_Combat
+        owners[802409] = 1887;  // LDF5_LMerc_Combat
+        owners[802410] = 1887;  // LDF5_DMerc_Combat
+        owners[802411] = 1887;  // LDF5_LMerc_Combat
+        owners[802412] = 1887;  // LDF5_DMerc_Combat
+        owners[802413] = 1887;  // LDF5_LMerc_Combat
+        owners[802414] = 1887;  // LDF5_DMerc_Combat
+        owners[802415] = 1887;  // LDF5_LMerc_Combat
+        owners[802416] = 1887;  // LDF5_DMerc_Combat
+        owners[802417] = 1887;  // LDF5_LFunc_Combat
+        owners[802418] = 1887;  // LDF5_DFunc_Combat
+        owners[802419] = 1887;  // LDF5_LMerc_Combat
+        owners[802420] = 1887;  // LDF5_DMerc_Combat
+        owners[802421] = 1887;  // LDF5_LMerc_Combat
+        owners[802422] = 1887;  // LDF5_DMerc_Combat
+        owners[802423] = 1887;  // LDF5_LFunc_Combat
+        owners[802424] = 1887;  // LDF5_DFunc_Combat
+        owners[802425] = 1887;  // LDF5_LMerc_Combat
+        owners[802426] = 1887;  // LDF5_DMerc_Combat
         owners[802443] = 0;  // LFunction
         owners[802444] = 5;  // DFunction
         owners[802445] = 0;  // LFunction
@@ -51429,116 +51389,116 @@ internal static class BattleCycles
         owners[802466] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802467] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802468] = 1132;  // F5_PvPLight_LGuard_Kn_An
-        owners[802550] = 1888;  // LDF5_LMerc_Combat
-        owners[802551] = 1888;  // LDF5_LMerc_Combat
-        owners[802552] = 1888;  // LDF5_DMerc_Combat
-        owners[802553] = 1888;  // LDF5_DMerc_Combat
-        owners[802554] = 1888;  // LDF5_LMerc_Combat
-        owners[802555] = 1888;  // LDF5_LFunc_Combat
-        owners[802556] = 1888;  // LDF5_LMerc_Combat
-        owners[802557] = 1888;  // LDF5_LMerc_Combat
-        owners[802558] = 1888;  // LDF5_LMerc_Combat
-        owners[802559] = 1888;  // LDF5_LMerc_Combat
-        owners[802560] = 1888;  // LDF5_LMerc_Combat
-        owners[802561] = 1888;  // LDF5_LMerc_Combat
-        owners[802562] = 1888;  // LDF5_LMerc_Combat
-        owners[802563] = 1888;  // LDF5_LMerc_Combat
-        owners[802564] = 1888;  // LDF5_LMerc_Combat
-        owners[802565] = 1888;  // LDF5_LMerc_Combat
-        owners[802566] = 1888;  // LDF5_LMerc_Combat
-        owners[802567] = 1888;  // LDF5_LMerc_Combat
-        owners[802568] = 1888;  // LDF5_LMerc_Combat
-        owners[802569] = 1888;  // LDF5_LMerc_Combat
-        owners[802570] = 1888;  // LDF5_LMerc_Combat
-        owners[802571] = 1888;  // LDF5_DMerc_Combat
-        owners[802572] = 1888;  // LDF5_DMerc_Combat
-        owners[802573] = 1888;  // LDF5_DMerc_Combat
-        owners[802574] = 1888;  // LDF5_DMerc_Combat
-        owners[802575] = 1888;  // LDF5_DMerc_Combat
-        owners[802576] = 1888;  // LDF5_DMerc_Combat
-        owners[802577] = 1888;  // LDF5_DMerc_Combat
-        owners[802578] = 1888;  // LDF5_DMerc_Combat
-        owners[802579] = 1888;  // LDF5_DMerc_Combat
-        owners[802580] = 1888;  // LDF5_DMerc_Combat
-        owners[802581] = 1888;  // LDF5_DMerc_Combat
-        owners[802582] = 1888;  // LDF5_DMerc_Combat
-        owners[802583] = 1888;  // LDF5_DMerc_Combat
-        owners[802584] = 1888;  // LDF5_DMerc_Combat
-        owners[802585] = 1888;  // LDF5_DMerc_Combat
-        owners[802586] = 1888;  // LDF5_DFunc_Combat
-        owners[802587] = 1888;  // LDF5_DMerc_Combat
-        owners[802588] = 1888;  // LDF5_DMerc_Combat
-        owners[802589] = 1888;  // LDF5_DMerc_Combat
-        owners[802590] = 1888;  // LDF5_DMerc_Combat
-        owners[802591] = 1888;  // LDF5_DMerc_Combat
-        owners[802592] = 1888;  // LDF5_DMerc_Combat
-        owners[802593] = 1888;  // LDF5_DMerc_Combat
-        owners[802594] = 1888;  // LDF5_DMerc_Combat
-        owners[802595] = 1888;  // LDF5_DMerc_Combat
-        owners[802596] = 1888;  // LDF5_DMerc_Combat
-        owners[802597] = 1888;  // LDF5_DMerc_Combat
-        owners[802598] = 1888;  // LDF5_DMerc_Combat
-        owners[802599] = 1888;  // LDF5_DMerc_Combat
-        owners[802600] = 1888;  // LDF5_DMerc_Combat
-        owners[802601] = 1888;  // LDF5_DMerc_Combat
-        owners[802602] = 1888;  // LDF5_LMerc_Combat
-        owners[802603] = 1888;  // LDF5_LMerc_Combat
-        owners[802604] = 1888;  // LDF5_LMerc_Combat
-        owners[802605] = 1888;  // LDF5_LMerc_Combat
-        owners[802606] = 1888;  // LDF5_LMerc_Combat
-        owners[802607] = 1888;  // LDF5_LMerc_Combat
-        owners[802608] = 1888;  // LDF5_LMerc_Combat
-        owners[802609] = 1888;  // LDF5_LMerc_Combat
-        owners[802610] = 1888;  // LDF5_LMerc_Combat
-        owners[802611] = 1888;  // LDF5_LMerc_Combat
-        owners[802612] = 1888;  // LDF5_LMerc_Combat
-        owners[802613] = 1888;  // LDF5_LMerc_Combat
-        owners[802614] = 1888;  // LDF5_LMerc_Combat
-        owners[802615] = 1888;  // LDF5_LMerc_Combat
-        owners[802616] = 1888;  // LDF5_LMerc_Combat
-        owners[802617] = 1888;  // LDF5_LMerc_Combat
-        owners[802618] = 1888;  // LDF5_LMerc_Combat
-        owners[802619] = 1888;  // LDF5_LMerc_Combat
-        owners[802620] = 1888;  // LDF5_LMerc_Combat
-        owners[802621] = 1888;  // LDF5_LMerc_Combat
-        owners[802622] = 1888;  // LDF5_LMerc_Combat
-        owners[802623] = 1888;  // LDF5_LMerc_Combat
-        owners[802624] = 1888;  // LDF5_LMerc_Combat
-        owners[802625] = 1888;  // LDF5_LMerc_Combat
-        owners[802626] = 1888;  // LDF5_LMerc_Combat
-        owners[802627] = 1888;  // LDF5_LMerc_Combat
-        owners[802628] = 1888;  // LDF5_LMerc_Combat
-        owners[802629] = 1888;  // LDF5_LMerc_Combat
-        owners[802630] = 1888;  // LDF5_LMerc_Combat
-        owners[802631] = 1888;  // LDF5_LMerc_Combat
-        owners[802632] = 1888;  // LDF5_LMerc_Combat
-        owners[802633] = 1888;  // LDF5_LMerc_Combat
-        owners[802634] = 1888;  // LDF5_LMerc_Combat
-        owners[802635] = 1888;  // LDF5_LFunc_Combat
-        owners[802636] = 1888;  // LDF5_LFunc_Combat
-        owners[802637] = 1888;  // LDF5_LMerc_Combat
-        owners[802638] = 1888;  // LDF5_DMerc_Combat
-        owners[802639] = 1888;  // LDF5_DMerc_Combat
-        owners[802640] = 1888;  // LDF5_DMerc_Combat
-        owners[802641] = 1888;  // LDF5_DMerc_Combat
-        owners[802642] = 1888;  // LDF5_DMerc_Combat
-        owners[802643] = 1888;  // LDF5_DMerc_Combat
-        owners[802644] = 1888;  // LDF5_DMerc_Combat
-        owners[802645] = 1888;  // LDF5_DMerc_Combat
-        owners[802646] = 1888;  // LDF5_DMerc_Combat
-        owners[802647] = 1888;  // LDF5_DMerc_Combat
-        owners[802648] = 1888;  // LDF5_DMerc_Combat
-        owners[802649] = 1888;  // LDF5_DMerc_Combat
-        owners[802650] = 1888;  // LDF5_DMerc_Combat
-        owners[802651] = 1888;  // LDF5_DMerc_Combat
-        owners[802652] = 1888;  // LDF5_DMerc_Combat
-        owners[802653] = 1888;  // LDF5_DMerc_Combat
-        owners[802654] = 1888;  // LDF5_DMerc_Combat
-        owners[802655] = 1888;  // LDF5_DMerc_Combat
-        owners[802656] = 1888;  // LDF5_DMerc_Combat
-        owners[802657] = 1888;  // LDF5_DFunc_Combat
-        owners[802658] = 1888;  // LDF5_DFunc_Combat
-        owners[802659] = 1888;  // LDF5_DMerc_Combat
+        owners[802550] = 1887;  // LDF5_LMerc_Combat
+        owners[802551] = 1887;  // LDF5_LMerc_Combat
+        owners[802552] = 1887;  // LDF5_DMerc_Combat
+        owners[802553] = 1887;  // LDF5_DMerc_Combat
+        owners[802554] = 1887;  // LDF5_LMerc_Combat
+        owners[802555] = 1887;  // LDF5_LFunc_Combat
+        owners[802556] = 1887;  // LDF5_LMerc_Combat
+        owners[802557] = 1887;  // LDF5_LMerc_Combat
+        owners[802558] = 1887;  // LDF5_LMerc_Combat
+        owners[802559] = 1887;  // LDF5_LMerc_Combat
+        owners[802560] = 1887;  // LDF5_LMerc_Combat
+        owners[802561] = 1887;  // LDF5_LMerc_Combat
+        owners[802562] = 1887;  // LDF5_LMerc_Combat
+        owners[802563] = 1887;  // LDF5_LMerc_Combat
+        owners[802564] = 1887;  // LDF5_LMerc_Combat
+        owners[802565] = 1887;  // LDF5_LMerc_Combat
+        owners[802566] = 1887;  // LDF5_LMerc_Combat
+        owners[802567] = 1887;  // LDF5_LMerc_Combat
+        owners[802568] = 1887;  // LDF5_LMerc_Combat
+        owners[802569] = 1887;  // LDF5_LMerc_Combat
+        owners[802570] = 1887;  // LDF5_LMerc_Combat
+        owners[802571] = 1887;  // LDF5_DMerc_Combat
+        owners[802572] = 1887;  // LDF5_DMerc_Combat
+        owners[802573] = 1887;  // LDF5_DMerc_Combat
+        owners[802574] = 1887;  // LDF5_DMerc_Combat
+        owners[802575] = 1887;  // LDF5_DMerc_Combat
+        owners[802576] = 1887;  // LDF5_DMerc_Combat
+        owners[802577] = 1887;  // LDF5_DMerc_Combat
+        owners[802578] = 1887;  // LDF5_DMerc_Combat
+        owners[802579] = 1887;  // LDF5_DMerc_Combat
+        owners[802580] = 1887;  // LDF5_DMerc_Combat
+        owners[802581] = 1887;  // LDF5_DMerc_Combat
+        owners[802582] = 1887;  // LDF5_DMerc_Combat
+        owners[802583] = 1887;  // LDF5_DMerc_Combat
+        owners[802584] = 1887;  // LDF5_DMerc_Combat
+        owners[802585] = 1887;  // LDF5_DMerc_Combat
+        owners[802586] = 1887;  // LDF5_DFunc_Combat
+        owners[802587] = 1887;  // LDF5_DMerc_Combat
+        owners[802588] = 1887;  // LDF5_DMerc_Combat
+        owners[802589] = 1887;  // LDF5_DMerc_Combat
+        owners[802590] = 1887;  // LDF5_DMerc_Combat
+        owners[802591] = 1887;  // LDF5_DMerc_Combat
+        owners[802592] = 1887;  // LDF5_DMerc_Combat
+        owners[802593] = 1887;  // LDF5_DMerc_Combat
+        owners[802594] = 1887;  // LDF5_DMerc_Combat
+        owners[802595] = 1887;  // LDF5_DMerc_Combat
+        owners[802596] = 1887;  // LDF5_DMerc_Combat
+        owners[802597] = 1887;  // LDF5_DMerc_Combat
+        owners[802598] = 1887;  // LDF5_DMerc_Combat
+        owners[802599] = 1887;  // LDF5_DMerc_Combat
+        owners[802600] = 1887;  // LDF5_DMerc_Combat
+        owners[802601] = 1887;  // LDF5_DMerc_Combat
+        owners[802602] = 1887;  // LDF5_LMerc_Combat
+        owners[802603] = 1887;  // LDF5_LMerc_Combat
+        owners[802604] = 1887;  // LDF5_LMerc_Combat
+        owners[802605] = 1887;  // LDF5_LMerc_Combat
+        owners[802606] = 1887;  // LDF5_LMerc_Combat
+        owners[802607] = 1887;  // LDF5_LMerc_Combat
+        owners[802608] = 1887;  // LDF5_LMerc_Combat
+        owners[802609] = 1887;  // LDF5_LMerc_Combat
+        owners[802610] = 1887;  // LDF5_LMerc_Combat
+        owners[802611] = 1887;  // LDF5_LMerc_Combat
+        owners[802612] = 1887;  // LDF5_LMerc_Combat
+        owners[802613] = 1887;  // LDF5_LMerc_Combat
+        owners[802614] = 1887;  // LDF5_LMerc_Combat
+        owners[802615] = 1887;  // LDF5_LMerc_Combat
+        owners[802616] = 1887;  // LDF5_LMerc_Combat
+        owners[802617] = 1887;  // LDF5_LMerc_Combat
+        owners[802618] = 1887;  // LDF5_LMerc_Combat
+        owners[802619] = 1887;  // LDF5_LMerc_Combat
+        owners[802620] = 1887;  // LDF5_LMerc_Combat
+        owners[802621] = 1887;  // LDF5_LMerc_Combat
+        owners[802622] = 1887;  // LDF5_LMerc_Combat
+        owners[802623] = 1887;  // LDF5_LMerc_Combat
+        owners[802624] = 1887;  // LDF5_LMerc_Combat
+        owners[802625] = 1887;  // LDF5_LMerc_Combat
+        owners[802626] = 1887;  // LDF5_LMerc_Combat
+        owners[802627] = 1887;  // LDF5_LMerc_Combat
+        owners[802628] = 1887;  // LDF5_LMerc_Combat
+        owners[802629] = 1887;  // LDF5_LMerc_Combat
+        owners[802630] = 1887;  // LDF5_LMerc_Combat
+        owners[802631] = 1887;  // LDF5_LMerc_Combat
+        owners[802632] = 1887;  // LDF5_LMerc_Combat
+        owners[802633] = 1887;  // LDF5_LMerc_Combat
+        owners[802634] = 1887;  // LDF5_LMerc_Combat
+        owners[802635] = 1887;  // LDF5_LFunc_Combat
+        owners[802636] = 1887;  // LDF5_LFunc_Combat
+        owners[802637] = 1887;  // LDF5_LMerc_Combat
+        owners[802638] = 1887;  // LDF5_DMerc_Combat
+        owners[802639] = 1887;  // LDF5_DMerc_Combat
+        owners[802640] = 1887;  // LDF5_DMerc_Combat
+        owners[802641] = 1887;  // LDF5_DMerc_Combat
+        owners[802642] = 1887;  // LDF5_DMerc_Combat
+        owners[802643] = 1887;  // LDF5_DMerc_Combat
+        owners[802644] = 1887;  // LDF5_DMerc_Combat
+        owners[802645] = 1887;  // LDF5_DMerc_Combat
+        owners[802646] = 1887;  // LDF5_DMerc_Combat
+        owners[802647] = 1887;  // LDF5_DMerc_Combat
+        owners[802648] = 1887;  // LDF5_DMerc_Combat
+        owners[802649] = 1887;  // LDF5_DMerc_Combat
+        owners[802650] = 1887;  // LDF5_DMerc_Combat
+        owners[802651] = 1887;  // LDF5_DMerc_Combat
+        owners[802652] = 1887;  // LDF5_DMerc_Combat
+        owners[802653] = 1887;  // LDF5_DMerc_Combat
+        owners[802654] = 1887;  // LDF5_DMerc_Combat
+        owners[802655] = 1887;  // LDF5_DMerc_Combat
+        owners[802656] = 1887;  // LDF5_DMerc_Combat
+        owners[802657] = 1887;  // LDF5_DFunc_Combat
+        owners[802658] = 1887;  // LDF5_DFunc_Combat
+        owners[802659] = 1887;  // LDF5_DMerc_Combat
         owners[802666] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802667] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[802668] = 1132;  // F5_PvPLight_LGuard_Kn_An
@@ -51548,330 +51508,330 @@ internal static class BattleCycles
         owners[804095] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[804096] = 1132;  // F5_PvPLight_LGuard_Kn_An
         owners[804097] = 1132;  // F5_PvPLight_LGuard_Kn_An
-        owners[804134] = 1888;  // LDF5_LMerc_Combat
-        owners[804135] = 1888;  // LDF5_LMerc_Combat
-        owners[804136] = 1888;  // LDF5_LMerc_Combat
-        owners[804137] = 1888;  // LDF5_LMerc_Combat
-        owners[804138] = 1888;  // LDF5_LMerc_Combat
-        owners[804139] = 1888;  // LDF5_LMerc_Combat
-        owners[804140] = 1888;  // LDF5_LMerc_Combat
-        owners[804141] = 1888;  // LDF5_LMerc_Combat
-        owners[804142] = 1888;  // LDF5_LMerc_Combat
-        owners[804143] = 1888;  // LDF5_LMerc_Combat
-        owners[804144] = 1888;  // LDF5_LMerc_Combat
-        owners[804145] = 1888;  // LDF5_LMerc_Combat
-        owners[804146] = 1888;  // LDF5_LMerc_Combat
-        owners[804147] = 1888;  // LDF5_LMerc_Combat
-        owners[804148] = 1888;  // LDF5_LMerc_Combat
-        owners[804149] = 1888;  // LDF5_LMerc_Combat
-        owners[804150] = 1888;  // LDF5_LMerc_Combat
-        owners[804151] = 1888;  // LDF5_LMerc_Combat
-        owners[804152] = 1888;  // LDF5_LMerc_Combat
-        owners[804153] = 1888;  // LDF5_LMerc_Combat
-        owners[804154] = 1888;  // LDF5_LMerc_Combat
-        owners[804155] = 1888;  // LDF5_LMerc_Combat
-        owners[804156] = 1888;  // LDF5_LMerc_Combat
-        owners[804157] = 1888;  // LDF5_LMerc_Combat
-        owners[804158] = 1888;  // LDF5_LMerc_Combat
-        owners[804159] = 1888;  // LDF5_LMerc_Combat
-        owners[804160] = 1888;  // LDF5_LMerc_Combat
-        owners[804161] = 1888;  // LDF5_LMerc_Combat
-        owners[804162] = 1888;  // LDF5_LMerc_Combat
-        owners[804163] = 1888;  // LDF5_LMerc_Combat
-        owners[804164] = 1888;  // LDF5_LMerc_Combat
-        owners[804165] = 1888;  // LDF5_LMerc_Combat
-        owners[804166] = 1888;  // LDF5_LMerc_Combat
-        owners[804167] = 1888;  // LDF5_LMerc_Combat
-        owners[804168] = 1888;  // LDF5_LMerc_Combat
-        owners[804169] = 1888;  // LDF5_LMerc_Combat
-        owners[804170] = 1888;  // LDF5_LMerc_Combat
-        owners[804171] = 1888;  // LDF5_LMerc_Combat
-        owners[804172] = 1888;  // LDF5_LMerc_Combat
-        owners[804173] = 1888;  // LDF5_LMerc_Combat
-        owners[804174] = 1888;  // LDF5_LMerc_Combat
-        owners[804175] = 1888;  // LDF5_LMerc_Combat
-        owners[804176] = 1888;  // LDF5_LMerc_Combat
-        owners[804177] = 1888;  // LDF5_LMerc_Combat
-        owners[804178] = 1888;  // LDF5_LMerc_Combat
-        owners[804179] = 1888;  // LDF5_LMerc_Combat
-        owners[804180] = 1888;  // LDF5_LMerc_Combat
-        owners[804181] = 1888;  // LDF5_LMerc_Combat
-        owners[804204] = 1888;  // LDF5_LMerc_Combat
-        owners[804205] = 1888;  // LDF5_LMerc_Combat
-        owners[804206] = 1888;  // LDF5_LMerc_Combat
-        owners[804207] = 1888;  // LDF5_LMerc_Combat
-        owners[804208] = 1888;  // LDF5_LMerc_Combat
-        owners[804209] = 1888;  // LDF5_LMerc_Combat
-        owners[804210] = 1888;  // LDF5_LMerc_Combat
-        owners[804211] = 1888;  // LDF5_LMerc_Combat
-        owners[804212] = 1888;  // LDF5_LMerc_Combat
-        owners[804213] = 1888;  // LDF5_LMerc_Combat
-        owners[804214] = 1888;  // LDF5_LMerc_Combat
-        owners[804215] = 1888;  // LDF5_LMerc_Combat
-        owners[804216] = 1888;  // LDF5_LMerc_Combat
-        owners[804217] = 1888;  // LDF5_LMerc_Combat
-        owners[804218] = 1888;  // LDF5_LMerc_Combat
-        owners[804219] = 1888;  // LDF5_LMerc_Combat
-        owners[804220] = 1888;  // LDF5_LMerc_Combat
-        owners[804221] = 1888;  // LDF5_LMerc_Combat
-        owners[804222] = 1888;  // LDF5_LMerc_Combat
-        owners[804223] = 1888;  // LDF5_LMerc_Combat
-        owners[804224] = 1888;  // LDF5_LMerc_Combat
-        owners[804225] = 1888;  // LDF5_LMerc_Combat
-        owners[804226] = 1888;  // LDF5_LMerc_Combat
-        owners[804227] = 1888;  // LDF5_LMerc_Combat
-        owners[804228] = 1888;  // LDF5_LMerc_Combat
-        owners[804229] = 1888;  // LDF5_LMerc_Combat
-        owners[804230] = 1888;  // LDF5_LMerc_Combat
-        owners[804231] = 1888;  // LDF5_LMerc_Combat
-        owners[804232] = 1888;  // LDF5_LMerc_Combat
-        owners[804233] = 1888;  // LDF5_LMerc_Combat
-        owners[804234] = 1888;  // LDF5_LMerc_Combat
-        owners[804235] = 1888;  // LDF5_LMerc_Combat
-        owners[804236] = 1888;  // LDF5_LMerc_Combat
-        owners[804237] = 1888;  // LDF5_LMerc_Combat
-        owners[804238] = 1888;  // LDF5_LMerc_Combat
-        owners[804239] = 1888;  // LDF5_LMerc_Combat
-        owners[804240] = 1888;  // LDF5_LMerc_Combat
-        owners[804241] = 1888;  // LDF5_LMerc_Combat
-        owners[804242] = 1888;  // LDF5_LMerc_Combat
-        owners[804243] = 1888;  // LDF5_LMerc_Combat
-        owners[804244] = 1888;  // LDF5_LMerc_Combat
-        owners[804245] = 1888;  // LDF5_LMerc_Combat
-        owners[804246] = 1888;  // LDF5_LMerc_Combat
-        owners[804247] = 1888;  // LDF5_LMerc_Combat
-        owners[804248] = 1888;  // LDF5_LMerc_Combat
-        owners[804249] = 1888;  // LDF5_LMerc_Combat
-        owners[804250] = 1888;  // LDF5_LMerc_Combat
-        owners[804251] = 1888;  // LDF5_LMerc_Combat
-        owners[804252] = 1888;  // LDF5_LMerc_Combat
-        owners[804253] = 1888;  // LDF5_LMerc_Combat
-        owners[804254] = 1888;  // LDF5_LMerc_Combat
-        owners[804255] = 1888;  // LDF5_LMerc_Combat
-        owners[804256] = 1888;  // LDF5_LMerc_Combat
-        owners[804257] = 1888;  // LDF5_LMerc_Combat
-        owners[804258] = 1888;  // LDF5_LMerc_Combat
-        owners[804259] = 1888;  // LDF5_LMerc_Combat
+        owners[804134] = 1887;  // LDF5_LMerc_Combat
+        owners[804135] = 1887;  // LDF5_LMerc_Combat
+        owners[804136] = 1887;  // LDF5_LMerc_Combat
+        owners[804137] = 1887;  // LDF5_LMerc_Combat
+        owners[804138] = 1887;  // LDF5_LMerc_Combat
+        owners[804139] = 1887;  // LDF5_LMerc_Combat
+        owners[804140] = 1887;  // LDF5_LMerc_Combat
+        owners[804141] = 1887;  // LDF5_LMerc_Combat
+        owners[804142] = 1887;  // LDF5_LMerc_Combat
+        owners[804143] = 1887;  // LDF5_LMerc_Combat
+        owners[804144] = 1887;  // LDF5_LMerc_Combat
+        owners[804145] = 1887;  // LDF5_LMerc_Combat
+        owners[804146] = 1887;  // LDF5_LMerc_Combat
+        owners[804147] = 1887;  // LDF5_LMerc_Combat
+        owners[804148] = 1887;  // LDF5_LMerc_Combat
+        owners[804149] = 1887;  // LDF5_LMerc_Combat
+        owners[804150] = 1887;  // LDF5_LMerc_Combat
+        owners[804151] = 1887;  // LDF5_LMerc_Combat
+        owners[804152] = 1887;  // LDF5_LMerc_Combat
+        owners[804153] = 1887;  // LDF5_LMerc_Combat
+        owners[804154] = 1887;  // LDF5_LMerc_Combat
+        owners[804155] = 1887;  // LDF5_LMerc_Combat
+        owners[804156] = 1887;  // LDF5_LMerc_Combat
+        owners[804157] = 1887;  // LDF5_LMerc_Combat
+        owners[804158] = 1887;  // LDF5_LMerc_Combat
+        owners[804159] = 1887;  // LDF5_LMerc_Combat
+        owners[804160] = 1887;  // LDF5_LMerc_Combat
+        owners[804161] = 1887;  // LDF5_LMerc_Combat
+        owners[804162] = 1887;  // LDF5_LMerc_Combat
+        owners[804163] = 1887;  // LDF5_LMerc_Combat
+        owners[804164] = 1887;  // LDF5_LMerc_Combat
+        owners[804165] = 1887;  // LDF5_LMerc_Combat
+        owners[804166] = 1887;  // LDF5_LMerc_Combat
+        owners[804167] = 1887;  // LDF5_LMerc_Combat
+        owners[804168] = 1887;  // LDF5_LMerc_Combat
+        owners[804169] = 1887;  // LDF5_LMerc_Combat
+        owners[804170] = 1887;  // LDF5_LMerc_Combat
+        owners[804171] = 1887;  // LDF5_LMerc_Combat
+        owners[804172] = 1887;  // LDF5_LMerc_Combat
+        owners[804173] = 1887;  // LDF5_LMerc_Combat
+        owners[804174] = 1887;  // LDF5_LMerc_Combat
+        owners[804175] = 1887;  // LDF5_LMerc_Combat
+        owners[804176] = 1887;  // LDF5_LMerc_Combat
+        owners[804177] = 1887;  // LDF5_LMerc_Combat
+        owners[804178] = 1887;  // LDF5_LMerc_Combat
+        owners[804179] = 1887;  // LDF5_LMerc_Combat
+        owners[804180] = 1887;  // LDF5_LMerc_Combat
+        owners[804181] = 1887;  // LDF5_LMerc_Combat
+        owners[804204] = 1887;  // LDF5_LMerc_Combat
+        owners[804205] = 1887;  // LDF5_LMerc_Combat
+        owners[804206] = 1887;  // LDF5_LMerc_Combat
+        owners[804207] = 1887;  // LDF5_LMerc_Combat
+        owners[804208] = 1887;  // LDF5_LMerc_Combat
+        owners[804209] = 1887;  // LDF5_LMerc_Combat
+        owners[804210] = 1887;  // LDF5_LMerc_Combat
+        owners[804211] = 1887;  // LDF5_LMerc_Combat
+        owners[804212] = 1887;  // LDF5_LMerc_Combat
+        owners[804213] = 1887;  // LDF5_LMerc_Combat
+        owners[804214] = 1887;  // LDF5_LMerc_Combat
+        owners[804215] = 1887;  // LDF5_LMerc_Combat
+        owners[804216] = 1887;  // LDF5_LMerc_Combat
+        owners[804217] = 1887;  // LDF5_LMerc_Combat
+        owners[804218] = 1887;  // LDF5_LMerc_Combat
+        owners[804219] = 1887;  // LDF5_LMerc_Combat
+        owners[804220] = 1887;  // LDF5_LMerc_Combat
+        owners[804221] = 1887;  // LDF5_LMerc_Combat
+        owners[804222] = 1887;  // LDF5_LMerc_Combat
+        owners[804223] = 1887;  // LDF5_LMerc_Combat
+        owners[804224] = 1887;  // LDF5_LMerc_Combat
+        owners[804225] = 1887;  // LDF5_LMerc_Combat
+        owners[804226] = 1887;  // LDF5_LMerc_Combat
+        owners[804227] = 1887;  // LDF5_LMerc_Combat
+        owners[804228] = 1887;  // LDF5_LMerc_Combat
+        owners[804229] = 1887;  // LDF5_LMerc_Combat
+        owners[804230] = 1887;  // LDF5_LMerc_Combat
+        owners[804231] = 1887;  // LDF5_LMerc_Combat
+        owners[804232] = 1887;  // LDF5_LMerc_Combat
+        owners[804233] = 1887;  // LDF5_LMerc_Combat
+        owners[804234] = 1887;  // LDF5_LMerc_Combat
+        owners[804235] = 1887;  // LDF5_LMerc_Combat
+        owners[804236] = 1887;  // LDF5_LMerc_Combat
+        owners[804237] = 1887;  // LDF5_LMerc_Combat
+        owners[804238] = 1887;  // LDF5_LMerc_Combat
+        owners[804239] = 1887;  // LDF5_LMerc_Combat
+        owners[804240] = 1887;  // LDF5_LMerc_Combat
+        owners[804241] = 1887;  // LDF5_LMerc_Combat
+        owners[804242] = 1887;  // LDF5_LMerc_Combat
+        owners[804243] = 1887;  // LDF5_LMerc_Combat
+        owners[804244] = 1887;  // LDF5_LMerc_Combat
+        owners[804245] = 1887;  // LDF5_LMerc_Combat
+        owners[804246] = 1887;  // LDF5_LMerc_Combat
+        owners[804247] = 1887;  // LDF5_LMerc_Combat
+        owners[804248] = 1887;  // LDF5_LMerc_Combat
+        owners[804249] = 1887;  // LDF5_LMerc_Combat
+        owners[804250] = 1887;  // LDF5_LMerc_Combat
+        owners[804251] = 1887;  // LDF5_LMerc_Combat
+        owners[804252] = 1887;  // LDF5_LMerc_Combat
+        owners[804253] = 1887;  // LDF5_LMerc_Combat
+        owners[804254] = 1887;  // LDF5_LMerc_Combat
+        owners[804255] = 1887;  // LDF5_LMerc_Combat
+        owners[804256] = 1887;  // LDF5_LMerc_Combat
+        owners[804257] = 1887;  // LDF5_LMerc_Combat
+        owners[804258] = 1887;  // LDF5_LMerc_Combat
+        owners[804259] = 1887;  // LDF5_LMerc_Combat
+        owners[804260] = 1887;  // LDF5_LMerc_Combat
     }
 
     private static void CycleOf47(Dictionary<int, int> owners)
     {
-        owners[804260] = 1888;  // LDF5_LMerc_Combat
-        owners[804261] = 1888;  // LDF5_LMerc_Combat
-        owners[804262] = 1888;  // LDF5_LMerc_Combat
-        owners[804263] = 1888;  // LDF5_LMerc_Combat
-        owners[804264] = 1888;  // LDF5_LMerc_Combat
-        owners[804265] = 1888;  // LDF5_LMerc_Combat
-        owners[804266] = 1888;  // LDF5_LMerc_Combat
-        owners[804267] = 1888;  // LDF5_LMerc_Combat
-        owners[804268] = 1888;  // LDF5_LMerc_Combat
-        owners[804269] = 1888;  // LDF5_LMerc_Combat
-        owners[804270] = 1888;  // LDF5_LMerc_Combat
-        owners[804271] = 1888;  // LDF5_LMerc_Combat
-        owners[804272] = 1888;  // LDF5_LMerc_Combat
-        owners[804273] = 1888;  // LDF5_LMerc_Combat
-        owners[804274] = 1888;  // LDF5_LMerc_Combat
-        owners[804275] = 1888;  // LDF5_LMerc_Combat
-        owners[804276] = 1888;  // LDF5_LMerc_Combat
-        owners[804277] = 1888;  // LDF5_LMerc_Combat
-        owners[804278] = 1888;  // LDF5_LMerc_Combat
-        owners[804279] = 1888;  // LDF5_LMerc_Combat
-        owners[804280] = 1888;  // LDF5_LMerc_Combat
-        owners[804281] = 1888;  // LDF5_LMerc_Combat
-        owners[804282] = 1888;  // LDF5_LMerc_Combat
-        owners[804283] = 1888;  // LDF5_LMerc_Combat
-        owners[804284] = 1888;  // LDF5_LMerc_Combat
-        owners[804285] = 1888;  // LDF5_LMerc_Combat
-        owners[804286] = 1888;  // LDF5_LMerc_Combat
-        owners[804287] = 1888;  // LDF5_LMerc_Combat
-        owners[804288] = 1888;  // LDF5_LMerc_Combat
-        owners[804289] = 1888;  // LDF5_LMerc_Combat
-        owners[804290] = 1888;  // LDF5_LMerc_Combat
-        owners[804291] = 1888;  // LDF5_LMerc_Combat
-        owners[804292] = 1888;  // LDF5_LMerc_Combat
-        owners[804293] = 1888;  // LDF5_LMerc_Combat
-        owners[804294] = 1888;  // LDF5_LMerc_Combat
-        owners[804295] = 1888;  // LDF5_LMerc_Combat
-        owners[804296] = 1888;  // LDF5_LMerc_Combat
-        owners[804297] = 1888;  // LDF5_LMerc_Combat
-        owners[804298] = 1888;  // LDF5_LMerc_Combat
-        owners[804299] = 1888;  // LDF5_LMerc_Combat
-        owners[804300] = 1888;  // LDF5_LMerc_Combat
-        owners[804301] = 1888;  // LDF5_LMerc_Combat
-        owners[804302] = 1888;  // LDF5_LMerc_Combat
-        owners[804303] = 1888;  // LDF5_LMerc_Combat
-        owners[804304] = 1888;  // LDF5_LMerc_Combat
-        owners[804305] = 1888;  // LDF5_LMerc_Combat
-        owners[804306] = 1888;  // LDF5_LMerc_Combat
-        owners[804307] = 1888;  // LDF5_LMerc_Combat
-        owners[804308] = 1888;  // LDF5_LMerc_Combat
-        owners[804309] = 1888;  // LDF5_LMerc_Combat
-        owners[804310] = 1888;  // LDF5_LMerc_Combat
-        owners[804311] = 1888;  // LDF5_LMerc_Combat
-        owners[804312] = 1888;  // LDF5_LMerc_Combat
-        owners[804313] = 1888;  // LDF5_LMerc_Combat
-        owners[804314] = 1888;  // LDF5_LMerc_Combat
-        owners[804315] = 1888;  // LDF5_LMerc_Combat
-        owners[804316] = 1888;  // LDF5_LMerc_Combat
-        owners[804317] = 1888;  // LDF5_LMerc_Combat
-        owners[804318] = 1888;  // LDF5_LMerc_Combat
-        owners[804319] = 1888;  // LDF5_LMerc_Combat
-        owners[804320] = 1888;  // LDF5_LMerc_Combat
-        owners[804321] = 1888;  // LDF5_LMerc_Combat
-        owners[804322] = 1888;  // LDF5_LMerc_Combat
-        owners[804323] = 1888;  // LDF5_LMerc_Combat
-        owners[804324] = 1888;  // LDF5_LMerc_Combat
-        owners[804325] = 1888;  // LDF5_LMerc_Combat
-        owners[804326] = 1888;  // LDF5_LMerc_Combat
-        owners[804327] = 1888;  // LDF5_LMerc_Combat
-        owners[804328] = 1888;  // LDF5_LMerc_Combat
-        owners[804329] = 1888;  // LDF5_LMerc_Combat
-        owners[804330] = 1888;  // LDF5_LMerc_Combat
-        owners[804331] = 1888;  // LDF5_LMerc_Combat
-        owners[804332] = 1888;  // LDF5_LMerc_Combat
-        owners[804333] = 1888;  // LDF5_LMerc_Combat
-        owners[804334] = 1888;  // LDF5_LMerc_Combat
-        owners[804335] = 1888;  // LDF5_LMerc_Combat
-        owners[804336] = 1888;  // LDF5_LMerc_Combat
-        owners[804337] = 1888;  // LDF5_LMerc_Combat
-        owners[804338] = 1888;  // LDF5_LMerc_Combat
-        owners[804339] = 1888;  // LDF5_LMerc_Combat
-        owners[804340] = 1888;  // LDF5_LMerc_Combat
-        owners[804341] = 1888;  // LDF5_LMerc_Combat
-        owners[804342] = 1888;  // LDF5_LMerc_Combat
-        owners[804343] = 1888;  // LDF5_LMerc_Combat
-        owners[804344] = 1888;  // LDF5_LMerc_Combat
-        owners[804345] = 1888;  // LDF5_LMerc_Combat
-        owners[804346] = 1888;  // LDF5_LMerc_Combat
-        owners[804347] = 1888;  // LDF5_LMerc_Combat
-        owners[804348] = 1888;  // LDF5_LMerc_Combat
-        owners[804349] = 1888;  // LDF5_LMerc_Combat
-        owners[804350] = 1888;  // LDF5_LMerc_Combat
-        owners[804351] = 1888;  // LDF5_LMerc_Combat
-        owners[804352] = 1888;  // LDF5_LMerc_Combat
-        owners[804353] = 1888;  // LDF5_LMerc_Combat
-        owners[804354] = 1888;  // LDF5_LMerc_Combat
-        owners[804355] = 1888;  // LDF5_LMerc_Combat
-        owners[804356] = 1888;  // LDF5_LMerc_Combat
-        owners[804357] = 1888;  // LDF5_LMerc_Combat
-        owners[804358] = 1888;  // LDF5_LMerc_Combat
-        owners[804359] = 1888;  // LDF5_LMerc_Combat
-        owners[804360] = 1888;  // LDF5_LMerc_Combat
-        owners[804361] = 1888;  // LDF5_LMerc_Combat
-        owners[804362] = 1888;  // LDF5_LMerc_Combat
-        owners[804363] = 1888;  // LDF5_LMerc_Combat
-        owners[804364] = 1888;  // LDF5_LMerc_Combat
-        owners[804365] = 1888;  // LDF5_LMerc_Combat
-        owners[804366] = 1888;  // LDF5_LMerc_Combat
-        owners[804367] = 1888;  // LDF5_LMerc_Combat
-        owners[804368] = 1888;  // LDF5_LMerc_Combat
-        owners[804369] = 1888;  // LDF5_LMerc_Combat
-        owners[804370] = 1888;  // LDF5_LMerc_Combat
-        owners[804371] = 1888;  // LDF5_LMerc_Combat
-        owners[804372] = 1888;  // LDF5_LMerc_Combat
-        owners[804373] = 1888;  // LDF5_LMerc_Combat
-        owners[804374] = 1888;  // LDF5_LMerc_Combat
-        owners[804375] = 1888;  // LDF5_LMerc_Combat
-        owners[804376] = 1888;  // LDF5_LMerc_Combat
-        owners[804377] = 1888;  // LDF5_LMerc_Combat
-        owners[804378] = 1888;  // LDF5_LMerc_Combat
-        owners[804379] = 1888;  // LDF5_LMerc_Combat
-        owners[804380] = 1888;  // LDF5_LMerc_Combat
-        owners[804381] = 1888;  // LDF5_LMerc_Combat
-        owners[804382] = 1888;  // LDF5_LMerc_Combat
-        owners[804383] = 1888;  // LDF5_LMerc_Combat
-        owners[804384] = 1888;  // LDF5_LMerc_Combat
-        owners[804385] = 1888;  // LDF5_LMerc_Combat
-        owners[804386] = 1888;  // LDF5_LMerc_Combat
-        owners[804387] = 1888;  // LDF5_LMerc_Combat
-        owners[804388] = 1888;  // LDF5_LMerc_Combat
-        owners[804389] = 1888;  // LDF5_LMerc_Combat
-        owners[804390] = 1888;  // LDF5_LMerc_Combat
-        owners[804391] = 1888;  // LDF5_LMerc_Combat
-        owners[804392] = 1888;  // LDF5_LMerc_Combat
-        owners[804393] = 1888;  // LDF5_LMerc_Combat
-        owners[804394] = 1888;  // LDF5_LMerc_Combat
-        owners[804395] = 1888;  // LDF5_LMerc_Combat
-        owners[804396] = 1888;  // LDF5_LMerc_Combat
-        owners[804397] = 1888;  // LDF5_LMerc_Combat
-        owners[804398] = 1888;  // LDF5_LMerc_Combat
-        owners[804399] = 1888;  // LDF5_LMerc_Combat
-        owners[804400] = 1888;  // LDF5_LMerc_Combat
-        owners[804401] = 1888;  // LDF5_LMerc_Combat
-        owners[804402] = 1888;  // LDF5_LMerc_Combat
-        owners[804403] = 1888;  // LDF5_LMerc_Combat
-        owners[804404] = 1888;  // LDF5_LMerc_Combat
-        owners[804405] = 1888;  // LDF5_LMerc_Combat
-        owners[804406] = 1888;  // LDF5_LMerc_Combat
-        owners[804407] = 1888;  // LDF5_LMerc_Combat
-        owners[804408] = 1888;  // LDF5_LMerc_Combat
-        owners[804409] = 1888;  // LDF5_LMerc_Combat
-        owners[804410] = 1888;  // LDF5_LMerc_Combat
-        owners[804411] = 1888;  // LDF5_LMerc_Combat
-        owners[804412] = 1888;  // LDF5_LMerc_Combat
-        owners[804413] = 1888;  // LDF5_LMerc_Combat
-        owners[804414] = 1888;  // LDF5_LMerc_Combat
-        owners[804415] = 1888;  // LDF5_LMerc_Combat
-        owners[804416] = 1888;  // LDF5_LMerc_Combat
-        owners[804417] = 1888;  // LDF5_LMerc_Combat
-        owners[804418] = 1888;  // LDF5_LMerc_Combat
-        owners[804419] = 1888;  // LDF5_LMerc_Combat
-        owners[804420] = 1888;  // LDF5_LMerc_Combat
-        owners[804421] = 1888;  // LDF5_LMerc_Combat
-        owners[804422] = 1888;  // LDF5_LMerc_Combat
-        owners[804423] = 1888;  // LDF5_LMerc_Combat
-        owners[804424] = 1888;  // LDF5_LMerc_Combat
-        owners[804425] = 1888;  // LDF5_LMerc_Combat
-        owners[804426] = 1888;  // LDF5_LMerc_Combat
-        owners[804427] = 1888;  // LDF5_LMerc_Combat
-        owners[804428] = 1888;  // LDF5_LMerc_Combat
-        owners[804429] = 1888;  // LDF5_LMerc_Combat
-        owners[804430] = 1888;  // LDF5_LMerc_Combat
-        owners[804431] = 1888;  // LDF5_LMerc_Combat
-        owners[804432] = 1888;  // LDF5_LMerc_Combat
-        owners[804433] = 1888;  // LDF5_LMerc_Combat
-        owners[804434] = 1888;  // LDF5_LMerc_Combat
-        owners[804435] = 1888;  // LDF5_LMerc_Combat
-        owners[804436] = 1888;  // LDF5_LMerc_Combat
-        owners[804437] = 1888;  // LDF5_LMerc_Combat
-        owners[804438] = 1888;  // LDF5_LMerc_Combat
-        owners[804439] = 1888;  // LDF5_LMerc_Combat
-        owners[804440] = 1888;  // LDF5_LMerc_Combat
-        owners[804441] = 1888;  // LDF5_LMerc_Combat
-        owners[804442] = 1888;  // LDF5_LMerc_Combat
-        owners[804443] = 1888;  // LDF5_LMerc_Combat
-        owners[804444] = 1888;  // LDF5_LMerc_Combat
-        owners[804445] = 1888;  // LDF5_LMerc_Combat
-        owners[804446] = 1888;  // LDF5_LMerc_Combat
-        owners[804447] = 1888;  // LDF5_LMerc_Combat
-        owners[804448] = 1888;  // LDF5_LMerc_Combat
-        owners[804449] = 1888;  // LDF5_LMerc_Combat
-        owners[804450] = 1888;  // LDF5_LMerc_Combat
-        owners[804451] = 1888;  // LDF5_LMerc_Combat
-        owners[804452] = 1888;  // LDF5_LMerc_Combat
-        owners[804453] = 1888;  // LDF5_LMerc_Combat
-        owners[804454] = 1888;  // LDF5_LMerc_Combat
-        owners[804455] = 1888;  // LDF5_LMerc_Combat
-        owners[804456] = 1888;  // LDF5_LMerc_Combat
-        owners[804457] = 1888;  // LDF5_LMerc_Combat
-        owners[804458] = 1888;  // LDF5_LMerc_Combat
-        owners[804459] = 1888;  // LDF5_LMerc_Combat
-        owners[804464] = 1888;  // LDF5_LMerc_Combat
-        owners[804465] = 1888;  // LDF5_LMerc_Combat
-        owners[804466] = 1888;  // LDF5_LMerc_Combat
-        owners[804467] = 1888;  // LDF5_DMerc_Combat
-        owners[804468] = 1888;  // LDF5_DMerc_Combat
-        owners[804469] = 1888;  // LDF5_DMerc_Combat
-        owners[804470] = 1888;  // LDF5_DFunc_Combat
-        owners[804471] = 1888;  // LDF5_LFunc_Combat
-        owners[804472] = 1888;  // LDF5_LMerc_Combat
-        owners[804473] = 1888;  // LDF5_LMerc_Combat
-        owners[804474] = 1888;  // LDF5_DMerc_Combat
-        owners[804475] = 1888;  // LDF5_DMerc_Combat
-        owners[804476] = 1888;  // LDF5_LFunc_Combat
-        owners[804477] = 1888;  // LDF5_LFunc_Combat
-        owners[804478] = 1888;  // LDF5_LFunc_Combat
-        owners[804479] = 1888;  // LDF5_LFunc_Combat
+        owners[804261] = 1887;  // LDF5_LMerc_Combat
+        owners[804262] = 1887;  // LDF5_LMerc_Combat
+        owners[804263] = 1887;  // LDF5_LMerc_Combat
+        owners[804264] = 1887;  // LDF5_LMerc_Combat
+        owners[804265] = 1887;  // LDF5_LMerc_Combat
+        owners[804266] = 1887;  // LDF5_LMerc_Combat
+        owners[804267] = 1887;  // LDF5_LMerc_Combat
+        owners[804268] = 1887;  // LDF5_LMerc_Combat
+        owners[804269] = 1887;  // LDF5_LMerc_Combat
+        owners[804270] = 1887;  // LDF5_LMerc_Combat
+        owners[804271] = 1887;  // LDF5_LMerc_Combat
+        owners[804272] = 1887;  // LDF5_LMerc_Combat
+        owners[804273] = 1887;  // LDF5_LMerc_Combat
+        owners[804274] = 1887;  // LDF5_LMerc_Combat
+        owners[804275] = 1887;  // LDF5_LMerc_Combat
+        owners[804276] = 1887;  // LDF5_LMerc_Combat
+        owners[804277] = 1887;  // LDF5_LMerc_Combat
+        owners[804278] = 1887;  // LDF5_LMerc_Combat
+        owners[804279] = 1887;  // LDF5_LMerc_Combat
+        owners[804280] = 1887;  // LDF5_LMerc_Combat
+        owners[804281] = 1887;  // LDF5_LMerc_Combat
+        owners[804282] = 1887;  // LDF5_LMerc_Combat
+        owners[804283] = 1887;  // LDF5_LMerc_Combat
+        owners[804284] = 1887;  // LDF5_LMerc_Combat
+        owners[804285] = 1887;  // LDF5_LMerc_Combat
+        owners[804286] = 1887;  // LDF5_LMerc_Combat
+        owners[804287] = 1887;  // LDF5_LMerc_Combat
+        owners[804288] = 1887;  // LDF5_LMerc_Combat
+        owners[804289] = 1887;  // LDF5_LMerc_Combat
+        owners[804290] = 1887;  // LDF5_LMerc_Combat
+        owners[804291] = 1887;  // LDF5_LMerc_Combat
+        owners[804292] = 1887;  // LDF5_LMerc_Combat
+        owners[804293] = 1887;  // LDF5_LMerc_Combat
+        owners[804294] = 1887;  // LDF5_LMerc_Combat
+        owners[804295] = 1887;  // LDF5_LMerc_Combat
+        owners[804296] = 1887;  // LDF5_LMerc_Combat
+        owners[804297] = 1887;  // LDF5_LMerc_Combat
+        owners[804298] = 1887;  // LDF5_LMerc_Combat
+        owners[804299] = 1887;  // LDF5_LMerc_Combat
+        owners[804300] = 1887;  // LDF5_LMerc_Combat
+        owners[804301] = 1887;  // LDF5_LMerc_Combat
+        owners[804302] = 1887;  // LDF5_LMerc_Combat
+        owners[804303] = 1887;  // LDF5_LMerc_Combat
+        owners[804304] = 1887;  // LDF5_LMerc_Combat
+        owners[804305] = 1887;  // LDF5_LMerc_Combat
+        owners[804306] = 1887;  // LDF5_LMerc_Combat
+        owners[804307] = 1887;  // LDF5_LMerc_Combat
+        owners[804308] = 1887;  // LDF5_LMerc_Combat
+        owners[804309] = 1887;  // LDF5_LMerc_Combat
+        owners[804310] = 1887;  // LDF5_LMerc_Combat
+        owners[804311] = 1887;  // LDF5_LMerc_Combat
+        owners[804312] = 1887;  // LDF5_LMerc_Combat
+        owners[804313] = 1887;  // LDF5_LMerc_Combat
+        owners[804314] = 1887;  // LDF5_LMerc_Combat
+        owners[804315] = 1887;  // LDF5_LMerc_Combat
+        owners[804316] = 1887;  // LDF5_LMerc_Combat
+        owners[804317] = 1887;  // LDF5_LMerc_Combat
+        owners[804318] = 1887;  // LDF5_LMerc_Combat
+        owners[804319] = 1887;  // LDF5_LMerc_Combat
+        owners[804320] = 1887;  // LDF5_LMerc_Combat
+        owners[804321] = 1887;  // LDF5_LMerc_Combat
+        owners[804322] = 1887;  // LDF5_LMerc_Combat
+        owners[804323] = 1887;  // LDF5_LMerc_Combat
+        owners[804324] = 1887;  // LDF5_LMerc_Combat
+        owners[804325] = 1887;  // LDF5_LMerc_Combat
+        owners[804326] = 1887;  // LDF5_LMerc_Combat
+        owners[804327] = 1887;  // LDF5_LMerc_Combat
+        owners[804328] = 1887;  // LDF5_LMerc_Combat
+        owners[804329] = 1887;  // LDF5_LMerc_Combat
+        owners[804330] = 1887;  // LDF5_LMerc_Combat
+        owners[804331] = 1887;  // LDF5_LMerc_Combat
+        owners[804332] = 1887;  // LDF5_LMerc_Combat
+        owners[804333] = 1887;  // LDF5_LMerc_Combat
+        owners[804334] = 1887;  // LDF5_LMerc_Combat
+        owners[804335] = 1887;  // LDF5_LMerc_Combat
+        owners[804336] = 1887;  // LDF5_LMerc_Combat
+        owners[804337] = 1887;  // LDF5_LMerc_Combat
+        owners[804338] = 1887;  // LDF5_LMerc_Combat
+        owners[804339] = 1887;  // LDF5_LMerc_Combat
+        owners[804340] = 1887;  // LDF5_LMerc_Combat
+        owners[804341] = 1887;  // LDF5_LMerc_Combat
+        owners[804342] = 1887;  // LDF5_LMerc_Combat
+        owners[804343] = 1887;  // LDF5_LMerc_Combat
+        owners[804344] = 1887;  // LDF5_LMerc_Combat
+        owners[804345] = 1887;  // LDF5_LMerc_Combat
+        owners[804346] = 1887;  // LDF5_LMerc_Combat
+        owners[804347] = 1887;  // LDF5_LMerc_Combat
+        owners[804348] = 1887;  // LDF5_LMerc_Combat
+        owners[804349] = 1887;  // LDF5_LMerc_Combat
+        owners[804350] = 1887;  // LDF5_LMerc_Combat
+        owners[804351] = 1887;  // LDF5_LMerc_Combat
+        owners[804352] = 1887;  // LDF5_LMerc_Combat
+        owners[804353] = 1887;  // LDF5_LMerc_Combat
+        owners[804354] = 1887;  // LDF5_LMerc_Combat
+        owners[804355] = 1887;  // LDF5_LMerc_Combat
+        owners[804356] = 1887;  // LDF5_LMerc_Combat
+        owners[804357] = 1887;  // LDF5_LMerc_Combat
+        owners[804358] = 1887;  // LDF5_LMerc_Combat
+        owners[804359] = 1887;  // LDF5_LMerc_Combat
+        owners[804360] = 1887;  // LDF5_LMerc_Combat
+        owners[804361] = 1887;  // LDF5_LMerc_Combat
+        owners[804362] = 1887;  // LDF5_LMerc_Combat
+        owners[804363] = 1887;  // LDF5_LMerc_Combat
+        owners[804364] = 1887;  // LDF5_LMerc_Combat
+        owners[804365] = 1887;  // LDF5_LMerc_Combat
+        owners[804366] = 1887;  // LDF5_LMerc_Combat
+        owners[804367] = 1887;  // LDF5_LMerc_Combat
+        owners[804368] = 1887;  // LDF5_LMerc_Combat
+        owners[804369] = 1887;  // LDF5_LMerc_Combat
+        owners[804370] = 1887;  // LDF5_LMerc_Combat
+        owners[804371] = 1887;  // LDF5_LMerc_Combat
+        owners[804372] = 1887;  // LDF5_LMerc_Combat
+        owners[804373] = 1887;  // LDF5_LMerc_Combat
+        owners[804374] = 1887;  // LDF5_LMerc_Combat
+        owners[804375] = 1887;  // LDF5_LMerc_Combat
+        owners[804376] = 1887;  // LDF5_LMerc_Combat
+        owners[804377] = 1887;  // LDF5_LMerc_Combat
+        owners[804378] = 1887;  // LDF5_LMerc_Combat
+        owners[804379] = 1887;  // LDF5_LMerc_Combat
+        owners[804380] = 1887;  // LDF5_LMerc_Combat
+        owners[804381] = 1887;  // LDF5_LMerc_Combat
+        owners[804382] = 1887;  // LDF5_LMerc_Combat
+        owners[804383] = 1887;  // LDF5_LMerc_Combat
+        owners[804384] = 1887;  // LDF5_LMerc_Combat
+        owners[804385] = 1887;  // LDF5_LMerc_Combat
+        owners[804386] = 1887;  // LDF5_LMerc_Combat
+        owners[804387] = 1887;  // LDF5_LMerc_Combat
+        owners[804388] = 1887;  // LDF5_LMerc_Combat
+        owners[804389] = 1887;  // LDF5_LMerc_Combat
+        owners[804390] = 1887;  // LDF5_LMerc_Combat
+        owners[804391] = 1887;  // LDF5_LMerc_Combat
+        owners[804392] = 1887;  // LDF5_LMerc_Combat
+        owners[804393] = 1887;  // LDF5_LMerc_Combat
+        owners[804394] = 1887;  // LDF5_LMerc_Combat
+        owners[804395] = 1887;  // LDF5_LMerc_Combat
+        owners[804396] = 1887;  // LDF5_LMerc_Combat
+        owners[804397] = 1887;  // LDF5_LMerc_Combat
+        owners[804398] = 1887;  // LDF5_LMerc_Combat
+        owners[804399] = 1887;  // LDF5_LMerc_Combat
+        owners[804400] = 1887;  // LDF5_LMerc_Combat
+        owners[804401] = 1887;  // LDF5_LMerc_Combat
+        owners[804402] = 1887;  // LDF5_LMerc_Combat
+        owners[804403] = 1887;  // LDF5_LMerc_Combat
+        owners[804404] = 1887;  // LDF5_LMerc_Combat
+        owners[804405] = 1887;  // LDF5_LMerc_Combat
+        owners[804406] = 1887;  // LDF5_LMerc_Combat
+        owners[804407] = 1887;  // LDF5_LMerc_Combat
+        owners[804408] = 1887;  // LDF5_LMerc_Combat
+        owners[804409] = 1887;  // LDF5_LMerc_Combat
+        owners[804410] = 1887;  // LDF5_LMerc_Combat
+        owners[804411] = 1887;  // LDF5_LMerc_Combat
+        owners[804412] = 1887;  // LDF5_LMerc_Combat
+        owners[804413] = 1887;  // LDF5_LMerc_Combat
+        owners[804414] = 1887;  // LDF5_LMerc_Combat
+        owners[804415] = 1887;  // LDF5_LMerc_Combat
+        owners[804416] = 1887;  // LDF5_LMerc_Combat
+        owners[804417] = 1887;  // LDF5_LMerc_Combat
+        owners[804418] = 1887;  // LDF5_LMerc_Combat
+        owners[804419] = 1887;  // LDF5_LMerc_Combat
+        owners[804420] = 1887;  // LDF5_LMerc_Combat
+        owners[804421] = 1887;  // LDF5_LMerc_Combat
+        owners[804422] = 1887;  // LDF5_LMerc_Combat
+        owners[804423] = 1887;  // LDF5_LMerc_Combat
+        owners[804424] = 1887;  // LDF5_LMerc_Combat
+        owners[804425] = 1887;  // LDF5_LMerc_Combat
+        owners[804426] = 1887;  // LDF5_LMerc_Combat
+        owners[804427] = 1887;  // LDF5_LMerc_Combat
+        owners[804428] = 1887;  // LDF5_LMerc_Combat
+        owners[804429] = 1887;  // LDF5_LMerc_Combat
+        owners[804430] = 1887;  // LDF5_LMerc_Combat
+        owners[804431] = 1887;  // LDF5_LMerc_Combat
+        owners[804432] = 1887;  // LDF5_LMerc_Combat
+        owners[804433] = 1887;  // LDF5_LMerc_Combat
+        owners[804434] = 1887;  // LDF5_LMerc_Combat
+        owners[804435] = 1887;  // LDF5_LMerc_Combat
+        owners[804436] = 1887;  // LDF5_LMerc_Combat
+        owners[804437] = 1887;  // LDF5_LMerc_Combat
+        owners[804438] = 1887;  // LDF5_LMerc_Combat
+        owners[804439] = 1887;  // LDF5_LMerc_Combat
+        owners[804440] = 1887;  // LDF5_LMerc_Combat
+        owners[804441] = 1887;  // LDF5_LMerc_Combat
+        owners[804442] = 1887;  // LDF5_LMerc_Combat
+        owners[804443] = 1887;  // LDF5_LMerc_Combat
+        owners[804444] = 1887;  // LDF5_LMerc_Combat
+        owners[804445] = 1887;  // LDF5_LMerc_Combat
+        owners[804446] = 1887;  // LDF5_LMerc_Combat
+        owners[804447] = 1887;  // LDF5_LMerc_Combat
+        owners[804448] = 1887;  // LDF5_LMerc_Combat
+        owners[804449] = 1887;  // LDF5_LMerc_Combat
+        owners[804450] = 1887;  // LDF5_LMerc_Combat
+        owners[804451] = 1887;  // LDF5_LMerc_Combat
+        owners[804452] = 1887;  // LDF5_LMerc_Combat
+        owners[804453] = 1887;  // LDF5_LMerc_Combat
+        owners[804454] = 1887;  // LDF5_LMerc_Combat
+        owners[804455] = 1887;  // LDF5_LMerc_Combat
+        owners[804456] = 1887;  // LDF5_LMerc_Combat
+        owners[804457] = 1887;  // LDF5_LMerc_Combat
+        owners[804458] = 1887;  // LDF5_LMerc_Combat
+        owners[804459] = 1887;  // LDF5_LMerc_Combat
+        owners[804464] = 1887;  // LDF5_LMerc_Combat
+        owners[804465] = 1887;  // LDF5_LMerc_Combat
+        owners[804466] = 1887;  // LDF5_LMerc_Combat
+        owners[804467] = 1887;  // LDF5_DMerc_Combat
+        owners[804468] = 1887;  // LDF5_DMerc_Combat
+        owners[804469] = 1887;  // LDF5_DMerc_Combat
+        owners[804470] = 1887;  // LDF5_DFunc_Combat
+        owners[804471] = 1887;  // LDF5_LFunc_Combat
+        owners[804472] = 1887;  // LDF5_LMerc_Combat
+        owners[804473] = 1887;  // LDF5_LMerc_Combat
+        owners[804474] = 1887;  // LDF5_DMerc_Combat
+        owners[804475] = 1887;  // LDF5_DMerc_Combat
+        owners[804476] = 1887;  // LDF5_LFunc_Combat
+        owners[804477] = 1887;  // LDF5_LFunc_Combat
+        owners[804478] = 1887;  // LDF5_LFunc_Combat
+        owners[804479] = 1887;  // LDF5_LFunc_Combat
         owners[804486] = 0;  // LFunction
         owners[804487] = 5;  // DFunction
         owners[804524] = 0;  // LFunction
@@ -51886,34 +51846,34 @@ internal static class BattleCycles
         owners[804535] = 5;  // DFunction
         owners[804561] = 0;  // LFunction
         owners[804562] = 5;  // DFunction
-        owners[804596] = 1888;  // LDF5_LMerc_Combat
-        owners[804597] = 1888;  // LDF5_DMerc_Combat
-        owners[804610] = 1888;  // LDF5_DMerc_Combat
-        owners[804611] = 1888;  // LDF5_LMerc_Combat
-        owners[804615] = 1888;  // LDF5_LMerc_Combat
-        owners[804616] = 1888;  // LDF5_LMerc_Combat
-        owners[804617] = 1888;  // LDF5_DMerc_Combat
-        owners[804618] = 1888;  // LDF5_DMerc_Combat
-        owners[804630] = 1888;  // LDF5_LFunc_Combat
-        owners[804631] = 1888;  // LDF5_LFunc_Combat
-        owners[804632] = 1888;  // LDF5_LFunc_Combat
-        owners[804633] = 1888;  // LDF5_LFunc_Combat
-        owners[804634] = 1888;  // LDF5_LFunc_Combat
-        owners[804635] = 1888;  // LDF5_LFunc_Combat
-        owners[804636] = 1888;  // LDF5_LFunc_Combat
-        owners[804637] = 1888;  // LDF5_LFunc_Combat
-        owners[804638] = 1888;  // LDF5_LFunc_Combat
-        owners[804639] = 1888;  // LDF5_LFunc_Combat
-        owners[804640] = 1888;  // LDF5_LFunc_Combat
-        owners[804641] = 1888;  // LDF5_LFunc_Combat
-        owners[804642] = 1888;  // LDF5_LFunc_Combat
-        owners[804643] = 1888;  // LDF5_LFunc_Combat
-        owners[804644] = 1888;  // LDF5_LFunc_Combat
-        owners[804645] = 1888;  // LDF5_LFunc_Combat
-        owners[804646] = 1888;  // LDF5_LFunc_Combat
-        owners[804647] = 1888;  // LDF5_LFunc_Combat
-        owners[804648] = 1888;  // LDF5_LFunc_Combat
-        owners[804649] = 1888;  // LDF5_LFunc_Combat
+        owners[804596] = 1887;  // LDF5_LMerc_Combat
+        owners[804597] = 1887;  // LDF5_DMerc_Combat
+        owners[804610] = 1887;  // LDF5_DMerc_Combat
+        owners[804611] = 1887;  // LDF5_LMerc_Combat
+        owners[804615] = 1887;  // LDF5_LMerc_Combat
+        owners[804616] = 1887;  // LDF5_LMerc_Combat
+        owners[804617] = 1887;  // LDF5_DMerc_Combat
+        owners[804618] = 1887;  // LDF5_DMerc_Combat
+        owners[804630] = 1887;  // LDF5_LFunc_Combat
+        owners[804631] = 1887;  // LDF5_LFunc_Combat
+        owners[804632] = 1887;  // LDF5_LFunc_Combat
+        owners[804633] = 1887;  // LDF5_LFunc_Combat
+        owners[804634] = 1887;  // LDF5_LFunc_Combat
+        owners[804635] = 1887;  // LDF5_LFunc_Combat
+        owners[804636] = 1887;  // LDF5_LFunc_Combat
+        owners[804637] = 1887;  // LDF5_LFunc_Combat
+        owners[804638] = 1887;  // LDF5_LFunc_Combat
+        owners[804639] = 1887;  // LDF5_LFunc_Combat
+        owners[804640] = 1887;  // LDF5_LFunc_Combat
+        owners[804641] = 1887;  // LDF5_LFunc_Combat
+        owners[804642] = 1887;  // LDF5_LFunc_Combat
+        owners[804643] = 1887;  // LDF5_LFunc_Combat
+        owners[804644] = 1887;  // LDF5_LFunc_Combat
+        owners[804645] = 1887;  // LDF5_LFunc_Combat
+        owners[804646] = 1887;  // LDF5_LFunc_Combat
+        owners[804647] = 1887;  // LDF5_LFunc_Combat
+        owners[804648] = 1887;  // LDF5_LFunc_Combat
+        owners[804649] = 1887;  // LDF5_LFunc_Combat
         owners[804657] = 0;  // LFunction
         owners[804668] = 5;  // DFunction
         owners[804693] = 0;  // LFunction
@@ -51922,286 +51882,286 @@ internal static class BattleCycles
         owners[804696] = 5;  // DFunction
         owners[804753] = 5;  // DFunction
         owners[804754] = 5;  // DFunction
-        owners[804755] = 1888;  // LDF5_DFunc_Combat
+        owners[804755] = 1887;  // LDF5_DFunc_Combat
         owners[804756] = 5;  // DFunction
-        owners[804758] = 1888;  // LDF5_DFunc_Combat
+        owners[804758] = 1887;  // LDF5_DFunc_Combat
         owners[804760] = 5;  // DFunction
-        owners[804761] = 1888;  // LDF5_DFunc_Combat
+        owners[804761] = 1887;  // LDF5_DFunc_Combat
         owners[804762] = 5;  // DFunction
-        owners[804764] = 1888;  // LDF5_DFunc_Combat
+        owners[804764] = 1887;  // LDF5_DFunc_Combat
         owners[804765] = 5;  // DFunction
-        owners[804766] = 1888;  // LDF5_DFunc_Combat
+        owners[804766] = 1887;  // LDF5_DFunc_Combat
         owners[804767] = 5;  // DFunction
-        owners[804769] = 1888;  // LDF5_DFunc_Combat
+        owners[804769] = 1887;  // LDF5_DFunc_Combat
         owners[804770] = 5;  // DFunction
-        owners[804772] = 1888;  // LDF5_DFunc_Combat
+        owners[804772] = 1887;  // LDF5_DFunc_Combat
         owners[804773] = 5;  // DFunction
-        owners[804775] = 1888;  // LDF5_DFunc_Combat
+        owners[804775] = 1887;  // LDF5_DFunc_Combat
         owners[804776] = 5;  // DFunction
-        owners[804778] = 1888;  // LDF5_DFunc_Combat
+        owners[804778] = 1887;  // LDF5_DFunc_Combat
         owners[804779] = 5;  // DFunction
-        owners[804781] = 1888;  // LDF5_DFunc_Combat
+        owners[804781] = 1887;  // LDF5_DFunc_Combat
         owners[804782] = 0;  // LFunction
         owners[804783] = 0;  // LFunction
-        owners[804784] = 1888;  // LDF5_LFunc_Combat
+        owners[804784] = 1887;  // LDF5_LFunc_Combat
         owners[804785] = 0;  // LFunction
-        owners[804787] = 1888;  // LDF5_LFunc_Combat
+        owners[804787] = 1887;  // LDF5_LFunc_Combat
         owners[804789] = 0;  // LFunction
-        owners[804790] = 1888;  // LDF5_LFunc_Combat
+        owners[804790] = 1887;  // LDF5_LFunc_Combat
         owners[804791] = 0;  // LFunction
-        owners[804793] = 1888;  // LDF5_LFunc_Combat
+        owners[804793] = 1887;  // LDF5_LFunc_Combat
         owners[804794] = 0;  // LFunction
-        owners[804795] = 1888;  // LDF5_LFunc_Combat
+        owners[804795] = 1887;  // LDF5_LFunc_Combat
         owners[804796] = 0;  // LFunction
-        owners[804798] = 1888;  // LDF5_LFunc_Combat
+        owners[804798] = 1887;  // LDF5_LFunc_Combat
         owners[804799] = 0;  // LFunction
-        owners[804801] = 1888;  // LDF5_LFunc_Combat
+        owners[804801] = 1887;  // LDF5_LFunc_Combat
         owners[804802] = 0;  // LFunction
-        owners[804804] = 1888;  // LDF5_LFunc_Combat
+        owners[804804] = 1887;  // LDF5_LFunc_Combat
         owners[804805] = 0;  // LFunction
-        owners[804807] = 1888;  // LDF5_LFunc_Combat
+        owners[804807] = 1887;  // LDF5_LFunc_Combat
         owners[804808] = 0;  // LFunction
-        owners[804810] = 1888;  // LDF5_LFunc_Combat
-        owners[804826] = 1888;  // LDF5_LFunc_Combat
-        owners[804827] = 1888;  // LDF5_LFunc_Combat
-        owners[804828] = 1888;  // LDF5_LMerc_Combat
-        owners[804829] = 1888;  // LDF5_LMerc_Combat
-        owners[804830] = 1888;  // LDF5_LMerc_Combat
-        owners[804834] = 1888;  // LDF5_DFunc_Combat
-        owners[804835] = 1888;  // LDF5_DFunc_Combat
-        owners[804836] = 1888;  // LDF5_DMerc_Combat
-        owners[804837] = 1888;  // LDF5_DMerc_Combat
-        owners[804838] = 1888;  // LDF5_DMerc_Combat
+        owners[804810] = 1887;  // LDF5_LFunc_Combat
+        owners[804826] = 1887;  // LDF5_LFunc_Combat
+        owners[804827] = 1887;  // LDF5_LFunc_Combat
+        owners[804828] = 1887;  // LDF5_LMerc_Combat
+        owners[804829] = 1887;  // LDF5_LMerc_Combat
+        owners[804830] = 1887;  // LDF5_LMerc_Combat
+        owners[804834] = 1887;  // LDF5_DFunc_Combat
+        owners[804835] = 1887;  // LDF5_DFunc_Combat
+        owners[804836] = 1887;  // LDF5_DMerc_Combat
+        owners[804837] = 1887;  // LDF5_DMerc_Combat
+        owners[804838] = 1887;  // LDF5_DMerc_Combat
         owners[804872] = 8;  // LGuard_FhA
         owners[804873] = 8;  // LGuard_FhA
         owners[804963] = 5;  // DFunction
         owners[804964] = 0;  // LFunction
-        owners[804967] = 1888;  // LDF5_DFunc_Combat
-        owners[804968] = 1888;  // LDF5_DFunc_Combat
-        owners[804969] = 1888;  // LDF5_DFunc_Combat
-        owners[804970] = 1888;  // LDF5_DFunc_Combat
-        owners[804971] = 1888;  // LDF5_DFunc_Combat
-        owners[804972] = 1888;  // LDF5_DFunc_Combat
-        owners[804973] = 1888;  // LDF5_DFunc_Combat
-        owners[804974] = 1888;  // LDF5_DFunc_Combat
-        owners[804975] = 1888;  // LDF5_DFunc_Combat
-        owners[804976] = 1888;  // LDF5_DFunc_Combat
-        owners[804977] = 1888;  // LDF5_DFunc_Combat
-        owners[804978] = 1888;  // LDF5_DFunc_Combat
-        owners[804979] = 1888;  // LDF5_DFunc_Combat
-        owners[804980] = 1888;  // LDF5_DFunc_Combat
-        owners[804981] = 1888;  // LDF5_DFunc_Combat
-        owners[804982] = 1888;  // LDF5_DFunc_Combat
-        owners[804983] = 1888;  // LDF5_DFunc_Combat
-        owners[804984] = 1888;  // LDF5_DFunc_Combat
-        owners[804985] = 1888;  // LDF5_DFunc_Combat
-        owners[804986] = 1888;  // LDF5_DFunc_Combat
-        owners[804987] = 1888;  // LDF5_DFunc_Combat
-        owners[804988] = 1888;  // LDF5_DFunc_Combat
-        owners[804989] = 1888;  // LDF5_DFunc_Combat
-        owners[804990] = 1888;  // LDF5_DFunc_Combat
-        owners[804991] = 1888;  // LDF5_DFunc_Combat
-        owners[804992] = 1888;  // LDF5_DFunc_Combat
-        owners[804993] = 1888;  // LDF5_DFunc_Combat
-        owners[804994] = 1888;  // LDF5_DFunc_Combat
-        owners[804995] = 1888;  // LDF5_DFunc_Combat
-        owners[804996] = 1888;  // LDF5_DFunc_Combat
-        owners[804997] = 1888;  // LDF5_DFunc_Combat
-        owners[804998] = 1888;  // LDF5_DFunc_Combat
-        owners[804999] = 1888;  // LDF5_DFunc_Combat
-        owners[805000] = 1888;  // LDF5_DFunc_Combat
-        owners[805001] = 1888;  // LDF5_DFunc_Combat
-        owners[805002] = 1888;  // LDF5_DFunc_Combat
-        owners[805003] = 1888;  // LDF5_DFunc_Combat
-        owners[805004] = 1888;  // LDF5_DFunc_Combat
-        owners[805005] = 1888;  // LDF5_DFunc_Combat
-        owners[805006] = 1888;  // LDF5_DFunc_Combat
-        owners[805007] = 1888;  // LDF5_DFunc_Combat
-        owners[805008] = 1888;  // LDF5_DFunc_Combat
-        owners[805009] = 1888;  // LDF5_DFunc_Combat
-        owners[805010] = 1888;  // LDF5_DFunc_Combat
-        owners[805011] = 1888;  // LDF5_DFunc_Combat
-        owners[805012] = 1888;  // LDF5_DFunc_Combat
-        owners[805013] = 1888;  // LDF5_DFunc_Combat
-        owners[805014] = 1888;  // LDF5_DFunc_Combat
-        owners[805015] = 1888;  // LDF5_DFunc_Combat
-        owners[805016] = 1888;  // LDF5_DFunc_Combat
-        owners[805017] = 1888;  // LDF5_DFunc_Combat
-        owners[805018] = 1888;  // LDF5_DFunc_Combat
-        owners[805019] = 1888;  // LDF5_DFunc_Combat
-        owners[805020] = 1888;  // LDF5_DFunc_Combat
-        owners[805021] = 1888;  // LDF5_DFunc_Combat
-        owners[805022] = 1888;  // LDF5_DFunc_Combat
-        owners[805023] = 1888;  // LDF5_DFunc_Combat
-        owners[805024] = 1888;  // LDF5_DFunc_Combat
-        owners[805025] = 1888;  // LDF5_DFunc_Combat
-        owners[805026] = 1888;  // LDF5_DFunc_Combat
-        owners[805027] = 1888;  // LDF5_DFunc_Combat
-        owners[805028] = 1888;  // LDF5_DFunc_Combat
-        owners[805029] = 1888;  // LDF5_DFunc_Combat
-        owners[805030] = 1888;  // LDF5_DFunc_Combat
-        owners[805031] = 1888;  // LDF5_DFunc_Combat
-        owners[805032] = 1888;  // LDF5_DFunc_Combat
-        owners[805033] = 1888;  // LDF5_DFunc_Combat
-        owners[805034] = 1888;  // LDF5_DFunc_Combat
-        owners[805035] = 1888;  // LDF5_DFunc_Combat
-        owners[805036] = 1888;  // LDF5_DFunc_Combat
-        owners[805037] = 1888;  // LDF5_DFunc_Combat
-        owners[805038] = 1888;  // LDF5_DFunc_Combat
-        owners[805039] = 1888;  // LDF5_DFunc_Combat
-        owners[805040] = 1888;  // LDF5_DFunc_Combat
-        owners[805041] = 1888;  // LDF5_DFunc_Combat
-        owners[805042] = 1888;  // LDF5_DFunc_Combat
-        owners[805043] = 1888;  // LDF5_DFunc_Combat
-        owners[805044] = 1888;  // LDF5_DFunc_Combat
-        owners[805045] = 1888;  // LDF5_DFunc_Combat
-        owners[805046] = 1888;  // LDF5_DFunc_Combat
+        owners[804967] = 1887;  // LDF5_DFunc_Combat
+        owners[804968] = 1887;  // LDF5_DFunc_Combat
+        owners[804969] = 1887;  // LDF5_DFunc_Combat
+        owners[804970] = 1887;  // LDF5_DFunc_Combat
+        owners[804971] = 1887;  // LDF5_DFunc_Combat
+        owners[804972] = 1887;  // LDF5_DFunc_Combat
+        owners[804973] = 1887;  // LDF5_DFunc_Combat
+        owners[804974] = 1887;  // LDF5_DFunc_Combat
+        owners[804975] = 1887;  // LDF5_DFunc_Combat
+        owners[804976] = 1887;  // LDF5_DFunc_Combat
+        owners[804977] = 1887;  // LDF5_DFunc_Combat
+        owners[804978] = 1887;  // LDF5_DFunc_Combat
+        owners[804979] = 1887;  // LDF5_DFunc_Combat
+        owners[804980] = 1887;  // LDF5_DFunc_Combat
+        owners[804981] = 1887;  // LDF5_DFunc_Combat
+        owners[804982] = 1887;  // LDF5_DFunc_Combat
+        owners[804983] = 1887;  // LDF5_DFunc_Combat
+        owners[804984] = 1887;  // LDF5_DFunc_Combat
+        owners[804985] = 1887;  // LDF5_DFunc_Combat
+        owners[804986] = 1887;  // LDF5_DFunc_Combat
+        owners[804987] = 1887;  // LDF5_DFunc_Combat
+        owners[804988] = 1887;  // LDF5_DFunc_Combat
+        owners[804989] = 1887;  // LDF5_DFunc_Combat
+        owners[804990] = 1887;  // LDF5_DFunc_Combat
+        owners[804991] = 1887;  // LDF5_DFunc_Combat
+        owners[804992] = 1887;  // LDF5_DFunc_Combat
+        owners[804993] = 1887;  // LDF5_DFunc_Combat
+        owners[804994] = 1887;  // LDF5_DFunc_Combat
+        owners[804995] = 1887;  // LDF5_DFunc_Combat
+        owners[804996] = 1887;  // LDF5_DFunc_Combat
+        owners[804997] = 1887;  // LDF5_DFunc_Combat
+        owners[804998] = 1887;  // LDF5_DFunc_Combat
+        owners[804999] = 1887;  // LDF5_DFunc_Combat
+        owners[805000] = 1887;  // LDF5_DFunc_Combat
+        owners[805001] = 1887;  // LDF5_DFunc_Combat
+        owners[805002] = 1887;  // LDF5_DFunc_Combat
+        owners[805003] = 1887;  // LDF5_DFunc_Combat
+        owners[805004] = 1887;  // LDF5_DFunc_Combat
+        owners[805005] = 1887;  // LDF5_DFunc_Combat
+        owners[805006] = 1887;  // LDF5_DFunc_Combat
+        owners[805007] = 1887;  // LDF5_DFunc_Combat
+        owners[805008] = 1887;  // LDF5_DFunc_Combat
+        owners[805009] = 1887;  // LDF5_DFunc_Combat
+        owners[805010] = 1887;  // LDF5_DFunc_Combat
+        owners[805011] = 1887;  // LDF5_DFunc_Combat
+        owners[805012] = 1887;  // LDF5_DFunc_Combat
+        owners[805013] = 1887;  // LDF5_DFunc_Combat
+        owners[805014] = 1887;  // LDF5_DFunc_Combat
+        owners[805015] = 1887;  // LDF5_DFunc_Combat
+        owners[805016] = 1887;  // LDF5_DFunc_Combat
+        owners[805017] = 1887;  // LDF5_DFunc_Combat
+        owners[805018] = 1887;  // LDF5_DFunc_Combat
+        owners[805019] = 1887;  // LDF5_DFunc_Combat
+        owners[805020] = 1887;  // LDF5_DFunc_Combat
+        owners[805021] = 1887;  // LDF5_DFunc_Combat
+        owners[805022] = 1887;  // LDF5_DFunc_Combat
+        owners[805023] = 1887;  // LDF5_DFunc_Combat
+        owners[805024] = 1887;  // LDF5_DFunc_Combat
+        owners[805025] = 1887;  // LDF5_DFunc_Combat
+        owners[805026] = 1887;  // LDF5_DFunc_Combat
+        owners[805027] = 1887;  // LDF5_DFunc_Combat
+        owners[805028] = 1887;  // LDF5_DFunc_Combat
+        owners[805029] = 1887;  // LDF5_DFunc_Combat
+        owners[805030] = 1887;  // LDF5_DFunc_Combat
+        owners[805031] = 1887;  // LDF5_DFunc_Combat
+        owners[805032] = 1887;  // LDF5_DFunc_Combat
+        owners[805033] = 1887;  // LDF5_DFunc_Combat
+        owners[805034] = 1887;  // LDF5_DFunc_Combat
+        owners[805035] = 1887;  // LDF5_DFunc_Combat
+        owners[805036] = 1887;  // LDF5_DFunc_Combat
+        owners[805037] = 1887;  // LDF5_DFunc_Combat
+        owners[805038] = 1887;  // LDF5_DFunc_Combat
+        owners[805039] = 1887;  // LDF5_DFunc_Combat
+        owners[805040] = 1887;  // LDF5_DFunc_Combat
+        owners[805041] = 1887;  // LDF5_DFunc_Combat
+        owners[805042] = 1887;  // LDF5_DFunc_Combat
+        owners[805043] = 1887;  // LDF5_DFunc_Combat
+        owners[805044] = 1887;  // LDF5_DFunc_Combat
+        owners[805045] = 1887;  // LDF5_DFunc_Combat
+        owners[805046] = 1887;  // LDF5_DFunc_Combat
+        owners[805047] = 1887;  // LDF5_DFunc_Combat
     }
 
     private static void CycleOf48(Dictionary<int, int> owners)
     {
-        owners[805047] = 1888;  // LDF5_DFunc_Combat
-        owners[805048] = 1888;  // LDF5_DFunc_Combat
-        owners[805049] = 1888;  // LDF5_DFunc_Combat
-        owners[805050] = 1888;  // LDF5_DFunc_Combat
-        owners[805051] = 1888;  // LDF5_DFunc_Combat
-        owners[805052] = 1888;  // LDF5_DFunc_Combat
-        owners[805053] = 1888;  // LDF5_DFunc_Combat
-        owners[805054] = 1888;  // LDF5_DFunc_Combat
-        owners[805055] = 1888;  // LDF5_DFunc_Combat
-        owners[805056] = 1888;  // LDF5_LFunc_Combat
-        owners[805057] = 1888;  // LDF5_LFunc_Combat
-        owners[805058] = 1888;  // LDF5_LFunc_Combat
-        owners[805059] = 1888;  // LDF5_LFunc_Combat
-        owners[805060] = 1888;  // LDF5_LFunc_Combat
-        owners[805061] = 1888;  // LDF5_LFunc_Combat
-        owners[805062] = 1888;  // LDF5_LFunc_Combat
-        owners[805063] = 1888;  // LDF5_LFunc_Combat
-        owners[805064] = 1888;  // LDF5_LFunc_Combat
-        owners[805065] = 1888;  // LDF5_LFunc_Combat
-        owners[805066] = 1888;  // LDF5_LFunc_Combat
-        owners[805067] = 1888;  // LDF5_LFunc_Combat
-        owners[805068] = 1888;  // LDF5_LFunc_Combat
-        owners[805069] = 1888;  // LDF5_LFunc_Combat
-        owners[805070] = 1888;  // LDF5_LFunc_Combat
-        owners[805071] = 1888;  // LDF5_LFunc_Combat
-        owners[805072] = 1888;  // LDF5_LFunc_Combat
-        owners[805073] = 1888;  // LDF5_LFunc_Combat
-        owners[805074] = 1888;  // LDF5_LFunc_Combat
-        owners[805075] = 1888;  // LDF5_LFunc_Combat
-        owners[805076] = 1888;  // LDF5_LFunc_Combat
-        owners[805077] = 1888;  // LDF5_LFunc_Combat
-        owners[805078] = 1888;  // LDF5_LFunc_Combat
-        owners[805079] = 1888;  // LDF5_LFunc_Combat
-        owners[805080] = 1888;  // LDF5_LFunc_Combat
-        owners[805081] = 1888;  // LDF5_LFunc_Combat
-        owners[805082] = 1888;  // LDF5_LFunc_Combat
-        owners[805083] = 1888;  // LDF5_LFunc_Combat
-        owners[805084] = 1888;  // LDF5_LFunc_Combat
-        owners[805085] = 1888;  // LDF5_LFunc_Combat
-        owners[805086] = 1888;  // LDF5_LFunc_Combat
-        owners[805087] = 1888;  // LDF5_LFunc_Combat
-        owners[805088] = 1888;  // LDF5_LFunc_Combat
-        owners[805089] = 1888;  // LDF5_LFunc_Combat
-        owners[805090] = 1888;  // LDF5_LFunc_Combat
-        owners[805091] = 1888;  // LDF5_LFunc_Combat
-        owners[805092] = 1888;  // LDF5_LFunc_Combat
-        owners[805093] = 1888;  // LDF5_LFunc_Combat
-        owners[805094] = 1888;  // LDF5_LFunc_Combat
-        owners[805095] = 1888;  // LDF5_LFunc_Combat
-        owners[805096] = 1888;  // LDF5_LFunc_Combat
-        owners[805097] = 1888;  // LDF5_LFunc_Combat
-        owners[805098] = 1888;  // LDF5_LFunc_Combat
-        owners[805099] = 1888;  // LDF5_LFunc_Combat
-        owners[805100] = 1888;  // LDF5_LFunc_Combat
-        owners[805101] = 1888;  // LDF5_LFunc_Combat
-        owners[805102] = 1888;  // LDF5_LFunc_Combat
-        owners[805103] = 1888;  // LDF5_LFunc_Combat
-        owners[805104] = 1888;  // LDF5_LFunc_Combat
-        owners[805105] = 1888;  // LDF5_LFunc_Combat
-        owners[805106] = 1888;  // LDF5_LFunc_Combat
-        owners[805107] = 1888;  // LDF5_LFunc_Combat
-        owners[805108] = 1888;  // LDF5_LFunc_Combat
-        owners[805109] = 1888;  // LDF5_LFunc_Combat
-        owners[805110] = 1888;  // LDF5_LFunc_Combat
-        owners[805111] = 1888;  // LDF5_LFunc_Combat
-        owners[805112] = 1888;  // LDF5_LFunc_Combat
-        owners[805113] = 1888;  // LDF5_LFunc_Combat
-        owners[805114] = 1888;  // LDF5_LFunc_Combat
-        owners[805115] = 1888;  // LDF5_LFunc_Combat
-        owners[805116] = 1888;  // LDF5_LFunc_Combat
-        owners[805117] = 1888;  // LDF5_LFunc_Combat
-        owners[805118] = 1888;  // LDF5_LFunc_Combat
-        owners[805119] = 1888;  // LDF5_LFunc_Combat
-        owners[805120] = 1888;  // LDF5_LFunc_Combat
-        owners[805121] = 1888;  // LDF5_LFunc_Combat
-        owners[805122] = 1888;  // LDF5_LFunc_Combat
-        owners[805123] = 1888;  // LDF5_LFunc_Combat
-        owners[805124] = 1888;  // LDF5_LFunc_Combat
-        owners[805125] = 1888;  // LDF5_LFunc_Combat
-        owners[805126] = 1888;  // LDF5_LFunc_Combat
-        owners[805127] = 1888;  // LDF5_LFunc_Combat
-        owners[805128] = 1888;  // LDF5_LFunc_Combat
-        owners[805129] = 1888;  // LDF5_LFunc_Combat
-        owners[805130] = 1888;  // LDF5_LFunc_Combat
-        owners[805131] = 1888;  // LDF5_LFunc_Combat
-        owners[805132] = 1888;  // LDF5_LFunc_Combat
-        owners[805133] = 1888;  // LDF5_LFunc_Combat
-        owners[805134] = 1888;  // LDF5_LFunc_Combat
-        owners[805135] = 1888;  // LDF5_LFunc_Combat
-        owners[805136] = 1888;  // LDF5_LFunc_Combat
-        owners[805137] = 1888;  // LDF5_LFunc_Combat
-        owners[805138] = 1888;  // LDF5_LFunc_Combat
-        owners[805139] = 1888;  // LDF5_LFunc_Combat
-        owners[805140] = 1888;  // LDF5_LFunc_Combat
-        owners[805141] = 1888;  // LDF5_LFunc_Combat
-        owners[805142] = 1888;  // LDF5_LFunc_Combat
-        owners[805143] = 1888;  // LDF5_LFunc_Combat
-        owners[805144] = 1888;  // LDF5_LFunc_Combat
-        owners[805145] = 1888;  // LDF5_LFunc_Combat
-        owners[805146] = 1888;  // LDF5_LFunc_Combat
-        owners[805147] = 1888;  // LDF5_LFunc_Combat
-        owners[805157] = 1888;  // LDF5_DFunc_Combat
-        owners[805158] = 1888;  // LDF5_DFunc_Combat
-        owners[805159] = 1888;  // LDF5_DFunc_Combat
-        owners[805186] = 1888;  // LDF5_LFunc_Combat
-        owners[805187] = 1888;  // LDF5_DFunc_Combat
+        owners[805048] = 1887;  // LDF5_DFunc_Combat
+        owners[805049] = 1887;  // LDF5_DFunc_Combat
+        owners[805050] = 1887;  // LDF5_DFunc_Combat
+        owners[805051] = 1887;  // LDF5_DFunc_Combat
+        owners[805052] = 1887;  // LDF5_DFunc_Combat
+        owners[805053] = 1887;  // LDF5_DFunc_Combat
+        owners[805054] = 1887;  // LDF5_DFunc_Combat
+        owners[805055] = 1887;  // LDF5_DFunc_Combat
+        owners[805056] = 1887;  // LDF5_LFunc_Combat
+        owners[805057] = 1887;  // LDF5_LFunc_Combat
+        owners[805058] = 1887;  // LDF5_LFunc_Combat
+        owners[805059] = 1887;  // LDF5_LFunc_Combat
+        owners[805060] = 1887;  // LDF5_LFunc_Combat
+        owners[805061] = 1887;  // LDF5_LFunc_Combat
+        owners[805062] = 1887;  // LDF5_LFunc_Combat
+        owners[805063] = 1887;  // LDF5_LFunc_Combat
+        owners[805064] = 1887;  // LDF5_LFunc_Combat
+        owners[805065] = 1887;  // LDF5_LFunc_Combat
+        owners[805066] = 1887;  // LDF5_LFunc_Combat
+        owners[805067] = 1887;  // LDF5_LFunc_Combat
+        owners[805068] = 1887;  // LDF5_LFunc_Combat
+        owners[805069] = 1887;  // LDF5_LFunc_Combat
+        owners[805070] = 1887;  // LDF5_LFunc_Combat
+        owners[805071] = 1887;  // LDF5_LFunc_Combat
+        owners[805072] = 1887;  // LDF5_LFunc_Combat
+        owners[805073] = 1887;  // LDF5_LFunc_Combat
+        owners[805074] = 1887;  // LDF5_LFunc_Combat
+        owners[805075] = 1887;  // LDF5_LFunc_Combat
+        owners[805076] = 1887;  // LDF5_LFunc_Combat
+        owners[805077] = 1887;  // LDF5_LFunc_Combat
+        owners[805078] = 1887;  // LDF5_LFunc_Combat
+        owners[805079] = 1887;  // LDF5_LFunc_Combat
+        owners[805080] = 1887;  // LDF5_LFunc_Combat
+        owners[805081] = 1887;  // LDF5_LFunc_Combat
+        owners[805082] = 1887;  // LDF5_LFunc_Combat
+        owners[805083] = 1887;  // LDF5_LFunc_Combat
+        owners[805084] = 1887;  // LDF5_LFunc_Combat
+        owners[805085] = 1887;  // LDF5_LFunc_Combat
+        owners[805086] = 1887;  // LDF5_LFunc_Combat
+        owners[805087] = 1887;  // LDF5_LFunc_Combat
+        owners[805088] = 1887;  // LDF5_LFunc_Combat
+        owners[805089] = 1887;  // LDF5_LFunc_Combat
+        owners[805090] = 1887;  // LDF5_LFunc_Combat
+        owners[805091] = 1887;  // LDF5_LFunc_Combat
+        owners[805092] = 1887;  // LDF5_LFunc_Combat
+        owners[805093] = 1887;  // LDF5_LFunc_Combat
+        owners[805094] = 1887;  // LDF5_LFunc_Combat
+        owners[805095] = 1887;  // LDF5_LFunc_Combat
+        owners[805096] = 1887;  // LDF5_LFunc_Combat
+        owners[805097] = 1887;  // LDF5_LFunc_Combat
+        owners[805098] = 1887;  // LDF5_LFunc_Combat
+        owners[805099] = 1887;  // LDF5_LFunc_Combat
+        owners[805100] = 1887;  // LDF5_LFunc_Combat
+        owners[805101] = 1887;  // LDF5_LFunc_Combat
+        owners[805102] = 1887;  // LDF5_LFunc_Combat
+        owners[805103] = 1887;  // LDF5_LFunc_Combat
+        owners[805104] = 1887;  // LDF5_LFunc_Combat
+        owners[805105] = 1887;  // LDF5_LFunc_Combat
+        owners[805106] = 1887;  // LDF5_LFunc_Combat
+        owners[805107] = 1887;  // LDF5_LFunc_Combat
+        owners[805108] = 1887;  // LDF5_LFunc_Combat
+        owners[805109] = 1887;  // LDF5_LFunc_Combat
+        owners[805110] = 1887;  // LDF5_LFunc_Combat
+        owners[805111] = 1887;  // LDF5_LFunc_Combat
+        owners[805112] = 1887;  // LDF5_LFunc_Combat
+        owners[805113] = 1887;  // LDF5_LFunc_Combat
+        owners[805114] = 1887;  // LDF5_LFunc_Combat
+        owners[805115] = 1887;  // LDF5_LFunc_Combat
+        owners[805116] = 1887;  // LDF5_LFunc_Combat
+        owners[805117] = 1887;  // LDF5_LFunc_Combat
+        owners[805118] = 1887;  // LDF5_LFunc_Combat
+        owners[805119] = 1887;  // LDF5_LFunc_Combat
+        owners[805120] = 1887;  // LDF5_LFunc_Combat
+        owners[805121] = 1887;  // LDF5_LFunc_Combat
+        owners[805122] = 1887;  // LDF5_LFunc_Combat
+        owners[805123] = 1887;  // LDF5_LFunc_Combat
+        owners[805124] = 1887;  // LDF5_LFunc_Combat
+        owners[805125] = 1887;  // LDF5_LFunc_Combat
+        owners[805126] = 1887;  // LDF5_LFunc_Combat
+        owners[805127] = 1887;  // LDF5_LFunc_Combat
+        owners[805128] = 1887;  // LDF5_LFunc_Combat
+        owners[805129] = 1887;  // LDF5_LFunc_Combat
+        owners[805130] = 1887;  // LDF5_LFunc_Combat
+        owners[805131] = 1887;  // LDF5_LFunc_Combat
+        owners[805132] = 1887;  // LDF5_LFunc_Combat
+        owners[805133] = 1887;  // LDF5_LFunc_Combat
+        owners[805134] = 1887;  // LDF5_LFunc_Combat
+        owners[805135] = 1887;  // LDF5_LFunc_Combat
+        owners[805136] = 1887;  // LDF5_LFunc_Combat
+        owners[805137] = 1887;  // LDF5_LFunc_Combat
+        owners[805138] = 1887;  // LDF5_LFunc_Combat
+        owners[805139] = 1887;  // LDF5_LFunc_Combat
+        owners[805140] = 1887;  // LDF5_LFunc_Combat
+        owners[805141] = 1887;  // LDF5_LFunc_Combat
+        owners[805142] = 1887;  // LDF5_LFunc_Combat
+        owners[805143] = 1887;  // LDF5_LFunc_Combat
+        owners[805144] = 1887;  // LDF5_LFunc_Combat
+        owners[805145] = 1887;  // LDF5_LFunc_Combat
+        owners[805146] = 1887;  // LDF5_LFunc_Combat
+        owners[805147] = 1887;  // LDF5_LFunc_Combat
+        owners[805157] = 1887;  // LDF5_DFunc_Combat
+        owners[805158] = 1887;  // LDF5_DFunc_Combat
+        owners[805159] = 1887;  // LDF5_DFunc_Combat
+        owners[805186] = 1887;  // LDF5_LFunc_Combat
+        owners[805187] = 1887;  // LDF5_DFunc_Combat
         owners[805197] = 5;  // DFunction
         owners[805198] = 5;  // DFunction
         owners[805199] = 5;  // DFunction
         owners[805200] = 0;  // LFunction
         owners[805201] = 0;  // LFunction
         owners[805202] = 0;  // LFunction
-        owners[805204] = 1888;  // LDF5_DFunc_Combat
-        owners[805205] = 1888;  // LDF5_DFunc_Combat
-        owners[805206] = 1888;  // LDF5_DFunc_Combat
-        owners[805209] = 1888;  // LDF5_LMerc_Combat
-        owners[805210] = 1888;  // LDF5_LMerc_Combat
-        owners[805211] = 1888;  // LDF5_LMerc_Combat
-        owners[805227] = 1888;  // LDF5_DFunc_Combat
-        owners[805228] = 1888;  // LDF5_LFunc_Combat
-        owners[805229] = 1888;  // LDF5_DFunc_Combat
-        owners[805230] = 1888;  // LDF5_LFunc_Combat
-        owners[805231] = 1888;  // LDF5_DFunc_Combat
-        owners[805232] = 1888;  // LDF5_DFunc_Combat
-        owners[805233] = 1888;  // LDF5_LFunc_Combat
-        owners[805234] = 1888;  // LDF5_LFunc_Combat
-        owners[805239] = 1888;  // LDF5_LFunc_Combat
-        owners[805240] = 1888;  // LDF5_LFunc_Combat
-        owners[805241] = 1888;  // LDF5_DFunc_Combat
-        owners[805242] = 1888;  // LDF5_DFunc_Combat
-        owners[805243] = 1888;  // LDF5_LFunc_Combat
-        owners[805244] = 1888;  // LDF5_LFunc_Combat
-        owners[805245] = 1888;  // LDF5_LFunc_Combat
-        owners[805246] = 1888;  // LDF5_LFunc_Combat
-        owners[805247] = 1888;  // LDF5_LFunc_Combat
-        owners[805248] = 1888;  // LDF5_LFunc_Combat
-        owners[805251] = 1888;  // LDF5_DFunc_Combat
-        owners[805252] = 1888;  // LDF5_DFunc_Combat
-        owners[805253] = 1888;  // LDF5_DFunc_Combat
-        owners[805254] = 1888;  // LDF5_DFunc_Combat
-        owners[805255] = 1888;  // LDF5_DFunc_Combat
-        owners[805256] = 1888;  // LDF5_DFunc_Combat
+        owners[805204] = 1887;  // LDF5_DFunc_Combat
+        owners[805205] = 1887;  // LDF5_DFunc_Combat
+        owners[805206] = 1887;  // LDF5_DFunc_Combat
+        owners[805209] = 1887;  // LDF5_LMerc_Combat
+        owners[805210] = 1887;  // LDF5_LMerc_Combat
+        owners[805211] = 1887;  // LDF5_LMerc_Combat
+        owners[805227] = 1887;  // LDF5_DFunc_Combat
+        owners[805228] = 1887;  // LDF5_LFunc_Combat
+        owners[805229] = 1887;  // LDF5_DFunc_Combat
+        owners[805230] = 1887;  // LDF5_LFunc_Combat
+        owners[805231] = 1887;  // LDF5_DFunc_Combat
+        owners[805232] = 1887;  // LDF5_DFunc_Combat
+        owners[805233] = 1887;  // LDF5_LFunc_Combat
+        owners[805234] = 1887;  // LDF5_LFunc_Combat
+        owners[805239] = 1887;  // LDF5_LFunc_Combat
+        owners[805240] = 1887;  // LDF5_LFunc_Combat
+        owners[805241] = 1887;  // LDF5_DFunc_Combat
+        owners[805242] = 1887;  // LDF5_DFunc_Combat
+        owners[805243] = 1887;  // LDF5_LFunc_Combat
+        owners[805244] = 1887;  // LDF5_LFunc_Combat
+        owners[805245] = 1887;  // LDF5_LFunc_Combat
+        owners[805246] = 1887;  // LDF5_LFunc_Combat
+        owners[805247] = 1887;  // LDF5_LFunc_Combat
+        owners[805248] = 1887;  // LDF5_LFunc_Combat
+        owners[805251] = 1887;  // LDF5_DFunc_Combat
+        owners[805252] = 1887;  // LDF5_DFunc_Combat
+        owners[805253] = 1887;  // LDF5_DFunc_Combat
+        owners[805254] = 1887;  // LDF5_DFunc_Combat
+        owners[805255] = 1887;  // LDF5_DFunc_Combat
+        owners[805256] = 1887;  // LDF5_DFunc_Combat
         owners[810015] = 0;  // LFunction
         owners[810016] = 5;  // DFunction
         owners[810035] = 0;  // LFunction
@@ -52262,9 +52222,9 @@ internal static class BattleCycles
         owners[830217] = 0;  // LFunction
         owners[830218] = 5;  // DFunction
         owners[830219] = 5;  // DFunction
-        owners[830580] = 1890;  // IDYun_Soldier_ND1
-        owners[830581] = 1891;  // IDYun_Soldier_ND2
-        owners[830582] = 1892;  // IDYun_Soldier_ND3
+        owners[830580] = 1889;  // IDYun_Soldier_ND1
+        owners[830581] = 1890;  // IDYun_Soldier_ND2
+        owners[830582] = 1891;  // IDYun_Soldier_ND3
         owners[830764] = 0;  // LFunction
         owners[830765] = 0;  // LFunction
         owners[830766] = 0;  // LFunction
@@ -52275,7 +52235,7 @@ internal static class BattleCycles
         owners[831011] = 8;  // DGuard_FhA
         owners[831013] = 3;  // DGuard_FeA
         owners[831014] = 8;  // DGuard_FhA
-        owners[831082] = 1860;  // InvadePortal_TestKeeper03
+        owners[831082] = 1859;  // InvadePortal_TestKeeper03
         owners[831086] = 10;  // Krall_WeB
         owners[831205] = 0;  // LFunction
         owners[831208] = 0;  // LFunction
@@ -52293,99 +52253,99 @@ internal static class BattleCycles
         owners[831381] = 0;  // LFunction
         owners[831583] = 0;  // LFunction
         owners[831585] = 5;  // DFunction
-        owners[831995] = 1888;  // LDF5_LFunc_Combat
-        owners[831996] = 1888;  // LDF5_DFunc_Combat
-        owners[832183] = 1888;  // LDF5_LMerc_Combat
-        owners[832184] = 1888;  // LDF5_LMerc_Combat
-        owners[832185] = 1888;  // LDF5_LMerc_Combat
-        owners[832186] = 1888;  // LDF5_LMerc_Combat
-        owners[832187] = 1888;  // LDF5_LMerc_Combat
-        owners[832188] = 1888;  // LDF5_LMerc_Combat
-        owners[832189] = 1888;  // LDF5_LFunc_Combat
-        owners[832190] = 1888;  // LDF5_LMerc_Combat
-        owners[832191] = 1888;  // LDF5_LMerc_Combat
-        owners[832192] = 1888;  // LDF5_LMerc_Combat
-        owners[832193] = 1888;  // LDF5_LMerc_Combat
-        owners[832194] = 1888;  // LDF5_LMerc_Combat
-        owners[832195] = 1888;  // LDF5_LMerc_Combat
-        owners[832196] = 1888;  // LDF5_LMerc_Combat
-        owners[832197] = 1888;  // LDF5_LMerc_Combat
-        owners[832198] = 1888;  // LDF5_LFunc_Combat
-        owners[832199] = 1888;  // LDF5_LMerc_Combat
-        owners[832200] = 1888;  // LDF5_LMerc_Combat
-        owners[832201] = 1888;  // LDF5_LMerc_Combat
-        owners[832202] = 1888;  // LDF5_LMerc_Combat
-        owners[832203] = 1888;  // LDF5_LMerc_Combat
-        owners[832204] = 1888;  // LDF5_LMerc_Combat
-        owners[832205] = 1888;  // LDF5_LMerc_Combat
-        owners[832206] = 1888;  // LDF5_LMerc_Combat
-        owners[832207] = 1888;  // LDF5_LFunc_Combat
-        owners[832208] = 1888;  // LDF5_LMerc_Combat
-        owners[832209] = 1888;  // LDF5_LMerc_Combat
-        owners[832210] = 1888;  // LDF5_LMerc_Combat
-        owners[832211] = 1888;  // LDF5_LMerc_Combat
-        owners[832212] = 1888;  // LDF5_LMerc_Combat
-        owners[832213] = 1888;  // LDF5_LMerc_Combat
-        owners[832214] = 1888;  // LDF5_LMerc_Combat
-        owners[832215] = 1888;  // LDF5_LMerc_Combat
-        owners[832216] = 1888;  // LDF5_LFunc_Combat
-        owners[832217] = 1888;  // LDF5_LMerc_Combat
-        owners[832218] = 1888;  // LDF5_LMerc_Combat
-        owners[832219] = 1888;  // LDF5_DMerc_Combat
-        owners[832220] = 1888;  // LDF5_DMerc_Combat
-        owners[832221] = 1888;  // LDF5_DMerc_Combat
-        owners[832222] = 1888;  // LDF5_DMerc_Combat
-        owners[832223] = 1888;  // LDF5_DMerc_Combat
-        owners[832224] = 1888;  // LDF5_DMerc_Combat
-        owners[832225] = 1888;  // LDF5_DFunc_Combat
-        owners[832226] = 1888;  // LDF5_DMerc_Combat
-        owners[832227] = 1888;  // LDF5_DMerc_Combat
-        owners[832228] = 1888;  // LDF5_DMerc_Combat
-        owners[832229] = 1888;  // LDF5_DMerc_Combat
-        owners[832230] = 1888;  // LDF5_DMerc_Combat
-        owners[832231] = 1888;  // LDF5_DMerc_Combat
-        owners[832232] = 1888;  // LDF5_DMerc_Combat
-        owners[832233] = 1888;  // LDF5_DMerc_Combat
-        owners[832234] = 1888;  // LDF5_DFunc_Combat
-        owners[832235] = 1888;  // LDF5_DMerc_Combat
-        owners[832236] = 1888;  // LDF5_DMerc_Combat
-        owners[832237] = 1888;  // LDF5_DMerc_Combat
-        owners[832238] = 1888;  // LDF5_DMerc_Combat
-        owners[832239] = 1888;  // LDF5_DMerc_Combat
-        owners[832240] = 1888;  // LDF5_DMerc_Combat
-        owners[832241] = 1888;  // LDF5_DMerc_Combat
-        owners[832242] = 1888;  // LDF5_DMerc_Combat
-        owners[832243] = 1888;  // LDF5_DFunc_Combat
-        owners[832244] = 1888;  // LDF5_DMerc_Combat
-        owners[832245] = 1888;  // LDF5_DMerc_Combat
-        owners[832246] = 1888;  // LDF5_DMerc_Combat
-        owners[832247] = 1888;  // LDF5_DMerc_Combat
-        owners[832248] = 1888;  // LDF5_DMerc_Combat
-        owners[832249] = 1888;  // LDF5_DMerc_Combat
-        owners[832250] = 1888;  // LDF5_DMerc_Combat
-        owners[832251] = 1888;  // LDF5_DMerc_Combat
-        owners[832252] = 1888;  // LDF5_DFunc_Combat
-        owners[832253] = 1888;  // LDF5_DMerc_Combat
-        owners[832254] = 1888;  // LDF5_DMerc_Combat
+        owners[831995] = 1887;  // LDF5_LFunc_Combat
+        owners[831996] = 1887;  // LDF5_DFunc_Combat
+        owners[832183] = 1887;  // LDF5_LMerc_Combat
+        owners[832184] = 1887;  // LDF5_LMerc_Combat
+        owners[832185] = 1887;  // LDF5_LMerc_Combat
+        owners[832186] = 1887;  // LDF5_LMerc_Combat
+        owners[832187] = 1887;  // LDF5_LMerc_Combat
+        owners[832188] = 1887;  // LDF5_LMerc_Combat
+        owners[832189] = 1887;  // LDF5_LFunc_Combat
+        owners[832190] = 1887;  // LDF5_LMerc_Combat
+        owners[832191] = 1887;  // LDF5_LMerc_Combat
+        owners[832192] = 1887;  // LDF5_LMerc_Combat
+        owners[832193] = 1887;  // LDF5_LMerc_Combat
+        owners[832194] = 1887;  // LDF5_LMerc_Combat
+        owners[832195] = 1887;  // LDF5_LMerc_Combat
+        owners[832196] = 1887;  // LDF5_LMerc_Combat
+        owners[832197] = 1887;  // LDF5_LMerc_Combat
+        owners[832198] = 1887;  // LDF5_LFunc_Combat
+        owners[832199] = 1887;  // LDF5_LMerc_Combat
+        owners[832200] = 1887;  // LDF5_LMerc_Combat
+        owners[832201] = 1887;  // LDF5_LMerc_Combat
+        owners[832202] = 1887;  // LDF5_LMerc_Combat
+        owners[832203] = 1887;  // LDF5_LMerc_Combat
+        owners[832204] = 1887;  // LDF5_LMerc_Combat
+        owners[832205] = 1887;  // LDF5_LMerc_Combat
+        owners[832206] = 1887;  // LDF5_LMerc_Combat
+        owners[832207] = 1887;  // LDF5_LFunc_Combat
+        owners[832208] = 1887;  // LDF5_LMerc_Combat
+        owners[832209] = 1887;  // LDF5_LMerc_Combat
+        owners[832210] = 1887;  // LDF5_LMerc_Combat
+        owners[832211] = 1887;  // LDF5_LMerc_Combat
+        owners[832212] = 1887;  // LDF5_LMerc_Combat
+        owners[832213] = 1887;  // LDF5_LMerc_Combat
+        owners[832214] = 1887;  // LDF5_LMerc_Combat
+        owners[832215] = 1887;  // LDF5_LMerc_Combat
+        owners[832216] = 1887;  // LDF5_LFunc_Combat
+        owners[832217] = 1887;  // LDF5_LMerc_Combat
+        owners[832218] = 1887;  // LDF5_LMerc_Combat
+        owners[832219] = 1887;  // LDF5_DMerc_Combat
+        owners[832220] = 1887;  // LDF5_DMerc_Combat
+        owners[832221] = 1887;  // LDF5_DMerc_Combat
+        owners[832222] = 1887;  // LDF5_DMerc_Combat
+        owners[832223] = 1887;  // LDF5_DMerc_Combat
+        owners[832224] = 1887;  // LDF5_DMerc_Combat
+        owners[832225] = 1887;  // LDF5_DFunc_Combat
+        owners[832226] = 1887;  // LDF5_DMerc_Combat
+        owners[832227] = 1887;  // LDF5_DMerc_Combat
+        owners[832228] = 1887;  // LDF5_DMerc_Combat
+        owners[832229] = 1887;  // LDF5_DMerc_Combat
+        owners[832230] = 1887;  // LDF5_DMerc_Combat
+        owners[832231] = 1887;  // LDF5_DMerc_Combat
+        owners[832232] = 1887;  // LDF5_DMerc_Combat
+        owners[832233] = 1887;  // LDF5_DMerc_Combat
+        owners[832234] = 1887;  // LDF5_DFunc_Combat
+        owners[832235] = 1887;  // LDF5_DMerc_Combat
+        owners[832236] = 1887;  // LDF5_DMerc_Combat
+        owners[832237] = 1887;  // LDF5_DMerc_Combat
+        owners[832238] = 1887;  // LDF5_DMerc_Combat
+        owners[832239] = 1887;  // LDF5_DMerc_Combat
+        owners[832240] = 1887;  // LDF5_DMerc_Combat
+        owners[832241] = 1887;  // LDF5_DMerc_Combat
+        owners[832242] = 1887;  // LDF5_DMerc_Combat
+        owners[832243] = 1887;  // LDF5_DFunc_Combat
+        owners[832244] = 1887;  // LDF5_DMerc_Combat
+        owners[832245] = 1887;  // LDF5_DMerc_Combat
+        owners[832246] = 1887;  // LDF5_DMerc_Combat
+        owners[832247] = 1887;  // LDF5_DMerc_Combat
+        owners[832248] = 1887;  // LDF5_DMerc_Combat
+        owners[832249] = 1887;  // LDF5_DMerc_Combat
+        owners[832250] = 1887;  // LDF5_DMerc_Combat
+        owners[832251] = 1887;  // LDF5_DMerc_Combat
+        owners[832252] = 1887;  // LDF5_DFunc_Combat
+        owners[832253] = 1887;  // LDF5_DMerc_Combat
+        owners[832254] = 1887;  // LDF5_DMerc_Combat
         owners[832745] = 0;  // LFunction
         owners[832746] = 5;  // DFunction
         owners[832803] = 5;  // DFunction
         owners[832804] = 0;  // LFunction
-        owners[832916] = 1888;  // LDF5_LFunc_Combat
-        owners[832917] = 1888;  // LDF5_DFunc_Combat
-        owners[833466] = 1890;  // IDYun_Soldier_ND1
-        owners[833467] = 1890;  // IDYun_Soldier_ND1
-        owners[833468] = 1890;  // IDYun_Soldier_ND1
-        owners[833469] = 1890;  // IDYun_Soldier_ND1
-        owners[833470] = 1891;  // IDYun_Soldier_ND2
-        owners[833471] = 1891;  // IDYun_Soldier_ND2
-        owners[833472] = 1891;  // IDYun_Soldier_ND2
-        owners[833473] = 1890;  // IDYun_Soldier_ND1
-        owners[833474] = 1892;  // IDYun_Soldier_ND3
-        owners[833475] = 1892;  // IDYun_Soldier_ND3
-        owners[855011] = 1895;  // IDLDF5_Fortress_Re_SetCond_Noshow_06
-        owners[855013] = 1895;  // IDLDF5_Fortress_Re_SetCond_Noshow_07
-        owners[855014] = 1895;  // IDLDF5_Fortress_Re_SetCond_Noshow_08
+        owners[832916] = 1887;  // LDF5_LFunc_Combat
+        owners[832917] = 1887;  // LDF5_DFunc_Combat
+        owners[833466] = 1889;  // IDYun_Soldier_ND1
+        owners[833467] = 1889;  // IDYun_Soldier_ND1
+        owners[833468] = 1889;  // IDYun_Soldier_ND1
+        owners[833469] = 1889;  // IDYun_Soldier_ND1
+        owners[833470] = 1890;  // IDYun_Soldier_ND2
+        owners[833471] = 1890;  // IDYun_Soldier_ND2
+        owners[833472] = 1890;  // IDYun_Soldier_ND2
+        owners[833473] = 1889;  // IDYun_Soldier_ND1
+        owners[833474] = 1891;  // IDYun_Soldier_ND3
+        owners[833475] = 1891;  // IDYun_Soldier_ND3
+        owners[855011] = 1894;  // IDLDF5_Fortress_Re_SetCond_Noshow_06
+        owners[855013] = 1894;  // IDLDF5_Fortress_Re_SetCond_Noshow_07
+        owners[855014] = 1894;  // IDLDF5_Fortress_Re_SetCond_Noshow_08
         owners[855039] = 1271;  // TR_Drakan_Fi_Stun_Hero
         owners[855059] = 1267;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[855060] = 1267;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
@@ -52398,8 +52358,8 @@ internal static class BattleCycles
         owners[855078] = 1269;  // LDF4_Advance_village_02
         owners[855079] = 1269;  // LDF4_Advance_village_02
         owners[855080] = 1269;  // LDF4_Advance_village_02
-        owners[855087] = 1896;  // IDLDF4_Re_01_Tank
-        owners[855088] = 1896;  // IDLDF4_Re_01_Tank
+        owners[855087] = 1895;  // IDLDF4_Re_01_Tank
+        owners[855088] = 1895;  // IDLDF4_Re_01_Tank
         owners[855149] = 921;  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
         owners[855150] = 922;  // IDLDF5Re_Solo_Vritra43IU_DrakanAn
         owners[855151] = 949;  // IDLDF5Re_Solo_Vritra43IU_DrakanWn
@@ -52419,10 +52379,10 @@ internal static class BattleCycles
         owners[855203] = 1270;  // LDF4_Advance_Rottentree_Green_Gi400
         owners[855219] = 980;  // Britra_As_Poison_LowNmd
         owners[855220] = 168;  // Naga_FhA
-        owners[855228] = 1897;  // Gab1_Named_01
+        owners[855228] = 1896;  // Gab1_Named_01
         owners[855246] = 1729;  // Rune_FrostNmd_RealImitaion_3_ver47
         owners[855247] = 1729;  // Rune_FrostNmd_FakeImitaion_ver47
-        owners[855250] = 1898;  // Rune_FrostNmd_MagCircle_NoShow2
+        owners[855250] = 1897;  // Rune_FrostNmd_MagCircle_NoShow2
         owners[855251] = 1124;  // Britra_Table
         owners[855252] = 1131;  // Britra_As_Poison
         owners[855253] = 1125;  // Britra_Table
@@ -52458,13 +52418,13 @@ internal static class BattleCycles
         owners[855350] = 69;  // F5_PvP_DGuard_Wi_Ae
         owners[855355] = 61;  // F5_PvP_DGuard_Fi_Ae
         owners[855356] = 69;  // F5_PvP_DGuard_Wi_Ae
-        owners[855369] = 1899;  // LDF4_Drakan_Worker_LV1
+        owners[855369] = 1898;  // LDF4_Drakan_Worker_LV1
         owners[855370] = 1292;  // LDF4_Drakan_Worker_LV2
+        owners[855371] = 1899;  // LDF4_Drakan_Worker_LV3
     }
 
     private static void CycleOf49(Dictionary<int, int> owners)
     {
-        owners[855371] = 1900;  // LDF4_Drakan_Worker_LV3
         owners[855419] = 516;  // Station_eye_Su
         owners[855420] = 514;  // Station_MaravataNM
         owners[855421] = 520;  // Station_Shu_PR
@@ -52473,28 +52433,28 @@ internal static class BattleCycles
         owners[855424] = 521;  // Station_Shu_AS
         owners[855426] = 522;  // Station_Shu_RA
         owners[855428] = 518;  // Station_HugenB
-        owners[855473] = 1901;  // IDSeal_Wave1_Leader_Lv3
-        owners[855474] = 1902;  // IDSeal_Wave2_Leader_Lv3
-        owners[855476] = 1903;  // IDSeal_Wave4_Leader_Lv3
-        owners[855486] = 1904;  // IDSeal_Forward_Guard
-        owners[855487] = 1904;  // IDSeal_Forward_Guard
+        owners[855473] = 1900;  // IDSeal_Wave1_Leader_Lv3
+        owners[855474] = 1901;  // IDSeal_Wave2_Leader_Lv3
+        owners[855476] = 1902;  // IDSeal_Wave4_Leader_Lv3
+        owners[855486] = 1903;  // IDSeal_Forward_Guard
+        owners[855487] = 1903;  // IDSeal_Forward_Guard
         owners[855489] = 1285;  // IDSeal_Immortal_Lv2
         owners[855490] = 1285;  // IDSeal_Immortal_Lv3
-        owners[855497] = 1905;  // IDSeal_FullWake_Lv2
-        owners[855498] = 1906;  // IDSeal_FullWake_Lv3
+        owners[855497] = 1904;  // IDSeal_FullWake_Lv2
+        owners[855498] = 1905;  // IDSeal_FullWake_Lv3
         owners[855531] = 1277;  // IDLDF5_Under_02_Boss_Wi
         owners[855532] = 1278;  // IDLDF5_Under_02_Boss_Pr
         owners[855533] = 1279;  // IDLDF5_Under_02_Boss_As
-        owners[855534] = 1907;  // IDLDF5_Under_02_Summon01
+        owners[855534] = 1906;  // IDLDF5_Under_02_Summon01
         owners[855535] = 922;  // IDLDF5_Under_02_Summon02
         owners[855616] = 1592;  // Station_Shu_WI_B
-        owners[855622] = 1908;  // IDSeal_Twin_M_Sum
+        owners[855622] = 1907;  // IDSeal_Twin_M_Sum
         owners[855646] = 766;  // LDF4b_T4_Driton_An
         owners[855684] = 660;  // LDF4a_B2_NepRe01
         owners[855686] = 660;  // LDF4a_B2_NepRe01
         owners[855691] = 834;  // LDF4b_T4_Tesinon_An
-        owners[855738] = 1909;  // LF5_ItemNamed_12_Pet_KJS
-        owners[855850] = 1910;  // IDRaksha_Re_B_KJS
+        owners[855738] = 1908;  // LF5_ItemNamed_12_Pet_KJS
+        owners[855850] = 1909;  // IDRaksha_Re_B_KJS
         owners[855862] = 742;  // LDF4b_T3_Varanus_Spring_An
         owners[855873] = 1096;  // GraveWitch_Mu_N_65_An
         owners[855874] = 1094;  // DeathKnight_Ri_N_65_Ae
@@ -52505,21 +52465,21 @@ internal static class BattleCycles
         owners[855887] = 880;  // IDYun_Temp_62
         owners[855888] = 880;  // IDYun_Temp_62
         owners[855889] = 507;  // IDYun_Temp_26
-        owners[855890] = 1911;  // IDYun_Temp_20
+        owners[855890] = 1910;  // IDYun_Temp_20
         owners[855892] = 510;  // IDYun_Drakan_ND1
         owners[855893] = 511;  // IDYun_Drakan_ND3
         owners[855894] = 880;  // IDYun_Temp_62
         owners[855895] = 880;  // IDYun_Temp_62
         owners[855896] = 507;  // IDYun_Temp_26
-        owners[855897] = 1911;  // IDYun_Temp_20
-        owners[855899] = 1912;  // IDYun_Nmd3
+        owners[855897] = 1910;  // IDYun_Temp_20
+        owners[855899] = 1911;  // IDYun_Nmd3
         owners[855902] = 513;  // IDYun_Nmd5
         owners[855906] = 918;  // DF5_ItemNamed_6_Fi_03_SSH
         owners[855907] = 919;  // DF5_ItemNamed_6_Wi_02_SSH
-        owners[855910] = 1913;  // DF5_ItemNamed_24_SSH
-        owners[855912] = 1914;  // DF5_ItemNamed_12_SSH
+        owners[855910] = 1912;  // DF5_ItemNamed_24_SSH
+        owners[855912] = 1913;  // DF5_ItemNamed_12_SSH
         owners[855914] = 915;  // DF5_ItemNamed_6_Fi_01_SSH
-        owners[855915] = 1915;  // DF5_ItemNamed_6_Wi_01_SSH
+        owners[855915] = 1914;  // DF5_ItemNamed_6_Wi_01_SSH
         owners[855917] = 917;  // DF5_ItemNamed_6_Fi_02_SSH
         owners[855918] = 916;  // DF5_ItemNamed_6_As_01_SSH
         owners[855921] = 918;  // DF5_ItemNamed_6_Fi_03_SSH
@@ -52530,7 +52490,7 @@ internal static class BattleCycles
         owners[855929] = 980;  // Britra_As_Poison_LowNmd
         owners[855931] = 1067;  // TR_Drakan_Fi_Stun_solo
         owners[855956] = 910;  // LF5_NewSpecies_Fi_KJS
-        owners[855959] = 1916;  // LF5_NewSpecies_Wi_KJS
+        owners[855959] = 1915;  // LF5_NewSpecies_Wi_KJS
         owners[855960] = 913;  // LF5_NewSpecies_Sum_KJS
         owners[855962] = 930;  // Britra_Fi_HpDrain
         owners[855963] = 910;  // LF5_NewSpecies_Fi_KJS
@@ -52538,7 +52498,7 @@ internal static class BattleCycles
         owners[855966] = 912;  // LF5_NewSpecies_Wi_KJS
         owners[855967] = 913;  // LF5_NewSpecies_Sum_KJS
         owners[855969] = 519;  // Station_Shu_KN
-        owners[855970] = 1917;  // IDStation_info_06
+        owners[855970] = 1916;  // IDStation_info_06
         owners[855974] = 64;  // F5_PvP_LGuard_Kn_Ae
         owners[855975] = 61;  // F5_PvP_LGuard_Fi_Ae
         owners[855976] = 69;  // F5_PvP_LGuard_Wi_Ae
@@ -52551,9 +52511,9 @@ internal static class BattleCycles
         owners[856011] = 1098;  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
         owners[856012] = 1099;  // IDF5_U1_Vri_Def_Wi_65_Ae
         owners[856013] = 1100;  // IDF5_U1_Vri_Def_As_65_Ae
-        owners[856014] = 1918;  // IDYun_info_05
-        owners[856029] = 1919;  // IDTiamat_Hard_Tiamat_Dragon_Dying
-        owners[856064] = 1920;  // IDStation_info_10
+        owners[856014] = 1917;  // IDYun_info_05
+        owners[856029] = 1918;  // IDTiamat_Hard_Tiamat_Dragon_Dying
+        owners[856064] = 1919;  // IDStation_info_10
         owners[856084] = 921;  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
         owners[856085] = 922;  // IDLDF5Re_Solo_Vritra43IU_DrakanAn
         owners[856093] = 923;  // IDF5_Mini_01_A_Prisoner_Boss_Wi
@@ -52566,10 +52526,10 @@ internal static class BattleCycles
         owners[856396] = 928;  // IDF5_U1_Vri_Def_Ba_65_Ae
         owners[856397] = 64;  // F5_PvP_LGuard_Kn_Ae
         owners[856478] = 507;  // IDYun_Temp_26
-        owners[856487] = 1921;  // LF5_QuestNPC_05
-        owners[856488] = 1921;  // LF5_QuestNPC_05
-        owners[856490] = 1922;  // IDYun_Temp_69
-        owners[856492] = 1922;  // IDYun_Temp_69
+        owners[856487] = 1920;  // LF5_QuestNPC_05
+        owners[856488] = 1920;  // LF5_QuestNPC_05
+        owners[856490] = 1921;  // IDYun_Temp_69
+        owners[856492] = 1921;  // IDYun_Temp_69
         owners[856499] = 1636;  // IDYun_Temp_51
         owners[880000] = 1416;  // Gab1_DArtiGuard_Boss_04_01_2
         owners[880001] = 1416;  // Gab1_DArtiGuard_Boss_04_01_2
@@ -52667,102 +52627,102 @@ internal static class BattleCycles
         owners[880748] = 1415;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880764] = 1415;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880780] = 1415;  // Gab1_VritraGuard_BossKiller_01_01
-        owners[880948] = 1923;  // Gab1_TurretSwitch_toPC_01
-        owners[880949] = 1923;  // Gab1_TurretSwitch_toPC_02
-        owners[880950] = 1923;  // Gab1_TurretSwitch_toPC_03
-        owners[880951] = 1923;  // Gab1_TurretSwitch_toPC_04
-        owners[880952] = 1923;  // Gab1_TurretSwitch_toPC_05
-        owners[880953] = 1923;  // Gab1_TurretSwitch_toPC_06
-        owners[880954] = 1923;  // Gab1_TurretSwitch_toPC_07
-        owners[880955] = 1923;  // Gab1_TurretSwitch_toPC_08
-        owners[880956] = 1923;  // Gab1_TurretSwitch_toPC_09
-        owners[880957] = 1923;  // Gab1_TurretSwitch_toPC_10
-        owners[880958] = 1923;  // Gab1_TurretSwitch_toPC_11
-        owners[880959] = 1923;  // Gab1_TurretSwitch_toPC_12
-        owners[880960] = 1923;  // Gab1_TurretSwitch_toPC_13
-        owners[880961] = 1923;  // Gab1_TurretSwitch_toPC_14
-        owners[880962] = 1923;  // Gab1_TurretSwitch_toPC_15
-        owners[880963] = 1923;  // Gab1_TurretSwitch_toPC_16
-        owners[880964] = 1923;  // Gab1_TurretSwitch_toPC_17
-        owners[880965] = 1923;  // Gab1_TurretSwitch_toPC_18
-        owners[880966] = 1923;  // Gab1_TurretSwitch_toPC_19
-        owners[880967] = 1923;  // Gab1_TurretSwitch_toPC_20
-        owners[880968] = 1923;  // Gab1_TurretSwitch_toPC_21
-        owners[880969] = 1923;  // Gab1_TurretSwitch_toPC_22
-        owners[880970] = 1923;  // Gab1_TurretSwitch_toPC_23
-        owners[881410] = 1897;  // Gab1_Named_01
-        owners[881418] = 1897;  // Gab1_Named_01
-        owners[881426] = 1897;  // Gab1_Named_01
-        owners[881434] = 1897;  // Gab1_Named_01
-        owners[881468] = 1923;  // Gab1_TurretSwitch_toPC_01
-        owners[881469] = 1923;  // Gab1_TurretSwitch_toPC_02
-        owners[881470] = 1923;  // Gab1_TurretSwitch_toPC_03
-        owners[881471] = 1923;  // Gab1_TurretSwitch_toPC_04
-        owners[881472] = 1923;  // Gab1_TurretSwitch_toPC_05
-        owners[881473] = 1923;  // Gab1_TurretSwitch_toPC_06
-        owners[881474] = 1923;  // Gab1_TurretSwitch_toPC_07
-        owners[881475] = 1923;  // Gab1_TurretSwitch_toPC_08
-        owners[881476] = 1923;  // Gab1_TurretSwitch_toPC_09
-        owners[881477] = 1923;  // Gab1_TurretSwitch_toPC_10
-        owners[881478] = 1923;  // Gab1_TurretSwitch_toPC_11
-        owners[881479] = 1923;  // Gab1_TurretSwitch_toPC_12
-        owners[881480] = 1923;  // Gab1_TurretSwitch_toPC_13
-        owners[881481] = 1923;  // Gab1_TurretSwitch_toPC_14
-        owners[881482] = 1923;  // Gab1_TurretSwitch_toPC_15
-        owners[881483] = 1923;  // Gab1_TurretSwitch_toPC_16
-        owners[881484] = 1923;  // Gab1_TurretSwitch_toPC_17
-        owners[881485] = 1923;  // Gab1_TurretSwitch_toPC_18
-        owners[881486] = 1923;  // Gab1_TurretSwitch_toPC_19
-        owners[881487] = 1923;  // Gab1_TurretSwitch_toPC_20
-        owners[881488] = 1923;  // Gab1_TurretSwitch_toPC_21
-        owners[881489] = 1923;  // Gab1_TurretSwitch_toPC_22
-        owners[881490] = 1923;  // Gab1_TurretSwitch_toPC_23
-        owners[881492] = 1923;  // Gab1_TurretSwitch_toPC_01
-        owners[881493] = 1923;  // Gab1_TurretSwitch_toPC_02
-        owners[881494] = 1923;  // Gab1_TurretSwitch_toPC_03
-        owners[881495] = 1923;  // Gab1_TurretSwitch_toPC_04
-        owners[881496] = 1923;  // Gab1_TurretSwitch_toPC_05
-        owners[881497] = 1923;  // Gab1_TurretSwitch_toPC_06
-        owners[881498] = 1923;  // Gab1_TurretSwitch_toPC_07
-        owners[881499] = 1923;  // Gab1_TurretSwitch_toPC_08
-        owners[881500] = 1923;  // Gab1_TurretSwitch_toPC_09
-        owners[881501] = 1923;  // Gab1_TurretSwitch_toPC_10
-        owners[881502] = 1923;  // Gab1_TurretSwitch_toPC_11
-        owners[881503] = 1923;  // Gab1_TurretSwitch_toPC_12
-        owners[881504] = 1923;  // Gab1_TurretSwitch_toPC_13
-        owners[881505] = 1923;  // Gab1_TurretSwitch_toPC_14
-        owners[881506] = 1923;  // Gab1_TurretSwitch_toPC_15
-        owners[881507] = 1923;  // Gab1_TurretSwitch_toPC_16
-        owners[881508] = 1923;  // Gab1_TurretSwitch_toPC_17
-        owners[881509] = 1923;  // Gab1_TurretSwitch_toPC_18
-        owners[881510] = 1923;  // Gab1_TurretSwitch_toPC_19
-        owners[881511] = 1923;  // Gab1_TurretSwitch_toPC_20
-        owners[881512] = 1923;  // Gab1_TurretSwitch_toPC_21
-        owners[881513] = 1923;  // Gab1_TurretSwitch_toPC_22
-        owners[881514] = 1923;  // Gab1_TurretSwitch_toPC_23
-        owners[881516] = 1923;  // Gab1_TurretSwitch_toPC_01
-        owners[881517] = 1923;  // Gab1_TurretSwitch_toPC_02
-        owners[881518] = 1923;  // Gab1_TurretSwitch_toPC_03
-        owners[881519] = 1923;  // Gab1_TurretSwitch_toPC_04
-        owners[881520] = 1923;  // Gab1_TurretSwitch_toPC_05
-        owners[881521] = 1923;  // Gab1_TurretSwitch_toPC_06
-        owners[881522] = 1923;  // Gab1_TurretSwitch_toPC_07
-        owners[881523] = 1923;  // Gab1_TurretSwitch_toPC_08
-        owners[881524] = 1923;  // Gab1_TurretSwitch_toPC_09
-        owners[881525] = 1923;  // Gab1_TurretSwitch_toPC_10
-        owners[881526] = 1923;  // Gab1_TurretSwitch_toPC_11
-        owners[881527] = 1923;  // Gab1_TurretSwitch_toPC_12
-        owners[881528] = 1923;  // Gab1_TurretSwitch_toPC_13
-        owners[881529] = 1923;  // Gab1_TurretSwitch_toPC_14
-        owners[881530] = 1923;  // Gab1_TurretSwitch_toPC_15
-        owners[881531] = 1923;  // Gab1_TurretSwitch_toPC_16
-        owners[881532] = 1923;  // Gab1_TurretSwitch_toPC_17
-        owners[881533] = 1923;  // Gab1_TurretSwitch_toPC_18
-        owners[881534] = 1923;  // Gab1_TurretSwitch_toPC_19
-        owners[881535] = 1923;  // Gab1_TurretSwitch_toPC_20
-        owners[881536] = 1923;  // Gab1_TurretSwitch_toPC_21
-        owners[881537] = 1923;  // Gab1_TurretSwitch_toPC_22
-        owners[881538] = 1923;  // Gab1_TurretSwitch_toPC_23
+        owners[880948] = 1922;  // Gab1_TurretSwitch_toPC_01
+        owners[880949] = 1922;  // Gab1_TurretSwitch_toPC_02
+        owners[880950] = 1922;  // Gab1_TurretSwitch_toPC_03
+        owners[880951] = 1922;  // Gab1_TurretSwitch_toPC_04
+        owners[880952] = 1922;  // Gab1_TurretSwitch_toPC_05
+        owners[880953] = 1922;  // Gab1_TurretSwitch_toPC_06
+        owners[880954] = 1922;  // Gab1_TurretSwitch_toPC_07
+        owners[880955] = 1922;  // Gab1_TurretSwitch_toPC_08
+        owners[880956] = 1922;  // Gab1_TurretSwitch_toPC_09
+        owners[880957] = 1922;  // Gab1_TurretSwitch_toPC_10
+        owners[880958] = 1922;  // Gab1_TurretSwitch_toPC_11
+        owners[880959] = 1922;  // Gab1_TurretSwitch_toPC_12
+        owners[880960] = 1922;  // Gab1_TurretSwitch_toPC_13
+        owners[880961] = 1922;  // Gab1_TurretSwitch_toPC_14
+        owners[880962] = 1922;  // Gab1_TurretSwitch_toPC_15
+        owners[880963] = 1922;  // Gab1_TurretSwitch_toPC_16
+        owners[880964] = 1922;  // Gab1_TurretSwitch_toPC_17
+        owners[880965] = 1922;  // Gab1_TurretSwitch_toPC_18
+        owners[880966] = 1922;  // Gab1_TurretSwitch_toPC_19
+        owners[880967] = 1922;  // Gab1_TurretSwitch_toPC_20
+        owners[880968] = 1922;  // Gab1_TurretSwitch_toPC_21
+        owners[880969] = 1922;  // Gab1_TurretSwitch_toPC_22
+        owners[880970] = 1922;  // Gab1_TurretSwitch_toPC_23
+        owners[881410] = 1896;  // Gab1_Named_01
+        owners[881418] = 1896;  // Gab1_Named_01
+        owners[881426] = 1896;  // Gab1_Named_01
+        owners[881434] = 1896;  // Gab1_Named_01
+        owners[881468] = 1922;  // Gab1_TurretSwitch_toPC_01
+        owners[881469] = 1922;  // Gab1_TurretSwitch_toPC_02
+        owners[881470] = 1922;  // Gab1_TurretSwitch_toPC_03
+        owners[881471] = 1922;  // Gab1_TurretSwitch_toPC_04
+        owners[881472] = 1922;  // Gab1_TurretSwitch_toPC_05
+        owners[881473] = 1922;  // Gab1_TurretSwitch_toPC_06
+        owners[881474] = 1922;  // Gab1_TurretSwitch_toPC_07
+        owners[881475] = 1922;  // Gab1_TurretSwitch_toPC_08
+        owners[881476] = 1922;  // Gab1_TurretSwitch_toPC_09
+        owners[881477] = 1922;  // Gab1_TurretSwitch_toPC_10
+        owners[881478] = 1922;  // Gab1_TurretSwitch_toPC_11
+        owners[881479] = 1922;  // Gab1_TurretSwitch_toPC_12
+        owners[881480] = 1922;  // Gab1_TurretSwitch_toPC_13
+        owners[881481] = 1922;  // Gab1_TurretSwitch_toPC_14
+        owners[881482] = 1922;  // Gab1_TurretSwitch_toPC_15
+        owners[881483] = 1922;  // Gab1_TurretSwitch_toPC_16
+        owners[881484] = 1922;  // Gab1_TurretSwitch_toPC_17
+        owners[881485] = 1922;  // Gab1_TurretSwitch_toPC_18
+        owners[881486] = 1922;  // Gab1_TurretSwitch_toPC_19
+        owners[881487] = 1922;  // Gab1_TurretSwitch_toPC_20
+        owners[881488] = 1922;  // Gab1_TurretSwitch_toPC_21
+        owners[881489] = 1922;  // Gab1_TurretSwitch_toPC_22
+        owners[881490] = 1922;  // Gab1_TurretSwitch_toPC_23
+        owners[881492] = 1922;  // Gab1_TurretSwitch_toPC_01
+        owners[881493] = 1922;  // Gab1_TurretSwitch_toPC_02
+        owners[881494] = 1922;  // Gab1_TurretSwitch_toPC_03
+        owners[881495] = 1922;  // Gab1_TurretSwitch_toPC_04
+        owners[881496] = 1922;  // Gab1_TurretSwitch_toPC_05
+        owners[881497] = 1922;  // Gab1_TurretSwitch_toPC_06
+        owners[881498] = 1922;  // Gab1_TurretSwitch_toPC_07
+        owners[881499] = 1922;  // Gab1_TurretSwitch_toPC_08
+        owners[881500] = 1922;  // Gab1_TurretSwitch_toPC_09
+        owners[881501] = 1922;  // Gab1_TurretSwitch_toPC_10
+        owners[881502] = 1922;  // Gab1_TurretSwitch_toPC_11
+        owners[881503] = 1922;  // Gab1_TurretSwitch_toPC_12
+        owners[881504] = 1922;  // Gab1_TurretSwitch_toPC_13
+        owners[881505] = 1922;  // Gab1_TurretSwitch_toPC_14
+        owners[881506] = 1922;  // Gab1_TurretSwitch_toPC_15
+        owners[881507] = 1922;  // Gab1_TurretSwitch_toPC_16
+        owners[881508] = 1922;  // Gab1_TurretSwitch_toPC_17
+        owners[881509] = 1922;  // Gab1_TurretSwitch_toPC_18
+        owners[881510] = 1922;  // Gab1_TurretSwitch_toPC_19
+        owners[881511] = 1922;  // Gab1_TurretSwitch_toPC_20
+        owners[881512] = 1922;  // Gab1_TurretSwitch_toPC_21
+        owners[881513] = 1922;  // Gab1_TurretSwitch_toPC_22
+        owners[881514] = 1922;  // Gab1_TurretSwitch_toPC_23
+        owners[881516] = 1922;  // Gab1_TurretSwitch_toPC_01
+        owners[881517] = 1922;  // Gab1_TurretSwitch_toPC_02
+        owners[881518] = 1922;  // Gab1_TurretSwitch_toPC_03
+        owners[881519] = 1922;  // Gab1_TurretSwitch_toPC_04
+        owners[881520] = 1922;  // Gab1_TurretSwitch_toPC_05
+        owners[881521] = 1922;  // Gab1_TurretSwitch_toPC_06
+        owners[881522] = 1922;  // Gab1_TurretSwitch_toPC_07
+        owners[881523] = 1922;  // Gab1_TurretSwitch_toPC_08
+        owners[881524] = 1922;  // Gab1_TurretSwitch_toPC_09
+        owners[881525] = 1922;  // Gab1_TurretSwitch_toPC_10
+        owners[881526] = 1922;  // Gab1_TurretSwitch_toPC_11
+        owners[881527] = 1922;  // Gab1_TurretSwitch_toPC_12
+        owners[881528] = 1922;  // Gab1_TurretSwitch_toPC_13
+        owners[881529] = 1922;  // Gab1_TurretSwitch_toPC_14
+        owners[881530] = 1922;  // Gab1_TurretSwitch_toPC_15
+        owners[881531] = 1922;  // Gab1_TurretSwitch_toPC_16
+        owners[881532] = 1922;  // Gab1_TurretSwitch_toPC_17
+        owners[881533] = 1922;  // Gab1_TurretSwitch_toPC_18
+        owners[881534] = 1922;  // Gab1_TurretSwitch_toPC_19
+        owners[881535] = 1922;  // Gab1_TurretSwitch_toPC_20
+        owners[881536] = 1922;  // Gab1_TurretSwitch_toPC_21
+        owners[881537] = 1922;  // Gab1_TurretSwitch_toPC_22
+        owners[881538] = 1922;  // Gab1_TurretSwitch_toPC_23
         owners[881542] = 1309;  // F5_RvR_LGuard_Ra_Ae
         owners[881545] = 1309;  // F5_RvR_DGuard_Ra_Ae
         owners[881546] = 1303;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
@@ -52864,11 +52824,11 @@ internal static class BattleCycles
         owners[881688] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881689] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881690] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+        owners[881691] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
     }
 
     private static void CycleOf50(Dictionary<int, int> owners)
     {
-        owners[881691] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881692] = 914;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881693] = 1192;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
         owners[881694] = 1192;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
@@ -53195,12 +53155,12 @@ internal static class BattleCycles
         owners[882244] = 1189;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[882245] = 1193;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[882246] = 1192;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
-        owners[882293] = 1924;  // F5_RvR_Trap
-        owners[882294] = 1924;  // F5_RvR_Trap
-        owners[882295] = 1924;  // F5_RvR_Trap
-        owners[882298] = 1880;  // LDF5_Fortress_VGuardBoss_Fi
-        owners[882299] = 1881;  // LDF5_Fortress_VGuardBoss_Ra
-        owners[882300] = 1882;  // LDF5_Fortress_VGuardBoss_Wi
+        owners[882293] = 1923;  // F5_RvR_Trap
+        owners[882294] = 1923;  // F5_RvR_Trap
+        owners[882295] = 1923;  // F5_RvR_Trap
+        owners[882298] = 1879;  // LDF5_Fortress_VGuardBoss_Fi
+        owners[882299] = 1880;  // LDF5_Fortress_VGuardBoss_Ra
+        owners[882300] = 1881;  // LDF5_Fortress_VGuardBoss_Wi
     }
 
     /// <summary>Arms the chain when the fight starts.</summary>
@@ -53208,7 +53168,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnEnterAttackStateVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[1380][];
+        PatternBranch[][] variants = new PatternBranch[1379][];
         OnEnterAttackStateVariants0(variants);
         OnEnterAttackStateVariants1(variants);
         OnEnterAttackStateVariants2(variants);
@@ -61361,91 +61321,83 @@ internal static class BattleCycles
         variants[1274] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
-                Do.ArmTimer(1, 10000),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18166),
-                Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21285)),
-        ];
-        variants[1275] = [
-            AiPattern.Branch(10, "rung 0", When.Always,
-                Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 8000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21451)),
         ];
-        variants[1276] = [
+        variants[1275] = [
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(17405)),
         ];
-        variants[1277] = [
+        variants[1276] = [
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16425),
                 Do.Say(340316, 0)),
         ];
-        variants[1278] = [
+        variants[1277] = [
             AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16602),
                 Do.Say(340316, 0)),
         ];
-        variants[1279] = [
+        variants[1278] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16602),
                 Do.Say(340316, 0)),
         ];
-        variants[1280] = [
+        variants[1279] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(16654),
                 Do.SkillOnEventTarget(16653)),
         ];
-        variants[1281] = [
+        variants[1280] = [
             AiPattern.Branch(4, "rung 0", When.Always,
+                Do.ArmTimer(0, 8000),
+                Do.ArmTimer(1, 20000),
+                Do.SkillOnEventTarget(16658),
+                Do.SkillOnEventTarget(16657)),
+        ];
+        variants[1281] = [
+            AiPattern.Branch(5, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000),
                 Do.ArmTimer(1, 20000),
                 Do.SkillOnEventTarget(16658),
                 Do.SkillOnEventTarget(16657)),
         ];
         variants[1282] = [
-            AiPattern.Branch(5, "rung 0", When.Always,
-                Do.ArmTimer(0, 8000),
-                Do.ArmTimer(1, 20000),
-                Do.SkillOnEventTarget(16658),
-                Do.SkillOnEventTarget(16657)),
-        ];
-        variants[1283] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(16630)),
         ];
-        variants[1284] = [
+        variants[1283] = [
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(16630)),
         ];
-        variants[1285] = [
+        variants[1284] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(1, 12000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17163),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16519),
                 Do.SwitchTarget(AggroTarget.RANDOM)),
         ];
-        variants[1286] = [
+        variants[1285] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000),
                 Do.ArmTimer(1, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16399)),
         ];
-        variants[1287] = [
+        variants[1286] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(340023, 0),
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16399)),
         ];
-        variants[1288] = [
+        variants[1287] = [
             AiPattern.Branch(9, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16886)),
@@ -61453,14 +61405,14 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 16784)),
         ];
-        variants[1289] = [
+        variants[1288] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000),
                 Do.ArmTimer(1, 10000),
                 Do.Say(1500205, 0),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17869)),
         ];
-        variants[1290] = [
+        variants[1289] = [
             AiPattern.Branch(8, "rung 0", [When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16686)),
             AiPattern.Branch(8, "rung 1", [When.HpBelow(50), When.FirstTime(1)],
@@ -61472,55 +61424,51 @@ internal static class BattleCycles
             AiPattern.Branch(7, "rung 3", [When.HpBetween(52, 99)],
                 Do.ArmTimer(0, 1500)),
         ];
-        variants[1291] = [
+        variants[1290] = [
             AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1292] = [
+        variants[1291] = [
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16405),
                 Do.SpawnNear(287030, 1, 1, 5.0f, 0),
                 Do.ArmTimer(0, 15000)),
         ];
-        variants[1293] = [
+        variants[1292] = [
             AiPattern.Branch(15, "rung 0", When.Always,
                 Do.ArmTimer(0, 30000)),
         ];
-        variants[1294] = [
+        variants[1293] = [
             AiPattern.Branch(15, "rung 0", [When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16536),
                 Do.SpawnOnTarget(287026, 1, 1, 5.0f, 0, 0, 50.0f),
                 Do.ArmTimer(0, 15000)),
         ];
-        variants[1295] = [
+        variants[1294] = [
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1296] = [
+        variants[1295] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(5, 7000)),
         ];
-        variants[1297] = [
+        variants[1296] = [
             AiPattern.Branch(9, "rung 0", When.Always,
                 Do.ArmTimer(20, 5000)),
         ];
-        variants[1298] = [
+        variants[1297] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19857),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20489)),
         ];
-        variants[1299] = [
+        variants[1298] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20110),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18199)),
         ];
-    }
-
-    private static void OnEnterAttackStateVariants13(PatternBranch[][] variants)
-    {
-        variants[1300] = [
+        variants[1299] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 12000),
                 Do.SkillOnEventTarget(17144),
@@ -61529,25 +61477,29 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 12000),
                 Do.SkillOnEventTarget(17143)),
         ];
-        variants[1301] = [
+    }
+
+    private static void OnEnterAttackStateVariants13(PatternBranch[][] variants)
+    {
+        variants[1300] = [
             AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
                 Do.ArmTimer(0, 1000)),
         ];
-        variants[1302] = [
+        variants[1301] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(1, 16000)),
         ];
-        variants[1303] = [
+        variants[1302] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(1, 5000)),
         ];
-        variants[1304] = [
+        variants[1303] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1305] = [
+        variants[1304] = [
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 15000),
@@ -61557,35 +61509,35 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16405)),
         ];
-        variants[1306] = [
+        variants[1305] = [
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17368)),
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(1, 15000)),
         ];
-        variants[1307] = [
+        variants[1306] = [
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17371)),
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(1, 15000)),
         ];
-        variants[1308] = [
+        variants[1307] = [
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17374)),
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(1, 15000)),
         ];
-        variants[1309] = [
+        variants[1308] = [
             AiPattern.Branch(6, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(1, 15000),
                 Do.SkillOnEventTarget(17377)),
             AiPattern.Branch(5, "rung 1", When.Always,
                 Do.ArmTimer(1, 15000)),
         ];
-        variants[1310] = [
+        variants[1309] = [
             AiPattern.Branch(10, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(17370)),
@@ -61593,7 +61545,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 20000),
                 Do.SkillOnEventTarget(17293)),
         ];
-        variants[1311] = [
+        variants[1310] = [
             AiPattern.Branch(18, "rung 0", When.Always,
                 Do.ArmTimer(0, 25000),
                 Do.ArmTimer(9, 3000),
@@ -61602,137 +61554,137 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18339),
                 Do.SpawnNear(295179, 1, 1, 0f, 0)),
         ];
-        variants[1312] = [
+        variants[1311] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
                 Do.SkillOnEventTarget(18453)),
         ];
-        variants[1313] = [
+        variants[1312] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 20000),
                 Do.SpawnNear(281472, 0, 1, 0f, 50),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16767)),
         ];
-        variants[1314] = [
+        variants[1313] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 15000),
                 Do.SpawnOnTarget(281473, 0, 1, 2.0f, 60, 0, 50.0f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18834)),
         ];
-        variants[1315] = [
+        variants[1314] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 20000),
                 Do.SpawnNear(281482, 0, 1, 0f, 60),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16767)),
         ];
-        variants[1316] = [
+        variants[1315] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 15000),
                 Do.SpawnOnTarget(281483, 0, 1, 2.0f, 60, 0, 50.0f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18834)),
         ];
-        variants[1317] = [
+        variants[1316] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18939)),
         ];
-        variants[1318] = [
+        variants[1317] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 15000),
                 Do.ArmTimer(2, 30000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19008)),
         ];
-        variants[1319] = [
+        variants[1318] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000),
                 Do.SkillOnEventTarget(16723)),
         ];
-        variants[1320] = [
+        variants[1319] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19040)),
         ];
-        variants[1321] = [
+        variants[1320] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOnEventTarget(19112)),
         ];
-        variants[1322] = [
+        variants[1321] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18834)),
         ];
-        variants[1323] = [
+        variants[1322] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17120)),
         ];
-        variants[1324] = [
+        variants[1323] = [
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(20672),
                 Do.SkillOnEventTarget(21263)),
         ];
-        variants[1325] = [
+        variants[1324] = [
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(20542)),
         ];
-        variants[1326] = [
+        variants[1325] = [
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(20548)),
         ];
-        variants[1327] = [
+        variants[1326] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(1, 10000),
                 Do.Broadcast(23105, 15f)),
         ];
-        variants[1328] = [
+        variants[1327] = [
             AiPattern.Branch(30, "rung 0", [When.FirstTime(5)],
                 Do.SystemMessage(1401493, 0),
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1329] = [
+        variants[1328] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOnEventTarget(17386),
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1330] = [
+        variants[1329] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17318),
                 Do.ArmTimer(0, 10000)),
         ];
-        variants[1331] = [
+        variants[1330] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(23000, 25f),
                 Do.SkillOnEventTarget(17332)),
         ];
-        variants[1332] = [
+        variants[1331] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.Broadcast(23004, 15f),
                 Do.SkillOnEventTarget(17697)),
         ];
-        variants[1333] = [
+        variants[1332] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(23005, 15f)),
         ];
-        variants[1334] = [
+        variants[1333] = [
             AiPattern.Branch(14, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000)),
         ];
-        variants[1335] = [
+        variants[1334] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000),
                 Do.ArmTimer(11, 60000),
@@ -61740,33 +61692,33 @@ internal static class BattleCycles
                 Do.Broadcast(23100, 10f),
                 Do.Say(341526, 0)),
         ];
-        variants[1336] = [
+        variants[1335] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19112)),
         ];
-        variants[1337] = [
+        variants[1336] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(18159)),
         ];
-        variants[1338] = [
+        variants[1337] = [
             AiPattern.Branch(9, "rung 0", When.Always,
                 Do.ArmTimer(0, 12000),
                 Do.SkillOnEventTarget(21296),
                 Do.SkillOnEventTarget(20704)),
         ];
-        variants[1339] = [
+        variants[1338] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(20715)),
         ];
-        variants[1340] = [
+        variants[1339] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(20715)),
         ];
-        variants[1341] = [
+        variants[1340] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOnEventTarget(17379)),
@@ -61774,17 +61726,17 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17360)),
         ];
-        variants[1342] = [
+        variants[1341] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42101, 30f)),
         ];
-        variants[1343] = [
+        variants[1342] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.Broadcast(42001, 30f)),
         ];
-        variants[1344] = [
+        variants[1343] = [
             AiPattern.Branch(7, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(41200, 13f),
@@ -61794,12 +61746,12 @@ internal static class BattleCycles
                 Do.Broadcast(41200, 13f),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 18762)),
         ];
-        variants[1345] = [
+        variants[1344] = [
             AiPattern.Branch(1, "rung 0", [When.EventTargetIsPlayer],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21664)),
         ];
-        variants[1346] = [
+        variants[1345] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23000, 50f),
                 Do.ArmTimer(0, 6000),
@@ -61810,7 +61762,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20668)),
         ];
-        variants[1347] = [
+        variants[1346] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23000, 50f),
                 Do.ArmTimer(0, 6000),
@@ -61821,7 +61773,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(17316)),
         ];
-        variants[1348] = [
+        variants[1347] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23000, 50f),
                 Do.ArmTimer(0, 6000),
@@ -61832,7 +61784,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.SkillOnEventTarget(18635)),
         ];
-        variants[1349] = [
+        variants[1348] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23000, 50f),
                 Do.ArmTimer(0, 6000),
@@ -61845,7 +61797,7 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20668)),
         ];
-        variants[1350] = [
+        variants[1349] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.Broadcast(23000, 50f),
                 Do.ArmTimer(0, 6000),
@@ -61857,6 +61809,19 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(3, 6000),
                 Do.SkillOnEventTarget(17316)),
+        ];
+        variants[1350] = [
+            AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
+                Do.Broadcast(23000, 50f),
+                Do.ArmTimer(0, 6000),
+                Do.ArmTimer(2, 6000),
+                Do.SkillOnEventTarget(17376),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18635)),
+            AiPattern.Branch(7, "rung 1", When.Always,
+                Do.Broadcast(23000, 50f),
+                Do.ArmTimer(0, 6000),
+                Do.ArmTimer(2, 6000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 18635)),
         ];
         variants[1351] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
@@ -61864,41 +61829,28 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(2, 6000),
                 Do.SkillOnEventTarget(17376),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18635)),
+                Do.SkillOnEventTarget(18635)),
             AiPattern.Branch(7, "rung 1", When.Always,
                 Do.Broadcast(23000, 50f),
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(2, 6000),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18635)),
+                Do.SkillOnEventTarget(18635)),
         ];
         variants[1352] = [
-            AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
-                Do.Broadcast(23000, 50f),
-                Do.ArmTimer(0, 6000),
-                Do.ArmTimer(2, 6000),
-                Do.SkillOnEventTarget(17376),
-                Do.SkillOnEventTarget(18635)),
-            AiPattern.Branch(7, "rung 1", When.Always,
-                Do.Broadcast(23000, 50f),
-                Do.ArmTimer(0, 6000),
-                Do.ArmTimer(2, 6000),
-                Do.SkillOnEventTarget(18635)),
-        ];
-        variants[1353] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Broadcast(6811, 50f),
                 Do.ArmTimer(0, 16000)),
         ];
-        variants[1354] = [
+        variants[1353] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000)),
         ];
-        variants[1355] = [
+        variants[1354] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000),
                 Do.ArmTimer(1, 40000)),
         ];
-        variants[1356] = [
+        variants[1355] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 7000),
@@ -61908,7 +61860,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17230)),
         ];
-        variants[1357] = [
+        variants[1356] = [
             AiPattern.Branch(8, "rung 0", [When.EventTargetFlying],
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 10000),
@@ -61918,37 +61870,37 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 10000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17100)),
         ];
-        variants[1358] = [
+        variants[1357] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21648)),
         ];
-        variants[1359] = [
+        variants[1358] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21657)),
         ];
-        variants[1360] = [
+        variants[1359] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16673)),
         ];
-        variants[1361] = [
+        variants[1360] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(1000400, 100f)),
         ];
-        variants[1362] = [
+        variants[1361] = [
             AiPattern.Branch(40, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000)),
         ];
-        variants[1363] = [
+        variants[1362] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(8, 6000)),
         ];
-        variants[1364] = [
+        variants[1363] = [
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.ArmTimer(4, 6000),
@@ -61956,7 +61908,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21844),
                 Do.Say(1501222, 0)),
         ];
-        variants[1365] = [
+        variants[1364] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 10000),
                 Do.ArmTimer(4, 6000),
@@ -61965,7 +61917,7 @@ internal static class BattleCycles
                 Do.Say(1501222, 0),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17343)),
         ];
-        variants[1366] = [
+        variants[1365] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(3, 30000),
@@ -61973,69 +61925,69 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21844),
                 Do.Say(1501222, 0)),
         ];
-        variants[1367] = [
+        variants[1366] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 15000),
                 Do.Broadcast(22760, 20f)),
         ];
-        variants[1368] = [
+        variants[1367] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(10, 6500),
                 Do.Broadcast(22742, 100f),
                 Do.Say(1501304, 0)),
         ];
-        variants[1369] = [
+        variants[1368] = [
             AiPattern.Branch(80, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.ArmTimer(1, 5000),
                 Do.ArmTimer(10, 30000)),
         ];
-        variants[1370] = [
+        variants[1369] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[1371] = [
+        variants[1370] = [
             AiPattern.Branch(3, "rung 0", When.Always,
                 Do.ArmTimer(0, 8000),
                 Do.ArmTimer(1, 25000),
                 Do.SpawnOnTarget(282465, 1, 1, 0.0f, 6, 0, 50.0f)),
         ];
-        variants[1372] = [
+        variants[1371] = [
             AiPattern.Branch(8, "rung 0", When.Always,
                 Do.ArmTimer(1, 6000),
                 Do.ArmTimer(2, 6000)),
         ];
-        variants[1373] = [
+        variants[1372] = [
             AiPattern.Branch(90, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.ArmTimer(10, 3000)),
         ];
-        variants[1374] = [
+        variants[1373] = [
             AiPattern.Branch(46, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SetIdleTimer(0)),
         ];
-        variants[1375] = [
+        variants[1374] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000),
                 Do.Say(1501197, 0)),
         ];
-        variants[1376] = [
+        variants[1375] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 22667)),
         ];
-        variants[1377] = [
+        variants[1376] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000)),
         ];
-        variants[1378] = [
+        variants[1377] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
-        variants[1379] = [
+        variants[1378] = [
             AiPattern.Branch(1, "rung 0", [When.EventTargetIsPlayer],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21792)),
@@ -78029,8 +77981,7 @@ internal static class BattleCycles
         owners[284851] = 1272;  // BIDF5_U3_hard_Vri_Ra
         owners[284852] = 1273;  // BIDF5_U3_hard_Vri_Gu
         owners[284853] = 786;  // BIDF5_U3_hard_Vri_Ba
-        owners[284854] = 1274;  // BIDF5_U3_SemiNmd_Vri_Fi
-        owners[284856] = 1275;  // BIDF5_U3_SemiNmd_Vri_Wi
+        owners[284856] = 1274;  // BIDF5_U3_SemiNmd_Vri_Wi
         owners[284902] = 761;  // Britra_As_Poison_LowNmd
         owners[284903] = 761;  // Britra_As_Poison_LowNmd
         owners[284906] = 952;  // ND2_ElementalSu2
@@ -78053,33 +78004,33 @@ internal static class BattleCycles
         owners[284966] = 513;  // IDLDF4_Re_01_DrakanAs
         owners[284967] = 513;  // IDLDF4_Re_01_DrakanFi
         owners[284968] = 955;  // IDLDF4_Re_01_Golem
-        owners[285098] = 1276;  // Krall_PeB
-        owners[285153] = 1277;  // Lycan_KeA
-        owners[285156] = 1276;  // Lycan_PeB
+        owners[285098] = 1275;  // Krall_PeB
+        owners[285153] = 1276;  // Lycan_KeA
+        owners[285156] = 1275;  // Lycan_PeB
         owners[285727] = 72;  // Lycan_FeA
         owners[285728] = 82;  // Lycan_FeB
-        owners[285732] = 1278;  // Lycan_KeA
-        owners[285733] = 1279;  // Lycan_KeB
-        owners[285734] = 1280;  // Lycan_RnA
-        owners[285735] = 1281;  // Lycan_ReA
-        owners[285736] = 1282;  // Lycan_ReB
+        owners[285732] = 1277;  // Lycan_KeA
+        owners[285733] = 1278;  // Lycan_KeB
+        owners[285734] = 1279;  // Lycan_RnA
+        owners[285735] = 1280;  // Lycan_ReA
+        owners[285736] = 1281;  // Lycan_ReB
         owners[285737] = 79;  // Lycan_HnA
         owners[285738] = 1061;  // Lycan_HeA
         owners[285739] = 1062;  // Lycan_HeB
         owners[285740] = 12;  // Lycan_WeA
         owners[285741] = 12;  // Lycan_WeB
-        owners[285742] = 1283;  // Lycan_PeA
-        owners[285743] = 1284;  // Lycan_PeB
+        owners[285742] = 1282;  // Lycan_PeA
+        owners[285743] = 1283;  // Lycan_PeB
         owners[285874] = 1037;  // Carrier_Main_A
         owners[285875] = 1037;  // Carrier_Main_A
         owners[285876] = 1037;  // Carrier_Main_A
         owners[285880] = 1038;  // Carrier_Attack_A
         owners[285881] = 1038;  // Carrier_Attack_A
-        owners[286417] = 1285;  // ND2_FnW
-        owners[286418] = 1285;  // ND2_FnW
-        owners[286419] = 1285;  // ND2_FnW
-        owners[286420] = 1285;  // ND2_FnW
-        owners[286421] = 1285;  // ND2_FnW
+        owners[286417] = 1284;  // ND2_FnW
+        owners[286418] = 1284;  // ND2_FnW
+        owners[286419] = 1284;  // ND2_FnW
+        owners[286420] = 1284;  // ND2_FnW
+        owners[286421] = 1284;  // ND2_FnW
         owners[286684] = 154;  // Lizardman_FeB
         owners[286685] = 154;  // Lizardman_FeB
         owners[286686] = 154;  // Lizardman_FeB
@@ -78134,24 +78085,24 @@ internal static class BattleCycles
         owners[286901] = 267;  // XDrakan_WeB
         owners[286902] = 267;  // XDrakan_WeB
         owners[286903] = 267;  // XDrakan_WeB
-        owners[286907] = 1286;  // testai63
-        owners[286920] = 1287;  // TestAI68
-        owners[286921] = 1288;  // TestAI69
+        owners[286907] = 1285;  // testai63
+        owners[286920] = 1286;  // TestAI68
+        owners[286921] = 1287;  // TestAI69
         owners[286926] = 284;  // Test_JM_Monster_1
-        owners[286949] = 1289;  // IDArena_S1_Named_1
-        owners[286953] = 1290;  // SYSTEM1_TestSample_Krall02
-        owners[286968] = 1290;  // SYSTEM1_TestSample_Krall02
+        owners[286949] = 1288;  // IDArena_S1_Named_1
+        owners[286953] = 1289;  // SYSTEM1_TestSample_Krall02
+        owners[286968] = 1289;  // SYSTEM1_TestSample_Krall02
         owners[286986] = 265;  // XDrakan_FeB
         owners[286987] = 267;  // XDrakan_WeB
-        owners[287014] = 1291;  // Test_Basic_Monster_AI_JKA_2
-        owners[287025] = 1292;  // Test_Basic_Monster_AI_JKA_4
-        owners[287026] = 1293;  // Test_Basic_Monster_AI_JKA_5
-        owners[287027] = 1294;  // Test_Basic_Monster_AI_JKA_6
-        owners[287029] = 1295;  // Test_Basic_Monster_AI_JKA_8
-        owners[287036] = 1296;  // Test_Basic_Monster_AI_LHJ_4
-        owners[287037] = 1297;  // Test_Basic_Monster_AI_LHJ_5
-        owners[287045] = 1298;  // Test_Basic_Monster_AI_KSG_7
-        owners[287046] = 1299;  // Test_Basic_Monster_AI_KSG_8
+        owners[287014] = 1290;  // Test_Basic_Monster_AI_JKA_2
+        owners[287025] = 1291;  // Test_Basic_Monster_AI_JKA_4
+        owners[287026] = 1292;  // Test_Basic_Monster_AI_JKA_5
+        owners[287027] = 1293;  // Test_Basic_Monster_AI_JKA_6
+        owners[287029] = 1294;  // Test_Basic_Monster_AI_JKA_8
+        owners[287036] = 1295;  // Test_Basic_Monster_AI_LHJ_4
+        owners[287037] = 1296;  // Test_Basic_Monster_AI_LHJ_5
+        owners[287045] = 1297;  // Test_Basic_Monster_AI_KSG_7
+        owners[287046] = 1298;  // Test_Basic_Monster_AI_KSG_8
         owners[287135] = 1060;  // F5_RvR_LGuard_Fi_Ae
         owners[287136] = 59;  // F5_RvR_LGuard_Wi_Ae
         owners[287137] = 951;  // F5_RvR_LGuard_Pr_Ae
@@ -78167,13 +78118,13 @@ internal static class BattleCycles
         owners[287147] = 1060;  // F5_RvR_LGuard_Fi_Ae
         owners[287148] = 59;  // F5_RvR_LGuard_Wi_Ae
         owners[287149] = 951;  // F5_RvR_LGuard_Pr_Ae
-        owners[287150] = 1300;  // F5_RvR_LGuard_Gu_Ae
+        owners[287150] = 1299;  // F5_RvR_LGuard_Gu_Ae
         owners[287184] = 265;  // XDrakan_FeB
         owners[287185] = 267;  // XDrakan_WeB
         owners[287189] = 732;  // Test_Basic_Monster_AI_GHB_2
-        owners[287192] = 1301;  // Test_Basic_Monster_AI_CYS_2
-        owners[287221] = 1302;  // TEST_MONSTER_JSJ_02
-        owners[287226] = 1303;  // Test_Monster_Ssh_02
+        owners[287192] = 1300;  // Test_Basic_Monster_AI_CYS_2
+        owners[287221] = 1301;  // TEST_MONSTER_JSJ_02
+        owners[287226] = 1302;  // Test_Monster_Ssh_02
         owners[287248] = 956;  // Test_Basic_Monster_AI_KJH02
         owners[287250] = 732;  // IDLDF4_Re_01_MagBoss
         owners[287252] = 956;  // Test_Basic_Monster_AI_KJH02
@@ -78187,8 +78138,8 @@ internal static class BattleCycles
         owners[287260] = 148;  // LDF4_Advance_Killer_06_Da
         owners[287261] = 148;  // LDF4_Advance_Killer_07_Da
         owners[287267] = 406;  // IDF4Re_Drana_Named_C
-        owners[287272] = 1304;  // Test_Basic_Monster_AI_YJH_1
-        owners[287273] = 1304;  // Test_Basic_Monster_AI_YJH_2
+        owners[287272] = 1303;  // Test_Basic_Monster_AI_YJH_1
+        owners[287273] = 1303;  // Test_Basic_Monster_AI_YJH_2
         owners[287276] = 732;  // LDF4_kalnif_horn_LV2
         owners[287277] = 732;  // LDF4_kalnif_horn_LV3
         owners[287278] = 732;  // LDF4_RottentreeRe_LV1
@@ -78242,7 +78193,7 @@ internal static class BattleCycles
         owners[290079] = 200;  // Lizardman_RnA
         owners[290081] = 307;  // AD2_Wss0BT15p50st1st2H50ss3
         owners[290082] = 307;  // AD2_Wss0BT15p50st1st2H50ss3ss4
-        owners[290083] = 1305;  // AD2_Bss0BT15st1H50st2st3
+        owners[290083] = 1304;  // AD2_Bss0BT15st1H50st2st3
         owners[290085] = 307;  // AD2_BT15st0H50ss1
         owners[290086] = 284;  // AD2_BT15p50st0st1
         owners[290087] = 284;  // AD2_BT15p50st0st1
@@ -78259,11 +78210,11 @@ internal static class BattleCycles
         owners[290099] = 1015;  // AD2_Bss0BT15p50st1st2H50st3
         owners[290101] = 975;  // AD2_Bst0st1BT15p50st2st3
         owners[290102] = 972;  // AD2_Bst0st1BT15p50st2st3
+        owners[290103] = 976;  // AD2_Bst0st1BT15p50st2st3
     }
 
     private static void OnEnterAttackStateOf40(Dictionary<int, int> owners)
     {
-        owners[290103] = 976;  // AD2_Bst0st1BT15p50st2st3
         owners[290104] = 315;  // AD2_Wss0BT15st1H50ss2
         owners[290106] = 974;  // AD2_Bst0st1BT15p50st2st3
         owners[290107] = 315;  // AD2_Wss0BT15st1H50st2
@@ -78460,10 +78411,10 @@ internal static class BattleCycles
         owners[294885] = 32;  // BGuard_GateRa
         owners[294886] = 33;  // BGuard_GateWi
         owners[294887] = 34;  // BGuard_GatePr
-        owners[294888] = 1306;  // BGuard_GateFi
-        owners[294889] = 1307;  // BGuard_GateRa
-        owners[294890] = 1308;  // BGuard_GateWi
-        owners[294891] = 1309;  // BGuard_GatePr
+        owners[294888] = 1305;  // BGuard_GateFi
+        owners[294889] = 1306;  // BGuard_GateRa
+        owners[294890] = 1307;  // BGuard_GateWi
+        owners[294891] = 1308;  // BGuard_GatePr
         owners[294895] = 25;  // LGuard_RnA
         owners[294896] = 15;  // LGuard_ReB
         owners[294899] = 26;  // LGuard_WnA
@@ -78511,7 +78462,7 @@ internal static class BattleCycles
         owners[295110] = 35;  // LGuard_WhB
         owners[295115] = 35;  // DGuard_WhB
         owners[295117] = 299;  // DrGuard_FhB
-        owners[295119] = 1310;  // DrGuard_AhB
+        owners[295119] = 1309;  // DrGuard_AhB
         owners[295120] = 1028;  // DrGuard_WhB
         owners[295133] = 36;  // BGuard_AhAPetA
         owners[295134] = 37;  // BGuard_AhAPetB
@@ -78528,13 +78479,13 @@ internal static class BattleCycles
         owners[295156] = 1097;  // DrGuard_WhAPet
         owners[295158] = 997;  // AD2_BT15ss0
         owners[295177] = 19;  // BGuard_Maximus
-        owners[295178] = 1311;  // DGuard_Kistenian
+        owners[295178] = 1310;  // DGuard_Kistenian
         owners[295182] = 2;  // LGuard_GriffonPet
         owners[295183] = 2;  // DGuard_ZaifPet
         owners[295188] = 35;  // LGuard_WhB
         owners[295193] = 35;  // DGuard_WhB
         owners[295195] = 299;  // DrGuard_FhB
-        owners[295197] = 1310;  // DrGuard_AhB
+        owners[295197] = 1309;  // DrGuard_AhB
         owners[295198] = 1028;  // DrGuard_WhB
         owners[295200] = 31;  // BGuard_GateFi
         owners[295201] = 32;  // BGuard_GateRa
@@ -78544,10 +78495,10 @@ internal static class BattleCycles
         owners[295205] = 32;  // BGuard_GateRa
         owners[295206] = 33;  // BGuard_GateWi
         owners[295207] = 34;  // BGuard_GatePr
-        owners[295208] = 1306;  // BGuard_GateFi
-        owners[295209] = 1307;  // BGuard_GateRa
-        owners[295210] = 1308;  // BGuard_GateWi
-        owners[295211] = 1309;  // BGuard_GatePr
+        owners[295208] = 1305;  // BGuard_GateFi
+        owners[295209] = 1306;  // BGuard_GateRa
+        owners[295210] = 1307;  // BGuard_GateWi
+        owners[295211] = 1308;  // BGuard_GatePr
         owners[295280] = 1;  // LGuard_FnA
         owners[295281] = 9;  // LGuard_FeB
         owners[295282] = 3;  // LGuard_FeA
@@ -78663,11 +78614,11 @@ internal static class BattleCycles
         owners[295460] = 1;  // LGuard_AnA
         owners[295464] = 26;  // LGuard_WnA
         owners[295465] = 28;  // LGuard_WeB
+        owners[295466] = 22;  // LGuard_WeA
     }
 
     private static void OnEnterAttackStateOf41(Dictionary<int, int> owners)
     {
-        owners[295466] = 22;  // LGuard_WeA
         owners[295468] = 26;  // LGuard_WnA
         owners[295469] = 28;  // LGuard_WeB
         owners[295470] = 22;  // LGuard_WeA
@@ -78867,7 +78818,7 @@ internal static class BattleCycles
         owners[296028] = 35;  // LGuard_WhB
         owners[296033] = 35;  // DGuard_WhB
         owners[296035] = 299;  // DrGuard_FhB
-        owners[296037] = 1310;  // DrGuard_AhB
+        owners[296037] = 1309;  // DrGuard_AhB
         owners[296038] = 1028;  // DrGuard_WhB
         owners[296040] = 31;  // BGuard_GateFi
         owners[296041] = 32;  // BGuard_GateRa
@@ -78877,10 +78828,10 @@ internal static class BattleCycles
         owners[296045] = 32;  // BGuard_GateRa
         owners[296046] = 33;  // BGuard_GateWi
         owners[296047] = 34;  // BGuard_GatePr
-        owners[296048] = 1306;  // BGuard_GateFi
-        owners[296049] = 1307;  // BGuard_GateRa
-        owners[296050] = 1308;  // BGuard_GateWi
-        owners[296051] = 1309;  // BGuard_GatePr
+        owners[296048] = 1305;  // BGuard_GateFi
+        owners[296049] = 1306;  // BGuard_GateRa
+        owners[296050] = 1307;  // BGuard_GateWi
+        owners[296051] = 1308;  // BGuard_GatePr
         owners[296063] = 36;  // BGuard_AhAPetA
         owners[296064] = 37;  // BGuard_AhAPetB
         owners[296066] = 31;  // BGuard_GateFi
@@ -78941,7 +78892,7 @@ internal static class BattleCycles
         owners[296394] = 35;  // LGuard_WhB
         owners[296399] = 35;  // DGuard_WhB
         owners[296401] = 299;  // DrGuard_FhB
-        owners[296403] = 1310;  // DrGuard_AhB
+        owners[296403] = 1309;  // DrGuard_AhB
         owners[296404] = 1028;  // DrGuard_WhB
         owners[296406] = 8;  // LGuard_FhA
         owners[296411] = 8;  // DGuard_FhA
@@ -78949,36 +78900,36 @@ internal static class BattleCycles
         owners[296424] = 35;  // LGuard_WhB
         owners[296429] = 35;  // DGuard_WhB
         owners[296431] = 299;  // DrGuard_FhB
-        owners[296433] = 1310;  // DrGuard_AhB
+        owners[296433] = 1309;  // DrGuard_AhB
         owners[296434] = 1028;  // DrGuard_WhB
-        owners[296443] = 1312;  // BGuard_ChiefSum_B
-        owners[296445] = 1313;  // GwLGuard_FhA
-        owners[296446] = 1313;  // GwLGuard_FhA
-        owners[296447] = 1314;  // GwLGuard_RhA
-        owners[296448] = 1314;  // GwLGuard_RhA
-        owners[296454] = 1315;  // GwDGuard_FhA
-        owners[296455] = 1315;  // GwDGuard_FhA
-        owners[296456] = 1316;  // GwDGuard_RhA
-        owners[296457] = 1316;  // GwDGuard_RhA
+        owners[296443] = 1311;  // BGuard_ChiefSum_B
+        owners[296445] = 1312;  // GwLGuard_FhA
+        owners[296446] = 1312;  // GwLGuard_FhA
+        owners[296447] = 1313;  // GwLGuard_RhA
+        owners[296448] = 1313;  // GwLGuard_RhA
+        owners[296454] = 1314;  // GwDGuard_FhA
+        owners[296455] = 1314;  // GwDGuard_FhA
+        owners[296456] = 1315;  // GwDGuard_RhA
+        owners[296457] = 1315;  // GwDGuard_RhA
         owners[296462] = 1024;  // LGuard_FsA
         owners[296468] = 1026;  // LGuard_AsA
-        owners[296470] = 1317;  // BGuard_FrostPillar
+        owners[296470] = 1316;  // BGuard_FrostPillar
         owners[296475] = 1024;  // DGuard_FsA
         owners[296481] = 1026;  // DGuard_AsA
-        owners[296483] = 1317;  // BGuard_FrostPillar
+        owners[296483] = 1316;  // BGuard_FrostPillar
         owners[296496] = 1025;  // DrGuard_FsA
-        owners[296497] = 1318;  // DrGuard_FsA_Officer
+        owners[296497] = 1317;  // DrGuard_FsA_Officer
         owners[296502] = 1027;  // DrGuard_AsA
-        owners[296504] = 1319;  // DrGuard_WsAPetA
+        owners[296504] = 1318;  // DrGuard_WsAPetA
         owners[296505] = 1031;  // DrGuard_WsB
-        owners[296507] = 1319;  // DrGuard_PsAPetA
-        owners[296508] = 1320;  // DrGuard_PsAPetB
-        owners[296511] = 1321;  // BGuard_TowerChiefF4A
-        owners[296513] = 1321;  // BGuard_TowerChiefF4B
-        owners[296516] = 1321;  // BGuard_TowerChiefF4A
-        owners[296518] = 1321;  // BGuard_TowerChiefF4B
-        owners[296521] = 1321;  // BGuard_TowerChiefF4A
-        owners[296523] = 1321;  // BGuard_TowerChiefF4B
+        owners[296507] = 1318;  // DrGuard_PsAPetA
+        owners[296508] = 1319;  // DrGuard_PsAPetB
+        owners[296511] = 1320;  // BGuard_TowerChiefF4A
+        owners[296513] = 1320;  // BGuard_TowerChiefF4B
+        owners[296516] = 1320;  // BGuard_TowerChiefF4A
+        owners[296518] = 1320;  // BGuard_TowerChiefF4B
+        owners[296521] = 1320;  // BGuard_TowerChiefF4A
+        owners[296523] = 1320;  // BGuard_TowerChiefF4B
         owners[296528] = 1024;  // LGuard_FsA
         owners[296530] = 1026;  // LGuard_AsA
         owners[296535] = 1024;  // DGuard_FsA
@@ -79067,11 +79018,11 @@ internal static class BattleCycles
         owners[296737] = 37;  // BGuard_AhAPetB
         owners[296738] = 36;  // BGuard_AhAPetA
         owners[296739] = 37;  // BGuard_AhAPetB
+        owners[296740] = 36;  // BGuard_AhAPetA
     }
 
     private static void OnEnterAttackStateOf42(Dictionary<int, int> owners)
     {
-        owners[296740] = 36;  // BGuard_AhAPetA
         owners[296741] = 37;  // BGuard_AhAPetB
         owners[296742] = 36;  // BGuard_AhAPetA
         owners[296743] = 37;  // BGuard_AhAPetB
@@ -79124,7 +79075,7 @@ internal static class BattleCycles
         owners[296835] = 1044;  // DrGuard_ReB
         owners[296839] = 255;  // DrGuard_AnA
         owners[296841] = 220;  // DrGuard_AeA
-        owners[296842] = 1310;  // DrGuard_AhB
+        owners[296842] = 1309;  // DrGuard_AhB
         owners[296843] = 222;  // DrGuard_AhA
         owners[296844] = 1029;  // DrGuard_WnA
         owners[296845] = 298;  // DrGuard_WeB
@@ -79149,24 +79100,24 @@ internal static class BattleCycles
         owners[296882] = 34;  // BGuard_GatePr
         owners[296886] = 1097;  // DrGuard_WhAPet
         owners[296888] = 997;  // AD2_BT15ss0
-        owners[296889] = 1322;  // GwLGuard_REA
-        owners[296890] = 1314;  // GwLGuard_RhA
-        owners[296891] = 1322;  // GwLGuard_REA
-        owners[296892] = 1314;  // GwLGuard_RhA
-        owners[296893] = 1323;  // GwLGuard_WEA
-        owners[296895] = 1323;  // GwLGuard_WEA
-        owners[296897] = 1322;  // GwDGuard_REA
-        owners[296898] = 1316;  // GwDGuard_RhA
-        owners[296899] = 1322;  // GwDGuard_REA
-        owners[296900] = 1316;  // GwDGuard_RhA
-        owners[296901] = 1323;  // GwDGuard_WEA
-        owners[296903] = 1323;  // GwDGuard_WEA
+        owners[296889] = 1321;  // GwLGuard_REA
+        owners[296890] = 1313;  // GwLGuard_RhA
+        owners[296891] = 1321;  // GwLGuard_REA
+        owners[296892] = 1313;  // GwLGuard_RhA
+        owners[296893] = 1322;  // GwLGuard_WEA
+        owners[296895] = 1322;  // GwLGuard_WEA
+        owners[296897] = 1321;  // GwDGuard_REA
+        owners[296898] = 1315;  // GwDGuard_RhA
+        owners[296899] = 1321;  // GwDGuard_REA
+        owners[296900] = 1315;  // GwDGuard_RhA
+        owners[296901] = 1322;  // GwDGuard_WEA
+        owners[296903] = 1322;  // GwDGuard_WEA
         owners[296965] = 52;  // F5_Safety_LGuard_Fi_An
         owners[296966] = 53;  // F5_Safety_LGuard_Ra_An_Broad
         owners[296967] = 52;  // F5_Safety_DGuard_Fi_An
-        owners[296969] = 1324;  // BF5_NeutralGuard_Shu_Fi
-        owners[296970] = 1325;  // BF5_NeutralGuard_Shu_Gu
-        owners[296971] = 1326;  // BF5_NeutralGuard_Shu_Wi
+        owners[296969] = 1323;  // BF5_NeutralGuard_Shu_Fi
+        owners[296970] = 1324;  // BF5_NeutralGuard_Shu_Gu
+        owners[296971] = 1325;  // BF5_NeutralGuard_Shu_Wi
         owners[296972] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[296973] = 54;  // F5_PvPLight_LGuard_Fi_An
         owners[296974] = 55;  // F5_PvPLight_LGuard_Ra_An_Broad
@@ -79179,7 +79130,7 @@ internal static class BattleCycles
         owners[296982] = 61;  // F5_PvP_LGuard_Gu_Ae
         owners[296983] = 64;  // F5_PvP_LGuard_Wi_Ae
         owners[296984] = 878;  // F5_PvP_LGuard_Pr_Ae
-        owners[296986] = 1327;  // F5_PvP_LGuard_ElementalFire_Ae
+        owners[296986] = 1326;  // F5_PvP_LGuard_ElementalFire_Ae
         owners[296988] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[296990] = 56;  // F5_PvPLight_DGuard_Wi_An
         owners[296991] = 836;  // F5_PvPLight_DGuard_Pr_An
@@ -79225,9 +79176,9 @@ internal static class BattleCycles
         owners[297041] = 46;  // DirectPortal_LGuard_Charge_PM_Fe
         owners[297043] = 877;  // DirectPortal_DGuard_Charge_PM_Fe
         owners[297044] = 46;  // DirectPortal_DGuard_Charge_PM_Fe
-        owners[297047] = 1328;  // InvadePortal_TestKeeper03
-        owners[297050] = 1329;  // LDF5_LGuard_Safety_Chase_Fn
-        owners[297051] = 1330;  // LDF5_LGuard_Safety_Hold_Rn
+        owners[297047] = 1327;  // InvadePortal_TestKeeper03
+        owners[297050] = 1328;  // LDF5_LGuard_Safety_Chase_Fn
+        owners[297051] = 1329;  // LDF5_LGuard_Safety_Hold_Rn
         owners[297052] = 879;  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
         owners[297053] = 879;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[297054] = 881;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
@@ -79236,13 +79187,13 @@ internal static class BattleCycles
         owners[297057] = 883;  // LDF5_LGuard_DisputePvP_Defend_PM_Ke
         owners[297058] = 882;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[297059] = 720;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
-        owners[297060] = 1331;  // LDF5_LGuard_DisputePvP_HideBroad_PM_Ae
+        owners[297060] = 1330;  // LDF5_LGuard_DisputePvP_HideBroad_PM_Ae
         owners[297061] = 885;  // LDF5_LGuard_DisputePvP_Watch_PR_Re
         owners[297062] = 888;  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
         owners[297063] = 886;  // LDF5_LGuard_DisputePvP_Strike_MRArea_We
         owners[297064] = 884;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
-        owners[297065] = 1332;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
-        owners[297066] = 1333;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
+        owners[297065] = 1331;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
+        owners[297066] = 1332;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
         owners[297067] = 983;  // LDF5_LGuard_DisputeRvR_Defend_PM_Ke
         owners[297068] = 979;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
         owners[297069] = 980;  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
@@ -79254,13 +79205,13 @@ internal static class BattleCycles
         owners[297075] = 988;  // LDF5_LGuard_DisputeRvR_Support_Deform_Ee
         owners[297082] = 62;  // BF5_NeutralGuard_Yun_Fi
         owners[297083] = 63;  // BF5_NeutralGuard_Yun_Ra
-        owners[297084] = 1334;  // BGuard_CommanderF5_L
-        owners[297085] = 1334;  // BGuard_CommanderF5_D
-        owners[297086] = 1334;  // BGuard_CommanderF5_Dr
+        owners[297084] = 1333;  // BGuard_CommanderF5_L
+        owners[297085] = 1333;  // BGuard_CommanderF5_D
+        owners[297086] = 1333;  // BGuard_CommanderF5_Dr
         owners[297088] = 1043;  // BGuard_ChiefA_Renew_Dr
         owners[297089] = 1043;  // BGuard_ChiefA_Renew_Dr
-        owners[297091] = 1335;  // BGuard_ChiefA_Renew_Li
-        owners[297092] = 1335;  // BGuard_ChiefA_Renew_Li
+        owners[297091] = 1334;  // BGuard_ChiefA_Renew_Li
+        owners[297092] = 1334;  // BGuard_ChiefA_Renew_Li
         owners[297111] = 1060;  // F5_RvR_LGuard_Fi_Ae
         owners[297112] = 986;  // F5_RvR_LGuard_El_Ae
         owners[297113] = 1060;  // F5_RvR_DGuard_Fi_Ae
@@ -79297,18 +79248,18 @@ internal static class BattleCycles
         owners[297154] = 61;  // F5_PvP_DGuard_Gu_Ae
         owners[297155] = 64;  // F5_PvP_DGuard_Wi_Ae
         owners[297156] = 878;  // F5_PvP_DGuard_Pr_Ae
-        owners[297163] = 1336;  // BGuard_TowerChiefF4A_Ver47
-        owners[297165] = 1336;  // BGuard_TowerChiefF4B_Ver47
-        owners[297168] = 1336;  // BGuard_TowerChiefF4A_Ver47
-        owners[297170] = 1336;  // BGuard_TowerChiefF4B_Ver47
-        owners[297173] = 1336;  // BGuard_TowerChiefF4A_Ver47
-        owners[297175] = 1336;  // BGuard_TowerChiefF4B_Ver47
+        owners[297163] = 1335;  // BGuard_TowerChiefF4A_Ver47
+        owners[297165] = 1335;  // BGuard_TowerChiefF4B_Ver47
+        owners[297168] = 1335;  // BGuard_TowerChiefF4A_Ver47
+        owners[297170] = 1335;  // BGuard_TowerChiefF4B_Ver47
+        owners[297173] = 1335;  // BGuard_TowerChiefF4A_Ver47
+        owners[297175] = 1335;  // BGuard_TowerChiefF4B_Ver47
         owners[297178] = 1053;  // LDF5_DisputeRvR_Strike_As
-        owners[297179] = 1337;  // LDF5_DisputeRvR_Hide_As
-        owners[297180] = 1338;  // LDF5_DisputeRvR_Stumble_Ri
-        owners[297181] = 1339;  // LDF5_DisputeRvR_Debuff_Ba
+        owners[297179] = 1336;  // LDF5_DisputeRvR_Hide_As
+        owners[297180] = 1337;  // LDF5_DisputeRvR_Stumble_Ri
+        owners[297181] = 1338;  // LDF5_DisputeRvR_Debuff_Ba
         owners[297182] = 1054;  // LDF5_DisputePvP_Strike_Gu
-        owners[297183] = 1340;  // LDF5_DisputePvP_Debuff_Ba
+        owners[297183] = 1339;  // LDF5_DisputePvP_Debuff_Ba
         owners[297221] = 882;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[297222] = 720;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[297223] = 884;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
@@ -79378,8 +79329,8 @@ internal static class BattleCycles
         owners[297349] = 49;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297350] = 49;  // DirectPortal_LGuard_Charge_PM_Fe2
         owners[297351] = 49;  // DirectPortal_DGuard_Charge_PM_Fe2
-        owners[297357] = 1329;  // LDF5_LGuard_Safety_Chase_Fn
-        owners[297358] = 1330;  // LDF5_LGuard_Safety_Hold_Rn
+        owners[297357] = 1328;  // LDF5_LGuard_Safety_Chase_Fn
+        owners[297358] = 1329;  // LDF5_LGuard_Safety_Hold_Rn
         owners[297359] = 879;  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
         owners[297360] = 879;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[297361] = 881;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
@@ -79392,8 +79343,8 @@ internal static class BattleCycles
         owners[297368] = 888;  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
         owners[297369] = 886;  // LDF5_LGuard_DisputePvP_Strike_MRArea_We
         owners[297370] = 884;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pe
-        owners[297371] = 1332;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
-        owners[297372] = 1333;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
+        owners[297371] = 1331;  // LDF5_LGuard_DisputePvP_Support_Ele_Ee
+        owners[297372] = 1332;  // LDF5_LDGuard_DisputePvP_ElementalFire_60_An
         owners[297373] = 983;  // LDF5_LGuard_DisputeRvR_Defend_PM_Ke
         owners[297374] = 979;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
         owners[297375] = 980;  // LDF5_LGuard_DisputeRvR_Hide_PM_Ae
@@ -79454,46 +79405,46 @@ internal static class BattleCycles
         owners[297430] = 49;  // DirectPortal_LGuard_Charge_PM_Fe2
         owners[297431] = 49;  // DirectPortal_DGuard_Charge_PM_Fe2
         owners[297437] = 1055;  // Gab1_Gaurd_Defend_PM_Kn
-        owners[297438] = 1341;  // Gab1_Gaurd_Support_HBuff_Pn
+        owners[297438] = 1340;  // Gab1_Gaurd_Support_HBuff_Pn
         owners[297439] = 1056;  // Gab1_Gaurd_Charge_PM_Fn
-        owners[297452] = 1342;  // Gab1_LGuard_Boss_02
-        owners[297453] = 1343;  // Gab1_VritraGuard_Boss_02
+        owners[297452] = 1341;  // Gab1_LGuard_Boss_02
+        owners[297453] = 1342;  // Gab1_VritraGuard_Boss_02
         owners[297476] = 882;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[297477] = 57;  // F5_PvP_DGuard_Fi_Ae
         owners[297478] = 57;  // F5_PvP_DGuard_Fi_Ae
-        owners[297483] = 1344;  // Gab1_DGuard_05
+        owners[297483] = 1343;  // Gab1_DGuard_05
         owners[297503] = 732;  // Gab1_VritraGuard_BossKiller_01
         owners[297504] = 732;  // Gab1_VritraGuard_BossKiller_02
-        owners[297505] = 1345;  // F5_RvR_Trap
-        owners[297506] = 1345;  // F5_RvR_Trap
+        owners[297505] = 1344;  // F5_RvR_Trap
+        owners[297506] = 1344;  // F5_RvR_Trap
         owners[297507] = 984;  // F5_RvR_LGuard_Ra_Ae
         owners[297508] = 984;  // F5_RvR_DGuard_Ra_Ae
         owners[297509] = 987;  // LDF5_DisputeRvR_Watch_NoBroad_Ra
         owners[297510] = 1055;  // Gab1_Gaurd_Defend_PM_Kn
-        owners[297511] = 1341;  // Gab1_Gaurd_Support_HBuff_Pn
+        owners[297511] = 1340;  // Gab1_Gaurd_Support_HBuff_Pn
+        owners[297512] = 1056;  // Gab1_Gaurd_Charge_PM_Fn
     }
 
     private static void OnEnterAttackStateOf43(Dictionary<int, int> owners)
     {
-        owners[297512] = 1056;  // Gab1_Gaurd_Charge_PM_Fn
-        owners[297519] = 1346;  // LDF5_Fortress_VGuardBoss_Fi
-        owners[297520] = 1347;  // LDF5_Fortress_VGuardBoss_Ra
-        owners[297521] = 1348;  // LDF5_Fortress_VGuardBoss_Wi
-        owners[297522] = 1349;  // LDF5_Fortress_LGuardBoss_Fi
-        owners[297523] = 1350;  // LDF5_Fortress_LGuardBoss_Ra
-        owners[297524] = 1351;  // LDF5_Fortress_LGuardBoss_Wi
-        owners[297525] = 1349;  // LDF5_Fortress_DGuardBoss_Fi
-        owners[297526] = 1350;  // LDF5_Fortress_DGuardBoss_Ra
-        owners[297527] = 1352;  // LDF5_Fortress_DGuardBoss_Wi
+        owners[297519] = 1345;  // LDF5_Fortress_VGuardBoss_Fi
+        owners[297520] = 1346;  // LDF5_Fortress_VGuardBoss_Ra
+        owners[297521] = 1347;  // LDF5_Fortress_VGuardBoss_Wi
+        owners[297522] = 1348;  // LDF5_Fortress_LGuardBoss_Fi
+        owners[297523] = 1349;  // LDF5_Fortress_LGuardBoss_Ra
+        owners[297524] = 1350;  // LDF5_Fortress_LGuardBoss_Wi
+        owners[297525] = 1348;  // LDF5_Fortress_DGuardBoss_Fi
+        owners[297526] = 1349;  // LDF5_Fortress_DGuardBoss_Ra
+        owners[297527] = 1351;  // LDF5_Fortress_DGuardBoss_Wi
         owners[297541] = 989;  // LDF5_Fortress_Guard_As
-        owners[700448] = 1353;  // ND2_WhHC1
-        owners[700449] = 1353;  // ND2_WhHC2
-        owners[702230] = 1354;  // LDF5_LFunc_Combat
-        owners[702231] = 1354;  // LDF5_DFunc_Combat
-        owners[702234] = 1354;  // LDF5_LFunc_Combat
-        owners[702235] = 1354;  // LDF5_DFunc_Combat
-        owners[702238] = 1354;  // LDF5_LFunc_Combat
-        owners[702239] = 1354;  // LDF5_DFunc_Combat
+        owners[700448] = 1352;  // ND2_WhHC1
+        owners[700449] = 1352;  // ND2_WhHC2
+        owners[702230] = 1353;  // LDF5_LFunc_Combat
+        owners[702231] = 1353;  // LDF5_DFunc_Combat
+        owners[702234] = 1353;  // LDF5_LFunc_Combat
+        owners[702235] = 1353;  // LDF5_DFunc_Combat
+        owners[702238] = 1353;  // LDF5_LFunc_Combat
+        owners[702239] = 1353;  // LDF5_DFunc_Combat
         owners[702521] = 3;  // DGuard_FeA
         owners[702522] = 3;  // DGuard_FeA
         owners[702527] = 3;  // DGuard_FeA
@@ -79793,10 +79744,10 @@ internal static class BattleCycles
         owners[799370] = 5;  // DFunction
         owners[799406] = 28;  // DGuard_WeB
         owners[799528] = 308;  // Elim_Mercenary2
-        owners[799648] = 1355;  // IDYun_Soldier_ND1
+        owners[799648] = 1354;  // IDYun_Soldier_ND1
         owners[799652] = 421;  // IDYun_Soldier_ND2
         owners[799653] = 369;  // IDYun_Soldier_ND3
-        owners[799654] = 1355;  // IDYun_Soldier_ND1
+        owners[799654] = 1354;  // IDYun_Soldier_ND1
         owners[799655] = 421;  // IDYun_Soldier_ND2
         owners[799656] = 369;  // IDYun_Soldier_ND3
         owners[799882] = 5;  // DFunction
@@ -79859,13 +79810,13 @@ internal static class BattleCycles
         owners[800209] = 0;  // LFunction
         owners[800210] = 0;  // LFunction
         owners[800245] = 0;  // LFunction
-        owners[800285] = 1355;  // IDYun_Soldier_ND1
+        owners[800285] = 1354;  // IDYun_Soldier_ND1
         owners[800286] = 421;  // IDYun_Soldier_ND2
         owners[800287] = 369;  // IDYun_Soldier_ND3
-        owners[800288] = 1355;  // IDYun_Soldier_ND1
+        owners[800288] = 1354;  // IDYun_Soldier_ND1
         owners[800289] = 421;  // IDYun_Soldier_ND2
         owners[800290] = 369;  // IDYun_Soldier_ND3
-        owners[800291] = 1355;  // IDYun_Soldier_ND1
+        owners[800291] = 1354;  // IDYun_Soldier_ND1
         owners[800292] = 421;  // IDYun_Soldier_ND2
         owners[800293] = 369;  // IDYun_Soldier_ND3
         owners[800307] = 0;  // LFunction
@@ -79875,11 +79826,11 @@ internal static class BattleCycles
         owners[800315] = 5;  // DFunction
         owners[800316] = 5;  // DFunction
         owners[800317] = 5;  // DFunction
+        owners[800318] = 5;  // DFunction
     }
 
     private static void OnEnterAttackStateOf44(Dictionary<int, int> owners)
     {
-        owners[800318] = 5;  // DFunction
         owners[800370] = 0;  // LFunction
         owners[800371] = 0;  // LFunction
         owners[800372] = 0;  // LFunction
@@ -79903,18 +79854,18 @@ internal static class BattleCycles
         owners[800515] = 0;  // LFunction
         owners[800516] = 5;  // DFunction
         owners[800517] = 5;  // DFunction
-        owners[800522] = 1354;  // LDF5_LFunc_Combat
-        owners[800523] = 1354;  // LDF5_LFunc_Combat
-        owners[800524] = 1354;  // LDF5_DFunc_Combat
-        owners[800525] = 1354;  // LDF5_DFunc_Combat
+        owners[800522] = 1353;  // LDF5_LFunc_Combat
+        owners[800523] = 1353;  // LDF5_LFunc_Combat
+        owners[800524] = 1353;  // LDF5_DFunc_Combat
+        owners[800525] = 1353;  // LDF5_DFunc_Combat
         owners[800526] = 836;  // F5_PvPLight_LGuard_Pr_An
-        owners[800527] = 1334;  // BGuard_CommanderF5_L
+        owners[800527] = 1333;  // BGuard_CommanderF5_L
         owners[800528] = 836;  // F5_PvPLight_DGuard_Pr_An
-        owners[800529] = 1334;  // BGuard_CommanderF5_D
+        owners[800529] = 1333;  // BGuard_CommanderF5_D
         owners[800530] = 54;  // F5_PvPLight_LGuard_Fi_An
         owners[800531] = 57;  // F5_PvP_DGuard_Fi_Ae
         owners[800535] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[800537] = 1356;  // F5_PvP_DGuard_Fi_Ae
+        owners[800537] = 1355;  // F5_PvP_DGuard_Fi_Ae
         owners[800540] = 60;  // F5_PvP_LGuard_Kn_Ae
         owners[800541] = 60;  // F5_PvP_LGuard_Kn_Ae
         owners[800542] = 60;  // F5_PvP_LGuard_Kn_Ae
@@ -79923,325 +79874,325 @@ internal static class BattleCycles
         owners[800552] = 54;  // F5_PvPLight_LGuard_Fi_An
         owners[800556] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800557] = 836;  // F5_PvPLight_DGuard_Pr_An
-        owners[800558] = 1357;  // F5_PvPLight_LGuard_Ra_An
+        owners[800558] = 1356;  // F5_PvPLight_LGuard_Ra_An
         owners[800560] = 54;  // F5_PvPLight_LGuard_Fi_An
         owners[800561] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[800562] = 1357;  // F5_PvPLight_DGuard_Ra_An
+        owners[800562] = 1356;  // F5_PvPLight_DGuard_Ra_An
         owners[800564] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800566] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[800567] = 54;  // F5_PvPLight_DGuard_Fi_An
-        owners[800569] = 1354;  // LDF5_LFunc_Combat
-        owners[800570] = 1354;  // LDF5_LFunc_Combat
-        owners[800571] = 1354;  // LDF5_DFunc_Combat
-        owners[800572] = 1354;  // LDF5_DFunc_Combat
-        owners[800578] = 1354;  // LDF5_LFunc_Combat
-        owners[800579] = 1354;  // LDF5_LFunc_Combat
-        owners[800580] = 1354;  // LDF5_LFunc_Combat
-        owners[800581] = 1354;  // LDF5_LFunc_Combat
-        owners[800582] = 1354;  // LDF5_LFunc_Combat
-        owners[800584] = 1354;  // LDF5_LFunc_Combat
-        owners[800585] = 1354;  // LDF5_LFunc_Combat
-        owners[800586] = 1354;  // LDF5_LFunc_Combat
-        owners[800587] = 1354;  // LDF5_LMerc_Combat
-        owners[800588] = 1354;  // LDF5_LMerc_Combat
-        owners[800589] = 1354;  // LDF5_LMerc_Combat
-        owners[800590] = 1354;  // LDF5_LMerc_Combat
-        owners[800591] = 1354;  // LDF5_LMerc_Combat
-        owners[800592] = 1354;  // LDF5_LMerc_Combat
-        owners[800593] = 1354;  // LDF5_LMerc_Combat
-        owners[800594] = 1354;  // LDF5_LMerc_Combat
-        owners[800595] = 1354;  // LDF5_LMerc_Combat
-        owners[800596] = 1354;  // LDF5_LMerc_Combat
-        owners[800597] = 1354;  // LDF5_LMerc_Combat
-        owners[800598] = 1354;  // LDF5_LMerc_Combat
-        owners[800599] = 1354;  // LDF5_LMerc_Combat
-        owners[800600] = 1354;  // LDF5_LMerc_Combat
-        owners[800601] = 1354;  // LDF5_DFunc_Combat
-        owners[800602] = 1354;  // LDF5_DFunc_Combat
-        owners[800603] = 1354;  // LDF5_DFunc_Combat
-        owners[800604] = 1354;  // LDF5_DFunc_Combat
-        owners[800605] = 1354;  // LDF5_DFunc_Combat
-        owners[800606] = 1354;  // LDF5_DFunc_Combat
-        owners[800607] = 1354;  // LDF5_DFunc_Combat
-        owners[800608] = 1354;  // LDF5_DFunc_Combat
-        owners[800609] = 1354;  // LDF5_DFunc_Combat
-        owners[800610] = 1354;  // LDF5_DMerc_Combat
-        owners[800611] = 1354;  // LDF5_DMerc_Combat
-        owners[800612] = 1354;  // LDF5_DMerc_Combat
-        owners[800613] = 1354;  // LDF5_DMerc_Combat
-        owners[800614] = 1354;  // LDF5_DMerc_Combat
-        owners[800615] = 1354;  // LDF5_DMerc_Combat
-        owners[800616] = 1354;  // LDF5_DMerc_Combat
-        owners[800617] = 1354;  // LDF5_DMerc_Combat
-        owners[800618] = 1354;  // LDF5_DMerc_Combat
-        owners[800619] = 1354;  // LDF5_DMerc_Combat
-        owners[800620] = 1354;  // LDF5_DMerc_Combat
-        owners[800621] = 1354;  // LDF5_DMerc_Combat
-        owners[800622] = 1354;  // LDF5_DMerc_Combat
-        owners[800623] = 1354;  // LDF5_DMerc_Combat
-        owners[800624] = 1354;  // LDF5_LFunc_Combat
-        owners[800625] = 1354;  // LDF5_DFunc_Combat
-        owners[800626] = 1354;  // LDF5_LFunc_Combat
-        owners[800627] = 1354;  // LDF5_LFunc_Combat
-        owners[800628] = 1354;  // LDF5_LFunc_Combat
-        owners[800629] = 1354;  // LDF5_LFunc_Combat
-        owners[800630] = 1354;  // LDF5_LMerc_Combat
-        owners[800631] = 1354;  // LDF5_LMerc_Combat
-        owners[800632] = 1354;  // LDF5_LMerc_Combat
-        owners[800633] = 1354;  // LDF5_DFunc_Combat
-        owners[800634] = 1354;  // LDF5_DFunc_Combat
-        owners[800635] = 1354;  // LDF5_DMerc_Combat
-        owners[800636] = 1354;  // LDF5_DMerc_Combat
-        owners[800637] = 1354;  // LDF5_DMerc_Combat
-        owners[800638] = 1354;  // LDF5_LFunc_Combat
-        owners[800639] = 1354;  // LDF5_LFunc_Combat
-        owners[800640] = 1354;  // LDF5_LFunc_Combat
-        owners[800641] = 1354;  // LDF5_LMerc_Combat
-        owners[800642] = 1354;  // LDF5_LMerc_Combat
-        owners[800643] = 1354;  // LDF5_DFunc_Combat
-        owners[800644] = 1354;  // LDF5_DFunc_Combat
-        owners[800645] = 1354;  // LDF5_DFunc_Combat
-        owners[800646] = 1354;  // LDF5_DMerc_Combat
-        owners[800647] = 1354;  // LDF5_DMerc_Combat
-        owners[800648] = 1354;  // LDF5_LFunc_Combat
-        owners[800649] = 1354;  // LDF5_LMerc_Combat
-        owners[800650] = 1354;  // LDF5_LMerc_Combat
-        owners[800651] = 1354;  // LDF5_LMerc_Combat
-        owners[800652] = 1354;  // LDF5_DFunc_Combat
-        owners[800653] = 1354;  // LDF5_DMerc_Combat
-        owners[800654] = 1354;  // LDF5_DMerc_Combat
-        owners[800655] = 1354;  // LDF5_DMerc_Combat
-        owners[800656] = 1354;  // LDF5_LFunc_Combat
-        owners[800657] = 1354;  // LDF5_LMerc_Combat
-        owners[800658] = 1354;  // LDF5_LMerc_Combat
-        owners[800659] = 1354;  // LDF5_LMerc_Combat
-        owners[800660] = 1354;  // LDF5_DFunc_Combat
-        owners[800661] = 1354;  // LDF5_DMerc_Combat
-        owners[800662] = 1354;  // LDF5_DMerc_Combat
-        owners[800663] = 1354;  // LDF5_DMerc_Combat
-        owners[800664] = 1354;  // LDF5_LFunc_Combat
-        owners[800665] = 1354;  // LDF5_LMerc_Combat
-        owners[800666] = 1354;  // LDF5_LMerc_Combat
-        owners[800667] = 1354;  // LDF5_LMerc_Combat
-        owners[800668] = 1354;  // LDF5_LMerc_Combat
-        owners[800669] = 1354;  // LDF5_LMerc_Combat
-        owners[800670] = 1354;  // LDF5_DFunc_Combat
-        owners[800671] = 1354;  // LDF5_DMerc_Combat
-        owners[800672] = 1354;  // LDF5_DMerc_Combat
-        owners[800673] = 1354;  // LDF5_DMerc_Combat
-        owners[800674] = 1354;  // LDF5_DMerc_Combat
-        owners[800675] = 1354;  // LDF5_DMerc_Combat
-        owners[800676] = 1354;  // LDF5_LFunc_Combat
-        owners[800677] = 1354;  // LDF5_LMerc_Combat
-        owners[800678] = 1354;  // LDF5_LMerc_Combat
-        owners[800679] = 1354;  // LDF5_LMerc_Combat
-        owners[800680] = 1354;  // LDF5_LMerc_Combat
-        owners[800681] = 1354;  // LDF5_LMerc_Combat
-        owners[800682] = 1354;  // LDF5_DFunc_Combat
-        owners[800683] = 1354;  // LDF5_DMerc_Combat
-        owners[800684] = 1354;  // LDF5_DMerc_Combat
-        owners[800685] = 1354;  // LDF5_DMerc_Combat
-        owners[800686] = 1354;  // LDF5_DMerc_Combat
-        owners[800687] = 1354;  // LDF5_DMerc_Combat
-        owners[800688] = 1354;  // LDF5_LFunc_Combat
-        owners[800689] = 1354;  // LDF5_LMerc_Combat
-        owners[800690] = 1354;  // LDF5_LMerc_Combat
-        owners[800691] = 1354;  // LDF5_LMerc_Combat
-        owners[800692] = 1354;  // LDF5_LMerc_Combat
-        owners[800693] = 1354;  // LDF5_DFunc_Combat
-        owners[800694] = 1354;  // LDF5_DMerc_Combat
-        owners[800695] = 1354;  // LDF5_DMerc_Combat
-        owners[800696] = 1354;  // LDF5_DMerc_Combat
-        owners[800697] = 1354;  // LDF5_DMerc_Combat
-        owners[800698] = 1354;  // LDF5_LFunc_Combat
-        owners[800699] = 1354;  // LDF5_LMerc_Combat
-        owners[800700] = 1354;  // LDF5_LMerc_Combat
-        owners[800701] = 1354;  // LDF5_LMerc_Combat
-        owners[800702] = 1354;  // LDF5_LMerc_Combat
-        owners[800703] = 1354;  // LDF5_DFunc_Combat
-        owners[800704] = 1354;  // LDF5_DMerc_Combat
-        owners[800705] = 1354;  // LDF5_DMerc_Combat
-        owners[800706] = 1354;  // LDF5_DMerc_Combat
-        owners[800707] = 1354;  // LDF5_DMerc_Combat
-        owners[800708] = 1354;  // LDF5_LFunc_Combat
-        owners[800709] = 1354;  // LDF5_LMerc_Combat
-        owners[800710] = 1354;  // LDF5_LMerc_Combat
-        owners[800711] = 1354;  // LDF5_LMerc_Combat
-        owners[800712] = 1354;  // LDF5_LMerc_Combat
-        owners[800713] = 1354;  // LDF5_DFunc_Combat
-        owners[800714] = 1354;  // LDF5_DMerc_Combat
-        owners[800715] = 1354;  // LDF5_DMerc_Combat
-        owners[800716] = 1354;  // LDF5_DMerc_Combat
-        owners[800717] = 1354;  // LDF5_DMerc_Combat
-        owners[800718] = 1354;  // LDF5_LFunc_Combat
-        owners[800719] = 1354;  // LDF5_LMerc_Combat
-        owners[800720] = 1354;  // LDF5_LMerc_Combat
-        owners[800721] = 1354;  // LDF5_LMerc_Combat
-        owners[800722] = 1354;  // LDF5_DFunc_Combat
-        owners[800723] = 1354;  // LDF5_DFunc_Combat
-        owners[800724] = 1354;  // LDF5_DMerc_Combat
-        owners[800725] = 1354;  // LDF5_DMerc_Combat
-        owners[800726] = 1354;  // LDF5_LFunc_Combat
-        owners[800727] = 1354;  // LDF5_LMerc_Combat
-        owners[800728] = 1354;  // LDF5_LMerc_Combat
-        owners[800729] = 1354;  // LDF5_LMerc_Combat
-        owners[800730] = 1354;  // LDF5_DFunc_Combat
-        owners[800731] = 1354;  // LDF5_DMerc_Combat
-        owners[800732] = 1354;  // LDF5_DMerc_Combat
-        owners[800733] = 1354;  // LDF5_DMerc_Combat
-        owners[800734] = 1354;  // LDF5_LFunc_Combat
-        owners[800736] = 1354;  // LDF5_LMerc_Combat
-        owners[800737] = 1354;  // LDF5_LMerc_Combat
-        owners[800738] = 1354;  // LDF5_LMerc_Combat
-        owners[800739] = 1354;  // LDF5_DFunc_Combat
-        owners[800741] = 1354;  // LDF5_DMerc_Combat
-        owners[800742] = 1354;  // LDF5_DMerc_Combat
-        owners[800743] = 1354;  // LDF5_DMerc_Combat
-        owners[800744] = 1354;  // LDF5_LFunc_Combat
-        owners[800745] = 1354;  // LDF5_LFunc_Combat
-        owners[800746] = 1354;  // LDF5_LMerc_Combat
-        owners[800747] = 1354;  // LDF5_DFunc_Combat
-        owners[800748] = 1354;  // LDF5_DFunc_Combat
-        owners[800749] = 1354;  // LDF5_DMerc_Combat
-        owners[800750] = 1354;  // LDF5_LFunc_Combat
-        owners[800751] = 1354;  // LDF5_LMerc_Combat
-        owners[800752] = 1354;  // LDF5_LMerc_Combat
-        owners[800753] = 1354;  // LDF5_LMerc_Combat
-        owners[800754] = 1354;  // LDF5_LMerc_Combat
-        owners[800755] = 1354;  // LDF5_DFunc_Combat
-        owners[800756] = 1354;  // LDF5_DMerc_Combat
-        owners[800757] = 1354;  // LDF5_DMerc_Combat
-        owners[800758] = 1354;  // LDF5_DMerc_Combat
-        owners[800759] = 1354;  // LDF5_DMerc_Combat
-        owners[800760] = 1354;  // LDF5_LFunc_Combat
-        owners[800761] = 1354;  // LDF5_LFunc_Combat
-        owners[800762] = 1354;  // LDF5_LFunc_Combat
-        owners[800763] = 1354;  // LDF5_LMerc_Combat
-        owners[800764] = 1354;  // LDF5_LMerc_Combat
-        owners[800765] = 1354;  // LDF5_DFunc_Combat
-        owners[800766] = 1354;  // LDF5_DFunc_Combat
-        owners[800767] = 1354;  // LDF5_DFunc_Combat
-        owners[800768] = 1354;  // LDF5_DMerc_Combat
-        owners[800769] = 1354;  // LDF5_DMerc_Combat
-        owners[800770] = 1354;  // LDF5_LFunc_Combat
-        owners[800771] = 1354;  // LDF5_LMerc_Combat
-        owners[800772] = 1354;  // LDF5_LMerc_Combat
-        owners[800773] = 1354;  // LDF5_DFunc_Combat
-        owners[800774] = 1354;  // LDF5_DMerc_Combat
-        owners[800775] = 1354;  // LDF5_DMerc_Combat
-        owners[800776] = 1354;  // LDF5_LFunc_Combat
-        owners[800777] = 1354;  // LDF5_LFunc_Combat
-        owners[800778] = 1354;  // LDF5_LMerc_Combat
-        owners[800779] = 1354;  // LDF5_LMerc_Combat
-        owners[800780] = 1354;  // LDF5_DFunc_Combat
-        owners[800781] = 1354;  // LDF5_DFunc_Combat
-        owners[800782] = 1354;  // LDF5_DMerc_Combat
-        owners[800783] = 1354;  // LDF5_DMerc_Combat
-        owners[800784] = 1354;  // LDF5_LFunc_Combat
-        owners[800785] = 1354;  // LDF5_LMerc_Combat
-        owners[800786] = 1354;  // LDF5_LMerc_Combat
-        owners[800787] = 1354;  // LDF5_DFunc_Combat
-        owners[800788] = 1354;  // LDF5_DFunc_Combat
-        owners[800789] = 1354;  // LDF5_DMerc_Combat
-        owners[800790] = 1354;  // LDF5_LFunc_Combat
-        owners[800791] = 1354;  // LDF5_LMerc_Combat
-        owners[800792] = 1354;  // LDF5_LMerc_Combat
-        owners[800793] = 1354;  // LDF5_LMerc_Combat
-        owners[800794] = 1354;  // LDF5_DFunc_Combat
-        owners[800795] = 1354;  // LDF5_DMerc_Combat
-        owners[800796] = 1354;  // LDF5_DMerc_Combat
-        owners[800797] = 1354;  // LDF5_DMerc_Combat
-        owners[800798] = 1354;  // LDF5_LFunc_Combat
-        owners[800799] = 1354;  // LDF5_LFunc_Combat
-        owners[800800] = 1354;  // LDF5_LMerc_Combat
-        owners[800801] = 1354;  // LDF5_LMerc_Combat
-        owners[800802] = 1354;  // LDF5_LMerc_Combat
-        owners[800803] = 1354;  // LDF5_DFunc_Combat
-        owners[800804] = 1354;  // LDF5_DFunc_Combat
-        owners[800805] = 1354;  // LDF5_DMerc_Combat
-        owners[800806] = 1354;  // LDF5_DMerc_Combat
-        owners[800807] = 1354;  // LDF5_DMerc_Combat
-        owners[800808] = 1354;  // LDF5_LFunc_Combat
-        owners[800809] = 1354;  // LDF5_LMerc_Combat
-        owners[800810] = 1354;  // LDF5_LMerc_Combat
-        owners[800811] = 1354;  // LDF5_LMerc_Combat
-        owners[800812] = 1354;  // LDF5_DFunc_Combat
-        owners[800813] = 1354;  // LDF5_DMerc_Combat
-        owners[800814] = 1354;  // LDF5_DMerc_Combat
-        owners[800815] = 1354;  // LDF5_DMerc_Combat
+        owners[800569] = 1353;  // LDF5_LFunc_Combat
+        owners[800570] = 1353;  // LDF5_LFunc_Combat
+        owners[800571] = 1353;  // LDF5_DFunc_Combat
+        owners[800572] = 1353;  // LDF5_DFunc_Combat
+        owners[800578] = 1353;  // LDF5_LFunc_Combat
+        owners[800579] = 1353;  // LDF5_LFunc_Combat
+        owners[800580] = 1353;  // LDF5_LFunc_Combat
+        owners[800581] = 1353;  // LDF5_LFunc_Combat
+        owners[800582] = 1353;  // LDF5_LFunc_Combat
+        owners[800584] = 1353;  // LDF5_LFunc_Combat
+        owners[800585] = 1353;  // LDF5_LFunc_Combat
+        owners[800586] = 1353;  // LDF5_LFunc_Combat
+        owners[800587] = 1353;  // LDF5_LMerc_Combat
+        owners[800588] = 1353;  // LDF5_LMerc_Combat
+        owners[800589] = 1353;  // LDF5_LMerc_Combat
+        owners[800590] = 1353;  // LDF5_LMerc_Combat
+        owners[800591] = 1353;  // LDF5_LMerc_Combat
+        owners[800592] = 1353;  // LDF5_LMerc_Combat
+        owners[800593] = 1353;  // LDF5_LMerc_Combat
+        owners[800594] = 1353;  // LDF5_LMerc_Combat
+        owners[800595] = 1353;  // LDF5_LMerc_Combat
+        owners[800596] = 1353;  // LDF5_LMerc_Combat
+        owners[800597] = 1353;  // LDF5_LMerc_Combat
+        owners[800598] = 1353;  // LDF5_LMerc_Combat
+        owners[800599] = 1353;  // LDF5_LMerc_Combat
+        owners[800600] = 1353;  // LDF5_LMerc_Combat
+        owners[800601] = 1353;  // LDF5_DFunc_Combat
+        owners[800602] = 1353;  // LDF5_DFunc_Combat
+        owners[800603] = 1353;  // LDF5_DFunc_Combat
+        owners[800604] = 1353;  // LDF5_DFunc_Combat
+        owners[800605] = 1353;  // LDF5_DFunc_Combat
+        owners[800606] = 1353;  // LDF5_DFunc_Combat
+        owners[800607] = 1353;  // LDF5_DFunc_Combat
+        owners[800608] = 1353;  // LDF5_DFunc_Combat
+        owners[800609] = 1353;  // LDF5_DFunc_Combat
+        owners[800610] = 1353;  // LDF5_DMerc_Combat
+        owners[800611] = 1353;  // LDF5_DMerc_Combat
+        owners[800612] = 1353;  // LDF5_DMerc_Combat
+        owners[800613] = 1353;  // LDF5_DMerc_Combat
+        owners[800614] = 1353;  // LDF5_DMerc_Combat
+        owners[800615] = 1353;  // LDF5_DMerc_Combat
+        owners[800616] = 1353;  // LDF5_DMerc_Combat
+        owners[800617] = 1353;  // LDF5_DMerc_Combat
+        owners[800618] = 1353;  // LDF5_DMerc_Combat
+        owners[800619] = 1353;  // LDF5_DMerc_Combat
+        owners[800620] = 1353;  // LDF5_DMerc_Combat
+        owners[800621] = 1353;  // LDF5_DMerc_Combat
+        owners[800622] = 1353;  // LDF5_DMerc_Combat
+        owners[800623] = 1353;  // LDF5_DMerc_Combat
+        owners[800624] = 1353;  // LDF5_LFunc_Combat
+        owners[800625] = 1353;  // LDF5_DFunc_Combat
+        owners[800626] = 1353;  // LDF5_LFunc_Combat
+        owners[800627] = 1353;  // LDF5_LFunc_Combat
+        owners[800628] = 1353;  // LDF5_LFunc_Combat
+        owners[800629] = 1353;  // LDF5_LFunc_Combat
+        owners[800630] = 1353;  // LDF5_LMerc_Combat
+        owners[800631] = 1353;  // LDF5_LMerc_Combat
+        owners[800632] = 1353;  // LDF5_LMerc_Combat
+        owners[800633] = 1353;  // LDF5_DFunc_Combat
+        owners[800634] = 1353;  // LDF5_DFunc_Combat
+        owners[800635] = 1353;  // LDF5_DMerc_Combat
+        owners[800636] = 1353;  // LDF5_DMerc_Combat
+        owners[800637] = 1353;  // LDF5_DMerc_Combat
+        owners[800638] = 1353;  // LDF5_LFunc_Combat
+        owners[800639] = 1353;  // LDF5_LFunc_Combat
+        owners[800640] = 1353;  // LDF5_LFunc_Combat
+        owners[800641] = 1353;  // LDF5_LMerc_Combat
+        owners[800642] = 1353;  // LDF5_LMerc_Combat
+        owners[800643] = 1353;  // LDF5_DFunc_Combat
+        owners[800644] = 1353;  // LDF5_DFunc_Combat
+        owners[800645] = 1353;  // LDF5_DFunc_Combat
+        owners[800646] = 1353;  // LDF5_DMerc_Combat
+        owners[800647] = 1353;  // LDF5_DMerc_Combat
+        owners[800648] = 1353;  // LDF5_LFunc_Combat
+        owners[800649] = 1353;  // LDF5_LMerc_Combat
+        owners[800650] = 1353;  // LDF5_LMerc_Combat
+        owners[800651] = 1353;  // LDF5_LMerc_Combat
+        owners[800652] = 1353;  // LDF5_DFunc_Combat
+        owners[800653] = 1353;  // LDF5_DMerc_Combat
+        owners[800654] = 1353;  // LDF5_DMerc_Combat
+        owners[800655] = 1353;  // LDF5_DMerc_Combat
+        owners[800656] = 1353;  // LDF5_LFunc_Combat
+        owners[800657] = 1353;  // LDF5_LMerc_Combat
+        owners[800658] = 1353;  // LDF5_LMerc_Combat
+        owners[800659] = 1353;  // LDF5_LMerc_Combat
+        owners[800660] = 1353;  // LDF5_DFunc_Combat
+        owners[800661] = 1353;  // LDF5_DMerc_Combat
+        owners[800662] = 1353;  // LDF5_DMerc_Combat
+        owners[800663] = 1353;  // LDF5_DMerc_Combat
+        owners[800664] = 1353;  // LDF5_LFunc_Combat
+        owners[800665] = 1353;  // LDF5_LMerc_Combat
+        owners[800666] = 1353;  // LDF5_LMerc_Combat
+        owners[800667] = 1353;  // LDF5_LMerc_Combat
+        owners[800668] = 1353;  // LDF5_LMerc_Combat
+        owners[800669] = 1353;  // LDF5_LMerc_Combat
+        owners[800670] = 1353;  // LDF5_DFunc_Combat
+        owners[800671] = 1353;  // LDF5_DMerc_Combat
+        owners[800672] = 1353;  // LDF5_DMerc_Combat
+        owners[800673] = 1353;  // LDF5_DMerc_Combat
+        owners[800674] = 1353;  // LDF5_DMerc_Combat
+        owners[800675] = 1353;  // LDF5_DMerc_Combat
+        owners[800676] = 1353;  // LDF5_LFunc_Combat
+        owners[800677] = 1353;  // LDF5_LMerc_Combat
+        owners[800678] = 1353;  // LDF5_LMerc_Combat
+        owners[800679] = 1353;  // LDF5_LMerc_Combat
+        owners[800680] = 1353;  // LDF5_LMerc_Combat
+        owners[800681] = 1353;  // LDF5_LMerc_Combat
+        owners[800682] = 1353;  // LDF5_DFunc_Combat
+        owners[800683] = 1353;  // LDF5_DMerc_Combat
+        owners[800684] = 1353;  // LDF5_DMerc_Combat
+        owners[800685] = 1353;  // LDF5_DMerc_Combat
+        owners[800686] = 1353;  // LDF5_DMerc_Combat
+        owners[800687] = 1353;  // LDF5_DMerc_Combat
+        owners[800688] = 1353;  // LDF5_LFunc_Combat
+        owners[800689] = 1353;  // LDF5_LMerc_Combat
+        owners[800690] = 1353;  // LDF5_LMerc_Combat
+        owners[800691] = 1353;  // LDF5_LMerc_Combat
+        owners[800692] = 1353;  // LDF5_LMerc_Combat
+        owners[800693] = 1353;  // LDF5_DFunc_Combat
+        owners[800694] = 1353;  // LDF5_DMerc_Combat
+        owners[800695] = 1353;  // LDF5_DMerc_Combat
+        owners[800696] = 1353;  // LDF5_DMerc_Combat
+        owners[800697] = 1353;  // LDF5_DMerc_Combat
+        owners[800698] = 1353;  // LDF5_LFunc_Combat
+        owners[800699] = 1353;  // LDF5_LMerc_Combat
+        owners[800700] = 1353;  // LDF5_LMerc_Combat
+        owners[800701] = 1353;  // LDF5_LMerc_Combat
+        owners[800702] = 1353;  // LDF5_LMerc_Combat
+        owners[800703] = 1353;  // LDF5_DFunc_Combat
+        owners[800704] = 1353;  // LDF5_DMerc_Combat
+        owners[800705] = 1353;  // LDF5_DMerc_Combat
+        owners[800706] = 1353;  // LDF5_DMerc_Combat
+        owners[800707] = 1353;  // LDF5_DMerc_Combat
+        owners[800708] = 1353;  // LDF5_LFunc_Combat
+        owners[800709] = 1353;  // LDF5_LMerc_Combat
+        owners[800710] = 1353;  // LDF5_LMerc_Combat
+        owners[800711] = 1353;  // LDF5_LMerc_Combat
+        owners[800712] = 1353;  // LDF5_LMerc_Combat
+        owners[800713] = 1353;  // LDF5_DFunc_Combat
+        owners[800714] = 1353;  // LDF5_DMerc_Combat
+        owners[800715] = 1353;  // LDF5_DMerc_Combat
+        owners[800716] = 1353;  // LDF5_DMerc_Combat
+        owners[800717] = 1353;  // LDF5_DMerc_Combat
+        owners[800718] = 1353;  // LDF5_LFunc_Combat
+        owners[800719] = 1353;  // LDF5_LMerc_Combat
+        owners[800720] = 1353;  // LDF5_LMerc_Combat
+        owners[800721] = 1353;  // LDF5_LMerc_Combat
+        owners[800722] = 1353;  // LDF5_DFunc_Combat
+        owners[800723] = 1353;  // LDF5_DFunc_Combat
+        owners[800724] = 1353;  // LDF5_DMerc_Combat
+        owners[800725] = 1353;  // LDF5_DMerc_Combat
+        owners[800726] = 1353;  // LDF5_LFunc_Combat
+        owners[800727] = 1353;  // LDF5_LMerc_Combat
+        owners[800728] = 1353;  // LDF5_LMerc_Combat
+        owners[800729] = 1353;  // LDF5_LMerc_Combat
+        owners[800730] = 1353;  // LDF5_DFunc_Combat
+        owners[800731] = 1353;  // LDF5_DMerc_Combat
+        owners[800732] = 1353;  // LDF5_DMerc_Combat
+        owners[800733] = 1353;  // LDF5_DMerc_Combat
+        owners[800734] = 1353;  // LDF5_LFunc_Combat
+        owners[800736] = 1353;  // LDF5_LMerc_Combat
+        owners[800737] = 1353;  // LDF5_LMerc_Combat
+        owners[800738] = 1353;  // LDF5_LMerc_Combat
+        owners[800739] = 1353;  // LDF5_DFunc_Combat
+        owners[800741] = 1353;  // LDF5_DMerc_Combat
+        owners[800742] = 1353;  // LDF5_DMerc_Combat
+        owners[800743] = 1353;  // LDF5_DMerc_Combat
+        owners[800744] = 1353;  // LDF5_LFunc_Combat
+        owners[800745] = 1353;  // LDF5_LFunc_Combat
+        owners[800746] = 1353;  // LDF5_LMerc_Combat
+        owners[800747] = 1353;  // LDF5_DFunc_Combat
+        owners[800748] = 1353;  // LDF5_DFunc_Combat
+        owners[800749] = 1353;  // LDF5_DMerc_Combat
+        owners[800750] = 1353;  // LDF5_LFunc_Combat
+        owners[800751] = 1353;  // LDF5_LMerc_Combat
+        owners[800752] = 1353;  // LDF5_LMerc_Combat
+        owners[800753] = 1353;  // LDF5_LMerc_Combat
+        owners[800754] = 1353;  // LDF5_LMerc_Combat
+        owners[800755] = 1353;  // LDF5_DFunc_Combat
+        owners[800756] = 1353;  // LDF5_DMerc_Combat
+        owners[800757] = 1353;  // LDF5_DMerc_Combat
+        owners[800758] = 1353;  // LDF5_DMerc_Combat
+        owners[800759] = 1353;  // LDF5_DMerc_Combat
+        owners[800760] = 1353;  // LDF5_LFunc_Combat
+        owners[800761] = 1353;  // LDF5_LFunc_Combat
+        owners[800762] = 1353;  // LDF5_LFunc_Combat
+        owners[800763] = 1353;  // LDF5_LMerc_Combat
+        owners[800764] = 1353;  // LDF5_LMerc_Combat
+        owners[800765] = 1353;  // LDF5_DFunc_Combat
+        owners[800766] = 1353;  // LDF5_DFunc_Combat
+        owners[800767] = 1353;  // LDF5_DFunc_Combat
+        owners[800768] = 1353;  // LDF5_DMerc_Combat
+        owners[800769] = 1353;  // LDF5_DMerc_Combat
+        owners[800770] = 1353;  // LDF5_LFunc_Combat
+        owners[800771] = 1353;  // LDF5_LMerc_Combat
+        owners[800772] = 1353;  // LDF5_LMerc_Combat
+        owners[800773] = 1353;  // LDF5_DFunc_Combat
+        owners[800774] = 1353;  // LDF5_DMerc_Combat
+        owners[800775] = 1353;  // LDF5_DMerc_Combat
+        owners[800776] = 1353;  // LDF5_LFunc_Combat
+        owners[800777] = 1353;  // LDF5_LFunc_Combat
+        owners[800778] = 1353;  // LDF5_LMerc_Combat
+        owners[800779] = 1353;  // LDF5_LMerc_Combat
+        owners[800780] = 1353;  // LDF5_DFunc_Combat
+        owners[800781] = 1353;  // LDF5_DFunc_Combat
+        owners[800782] = 1353;  // LDF5_DMerc_Combat
+        owners[800783] = 1353;  // LDF5_DMerc_Combat
+        owners[800784] = 1353;  // LDF5_LFunc_Combat
+        owners[800785] = 1353;  // LDF5_LMerc_Combat
+        owners[800786] = 1353;  // LDF5_LMerc_Combat
+        owners[800787] = 1353;  // LDF5_DFunc_Combat
+        owners[800788] = 1353;  // LDF5_DFunc_Combat
+        owners[800789] = 1353;  // LDF5_DMerc_Combat
+        owners[800790] = 1353;  // LDF5_LFunc_Combat
+        owners[800791] = 1353;  // LDF5_LMerc_Combat
+        owners[800792] = 1353;  // LDF5_LMerc_Combat
+        owners[800793] = 1353;  // LDF5_LMerc_Combat
+        owners[800794] = 1353;  // LDF5_DFunc_Combat
+        owners[800795] = 1353;  // LDF5_DMerc_Combat
+        owners[800796] = 1353;  // LDF5_DMerc_Combat
+        owners[800797] = 1353;  // LDF5_DMerc_Combat
+        owners[800798] = 1353;  // LDF5_LFunc_Combat
+        owners[800799] = 1353;  // LDF5_LFunc_Combat
+        owners[800800] = 1353;  // LDF5_LMerc_Combat
+        owners[800801] = 1353;  // LDF5_LMerc_Combat
+        owners[800802] = 1353;  // LDF5_LMerc_Combat
+        owners[800803] = 1353;  // LDF5_DFunc_Combat
+        owners[800804] = 1353;  // LDF5_DFunc_Combat
+        owners[800805] = 1353;  // LDF5_DMerc_Combat
+        owners[800806] = 1353;  // LDF5_DMerc_Combat
+        owners[800807] = 1353;  // LDF5_DMerc_Combat
+        owners[800808] = 1353;  // LDF5_LFunc_Combat
+        owners[800809] = 1353;  // LDF5_LMerc_Combat
+        owners[800810] = 1353;  // LDF5_LMerc_Combat
+        owners[800811] = 1353;  // LDF5_LMerc_Combat
+        owners[800812] = 1353;  // LDF5_DFunc_Combat
+        owners[800813] = 1353;  // LDF5_DMerc_Combat
+        owners[800814] = 1353;  // LDF5_DMerc_Combat
+        owners[800815] = 1353;  // LDF5_DMerc_Combat
         owners[800816] = 54;  // F5_PvPLight_LGuard_Fi_An
         owners[800821] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800825] = 54;  // F5_PvPLight_DGuard_Fi_An
-        owners[800849] = 1354;  // LDF5_LFunc_Combat
-        owners[800850] = 1354;  // LDF5_LMerc_Combat
-        owners[800851] = 1354;  // LDF5_LMerc_Combat
-        owners[800852] = 1354;  // LDF5_LFunc_Combat
-        owners[800853] = 1354;  // LDF5_LFunc_Combat
-        owners[800854] = 1354;  // LDF5_LMerc_Combat
-        owners[800855] = 1354;  // LDF5_LMerc_Combat
-        owners[800856] = 1354;  // LDF5_LMerc_Combat
-        owners[800857] = 1354;  // LDF5_LMerc_Combat
-        owners[800858] = 1354;  // LDF5_LMerc_Combat
-        owners[800859] = 1354;  // LDF5_LMerc_Combat
-        owners[800860] = 1354;  // LDF5_DFunc_Combat
-        owners[800861] = 1354;  // LDF5_DMerc_Combat
-        owners[800862] = 1354;  // LDF5_DMerc_Combat
-        owners[800863] = 1354;  // LDF5_DFunc_Combat
-        owners[800864] = 1354;  // LDF5_DFunc_Combat
-        owners[800865] = 1354;  // LDF5_DMerc_Combat
-        owners[800866] = 1354;  // LDF5_DMerc_Combat
-        owners[800867] = 1354;  // LDF5_DMerc_Combat
-        owners[800868] = 1354;  // LDF5_DMerc_Combat
-        owners[800869] = 1354;  // LDF5_DMerc_Combat
-        owners[800870] = 1354;  // LDF5_DMerc_Combat
-        owners[800871] = 1354;  // LDF5_LFunc_Combat
-        owners[800872] = 1354;  // LDF5_LFunc_Combat
-        owners[800873] = 1354;  // LDF5_LFunc_Combat
-        owners[800874] = 1354;  // LDF5_LFunc_Combat
-        owners[800875] = 1354;  // LDF5_LFunc_Combat
-        owners[800877] = 1354;  // LDF5_LMerc_Combat
-        owners[800878] = 1354;  // LDF5_LMerc_Combat
-        owners[800879] = 1354;  // LDF5_LMerc_Combat
-        owners[800880] = 1354;  // LDF5_LMerc_Combat
-        owners[800881] = 1354;  // LDF5_LMerc_Combat
-        owners[800882] = 1354;  // LDF5_DFunc_Combat
-        owners[800883] = 1354;  // LDF5_DFunc_Combat
-        owners[800884] = 1354;  // LDF5_DFunc_Combat
-        owners[800885] = 1354;  // LDF5_DFunc_Combat
-        owners[800886] = 1354;  // LDF5_DFunc_Combat
-        owners[800888] = 1354;  // LDF5_DMerc_Combat
-        owners[800889] = 1354;  // LDF5_DMerc_Combat
-        owners[800890] = 1354;  // LDF5_DMerc_Combat
-        owners[800891] = 1354;  // LDF5_DMerc_Combat
-        owners[800892] = 1354;  // LDF5_DMerc_Combat
-        owners[800893] = 1354;  // LDF5_LFunc_Combat
-        owners[800894] = 1354;  // LDF5_LMerc_Combat
-        owners[800895] = 1354;  // LDF5_LMerc_Combat
-        owners[800896] = 1354;  // LDF5_LFunc_Combat
-        owners[800897] = 1354;  // LDF5_LFunc_Combat
-        owners[800898] = 1354;  // LDF5_LMerc_Combat
-        owners[800899] = 1354;  // LDF5_LMerc_Combat
-        owners[800900] = 1354;  // LDF5_LMerc_Combat
-        owners[800901] = 1354;  // LDF5_LMerc_Combat
-        owners[800902] = 1354;  // LDF5_LMerc_Combat
-        owners[800903] = 1354;  // LDF5_LMerc_Combat
-        owners[800904] = 1354;  // LDF5_DFunc_Combat
-        owners[800905] = 1354;  // LDF5_DMerc_Combat
-        owners[800906] = 1354;  // LDF5_DMerc_Combat
-        owners[800907] = 1354;  // LDF5_DFunc_Combat
-        owners[800908] = 1354;  // LDF5_DFunc_Combat
-        owners[800909] = 1354;  // LDF5_DMerc_Combat
-        owners[800910] = 1354;  // LDF5_DMerc_Combat
-        owners[800911] = 1354;  // LDF5_DMerc_Combat
-        owners[800912] = 1354;  // LDF5_DMerc_Combat
-        owners[800913] = 1354;  // LDF5_DMerc_Combat
-        owners[800914] = 1354;  // LDF5_DMerc_Combat
-        owners[800915] = 1354;  // LDF5_LFunc_Combat
-        owners[800916] = 1354;  // LDF5_LFunc_Combat
-        owners[800917] = 1354;  // LDF5_LFunc_Combat
-        owners[800918] = 1354;  // LDF5_DFunc_Combat
-        owners[800919] = 1354;  // LDF5_DFunc_Combat
-        owners[800920] = 1354;  // LDF5_DFunc_Combat
+        owners[800849] = 1353;  // LDF5_LFunc_Combat
+        owners[800850] = 1353;  // LDF5_LMerc_Combat
+        owners[800851] = 1353;  // LDF5_LMerc_Combat
+        owners[800852] = 1353;  // LDF5_LFunc_Combat
+        owners[800853] = 1353;  // LDF5_LFunc_Combat
+        owners[800854] = 1353;  // LDF5_LMerc_Combat
+        owners[800855] = 1353;  // LDF5_LMerc_Combat
+        owners[800856] = 1353;  // LDF5_LMerc_Combat
+        owners[800857] = 1353;  // LDF5_LMerc_Combat
+        owners[800858] = 1353;  // LDF5_LMerc_Combat
+        owners[800859] = 1353;  // LDF5_LMerc_Combat
+        owners[800860] = 1353;  // LDF5_DFunc_Combat
+        owners[800861] = 1353;  // LDF5_DMerc_Combat
+        owners[800862] = 1353;  // LDF5_DMerc_Combat
+        owners[800863] = 1353;  // LDF5_DFunc_Combat
+        owners[800864] = 1353;  // LDF5_DFunc_Combat
+        owners[800865] = 1353;  // LDF5_DMerc_Combat
+        owners[800866] = 1353;  // LDF5_DMerc_Combat
+        owners[800867] = 1353;  // LDF5_DMerc_Combat
+        owners[800868] = 1353;  // LDF5_DMerc_Combat
+        owners[800869] = 1353;  // LDF5_DMerc_Combat
+        owners[800870] = 1353;  // LDF5_DMerc_Combat
+        owners[800871] = 1353;  // LDF5_LFunc_Combat
+        owners[800872] = 1353;  // LDF5_LFunc_Combat
+        owners[800873] = 1353;  // LDF5_LFunc_Combat
+        owners[800874] = 1353;  // LDF5_LFunc_Combat
+        owners[800875] = 1353;  // LDF5_LFunc_Combat
+        owners[800877] = 1353;  // LDF5_LMerc_Combat
+        owners[800878] = 1353;  // LDF5_LMerc_Combat
+        owners[800879] = 1353;  // LDF5_LMerc_Combat
+        owners[800880] = 1353;  // LDF5_LMerc_Combat
+        owners[800881] = 1353;  // LDF5_LMerc_Combat
+        owners[800882] = 1353;  // LDF5_DFunc_Combat
+        owners[800883] = 1353;  // LDF5_DFunc_Combat
+        owners[800884] = 1353;  // LDF5_DFunc_Combat
+        owners[800885] = 1353;  // LDF5_DFunc_Combat
+        owners[800886] = 1353;  // LDF5_DFunc_Combat
+        owners[800888] = 1353;  // LDF5_DMerc_Combat
+        owners[800889] = 1353;  // LDF5_DMerc_Combat
+        owners[800890] = 1353;  // LDF5_DMerc_Combat
+        owners[800891] = 1353;  // LDF5_DMerc_Combat
+        owners[800892] = 1353;  // LDF5_DMerc_Combat
+        owners[800893] = 1353;  // LDF5_LFunc_Combat
+        owners[800894] = 1353;  // LDF5_LMerc_Combat
+        owners[800895] = 1353;  // LDF5_LMerc_Combat
+        owners[800896] = 1353;  // LDF5_LFunc_Combat
+        owners[800897] = 1353;  // LDF5_LFunc_Combat
+        owners[800898] = 1353;  // LDF5_LMerc_Combat
+        owners[800899] = 1353;  // LDF5_LMerc_Combat
+        owners[800900] = 1353;  // LDF5_LMerc_Combat
+        owners[800901] = 1353;  // LDF5_LMerc_Combat
+        owners[800902] = 1353;  // LDF5_LMerc_Combat
+        owners[800903] = 1353;  // LDF5_LMerc_Combat
+        owners[800904] = 1353;  // LDF5_DFunc_Combat
+        owners[800905] = 1353;  // LDF5_DMerc_Combat
+        owners[800906] = 1353;  // LDF5_DMerc_Combat
+        owners[800907] = 1353;  // LDF5_DFunc_Combat
+        owners[800908] = 1353;  // LDF5_DFunc_Combat
+        owners[800909] = 1353;  // LDF5_DMerc_Combat
+        owners[800910] = 1353;  // LDF5_DMerc_Combat
+        owners[800911] = 1353;  // LDF5_DMerc_Combat
+        owners[800912] = 1353;  // LDF5_DMerc_Combat
+        owners[800913] = 1353;  // LDF5_DMerc_Combat
+        owners[800914] = 1353;  // LDF5_DMerc_Combat
+        owners[800915] = 1353;  // LDF5_LFunc_Combat
+        owners[800916] = 1353;  // LDF5_LFunc_Combat
+        owners[800917] = 1353;  // LDF5_LFunc_Combat
+        owners[800918] = 1353;  // LDF5_DFunc_Combat
+        owners[800919] = 1353;  // LDF5_DFunc_Combat
+        owners[800920] = 1353;  // LDF5_DFunc_Combat
         owners[800939] = 0;  // LFunction
         owners[800942] = 5;  // DFunction
         owners[800945] = 0;  // LFunction
@@ -80250,15 +80201,15 @@ internal static class BattleCycles
         owners[800987] = 56;  // F5_PvPLight_DGuard_Wi_An
         owners[800989] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800990] = 56;  // F5_PvPLight_DGuard_Wi_An
-        owners[800991] = 1357;  // F5_PvPLight_DGuard_Ra_An
+        owners[800991] = 1356;  // F5_PvPLight_DGuard_Ra_An
         owners[800992] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800994] = 836;  // F5_PvPLight_DGuard_Pr_An
-        owners[800995] = 1357;  // F5_PvPLight_DGuard_Ra_An
+        owners[800995] = 1356;  // F5_PvPLight_DGuard_Ra_An
         owners[800996] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800998] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[800999] = 56;  // F5_PvPLight_DGuard_Wi_An
         owners[801001] = 57;  // F5_PvP_DGuard_Fi_Ae
-        owners[801002] = 1357;  // F5_PvPLight_DGuard_Ra_An
+        owners[801002] = 1356;  // F5_PvPLight_DGuard_Ra_An
         owners[801003] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[801004] = 836;  // F5_PvPLight_DGuard_Pr_An
         owners[801005] = 54;  // F5_PvPLight_DGuard_Fi_An
@@ -80279,11 +80230,11 @@ internal static class BattleCycles
         owners[801023] = 836;  // F5_PvPLight_LGuard_Pr_An
         owners[801024] = 54;  // F5_PvPLight_LGuard_Fi_An
         owners[801025] = 56;  // F5_PvPLight_LGuard_Wi_An
+        owners[801026] = 887;  // F5_PvP_LGuard_As_Ae_Hide
     }
 
     private static void OnEnterAttackStateOf45(Dictionary<int, int> owners)
     {
-        owners[801026] = 887;  // F5_PvP_LGuard_As_Ae_Hide
         owners[801027] = 64;  // F5_PvP_LGuard_Wi_Ae
         owners[801028] = 836;  // F5_PvPLight_LGuard_Pr_An
         owners[801029] = 54;  // F5_PvPLight_LGuard_Fi_An
@@ -80338,7 +80289,7 @@ internal static class BattleCycles
         owners[801104] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[801105] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[801106] = 56;  // F5_PvPLight_DGuard_Wi_An
-        owners[801107] = 1357;  // F5_PvPLight_DGuard_Ra_An
+        owners[801107] = 1356;  // F5_PvPLight_DGuard_Ra_An
         owners[801108] = 56;  // F5_PvPLight_DGuard_Wi_An
         owners[801109] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[801110] = 54;  // F5_PvPLight_DGuard_Fi_An
@@ -80400,214 +80351,214 @@ internal static class BattleCycles
         owners[801275] = 836;  // F5_PvPLight_LGuard_Pr_An
         owners[801276] = 54;  // F5_PvPLight_DGuard_Fi_An
         owners[801277] = 54;  // F5_PvPLight_LGuard_Fi_An
-        owners[801293] = 1354;  // LDF5_LFunc_Combat
-        owners[801294] = 1354;  // LDF5_DFunc_Combat
-        owners[801338] = 1354;  // LDF5_DMerc_Combat
-        owners[801339] = 1354;  // LDF5_DMerc_Combat
-        owners[801340] = 1354;  // LDF5_DMerc_Combat
-        owners[801341] = 1354;  // LDF5_DMerc_Combat
-        owners[801342] = 1354;  // LDF5_DMerc_Combat
-        owners[801343] = 1354;  // LDF5_DMerc_Combat
-        owners[801345] = 1354;  // LDF5_DMerc_Combat
-        owners[801346] = 1354;  // LDF5_LMerc_Combat
-        owners[801347] = 1354;  // LDF5_LMerc_Combat
-        owners[801348] = 1354;  // LDF5_LMerc_Combat
-        owners[801349] = 1354;  // LDF5_LMerc_Combat
-        owners[801350] = 1354;  // LDF5_LMerc_Combat
-        owners[801351] = 1354;  // LDF5_LMerc_Combat
-        owners[801353] = 1354;  // LDF5_LMerc_Combat
-        owners[801354] = 1354;  // LDF5_DMerc_Combat
-        owners[801355] = 1354;  // LDF5_DMerc_Combat
-        owners[801356] = 1354;  // LDF5_DMerc_Combat
-        owners[801357] = 1354;  // LDF5_DMerc_Combat
-        owners[801358] = 1354;  // LDF5_DMerc_Combat
-        owners[801359] = 1354;  // LDF5_DMerc_Combat
-        owners[801361] = 1354;  // LDF5_DMerc_Combat
-        owners[801362] = 1354;  // LDF5_LMerc_Combat
-        owners[801363] = 1354;  // LDF5_LMerc_Combat
-        owners[801364] = 1354;  // LDF5_LMerc_Combat
-        owners[801365] = 1354;  // LDF5_LMerc_Combat
-        owners[801366] = 1354;  // LDF5_LMerc_Combat
-        owners[801367] = 1354;  // LDF5_LMerc_Combat
-        owners[801369] = 1354;  // LDF5_LMerc_Combat
-        owners[801370] = 1354;  // LDF5_DMerc_Combat
-        owners[801371] = 1354;  // LDF5_DMerc_Combat
-        owners[801372] = 1354;  // LDF5_DMerc_Combat
-        owners[801373] = 1354;  // LDF5_DMerc_Combat
-        owners[801374] = 1354;  // LDF5_DMerc_Combat
-        owners[801375] = 1354;  // LDF5_DMerc_Combat
-        owners[801377] = 1354;  // LDF5_DMerc_Combat
-        owners[801378] = 1354;  // LDF5_LMerc_Combat
-        owners[801379] = 1354;  // LDF5_LMerc_Combat
-        owners[801380] = 1354;  // LDF5_LMerc_Combat
-        owners[801381] = 1354;  // LDF5_LMerc_Combat
-        owners[801382] = 1354;  // LDF5_LMerc_Combat
-        owners[801383] = 1354;  // LDF5_LMerc_Combat
-        owners[801385] = 1354;  // LDF5_LMerc_Combat
-        owners[801386] = 1354;  // LDF5_DMerc_Combat
-        owners[801387] = 1354;  // LDF5_DMerc_Combat
-        owners[801388] = 1354;  // LDF5_DMerc_Combat
-        owners[801389] = 1354;  // LDF5_DMerc_Combat
-        owners[801390] = 1354;  // LDF5_DMerc_Combat
-        owners[801391] = 1354;  // LDF5_DMerc_Combat
-        owners[801392] = 1354;  // LDF5_DFunc_Combat
-        owners[801393] = 1354;  // LDF5_DFunc_Combat
-        owners[801394] = 1354;  // LDF5_DMerc_Combat
-        owners[801395] = 1354;  // LDF5_DMerc_Combat
-        owners[801396] = 1354;  // LDF5_DMerc_Combat
-        owners[801397] = 1354;  // LDF5_DMerc_Combat
-        owners[801398] = 1354;  // LDF5_DMerc_Combat
-        owners[801400] = 1354;  // LDF5_DFunc_Combat
-        owners[801401] = 1354;  // LDF5_DMerc_Combat
-        owners[801402] = 1354;  // LDF5_LMerc_Combat
-        owners[801403] = 1354;  // LDF5_DMerc_Combat
-        owners[801404] = 1354;  // LDF5_LMerc_Combat
-        owners[801405] = 1354;  // LDF5_DFunc_Combat
-        owners[801406] = 1354;  // LDF5_LFunc_Combat
-        owners[801407] = 1354;  // LDF5_DMerc_Combat
-        owners[801408] = 1354;  // LDF5_LMerc_Combat
-        owners[801409] = 1354;  // LDF5_DMerc_Combat
-        owners[801410] = 1354;  // LDF5_LMerc_Combat
-        owners[801411] = 1354;  // LDF5_DMerc_Combat
-        owners[801412] = 1354;  // LDF5_LMerc_Combat
-        owners[801413] = 1354;  // LDF5_DMerc_Combat
-        owners[801414] = 1354;  // LDF5_LMerc_Combat
-        owners[801415] = 1354;  // LDF5_DFunc_Combat
-        owners[801416] = 1354;  // LDF5_DMerc_Combat
-        owners[801417] = 1354;  // LDF5_LMerc_Combat
-        owners[801418] = 1354;  // LDF5_DMerc_Combat
-        owners[801419] = 1354;  // LDF5_LMerc_Combat
-        owners[801420] = 1354;  // LDF5_DMerc_Combat
-        owners[801421] = 1354;  // LDF5_LMerc_Combat
-        owners[801422] = 1354;  // LDF5_DMerc_Combat
-        owners[801423] = 1354;  // LDF5_LMerc_Combat
-        owners[801424] = 1354;  // LDF5_DMerc_Combat
-        owners[801425] = 1354;  // LDF5_LMerc_Combat
-        owners[801426] = 1354;  // LDF5_DMerc_Combat
-        owners[801427] = 1354;  // LDF5_LMerc_Combat
-        owners[801428] = 1354;  // LDF5_DMerc_Combat
-        owners[801429] = 1354;  // LDF5_LMerc_Combat
-        owners[801430] = 1354;  // LDF5_DMerc_Combat
-        owners[801431] = 1354;  // LDF5_LMerc_Combat
-        owners[801432] = 1354;  // LDF5_DMerc_Combat
-        owners[801433] = 1354;  // LDF5_LMerc_Combat
-        owners[801434] = 1354;  // LDF5_DMerc_Combat
-        owners[801435] = 1354;  // LDF5_LMerc_Combat
-        owners[801436] = 1354;  // LDF5_DMerc_Combat
-        owners[801437] = 1354;  // LDF5_LMerc_Combat
-        owners[801438] = 1354;  // LDF5_DMerc_Combat
-        owners[801439] = 1354;  // LDF5_LMerc_Combat
-        owners[801440] = 1354;  // LDF5_DMerc_Combat
-        owners[801441] = 1354;  // LDF5_LMerc_Combat
-        owners[801442] = 1354;  // LDF5_DMerc_Combat
-        owners[801443] = 1354;  // LDF5_LMerc_Combat
-        owners[801444] = 1354;  // LDF5_DFunc_Combat
-        owners[801445] = 1354;  // LDF5_LFunc_Combat
-        owners[801446] = 1354;  // LDF5_DMerc_Combat
-        owners[801447] = 1354;  // LDF5_LMerc_Combat
-        owners[801448] = 1354;  // LDF5_DFunc_Combat
-        owners[801449] = 1354;  // LDF5_LFunc_Combat
-        owners[801450] = 1354;  // LDF5_DMerc_Combat
-        owners[801451] = 1354;  // LDF5_LMerc_Combat
-        owners[801452] = 1354;  // LDF5_LMerc_Combat
-        owners[801453] = 1354;  // LDF5_LMerc_Combat
-        owners[801454] = 1354;  // LDF5_LMerc_Combat
-        owners[801455] = 1354;  // LDF5_LMerc_Combat
-        owners[801456] = 1354;  // LDF5_LMerc_Combat
-        owners[801457] = 1354;  // LDF5_LMerc_Combat
-        owners[801458] = 1354;  // LDF5_LFunc_Combat
-        owners[801459] = 1354;  // LDF5_LFunc_Combat
-        owners[801460] = 1354;  // LDF5_LFunc_Combat
-        owners[801461] = 1354;  // LDF5_LMerc_Combat
-        owners[801462] = 1354;  // LDF5_LMerc_Combat
-        owners[801463] = 1354;  // LDF5_LMerc_Combat
-        owners[801464] = 1354;  // LDF5_LMerc_Combat
-        owners[801465] = 1354;  // LDF5_LMerc_Combat
-        owners[801467] = 1354;  // LDF5_LFunc_Combat
-        owners[801468] = 1354;  // LDF5_LFunc_Combat
-        owners[801470] = 1354;  // LDF5_DMerc_Combat
-        owners[801471] = 1354;  // LDF5_DMerc_Combat
-        owners[801472] = 1354;  // LDF5_LMerc_Combat
-        owners[801473] = 1354;  // LDF5_DMerc_Combat
-        owners[801474] = 1354;  // LDF5_LMerc_Combat
-        owners[801475] = 1354;  // LDF5_DMerc_Combat
-        owners[801476] = 1354;  // LDF5_LMerc_Combat
-        owners[801477] = 1354;  // LDF5_DMerc_Combat
-        owners[801478] = 1354;  // LDF5_LMerc_Combat
-        owners[801481] = 1354;  // LDF5_DMerc_Combat
-        owners[801482] = 1354;  // LDF5_LMerc_Combat
-        owners[801483] = 1354;  // LDF5_DMerc_Combat
-        owners[801484] = 1354;  // LDF5_LMerc_Combat
-        owners[801485] = 1354;  // LDF5_DMerc_Combat
-        owners[801486] = 1354;  // LDF5_LMerc_Combat
-        owners[801487] = 1354;  // LDF5_DMerc_Combat
-        owners[801488] = 1354;  // LDF5_LMerc_Combat
-        owners[801489] = 1354;  // LDF5_DMerc_Combat
-        owners[801492] = 1354;  // LDF5_DMerc_Combat
-        owners[801493] = 1354;  // LDF5_LMerc_Combat
-        owners[801494] = 1354;  // LDF5_DMerc_Combat
-        owners[801495] = 1354;  // LDF5_LMerc_Combat
-        owners[801497] = 1354;  // LDF5_LFunc_Combat
-        owners[801504] = 1354;  // LDF5_DFunc_Combat
-        owners[801505] = 1354;  // LDF5_LFunc_Combat
-        owners[801506] = 1354;  // LDF5_DMerc_Combat
-        owners[801507] = 1354;  // LDF5_LMerc_Combat
-        owners[801509] = 1354;  // LDF5_DMerc_Combat
-        owners[801510] = 1354;  // LDF5_LMerc_Combat
-        owners[801513] = 1354;  // LDF5_DMerc_Combat
-        owners[801514] = 1354;  // LDF5_LMerc_Combat
-        owners[801515] = 1354;  // LDF5_DMerc_Combat
-        owners[801516] = 1354;  // LDF5_LMerc_Combat
-        owners[801518] = 1354;  // LDF5_DMerc_Combat
-        owners[801519] = 1354;  // LDF5_LMerc_Combat
-        owners[801524] = 1354;  // LDF5_DFunc_Combat
-        owners[801525] = 1354;  // LDF5_LFunc_Combat
-        owners[801529] = 1354;  // LDF5_DFunc_Combat
-        owners[801530] = 1354;  // LDF5_LFunc_Combat
-        owners[801535] = 1354;  // LDF5_DMerc_Combat
-        owners[801536] = 1354;  // LDF5_LMerc_Combat
-        owners[801537] = 1354;  // LDF5_DMerc_Combat
-        owners[801538] = 1354;  // LDF5_LMerc_Combat
-        owners[801539] = 1354;  // LDF5_LMerc_Combat
-        owners[801555] = 1354;  // LDF5_DMerc_Combat
-        owners[801556] = 1354;  // LDF5_LMerc_Combat
-        owners[801558] = 1354;  // LDF5_DMerc_Combat
-        owners[801559] = 1354;  // LDF5_LMerc_Combat
-        owners[801560] = 1354;  // LDF5_DMerc_Combat
-        owners[801561] = 1354;  // LDF5_LMerc_Combat
-        owners[801562] = 1354;  // LDF5_DMerc_Combat
-        owners[801563] = 1354;  // LDF5_LMerc_Combat
-        owners[801566] = 1354;  // LDF5_DMerc_Combat
-        owners[801567] = 1354;  // LDF5_LMerc_Combat
-        owners[801568] = 1354;  // LDF5_DMerc_Combat
-        owners[801569] = 1354;  // LDF5_DMerc_Combat
-        owners[801570] = 1354;  // LDF5_LMerc_Combat
-        owners[801571] = 1354;  // LDF5_LMerc_Combat
-        owners[801657] = 1354;  // LDF5_DMerc_Combat
+        owners[801293] = 1353;  // LDF5_LFunc_Combat
+        owners[801294] = 1353;  // LDF5_DFunc_Combat
+        owners[801338] = 1353;  // LDF5_DMerc_Combat
+        owners[801339] = 1353;  // LDF5_DMerc_Combat
+        owners[801340] = 1353;  // LDF5_DMerc_Combat
+        owners[801341] = 1353;  // LDF5_DMerc_Combat
+        owners[801342] = 1353;  // LDF5_DMerc_Combat
+        owners[801343] = 1353;  // LDF5_DMerc_Combat
+        owners[801345] = 1353;  // LDF5_DMerc_Combat
+        owners[801346] = 1353;  // LDF5_LMerc_Combat
+        owners[801347] = 1353;  // LDF5_LMerc_Combat
+        owners[801348] = 1353;  // LDF5_LMerc_Combat
+        owners[801349] = 1353;  // LDF5_LMerc_Combat
+        owners[801350] = 1353;  // LDF5_LMerc_Combat
+        owners[801351] = 1353;  // LDF5_LMerc_Combat
+        owners[801353] = 1353;  // LDF5_LMerc_Combat
+        owners[801354] = 1353;  // LDF5_DMerc_Combat
+        owners[801355] = 1353;  // LDF5_DMerc_Combat
+        owners[801356] = 1353;  // LDF5_DMerc_Combat
+        owners[801357] = 1353;  // LDF5_DMerc_Combat
+        owners[801358] = 1353;  // LDF5_DMerc_Combat
+        owners[801359] = 1353;  // LDF5_DMerc_Combat
+        owners[801361] = 1353;  // LDF5_DMerc_Combat
+        owners[801362] = 1353;  // LDF5_LMerc_Combat
+        owners[801363] = 1353;  // LDF5_LMerc_Combat
+        owners[801364] = 1353;  // LDF5_LMerc_Combat
+        owners[801365] = 1353;  // LDF5_LMerc_Combat
+        owners[801366] = 1353;  // LDF5_LMerc_Combat
+        owners[801367] = 1353;  // LDF5_LMerc_Combat
+        owners[801369] = 1353;  // LDF5_LMerc_Combat
+        owners[801370] = 1353;  // LDF5_DMerc_Combat
+        owners[801371] = 1353;  // LDF5_DMerc_Combat
+        owners[801372] = 1353;  // LDF5_DMerc_Combat
+        owners[801373] = 1353;  // LDF5_DMerc_Combat
+        owners[801374] = 1353;  // LDF5_DMerc_Combat
+        owners[801375] = 1353;  // LDF5_DMerc_Combat
+        owners[801377] = 1353;  // LDF5_DMerc_Combat
+        owners[801378] = 1353;  // LDF5_LMerc_Combat
+        owners[801379] = 1353;  // LDF5_LMerc_Combat
+        owners[801380] = 1353;  // LDF5_LMerc_Combat
+        owners[801381] = 1353;  // LDF5_LMerc_Combat
+        owners[801382] = 1353;  // LDF5_LMerc_Combat
+        owners[801383] = 1353;  // LDF5_LMerc_Combat
+        owners[801385] = 1353;  // LDF5_LMerc_Combat
+        owners[801386] = 1353;  // LDF5_DMerc_Combat
+        owners[801387] = 1353;  // LDF5_DMerc_Combat
+        owners[801388] = 1353;  // LDF5_DMerc_Combat
+        owners[801389] = 1353;  // LDF5_DMerc_Combat
+        owners[801390] = 1353;  // LDF5_DMerc_Combat
+        owners[801391] = 1353;  // LDF5_DMerc_Combat
+        owners[801392] = 1353;  // LDF5_DFunc_Combat
+        owners[801393] = 1353;  // LDF5_DFunc_Combat
+        owners[801394] = 1353;  // LDF5_DMerc_Combat
+        owners[801395] = 1353;  // LDF5_DMerc_Combat
+        owners[801396] = 1353;  // LDF5_DMerc_Combat
+        owners[801397] = 1353;  // LDF5_DMerc_Combat
+        owners[801398] = 1353;  // LDF5_DMerc_Combat
+        owners[801400] = 1353;  // LDF5_DFunc_Combat
+        owners[801401] = 1353;  // LDF5_DMerc_Combat
+        owners[801402] = 1353;  // LDF5_LMerc_Combat
+        owners[801403] = 1353;  // LDF5_DMerc_Combat
+        owners[801404] = 1353;  // LDF5_LMerc_Combat
+        owners[801405] = 1353;  // LDF5_DFunc_Combat
+        owners[801406] = 1353;  // LDF5_LFunc_Combat
+        owners[801407] = 1353;  // LDF5_DMerc_Combat
+        owners[801408] = 1353;  // LDF5_LMerc_Combat
+        owners[801409] = 1353;  // LDF5_DMerc_Combat
+        owners[801410] = 1353;  // LDF5_LMerc_Combat
+        owners[801411] = 1353;  // LDF5_DMerc_Combat
+        owners[801412] = 1353;  // LDF5_LMerc_Combat
+        owners[801413] = 1353;  // LDF5_DMerc_Combat
+        owners[801414] = 1353;  // LDF5_LMerc_Combat
+        owners[801415] = 1353;  // LDF5_DFunc_Combat
+        owners[801416] = 1353;  // LDF5_DMerc_Combat
+        owners[801417] = 1353;  // LDF5_LMerc_Combat
+        owners[801418] = 1353;  // LDF5_DMerc_Combat
+        owners[801419] = 1353;  // LDF5_LMerc_Combat
+        owners[801420] = 1353;  // LDF5_DMerc_Combat
+        owners[801421] = 1353;  // LDF5_LMerc_Combat
+        owners[801422] = 1353;  // LDF5_DMerc_Combat
+        owners[801423] = 1353;  // LDF5_LMerc_Combat
+        owners[801424] = 1353;  // LDF5_DMerc_Combat
+        owners[801425] = 1353;  // LDF5_LMerc_Combat
+        owners[801426] = 1353;  // LDF5_DMerc_Combat
+        owners[801427] = 1353;  // LDF5_LMerc_Combat
+        owners[801428] = 1353;  // LDF5_DMerc_Combat
+        owners[801429] = 1353;  // LDF5_LMerc_Combat
+        owners[801430] = 1353;  // LDF5_DMerc_Combat
+        owners[801431] = 1353;  // LDF5_LMerc_Combat
+        owners[801432] = 1353;  // LDF5_DMerc_Combat
+        owners[801433] = 1353;  // LDF5_LMerc_Combat
+        owners[801434] = 1353;  // LDF5_DMerc_Combat
+        owners[801435] = 1353;  // LDF5_LMerc_Combat
+        owners[801436] = 1353;  // LDF5_DMerc_Combat
+        owners[801437] = 1353;  // LDF5_LMerc_Combat
+        owners[801438] = 1353;  // LDF5_DMerc_Combat
+        owners[801439] = 1353;  // LDF5_LMerc_Combat
+        owners[801440] = 1353;  // LDF5_DMerc_Combat
+        owners[801441] = 1353;  // LDF5_LMerc_Combat
+        owners[801442] = 1353;  // LDF5_DMerc_Combat
+        owners[801443] = 1353;  // LDF5_LMerc_Combat
+        owners[801444] = 1353;  // LDF5_DFunc_Combat
+        owners[801445] = 1353;  // LDF5_LFunc_Combat
+        owners[801446] = 1353;  // LDF5_DMerc_Combat
+        owners[801447] = 1353;  // LDF5_LMerc_Combat
+        owners[801448] = 1353;  // LDF5_DFunc_Combat
+        owners[801449] = 1353;  // LDF5_LFunc_Combat
+        owners[801450] = 1353;  // LDF5_DMerc_Combat
+        owners[801451] = 1353;  // LDF5_LMerc_Combat
+        owners[801452] = 1353;  // LDF5_LMerc_Combat
+        owners[801453] = 1353;  // LDF5_LMerc_Combat
+        owners[801454] = 1353;  // LDF5_LMerc_Combat
+        owners[801455] = 1353;  // LDF5_LMerc_Combat
+        owners[801456] = 1353;  // LDF5_LMerc_Combat
+        owners[801457] = 1353;  // LDF5_LMerc_Combat
+        owners[801458] = 1353;  // LDF5_LFunc_Combat
+        owners[801459] = 1353;  // LDF5_LFunc_Combat
+        owners[801460] = 1353;  // LDF5_LFunc_Combat
+        owners[801461] = 1353;  // LDF5_LMerc_Combat
+        owners[801462] = 1353;  // LDF5_LMerc_Combat
+        owners[801463] = 1353;  // LDF5_LMerc_Combat
+        owners[801464] = 1353;  // LDF5_LMerc_Combat
+        owners[801465] = 1353;  // LDF5_LMerc_Combat
+        owners[801467] = 1353;  // LDF5_LFunc_Combat
+        owners[801468] = 1353;  // LDF5_LFunc_Combat
+        owners[801470] = 1353;  // LDF5_DMerc_Combat
+        owners[801471] = 1353;  // LDF5_DMerc_Combat
+        owners[801472] = 1353;  // LDF5_LMerc_Combat
+        owners[801473] = 1353;  // LDF5_DMerc_Combat
+        owners[801474] = 1353;  // LDF5_LMerc_Combat
+        owners[801475] = 1353;  // LDF5_DMerc_Combat
+        owners[801476] = 1353;  // LDF5_LMerc_Combat
+        owners[801477] = 1353;  // LDF5_DMerc_Combat
+        owners[801478] = 1353;  // LDF5_LMerc_Combat
+        owners[801481] = 1353;  // LDF5_DMerc_Combat
+        owners[801482] = 1353;  // LDF5_LMerc_Combat
+        owners[801483] = 1353;  // LDF5_DMerc_Combat
+        owners[801484] = 1353;  // LDF5_LMerc_Combat
+        owners[801485] = 1353;  // LDF5_DMerc_Combat
+        owners[801486] = 1353;  // LDF5_LMerc_Combat
+        owners[801487] = 1353;  // LDF5_DMerc_Combat
+        owners[801488] = 1353;  // LDF5_LMerc_Combat
+        owners[801489] = 1353;  // LDF5_DMerc_Combat
+        owners[801492] = 1353;  // LDF5_DMerc_Combat
+        owners[801493] = 1353;  // LDF5_LMerc_Combat
+        owners[801494] = 1353;  // LDF5_DMerc_Combat
+        owners[801495] = 1353;  // LDF5_LMerc_Combat
+        owners[801497] = 1353;  // LDF5_LFunc_Combat
+        owners[801504] = 1353;  // LDF5_DFunc_Combat
+        owners[801505] = 1353;  // LDF5_LFunc_Combat
+        owners[801506] = 1353;  // LDF5_DMerc_Combat
+        owners[801507] = 1353;  // LDF5_LMerc_Combat
+        owners[801509] = 1353;  // LDF5_DMerc_Combat
+        owners[801510] = 1353;  // LDF5_LMerc_Combat
+        owners[801513] = 1353;  // LDF5_DMerc_Combat
+        owners[801514] = 1353;  // LDF5_LMerc_Combat
+        owners[801515] = 1353;  // LDF5_DMerc_Combat
+        owners[801516] = 1353;  // LDF5_LMerc_Combat
+        owners[801518] = 1353;  // LDF5_DMerc_Combat
+        owners[801519] = 1353;  // LDF5_LMerc_Combat
+        owners[801524] = 1353;  // LDF5_DFunc_Combat
+        owners[801525] = 1353;  // LDF5_LFunc_Combat
+        owners[801529] = 1353;  // LDF5_DFunc_Combat
+        owners[801530] = 1353;  // LDF5_LFunc_Combat
+        owners[801535] = 1353;  // LDF5_DMerc_Combat
+        owners[801536] = 1353;  // LDF5_LMerc_Combat
+        owners[801537] = 1353;  // LDF5_DMerc_Combat
+        owners[801538] = 1353;  // LDF5_LMerc_Combat
+        owners[801539] = 1353;  // LDF5_LMerc_Combat
+        owners[801555] = 1353;  // LDF5_DMerc_Combat
+        owners[801556] = 1353;  // LDF5_LMerc_Combat
+        owners[801558] = 1353;  // LDF5_DMerc_Combat
+        owners[801559] = 1353;  // LDF5_LMerc_Combat
+        owners[801560] = 1353;  // LDF5_DMerc_Combat
+        owners[801561] = 1353;  // LDF5_LMerc_Combat
+        owners[801562] = 1353;  // LDF5_DMerc_Combat
+        owners[801563] = 1353;  // LDF5_LMerc_Combat
+        owners[801566] = 1353;  // LDF5_DMerc_Combat
+        owners[801567] = 1353;  // LDF5_LMerc_Combat
+        owners[801568] = 1353;  // LDF5_DMerc_Combat
+        owners[801569] = 1353;  // LDF5_DMerc_Combat
+        owners[801570] = 1353;  // LDF5_LMerc_Combat
+        owners[801571] = 1353;  // LDF5_LMerc_Combat
+        owners[801657] = 1353;  // LDF5_DMerc_Combat
         owners[801667] = 0;  // LFunction
         owners[801668] = 5;  // DFunction
         owners[801669] = 0;  // LFunction
         owners[801670] = 5;  // DFunction
-        owners[801678] = 1354;  // LDF5_DFunc_Combat
-        owners[801679] = 1354;  // LDF5_LFunc_Combat
-        owners[801680] = 1354;  // LDF5_DFunc_Combat
-        owners[801681] = 1354;  // LDF5_LFunc_Combat
-        owners[801682] = 1354;  // LDF5_DFunc_Combat
-        owners[801683] = 1354;  // LDF5_LFunc_Combat
-        owners[801684] = 1354;  // LDF5_DFunc_Combat
-        owners[801685] = 1354;  // LDF5_LFunc_Combat
-        owners[801686] = 1354;  // LDF5_DFunc_Combat
-        owners[801687] = 1354;  // LDF5_LFunc_Combat
-        owners[801688] = 1354;  // LDF5_DFunc_Combat
-        owners[801689] = 1354;  // LDF5_LFunc_Combat
-        owners[801690] = 1354;  // LDF5_DFunc_Combat
-        owners[801691] = 1354;  // LDF5_LFunc_Combat
-        owners[801692] = 1354;  // LDF5_DFunc_Combat
-        owners[801693] = 1354;  // LDF5_LFunc_Combat
-        owners[801694] = 1354;  // LDF5_DFunc_Combat
-        owners[801695] = 1354;  // LDF5_LFunc_Combat
-        owners[801696] = 1354;  // LDF5_DFunc_Combat
-        owners[801697] = 1354;  // LDF5_LFunc_Combat
+        owners[801678] = 1353;  // LDF5_DFunc_Combat
+        owners[801679] = 1353;  // LDF5_LFunc_Combat
+        owners[801680] = 1353;  // LDF5_DFunc_Combat
+        owners[801681] = 1353;  // LDF5_LFunc_Combat
+        owners[801682] = 1353;  // LDF5_DFunc_Combat
+        owners[801683] = 1353;  // LDF5_LFunc_Combat
+        owners[801684] = 1353;  // LDF5_DFunc_Combat
+        owners[801685] = 1353;  // LDF5_LFunc_Combat
+        owners[801686] = 1353;  // LDF5_DFunc_Combat
+        owners[801687] = 1353;  // LDF5_LFunc_Combat
+        owners[801688] = 1353;  // LDF5_DFunc_Combat
+        owners[801689] = 1353;  // LDF5_LFunc_Combat
+        owners[801690] = 1353;  // LDF5_DFunc_Combat
+        owners[801691] = 1353;  // LDF5_LFunc_Combat
+        owners[801692] = 1353;  // LDF5_DFunc_Combat
+        owners[801693] = 1353;  // LDF5_LFunc_Combat
+        owners[801694] = 1353;  // LDF5_DFunc_Combat
+        owners[801695] = 1353;  // LDF5_LFunc_Combat
+        owners[801696] = 1353;  // LDF5_DFunc_Combat
+        owners[801697] = 1353;  // LDF5_LFunc_Combat
         owners[801698] = 5;  // DFunction
         owners[801699] = 0;  // LFunction
         owners[801700] = 5;  // DFunction
@@ -80656,47 +80607,47 @@ internal static class BattleCycles
         owners[801743] = 0;  // LFunction
         owners[801744] = 5;  // DFunction
         owners[801745] = 0;  // LFunction
-        owners[801747] = 1354;  // LDF5_DFunc_Combat
-        owners[801749] = 1354;  // LDF5_LMerc_Combat
-        owners[801750] = 1354;  // LDF5_DMerc_Combat
-        owners[801754] = 1354;  // LDF5_LMerc_Combat
+        owners[801747] = 1353;  // LDF5_DFunc_Combat
+        owners[801749] = 1353;  // LDF5_LMerc_Combat
+        owners[801750] = 1353;  // LDF5_DMerc_Combat
+        owners[801754] = 1353;  // LDF5_LMerc_Combat
         owners[801756] = 5;  // DFunction
         owners[801757] = 0;  // LFunction
-        owners[801781] = 1354;  // LDF5_DMerc_Combat
-        owners[801782] = 1354;  // LDF5_DMerc_Combat
-        owners[801783] = 1354;  // LDF5_DMerc_Combat
-        owners[801784] = 1354;  // LDF5_DMerc_Combat
-        owners[801785] = 1354;  // LDF5_LMerc_Combat
-        owners[801786] = 1354;  // LDF5_LMerc_Combat
-        owners[801787] = 1354;  // LDF5_LMerc_Combat
-        owners[801788] = 1354;  // LDF5_LMerc_Combat
-        owners[801968] = 1354;  // LDF5_LMerc_Combat
-        owners[801969] = 1354;  // LDF5_DMerc_Combat
-        owners[801970] = 1354;  // LDF5_LMerc_Combat
-        owners[801971] = 1354;  // LDF5_DMerc_Combat
+        owners[801781] = 1353;  // LDF5_DMerc_Combat
+        owners[801782] = 1353;  // LDF5_DMerc_Combat
+        owners[801783] = 1353;  // LDF5_DMerc_Combat
+        owners[801784] = 1353;  // LDF5_DMerc_Combat
+        owners[801785] = 1353;  // LDF5_LMerc_Combat
+        owners[801786] = 1353;  // LDF5_LMerc_Combat
+        owners[801787] = 1353;  // LDF5_LMerc_Combat
+        owners[801788] = 1353;  // LDF5_LMerc_Combat
+        owners[801968] = 1353;  // LDF5_LMerc_Combat
+        owners[801969] = 1353;  // LDF5_DMerc_Combat
+        owners[801970] = 1353;  // LDF5_LMerc_Combat
+        owners[801971] = 1353;  // LDF5_DMerc_Combat
         owners[802009] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802055] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[802056] = 1354;  // LDF5_LMerc_Combat
-        owners[802057] = 1354;  // LDF5_DMerc_Combat
+        owners[802056] = 1353;  // LDF5_LMerc_Combat
+        owners[802057] = 1353;  // LDF5_DMerc_Combat
         owners[802186] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802187] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802188] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[802211] = 1354;  // LDF5_LMerc_Combat
-        owners[802212] = 1354;  // LDF5_DMerc_Combat
+        owners[802211] = 1353;  // LDF5_LMerc_Combat
+        owners[802212] = 1353;  // LDF5_DMerc_Combat
+        owners[802213] = 1353;  // LDF5_LMerc_Combat
     }
 
     private static void OnEnterAttackStateOf46(Dictionary<int, int> owners)
     {
-        owners[802213] = 1354;  // LDF5_LMerc_Combat
-        owners[802214] = 1354;  // LDF5_DMerc_Combat
-        owners[802215] = 1354;  // LDF5_LMerc_Combat
-        owners[802216] = 1354;  // LDF5_LMerc_Combat
-        owners[802217] = 1354;  // LDF5_DMerc_Combat
-        owners[802218] = 1354;  // LDF5_DMerc_Combat
-        owners[802227] = 1354;  // LDF5_DMerc_Combat
-        owners[802228] = 1354;  // LDF5_LMerc_Combat
-        owners[802229] = 1354;  // LDF5_DMerc_Combat
-        owners[802230] = 1354;  // LDF5_LMerc_Combat
+        owners[802214] = 1353;  // LDF5_DMerc_Combat
+        owners[802215] = 1353;  // LDF5_LMerc_Combat
+        owners[802216] = 1353;  // LDF5_LMerc_Combat
+        owners[802217] = 1353;  // LDF5_DMerc_Combat
+        owners[802218] = 1353;  // LDF5_DMerc_Combat
+        owners[802227] = 1353;  // LDF5_DMerc_Combat
+        owners[802228] = 1353;  // LDF5_LMerc_Combat
+        owners[802229] = 1353;  // LDF5_DMerc_Combat
+        owners[802230] = 1353;  // LDF5_LMerc_Combat
         owners[802231] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802232] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802233] = 54;  // F5_PvPLight_LGuard_Kn_An
@@ -80704,48 +80655,48 @@ internal static class BattleCycles
         owners[802378] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802379] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802383] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[802385] = 1354;  // LDF5_LMerc_Combat
-        owners[802386] = 1354;  // LDF5_DMerc_Combat
-        owners[802387] = 1354;  // LDF5_LMerc_Combat
-        owners[802388] = 1354;  // LDF5_DMerc_Combat
-        owners[802389] = 1354;  // LDF5_LMerc_Combat
-        owners[802390] = 1354;  // LDF5_DFunc_Combat
-        owners[802391] = 1354;  // LDF5_LMerc_Combat
-        owners[802392] = 1354;  // LDF5_DMerc_Combat
-        owners[802393] = 1354;  // LDF5_LMerc_Combat
-        owners[802394] = 1354;  // LDF5_DMerc_Combat
-        owners[802395] = 1354;  // LDF5_LMerc_Combat
-        owners[802396] = 1354;  // LDF5_DMerc_Combat
-        owners[802397] = 1354;  // LDF5_LMerc_Combat
-        owners[802398] = 1354;  // LDF5_DMerc_Combat
-        owners[802399] = 1354;  // LDF5_LMerc_Combat
-        owners[802400] = 1354;  // LDF5_DFunc_Combat
-        owners[802401] = 1354;  // LDF5_LMerc_Combat
-        owners[802402] = 1354;  // LDF5_DMerc_Combat
-        owners[802403] = 1354;  // LDF5_LMerc_Combat
-        owners[802404] = 1354;  // LDF5_DMerc_Combat
-        owners[802405] = 1354;  // LDF5_LFunc_Combat
-        owners[802406] = 1354;  // LDF5_DFunc_Combat
-        owners[802407] = 1354;  // LDF5_LMerc_Combat
-        owners[802408] = 1354;  // LDF5_DMerc_Combat
-        owners[802409] = 1354;  // LDF5_LMerc_Combat
-        owners[802410] = 1354;  // LDF5_DMerc_Combat
-        owners[802411] = 1354;  // LDF5_LMerc_Combat
-        owners[802412] = 1354;  // LDF5_DMerc_Combat
-        owners[802413] = 1354;  // LDF5_LMerc_Combat
-        owners[802414] = 1354;  // LDF5_DMerc_Combat
-        owners[802415] = 1354;  // LDF5_LMerc_Combat
-        owners[802416] = 1354;  // LDF5_DMerc_Combat
-        owners[802417] = 1354;  // LDF5_LFunc_Combat
-        owners[802418] = 1354;  // LDF5_DFunc_Combat
-        owners[802419] = 1354;  // LDF5_LMerc_Combat
-        owners[802420] = 1354;  // LDF5_DMerc_Combat
-        owners[802421] = 1354;  // LDF5_LMerc_Combat
-        owners[802422] = 1354;  // LDF5_DMerc_Combat
-        owners[802423] = 1354;  // LDF5_LFunc_Combat
-        owners[802424] = 1354;  // LDF5_DFunc_Combat
-        owners[802425] = 1354;  // LDF5_LMerc_Combat
-        owners[802426] = 1354;  // LDF5_DMerc_Combat
+        owners[802385] = 1353;  // LDF5_LMerc_Combat
+        owners[802386] = 1353;  // LDF5_DMerc_Combat
+        owners[802387] = 1353;  // LDF5_LMerc_Combat
+        owners[802388] = 1353;  // LDF5_DMerc_Combat
+        owners[802389] = 1353;  // LDF5_LMerc_Combat
+        owners[802390] = 1353;  // LDF5_DFunc_Combat
+        owners[802391] = 1353;  // LDF5_LMerc_Combat
+        owners[802392] = 1353;  // LDF5_DMerc_Combat
+        owners[802393] = 1353;  // LDF5_LMerc_Combat
+        owners[802394] = 1353;  // LDF5_DMerc_Combat
+        owners[802395] = 1353;  // LDF5_LMerc_Combat
+        owners[802396] = 1353;  // LDF5_DMerc_Combat
+        owners[802397] = 1353;  // LDF5_LMerc_Combat
+        owners[802398] = 1353;  // LDF5_DMerc_Combat
+        owners[802399] = 1353;  // LDF5_LMerc_Combat
+        owners[802400] = 1353;  // LDF5_DFunc_Combat
+        owners[802401] = 1353;  // LDF5_LMerc_Combat
+        owners[802402] = 1353;  // LDF5_DMerc_Combat
+        owners[802403] = 1353;  // LDF5_LMerc_Combat
+        owners[802404] = 1353;  // LDF5_DMerc_Combat
+        owners[802405] = 1353;  // LDF5_LFunc_Combat
+        owners[802406] = 1353;  // LDF5_DFunc_Combat
+        owners[802407] = 1353;  // LDF5_LMerc_Combat
+        owners[802408] = 1353;  // LDF5_DMerc_Combat
+        owners[802409] = 1353;  // LDF5_LMerc_Combat
+        owners[802410] = 1353;  // LDF5_DMerc_Combat
+        owners[802411] = 1353;  // LDF5_LMerc_Combat
+        owners[802412] = 1353;  // LDF5_DMerc_Combat
+        owners[802413] = 1353;  // LDF5_LMerc_Combat
+        owners[802414] = 1353;  // LDF5_DMerc_Combat
+        owners[802415] = 1353;  // LDF5_LMerc_Combat
+        owners[802416] = 1353;  // LDF5_DMerc_Combat
+        owners[802417] = 1353;  // LDF5_LFunc_Combat
+        owners[802418] = 1353;  // LDF5_DFunc_Combat
+        owners[802419] = 1353;  // LDF5_LMerc_Combat
+        owners[802420] = 1353;  // LDF5_DMerc_Combat
+        owners[802421] = 1353;  // LDF5_LMerc_Combat
+        owners[802422] = 1353;  // LDF5_DMerc_Combat
+        owners[802423] = 1353;  // LDF5_LFunc_Combat
+        owners[802424] = 1353;  // LDF5_DFunc_Combat
+        owners[802425] = 1353;  // LDF5_LMerc_Combat
+        owners[802426] = 1353;  // LDF5_DMerc_Combat
         owners[802443] = 0;  // LFunction
         owners[802444] = 5;  // DFunction
         owners[802445] = 0;  // LFunction
@@ -80759,116 +80710,116 @@ internal static class BattleCycles
         owners[802466] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802467] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802468] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[802550] = 1354;  // LDF5_LMerc_Combat
-        owners[802551] = 1354;  // LDF5_LMerc_Combat
-        owners[802552] = 1354;  // LDF5_DMerc_Combat
-        owners[802553] = 1354;  // LDF5_DMerc_Combat
-        owners[802554] = 1354;  // LDF5_LMerc_Combat
-        owners[802555] = 1354;  // LDF5_LFunc_Combat
-        owners[802556] = 1354;  // LDF5_LMerc_Combat
-        owners[802557] = 1354;  // LDF5_LMerc_Combat
-        owners[802558] = 1354;  // LDF5_LMerc_Combat
-        owners[802559] = 1354;  // LDF5_LMerc_Combat
-        owners[802560] = 1354;  // LDF5_LMerc_Combat
-        owners[802561] = 1354;  // LDF5_LMerc_Combat
-        owners[802562] = 1354;  // LDF5_LMerc_Combat
-        owners[802563] = 1354;  // LDF5_LMerc_Combat
-        owners[802564] = 1354;  // LDF5_LMerc_Combat
-        owners[802565] = 1354;  // LDF5_LMerc_Combat
-        owners[802566] = 1354;  // LDF5_LMerc_Combat
-        owners[802567] = 1354;  // LDF5_LMerc_Combat
-        owners[802568] = 1354;  // LDF5_LMerc_Combat
-        owners[802569] = 1354;  // LDF5_LMerc_Combat
-        owners[802570] = 1354;  // LDF5_LMerc_Combat
-        owners[802571] = 1354;  // LDF5_DMerc_Combat
-        owners[802572] = 1354;  // LDF5_DMerc_Combat
-        owners[802573] = 1354;  // LDF5_DMerc_Combat
-        owners[802574] = 1354;  // LDF5_DMerc_Combat
-        owners[802575] = 1354;  // LDF5_DMerc_Combat
-        owners[802576] = 1354;  // LDF5_DMerc_Combat
-        owners[802577] = 1354;  // LDF5_DMerc_Combat
-        owners[802578] = 1354;  // LDF5_DMerc_Combat
-        owners[802579] = 1354;  // LDF5_DMerc_Combat
-        owners[802580] = 1354;  // LDF5_DMerc_Combat
-        owners[802581] = 1354;  // LDF5_DMerc_Combat
-        owners[802582] = 1354;  // LDF5_DMerc_Combat
-        owners[802583] = 1354;  // LDF5_DMerc_Combat
-        owners[802584] = 1354;  // LDF5_DMerc_Combat
-        owners[802585] = 1354;  // LDF5_DMerc_Combat
-        owners[802586] = 1354;  // LDF5_DFunc_Combat
-        owners[802587] = 1354;  // LDF5_DMerc_Combat
-        owners[802588] = 1354;  // LDF5_DMerc_Combat
-        owners[802589] = 1354;  // LDF5_DMerc_Combat
-        owners[802590] = 1354;  // LDF5_DMerc_Combat
-        owners[802591] = 1354;  // LDF5_DMerc_Combat
-        owners[802592] = 1354;  // LDF5_DMerc_Combat
-        owners[802593] = 1354;  // LDF5_DMerc_Combat
-        owners[802594] = 1354;  // LDF5_DMerc_Combat
-        owners[802595] = 1354;  // LDF5_DMerc_Combat
-        owners[802596] = 1354;  // LDF5_DMerc_Combat
-        owners[802597] = 1354;  // LDF5_DMerc_Combat
-        owners[802598] = 1354;  // LDF5_DMerc_Combat
-        owners[802599] = 1354;  // LDF5_DMerc_Combat
-        owners[802600] = 1354;  // LDF5_DMerc_Combat
-        owners[802601] = 1354;  // LDF5_DMerc_Combat
-        owners[802602] = 1354;  // LDF5_LMerc_Combat
-        owners[802603] = 1354;  // LDF5_LMerc_Combat
-        owners[802604] = 1354;  // LDF5_LMerc_Combat
-        owners[802605] = 1354;  // LDF5_LMerc_Combat
-        owners[802606] = 1354;  // LDF5_LMerc_Combat
-        owners[802607] = 1354;  // LDF5_LMerc_Combat
-        owners[802608] = 1354;  // LDF5_LMerc_Combat
-        owners[802609] = 1354;  // LDF5_LMerc_Combat
-        owners[802610] = 1354;  // LDF5_LMerc_Combat
-        owners[802611] = 1354;  // LDF5_LMerc_Combat
-        owners[802612] = 1354;  // LDF5_LMerc_Combat
-        owners[802613] = 1354;  // LDF5_LMerc_Combat
-        owners[802614] = 1354;  // LDF5_LMerc_Combat
-        owners[802615] = 1354;  // LDF5_LMerc_Combat
-        owners[802616] = 1354;  // LDF5_LMerc_Combat
-        owners[802617] = 1354;  // LDF5_LMerc_Combat
-        owners[802618] = 1354;  // LDF5_LMerc_Combat
-        owners[802619] = 1354;  // LDF5_LMerc_Combat
-        owners[802620] = 1354;  // LDF5_LMerc_Combat
-        owners[802621] = 1354;  // LDF5_LMerc_Combat
-        owners[802622] = 1354;  // LDF5_LMerc_Combat
-        owners[802623] = 1354;  // LDF5_LMerc_Combat
-        owners[802624] = 1354;  // LDF5_LMerc_Combat
-        owners[802625] = 1354;  // LDF5_LMerc_Combat
-        owners[802626] = 1354;  // LDF5_LMerc_Combat
-        owners[802627] = 1354;  // LDF5_LMerc_Combat
-        owners[802628] = 1354;  // LDF5_LMerc_Combat
-        owners[802629] = 1354;  // LDF5_LMerc_Combat
-        owners[802630] = 1354;  // LDF5_LMerc_Combat
-        owners[802631] = 1354;  // LDF5_LMerc_Combat
-        owners[802632] = 1354;  // LDF5_LMerc_Combat
-        owners[802633] = 1354;  // LDF5_LMerc_Combat
-        owners[802634] = 1354;  // LDF5_LMerc_Combat
-        owners[802635] = 1354;  // LDF5_LFunc_Combat
-        owners[802636] = 1354;  // LDF5_LFunc_Combat
-        owners[802637] = 1354;  // LDF5_LMerc_Combat
-        owners[802638] = 1354;  // LDF5_DMerc_Combat
-        owners[802639] = 1354;  // LDF5_DMerc_Combat
-        owners[802640] = 1354;  // LDF5_DMerc_Combat
-        owners[802641] = 1354;  // LDF5_DMerc_Combat
-        owners[802642] = 1354;  // LDF5_DMerc_Combat
-        owners[802643] = 1354;  // LDF5_DMerc_Combat
-        owners[802644] = 1354;  // LDF5_DMerc_Combat
-        owners[802645] = 1354;  // LDF5_DMerc_Combat
-        owners[802646] = 1354;  // LDF5_DMerc_Combat
-        owners[802647] = 1354;  // LDF5_DMerc_Combat
-        owners[802648] = 1354;  // LDF5_DMerc_Combat
-        owners[802649] = 1354;  // LDF5_DMerc_Combat
-        owners[802650] = 1354;  // LDF5_DMerc_Combat
-        owners[802651] = 1354;  // LDF5_DMerc_Combat
-        owners[802652] = 1354;  // LDF5_DMerc_Combat
-        owners[802653] = 1354;  // LDF5_DMerc_Combat
-        owners[802654] = 1354;  // LDF5_DMerc_Combat
-        owners[802655] = 1354;  // LDF5_DMerc_Combat
-        owners[802656] = 1354;  // LDF5_DMerc_Combat
-        owners[802657] = 1354;  // LDF5_DFunc_Combat
-        owners[802658] = 1354;  // LDF5_DFunc_Combat
-        owners[802659] = 1354;  // LDF5_DMerc_Combat
+        owners[802550] = 1353;  // LDF5_LMerc_Combat
+        owners[802551] = 1353;  // LDF5_LMerc_Combat
+        owners[802552] = 1353;  // LDF5_DMerc_Combat
+        owners[802553] = 1353;  // LDF5_DMerc_Combat
+        owners[802554] = 1353;  // LDF5_LMerc_Combat
+        owners[802555] = 1353;  // LDF5_LFunc_Combat
+        owners[802556] = 1353;  // LDF5_LMerc_Combat
+        owners[802557] = 1353;  // LDF5_LMerc_Combat
+        owners[802558] = 1353;  // LDF5_LMerc_Combat
+        owners[802559] = 1353;  // LDF5_LMerc_Combat
+        owners[802560] = 1353;  // LDF5_LMerc_Combat
+        owners[802561] = 1353;  // LDF5_LMerc_Combat
+        owners[802562] = 1353;  // LDF5_LMerc_Combat
+        owners[802563] = 1353;  // LDF5_LMerc_Combat
+        owners[802564] = 1353;  // LDF5_LMerc_Combat
+        owners[802565] = 1353;  // LDF5_LMerc_Combat
+        owners[802566] = 1353;  // LDF5_LMerc_Combat
+        owners[802567] = 1353;  // LDF5_LMerc_Combat
+        owners[802568] = 1353;  // LDF5_LMerc_Combat
+        owners[802569] = 1353;  // LDF5_LMerc_Combat
+        owners[802570] = 1353;  // LDF5_LMerc_Combat
+        owners[802571] = 1353;  // LDF5_DMerc_Combat
+        owners[802572] = 1353;  // LDF5_DMerc_Combat
+        owners[802573] = 1353;  // LDF5_DMerc_Combat
+        owners[802574] = 1353;  // LDF5_DMerc_Combat
+        owners[802575] = 1353;  // LDF5_DMerc_Combat
+        owners[802576] = 1353;  // LDF5_DMerc_Combat
+        owners[802577] = 1353;  // LDF5_DMerc_Combat
+        owners[802578] = 1353;  // LDF5_DMerc_Combat
+        owners[802579] = 1353;  // LDF5_DMerc_Combat
+        owners[802580] = 1353;  // LDF5_DMerc_Combat
+        owners[802581] = 1353;  // LDF5_DMerc_Combat
+        owners[802582] = 1353;  // LDF5_DMerc_Combat
+        owners[802583] = 1353;  // LDF5_DMerc_Combat
+        owners[802584] = 1353;  // LDF5_DMerc_Combat
+        owners[802585] = 1353;  // LDF5_DMerc_Combat
+        owners[802586] = 1353;  // LDF5_DFunc_Combat
+        owners[802587] = 1353;  // LDF5_DMerc_Combat
+        owners[802588] = 1353;  // LDF5_DMerc_Combat
+        owners[802589] = 1353;  // LDF5_DMerc_Combat
+        owners[802590] = 1353;  // LDF5_DMerc_Combat
+        owners[802591] = 1353;  // LDF5_DMerc_Combat
+        owners[802592] = 1353;  // LDF5_DMerc_Combat
+        owners[802593] = 1353;  // LDF5_DMerc_Combat
+        owners[802594] = 1353;  // LDF5_DMerc_Combat
+        owners[802595] = 1353;  // LDF5_DMerc_Combat
+        owners[802596] = 1353;  // LDF5_DMerc_Combat
+        owners[802597] = 1353;  // LDF5_DMerc_Combat
+        owners[802598] = 1353;  // LDF5_DMerc_Combat
+        owners[802599] = 1353;  // LDF5_DMerc_Combat
+        owners[802600] = 1353;  // LDF5_DMerc_Combat
+        owners[802601] = 1353;  // LDF5_DMerc_Combat
+        owners[802602] = 1353;  // LDF5_LMerc_Combat
+        owners[802603] = 1353;  // LDF5_LMerc_Combat
+        owners[802604] = 1353;  // LDF5_LMerc_Combat
+        owners[802605] = 1353;  // LDF5_LMerc_Combat
+        owners[802606] = 1353;  // LDF5_LMerc_Combat
+        owners[802607] = 1353;  // LDF5_LMerc_Combat
+        owners[802608] = 1353;  // LDF5_LMerc_Combat
+        owners[802609] = 1353;  // LDF5_LMerc_Combat
+        owners[802610] = 1353;  // LDF5_LMerc_Combat
+        owners[802611] = 1353;  // LDF5_LMerc_Combat
+        owners[802612] = 1353;  // LDF5_LMerc_Combat
+        owners[802613] = 1353;  // LDF5_LMerc_Combat
+        owners[802614] = 1353;  // LDF5_LMerc_Combat
+        owners[802615] = 1353;  // LDF5_LMerc_Combat
+        owners[802616] = 1353;  // LDF5_LMerc_Combat
+        owners[802617] = 1353;  // LDF5_LMerc_Combat
+        owners[802618] = 1353;  // LDF5_LMerc_Combat
+        owners[802619] = 1353;  // LDF5_LMerc_Combat
+        owners[802620] = 1353;  // LDF5_LMerc_Combat
+        owners[802621] = 1353;  // LDF5_LMerc_Combat
+        owners[802622] = 1353;  // LDF5_LMerc_Combat
+        owners[802623] = 1353;  // LDF5_LMerc_Combat
+        owners[802624] = 1353;  // LDF5_LMerc_Combat
+        owners[802625] = 1353;  // LDF5_LMerc_Combat
+        owners[802626] = 1353;  // LDF5_LMerc_Combat
+        owners[802627] = 1353;  // LDF5_LMerc_Combat
+        owners[802628] = 1353;  // LDF5_LMerc_Combat
+        owners[802629] = 1353;  // LDF5_LMerc_Combat
+        owners[802630] = 1353;  // LDF5_LMerc_Combat
+        owners[802631] = 1353;  // LDF5_LMerc_Combat
+        owners[802632] = 1353;  // LDF5_LMerc_Combat
+        owners[802633] = 1353;  // LDF5_LMerc_Combat
+        owners[802634] = 1353;  // LDF5_LMerc_Combat
+        owners[802635] = 1353;  // LDF5_LFunc_Combat
+        owners[802636] = 1353;  // LDF5_LFunc_Combat
+        owners[802637] = 1353;  // LDF5_LMerc_Combat
+        owners[802638] = 1353;  // LDF5_DMerc_Combat
+        owners[802639] = 1353;  // LDF5_DMerc_Combat
+        owners[802640] = 1353;  // LDF5_DMerc_Combat
+        owners[802641] = 1353;  // LDF5_DMerc_Combat
+        owners[802642] = 1353;  // LDF5_DMerc_Combat
+        owners[802643] = 1353;  // LDF5_DMerc_Combat
+        owners[802644] = 1353;  // LDF5_DMerc_Combat
+        owners[802645] = 1353;  // LDF5_DMerc_Combat
+        owners[802646] = 1353;  // LDF5_DMerc_Combat
+        owners[802647] = 1353;  // LDF5_DMerc_Combat
+        owners[802648] = 1353;  // LDF5_DMerc_Combat
+        owners[802649] = 1353;  // LDF5_DMerc_Combat
+        owners[802650] = 1353;  // LDF5_DMerc_Combat
+        owners[802651] = 1353;  // LDF5_DMerc_Combat
+        owners[802652] = 1353;  // LDF5_DMerc_Combat
+        owners[802653] = 1353;  // LDF5_DMerc_Combat
+        owners[802654] = 1353;  // LDF5_DMerc_Combat
+        owners[802655] = 1353;  // LDF5_DMerc_Combat
+        owners[802656] = 1353;  // LDF5_DMerc_Combat
+        owners[802657] = 1353;  // LDF5_DFunc_Combat
+        owners[802658] = 1353;  // LDF5_DFunc_Combat
+        owners[802659] = 1353;  // LDF5_DMerc_Combat
         owners[802666] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802667] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[802668] = 54;  // F5_PvPLight_LGuard_Kn_An
@@ -80878,330 +80829,330 @@ internal static class BattleCycles
         owners[804095] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[804096] = 54;  // F5_PvPLight_LGuard_Kn_An
         owners[804097] = 54;  // F5_PvPLight_LGuard_Kn_An
-        owners[804134] = 1354;  // LDF5_LMerc_Combat
-        owners[804135] = 1354;  // LDF5_LMerc_Combat
-        owners[804136] = 1354;  // LDF5_LMerc_Combat
-        owners[804137] = 1354;  // LDF5_LMerc_Combat
-        owners[804138] = 1354;  // LDF5_LMerc_Combat
-        owners[804139] = 1354;  // LDF5_LMerc_Combat
-        owners[804140] = 1354;  // LDF5_LMerc_Combat
-        owners[804141] = 1354;  // LDF5_LMerc_Combat
-        owners[804142] = 1354;  // LDF5_LMerc_Combat
-        owners[804143] = 1354;  // LDF5_LMerc_Combat
-        owners[804144] = 1354;  // LDF5_LMerc_Combat
-        owners[804145] = 1354;  // LDF5_LMerc_Combat
-        owners[804146] = 1354;  // LDF5_LMerc_Combat
-        owners[804147] = 1354;  // LDF5_LMerc_Combat
-        owners[804148] = 1354;  // LDF5_LMerc_Combat
-        owners[804149] = 1354;  // LDF5_LMerc_Combat
-        owners[804150] = 1354;  // LDF5_LMerc_Combat
-        owners[804151] = 1354;  // LDF5_LMerc_Combat
-        owners[804152] = 1354;  // LDF5_LMerc_Combat
-        owners[804153] = 1354;  // LDF5_LMerc_Combat
-        owners[804154] = 1354;  // LDF5_LMerc_Combat
-        owners[804155] = 1354;  // LDF5_LMerc_Combat
-        owners[804156] = 1354;  // LDF5_LMerc_Combat
-        owners[804157] = 1354;  // LDF5_LMerc_Combat
-        owners[804158] = 1354;  // LDF5_LMerc_Combat
-        owners[804159] = 1354;  // LDF5_LMerc_Combat
-        owners[804160] = 1354;  // LDF5_LMerc_Combat
-        owners[804161] = 1354;  // LDF5_LMerc_Combat
-        owners[804162] = 1354;  // LDF5_LMerc_Combat
-        owners[804163] = 1354;  // LDF5_LMerc_Combat
-        owners[804164] = 1354;  // LDF5_LMerc_Combat
-        owners[804165] = 1354;  // LDF5_LMerc_Combat
-        owners[804166] = 1354;  // LDF5_LMerc_Combat
-        owners[804167] = 1354;  // LDF5_LMerc_Combat
-        owners[804168] = 1354;  // LDF5_LMerc_Combat
-        owners[804169] = 1354;  // LDF5_LMerc_Combat
-        owners[804170] = 1354;  // LDF5_LMerc_Combat
-        owners[804171] = 1354;  // LDF5_LMerc_Combat
-        owners[804172] = 1354;  // LDF5_LMerc_Combat
-        owners[804173] = 1354;  // LDF5_LMerc_Combat
-        owners[804174] = 1354;  // LDF5_LMerc_Combat
-        owners[804175] = 1354;  // LDF5_LMerc_Combat
-        owners[804176] = 1354;  // LDF5_LMerc_Combat
-        owners[804177] = 1354;  // LDF5_LMerc_Combat
-        owners[804178] = 1354;  // LDF5_LMerc_Combat
-        owners[804179] = 1354;  // LDF5_LMerc_Combat
-        owners[804180] = 1354;  // LDF5_LMerc_Combat
-        owners[804181] = 1354;  // LDF5_LMerc_Combat
-        owners[804204] = 1354;  // LDF5_LMerc_Combat
-        owners[804205] = 1354;  // LDF5_LMerc_Combat
-        owners[804206] = 1354;  // LDF5_LMerc_Combat
-        owners[804207] = 1354;  // LDF5_LMerc_Combat
-        owners[804208] = 1354;  // LDF5_LMerc_Combat
-        owners[804209] = 1354;  // LDF5_LMerc_Combat
-        owners[804210] = 1354;  // LDF5_LMerc_Combat
-        owners[804211] = 1354;  // LDF5_LMerc_Combat
-        owners[804212] = 1354;  // LDF5_LMerc_Combat
-        owners[804213] = 1354;  // LDF5_LMerc_Combat
-        owners[804214] = 1354;  // LDF5_LMerc_Combat
-        owners[804215] = 1354;  // LDF5_LMerc_Combat
-        owners[804216] = 1354;  // LDF5_LMerc_Combat
-        owners[804217] = 1354;  // LDF5_LMerc_Combat
-        owners[804218] = 1354;  // LDF5_LMerc_Combat
-        owners[804219] = 1354;  // LDF5_LMerc_Combat
-        owners[804220] = 1354;  // LDF5_LMerc_Combat
-        owners[804221] = 1354;  // LDF5_LMerc_Combat
-        owners[804222] = 1354;  // LDF5_LMerc_Combat
-        owners[804223] = 1354;  // LDF5_LMerc_Combat
-        owners[804224] = 1354;  // LDF5_LMerc_Combat
-        owners[804225] = 1354;  // LDF5_LMerc_Combat
-        owners[804226] = 1354;  // LDF5_LMerc_Combat
-        owners[804227] = 1354;  // LDF5_LMerc_Combat
-        owners[804228] = 1354;  // LDF5_LMerc_Combat
-        owners[804229] = 1354;  // LDF5_LMerc_Combat
-        owners[804230] = 1354;  // LDF5_LMerc_Combat
-        owners[804231] = 1354;  // LDF5_LMerc_Combat
-        owners[804232] = 1354;  // LDF5_LMerc_Combat
-        owners[804233] = 1354;  // LDF5_LMerc_Combat
-        owners[804234] = 1354;  // LDF5_LMerc_Combat
-        owners[804235] = 1354;  // LDF5_LMerc_Combat
-        owners[804236] = 1354;  // LDF5_LMerc_Combat
-        owners[804237] = 1354;  // LDF5_LMerc_Combat
-        owners[804238] = 1354;  // LDF5_LMerc_Combat
-        owners[804239] = 1354;  // LDF5_LMerc_Combat
-        owners[804240] = 1354;  // LDF5_LMerc_Combat
-        owners[804241] = 1354;  // LDF5_LMerc_Combat
-        owners[804242] = 1354;  // LDF5_LMerc_Combat
-        owners[804243] = 1354;  // LDF5_LMerc_Combat
-        owners[804244] = 1354;  // LDF5_LMerc_Combat
-        owners[804245] = 1354;  // LDF5_LMerc_Combat
-        owners[804246] = 1354;  // LDF5_LMerc_Combat
-        owners[804247] = 1354;  // LDF5_LMerc_Combat
-        owners[804248] = 1354;  // LDF5_LMerc_Combat
-        owners[804249] = 1354;  // LDF5_LMerc_Combat
-        owners[804250] = 1354;  // LDF5_LMerc_Combat
-        owners[804251] = 1354;  // LDF5_LMerc_Combat
-        owners[804252] = 1354;  // LDF5_LMerc_Combat
-        owners[804253] = 1354;  // LDF5_LMerc_Combat
-        owners[804254] = 1354;  // LDF5_LMerc_Combat
-        owners[804255] = 1354;  // LDF5_LMerc_Combat
-        owners[804256] = 1354;  // LDF5_LMerc_Combat
-        owners[804257] = 1354;  // LDF5_LMerc_Combat
-        owners[804258] = 1354;  // LDF5_LMerc_Combat
-        owners[804259] = 1354;  // LDF5_LMerc_Combat
-        owners[804260] = 1354;  // LDF5_LMerc_Combat
-        owners[804261] = 1354;  // LDF5_LMerc_Combat
-        owners[804262] = 1354;  // LDF5_LMerc_Combat
-        owners[804263] = 1354;  // LDF5_LMerc_Combat
-        owners[804264] = 1354;  // LDF5_LMerc_Combat
-        owners[804265] = 1354;  // LDF5_LMerc_Combat
-        owners[804266] = 1354;  // LDF5_LMerc_Combat
-        owners[804267] = 1354;  // LDF5_LMerc_Combat
-        owners[804268] = 1354;  // LDF5_LMerc_Combat
-        owners[804269] = 1354;  // LDF5_LMerc_Combat
-        owners[804270] = 1354;  // LDF5_LMerc_Combat
-        owners[804271] = 1354;  // LDF5_LMerc_Combat
-        owners[804272] = 1354;  // LDF5_LMerc_Combat
-        owners[804273] = 1354;  // LDF5_LMerc_Combat
-        owners[804274] = 1354;  // LDF5_LMerc_Combat
-        owners[804275] = 1354;  // LDF5_LMerc_Combat
-        owners[804276] = 1354;  // LDF5_LMerc_Combat
-        owners[804277] = 1354;  // LDF5_LMerc_Combat
-        owners[804278] = 1354;  // LDF5_LMerc_Combat
-        owners[804279] = 1354;  // LDF5_LMerc_Combat
-        owners[804280] = 1354;  // LDF5_LMerc_Combat
-        owners[804281] = 1354;  // LDF5_LMerc_Combat
-        owners[804282] = 1354;  // LDF5_LMerc_Combat
-        owners[804283] = 1354;  // LDF5_LMerc_Combat
-        owners[804284] = 1354;  // LDF5_LMerc_Combat
-        owners[804285] = 1354;  // LDF5_LMerc_Combat
-        owners[804286] = 1354;  // LDF5_LMerc_Combat
-        owners[804287] = 1354;  // LDF5_LMerc_Combat
-        owners[804288] = 1354;  // LDF5_LMerc_Combat
-        owners[804289] = 1354;  // LDF5_LMerc_Combat
-        owners[804290] = 1354;  // LDF5_LMerc_Combat
-        owners[804291] = 1354;  // LDF5_LMerc_Combat
-        owners[804292] = 1354;  // LDF5_LMerc_Combat
-        owners[804293] = 1354;  // LDF5_LMerc_Combat
-        owners[804294] = 1354;  // LDF5_LMerc_Combat
-        owners[804295] = 1354;  // LDF5_LMerc_Combat
-        owners[804296] = 1354;  // LDF5_LMerc_Combat
-        owners[804297] = 1354;  // LDF5_LMerc_Combat
-        owners[804298] = 1354;  // LDF5_LMerc_Combat
-        owners[804299] = 1354;  // LDF5_LMerc_Combat
-        owners[804300] = 1354;  // LDF5_LMerc_Combat
-        owners[804301] = 1354;  // LDF5_LMerc_Combat
-        owners[804302] = 1354;  // LDF5_LMerc_Combat
-        owners[804303] = 1354;  // LDF5_LMerc_Combat
-        owners[804304] = 1354;  // LDF5_LMerc_Combat
-        owners[804305] = 1354;  // LDF5_LMerc_Combat
-        owners[804306] = 1354;  // LDF5_LMerc_Combat
-        owners[804307] = 1354;  // LDF5_LMerc_Combat
-        owners[804308] = 1354;  // LDF5_LMerc_Combat
-        owners[804309] = 1354;  // LDF5_LMerc_Combat
-        owners[804310] = 1354;  // LDF5_LMerc_Combat
-        owners[804311] = 1354;  // LDF5_LMerc_Combat
-        owners[804312] = 1354;  // LDF5_LMerc_Combat
-        owners[804313] = 1354;  // LDF5_LMerc_Combat
-        owners[804314] = 1354;  // LDF5_LMerc_Combat
-        owners[804315] = 1354;  // LDF5_LMerc_Combat
-        owners[804316] = 1354;  // LDF5_LMerc_Combat
-        owners[804317] = 1354;  // LDF5_LMerc_Combat
-        owners[804318] = 1354;  // LDF5_LMerc_Combat
-        owners[804319] = 1354;  // LDF5_LMerc_Combat
-        owners[804320] = 1354;  // LDF5_LMerc_Combat
-        owners[804321] = 1354;  // LDF5_LMerc_Combat
-        owners[804322] = 1354;  // LDF5_LMerc_Combat
-        owners[804323] = 1354;  // LDF5_LMerc_Combat
-        owners[804324] = 1354;  // LDF5_LMerc_Combat
-        owners[804325] = 1354;  // LDF5_LMerc_Combat
-        owners[804326] = 1354;  // LDF5_LMerc_Combat
-        owners[804327] = 1354;  // LDF5_LMerc_Combat
-        owners[804328] = 1354;  // LDF5_LMerc_Combat
-        owners[804329] = 1354;  // LDF5_LMerc_Combat
-        owners[804330] = 1354;  // LDF5_LMerc_Combat
-        owners[804331] = 1354;  // LDF5_LMerc_Combat
-        owners[804332] = 1354;  // LDF5_LMerc_Combat
-        owners[804333] = 1354;  // LDF5_LMerc_Combat
-        owners[804334] = 1354;  // LDF5_LMerc_Combat
-        owners[804335] = 1354;  // LDF5_LMerc_Combat
-        owners[804336] = 1354;  // LDF5_LMerc_Combat
-        owners[804337] = 1354;  // LDF5_LMerc_Combat
-        owners[804338] = 1354;  // LDF5_LMerc_Combat
-        owners[804339] = 1354;  // LDF5_LMerc_Combat
-        owners[804340] = 1354;  // LDF5_LMerc_Combat
-        owners[804341] = 1354;  // LDF5_LMerc_Combat
-        owners[804342] = 1354;  // LDF5_LMerc_Combat
-        owners[804343] = 1354;  // LDF5_LMerc_Combat
-        owners[804344] = 1354;  // LDF5_LMerc_Combat
-        owners[804345] = 1354;  // LDF5_LMerc_Combat
-        owners[804346] = 1354;  // LDF5_LMerc_Combat
-        owners[804347] = 1354;  // LDF5_LMerc_Combat
-        owners[804348] = 1354;  // LDF5_LMerc_Combat
-        owners[804349] = 1354;  // LDF5_LMerc_Combat
-        owners[804350] = 1354;  // LDF5_LMerc_Combat
-        owners[804351] = 1354;  // LDF5_LMerc_Combat
-        owners[804352] = 1354;  // LDF5_LMerc_Combat
-        owners[804353] = 1354;  // LDF5_LMerc_Combat
-        owners[804354] = 1354;  // LDF5_LMerc_Combat
-        owners[804355] = 1354;  // LDF5_LMerc_Combat
-        owners[804356] = 1354;  // LDF5_LMerc_Combat
-        owners[804357] = 1354;  // LDF5_LMerc_Combat
-        owners[804358] = 1354;  // LDF5_LMerc_Combat
-        owners[804359] = 1354;  // LDF5_LMerc_Combat
-        owners[804360] = 1354;  // LDF5_LMerc_Combat
-        owners[804361] = 1354;  // LDF5_LMerc_Combat
-        owners[804362] = 1354;  // LDF5_LMerc_Combat
-        owners[804363] = 1354;  // LDF5_LMerc_Combat
-        owners[804364] = 1354;  // LDF5_LMerc_Combat
+        owners[804134] = 1353;  // LDF5_LMerc_Combat
+        owners[804135] = 1353;  // LDF5_LMerc_Combat
+        owners[804136] = 1353;  // LDF5_LMerc_Combat
+        owners[804137] = 1353;  // LDF5_LMerc_Combat
+        owners[804138] = 1353;  // LDF5_LMerc_Combat
+        owners[804139] = 1353;  // LDF5_LMerc_Combat
+        owners[804140] = 1353;  // LDF5_LMerc_Combat
+        owners[804141] = 1353;  // LDF5_LMerc_Combat
+        owners[804142] = 1353;  // LDF5_LMerc_Combat
+        owners[804143] = 1353;  // LDF5_LMerc_Combat
+        owners[804144] = 1353;  // LDF5_LMerc_Combat
+        owners[804145] = 1353;  // LDF5_LMerc_Combat
+        owners[804146] = 1353;  // LDF5_LMerc_Combat
+        owners[804147] = 1353;  // LDF5_LMerc_Combat
+        owners[804148] = 1353;  // LDF5_LMerc_Combat
+        owners[804149] = 1353;  // LDF5_LMerc_Combat
+        owners[804150] = 1353;  // LDF5_LMerc_Combat
+        owners[804151] = 1353;  // LDF5_LMerc_Combat
+        owners[804152] = 1353;  // LDF5_LMerc_Combat
+        owners[804153] = 1353;  // LDF5_LMerc_Combat
+        owners[804154] = 1353;  // LDF5_LMerc_Combat
+        owners[804155] = 1353;  // LDF5_LMerc_Combat
+        owners[804156] = 1353;  // LDF5_LMerc_Combat
+        owners[804157] = 1353;  // LDF5_LMerc_Combat
+        owners[804158] = 1353;  // LDF5_LMerc_Combat
+        owners[804159] = 1353;  // LDF5_LMerc_Combat
+        owners[804160] = 1353;  // LDF5_LMerc_Combat
+        owners[804161] = 1353;  // LDF5_LMerc_Combat
+        owners[804162] = 1353;  // LDF5_LMerc_Combat
+        owners[804163] = 1353;  // LDF5_LMerc_Combat
+        owners[804164] = 1353;  // LDF5_LMerc_Combat
+        owners[804165] = 1353;  // LDF5_LMerc_Combat
+        owners[804166] = 1353;  // LDF5_LMerc_Combat
+        owners[804167] = 1353;  // LDF5_LMerc_Combat
+        owners[804168] = 1353;  // LDF5_LMerc_Combat
+        owners[804169] = 1353;  // LDF5_LMerc_Combat
+        owners[804170] = 1353;  // LDF5_LMerc_Combat
+        owners[804171] = 1353;  // LDF5_LMerc_Combat
+        owners[804172] = 1353;  // LDF5_LMerc_Combat
+        owners[804173] = 1353;  // LDF5_LMerc_Combat
+        owners[804174] = 1353;  // LDF5_LMerc_Combat
+        owners[804175] = 1353;  // LDF5_LMerc_Combat
+        owners[804176] = 1353;  // LDF5_LMerc_Combat
+        owners[804177] = 1353;  // LDF5_LMerc_Combat
+        owners[804178] = 1353;  // LDF5_LMerc_Combat
+        owners[804179] = 1353;  // LDF5_LMerc_Combat
+        owners[804180] = 1353;  // LDF5_LMerc_Combat
+        owners[804181] = 1353;  // LDF5_LMerc_Combat
+        owners[804204] = 1353;  // LDF5_LMerc_Combat
+        owners[804205] = 1353;  // LDF5_LMerc_Combat
+        owners[804206] = 1353;  // LDF5_LMerc_Combat
+        owners[804207] = 1353;  // LDF5_LMerc_Combat
+        owners[804208] = 1353;  // LDF5_LMerc_Combat
+        owners[804209] = 1353;  // LDF5_LMerc_Combat
+        owners[804210] = 1353;  // LDF5_LMerc_Combat
+        owners[804211] = 1353;  // LDF5_LMerc_Combat
+        owners[804212] = 1353;  // LDF5_LMerc_Combat
+        owners[804213] = 1353;  // LDF5_LMerc_Combat
+        owners[804214] = 1353;  // LDF5_LMerc_Combat
+        owners[804215] = 1353;  // LDF5_LMerc_Combat
+        owners[804216] = 1353;  // LDF5_LMerc_Combat
+        owners[804217] = 1353;  // LDF5_LMerc_Combat
+        owners[804218] = 1353;  // LDF5_LMerc_Combat
+        owners[804219] = 1353;  // LDF5_LMerc_Combat
+        owners[804220] = 1353;  // LDF5_LMerc_Combat
+        owners[804221] = 1353;  // LDF5_LMerc_Combat
+        owners[804222] = 1353;  // LDF5_LMerc_Combat
+        owners[804223] = 1353;  // LDF5_LMerc_Combat
+        owners[804224] = 1353;  // LDF5_LMerc_Combat
+        owners[804225] = 1353;  // LDF5_LMerc_Combat
+        owners[804226] = 1353;  // LDF5_LMerc_Combat
+        owners[804227] = 1353;  // LDF5_LMerc_Combat
+        owners[804228] = 1353;  // LDF5_LMerc_Combat
+        owners[804229] = 1353;  // LDF5_LMerc_Combat
+        owners[804230] = 1353;  // LDF5_LMerc_Combat
+        owners[804231] = 1353;  // LDF5_LMerc_Combat
+        owners[804232] = 1353;  // LDF5_LMerc_Combat
+        owners[804233] = 1353;  // LDF5_LMerc_Combat
+        owners[804234] = 1353;  // LDF5_LMerc_Combat
+        owners[804235] = 1353;  // LDF5_LMerc_Combat
+        owners[804236] = 1353;  // LDF5_LMerc_Combat
+        owners[804237] = 1353;  // LDF5_LMerc_Combat
+        owners[804238] = 1353;  // LDF5_LMerc_Combat
+        owners[804239] = 1353;  // LDF5_LMerc_Combat
+        owners[804240] = 1353;  // LDF5_LMerc_Combat
+        owners[804241] = 1353;  // LDF5_LMerc_Combat
+        owners[804242] = 1353;  // LDF5_LMerc_Combat
+        owners[804243] = 1353;  // LDF5_LMerc_Combat
+        owners[804244] = 1353;  // LDF5_LMerc_Combat
+        owners[804245] = 1353;  // LDF5_LMerc_Combat
+        owners[804246] = 1353;  // LDF5_LMerc_Combat
+        owners[804247] = 1353;  // LDF5_LMerc_Combat
+        owners[804248] = 1353;  // LDF5_LMerc_Combat
+        owners[804249] = 1353;  // LDF5_LMerc_Combat
+        owners[804250] = 1353;  // LDF5_LMerc_Combat
+        owners[804251] = 1353;  // LDF5_LMerc_Combat
+        owners[804252] = 1353;  // LDF5_LMerc_Combat
+        owners[804253] = 1353;  // LDF5_LMerc_Combat
+        owners[804254] = 1353;  // LDF5_LMerc_Combat
+        owners[804255] = 1353;  // LDF5_LMerc_Combat
+        owners[804256] = 1353;  // LDF5_LMerc_Combat
+        owners[804257] = 1353;  // LDF5_LMerc_Combat
+        owners[804258] = 1353;  // LDF5_LMerc_Combat
+        owners[804259] = 1353;  // LDF5_LMerc_Combat
+        owners[804260] = 1353;  // LDF5_LMerc_Combat
+        owners[804261] = 1353;  // LDF5_LMerc_Combat
+        owners[804262] = 1353;  // LDF5_LMerc_Combat
+        owners[804263] = 1353;  // LDF5_LMerc_Combat
+        owners[804264] = 1353;  // LDF5_LMerc_Combat
+        owners[804265] = 1353;  // LDF5_LMerc_Combat
+        owners[804266] = 1353;  // LDF5_LMerc_Combat
+        owners[804267] = 1353;  // LDF5_LMerc_Combat
+        owners[804268] = 1353;  // LDF5_LMerc_Combat
+        owners[804269] = 1353;  // LDF5_LMerc_Combat
+        owners[804270] = 1353;  // LDF5_LMerc_Combat
+        owners[804271] = 1353;  // LDF5_LMerc_Combat
+        owners[804272] = 1353;  // LDF5_LMerc_Combat
+        owners[804273] = 1353;  // LDF5_LMerc_Combat
+        owners[804274] = 1353;  // LDF5_LMerc_Combat
+        owners[804275] = 1353;  // LDF5_LMerc_Combat
+        owners[804276] = 1353;  // LDF5_LMerc_Combat
+        owners[804277] = 1353;  // LDF5_LMerc_Combat
+        owners[804278] = 1353;  // LDF5_LMerc_Combat
+        owners[804279] = 1353;  // LDF5_LMerc_Combat
+        owners[804280] = 1353;  // LDF5_LMerc_Combat
+        owners[804281] = 1353;  // LDF5_LMerc_Combat
+        owners[804282] = 1353;  // LDF5_LMerc_Combat
+        owners[804283] = 1353;  // LDF5_LMerc_Combat
+        owners[804284] = 1353;  // LDF5_LMerc_Combat
+        owners[804285] = 1353;  // LDF5_LMerc_Combat
+        owners[804286] = 1353;  // LDF5_LMerc_Combat
+        owners[804287] = 1353;  // LDF5_LMerc_Combat
+        owners[804288] = 1353;  // LDF5_LMerc_Combat
+        owners[804289] = 1353;  // LDF5_LMerc_Combat
+        owners[804290] = 1353;  // LDF5_LMerc_Combat
+        owners[804291] = 1353;  // LDF5_LMerc_Combat
+        owners[804292] = 1353;  // LDF5_LMerc_Combat
+        owners[804293] = 1353;  // LDF5_LMerc_Combat
+        owners[804294] = 1353;  // LDF5_LMerc_Combat
+        owners[804295] = 1353;  // LDF5_LMerc_Combat
+        owners[804296] = 1353;  // LDF5_LMerc_Combat
+        owners[804297] = 1353;  // LDF5_LMerc_Combat
+        owners[804298] = 1353;  // LDF5_LMerc_Combat
+        owners[804299] = 1353;  // LDF5_LMerc_Combat
+        owners[804300] = 1353;  // LDF5_LMerc_Combat
+        owners[804301] = 1353;  // LDF5_LMerc_Combat
+        owners[804302] = 1353;  // LDF5_LMerc_Combat
+        owners[804303] = 1353;  // LDF5_LMerc_Combat
+        owners[804304] = 1353;  // LDF5_LMerc_Combat
+        owners[804305] = 1353;  // LDF5_LMerc_Combat
+        owners[804306] = 1353;  // LDF5_LMerc_Combat
+        owners[804307] = 1353;  // LDF5_LMerc_Combat
+        owners[804308] = 1353;  // LDF5_LMerc_Combat
+        owners[804309] = 1353;  // LDF5_LMerc_Combat
+        owners[804310] = 1353;  // LDF5_LMerc_Combat
+        owners[804311] = 1353;  // LDF5_LMerc_Combat
+        owners[804312] = 1353;  // LDF5_LMerc_Combat
+        owners[804313] = 1353;  // LDF5_LMerc_Combat
+        owners[804314] = 1353;  // LDF5_LMerc_Combat
+        owners[804315] = 1353;  // LDF5_LMerc_Combat
+        owners[804316] = 1353;  // LDF5_LMerc_Combat
+        owners[804317] = 1353;  // LDF5_LMerc_Combat
+        owners[804318] = 1353;  // LDF5_LMerc_Combat
+        owners[804319] = 1353;  // LDF5_LMerc_Combat
+        owners[804320] = 1353;  // LDF5_LMerc_Combat
+        owners[804321] = 1353;  // LDF5_LMerc_Combat
+        owners[804322] = 1353;  // LDF5_LMerc_Combat
+        owners[804323] = 1353;  // LDF5_LMerc_Combat
+        owners[804324] = 1353;  // LDF5_LMerc_Combat
+        owners[804325] = 1353;  // LDF5_LMerc_Combat
+        owners[804326] = 1353;  // LDF5_LMerc_Combat
+        owners[804327] = 1353;  // LDF5_LMerc_Combat
+        owners[804328] = 1353;  // LDF5_LMerc_Combat
+        owners[804329] = 1353;  // LDF5_LMerc_Combat
+        owners[804330] = 1353;  // LDF5_LMerc_Combat
+        owners[804331] = 1353;  // LDF5_LMerc_Combat
+        owners[804332] = 1353;  // LDF5_LMerc_Combat
+        owners[804333] = 1353;  // LDF5_LMerc_Combat
+        owners[804334] = 1353;  // LDF5_LMerc_Combat
+        owners[804335] = 1353;  // LDF5_LMerc_Combat
+        owners[804336] = 1353;  // LDF5_LMerc_Combat
+        owners[804337] = 1353;  // LDF5_LMerc_Combat
+        owners[804338] = 1353;  // LDF5_LMerc_Combat
+        owners[804339] = 1353;  // LDF5_LMerc_Combat
+        owners[804340] = 1353;  // LDF5_LMerc_Combat
+        owners[804341] = 1353;  // LDF5_LMerc_Combat
+        owners[804342] = 1353;  // LDF5_LMerc_Combat
+        owners[804343] = 1353;  // LDF5_LMerc_Combat
+        owners[804344] = 1353;  // LDF5_LMerc_Combat
+        owners[804345] = 1353;  // LDF5_LMerc_Combat
+        owners[804346] = 1353;  // LDF5_LMerc_Combat
+        owners[804347] = 1353;  // LDF5_LMerc_Combat
+        owners[804348] = 1353;  // LDF5_LMerc_Combat
+        owners[804349] = 1353;  // LDF5_LMerc_Combat
+        owners[804350] = 1353;  // LDF5_LMerc_Combat
+        owners[804351] = 1353;  // LDF5_LMerc_Combat
+        owners[804352] = 1353;  // LDF5_LMerc_Combat
+        owners[804353] = 1353;  // LDF5_LMerc_Combat
+        owners[804354] = 1353;  // LDF5_LMerc_Combat
+        owners[804355] = 1353;  // LDF5_LMerc_Combat
+        owners[804356] = 1353;  // LDF5_LMerc_Combat
+        owners[804357] = 1353;  // LDF5_LMerc_Combat
+        owners[804358] = 1353;  // LDF5_LMerc_Combat
+        owners[804359] = 1353;  // LDF5_LMerc_Combat
+        owners[804360] = 1353;  // LDF5_LMerc_Combat
+        owners[804361] = 1353;  // LDF5_LMerc_Combat
+        owners[804362] = 1353;  // LDF5_LMerc_Combat
+        owners[804363] = 1353;  // LDF5_LMerc_Combat
+        owners[804364] = 1353;  // LDF5_LMerc_Combat
+        owners[804365] = 1353;  // LDF5_LMerc_Combat
     }
 
     private static void OnEnterAttackStateOf47(Dictionary<int, int> owners)
     {
-        owners[804365] = 1354;  // LDF5_LMerc_Combat
-        owners[804366] = 1354;  // LDF5_LMerc_Combat
-        owners[804367] = 1354;  // LDF5_LMerc_Combat
-        owners[804368] = 1354;  // LDF5_LMerc_Combat
-        owners[804369] = 1354;  // LDF5_LMerc_Combat
-        owners[804370] = 1354;  // LDF5_LMerc_Combat
-        owners[804371] = 1354;  // LDF5_LMerc_Combat
-        owners[804372] = 1354;  // LDF5_LMerc_Combat
-        owners[804373] = 1354;  // LDF5_LMerc_Combat
-        owners[804374] = 1354;  // LDF5_LMerc_Combat
-        owners[804375] = 1354;  // LDF5_LMerc_Combat
-        owners[804376] = 1354;  // LDF5_LMerc_Combat
-        owners[804377] = 1354;  // LDF5_LMerc_Combat
-        owners[804378] = 1354;  // LDF5_LMerc_Combat
-        owners[804379] = 1354;  // LDF5_LMerc_Combat
-        owners[804380] = 1354;  // LDF5_LMerc_Combat
-        owners[804381] = 1354;  // LDF5_LMerc_Combat
-        owners[804382] = 1354;  // LDF5_LMerc_Combat
-        owners[804383] = 1354;  // LDF5_LMerc_Combat
-        owners[804384] = 1354;  // LDF5_LMerc_Combat
-        owners[804385] = 1354;  // LDF5_LMerc_Combat
-        owners[804386] = 1354;  // LDF5_LMerc_Combat
-        owners[804387] = 1354;  // LDF5_LMerc_Combat
-        owners[804388] = 1354;  // LDF5_LMerc_Combat
-        owners[804389] = 1354;  // LDF5_LMerc_Combat
-        owners[804390] = 1354;  // LDF5_LMerc_Combat
-        owners[804391] = 1354;  // LDF5_LMerc_Combat
-        owners[804392] = 1354;  // LDF5_LMerc_Combat
-        owners[804393] = 1354;  // LDF5_LMerc_Combat
-        owners[804394] = 1354;  // LDF5_LMerc_Combat
-        owners[804395] = 1354;  // LDF5_LMerc_Combat
-        owners[804396] = 1354;  // LDF5_LMerc_Combat
-        owners[804397] = 1354;  // LDF5_LMerc_Combat
-        owners[804398] = 1354;  // LDF5_LMerc_Combat
-        owners[804399] = 1354;  // LDF5_LMerc_Combat
-        owners[804400] = 1354;  // LDF5_LMerc_Combat
-        owners[804401] = 1354;  // LDF5_LMerc_Combat
-        owners[804402] = 1354;  // LDF5_LMerc_Combat
-        owners[804403] = 1354;  // LDF5_LMerc_Combat
-        owners[804404] = 1354;  // LDF5_LMerc_Combat
-        owners[804405] = 1354;  // LDF5_LMerc_Combat
-        owners[804406] = 1354;  // LDF5_LMerc_Combat
-        owners[804407] = 1354;  // LDF5_LMerc_Combat
-        owners[804408] = 1354;  // LDF5_LMerc_Combat
-        owners[804409] = 1354;  // LDF5_LMerc_Combat
-        owners[804410] = 1354;  // LDF5_LMerc_Combat
-        owners[804411] = 1354;  // LDF5_LMerc_Combat
-        owners[804412] = 1354;  // LDF5_LMerc_Combat
-        owners[804413] = 1354;  // LDF5_LMerc_Combat
-        owners[804414] = 1354;  // LDF5_LMerc_Combat
-        owners[804415] = 1354;  // LDF5_LMerc_Combat
-        owners[804416] = 1354;  // LDF5_LMerc_Combat
-        owners[804417] = 1354;  // LDF5_LMerc_Combat
-        owners[804418] = 1354;  // LDF5_LMerc_Combat
-        owners[804419] = 1354;  // LDF5_LMerc_Combat
-        owners[804420] = 1354;  // LDF5_LMerc_Combat
-        owners[804421] = 1354;  // LDF5_LMerc_Combat
-        owners[804422] = 1354;  // LDF5_LMerc_Combat
-        owners[804423] = 1354;  // LDF5_LMerc_Combat
-        owners[804424] = 1354;  // LDF5_LMerc_Combat
-        owners[804425] = 1354;  // LDF5_LMerc_Combat
-        owners[804426] = 1354;  // LDF5_LMerc_Combat
-        owners[804427] = 1354;  // LDF5_LMerc_Combat
-        owners[804428] = 1354;  // LDF5_LMerc_Combat
-        owners[804429] = 1354;  // LDF5_LMerc_Combat
-        owners[804430] = 1354;  // LDF5_LMerc_Combat
-        owners[804431] = 1354;  // LDF5_LMerc_Combat
-        owners[804432] = 1354;  // LDF5_LMerc_Combat
-        owners[804433] = 1354;  // LDF5_LMerc_Combat
-        owners[804434] = 1354;  // LDF5_LMerc_Combat
-        owners[804435] = 1354;  // LDF5_LMerc_Combat
-        owners[804436] = 1354;  // LDF5_LMerc_Combat
-        owners[804437] = 1354;  // LDF5_LMerc_Combat
-        owners[804438] = 1354;  // LDF5_LMerc_Combat
-        owners[804439] = 1354;  // LDF5_LMerc_Combat
-        owners[804440] = 1354;  // LDF5_LMerc_Combat
-        owners[804441] = 1354;  // LDF5_LMerc_Combat
-        owners[804442] = 1354;  // LDF5_LMerc_Combat
-        owners[804443] = 1354;  // LDF5_LMerc_Combat
-        owners[804444] = 1354;  // LDF5_LMerc_Combat
-        owners[804445] = 1354;  // LDF5_LMerc_Combat
-        owners[804446] = 1354;  // LDF5_LMerc_Combat
-        owners[804447] = 1354;  // LDF5_LMerc_Combat
-        owners[804448] = 1354;  // LDF5_LMerc_Combat
-        owners[804449] = 1354;  // LDF5_LMerc_Combat
-        owners[804450] = 1354;  // LDF5_LMerc_Combat
-        owners[804451] = 1354;  // LDF5_LMerc_Combat
-        owners[804452] = 1354;  // LDF5_LMerc_Combat
-        owners[804453] = 1354;  // LDF5_LMerc_Combat
-        owners[804454] = 1354;  // LDF5_LMerc_Combat
-        owners[804455] = 1354;  // LDF5_LMerc_Combat
-        owners[804456] = 1354;  // LDF5_LMerc_Combat
-        owners[804457] = 1354;  // LDF5_LMerc_Combat
-        owners[804458] = 1354;  // LDF5_LMerc_Combat
-        owners[804459] = 1354;  // LDF5_LMerc_Combat
-        owners[804464] = 1354;  // LDF5_LMerc_Combat
-        owners[804465] = 1354;  // LDF5_LMerc_Combat
-        owners[804466] = 1354;  // LDF5_LMerc_Combat
-        owners[804467] = 1354;  // LDF5_DMerc_Combat
-        owners[804468] = 1354;  // LDF5_DMerc_Combat
-        owners[804469] = 1354;  // LDF5_DMerc_Combat
-        owners[804470] = 1354;  // LDF5_DFunc_Combat
-        owners[804471] = 1354;  // LDF5_LFunc_Combat
-        owners[804472] = 1354;  // LDF5_LMerc_Combat
-        owners[804473] = 1354;  // LDF5_LMerc_Combat
-        owners[804474] = 1354;  // LDF5_DMerc_Combat
-        owners[804475] = 1354;  // LDF5_DMerc_Combat
-        owners[804476] = 1354;  // LDF5_LFunc_Combat
-        owners[804477] = 1354;  // LDF5_LFunc_Combat
-        owners[804478] = 1354;  // LDF5_LFunc_Combat
-        owners[804479] = 1354;  // LDF5_LFunc_Combat
+        owners[804366] = 1353;  // LDF5_LMerc_Combat
+        owners[804367] = 1353;  // LDF5_LMerc_Combat
+        owners[804368] = 1353;  // LDF5_LMerc_Combat
+        owners[804369] = 1353;  // LDF5_LMerc_Combat
+        owners[804370] = 1353;  // LDF5_LMerc_Combat
+        owners[804371] = 1353;  // LDF5_LMerc_Combat
+        owners[804372] = 1353;  // LDF5_LMerc_Combat
+        owners[804373] = 1353;  // LDF5_LMerc_Combat
+        owners[804374] = 1353;  // LDF5_LMerc_Combat
+        owners[804375] = 1353;  // LDF5_LMerc_Combat
+        owners[804376] = 1353;  // LDF5_LMerc_Combat
+        owners[804377] = 1353;  // LDF5_LMerc_Combat
+        owners[804378] = 1353;  // LDF5_LMerc_Combat
+        owners[804379] = 1353;  // LDF5_LMerc_Combat
+        owners[804380] = 1353;  // LDF5_LMerc_Combat
+        owners[804381] = 1353;  // LDF5_LMerc_Combat
+        owners[804382] = 1353;  // LDF5_LMerc_Combat
+        owners[804383] = 1353;  // LDF5_LMerc_Combat
+        owners[804384] = 1353;  // LDF5_LMerc_Combat
+        owners[804385] = 1353;  // LDF5_LMerc_Combat
+        owners[804386] = 1353;  // LDF5_LMerc_Combat
+        owners[804387] = 1353;  // LDF5_LMerc_Combat
+        owners[804388] = 1353;  // LDF5_LMerc_Combat
+        owners[804389] = 1353;  // LDF5_LMerc_Combat
+        owners[804390] = 1353;  // LDF5_LMerc_Combat
+        owners[804391] = 1353;  // LDF5_LMerc_Combat
+        owners[804392] = 1353;  // LDF5_LMerc_Combat
+        owners[804393] = 1353;  // LDF5_LMerc_Combat
+        owners[804394] = 1353;  // LDF5_LMerc_Combat
+        owners[804395] = 1353;  // LDF5_LMerc_Combat
+        owners[804396] = 1353;  // LDF5_LMerc_Combat
+        owners[804397] = 1353;  // LDF5_LMerc_Combat
+        owners[804398] = 1353;  // LDF5_LMerc_Combat
+        owners[804399] = 1353;  // LDF5_LMerc_Combat
+        owners[804400] = 1353;  // LDF5_LMerc_Combat
+        owners[804401] = 1353;  // LDF5_LMerc_Combat
+        owners[804402] = 1353;  // LDF5_LMerc_Combat
+        owners[804403] = 1353;  // LDF5_LMerc_Combat
+        owners[804404] = 1353;  // LDF5_LMerc_Combat
+        owners[804405] = 1353;  // LDF5_LMerc_Combat
+        owners[804406] = 1353;  // LDF5_LMerc_Combat
+        owners[804407] = 1353;  // LDF5_LMerc_Combat
+        owners[804408] = 1353;  // LDF5_LMerc_Combat
+        owners[804409] = 1353;  // LDF5_LMerc_Combat
+        owners[804410] = 1353;  // LDF5_LMerc_Combat
+        owners[804411] = 1353;  // LDF5_LMerc_Combat
+        owners[804412] = 1353;  // LDF5_LMerc_Combat
+        owners[804413] = 1353;  // LDF5_LMerc_Combat
+        owners[804414] = 1353;  // LDF5_LMerc_Combat
+        owners[804415] = 1353;  // LDF5_LMerc_Combat
+        owners[804416] = 1353;  // LDF5_LMerc_Combat
+        owners[804417] = 1353;  // LDF5_LMerc_Combat
+        owners[804418] = 1353;  // LDF5_LMerc_Combat
+        owners[804419] = 1353;  // LDF5_LMerc_Combat
+        owners[804420] = 1353;  // LDF5_LMerc_Combat
+        owners[804421] = 1353;  // LDF5_LMerc_Combat
+        owners[804422] = 1353;  // LDF5_LMerc_Combat
+        owners[804423] = 1353;  // LDF5_LMerc_Combat
+        owners[804424] = 1353;  // LDF5_LMerc_Combat
+        owners[804425] = 1353;  // LDF5_LMerc_Combat
+        owners[804426] = 1353;  // LDF5_LMerc_Combat
+        owners[804427] = 1353;  // LDF5_LMerc_Combat
+        owners[804428] = 1353;  // LDF5_LMerc_Combat
+        owners[804429] = 1353;  // LDF5_LMerc_Combat
+        owners[804430] = 1353;  // LDF5_LMerc_Combat
+        owners[804431] = 1353;  // LDF5_LMerc_Combat
+        owners[804432] = 1353;  // LDF5_LMerc_Combat
+        owners[804433] = 1353;  // LDF5_LMerc_Combat
+        owners[804434] = 1353;  // LDF5_LMerc_Combat
+        owners[804435] = 1353;  // LDF5_LMerc_Combat
+        owners[804436] = 1353;  // LDF5_LMerc_Combat
+        owners[804437] = 1353;  // LDF5_LMerc_Combat
+        owners[804438] = 1353;  // LDF5_LMerc_Combat
+        owners[804439] = 1353;  // LDF5_LMerc_Combat
+        owners[804440] = 1353;  // LDF5_LMerc_Combat
+        owners[804441] = 1353;  // LDF5_LMerc_Combat
+        owners[804442] = 1353;  // LDF5_LMerc_Combat
+        owners[804443] = 1353;  // LDF5_LMerc_Combat
+        owners[804444] = 1353;  // LDF5_LMerc_Combat
+        owners[804445] = 1353;  // LDF5_LMerc_Combat
+        owners[804446] = 1353;  // LDF5_LMerc_Combat
+        owners[804447] = 1353;  // LDF5_LMerc_Combat
+        owners[804448] = 1353;  // LDF5_LMerc_Combat
+        owners[804449] = 1353;  // LDF5_LMerc_Combat
+        owners[804450] = 1353;  // LDF5_LMerc_Combat
+        owners[804451] = 1353;  // LDF5_LMerc_Combat
+        owners[804452] = 1353;  // LDF5_LMerc_Combat
+        owners[804453] = 1353;  // LDF5_LMerc_Combat
+        owners[804454] = 1353;  // LDF5_LMerc_Combat
+        owners[804455] = 1353;  // LDF5_LMerc_Combat
+        owners[804456] = 1353;  // LDF5_LMerc_Combat
+        owners[804457] = 1353;  // LDF5_LMerc_Combat
+        owners[804458] = 1353;  // LDF5_LMerc_Combat
+        owners[804459] = 1353;  // LDF5_LMerc_Combat
+        owners[804464] = 1353;  // LDF5_LMerc_Combat
+        owners[804465] = 1353;  // LDF5_LMerc_Combat
+        owners[804466] = 1353;  // LDF5_LMerc_Combat
+        owners[804467] = 1353;  // LDF5_DMerc_Combat
+        owners[804468] = 1353;  // LDF5_DMerc_Combat
+        owners[804469] = 1353;  // LDF5_DMerc_Combat
+        owners[804470] = 1353;  // LDF5_DFunc_Combat
+        owners[804471] = 1353;  // LDF5_LFunc_Combat
+        owners[804472] = 1353;  // LDF5_LMerc_Combat
+        owners[804473] = 1353;  // LDF5_LMerc_Combat
+        owners[804474] = 1353;  // LDF5_DMerc_Combat
+        owners[804475] = 1353;  // LDF5_DMerc_Combat
+        owners[804476] = 1353;  // LDF5_LFunc_Combat
+        owners[804477] = 1353;  // LDF5_LFunc_Combat
+        owners[804478] = 1353;  // LDF5_LFunc_Combat
+        owners[804479] = 1353;  // LDF5_LFunc_Combat
         owners[804486] = 0;  // LFunction
         owners[804487] = 5;  // DFunction
         owners[804524] = 0;  // LFunction
@@ -81216,34 +81167,34 @@ internal static class BattleCycles
         owners[804535] = 5;  // DFunction
         owners[804561] = 0;  // LFunction
         owners[804562] = 5;  // DFunction
-        owners[804596] = 1354;  // LDF5_LMerc_Combat
-        owners[804597] = 1354;  // LDF5_DMerc_Combat
-        owners[804610] = 1354;  // LDF5_DMerc_Combat
-        owners[804611] = 1354;  // LDF5_LMerc_Combat
-        owners[804615] = 1354;  // LDF5_LMerc_Combat
-        owners[804616] = 1354;  // LDF5_LMerc_Combat
-        owners[804617] = 1354;  // LDF5_DMerc_Combat
-        owners[804618] = 1354;  // LDF5_DMerc_Combat
-        owners[804630] = 1354;  // LDF5_LFunc_Combat
-        owners[804631] = 1354;  // LDF5_LFunc_Combat
-        owners[804632] = 1354;  // LDF5_LFunc_Combat
-        owners[804633] = 1354;  // LDF5_LFunc_Combat
-        owners[804634] = 1354;  // LDF5_LFunc_Combat
-        owners[804635] = 1354;  // LDF5_LFunc_Combat
-        owners[804636] = 1354;  // LDF5_LFunc_Combat
-        owners[804637] = 1354;  // LDF5_LFunc_Combat
-        owners[804638] = 1354;  // LDF5_LFunc_Combat
-        owners[804639] = 1354;  // LDF5_LFunc_Combat
-        owners[804640] = 1354;  // LDF5_LFunc_Combat
-        owners[804641] = 1354;  // LDF5_LFunc_Combat
-        owners[804642] = 1354;  // LDF5_LFunc_Combat
-        owners[804643] = 1354;  // LDF5_LFunc_Combat
-        owners[804644] = 1354;  // LDF5_LFunc_Combat
-        owners[804645] = 1354;  // LDF5_LFunc_Combat
-        owners[804646] = 1354;  // LDF5_LFunc_Combat
-        owners[804647] = 1354;  // LDF5_LFunc_Combat
-        owners[804648] = 1354;  // LDF5_LFunc_Combat
-        owners[804649] = 1354;  // LDF5_LFunc_Combat
+        owners[804596] = 1353;  // LDF5_LMerc_Combat
+        owners[804597] = 1353;  // LDF5_DMerc_Combat
+        owners[804610] = 1353;  // LDF5_DMerc_Combat
+        owners[804611] = 1353;  // LDF5_LMerc_Combat
+        owners[804615] = 1353;  // LDF5_LMerc_Combat
+        owners[804616] = 1353;  // LDF5_LMerc_Combat
+        owners[804617] = 1353;  // LDF5_DMerc_Combat
+        owners[804618] = 1353;  // LDF5_DMerc_Combat
+        owners[804630] = 1353;  // LDF5_LFunc_Combat
+        owners[804631] = 1353;  // LDF5_LFunc_Combat
+        owners[804632] = 1353;  // LDF5_LFunc_Combat
+        owners[804633] = 1353;  // LDF5_LFunc_Combat
+        owners[804634] = 1353;  // LDF5_LFunc_Combat
+        owners[804635] = 1353;  // LDF5_LFunc_Combat
+        owners[804636] = 1353;  // LDF5_LFunc_Combat
+        owners[804637] = 1353;  // LDF5_LFunc_Combat
+        owners[804638] = 1353;  // LDF5_LFunc_Combat
+        owners[804639] = 1353;  // LDF5_LFunc_Combat
+        owners[804640] = 1353;  // LDF5_LFunc_Combat
+        owners[804641] = 1353;  // LDF5_LFunc_Combat
+        owners[804642] = 1353;  // LDF5_LFunc_Combat
+        owners[804643] = 1353;  // LDF5_LFunc_Combat
+        owners[804644] = 1353;  // LDF5_LFunc_Combat
+        owners[804645] = 1353;  // LDF5_LFunc_Combat
+        owners[804646] = 1353;  // LDF5_LFunc_Combat
+        owners[804647] = 1353;  // LDF5_LFunc_Combat
+        owners[804648] = 1353;  // LDF5_LFunc_Combat
+        owners[804649] = 1353;  // LDF5_LFunc_Combat
         owners[804657] = 0;  // LFunction
         owners[804668] = 5;  // DFunction
         owners[804693] = 0;  // LFunction
@@ -81252,286 +81203,286 @@ internal static class BattleCycles
         owners[804696] = 5;  // DFunction
         owners[804753] = 5;  // DFunction
         owners[804754] = 5;  // DFunction
-        owners[804755] = 1354;  // LDF5_DFunc_Combat
+        owners[804755] = 1353;  // LDF5_DFunc_Combat
         owners[804756] = 5;  // DFunction
-        owners[804758] = 1354;  // LDF5_DFunc_Combat
+        owners[804758] = 1353;  // LDF5_DFunc_Combat
         owners[804760] = 5;  // DFunction
-        owners[804761] = 1354;  // LDF5_DFunc_Combat
+        owners[804761] = 1353;  // LDF5_DFunc_Combat
         owners[804762] = 5;  // DFunction
-        owners[804764] = 1354;  // LDF5_DFunc_Combat
+        owners[804764] = 1353;  // LDF5_DFunc_Combat
         owners[804765] = 5;  // DFunction
-        owners[804766] = 1354;  // LDF5_DFunc_Combat
+        owners[804766] = 1353;  // LDF5_DFunc_Combat
         owners[804767] = 5;  // DFunction
-        owners[804769] = 1354;  // LDF5_DFunc_Combat
+        owners[804769] = 1353;  // LDF5_DFunc_Combat
         owners[804770] = 5;  // DFunction
-        owners[804772] = 1354;  // LDF5_DFunc_Combat
+        owners[804772] = 1353;  // LDF5_DFunc_Combat
         owners[804773] = 5;  // DFunction
-        owners[804775] = 1354;  // LDF5_DFunc_Combat
+        owners[804775] = 1353;  // LDF5_DFunc_Combat
         owners[804776] = 5;  // DFunction
-        owners[804778] = 1354;  // LDF5_DFunc_Combat
+        owners[804778] = 1353;  // LDF5_DFunc_Combat
         owners[804779] = 5;  // DFunction
-        owners[804781] = 1354;  // LDF5_DFunc_Combat
+        owners[804781] = 1353;  // LDF5_DFunc_Combat
         owners[804782] = 0;  // LFunction
         owners[804783] = 0;  // LFunction
-        owners[804784] = 1354;  // LDF5_LFunc_Combat
+        owners[804784] = 1353;  // LDF5_LFunc_Combat
         owners[804785] = 0;  // LFunction
-        owners[804787] = 1354;  // LDF5_LFunc_Combat
+        owners[804787] = 1353;  // LDF5_LFunc_Combat
         owners[804789] = 0;  // LFunction
-        owners[804790] = 1354;  // LDF5_LFunc_Combat
+        owners[804790] = 1353;  // LDF5_LFunc_Combat
         owners[804791] = 0;  // LFunction
-        owners[804793] = 1354;  // LDF5_LFunc_Combat
+        owners[804793] = 1353;  // LDF5_LFunc_Combat
         owners[804794] = 0;  // LFunction
-        owners[804795] = 1354;  // LDF5_LFunc_Combat
+        owners[804795] = 1353;  // LDF5_LFunc_Combat
         owners[804796] = 0;  // LFunction
-        owners[804798] = 1354;  // LDF5_LFunc_Combat
+        owners[804798] = 1353;  // LDF5_LFunc_Combat
         owners[804799] = 0;  // LFunction
-        owners[804801] = 1354;  // LDF5_LFunc_Combat
+        owners[804801] = 1353;  // LDF5_LFunc_Combat
         owners[804802] = 0;  // LFunction
-        owners[804804] = 1354;  // LDF5_LFunc_Combat
+        owners[804804] = 1353;  // LDF5_LFunc_Combat
         owners[804805] = 0;  // LFunction
-        owners[804807] = 1354;  // LDF5_LFunc_Combat
+        owners[804807] = 1353;  // LDF5_LFunc_Combat
         owners[804808] = 0;  // LFunction
-        owners[804810] = 1354;  // LDF5_LFunc_Combat
-        owners[804826] = 1354;  // LDF5_LFunc_Combat
-        owners[804827] = 1354;  // LDF5_LFunc_Combat
-        owners[804828] = 1354;  // LDF5_LMerc_Combat
-        owners[804829] = 1354;  // LDF5_LMerc_Combat
-        owners[804830] = 1354;  // LDF5_LMerc_Combat
-        owners[804834] = 1354;  // LDF5_DFunc_Combat
-        owners[804835] = 1354;  // LDF5_DFunc_Combat
-        owners[804836] = 1354;  // LDF5_DMerc_Combat
-        owners[804837] = 1354;  // LDF5_DMerc_Combat
-        owners[804838] = 1354;  // LDF5_DMerc_Combat
+        owners[804810] = 1353;  // LDF5_LFunc_Combat
+        owners[804826] = 1353;  // LDF5_LFunc_Combat
+        owners[804827] = 1353;  // LDF5_LFunc_Combat
+        owners[804828] = 1353;  // LDF5_LMerc_Combat
+        owners[804829] = 1353;  // LDF5_LMerc_Combat
+        owners[804830] = 1353;  // LDF5_LMerc_Combat
+        owners[804834] = 1353;  // LDF5_DFunc_Combat
+        owners[804835] = 1353;  // LDF5_DFunc_Combat
+        owners[804836] = 1353;  // LDF5_DMerc_Combat
+        owners[804837] = 1353;  // LDF5_DMerc_Combat
+        owners[804838] = 1353;  // LDF5_DMerc_Combat
         owners[804872] = 8;  // LGuard_FhA
         owners[804873] = 8;  // LGuard_FhA
         owners[804963] = 5;  // DFunction
         owners[804964] = 0;  // LFunction
-        owners[804967] = 1354;  // LDF5_DFunc_Combat
-        owners[804968] = 1354;  // LDF5_DFunc_Combat
-        owners[804969] = 1354;  // LDF5_DFunc_Combat
-        owners[804970] = 1354;  // LDF5_DFunc_Combat
-        owners[804971] = 1354;  // LDF5_DFunc_Combat
-        owners[804972] = 1354;  // LDF5_DFunc_Combat
-        owners[804973] = 1354;  // LDF5_DFunc_Combat
-        owners[804974] = 1354;  // LDF5_DFunc_Combat
-        owners[804975] = 1354;  // LDF5_DFunc_Combat
-        owners[804976] = 1354;  // LDF5_DFunc_Combat
-        owners[804977] = 1354;  // LDF5_DFunc_Combat
-        owners[804978] = 1354;  // LDF5_DFunc_Combat
-        owners[804979] = 1354;  // LDF5_DFunc_Combat
-        owners[804980] = 1354;  // LDF5_DFunc_Combat
-        owners[804981] = 1354;  // LDF5_DFunc_Combat
-        owners[804982] = 1354;  // LDF5_DFunc_Combat
-        owners[804983] = 1354;  // LDF5_DFunc_Combat
-        owners[804984] = 1354;  // LDF5_DFunc_Combat
-        owners[804985] = 1354;  // LDF5_DFunc_Combat
-        owners[804986] = 1354;  // LDF5_DFunc_Combat
-        owners[804987] = 1354;  // LDF5_DFunc_Combat
-        owners[804988] = 1354;  // LDF5_DFunc_Combat
-        owners[804989] = 1354;  // LDF5_DFunc_Combat
-        owners[804990] = 1354;  // LDF5_DFunc_Combat
-        owners[804991] = 1354;  // LDF5_DFunc_Combat
-        owners[804992] = 1354;  // LDF5_DFunc_Combat
-        owners[804993] = 1354;  // LDF5_DFunc_Combat
-        owners[804994] = 1354;  // LDF5_DFunc_Combat
-        owners[804995] = 1354;  // LDF5_DFunc_Combat
-        owners[804996] = 1354;  // LDF5_DFunc_Combat
-        owners[804997] = 1354;  // LDF5_DFunc_Combat
-        owners[804998] = 1354;  // LDF5_DFunc_Combat
-        owners[804999] = 1354;  // LDF5_DFunc_Combat
-        owners[805000] = 1354;  // LDF5_DFunc_Combat
-        owners[805001] = 1354;  // LDF5_DFunc_Combat
-        owners[805002] = 1354;  // LDF5_DFunc_Combat
-        owners[805003] = 1354;  // LDF5_DFunc_Combat
-        owners[805004] = 1354;  // LDF5_DFunc_Combat
-        owners[805005] = 1354;  // LDF5_DFunc_Combat
-        owners[805006] = 1354;  // LDF5_DFunc_Combat
-        owners[805007] = 1354;  // LDF5_DFunc_Combat
-        owners[805008] = 1354;  // LDF5_DFunc_Combat
-        owners[805009] = 1354;  // LDF5_DFunc_Combat
-        owners[805010] = 1354;  // LDF5_DFunc_Combat
-        owners[805011] = 1354;  // LDF5_DFunc_Combat
-        owners[805012] = 1354;  // LDF5_DFunc_Combat
-        owners[805013] = 1354;  // LDF5_DFunc_Combat
-        owners[805014] = 1354;  // LDF5_DFunc_Combat
-        owners[805015] = 1354;  // LDF5_DFunc_Combat
-        owners[805016] = 1354;  // LDF5_DFunc_Combat
-        owners[805017] = 1354;  // LDF5_DFunc_Combat
-        owners[805018] = 1354;  // LDF5_DFunc_Combat
-        owners[805019] = 1354;  // LDF5_DFunc_Combat
-        owners[805020] = 1354;  // LDF5_DFunc_Combat
-        owners[805021] = 1354;  // LDF5_DFunc_Combat
-        owners[805022] = 1354;  // LDF5_DFunc_Combat
-        owners[805023] = 1354;  // LDF5_DFunc_Combat
-        owners[805024] = 1354;  // LDF5_DFunc_Combat
-        owners[805025] = 1354;  // LDF5_DFunc_Combat
-        owners[805026] = 1354;  // LDF5_DFunc_Combat
-        owners[805027] = 1354;  // LDF5_DFunc_Combat
-        owners[805028] = 1354;  // LDF5_DFunc_Combat
-        owners[805029] = 1354;  // LDF5_DFunc_Combat
-        owners[805030] = 1354;  // LDF5_DFunc_Combat
-        owners[805031] = 1354;  // LDF5_DFunc_Combat
-        owners[805032] = 1354;  // LDF5_DFunc_Combat
-        owners[805033] = 1354;  // LDF5_DFunc_Combat
-        owners[805034] = 1354;  // LDF5_DFunc_Combat
-        owners[805035] = 1354;  // LDF5_DFunc_Combat
-        owners[805036] = 1354;  // LDF5_DFunc_Combat
-        owners[805037] = 1354;  // LDF5_DFunc_Combat
-        owners[805038] = 1354;  // LDF5_DFunc_Combat
-        owners[805039] = 1354;  // LDF5_DFunc_Combat
-        owners[805040] = 1354;  // LDF5_DFunc_Combat
-        owners[805041] = 1354;  // LDF5_DFunc_Combat
-        owners[805042] = 1354;  // LDF5_DFunc_Combat
-        owners[805043] = 1354;  // LDF5_DFunc_Combat
-        owners[805044] = 1354;  // LDF5_DFunc_Combat
-        owners[805045] = 1354;  // LDF5_DFunc_Combat
-        owners[805046] = 1354;  // LDF5_DFunc_Combat
-        owners[805047] = 1354;  // LDF5_DFunc_Combat
-        owners[805048] = 1354;  // LDF5_DFunc_Combat
-        owners[805049] = 1354;  // LDF5_DFunc_Combat
-        owners[805050] = 1354;  // LDF5_DFunc_Combat
-        owners[805051] = 1354;  // LDF5_DFunc_Combat
-        owners[805052] = 1354;  // LDF5_DFunc_Combat
-        owners[805053] = 1354;  // LDF5_DFunc_Combat
-        owners[805054] = 1354;  // LDF5_DFunc_Combat
-        owners[805055] = 1354;  // LDF5_DFunc_Combat
-        owners[805056] = 1354;  // LDF5_LFunc_Combat
-        owners[805057] = 1354;  // LDF5_LFunc_Combat
-        owners[805058] = 1354;  // LDF5_LFunc_Combat
-        owners[805059] = 1354;  // LDF5_LFunc_Combat
-        owners[805060] = 1354;  // LDF5_LFunc_Combat
-        owners[805061] = 1354;  // LDF5_LFunc_Combat
-        owners[805062] = 1354;  // LDF5_LFunc_Combat
-        owners[805063] = 1354;  // LDF5_LFunc_Combat
-        owners[805064] = 1354;  // LDF5_LFunc_Combat
-        owners[805065] = 1354;  // LDF5_LFunc_Combat
-        owners[805066] = 1354;  // LDF5_LFunc_Combat
-        owners[805067] = 1354;  // LDF5_LFunc_Combat
-        owners[805068] = 1354;  // LDF5_LFunc_Combat
-        owners[805069] = 1354;  // LDF5_LFunc_Combat
-        owners[805070] = 1354;  // LDF5_LFunc_Combat
-        owners[805071] = 1354;  // LDF5_LFunc_Combat
-        owners[805072] = 1354;  // LDF5_LFunc_Combat
-        owners[805073] = 1354;  // LDF5_LFunc_Combat
-        owners[805074] = 1354;  // LDF5_LFunc_Combat
-        owners[805075] = 1354;  // LDF5_LFunc_Combat
-        owners[805076] = 1354;  // LDF5_LFunc_Combat
-        owners[805077] = 1354;  // LDF5_LFunc_Combat
-        owners[805078] = 1354;  // LDF5_LFunc_Combat
-        owners[805079] = 1354;  // LDF5_LFunc_Combat
-        owners[805080] = 1354;  // LDF5_LFunc_Combat
-        owners[805081] = 1354;  // LDF5_LFunc_Combat
-        owners[805082] = 1354;  // LDF5_LFunc_Combat
-        owners[805083] = 1354;  // LDF5_LFunc_Combat
-        owners[805084] = 1354;  // LDF5_LFunc_Combat
-        owners[805085] = 1354;  // LDF5_LFunc_Combat
-        owners[805086] = 1354;  // LDF5_LFunc_Combat
-        owners[805087] = 1354;  // LDF5_LFunc_Combat
-        owners[805088] = 1354;  // LDF5_LFunc_Combat
-        owners[805089] = 1354;  // LDF5_LFunc_Combat
-        owners[805090] = 1354;  // LDF5_LFunc_Combat
-        owners[805091] = 1354;  // LDF5_LFunc_Combat
-        owners[805092] = 1354;  // LDF5_LFunc_Combat
-        owners[805093] = 1354;  // LDF5_LFunc_Combat
-        owners[805094] = 1354;  // LDF5_LFunc_Combat
-        owners[805095] = 1354;  // LDF5_LFunc_Combat
-        owners[805096] = 1354;  // LDF5_LFunc_Combat
-        owners[805097] = 1354;  // LDF5_LFunc_Combat
-        owners[805098] = 1354;  // LDF5_LFunc_Combat
-        owners[805099] = 1354;  // LDF5_LFunc_Combat
-        owners[805100] = 1354;  // LDF5_LFunc_Combat
-        owners[805101] = 1354;  // LDF5_LFunc_Combat
-        owners[805102] = 1354;  // LDF5_LFunc_Combat
-        owners[805103] = 1354;  // LDF5_LFunc_Combat
-        owners[805104] = 1354;  // LDF5_LFunc_Combat
-        owners[805105] = 1354;  // LDF5_LFunc_Combat
-        owners[805106] = 1354;  // LDF5_LFunc_Combat
-        owners[805107] = 1354;  // LDF5_LFunc_Combat
-        owners[805108] = 1354;  // LDF5_LFunc_Combat
-        owners[805109] = 1354;  // LDF5_LFunc_Combat
-        owners[805110] = 1354;  // LDF5_LFunc_Combat
-        owners[805111] = 1354;  // LDF5_LFunc_Combat
-        owners[805112] = 1354;  // LDF5_LFunc_Combat
-        owners[805113] = 1354;  // LDF5_LFunc_Combat
-        owners[805114] = 1354;  // LDF5_LFunc_Combat
-        owners[805115] = 1354;  // LDF5_LFunc_Combat
-        owners[805116] = 1354;  // LDF5_LFunc_Combat
-        owners[805117] = 1354;  // LDF5_LFunc_Combat
-        owners[805118] = 1354;  // LDF5_LFunc_Combat
-        owners[805119] = 1354;  // LDF5_LFunc_Combat
-        owners[805120] = 1354;  // LDF5_LFunc_Combat
-        owners[805121] = 1354;  // LDF5_LFunc_Combat
-        owners[805122] = 1354;  // LDF5_LFunc_Combat
-        owners[805123] = 1354;  // LDF5_LFunc_Combat
-        owners[805124] = 1354;  // LDF5_LFunc_Combat
-        owners[805125] = 1354;  // LDF5_LFunc_Combat
-        owners[805126] = 1354;  // LDF5_LFunc_Combat
-        owners[805127] = 1354;  // LDF5_LFunc_Combat
-        owners[805128] = 1354;  // LDF5_LFunc_Combat
-        owners[805129] = 1354;  // LDF5_LFunc_Combat
-        owners[805130] = 1354;  // LDF5_LFunc_Combat
-        owners[805131] = 1354;  // LDF5_LFunc_Combat
-        owners[805132] = 1354;  // LDF5_LFunc_Combat
-        owners[805133] = 1354;  // LDF5_LFunc_Combat
-        owners[805134] = 1354;  // LDF5_LFunc_Combat
-        owners[805135] = 1354;  // LDF5_LFunc_Combat
-        owners[805136] = 1354;  // LDF5_LFunc_Combat
-        owners[805137] = 1354;  // LDF5_LFunc_Combat
-        owners[805138] = 1354;  // LDF5_LFunc_Combat
-        owners[805139] = 1354;  // LDF5_LFunc_Combat
-        owners[805140] = 1354;  // LDF5_LFunc_Combat
-        owners[805141] = 1354;  // LDF5_LFunc_Combat
-        owners[805142] = 1354;  // LDF5_LFunc_Combat
-        owners[805143] = 1354;  // LDF5_LFunc_Combat
-        owners[805144] = 1354;  // LDF5_LFunc_Combat
-        owners[805145] = 1354;  // LDF5_LFunc_Combat
-        owners[805146] = 1354;  // LDF5_LFunc_Combat
-        owners[805147] = 1354;  // LDF5_LFunc_Combat
-        owners[805157] = 1354;  // LDF5_DFunc_Combat
-        owners[805158] = 1354;  // LDF5_DFunc_Combat
-        owners[805159] = 1354;  // LDF5_DFunc_Combat
-        owners[805186] = 1354;  // LDF5_LFunc_Combat
+        owners[804967] = 1353;  // LDF5_DFunc_Combat
+        owners[804968] = 1353;  // LDF5_DFunc_Combat
+        owners[804969] = 1353;  // LDF5_DFunc_Combat
+        owners[804970] = 1353;  // LDF5_DFunc_Combat
+        owners[804971] = 1353;  // LDF5_DFunc_Combat
+        owners[804972] = 1353;  // LDF5_DFunc_Combat
+        owners[804973] = 1353;  // LDF5_DFunc_Combat
+        owners[804974] = 1353;  // LDF5_DFunc_Combat
+        owners[804975] = 1353;  // LDF5_DFunc_Combat
+        owners[804976] = 1353;  // LDF5_DFunc_Combat
+        owners[804977] = 1353;  // LDF5_DFunc_Combat
+        owners[804978] = 1353;  // LDF5_DFunc_Combat
+        owners[804979] = 1353;  // LDF5_DFunc_Combat
+        owners[804980] = 1353;  // LDF5_DFunc_Combat
+        owners[804981] = 1353;  // LDF5_DFunc_Combat
+        owners[804982] = 1353;  // LDF5_DFunc_Combat
+        owners[804983] = 1353;  // LDF5_DFunc_Combat
+        owners[804984] = 1353;  // LDF5_DFunc_Combat
+        owners[804985] = 1353;  // LDF5_DFunc_Combat
+        owners[804986] = 1353;  // LDF5_DFunc_Combat
+        owners[804987] = 1353;  // LDF5_DFunc_Combat
+        owners[804988] = 1353;  // LDF5_DFunc_Combat
+        owners[804989] = 1353;  // LDF5_DFunc_Combat
+        owners[804990] = 1353;  // LDF5_DFunc_Combat
+        owners[804991] = 1353;  // LDF5_DFunc_Combat
+        owners[804992] = 1353;  // LDF5_DFunc_Combat
+        owners[804993] = 1353;  // LDF5_DFunc_Combat
+        owners[804994] = 1353;  // LDF5_DFunc_Combat
+        owners[804995] = 1353;  // LDF5_DFunc_Combat
+        owners[804996] = 1353;  // LDF5_DFunc_Combat
+        owners[804997] = 1353;  // LDF5_DFunc_Combat
+        owners[804998] = 1353;  // LDF5_DFunc_Combat
+        owners[804999] = 1353;  // LDF5_DFunc_Combat
+        owners[805000] = 1353;  // LDF5_DFunc_Combat
+        owners[805001] = 1353;  // LDF5_DFunc_Combat
+        owners[805002] = 1353;  // LDF5_DFunc_Combat
+        owners[805003] = 1353;  // LDF5_DFunc_Combat
+        owners[805004] = 1353;  // LDF5_DFunc_Combat
+        owners[805005] = 1353;  // LDF5_DFunc_Combat
+        owners[805006] = 1353;  // LDF5_DFunc_Combat
+        owners[805007] = 1353;  // LDF5_DFunc_Combat
+        owners[805008] = 1353;  // LDF5_DFunc_Combat
+        owners[805009] = 1353;  // LDF5_DFunc_Combat
+        owners[805010] = 1353;  // LDF5_DFunc_Combat
+        owners[805011] = 1353;  // LDF5_DFunc_Combat
+        owners[805012] = 1353;  // LDF5_DFunc_Combat
+        owners[805013] = 1353;  // LDF5_DFunc_Combat
+        owners[805014] = 1353;  // LDF5_DFunc_Combat
+        owners[805015] = 1353;  // LDF5_DFunc_Combat
+        owners[805016] = 1353;  // LDF5_DFunc_Combat
+        owners[805017] = 1353;  // LDF5_DFunc_Combat
+        owners[805018] = 1353;  // LDF5_DFunc_Combat
+        owners[805019] = 1353;  // LDF5_DFunc_Combat
+        owners[805020] = 1353;  // LDF5_DFunc_Combat
+        owners[805021] = 1353;  // LDF5_DFunc_Combat
+        owners[805022] = 1353;  // LDF5_DFunc_Combat
+        owners[805023] = 1353;  // LDF5_DFunc_Combat
+        owners[805024] = 1353;  // LDF5_DFunc_Combat
+        owners[805025] = 1353;  // LDF5_DFunc_Combat
+        owners[805026] = 1353;  // LDF5_DFunc_Combat
+        owners[805027] = 1353;  // LDF5_DFunc_Combat
+        owners[805028] = 1353;  // LDF5_DFunc_Combat
+        owners[805029] = 1353;  // LDF5_DFunc_Combat
+        owners[805030] = 1353;  // LDF5_DFunc_Combat
+        owners[805031] = 1353;  // LDF5_DFunc_Combat
+        owners[805032] = 1353;  // LDF5_DFunc_Combat
+        owners[805033] = 1353;  // LDF5_DFunc_Combat
+        owners[805034] = 1353;  // LDF5_DFunc_Combat
+        owners[805035] = 1353;  // LDF5_DFunc_Combat
+        owners[805036] = 1353;  // LDF5_DFunc_Combat
+        owners[805037] = 1353;  // LDF5_DFunc_Combat
+        owners[805038] = 1353;  // LDF5_DFunc_Combat
+        owners[805039] = 1353;  // LDF5_DFunc_Combat
+        owners[805040] = 1353;  // LDF5_DFunc_Combat
+        owners[805041] = 1353;  // LDF5_DFunc_Combat
+        owners[805042] = 1353;  // LDF5_DFunc_Combat
+        owners[805043] = 1353;  // LDF5_DFunc_Combat
+        owners[805044] = 1353;  // LDF5_DFunc_Combat
+        owners[805045] = 1353;  // LDF5_DFunc_Combat
+        owners[805046] = 1353;  // LDF5_DFunc_Combat
+        owners[805047] = 1353;  // LDF5_DFunc_Combat
+        owners[805048] = 1353;  // LDF5_DFunc_Combat
+        owners[805049] = 1353;  // LDF5_DFunc_Combat
+        owners[805050] = 1353;  // LDF5_DFunc_Combat
+        owners[805051] = 1353;  // LDF5_DFunc_Combat
+        owners[805052] = 1353;  // LDF5_DFunc_Combat
+        owners[805053] = 1353;  // LDF5_DFunc_Combat
+        owners[805054] = 1353;  // LDF5_DFunc_Combat
+        owners[805055] = 1353;  // LDF5_DFunc_Combat
+        owners[805056] = 1353;  // LDF5_LFunc_Combat
+        owners[805057] = 1353;  // LDF5_LFunc_Combat
+        owners[805058] = 1353;  // LDF5_LFunc_Combat
+        owners[805059] = 1353;  // LDF5_LFunc_Combat
+        owners[805060] = 1353;  // LDF5_LFunc_Combat
+        owners[805061] = 1353;  // LDF5_LFunc_Combat
+        owners[805062] = 1353;  // LDF5_LFunc_Combat
+        owners[805063] = 1353;  // LDF5_LFunc_Combat
+        owners[805064] = 1353;  // LDF5_LFunc_Combat
+        owners[805065] = 1353;  // LDF5_LFunc_Combat
+        owners[805066] = 1353;  // LDF5_LFunc_Combat
+        owners[805067] = 1353;  // LDF5_LFunc_Combat
+        owners[805068] = 1353;  // LDF5_LFunc_Combat
+        owners[805069] = 1353;  // LDF5_LFunc_Combat
+        owners[805070] = 1353;  // LDF5_LFunc_Combat
+        owners[805071] = 1353;  // LDF5_LFunc_Combat
+        owners[805072] = 1353;  // LDF5_LFunc_Combat
+        owners[805073] = 1353;  // LDF5_LFunc_Combat
+        owners[805074] = 1353;  // LDF5_LFunc_Combat
+        owners[805075] = 1353;  // LDF5_LFunc_Combat
+        owners[805076] = 1353;  // LDF5_LFunc_Combat
+        owners[805077] = 1353;  // LDF5_LFunc_Combat
+        owners[805078] = 1353;  // LDF5_LFunc_Combat
+        owners[805079] = 1353;  // LDF5_LFunc_Combat
+        owners[805080] = 1353;  // LDF5_LFunc_Combat
+        owners[805081] = 1353;  // LDF5_LFunc_Combat
+        owners[805082] = 1353;  // LDF5_LFunc_Combat
+        owners[805083] = 1353;  // LDF5_LFunc_Combat
+        owners[805084] = 1353;  // LDF5_LFunc_Combat
+        owners[805085] = 1353;  // LDF5_LFunc_Combat
+        owners[805086] = 1353;  // LDF5_LFunc_Combat
+        owners[805087] = 1353;  // LDF5_LFunc_Combat
+        owners[805088] = 1353;  // LDF5_LFunc_Combat
+        owners[805089] = 1353;  // LDF5_LFunc_Combat
+        owners[805090] = 1353;  // LDF5_LFunc_Combat
+        owners[805091] = 1353;  // LDF5_LFunc_Combat
+        owners[805092] = 1353;  // LDF5_LFunc_Combat
+        owners[805093] = 1353;  // LDF5_LFunc_Combat
+        owners[805094] = 1353;  // LDF5_LFunc_Combat
+        owners[805095] = 1353;  // LDF5_LFunc_Combat
+        owners[805096] = 1353;  // LDF5_LFunc_Combat
+        owners[805097] = 1353;  // LDF5_LFunc_Combat
+        owners[805098] = 1353;  // LDF5_LFunc_Combat
+        owners[805099] = 1353;  // LDF5_LFunc_Combat
+        owners[805100] = 1353;  // LDF5_LFunc_Combat
+        owners[805101] = 1353;  // LDF5_LFunc_Combat
+        owners[805102] = 1353;  // LDF5_LFunc_Combat
+        owners[805103] = 1353;  // LDF5_LFunc_Combat
+        owners[805104] = 1353;  // LDF5_LFunc_Combat
+        owners[805105] = 1353;  // LDF5_LFunc_Combat
+        owners[805106] = 1353;  // LDF5_LFunc_Combat
+        owners[805107] = 1353;  // LDF5_LFunc_Combat
+        owners[805108] = 1353;  // LDF5_LFunc_Combat
+        owners[805109] = 1353;  // LDF5_LFunc_Combat
+        owners[805110] = 1353;  // LDF5_LFunc_Combat
+        owners[805111] = 1353;  // LDF5_LFunc_Combat
+        owners[805112] = 1353;  // LDF5_LFunc_Combat
+        owners[805113] = 1353;  // LDF5_LFunc_Combat
+        owners[805114] = 1353;  // LDF5_LFunc_Combat
+        owners[805115] = 1353;  // LDF5_LFunc_Combat
+        owners[805116] = 1353;  // LDF5_LFunc_Combat
+        owners[805117] = 1353;  // LDF5_LFunc_Combat
+        owners[805118] = 1353;  // LDF5_LFunc_Combat
+        owners[805119] = 1353;  // LDF5_LFunc_Combat
+        owners[805120] = 1353;  // LDF5_LFunc_Combat
+        owners[805121] = 1353;  // LDF5_LFunc_Combat
+        owners[805122] = 1353;  // LDF5_LFunc_Combat
+        owners[805123] = 1353;  // LDF5_LFunc_Combat
+        owners[805124] = 1353;  // LDF5_LFunc_Combat
+        owners[805125] = 1353;  // LDF5_LFunc_Combat
+        owners[805126] = 1353;  // LDF5_LFunc_Combat
+        owners[805127] = 1353;  // LDF5_LFunc_Combat
+        owners[805128] = 1353;  // LDF5_LFunc_Combat
+        owners[805129] = 1353;  // LDF5_LFunc_Combat
+        owners[805130] = 1353;  // LDF5_LFunc_Combat
+        owners[805131] = 1353;  // LDF5_LFunc_Combat
+        owners[805132] = 1353;  // LDF5_LFunc_Combat
+        owners[805133] = 1353;  // LDF5_LFunc_Combat
+        owners[805134] = 1353;  // LDF5_LFunc_Combat
+        owners[805135] = 1353;  // LDF5_LFunc_Combat
+        owners[805136] = 1353;  // LDF5_LFunc_Combat
+        owners[805137] = 1353;  // LDF5_LFunc_Combat
+        owners[805138] = 1353;  // LDF5_LFunc_Combat
+        owners[805139] = 1353;  // LDF5_LFunc_Combat
+        owners[805140] = 1353;  // LDF5_LFunc_Combat
+        owners[805141] = 1353;  // LDF5_LFunc_Combat
+        owners[805142] = 1353;  // LDF5_LFunc_Combat
+        owners[805143] = 1353;  // LDF5_LFunc_Combat
+        owners[805144] = 1353;  // LDF5_LFunc_Combat
+        owners[805145] = 1353;  // LDF5_LFunc_Combat
+        owners[805146] = 1353;  // LDF5_LFunc_Combat
+        owners[805147] = 1353;  // LDF5_LFunc_Combat
+        owners[805157] = 1353;  // LDF5_DFunc_Combat
+        owners[805158] = 1353;  // LDF5_DFunc_Combat
+        owners[805159] = 1353;  // LDF5_DFunc_Combat
+        owners[805186] = 1353;  // LDF5_LFunc_Combat
+        owners[805187] = 1353;  // LDF5_DFunc_Combat
     }
 
     private static void OnEnterAttackStateOf48(Dictionary<int, int> owners)
     {
-        owners[805187] = 1354;  // LDF5_DFunc_Combat
         owners[805197] = 5;  // DFunction
         owners[805198] = 5;  // DFunction
         owners[805199] = 5;  // DFunction
         owners[805200] = 0;  // LFunction
         owners[805201] = 0;  // LFunction
         owners[805202] = 0;  // LFunction
-        owners[805204] = 1354;  // LDF5_DFunc_Combat
-        owners[805205] = 1354;  // LDF5_DFunc_Combat
-        owners[805206] = 1354;  // LDF5_DFunc_Combat
-        owners[805209] = 1354;  // LDF5_LMerc_Combat
-        owners[805210] = 1354;  // LDF5_LMerc_Combat
-        owners[805211] = 1354;  // LDF5_LMerc_Combat
-        owners[805227] = 1354;  // LDF5_DFunc_Combat
-        owners[805228] = 1354;  // LDF5_LFunc_Combat
-        owners[805229] = 1354;  // LDF5_DFunc_Combat
-        owners[805230] = 1354;  // LDF5_LFunc_Combat
-        owners[805231] = 1354;  // LDF5_DFunc_Combat
-        owners[805232] = 1354;  // LDF5_DFunc_Combat
-        owners[805233] = 1354;  // LDF5_LFunc_Combat
-        owners[805234] = 1354;  // LDF5_LFunc_Combat
-        owners[805239] = 1354;  // LDF5_LFunc_Combat
-        owners[805240] = 1354;  // LDF5_LFunc_Combat
-        owners[805241] = 1354;  // LDF5_DFunc_Combat
-        owners[805242] = 1354;  // LDF5_DFunc_Combat
-        owners[805243] = 1354;  // LDF5_LFunc_Combat
-        owners[805244] = 1354;  // LDF5_LFunc_Combat
-        owners[805245] = 1354;  // LDF5_LFunc_Combat
-        owners[805246] = 1354;  // LDF5_LFunc_Combat
-        owners[805247] = 1354;  // LDF5_LFunc_Combat
-        owners[805248] = 1354;  // LDF5_LFunc_Combat
-        owners[805251] = 1354;  // LDF5_DFunc_Combat
-        owners[805252] = 1354;  // LDF5_DFunc_Combat
-        owners[805253] = 1354;  // LDF5_DFunc_Combat
-        owners[805254] = 1354;  // LDF5_DFunc_Combat
-        owners[805255] = 1354;  // LDF5_DFunc_Combat
-        owners[805256] = 1354;  // LDF5_DFunc_Combat
+        owners[805204] = 1353;  // LDF5_DFunc_Combat
+        owners[805205] = 1353;  // LDF5_DFunc_Combat
+        owners[805206] = 1353;  // LDF5_DFunc_Combat
+        owners[805209] = 1353;  // LDF5_LMerc_Combat
+        owners[805210] = 1353;  // LDF5_LMerc_Combat
+        owners[805211] = 1353;  // LDF5_LMerc_Combat
+        owners[805227] = 1353;  // LDF5_DFunc_Combat
+        owners[805228] = 1353;  // LDF5_LFunc_Combat
+        owners[805229] = 1353;  // LDF5_DFunc_Combat
+        owners[805230] = 1353;  // LDF5_LFunc_Combat
+        owners[805231] = 1353;  // LDF5_DFunc_Combat
+        owners[805232] = 1353;  // LDF5_DFunc_Combat
+        owners[805233] = 1353;  // LDF5_LFunc_Combat
+        owners[805234] = 1353;  // LDF5_LFunc_Combat
+        owners[805239] = 1353;  // LDF5_LFunc_Combat
+        owners[805240] = 1353;  // LDF5_LFunc_Combat
+        owners[805241] = 1353;  // LDF5_DFunc_Combat
+        owners[805242] = 1353;  // LDF5_DFunc_Combat
+        owners[805243] = 1353;  // LDF5_LFunc_Combat
+        owners[805244] = 1353;  // LDF5_LFunc_Combat
+        owners[805245] = 1353;  // LDF5_LFunc_Combat
+        owners[805246] = 1353;  // LDF5_LFunc_Combat
+        owners[805247] = 1353;  // LDF5_LFunc_Combat
+        owners[805248] = 1353;  // LDF5_LFunc_Combat
+        owners[805251] = 1353;  // LDF5_DFunc_Combat
+        owners[805252] = 1353;  // LDF5_DFunc_Combat
+        owners[805253] = 1353;  // LDF5_DFunc_Combat
+        owners[805254] = 1353;  // LDF5_DFunc_Combat
+        owners[805255] = 1353;  // LDF5_DFunc_Combat
+        owners[805256] = 1353;  // LDF5_DFunc_Combat
         owners[810015] = 0;  // LFunction
         owners[810016] = 5;  // DFunction
         owners[810035] = 0;  // LFunction
@@ -81592,7 +81543,7 @@ internal static class BattleCycles
         owners[830217] = 0;  // LFunction
         owners[830218] = 5;  // DFunction
         owners[830219] = 5;  // DFunction
-        owners[830580] = 1355;  // IDYun_Soldier_ND1
+        owners[830580] = 1354;  // IDYun_Soldier_ND1
         owners[830581] = 421;  // IDYun_Soldier_ND2
         owners[830582] = 369;  // IDYun_Soldier_ND3
         owners[830764] = 0;  // LFunction
@@ -81605,7 +81556,7 @@ internal static class BattleCycles
         owners[831011] = 8;  // DGuard_FhA
         owners[831013] = 3;  // DGuard_FeA
         owners[831014] = 8;  // DGuard_FhA
-        owners[831082] = 1328;  // InvadePortal_TestKeeper03
+        owners[831082] = 1327;  // InvadePortal_TestKeeper03
         owners[831086] = 10;  // Krall_WeB
         owners[831205] = 0;  // LFunction
         owners[831208] = 0;  // LFunction
@@ -81623,99 +81574,99 @@ internal static class BattleCycles
         owners[831381] = 0;  // LFunction
         owners[831583] = 0;  // LFunction
         owners[831585] = 5;  // DFunction
-        owners[831995] = 1354;  // LDF5_LFunc_Combat
-        owners[831996] = 1354;  // LDF5_DFunc_Combat
-        owners[832183] = 1354;  // LDF5_LMerc_Combat
-        owners[832184] = 1354;  // LDF5_LMerc_Combat
-        owners[832185] = 1354;  // LDF5_LMerc_Combat
-        owners[832186] = 1354;  // LDF5_LMerc_Combat
-        owners[832187] = 1354;  // LDF5_LMerc_Combat
-        owners[832188] = 1354;  // LDF5_LMerc_Combat
-        owners[832189] = 1354;  // LDF5_LFunc_Combat
-        owners[832190] = 1354;  // LDF5_LMerc_Combat
-        owners[832191] = 1354;  // LDF5_LMerc_Combat
-        owners[832192] = 1354;  // LDF5_LMerc_Combat
-        owners[832193] = 1354;  // LDF5_LMerc_Combat
-        owners[832194] = 1354;  // LDF5_LMerc_Combat
-        owners[832195] = 1354;  // LDF5_LMerc_Combat
-        owners[832196] = 1354;  // LDF5_LMerc_Combat
-        owners[832197] = 1354;  // LDF5_LMerc_Combat
-        owners[832198] = 1354;  // LDF5_LFunc_Combat
-        owners[832199] = 1354;  // LDF5_LMerc_Combat
-        owners[832200] = 1354;  // LDF5_LMerc_Combat
-        owners[832201] = 1354;  // LDF5_LMerc_Combat
-        owners[832202] = 1354;  // LDF5_LMerc_Combat
-        owners[832203] = 1354;  // LDF5_LMerc_Combat
-        owners[832204] = 1354;  // LDF5_LMerc_Combat
-        owners[832205] = 1354;  // LDF5_LMerc_Combat
-        owners[832206] = 1354;  // LDF5_LMerc_Combat
-        owners[832207] = 1354;  // LDF5_LFunc_Combat
-        owners[832208] = 1354;  // LDF5_LMerc_Combat
-        owners[832209] = 1354;  // LDF5_LMerc_Combat
-        owners[832210] = 1354;  // LDF5_LMerc_Combat
-        owners[832211] = 1354;  // LDF5_LMerc_Combat
-        owners[832212] = 1354;  // LDF5_LMerc_Combat
-        owners[832213] = 1354;  // LDF5_LMerc_Combat
-        owners[832214] = 1354;  // LDF5_LMerc_Combat
-        owners[832215] = 1354;  // LDF5_LMerc_Combat
-        owners[832216] = 1354;  // LDF5_LFunc_Combat
-        owners[832217] = 1354;  // LDF5_LMerc_Combat
-        owners[832218] = 1354;  // LDF5_LMerc_Combat
-        owners[832219] = 1354;  // LDF5_DMerc_Combat
-        owners[832220] = 1354;  // LDF5_DMerc_Combat
-        owners[832221] = 1354;  // LDF5_DMerc_Combat
-        owners[832222] = 1354;  // LDF5_DMerc_Combat
-        owners[832223] = 1354;  // LDF5_DMerc_Combat
-        owners[832224] = 1354;  // LDF5_DMerc_Combat
-        owners[832225] = 1354;  // LDF5_DFunc_Combat
-        owners[832226] = 1354;  // LDF5_DMerc_Combat
-        owners[832227] = 1354;  // LDF5_DMerc_Combat
-        owners[832228] = 1354;  // LDF5_DMerc_Combat
-        owners[832229] = 1354;  // LDF5_DMerc_Combat
-        owners[832230] = 1354;  // LDF5_DMerc_Combat
-        owners[832231] = 1354;  // LDF5_DMerc_Combat
-        owners[832232] = 1354;  // LDF5_DMerc_Combat
-        owners[832233] = 1354;  // LDF5_DMerc_Combat
-        owners[832234] = 1354;  // LDF5_DFunc_Combat
-        owners[832235] = 1354;  // LDF5_DMerc_Combat
-        owners[832236] = 1354;  // LDF5_DMerc_Combat
-        owners[832237] = 1354;  // LDF5_DMerc_Combat
-        owners[832238] = 1354;  // LDF5_DMerc_Combat
-        owners[832239] = 1354;  // LDF5_DMerc_Combat
-        owners[832240] = 1354;  // LDF5_DMerc_Combat
-        owners[832241] = 1354;  // LDF5_DMerc_Combat
-        owners[832242] = 1354;  // LDF5_DMerc_Combat
-        owners[832243] = 1354;  // LDF5_DFunc_Combat
-        owners[832244] = 1354;  // LDF5_DMerc_Combat
-        owners[832245] = 1354;  // LDF5_DMerc_Combat
-        owners[832246] = 1354;  // LDF5_DMerc_Combat
-        owners[832247] = 1354;  // LDF5_DMerc_Combat
-        owners[832248] = 1354;  // LDF5_DMerc_Combat
-        owners[832249] = 1354;  // LDF5_DMerc_Combat
-        owners[832250] = 1354;  // LDF5_DMerc_Combat
-        owners[832251] = 1354;  // LDF5_DMerc_Combat
-        owners[832252] = 1354;  // LDF5_DFunc_Combat
-        owners[832253] = 1354;  // LDF5_DMerc_Combat
-        owners[832254] = 1354;  // LDF5_DMerc_Combat
+        owners[831995] = 1353;  // LDF5_LFunc_Combat
+        owners[831996] = 1353;  // LDF5_DFunc_Combat
+        owners[832183] = 1353;  // LDF5_LMerc_Combat
+        owners[832184] = 1353;  // LDF5_LMerc_Combat
+        owners[832185] = 1353;  // LDF5_LMerc_Combat
+        owners[832186] = 1353;  // LDF5_LMerc_Combat
+        owners[832187] = 1353;  // LDF5_LMerc_Combat
+        owners[832188] = 1353;  // LDF5_LMerc_Combat
+        owners[832189] = 1353;  // LDF5_LFunc_Combat
+        owners[832190] = 1353;  // LDF5_LMerc_Combat
+        owners[832191] = 1353;  // LDF5_LMerc_Combat
+        owners[832192] = 1353;  // LDF5_LMerc_Combat
+        owners[832193] = 1353;  // LDF5_LMerc_Combat
+        owners[832194] = 1353;  // LDF5_LMerc_Combat
+        owners[832195] = 1353;  // LDF5_LMerc_Combat
+        owners[832196] = 1353;  // LDF5_LMerc_Combat
+        owners[832197] = 1353;  // LDF5_LMerc_Combat
+        owners[832198] = 1353;  // LDF5_LFunc_Combat
+        owners[832199] = 1353;  // LDF5_LMerc_Combat
+        owners[832200] = 1353;  // LDF5_LMerc_Combat
+        owners[832201] = 1353;  // LDF5_LMerc_Combat
+        owners[832202] = 1353;  // LDF5_LMerc_Combat
+        owners[832203] = 1353;  // LDF5_LMerc_Combat
+        owners[832204] = 1353;  // LDF5_LMerc_Combat
+        owners[832205] = 1353;  // LDF5_LMerc_Combat
+        owners[832206] = 1353;  // LDF5_LMerc_Combat
+        owners[832207] = 1353;  // LDF5_LFunc_Combat
+        owners[832208] = 1353;  // LDF5_LMerc_Combat
+        owners[832209] = 1353;  // LDF5_LMerc_Combat
+        owners[832210] = 1353;  // LDF5_LMerc_Combat
+        owners[832211] = 1353;  // LDF5_LMerc_Combat
+        owners[832212] = 1353;  // LDF5_LMerc_Combat
+        owners[832213] = 1353;  // LDF5_LMerc_Combat
+        owners[832214] = 1353;  // LDF5_LMerc_Combat
+        owners[832215] = 1353;  // LDF5_LMerc_Combat
+        owners[832216] = 1353;  // LDF5_LFunc_Combat
+        owners[832217] = 1353;  // LDF5_LMerc_Combat
+        owners[832218] = 1353;  // LDF5_LMerc_Combat
+        owners[832219] = 1353;  // LDF5_DMerc_Combat
+        owners[832220] = 1353;  // LDF5_DMerc_Combat
+        owners[832221] = 1353;  // LDF5_DMerc_Combat
+        owners[832222] = 1353;  // LDF5_DMerc_Combat
+        owners[832223] = 1353;  // LDF5_DMerc_Combat
+        owners[832224] = 1353;  // LDF5_DMerc_Combat
+        owners[832225] = 1353;  // LDF5_DFunc_Combat
+        owners[832226] = 1353;  // LDF5_DMerc_Combat
+        owners[832227] = 1353;  // LDF5_DMerc_Combat
+        owners[832228] = 1353;  // LDF5_DMerc_Combat
+        owners[832229] = 1353;  // LDF5_DMerc_Combat
+        owners[832230] = 1353;  // LDF5_DMerc_Combat
+        owners[832231] = 1353;  // LDF5_DMerc_Combat
+        owners[832232] = 1353;  // LDF5_DMerc_Combat
+        owners[832233] = 1353;  // LDF5_DMerc_Combat
+        owners[832234] = 1353;  // LDF5_DFunc_Combat
+        owners[832235] = 1353;  // LDF5_DMerc_Combat
+        owners[832236] = 1353;  // LDF5_DMerc_Combat
+        owners[832237] = 1353;  // LDF5_DMerc_Combat
+        owners[832238] = 1353;  // LDF5_DMerc_Combat
+        owners[832239] = 1353;  // LDF5_DMerc_Combat
+        owners[832240] = 1353;  // LDF5_DMerc_Combat
+        owners[832241] = 1353;  // LDF5_DMerc_Combat
+        owners[832242] = 1353;  // LDF5_DMerc_Combat
+        owners[832243] = 1353;  // LDF5_DFunc_Combat
+        owners[832244] = 1353;  // LDF5_DMerc_Combat
+        owners[832245] = 1353;  // LDF5_DMerc_Combat
+        owners[832246] = 1353;  // LDF5_DMerc_Combat
+        owners[832247] = 1353;  // LDF5_DMerc_Combat
+        owners[832248] = 1353;  // LDF5_DMerc_Combat
+        owners[832249] = 1353;  // LDF5_DMerc_Combat
+        owners[832250] = 1353;  // LDF5_DMerc_Combat
+        owners[832251] = 1353;  // LDF5_DMerc_Combat
+        owners[832252] = 1353;  // LDF5_DFunc_Combat
+        owners[832253] = 1353;  // LDF5_DMerc_Combat
+        owners[832254] = 1353;  // LDF5_DMerc_Combat
         owners[832745] = 0;  // LFunction
         owners[832746] = 5;  // DFunction
         owners[832803] = 5;  // DFunction
         owners[832804] = 0;  // LFunction
-        owners[832916] = 1354;  // LDF5_LFunc_Combat
-        owners[832917] = 1354;  // LDF5_DFunc_Combat
-        owners[833466] = 1355;  // IDYun_Soldier_ND1
-        owners[833467] = 1355;  // IDYun_Soldier_ND1
-        owners[833468] = 1355;  // IDYun_Soldier_ND1
-        owners[833469] = 1355;  // IDYun_Soldier_ND1
+        owners[832916] = 1353;  // LDF5_LFunc_Combat
+        owners[832917] = 1353;  // LDF5_DFunc_Combat
+        owners[833466] = 1354;  // IDYun_Soldier_ND1
+        owners[833467] = 1354;  // IDYun_Soldier_ND1
+        owners[833468] = 1354;  // IDYun_Soldier_ND1
+        owners[833469] = 1354;  // IDYun_Soldier_ND1
         owners[833470] = 421;  // IDYun_Soldier_ND2
         owners[833471] = 421;  // IDYun_Soldier_ND2
         owners[833472] = 421;  // IDYun_Soldier_ND2
-        owners[833473] = 1355;  // IDYun_Soldier_ND1
+        owners[833473] = 1354;  // IDYun_Soldier_ND1
         owners[833474] = 369;  // IDYun_Soldier_ND3
         owners[833475] = 369;  // IDYun_Soldier_ND3
-        owners[855011] = 1358;  // IDLDF5_Fortress_Re_SetCond_Noshow_06
-        owners[855013] = 1358;  // IDLDF5_Fortress_Re_SetCond_Noshow_07
-        owners[855014] = 1358;  // IDLDF5_Fortress_Re_SetCond_Noshow_08
+        owners[855011] = 1357;  // IDLDF5_Fortress_Re_SetCond_Noshow_06
+        owners[855013] = 1357;  // IDLDF5_Fortress_Re_SetCond_Noshow_07
+        owners[855014] = 1357;  // IDLDF5_Fortress_Re_SetCond_Noshow_08
         owners[855039] = 960;  // TR_Drakan_Fi_Stun_Hero
         owners[855059] = 882;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[855060] = 882;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
@@ -81728,8 +81679,8 @@ internal static class BattleCycles
         owners[855078] = 959;  // LDF4_Advance_village_02
         owners[855079] = 959;  // LDF4_Advance_village_02
         owners[855080] = 959;  // LDF4_Advance_village_02
-        owners[855087] = 1359;  // IDLDF4_Re_01_Tank
-        owners[855088] = 1359;  // IDLDF4_Re_01_Tank
+        owners[855087] = 1358;  // IDLDF4_Re_01_Tank
+        owners[855088] = 1358;  // IDLDF4_Re_01_Tank
         owners[855149] = 725;  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
         owners[855150] = 725;  // IDLDF5Re_Solo_Vritra43IU_DrakanAn
         owners[855151] = 725;  // IDLDF5Re_Solo_Vritra43IU_DrakanWn
@@ -81749,8 +81700,8 @@ internal static class BattleCycles
         owners[855203] = 148;  // LDF4_Advance_Rottentree_Green_Gi400
         owners[855219] = 761;  // Britra_As_Poison_LowNmd
         owners[855220] = 158;  // Naga_FhA
-        owners[855228] = 1360;  // Gab1_Named_01
-        owners[855250] = 1361;  // Rune_FrostNmd_MagCircle_NoShow2
+        owners[855228] = 1359;  // Gab1_Named_01
+        owners[855250] = 1360;  // Rune_FrostNmd_MagCircle_NoShow2
         owners[855251] = 762;  // Britra_Table
         owners[855252] = 761;  // Britra_As_Poison
         owners[855253] = 837;  // Britra_Table
@@ -81786,9 +81737,9 @@ internal static class BattleCycles
         owners[855350] = 64;  // F5_PvP_DGuard_Wi_Ae
         owners[855355] = 57;  // F5_PvP_DGuard_Fi_Ae
         owners[855356] = 64;  // F5_PvP_DGuard_Wi_Ae
-        owners[855369] = 1362;  // LDF4_Drakan_Worker_LV1
+        owners[855369] = 1361;  // LDF4_Drakan_Worker_LV1
         owners[855370] = 970;  // LDF4_Drakan_Worker_LV2
-        owners[855371] = 1363;  // LDF4_Drakan_Worker_LV3
+        owners[855371] = 1362;  // LDF4_Drakan_Worker_LV3
         owners[855419] = 426;  // Station_eye_Su
         owners[855420] = 424;  // Station_MaravataNM
         owners[855421] = 429;  // Station_Shu_PR
@@ -81797,22 +81748,22 @@ internal static class BattleCycles
         owners[855424] = 430;  // Station_Shu_AS
         owners[855426] = 429;  // Station_Shu_RA
         owners[855428] = 427;  // Station_HugenB
-        owners[855473] = 1364;  // IDSeal_Wave1_Leader_Lv3
-        owners[855474] = 1365;  // IDSeal_Wave2_Leader_Lv3
-        owners[855476] = 1366;  // IDSeal_Wave4_Leader_Lv3
-        owners[855486] = 1367;  // IDSeal_Forward_Guard
-        owners[855487] = 1367;  // IDSeal_Forward_Guard
+        owners[855473] = 1363;  // IDSeal_Wave1_Leader_Lv3
+        owners[855474] = 1364;  // IDSeal_Wave2_Leader_Lv3
+        owners[855476] = 1365;  // IDSeal_Wave4_Leader_Lv3
+        owners[855486] = 1366;  // IDSeal_Forward_Guard
+        owners[855487] = 1366;  // IDSeal_Forward_Guard
         owners[855489] = 965;  // IDSeal_Immortal_Lv2
         owners[855490] = 965;  // IDSeal_Immortal_Lv3
-        owners[855497] = 1368;  // IDSeal_FullWake_Lv2
-        owners[855498] = 1368;  // IDSeal_FullWake_Lv3
+        owners[855497] = 1367;  // IDSeal_FullWake_Lv2
+        owners[855498] = 1367;  // IDSeal_FullWake_Lv3
         owners[855531] = 963;  // IDLDF5_Under_02_Boss_Wi
         owners[855532] = 963;  // IDLDF5_Under_02_Boss_Pr
         owners[855533] = 963;  // IDLDF5_Under_02_Boss_As
-        owners[855534] = 1369;  // IDLDF5_Under_02_Summon01
+        owners[855534] = 1368;  // IDLDF5_Under_02_Summon01
         owners[855535] = 725;  // IDLDF5_Under_02_Summon02
         owners[855616] = 1172;  // Station_Shu_WI_B
-        owners[855622] = 1370;  // IDSeal_Twin_M_Sum
+        owners[855622] = 1369;  // IDSeal_Twin_M_Sum
         owners[855646] = 594;  // LDF4b_T4_Driton_An
         owners[855684] = 527;  // LDF4a_B2_NepRe01
         owners[855686] = 527;  // LDF4a_B2_NepRe01
@@ -81829,18 +81780,18 @@ internal static class BattleCycles
         owners[855887] = 696;  // IDYun_Temp_62
         owners[855888] = 696;  // IDYun_Temp_62
         owners[855889] = 401;  // IDYun_Temp_26
-        owners[855890] = 1371;  // IDYun_Temp_20
+        owners[855890] = 1370;  // IDYun_Temp_20
         owners[855892] = 421;  // IDYun_Drakan_ND1
         owners[855893] = 420;  // IDYun_Drakan_ND3
         owners[855894] = 696;  // IDYun_Temp_62
         owners[855895] = 696;  // IDYun_Temp_62
         owners[855896] = 401;  // IDYun_Temp_26
-        owners[855897] = 1371;  // IDYun_Temp_20
-        owners[855899] = 1372;  // IDYun_Nmd3
+        owners[855897] = 1370;  // IDYun_Temp_20
+        owners[855899] = 1371;  // IDYun_Nmd3
         owners[855902] = 423;  // IDYun_Nmd5
         owners[855906] = 722;  // DF5_ItemNamed_6_Fi_03_SSH
         owners[855907] = 723;  // DF5_ItemNamed_6_Wi_02_SSH
-        owners[855910] = 1373;  // DF5_ItemNamed_24_SSH
+        owners[855910] = 1372;  // DF5_ItemNamed_24_SSH
         owners[855912] = 424;  // DF5_ItemNamed_12_SSH
         owners[855914] = 314;  // DF5_ItemNamed_6_Fi_01_SSH
         owners[855915] = 722;  // DF5_ItemNamed_6_Wi_01_SSH
@@ -81876,8 +81827,8 @@ internal static class BattleCycles
         owners[856012] = 818;  // IDF5_U1_Vri_Def_Wi_65_Ae
         owners[856013] = 819;  // IDF5_U1_Vri_Def_As_65_Ae
         owners[856014] = 148;  // IDYun_info_05
-        owners[856029] = 1374;  // IDTiamat_Hard_Tiamat_Dragon_Dying
-        owners[856064] = 1375;  // IDStation_info_10
+        owners[856029] = 1373;  // IDTiamat_Hard_Tiamat_Dragon_Dying
+        owners[856064] = 1374;  // IDStation_info_10
         owners[856084] = 725;  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
         owners[856085] = 725;  // IDLDF5Re_Solo_Vritra43IU_DrakanAn
         owners[856093] = 726;  // IDF5_Mini_01_A_Prisoner_Boss_Wi
@@ -81890,16 +81841,16 @@ internal static class BattleCycles
         owners[856396] = 729;  // IDF5_U1_Vri_Def_Ba_65_Ae
         owners[856397] = 60;  // F5_PvP_LGuard_Kn_Ae
         owners[856478] = 401;  // IDYun_Temp_26
-        owners[856487] = 1376;  // LF5_QuestNPC_05
-        owners[856488] = 1376;  // LF5_QuestNPC_05
-        owners[856490] = 1377;  // IDYun_Temp_69
-        owners[856492] = 1377;  // IDYun_Temp_69
+        owners[856487] = 1375;  // LF5_QuestNPC_05
+        owners[856488] = 1375;  // LF5_QuestNPC_05
+        owners[856490] = 1376;  // IDYun_Temp_69
+        owners[856492] = 1376;  // IDYun_Temp_69
         owners[856499] = 1004;  // IDYun_Temp_51
+        owners[880000] = 1058;  // Gab1_DArtiGuard_Boss_04_01_2
     }
 
     private static void OnEnterAttackStateOf49(Dictionary<int, int> owners)
     {
-        owners[880000] = 1058;  // Gab1_DArtiGuard_Boss_04_01_2
         owners[880001] = 1058;  // Gab1_DArtiGuard_Boss_04_01_2
         owners[880002] = 1058;  // Gab1_DArtiGuard_Boss_04_01_2
         owners[880003] = 1058;  // Gab1_DArtiGuard_Boss_04_01_2
@@ -81995,102 +81946,102 @@ internal static class BattleCycles
         owners[880748] = 1057;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880764] = 1057;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880780] = 1057;  // Gab1_VritraGuard_BossKiller_01_01
-        owners[880948] = 1378;  // Gab1_TurretSwitch_toPC_01
-        owners[880949] = 1378;  // Gab1_TurretSwitch_toPC_02
-        owners[880950] = 1378;  // Gab1_TurretSwitch_toPC_03
-        owners[880951] = 1378;  // Gab1_TurretSwitch_toPC_04
-        owners[880952] = 1378;  // Gab1_TurretSwitch_toPC_05
-        owners[880953] = 1378;  // Gab1_TurretSwitch_toPC_06
-        owners[880954] = 1378;  // Gab1_TurretSwitch_toPC_07
-        owners[880955] = 1378;  // Gab1_TurretSwitch_toPC_08
-        owners[880956] = 1378;  // Gab1_TurretSwitch_toPC_09
-        owners[880957] = 1378;  // Gab1_TurretSwitch_toPC_10
-        owners[880958] = 1378;  // Gab1_TurretSwitch_toPC_11
-        owners[880959] = 1378;  // Gab1_TurretSwitch_toPC_12
-        owners[880960] = 1378;  // Gab1_TurretSwitch_toPC_13
-        owners[880961] = 1378;  // Gab1_TurretSwitch_toPC_14
-        owners[880962] = 1378;  // Gab1_TurretSwitch_toPC_15
-        owners[880963] = 1378;  // Gab1_TurretSwitch_toPC_16
-        owners[880964] = 1378;  // Gab1_TurretSwitch_toPC_17
-        owners[880965] = 1378;  // Gab1_TurretSwitch_toPC_18
-        owners[880966] = 1378;  // Gab1_TurretSwitch_toPC_19
-        owners[880967] = 1378;  // Gab1_TurretSwitch_toPC_20
-        owners[880968] = 1378;  // Gab1_TurretSwitch_toPC_21
-        owners[880969] = 1378;  // Gab1_TurretSwitch_toPC_22
-        owners[880970] = 1378;  // Gab1_TurretSwitch_toPC_23
-        owners[881410] = 1360;  // Gab1_Named_01
-        owners[881418] = 1360;  // Gab1_Named_01
-        owners[881426] = 1360;  // Gab1_Named_01
-        owners[881434] = 1360;  // Gab1_Named_01
-        owners[881468] = 1378;  // Gab1_TurretSwitch_toPC_01
-        owners[881469] = 1378;  // Gab1_TurretSwitch_toPC_02
-        owners[881470] = 1378;  // Gab1_TurretSwitch_toPC_03
-        owners[881471] = 1378;  // Gab1_TurretSwitch_toPC_04
-        owners[881472] = 1378;  // Gab1_TurretSwitch_toPC_05
-        owners[881473] = 1378;  // Gab1_TurretSwitch_toPC_06
-        owners[881474] = 1378;  // Gab1_TurretSwitch_toPC_07
-        owners[881475] = 1378;  // Gab1_TurretSwitch_toPC_08
-        owners[881476] = 1378;  // Gab1_TurretSwitch_toPC_09
-        owners[881477] = 1378;  // Gab1_TurretSwitch_toPC_10
-        owners[881478] = 1378;  // Gab1_TurretSwitch_toPC_11
-        owners[881479] = 1378;  // Gab1_TurretSwitch_toPC_12
-        owners[881480] = 1378;  // Gab1_TurretSwitch_toPC_13
-        owners[881481] = 1378;  // Gab1_TurretSwitch_toPC_14
-        owners[881482] = 1378;  // Gab1_TurretSwitch_toPC_15
-        owners[881483] = 1378;  // Gab1_TurretSwitch_toPC_16
-        owners[881484] = 1378;  // Gab1_TurretSwitch_toPC_17
-        owners[881485] = 1378;  // Gab1_TurretSwitch_toPC_18
-        owners[881486] = 1378;  // Gab1_TurretSwitch_toPC_19
-        owners[881487] = 1378;  // Gab1_TurretSwitch_toPC_20
-        owners[881488] = 1378;  // Gab1_TurretSwitch_toPC_21
-        owners[881489] = 1378;  // Gab1_TurretSwitch_toPC_22
-        owners[881490] = 1378;  // Gab1_TurretSwitch_toPC_23
-        owners[881492] = 1378;  // Gab1_TurretSwitch_toPC_01
-        owners[881493] = 1378;  // Gab1_TurretSwitch_toPC_02
-        owners[881494] = 1378;  // Gab1_TurretSwitch_toPC_03
-        owners[881495] = 1378;  // Gab1_TurretSwitch_toPC_04
-        owners[881496] = 1378;  // Gab1_TurretSwitch_toPC_05
-        owners[881497] = 1378;  // Gab1_TurretSwitch_toPC_06
-        owners[881498] = 1378;  // Gab1_TurretSwitch_toPC_07
-        owners[881499] = 1378;  // Gab1_TurretSwitch_toPC_08
-        owners[881500] = 1378;  // Gab1_TurretSwitch_toPC_09
-        owners[881501] = 1378;  // Gab1_TurretSwitch_toPC_10
-        owners[881502] = 1378;  // Gab1_TurretSwitch_toPC_11
-        owners[881503] = 1378;  // Gab1_TurretSwitch_toPC_12
-        owners[881504] = 1378;  // Gab1_TurretSwitch_toPC_13
-        owners[881505] = 1378;  // Gab1_TurretSwitch_toPC_14
-        owners[881506] = 1378;  // Gab1_TurretSwitch_toPC_15
-        owners[881507] = 1378;  // Gab1_TurretSwitch_toPC_16
-        owners[881508] = 1378;  // Gab1_TurretSwitch_toPC_17
-        owners[881509] = 1378;  // Gab1_TurretSwitch_toPC_18
-        owners[881510] = 1378;  // Gab1_TurretSwitch_toPC_19
-        owners[881511] = 1378;  // Gab1_TurretSwitch_toPC_20
-        owners[881512] = 1378;  // Gab1_TurretSwitch_toPC_21
-        owners[881513] = 1378;  // Gab1_TurretSwitch_toPC_22
-        owners[881514] = 1378;  // Gab1_TurretSwitch_toPC_23
-        owners[881516] = 1378;  // Gab1_TurretSwitch_toPC_01
-        owners[881517] = 1378;  // Gab1_TurretSwitch_toPC_02
-        owners[881518] = 1378;  // Gab1_TurretSwitch_toPC_03
-        owners[881519] = 1378;  // Gab1_TurretSwitch_toPC_04
-        owners[881520] = 1378;  // Gab1_TurretSwitch_toPC_05
-        owners[881521] = 1378;  // Gab1_TurretSwitch_toPC_06
-        owners[881522] = 1378;  // Gab1_TurretSwitch_toPC_07
-        owners[881523] = 1378;  // Gab1_TurretSwitch_toPC_08
-        owners[881524] = 1378;  // Gab1_TurretSwitch_toPC_09
-        owners[881525] = 1378;  // Gab1_TurretSwitch_toPC_10
-        owners[881526] = 1378;  // Gab1_TurretSwitch_toPC_11
-        owners[881527] = 1378;  // Gab1_TurretSwitch_toPC_12
-        owners[881528] = 1378;  // Gab1_TurretSwitch_toPC_13
-        owners[881529] = 1378;  // Gab1_TurretSwitch_toPC_14
-        owners[881530] = 1378;  // Gab1_TurretSwitch_toPC_15
-        owners[881531] = 1378;  // Gab1_TurretSwitch_toPC_16
-        owners[881532] = 1378;  // Gab1_TurretSwitch_toPC_17
-        owners[881533] = 1378;  // Gab1_TurretSwitch_toPC_18
-        owners[881534] = 1378;  // Gab1_TurretSwitch_toPC_19
-        owners[881535] = 1378;  // Gab1_TurretSwitch_toPC_20
-        owners[881536] = 1378;  // Gab1_TurretSwitch_toPC_21
-        owners[881537] = 1378;  // Gab1_TurretSwitch_toPC_22
-        owners[881538] = 1378;  // Gab1_TurretSwitch_toPC_23
+        owners[880948] = 1377;  // Gab1_TurretSwitch_toPC_01
+        owners[880949] = 1377;  // Gab1_TurretSwitch_toPC_02
+        owners[880950] = 1377;  // Gab1_TurretSwitch_toPC_03
+        owners[880951] = 1377;  // Gab1_TurretSwitch_toPC_04
+        owners[880952] = 1377;  // Gab1_TurretSwitch_toPC_05
+        owners[880953] = 1377;  // Gab1_TurretSwitch_toPC_06
+        owners[880954] = 1377;  // Gab1_TurretSwitch_toPC_07
+        owners[880955] = 1377;  // Gab1_TurretSwitch_toPC_08
+        owners[880956] = 1377;  // Gab1_TurretSwitch_toPC_09
+        owners[880957] = 1377;  // Gab1_TurretSwitch_toPC_10
+        owners[880958] = 1377;  // Gab1_TurretSwitch_toPC_11
+        owners[880959] = 1377;  // Gab1_TurretSwitch_toPC_12
+        owners[880960] = 1377;  // Gab1_TurretSwitch_toPC_13
+        owners[880961] = 1377;  // Gab1_TurretSwitch_toPC_14
+        owners[880962] = 1377;  // Gab1_TurretSwitch_toPC_15
+        owners[880963] = 1377;  // Gab1_TurretSwitch_toPC_16
+        owners[880964] = 1377;  // Gab1_TurretSwitch_toPC_17
+        owners[880965] = 1377;  // Gab1_TurretSwitch_toPC_18
+        owners[880966] = 1377;  // Gab1_TurretSwitch_toPC_19
+        owners[880967] = 1377;  // Gab1_TurretSwitch_toPC_20
+        owners[880968] = 1377;  // Gab1_TurretSwitch_toPC_21
+        owners[880969] = 1377;  // Gab1_TurretSwitch_toPC_22
+        owners[880970] = 1377;  // Gab1_TurretSwitch_toPC_23
+        owners[881410] = 1359;  // Gab1_Named_01
+        owners[881418] = 1359;  // Gab1_Named_01
+        owners[881426] = 1359;  // Gab1_Named_01
+        owners[881434] = 1359;  // Gab1_Named_01
+        owners[881468] = 1377;  // Gab1_TurretSwitch_toPC_01
+        owners[881469] = 1377;  // Gab1_TurretSwitch_toPC_02
+        owners[881470] = 1377;  // Gab1_TurretSwitch_toPC_03
+        owners[881471] = 1377;  // Gab1_TurretSwitch_toPC_04
+        owners[881472] = 1377;  // Gab1_TurretSwitch_toPC_05
+        owners[881473] = 1377;  // Gab1_TurretSwitch_toPC_06
+        owners[881474] = 1377;  // Gab1_TurretSwitch_toPC_07
+        owners[881475] = 1377;  // Gab1_TurretSwitch_toPC_08
+        owners[881476] = 1377;  // Gab1_TurretSwitch_toPC_09
+        owners[881477] = 1377;  // Gab1_TurretSwitch_toPC_10
+        owners[881478] = 1377;  // Gab1_TurretSwitch_toPC_11
+        owners[881479] = 1377;  // Gab1_TurretSwitch_toPC_12
+        owners[881480] = 1377;  // Gab1_TurretSwitch_toPC_13
+        owners[881481] = 1377;  // Gab1_TurretSwitch_toPC_14
+        owners[881482] = 1377;  // Gab1_TurretSwitch_toPC_15
+        owners[881483] = 1377;  // Gab1_TurretSwitch_toPC_16
+        owners[881484] = 1377;  // Gab1_TurretSwitch_toPC_17
+        owners[881485] = 1377;  // Gab1_TurretSwitch_toPC_18
+        owners[881486] = 1377;  // Gab1_TurretSwitch_toPC_19
+        owners[881487] = 1377;  // Gab1_TurretSwitch_toPC_20
+        owners[881488] = 1377;  // Gab1_TurretSwitch_toPC_21
+        owners[881489] = 1377;  // Gab1_TurretSwitch_toPC_22
+        owners[881490] = 1377;  // Gab1_TurretSwitch_toPC_23
+        owners[881492] = 1377;  // Gab1_TurretSwitch_toPC_01
+        owners[881493] = 1377;  // Gab1_TurretSwitch_toPC_02
+        owners[881494] = 1377;  // Gab1_TurretSwitch_toPC_03
+        owners[881495] = 1377;  // Gab1_TurretSwitch_toPC_04
+        owners[881496] = 1377;  // Gab1_TurretSwitch_toPC_05
+        owners[881497] = 1377;  // Gab1_TurretSwitch_toPC_06
+        owners[881498] = 1377;  // Gab1_TurretSwitch_toPC_07
+        owners[881499] = 1377;  // Gab1_TurretSwitch_toPC_08
+        owners[881500] = 1377;  // Gab1_TurretSwitch_toPC_09
+        owners[881501] = 1377;  // Gab1_TurretSwitch_toPC_10
+        owners[881502] = 1377;  // Gab1_TurretSwitch_toPC_11
+        owners[881503] = 1377;  // Gab1_TurretSwitch_toPC_12
+        owners[881504] = 1377;  // Gab1_TurretSwitch_toPC_13
+        owners[881505] = 1377;  // Gab1_TurretSwitch_toPC_14
+        owners[881506] = 1377;  // Gab1_TurretSwitch_toPC_15
+        owners[881507] = 1377;  // Gab1_TurretSwitch_toPC_16
+        owners[881508] = 1377;  // Gab1_TurretSwitch_toPC_17
+        owners[881509] = 1377;  // Gab1_TurretSwitch_toPC_18
+        owners[881510] = 1377;  // Gab1_TurretSwitch_toPC_19
+        owners[881511] = 1377;  // Gab1_TurretSwitch_toPC_20
+        owners[881512] = 1377;  // Gab1_TurretSwitch_toPC_21
+        owners[881513] = 1377;  // Gab1_TurretSwitch_toPC_22
+        owners[881514] = 1377;  // Gab1_TurretSwitch_toPC_23
+        owners[881516] = 1377;  // Gab1_TurretSwitch_toPC_01
+        owners[881517] = 1377;  // Gab1_TurretSwitch_toPC_02
+        owners[881518] = 1377;  // Gab1_TurretSwitch_toPC_03
+        owners[881519] = 1377;  // Gab1_TurretSwitch_toPC_04
+        owners[881520] = 1377;  // Gab1_TurretSwitch_toPC_05
+        owners[881521] = 1377;  // Gab1_TurretSwitch_toPC_06
+        owners[881522] = 1377;  // Gab1_TurretSwitch_toPC_07
+        owners[881523] = 1377;  // Gab1_TurretSwitch_toPC_08
+        owners[881524] = 1377;  // Gab1_TurretSwitch_toPC_09
+        owners[881525] = 1377;  // Gab1_TurretSwitch_toPC_10
+        owners[881526] = 1377;  // Gab1_TurretSwitch_toPC_11
+        owners[881527] = 1377;  // Gab1_TurretSwitch_toPC_12
+        owners[881528] = 1377;  // Gab1_TurretSwitch_toPC_13
+        owners[881529] = 1377;  // Gab1_TurretSwitch_toPC_14
+        owners[881530] = 1377;  // Gab1_TurretSwitch_toPC_15
+        owners[881531] = 1377;  // Gab1_TurretSwitch_toPC_16
+        owners[881532] = 1377;  // Gab1_TurretSwitch_toPC_17
+        owners[881533] = 1377;  // Gab1_TurretSwitch_toPC_18
+        owners[881534] = 1377;  // Gab1_TurretSwitch_toPC_19
+        owners[881535] = 1377;  // Gab1_TurretSwitch_toPC_20
+        owners[881536] = 1377;  // Gab1_TurretSwitch_toPC_21
+        owners[881537] = 1377;  // Gab1_TurretSwitch_toPC_22
+        owners[881538] = 1377;  // Gab1_TurretSwitch_toPC_23
         owners[881542] = 984;  // F5_RvR_LGuard_Ra_Ae
         owners[881545] = 984;  // F5_RvR_DGuard_Ra_Ae
         owners[881546] = 979;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
@@ -82299,11 +82250,11 @@ internal static class BattleCycles
         owners[881820] = 836;  // F5_PvPLight_DGuard_Pr_An
         owners[881821] = 836;  // F5_PvPLight_DGuard_Pr_An
         owners[881822] = 836;  // F5_PvPLight_DGuard_Pr_An
+        owners[881823] = 836;  // F5_PvPLight_DGuard_Pr_An
     }
 
     private static void OnEnterAttackStateOf50(Dictionary<int, int> owners)
     {
-        owners[881823] = 836;  // F5_PvPLight_DGuard_Pr_An
         owners[881824] = 836;  // F5_PvPLight_DGuard_Pr_An
         owners[881825] = 836;  // F5_PvPLight_DGuard_Pr_An
         owners[881826] = 836;  // F5_PvPLight_DGuard_Pr_An
@@ -82523,12 +82474,12 @@ internal static class BattleCycles
         owners[882244] = 879;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[882245] = 830;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[882246] = 881;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
-        owners[882293] = 1379;  // F5_RvR_Trap
-        owners[882294] = 1379;  // F5_RvR_Trap
-        owners[882295] = 1379;  // F5_RvR_Trap
-        owners[882298] = 1346;  // LDF5_Fortress_VGuardBoss_Fi
-        owners[882299] = 1347;  // LDF5_Fortress_VGuardBoss_Ra
-        owners[882300] = 1348;  // LDF5_Fortress_VGuardBoss_Wi
+        owners[882293] = 1378;  // F5_RvR_Trap
+        owners[882294] = 1378;  // F5_RvR_Trap
+        owners[882295] = 1378;  // F5_RvR_Trap
+        owners[882298] = 1345;  // LDF5_Fortress_VGuardBoss_Fi
+        owners[882299] = 1346;  // LDF5_Fortress_VGuardBoss_Ra
+        owners[882300] = 1347;  // LDF5_Fortress_VGuardBoss_Wi
     }
 
     /// <summary>Arms the chain when another npc calls.</summary>
@@ -88239,7 +88190,6 @@ internal static class BattleCycles
         owners[284653] = 56;  // IDRuneWP_Main_VriIU_Wi_A_65_Ae
         owners[284717] = 15;  // IDDreadgion_03_DrakanPr_Vil_60_Ae
         owners[284850] = 112;  // BIDF5_U3_hard_Vri_Pr
-        owners[284854] = 113;  // BIDF5_U3_SemiNmd_Vri_Fi
         owners[284856] = 113;  // BIDF5_U3_SemiNmd_Vri_Wi
         owners[284906] = 75;  // ND2_ElementalSu2
         owners[284914] = 58;  // Britra_Table
@@ -88288,11 +88238,11 @@ internal static class BattleCycles
         owners[297179] = 118;  // LDF5_DisputeRvR_Hide_As
         owners[297222] = 67;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[297228] = 67;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
+        owners[297233] = 66;  // F5_PvP_LGuard_As_Ae_Hide
     }
 
     private static void OnLeaveAttackOf3(Dictionary<int, int> owners)
     {
-        owners[297233] = 66;  // F5_PvP_LGuard_As_Ae_Hide
         owners[297234] = 66;  // F5_PvP_DGuard_As_Ae_Hide
         owners[297235] = 67;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[297249] = 67;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
@@ -88398,7 +88348,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnEnterIdleStateVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[135][];
+        PatternBranch[][] variants = new PatternBranch[134][];
         OnEnterIdleStateVariants0(variants);
         OnEnterIdleStateVariants1(variants);
         return variants;
@@ -88954,12 +88904,6 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
         ];
         variants[125] = [
-            AiPattern.Branch(1, "rung 0", When.Always,
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 16391),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
-                Do.ContinueRoute()),
-        ];
-        variants[126] = [
             AiPattern.Branch(2, "rung 0", [When.HpBelow(25)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18670),
                 Do.Despawn(1),
@@ -88972,40 +88916,40 @@ internal static class BattleCycles
                 Do.Despawn(3),
                 Do.Despawn(4)),
         ];
-        variants[127] = [
+        variants[126] = [
             AiPattern.Branch(10, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16852)),
         ];
-        variants[128] = [
+        variants[127] = [
             AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17547)),
         ];
-        variants[129] = [
+        variants[128] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(10009, 100f),
                 Do.Broadcast(10037, 100f)),
         ];
-        variants[130] = [
+        variants[129] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(10005, 30f)),
         ];
-        variants[131] = [
+        variants[130] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762),
                 Do.GotoWaypoint(0)),
         ];
-        variants[132] = [
+        variants[131] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
         ];
-        variants[133] = [
+        variants[132] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.Broadcast(22732, 100f),
                 Do.SetSpawnVariable("ORITSA_SUMMON", 10, 0),
                 Do.Despawn(1),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21634)),
         ];
-        variants[134] = [
+        variants[133] = [
             AiPattern.Branch(14, "rung 0", When.Always,
                 Do.Broadcast(500, 100f),
                 Do.Despawn(1)),
@@ -89774,36 +89718,35 @@ internal static class BattleCycles
         owners[284820] = 43;  // IDF5_TD_War_Vri_Officer_08
         owners[284821] = 43;  // IDF5_TD_War_Vri_Officer_09
         owners[284822] = 43;  // IDF5_TD_War_Vri_Officer_10
-        owners[284854] = 125;  // BIDF5_U3_SemiNmd_Vri_Fi
         owners[284964] = 66;  // IDLDF4_Re_01_DrakanWi
         owners[284965] = 66;  // IDLDF4_Re_01_DrakanRa
         owners[284966] = 67;  // IDLDF4_Re_01_DrakanAs
         owners[284967] = 66;  // IDLDF4_Re_01_DrakanFi
         owners[284972] = 68;  // IDLDF4R_Re_01_Stone
         owners[284996] = 1;  // ND2_AnM
-        owners[286791] = 126;  // LF4_FieldRaid
-        owners[286921] = 127;  // TestAI69
+        owners[286791] = 125;  // LF4_FieldRaid
+        owners[286921] = 126;  // TestAI69
         owners[290123] = 72;  // FD2_AnB
         owners[294607] = 20;  // DrGuard_AhA
         owners[294654] = 20;  // DrGuard_AhA
         owners[294699] = 20;  // DrGuard_AhA
-        owners[295086] = 128;  // BGuard_Shield
-        owners[295087] = 128;  // BGuard_Shield
-        owners[295088] = 128;  // BGuard_Shield
-        owners[295092] = 129;  // BGuard_ChiefDespawn
+        owners[295086] = 127;  // BGuard_Shield
+        owners[295087] = 127;  // BGuard_Shield
+        owners[295088] = 127;  // BGuard_Shield
+        owners[295092] = 128;  // BGuard_ChiefDespawn
         owners[295351] = 20;  // DrGuard_AhA
         owners[295435] = 20;  // DrGuard_AhA
         owners[295519] = 20;  // DrGuard_AhA
         owners[295740] = 20;  // DrGuard_AhA
         owners[295824] = 20;  // DrGuard_AhA
         owners[295908] = 20;  // DrGuard_AhA
-        owners[296175] = 128;  // BGuard_Shield
-        owners[296176] = 128;  // BGuard_Shield
-        owners[296177] = 128;  // BGuard_Shield
-        owners[296190] = 128;  // BGuard_Shield
-        owners[296191] = 128;  // BGuard_Shield
-        owners[296192] = 128;  // BGuard_Shield
-        owners[296337] = 130;  // BGuard_DespawnH1
+        owners[296175] = 127;  // BGuard_Shield
+        owners[296176] = 127;  // BGuard_Shield
+        owners[296177] = 127;  // BGuard_Shield
+        owners[296190] = 127;  // BGuard_Shield
+        owners[296191] = 127;  // BGuard_Shield
+        owners[296192] = 127;  // BGuard_Shield
+        owners[296337] = 129;  // BGuard_DespawnH1
         owners[296418] = 20;  // DrGuard_AhA
         owners[296462] = 73;  // LGuard_FsA
         owners[296468] = 75;  // LGuard_AsA
@@ -89818,25 +89761,25 @@ internal static class BattleCycles
         owners[296542] = 74;  // DrGuard_FsA
         owners[296544] = 74;  // DrGuard_AsA
         owners[296843] = 20;  // DrGuard_AhA
-        owners[297483] = 131;  // Gab1_DGuard_05
+        owners[297483] = 130;  // Gab1_DGuard_05
         owners[297541] = 71;  // LDF5_Fortress_Guard_As
-        owners[800214] = 132;  // LDF4b_Tiamat_Temp51
-        owners[800219] = 132;  // LDF4b_Tiamat_Temp51
+        owners[800214] = 131;  // LDF4b_Tiamat_Temp51
+        owners[800219] = 131;  // LDF4b_Tiamat_Temp51
         owners[855046] = 1;  // ND2_AnM
         owners[855419] = 33;  // Station_eye_Su
         owners[855424] = 34;  // Station_Shu_AS
         owners[855489] = 70;  // IDSeal_Immortal_Lv2
         owners[855490] = 70;  // IDSeal_Immortal_Lv3
-        owners[855497] = 133;  // IDSeal_FullWake_Lv2
-        owners[855498] = 133;  // IDSeal_FullWake_Lv3
+        owners[855497] = 132;  // IDSeal_FullWake_Lv2
+        owners[855498] = 132;  // IDSeal_FullWake_Lv3
+        owners[855671] = 105;  // LDF5_D2_Xipeto_Clodworm
     }
 
     private static void OnEnterIdleStateOf2(Dictionary<int, int> owners)
     {
-        owners[855671] = 105;  // LDF5_D2_Xipeto_Clodworm
         owners[855869] = 1;  // ND2_AnM
         owners[855876] = 30;  // IDAbRe_Core_Cannon
-        owners[855899] = 134;  // IDYun_Nmd3
+        owners[855899] = 133;  // IDYun_Nmd3
         owners[855902] = 32;  // IDYun_Nmd5
         owners[855907] = 43;  // DF5_ItemNamed_6_Wi_02_SSH
         owners[855922] = 43;  // DF5_ItemNamed_6_Wi_02_SSH
@@ -90037,7 +89980,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnSeeFriendAttackedVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[17][];
+        PatternBranch[][] variants = new PatternBranch[60][];
         OnSeeFriendAttackedVariants0(variants);
         return variants;
     }
@@ -90045,78 +89988,264 @@ internal static class BattleCycles
     private static void OnSeeFriendAttackedVariants0(PatternBranch[][] variants)
     {
         variants[0] = [
+            AiPattern.Branch(8, "rung 0", [When.Chance(50), When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17215)),
+        ];
+        variants[1] = [
             AiPattern.Branch(1, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[1] = [
+        variants[2] = [
+            AiPattern.Branch(10, "rung 0", [When.Chance(25), When.FriendHpBelow(50), When.SkillReady(17211)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17211)),
+        ];
+        variants[3] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.Nothing()),
         ];
-        variants[2] = [
+        variants[4] = [
             AiPattern.Branch(2, "rung 0", [When.Fighting],
                 Do.Nothing()),
             AiPattern.Branch(1, "rung 1", When.Always,
                 Do.FleeFromFriendsAttacker(3)),
         ];
-        variants[3] = [
+        variants[5] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(100), When.FriendHpBelow(35), When.FirstTime(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16670),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16667)),
+        ];
+        variants[6] = [
             AiPattern.Branch(2, "rung 0", [When.SkillReady(16667)],
                 Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16667)),
         ];
-        variants[4] = [
+        variants[7] = [
+            AiPattern.Branch(8, "rung 0", [When.Chance(30), When.FriendHpBelow(50)],
+                Do.ArmTimer(0, 6000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16631)),
+        ];
+        variants[8] = [
+            AiPattern.Branch(3, "rung 0", [When.Chance(25), When.FriendHpBelow(70)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[9] = [
+            AiPattern.Branch(5, "rung 0", [When.Chance(25), When.FriendHpBelow(70)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16631)),
+        ];
+        variants[10] = [
+            AiPattern.Branch(1, "rung 0", [When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[11] = [
             AiPattern.Branch(1, "rung 0", [When.Chance(15), When.FirstTime(5)],
                 Do.Say(340883, 0),
                 Do.SkillOnAttacker(16602)),
         ];
-        variants[5] = [
+        variants[12] = [
+            AiPattern.Branch(3, "rung 0", [When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[13] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Nothing()),
         ];
-        variants[6] = [
+        variants[14] = [
             AiPattern.Branch(1, "rung 0", [When.Chance(15), When.FirstTime(5)],
                 Do.Say(340882, 0),
                 Do.SkillOnAttacker(16602)),
         ];
-        variants[7] = [
+        variants[15] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(100), When.FriendHpBelow(35), When.FirstTime(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16670),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16395)),
+        ];
+        variants[16] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(10), When.FriendHpBelow(50)],
+                Do.ArmTimer(0, 4000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[17] = [
+            AiPattern.Branch(2, "rung 0", [When.FriendHpBelow(75), When.FirstTime(1)],
+                Do.Say(340889, 0),
+                Do.Broadcast(3201, 13f)),
+        ];
+        variants[18] = [
             AiPattern.Branch(7, "rung 0", [When.Chance(50), When.SkillReady(16563)],
                 Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
         ];
-        variants[8] = [
+        variants[19] = [
+            AiPattern.Branch(11, "rung 0", [When.Chance(25), When.FriendHpBelow(50), When.SkillReady(17361)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[20] = [
+            AiPattern.Branch(13, "rung 0", [When.Chance(25), When.FriendHpBelow(50), When.SkillReady(17363)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17363)),
+        ];
+        variants[21] = [
+            AiPattern.Branch(7, "rung 0", [When.Chance(50), When.FriendHpBelow(30), When.SkillReady(16563)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[22] = [
             AiPattern.Branch(3, "rung 0", [When.Fighting, When.FirstTime(10)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18167),
                 Do.Say(341769, 0),
                 Do.Broadcast(3409, 13f)),
         ];
-        variants[9] = [
+        variants[23] = [
             AiPattern.Branch(2, "rung 0", [When.Fighting, When.FirstTime(10)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18167),
                 Do.Say(341770, 0),
                 Do.Broadcast(3409, 13f)),
         ];
-        variants[10] = [
+        variants[24] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(50), When.FriendHpBelow(30), When.SkillReady(16563)],
+                Do.Say(342087, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[25] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(50), When.FriendHpBelow(30), When.FirstTime(5)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16631)),
+        ];
+        variants[26] = [
+            AiPattern.Branch(9, "rung 0", [When.Chance(20), When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[27] = [
             AiPattern.Branch(7, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[11] = [
+        variants[28] = [
+            AiPattern.Branch(3, "rung 0", [When.FriendHpBelow(40)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[29] = [
+            AiPattern.Branch(7, "rung 0", [When.FriendHpBelow(50), When.FirstTime(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16565)),
+        ];
+        variants[30] = [
+            AiPattern.Branch(7, "rung 0", [When.FriendHpBelow(50), When.FirstTime(5)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16634)),
+        ];
+        variants[31] = [
+            AiPattern.Branch(7, "rung 0", [When.FriendHpBelow(50), When.FirstTime(5)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[32] = [
+            AiPattern.Branch(10, "rung 0", [When.FriendHpBelow(30), When.FirstTime(0)],
+                Do.ArmTimer(2, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 18751)),
+        ];
+        variants[33] = [
+            AiPattern.Branch(10, "rung 0", [When.FriendHpBelow(30), When.FirstTime(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16682)),
+        ];
+        variants[34] = [
             AiPattern.Branch(2, "rung 0", [When.SkillReady(16463)],
                 Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16463)),
         ];
-        variants[12] = [
+        variants[35] = [
+            AiPattern.Branch(11, "rung 0", [When.FriendHpBelow(35)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 18751)),
+        ];
+        variants[36] = [
+            AiPattern.Branch(71, "rung 0", [When.FriendHpBelow(30)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[37] = [
+            AiPattern.Branch(7, "rung 0", [When.AttackedByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[38] = [
+            AiPattern.Branch(7, "rung 0", [When.AttackedByPlayer, When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[39] = [
+            AiPattern.Branch(12, "rung 0", [When.FriendHpBelow(35)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17125)),
+        ];
+        variants[40] = [
+            AiPattern.Branch(7, "rung 0", [When.FriendHpBelow(30), When.FirstTime(2)],
+                Do.ArmTimer(3, 15000),
+                Do.SkillOnAttacker(16564),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[41] = [
+            AiPattern.Branch(500, "rung 0", [When.FriendHpBelow(50), When.FirstTime(10)],
+                Do.ArmTimer(10, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[42] = [
+            AiPattern.Branch(149, "rung 0", [When.FriendHpBelow(30), When.FirstTime(29)],
+                Do.SpawnOnTarget(283629, 1, 1, 5.0f, 0, 0, 50.0f)),
+        ];
+        variants[43] = [
+            AiPattern.Branch(7, "rung 0", [When.FriendHpBelow(30), When.FirstTime(0)],
+                Do.ArmTimer(5, 20000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 18751)),
+        ];
+        variants[44] = [
+            AiPattern.Branch(12, "rung 0", [When.FriendHpBelow(35)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17126)),
+        ];
+        variants[45] = [
+            AiPattern.Branch(17, "rung 0", [When.FriendHpBelow(50), When.SkillReady(20556)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 20556)),
+        ];
+        variants[46] = [
             AiPattern.Branch(1, "rung 0", [When.AttackerIsEnemy],
                 Do.FleeFromFriendsAttacker(5)),
         ];
-        variants[13] = [
+        variants[47] = [
             AiPattern.Branch(7, "rung 0", [When.Idling],
                 Do.Nothing()),
         ];
-        variants[14] = [
+        variants[48] = [
+            AiPattern.Branch(11, "rung 0", [When.FriendHpBelow(25), When.FirstTime(10)],
+                Do.SkillOnAttacker(17349)),
+        ];
+        variants[49] = [
+            AiPattern.Branch(9, "rung 0", [When.Chance(20), When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17367)),
+        ];
+        variants[50] = [
+            AiPattern.Branch(7, "rung 0", [When.FriendHpBelow(50), When.FirstTime(5)],
+                Do.ArmTimer(1, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[51] = [
+            AiPattern.Branch(13, "rung 0", [When.AttackedByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16604)),
+        ];
+        variants[52] = [
+            AiPattern.Branch(13, "rung 0", [When.AttackedByPlayer, When.FriendHpBelow(50), When.SkillReady(16563)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[53] = [
+            AiPattern.Branch(7, "rung 0", [When.AttackedByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 18522)),
+        ];
+        variants[54] = [
+            AiPattern.Branch(7, "rung 0", [When.AttackedByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 19718)),
+        ];
+        variants[55] = [
             AiPattern.Branch(10, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[15] = [
+        variants[56] = [
+            AiPattern.Branch(15, "rung 0", [When.FriendHpBelow(30), When.FirstTime(5)],
+                Do.Broadcast(22222, 100f),
+                Do.Say(340131, 0)),
+        ];
+        variants[57] = [
+            AiPattern.Branch(10, "rung 0", [When.Chance(25), When.FriendHpBelow(50), When.SkillReady(17361)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[58] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Nothing()),
         ];
-        variants[16] = [
+        variants[59] = [
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.Nothing()),
         ];
@@ -90128,295 +90257,1178 @@ internal static class BattleCycles
     {
         Dictionary<int, int> owners = new Dictionary<int, int>();
         OnSeeFriendAttackedOf0(owners);
+        OnSeeFriendAttackedOf1(owners);
+        OnSeeFriendAttackedOf2(owners);
         return owners;
     }
 
     private static void OnSeeFriendAttackedOf0(Dictionary<int, int> owners)
     {
-        owners[205498] = 0;  // IDHouse_Zadra_Deform_Air
-        owners[210148] = 1;  // Brownie_FnR
-        owners[210153] = 1;  // Brownie_FnR
-        owners[210259] = 2;  // D2_FnN
-        owners[210260] = 2;  // D2_FnN
-        owners[210370] = 2;  // D2_FnN
-        owners[210371] = 2;  // D2_FnN
-        owners[210590] = 2;  // D2_FnN
-        owners[210650] = 2;  // D2_FnN
-        owners[210651] = 2;  // D2_FnN
-        owners[210652] = 2;  // D2_FnN
-        owners[210672] = 2;  // D2_FnN
-        owners[210703] = 1;  // Brownie_FnR
-        owners[210704] = 1;  // Brownie_FnR
-        owners[210729] = 2;  // D2_FnN
-        owners[210730] = 2;  // D2_FnN
-        owners[210748] = 2;  // D2_FnN
-        owners[210749] = 2;  // D2_FnN
-        owners[211046] = 3;  // ND2_KnG
-        owners[211049] = 3;  // ND2_KnG
-        owners[211297] = 3;  // ND2_KnG
-        owners[211304] = 3;  // ND2_KnG
-        owners[211398] = 2;  // ND2_AnP
-        owners[211429] = 2;  // ND2_AnP
-        owners[211873] = 3;  // ND2_KnG
-        owners[211874] = 3;  // ND2_KnG
-        owners[212078] = 3;  // ND2_KnG
-        owners[212079] = 3;  // ND2_KnG
-        owners[212080] = 3;  // ND2_KnG
-        owners[212116] = 3;  // ND2_KnG
-        owners[212270] = 4;  // Lizardman_FeC
-        owners[212274] = 5;  // D2_FnU
-        owners[212280] = 6;  // Lizardman_FeB
-        owners[212370] = 3;  // ND2_KnG
-        owners[212373] = 2;  // ND2_AnP
-        owners[212374] = 2;  // ND2_AnP
-        owners[212641] = 3;  // ND2_KnG
-        owners[213078] = 2;  // ND2_AnP
-        owners[213079] = 2;  // ND2_AnP
-        owners[213095] = 3;  // ND2_KnG
-        owners[213096] = 3;  // ND2_KnG
-        owners[213097] = 3;  // ND2_KnG
-        owners[213098] = 3;  // ND2_KnG
-        owners[213099] = 3;  // ND2_KnG
-        owners[213241] = 2;  // ND2_AnP
-        owners[213242] = 2;  // ND2_AnP
-        owners[213301] = 6;  // Lizardman_FeB
-        owners[213302] = 6;  // Lizardman_FeB
-        owners[213303] = 4;  // Lizardman_FeC
-        owners[213379] = 6;  // Lizardman_FeB
-        owners[213380] = 6;  // Lizardman_FeB
-        owners[213381] = 6;  // Lizardman_FeB
-        owners[213382] = 4;  // Lizardman_FeC
-        owners[213383] = 4;  // Lizardman_FeC
-        owners[213384] = 4;  // Lizardman_FeC
-        owners[213385] = 6;  // Lizardman_FeB
-        owners[213386] = 6;  // Lizardman_FeB
-        owners[213387] = 6;  // Lizardman_FeB
-        owners[213459] = 6;  // Lizardman_FeB
-        owners[213460] = 6;  // Lizardman_FeB
-        owners[213461] = 6;  // Lizardman_FeB
-        owners[213462] = 4;  // Lizardman_FeC
-        owners[213463] = 4;  // Lizardman_FeC
-        owners[213464] = 4;  // Lizardman_FeC
-        owners[213628] = 6;  // Lizardman_FeB
-        owners[213629] = 6;  // Lizardman_FeB
-        owners[213630] = 6;  // Lizardman_FeB
-        owners[213631] = 6;  // Lizardman_FeB
-        owners[213632] = 4;  // Lizardman_FeC
-        owners[213633] = 4;  // Lizardman_FeC
-        owners[213634] = 4;  // Lizardman_FeC
-        owners[213635] = 4;  // Lizardman_FeC
-        owners[213636] = 6;  // Lizardman_FeB
-        owners[213637] = 6;  // Lizardman_FeB
-        owners[213751] = 4;  // Lizardman_FeC
-        owners[213766] = 4;  // Lizardman_FeC
-        owners[213771] = 4;  // Lizardman_FeC
-        owners[213776] = 4;  // IDDF3_NamedLFi
-        owners[213966] = 6;  // Lizardman_FeB
-        owners[213967] = 6;  // Lizardman_FeB
-        owners[213968] = 6;  // Lizardman_FeB
-        owners[213969] = 6;  // Lizardman_FeB
-        owners[213970] = 4;  // Lizardman_FeC
-        owners[213971] = 4;  // Lizardman_FeC
-        owners[214047] = 6;  // Lizardman_FeB
-        owners[214048] = 6;  // Lizardman_FeB
-        owners[214049] = 6;  // Lizardman_FeB
-        owners[214050] = 6;  // Lizardman_FeB
-        owners[214051] = 6;  // Lizardman_FeB
-        owners[214052] = 6;  // Lizardman_FeB
-        owners[214053] = 6;  // Lizardman_FeB
-        owners[214054] = 4;  // Lizardman_FeC
-        owners[214105] = 6;  // Lizardman_FeB
-        owners[214106] = 6;  // Lizardman_FeB
-        owners[214162] = 6;  // Lizardman_FeB
-        owners[214645] = 7;  // ND2_Bst_28_1
-        owners[214733] = 6;  // Lizardman_FeB
-        owners[214744] = 6;  // Lizardman_FeB
-        owners[214748] = 6;  // Lizardman_FeB
-        owners[214752] = 6;  // Lizardman_FeB
-        owners[214756] = 6;  // Lizardman_FeB
-        owners[214771] = 6;  // Lizardman_FeB
-        owners[214775] = 6;  // Lizardman_FeB
-        owners[214827] = 6;  // Lizardman_FeB
-        owners[214832] = 6;  // Lizardman_FeB
-        owners[214841] = 4;  // Lizardman_FeC
-        owners[214852] = 6;  // Lizardman_FeB
-        owners[215094] = 6;  // Lizardman_FeB
-        owners[215098] = 6;  // Lizardman_FeB
-        owners[215130] = 4;  // Lizardman_FeC
-        owners[215137] = 6;  // Lizardman_FeB
-        owners[215141] = 6;  // Lizardman_FeB
-        owners[215173] = 4;  // Lizardman_FeC
-        owners[215180] = 6;  // Lizardman_FeB
-        owners[215184] = 6;  // Lizardman_FeB
-        owners[215216] = 4;  // Lizardman_FeC
-        owners[215246] = 8;  // XDrakan_AeG
-        owners[215248] = 9;  // XDrakan_ReG_50
-        owners[215255] = 8;  // XDrakan_AeG
-        owners[215257] = 9;  // XDrakan_ReG_50
-        owners[215264] = 8;  // XDrakan_AeG
-        owners[215266] = 9;  // XDrakan_ReG_50
-        owners[215273] = 8;  // XDrakan_AeG
-        owners[215275] = 9;  // XDrakan_ReG_50
-        owners[215285] = 6;  // Lizardman_FeB
-        owners[215289] = 6;  // Lizardman_FeB
-        owners[215301] = 6;  // Lizardman_FeB
-        owners[215305] = 6;  // Lizardman_FeB
-        owners[215317] = 6;  // Lizardman_FeB
-        owners[215321] = 6;  // Lizardman_FeB
-        owners[215333] = 6;  // Lizardman_FeB
-        owners[215337] = 6;  // Lizardman_FeB
-        owners[215349] = 6;  // Lizardman_FeB
-        owners[215353] = 6;  // Lizardman_FeB
-        owners[215365] = 6;  // Lizardman_FeB
-        owners[215369] = 6;  // Lizardman_FeB
-        owners[215429] = 4;  // Lizardman_FeC
-        owners[215439] = 6;  // Lizardman_FeB
-        owners[215445] = 6;  // Lizardman_FeB
-        owners[215754] = 8;  // XDrakan_AeG
-        owners[215774] = 8;  // XDrakan_AeG
-        owners[216125] = 8;  // XDrakan_AeG_ver40
-        owners[216828] = 8;  // XDrakan_AeG_ver40
-        owners[216829] = 8;  // XDrakan_AeG
-        owners[216830] = 8;  // XDrakan_AeG
-        owners[216831] = 8;  // XDrakan_AeG
-        owners[217235] = 0;  // IDForest_Rollingstone_Boss
-        owners[217236] = 0;  // IDForest_Rollingstone_Boss
-        owners[217246] = 0;  // IDForest_Rollingstone_Boss
-        owners[217247] = 0;  // IDForest_Rollingstone_Boss
-        owners[217754] = 10;  // IDArena_S9_Bonus_1
-        owners[218826] = 5;  // LDF4b_Tiamat_Temp20
-        owners[218830] = 5;  // LDF4b_Tiamat_Temp20
-        owners[218941] = 6;  // Lizardman_FeB_Solo
-        owners[218942] = 6;  // Lizardman_FeB_Solo
-        owners[218959] = 4;  // Lizardman_FeC
-        owners[219107] = 6;  // Lizardman_FeB_Solo
-        owners[219108] = 6;  // Lizardman_FeB_Solo
-        owners[219109] = 6;  // Lizardman_FeB_Solo
-        owners[219133] = 6;  // Lizardman_FeB_Solo
-        owners[219134] = 6;  // Lizardman_FeB_Solo
-        owners[219135] = 6;  // Lizardman_FeB_Solo
-        owners[219136] = 6;  // Lizardman_FeB_Solo
-        owners[219137] = 6;  // Lizardman_FeB_Solo
-        owners[219415] = 5;  // Brownie_FnQ
-        owners[219419] = 5;  // Ratman_FnR
-        owners[219980] = 10;  // IDF5_Mini_01_C_Killer_Fi
-        owners[219981] = 10;  // IDF5_Mini_01_C_Guard_Fi
-        owners[219982] = 10;  // IDF5_Mini_01_C_Guard_As
-        owners[219983] = 10;  // IDF5_Mini_01_C_Attack_1
-        owners[219984] = 10;  // IDF5_Mini_01_C_Attack_2
-        owners[219985] = 10;  // IDF5_Mini_01_C_Attack_3
-        owners[219986] = 10;  // IDF5_Mini_01_C_Attack_4
-        owners[230252] = 11;  // ND2_KnG
-        owners[230264] = 11;  // ND2_KnG
-        owners[230304] = 11;  // ND2_KnG
-        owners[230332] = 11;  // ND2_KnG
-        owners[230443] = 11;  // ND2_KnG
-        owners[230444] = 11;  // ND2_KnG
-        owners[230457] = 11;  // ND2_KnG
-        owners[230458] = 11;  // ND2_KnG
-        owners[230470] = 11;  // ND2_KnG
-        owners[230471] = 11;  // ND2_KnG
-        owners[233591] = 6;  // Lizardman_FeB
-        owners[233595] = 6;  // Lizardman_FeB
-        owners[233627] = 4;  // Lizardman_FeC
-        owners[233634] = 6;  // Lizardman_FeB
-        owners[233638] = 6;  // Lizardman_FeB
-        owners[233670] = 4;  // Lizardman_FeC
-        owners[233677] = 6;  // Lizardman_FeB
-        owners[233681] = 6;  // Lizardman_FeB
-        owners[233713] = 4;  // Lizardman_FeC
-        owners[233750] = 6;  // Lizardman_FeB
-        owners[233754] = 6;  // Lizardman_FeB
-        owners[233766] = 6;  // Lizardman_FeB
-        owners[233770] = 6;  // Lizardman_FeB
-        owners[233782] = 6;  // Lizardman_FeB
-        owners[233786] = 6;  // Lizardman_FeB
-        owners[233798] = 6;  // Lizardman_FeB
-        owners[233802] = 6;  // Lizardman_FeB
-        owners[233814] = 6;  // Lizardman_FeB
-        owners[233818] = 6;  // Lizardman_FeB
-        owners[233830] = 6;  // Lizardman_FeB
-        owners[233834] = 6;  // Lizardman_FeB
-        owners[235390] = 6;  // Lizardman_FeB
-        owners[235391] = 6;  // Lizardman_FeB
-        owners[235392] = 6;  // Lizardman_FeB
-        owners[235393] = 6;  // Lizardman_FeB
-        owners[235394] = 4;  // Lizardman_FeC
-        owners[235395] = 4;  // Lizardman_FeC
-        owners[235396] = 4;  // Lizardman_FeC
-        owners[235397] = 4;  // Lizardman_FeC
-        owners[235398] = 6;  // Lizardman_FeB
-        owners[235399] = 6;  // Lizardman_FeB
-        owners[235449] = 4;  // Lizardman_FeC
-        owners[235510] = 6;  // Lizardman_FeB
-        owners[235511] = 6;  // Lizardman_FeB
-        owners[235512] = 6;  // Lizardman_FeB
-        owners[235513] = 6;  // Lizardman_FeB
-        owners[235514] = 6;  // Lizardman_FeB
-        owners[236478] = 8;  // XDrakan_AeG
-        owners[253622] = 12;  // AD2_Prisoner
-        owners[253624] = 12;  // AD2_Prisoner
-        owners[253625] = 12;  // AD2_Prisoner
-        owners[253627] = 12;  // AD2_Prisoner
-        owners[280016] = 2;  // D2_FnN
-        owners[280096] = 2;  // D2_FnN
-        owners[280135] = 2;  // D2_FnN
-        owners[280140] = 1;  // Brownie_FnR
-        owners[280141] = 5;  // Brownie_FnQ
-        owners[280144] = 5;  // Ratman_FnR
-        owners[280212] = 5;  // D2_FnU
-        owners[280360] = 3;  // ND2_KnG
-        owners[280361] = 3;  // ND2_KnG
-        owners[280364] = 2;  // ND2_AnP
-        owners[280612] = 6;  // Lizardman_FeB
-        owners[280613] = 4;  // Lizardman_FeC
-        owners[281159] = 8;  // XDrakan_AeG
-        owners[281162] = 9;  // XDrakan_ReG_50
-        owners[281502] = 10;  // IDTP_SumFanaAs
-        owners[282146] = 0;  // IDHouse_Prime_Sum1
-        owners[282185] = 0;  // IDHouse_Zadra_Deform_Air
-        owners[282321] = 13;  // Raksha_DrakanStatuePoison
-        owners[282322] = 13;  // Raksha_DrakanStatueEarth
-        owners[282324] = 10;  // Raksha_Deliverfire
-        owners[282345] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282346] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282347] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282348] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282349] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282350] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282351] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282352] = 5;  // IDHouse_Butler_RollingGolem
-        owners[282557] = 2;  // ND2_AnP
-        owners[282558] = 2;  // ND2_AnP
-        owners[283724] = 11;  // ND2_KnG
-        owners[284512] = 14;  // IDRuneWP_Main_VriCU_Fi_A_65_Ae
-        owners[284513] = 14;  // IDRuneWP_Main_VriIU_As_A_65_Ae
-        owners[284652] = 14;  // IDRuneWP_Main_VriCU_Ra_A_65_Ae
-        owners[284653] = 14;  // IDRuneWP_Main_VriIU_Wi_A_65_Ae
-        owners[285104] = 1;  // Brownie_FnR
-        owners[285108] = 2;  // D2_FnN
-        owners[285724] = 5;  // Ratman_FnR
-        owners[286010] = 3;  // ND2_KnG
-        owners[286684] = 6;  // Lizardman_FeB
-        owners[286685] = 6;  // Lizardman_FeB
-        owners[286686] = 6;  // Lizardman_FeB
-        owners[286690] = 6;  // Lizardman_FeB
-        owners[286691] = 6;  // Lizardman_FeB
-        owners[286692] = 6;  // Lizardman_FeB
-        owners[287285] = 11;  // ND2_KnG
-        owners[290022] = 12;  // AD2_Prisoner
-        owners[290023] = 12;  // AD2_Prisoner
-        owners[296525] = 15;  // BGuard_F4ChiefBuffer
-        owners[296905] = 15;  // BGuard_F4ChiefBuffer
-        owners[296906] = 15;  // BGuard_F4ChiefBuffer
-        owners[297177] = 15;  // BGuard_F4ChiefBuffer
-        owners[855899] = 0;  // IDYun_Nmd3
-        owners[856050] = 16;  // BIDF5_U01_Runaway_Wi_S_P1
-        owners[856051] = 16;  // BIDF5_U01_Runaway_Pr_S_P1
-        owners[856052] = 16;  // BIDF5_U01_Runaway_As_S_P1
-        owners[856104] = 10;  // IDF5_Mini_01_C_Killer_Fi
-        owners[856105] = 10;  // IDF5_Mini_01_C_Guard_Fi
-        owners[856106] = 10;  // IDF5_Mini_01_C_Guard_As
+        owners[203900] = 0;  // BGuard_Divine
+        owners[204300] = 0;  // BGuard_Divine
+        owners[204504] = 0;  // BGuard_Divine
+        owners[204715] = 0;  // BGuard_Divine
+        owners[205498] = 1;  // IDHouse_Zadra_Deform_Air
+        owners[207538] = 2;  // BGuard_GatePr
+        owners[207820] = 2;  // BGuard_GatePr
+        owners[207831] = 2;  // BGuard_GatePr
+        owners[210148] = 3;  // Brownie_FnR
+        owners[210153] = 3;  // Brownie_FnR
+        owners[210259] = 4;  // D2_FnN
+        owners[210260] = 4;  // D2_FnN
+        owners[210370] = 4;  // D2_FnN
+        owners[210371] = 4;  // D2_FnN
+        owners[210590] = 4;  // D2_FnN
+        owners[210650] = 4;  // D2_FnN
+        owners[210651] = 4;  // D2_FnN
+        owners[210652] = 4;  // D2_FnN
+        owners[210672] = 4;  // D2_FnN
+        owners[210703] = 3;  // Brownie_FnR
+        owners[210704] = 3;  // Brownie_FnR
+        owners[210729] = 4;  // D2_FnN
+        owners[210730] = 4;  // D2_FnN
+        owners[210748] = 4;  // D2_FnN
+        owners[210749] = 4;  // D2_FnN
+        owners[210847] = 5;  // ND2_KnH
+        owners[210879] = 5;  // ND2_KnH
+        owners[210899] = 5;  // ND2_KnH
+        owners[211046] = 6;  // ND2_KnG
+        owners[211049] = 6;  // ND2_KnG
+        owners[211297] = 6;  // ND2_KnG
+        owners[211304] = 6;  // ND2_KnG
+        owners[211398] = 4;  // ND2_AnP
+        owners[211429] = 4;  // ND2_AnP
+        owners[211460] = 7;  // NLycan_PeB
+        owners[211585] = 8;  // XLehpar_PeA
+        owners[211598] = 9;  // NLycan_PeA
+        owners[211607] = 8;  // XLehpar_PeA
+        owners[211610] = 9;  // NLycan_PeA
+        owners[211613] = 9;  // NLycan_PeA
+        owners[211618] = 8;  // XLehpar_PeA
+        owners[211702] = 8;  // XLehpar_PeA
+        owners[211873] = 6;  // ND2_KnG
+        owners[211874] = 6;  // ND2_KnG
+        owners[212078] = 6;  // ND2_KnG
+        owners[212079] = 6;  // ND2_KnG
+        owners[212080] = 6;  // ND2_KnG
+        owners[212116] = 6;  // ND2_KnG
+        owners[212267] = 10;  // Lizardman_PhA
+        owners[212270] = 11;  // Lizardman_FeC
+        owners[212272] = 12;  // Lizardman_PeB
+        owners[212274] = 13;  // D2_FnU
+        owners[212277] = 12;  // Lizardman_PeB
+        owners[212280] = 14;  // Lizardman_FeB
+        owners[212370] = 6;  // ND2_KnG
+        owners[212373] = 4;  // ND2_AnP
+        owners[212374] = 4;  // ND2_AnP
+        owners[212545] = 15;  // ND2_KnH
+        owners[212546] = 15;  // ND2_KnH
+        owners[212547] = 15;  // ND2_KnH
+        owners[212638] = 8;  // XLehpar_PeA
+        owners[212639] = 8;  // XLehpar_PeA
+        owners[212641] = 6;  // ND2_KnG
+        owners[212669] = 9;  // NLycan_PeA
+        owners[212732] = 7;  // NLycan_PeB
+        owners[212733] = 7;  // NLycan_PeB
+        owners[212812] = 9;  // NLycan_PeA
+        owners[212851] = 8;  // XLehpar_PeA
+        owners[212853] = 16;  // XLehpar_CeA
+        owners[212856] = 16;  // XLehpar_CeA
+        owners[212866] = 9;  // NLycan_PeA
+        owners[212869] = 9;  // NLycan_PeA
+        owners[212898] = 8;  // XLehpar_PeA
+        owners[212899] = 8;  // XLehpar_PeA
+        owners[212923] = 16;  // XLehpar_CeA
+        owners[212924] = 16;  // XLehpar_CeA
+        owners[212925] = 8;  // XLehpar_PeA
+        owners[212926] = 8;  // XLehpar_PeA
+        owners[212927] = 8;  // XLehpar_PeA
+        owners[212966] = 8;  // XLehpar_PeA
+        owners[212967] = 8;  // XLehpar_PeA
+        owners[212975] = 16;  // XLehpar_CeA
+        owners[213078] = 4;  // ND2_AnP
+        owners[213079] = 4;  // ND2_AnP
+        owners[213095] = 6;  // ND2_KnG
+        owners[213096] = 6;  // ND2_KnG
+        owners[213097] = 6;  // ND2_KnG
+        owners[213098] = 6;  // ND2_KnG
+        owners[213099] = 6;  // ND2_KnG
+        owners[213227] = 9;  // NLycan_PeA
+        owners[213228] = 9;  // NLycan_PeA
+        owners[213241] = 4;  // ND2_AnP
+        owners[213242] = 4;  // ND2_AnP
+        owners[213295] = 16;  // XLehpar_CeA
+        owners[213296] = 16;  // XLehpar_CeA
+        owners[213297] = 8;  // XLehpar_PeA
+        owners[213298] = 8;  // XLehpar_PeA
+        owners[213300] = 17;  // Lizardman_FeA
+        owners[213301] = 14;  // Lizardman_FeB
+        owners[213302] = 14;  // Lizardman_FeB
+        owners[213303] = 11;  // Lizardman_FeC
+        owners[213312] = 12;  // Lizardman_PeB
+        owners[213313] = 12;  // Lizardman_PeB
+        owners[213334] = 16;  // XLehpar_CeA
+        owners[213335] = 16;  // XLehpar_CeA
+        owners[213336] = 8;  // XLehpar_PeA
+        owners[213337] = 8;  // XLehpar_PeA
+        owners[213379] = 14;  // Lizardman_FeB
+        owners[213380] = 14;  // Lizardman_FeB
+        owners[213381] = 14;  // Lizardman_FeB
+        owners[213382] = 11;  // Lizardman_FeC
+        owners[213383] = 11;  // Lizardman_FeC
+        owners[213384] = 11;  // Lizardman_FeC
+        owners[213385] = 14;  // Lizardman_FeB
+        owners[213386] = 14;  // Lizardman_FeB
+        owners[213387] = 14;  // Lizardman_FeB
+        owners[213409] = 12;  // Lizardman_PeB
+        owners[213410] = 12;  // Lizardman_PeB
+        owners[213411] = 12;  // Lizardman_PeB
+        owners[213428] = 10;  // Naga_CeA
+        owners[213429] = 10;  // Naga_CeA
+        owners[213430] = 10;  // Naga_CeA
+        owners[213456] = 17;  // Lizardman_FeA
+        owners[213458] = 17;  // Lizardman_FeA
+        owners[213459] = 14;  // Lizardman_FeB
+        owners[213460] = 14;  // Lizardman_FeB
+        owners[213461] = 14;  // Lizardman_FeB
+        owners[213462] = 11;  // Lizardman_FeC
+        owners[213463] = 11;  // Lizardman_FeC
+        owners[213464] = 11;  // Lizardman_FeC
+        owners[213476] = 12;  // Lizardman_PeB
+        owners[213477] = 12;  // Lizardman_PeB
+        owners[213478] = 12;  // Lizardman_PeB
+        owners[213492] = 10;  // Naga_CeA
+        owners[213493] = 10;  // Naga_CeA
+        owners[213494] = 10;  // Naga_CeA
+        owners[213533] = 16;  // XLehpar_CeA
+        owners[213534] = 16;  // XLehpar_CeA
+        owners[213535] = 16;  // XLehpar_CeA
+        owners[213536] = 8;  // XLehpar_PeA
+        owners[213537] = 8;  // XLehpar_PeA
+        owners[213538] = 8;  // XLehpar_PeA
+        owners[213539] = 16;  // XLehpar_CeA
+        owners[213550] = 10;  // Lizardman_PeD
+        owners[213592] = 7;  // NLycan_PeB
+        owners[213617] = 16;  // XLehpar_CeA
+        owners[213624] = 17;  // Lizardman_FeA
+        owners[213625] = 17;  // Lizardman_FeA
+        owners[213626] = 17;  // Lizardman_FeA
+        owners[213627] = 17;  // Lizardman_FeA
+        owners[213628] = 14;  // Lizardman_FeB
+        owners[213629] = 14;  // Lizardman_FeB
+        owners[213630] = 14;  // Lizardman_FeB
+        owners[213631] = 14;  // Lizardman_FeB
+        owners[213632] = 11;  // Lizardman_FeC
+        owners[213633] = 11;  // Lizardman_FeC
+        owners[213634] = 11;  // Lizardman_FeC
+        owners[213635] = 11;  // Lizardman_FeC
+        owners[213636] = 14;  // Lizardman_FeB
+        owners[213637] = 14;  // Lizardman_FeB
+        owners[213659] = 12;  // Lizardman_PeB
+        owners[213660] = 12;  // Lizardman_PeB
+        owners[213661] = 12;  // Lizardman_PeB
+        owners[213662] = 12;  // Lizardman_PeB
+        owners[213674] = 10;  // Naga_CeA
+        owners[213675] = 10;  // Naga_CeA
+        owners[213751] = 11;  // Lizardman_FeC
+        owners[213761] = 8;  // XLehpar_PeA
+        owners[213766] = 11;  // Lizardman_FeC
+        owners[213771] = 11;  // Lizardman_FeC
+        owners[213773] = 12;  // Lizardman_PeB
+        owners[213776] = 11;  // IDDF3_NamedLFi
+        owners[213783] = 10;  // Naga_CeA
+        owners[213802] = 10;  // IDDF3_NamedNCh
+        owners[213913] = 12;  // Lizardman_PeB
+        owners[213933] = 10;  // Naga_CeA
+        owners[213942] = 8;  // XLehpar_PeA
+        owners[213958] = 8;  // XLehpar_PeA
+        owners[213966] = 14;  // Lizardman_FeB
+        owners[213967] = 14;  // Lizardman_FeB
+        owners[213968] = 14;  // Lizardman_FeB
+        owners[213969] = 14;  // Lizardman_FeB
+        owners[213970] = 11;  // Lizardman_FeC
+        owners[213971] = 11;  // Lizardman_FeC
+        owners[213990] = 12;  // Lizardman_PeB
+        owners[213991] = 12;  // Lizardman_PeB
+        owners[213992] = 12;  // Lizardman_PeB
+        owners[213993] = 12;  // Lizardman_PeB
+        owners[214009] = 10;  // Naga_CeA
+        owners[214010] = 10;  // Naga_CeA
+        owners[214011] = 10;  // Naga_CeA
+        owners[214037] = 15;  // ND2_KnH
+        owners[214042] = 17;  // Lizardman_FeA
+        owners[214047] = 14;  // Lizardman_FeB
+        owners[214048] = 14;  // Lizardman_FeB
+        owners[214049] = 14;  // Lizardman_FeB
+        owners[214050] = 14;  // Lizardman_FeB
+        owners[214051] = 14;  // Lizardman_FeB
+        owners[214052] = 14;  // Lizardman_FeB
+        owners[214053] = 14;  // Lizardman_FeB
+        owners[214054] = 11;  // Lizardman_FeC
+        owners[214063] = 12;  // Lizardman_PeB
+        owners[214064] = 12;  // Lizardman_PeB
+        owners[214065] = 12;  // Lizardman_PeB
+        owners[214066] = 12;  // Lizardman_PeB
+        owners[214067] = 12;  // Lizardman_PeB
+        owners[214068] = 12;  // Lizardman_PeB
+        owners[214069] = 12;  // Lizardman_PeB
+        owners[214081] = 10;  // Naga_CeA
+        owners[214082] = 10;  // Naga_CeA
+        owners[214101] = 8;  // XLehpar_PeA
+        owners[214104] = 12;  // Lizardman_PeB
+        owners[214105] = 14;  // Lizardman_FeB
+        owners[214106] = 14;  // Lizardman_FeB
+        owners[214160] = 12;  // Lizardman_PeB
+        owners[214161] = 12;  // Lizardman_PeB
+        owners[214162] = 14;  // Lizardman_FeB
+        owners[214526] = 8;  // XLehpar_PeA
+        owners[214645] = 18;  // ND2_Bst_28_1
+        owners[214733] = 14;  // Lizardman_FeB
+        owners[214736] = 12;  // Lizardman_PeB
+        owners[214738] = 10;  // Naga_CeA
+        owners[214743] = 12;  // Lizardman_PeB
+        owners[214744] = 14;  // Lizardman_FeB
+        owners[214747] = 12;  // Lizardman_PeB
+        owners[214748] = 14;  // Lizardman_FeB
+        owners[214750] = 10;  // Naga_CeA
+        owners[214752] = 14;  // Lizardman_FeB
+        owners[214755] = 12;  // Lizardman_PeB
+        owners[214756] = 14;  // Lizardman_FeB
+        owners[214759] = 12;  // Lizardman_PeB
+        owners[214771] = 14;  // Lizardman_FeB
+        owners[214774] = 12;  // Lizardman_PeB
+        owners[214775] = 14;  // Lizardman_FeB
+        owners[214778] = 12;  // Lizardman_PeB
+        owners[214810] = 19;  // Dread_LiPnA
+        owners[214812] = 10;  // Dread_NagaCeA
+        owners[214814] = 10;  // Dread_NagaCeA
+        owners[214818] = 20;  // Dread_DrakanPeA
+        owners[214826] = 10;  // Naga_CeA
+        owners[214827] = 14;  // Lizardman_FeB
+        owners[214830] = 12;  // Lizardman_PeB
+        owners[214832] = 14;  // Lizardman_FeB
+        owners[214835] = 12;  // Lizardman_PeB
+        owners[214841] = 11;  // Lizardman_FeC
+        owners[214852] = 14;  // Lizardman_FeB
+        owners[214855] = 12;  // Lizardman_PeB
+        owners[215001] = 21;  // Shulack_PeA
+        owners[215002] = 21;  // Shulack_PeA
+        owners[215003] = 21;  // Shulack_PeA
+        owners[215004] = 21;  // Shulack_PeA
+        owners[215005] = 21;  // Shulack_PeA
+        owners[215006] = 21;  // Shulack_PeA
+        owners[215007] = 21;  // Shulack_PeA
+        owners[215008] = 21;  // Shulack_PeA
+        owners[215009] = 21;  // Shulack_PeA
+        owners[215010] = 21;  // Shulack_PeA
+        owners[215011] = 21;  // Shulack_PeA
+        owners[215012] = 21;  // Shulack_PeA
+        owners[215013] = 21;  // Shulack_PeA
+        owners[215014] = 21;  // Shulack_PeA
+        owners[215015] = 21;  // Shulack_PeA
+        owners[215016] = 21;  // Shulack_PeA
+        owners[215065] = 21;  // Shulack_PeA
+        owners[215083] = 10;  // Dread_SurkanaNm02
+        owners[215084] = 10;  // Dread_SurkanaNm02
+        owners[215094] = 14;  // Lizardman_FeB
+        owners[215097] = 12;  // Lizardman_PeB
+        owners[215098] = 14;  // Lizardman_FeB
+        owners[215101] = 12;  // Lizardman_PeB
+        owners[215109] = 10;  // Naga_CeA
+        owners[215113] = 10;  // Naga_CeA
+        owners[215130] = 11;  // Lizardman_FeC
+        owners[215133] = 12;  // Lizardman_PeB
+        owners[215137] = 14;  // Lizardman_FeB
+        owners[215140] = 12;  // Lizardman_PeB
+        owners[215141] = 14;  // Lizardman_FeB
+        owners[215144] = 12;  // Lizardman_PeB
+        owners[215152] = 10;  // Naga_CeA
+        owners[215156] = 10;  // Naga_CeA
+        owners[215173] = 11;  // Lizardman_FeC
+        owners[215176] = 12;  // Lizardman_PeB
+        owners[215180] = 14;  // Lizardman_FeB
+        owners[215183] = 12;  // Lizardman_PeB
+        owners[215184] = 14;  // Lizardman_FeB
+        owners[215187] = 12;  // Lizardman_PeB
+        owners[215195] = 10;  // Naga_CeA
+        owners[215199] = 10;  // Naga_CeA
+        owners[215216] = 11;  // Lizardman_FeC
+        owners[215219] = 12;  // Lizardman_PeB
+        owners[215238] = 10;  // Naga_CeA
+        owners[215246] = 22;  // XDrakan_AeG
+        owners[215248] = 23;  // XDrakan_ReG_50
+        owners[215255] = 22;  // XDrakan_AeG
+        owners[215257] = 23;  // XDrakan_ReG_50
+        owners[215264] = 22;  // XDrakan_AeG
+        owners[215266] = 23;  // XDrakan_ReG_50
+        owners[215273] = 22;  // XDrakan_AeG
+        owners[215275] = 23;  // XDrakan_ReG_50
+        owners[215285] = 14;  // Lizardman_FeB
+        owners[215288] = 12;  // Lizardman_PeB
+        owners[215289] = 14;  // Lizardman_FeB
+        owners[215292] = 12;  // Lizardman_PeB
+        owners[215296] = 10;  // Naga_CeA
+        owners[215300] = 10;  // Naga_CeA
+        owners[215301] = 14;  // Lizardman_FeB
+        owners[215304] = 12;  // Lizardman_PeB
+        owners[215305] = 14;  // Lizardman_FeB
+        owners[215308] = 12;  // Lizardman_PeB
+        owners[215312] = 10;  // Naga_CeA
+        owners[215316] = 10;  // Naga_CeA
+        owners[215317] = 14;  // Lizardman_FeB
+        owners[215320] = 12;  // Lizardman_PeB
+        owners[215321] = 14;  // Lizardman_FeB
+        owners[215324] = 12;  // Lizardman_PeB
+        owners[215328] = 10;  // Naga_CeA
+        owners[215332] = 10;  // Naga_CeA
+        owners[215333] = 14;  // Lizardman_FeB
+        owners[215336] = 12;  // Lizardman_PeB
+        owners[215337] = 14;  // Lizardman_FeB
+        owners[215340] = 12;  // Lizardman_PeB
+        owners[215344] = 10;  // Naga_CeA
+        owners[215348] = 10;  // Naga_CeA
+        owners[215349] = 14;  // Lizardman_FeB
+        owners[215352] = 12;  // Lizardman_PeB
+        owners[215353] = 14;  // Lizardman_FeB
+        owners[215356] = 12;  // Lizardman_PeB
+        owners[215360] = 10;  // Naga_CeA
+        owners[215364] = 10;  // Naga_CeA
+        owners[215365] = 14;  // Lizardman_FeB
+        owners[215368] = 12;  // Lizardman_PeB
+        owners[215369] = 14;  // Lizardman_FeB
+        owners[215372] = 12;  // Lizardman_PeB
+        owners[215376] = 10;  // Naga_CeA
+        owners[215380] = 10;  // Naga_CeA
+        owners[215429] = 11;  // Lizardman_FeC
+        owners[215438] = 21;  // Shulack_PeA
+        owners[215439] = 14;  // Lizardman_FeB
+        owners[215442] = 12;  // Lizardman_PeB
+        owners[215445] = 14;  // Lizardman_FeB
+        owners[215448] = 12;  // Lizardman_PeB
+        owners[215568] = 21;  // Shulack_PeA
+        owners[215569] = 21;  // Shulack_PeA
+        owners[215570] = 21;  // Shulack_PeA
+        owners[215571] = 21;  // Shulack_PeA
+        owners[215572] = 21;  // Shulack_PeA
+        owners[215573] = 21;  // Shulack_PeA
+        owners[215635] = 12;  // Lizardman_PeB
+        owners[215641] = 21;  // Shulack_PeA
+        owners[215754] = 22;  // XDrakan_AeG
+        owners[215774] = 22;  // XDrakan_AeG
+        owners[216077] = 24;  // Owllau_PeA
+        owners[216078] = 24;  // Owllau_PeA
+        owners[216088] = 25;  // LycanDR_PnA
+        owners[216089] = 25;  // LycanDR_PnA
+        owners[216090] = 25;  // LycanDR_PnA
+        owners[216125] = 22;  // XDrakan_AeG_ver40
+        owners[216455] = 25;  // LycanDR_PnA
+        owners[216470] = 21;  // Shulack_PeA
+        owners[216471] = 21;  // Shulack_PeA
+        owners[216508] = 12;  // Lizardman_PeB
+        owners[216560] = 25;  // LycanDR_PnA
+        owners[216606] = 21;  // Shulack_PeA
+        owners[216659] = 21;  // Shulack_PeA
+        owners[216660] = 21;  // Shulack_PeA
+        owners[216665] = 24;  // Owllau_PeA
+        owners[216669] = 24;  // Owllau_PeA
+        owners[216671] = 24;  // Owllau_PeA
+        owners[216678] = 24;  // Owllau_PeA
+        owners[216679] = 24;  // Owllau_PeA
+        owners[216719] = 21;  // Shulack_PeA
+        owners[216720] = 21;  // Shulack_PeA
+        owners[216828] = 22;  // XDrakan_AeG_ver40
+        owners[216829] = 22;  // XDrakan_AeG
+        owners[216830] = 22;  // XDrakan_AeG
+        owners[216831] = 22;  // XDrakan_AeG
+        owners[216859] = 19;  // Dread02_LizardPr
+        owners[216864] = 20;  // Dread02_Drakan_Pr
+        owners[217084] = 25;  // LycanDR_PnA
+        owners[217199] = 26;  // IDF4Re_Drana_Drakan_Vil_Pr
+        owners[217207] = 26;  // IDCT_DrakanPr
+        owners[217235] = 1;  // IDForest_Rollingstone_Boss
+        owners[217236] = 1;  // IDForest_Rollingstone_Boss
+        owners[217246] = 1;  // IDForest_Rollingstone_Boss
+        owners[217247] = 1;  // IDForest_Rollingstone_Boss
+        owners[217288] = 26;  // IDF4Re_Drana_Drakan_Vil_Pr
+        owners[217506] = 9;  // IDArena_S2_Monster_R5
+        owners[217536] = 8;  // IDArena_S4_Monster_8
+        owners[217542] = 8;  // IDArena_S4_Monster_8
+        owners[217550] = 21;  // IDArena_S4_Monster_R6
+        owners[217557] = 17;  // IDArena_S5_Monster_1
+        owners[217559] = 12;  // IDArena_S5_Monster_3
+        owners[217561] = 10;  // IDArena_S5_Monster_5
+        owners[217602] = 20;  // IDArena_S10_Monster_3
+        owners[217754] = 27;  // IDArena_S9_Bonus_1
+        owners[218826] = 13;  // LDF4b_Tiamat_Temp20
+        owners[218830] = 13;  // LDF4b_Tiamat_Temp20
+        owners[218941] = 14;  // Lizardman_FeB_Solo
+        owners[218942] = 14;  // Lizardman_FeB_Solo
+        owners[218949] = 28;  // Lizardman_PeB_Solo
+    }
+
+    private static void OnSeeFriendAttackedOf1(Dictionary<int, int> owners)
+    {
+        owners[218950] = 28;  // Lizardman_PeB_Solo
+        owners[218959] = 11;  // Lizardman_FeC
+        owners[219004] = 21;  // Shulack_PeA
+        owners[219005] = 21;  // Shulack_PeA
+        owners[219006] = 21;  // Shulack_PeA
+        owners[219007] = 21;  // Shulack_PeA
+        owners[219008] = 21;  // Shulack_PeA
+        owners[219009] = 21;  // Shulack_PeA
+        owners[219010] = 21;  // Shulack_PeA
+        owners[219011] = 21;  // Shulack_PeA
+        owners[219029] = 21;  // Shulack_PeA
+        owners[219042] = 21;  // Shulack_PeA
+        owners[219048] = 29;  // NKrall_PeA_Solo
+        owners[219060] = 29;  // NKrall_PeA_Solo
+        owners[219064] = 29;  // NKrall_PeA_Solo
+        owners[219074] = 29;  // NKrall_PeA_Solo
+        owners[219090] = 29;  // NKrall_PeA_Solo
+        owners[219098] = 29;  // NKrall_PeA_Solo
+        owners[219103] = 28;  // Lizardman_PeB_Solo
+        owners[219107] = 14;  // Lizardman_FeB_Solo
+        owners[219108] = 14;  // Lizardman_FeB_Solo
+        owners[219109] = 14;  // Lizardman_FeB_Solo
+        owners[219124] = 28;  // Lizardman_PeB_Solo
+        owners[219125] = 28;  // Lizardman_PeB_Solo
+        owners[219126] = 28;  // Lizardman_PeB_Solo
+        owners[219128] = 17;  // Lizardman_FeA_Solo
+        owners[219129] = 17;  // Lizardman_FeA_Solo
+        owners[219130] = 17;  // Lizardman_FeA_Solo
+        owners[219131] = 17;  // Lizardman_FeA_Solo
+        owners[219133] = 14;  // Lizardman_FeB_Solo
+        owners[219134] = 14;  // Lizardman_FeB_Solo
+        owners[219135] = 14;  // Lizardman_FeB_Solo
+        owners[219136] = 14;  // Lizardman_FeB_Solo
+        owners[219137] = 14;  // Lizardman_FeB_Solo
+        owners[219146] = 28;  // Lizardman_PeB_Solo
+        owners[219147] = 28;  // Lizardman_PeB_Solo
+        owners[219148] = 28;  // Lizardman_PeB_Solo
+        owners[219149] = 28;  // Lizardman_PeB_Solo
+        owners[219150] = 28;  // Lizardman_PeB_Solo
+        owners[219151] = 28;  // Lizardman_PeB_Solo
+        owners[219415] = 13;  // Brownie_FnQ
+        owners[219419] = 13;  // Ratman_FnR
+        owners[219604] = 26;  // IDCT_DrakanPr
+        owners[219608] = 12;  // Lizardman_PeB
+        owners[219638] = 26;  // IDCT_DrakanPr
+        owners[219802] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[219803] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[219804] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[219805] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[219806] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[219807] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[219815] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[219816] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[219817] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[219818] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[219819] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[219820] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[219980] = 27;  // IDF5_Mini_01_C_Killer_Fi
+        owners[219981] = 27;  // IDF5_Mini_01_C_Guard_Fi
+        owners[219982] = 27;  // IDF5_Mini_01_C_Guard_As
+        owners[219983] = 27;  // IDF5_Mini_01_C_Attack_1
+        owners[219984] = 27;  // IDF5_Mini_01_C_Attack_2
+        owners[219985] = 27;  // IDF5_Mini_01_C_Attack_3
+        owners[219986] = 27;  // IDF5_Mini_01_C_Attack_4
+        owners[220004] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[220005] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[220008] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[220009] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[220026] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[220028] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[220058] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[220059] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[220175] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[220177] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[220179] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[220181] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[230028] = 32;  // ShulackRose_Mus_Debuffer
+        owners[230034] = 32;  // ShulackRose_Mus_Debuffer
+        owners[230040] = 32;  // ShulackRose_Mus_Debuffer
+        owners[230043] = 33;  // ShulackRose_Pr_Heal
+        owners[230045] = 33;  // ShulackRose_Pr_Heal
+        owners[230047] = 33;  // ShulackRose_Pr_Heal
+        owners[230252] = 34;  // ND2_KnG
+        owners[230264] = 34;  // ND2_KnG
+        owners[230304] = 34;  // ND2_KnG
+        owners[230332] = 34;  // ND2_KnG
+        owners[230443] = 34;  // ND2_KnG
+        owners[230444] = 34;  // ND2_KnG
+        owners[230457] = 34;  // ND2_KnG
+        owners[230458] = 34;  // ND2_KnG
+        owners[230470] = 34;  // ND2_KnG
+        owners[230471] = 34;  // ND2_KnG
+        owners[230647] = 35;  // IDRose_M_ShulackF_Mu_S_Key_An
+        owners[230650] = 35;  // IDRose_M_ShulackF_Pr_S_Key_An
+        owners[230655] = 35;  // IDRose_H_ShulackF_Mu_P_Key_Ae
+        owners[230681] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230682] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230683] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230684] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230689] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230690] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230691] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230692] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230722] = 35;  // IDRose_M_ShulackF_Mu_P_Key_Ae
+        owners[230725] = 35;  // IDRose_M_ShulackF_Pr_P_Key_Ae
+        owners[230730] = 35;  // IDRose_H_ShulackF_Mu_P_Key_Ae
+        owners[230743] = 36;  // IDRose_H_Boss_Mu_P_N_Ae
+        owners[230755] = 37;  // IDF5_TD_Nor_Pr
+        owners[230820] = 38;  // IDVritra_Base_Drakan_Ba
+        owners[230821] = 38;  // IDVritra_Base_Drakan_Ba
+        owners[230822] = 38;  // IDVritra_Base_Drakan_Ba
+        owners[230823] = 38;  // IDVritra_Base_Drakan_Ba
+        owners[230824] = 38;  // IDVritra_Base_Drakan_Ba_Officer
+        owners[230825] = 38;  // IDVritra_Base_Drakan_Ba_Officer
+        owners[230845] = 38;  // IDVritra_Base_Shugo_Nurse
+        owners[231200] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231201] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231230] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231234] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231423] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231424] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231429] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231430] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231436] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231454] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231456] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231470] = 35;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231472] = 35;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231509] = 40;  // Calydon_ChiefG_Pr_N_65_An
+        owners[231519] = 41;  // Vri_SelfHBuff_I_Mu_N_65_Ae
+        owners[231520] = 42;  // Vri_Summon_Q_El_N_65_Ae
+        owners[231522] = 43;  // Shulack_Debuff_Pr_N_65_An
+        owners[231689] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231694] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231699] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231704] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231709] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[231714] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[231719] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[231724] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231729] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231734] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231739] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231744] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[231749] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[231754] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[232196] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232201] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232206] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232211] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232216] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232221] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[232226] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[232231] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232236] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232241] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232246] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232251] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232256] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[232261] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232266] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232271] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232276] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[232281] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232286] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[232291] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232296] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232301] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232306] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232311] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232316] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[232321] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[232326] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232331] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232336] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232341] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232346] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232351] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[232356] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232361] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232366] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232371] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[232376] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[232381] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[233075] = 39;  // IDF5_U2_Light_Pr_solo_65_An
+        owners[233134] = 44;  // IDF5_U2_Light_Pr_party_65_Ae
+        owners[233312] = 37;  // IDF5_TD_Easy_Pr
+        owners[233394] = 39;  // IDF5_U2_S_Light_Pr_65_An_NoMsg
+        owners[233400] = 44;  // IDF5_U2_P_Light_Pr_65_Ae_NoMsg
+        owners[233406] = 44;  // IDF5_U2_P_Light_Pr_65_Ae_NoMsg
+        owners[233438] = 38;  // IDVritra_Base_Drakan_Ba
+        owners[233439] = 38;  // IDVritra_Base_Drakan_Ba_Officer
+        owners[233550] = 45;  // IDF5_TD_War_Vri_Officer_01
+        owners[233551] = 45;  // IDF5_TD_War_Vri_Officer_02
+        owners[233552] = 45;  // IDF5_TD_War_Vri_Officer_03
+        owners[233553] = 45;  // IDF5_TD_War_Vri_Officer_04
+        owners[233554] = 45;  // IDF5_TD_War_Vri_Officer_05
+        owners[233555] = 45;  // IDF5_TD_War_Vri_Officer_06
+        owners[233556] = 45;  // IDF5_TD_War_Vri_Officer_07
+        owners[233557] = 45;  // IDF5_TD_War_Vri_Officer_08
+        owners[233558] = 45;  // IDF5_TD_War_Vri_Officer_09
+        owners[233559] = 45;  // IDF5_TD_War_Vri_Officer_10
+        owners[233591] = 14;  // Lizardman_FeB
+        owners[233594] = 12;  // Lizardman_PeB
+        owners[233595] = 14;  // Lizardman_FeB
+        owners[233598] = 12;  // Lizardman_PeB
+        owners[233606] = 10;  // Naga_CeA
+        owners[233610] = 10;  // Naga_CeA
+        owners[233627] = 11;  // Lizardman_FeC
+        owners[233630] = 12;  // Lizardman_PeB
+        owners[233634] = 14;  // Lizardman_FeB
+        owners[233637] = 12;  // Lizardman_PeB
+        owners[233638] = 14;  // Lizardman_FeB
+        owners[233641] = 12;  // Lizardman_PeB
+        owners[233649] = 10;  // Naga_CeA
+        owners[233653] = 10;  // Naga_CeA
+        owners[233670] = 11;  // Lizardman_FeC
+        owners[233673] = 12;  // Lizardman_PeB
+        owners[233677] = 14;  // Lizardman_FeB
+        owners[233680] = 12;  // Lizardman_PeB
+        owners[233681] = 14;  // Lizardman_FeB
+        owners[233684] = 12;  // Lizardman_PeB
+        owners[233692] = 10;  // Naga_CeA
+        owners[233696] = 10;  // Naga_CeA
+        owners[233713] = 11;  // Lizardman_FeC
+        owners[233716] = 12;  // Lizardman_PeB
+        owners[233750] = 14;  // Lizardman_FeB
+        owners[233753] = 12;  // Lizardman_PeB
+        owners[233754] = 14;  // Lizardman_FeB
+        owners[233757] = 12;  // Lizardman_PeB
+        owners[233761] = 10;  // Naga_CeA
+        owners[233765] = 10;  // Naga_CeA
+        owners[233766] = 14;  // Lizardman_FeB
+        owners[233769] = 12;  // Lizardman_PeB
+        owners[233770] = 14;  // Lizardman_FeB
+        owners[233773] = 12;  // Lizardman_PeB
+        owners[233777] = 10;  // Naga_CeA
+        owners[233781] = 10;  // Naga_CeA
+        owners[233782] = 14;  // Lizardman_FeB
+        owners[233785] = 12;  // Lizardman_PeB
+        owners[233786] = 14;  // Lizardman_FeB
+        owners[233789] = 12;  // Lizardman_PeB
+        owners[233793] = 10;  // Naga_CeA
+        owners[233797] = 10;  // Naga_CeA
+        owners[233798] = 14;  // Lizardman_FeB
+        owners[233801] = 12;  // Lizardman_PeB
+        owners[233802] = 14;  // Lizardman_FeB
+        owners[233805] = 12;  // Lizardman_PeB
+        owners[233809] = 10;  // Naga_CeA
+        owners[233813] = 10;  // Naga_CeA
+        owners[233814] = 14;  // Lizardman_FeB
+        owners[233817] = 12;  // Lizardman_PeB
+        owners[233818] = 14;  // Lizardman_FeB
+        owners[233821] = 12;  // Lizardman_PeB
+        owners[233825] = 10;  // Naga_CeA
+        owners[233829] = 10;  // Naga_CeA
+        owners[233830] = 14;  // Lizardman_FeB
+        owners[233833] = 12;  // Lizardman_PeB
+        owners[233834] = 14;  // Lizardman_FeB
+        owners[233837] = 12;  // Lizardman_PeB
+        owners[233841] = 10;  // Naga_CeA
+        owners[233845] = 10;  // Naga_CeA
+        owners[233961] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[233966] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[233985] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[233992] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[234057] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234058] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234072] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234073] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234087] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[234088] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[234102] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[234103] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[234817] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234818] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234829] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234830] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234841] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234842] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234853] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234854] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234865] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234866] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234877] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234878] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234889] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234890] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[234901] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[234902] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[235189] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[235195] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[235201] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[235207] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[235388] = 17;  // Lizardman_FeA
+        owners[235389] = 17;  // Lizardman_FeA
+        owners[235390] = 14;  // Lizardman_FeB
+        owners[235391] = 14;  // Lizardman_FeB
+        owners[235392] = 14;  // Lizardman_FeB
+        owners[235393] = 14;  // Lizardman_FeB
+        owners[235394] = 11;  // Lizardman_FeC
+        owners[235395] = 11;  // Lizardman_FeC
+        owners[235396] = 11;  // Lizardman_FeC
+        owners[235397] = 11;  // Lizardman_FeC
+        owners[235398] = 14;  // Lizardman_FeB
+        owners[235399] = 14;  // Lizardman_FeB
+        owners[235415] = 12;  // Lizardman_PeB
+        owners[235416] = 12;  // Lizardman_PeB
+        owners[235417] = 12;  // Lizardman_PeB
+        owners[235418] = 12;  // Lizardman_PeB
+        owners[235430] = 10;  // Naga_CeA
+        owners[235431] = 10;  // Naga_CeA
+        owners[235449] = 11;  // Lizardman_FeC
+        owners[235454] = 10;  // Naga_CeA
+        owners[235483] = 10;  // Naga_CeA
+        owners[235484] = 10;  // Naga_CeA
+        owners[235502] = 10;  // Naga_CeA
+        owners[235510] = 14;  // Lizardman_FeB
+        owners[235511] = 14;  // Lizardman_FeB
+        owners[235512] = 14;  // Lizardman_FeB
+        owners[235513] = 14;  // Lizardman_FeB
+        owners[235514] = 14;  // Lizardman_FeB
+        owners[235522] = 17;  // Lizardman_FeA
+        owners[235524] = 17;  // Lizardman_FeA
+        owners[235826] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[235833] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[235836] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[235839] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[235842] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[235845] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[235848] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[236450] = 26;  // IDCT_DrakanPr
+        owners[236476] = 26;  // IDCT_DrakanPr
+        owners[236478] = 22;  // XDrakan_AeG
+        owners[236508] = 26;  // IDCT_DrakanPr
+        owners[236509] = 26;  // IDCT_DrakanPr
+        owners[251058] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[251059] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251060] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251074] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[251075] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251076] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251136] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251145] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251164] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251173] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251191] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251200] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251218] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251227] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251245] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251254] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251272] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251281] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251299] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251308] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251477] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[251490] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[251520] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[251533] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[251563] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[251576] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[251623] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251624] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251625] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251626] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251627] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251628] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251629] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251630] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251631] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251632] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[251683] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251684] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251685] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251686] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251687] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251688] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251689] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251690] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251691] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251692] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[251792] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[251798] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252351] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252356] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252361] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252366] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252371] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252376] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252381] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252386] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252391] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252396] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252401] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252406] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252411] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252416] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[252421] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[252426] = 39;  // F5_PvPLight_DGuard_Pr_An
+    }
+
+    private static void OnSeeFriendAttackedOf2(Dictionary<int, int> owners)
+    {
+        owners[253622] = 46;  // AD2_Prisoner
+        owners[253624] = 46;  // AD2_Prisoner
+        owners[253625] = 46;  // AD2_Prisoner
+        owners[253627] = 46;  // AD2_Prisoner
+        owners[279089] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279090] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279091] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279092] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279093] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279094] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279095] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279096] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279097] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279098] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279099] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279100] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279101] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279102] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279103] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279187] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279188] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279189] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279190] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279191] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279192] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279193] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279194] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279195] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279196] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279197] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279198] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279199] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279200] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279201] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279285] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279286] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279287] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279288] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279289] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279290] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279291] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279292] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279293] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279294] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279295] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279296] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279297] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279298] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279299] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279383] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279384] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279385] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279386] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279387] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279388] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279389] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279390] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279391] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279392] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279393] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279394] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279395] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279396] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279397] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279481] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279482] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279483] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279484] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279485] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279486] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279487] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279488] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279489] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279490] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279491] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279492] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279493] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279494] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279495] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279579] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279580] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279581] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279582] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279583] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279584] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279585] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279586] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279587] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279588] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279589] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279590] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279591] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279592] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279593] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279948] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279949] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279950] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279964] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279965] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279966] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279980] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[279981] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279982] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[279996] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[279997] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[279998] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[280016] = 4;  // D2_FnN
+        owners[280096] = 4;  // D2_FnN
+        owners[280135] = 4;  // D2_FnN
+        owners[280140] = 3;  // Brownie_FnR
+        owners[280141] = 13;  // Brownie_FnQ
+        owners[280144] = 13;  // Ratman_FnR
+        owners[280198] = 5;  // ND2_KnH
+        owners[280212] = 13;  // D2_FnU
+        owners[280360] = 6;  // ND2_KnG
+        owners[280361] = 6;  // ND2_KnG
+        owners[280364] = 4;  // ND2_AnP
+        owners[280367] = 15;  // ND2_KnH
+        owners[280439] = 9;  // NLycan_PeA
+        owners[280440] = 7;  // NLycan_PeB
+        owners[280464] = 16;  // XLehpar_CeA
+        owners[280465] = 8;  // XLehpar_PeA
+        owners[280611] = 17;  // Lizardman_FeA
+        owners[280612] = 14;  // Lizardman_FeB
+        owners[280613] = 11;  // Lizardman_FeC
+        owners[280629] = 12;  // Lizardman_PeB
+        owners[280634] = 10;  // Naga_CeA
+        owners[280662] = 10;  // Lizardman_PeD
+        owners[280767] = 10;  // Lizardman_PhA
+        owners[281159] = 22;  // XDrakan_AeG
+        owners[281162] = 23;  // XDrakan_ReG_50
+        owners[281233] = 21;  // Shulack_PeA
+        owners[281307] = 19;  // Dread_LiPnA
+        owners[281310] = 10;  // Dread_NagaCeA
+        owners[281314] = 20;  // Dread_DrakanPeA
+        owners[281337] = 10;  // Dread_NagaCeA
+        owners[281339] = 10;  // Dread_NagaCeA
+        owners[281502] = 27;  // IDTP_SumFanaAs
+        owners[281550] = 24;  // Owllau_PeA
+        owners[281653] = 25;  // LycanDR_PnA
+        owners[281848] = 10;  // Dread_SurkanaNm02
+        owners[281859] = 19;  // Dread02_LizardPr
+        owners[281864] = 20;  // Dread02_Drakan_Pr
+        owners[282146] = 1;  // IDHouse_Prime_Sum1
+        owners[282185] = 1;  // IDHouse_Zadra_Deform_Air
+        owners[282321] = 47;  // Raksha_DrakanStatuePoison
+        owners[282322] = 47;  // Raksha_DrakanStatueEarth
+        owners[282324] = 27;  // Raksha_Deliverfire
+        owners[282345] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282346] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282347] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282348] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282349] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282350] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282351] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282352] = 13;  // IDHouse_Butler_RollingGolem
+        owners[282419] = 48;  // BDrakan_MeA
+        owners[282557] = 4;  // ND2_AnP
+        owners[282558] = 4;  // ND2_AnP
+        owners[282619] = 49;  // IDDramata_Drakan_Pr
+        owners[283527] = 32;  // ShulackRose_Mus_Debuffer
+        owners[283533] = 32;  // ShulackRose_Mus_Debuffer
+        owners[283539] = 32;  // ShulackRose_Mus_Debuffer
+        owners[283542] = 33;  // ShulackRose_Pr_Heal
+        owners[283544] = 33;  // ShulackRose_Pr_Heal
+        owners[283546] = 33;  // ShulackRose_Pr_Heal
+        owners[283628] = 42;  // Britra_Party_El_Summoner_LowNmd
+        owners[283724] = 34;  // ND2_KnG
+        owners[283899] = 50;  // Fanatic40_P_Pr
+        owners[284035] = 51;  // IDF5_TD_Assult_Kn
+        owners[284039] = 52;  // IDF5_TD_Assult_Pr
+        owners[284058] = 53;  // IDF5_TD_Nor_Pr
+        owners[284059] = 54;  // IDF5_TD_Nor_Ba
+        owners[284206] = 42;  // Vri_Summon_Q_El_N_65_Ae
+        owners[284207] = 41;  // Vri_SelfHBuff_I_Mu_N_65_Ae
+        owners[284240] = 43;  // Shulack_Debuff_Pr_N_65_An
+        owners[284249] = 40;  // Calydon_ChiefG_Pr_N_65_An
+        owners[284512] = 55;  // IDRuneWP_Main_VriCU_Fi_A_65_Ae
+        owners[284513] = 55;  // IDRuneWP_Main_VriIU_As_A_65_Ae
+        owners[284596] = 39;  // IDF5_U2_Light_Pr_solo_65_An
+        owners[284633] = 44;  // IDF5_U2_Light_Pr_party_65_Ae
+        owners[284652] = 55;  // IDRuneWP_Main_VriCU_Ra_A_65_Ae
+        owners[284653] = 55;  // IDRuneWP_Main_VriIU_Wi_A_65_Ae
+        owners[284717] = 26;  // IDDreadgion_03_DrakanPr_Vil_60_Ae
+        owners[284813] = 45;  // IDF5_TD_War_Vri_Officer_01
+        owners[284814] = 45;  // IDF5_TD_War_Vri_Officer_02
+        owners[284815] = 45;  // IDF5_TD_War_Vri_Officer_03
+        owners[284816] = 45;  // IDF5_TD_War_Vri_Officer_04
+        owners[284817] = 45;  // IDF5_TD_War_Vri_Officer_05
+        owners[284818] = 45;  // IDF5_TD_War_Vri_Officer_06
+        owners[284819] = 45;  // IDF5_TD_War_Vri_Officer_07
+        owners[284820] = 45;  // IDF5_TD_War_Vri_Officer_08
+        owners[284821] = 45;  // IDF5_TD_War_Vri_Officer_09
+        owners[284822] = 45;  // IDF5_TD_War_Vri_Officer_10
+        owners[284845] = 38;  // BIDF5_U3_Nor_Vri_Ba
+        owners[284853] = 38;  // BIDF5_U3_hard_Vri_Ba
+        owners[285104] = 3;  // Brownie_FnR
+        owners[285108] = 4;  // D2_FnN
+        owners[285724] = 13;  // Ratman_FnR
+        owners[286010] = 6;  // ND2_KnG
+        owners[286684] = 14;  // Lizardman_FeB
+        owners[286685] = 14;  // Lizardman_FeB
+        owners[286686] = 14;  // Lizardman_FeB
+        owners[286687] = 17;  // Lizardman_FeA
+        owners[286688] = 17;  // Lizardman_FeA
+        owners[286689] = 17;  // Lizardman_FeA
+        owners[286690] = 14;  // Lizardman_FeB
+        owners[286691] = 14;  // Lizardman_FeB
+        owners[286692] = 14;  // Lizardman_FeB
+        owners[287037] = 56;  // Test_Basic_Monster_AI_LHJ_5
+        owners[287285] = 34;  // ND2_KnG
+        owners[290022] = 46;  // AD2_Prisoner
+        owners[290023] = 46;  // AD2_Prisoner
+        owners[294730] = 2;  // BGuard_GatePr
+        owners[294731] = 2;  // BGuard_GatePr
+        owners[294732] = 2;  // BGuard_GatePr
+        owners[294763] = 2;  // BGuard_GatePr
+        owners[294764] = 2;  // BGuard_GatePr
+        owners[294765] = 2;  // BGuard_GatePr
+        owners[294883] = 2;  // BGuard_GatePr
+        owners[294887] = 2;  // BGuard_GatePr
+        owners[294891] = 57;  // BGuard_GatePr
+        owners[295139] = 2;  // BGuard_GatePr
+        owners[295150] = 2;  // BGuard_GatePr
+        owners[295203] = 2;  // BGuard_GatePr
+        owners[295207] = 2;  // BGuard_GatePr
+        owners[295211] = 57;  // BGuard_GatePr
+        owners[296043] = 2;  // BGuard_GatePr
+        owners[296047] = 2;  // BGuard_GatePr
+        owners[296051] = 57;  // BGuard_GatePr
+        owners[296069] = 2;  // BGuard_GatePr
+        owners[296080] = 2;  // BGuard_GatePr
+        owners[296333] = 0;  // BGuard_Divine
+        owners[296334] = 0;  // BGuard_Divine
+        owners[296335] = 0;  // BGuard_Divine
+        owners[296336] = 0;  // BGuard_Divine
+        owners[296525] = 58;  // BGuard_F4ChiefBuffer
+        owners[296638] = 2;  // BGuard_GatePr
+        owners[296643] = 2;  // BGuard_GatePr
+        owners[296748] = 2;  // BGuard_GatePr
+        owners[296753] = 2;  // BGuard_GatePr
+        owners[296874] = 2;  // BGuard_GatePr
+        owners[296882] = 2;  // BGuard_GatePr
+        owners[296905] = 58;  // BGuard_F4ChiefBuffer
+        owners[296906] = 58;  // BGuard_F4ChiefBuffer
+        owners[296976] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[296984] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[296991] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[296999] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[297125] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[297129] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[297149] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[297156] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[297177] = 58;  // BGuard_F4ChiefBuffer
+        owners[297255] = 44;  // F5_PvP_LGuard_Pr_Ae
+        owners[297259] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[297263] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[297268] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[297296] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[297303] = 44;  // F5_PvP_DGuard_Pr_Ae
+        owners[800526] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[800528] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[800551] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[800557] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[800994] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801004] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801009] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801011] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801012] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801015] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801017] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801021] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801022] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801023] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801028] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801067] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801068] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801070] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801073] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801074] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801075] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801081] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801083] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801084] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801088] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801090] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801096] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801098] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[801113] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801116] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801119] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801128] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801130] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801132] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[801275] = 39;  // F5_PvPLight_LGuard_Pr_An
+        owners[855899] = 1;  // IDYun_Nmd3
+        owners[855956] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[855963] = 30;  // LF5_NewSpecies_Fi_KJS
+        owners[855965] = 31;  // LF5_NewSpecies_Pr_KJS
+        owners[856050] = 59;  // BIDF5_U01_Runaway_Wi_S_P1
+        owners[856051] = 59;  // BIDF5_U01_Runaway_Pr_S_P1
+        owners[856052] = 59;  // BIDF5_U01_Runaway_As_S_P1
+        owners[856104] = 27;  // IDF5_Mini_01_C_Killer_Fi
+        owners[856105] = 27;  // IDF5_Mini_01_C_Guard_Fi
+        owners[856106] = 27;  // IDF5_Mini_01_C_Guard_As
+        owners[881758] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881759] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881760] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881761] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881762] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881763] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881764] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881765] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881766] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881767] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881773] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881774] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881775] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881776] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881777] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881778] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881779] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881780] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881781] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881782] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881818] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881819] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881820] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881821] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881822] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881823] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881824] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881825] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881826] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881827] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881833] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881834] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881835] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881836] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881837] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881838] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881839] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881840] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881841] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881842] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881893] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881894] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881895] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881896] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881897] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881898] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881899] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881900] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881901] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881902] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881917] = 39;  // F5_PvPLight_DGuard_Pr_An
+        owners[881918] = 39;  // F5_PvPLight_DGuard_Pr_An
     }
 
     /// <summary>What it does on reaching a point on its route.</summary>
@@ -91889,7 +92901,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnFriendSpelledVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[16][];
+        PatternBranch[][] variants = new PatternBranch[45][];
         OnFriendSpelledVariants0(variants);
         return variants;
     }
@@ -91897,72 +92909,194 @@ internal static class BattleCycles
     private static void OnFriendSpelledVariants0(PatternBranch[][] variants)
     {
         variants[0] = [
+            AiPattern.Branch(7, "rung 0", [When.Chance(50), When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17215)),
+        ];
+        variants[1] = [
+            AiPattern.Branch(9, "rung 0", [When.Chance(25), When.CasterIsEnemy, When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17211)),
+        ];
+        variants[2] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.Nothing()),
         ];
-        variants[1] = [
+        variants[3] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(100), When.FriendHpBelow(35), When.CasterIsEnemy, When.FirstTime(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16670),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16667)),
+        ];
+        variants[4] = [
             AiPattern.Branch(2, "rung 0", [When.CasterIsEnemy, When.SkillReady(16667)],
                 Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16667)),
         ];
-        variants[2] = [
+        variants[5] = [
+            AiPattern.Branch(4, "rung 0", [When.Chance(25), When.FriendHpBelow(70)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16631)),
+        ];
+        variants[6] = [
+            AiPattern.Branch(2, "rung 0", [When.FriendHpBelow(50), When.CasterIsEnemy],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[7] = [
             AiPattern.Branch(2, "rung 0", [When.Chance(15), When.CasterIsEnemy, When.FirstTime(5)],
                 Do.Say(340883, 0),
                 Do.SkillOnCaster(16602)),
         ];
-        variants[3] = [
+        variants[8] = [
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Nothing()),
         ];
-        variants[4] = [
+        variants[9] = [
             AiPattern.Branch(2, "rung 0", [When.Chance(15), When.CasterIsEnemy, When.FirstTime(5)],
                 Do.Say(340882, 0),
                 Do.SkillOnCaster(16602)),
         ];
-        variants[5] = [
+        variants[10] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(100), When.FriendHpBelow(35), When.CasterIsEnemy, When.FirstTime(0)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16670),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16395)),
+        ];
+        variants[11] = [
+            AiPattern.Branch(2, "rung 0", [When.Chance(10), When.FriendHpBelow(50)],
+                Do.ArmTimer(0, 4000),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[12] = [
+            AiPattern.Branch(1, "rung 0", [When.CasterIsEnemy, When.FriendHpBelow(75), When.FirstTime(1)],
+                Do.Say(340889, 0),
+                Do.Broadcast(3201, 13f)),
+        ];
+        variants[13] = [
+            AiPattern.Branch(2, "rung 0", [When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[14] = [
             AiPattern.Branch(7, "rung 0", [When.Chance(50), When.SkillReady(16563)],
                 Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
         ];
-        variants[6] = [
+        variants[15] = [
+            AiPattern.Branch(10, "rung 0", [When.Chance(25), When.CasterIsEnemy, When.FriendHpBelow(50), When.SkillReady(17361)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[16] = [
+            AiPattern.Branch(12, "rung 0", [When.Chance(25), When.CasterIsEnemy, When.FriendHpBelow(50), When.SkillReady(17363)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17363)),
+        ];
+        variants[17] = [
+            AiPattern.Branch(7, "rung 0", [When.Chance(50), When.FriendHpBelow(30), When.SkillReady(16563)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[18] = [
             AiPattern.Branch(2, "rung 0", [When.Fighting, When.CasterIsEnemy, When.FirstTime(10)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18167),
                 Do.Say(341769, 0),
                 Do.Broadcast(3409, 13f)),
         ];
-        variants[7] = [
+        variants[19] = [
             AiPattern.Branch(3, "rung 0", [When.CasterIsEnemy, When.Fighting, When.FirstTime(10)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18167),
                 Do.Say(341770, 0),
                 Do.Broadcast(3409, 13f)),
         ];
-        variants[8] = [
+        variants[20] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(50), When.FriendHpBelow(30), When.SkillReady(16563)],
+                Do.Say(342087, 0),
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[21] = [
+            AiPattern.Branch(1, "rung 0", [When.Chance(50), When.FriendHpBelow(30), When.FirstTime(5)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16631)),
+        ];
+        variants[22] = [
             AiPattern.Branch(7, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[9] = [
+        variants[23] = [
+            AiPattern.Branch(2, "rung 0", [When.FriendHpBelow(40), When.CasterIsEnemy],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[24] = [
             AiPattern.Branch(2, "rung 0", [When.CasterIsEnemy, When.SkillReady(16463)],
                 Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16463)),
         ];
-        variants[10] = [
+        variants[25] = [
+            AiPattern.Branch(10, "rung 0", [When.FriendHpBelow(35)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 18751)),
+        ];
+        variants[26] = [
+            AiPattern.Branch(70, "rung 0", [When.FriendHpBelow(30)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[27] = [
+            AiPattern.Branch(7, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[28] = [
+            AiPattern.Branch(7, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[29] = [
+            AiPattern.Branch(7, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17361)),
+        ];
+        variants[30] = [
+            AiPattern.Branch(11, "rung 0", [When.FriendHpBelow(35)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17125)),
+        ];
+        variants[31] = [
+            AiPattern.Branch(16, "rung 0", [When.FriendHpBelow(50), When.SkillReady(20556)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 20556)),
+        ];
+        variants[32] = [
             AiPattern.Branch(7, "rung 0", [When.Casting],
                 Do.Nothing()),
         ];
-        variants[11] = [
+        variants[33] = [
             AiPattern.Branch(1, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[12] = [
+        variants[34] = [
+            AiPattern.Branch(10, "rung 0", [When.Chance(20), When.FriendHpBelow(50), When.CasterIsEnemy],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17367)),
+        ];
+        variants[35] = [
+            AiPattern.Branch(13, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16604)),
+        ];
+        variants[36] = [
+            AiPattern.Branch(13, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50), When.SkillReady(16563)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 16563)),
+        ];
+        variants[37] = [
+            AiPattern.Branch(7, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 18522)),
+        ];
+        variants[38] = [
+            AiPattern.Branch(7, "rung 0", [When.SpelledByPlayer, When.FriendHpBelow(50), When.Counting(0, 0, 3, false)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 19718)),
+        ];
+        variants[39] = [
             AiPattern.Branch(10, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[13] = [
+        variants[40] = [
             AiPattern.Branch(99, "rung 0", [When.WalkingItsRoute],
                 Do.Nothing()),
         ];
-        variants[14] = [
+        variants[41] = [
+            AiPattern.Branch(15, "rung 0", [When.FriendHpBelow(30), When.FirstTime(5)],
+                Do.Say(340131, 0),
+                Do.Broadcast(22222, 100f)),
+        ];
+        variants[42] = [
+            AiPattern.Branch(9, "rung 0", [When.Chance(25), When.CasterIsEnemy, When.FriendHpBelow(50)],
+                Do.SkillOn(NpcSkillTargetAttribute.FRIEND, 17361)),
+        ];
+        variants[43] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Nothing()),
         ];
-        variants[15] = [
+        variants[44] = [
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.Nothing()),
         ];
@@ -91974,250 +93108,787 @@ internal static class BattleCycles
     {
         Dictionary<int, int> owners = new Dictionary<int, int>();
         OnFriendSpelledOf0(owners);
+        OnFriendSpelledOf1(owners);
         return owners;
     }
 
     private static void OnFriendSpelledOf0(Dictionary<int, int> owners)
     {
-        owners[210148] = 0;  // Brownie_FnR
-        owners[210153] = 0;  // Brownie_FnR
-        owners[210703] = 0;  // Brownie_FnR
-        owners[210704] = 0;  // Brownie_FnR
-        owners[211046] = 1;  // ND2_KnG
-        owners[211049] = 1;  // ND2_KnG
-        owners[211297] = 1;  // ND2_KnG
-        owners[211304] = 1;  // ND2_KnG
-        owners[211873] = 1;  // ND2_KnG
-        owners[211874] = 1;  // ND2_KnG
-        owners[212078] = 1;  // ND2_KnG
-        owners[212079] = 1;  // ND2_KnG
-        owners[212080] = 1;  // ND2_KnG
-        owners[212116] = 1;  // ND2_KnG
-        owners[212270] = 2;  // Lizardman_FeC
-        owners[212274] = 3;  // D2_FnU
-        owners[212280] = 4;  // Lizardman_FeB
-        owners[212370] = 1;  // ND2_KnG
-        owners[212641] = 1;  // ND2_KnG
-        owners[213095] = 1;  // ND2_KnG
-        owners[213096] = 1;  // ND2_KnG
-        owners[213097] = 1;  // ND2_KnG
-        owners[213098] = 1;  // ND2_KnG
-        owners[213099] = 1;  // ND2_KnG
-        owners[213301] = 4;  // Lizardman_FeB
-        owners[213302] = 4;  // Lizardman_FeB
-        owners[213303] = 2;  // Lizardman_FeC
-        owners[213379] = 4;  // Lizardman_FeB
-        owners[213380] = 4;  // Lizardman_FeB
-        owners[213381] = 4;  // Lizardman_FeB
-        owners[213382] = 2;  // Lizardman_FeC
-        owners[213383] = 2;  // Lizardman_FeC
-        owners[213384] = 2;  // Lizardman_FeC
-        owners[213385] = 4;  // Lizardman_FeB
-        owners[213386] = 4;  // Lizardman_FeB
-        owners[213387] = 4;  // Lizardman_FeB
-        owners[213459] = 4;  // Lizardman_FeB
-        owners[213460] = 4;  // Lizardman_FeB
-        owners[213461] = 4;  // Lizardman_FeB
-        owners[213462] = 2;  // Lizardman_FeC
-        owners[213463] = 2;  // Lizardman_FeC
-        owners[213464] = 2;  // Lizardman_FeC
-        owners[213628] = 4;  // Lizardman_FeB
-        owners[213629] = 4;  // Lizardman_FeB
-        owners[213630] = 4;  // Lizardman_FeB
-        owners[213631] = 4;  // Lizardman_FeB
-        owners[213632] = 2;  // Lizardman_FeC
-        owners[213633] = 2;  // Lizardman_FeC
-        owners[213634] = 2;  // Lizardman_FeC
-        owners[213635] = 2;  // Lizardman_FeC
-        owners[213636] = 4;  // Lizardman_FeB
-        owners[213637] = 4;  // Lizardman_FeB
-        owners[213751] = 2;  // Lizardman_FeC
-        owners[213766] = 2;  // Lizardman_FeC
-        owners[213771] = 2;  // Lizardman_FeC
-        owners[213776] = 2;  // IDDF3_NamedLFi
-        owners[213966] = 4;  // Lizardman_FeB
-        owners[213967] = 4;  // Lizardman_FeB
-        owners[213968] = 4;  // Lizardman_FeB
-        owners[213969] = 4;  // Lizardman_FeB
-        owners[213970] = 2;  // Lizardman_FeC
-        owners[213971] = 2;  // Lizardman_FeC
-        owners[214047] = 4;  // Lizardman_FeB
-        owners[214048] = 4;  // Lizardman_FeB
-        owners[214049] = 4;  // Lizardman_FeB
-        owners[214050] = 4;  // Lizardman_FeB
-        owners[214051] = 4;  // Lizardman_FeB
-        owners[214052] = 4;  // Lizardman_FeB
-        owners[214053] = 4;  // Lizardman_FeB
-        owners[214054] = 2;  // Lizardman_FeC
-        owners[214105] = 4;  // Lizardman_FeB
-        owners[214106] = 4;  // Lizardman_FeB
-        owners[214162] = 4;  // Lizardman_FeB
-        owners[214645] = 5;  // ND2_Bst_28_1
-        owners[214733] = 4;  // Lizardman_FeB
-        owners[214744] = 4;  // Lizardman_FeB
-        owners[214748] = 4;  // Lizardman_FeB
-        owners[214752] = 4;  // Lizardman_FeB
-        owners[214756] = 4;  // Lizardman_FeB
-        owners[214771] = 4;  // Lizardman_FeB
-        owners[214775] = 4;  // Lizardman_FeB
-        owners[214827] = 4;  // Lizardman_FeB
-        owners[214832] = 4;  // Lizardman_FeB
-        owners[214841] = 2;  // Lizardman_FeC
-        owners[214852] = 4;  // Lizardman_FeB
-        owners[215094] = 4;  // Lizardman_FeB
-        owners[215098] = 4;  // Lizardman_FeB
-        owners[215130] = 2;  // Lizardman_FeC
-        owners[215137] = 4;  // Lizardman_FeB
-        owners[215141] = 4;  // Lizardman_FeB
-        owners[215173] = 2;  // Lizardman_FeC
-        owners[215180] = 4;  // Lizardman_FeB
-        owners[215184] = 4;  // Lizardman_FeB
-        owners[215216] = 2;  // Lizardman_FeC
-        owners[215246] = 6;  // XDrakan_AeG
-        owners[215248] = 7;  // XDrakan_ReG_50
-        owners[215255] = 6;  // XDrakan_AeG
-        owners[215257] = 7;  // XDrakan_ReG_50
-        owners[215264] = 6;  // XDrakan_AeG
-        owners[215266] = 7;  // XDrakan_ReG_50
-        owners[215273] = 6;  // XDrakan_AeG
-        owners[215275] = 7;  // XDrakan_ReG_50
-        owners[215285] = 4;  // Lizardman_FeB
-        owners[215289] = 4;  // Lizardman_FeB
-        owners[215301] = 4;  // Lizardman_FeB
-        owners[215305] = 4;  // Lizardman_FeB
-        owners[215317] = 4;  // Lizardman_FeB
-        owners[215321] = 4;  // Lizardman_FeB
-        owners[215333] = 4;  // Lizardman_FeB
-        owners[215337] = 4;  // Lizardman_FeB
-        owners[215349] = 4;  // Lizardman_FeB
-        owners[215353] = 4;  // Lizardman_FeB
-        owners[215365] = 4;  // Lizardman_FeB
-        owners[215369] = 4;  // Lizardman_FeB
-        owners[215429] = 2;  // Lizardman_FeC
-        owners[215439] = 4;  // Lizardman_FeB
-        owners[215445] = 4;  // Lizardman_FeB
-        owners[215754] = 6;  // XDrakan_AeG
-        owners[215774] = 6;  // XDrakan_AeG
-        owners[216125] = 6;  // XDrakan_AeG_ver40
-        owners[216828] = 6;  // XDrakan_AeG_ver40
-        owners[216829] = 6;  // XDrakan_AeG
-        owners[216830] = 6;  // XDrakan_AeG
-        owners[216831] = 6;  // XDrakan_AeG
-        owners[217754] = 8;  // IDArena_S9_Bonus_1
-        owners[218941] = 4;  // Lizardman_FeB_Solo
-        owners[218942] = 4;  // Lizardman_FeB_Solo
-        owners[218959] = 2;  // Lizardman_FeC
-        owners[219107] = 4;  // Lizardman_FeB_Solo
-        owners[219108] = 4;  // Lizardman_FeB_Solo
-        owners[219109] = 4;  // Lizardman_FeB_Solo
-        owners[219133] = 4;  // Lizardman_FeB_Solo
-        owners[219134] = 4;  // Lizardman_FeB_Solo
-        owners[219135] = 4;  // Lizardman_FeB_Solo
-        owners[219136] = 4;  // Lizardman_FeB_Solo
-        owners[219137] = 4;  // Lizardman_FeB_Solo
-        owners[219415] = 3;  // Brownie_FnQ
-        owners[219419] = 0;  // Ratman_FnR
-        owners[219980] = 8;  // IDF5_Mini_01_C_Killer_Fi
-        owners[219981] = 8;  // IDF5_Mini_01_C_Guard_Fi
-        owners[219982] = 8;  // IDF5_Mini_01_C_Guard_As
-        owners[219983] = 8;  // IDF5_Mini_01_C_Attack_1
-        owners[219984] = 8;  // IDF5_Mini_01_C_Attack_2
-        owners[219985] = 8;  // IDF5_Mini_01_C_Attack_3
-        owners[219986] = 8;  // IDF5_Mini_01_C_Attack_4
-        owners[230252] = 9;  // ND2_KnG
-        owners[230264] = 9;  // ND2_KnG
-        owners[230304] = 9;  // ND2_KnG
-        owners[230332] = 9;  // ND2_KnG
-        owners[230443] = 9;  // ND2_KnG
-        owners[230444] = 9;  // ND2_KnG
-        owners[230457] = 9;  // ND2_KnG
-        owners[230458] = 9;  // ND2_KnG
-        owners[230470] = 9;  // ND2_KnG
-        owners[230471] = 9;  // ND2_KnG
-        owners[233591] = 4;  // Lizardman_FeB
-        owners[233595] = 4;  // Lizardman_FeB
-        owners[233627] = 2;  // Lizardman_FeC
-        owners[233634] = 4;  // Lizardman_FeB
-        owners[233638] = 4;  // Lizardman_FeB
-        owners[233670] = 2;  // Lizardman_FeC
-        owners[233677] = 4;  // Lizardman_FeB
-        owners[233681] = 4;  // Lizardman_FeB
-        owners[233713] = 2;  // Lizardman_FeC
-        owners[233750] = 4;  // Lizardman_FeB
-        owners[233754] = 4;  // Lizardman_FeB
-        owners[233766] = 4;  // Lizardman_FeB
-        owners[233770] = 4;  // Lizardman_FeB
-        owners[233782] = 4;  // Lizardman_FeB
-        owners[233786] = 4;  // Lizardman_FeB
-        owners[233798] = 4;  // Lizardman_FeB
-        owners[233802] = 4;  // Lizardman_FeB
-        owners[233814] = 4;  // Lizardman_FeB
-        owners[233818] = 4;  // Lizardman_FeB
-        owners[233830] = 4;  // Lizardman_FeB
-        owners[233834] = 4;  // Lizardman_FeB
-        owners[235390] = 4;  // Lizardman_FeB
-        owners[235391] = 4;  // Lizardman_FeB
-        owners[235392] = 4;  // Lizardman_FeB
-        owners[235393] = 4;  // Lizardman_FeB
-        owners[235394] = 2;  // Lizardman_FeC
-        owners[235395] = 2;  // Lizardman_FeC
-        owners[235396] = 2;  // Lizardman_FeC
-        owners[235397] = 2;  // Lizardman_FeC
-        owners[235398] = 4;  // Lizardman_FeB
-        owners[235399] = 4;  // Lizardman_FeB
-        owners[235449] = 2;  // Lizardman_FeC
-        owners[235510] = 4;  // Lizardman_FeB
-        owners[235511] = 4;  // Lizardman_FeB
-        owners[235512] = 4;  // Lizardman_FeB
-        owners[235513] = 4;  // Lizardman_FeB
-        owners[235514] = 4;  // Lizardman_FeB
-        owners[235976] = 10;  // LF5_ItemNamed_24_Pet_KJS
-        owners[236478] = 6;  // XDrakan_AeG
-        owners[280140] = 0;  // Brownie_FnR
-        owners[280141] = 3;  // Brownie_FnQ
-        owners[280144] = 0;  // Ratman_FnR
-        owners[280212] = 3;  // D2_FnU
-        owners[280360] = 1;  // ND2_KnG
-        owners[280361] = 1;  // ND2_KnG
-        owners[280612] = 4;  // Lizardman_FeB
-        owners[280613] = 2;  // Lizardman_FeC
-        owners[281159] = 6;  // XDrakan_AeG
-        owners[281162] = 7;  // XDrakan_ReG_50
-        owners[281502] = 8;  // IDTP_SumFanaAs
-        owners[282146] = 11;  // IDHouse_Prime_Sum1
-        owners[282345] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282346] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282347] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282348] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282349] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282350] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282351] = 3;  // IDHouse_Butler_RollingGolem
-        owners[282352] = 3;  // IDHouse_Butler_RollingGolem
-        owners[283724] = 9;  // ND2_KnG
-        owners[284512] = 12;  // IDRuneWP_Main_VriCU_Fi_A_65_Ae
-        owners[284513] = 13;  // IDRuneWP_Main_VriIU_As_A_65_Ae
-        owners[284652] = 12;  // IDRuneWP_Main_VriCU_Ra_A_65_Ae
-        owners[284653] = 12;  // IDRuneWP_Main_VriIU_Wi_A_65_Ae
-        owners[285104] = 0;  // Brownie_FnR
-        owners[285724] = 0;  // Ratman_FnR
-        owners[286010] = 1;  // ND2_KnG
-        owners[286684] = 4;  // Lizardman_FeB
-        owners[286685] = 4;  // Lizardman_FeB
-        owners[286686] = 4;  // Lizardman_FeB
-        owners[286690] = 4;  // Lizardman_FeB
-        owners[286691] = 4;  // Lizardman_FeB
-        owners[286692] = 4;  // Lizardman_FeB
-        owners[287285] = 9;  // ND2_KnG
-        owners[296525] = 14;  // BGuard_F4ChiefBuffer
-        owners[296905] = 14;  // BGuard_F4ChiefBuffer
-        owners[296906] = 14;  // BGuard_F4ChiefBuffer
-        owners[297177] = 14;  // BGuard_F4ChiefBuffer
-        owners[856050] = 15;  // BIDF5_U01_Runaway_Wi_S_P1
-        owners[856051] = 15;  // BIDF5_U01_Runaway_Pr_S_P1
-        owners[856052] = 15;  // BIDF5_U01_Runaway_As_S_P1
-        owners[856104] = 8;  // IDF5_Mini_01_C_Killer_Fi
-        owners[856105] = 8;  // IDF5_Mini_01_C_Guard_Fi
-        owners[856106] = 8;  // IDF5_Mini_01_C_Guard_As
+        owners[203900] = 0;  // BGuard_Divine
+        owners[204300] = 0;  // BGuard_Divine
+        owners[204504] = 0;  // BGuard_Divine
+        owners[204715] = 0;  // BGuard_Divine
+        owners[207538] = 1;  // BGuard_GatePr
+        owners[207820] = 1;  // BGuard_GatePr
+        owners[207831] = 1;  // BGuard_GatePr
+        owners[210148] = 2;  // Brownie_FnR
+        owners[210153] = 2;  // Brownie_FnR
+        owners[210703] = 2;  // Brownie_FnR
+        owners[210704] = 2;  // Brownie_FnR
+        owners[210847] = 3;  // ND2_KnH
+        owners[210879] = 3;  // ND2_KnH
+        owners[210899] = 3;  // ND2_KnH
+        owners[211046] = 4;  // ND2_KnG
+        owners[211049] = 4;  // ND2_KnG
+        owners[211297] = 4;  // ND2_KnG
+        owners[211304] = 4;  // ND2_KnG
+        owners[211598] = 5;  // NLycan_PeA
+        owners[211610] = 5;  // NLycan_PeA
+        owners[211613] = 5;  // NLycan_PeA
+        owners[211873] = 4;  // ND2_KnG
+        owners[211874] = 4;  // ND2_KnG
+        owners[212078] = 4;  // ND2_KnG
+        owners[212079] = 4;  // ND2_KnG
+        owners[212080] = 4;  // ND2_KnG
+        owners[212116] = 4;  // ND2_KnG
+        owners[212267] = 6;  // Lizardman_PhA
+        owners[212270] = 7;  // Lizardman_FeC
+        owners[212274] = 8;  // D2_FnU
+        owners[212280] = 9;  // Lizardman_FeB
+        owners[212370] = 4;  // ND2_KnG
+        owners[212545] = 10;  // ND2_KnH
+        owners[212546] = 10;  // ND2_KnH
+        owners[212547] = 10;  // ND2_KnH
+        owners[212641] = 4;  // ND2_KnG
+        owners[212669] = 5;  // NLycan_PeA
+        owners[212812] = 5;  // NLycan_PeA
+        owners[212853] = 11;  // XLehpar_CeA
+        owners[212856] = 11;  // XLehpar_CeA
+        owners[212866] = 5;  // NLycan_PeA
+        owners[212869] = 5;  // NLycan_PeA
+        owners[212923] = 11;  // XLehpar_CeA
+        owners[212924] = 11;  // XLehpar_CeA
+        owners[212975] = 11;  // XLehpar_CeA
+        owners[213095] = 4;  // ND2_KnG
+        owners[213096] = 4;  // ND2_KnG
+        owners[213097] = 4;  // ND2_KnG
+        owners[213098] = 4;  // ND2_KnG
+        owners[213099] = 4;  // ND2_KnG
+        owners[213227] = 5;  // NLycan_PeA
+        owners[213228] = 5;  // NLycan_PeA
+        owners[213295] = 11;  // XLehpar_CeA
+        owners[213296] = 11;  // XLehpar_CeA
+        owners[213300] = 12;  // Lizardman_FeA
+        owners[213301] = 9;  // Lizardman_FeB
+        owners[213302] = 9;  // Lizardman_FeB
+        owners[213303] = 7;  // Lizardman_FeC
+        owners[213334] = 11;  // XLehpar_CeA
+        owners[213335] = 11;  // XLehpar_CeA
+        owners[213379] = 9;  // Lizardman_FeB
+        owners[213380] = 9;  // Lizardman_FeB
+        owners[213381] = 9;  // Lizardman_FeB
+        owners[213382] = 7;  // Lizardman_FeC
+        owners[213383] = 7;  // Lizardman_FeC
+        owners[213384] = 7;  // Lizardman_FeC
+        owners[213385] = 9;  // Lizardman_FeB
+        owners[213386] = 9;  // Lizardman_FeB
+        owners[213387] = 9;  // Lizardman_FeB
+        owners[213428] = 13;  // Naga_CeA
+        owners[213429] = 13;  // Naga_CeA
+        owners[213430] = 13;  // Naga_CeA
+        owners[213456] = 12;  // Lizardman_FeA
+        owners[213458] = 12;  // Lizardman_FeA
+        owners[213459] = 9;  // Lizardman_FeB
+        owners[213460] = 9;  // Lizardman_FeB
+        owners[213461] = 9;  // Lizardman_FeB
+        owners[213462] = 7;  // Lizardman_FeC
+        owners[213463] = 7;  // Lizardman_FeC
+        owners[213464] = 7;  // Lizardman_FeC
+        owners[213492] = 13;  // Naga_CeA
+        owners[213493] = 13;  // Naga_CeA
+        owners[213494] = 13;  // Naga_CeA
+        owners[213533] = 11;  // XLehpar_CeA
+        owners[213534] = 11;  // XLehpar_CeA
+        owners[213535] = 11;  // XLehpar_CeA
+        owners[213539] = 11;  // XLehpar_CeA
+        owners[213550] = 6;  // Lizardman_PeD
+        owners[213617] = 11;  // XLehpar_CeA
+        owners[213624] = 12;  // Lizardman_FeA
+        owners[213625] = 12;  // Lizardman_FeA
+        owners[213626] = 12;  // Lizardman_FeA
+        owners[213627] = 12;  // Lizardman_FeA
+        owners[213628] = 9;  // Lizardman_FeB
+        owners[213629] = 9;  // Lizardman_FeB
+        owners[213630] = 9;  // Lizardman_FeB
+        owners[213631] = 9;  // Lizardman_FeB
+        owners[213632] = 7;  // Lizardman_FeC
+        owners[213633] = 7;  // Lizardman_FeC
+        owners[213634] = 7;  // Lizardman_FeC
+        owners[213635] = 7;  // Lizardman_FeC
+        owners[213636] = 9;  // Lizardman_FeB
+        owners[213637] = 9;  // Lizardman_FeB
+        owners[213674] = 13;  // Naga_CeA
+        owners[213675] = 13;  // Naga_CeA
+        owners[213751] = 7;  // Lizardman_FeC
+        owners[213766] = 7;  // Lizardman_FeC
+        owners[213771] = 7;  // Lizardman_FeC
+        owners[213776] = 7;  // IDDF3_NamedLFi
+        owners[213783] = 13;  // Naga_CeA
+        owners[213802] = 13;  // IDDF3_NamedNCh
+        owners[213933] = 13;  // Naga_CeA
+        owners[213966] = 9;  // Lizardman_FeB
+        owners[213967] = 9;  // Lizardman_FeB
+        owners[213968] = 9;  // Lizardman_FeB
+        owners[213969] = 9;  // Lizardman_FeB
+        owners[213970] = 7;  // Lizardman_FeC
+        owners[213971] = 7;  // Lizardman_FeC
+        owners[214009] = 13;  // Naga_CeA
+        owners[214010] = 13;  // Naga_CeA
+        owners[214011] = 13;  // Naga_CeA
+        owners[214037] = 10;  // ND2_KnH
+        owners[214042] = 12;  // Lizardman_FeA
+        owners[214047] = 9;  // Lizardman_FeB
+        owners[214048] = 9;  // Lizardman_FeB
+        owners[214049] = 9;  // Lizardman_FeB
+        owners[214050] = 9;  // Lizardman_FeB
+        owners[214051] = 9;  // Lizardman_FeB
+        owners[214052] = 9;  // Lizardman_FeB
+        owners[214053] = 9;  // Lizardman_FeB
+        owners[214054] = 7;  // Lizardman_FeC
+        owners[214081] = 13;  // Naga_CeA
+        owners[214082] = 13;  // Naga_CeA
+        owners[214105] = 9;  // Lizardman_FeB
+        owners[214106] = 9;  // Lizardman_FeB
+        owners[214162] = 9;  // Lizardman_FeB
+        owners[214645] = 14;  // ND2_Bst_28_1
+        owners[214733] = 9;  // Lizardman_FeB
+        owners[214738] = 13;  // Naga_CeA
+        owners[214744] = 9;  // Lizardman_FeB
+        owners[214748] = 9;  // Lizardman_FeB
+        owners[214750] = 13;  // Naga_CeA
+        owners[214752] = 9;  // Lizardman_FeB
+        owners[214756] = 9;  // Lizardman_FeB
+        owners[214771] = 9;  // Lizardman_FeB
+        owners[214775] = 9;  // Lizardman_FeB
+        owners[214810] = 15;  // Dread_LiPnA
+        owners[214812] = 13;  // Dread_NagaCeA
+        owners[214814] = 13;  // Dread_NagaCeA
+        owners[214818] = 16;  // Dread_DrakanPeA
+        owners[214826] = 13;  // Naga_CeA
+        owners[214827] = 9;  // Lizardman_FeB
+        owners[214832] = 9;  // Lizardman_FeB
+        owners[214841] = 7;  // Lizardman_FeC
+        owners[214852] = 9;  // Lizardman_FeB
+        owners[215001] = 17;  // Shulack_PeA
+        owners[215002] = 17;  // Shulack_PeA
+        owners[215003] = 17;  // Shulack_PeA
+        owners[215004] = 17;  // Shulack_PeA
+        owners[215005] = 17;  // Shulack_PeA
+        owners[215006] = 17;  // Shulack_PeA
+        owners[215007] = 17;  // Shulack_PeA
+        owners[215008] = 17;  // Shulack_PeA
+        owners[215009] = 17;  // Shulack_PeA
+        owners[215010] = 17;  // Shulack_PeA
+        owners[215011] = 17;  // Shulack_PeA
+        owners[215012] = 17;  // Shulack_PeA
+        owners[215013] = 17;  // Shulack_PeA
+        owners[215014] = 17;  // Shulack_PeA
+        owners[215015] = 17;  // Shulack_PeA
+        owners[215016] = 17;  // Shulack_PeA
+        owners[215065] = 17;  // Shulack_PeA
+        owners[215083] = 13;  // Dread_SurkanaNm02
+        owners[215084] = 13;  // Dread_SurkanaNm02
+        owners[215094] = 9;  // Lizardman_FeB
+        owners[215098] = 9;  // Lizardman_FeB
+        owners[215109] = 13;  // Naga_CeA
+        owners[215113] = 13;  // Naga_CeA
+        owners[215130] = 7;  // Lizardman_FeC
+        owners[215137] = 9;  // Lizardman_FeB
+        owners[215141] = 9;  // Lizardman_FeB
+        owners[215152] = 13;  // Naga_CeA
+        owners[215156] = 13;  // Naga_CeA
+        owners[215173] = 7;  // Lizardman_FeC
+        owners[215180] = 9;  // Lizardman_FeB
+        owners[215184] = 9;  // Lizardman_FeB
+        owners[215195] = 13;  // Naga_CeA
+        owners[215199] = 13;  // Naga_CeA
+        owners[215216] = 7;  // Lizardman_FeC
+        owners[215238] = 13;  // Naga_CeA
+        owners[215246] = 18;  // XDrakan_AeG
+        owners[215248] = 19;  // XDrakan_ReG_50
+        owners[215255] = 18;  // XDrakan_AeG
+        owners[215257] = 19;  // XDrakan_ReG_50
+        owners[215264] = 18;  // XDrakan_AeG
+        owners[215266] = 19;  // XDrakan_ReG_50
+        owners[215273] = 18;  // XDrakan_AeG
+        owners[215275] = 19;  // XDrakan_ReG_50
+        owners[215285] = 9;  // Lizardman_FeB
+        owners[215289] = 9;  // Lizardman_FeB
+        owners[215296] = 13;  // Naga_CeA
+        owners[215300] = 13;  // Naga_CeA
+        owners[215301] = 9;  // Lizardman_FeB
+        owners[215305] = 9;  // Lizardman_FeB
+        owners[215312] = 13;  // Naga_CeA
+        owners[215316] = 13;  // Naga_CeA
+        owners[215317] = 9;  // Lizardman_FeB
+        owners[215321] = 9;  // Lizardman_FeB
+        owners[215328] = 13;  // Naga_CeA
+        owners[215332] = 13;  // Naga_CeA
+        owners[215333] = 9;  // Lizardman_FeB
+        owners[215337] = 9;  // Lizardman_FeB
+        owners[215344] = 13;  // Naga_CeA
+        owners[215348] = 13;  // Naga_CeA
+        owners[215349] = 9;  // Lizardman_FeB
+        owners[215353] = 9;  // Lizardman_FeB
+        owners[215360] = 13;  // Naga_CeA
+        owners[215364] = 13;  // Naga_CeA
+        owners[215365] = 9;  // Lizardman_FeB
+        owners[215369] = 9;  // Lizardman_FeB
+        owners[215376] = 13;  // Naga_CeA
+        owners[215380] = 13;  // Naga_CeA
+        owners[215429] = 7;  // Lizardman_FeC
+        owners[215438] = 17;  // Shulack_PeA
+        owners[215439] = 9;  // Lizardman_FeB
+        owners[215445] = 9;  // Lizardman_FeB
+        owners[215568] = 17;  // Shulack_PeA
+        owners[215569] = 17;  // Shulack_PeA
+        owners[215570] = 17;  // Shulack_PeA
+        owners[215571] = 17;  // Shulack_PeA
+        owners[215572] = 17;  // Shulack_PeA
+        owners[215573] = 17;  // Shulack_PeA
+        owners[215641] = 17;  // Shulack_PeA
+        owners[215754] = 18;  // XDrakan_AeG
+        owners[215774] = 18;  // XDrakan_AeG
+        owners[216077] = 20;  // Owllau_PeA
+        owners[216078] = 20;  // Owllau_PeA
+        owners[216088] = 21;  // LycanDR_PnA
+        owners[216089] = 21;  // LycanDR_PnA
+        owners[216090] = 21;  // LycanDR_PnA
+        owners[216125] = 18;  // XDrakan_AeG_ver40
+        owners[216455] = 21;  // LycanDR_PnA
+        owners[216470] = 17;  // Shulack_PeA
+        owners[216471] = 17;  // Shulack_PeA
+        owners[216560] = 21;  // LycanDR_PnA
+        owners[216606] = 17;  // Shulack_PeA
+        owners[216659] = 17;  // Shulack_PeA
+        owners[216660] = 17;  // Shulack_PeA
+        owners[216665] = 20;  // Owllau_PeA
+        owners[216669] = 20;  // Owllau_PeA
+        owners[216671] = 20;  // Owllau_PeA
+        owners[216678] = 20;  // Owllau_PeA
+        owners[216679] = 20;  // Owllau_PeA
+        owners[216719] = 17;  // Shulack_PeA
+        owners[216720] = 17;  // Shulack_PeA
+        owners[216828] = 18;  // XDrakan_AeG_ver40
+        owners[216829] = 18;  // XDrakan_AeG
+        owners[216830] = 18;  // XDrakan_AeG
+        owners[216831] = 18;  // XDrakan_AeG
+        owners[216859] = 15;  // Dread02_LizardPr
+        owners[216864] = 16;  // Dread02_Drakan_Pr
+        owners[217084] = 21;  // LycanDR_PnA
+        owners[217506] = 5;  // IDArena_S2_Monster_R5
+        owners[217550] = 17;  // IDArena_S4_Monster_R6
+        owners[217557] = 12;  // IDArena_S5_Monster_1
+        owners[217561] = 13;  // IDArena_S5_Monster_5
+        owners[217602] = 16;  // IDArena_S10_Monster_3
+        owners[217754] = 22;  // IDArena_S9_Bonus_1
+        owners[218941] = 9;  // Lizardman_FeB_Solo
+        owners[218942] = 9;  // Lizardman_FeB_Solo
+        owners[218949] = 23;  // Lizardman_PeB_Solo
+        owners[218950] = 23;  // Lizardman_PeB_Solo
+        owners[218959] = 7;  // Lizardman_FeC
+        owners[219004] = 17;  // Shulack_PeA
+        owners[219005] = 17;  // Shulack_PeA
+        owners[219006] = 17;  // Shulack_PeA
+        owners[219007] = 17;  // Shulack_PeA
+        owners[219008] = 17;  // Shulack_PeA
+        owners[219009] = 17;  // Shulack_PeA
+        owners[219010] = 17;  // Shulack_PeA
+        owners[219011] = 17;  // Shulack_PeA
+        owners[219029] = 17;  // Shulack_PeA
+        owners[219042] = 17;  // Shulack_PeA
+        owners[219103] = 23;  // Lizardman_PeB_Solo
+        owners[219107] = 9;  // Lizardman_FeB_Solo
+        owners[219108] = 9;  // Lizardman_FeB_Solo
+        owners[219109] = 9;  // Lizardman_FeB_Solo
+        owners[219124] = 23;  // Lizardman_PeB_Solo
+        owners[219125] = 23;  // Lizardman_PeB_Solo
+        owners[219126] = 23;  // Lizardman_PeB_Solo
+        owners[219128] = 12;  // Lizardman_FeA_Solo
+        owners[219129] = 12;  // Lizardman_FeA_Solo
+        owners[219130] = 12;  // Lizardman_FeA_Solo
+        owners[219131] = 12;  // Lizardman_FeA_Solo
+        owners[219133] = 9;  // Lizardman_FeB_Solo
+        owners[219134] = 9;  // Lizardman_FeB_Solo
+        owners[219135] = 9;  // Lizardman_FeB_Solo
+        owners[219136] = 9;  // Lizardman_FeB_Solo
+        owners[219137] = 9;  // Lizardman_FeB_Solo
+        owners[219146] = 23;  // Lizardman_PeB_Solo
+        owners[219147] = 23;  // Lizardman_PeB_Solo
+        owners[219148] = 23;  // Lizardman_PeB_Solo
+        owners[219149] = 23;  // Lizardman_PeB_Solo
+        owners[219150] = 23;  // Lizardman_PeB_Solo
+        owners[219151] = 23;  // Lizardman_PeB_Solo
+        owners[219415] = 8;  // Brownie_FnQ
+        owners[219419] = 2;  // Ratman_FnR
+        owners[219980] = 22;  // IDF5_Mini_01_C_Killer_Fi
+        owners[219981] = 22;  // IDF5_Mini_01_C_Guard_Fi
+        owners[219982] = 22;  // IDF5_Mini_01_C_Guard_As
+        owners[219983] = 22;  // IDF5_Mini_01_C_Attack_1
+        owners[219984] = 22;  // IDF5_Mini_01_C_Attack_2
+        owners[219985] = 22;  // IDF5_Mini_01_C_Attack_3
+        owners[219986] = 22;  // IDF5_Mini_01_C_Attack_4
+        owners[230252] = 24;  // ND2_KnG
+        owners[230264] = 24;  // ND2_KnG
+        owners[230304] = 24;  // ND2_KnG
+        owners[230332] = 24;  // ND2_KnG
+        owners[230443] = 24;  // ND2_KnG
+        owners[230444] = 24;  // ND2_KnG
+        owners[230457] = 24;  // ND2_KnG
+        owners[230458] = 24;  // ND2_KnG
+        owners[230470] = 24;  // ND2_KnG
+        owners[230471] = 24;  // ND2_KnG
+        owners[230647] = 25;  // IDRose_M_ShulackF_Mu_S_Key_An
+        owners[230650] = 25;  // IDRose_M_ShulackF_Pr_S_Key_An
+        owners[230655] = 25;  // IDRose_H_ShulackF_Mu_P_Key_Ae
+        owners[230681] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230682] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230683] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230684] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[230689] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230690] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230691] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230692] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[230722] = 25;  // IDRose_M_ShulackF_Mu_P_Key_Ae
+        owners[230725] = 25;  // IDRose_M_ShulackF_Pr_P_Key_Ae
+        owners[230730] = 25;  // IDRose_H_ShulackF_Mu_P_Key_Ae
+        owners[230743] = 26;  // IDRose_H_Boss_Mu_P_N_Ae
+        owners[230755] = 27;  // IDF5_TD_Nor_Pr
+        owners[230820] = 28;  // IDVritra_Base_Drakan_Ba
+        owners[230821] = 28;  // IDVritra_Base_Drakan_Ba
+        owners[230822] = 28;  // IDVritra_Base_Drakan_Ba
+        owners[230823] = 28;  // IDVritra_Base_Drakan_Ba
+        owners[230824] = 28;  // IDVritra_Base_Drakan_Ba_Officer
+        owners[230825] = 28;  // IDVritra_Base_Drakan_Ba_Officer
+        owners[230845] = 29;  // IDVritra_Base_Shugo_Nurse
+        owners[231200] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231201] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[231230] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231234] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[231423] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231424] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231429] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231430] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231436] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231454] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231456] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231470] = 25;  // IDRose_ShulackF_Pr_P_Ae
+        owners[231472] = 25;  // IDRose_ShulackF_Ba_P_Ae
+        owners[231689] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231694] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231699] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231704] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231709] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[231724] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[231729] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[231734] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[231739] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[231744] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232196] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232201] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232206] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232211] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232216] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232231] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232236] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232241] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232246] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232251] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232261] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232266] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232271] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232281] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232286] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[232291] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232296] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232301] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232306] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232311] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232326] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232331] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232336] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232341] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232346] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232356] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232361] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232366] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232376] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[232381] = 30;  // F5_PvPLight_DGuard_Pr_An
+    }
+
+    private static void OnFriendSpelledOf1(Dictionary<int, int> owners)
+    {
+        owners[233075] = 30;  // IDF5_U2_Light_Pr_solo_65_An
+        owners[233312] = 27;  // IDF5_TD_Easy_Pr
+        owners[233394] = 30;  // IDF5_U2_S_Light_Pr_65_An_NoMsg
+        owners[233438] = 28;  // IDVritra_Base_Drakan_Ba
+        owners[233439] = 28;  // IDVritra_Base_Drakan_Ba_Officer
+        owners[233550] = 31;  // IDF5_TD_War_Vri_Officer_01
+        owners[233551] = 31;  // IDF5_TD_War_Vri_Officer_02
+        owners[233552] = 31;  // IDF5_TD_War_Vri_Officer_03
+        owners[233553] = 31;  // IDF5_TD_War_Vri_Officer_04
+        owners[233554] = 31;  // IDF5_TD_War_Vri_Officer_05
+        owners[233555] = 31;  // IDF5_TD_War_Vri_Officer_06
+        owners[233556] = 31;  // IDF5_TD_War_Vri_Officer_07
+        owners[233557] = 31;  // IDF5_TD_War_Vri_Officer_08
+        owners[233558] = 31;  // IDF5_TD_War_Vri_Officer_09
+        owners[233559] = 31;  // IDF5_TD_War_Vri_Officer_10
+        owners[233591] = 9;  // Lizardman_FeB
+        owners[233595] = 9;  // Lizardman_FeB
+        owners[233606] = 13;  // Naga_CeA
+        owners[233610] = 13;  // Naga_CeA
+        owners[233627] = 7;  // Lizardman_FeC
+        owners[233634] = 9;  // Lizardman_FeB
+        owners[233638] = 9;  // Lizardman_FeB
+        owners[233649] = 13;  // Naga_CeA
+        owners[233653] = 13;  // Naga_CeA
+        owners[233670] = 7;  // Lizardman_FeC
+        owners[233677] = 9;  // Lizardman_FeB
+        owners[233681] = 9;  // Lizardman_FeB
+        owners[233692] = 13;  // Naga_CeA
+        owners[233696] = 13;  // Naga_CeA
+        owners[233713] = 7;  // Lizardman_FeC
+        owners[233750] = 9;  // Lizardman_FeB
+        owners[233754] = 9;  // Lizardman_FeB
+        owners[233761] = 13;  // Naga_CeA
+        owners[233765] = 13;  // Naga_CeA
+        owners[233766] = 9;  // Lizardman_FeB
+        owners[233770] = 9;  // Lizardman_FeB
+        owners[233777] = 13;  // Naga_CeA
+        owners[233781] = 13;  // Naga_CeA
+        owners[233782] = 9;  // Lizardman_FeB
+        owners[233786] = 9;  // Lizardman_FeB
+        owners[233793] = 13;  // Naga_CeA
+        owners[233797] = 13;  // Naga_CeA
+        owners[233798] = 9;  // Lizardman_FeB
+        owners[233802] = 9;  // Lizardman_FeB
+        owners[233809] = 13;  // Naga_CeA
+        owners[233813] = 13;  // Naga_CeA
+        owners[233814] = 9;  // Lizardman_FeB
+        owners[233818] = 9;  // Lizardman_FeB
+        owners[233825] = 13;  // Naga_CeA
+        owners[233829] = 13;  // Naga_CeA
+        owners[233830] = 9;  // Lizardman_FeB
+        owners[233834] = 9;  // Lizardman_FeB
+        owners[233841] = 13;  // Naga_CeA
+        owners[233845] = 13;  // Naga_CeA
+        owners[234057] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234058] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234072] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234073] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234817] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234818] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234829] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234830] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234841] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234842] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234853] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234854] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234865] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234866] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234877] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234878] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234889] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234890] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[234901] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[234902] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[235388] = 12;  // Lizardman_FeA
+        owners[235389] = 12;  // Lizardman_FeA
+        owners[235390] = 9;  // Lizardman_FeB
+        owners[235391] = 9;  // Lizardman_FeB
+        owners[235392] = 9;  // Lizardman_FeB
+        owners[235393] = 9;  // Lizardman_FeB
+        owners[235394] = 7;  // Lizardman_FeC
+        owners[235395] = 7;  // Lizardman_FeC
+        owners[235396] = 7;  // Lizardman_FeC
+        owners[235397] = 7;  // Lizardman_FeC
+        owners[235398] = 9;  // Lizardman_FeB
+        owners[235399] = 9;  // Lizardman_FeB
+        owners[235430] = 13;  // Naga_CeA
+        owners[235431] = 13;  // Naga_CeA
+        owners[235449] = 7;  // Lizardman_FeC
+        owners[235454] = 13;  // Naga_CeA
+        owners[235483] = 13;  // Naga_CeA
+        owners[235484] = 13;  // Naga_CeA
+        owners[235502] = 13;  // Naga_CeA
+        owners[235510] = 9;  // Lizardman_FeB
+        owners[235511] = 9;  // Lizardman_FeB
+        owners[235512] = 9;  // Lizardman_FeB
+        owners[235513] = 9;  // Lizardman_FeB
+        owners[235514] = 9;  // Lizardman_FeB
+        owners[235522] = 12;  // Lizardman_FeA
+        owners[235524] = 12;  // Lizardman_FeA
+        owners[235976] = 32;  // LF5_ItemNamed_24_Pet_KJS
+        owners[236478] = 18;  // XDrakan_AeG
+        owners[251058] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[251074] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[251477] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[251490] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[251520] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[251533] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[251563] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[251576] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[251792] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[251798] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252351] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252356] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252361] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252366] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252371] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252376] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252381] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252386] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252391] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252396] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252401] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252406] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252411] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252416] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[252421] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[252426] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279089] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279090] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279091] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279092] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279093] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279187] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279188] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279189] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279190] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279191] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279285] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279286] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279287] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279288] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279289] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279383] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279384] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279385] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279386] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279387] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279481] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279482] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279483] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279484] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279485] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279579] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279580] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279581] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279582] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279583] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[279948] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279964] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279980] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[279996] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[280140] = 2;  // Brownie_FnR
+        owners[280141] = 8;  // Brownie_FnQ
+        owners[280144] = 2;  // Ratman_FnR
+        owners[280198] = 3;  // ND2_KnH
+        owners[280212] = 8;  // D2_FnU
+        owners[280360] = 4;  // ND2_KnG
+        owners[280361] = 4;  // ND2_KnG
+        owners[280367] = 10;  // ND2_KnH
+        owners[280439] = 5;  // NLycan_PeA
+        owners[280464] = 11;  // XLehpar_CeA
+        owners[280611] = 12;  // Lizardman_FeA
+        owners[280612] = 9;  // Lizardman_FeB
+        owners[280613] = 7;  // Lizardman_FeC
+        owners[280634] = 13;  // Naga_CeA
+        owners[280662] = 6;  // Lizardman_PeD
+        owners[280767] = 6;  // Lizardman_PhA
+        owners[281159] = 18;  // XDrakan_AeG
+        owners[281162] = 19;  // XDrakan_ReG_50
+        owners[281233] = 17;  // Shulack_PeA
+        owners[281307] = 15;  // Dread_LiPnA
+        owners[281310] = 13;  // Dread_NagaCeA
+        owners[281314] = 16;  // Dread_DrakanPeA
+        owners[281337] = 13;  // Dread_NagaCeA
+        owners[281339] = 13;  // Dread_NagaCeA
+        owners[281502] = 22;  // IDTP_SumFanaAs
+        owners[281550] = 20;  // Owllau_PeA
+        owners[281653] = 21;  // LycanDR_PnA
+        owners[281848] = 13;  // Dread_SurkanaNm02
+        owners[281859] = 15;  // Dread02_LizardPr
+        owners[281864] = 16;  // Dread02_Drakan_Pr
+        owners[282146] = 33;  // IDHouse_Prime_Sum1
+        owners[282345] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282346] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282347] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282348] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282349] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282350] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282351] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282352] = 8;  // IDHouse_Butler_RollingGolem
+        owners[282619] = 34;  // IDDramata_Drakan_Pr
+        owners[283724] = 24;  // ND2_KnG
+        owners[284035] = 35;  // IDF5_TD_Assult_Kn
+        owners[284039] = 36;  // IDF5_TD_Assult_Pr
+        owners[284058] = 37;  // IDF5_TD_Nor_Pr
+        owners[284059] = 38;  // IDF5_TD_Nor_Ba
+        owners[284512] = 39;  // IDRuneWP_Main_VriCU_Fi_A_65_Ae
+        owners[284513] = 40;  // IDRuneWP_Main_VriIU_As_A_65_Ae
+        owners[284596] = 30;  // IDF5_U2_Light_Pr_solo_65_An
+        owners[284652] = 39;  // IDRuneWP_Main_VriCU_Ra_A_65_Ae
+        owners[284653] = 39;  // IDRuneWP_Main_VriIU_Wi_A_65_Ae
+        owners[284813] = 31;  // IDF5_TD_War_Vri_Officer_01
+        owners[284814] = 31;  // IDF5_TD_War_Vri_Officer_02
+        owners[284815] = 31;  // IDF5_TD_War_Vri_Officer_03
+        owners[284816] = 31;  // IDF5_TD_War_Vri_Officer_04
+        owners[284817] = 31;  // IDF5_TD_War_Vri_Officer_05
+        owners[284818] = 31;  // IDF5_TD_War_Vri_Officer_06
+        owners[284819] = 31;  // IDF5_TD_War_Vri_Officer_07
+        owners[284820] = 31;  // IDF5_TD_War_Vri_Officer_08
+        owners[284821] = 31;  // IDF5_TD_War_Vri_Officer_09
+        owners[284822] = 31;  // IDF5_TD_War_Vri_Officer_10
+        owners[284845] = 28;  // BIDF5_U3_Nor_Vri_Ba
+        owners[284853] = 28;  // BIDF5_U3_hard_Vri_Ba
+        owners[285104] = 2;  // Brownie_FnR
+        owners[285724] = 2;  // Ratman_FnR
+        owners[286010] = 4;  // ND2_KnG
+        owners[286684] = 9;  // Lizardman_FeB
+        owners[286685] = 9;  // Lizardman_FeB
+        owners[286686] = 9;  // Lizardman_FeB
+        owners[286687] = 12;  // Lizardman_FeA
+        owners[286688] = 12;  // Lizardman_FeA
+        owners[286689] = 12;  // Lizardman_FeA
+        owners[286690] = 9;  // Lizardman_FeB
+        owners[286691] = 9;  // Lizardman_FeB
+        owners[286692] = 9;  // Lizardman_FeB
+        owners[287037] = 41;  // Test_Basic_Monster_AI_LHJ_5
+        owners[287285] = 24;  // ND2_KnG
+        owners[294730] = 1;  // BGuard_GatePr
+        owners[294731] = 1;  // BGuard_GatePr
+        owners[294732] = 1;  // BGuard_GatePr
+        owners[294763] = 1;  // BGuard_GatePr
+        owners[294764] = 1;  // BGuard_GatePr
+        owners[294765] = 1;  // BGuard_GatePr
+        owners[294883] = 1;  // BGuard_GatePr
+        owners[294887] = 1;  // BGuard_GatePr
+        owners[294891] = 42;  // BGuard_GatePr
+        owners[295139] = 1;  // BGuard_GatePr
+        owners[295150] = 1;  // BGuard_GatePr
+        owners[295203] = 1;  // BGuard_GatePr
+        owners[295207] = 1;  // BGuard_GatePr
+        owners[295211] = 42;  // BGuard_GatePr
+        owners[296043] = 1;  // BGuard_GatePr
+        owners[296047] = 1;  // BGuard_GatePr
+        owners[296051] = 42;  // BGuard_GatePr
+        owners[296069] = 1;  // BGuard_GatePr
+        owners[296080] = 1;  // BGuard_GatePr
+        owners[296333] = 0;  // BGuard_Divine
+        owners[296334] = 0;  // BGuard_Divine
+        owners[296335] = 0;  // BGuard_Divine
+        owners[296336] = 0;  // BGuard_Divine
+        owners[296525] = 43;  // BGuard_F4ChiefBuffer
+        owners[296638] = 1;  // BGuard_GatePr
+        owners[296643] = 1;  // BGuard_GatePr
+        owners[296748] = 1;  // BGuard_GatePr
+        owners[296753] = 1;  // BGuard_GatePr
+        owners[296874] = 1;  // BGuard_GatePr
+        owners[296882] = 1;  // BGuard_GatePr
+        owners[296905] = 43;  // BGuard_F4ChiefBuffer
+        owners[296906] = 43;  // BGuard_F4ChiefBuffer
+        owners[296976] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[296991] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[297125] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[297129] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[297177] = 43;  // BGuard_F4ChiefBuffer
+        owners[297263] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[297268] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[297296] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[800526] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[800528] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[800551] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[800557] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[800994] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801004] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801009] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801011] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801012] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801015] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801017] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801021] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801022] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801023] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801028] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801067] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801068] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801070] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801073] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801074] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801075] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801081] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801083] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801084] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801088] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801090] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801096] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801098] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[801113] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801116] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801119] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801128] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801130] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801132] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[801275] = 30;  // F5_PvPLight_LGuard_Pr_An
+        owners[856050] = 44;  // BIDF5_U01_Runaway_Wi_S_P1
+        owners[856051] = 44;  // BIDF5_U01_Runaway_Pr_S_P1
+        owners[856052] = 44;  // BIDF5_U01_Runaway_As_S_P1
+        owners[856104] = 22;  // IDF5_Mini_01_C_Killer_Fi
+        owners[856105] = 22;  // IDF5_Mini_01_C_Guard_Fi
+        owners[856106] = 22;  // IDF5_Mini_01_C_Guard_As
+        owners[881758] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881759] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881760] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881761] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881762] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881763] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881764] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881765] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881766] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881767] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881773] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881774] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881775] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881776] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881777] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881778] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881779] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881780] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881781] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881782] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881818] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881819] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881820] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881821] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881822] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881823] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881824] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881825] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881826] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881827] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881833] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881834] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881835] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881836] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881837] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881838] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881839] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881840] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881841] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881842] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881893] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881894] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881895] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881896] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881897] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881898] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881899] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881900] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881901] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881902] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881917] = 30;  // F5_PvPLight_DGuard_Pr_An
+        owners[881918] = 30;  // F5_PvPLight_DGuard_Pr_An
     }
 
     /// <summary>What it does when it stops running away.</summary>

@@ -189,6 +189,9 @@ def guard_code(token: str) -> str:
     kind, _, argument = token.partition(":")
     if kind == "timer":
         return f"When.Timer({argument})"
+    if kind == "hp_of":
+        name, percent = argument.split(":")
+        return f"When.{name}({percent})"
     if kind == "hp_below":
         return f"When.HpBelow({argument})"
     if kind == "hp_between":

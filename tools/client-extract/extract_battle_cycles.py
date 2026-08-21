@@ -47,9 +47,12 @@ Two conditions need care rather than a helper:
 
 * **`is_hp_in_boundary` is exclusive at both ends**, and `When.HpBetween` is inclusive, so the bounds
   are emitted as `low+1 .. high-1`. Percentages are integers, so that is exact rather than a rounding.
-* **`is_hp_lower_than` is only taken for `OBJI_SELF`** (6,048 of its 6,386 uses). The friend and target
-  forms ask about somebody else and have their own helpers; emitting `HpBelow` for them would silently
-  read the wrong creature's health.
+* **`is_hp_lower_than` asks about a named creature, not always this one.** 6,048 of its 6,386 uses are
+  `OBJI_SELF` and were always taken; the other 338 ask about somebody the event names and were refused,
+  because emitting `HpBelow` for them would silently have read the wrong creature's health. They are
+  read now, each against the role `PatternAi` already tracks -- `OBJI_FRIEND` is 314 of the 338 and
+  lives entirely in the two friend handlers, where `Friend` is set. `OBJI_PARTY_MEMBER` (2) is still
+  refused: this port has no party-member role on an npc pattern.
 
 Unlike the idle table these rows carry **real spawn group ids**: `despawn` names a `SPAWN_ID_n`, so a
 rotation that cleans up after itself needs the group it spawned into, not `Untracked`.
@@ -220,6 +223,17 @@ FLEE_ROLES = {
     "OBJI_TALKER": "flee_FleeFromTalker",
 }
 
+#: Retail's `is_hp_lower_than` subjects other than itself, and the condition each becomes.
+#: `OBJI_PARTY_MEMBER` is absent -- this port has no party-member role on an npc pattern.
+HP_ROLES = {
+    "OBJI_FRIEND": "FriendHpBelow",
+    "OBJI_CUR_TARGET": "TargetHpBelow",
+    "OBJI_SEEN": "SeenHpBelow",
+    "OBJI_CASTER": "CasterHpBelow",
+    "OBJI_ATTACKER": "AttackerHpBelow",
+    "OBJI_MESSAGE_SENDER": "MessageSenderHpBelow",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -271,10 +285,17 @@ def read_guards(block: str) -> list[str]:
         elif kind == "is_hp_lower_than":
             who = re.search(r"<who>(\w+)</who>", body)
             percent = re.search(r"<percent>(\d+)</percent>", body)
-            # Only the NPC's own health. OBJI_FRIEND and OBJI_CUR_TARGET ask about somebody else.
-            if not percent or not who or who.group(1) != "OBJI_SELF":
-                raise Unsayable("is_hp_lower_than about somebody else")
-            out.append(f"hp_below:{percent.group(1)}")
+            if not who or not percent:
+                raise Unsayable("is_hp_lower_than with no subject or percent")
+            if who.group(1) == "OBJI_SELF":
+                out.append(f"hp_below:{percent.group(1)}")
+            elif who.group(1) in HP_ROLES:
+                # Somebody else's health, which is a different question and a different creature.
+                # See `When.FriendHpBelow`: an absent role answers false, because "somebody who is not
+                # there is below 30%" is not true about anything.
+                out.append(f"hp_of:{HP_ROLES[who.group(1)]}:{percent.group(1)}")
+            else:
+                raise Unsayable(f"is_hp_lower_than about {who.group(1)}")
         elif kind == "is_hp_in_boundary":
             who = re.search(r"<who>(\w+)</who>", body)
             low = re.search(r"<larger_than>(\d+)</larger_than>", body)

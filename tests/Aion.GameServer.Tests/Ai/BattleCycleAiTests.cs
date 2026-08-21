@@ -324,7 +324,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 81,589 casts across 21,716 npcs, none of them read by a human. The index they came from is only
+	/// 82,944 casts across 21,725 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -343,7 +343,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(81589, casts);
+		Assert.Equal(82944, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -1070,13 +1070,15 @@ public sealed class BattleCycleAiTests
 				["who:TargetIsPlayer"] = 59,
 				["who:EventTargetIsPlayer"] = 10,
 				["who:TargetIsNpc"] = 4,
-				["who:AttackedByPlayer"] = 1,
 
-				// Arrived when `flee_from` was read: two patterns that had been refused for that
-				// element carry a talker guard as well, so `TalkerIsPlayer` stopped being a mapping
-				// with no data. This is the pin doing its job -- the number moved because the table
-				// grew, and it moved here as a visible edit rather than as silence.
+				// These three arrived as other elements were read, not as a change to `is_user`
+				// itself: `TalkerIsPlayer` when `flee_from` landed, and the attacked/spelled pair when
+				// `is_hp_lower_than` about a friend did. Each time a refused element is read, patterns
+				// that carried it *and* an identity guard come in together. That is the pin doing its
+				// job -- the numbers move as visible edits here rather than as silence.
 				["who:TalkerIsPlayer"] = 2,
+				["who:AttackedByPlayer"] = 18,
+				["who:SpelledByPlayer"] = 17,
 			}.OrderBy(e => e.Key),
 			seen.OrderBy(e => e.Key));
 	}
@@ -1170,6 +1172,41 @@ public sealed class BattleCycleAiTests
 		Assert.Equal(y, worm.GetY());
 		Assert.False(worm.GetAi().IsInState(Aion.GameServer.Ai.AIState.FEAR),
 			"an npc with nothing to flee from went into a flee state anyway");
+	}
+
+	/// <summary><b>A friend who is not there is not hurt.</b></summary>
+	/// <remarks>
+	/// <c>is_hp_lower_than</c> is 6,386 uses; 6,048 ask about the npc itself and were always read. The
+	/// other 338 ask about a creature the event names, and <c>OBJI_FRIEND</c> is 314 of those, living
+	/// entirely in <c>on_see_friend_attacked</c> and <c>on_friend_spelled</c> -- a healer deciding
+	/// whether the friend is hurt enough to be worth helping.
+	/// <para>
+	/// <b>An unset role answers false here, which is the opposite of the choice
+	/// <see cref="When.SkillReady"/> makes.</b> The reasons differ and both are deliberate. There, a
+	/// missing entry meant this port has no cooldown data, so blocking would have destroyed a working
+	/// mechanic. Here a missing role means the event has no such creature, and "somebody who is not
+	/// there is below 30% health" is not a true statement about anything -- answering true would fire
+	/// every healer's rescue rung continuously at nobody.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void AFriendWhoIsNotThereIsNotHurt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		// Outside a friend handler the role is unset, which is most of the time.
+		Assert.False(When.FriendHpBelow(30)(ai), "an npc with no friend in trouble read one as hurt");
+		// 101 rather than 100, and the choice is what makes this pin bite. The npc is at full health,
+		// so a version reading its *own* health answers false at 100 and true at 101 -- while the
+		// correct version answers false at both, having no friend. A mutation swapping the friend for
+		// the npc survived a pin written with 100.
+		Assert.False(When.FriendHpBelow(101)(ai),
+			"an absent friend was read as the npc's own health");
+
+		// And the npc's own health is a different question, still answered from itself.
+		Assert.True(When.HpBelow(101)(ai), "the npc's own health stopped being readable");
 	}
 
 }
