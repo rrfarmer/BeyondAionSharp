@@ -38912,3 +38912,71 @@ like in a Python comment, and that is its own piece of work.
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## What is actually left, counted rather than assumed
+
+`Retail-AI-Pattern: none — measurement only, no behaviour change`
+
+The previous entry ended with "170 pieces of ordinary porting work" at the top of the list. Chasing
+where those adds go turned into a correction and a proper breakdown of the largest refusal in the
+whole pipeline.
+
+### The correction
+
+`no npc here that is free to run it` is 3,941 refused patterns, the biggest single line in the
+extractor's output. Grouping the blocking npcs by their `ai=` put **14,546 under `None`**, which
+reads as "npcs with no AI class". Following that: `Creature`'s constructor hands a null AI name to
+`AIEngine.NewAI`, which returns `DummyAI` -- an AI that does nothing. Fourteen thousand npcs with
+retail patterns and no behaviour at all would have been the largest finding in this document.
+
+**It is not true.** Every pattern-named npc that exists in `npc_templates.xml` carries an `ai=` --
+zero exceptions. The `None` was `dict.get` missing on npcs that **are not in this port's templates at
+all**: of the 69,274 npcs the patterns name, **17,987 do not exist here.** That is the 4.8-versus-5.8
+version gap, not a binding problem, and `DummyAI` never entered into it.
+
+Checking before writing is what caught it, and it is worth naming the tell: a number that would be
+the biggest finding yet, arrived at by reading a `None` out of a lookup.
+
+### The breakdown
+
+Of the 3,941 patterns refused for want of a free npc:
+
+| | patterns |
+|---|---|
+| every npc absent from this port (4.8 vs 5.8) | **3,291** |
+| pattern names no npc this binding knows | 1,918 |
+| a free npc exists -- refused for a vocabulary reason instead | 1,902 |
+| npcs on a hand-written class this table does not accept | 1,708 |
+| every npc already modelled by a hand-written class | 110 |
+
+(The rows overlap: a pattern is counted once, at the first reason that applies.)
+
+**3,291 patterns can never be read** -- their npcs do not exist in this port. That is a third of the
+refusals and it is not work, it is a version boundary.
+
+**1,708 patterns are gated by a hand-written class**, and this is the tractable one. Some of those
+classes model an encounter and must not be second-guessed -- `EnragedAgent : SummonerAI` overrides
+four handlers and means it. Others are generic variants that model nothing:
+`AggressiveNoLootNpcAI` is 24 lines, `AggressiveNpcAI` plus one `Ask` override about loot, and an npc
+on it is exactly as free to run a pattern as one on `aggressive`. Composing `GeneratedPattern` into
+the generic variants is the same purely-additive move that `battle_cycle` and `passive_pattern`
+already make; doing it to the modelled ones would double up mechanics somebody has already written.
+
+**Telling those two apart is the next piece of work**, and it is a judgement per class rather than a
+sweep -- which is why this entry stops at the measurement rather than starting it.
+
+### Still missing, in order
+
+1. **Separate the generic-variant AI classes from the modelled ones** (1,708 patterns gated). Class
+   size and whether it overrides behaviour are the signals; `aggressive_no_loot` is the clear yes,
+   `enraged_agent` the clear no.
+2. **170 fully self-contained adds** across ~130 encounters -- ordinary porting, no blocker.
+3. **16 waypoint paths** absent from the walker file (172 spawn uses, 5 backlog adds).
+4. `control_door` (691) -- one in-game observation away.
+5. `random_move` (187); the abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **3,291 patterns whose npcs this port does not have** -- a version boundary, recorded so nobody
+   counts it as a backlog.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.
