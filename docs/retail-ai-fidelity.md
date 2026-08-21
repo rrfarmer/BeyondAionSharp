@@ -39098,3 +39098,68 @@ question than "which classes could take a table".
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## Adds lost with a dropped handler, and a correction to "ordinary porting work"
+
+`Retail-AI-Pattern: none — measurement only, no behaviour change`
+
+### The correction
+
+Two entries called the 170 self-contained adds "ordinary porting work, no blocker" and put them at
+the top of the list. **That reads the audit's flag as more than it says.** "Fully self-contained"
+describes the *placement* -- at the spawner, at coordinates the pattern carries -- and says nothing
+about whether the pattern is readable or its npc is free.
+
+Splitting the 128 encounters that still miss an add:
+
+* **103 have a pattern in no generated table.** Their npcs sit on `marabata_controller`,
+  `tiamats_incarnation`, `fortress_protector`, `agrint` -- hand-written classes the previous entry
+  reviewed and closed. **17 are on plain `aggressive`**, which *is* accepted, so those are refused
+  for a vocabulary reason and are the genuinely actionable slice.
+* **25 have a pattern that is in a table** and still do not spawn their add.
+
+Those 25 are the interesting ones, and chasing them found a loss channel nothing had named.
+
+### A dropped handler takes its adds with it
+
+The battle extractor treats the rotation as all-or-nothing and the other handlers as best-effort: an
+unsayable branch in `on_die` or `on_wake_up` costs that handler, not the pattern. **906 handlers are
+dropped that way**, and the count has been printed for entries without anyone asking what was in
+them.
+
+What is in them: **57 spawn actions across 35 distinct add npcs**, in patterns this port otherwise
+reads and runs.
+
+| why the handler was dropped | spawns lost |
+|---|---|
+| `on_die: control_door` | 10 |
+| `goto_waypoint` asking for `MOVETYPE_RUN` | 11 |
+| a waypoint path this repo does not carry | 16 |
+| `despawn_by_nameid` | 3 |
+| `is_event_skill_id` | 3 |
+
+The all-or-nothing rule is right and is not what should change: branch lists are first-match-wins, so
+dropping one branch promotes the ones below it, and a handler read in part would fire rungs retail
+never reaches. The way to recover these adds is to make the blocking elements sayable.
+
+**Which re-prices two items already on the list.** `control_door` is not only 691 unread uses -- it
+is also ten adds that never appear in encounters we already run. The sixteen missing waypoint paths
+are not only 172 spawn uses -- they are sixteen more. Both were being counted as vocabulary work;
+they are add work as well.
+
+### Still missing, in order
+
+1. **`control_door` (691 uses + 10 lost adds)** -- one in-game observation settles which `method`
+   opens. Now the best-value single item on the list.
+2. **16 waypoint paths** absent from `retail_pattern_paths.xml` -- 172 spawn uses, 16 lost adds,
+   5 backlog adds. `NPCPathIDSweep_1` to `_4` are 32 uses each.
+3. **17 encounters on plain `aggressive`** whose pattern is refused for vocabulary -- the actionable
+   slice of the adds backlog.
+4. `random_move` (187, and 11 lost adds sit behind the same `MOVETYPE_RUN` gap).
+5. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+6. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; the eight handlers with no
+   engine slot.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary, not a backlog.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.
