@@ -99,6 +99,78 @@ public sealed class TwinFontAiTests
 	}
 
 	/// <summary>
+	/// <b>The guards have a rotation, and the leader's is not the soldier's.</b> Retail arms a
+	/// six-second clock on engaging; its first firing casts each one's own opening skill at whoever it
+	/// hates most — <c>20834</c> for the leader, <c>20836</c> for the soldier.
+	/// </summary>
+	/// <remarks>
+	/// These four npcs ran nothing at all until the extractors stopped refusing patterns for npcs
+	/// merely <i>named</i> by a constant in an AI class. <see cref="TwinFontAI"/> picks which pair to
+	/// spawn and sets their hate; everything below is retail's, and none of it was reachable before.
+	/// <para>
+	/// <b>The pair is the point.</b> One id would pass on a table that gave both guards the same
+	/// rotation, which is exactly what a mis-keyed owner map produces.
+	/// </para>
+	/// </remarks>
+	/// <remarks>
+	/// <b>Both races, because they are separate npc ids sharing one pattern.</b> The table keys them to
+	/// the same variants today; a re-emit that split them would leave one side silent, and only a pin
+	/// naming both would notice.
+	/// </remarks>
+	[Theory]
+	[InlineData(ElyosLeader, ElyosSoldier)]
+	[InlineData(AsmodianLeader, AsmodianSoldier)]
+	public void TheLeaderAndTheSoldierOpenWithDifferentSkills(int leaderId, int soldierId)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(leaderId, 520f, 200f, 1682f);
+		Npc soldier = harness.Spawn(soldierId, 524f, 200f, 1682f);
+		Player raider = harness.SpawnPlayer(522f, 204f, 1682f);
+		harness.Engage(leader, raider);
+		harness.Engage(soldier, raider);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(7));
+
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(leader), cast => cast.SkillId == 20834);
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(soldier), cast => cast.SkillId == 20836);
+	}
+
+	/// <summary>
+	/// <b>And neither opens before its clock comes round.</b> Six seconds is retail's delay; without
+	/// this the pin above would pass on a rotation that fired the moment anything engaged.
+	/// </summary>
+	[Fact]
+	public void NeitherGuardOpensBeforeTheClock()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(ElyosLeader, 520f, 200f, 1682f);
+		Player raider = harness.SpawnPlayer(522f, 204f, 1682f);
+		harness.Engage(leader, raider);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(4));
+
+		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(leader), cast => cast.SkillId == 20834);
+	}
+
+	/// <summary>
+	/// <b>The second clock brings the buff both of them share.</b> The opening rung arms a
+	/// twenty-second timer, and that one casts <c>21494</c> on itself — the same skill for leader and
+	/// soldier, which is why the skills above had to differ for the pins to mean anything.
+	/// </summary>
+	[Fact]
+	public void TheTwentySecondClockBringsTheSharedBuff()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc soldier = harness.Spawn(ElyosSoldier, 524f, 200f, 1682f);
+		Player raider = harness.SpawnPlayer(522f, 204f, 1682f);
+		harness.Engage(soldier, raider);
+
+		harness.Clock.Advance(TimeSpan.FromSeconds(28));
+
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(soldier), cast => cast.SkillId == 21494);
+	}
+
+	/// <summary>
 	/// <b>Once, however long the display keeps announcing.</b> It repeats every three seconds until
 	/// dismissed, so without the flag a failed raid drowns in guards.
 	/// </summary>

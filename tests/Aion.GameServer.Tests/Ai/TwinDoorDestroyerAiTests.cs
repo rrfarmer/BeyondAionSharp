@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 
@@ -27,8 +28,53 @@ public sealed class TwinDoorDestroyerAiTests
 
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(DrakenspireDepths).WithWorldSize(2048).WithWalkerRoutes()
-			.WithAi(typeof(TwinDoorDestroyerAI), typeof(GeneralNpcAI), typeof(AggressiveNpcAI))
+			.WithAi(typeof(TwinDoorDestroyerAI), typeof(GeneralNpcAI), typeof(AggressiveNpcAI),
+				typeof(AggressiveNoLootNpcAI))
 			.Build();
+
+	/// <summary><c>IDSeal_AreaDoor</c>'s call. The successor answers it by firing on the door.</summary>
+	private const int DoorCall = 22774;
+
+	/// <summary><c>SKILLI_INDEX_0</c> for both successors.</summary>
+	private const int BomberShot = 20840;
+
+	/// <summary>
+	/// <b>The successor shoots whatever calls it, and it could not before.</b> This class chooses
+	/// which successor to place; retail's bomber pattern is what the successor then does, and it was
+	/// refused while a constant here counted as modelling the npc.
+	/// </summary>
+	/// <remarks>
+	/// The cast goes at the <i>message sender</i> — the door — rather than at anything the bomber is
+	/// fighting, which is the whole shape of the mechanic.
+	/// </remarks>
+	[Theory]
+	[InlineData(TwinDoorDestroyerAI.ElyosDemolisher, TwinDoorDestroyerAI.ElyosSuccessor)]
+	[InlineData(TwinDoorDestroyerAI.AsmodianDemolisher, TwinDoorDestroyerAI.AsmodianSuccessor)]
+	public void TheSuccessorFiresOnWhateverCallsIt(int callerId, int bomberId)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc caller = harness.Spawn(callerId, 520f, 200f, 300f);
+		Npc bomber = harness.Spawn(bomberId, 524f, 200f, 300f);
+		BossAiHarness.MakeMutuallyKnown(caller, bomber);
+
+		NpcMessageBus.Broadcast(caller, DoorCall, null, 100f);
+
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(bomber), cast => cast.SkillId == BomberShot);
+	}
+
+	/// <summary><b>And not on a number the door does not use.</b></summary>
+	[Fact]
+	public void TheSuccessorHoldsItsFireOtherwise()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc caller = harness.Spawn(TwinDoorDestroyerAI.ElyosDemolisher, 520f, 200f, 300f);
+		Npc bomber = harness.Spawn(TwinDoorDestroyerAI.ElyosSuccessor, 524f, 200f, 300f);
+		BossAiHarness.MakeMutuallyKnown(caller, bomber);
+
+		NpcMessageBus.Broadcast(caller, 22773, null, 100f);
+
+		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(bomber), cast => cast.SkillId == BomberShot);
+	}
 
 	private static Npc Arrived(BossAiHarness harness, int npcId)
 	{

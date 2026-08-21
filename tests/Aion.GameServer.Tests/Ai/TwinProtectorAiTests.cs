@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
@@ -43,6 +44,65 @@ public sealed class TwinProtectorAiTests
 			.WithAi(typeof(TwinProtectorAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI),
 				typeof(AggressiveNoLootNpcAI))
 			.Build();
+
+	/// <summary><c>IDSeal_Twin_M</c>'s call to burn, and <c>_Failed</c>'s call to stop.</summary>
+	private const int BurnCall = 22715;
+
+	private const int StopCall = 22717;
+
+	/// <summary>The field's own skill, which is not the protector's <see cref="RagingHellfire"/>.</summary>
+	private const int FieldBurn = 21645;
+
+	/// <summary>
+	/// <b>The field answers the twin, and it had no answer at all until now.</b> This class places the
+	/// field and clears it on death — retail's <c>SPAWN_ID_2</c> — but the field's <i>own</i> pattern
+	/// was refused for as long as the extractors treated <c>private const int HeatventField</c> as
+	/// proof that this class already modelled it. It does not: it spawns it.
+	/// </summary>
+	[Fact]
+	public void TheFieldBurnsWhenTheTwinCallsForIt()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc twin = harness.Spawn(HeatventProtector, 520f, 200f, 1682f);
+		Npc field = harness.Spawn(HeatventField, 524f, 200f, 1682f);
+		BossAiHarness.MakeMutuallyKnown(twin, field);
+
+		NpcMessageBus.Broadcast(twin, BurnCall, null, 100f);
+
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(field), cast => cast.SkillId == FieldBurn);
+	}
+
+	/// <summary><b>And it leaves when told to.</b> Retail's priority-19 rung, above the burn.</summary>
+	[Fact]
+	public void TheFieldGoesWhenTheTwinStops()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc twin = harness.Spawn(HeatventProtector, 520f, 200f, 1682f);
+		Npc field = harness.Spawn(HeatventField, 524f, 200f, 1682f);
+		BossAiHarness.MakeMutuallyKnown(twin, field);
+
+		NpcMessageBus.Broadcast(twin, StopCall, null, 100f);
+
+		Assert.DoesNotContain(field, harness.LiveNpcs());
+	}
+
+	/// <summary>
+	/// <b>A number neither call uses leaves the field alone.</b> Without this the two above would pass
+	/// on a field that burned and vanished on anything anybody said.
+	/// </summary>
+	[Fact]
+	public void TheFieldIgnoresAnythingElse()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc twin = harness.Spawn(HeatventProtector, 520f, 200f, 1682f);
+		Npc field = harness.Spawn(HeatventField, 524f, 200f, 1682f);
+		BossAiHarness.MakeMutuallyKnown(twin, field);
+
+		NpcMessageBus.Broadcast(twin, 22716, null, 100f);
+
+		Assert.Contains(field, harness.LiveNpcs());
+		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(field), cast => cast.SkillId == FieldBurn);
+	}
 
 	private static int Count(BossAiHarness harness, int npcId) =>
 		harness.LiveNpcs().Count(n => n.GetNpcId() == npcId);

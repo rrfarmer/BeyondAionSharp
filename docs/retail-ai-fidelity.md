@@ -39819,3 +39819,74 @@ despawned on any hit at all would pass.
 5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## Paying the debt the last entry booked
+
+Last entry unblocked eight npcs by removing a rule, and said so plainly: *"the seven other unblocked
+npcs are emitted but unpinned … they went in on a rule change, not on a reading of each encounter."*
+This entry reads them.
+
+### What they were given, and what now holds it
+
+| npc | the mechanic | pinned by |
+|---|---|---|
+| 209688/209753 leader, 209689/209754 soldier | six-second clock on engaging; its first firing casts the guard's **own** opening skill at most-hated — 20834 leader, 20836 soldier — and arms twenty seconds; that clock casts the shared 21494 | opening skills **differ**, nothing before the clock, shared buff on the second |
+| 209697/209762 successor | answers the door's **22774** by casting 20840 *at the message sender* | fires on the caller; silent on 22773 |
+| 855712 hellfire field | burns on **22715**, leaves on **22717** | burns, goes, and ignores 22716 |
+
+**The discriminating pin in the first row is that the two skills differ.** One id would pass on a
+table that handed both guards the same rotation, which is exactly what a mis-keyed owner map produces.
+
+**Both races are pinned, not one.** The Asmodian ids key to the same variants as the Elyos ones today;
+a re-emit that split them would leave one faction's guards silent and a single-race pin would not
+notice. They are theories over both pairs.
+
+### Ruling out the cheap pass
+
+Every skill pinned here is **also in the npc's own `retail_autonomous.xml` list** — 21645 for the
+field, 20840 for the bomber, 20834/20836/21494 for the guards. That is not a coincidence and it is not
+a problem: they sit at `prob="0"`, so they are never autonomously chosen and exist only to put the
+ordered list in front of `SKILLI_INDEX`. But a pin asserting "this npc queued skill X" would pass on
+either source, so it was checked rather than assumed.
+
+**Then checked again by mutation, which is the version that settles it.** Deleting the `owners[…]`
+entries from the generated table reddens all five positive pins and nothing else:
+
+```
+TwinProtectorAiTests.TheFieldBurnsWhenTheTwinCallsForIt          FAIL
+TwinProtectorAiTests.TheFieldGoesWhenTheTwinStops                FAIL
+TwinDoorDestroyerAiTests.TheSuccessorFiresOnWhateverCallsIt      FAIL
+TwinFontAiTests.TheLeaderAndTheSoldierOpenWithDifferentSkills    FAIL
+TwinFontAiTests.TheTwentySecondClockBringsTheSharedBuff          FAIL
+```
+
+They read the new rungs and nothing else.
+
+### One gap found while reading
+
+`IDSeal_Scene_08_Bomber` has **`on_see_user_move`** as well as `on_see_user`, carrying the same
+`set_flag_var FLAGVARI_ALPHA_1` and the same broadcast. Only `on_see_user` is emitted. Because the flag
+is shared and test-and-set, whichever fires first spends it, so the *effect* is right for a player who
+walks into view — but a player already standing in range when the bomber spawns is retail's
+`on_see_user_move` case, and this port has no handler for it. **Narrow, real, and now written down
+rather than discovered later as "the bomber sometimes says nothing."**
+
+**Verification.** Full suite **2,923 passing**, 1 skipped. Eight new pins across three encounters.
+
+### Still missing, in order
+
+1. **`on_see_user_move`** — one handler, and the bomber is not the only pattern using it. Worth
+   counting before building.
+2. **Kaidan's low-health rung** — needs the index list resolved for thirteen shamans, which may not
+   agree the way the wave attackers' index 0 did (22 of 22).
+3. **The 18 `--implemented` candidates**, plus the fifth copy of the skill-index claim in
+   `SealWaveLeaderAI` ("the buff itself (index 0, on all five)") while the generated table already
+   emits `Do.SkillOn(ME, 21844)`.
+4. **The guards' two broadcasts are unpinned** — the leader's 22696 on waking and 22658 on its second
+   clock. Nothing in our tree was found listening for either, so a pin would assert into silence; that
+   is a reason to check the listener side, not to assume the broadcast is idle.
+5. `control_door` (691) — one in-game observation; `enable_area` (575) — runtime zone toggling;
+   `change_world_scene_status` (101) — no runtime packet in either tree.
+6. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+7. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
