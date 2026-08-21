@@ -328,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 90,261 casts across 22,440 npcs, none of them read by a human. The index they came from is only
+	/// 93,355 casts across 22,567 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(90261, casts);
+		Assert.Equal(93355, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -789,7 +789,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1810, spawns);
+		Assert.Equal(1876, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1071,9 +1071,14 @@ public sealed class BattleCycleAiTests
 		Assert.Equal(
 			new Dictionary<string, int>
 			{
-				["who:TargetIsPlayer"] = 95,
+				["who:TargetIsPlayer"] = 152,
 				["who:EventTargetIsPlayer"] = 10,
-				["who:TargetIsNpc"] = 4,
+				["who:TargetIsNpc"] = 42,
+
+				// Was a mapping with no data until `add_hate_point` and `is_distance_shorter_than`
+				// were read, which brought in patterns carrying it alongside those. Five of the nine
+				// conditions have data now; four still do not.
+				["who:EventTargetIsNpc"] = 27,
 
 				// These three arrived as other elements were read, not as a change to `is_user`
 				// itself: `TalkerIsPlayer` when `flee_from` landed, and the attacked/spelled pair when
@@ -1408,6 +1413,49 @@ public sealed class BattleCycleAiTests
 
 		// Retail writes several races on one check, and any of them should do.
 		Assert.True(When.TargetRace(other, actual)(ai), "a list containing the race did not match");
+	}
+
+	/// <summary><b>Hate lands on the creature the role names, and nowhere when there is none.</b></summary>
+	/// <remarks>
+	/// <c>add_hate_point</c> is 1,793 uses across seven subjects, and this port read one of them --
+	/// <c>OBJI_MESSAGE_PARAM</c>, 752 uses -- while six of the seven helpers were already written for
+	/// hand-written classes. Only the event target needed adding.
+	/// <para>
+	/// The two halves that can go wrong are which creature receives the hate and whether an unset role
+	/// quietly hates somebody else. The first is checked with two creatures on the list at once, so a
+	/// helper reading the wrong role would put the points on the wrong one rather than on nobody; the
+	/// second by calling a role nothing has set and requiring the totals not to move.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void HateLandsOnTheCreatureTheRoleNames()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		Player tank = harness.SpawnPlayer(302f, 300f, 200f);
+		Player other = harness.SpawnPlayer(303f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, tank);
+		BossAiHarness.MakeMutuallyKnown(worm, other);
+		worm.GetAggroList().AddHate(tank, 10);
+		worm.GetAggroList().AddHate(other, 10);
+		worm.SetTarget(tank);
+
+		Do.HateTarget(500)(ai);
+
+		Assert.Equal(510, worm.GetAggroList().GetHate(tank));
+		Assert.Equal(10, worm.GetAggroList().GetHate(other));
+
+		// Adding hate raises an aggro event, which sets the event target -- so this npc has one, and a
+		// first version of this pin that assumed otherwise failed against correct code. The unset case
+		// uses the creature-seen role instead, which nothing here has touched.
+		Assert.NotNull(ai.EventTarget);
+		Assert.Null(ai.SeenCreature);
+
+		Do.HateSeen(500)(ai);
+		Assert.Equal(510, worm.GetAggroList().GetHate(tank));
+		Assert.Equal(10, worm.GetAggroList().GetHate(other));
 	}
 
 }

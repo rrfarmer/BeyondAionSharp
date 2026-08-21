@@ -525,6 +525,43 @@ public static class When
         ai.CurrentTarget is Aion.GameServer.Model.GameObjects.Creature target
         && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), target, metres);
 
+    /// <summary><c>is_distance_shorter_than</c> about somebody other than the current target.</summary>
+    /// <remarks>
+    /// The mirror of the <c>is_distance_longer_than</c> family, and the half that was left behind:
+    /// <see cref="TargetWithin"/> covered 194 of the element's 257 uses and the other 63 named the
+    /// attacker, the killer, the message parameter, the caster or the message sender.
+    /// <para>
+    /// Same null rule as the "beyond" family, and it matters in the opposite direction. An absent role
+    /// answers <b>false</b> — nobody is not close by — so a melee-only rung does not fire at an empty
+    /// room. <c>OBJI_SELF</c> (3 uses) is refused: the distance from an NPC to itself is zero, so the
+    /// branch is always true and is decided at build time rather than at run time.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>is_distance_shorter_than who=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerWithin(int metres) => ai =>
+        ai.LastAttacker is Aion.GameServer.Model.GameObjects.Creature who
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_shorter_than who=OBJI_KILLER</c>.</summary>
+    public static PatternCondition KillerWithin(int metres) => ai =>
+        ai.Killer is Aion.GameServer.Model.GameObjects.Creature who
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_shorter_than who=OBJI_MESSAGE_PARAM</c>.</summary>
+    public static PatternCondition MessageParamWithin(int metres) => ai =>
+        ai.MessageParam as Creature is Aion.GameServer.Model.GameObjects.Creature who
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_shorter_than who=OBJI_CASTER</c>.</summary>
+    public static PatternCondition CasterWithin(int metres) => ai =>
+        ai.LastCaster is Aion.GameServer.Model.GameObjects.Creature who
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_shorter_than who=OBJI_MESSAGE_SENDER</c>.</summary>
+    public static PatternCondition MessageSenderWithin(int metres) => ai =>
+        ai.MessageSender is Aion.GameServer.Model.GameObjects.Creature who
+        && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
     /// <summary><c>is_distance_longer_than</c> — the named creature is further away than this.</summary>
     /// <remarks>
     /// 592 uses, and the mirror of <see cref="TargetWithin"/>: retail uses one to make a branch
@@ -1197,6 +1234,9 @@ public static class Do
 
     /// <summary><c>switch_target target=OBJI_SEEN</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateSeen(int hate) => ai => ai.HateSeen(hate);
+
+    /// <summary><c>add_hate_point target=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternAction HateEventTarget(int hate) => ai => ai.HateEventTarget(hate);
 
     /// <summary><c>switch_target target=OBJI_ATTACKER</c> with its <c>points_to_add</c>.</summary>
     public static PatternAction HateAttacker(int hate) => ai => ai.HateAttacker(hate);

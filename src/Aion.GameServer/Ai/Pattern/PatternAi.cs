@@ -931,6 +931,20 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Puts hate on the NPC just seen and turns to face it.</summary>
+    /// <summary><c>add_hate_point target=OBJI_EVENT_TARGET</c> — hate whoever started this fight.</summary>
+    /// <remarks>
+    /// The last of retail's seven <c>add_hate_point</c> subjects to get a helper. The other six were
+    /// written for hand-written classes and the extractor read none of them, taking only the message
+    /// parameter -- 752 of the element's 1,793 uses.
+    /// </remarks>
+    public void HateEventTarget(int hate)
+    {
+        if (EventTarget is Creature who && !who.IsDead())
+        {
+            GetAggroList().AddHate(who, hate);
+        }
+    }
+
     public void HateSeen(int hate)
     {
         if (SeenCreature is not Creature seen || seen.IsDead())

@@ -321,6 +321,27 @@ PORT_RACES = {
     "DOOR_KILLER",
 }
 
+#: Retail's `add_hate_point` subjects, and the action each becomes.
+HATE_ROLES = {
+    "OBJI_MESSAGE_PARAM": "HateMessageParam",
+    "OBJI_MESSAGE_SENDER": "HateMessageSender",
+    "OBJI_SEEN": "HateSeen",
+    "OBJI_CUR_TARGET": "HateTarget",
+    "OBJI_ATTACKER": "HateAttacker",
+    "OBJI_CASTER": "HateCaster",
+    "OBJI_EVENT_TARGET": "HateEventTarget",
+}
+
+#: Retail's `is_distance_shorter_than` subjects. `OBJI_SELF` is absent -- see the condition.
+NEAR_ROLES = {
+    "OBJI_CUR_TARGET": "TargetWithin",
+    "OBJI_ATTACKER": "AttackerWithin",
+    "OBJI_KILLER": "KillerWithin",
+    "OBJI_MESSAGE_PARAM": "MessageParamWithin",
+    "OBJI_CASTER": "CasterWithin",
+    "OBJI_MESSAGE_SENDER": "MessageSenderWithin",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -453,6 +474,16 @@ def read_guards(block: str) -> list[str]:
             if name not in PORT_RACES:
                 raise Unsayable(f"is_race of a race this port does not name: {race.group(1)}")
             out.append(f"race:{RACE_ROLES[who.group(1)]}:{name}")
+        elif kind == "is_distance_shorter_than":
+            who = re.search(r"<who>(\w+)</who>", body)
+            metres = re.search(r"<distance>([-\d.]+)</distance>", body)
+            if not who or not metres:
+                raise Unsayable("is_distance_shorter_than with no subject or distance")
+            if who.group(1) not in NEAR_ROLES:
+                # `OBJI_SELF` lands here: zero distance makes the branch always true, so it is decided
+                # at build time and emitting it would be a claim about the data, not a port of it.
+                raise Unsayable(f"is_distance_shorter_than about {who.group(1)}")
+            out.append(f"within:{NEAR_ROLES[who.group(1)]}:{int(float(metres.group(1)))}")
         elif kind == "is_distance_longer_than":
             who = re.search(r"<who>(\w+)</who>", body)
             metres = re.search(r"<distance>([-\d.]+)</distance>", body)
@@ -589,16 +620,25 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             out.append(("skill_in_reach" if ranged and ranged.group(1).upper() == "TRUE" else "skill",
                         int(index.group(1)), 0, 0, SKILL_AGGRO[who.group(1)],
                         0.0, 0.0, 0.0, 0))
-        elif kind in ("add_hate_point", "switch_target"):
-            # Only the message parameter: these name a creature by role, and the message param is the
-            # one this port can point at. `add_hate_point` at a friend or the caster is a different
-            # helper and is refused rather than aimed at the wrong creature.
+        elif kind == "add_hate_point":
+            # Every subject retail names, each reading a role `PatternAi` already tracks. This used to
+            # take only `OBJI_MESSAGE_PARAM` -- 752 of 1,793 uses -- while six of the seven helpers
+            # were already written for hand-written classes.
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not who or who.group(1) not in HATE_ROLES:
+                raise Unsayable(f"add_hate_point at {who.group(1) if who else '?'}")
+            hate = re.search(r"<point[s]?_to_add>(-?\d+)</", body)
+            out.append(("hate_at:" + HATE_ROLES[who.group(1)],
+                        int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "switch_target":
+            # Still only the message parameter, and for a reason that has not gone away: `SwitchTarget`
+            # takes an `AggroTarget`, which is a rank in the hate list, and switching to *the creature
+            # in a role* needs a helper this port does not have. `Do.TargetMessageParam` is the one
+            # exception because it was written by hand for a specific encounter.
             who = re.search(r"<target>(\w+)</target>", body)
             if not who or who.group(1) != "OBJI_MESSAGE_PARAM":
                 raise Unsayable(f"{kind} at a creature this port cannot name")
-            hate = re.search(r"<point[s]?_to_add>(-?\d+)</", body)
-            out.append(("hate" if kind == "add_hate_point" else "switch",
-                        int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+            out.append(("switch", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "spawn_on_multi_target":

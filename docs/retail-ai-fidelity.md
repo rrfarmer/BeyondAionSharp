@@ -38227,3 +38227,59 @@ Unchanged: 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`, the eight re
 engine slot, `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`,
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## Hate on the right creature, and the near half of the distance pair
+
+`Retail-AI-Pattern: add_hate_point roles and is_distance_shorter_than`
+
+Two jobs the previous entry named. Both were role-mapping onto helpers that already existed.
+
+**`add_hate_point`** is 1,793 uses across seven subjects, of which this port read exactly one —
+`OBJI_MESSAGE_PARAM`, 752 uses — while `HateSeen`, `HateAttacker`, `HateTarget`, `HateCaster` and
+`HateMessageSender` had all been written for hand-written classes. Only `HateEventTarget` was new.
+316 hate rows now land, spread across six subjects.
+
+**`is_distance_shorter_than`** (257) is the mirror of the "beyond" family added two entries ago, and
+was the half left behind: `TargetWithin` covered 194 uses and the other 63 named the attacker, the
+killer, the message parameter, the caster or the message sender. 1,568 rows now carry one.
+
+The null rule matters in the opposite direction from its mirror. An absent role answers **false** —
+nobody is not close by — so a melee-only rung does not fire at an empty room. `OBJI_SELF` (3 uses) is
+refused for the same reason the "beyond" form refuses it: zero distance makes the branch constant, so
+it is decided at build time rather than run time.
+
+**`switch_target` is deliberately still limited to the message parameter**, and this is not an
+oversight to fix next time. `Do.SwitchTarget` takes an `AggroTarget`, which is a *rank in the hate
+list*, and switching to the creature in a role is a different operation with no helper here.
+`Do.TargetMessageParam` exists only because it was hand-written for one encounter. 924 of the 1,321
+uses stay refused until that helper exists.
+
+Patterns 2,772 -> **2,813**; npcs 22,440 -> **22,567**; casts 90,261 -> **93,355**; spawns 1,810 ->
+**1,876**. Backlog unchanged at 189 across 133.
+
+### The pin was wrong about the engine, not the other way round
+
+Its first version called `Do.HateEventTarget` expecting nothing to happen, on the grounds that
+nothing had set the event target. It failed: **adding hate raises an aggro event, and that sets the
+event target**. The code was right and the assumption was not. The pin now asserts the precondition
+it depends on (`EventTarget` is set, `SeenCreature` is not) and takes its unset case from the
+creature-seen role instead, so it cannot pass for the wrong reason.
+
+The identity-guard census moved again and one line of it is worth noting: `EventTargetIsNpc` went
+from **no data at all** to 27 rows. Reading `add_hate_point` and `is_distance_shorter_than` brought
+in patterns that carried an identity guard alongside them. Five of those nine conditions now have
+data; four still do not, and the pin says so.
+
+### Still missing
+
+`random_move` (187) needs timed wandering. `say_to_all_str` (19) carries a literal string where this
+port sends string ids. `is_obj_in_abnormal_state` (12) and `add_intvar` (9) are unread.
+`switch_target` for the other six roles needs the helper described above.
+
+The `npc_skills` data gap is unchanged and remains the largest known hole: 59,131 of 74,792 cast
+pairs have no port-side entry, and retail's `npcs.xml` cannot close it.
+
+Unchanged: 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`, the eight retail handlers with no
+engine slot, `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`,
+`teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
+`GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.

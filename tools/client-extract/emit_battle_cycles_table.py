@@ -193,6 +193,9 @@ def guard_code(token: str) -> str:
     if kind == "race":
         name, race = argument.split(":")
         return f"When.{name}(Race.{race})"
+    if kind == "within":
+        name, metres = argument.split(":")
+        return f"When.{name}({metres})"
     if kind == "beyond":
         name, metres = argument.split(":")
         return f"When.{name}({metres})"
@@ -280,6 +283,8 @@ def action_code(row: dict) -> str:
         return f"Do.SpawnNear({row['a1']}, {row['group']}, {row['a2']}, {row['x']}f, {row['a3']})"
     if kind == "switch_to":
         return f"Do.SwitchTarget(AggroTarget.{row['place']})"
+    if kind.startswith("hate_at:"):
+        return f"Do.{kind[len('hate_at:'):]}({row['a1']})"
     if kind == "hate":
         return f"Do.HateMessageParam({row['a1']})"
     if kind == "switch":
