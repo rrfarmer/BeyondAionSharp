@@ -160,7 +160,7 @@ public sealed class EmpyreanLordAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(8));
 
-		Npc god = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == KaisinelSpawnHeal));
+		Npc god = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == KaisinelSpawnHeal);
 		Assert.Equal(640f, god.GetX(), 1);
 		Assert.Equal(480f, god.GetY(), 1);
 	}

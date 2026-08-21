@@ -31,12 +31,12 @@ public sealed class SplinterCoreSummonAiTests
 	private const int UnstableSplinter = 300600000;
 
 	/// <summary>map, boss npc, the summon it calls, and the AI under test.</summary>
-	public static TheoryData<int, int, int, string> Cores => new()
+	public static TheoryData<int, int, int> Cores => new()
 	{
-		{ AbyssalSplinter, 216948, 281907, "rukril" },
-		{ AbyssalSplinter, 216949, 281908, "ebonsoul" },
-		{ UnstableSplinter, 219551, 283204, "unstablerukril" },
-		{ UnstableSplinter, 219552, 283205, "unstableebonsoul" },
+		{ AbyssalSplinter, 216948, 281907 },    // rukril
+		{ AbyssalSplinter, 216949, 281908 },    // ebonsoul
+		{ UnstableSplinter, 219551, 283204 },   // unstablerukril
+		{ UnstableSplinter, 219552, 283205 },   // unstableebonsoul
 	};
 
 	private static (BossAiHarness, Npc) Engaged(int map, int npcId)
@@ -69,7 +69,7 @@ public sealed class SplinterCoreSummonAiTests
 	/// </remarks>
 	[Theory]
 	[MemberData(nameof(Cores))]
-	public void TheSummonsArrive(int map, int npcId, int summon, string _ai)
+	public void TheSummonsArrive(int map, int npcId, int summon)
 	{
 		var (harness, _) = Engaged(map, npcId);
 		using BossAiHarness _h = harness;
@@ -87,7 +87,7 @@ public sealed class SplinterCoreSummonAiTests
 	/// </summary>
 	[Theory]
 	[MemberData(nameof(Cores))]
-	public void TheSummonsLeaveAtSeventySeconds(int map, int npcId, int summon, string _ai)
+	public void TheSummonsLeaveAtSeventySeconds(int map, int npcId, int summon)
 	{
 		var (harness, _) = Engaged(map, npcId);
 		using BossAiHarness _h = harness;
@@ -107,7 +107,7 @@ public sealed class SplinterCoreSummonAiTests
 	/// </summary>
 	[Theory]
 	[MemberData(nameof(Cores))]
-	public void TheSummonsDoNotAccumulate(int map, int npcId, int summon, string _ai)
+	public void TheSummonsDoNotAccumulate(int map, int npcId, int summon)
 	{
 		var (harness, _) = Engaged(map, npcId);
 		using BossAiHarness _h = harness;

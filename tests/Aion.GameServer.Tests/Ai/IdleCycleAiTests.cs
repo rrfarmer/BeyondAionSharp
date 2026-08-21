@@ -76,7 +76,7 @@ public sealed class IdleCycleAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(5));
 
 		Assert.Equal(8, harness.LiveNpcs().Count(n => n.GetNpcId() == Add));
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Leader));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == Leader);
 	}
 
 	/// <summary>

@@ -177,7 +177,7 @@ public sealed class BollvigBlackheartAiTests
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 
 		Assert.Equal(0, Count(harness, Bloodwing));
-		Npc relic = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Relic));
+		Npc relic = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == Relic);
 		Assert.Equal(1001f, relic.GetX(), 1);
 		Assert.Equal(2828f, relic.GetY(), 1);
 	}

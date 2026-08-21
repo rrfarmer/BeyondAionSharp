@@ -269,7 +269,7 @@ public sealed class KlawEggAiTests
 
 		Npc egg = harness.Spawn(Egg, 300f, 300f, 200f);
 
-		Npc klaw = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == FaithfulSubordinate));
+		Npc klaw = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == FaithfulSubordinate);
 		Assert.Equal(300f, klaw.GetX(), 1);
 		Assert.Equal(300f, klaw.GetY(), 1);
 		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == Egg);

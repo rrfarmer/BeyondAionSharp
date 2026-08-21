@@ -33,7 +33,7 @@ public sealed class IdleSpawnerAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(5));
 
-		Npc placed = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == 282436));
+		Npc placed = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == 282436);
 		Assert.Equal(1629f, placed.GetX(), 1);
 		Assert.Equal(154f, placed.GetY(), 1);
 	}
@@ -50,7 +50,7 @@ public sealed class IdleSpawnerAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(6));
 
-		Npc placed = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == 855206));
+		Npc placed = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == 855206);
 		Assert.Equal(spawner.GetX(), placed.GetX(), 0);
 		Assert.Equal(spawner.GetY(), placed.GetY(), 0);
 	}

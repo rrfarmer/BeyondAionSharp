@@ -200,7 +200,7 @@ public sealed class GoldenTatarAiTests
 		// The clone timer first fires at ten seconds; the provoke is deferred a tick past that.
 		Advance(harness, boss, raid, 12);
 
-		Npc clone = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Clone));
+		Npc clone = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == Clone);
 		Assert.Equal(AIState.FIGHT, clone.GetAi().GetState());
 		Assert.Same(raid[0], clone.GetTarget());
 		Assert.True(clone.GetAggroList().GetHate(raid[0]) >= 2,

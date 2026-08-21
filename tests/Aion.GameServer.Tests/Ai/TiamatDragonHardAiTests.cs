@@ -51,7 +51,7 @@ public sealed class TiamatDragonHardAiTests
 		Assert.True(MageCount(harness) == 0, "the mages wait for the fight");
 
 		// The flash stands on its own absolute mark, not on hers.
-		Npc flash = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == ShapeChangeFlash));
+		Npc flash = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == ShapeChangeFlash);
 		Assert.Equal(457.9f, flash.GetX(), 1);
 		Assert.Equal(514.5f, flash.GetY(), 1);
 	}

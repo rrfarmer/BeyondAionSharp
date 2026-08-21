@@ -58,7 +58,7 @@ public sealed class GatedSpawnControllerTests
 		controller.Refresh();
 
 		Assert.Equal(1, controller.Placed);
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Guard));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == Guard);
 	}
 
 	/// <summary>

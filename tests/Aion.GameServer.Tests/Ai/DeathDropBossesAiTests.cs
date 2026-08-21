@@ -73,7 +73,7 @@ public sealed class DeathDropBossesAiTests
 
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 
-		Npc core = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == TitanCore));
+		Npc core = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == TitanCore);
 		Assert.Equal(300f, core.GetX(), 1);
 	}
 
@@ -162,7 +162,7 @@ public sealed class DeathDropBossesAiTests
 
 		Drive(harness, boss, player, 2);
 
-		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == ExplosiveTrap));
+		Npc trap = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == ExplosiveTrap);
 		Assert.True(Math.Abs(trap.GetX() - player.GetX()) < Math.Abs(trap.GetX() - boss.GetX()),
 			$"the trap goes on his quarry: {trap.GetX():F0} against player {player.GetX():F0} "
 			+ $"and boss {boss.GetX():F0}");

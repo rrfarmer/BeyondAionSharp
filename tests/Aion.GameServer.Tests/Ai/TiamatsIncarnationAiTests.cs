@@ -42,6 +42,9 @@ public sealed class TiamatsIncarnationAiTests
 	private static readonly TimeSpan FirstPowerAtk = TimeSpan.FromSeconds(3);
 	private static readonly TimeSpan FirstAreaAtk = TimeSpan.FromSeconds(15);
 
+	/// <summary>Just the three ids, for a theory that does not care which hazard each one throws.</summary>
+	public static TheoryData<int> IncarnationIds => new() { Fissurefang, Graviwing, Petriscale };
+
 	public static TheoryData<int, int> Incarnations => new TheoryData<int, int>
 	{
 		{ Fissurefang, CavityOfEarth },
@@ -175,8 +178,8 @@ public sealed class TiamatsIncarnationAiTests
 	}
 
 	[Theory]
-	[MemberData(nameof(Incarnations))]
-	public void RepeatsThatPowerAttackEveryNineSeconds(int npcId, int hazard)
+	[MemberData(nameof(IncarnationIds))]
+	public void RepeatsThatPowerAttackEveryNineSeconds(int npcId)
 	{
 		using BossAiHarness harness = NewHarness();
 		Npc boss = SpawnBoss(harness, npcId);
@@ -364,7 +367,7 @@ public sealed class TiamatsIncarnationAiTests
 		// The power attack lands at three seconds; the provoke is deferred one tick past that.
 		harness.Clock.Advance(TimeSpan.FromSeconds(4));
 
-		Npc quake = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == CavityOfEarth));
+		Npc quake = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == CavityOfEarth);
 		Assert.Equal(AIState.FIGHT, quake.GetAi().GetState());
 		Assert.Same(tank, quake.GetTarget());
 	}
@@ -380,7 +383,7 @@ public sealed class TiamatsIncarnationAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(4));
 
-		Npc whirl = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == GravityWhirlpool));
+		Npc whirl = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == GravityWhirlpool);
 		Assert.NotEqual(AIState.FIGHT, whirl.GetAi().GetState());
 	}
 

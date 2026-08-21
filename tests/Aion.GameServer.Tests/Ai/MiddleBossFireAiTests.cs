@@ -24,6 +24,9 @@ public sealed class MiddleBossFireAiTests
 	private const int BoostDeadlyVirulency = 17005;
 	private const int MidnightRobe = 20700;
 
+	/// <summary>Just the four ids, for theories that do not care which traits each one has.</summary>
+	public static TheoryData<int> BossIds => new() { 235772, 235773, 235774, 235775 };
+
 	public static TheoryData<int, int, int> Bosses => new()
 	{
 		{ 235772, 17900, 0 },      // hakara — no trait 2 in our data
@@ -87,8 +90,8 @@ public sealed class MiddleBossFireAiTests
 	}
 
 	[Theory]
-	[MemberData(nameof(Bosses))]
-	public void EachRobesItselfOnWaking(int npcId, int trait1, int trait2)
+	[MemberData(nameof(BossIds))]
+	public void EachRobesItselfOnWaking(int npcId)
 	{
 		using BossAiHarness harness = BossAiHarness.For(OphidanBridge).WithWorldSize(2048)
 			.WithAi(typeof(MiddleBossFireAI), typeof(AggressiveNpcAI)).Build();

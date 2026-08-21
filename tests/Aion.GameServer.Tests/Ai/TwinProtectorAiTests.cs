@@ -123,7 +123,7 @@ public sealed class TwinProtectorAiTests
 		using BossAiHarness harness = NewHarness();
 		harness.Spawn(LavaProtector, 520f, 200f, 1682f);
 
-		Npc field = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == LavaField));
+		Npc field = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == LavaField);
 		Assert.Equal(530.5f, field.GetX(), 1);
 		Assert.Equal(212f, field.GetY(), 1);
 		Assert.Equal(0, Count(harness, HeatventField));
@@ -136,7 +136,7 @@ public sealed class TwinProtectorAiTests
 		using BossAiHarness harness = NewHarness();
 		harness.Spawn(HeatventProtector, 520f, 200f, 1682f);
 
-		Npc field = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventField));
+		Npc field = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == HeatventField);
 		Assert.Equal(531.4f, field.GetX(), 1);
 		Assert.Equal(151f, field.GetY(), 1);
 		Assert.Equal(0, Count(harness, LavaField));
@@ -194,7 +194,7 @@ public sealed class TwinProtectorAiTests
 		protector.GetAi().OnEndUseSkill(
 			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(RagingHellfire), 1);
 
-		Npc wave = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventWave));
+		Npc wave = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == HeatventWave);
 		Assert.Equal(OnArrival, wave.GetAggroList().GetHate(player));
 		Assert.Same(player, wave.GetTarget());
 	}
@@ -297,12 +297,12 @@ public sealed class TwinProtectorAiTests
 
 		// Down through 65 and 40 to the 25% rung, which is the one that places the summons.
 		StepTo(harness, protector, player, 64, 39, 24);
-		Assert.NotEmpty(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventSummon));
+		Assert.Contains(harness.LiveNpcs(), n => n.GetNpcId() == HeatventSummon);
 
 		// And on to the 15% rung, which is a hellfire phase and clears them.
 		StepTo(harness, protector, player, 14);
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == HeatventSummon));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == HeatventSummon);
 	}
 
 	/// <summary>

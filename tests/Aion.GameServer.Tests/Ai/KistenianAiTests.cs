@@ -55,7 +55,7 @@ public sealed class KistenianAiTests
 
 		harness.Engage(boss, player);
 
-		Npc flame = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == FlameOfKistenian));
+		Npc flame = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == FlameOfKistenian);
 		Assert.InRange(flame.GetX(), boss.GetX() - 4f, boss.GetX() + 4f);
 	}
 

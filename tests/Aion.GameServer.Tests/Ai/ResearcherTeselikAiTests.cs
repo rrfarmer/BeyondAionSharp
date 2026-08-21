@@ -413,7 +413,7 @@ public sealed class ResearcherTeselikAiTests
 
 		teselik.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == ResearcherTeselikAI.BonusHand));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == ResearcherTeselikAI.BonusHand);
 	}
 
 	/// <summary>
@@ -486,7 +486,7 @@ public sealed class ResearcherTeselikAiTests
 			harness.Clock.Advance(TimeSpan.FromSeconds(1));
 		}
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == Hand));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == Hand);
 	}
 
 	/// <summary>

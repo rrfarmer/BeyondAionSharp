@@ -98,7 +98,7 @@ public sealed class TiamatSiegeWeaponAiTests
 
 		weapon.GetAi().OnGeneralEvent(AiEventType.Died);
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == 284869));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == 284869);
 	}
 
 	/// <summary>

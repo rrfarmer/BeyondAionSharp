@@ -188,9 +188,9 @@ public sealed class RagnarokAiTests
 		Assert.All(parasites, p => Assert.Same(raid[0], p.GetTarget()));
 
 		Advance(harness, boss, raid, 290);
-		Assert.NotEmpty(harness.LiveNpcs().Where(n => n.GetNpcId() == Parasite));
+		Assert.Contains(harness.LiveNpcs(), n => n.GetNpcId() == Parasite);
 
 		Advance(harness, boss, raid, 10);
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == Parasite));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == Parasite);
 	}
 }

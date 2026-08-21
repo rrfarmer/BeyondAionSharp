@@ -85,7 +85,7 @@ public sealed class TiamatDyingRotationAiTests
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(60));
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == BeaconMiddle));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == BeaconMiddle);
 	}
 
 	/// <summary>
@@ -226,13 +226,13 @@ public sealed class TiamatDyingRotationAiTests
 				break;
 		}
 
-		Assert.NotEmpty(harness.LiveNpcs().Where(
-			n => n.GetNpcId() is BeaconLeft or BeaconMiddle or BeaconRight));
+		Assert.Contains(harness.LiveNpcs(), 
+			n => n.GetNpcId() is BeaconLeft or BeaconMiddle or BeaconRight);
 
 		boss.GetAi().OnGeneralEvent(AiEventType.Died);
 
-		Assert.Empty(harness.LiveNpcs().Where(
-			n => n.GetNpcId() is BeaconLeft or BeaconMiddle or BeaconRight or Thorn or CyclopsCrack));
+		Assert.DoesNotContain(harness.LiveNpcs(), 
+			n => n.GetNpcId() is BeaconLeft or BeaconMiddle or BeaconRight or Thorn or CyclopsCrack);
 	}
 
 	/// <summary>

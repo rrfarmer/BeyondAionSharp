@@ -48,12 +48,12 @@ public sealed class ChaoslordKalabarAiTests
 		using BossAiHarness _h = harness;
 
 		harness.Watch(20, null, WheelOfDeath);
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
 
 		BossAiHarness.SetExactPercent(boss, 85);
 		harness.Watch(20, null, WheelOfDeath);
 
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
 	}
 
 	/// <summary>
@@ -67,13 +67,13 @@ public sealed class ChaoslordKalabarAiTests
 		using BossAiHarness _h = harness;
 
 		harness.Watch(20, null, WheelOfDeath);
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
 
 		BossAiHarness.SetExactPercent(boss, 50);
 		harness.Watch(20, null, StoneGuard);
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == StoneGuard));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == StoneGuard);
 	}
 
 	/// <summary>
@@ -87,12 +87,12 @@ public sealed class ChaoslordKalabarAiTests
 		using BossAiHarness _h = harness;
 
 		harness.Watch(20, null, StoneGuard);
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == StoneGuard));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == StoneGuard);
 
 		BossAiHarness.SetExactPercent(boss, 20);
 		harness.Watch(20, null, StoneGuard);
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == StoneGuard));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == StoneGuard);
 	}
 
 	/// <summary>
@@ -107,7 +107,7 @@ public sealed class ChaoslordKalabarAiTests
 
 		harness.Watch(60, null, WheelOfDeath);
 
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
 	}
 
 	/// <summary>
@@ -121,11 +121,11 @@ public sealed class ChaoslordKalabarAiTests
 		using BossAiHarness _h = harness;
 
 		harness.Watch(20, null, WheelOfDeath);
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
 
 		boss.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.Died);
 
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == WheelOfDeath));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == WheelOfDeath);
 	}
 
 	/// <summary>
@@ -140,12 +140,12 @@ public sealed class ChaoslordKalabarAiTests
 		using BossAiHarness _h = harness;
 
 		harness.Watch(20, null, StoneGuard);
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == StoneGuard));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == StoneGuard);
 
 		BossAiHarness.SetExactPercent(boss, 35);
 		harness.Watch(30, null, StoneGuard);
 
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == StoneGuard));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == StoneGuard);
 	}
 
 	/// <summary><b>The message number and the add ids are retail's, not ours.</b></summary>

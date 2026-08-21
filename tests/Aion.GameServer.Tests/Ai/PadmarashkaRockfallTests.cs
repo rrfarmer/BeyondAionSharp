@@ -270,7 +270,7 @@ public sealed class PadmarashkaRockfallTests
 
 		Advance(harness, boss, raid, 16);
 
-		Npc rock = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == RockB));
+		Npc rock = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == RockB);
 		Assert.Equal(AIState.FIGHT, rock.GetAi().GetState());
 		Assert.Same(raid[0], rock.GetTarget());
 		Assert.True(rock.GetAggroList().GetHate(raid[0]) >= 2,

@@ -98,7 +98,7 @@ public sealed class DrakenspireTwinFlowTests
 		Assert.Equal(0, Count(harness, LavaProtector));
 
 		// Where it fell, not at the opening mark.
-		Npc back = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == FountlessLava));
+		Npc back = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == FountlessLava);
 		Assert.Equal(620f, back.GetX(), 1);
 		Assert.Equal(240f, back.GetY(), 1);
 	}
@@ -142,7 +142,7 @@ public sealed class DrakenspireTwinFlowTests
 		Assert.Equal(1, Count(harness, OminousDarkness));
 
 		// On the font's mark, which is where the first twin fell.
-		Npc left = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == OminousDarkness));
+		Npc left = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == OminousDarkness);
 		Assert.Equal(531f, left.GetX(), 1);
 	}
 

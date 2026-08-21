@@ -239,7 +239,7 @@ public sealed class Rm56cAiTests
 		using BossAiHarness _h = harness;
 
 		Advance(harness, boss, player, 6);
-		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == CompleteTrap));
+		Npc trap = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == CompleteTrap);
 		BossAiHarness.MakeMutuallyKnown(boss, trap);
 
 		Aion.GameServer.Ai.NpcMessageBus.Broadcast(boss, CompleteTrapAI.LayAnother + 1, null, CompleteTrapAI.Reach);

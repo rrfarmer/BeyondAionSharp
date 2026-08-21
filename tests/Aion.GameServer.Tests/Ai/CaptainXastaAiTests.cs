@@ -261,7 +261,7 @@ public sealed class CaptainXastaAiTests
 
 		Advance(harness, boss, player, 12);
 
-		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == XastasTrap));
+		Npc trap = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == XastasTrap);
 		Assert.Same(player, trap.GetTarget());
 		Assert.True(trap.GetAggroList().GetHate(player) > 1000000,
 			$"ten million is what keeps it on the player it picked: {trap.GetAggroList().GetHate(player)}");
@@ -283,7 +283,7 @@ public sealed class CaptainXastaAiTests
 		using BossAiHarness _h = harness;
 
 		Advance(harness, boss, player, 11);
-		int first = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == XastasTrap)).GetObjectId();
+		int first = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == XastasTrap).GetObjectId();
 
 		// Thirteen seconds of trap, then five of waiting: the second lands around twenty-nine.
 		Advance(harness, boss, player, 12);
@@ -291,7 +291,7 @@ public sealed class CaptainXastaAiTests
 
 		Advance(harness, boss, player, 7);
 
-		Npc second = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == XastasTrap));
+		Npc second = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == XastasTrap);
 		Assert.NotEqual(first, second.GetObjectId());
 	}
 

@@ -41,7 +41,7 @@ public sealed class GravityTornadoAiTests
 		using BossAiHarness harness = NewHarness();
 		Npc tornado = harness.Spawn(NormalTornado, 500f, 500f, 400f);
 
-		Npc crusher = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == NormalCrusher));
+		Npc crusher = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == NormalCrusher);
 		Assert.Equal(tornado.GetX(), crusher.GetX(), 1);
 		Assert.Equal(tornado.GetY(), crusher.GetY(), 1);
 		Assert.Equal(0, Count(harness, HardCrusher));

@@ -324,7 +324,7 @@ public sealed class BattleCycleAiTests
 		// One-way, and deliberately so. Every npc with a rotation must be bound to something that
 		// runs it; the reverse is no longer a defect, because a composing class is also where an npc
 		// with only a wake rung or only a death spawn now lives.
-		Assert.Empty(BattleCycles.Npcs.Where(id => !bound.Contains(id)));
+		Assert.DoesNotContain(BattleCycles.Npcs, id => !bound.Contains(id));
 	}
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
@@ -1132,7 +1132,7 @@ public sealed class BattleCycleAiTests
 		// condition could be a constant true and every assertion above would still pass -- which a
 		// mutation demonstrated.
 		Aion.GameServer.Model.Skill.NpcSkillEntry entry = Assert.Single(
-			guard.GetSkillList().GetNpcSkills().Where(e => e.GetSkillId() == GuardSkill));
+			guard.GetSkillList().GetNpcSkills(), e => e.GetSkillId() == GuardSkill);
 		entry.SetLastTimeUsed();
 		Assert.False(When.SkillReady(GuardSkill)(guardAi),
 			"a skill used a moment ago is still counted as ready");
@@ -1349,7 +1349,7 @@ public sealed class BattleCycleAiTests
 			aimed.Add(BossAiHarness.FireNextQueuedSkill(worm));
 		}
 
-		Assert.NotEmpty(aimed.Where(a => a != null));
+		Assert.Contains(aimed, a => a != null);
 		Assert.DoesNotContain(far, aimed);
 		Assert.Contains(near, aimed);
 

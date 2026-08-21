@@ -343,7 +343,7 @@ public sealed class CommanderBakarmaAiTests
 		Assert.Equal(placed.Count, Live(harness, Vanguard).Count(v => placed.Contains(v.GetObjectId())));
 
 		harness.Clock.Advance(TimeSpan.FromSeconds(120));
-		Assert.Empty(Live(harness, Vanguard).Where(v => placed.Contains(v.GetObjectId())));
+		Assert.DoesNotContain(Live(harness, Vanguard), v => placed.Contains(v.GetObjectId()));
 	}
 
 	/// <summary>

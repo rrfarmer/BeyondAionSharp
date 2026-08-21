@@ -90,7 +90,7 @@ public sealed class QueenAlukinaBeluslanAiTests
 
 		Advance(harness, queen, target, 11);
 
-		Assert.Equal(1, Of(harness, FaithfulServant).Count);
+		Assert.Single(Of(harness, FaithfulServant));
 	}
 
 	/// <summary>

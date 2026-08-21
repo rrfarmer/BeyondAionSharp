@@ -76,7 +76,7 @@ public sealed class TheFlamelordAiTests
 			Assert.Equal(before + 1, ExecutorCount(harness));
 
 			Npc arrived = Assert.Single(harness.LiveNpcs()
-				.Where(n => Executors.Contains(n.GetNpcId()) && !seen.Contains(n)));
+				, n => Executors.Contains(n.GetNpcId()) && !seen.Contains(n));
 			seen.Add(arrived);
 			order.Add(arrived.GetNpcId());
 		}

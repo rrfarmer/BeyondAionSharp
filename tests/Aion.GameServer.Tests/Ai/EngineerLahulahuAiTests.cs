@@ -136,7 +136,7 @@ public sealed class EngineerLahulahuAiTests
 				ArriveAt(engineer, 2);
 				harness.Clock.Advance(TimeSpan.FromSeconds(4));
 			}
-			Assert.NotEmpty(harness.LiveNpcs().Where(n => Nozzles.Contains(n.GetNpcId())));
+			Assert.Contains(harness.LiveNpcs(), n => Nozzles.Contains(n.GetNpcId()));
 			Assert.All(harness.LiveNpcs().Where(n => Nozzles.Contains(n.GetNpcId())),
 				n => Assert.Contains(n.GetNpcId(), top));
 		}
@@ -150,7 +150,7 @@ public sealed class EngineerLahulahuAiTests
 				ArriveAt(engineer, 2);
 				harness.Clock.Advance(TimeSpan.FromSeconds(4));
 			}
-			Assert.NotEmpty(harness.LiveNpcs().Where(n => Nozzles.Contains(n.GetNpcId())));
+			Assert.Contains(harness.LiveNpcs(), n => Nozzles.Contains(n.GetNpcId()));
 			Assert.All(harness.LiveNpcs().Where(n => Nozzles.Contains(n.GetNpcId())),
 				n => Assert.Contains(n.GetNpcId(), bottom));
 		}

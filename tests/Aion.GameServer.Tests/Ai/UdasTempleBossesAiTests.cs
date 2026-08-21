@@ -81,7 +81,7 @@ public sealed class UdasTempleBossesAiTests
 		BossAiHarness.SetExactPercent(boss, 49);
 		Hit(boss, raid[0]);
 
-		Npc shatter = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Shatter));
+		Npc shatter = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == Shatter);
 		Player nearest = raid.OrderBy(p => Math.Abs(p.GetX() - shatter.GetX())).First();
 		Assert.Equal(raid[2].GetObjectId(), nearest.GetObjectId());
 	}
@@ -121,7 +121,7 @@ public sealed class UdasTempleBossesAiTests
 		Hit(boss, raid[0]);
 		harness.Clock.Advance(TimeSpan.FromSeconds(1));
 
-		Npc shatter = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == Shatter));
+		Npc shatter = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == Shatter);
 		Assert.Same(raid[2], shatter.GetTarget());
 		Assert.True(shatter.GetAggroList().GetHate(raid[2]) >= 2,
 			$"one point is what it would aggro on its own; the flag adds retail's on top: "

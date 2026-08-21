@@ -91,7 +91,7 @@ public sealed class DeathSpawnAiTests
 		{
 			using BossAiHarness harness = Fell(npcId, byPlayer: false);
 
-			Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == left.NpcId));
+			Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == left.NpcId);
 		}
 	}
 

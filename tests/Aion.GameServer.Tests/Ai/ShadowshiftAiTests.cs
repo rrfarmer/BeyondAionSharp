@@ -116,7 +116,7 @@ public sealed class ShadowshiftAiTests
 
 		// ORDERI_DESCENDING: it lands on whoever holds the most hate, which the harness makes players[0]
 		// by engaging with them first and topping everyone up equally afterwards.
-		Npc spectre = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == SpectreFar));
+		Npc spectre = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == SpectreFar);
 		Player nearest = players.OrderBy(p => Math.Abs(p.GetX() - spectre.GetX())).First();
 		Assert.Equal(players[0].GetObjectId(), nearest.GetObjectId());
 	}
@@ -215,7 +215,7 @@ public sealed class ShadowshiftAiTests
 		using BossAiHarness _h = harness;
 
 		Advance(harness, boss, players, 8);
-		Npc spectre = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == SpectreFar));
+		Npc spectre = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == SpectreFar);
 
 		// One more tick: the provoke is deferred, for the reasons PatternAi.ProvokeNextTick gives.
 		Advance(harness, boss, players, 1);

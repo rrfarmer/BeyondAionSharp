@@ -46,7 +46,7 @@ public sealed class NTrapAiTests
 		harness.Clock.Advance(TimeSpan.FromSeconds(5));
 
 		Assert.False(trap.IsSpawned());
-		Assert.Empty(harness.LiveNpcs().Where(n => n.GetNpcId() == npcId));
+		Assert.DoesNotContain(harness.LiveNpcs(), n => n.GetNpcId() == npcId);
 	}
 
 	/// <summary>

@@ -48,7 +48,7 @@ public sealed class SoulAnchorBarrierAiTests
 
 		harness.Clock.Advance(TimeSpan.FromMinutes(10));
 
-		Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == FactionBalance));
+		Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == FactionBalance);
 	}
 
 	/// <summary>

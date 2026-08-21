@@ -82,7 +82,7 @@ public sealed class GatewayTrapGuardAiTests
 		var (harness, guard, player) = Engaged(ElyosPriest);
 		using BossAiHarness _h = harness;
 
-		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == NetTrap));
+		Npc trap = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == NetTrap);
 
 		float toGuard = Math.Abs(trap.GetX() - guard.GetX());
 		float toPlayer = Math.Abs(trap.GetX() - player.GetX());
@@ -97,7 +97,7 @@ public sealed class GatewayTrapGuardAiTests
 		var (harness, guard, player) = Engaged(AsmodianMage);
 		using BossAiHarness _h = harness;
 
-		Npc trap = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == SleepdustTrap));
+		Npc trap = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == SleepdustTrap);
 
 		float toGuard = Math.Abs(trap.GetX() - guard.GetX());
 		float toPlayer = Math.Abs(trap.GetX() - player.GetX());

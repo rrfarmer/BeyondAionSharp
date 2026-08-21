@@ -80,7 +80,7 @@ public sealed class AdmaSkeletonWaveTests
 
 		Call(coffin, LordLannokAI.CallForPages);
 
-		Npc page = Assert.Single(harness.LiveNpcs().Where(n => n.GetNpcId() == FaithfulPage));
+		Npc page = Assert.Single(harness.LiveNpcs(), n => n.GetNpcId() == FaithfulPage);
 		Assert.Equal(596f, page.GetX());
 		Assert.Equal(723f, page.GetY());
 	}
