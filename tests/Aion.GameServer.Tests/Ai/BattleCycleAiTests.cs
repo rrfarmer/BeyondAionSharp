@@ -340,7 +340,9 @@ public sealed class BattleCycleAiTests
 	{
 		using BossAiHarness harness = NewHarness();
 		int casts = 0;
-		foreach (string[] fields in Rows("skill"))
+		// Both cast kinds. `skill_now` is the hazard's immediate path -- same skill id, different
+		// helper -- and counting only `skill` would leave 112 casts unchecked for naming a real skill.
+		foreach (string[] fields in Rows("skill").Concat(Rows("skill_now")))
 		{
 			casts++;
 			int skill = int.Parse(fields[0]);
@@ -383,7 +385,9 @@ public sealed class BattleCycleAiTests
 	public void AWeakestTargetCastKeepsThatTarget()
 	{
 		int lowest = 0;
-		foreach (string[] fields in Rows("skill"))
+		// Both cast kinds. `skill_now` is the hazard's immediate path -- same skill id, different
+		// helper -- and counting only `skill` would leave 112 casts unchecked for naming a real skill.
+		foreach (string[] fields in Rows("skill").Concat(Rows("skill_now")))
 		{
 			if (fields[2] == "LOWEST_HP")
 				lowest++;

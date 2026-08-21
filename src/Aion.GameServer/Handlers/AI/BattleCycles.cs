@@ -620,7 +620,7 @@ internal static class BattleCycles
         ];
         variants[27] = [
             AiPattern.Branch(7, "rung 0", [When.FirstTime(1)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20408),
+                Do.SkillOnSelfNow(20408),
                 Do.DespawnSelf()),
         ];
         variants[28] = [
@@ -720,7 +720,7 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17141)),
             AiPattern.Branch(2, "rung 2", [When.Timer(2)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 17141),
+                Do.SkillOnSelfNow(17141),
                 Do.DespawnSelf()),
         ];
         variants[36] = [
@@ -5773,7 +5773,7 @@ internal static class BattleCycles
         ];
         variants[325] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0), When.HpBetween(1, 99)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 16991),
+                Do.SkillOnSelfNow(16991),
                 Do.DespawnSelf()),
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 7000)),
@@ -10027,7 +10027,7 @@ internal static class BattleCycles
         ];
         variants[569] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19979),
+                Do.SkillOnSelfNow(19979),
                 Do.DespawnSelf()),
         ];
         variants[570] = [
@@ -11036,7 +11036,7 @@ internal static class BattleCycles
             AiPattern.Branch(22, "rung 0", [When.Timer(9)],
                 Do.Say(341867, 0),
                 Do.SystemMessage(1400258, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19679),
+                Do.SkillOnSelfNow(19679),
                 Do.DespawnSelf()),
             AiPattern.Branch(20, "rung 1", [When.Timer(8), When.HpBelow(45)],
                 Do.ArmTimer(5, 9000),
@@ -14877,7 +14877,7 @@ internal static class BattleCycles
         ];
         variants[954] = [
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20592),
+                Do.SkillOnSelfNow(20592),
                 Do.SpawnNearForTheFight(219411, 1, 2, 0f, 60),
                 Do.DespawnSelf()),
         ];
@@ -26723,7 +26723,7 @@ internal static class BattleCycles
         ];
         variants[1476] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(1)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 17194),
+                Do.SkillOnSelfNow(17194),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 15000),
@@ -30591,7 +30591,7 @@ internal static class BattleCycles
             AiPattern.Branch(22, "rung 0", [When.Timer(9)],
                 Do.Say(341867, 0),
                 Do.SystemMessage(1400258, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18223),
+                Do.SkillOnSelfNow(18223),
                 Do.DespawnSelf()),
             AiPattern.Branch(20, "rung 1", [When.Timer(8), When.HpBelow(45)],
                 Do.ArmTimer(5, 9000),
@@ -30711,7 +30711,7 @@ internal static class BattleCycles
             AiPattern.Branch(22, "rung 0", [When.Timer(9)],
                 Do.Say(341867, 0),
                 Do.SystemMessage(1400260, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18223),
+                Do.SkillOnSelfNow(18223),
                 Do.DespawnSelf()),
             AiPattern.Branch(20, "rung 1", [When.Timer(8), When.HpBelow(45)],
                 Do.ArmTimer(5, 7000),
@@ -31129,7 +31129,7 @@ internal static class BattleCycles
         ];
         variants[1668] = [
             AiPattern.Branch(2, "rung 0", [When.Timer(0), When.HpBetween(1, 99)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18583),
+                Do.SkillOnSelfNow(18583),
                 Do.DespawnSelf()),
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 7000)),
@@ -31503,12 +31503,12 @@ internal static class BattleCycles
         ];
         variants[1687] = [
             AiPattern.Branch(9, "rung 0", [When.Timer(2)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18978),
+                Do.SkillOnSelfNow(18978),
                 Do.SpawnNearForTheFight(281952, 0, 1, 0f, 10),
                 Do.DespawnSelf()),
             AiPattern.Branch(8, "rung 1", [When.Timer(0), When.HpBelow(10), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18978),
+                Do.SkillOnSelfNow(18978),
                 Do.SpawnNearForTheFight(281952, 0, 1, 0f, 10),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 2", [When.Timer(1)],
@@ -31523,7 +31523,7 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 1", [When.Timer(0), When.HpBelow(10), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.Say(342063, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18571),
+                Do.SkillOnSelfNow(18571),
                 Do.SpawnNearForTheFight(281764, 0, 1, 0f, 10),
                 Do.SpawnNearForTheFight(281952, 0, 1, 0f, 10),
                 Do.DespawnSelf()),
@@ -31545,7 +31545,7 @@ internal static class BattleCycles
             AiPattern.Branch(19, "rung 1", [When.Timer(0), When.HpBelow(10), When.FirstTime(0)],
                 Do.ArmTimer(0, 5000),
                 Do.Say(342065, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18688),
+                Do.SkillOnSelfNow(18688),
                 Do.SpawnNearForTheFight(281764, 0, 1, 0f, 10),
                 Do.SpawnNearForTheFight(281952, 0, 1, 0f, 10),
                 Do.DespawnSelf()),
@@ -32576,7 +32576,7 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18479)),
             AiPattern.Branch(2, "rung 2", [When.Timer(2)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18479),
+                Do.SkillOnSelfNow(18479),
                 Do.DespawnSelf()),
         ];
         variants[1724] = [
@@ -33211,7 +33211,7 @@ internal static class BattleCycles
         ];
         variants[1774] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19125),
+                Do.SkillOnSelfNow(19125),
                 Do.DespawnSelf()),
         ];
         variants[1775] = [
@@ -33360,7 +33360,7 @@ internal static class BattleCycles
         ];
         variants[1786] = [
             AiPattern.Branch(2, "rung 0", [When.Chance(50), When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19653),
+                Do.SkillOnSelfNow(19653),
                 Do.DespawnSelf()),
             AiPattern.Branch(1, "rung 1", [When.Timer(0)],
                 Do.ArmTimer(0, 7000)),
@@ -33589,7 +33589,7 @@ internal static class BattleCycles
             AiPattern.Branch(15, "rung 0", [When.Timer(2), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20444)),
             AiPattern.Branch(10, "rung 1", [When.Timer(1)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19895),
+                Do.SkillOnSelfNow(19895),
                 Do.DespawnSelf()),
             AiPattern.Branch(5, "rung 2", [When.Timer(0)],
                 Do.ArmTimer(0, 4000),
@@ -33927,7 +33927,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 4000)),
             AiPattern.Branch(1, "rung 15", [When.Timer(0), When.FirstTime(10)],
                 Do.Broadcast(610001, 70f),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
+                Do.SkillOnSelfNow(20533),
                 Do.DespawnSelf()),
         ];
         variants[1836] = [
@@ -33982,7 +33982,7 @@ internal static class BattleCycles
                 Do.SpawnNearForTheFight(283009, 1, 3, 0f, 6),
                 Do.ArmTimer(0, 6000)),
             AiPattern.Branch(1, "rung 15", [When.Timer(0), When.FirstTime(10)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
+                Do.SkillOnSelfNow(20533),
                 Do.DespawnSelf()),
         ];
         variants[1837] = [
@@ -34037,7 +34037,7 @@ internal static class BattleCycles
                 Do.SpawnNearForTheFight(283009, 1, 3, 0f, 6),
                 Do.ArmTimer(0, 1000)),
             AiPattern.Branch(1, "rung 15", [When.Timer(0), When.FirstTime(10)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
+                Do.SkillOnSelfNow(20533),
                 Do.DespawnSelf()),
         ];
         variants[1838] = [
@@ -36247,7 +36247,7 @@ internal static class BattleCycles
         ];
         variants[1993] = [
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19428),
+                Do.SkillOnSelfNow(19428),
                 Do.DespawnSelf()),
             AiPattern.Branch(6, "rung 1", [When.Timer(1), When.HpBelow(20), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16438)),
@@ -36279,7 +36279,7 @@ internal static class BattleCycles
         ];
         variants[1995] = [
             AiPattern.Branch(8, "rung 0", [When.Timer(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 21463),
+                Do.SkillOnSelfNow(21463),
                 Do.DespawnSelf()),
             AiPattern.Branch(6, "rung 1", [When.Timer(1), When.HpBelow(20), When.FirstTime(0)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17125)),
@@ -37058,7 +37058,7 @@ internal static class BattleCycles
                 Do.ArmTimer(2, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18939)),
             AiPattern.Branch(2, "rung 2", [When.Timer(2)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18939),
+                Do.SkillOnSelfNow(18939),
                 Do.DespawnSelf()),
         ];
         variants[2034] = [
@@ -38411,7 +38411,7 @@ internal static class BattleCycles
         variants[2101] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 5000),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 21180),
+                Do.SkillOnSelfNow(21180),
                 Do.DespawnSelf()),
         ];
         variants[2102] = [
@@ -39628,7 +39628,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 8000)),
             AiPattern.Branch(100, "rung 15", [When.Timer(0), When.FirstTime(10)],
                 Do.Broadcast(610001, 70f),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
+                Do.SkillOnSelfNow(20533),
                 Do.DespawnSelf()),
         ];
         variants[2135] = [
@@ -93174,7 +93174,7 @@ internal static class BattleCycles
         ];
         variants[45] = [
             AiPattern.Branch(202, "rung 0", [When.Message(23015)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20709),
+                Do.SkillOnSelfNow(20709),
                 Do.DespawnSelf()),
             AiPattern.Branch(201, "rung 1", [When.Message(23016), When.FirstTime(5)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16405)),
@@ -97819,7 +97819,7 @@ internal static class BattleCycles
         ];
         variants[119] = [
             AiPattern.Branch(1, "rung 0", When.Always,
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19572),
+                Do.SkillOnSelfNow(19572),
                 Do.DespawnSelf()),
         ];
         variants[120] = [
@@ -97829,12 +97829,12 @@ internal static class BattleCycles
         ];
         variants[121] = [
             AiPattern.Branch(9, "rung 0", When.Always,
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
+                Do.SkillOnSelfNow(20533),
                 Do.DespawnSelf()),
         ];
         variants[122] = [
             AiPattern.Branch(9, "rung 0", When.Always,
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
+                Do.SkillOnSelfNow(20533),
                 Do.Despawn(2),
                 Do.DespawnSelf()),
         ];
@@ -99910,7 +99910,7 @@ internal static class BattleCycles
         ];
         variants[111] = [
             AiPattern.Branch(2, "rung 0", When.Always,
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19572),
+                Do.SkillOnSelfNow(19572),
                 Do.DespawnSelf()),
         ];
         variants[112] = [
@@ -100963,7 +100963,7 @@ internal static class BattleCycles
     {
         variants[0] = [
             AiPattern.Branch(4, "rung 0", [When.FirstTime(0)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 21866),
+                Do.SkillOnSelfNow(21866),
                 Do.DespawnSelf()),
         ];
         variants[1] = [
@@ -103494,7 +103494,7 @@ internal static class BattleCycles
         variants[24] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(15)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103503,7 +103503,7 @@ internal static class BattleCycles
         variants[25] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(20)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103574,56 +103574,56 @@ internal static class BattleCycles
         ];
         variants[30] = [
             AiPattern.Branch(99, "rung 0", [When.AtWaypoint(1)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19125),
+                Do.SkillOnSelfNow(19125),
                 Do.Broadcast(12501, 80f),
                 Do.DespawnSelf()),
         ];
         variants[31] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19525),
+                Do.SkillOnSelfNow(19525),
                 Do.DespawnSelf()),
         ];
         variants[32] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19526),
+                Do.SkillOnSelfNow(19526),
                 Do.DespawnSelf()),
         ];
         variants[33] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19527),
+                Do.SkillOnSelfNow(19527),
                 Do.DespawnSelf()),
         ];
         variants[34] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19528),
+                Do.SkillOnSelfNow(19528),
                 Do.DespawnSelf()),
         ];
         variants[35] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19529),
+                Do.SkillOnSelfNow(19529),
                 Do.DespawnSelf()),
         ];
         variants[36] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19530),
+                Do.SkillOnSelfNow(19530),
                 Do.DespawnSelf()),
         ];
         variants[37] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19531),
+                Do.SkillOnSelfNow(19531),
                 Do.DespawnSelf()),
         ];
         variants[38] = [
             AiPattern.Branch(4, "rung 0", [When.AtWaypoint(2)],
                 Do.Say(1500462, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19532),
+                Do.SkillOnSelfNow(19532),
                 Do.DespawnSelf()),
         ];
         variants[39] = [
@@ -103645,7 +103645,7 @@ internal static class BattleCycles
         variants[42] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(14)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.ContinueRoute()),
@@ -103677,7 +103677,7 @@ internal static class BattleCycles
         variants[49] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(5)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103686,7 +103686,7 @@ internal static class BattleCycles
         variants[50] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(10)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103695,7 +103695,7 @@ internal static class BattleCycles
         variants[51] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(25)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103704,7 +103704,7 @@ internal static class BattleCycles
         variants[52] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(30)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103713,7 +103713,7 @@ internal static class BattleCycles
         variants[53] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(35)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103722,7 +103722,7 @@ internal static class BattleCycles
         variants[54] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(40)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103731,7 +103731,7 @@ internal static class BattleCycles
         variants[55] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(45)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103740,7 +103740,7 @@ internal static class BattleCycles
         variants[56] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(50)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103749,7 +103749,7 @@ internal static class BattleCycles
         variants[57] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(55)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103758,7 +103758,7 @@ internal static class BattleCycles
         variants[58] = [
             AiPattern.Branch(3, "rung 0", [When.AtWaypoint(60)],
                 Do.Say(340927, 0),
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 18145),
+                Do.SkillOnSelfNow(18145),
                 Do.DespawnSelf()),
             AiPattern.Branch(2, "rung 1", When.Always,
                 Do.Say(341120, 0),
@@ -103770,7 +103770,7 @@ internal static class BattleCycles
         ];
         variants[60] = [
             AiPattern.Branch(2, "rung 0", [When.AtWaypoint(1)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19358),
+                Do.SkillOnSelfNow(19358),
                 Do.DespawnSelf()),
         ];
         variants[61] = [
@@ -103780,7 +103780,7 @@ internal static class BattleCycles
         ];
         variants[62] = [
             AiPattern.Branch(1, "rung 0", [When.FirstTime(1)],
-                Do.SkillOn(NpcSkillTargetAttribute.ME, 19358),
+                Do.SkillOnSelfNow(19358),
                 Do.SetSpawnVariable("IDTIAMAT_TELEPORT_T2", 0, 1),
                 Do.SetSpawnVariable("TIAMAT_GROUND_SPAWN", 0, 1),
                 Do.SetSpawnVariable("KAHRUN_SPAWN", 0, 1),

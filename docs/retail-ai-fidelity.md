@@ -39282,3 +39282,65 @@ despawning themselves -- the hypothesis above is checkable in one run.
 Of the 17 encounters on plain `aggressive`, **7 are npcs a hand-written class already names** --
 `CaptainXastaAI`, `InfiltratorsAI`, `GeneralChunapaAI` -- so those are the per-encounter question, not
 extractor work. The other 10 are arming-only patterns and are covered by item 1.
+
+## 112 hazards were casting into a queue that never drained
+
+`Retail-AI-Pattern: the hazard rule reaches the battle table`
+
+The previous entry ended with a hypothesis and a way to check it: relax the arming-only rule, run the
+six failing pins, and find out whether the adds despawn themselves. Checked -- and the answer was
+better than the question, because it exposed a bug that is live **now**, without any relaxation.
+
+### What the failing pins were telling us
+
+Kasika's fourth tier is npc 280472, whose pattern is `NLycan_SELC_S2`; the death-bequest traps are
+`NTrap_A`. Both are arming-only patterns, and both carry a branch of the same shape:
+
+> on waking: cast `SKILLI_INDEX_0` **on myself**, then `despawn_self`.
+
+That is the hazard shape -- the Tiamat tornado is the same thing. The cast *is* the mechanic and the
+npc is meant to vanish immediately after it.
+
+`extract_wake_idle_patterns.py` has had a rule for this since the tornado needed it: when a branch
+despawns itself and the cast targets `ME`, emit the **immediate** helper, because `Do.SkillOn` puts
+the skill on a queue that the attack loop drains -- and the npc is gone before that happens.
+
+**The battle extractor never had that rule.** Zero occurrences of it in the file.
+
+### The bug that was already there
+
+This is not only about the relaxed rule. In the table as it stands today, **112 branches across 102
+npcs** cast on themselves and despawn in the same rung, every one of them through the queued path.
+Those casts have never fired. The add appears, removes itself, and the mechanic it exists for does
+nothing -- which is invisible from outside, because the spawn worked and the count was right.
+
+So the rule is ported: same condition, same reason, same helper. 112 rows become `skill_now`.
+
+`EveryCastNamesAKnownSkill` now walks both cast kinds. Counting only `skill` would have quietly
+dropped those 112 from the check that every cast names a real skill -- the census would have gone
+down by 112 and read as a smaller table rather than an unchecked one.
+
+Patterns and npcs unchanged at 2,892 and 22,824; casts still 95,032, now split 94,920 queued and
+**112 immediate**. Backlog unchanged at 183 across 128 -- these are casts, not adds.
+
+### What this means for the arming-only work
+
+The six red pins in the previous entry were **not** telling us the relaxed rule is wrong. They were
+telling us the battle table mishandles hazards, and relaxing the rule brought 4,491 more patterns in
+-- some of them hazards -- which made an existing bug visible.
+
+With the hazard rule in place the next attempt has a real chance. It is still worth doing carefully:
+the relaxation is the largest single gain left (**9,113 spawn actions**), and the six pins are the
+check that it landed correctly rather than an obstacle to route around.
+
+### Still missing, in order
+
+1. **The arming-only patterns** (4,491 patterns, 9,113 spawns) -- retry now that hazards cast
+   properly, and expect the six pins to be the arbiter again.
+2. `control_door` (691 uses + 10 lost adds) -- one in-game observation.
+3. `random_move` (187; 11 lost adds behind the same `MOVETYPE_RUN` gap).
+4. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+5. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; the eight handlers with no
+   engine slot.
+6. **16 waypoint paths** -- searched exhaustively, absent from dump and client.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary.

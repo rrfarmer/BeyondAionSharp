@@ -277,6 +277,10 @@ def action_code(row: dict) -> str:
         return f"Do.SpawnAt{suffix}({npc}, {group}, {live}, {spots})"
     if kind == "skill":
         return f"Do.SkillOn(NpcSkillTargetAttribute.{row['place']}, {row['a1']})"
+    if kind == "skill_now":
+        # The hazard's immediate path; see the extractor. `Do.SkillOn` would queue it and the npc is
+        # gone before the queue drains.
+        return f"Do.SkillOnSelfNow({row['a1']})"
     if kind == "skill_in_reach":
         return f"Do.SkillOnRankedInReach(AggroTarget.{row['place']}, {row['a1']})"
     if kind == "skill_at":

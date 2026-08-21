@@ -1162,9 +1162,18 @@ def main() -> int:
                         guards = [f"skillready:{skills[npc][int(g.split(':')[1])]}"
                                   if g.startswith("skillready:") else g
                                   for g in guards]
+                        # **A branch that casts on itself and then removes itself is a hazard**, and
+                        # the queued path loses the cast: `Do.SkillOn` enqueues, the attack loop drains
+                        # the queue, and the npc is gone before it runs. The wake table has had this
+                        # rule since the Tiamat tornado needed it; this one never did, and 112 branches
+                        # across 102 npcs have been placing a hazard that vanishes without casting.
+                        hazard = any(a[0] == "despawn_self" for a in actions)
                         for order, action in enumerate(actions):
                             if action[0] in ("skill", "skill_at", "skill_in_reach"):
-                                action = (action[0], skills[npc][action[1]]) + action[2:]
+                                if action[0] == "skill" and hazard and action[4] == "ME":
+                                    action = ("skill_now", skills[npc][action[1]]) + action[2:]
+                                else:
+                                    action = (action[0], skills[npc][action[1]]) + action[2:]
                             rows.append((npc, named.group(1), handler, index, priority,
                                          "|".join(guards), order) + action)
 
