@@ -38719,3 +38719,72 @@ The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fa
 Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
 conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## Two refusals settled: one permanently, one still open
+
+`Retail-AI-Pattern: none — investigation only, no behaviour change`
+
+The previous entry put `control_door` (691 uses) at the top of the list and `say_to_all_str` (187)
+below it. Both were investigated properly this time. One can now be closed for good; the other is
+narrower than it was but still open.
+
+### `say_to_all_str` is developer text, and should stay refused
+
+The last entry described it as "a literal string where this port sends string ids". Mid-investigation
+that looked wrong -- the first example found was `STR_CHAT_CoDragon_AIPattern_19`, a symbolic name of
+exactly the kind `strings.xml` resolves -- so the extractor was extended to collect those names.
+
+**That correction was itself wrong.** Of the element's 149 distinct values, **one** is a symbolic
+name (2 uses). The other 148 are literal Korean text: *동료가 죽었네* ("a companion died"),
+*어택모듈 공격받음* ("attack module attacked"), *예~ 두목님~!* ("yes, boss!").
+
+These are developer notes left in the data, not player-facing lines. There is no id to resolve
+because they were never meant to reach a client, and porting them would put untranslated Korean debug
+text in front of players. The collector change was reverted rather than kept: it resolved 2 more uses
+and added 148 unresolvable names to the tool's output, which is noise about a thing that should not
+be ported.
+
+**Closed.** Not "needs somewhere for a string to go" -- there is nothing here worth saying.
+
+### `control_door`: the cross-check does not exist
+
+`WorldMapInstance.SetDoorState(staticId, open)` is exactly the call retail's element needs, so the
+only unknown is which `method` number opens. Three sources were checked and none settles it:
+
+* **Pattern names** favour 1 = open, 12 to 1.
+* **Handlers** favour the reverse: method 1 is 338 of 590 uses on `on_wake_up` -- a controller setting
+  a door's initial state, which in a dungeon is usually closed -- while method 2 is most often
+  `on_enter_attack_state`, the classic lock-the-room-when-the-fight-starts.
+* **This port's own calls** read backwards: `AturamSkyFortressInstance` comments
+  `SetDoorState(307, true)` as "close side windows" while `StaticDoor.SetOpen(true)` adds `OPENED`.
+
+The decisive test would be an encounter the port hand-codes *and* retail scripts, controlling the
+same door: 64 npcs have hand-written `SetDoorState` calls and every pattern's `control_door` ids were
+joined against them. **Zero (npc, door id) pairs match.** The two never touch the same door, so the
+comparison is not available. Worth recording so nobody builds the join again.
+
+One thing the data does show: `Station_DrakanC` closes door 411 with method 2 and opens door 412 with
+method 1 in the same `on_die`, and the port's own handler for that encounter does `SetDoorState(307,
+false)` and `SetDoorState(230, true)` together -- close one, open another. The shape matches, the ids
+do not, so it corroborates without proving.
+
+Getting this backwards means doors lock when they should open in 691 places, and it would look like
+working code. It needs one in-game observation, and that is the whole of what is missing.
+
+### Still missing, in order
+
+1. `control_door` (691) -- one observation away, as above.
+2. `random_move` (187) -- a combat reposition this port has no notion of.
+3. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- **no source in the
+   dump**, established last entry by search.
+4. `switch_target_by_class_indicator` (53) -- groups *and* the percent-hate unknown.
+5. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`; the eight handlers with no engine slot;
+   `SANCTUARY`, `INVISIBLE`, `DEFORM`, absent from `AbnormalState`.
+6. ~~`say_to_all_str`~~ -- closed, above.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fallback at 546 pairs,
+**per-mille reading evidence-backed but wanting play-testing**.
+
+Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
+conceded to `spawn_helpers.xml`, and retail cast timings.
