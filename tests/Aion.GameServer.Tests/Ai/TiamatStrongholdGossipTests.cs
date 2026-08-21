@@ -22,6 +22,14 @@ namespace Aion.GameServer.Tests.Ai;
 /// notice if the call sites stopped using the table.
 /// </para>
 /// </remarks>
+/// <remarks>
+/// <b>This was missing its collection and flaked the moment anything else built a harness beside it.</b>
+/// <c>WithAi</c> registers handlers globally, so two harnesses in different classes race; the symptom
+/// was this class's clock-driven despawn assertion failing in a full run and passing on its own. It
+/// was latent rather than harmless -- it needed a second unserialised harness class to exist, and one
+/// did the day <c>EventSkillGuardTests</c> was written without the attribute.
+/// </remarks>
+[Collection("GoldenDataManager")]
 public sealed class TiamatStrongholdGossipTests
 {
 	private const int TiamatStronghold = 300510000;

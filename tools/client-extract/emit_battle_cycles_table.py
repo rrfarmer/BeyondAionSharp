@@ -195,6 +195,8 @@ def guard_code(token: str) -> str:
         name, classes = argument.split(":")
         listed = ", ".join(f"PlayerClass.{c}" for c in classes.split("+"))
         return f"When.{name}({listed})"
+    if kind == "eventskill":
+        return f"When.EventSkill({argument})"
     if kind == "abnormal":
         name, state = argument.split(":")
         return f"When.{name}(AbnormalState.{state})"

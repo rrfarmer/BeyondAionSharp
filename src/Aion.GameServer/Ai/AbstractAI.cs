@@ -265,8 +265,13 @@ public abstract class AbstractAI : AI
     }
 
     /// <summary>
-    /// Retail's <c>on_spelled</c>: a skill landed on this NPC. Call <see cref="GetSpelledSkillId"/> for
+    /// Retail's <c>on_spelled</c>: a skill landed on this NPC. <c>PatternAi.SpelledSkillId</c> holds
     /// which one -- that is what retail's <c>is_event_skill_id</c> tests.
+    /// <para>
+    /// This used to point at a <c>GetSpelledSkillId</c> that was never written. The id is carried on
+    /// <c>PatternAi</c> instead, handed over by the damage path, because that is the only place an
+    /// <c>Effect</c> exists to name the skill.
+    /// </para>
     /// </summary>
     protected virtual void HandleSpelled(Creature caster)
     {

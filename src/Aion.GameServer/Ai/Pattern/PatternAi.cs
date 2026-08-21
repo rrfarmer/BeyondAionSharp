@@ -901,6 +901,26 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// <summary>Set by <see cref="FriendDeathNotice"/> immediately before it raises the event.</summary>
     internal void NoteFriendsKiller(Creature? killer) => FriendsKiller = killer;
 
+    /// <summary>
+    /// The skill that raised the current <c>on_spelled</c>, or 0 outside one. Retail's
+    /// <c>is_event_skill_id</c> tests this.
+    /// </summary>
+    /// <remarks>
+    /// <b>Set by <see cref="CreatureController"/> immediately before it raises the event</b>, the same
+    /// way <see cref="FriendsKiller"/> reaches its watcher, because the event carries only the caster.
+    /// The <c>Effect</c> is what distinguishes a skill from a swing and it exists only at that one
+    /// point in the damage path, so the id has to be handed over rather than looked up later.
+    /// <para>
+    /// Cleared in the same <c>finally</c> as <see cref="LastCaster"/>: a branch that reads it after
+    /// the handler has returned is reading the last fight's skill, and a stale id here would fire a
+    /// despawn on a creature nobody hit.
+    /// </para>
+    /// </remarks>
+    public int SpelledSkillId { get; private set; }
+
+    /// <summary>Handed the skill id by the damage path just before the event is raised.</summary>
+    internal void NoteSpelledSkill(int skillId) => SpelledSkillId = skillId;
+
     /// <summary>Retail's <c>on_spelled</c>.</summary>
     /// <remarks>
     /// Guarded against re-entrancy for the same reason <c>on_attacked</c> is: a branch that adds hate
@@ -910,7 +930,10 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         base.HandleSpelled(caster);
         if (inOnSpelled || Pattern.OnSpelled.Length == 0)
+        {
+            SpelledSkillId = 0;
             return;
+        }
 
         inOnSpelled = true;
         LastCaster = caster;
@@ -921,6 +944,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         finally
         {
             LastCaster = null;
+            SpelledSkillId = 0;
             inOnSpelled = false;
         }
     }

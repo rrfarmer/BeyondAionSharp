@@ -39666,3 +39666,81 @@ mutation rather than by reading it.
    `switch_target_by_class_indicator` (53).
 7. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — both boundaries, not
    backlog.
+
+## `is_event_skill_id`, and two things it flushed out
+
+Last entry left the seal wave's bombardment blocked on npc 855923 having no voice. Chasing that one
+marker turned into the condition behind it: **`is_event_skill_id`, 259 uses across 185 patterns**, and
+every one of them refused because nothing here could say "the skill that just hit me".
+
+### The engine half
+
+`on_spelled` is raised from the damage path and carries only the caster. The `Effect` — the one thing
+that knows *which* skill — exists at exactly one point in `CreatureController`, so the id is handed
+over there, the same way `FriendsKiller` reaches its watcher, and cleared in the same `finally` as
+`LastCaster`. A stale id would have an npc answering a skill nobody cast.
+
+`AbstractAI` already told readers to "call `GetSpelledSkillId`". **There was no such method** — an
+aspirational `<see cref>` that had sat there pointing at nothing. It points at `SpelledSkillId` now.
+
+### The name half
+
+Retail names skills, not ids: `DGRA_SatkBig_TA`. `skill_base.xml` carries `<id>` beside `<name>`, so
+the map is a lookup rather than a guess — and it must be the *global* one, because `is_event_skill_id`
+names skills cast by players, which no npc's own list contains.
+
+**61 of the 65 names resolve to a skill this port has a template for, covering 237 of 259 uses**, with
+**zero ambiguity** — no name maps to two ids. The four refused are 5.8 content (`Ab1_Item_Heal`, two
+Luna siege bombs, an event skill); a guard pointed at a skill that can never arrive is a branch that
+never fires, which is worse than a refusal because it looks built.
+
+### What it actually bought, after a correction
+
+The first regeneration read **3,955 patterns / 30,233 npcs** and turned `TheBindingsAndTheTableAgree`
+red, listing npcs no composing class claims. The extractor's `GENERIC` set contained **`aggressive`
+and `general`** — and the paragraph directly above that set explains why `wake_variable` was once held
+out: *its class descended from `GeneralNpcAI` rather than `PatternAi`, so an npc bound there would
+carry rows that never ran*. `AggressiveNpcAI : GeneralNpcAI : NpcAI` still fails that test. The set
+contradicted its own stated rule, and nothing had reached the table through those two names until this
+change let a handful of patterns through.
+
+Narrowed, the real figure is **3,936 patterns / 30,158 npcs — +7 patterns and +7 npcs over HEAD**, and
+the other 19 were rotations that would have existed and never run. **The pin named the exact npcs**,
+which is what made this a two-line fix instead of a hunt.
+
+### The flake was mine
+
+The new pins passed alone and failed in a full run, taking `TiamatStrongholdGossipTests` with them.
+`WithAi` registers AI handlers globally, so harness classes must carry
+`[Collection("GoldenDataManager")]`, which disables parallelisation. `EventSkillGuardTests` did not.
+
+**Exactly two harness-building classes in the suite lacked it** — the new one and the gossip one, which
+had been latent since it was written: it needed a second unserialised harness class to exist, and none
+did until this pass. Both carry it now, and the failure it produced was a clock-driven despawn
+assertion, which reads like a timing bug in the encounter rather than a test-isolation defect. Worth
+remembering: **an intermittent failure in an unrelated encounter is a plausible symptom of a test that
+forgot its collection.**
+
+**Verification.** Full suite **2,909 passing**, 1 skipped, after a green HEAD run to check the flake
+was not pre-existing. The plumbing is pinned by mutation: delete the hand-over in `CreatureController`
+and `TheSkillItNamesSetsItCasting` goes red on its own.
+
+### Still missing, in order
+
+1. **855923's voice is blocked on `spoken_for`, not on the condition.** With `is_event_skill_id` built,
+   every branch of `IDSeal_Wave_Arrow_Target` is sayable — verified branch by branch. It is refused
+   because `SealWaveLeaderAI` contains `public const int ArrowTarget = 855923;`, and the extractor
+   treats any `= 123456;` constant as "an encounter class already models this npc". **The leader only
+   spawns the marker; it does not drive it.** The decidable test is whether the npc's `ai=` resolves to
+   that class's own `[AIName]` — and **171 npcs are excluded by the conflation**, so this is a measured
+   change wanting its own pass, not a flip at the end of this one. That is precisely the batch-at-the-
+   end mistake this log already had to revert once.
+2. **Kaidan's rung** — indices for thirteen shamans first.
+3. **The 18 other `--implemented` candidates**, plus a fifth copy of the skill-index claim now known to
+   be in `SealWaveLeaderAI` ("the buff itself (index 0, on all five)") while the generated table already
+   emits `Do.SkillOn(ME, 21844)`.
+4. `control_door` (691) — one in-game observation; `enable_area` (575) — runtime zone toggling;
+   `change_world_scene_status` (101) — no runtime packet in either tree.
+5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.

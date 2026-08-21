@@ -440,6 +440,17 @@ CLASS_GROUPS = {
 WAYPOINT_STARTS: dict[str, tuple[float, float, float]] = {}
 
 
+#: Retail's `is_event_skill_id` names a skill by name -- `DGRA_SatkBig_TA` -- and this resolves it to
+#: the id through `skill_base.xml`'s own `<id>`, intersected with the skills this port has a template
+#: for. Populated in `main`; empty until then, which makes every use refuse rather than emit a zero.
+#:
+#: 61 of the 65 names retail uses resolve to a skill present here, covering 237 of the 259 uses. The
+#: four that do not -- `Ab1_Item_Heal`, two Luna siege bombs and an event skill -- are 5.8 content this
+#: 4.8 port has no template for, and a guard pointed at a skill that can never arrive is a branch that
+#: never fires, which is worse than a refusal because it looks built.
+EVENT_SKILLS: dict[str, int] = {}
+
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -461,7 +472,13 @@ BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 #: They are `PassivePatternAi` and `PatternAi` now, keeping the aggression each was written to protect,
 #: so the exclusion has no reason left. Their spawn-time variable write is an override and survives
 #: unchanged -- **the tables do not subsume it**, and nothing here claims they do.
-GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
+#: **`aggressive` and `general` are deliberately absent, and used to be here.** They fail the very
+#: test the paragraph above applies to `wake_variable`: `AggressiveNpcAI : GeneralNpcAI : NpcAI`, and
+#: neither is a `PatternAi`, so an npc bound to either carries rows that never run. Nothing had
+#: reached the table through them until `is_event_skill_id` let a handful of patterns through, and
+#: `TheBindingsAndTheTableAgree` caught it the same day -- the pin lists exactly the npcs a composing
+#: class does not claim, which is what made this a two-line fix rather than a hunt.
+GENERIC = {"battle_cycle", "death_spawn", "idle_cycle",
            "idle_cycle_passive", "aggressive_pattern", "passive_pattern",
            "wake_variable", "wake_variable_aggressive", "aggressive_no_loot"}
 
@@ -534,6 +551,16 @@ def read_guards(block: str) -> list[str]:
             if not percent:
                 raise Unsayable("test_probability with no percent")
             out.append(f"chance:{percent.group(1)}")
+        elif kind == "is_event_skill_id":
+            # Only meaningful on `on_spelled`, which is the only handler retail uses it in. The name is
+            # resolved through skill_base.xml; a name this port has no template for is refused.
+            named = re.search(r"<skill_id>([^<]+)</skill_id>", body)
+            if not named:
+                raise Unsayable("is_event_skill_id with no skill")
+            found = EVENT_SKILLS.get(named.group(1).strip())
+            if found is None:
+                raise Unsayable(f"is_event_skill_id of {named.group(1).strip()}")
+            out.append(f"eventskill:{found}")
         elif kind == "is_skill_count_left":
             # Retail names the skill by its place in this npc's own ordered list, exactly as `use_skill`
             # does, so the index is carried here and resolved per npc alongside the casts.
@@ -1034,6 +1061,18 @@ def main() -> int:
           for m in re.finditer(r'npc_id="(\d+)"[^>]*?\bai="([\w_]+)"', templates)}
     dev = {k: int(v) for k, v in npc_names(args.patterns_dir).items()}
     strings = string_ids(args.repo)
+
+    # `is_event_skill_id` names skills by name, including skills cast by players, so the per-npc join
+    # in npc_skill_lists.tsv cannot answer it -- that file only knows skills some npc carries. This is
+    # the global map, narrowed to what this port can actually be hit by.
+    import extract_npc_skill_lists as SK
+    ours = set(re.findall(
+        r'skill_template\s+skill_id="(\d+)"',
+        A.read_text(args.repo / "game-server/data/static_data/skills/skill_templates.xml")))
+    for skill_name, skill_id in SK.skill_ids(args.patterns_dir / "skill_base.xml").items():
+        if str(skill_id) in ours:
+            EVENT_SKILLS[skill_name] = skill_id
+    print(f"    {len(EVENT_SKILLS)} skill names resolve to a skill this port has")
 
     # The named designer paths. Earlier entries recorded these as server-side data present in neither
     # the client nor this repo; they are in fact already extracted here, and reading them is what

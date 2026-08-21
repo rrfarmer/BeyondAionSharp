@@ -269,6 +269,20 @@ public static class When
     /// </remarks>
     public static PatternCondition SkillReady(int skillId) => ai => ai.SkillAvailable(skillId);
 
+    /// <summary><c>is_event_skill_id</c> — the skill that just landed on me is this one.</summary>
+    /// <remarks>
+    /// Only meaningful inside <c>on_spelled</c>, which is the only handler retail uses it in.
+    /// Outside one <see cref="PatternAi.SpelledSkillId"/> is 0 and this is false, so a branch cannot
+    /// leak into another handler.
+    /// <para>
+    /// <b>Retail names the skill, not the id</b> — <c>DGRA_SatkBig_TA</c> — and the extractor resolves
+    /// that through <c>skill_base.xml</c>'s own <c>&lt;id&gt;</c>. 61 of the 65 names it uses resolve
+    /// to a skill this port has a template for; the four that do not are 5.8-only and are refused
+    /// rather than pointed at a skill that would never arrive.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition EventSkill(int skillId) => ai => ai.SpelledSkillId == skillId;
+
     /// <summary><c>is_npc_state</c> — what the NPC is doing right now.</summary>
     /// <remarks>
     /// 2,834 uses in the 5.8 dump, every one of them asking about <c>NPCI_SELF</c>, which is why there

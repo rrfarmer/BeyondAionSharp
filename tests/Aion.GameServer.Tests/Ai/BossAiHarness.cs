@@ -228,6 +228,29 @@ public sealed class BossAiHarness : IDisposable
 		new Aion.GameServer.SkillEngine.Model.Effect(effector, effected,
 			Aion.GameServer.Dataholders.DataManager.SKILL_DATA.GetSkillTemplate(skillId), 1);
 
+	/// <summary>
+	/// Lands a named skill on an NPC through the damage path, which is the only path that raises
+	/// <c>Spelled</c> <b>and</b> says which skill did it.
+	/// </summary>
+	/// <remarks>
+	/// <b>Raising <c>AiEventType.Spelled</c> directly is not enough for a branch that names a skill.</b>
+	/// The event carries the caster and nothing else; the skill id reaches the AI because
+	/// <c>CreatureController</c> hands it over just before raising, and an <c>Effect</c> only exists
+	/// there. A pin that raises the event by hand leaves <c>SpelledSkillId</c> at 0, so every
+	/// <see cref="Aion.GameServer.Ai.Pattern.AiPattern.When.EventSkill"/> guard reads false and the
+	/// branch silently does nothing -- which looks exactly like a branch that was never written.
+	/// </remarks>
+	public static void SpellHit(Npc npc, Creature caster, int skillId, int damage = 100) =>
+		npc.GetController().OnAttack(
+			caster,
+			EffectOf(caster, npc, skillId),
+			Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE.REGULAR,
+			damage,
+			true,
+			Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG.REGULAR,
+			null,
+			null);
+
 	public static void Rehate(Npc npc, Creature attacker) => npc.GetAggroList().AddHate(attacker, InitialHate);
 
 	/// <summary>
