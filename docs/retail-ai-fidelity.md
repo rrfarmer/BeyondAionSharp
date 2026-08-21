@@ -39457,3 +39457,65 @@ Adds backlog unchanged at 174 across 122 -- these are wake behaviours, not spawn
 6. **16 waypoint paths** -- searched exhaustively, absent from dump and client.
 7. **3,291 patterns whose npcs this port does not have** -- a version boundary. The wake table's
    newly-visible 3,878 is the same population seen from its own side.
+
+## "One route speed" was never true
+
+`Retail-AI-Pattern: MOVETYPE_RUN on routes`
+
+`MOVETYPE_RUN` has been refused since `goto_waypoint` was first read, on the grounds that **"this
+port's route walking has one speed"**. That line is in two extractors and has been repeated in a
+dozen entries of this document. It is wrong.
+
+`NpcMoveController.GetMovementMask` picks from `CreatureState.WALK_MODE`:
+`EmoteManager.EmoteStartWalking` sets it, and `EmoteStartReturning` and `EmoteStartFollowing` unset it
+and broadcast `CHANGE_SPEED`. Unset, the npc moves without the walk mask -- which is running.
+
+And the codebase already does exactly this by hand. `EternalBastionAssaulterNpcAI` has, since it was
+written:
+
+    WalkManager.StartWalking(this);
+    GetOwner().UnsetState(CreatureState.WALK_MODE);
+    PacketSendUtility.BroadcastPacket(..., EmotionType.CHANGE_SPEED, ...);
+
+Three lines. The same three are used here rather than a second way of moving.
+
+`Do.GotoWaypointRunning` starts the route and switches pace. `Do.ContinueRouteRunning` only switches
+pace -- the walking form does nothing because arriving already advances the route, but the running
+form is not nothing, since the advance happens either way and this changes how fast.
+
+### What it cost while it was refused
+
+* **102 `on_arrived_at_waypoint` handlers** dropped best-effort, taking **11 adds** with them.
+* **40 wake patterns** refused outright.
+* 210 `goto_waypoint` and 186 `goto_next_waypoint` uses.
+
+Battle table 3,828 -> **3,929 patterns**, 29,780 -> **30,151 npcs**, spawn rows 2,462 -> **3,151**.
+Wake table 1,507 -> **1,554 patterns**, 3,834 -> **3,925 npcs**. 470 rows now move at running pace.
+404 npcs newly bound.
+
+### Why it stood for so long
+
+The claim was true of `WalkManager` in isolation: `StartRouteWalkingAt` has no speed argument, and
+looking there and stopping is a reasonable thing to do. The speed does not live in the walk manager,
+it lives in a creature state the emote sets -- so the check that would have settled it was to ask how
+an npc *ever* runs, rather than how a route is started.
+
+That is the fourth claim in this stretch to fail the same way: `is_waypoint_index`, `is_enemy`, the
+`retail_pattern_paths` file, and now this. Each was a note saying "this port cannot do X" that
+survived because nobody re-asked. **The audit built for exactly this only scans the AI classes** --
+none of these four was in an AI class.
+
+Adds backlog unchanged at 174 across 122: these are movement rungs, and the adds they were dropping
+sit in handlers that had other refusals too.
+
+### Still missing, in order
+
+1. **`control_door`** (691 uses + 10 lost adds + 38 wake patterns) -- one in-game observation.
+2. `change_world_scene_status` (101 uses, 54 in the wake table) -- **checked this time**: `SceneStatus`
+   appears only in `SM_VERSION_CHECK`, a login-time city decoration, in both trees. No runtime packet.
+3. `enable_area` (575 uses) -- toggles a named quest-script area; this port has `ZoneInstance` and
+   enter/leave events but no runtime enable.
+4. `random_move` (187) -- a combat reposition.
+5. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+6. **Widen `audit_stale_claims.py` beyond the AI classes.** Four stale "we cannot do X" notes in this
+   stretch were in extractors and in this document, which it does not read.

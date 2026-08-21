@@ -9,7 +9,10 @@ using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Skill;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Walker;
@@ -1560,6 +1563,56 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     {
         if (!IsDead())
             WalkManager.StartRouteWalkingAt(this, step);
+    }
+
+    /// <summary>
+    /// <c>goto_waypoint move_type=MOVETYPE_RUN</c> — the same route, taken at running pace.
+    /// </summary>
+    /// <remarks>
+    /// <b>This port was recorded as having "one route speed" for several entries, and it does not.</b>
+    /// <c>NpcMoveController</c> picks its movement mask from <c>CreatureState.WALK_MODE</c>:
+    /// <c>EmoteManager.EmoteStartWalking</c> sets it, and <c>EmoteStartReturning</c> and
+    /// <c>EmoteStartFollowing</c> unset it and broadcast <c>CHANGE_SPEED</c> — which is running.
+    /// <para>
+    /// <c>EternalBastionAssaulterNpcAI</c> has done exactly this by hand since it was written: start
+    /// the walk, unset the state, send the emote. Three lines, and the same three are used here rather
+    /// than a second way of moving. 210 <c>goto_waypoint</c> uses and 186 <c>goto_next_waypoint</c>
+    /// uses were refused for want of them.
+    /// </para>
+    /// </remarks>
+    public void GotoWaypointRunning(int step)
+    {
+        if (IsDead())
+        {
+            return;
+        }
+
+        WalkManager.StartRouteWalkingAt(this, step);
+        RunRatherThanWalk();
+    }
+
+    /// <summary>
+    /// <c>goto_next_waypoint move_type=MOVETYPE_RUN</c> — carry on to the next point, running.
+    /// </summary>
+    /// <remarks>
+    /// The walking form of this is <see cref="AiPattern"/>'s <c>Do.ContinueRoute</c> and does nothing,
+    /// because arriving already advances the route. The running form is not nothing: the advance
+    /// happens either way, and this changes the pace it happens at.
+    /// </remarks>
+    public void ContinueRouteRunning()
+    {
+        if (!IsDead())
+        {
+            RunRatherThanWalk();
+        }
+    }
+
+    /// <summary>Drops the NPC out of walk mode and tells the client its speed changed.</summary>
+    private void RunRatherThanWalk()
+    {
+        GetOwner().UnsetState(CreatureState.WALK_MODE);
+        PacketSendUtility.BroadcastPacket(
+            GetOwner(), new SM_EMOTION(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetOwner().GetObjectId()));
     }
 
     public void StartWalking()

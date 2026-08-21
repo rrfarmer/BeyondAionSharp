@@ -947,9 +947,9 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             # reason `goto_waypoint` refuses one -- this port's route walking has a single speed --
             # which costs 186 of them; the other 483 walk or leave it unspecified.
             how = re.search(r"<move_type>(\w+)</move_type>", body)
-            if how and how.group(1) == "MOVETYPE_RUN":
-                raise Unsayable("goto_next_waypoint asking for a run")
-            out.append(("next_waypoint", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+            running = bool(how and how.group(1) == "MOVETYPE_RUN")
+            out.append(("next_waypoint_run" if running else "next_waypoint",
+                        0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "goto_waypoint":
             # Retail's waypoint is an index into the npc's own route, not a named path. `move_type`
             # says walk or run and this port's route walking has one speed, so a rung asking for a run
@@ -958,9 +958,9 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             how = re.search(r"<move_type>(\w+)</move_type>", body)
             if not step:
                 raise Unsayable("goto_waypoint with no waypoint")
-            if how and how.group(1) == "MOVETYPE_RUN":
-                raise Unsayable("goto_waypoint asking for a run")
-            out.append(("waypoint", int(step.group(1)), 0, 0, "", 0.0, 0.0, 0.0, 0))
+            running = bool(how and how.group(1) == "MOVETYPE_RUN")
+            out.append(("waypoint_run" if running else "waypoint",
+                        int(step.group(1)), 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind in ("say_to_all", "display_system_message", "send_system_msg"):
             named = re.search(r"<string_id>([^<]+)</string_id>", body)
             message = strings.get(named.group(1).strip()) if named else None

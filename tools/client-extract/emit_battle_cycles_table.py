@@ -330,6 +330,10 @@ def action_code(row: dict) -> str:
         return "Do.Nothing()"
     if kind == "next_waypoint":
         return "Do.ContinueRoute()"
+    if kind == "next_waypoint_run":
+        return "Do.ContinueRouteRunning()"
+    if kind == "waypoint_run":
+        return f"Do.GotoWaypointRunning({row['a1']})"
     if kind == "say":
         return f"Do.Say({row['a1']}, {row['a2']})"
     if kind == "sysmsg":

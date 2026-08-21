@@ -1183,6 +1183,12 @@ public static class Do
     /// <summary><c>goto_waypoint</c>: walk the npc's own route from the given step.</summary>
     public static PatternAction GotoWaypoint(int step) => ai => ai.GotoWaypoint(step);
 
+    /// <summary><c>goto_waypoint move_type=MOVETYPE_RUN</c>.</summary>
+    public static PatternAction GotoWaypointRunning(int step) => ai => ai.GotoWaypointRunning(step);
+
+    /// <summary><c>goto_next_waypoint move_type=MOVETYPE_RUN</c>.</summary>
+    public static PatternAction ContinueRouteRunning() => static ai => ai.ContinueRouteRunning();
+
     /// <summary><c>goto_next_waypoint</c> — carry on to the next point of the route.</summary>
     /// <remarks>
     /// <b>Deliberately does nothing, and the nothing is the point.</b> This port already advances the

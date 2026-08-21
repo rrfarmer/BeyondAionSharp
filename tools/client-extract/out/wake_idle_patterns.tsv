@@ -127,6 +127,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 214713	ND2_WhG3	on_wake_up	0	100		0	spawn	280972	1	0	for_the_fight_absolute	407.19	762.6	189.2
 214713	ND2_WhG3	on_wake_up	0	100		1	spawn	280971	1	0	for_the_fight_absolute	377.24	762.6	189.2
 214713	ND2_WhG3	on_wake_up	0	100		2	waypoint	0	0	0		0.0	0.0	0.0
+214836	Lizardman_FeB_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+214837	Lizardman_AeB_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+214838	Lizardman_ReC_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+214839	Lizardman_PeB_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
 214863	AD2_Wss0Bst1BT10st3H30st2	on_wake_up	0	5		0	skill	16822	0	0	ME	0.0	0.0	0.0
 214877	ND2_FeL2	on_wake_up	0	6		0	skill	18155	0	0	ME	0.0	0.0	0.0
 214877	ND2_FeL2	on_wake_up	0	6		1	waypoint	0	0	0		0.0	0.0	0.0
@@ -193,6 +197,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 217252	IDHouse_Zadra_Boss_Phase3	on_wake_up	0	5		0	nothing	0	0	0		0.0	0.0	0.0
 217253	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		0	say	1500481	0	0		0.0	0.0	0.0
 217253	IDHouse_Zadra_Boss_Phase4	on_wake_up	0	99		1	nothing	0	0	0		0.0	0.0	0.0
+217264	RangeGolem	on_wake_up	0	5		0	waypoint_run	0	0	0		0.0	0.0	0.0
+217265	MeleeGolem	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 217266	IDForest_Nr_milipede_sky_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
 217267	IDForest_Nr_Light_sky_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
 217268	IDForest_Nr_Octaside_Light_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
@@ -202,6 +208,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 217272	IDForest_Nr_ElementalLight2_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
 217273	IDForest_Nr_ElementalLight1_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
 217274	IDForest_Nr_Golem_Ranger_Hard	on_wake_up	0	7		0	skill	19435	0	0	ME	0.0	0.0	0.0
+217275	RangeGolem	on_wake_up	0	5		0	waypoint_run	0	0	0		0.0	0.0	0.0
+217276	MeleeGolem	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 217290	IDYun_Temp_29	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
 217291	IDYun_Temp_30	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
 217292	IDYun_Temp_31	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
@@ -230,6 +238,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 217383	D3_NeM	on_idle_timer	2	1	set_flag_var:2	4	despawn_self	0	0	0		0.0	0.0	0.0
 217392	Raksha_DrakanAssasin_KNmd	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 217424	Raksha_MirrorImage	on_wake_up	0	7		0	timer	1000	0	0		0.0	0.0	0.0
+217450	Raksha_Deliverfire	on_wake_up	0	7		0	waypoint_run	1	0	0		0.0	0.0	0.0
 217456	Raksha_Evileye_Nmd	on_wake_up	0	7		0	sysmsg	1401135	0	0		0.0	0.0	0.0
 217555	IDArena_S4_Named_R5	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
 217556	IDArena_S4_Named_R6	on_wake_up	0	7		0	spawn	281191	1	0	for_the_fight_absolute	1261.8	804.5	358.7
@@ -872,6 +881,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 231001	GraveWitch_Mu_N_65_An	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 231014	IDRose_M_Ratman_Wa_S_An	on_wake_up	0	95		0	skill	20557	0	0	ME	0.0	0.0	0.0
 231015	IDRose_M_Ratman_Wa_P_Ae	on_wake_up	0	95		0	skill	20557	0	0	ME	0.0	0.0	0.0
+231019	IDRose_H_ShulackF_Fi_BossGuard	on_wake_up	0	15		0	skill	20557	0	0	ME	0.0	0.0	0.0
+231019	IDRose_H_ShulackF_Fi_BossGuard	on_wake_up	0	15		1	waypoint_run	0	0	0		0.0	0.0	0.0
+231020	IDRose_H_ShulackF_Gu_BossGuard	on_wake_up	0	15		0	skill	20557	0	0	ME	0.0	0.0	0.0
+231020	IDRose_H_ShulackF_Gu_BossGuard	on_wake_up	0	15		1	waypoint_run	0	0	0		0.0	0.0	0.0
+231021	IDRose_H_ShulackF_Ri_BossGuard	on_wake_up	0	15		0	skill	20557	0	0	ME	0.0	0.0	0.0
+231021	IDRose_H_ShulackF_Ri_BossGuard	on_wake_up	0	15		1	waypoint_run	0	0	0		0.0	0.0	0.0
 231022	IDF5_U1_Vri_Def_Ra_SN_65_Ae	on_wake_up	0	90		0	waypoint	0	0	0		0.0	0.0	0.0
 231022	IDF5_U1_Vri_Def_Ra_SN_65_Ae	on_wake_up	0	90		1	skill	20700	0	0	ME	0.0	0.0	0.0
 231023	IDF5_U1_Vri_Def_Wi_65_Ae	on_wake_up	0	90		0	waypoint	0	0	0		0.0	0.0	0.0
@@ -2008,6 +2023,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 235205	F5_PvP_DGuard_As_Ae_Hide	on_wake_up	0	95		0	skill	20664	0	0	ME	0.0	0.0	0.0
 235205	F5_PvP_DGuard_As_Ae_Hide	on_wake_up	0	95		1	skill	17166	0	0	ME	0.0	0.0	0.0
 235206	LDF4_Advance_Guard_Ra	on_wake_up	0	7		0	skill	20664	0	0	ME	0.0	0.0	0.0
+235328	LDF4_Advance_Guard_killer_As	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+235329	LDF4_Advance_Guard_killer_As	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+235330	LDF4_Advance_Guard_killer_As	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+235331	LDF4_Advance_Guard_killer_As	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+235332	LDF4_Advance_Guard_killer_As	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+235333	LDF4_Advance_Guard_killer_As	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
 235580	IDF5_U2_VriRP_As_party_Hide_65_Ae	on_wake_up	0	91		0	skill	20700	0	0	ME	0.0	0.0	0.0
 235580	IDF5_U2_VriRP_As_party_Hide_65_Ae	on_wake_up	0	91		1	skill	16822	0	0	ME	0.0	0.0	0.0
 235580	IDF5_U2_VriRP_As_party_Hide_65_Ae	on_wake_up	0	91		2	waypoint	0	0	0		0.0	0.0	0.0
@@ -2825,6 +2846,16 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 273340	BGuard_ChiefF5_Killer	on_wake_up	0	18		0	skill	20664	0	0	ME	0.0	0.0	0.0
 273341	BGuard_ChiefF5_Killer	on_wake_up	0	18		0	skill	20664	0	0	ME	0.0	0.0	0.0
 273342	BGuard_ChiefF5_Killer	on_wake_up	0	18		0	skill	20664	0	0	ME	0.0	0.0	0.0
+276687	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276688	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276689	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276690	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276691	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276989	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276990	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276991	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276992	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+276993	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 277243	LDF5_LGuard_DisputePvP_Hide_PM_Ae	on_wake_up	0	99		0	skill	20664	0	0	ME	0.0	0.0	0.0
 277243	LDF5_LGuard_DisputePvP_Hide_PM_Ae	on_wake_up	0	99		1	skill	18762	0	0	ME	0.0	0.0	0.0
 277245	LDF5_LGuard_DisputePvP_Support_HBuff_Pn	on_wake_up	0	7		0	waypoint	0	0	0		0.0	0.0	0.0
@@ -3319,6 +3350,10 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281204	ABRwd_SpawnBoxH	on_wake_up	0	7		8	spawn	700543	1	555	for_the_fight_absolute	559.9	882.7	199.28
 281204	ABRwd_SpawnBoxH	on_wake_up	0	7		9	spawn	700543	1	575	for_the_fight_absolute	571.6	869.8	199.28
 281204	ABRwd_SpawnBoxH	on_wake_up	0	7		10	spawn	700561	1	595	for_the_fight_absolute	576.8	853.5	199.28
+281206	Lizardman_FeB_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+281207	Lizardman_AeB_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+281208	Lizardman_ReC_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+281209	Lizardman_PeB_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
 281210	IDLF1_GCoreDS	on_wake_up	0	7		0	broadcast	6822	35	0		0.0	0.0	0.0
 281210	IDLF1_GCoreDS	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 281211	IDSlk_Gunner	on_wake_up	0	7		0	nothing	0	0	0		0.0	0.0	0.0
@@ -3328,6 +3363,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 281242	IDSlk_DeckBomb	on_wake_up	0	7		0	skill	18560	0	0	ME	0.0	0.0	0.0
 281242	IDSlk_DeckBomb	on_wake_up	0	7		1	spawn	281290	15	0	for_the_fight_self	0.0	0.0	0.0
 281274	Dragon_G3	on_wake_up	0	1		0	skill	18168	0	0	ME	0.0	0.0	0.0
+281283	Lizardman_FeC_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+281284	Lizardman_PeA_1	on_wake_up	0	7		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
 281288	ABRwd_DespawnDoor	on_wake_up	0	7		0	broadcast	6683	10	0		0.0	0.0	0.0
 281289	IDSlk_DeckBomb	on_wake_up	0	7		0	skill	18560	0	0	ME	0.0	0.0	0.0
 281289	IDSlk_DeckBomb	on_wake_up	0	7		1	spawn	281290	15	0	for_the_fight_self	0.0	0.0	0.0
@@ -3596,6 +3633,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282257	IDForest_wave_etc1	on_wake_up	0	2		0	timer	2500	0	0		0.0	0.0	0.0
 282261	IDElemental_Ex3	on_wake_up	0	8		0	skill	19227	0	0	ME	0.0	0.0	0.0
 282262	IDElemental_Ex4	on_wake_up	0	8		0	skill	19227	0	0	ME	0.0	0.0	0.0
+282264	D3_NeP_S	on_wake_up	0	20		0	waypoint_run	0	0	0		0.0	0.0	0.0
+282264	D3_NeP_S	on_wake_up	0	20		1	spawn	282184	1	0	for_the_fight_self	0.0	0.0	0.0
 282268	IDHouse_Zadra_PrimeBuff	on_wake_up	0	2		0	spawn	282190	1	0	for_the_fight_offset	0.0	0.0	0.0
 282268	IDHouse_Zadra_PrimeBuff	on_wake_up	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
 282276	Station_Shu_AS	on_wake_up	0	7		0	skill	19493	0	0	ME	0.0	0.0	0.0
@@ -3610,6 +3649,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 282321	Raksha_DrakanStatuePoison	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 282322	Raksha_DrakanStatueEarth	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 282323	Raksha_DrakanStatueMain	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
+282324	Raksha_Deliverfire	on_wake_up	0	7		0	waypoint_run	1	0	0		0.0	0.0	0.0
 282326	Raksha_MirrorImage	on_wake_up	0	7		0	timer	1000	0	0		0.0	0.0	0.0
 282345	IDHouse_Butler_RollingGolem	on_wake_up	0	1		0	skill	19571	0	0	ME	0.0	0.0	0.0
 282345	IDHouse_Butler_RollingGolem	on_wake_up	0	1		1	nothing	0	0	0		0.0	0.0	0.0
@@ -4182,6 +4222,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284289	Frillfaimam_As_N_65_Ah	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 284289	Frillfaimam_As_N_65_Ah	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
 284295	GhostRune_As_N_65_Ae	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
+284308	BIDF5_R2_Sync2_A3	on_wake_up	0	1		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
+284309	BIDF5_R2_Sync2_A4	on_wake_up	0	1		0	next_waypoint_run	0	0	0		0.0	0.0	0.0
 284310	BIDF5_R2_Sync2_A5	on_wake_up	0	1		0	next_waypoint	0	0	0		0.0	0.0	0.0
 284311	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284312	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
@@ -4262,6 +4304,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284431	IDVritra_Base_Boss2	on_idle_timer	0	7	set_flag_var:24	0	timer	0	0	0		0.0	0.0	0.0
 284431	IDVritra_Base_Boss2	on_idle_timer	0	7	set_flag_var:24	1	broadcast	15062401	50	0		0.0	0.0	0.0
 284431	IDVritra_Base_Boss2	on_wake_up	0	7		0	timer	5000	0	0		0.0	0.0	0.0
+284435	IDVritra_Base_Boss1_Sum1	on_wake_up	0	1		0	skill	16822	0	0	ME	0.0	0.0	0.0
+284435	IDVritra_Base_Boss1_Sum1	on_wake_up	0	1		1	waypoint_run	0	0	0		0.0	0.0	0.0
 284438	IDVritra_Base_Boss3_Sum	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284439	IDVritra_Base_Boss3_Sum	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284443	Rune_FrostNmd_MagCircle_NoShow3	on_idle_timer	0	7		0	spawn	284444	1	30	for_the_fight_self	0.0	0.0	0.0
@@ -4719,6 +4763,18 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 294791	Ab_SummonSkill	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 294792	Ab_SummonSkill	on_wake_up	0	1		0	skill_now	18151	0	0	ME	0.0	0.0	0.0
 294792	Ab_SummonSkill	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+294838	DrGuard_FhA_WarpA	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+294839	DrGuard_FhA_WarpB	on_wake_up	0	1		0	skill	18150	0	0	ME	0.0	0.0	0.0
+294839	DrGuard_FhA_WarpB	on_wake_up	0	1		1	waypoint_run	0	0	0		0.0	0.0	0.0
+294839	DrGuard_FhA_WarpB	on_wake_up	0	1		2	say	340928	0	0		0.0	0.0	0.0
+294839	DrGuard_FhA_WarpB	on_wake_up	0	1		3	spawn	294615	1	30	for_the_fight_self	0.0	0.0	0.0
+294840	DrGuard_FhA_WarpC	on_wake_up	0	1		0	skill	18150	0	0	ME	0.0	0.0	0.0
+294840	DrGuard_FhA_WarpC	on_wake_up	0	1		1	waypoint_run	0	0	0		0.0	0.0	0.0
+294840	DrGuard_FhA_WarpC	on_wake_up	0	1		2	say	340928	0	0		0.0	0.0	0.0
+294840	DrGuard_FhA_WarpC	on_wake_up	0	1		3	spawn	294615	1	30	for_the_fight_self	0.0	0.0	0.0
+294841	DrGuard_FhA_CDropA	on_wake_up	0	1		0	skill	18150	0	0	ME	0.0	0.0	0.0
+294841	DrGuard_FhA_CDropA	on_wake_up	0	1		1	waypoint_run	0	0	0		0.0	0.0	0.0
+294841	DrGuard_FhA_CDropA	on_wake_up	0	1		2	say	340928	0	0		0.0	0.0	0.0
 294926	Ab_QuarterMaster_W5	on_wake_up	0	1		0	say	341119	0	0		0.0	0.0	0.0
 294926	Ab_QuarterMaster_W5	on_wake_up	0	1		1	waypoint	0	0	0		0.0	0.0	0.0
 294927	Ab_QuarterMaster_W10	on_wake_up	0	1		0	say	341119	0	0		0.0	0.0	0.0
@@ -4770,18 +4826,48 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 295092	BGuard_ChiefDespawn	on_wake_up	0	7		0	broadcast	10009	100	0		0.0	0.0	0.0
 295092	BGuard_ChiefDespawn	on_wake_up	0	7		1	broadcast	10037	100	0		0.0	0.0	0.0
 295184	BGuard_Nothing	on_wake_up	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+295221	DrGuard_FhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295226	DrGuard_RhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295231	DrGuard_AhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295236	DrGuard_WhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295241	DrGuard_PhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295246	DrGuard_FhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295251	DrGuard_RhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295256	DrGuard_AhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295261	DrGuard_WhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295266	DrGuard_PhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 295349	DrGuard_AeB	on_wake_up	0	15		0	skill	17394	0	0	ME	0.0	0.0	0.0
 295349	DrGuard_AeB	on_wake_up	0	15		1	waypoint	0	0	0		0.0	0.0	0.0
 295433	DrGuard_AeB	on_wake_up	0	15		0	skill	17394	0	0	ME	0.0	0.0	0.0
 295433	DrGuard_AeB	on_wake_up	0	15		1	waypoint	0	0	0		0.0	0.0	0.0
 295517	DrGuard_AeB	on_wake_up	0	15		0	skill	17394	0	0	ME	0.0	0.0	0.0
 295517	DrGuard_AeB	on_wake_up	0	15		1	waypoint	0	0	0		0.0	0.0	0.0
+295532	DrGuard_FhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295537	DrGuard_RhA_L50_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295542	DrGuard_AhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295547	DrGuard_WhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295552	DrGuard_PhA_L50_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295557	DrGuard_FhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295562	DrGuard_RhB_L50_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295567	DrGuard_AhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295572	DrGuard_WhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295577	DrGuard_PhB_L50_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 295738	DrGuard_AeB	on_wake_up	0	15		0	skill	17394	0	0	ME	0.0	0.0	0.0
 295738	DrGuard_AeB	on_wake_up	0	15		1	waypoint	0	0	0		0.0	0.0	0.0
 295822	DrGuard_AeB	on_wake_up	0	15		0	skill	17394	0	0	ME	0.0	0.0	0.0
 295822	DrGuard_AeB	on_wake_up	0	15		1	waypoint	0	0	0		0.0	0.0	0.0
 295906	DrGuard_AeB	on_wake_up	0	15		0	skill	17394	0	0	ME	0.0	0.0	0.0
 295906	DrGuard_AeB	on_wake_up	0	15		1	waypoint	0	0	0		0.0	0.0	0.0
+295921	DrGuard_FhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295926	DrGuard_RhA_L50M_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295931	DrGuard_AhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295936	DrGuard_WhA_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295941	DrGuard_PhA_L50M_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295946	DrGuard_FhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295951	DrGuard_RhB_L50M_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295956	DrGuard_AhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295961	DrGuard_WhB_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+295966	DrGuard_PhB_L50M_CDrop	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 296239	BGuard_CDropGateA	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
 296239	BGuard_CDropGateA	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 296241	BGuard_CDropGateA	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
@@ -4809,6 +4895,15 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 296252	BGuard_CDropGateA_330D	on_wake_up	0	7		0	spawn	296238	1	30	for_the_fight_self	0.0	0.0	0.0
 296252	BGuard_CDropGateA_330D	on_wake_up	0	7		1	despawn_self	0	0	0		0.0	0.0	0.0
 296337	BGuard_DespawnH1	on_wake_up	0	7		0	broadcast	10005	30	0		0.0	0.0	0.0
+296380	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296381	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296382	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296383	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296384	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296385	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296386	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296387	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
+296388	DrGuard_FhA_WarpH1	on_wake_up	0	1		0	waypoint_run	0	0	0		0.0	0.0	0.0
 296439	BGuard_ChiefSum_C	on_wake_up	0	3	set_flag_var:0	0	skill	18454	0	0	ME	0.0	0.0	0.0
 296440	BGuard_ChiefSum_C	on_wake_up	0	3	set_flag_var:0	0	skill	18455	0	0	ME	0.0	0.0	0.0
 296512	BGuard_TowerChiefF4ASum	on_idle_timer	0	7		0	broadcast	10032	40	0		0.0	0.0	0.0
@@ -5956,6 +6051,8 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 799668	IDYun_Ariana3	on_idle_timer	1	1	set_flag_var:1	0	timer	0	0	0		0.0	0.0	0.0
 799668	IDYun_Ariana3	on_idle_timer	1	1	set_flag_var:1	1	despawn_self	0	0	0		0.0	0.0	0.0
 799668	IDYun_Ariana3	on_wake_up	0	6		0	skill	19921	0	0	ME	0.0	0.0	0.0
+799669	IDYun_Ariana4	on_wake_up	0	3		0	waypoint_run	0	0	0		0.0	0.0	0.0
+799669	IDYun_Ariana4	on_wake_up	0	3		1	timer	6000	0	0		0.0	0.0	0.0
 799670	IDYun_Ariana5	on_idle_timer	0	6	set_flag_var:1	0	say	1500418	0	0		0.0	0.0	0.0
 799670	IDYun_Ariana5	on_idle_timer	0	6	set_flag_var:1	1	spawn	800227	1	0	for_the_fight_absolute	193.31	435.41	262.0
 799670	IDYun_Ariana5	on_idle_timer	0	6	set_flag_var:1	2	spawn	800227	1	0	for_the_fight_absolute	193.31	435.41	262.0
@@ -6036,6 +6133,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 799674	IDYun_Merops4	on_idle_timer	2	2	set_flag_var:3	2	say	1500436	0	0		0.0	0.0	0.0
 799674	IDYun_Merops4	on_idle_timer	3	1	set_flag_var:4	0	broadcast	33	50	0		0.0	0.0	0.0
 799674	IDYun_Merops4	on_idle_timer	3	1	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
+799676	IDYun_Temp_28	on_wake_up	0	7		0	waypoint_run	0	0	0		0.0	0.0	0.0
+799677	IDYun_Temp_28	on_wake_up	0	7		0	waypoint_run	0	0	0		0.0	0.0	0.0
+799678	IDYun_Temp_28	on_wake_up	0	7		0	waypoint_run	0	0	0		0.0	0.0	0.0
 800160	LDF4b_Tiamat_Temp54	on_idle_timer	0	9	set_flag_var:0	0	say	390624	0	0		0.0	0.0	0.0
 800160	LDF4b_Tiamat_Temp54	on_idle_timer	0	9	set_flag_var:0	1	timer	20000	0	0		0.0	0.0	0.0
 800160	LDF4b_Tiamat_Temp54	on_idle_timer	1	8	set_flag_var:1	0	say	390625	0	0		0.0	0.0	0.0
@@ -6104,6 +6204,13 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 800344	IDTiamat_Kahrun10	on_idle_timer	5	95	set_flag_var:5	0	broadcast	15117	50	0		0.0	0.0	0.0
 800344	IDTiamat_Kahrun10	on_idle_timer	5	95	set_flag_var:5	1	broadcast	2000	50	0		0.0	0.0	0.0
 800344	IDTiamat_Kahrun10	on_idle_timer	5	95	set_flag_var:5	2	timer	0	0	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_idle_timer	0	3	set_flag_var:0	0	broadcast	200	50	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_idle_timer	0	3	set_flag_var:0	1	timer	0	0	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_idle_timer	1	2	set_flag_var:1	0	broadcast	202	50	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_idle_timer	1	2	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_idle_timer	2	1	set_flag_var:2	0	broadcast	204	50	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_idle_timer	2	1	set_flag_var:2	1	timer	0	0	0		0.0	0.0	0.0
+800347	IDTiamat_Garnon1	on_wake_up	0	10		0	waypoint_run	0	0	0		0.0	0.0	0.0
 800351	IDTiamat_Kaisinel_2	on_idle_timer	0	99	set_flag_var:1	0	broadcast	15102	50	0		0.0	0.0	0.0
 800351	IDTiamat_Kaisinel_2	on_idle_timer	0	99	set_flag_var:1	1	timer	0	0	0		0.0	0.0	0.0
 800351	IDTiamat_Kaisinel_2	on_idle_timer	1	98	set_flag_var:2	0	broadcast	15104	50	0		0.0	0.0	0.0
@@ -6146,6 +6253,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	4	97	set_flag_var:4	1	timer	0	0	0		0.0	0.0	0.0
 800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	4	97	set_flag_var:4	2	timer	11000	0	0		0.0	0.0	0.0
 800385	IDTiamat_NPC_Tiamat_2	on_idle_timer	5	96	set_flag_var:14	0	var	0	1	0	TIAMAT_SPAWN	0.0	0.0	0.0
+800437	IDTiamat_Murugan3	on_wake_up	0	7		0	waypoint_run	0	0	0		0.0	0.0	0.0
 800457	IDTiamat_NPC_Li_Hero_D	on_wake_up	0	7		0	say	390863	0	0		0.0	0.0	0.0
 800458	IDTiamat_NPC_Da_Hero_D	on_wake_up	0	7		0	say	390861	0	0		0.0	0.0	0.0
 801026	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		0	skill	20664	0	0	ME	0.0	0.0	0.0
@@ -8523,6 +8631,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 856039	IDTiamat_Hard_Breath_Left_01	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 856044	IDTiamat_Hard_FallingRock_Dmg	on_wake_up	0	1		0	skill_now	21899	0	0	ME	0.0	0.0	0.0
 856044	IDTiamat_Hard_FallingRock_Dmg	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
+856050	BIDF5_U01_Runaway_Wi_S_P1	on_wake_up	0	1000		0	waypoint_run	0	0	0		0.0	0.0	0.0
+856051	BIDF5_U01_Runaway_Pr_S_P1	on_wake_up	0	1000		0	waypoint_run	0	0	0		0.0	0.0	0.0
+856052	BIDF5_U01_Runaway_As_S_P1	on_wake_up	0	1000		0	waypoint_run	0	0	0		0.0	0.0	0.0
 856054	BIDF5_U01_Ctrl_01	on_wake_up	0	1000	chance:30|set_flag_var:0	0	var	1	0	0	bridge_on	0.0	0.0	0.0
 856054	BIDF5_U01_Ctrl_01	on_wake_up	0	1000	chance:30|set_flag_var:0	1	spawn	235782	1	0	for_the_fight_self	0.0	0.0	0.0
 856054	BIDF5_U01_Ctrl_01	on_wake_up	0	1000	chance:30|set_flag_var:0	2	spawn	856062	1	0	for_the_fight_absolute	612.3	559.2	590.6
