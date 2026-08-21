@@ -40030,3 +40030,74 @@ encounter that carries the element.
 7. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 8. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## Taloc's ambush, and a flake that is nobody's new fault
+
+Continuing down the move-rung debt. After the runners, the next patterns that carry real mechanics are
+`Elim_EventC` and `Elim_EventD` — two markers in Taloc's Hollow, one npc each.
+
+### The mechanic
+
+Both sighting handlers carry the same three actions behind one test-and-set flag: **spawn three mobs at
+fixed absolute coordinates, then despawn yourself.** C brings two 216135 and one 216137; D brings two
+216136 and one 216134. The coordinates are retail's own and absolute rather than relative, so the
+ambush lands where the room was built for it rather than on top of the marker.
+
+Pinned: walking past brings exactly three and removes the marker; walking past repeatedly still brings
+three, which is what the flag is for; and walking about across the room springs nothing, which is what
+the sight test is for. Deleting the two `owners[…]` entries reddens three of the four.
+
+### What this port does instead, and why it stays
+
+**The markers are not spawned here — the mobs are.** 216134-216137 have rows in
+`300190000_Taloc's_Hollow.xml`; 281531 and 281532 have none. So the three mobs stand in the room from
+the moment the instance opens, where retail has them walk into an ambush.
+
+**Checked against the spec before drawing any conclusion: the Java tree on 4.8 is identical** — it
+spawns the same four mobs and neither marker. So this is not a porting mistake, it is aionemu differing
+from retail in *spawn data*, faithfully carried across.
+
+That matters for what may be changed. The sanctioned exception in `CLAUDE.md` covers **NPC AI behaviour**
+sourced from retail pattern data; where the mobs stand is spawn data, and the Java tree is the spec for
+it. So the difference is recorded and the rows are left alone. The pattern layer is ready for the
+markers the day somebody decides those rows should change.
+
+### The flake
+
+One full run failed on `KingspinAiTests.TheTopRungOfTheLadderThrowsNothing` — *"below fifty-one he
+should throw: 1 against 1"*. Chased rather than re-run and forgotten:
+
+* Kingspin carries **no** `goto_next_waypoint` rung, so last entry's `ContinueRoute` change cannot
+  reach it; it is `ai="kingspin"`, a bespoke class, so the harness registrations cannot collide.
+* **HEAD, without this entry's files, ran green.** So adding a class perturbs it.
+* The two classes **together** run green, so it is not a direct interaction.
+* The identical tree **run again** is green.
+
+So it is intermittent, and adding any class shifts whatever it depends on. **It has the same shape as
+the `TiamatStrongholdGossipTests` flake three entries ago**: advance a harness clock, then assert on
+something a scheduled task has to run first. That one was a missing `[Collection]`; this one has its
+collection, so the remaining suspect is the assertion racing the task rather than the ordering itself.
+
+**Not fixed here, and not written off.** It is named at the top of the list below with what is known,
+because an intermittent red in an unrelated encounter is exactly the kind of thing that gets re-run
+until it passes and then forgotten.
+
+**Verification.** Full suite **2,931 passing**, 1 skipped. Four new pins.
+
+### Still missing, in order
+
+1. **`KingspinAiTests.TheTopRungOfTheLadderThrowsNothing` is flaky.** Evidence above. The likely shape
+   is a clock advance racing a scheduled task; if that is right, the fix belongs in the harness — drain
+   or await scheduled work after `Advance` — and would harden every clock-driven pin at once.
+2. **The other 65 move-rung patterns.** `IDLDF4_Re_01_check` (12 rungs, race-gated condition-spawn
+   variables on three npcs) is the next real one; `IDHouse_Butler_RollingGolem` (8) is `do_nothing`
+   throughout and needs no reading.
+3. **The runner encounter stays unverifiable** — nine npcs, no spawn rows, no routes.
+4. **Kaidan's low-health rung** — indices for thirteen shamans first.
+5. **The 18 `--implemented` candidates**, plus the fifth copy of the skill-index claim in
+   `SealWaveLeaderAI`.
+6. **The guards' two broadcasts** (22696 waking, 22658 second clock) — no listener found in our tree.
+7. `control_door` (691); `enable_area` (575); `change_world_scene_status` (101) — no runtime packet.
+8. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+9. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
