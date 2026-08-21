@@ -40101,3 +40101,65 @@ until it passes and then forgotten.
 8. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 9. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## The flake, and the hypothesis I had to throw away
+
+Last entry put `KingspinAiTests.TheTopRungOfTheLadderThrowsNothing` at the top of the backlog with a
+guess attached: *"the likely shape is a clock advance racing a scheduled task … the fix belongs in the
+harness."* **That was wrong, and checking it was the first thing worth doing.**
+
+`VirtualThreadPool.Advance` runs every due entry **inline** — `next.Handle.Run()`, on the calling
+thread. There is no task to race. Its one escape hatch, `MaxTicksPerAdvance`, is 100,000 and cannot be
+reached by a twenty-five second advance. A harness-wide "drain scheduled work" change would have been
+built on nothing, and it would have looked like a fix because the flake is one run in twenty.
+
+The second guess died the same way: the cry a web makes carries **fifty metres** (`CryReach`), and the
+whole raid stands within fifteen of the probe, so which player a web lands on cannot decide whether it
+is heard.
+
+### What it actually was
+
+The test's own remarks named it and then did not do it:
+
+> **Counted as webs, and this is the fourth pin in this file to be moved off cries.** … Webs can: four
+> per throw, regardless of where anyone stands.
+
+**Both assertions still called `Cries`.** The reasoning had been written down, the change had not been
+made, and the paragraph read as though it had — the same failure this log has recorded for stale
+comments, here inside a test.
+
+The variance is one line: the throw is `WebOn(4, MultiTargetOrder.Random, …)` — four webs chosen at
+random from whoever is in reach — and the raid was **six**. Which four get webs differs from run to
+run, and the pin compares a tally before against a tally after.
+
+**Sized the raid to the throw: four.** Random then picks all four every time. The order is still
+random, nothing about the encounter is faked, and there is simply no subset left to choose. The rung
+below, `WebOn(5, Ascending, …)`, covers the same four.
+
+**Stated honestly: this is reasoned, not proven.** A one-in-twenty flake is not disproved by a green
+run, and this entry has one. What can be said is that the source of variance the pin depended on is
+gone, and that the two mechanisms guessed at last time are ruled out by measurement rather than by the
+test passing.
+
+The file's other cry-based pin asserts `Cries(cries) > 0` rather than a delta, so a varying subset
+cannot reach it; it is left alone.
+
+**Verification.** Full suite **2,931 passing**, 1 skipped.
+
+### Still missing, in order
+
+1. **The flake is not proven fixed.** If it returns, the next thing to look at is why `settled` was
+   **1** after twenty-five seconds at eighty percent health — the opening throw puts three webs on
+   players and four behind him, and only one spoke. That number was never explained, and it may be a
+   second, quieter problem sitting underneath the one addressed here.
+2. **The other 65 move-rung patterns.** `IDLDF4_Re_01_check` (12 rungs, race-gated condition-spawn
+   variables) is next; `IDHouse_Butler_RollingGolem` (8) is `do_nothing` throughout.
+3. **The runner encounter stays unverifiable** — nine npcs, no spawn rows, no routes.
+4. **Kaidan's low-health rung** — indices for thirteen shamans first.
+5. **The 18 `--implemented` candidates**, plus the fifth copy of the skill-index claim in
+   `SealWaveLeaderAI`.
+6. **The guards' two broadcasts** (22696 waking, 22658 second clock) — no listener found in our tree.
+7. `control_door` (691); `enable_area` (575); `change_world_scene_status` (101) — no runtime packet.
+8. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+9. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.

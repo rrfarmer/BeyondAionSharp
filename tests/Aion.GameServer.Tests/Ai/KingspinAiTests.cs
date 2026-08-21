@@ -230,18 +230,28 @@ public sealed class KingspinAiTests
 	/// rather than of no rung at all — above eighty-six nothing matches and any mistake in the top
 	/// rung is invisible.
 	/// <para>
-	/// <b>Counted as webs, and this is the fourth pin in this file to be moved off cries.</b> A throw
-	/// puts four webs out and only the ones that land on somebody speak, so the cry tally depends on
-	/// where the raid is standing — which made this flake about one full-suite run in twenty. The other
-	/// three were moved onto the throw clock; this one cannot be, because <b>the whole point of the top
+	/// <b>This pin still counted cries, and it still flaked — about one full-suite run in twenty.</b>
+	/// The paragraph here used to say it had been moved off them; the assertions had not been. It
+	/// cannot move onto the throw clock the way three others did, because <b>the whole point of the top
 	/// rung is that the clock ticks and throws nothing</b>, so the clock cannot tell the rungs apart.
-	/// Webs can: four per throw, regardless of where anyone stands.
+	/// <para>
+	/// <b>What actually made the tally vary was the raid being larger than the throw.</b> The throw is
+	/// <c>WebOn(4, MultiTargetOrder.Random, …)</c>: four webs chosen at random out of whoever is in
+	/// reach. With six in the raid the chosen four differ from run to run, and so does the number that
+	/// land near enough to speak. <b>With four, random picks all four, every time</b> — the order is
+	/// still random and nothing about the encounter is faked; there is simply no subset left to choose.
+	/// The rung below it, <c>WebOn(5, Ascending, …)</c>, covers the same four.
+	/// </para>
+	/// <para>
+	/// Reasoned rather than proven: a one-in-twenty flake is not disproved by a green run. What can be
+	/// said is that the source of variance this pin depended on is gone.
 	/// </para>
 	/// </remarks>
 	[Fact]
 	public void TheTopRungOfTheLadderThrowsNothing()
 	{
-		var (harness, boss, raid, cries) = Engaged(6);
+		// Four, not six: the throw picks four at random, so a bigger raid makes the tally a lottery.
+		var (harness, boss, raid, cries) = Engaged(4);
 		using BossAiHarness _h = harness;
 
 		BossAiHarness.SetExactPercent(boss, 80);
