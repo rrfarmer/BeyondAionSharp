@@ -83,7 +83,7 @@ public class ConquestOfferingSpawnerAI : NpcAI, INpcMessageListener
             [856172] = (856370, 856376),
             [856173] = (856371, 856377),
         };
-    private ScheduledTask cycleTask;
+    private ScheduledTask? cycleTask;
 
     public ConquestOfferingSpawnerAI(Npc owner)
         : base(owner)
@@ -151,7 +151,7 @@ public class ConquestOfferingSpawnerAI : NpcAI, INpcMessageListener
     /// which starts the spawner's eight minutes again rather than letting it run out on its own.
     /// Recorded as having no sender in this port until the monster's death ladder was read.
     /// </remarks>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject param)
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (messageType != TimeReset)
             return;
@@ -177,7 +177,7 @@ public class ConquestOfferingTimeResetAI : NpcAI
     private const float Earshot = 50f;
     private const long RepeatMillis = 6_000L;
 
-    private ScheduledTask beatTask;
+    private ScheduledTask? beatTask;
 
     public ConquestOfferingTimeResetAI(Npc owner)
         : base(owner)
@@ -305,7 +305,7 @@ public class ConquestOfferingSpotAI : NpcAI
     protected override void HandleSpawned()
     {
         base.HandleSpawned();
-        if (!Monsters.TryGetValue(GetNpcId(), out int[] table))
+        if (!Monsters.TryGetValue(GetNpcId(), out int[]? table))
             return;
 
         int roll = Rnd.NextInt(100);

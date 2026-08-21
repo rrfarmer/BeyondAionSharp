@@ -56,7 +56,7 @@ public class ContinueRouteTests
 		Npc walker = harness.Spawn(RoutedNpc, 300f, 300f, 200f);
 		// The harness spawns without a walker id; production reads it from the spawn row. This is the
 		// route 220070000_Gelkmaros.xml really gives this npc.
-		walker.GetSpawn().SetWalkerId(GelkmarosRoute);
+		walker.GetSpawn()!.SetWalkerId(GelkmarosRoute);
 		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(walker.GetAi());
 		ai.SetStateIfNot(AIState.IDLE);
 		Assert.False(ai.IsInState(AIState.WALKING));
@@ -78,7 +78,7 @@ public class ContinueRouteTests
 		Npc rooted = harness.Spawn(216435, 300f, 300f, 200f);
 		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(rooted.GetAi());
 		ai.SetStateIfNot(AIState.IDLE);
-		Assert.Null(rooted.GetSpawn().GetWalkerId());
+		Assert.Null(rooted.GetSpawn()!.GetWalkerId());
 
 		ai.ContinueRoute();
 

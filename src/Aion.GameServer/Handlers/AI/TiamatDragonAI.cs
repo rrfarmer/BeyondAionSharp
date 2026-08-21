@@ -216,7 +216,7 @@ public class TiamatDragonAI : AggressiveNpcAI
             if (Spawn(npcId, x, y, RushZ, 0) is not Npc drakan)
                 continue;
 
-            drakan.GetSpawn().SetWalkerId(path);
+            drakan.GetSpawn()?.SetWalkerId(path);
             Aion.GameServer.Ai.Manager.WalkManager.StartWalking((NpcAI)drakan.GetAi());
         }
     }

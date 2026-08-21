@@ -123,7 +123,7 @@ public class CapturedDrakanScientistAI : GeneralNpcAI
         if (steps == null || steps.Count <= EscapeStepIndex)
             return false;
 
-        GetMoveController().SetWalkerTemplate(route, 0);
+        GetMoveController().SetWalkerTemplate(route!, 0);
         SetSubStateIfNot(AISubState.WALK_PATH);
         GetMoveController().SetRouteStep(steps[1]);
         GetMoveController().MoveToNextPoint();

@@ -33,7 +33,7 @@ public class TahabataLavaFloorAI : NpcAI
     /// <summary>Retail's <c>live_time</c> on each damage npc.</summary>
     private const int DamageLife = 3;
 
-    private ScheduledTask tickTask;
+    private ScheduledTask? tickTask;
 
     public TahabataLavaFloorAI(Npc owner)
         : base(owner)

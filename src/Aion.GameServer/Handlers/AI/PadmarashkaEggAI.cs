@@ -49,7 +49,7 @@ public class PadmarashkaEggAI : NpcAI
     /// <summary>Retail's <c>set_idle_timer</c> on both eggs, which is where the hatch comes from.</summary>
     private const long HatchMillis = 60_000L;
 
-    private ScheduledTask hatchTask;
+    private ScheduledTask? hatchTask;
 
     bool isSmallEggProtectorSpawned = false;
     bool isHugeEggProtectorSpawned = false;

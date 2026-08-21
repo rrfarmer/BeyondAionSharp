@@ -67,7 +67,7 @@ FOOTER = '''    };
     /// </remarks>
     internal static PatternBranch[] RungFor(int npcId) => Built.GetOrAdd(npcId, static id =>
     {
-        if (!ByNpc.TryGetValue(id, out Pull[] calls))
+        if (!ByNpc.TryGetValue(id, out Pull[]? calls))
             return [];
 
         PatternAction[] actions = new PatternAction[calls.Length];
@@ -91,7 +91,7 @@ FOOTER = '''    };
     /// </remarks>
     internal static void Shout(Aion.GameServer.Model.GameObjects.Npc guard)
     {
-        if (!ByNpc.TryGetValue(guard.GetNpcId(), out Pull[] calls))
+        if (!ByNpc.TryGetValue(guard.GetNpcId(), out Pull[]? calls))
             return;
 
         foreach (Pull call in calls)

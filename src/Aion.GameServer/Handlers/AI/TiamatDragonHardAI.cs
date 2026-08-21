@@ -175,7 +175,7 @@ public class TiamatDragonHardAI : PatternAi
                 continue;
 
             Npc drakan = placed[placed.Count - 1];
-            drakan.GetSpawn().SetWalkerId(path);
+            drakan.GetSpawn()?.SetWalkerId(path);
             Aion.GameServer.Ai.Manager.WalkManager.StartWalking((NpcAI)drakan.GetAi());
         }
     };

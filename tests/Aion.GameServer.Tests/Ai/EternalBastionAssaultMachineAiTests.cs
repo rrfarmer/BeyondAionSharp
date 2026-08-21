@@ -84,7 +84,7 @@ public sealed class EternalBastionAssaultMachineAiTests
 		foreach (Npc escort in harness.LiveNpcs().Where(
 			n => n.GetNpcId() == Ambusher || n.GetNpcId() == Gunner))
 		{
-			Assert.Equal("NPCPathIDLDF5b_TD_Mob_Z1_S3_POD01", escort.GetSpawn().GetWalkerId());
+			Assert.Equal("NPCPathIDLDF5b_TD_Mob_Z1_S3_POD01", escort.GetSpawn()!.GetWalkerId());
 		}
 	}
 

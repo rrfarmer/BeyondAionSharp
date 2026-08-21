@@ -93,7 +93,7 @@ public class TwinFontAI : AggressiveNoLootNpcAI, INpcMessageListener
     internal static (int Leader, int Soldier) DetachmentFor(Race race) =>
         race == Race.ASMODIANS ? (AsmodianLeader, AsmodianSoldier) : (ElyosLeader, ElyosSoldier);
 
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (messageType != TimeOverFor(GetOwner().GetNpcId()) || IsDead() || guardsCalled)
             return;

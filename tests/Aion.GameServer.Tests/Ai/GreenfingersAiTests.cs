@@ -49,7 +49,7 @@ public sealed class GreenfingersAiTests
 	private static Npc Walking(BossAiHarness harness)
 	{
 		Npc helper = harness.Spawn(Helper, 1174.44f, 669.64f, 297.5f);
-		helper.GetSpawn().SetWalkerId(HelperRoute);
+		helper.GetSpawn()!.SetWalkerId(HelperRoute);
 		Aion.GameServer.Ai.Manager.WalkManager.StartWalking((Aion.GameServer.Ai.NpcAI)helper.GetAi());
 		return helper;
 	}

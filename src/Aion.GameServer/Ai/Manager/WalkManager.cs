@@ -61,8 +61,9 @@ public class WalkManager
         if (!owner.IsPathWalker())
             return false;
 
-        WalkerTemplate template = owner.GetMoveController().GetWalkerTemplate()
-            ?? DataManager.WALKER_DATA.GetWalkerTemplate(owner.GetSpawn().GetWalkerId());
+        string? walkerId = owner.GetSpawn()?.GetWalkerId();
+        WalkerTemplate? template = owner.GetMoveController().GetWalkerTemplate()
+            ?? (walkerId == null ? null : DataManager.WALKER_DATA.GetWalkerTemplate(walkerId));
         if (template == null || step < 0 || step >= template.GetRouteSteps().Count)
             return false;
 

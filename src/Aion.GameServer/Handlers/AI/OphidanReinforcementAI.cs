@@ -56,7 +56,7 @@ public class OphidanReinforcementAI : PatternAi
 	private const int Tick = 30000;
 
 	/// <summary>Retail's <c>INTVARI_FIRST</c>, and the bounds its five branches divide.</summary>
-	private const int Counter = 0;
+	private new const int Counter = 0;
 	private const int Spent = 10;
 
 	/// <summary>Where each post puts its pair, and which two kinds it calls.</summary>

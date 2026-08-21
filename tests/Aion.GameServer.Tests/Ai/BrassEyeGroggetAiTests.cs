@@ -42,7 +42,7 @@ public sealed class BrassEyeGroggetAiTests
 	private static Npc Walking(BossAiHarness harness)
 	{
 		Npc grogget = harness.Spawn(Grogget, 427.45f, 509.88f, 1075.3801f);
-		grogget.GetSpawn().SetWalkerId(CaptainRoute);
+		grogget.GetSpawn()!.SetWalkerId(CaptainRoute);
 		Aion.GameServer.Ai.Manager.WalkManager.StartWalking((Aion.GameServer.Ai.NpcAI)grogget.GetAi());
 		return grogget;
 	}

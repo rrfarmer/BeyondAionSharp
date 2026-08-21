@@ -63,7 +63,7 @@ public class DracusBox : OneDmgNoActionAI
         float x = crate.GetX(), y = crate.GetY(), z = crate.GetZ();
         sbyte heading = (sbyte)crate.GetHeading();
 
-        Npc dracus = null;
+        Npc? dracus = null;
         if (Rnd.Chance() < DracusPercent)
         {
             dracus = Spawn(DRACUS_ID, x, y, z, heading);
@@ -104,7 +104,7 @@ public class DracusBox : OneDmgNoActionAI
         }
     }
 
-    private Npc Spawn(int npcId, float x, float y, float z, sbyte heading) =>
+    private new Npc Spawn(int npcId, float x, float y, float z, sbyte heading) =>
         (Npc)SpawnFor(npcId, x, y, z, heading, SummonLife);
 
     public override bool Ask(AIQuestion question)

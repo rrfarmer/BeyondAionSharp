@@ -42,7 +42,7 @@ public class ShabokanEarthquakeFxAI : NpcAI
     /// <summary>Retail writes five rungs, each guarded by its own flag var.</summary>
     private const int Ticks = 5;
 
-    private ScheduledTask tickTask;
+    private ScheduledTask? tickTask;
 
     public ShabokanEarthquakeFxAI(Npc owner)
         : base(owner)

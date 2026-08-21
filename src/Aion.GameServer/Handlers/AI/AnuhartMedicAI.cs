@@ -34,7 +34,7 @@ public class AnuhartMedicAI : DrakanMedicAI, INpcMessageListener
 	{
 	}
 
-	public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+	public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
 	{
 		if (messageType != MarabataControllerAI.BoosterUnderAttack)
 			return;

@@ -135,7 +135,7 @@ public class UnstableKaluvaSpawnAI : NpcAI
 
     private void HatchAdds()
     {
-        if (!ByEgg.TryGetValue(GetNpcId(), out (int NpcId, int Count)[] hatch))
+        if (!ByEgg.TryGetValue(GetNpcId(), out (int NpcId, int Count)[]? hatch))
             return;
 
         WorldPosition p = GetPosition();

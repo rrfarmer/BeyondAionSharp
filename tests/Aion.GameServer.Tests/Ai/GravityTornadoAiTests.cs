@@ -163,7 +163,7 @@ public class BeatProbeAI : Aion.GameServer.Handlers.AI.GeneralNpcAI, Aion.GameSe
 	{
 	}
 
-	public void OnNpcMessage(Npc sender, int messageType, Aion.GameServer.Model.GameObjects.VisibleObject? param)
+	public new void OnNpcMessage(Npc sender, int messageType, Aion.GameServer.Model.GameObjects.VisibleObject? param)
 	{
 		if (messageType == GravityBombDamageAI.CastNow)
 			Beats++;

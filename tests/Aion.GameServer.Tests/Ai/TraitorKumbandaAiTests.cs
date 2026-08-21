@@ -114,7 +114,7 @@ public sealed class TraitorKumbandaAiTests
 		Assert.NotSame(facing, avatar.GetTarget());
 		Assert.Contains(avatar.GetTarget(), new object[] { tank, other });
 
-		Creature landedOn = (Creature)avatar.GetTarget();
+		Creature landedOn = (Creature)avatar.GetTarget()!;
 		Assert.Equal(landedOn.GetX(), avatar.GetX(), 1);
 		Assert.True(avatar.GetAggroList().GetHate(landedOn) > 0,
 			"the avatar did not arrive locked onto the player it was dropped on");

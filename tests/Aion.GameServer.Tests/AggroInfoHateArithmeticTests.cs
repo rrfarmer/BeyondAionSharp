@@ -24,7 +24,7 @@ public sealed class AggroInfoHateArithmeticTests
 	[Fact]
 	public void OrdinaryHateAddsAndClampsAsBefore()
 	{
-		AggroInfo info = new AggroInfo(null);
+		AggroInfo info = new AggroInfo(null!);
 
 		info.AddHate(500);
 		Assert.Equal(500, info.GetHate());
@@ -43,7 +43,7 @@ public sealed class AggroInfoHateArithmeticTests
 	[Fact]
 	public void AHugeAdditionSaturatesInsteadOfInverting()
 	{
-		AggroInfo info = new AggroInfo(null);
+		AggroInfo info = new AggroInfo(null!);
 		info.AddHate(500);
 
 		info.AddHate(int.MaxValue);
@@ -57,7 +57,7 @@ public sealed class AggroInfoHateArithmeticTests
 	[Fact]
 	public void SaturatedHateStaysSaturated()
 	{
-		AggroInfo info = new AggroInfo(null);
+		AggroInfo info = new AggroInfo(null!);
 		info.AddHate(int.MaxValue);
 		info.AddHate(int.MaxValue);
 

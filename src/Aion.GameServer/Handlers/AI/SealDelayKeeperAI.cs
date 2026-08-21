@@ -36,7 +36,7 @@ public class SealDelayKeeperAI : NpcAI, INpcMessageListener
     public const int ChiefKilled = 22610;
     private const long LingerMillis = 20_000L;
 
-    private ScheduledTask lingerTask;
+    private ScheduledTask? lingerTask;
 
     public SealDelayKeeperAI(Npc owner)
         : base(owner)
@@ -46,7 +46,7 @@ public class SealDelayKeeperAI : NpcAI, INpcMessageListener
     /// <summary>
     /// <c>22610</c> — the chief that dropped this keeper has been killed.
     /// </summary>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject param)
+    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (messageType != ChiefKilled || lingerTask != null)
             return;

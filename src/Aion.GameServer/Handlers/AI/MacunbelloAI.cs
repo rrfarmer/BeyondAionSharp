@@ -228,7 +228,7 @@ public class MacunbelloAI : AggressiveNpcAI, INpcMessageListener
     /// <summary>
     /// A soul reaper reports the player it just cursed; Macunbello devours that exact player.
     /// </summary>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         // Retail's on_message p100 DIRECT, ahead of everything else in the handler: the decoy call
         // takes precedence over the curse report, and a lich that is about to vanish does not first

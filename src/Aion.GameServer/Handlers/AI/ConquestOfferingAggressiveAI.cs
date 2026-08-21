@@ -62,7 +62,7 @@ public class ConquestOfferingAggressiveAI : AggressiveNpcAI
     /// <summary>Retail's <c>BTIMERI_INDEX_0</c>, armed on entering combat and re-armed every turn.</summary>
     private const long BattleTimerMillis = 6_000L;
 
-    private ScheduledTask battleTimer;
+    private ScheduledTask? battleTimer;
 
     protected override void HandleSpawned()
     {

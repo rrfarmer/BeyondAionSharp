@@ -1,6 +1,5 @@
 using System;
 using Aion.GameServer.Ai.Pattern;
-using Aion.GameServer.Ai.Pattern;
 using Aion.GameServer.Handlers.AI;
 using Aion.GameServer.Model.GameObjects;
 

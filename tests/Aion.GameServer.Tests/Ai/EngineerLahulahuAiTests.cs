@@ -42,7 +42,7 @@ public sealed class EngineerLahulahuAiTests
 	private static Npc Walking(BossAiHarness harness)
 	{
 		Npc engineer = harness.Spawn(Lahulahu, 695.76f, 508.37f, 867.3649f);
-		engineer.GetSpawn().SetWalkerId(EngineerRoute);
+		engineer.GetSpawn()!.SetWalkerId(EngineerRoute);
 		Aion.GameServer.Ai.Manager.WalkManager.StartWalking((Aion.GameServer.Ai.NpcAI)engineer.GetAi());
 		return engineer;
 	}

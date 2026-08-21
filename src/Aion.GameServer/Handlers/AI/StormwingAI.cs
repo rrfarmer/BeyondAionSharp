@@ -420,7 +420,7 @@ public class StormwingAI : AggressiveNpcAI
         // Retail's spawn is RELATIVE *and* names a path: it appears at the offset and then walks. A
         // twister whose route cannot be resolved still stands where it was put, which is the behaviour
         // this class had for every one of them.
-        twister.GetSpawn().SetWalkerId(path);
+        twister.GetSpawn()?.SetWalkerId(path);
         if (twister.GetAi() is NpcAI ai)
             Aion.GameServer.Ai.Manager.WalkManager.StartWalking(ai);
     }

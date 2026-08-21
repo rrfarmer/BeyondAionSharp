@@ -181,7 +181,7 @@ public sealed class StormwingAiTests
 			// THE ASSERTION THAT PINS THE CHANGE: the fifth and sixth waves matter as much as the
 			// first. Under the old four-wave cap these were empty.
 			Assert.Equal(8, wave.Count);
-			routeSets.Add(wave.Select(n => n.GetSpawn().GetWalkerId()!).ToHashSet());
+			routeSets.Add(wave.Select(n => n.GetSpawn()!.GetWalkerId()!).ToHashSet());
 		}
 
 		Assert.All(routeSets, s => Assert.All(s, r => Assert.StartsWith("NPCPathPath_RudraWind_", r)));
@@ -310,7 +310,7 @@ public sealed class StormwingAiTests
 
 		// The ninety-five band scatters, so it takes the wide set — and all four differ, which is what
 		// rules out every twister being handed the same route.
-		var routes = twisters.Select(n => n.GetSpawn().GetWalkerId()).ToList();
+		var routes = twisters.Select(n => n.GetSpawn()!.GetWalkerId()).ToList();
 		Assert.All(routes, r => Assert.StartsWith("NPCPathPath_RudraWindC", r));
 		Assert.All(routes, r => Assert.DoesNotContain("_1", r));
 		Assert.Equal(2, routes.Distinct().Count());

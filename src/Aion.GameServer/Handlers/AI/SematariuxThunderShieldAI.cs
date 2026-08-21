@@ -55,7 +55,7 @@ public class SematariuxThunderShieldAI : AggressiveNpcAI, INpcMessageListener
     }
 
     /// <summary>Retail's <c>on_message</c>: <c>add_hate_point 1</c>, then <c>attack_most_hating</c>.</summary>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (messageType != ShieldCall || IsDead())
             return;

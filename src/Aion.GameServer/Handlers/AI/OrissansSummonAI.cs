@@ -22,7 +22,7 @@ public class OrissansSummonAI : GeneralNpcAI, INpcMessageListener
     /// the moment they have placed a crystal, so by the time Orissan dies there is nothing left to do
     /// the despawning -- the listener has to be on the crystal itself. Same outcome, one hop shorter.
     /// </remarks>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (messageType == OrissanAI.OrissanIsDead)
             AIActions.DeleteOwner(this);

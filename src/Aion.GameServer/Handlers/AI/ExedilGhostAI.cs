@@ -64,7 +64,7 @@ public class ExedilGhostAI : ServantNpcAI, INpcMessageListener
     /// <summary>What this ghost becomes, or 0 for one that is not in the table.</summary>
     internal static int TrueFormOf(int npcId) => TrueForms.TryGetValue(npcId, out int form) ? form : 0;
 
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (messageType != ExedilAI.TrueForm || IsDead())
             return;

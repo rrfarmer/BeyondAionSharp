@@ -240,7 +240,7 @@ public class BergrisarAI : PatternAi
             return;
 
         Npc wheel = placed[placed.Count - 1];
-        wheel.GetSpawn().SetWalkerId(path);
+        wheel.GetSpawn()?.SetWalkerId(path);
         Aion.GameServer.Ai.Manager.WalkManager.StartWalking((NpcAI)wheel.GetAi());
     };
 

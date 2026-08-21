@@ -44,7 +44,7 @@ public sealed class ChiefGunnerKoakoaAiTests
 	private static Npc Walking(BossAiHarness harness)
 	{
 		Npc gunner = harness.Spawn(Koakoa, 755.777f, 509.02f, 1012.3f);
-		gunner.GetSpawn().SetWalkerId(Route);
+		gunner.GetSpawn()!.SetWalkerId(Route);
 		Aion.GameServer.Ai.Manager.WalkManager.StartWalking((Aion.GameServer.Ai.NpcAI)gunner.GetAi());
 		return gunner;
 	}

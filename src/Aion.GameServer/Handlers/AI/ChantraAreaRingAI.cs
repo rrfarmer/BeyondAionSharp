@@ -38,7 +38,7 @@ public class ChantraAreaRingAI : NpcAI
     private const long AfterRingDelayMillis = 3000L;
     private const int AfterRingLife = 4;
 
-    private ScheduledTask afterTask;
+    private ScheduledTask? afterTask;
 
     public ChantraAreaRingAI(Npc owner)
         : base(owner)

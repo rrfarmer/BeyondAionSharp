@@ -377,7 +377,7 @@ public sealed class BossAiHarness : IDisposable
 			Aion.GameServer.Dataholders.DataManager.WALKER_DATA.GetWalkerTemplate(routeId)
 			?? throw new InvalidOperationException($"no route '{routeId}' is loaded");
 
-		npc.GetSpawn().SetWalkerId(routeId);
+		npc.GetSpawn()!.SetWalkerId(routeId);
 		npc.GetMoveController().SetWalkerTemplate(route, route.GetRouteSteps().Count - 1);
 		npc.GetAi().OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.MOVE_ARRIVED);
 	}

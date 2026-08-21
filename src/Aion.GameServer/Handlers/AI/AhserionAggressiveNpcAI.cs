@@ -48,7 +48,7 @@ public class AhserionAggressiveNpcAI : AggressiveNoLootNpcAI, INpcMessageListene
     /// Retail's <c>on_message</c> pair on <c>Gab1_Sub_Pod_Sum_Vri_As</c>, both guarded by
     /// <c>is_enemy(OBJI_MESSAGE_PARAM)</c>, which <see cref="SummonOrder.Take"/> checks for us.
     /// </summary>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (IsDead())
             return;

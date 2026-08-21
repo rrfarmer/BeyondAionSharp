@@ -64,7 +64,7 @@ public class TiamatIncarnationDeathEffectAI : NpcAI
     {
         base.HandleSpawned();
 
-        if (!MageByDeathEffect.TryGetValue(GetNpcId(), out int[] mages))
+        if (!MageByDeathEffect.TryGetValue(GetNpcId(), out int[]? mages))
             return;
 
         foreach (Npc npc in GetPosition().GetWorldMapInstance().GetNpcs().ToList())

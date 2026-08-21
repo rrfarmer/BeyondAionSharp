@@ -660,7 +660,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// fights as well as to coordinate them, and a listener that ignored them out of combat could
     /// never be pulled by one.
     /// </remarks>
-    public void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
+    public new void OnNpcMessage(Npc sender, int messageType, VisibleObject? param)
     {
         if (IsDead() || Pattern.OnMessage.Length == 0)
             return;
@@ -1802,7 +1802,7 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         if (spawned is not Npc walker)
             return;
 
-        walker.GetSpawn().SetWalkerId(pathName);
+        walker.GetSpawn()?.SetWalkerId(pathName);
         if (walker.GetAi() is NpcAI ai)
             WalkManager.StartWalking(ai);
     }

@@ -217,7 +217,7 @@ public class IDSweepStageAddAI : IDSweep_Shugos, INpcMessageListener
 	{
 	}
 
-	public void OnNpcMessage(Npc sender, int messageType, Aion.GameServer.Model.GameObjects.VisibleObject? param)
+	public new void OnNpcMessage(Npc sender, int messageType, Aion.GameServer.Model.GameObjects.VisibleObject? param)
 	{
 		if (messageType == WatchmanHokuruki.StageIsOver && !IsDead())
 			AIActions.DeleteOwner(this);

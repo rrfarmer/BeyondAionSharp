@@ -219,7 +219,7 @@ public class PopuchinAI : AggressiveNpcAI
     /// <summary>Retail's <c>SPAWN_ID_1</c> for this boss: both bomb npcs.</summary>
     private void DespawnBombs()
     {
-        WorldMapInstance instance = GetPosition()?.GetWorldMapInstance();
+        WorldMapInstance? instance = GetPosition()?.GetWorldMapInstance();
         if (instance == null)
             return;
 

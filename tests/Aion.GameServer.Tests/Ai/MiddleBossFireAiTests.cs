@@ -118,8 +118,8 @@ public sealed class MiddleBossFireAiTests
 	}
 
 	[Theory]
-	[MemberData(nameof(Bosses))]
-	public void EachSlashesAfterItsTrait(int npcId, int trait1, int trait2)
+	[MemberData(nameof(BossIds))]
+	public void EachSlashesAfterItsTrait(int npcId)
 	{
 		var (harness, boss, player) = Engaged(npcId);
 		using (harness)
