@@ -287,6 +287,8 @@ def action_code(row: dict) -> str:
         return f"Do.{kind[len('hate_at:'):]}({row['a1']})"
     if kind == "hate":
         return f"Do.HateMessageParam({row['a1']})"
+    if kind.startswith("switch_to:"):
+        return f"Do.{kind[len('switch_to:'):]}()"
     if kind == "switch":
         return "Do.TargetMessageParam()"
     if kind == "attack":

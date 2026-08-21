@@ -765,6 +765,68 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
             GetOwner().SetTarget(named);
     }
 
+    /// <summary><c>switch_target</c> at the other creatures retail names.</summary>
+    /// <remarks>
+    /// 1,321 uses across seven subjects, of which this port read one -- <c>OBJI_MESSAGE_PARAM</c>, 397
+    /// uses -- because <see cref="SwitchTarget"/> takes an <c>AggroTarget</c>, which is a *rank in the
+    /// hate list* and cannot name a creature by its part in the event.
+    /// <para>
+    /// <b>The previous entry called that "a different operation with no helper here", which overstated
+    /// it.</b> The operation is different, but <see cref="TargetMessageParam"/> shows the whole of it
+    /// is a guarded <c>SetTarget</c>, so each of these is one line. What was actually missing was five
+    /// one-line methods, not machinery.
+    /// </para>
+    /// <para>
+    /// The dead check is not decoration: retail switches to the caster or the killer from handlers
+    /// that fire as somebody dies, and pointing an NPC at a corpse leaves it holding a target it can
+    /// never reach, which reads as a boss that has stopped doing anything.
+    /// </para>
+    /// <para>
+    /// <c>OBJI_CUR_TARGET</c> (70 uses) is refused by the extractor: switching to the creature you are
+    /// already targeting is a no-op, so the rung would be a step retail takes and this port cannot
+    /// distinguish from doing nothing.
+    /// </para>
+    /// </remarks>
+    public void TargetAttacker()
+    {
+        if (LastAttacker is Creature who && !who.IsDead())
+        {
+            GetOwner().SetTarget(who);
+        }
+    }
+
+    public void TargetSeen()
+    {
+        if (SeenCreature is Creature who && !who.IsDead())
+        {
+            GetOwner().SetTarget(who);
+        }
+    }
+
+    public void TargetCaster()
+    {
+        if (LastCaster is Creature who && !who.IsDead())
+        {
+            GetOwner().SetTarget(who);
+        }
+    }
+
+    public void TargetMessageSender()
+    {
+        if (MessageSender is Creature who && !who.IsDead())
+        {
+            GetOwner().SetTarget(who);
+        }
+    }
+
+    public void TargetKiller()
+    {
+        if (Killer is Creature who && !who.IsDead())
+        {
+            GetOwner().SetTarget(who);
+        }
+    }
+
     /// <summary>The NPC that just came into view, or null outside an <c>on_see_npc</c> branch.</summary>
     public Creature? SeenCreature { get; private set; }
 

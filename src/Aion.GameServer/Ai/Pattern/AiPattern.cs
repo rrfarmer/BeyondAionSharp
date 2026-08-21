@@ -919,6 +919,21 @@ public static class Do
     /// <summary><c>switch_target_by_attacker_indicator</c>.</summary>
     public static PatternAction SwitchTarget(AggroTarget which) => ai => ai.SwitchTarget(which);
 
+    /// <summary><c>switch_target target=OBJI_ATTACKER</c>.</summary>
+    public static PatternAction TargetAttacker() => static ai => ai.TargetAttacker();
+
+    /// <summary><c>switch_target target=OBJI_SEEN</c>.</summary>
+    public static PatternAction TargetSeen() => static ai => ai.TargetSeen();
+
+    /// <summary><c>switch_target target=OBJI_CASTER</c>.</summary>
+    public static PatternAction TargetCaster() => static ai => ai.TargetCaster();
+
+    /// <summary><c>switch_target target=OBJI_MESSAGE_SENDER</c>.</summary>
+    public static PatternAction TargetMessageSender() => static ai => ai.TargetMessageSender();
+
+    /// <summary><c>switch_target target=OBJI_KILLER</c>.</summary>
+    public static PatternAction TargetKiller() => static ai => ai.TargetKiller();
+
     /// <summary><c>use_skill target=OBJI_EVENT_TARGET</c>: at whoever started the fight.</summary>
     public static PatternAction SkillOnEventTarget(int skillId)
         => ai => ai.CastSkillAt(ai.EventTarget, skillId);

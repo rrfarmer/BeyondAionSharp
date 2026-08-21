@@ -328,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 93,355 casts across 22,567 npcs, none of them read by a human. The index they came from is only
+	/// 93,411 casts across 22,582 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(93355, casts);
+		Assert.Equal(93411, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -789,7 +789,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1876, spawns);
+		Assert.Equal(1875, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1079,6 +1079,10 @@ public sealed class BattleCycleAiTests
 				// were read, which brought in patterns carrying it alongside those. Five of the nine
 				// conditions have data now; four still do not.
 				["who:EventTargetIsNpc"] = 27,
+
+				// And this one when `switch_target` learned the rest of its subjects. Six of the nine
+				// have data now.
+				["who:KilledByPlayer"] = 26,
 
 				// These three arrived as other elements were read, not as a change to `is_user`
 				// itself: `TalkerIsPlayer` when `flee_from` landed, and the attacked/spelled pair when
@@ -1456,6 +1460,48 @@ public sealed class BattleCycleAiTests
 		Do.HateSeen(500)(ai);
 		Assert.Equal(510, worm.GetAggroList().GetHate(tank));
 		Assert.Equal(10, worm.GetAggroList().GetHate(other));
+	}
+
+	/// <summary><b>A target switch at a role nothing has set leaves the target alone.</b></summary>
+	/// <remarks>
+	/// <c>switch_target</c> is 1,321 uses across seven subjects, of which this port read one --
+	/// <c>OBJI_MESSAGE_PARAM</c>, 397 uses -- because <c>Do.SwitchTarget</c> takes an
+	/// <c>AggroTarget</c>, a rank in the hate list, which cannot name a creature by its part in the
+	/// event. Each role now has a one-line helper instead.
+	/// <para>
+	/// <b>What this pins and what it does not.</b> Every one of these roles is cleared in a
+	/// <c>finally</c> when its handler returns, so the only state observable from outside a branch is
+	/// the unset one -- and that is worth having: a helper that called <c>SetTarget(null)</c> rather
+	/// than skipping would drop the boss's target every time a rung ran with the role empty, which
+	/// reads as a boss that keeps losing interest.
+	/// </para>
+	/// <para>
+	/// The dead check inside each helper is <b>not</b> pinned here and rests on reading rather than on
+	/// a test. Retail switches to the caster or the killer from handlers that fire as somebody dies,
+	/// and pointing an npc at a corpse leaves it holding a target it can never reach -- a boss that
+	/// quietly stops. Driving that needs a role set to a dead creature from inside its own handler,
+	/// which this harness cannot arrange.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ATargetSwitchAtAnEmptyRoleLeavesTheTargetAlone()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		Player alive = harness.SpawnPlayer(302f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, alive);
+		worm.SetTarget(alive);
+
+		Assert.Null(ai.SeenCreature);
+		Assert.Null(ai.LastCaster);
+
+		Do.TargetSeen()(ai);
+		Do.TargetCaster()(ai);
+		Do.TargetKiller()(ai);
+
+		Assert.Equal(alive, worm.GetTarget());
 	}
 
 }

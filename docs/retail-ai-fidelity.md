@@ -38283,3 +38283,61 @@ Unchanged: 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`, the eight re
 engine slot, `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`,
 `teleport_target_alias`, `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`,
 `GAb1_PvPStatus`, 17 npcs conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## `switch_target` at the creature, not at a rank
+
+`Retail-AI-Pattern: role-named target switches`
+
+The previous entry said switching to the creature in a role was "a different operation with no helper
+here" and left 924 uses refused. **That overstated it.** The operation is genuinely different --
+`Do.SwitchTarget` takes an `AggroTarget`, a rank in the hate list, which cannot name a creature by its
+part in the event -- but `TargetMessageParam` shows the whole of the role form is a guarded
+`SetTarget`. What was missing was five one-line methods, not machinery.
+
+So the estimate was wrong in the direction that costs work: I deferred something cheap by describing
+it as expensive. The habit that has been paying all along -- check the runtime before writing the
+refusal note -- applies to *forward* claims too, and this is the second time in three entries that a
+"needs engine work" line has not survived contact.
+
+`OBJI_CUR_TARGET` (70 uses) is refused: switching to the creature already targeted is a no-op, so the
+rung cannot be told apart from doing nothing, and emitting it would claim a step this port does not
+actually take.
+
+662 role-named switch rows land: 331 at the attacker, 319 at the caster, 11 at the killer, 1 at the
+creature seen. Patterns 2,813 -> **2,815**; npcs 22,567 -> **22,582**. Backlog unchanged at 189 across
+133 -- target switches are what a boss does with the adds it already has.
+
+### What the pin covers, said plainly
+
+Every one of these roles is cleared in a `finally` when its handler returns, so the only state
+observable from outside a branch is the **unset** one. That is still worth pinning: a helper calling
+`SetTarget(null)` rather than skipping would drop the boss's target every time a rung ran with the
+role empty, which reads as a boss that keeps losing interest. The mutation doing exactly that is
+caught.
+
+**The dead check inside each helper is not pinned and rests on reading.** Retail switches to the
+caster or the killer from handlers that fire as somebody dies; pointing an NPC at a corpse leaves it
+holding a target it can never reach, which in play is a boss that quietly stops -- no error, no
+missing add. Driving that needs a role set to a dead creature from inside its own handler, which this
+harness cannot arrange. Recorded rather than left implied.
+
+`KilledByPlayer` joined the identity-guard census at 26 rows, so six of those nine conditions now
+have data and three still do not.
+
+### Still missing
+
+`random_move` (187) needs timed wandering. `say_to_all_str` (19) carries a literal string where this
+port sends string ids -- and unlike most entries here that is not a mapping problem: there is nowhere
+for an unlocalised string to go.
+
+`is_obj_in_abnormal_state` (12) and `add_intvar` (9) are unread. 102 `on_arrived_at_waypoint`
+handlers still drop on `MOVETYPE_RUN`.
+
+The `npc_skills` data gap remains the largest known hole: 59,131 of 74,792 cast pairs have no
+port-side entry, and retail's `npcs.xml` cannot close it. **This is now clearly the most valuable
+remaining piece of work in this area**, and it is a data decision rather than an extraction one.
+
+Unchanged: the eight retail handlers with no engine slot, `control_door`, `enable_area`,
+`change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
+`set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.

@@ -342,6 +342,17 @@ NEAR_ROLES = {
     "OBJI_MESSAGE_SENDER": "MessageSenderWithin",
 }
 
+#: Retail's `switch_target` subjects, and the action each becomes. `OBJI_CUR_TARGET` is absent
+#: on purpose -- see the parser.
+SWITCH_ROLES = {
+    "OBJI_MESSAGE_PARAM": "switch",
+    "OBJI_ATTACKER": "switch_to:TargetAttacker",
+    "OBJI_SEEN": "switch_to:TargetSeen",
+    "OBJI_CASTER": "switch_to:TargetCaster",
+    "OBJI_MESSAGE_SENDER": "switch_to:TargetMessageSender",
+    "OBJI_KILLER": "switch_to:TargetKiller",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -631,14 +642,15 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             out.append(("hate_at:" + HATE_ROLES[who.group(1)],
                         int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "switch_target":
-            # Still only the message parameter, and for a reason that has not gone away: `SwitchTarget`
-            # takes an `AggroTarget`, which is a rank in the hate list, and switching to *the creature
-            # in a role* needs a helper this port does not have. `Do.TargetMessageParam` is the one
-            # exception because it was written by hand for a specific encounter.
+            # Every subject retail names. `SwitchTarget` takes an `AggroTarget` -- a rank in the hate
+            # list -- and cannot name a creature by its part in the event, so each role has its own
+            # one-line helper instead. `OBJI_CUR_TARGET` is refused: switching to the creature already
+            # targeted is a no-op, and a rung that cannot be told from doing nothing is not a port of
+            # the step retail takes.
             who = re.search(r"<target>(\w+)</target>", body)
-            if not who or who.group(1) != "OBJI_MESSAGE_PARAM":
-                raise Unsayable(f"{kind} at a creature this port cannot name")
-            out.append(("switch", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+            if not who or who.group(1) not in SWITCH_ROLES:
+                raise Unsayable(f"{kind} at {who.group(1) if who else '?'}")
+            out.append((SWITCH_ROLES[who.group(1)], 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "spawn_on_multi_target":
