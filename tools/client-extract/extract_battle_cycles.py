@@ -653,6 +653,41 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
             out.append((SWITCH_ROLES[who.group(1)], 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "spawn_on_target_by_attacker_indicator":
+            # One add on a creature picked by its place in the hate list rather than on the tank.
+            # `Do.SpawnOnAttacker` takes every one of these arguments and was written for a
+            # hand-written class; the extractor had simply never read the element.
+            named = re.search(r"<npc_nameid>([^<]+)</npc_nameid>", body)
+            npc_id = dev.get(named.group(1)) if named else None
+            if npc_id is None or npc_id not in known:
+                raise Unsayable("spawns an npc with no template here")
+            who = re.search(r"<target>(\w+)</target>", body)
+            if not who or who.group(1) not in AGGRO:
+                raise Unsayable("spawn_on_target_by_attacker_indicator at an indicator this port lacks")
+            ranged = re.search(r"<restricted_range>(\w+)</", body)
+            if ranged and ranged.group(1).upper() == "TRUE":
+                # 4 uses. `valid_distance` already bounds how far the chosen creature may be, so what
+                # a second restriction adds is not stated anywhere in the element, and guessing it
+                # would change which creature gets the add.
+                raise Unsayable("spawn_on_target_by_attacker_indicator with a restricted range")
+            group = re.search(r"<spawn_id>SPAWN_ID_(\d+)</", body)
+            live = re.search(r"<live_time>(\d+)</", body)
+            reach = re.search(r"<spawn_range>([-\d.]+)</", body)
+            valid = re.search(r"<valid_distance>([-\d.]+)</", body)
+            hate = re.search(r"<hatepoints_to_add>(\d+)</", body)
+            attacks = re.search(r"<attack_target_after_spawn>(\w+)</", body)
+            points = int(hate.group(1)) if hate else 0
+            # The rule both other spawn elements already use: TRUE with no hate says "attack" and
+            # gives nothing to attack with, and a number invented here invents how hard it pulls.
+            if attacks and attacks.group(1).upper() == "TRUE" and points == 0:
+                raise Unsayable("spawn_on_target_by_attacker_indicator told to attack with no hate")
+            if not (attacks and attacks.group(1).upper() == "TRUE"):
+                points = 0
+            out.append(("spawn_on_ranked", npc_id, points, 0, AGGRO[who.group(1)],
+                        float(reach.group(1)) if reach else 0.0,
+                        float(valid.group(1)) if valid else 0.0,
+                        float(live.group(1)) if live else 0.0,
+                        int(group.group(1)) if group else 0))
         elif kind == "spawn_on_multi_target":
             # One add on every valid target, capped, with retail choosing which end of the hate list
             # the cap keeps. `Do.SpawnOnEachTarget` has taken all of this since it was written for a

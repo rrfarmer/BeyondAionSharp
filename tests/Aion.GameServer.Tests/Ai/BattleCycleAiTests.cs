@@ -328,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 93,411 casts across 22,582 npcs, none of them read by a human. The index they came from is only
+	/// 94,239 casts across 22,647 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(93411, casts);
+		Assert.Equal(94239, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -789,7 +789,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1875, spawns);
+		Assert.Equal(2072, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1078,7 +1078,7 @@ public sealed class BattleCycleAiTests
 				// Was a mapping with no data until `add_hate_point` and `is_distance_shorter_than`
 				// were read, which brought in patterns carrying it alongside those. Five of the nine
 				// conditions have data now; four still do not.
-				["who:EventTargetIsNpc"] = 27,
+				["who:EventTargetIsNpc"] = 37,
 
 				// And this one when `switch_target` learned the rest of its subjects. Six of the nine
 				// have data now.

@@ -38480,3 +38480,55 @@ Unchanged: the eight retail handlers with no engine slot, `control_door`, `enabl
 `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
 `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
 `spawn_helpers.xml`, and retail cast timings.
+
+## An add on whoever the hate list picks, and why `random_move` is not next
+
+`Retail-AI-Pattern: spawn_on_target_by_attacker_indicator`
+
+**`spawn_on_target_by_attacker_indicator`** is 306 uses, all six of retail's `ATTACKERI_*`
+indicators, and `Do.SpawnOnAttacker` takes every argument it carries -- it was written for a
+hand-written class and the extractor had simply never read the element. The eighth time in this
+stretch. 138 rows land.
+
+Two refusals rather than guesses. `restricted_range=TRUE` (4 uses) is refused because
+`valid_distance` already bounds how far the chosen creature may be, and what a *second* restriction
+adds is stated nowhere in the element -- guessing would change which creature gets the add.
+`attack_target_after_spawn=TRUE` with no hate points is refused on the rule both other spawn elements
+already use.
+
+Patterns 2,815 -> **2,839**; npcs 22,582 -> **22,647**; spawns 1,876 -> **2,072**; casts 93,411 ->
+**94,239**. **Adds backlog 189 -> 184 across 133 -> 129 encounters.**
+
+### `random_move` is not what the last three entries assumed
+
+It has been carried as "187 uses, needs timed wandering" since it first appeared. Looking at *where*
+retail puts it changes the problem entirely: **120 of the 187 are in combat handlers** --
+`on_battle_timer` (69) and `on_enter_attack_state` (51). Only a handful sit anywhere idle.
+
+That rules out the mapping everyone would reach for. This port's random walking moves the NPC to a
+point inside its **spawn's** `randomWalkRange`, around its **spawn point**, and requires
+`AIState.WALKING`. Applied to a boss mid-fight it would drag the boss back toward where it spawned
+and take it out of `AIState.FIGHT` -- which is not "move erratically for three seconds", it is
+"abandon the encounter".
+
+So `random_move` is not blocked on timed wandering at all. It needs a *combat* reposition that this
+port has no notion of, and the honest description of the gap is that, not the one carried for three
+entries. Recorded so the next person does not spend the effort on the wrong machinery.
+
+### Still missing, in order
+
+1. `random_move` (187, and now correctly described) -- needs a combat reposition, not a wander.
+2. `switch_target_by_class_indicator` (29) -- `When.AttackerClass` exists, so the class vocabulary is
+   here, but switching *to* a class needs a hate-list filter that does not.
+3. `say_to_all_str` (19) -- a literal string where this port sends string ids.
+4. `control_door` (19), `is_obj_in_abnormal_state` (12), `add_intvar` (11).
+5. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN` -- one route speed.
+6. The eight retail handlers with no engine slot.
+
+The `npc_skills` work from the previous entry stands: 42,390 npcs now have a port-side list and the
+`SkillReady` fallback is down to 546 pairs. **Its per-mille reading is evidence-backed but wants
+play-testing** -- an npc that should cast roughly one skill in ten is the thing to watch.
+
+Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
+conceded to `spawn_helpers.xml`, and retail cast timings.

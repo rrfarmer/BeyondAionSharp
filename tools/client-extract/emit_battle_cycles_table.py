@@ -273,6 +273,9 @@ def action_code(row: dict) -> str:
         return f"Do.ArmTimer({row['a1']}, {row['a2']})"
     if kind == "despawn":
         return f"Do.Despawn({row['a1']})"
+    if kind == "spawn_on_ranked":
+        return (f"Do.SpawnOnAttacker(AggroTarget.{row['place']}, {row['a1']}, {row['group']}, "
+                f"{row['x']}f, {int(float(row['z']))}, {row['a2']}, {row['y']}f)")
     if kind == "spawn_each":
         return (f"Do.SpawnOnEachTarget({row['a1']}, {row['group']}, {row['x']}f, {row['a2']}, "
                 f"MultiTargetOrder.{row['place']}, {row['y']}f, {int(float(row['z']))}, {row['a3']})")
