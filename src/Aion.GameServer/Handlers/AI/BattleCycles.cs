@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 3936 retail patterns across 30158 npcs, 318333 actions.
+/// Combat rotations: 3938 retail patterns across 30166 npcs, 318376 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -40461,8 +40461,12 @@ internal static class BattleCycles
         owners[209670] = 69;  // F5_PvPLight_DGuard_Fi_An
         owners[209673] = 63;  // F5_PvPLight_DGuard_Wi_An
         owners[209674] = 63;  // F5_PvPLight_DGuard_Wi_An
+        owners[209688] = 73;  // IDSeal_Scene_24_PCGuard_Leader
+        owners[209689] = 74;  // IDSeal_Scene_24_PCGuard
         owners[209706] = 73;  // IDSeal_Scene_24_PCGuard_Leader
         owners[209707] = 74;  // IDSeal_Scene_24_PCGuard
+        owners[209753] = 73;  // IDSeal_Scene_24_PCGuard_Leader
+        owners[209754] = 74;  // IDSeal_Scene_24_PCGuard
         owners[209771] = 73;  // IDSeal_Scene_24_PCGuard_Leader
         owners[209772] = 74;  // IDSeal_Scene_24_PCGuard
         owners[209797] = 75;  // IDSeal_Scene_23_PCGuard_Leader
@@ -40569,14 +40573,14 @@ internal static class BattleCycles
         owners[210860] = 104;  // NLehpar_FnB
         owners[210861] = 77;  // Brownie_FnH
         owners[210867] = 102;  // NKrall_FeA
-        owners[210868] = 103;  // NKrall_ReC
-        owners[210869] = 105;  // NKrall_PeA
-        owners[210870] = 106;  // ND2_FnN
-        owners[210887] = 107;  // ND2_KnL
     }
 
     private static void CycleOf2(Dictionary<int, int> owners)
     {
+        owners[210868] = 103;  // NKrall_ReC
+        owners[210869] = 105;  // NKrall_PeA
+        owners[210870] = 106;  // ND2_FnN
+        owners[210887] = 107;  // ND2_KnL
         owners[210891] = 102;  // NKrall_FeA
         owners[210892] = 105;  // NKrall_PeA
         owners[210893] = 103;  // NKrall_ReC
@@ -40973,14 +40977,14 @@ internal static class BattleCycles
         owners[212962] = 199;  // XLehpar_KeB
         owners[212963] = 199;  // XLehpar_KeB
         owners[212964] = 200;  // XLehpar_ReB_S1
-        owners[212965] = 200;  // XLehpar_ReB_S1
-        owners[212966] = 130;  // XLehpar_PeA
-        owners[212967] = 130;  // XLehpar_PeA
-        owners[212971] = 201;  // ND2_FnX
     }
 
     private static void CycleOf3(Dictionary<int, int> owners)
     {
+        owners[212965] = 200;  // XLehpar_ReB_S1
+        owners[212966] = 130;  // XLehpar_PeA
+        owners[212967] = 130;  // XLehpar_PeA
+        owners[212971] = 201;  // ND2_FnX
         owners[212972] = 201;  // ND2_FnX
         owners[212975] = 190;  // XLehpar_CeA
         owners[212976] = 202;  // XLehpar_KeB
@@ -41377,14 +41381,14 @@ internal static class BattleCycles
         owners[213933] = 220;  // Naga_CeA
         owners[213934] = 129;  // Xlehpar_FeB
         owners[213935] = 129;  // Xlehpar_FeB
-        owners[213936] = 189;  // XLehpar_KeB
-        owners[213937] = 121;  // XLehpar_AeB
-        owners[213938] = 121;  // XLehpar_AeB
-        owners[213939] = 254;  // XLehpar_ReB_S3
     }
 
     private static void CycleOf4(Dictionary<int, int> owners)
     {
+        owners[213936] = 189;  // XLehpar_KeB
+        owners[213937] = 121;  // XLehpar_AeB
+        owners[213938] = 121;  // XLehpar_AeB
+        owners[213939] = 254;  // XLehpar_ReB_S3
         owners[213940] = 127;  // XLehpar_WeA
         owners[213941] = 135;  // XLehpar_EeA
         owners[213942] = 130;  // XLehpar_PeA
@@ -41781,14 +41785,14 @@ internal static class BattleCycles
         owners[214972] = 330;  // Shulack_ReA
         owners[214973] = 330;  // Shulack_ReA
         owners[214974] = 330;  // Shulack_ReA
-        owners[214975] = 330;  // Shulack_ReA
-        owners[214976] = 330;  // Shulack_ReA
-        owners[214977] = 330;  // Shulack_ReA
-        owners[214978] = 330;  // Shulack_ReA
     }
 
     private static void CycleOf5(Dictionary<int, int> owners)
     {
+        owners[214975] = 330;  // Shulack_ReA
+        owners[214976] = 330;  // Shulack_ReA
+        owners[214977] = 330;  // Shulack_ReA
+        owners[214978] = 330;  // Shulack_ReA
         owners[214979] = 330;  // Shulack_ReA
         owners[214980] = 330;  // Shulack_ReA
         owners[214981] = 330;  // Shulack_ReA
@@ -42185,14 +42189,14 @@ internal static class BattleCycles
         owners[215554] = 384;  // Shulack_AeB
         owners[215555] = 384;  // Shulack_AeB
         owners[215562] = 385;  // Shulack_WeA
-        owners[215563] = 385;  // Shulack_WeA
-        owners[215564] = 385;  // Shulack_WeA
-        owners[215565] = 385;  // Shulack_WeA
-        owners[215566] = 385;  // Shulack_WeA
     }
 
     private static void CycleOf6(Dictionary<int, int> owners)
     {
+        owners[215563] = 385;  // Shulack_WeA
+        owners[215564] = 385;  // Shulack_WeA
+        owners[215565] = 385;  // Shulack_WeA
+        owners[215566] = 385;  // Shulack_WeA
         owners[215567] = 385;  // Shulack_WeA
         owners[215568] = 386;  // Shulack_PeA
         owners[215569] = 386;  // Shulack_PeA
@@ -42589,14 +42593,14 @@ internal static class BattleCycles
         owners[216705] = 384;  // Shulack_AeB
         owners[216706] = 384;  // Shulack_AeB
         owners[216707] = 384;  // Shulack_AeB
-        owners[216708] = 384;  // Shulack_AeB
-        owners[216709] = 384;  // Shulack_AeB
-        owners[216710] = 384;  // Shulack_AeB
-        owners[216717] = 385;  // Shulack_WeA
     }
 
     private static void CycleOf7(Dictionary<int, int> owners)
     {
+        owners[216708] = 384;  // Shulack_AeB
+        owners[216709] = 384;  // Shulack_AeB
+        owners[216710] = 384;  // Shulack_AeB
+        owners[216717] = 385;  // Shulack_WeA
         owners[216718] = 385;  // Shulack_WeA
         owners[216719] = 386;  // Shulack_PeA
         owners[216720] = 386;  // Shulack_PeA
@@ -42993,14 +42997,14 @@ internal static class BattleCycles
         owners[217660] = 611;  // Raksha_DrakanGuardKnight
         owners[217740] = 612;  // IDArena_S3_Bonus_2
         owners[217741] = 613;  // IDArena_S3_Bonus_3
-        owners[217742] = 614;  // IDArena_S3_Bonus_4
-        owners[217743] = 615;  // IDArena_S3_Bonus_5
-        owners[217752] = 616;  // IDArena_S6_Bonus_4
-        owners[217755] = 617;  // IDArena_S9_Bonus_CTRL
     }
 
     private static void CycleOf8(Dictionary<int, int> owners)
     {
+        owners[217742] = 614;  // IDArena_S3_Bonus_4
+        owners[217743] = 615;  // IDArena_S3_Bonus_5
+        owners[217752] = 616;  // IDArena_S6_Bonus_4
+        owners[217755] = 617;  // IDArena_S9_Bonus_CTRL
         owners[217766] = 618;  // Raksha_DrakanBoneAssassin
         owners[217767] = 618;  // Raksha_DrakanBoneAssassin
         owners[217768] = 618;  // Raksha_DrakanBoneAssassin
@@ -43397,14 +43401,14 @@ internal static class BattleCycles
         owners[218279] = 726;  // LDF4b_T2_Rottentree_An
         owners[218280] = 758;  // LDF4b_T2_Rottentree_Flower_An
         owners[218281] = 758;  // LDF4b_T2_Rottentree_Flower_An
-        owners[218282] = 759;  // LDF4b_T2_Bat_Dolphin_An
-        owners[218283] = 759;  // LDF4b_T2_Bat_Dolphin_An
-        owners[218284] = 759;  // LDF4b_T2_Bat_Dolphin_Red_An
-        owners[218285] = 759;  // LDF4b_T2_Bat_Dolphin_Red_An
     }
 
     private static void CycleOf9(Dictionary<int, int> owners)
     {
+        owners[218282] = 759;  // LDF4b_T2_Bat_Dolphin_An
+        owners[218283] = 759;  // LDF4b_T2_Bat_Dolphin_An
+        owners[218284] = 759;  // LDF4b_T2_Bat_Dolphin_Red_An
+        owners[218285] = 759;  // LDF4b_T2_Bat_Dolphin_Red_An
         owners[218288] = 760;  // LDF4b_T2_Unicorn_An
         owners[218289] = 760;  // LDF4b_T2_Unicorn_An
         owners[218296] = 761;  // LDF4b_T2_Spider_Leaf_An
@@ -43801,14 +43805,14 @@ internal static class BattleCycles
         owners[218910] = 796;  // LDF4b_Portal_DrakanWhip
         owners[218911] = 896;  // LDF4b_Portal_DrakanGiant
         owners[218912] = 897;  // LDF4b_Portal_DrakanBomber
-        owners[218913] = 898;  // LDF4b_Portal_DrakanBomber_Sum
-        owners[218922] = 899;  // LDF4b_Tiamat_Temp22
-        owners[218923] = 733;  // TDown_DrakanFi_Tiamat_60_Ae
-        owners[218925] = 735;  // TDown_DrakanCl_Tiamat_60_Ae
     }
 
     private static void CycleOf10(Dictionary<int, int> owners)
     {
+        owners[218913] = 898;  // LDF4b_Portal_DrakanBomber_Sum
+        owners[218922] = 899;  // LDF4b_Tiamat_Temp22
+        owners[218923] = 733;  // TDown_DrakanFi_Tiamat_60_Ae
+        owners[218925] = 735;  // TDown_DrakanCl_Tiamat_60_Ae
         owners[218928] = 733;  // LDF4b_TiamatDrakan_NobleFighter
         owners[218931] = 733;  // LDF4b_TiamatDrakan_NobleFighter
         owners[218936] = 733;  // LDF4b_TiamatDrakan_NobleFighter
@@ -44205,14 +44209,14 @@ internal static class BattleCycles
         owners[220008] = 972;  // LF5_NewSpecies_Pr_KJS
         owners[220009] = 972;  // LF5_NewSpecies_Pr_KJS
         owners[220010] = 973;  // LF5_NewSpecies_Wi_KJS
-        owners[220011] = 973;  // LF5_NewSpecies_Wi_KJS
-        owners[220020] = 947;  // TiamatDown_TiamatAgent
-        owners[220021] = 362;  // XDrakan_FeG
-        owners[220022] = 319;  // XDrakan_WeB
     }
 
     private static void CycleOf11(Dictionary<int, int> owners)
     {
+        owners[220011] = 973;  // LF5_NewSpecies_Wi_KJS
+        owners[220020] = 947;  // TiamatDown_TiamatAgent
+        owners[220021] = 362;  // XDrakan_FeG
+        owners[220022] = 319;  // XDrakan_WeB
         owners[220026] = 971;  // LF5_NewSpecies_Fi_KJS
         owners[220028] = 972;  // LF5_NewSpecies_Pr_KJS
         owners[220029] = 973;  // LF5_NewSpecies_Wi_KJS
@@ -44609,14 +44613,14 @@ internal static class BattleCycles
         owners[230925] = 1151;  // TR_Drakan_Pr_Heal_Party
         owners[230926] = 1152;  // TR_Drakan_As_Hide_Party
         owners[230928] = 1153;  // TR_Drakan_Wi_Summon_Party
-        owners[230929] = 1154;  // TR_Drakan_Fi_Stun_Party
-        owners[230931] = 1155;  // TR_Drakan_Wi_Mes_Party
-        owners[230934] = 1125;  // TR_Lizard_Basic_Second
-        owners[230935] = 1126;  // TR_Lizard_Basic_Second
     }
 
     private static void CycleOf12(Dictionary<int, int> owners)
     {
+        owners[230929] = 1154;  // TR_Drakan_Fi_Stun_Party
+        owners[230931] = 1155;  // TR_Drakan_Wi_Mes_Party
+        owners[230934] = 1125;  // TR_Lizard_Basic_Second
+        owners[230935] = 1126;  // TR_Lizard_Basic_Second
         owners[230936] = 1125;  // TR_Lizard_Basic_Third
         owners[230937] = 1126;  // TR_Lizard_Basic_Third
         owners[230938] = 1125;  // TR_Lizard_Basic_Fourth
@@ -45013,14 +45017,14 @@ internal static class BattleCycles
         owners[231700] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[231701] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[231702] = 61;  // F5_PvPLight_LGuard_Fi_An
-        owners[231703] = 1201;  // F5_PvPLight_LGuard_Kn_An
-        owners[231704] = 1192;  // F5_PvPLight_LGuard_Pr_An
-        owners[231705] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
-        owners[231706] = 63;  // F5_PvPLight_LGuard_Wi_An
     }
 
     private static void CycleOf13(Dictionary<int, int> owners)
     {
+        owners[231703] = 1201;  // F5_PvPLight_LGuard_Kn_An
+        owners[231704] = 1192;  // F5_PvPLight_LGuard_Pr_An
+        owners[231705] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
+        owners[231706] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[231707] = 61;  // F5_PvPLight_LGuard_Fi_An
         owners[231708] = 1201;  // F5_PvPLight_LGuard_Kn_An
         owners[231709] = 1192;  // F5_PvPLight_LGuard_Pr_An
@@ -45417,14 +45421,14 @@ internal static class BattleCycles
         owners[232254] = 64;  // F5_PvP_LGuard_Fi_Ae
         owners[232255] = 67;  // F5_PvP_LGuard_Kn_Ae
         owners[232256] = 1257;  // F5_PvP_LGuard_Pr_Ae
-        owners[232257] = 65;  // F5_PvP_LGuard_Ra_Ae_Broad
-        owners[232258] = 72;  // F5_PvP_LGuard_Wi_Ae
-        owners[232259] = 61;  // F5_PvPLight_LGuard_Fi_An
-        owners[232260] = 1201;  // F5_PvPLight_LGuard_Kn_An
     }
 
     private static void CycleOf14(Dictionary<int, int> owners)
     {
+        owners[232257] = 65;  // F5_PvP_LGuard_Ra_Ae_Broad
+        owners[232258] = 72;  // F5_PvP_LGuard_Wi_Ae
+        owners[232259] = 61;  // F5_PvPLight_LGuard_Fi_An
+        owners[232260] = 1201;  // F5_PvPLight_LGuard_Kn_An
         owners[232261] = 1192;  // F5_PvPLight_LGuard_Pr_An
         owners[232262] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[232263] = 63;  // F5_PvPLight_LGuard_Wi_An
@@ -45821,14 +45825,14 @@ internal static class BattleCycles
         owners[232711] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[232712] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[232713] = 64;  // F5_PvP_LGuard_Fi_Ae
-        owners[232714] = 65;  // F5_PvP_LGuard_Ra_Ae_Broad
-        owners[232715] = 72;  // F5_PvP_LGuard_Wi_Ae
-        owners[232716] = 68;  // F5_PvP_LGuard_Gu_Ae
-        owners[232717] = 61;  // F5_PvPLight_LGuard_Fi_An
     }
 
     private static void CycleOf15(Dictionary<int, int> owners)
     {
+        owners[232714] = 65;  // F5_PvP_LGuard_Ra_Ae_Broad
+        owners[232715] = 72;  // F5_PvP_LGuard_Wi_Ae
+        owners[232716] = 68;  // F5_PvP_LGuard_Gu_Ae
+        owners[232717] = 61;  // F5_PvPLight_LGuard_Fi_An
         owners[232718] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[232719] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[232720] = 61;  // F5_PvPLight_LGuard_Fi_An
@@ -46225,14 +46229,14 @@ internal static class BattleCycles
         owners[233521] = 67;  // IDF5_TD_War_Light_Officer_04
         owners[233522] = 67;  // IDF5_TD_War_Light_Officer_05
         owners[233523] = 67;  // IDF5_TD_War_Light_Officer_06
-        owners[233524] = 67;  // IDF5_TD_War_Light_Officer_07
-        owners[233525] = 67;  // IDF5_TD_War_Light_Officer_08
-        owners[233526] = 67;  // IDF5_TD_War_Light_Officer_09
-        owners[233527] = 67;  // IDF5_TD_War_Light_Officer_10
     }
 
     private static void CycleOf16(Dictionary<int, int> owners)
     {
+        owners[233524] = 67;  // IDF5_TD_War_Light_Officer_07
+        owners[233525] = 67;  // IDF5_TD_War_Light_Officer_08
+        owners[233526] = 67;  // IDF5_TD_War_Light_Officer_09
+        owners[233527] = 67;  // IDF5_TD_War_Light_Officer_10
         owners[233528] = 1319;  // IDF5_TD_War_Light_Ra_01
         owners[233537] = 1320;  // IDF5_TD_War_Vri_DragonRider
         owners[233541] = 1321;  // IDF5_TD_War_Vri_As
@@ -46629,14 +46633,14 @@ internal static class BattleCycles
         owners[234392] = 69;  // F5_PvPLight_DGuard_Fi_An
         owners[234394] = 63;  // F5_PvPLight_DGuard_Wi_An
         owners[234395] = 69;  // F5_PvPLight_DGuard_Fi_An
-        owners[234397] = 63;  // F5_PvPLight_DGuard_Wi_An
-        owners[234398] = 1201;  // F5_PvPLight_LGuard_Kn_An
-        owners[234399] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
-        owners[234400] = 63;  // F5_PvPLight_LGuard_Wi_An
     }
 
     private static void CycleOf17(Dictionary<int, int> owners)
     {
+        owners[234397] = 63;  // F5_PvPLight_DGuard_Wi_An
+        owners[234398] = 1201;  // F5_PvPLight_LGuard_Kn_An
+        owners[234399] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
+        owners[234400] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[234401] = 1201;  // F5_PvPLight_LGuard_Kn_An
         owners[234402] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[234403] = 63;  // F5_PvPLight_LGuard_Wi_An
@@ -47033,14 +47037,14 @@ internal static class BattleCycles
         owners[235402] = 207;  // Lizardman_AeB
         owners[235403] = 207;  // Lizardman_AeB
         owners[235406] = 225;  // Lizardman_BeastKA
-        owners[235407] = 225;  // Lizardman_BeastKA
-        owners[235408] = 170;  // Lizardman_ReA
-        owners[235409] = 170;  // Lizardman_ReA
-        owners[235410] = 170;  // Lizardman_ReA
     }
 
     private static void CycleOf18(Dictionary<int, int> owners)
     {
+        owners[235407] = 225;  // Lizardman_BeastKA
+        owners[235408] = 170;  // Lizardman_ReA
+        owners[235409] = 170;  // Lizardman_ReA
+        owners[235410] = 170;  // Lizardman_ReA
         owners[235411] = 170;  // Lizardman_ReA
         owners[235412] = 239;  // Lizardman_ReB_1
         owners[235413] = 239;  // Lizardman_ReB_1
@@ -47437,14 +47441,14 @@ internal static class BattleCycles
         owners[236723] = 1359;  // WorldRaid_VMR_Easy
         owners[236724] = 1359;  // WorldRaid_VMR_Easy
         owners[236725] = 1358;  // WorldRaid_VriMechanic_Easy
-        owners[236727] = 1360;  // WorldRaid_Dyna_Normal
-        owners[236728] = 1361;  // WorldRaid_Dyna_Easy
-        owners[236729] = 1358;  // WorldRaid_VriMechanic_Easy
-        owners[236730] = 1360;  // WorldRaid_Dyna_Normal
     }
 
     private static void CycleOf19(Dictionary<int, int> owners)
     {
+        owners[236727] = 1360;  // WorldRaid_Dyna_Normal
+        owners[236728] = 1361;  // WorldRaid_Dyna_Easy
+        owners[236729] = 1358;  // WorldRaid_VriMechanic_Easy
+        owners[236730] = 1360;  // WorldRaid_Dyna_Normal
         owners[236731] = 1358;  // WorldRaid_VriMechanic_Easy
         owners[236732] = 1361;  // WorldRaid_Dyna_Easy
         owners[236733] = 1362;  // WorldRaid_VMF_Normal
@@ -47841,14 +47845,14 @@ internal static class BattleCycles
         owners[251610] = 64;  // F5_PvP_LGuard_Fi_Ae
         owners[251611] = 64;  // F5_PvP_LGuard_Fi_Ae
         owners[251612] = 64;  // F5_PvP_LGuard_Fi_Ae
-        owners[251613] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
-        owners[251614] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
-        owners[251615] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
-        owners[251616] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
     }
 
     private static void CycleOf20(Dictionary<int, int> owners)
     {
+        owners[251613] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251614] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251615] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
+        owners[251616] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
         owners[251617] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
         owners[251618] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
         owners[251619] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
@@ -48245,14 +48249,14 @@ internal static class BattleCycles
         owners[252273] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
         owners[252284] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
         owners[252285] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
-        owners[252286] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
-        owners[252288] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
-        owners[252348] = 61;  // F5_PvPLight_LGuard_Fi_An
-        owners[252350] = 63;  // F5_PvPLight_LGuard_Wi_An
     }
 
     private static void CycleOf21(Dictionary<int, int> owners)
     {
+        owners[252286] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
+        owners[252288] = 1439;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
+        owners[252348] = 61;  // F5_PvPLight_LGuard_Fi_An
+        owners[252350] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[252351] = 1192;  // F5_PvPLight_LGuard_Pr_An
         owners[252352] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
         owners[252353] = 69;  // F5_PvPLight_DGuard_Fi_An
@@ -48649,14 +48653,14 @@ internal static class BattleCycles
         owners[257190] = 32;  // DGuard_PnA
         owners[257191] = 306;  // DrGuard_PnA
         owners[257228] = 1529;  // DrGuard_FsA
-        owners[257229] = 1260;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
-        owners[257230] = 1258;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
-        owners[257231] = 1528;  // LGuard_FsA
-        owners[257232] = 1528;  // DGuard_FsA
     }
 
     private static void CycleOf22(Dictionary<int, int> owners)
     {
+        owners[257229] = 1260;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
+        owners[257230] = 1258;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
+        owners[257231] = 1528;  // LGuard_FsA
+        owners[257232] = 1528;  // DGuard_FsA
         owners[257315] = 1528;  // LGuard_FsA
         owners[257316] = 1528;  // LGuard_FsA
         owners[257317] = 1528;  // LGuard_FsA
@@ -49053,14 +49057,14 @@ internal static class BattleCycles
         owners[259214] = 1546;  // LDF4b_Tiamat_Gravity
         owners[259215] = 3;  // LGuard_FeA
         owners[259216] = 3;  // DGuard_FeA
-        owners[259218] = 16;  // LGuard_AeA
-        owners[259219] = 16;  // DGuard_AeA
-        owners[259220] = 260;  // DrGuard_AeA
-        owners[259224] = 25;  // LGuard_WeA
     }
 
     private static void CycleOf23(Dictionary<int, int> owners)
     {
+        owners[259218] = 16;  // LGuard_AeA
+        owners[259219] = 16;  // DGuard_AeA
+        owners[259220] = 260;  // DrGuard_AeA
+        owners[259224] = 25;  // LGuard_WeA
         owners[259225] = 25;  // DGuard_WeA
         owners[259227] = 4;  // LGuard_PeA
         owners[259228] = 4;  // DGuard_PeA
@@ -49457,14 +49461,14 @@ internal static class BattleCycles
         owners[260228] = 1553;  // DGuard_FhA_Officer
         owners[260237] = 1554;  // BGuard_GiantBlue
         owners[260238] = 1554;  // BGuard_GiantBlue
-        owners[260239] = 1554;  // BGuard_GiantBlue
-        owners[260240] = 1554;  // BGuard_GiantBlue
-        owners[260241] = 1554;  // BGuard_GiantBlue
-        owners[260242] = 1554;  // BGuard_GiantBlue
     }
 
     private static void CycleOf24(Dictionary<int, int> owners)
     {
+        owners[260239] = 1554;  // BGuard_GiantBlue
+        owners[260240] = 1554;  // BGuard_GiantBlue
+        owners[260241] = 1554;  // BGuard_GiantBlue
+        owners[260242] = 1554;  // BGuard_GiantBlue
         owners[260243] = 1554;  // BGuard_GiantBlue
         owners[260244] = 1554;  // BGuard_GiantBlue
         owners[260245] = 1554;  // BGuard_GiantBlue
@@ -49861,14 +49865,14 @@ internal static class BattleCycles
         owners[261828] = 304;  // DrGuard_FnA
         owners[261829] = 304;  // DrGuard_FnA
         owners[261830] = 304;  // DrGuard_FnA
-        owners[261831] = 30;  // LGuard_RnA
-        owners[261832] = 30;  // LGuard_RnA
-        owners[261833] = 30;  // LGuard_RnA
-        owners[261834] = 30;  // LGuard_RnA
     }
 
     private static void CycleOf25(Dictionary<int, int> owners)
     {
+        owners[261831] = 30;  // LGuard_RnA
+        owners[261832] = 30;  // LGuard_RnA
+        owners[261833] = 30;  // LGuard_RnA
+        owners[261834] = 30;  // LGuard_RnA
         owners[261835] = 30;  // LGuard_RnA
         owners[261836] = 30;  // DGuard_RnA
         owners[261837] = 30;  // DGuard_RnA
@@ -50265,14 +50269,14 @@ internal static class BattleCycles
         owners[263165] = 1465;  // DrGuard_RnA
         owners[263166] = 31;  // LGuard_WnA
         owners[263167] = 31;  // LGuard_WnA
-        owners[263168] = 31;  // LGuard_WnA
-        owners[263169] = 31;  // LGuard_WnA
-        owners[263170] = 31;  // LGuard_WnA
-        owners[263171] = 31;  // DGuard_WnA
     }
 
     private static void CycleOf26(Dictionary<int, int> owners)
     {
+        owners[263168] = 31;  // LGuard_WnA
+        owners[263169] = 31;  // LGuard_WnA
+        owners[263170] = 31;  // LGuard_WnA
+        owners[263171] = 31;  // DGuard_WnA
         owners[263172] = 31;  // DGuard_WnA
         owners[263173] = 31;  // DGuard_WnA
         owners[263174] = 31;  // DGuard_WnA
@@ -50669,14 +50673,14 @@ internal static class BattleCycles
         owners[263926] = 304;  // DrGuard_FnA
         owners[263927] = 304;  // DrGuard_FnA
         owners[263928] = 304;  // DrGuard_FnA
-        owners[263929] = 304;  // DrGuard_FnA
-        owners[263930] = 304;  // DrGuard_FnA
-        owners[263931] = 30;  // LGuard_RnA
-        owners[263932] = 30;  // LGuard_RnA
     }
 
     private static void CycleOf27(Dictionary<int, int> owners)
     {
+        owners[263929] = 304;  // DrGuard_FnA
+        owners[263930] = 304;  // DrGuard_FnA
+        owners[263931] = 30;  // LGuard_RnA
+        owners[263932] = 30;  // LGuard_RnA
         owners[263933] = 30;  // LGuard_RnA
         owners[263934] = 30;  // LGuard_RnA
         owners[263935] = 30;  // LGuard_RnA
@@ -51073,14 +51077,14 @@ internal static class BattleCycles
         owners[264861] = 34;  // LGuard_PeB
         owners[264862] = 34;  // LGuard_PeB
         owners[264863] = 34;  // LGuard_PeB
-        owners[264864] = 34;  // LGuard_PeB
-        owners[264865] = 34;  // LGuard_PeB
-        owners[264866] = 34;  // DGuard_PeB
-        owners[264867] = 34;  // DGuard_PeB
     }
 
     private static void CycleOf28(Dictionary<int, int> owners)
     {
+        owners[264864] = 34;  // LGuard_PeB
+        owners[264865] = 34;  // LGuard_PeB
+        owners[264866] = 34;  // DGuard_PeB
+        owners[264867] = 34;  // DGuard_PeB
         owners[264868] = 34;  // DGuard_PeB
         owners[264869] = 34;  // DGuard_PeB
         owners[264870] = 34;  // DGuard_PeB
@@ -51477,14 +51481,14 @@ internal static class BattleCycles
         owners[266426] = 4;  // DGuard_PeA
         owners[266427] = 4;  // DGuard_PeA
         owners[266428] = 4;  // DGuard_PeA
-        owners[266429] = 4;  // DGuard_PeA
-        owners[266430] = 4;  // DGuard_PeA
-        owners[266431] = 261;  // DrGuard_PeA
-        owners[266432] = 261;  // DrGuard_PeA
     }
 
     private static void CycleOf29(Dictionary<int, int> owners)
     {
+        owners[266429] = 4;  // DGuard_PeA
+        owners[266430] = 4;  // DGuard_PeA
+        owners[266431] = 261;  // DrGuard_PeA
+        owners[266432] = 261;  // DrGuard_PeA
         owners[266433] = 261;  // DrGuard_PeA
         owners[266434] = 261;  // DrGuard_PeA
         owners[266435] = 261;  // DrGuard_PeA
@@ -51881,14 +51885,14 @@ internal static class BattleCycles
         owners[267817] = 9;  // LGuard_FeB
         owners[267818] = 9;  // LGuard_FeB
         owners[267819] = 9;  // LGuard_FeB
-        owners[267820] = 9;  // LGuard_FeB
-        owners[267821] = 9;  // DGuard_FeB
-        owners[267822] = 9;  // DGuard_FeB
-        owners[267823] = 9;  // DGuard_FeB
     }
 
     private static void CycleOf30(Dictionary<int, int> owners)
     {
+        owners[267820] = 9;  // LGuard_FeB
+        owners[267821] = 9;  // DGuard_FeB
+        owners[267822] = 9;  // DGuard_FeB
+        owners[267823] = 9;  // DGuard_FeB
         owners[267824] = 9;  // DGuard_FeB
         owners[267825] = 9;  // DGuard_FeB
         owners[267826] = 1502;  // DrGuard_FeB
@@ -52285,14 +52289,14 @@ internal static class BattleCycles
         owners[268767] = 34;  // DGuard_PeB
         owners[268768] = 34;  // DGuard_PeB
         owners[268769] = 34;  // DGuard_PeB
-        owners[268770] = 34;  // DGuard_PeB
-        owners[268771] = 1552;  // DrGuard_PeB
-        owners[268772] = 1552;  // DrGuard_PeB
-        owners[268773] = 1552;  // DrGuard_PeB
     }
 
     private static void CycleOf31(Dictionary<int, int> owners)
     {
+        owners[268770] = 34;  // DGuard_PeB
+        owners[268771] = 1552;  // DrGuard_PeB
+        owners[268772] = 1552;  // DrGuard_PeB
+        owners[268773] = 1552;  // DrGuard_PeB
         owners[268774] = 1552;  // DrGuard_PeB
         owners[268775] = 1552;  // DrGuard_PeB
         owners[268776] = 9;  // LGuard_FeB
@@ -52689,14 +52693,14 @@ internal static class BattleCycles
         owners[269955] = 33;  // DGuard_WeB
         owners[269956] = 359;  // DrGuard_WeB
         owners[269957] = 359;  // DrGuard_WeB
-        owners[269958] = 359;  // DrGuard_WeB
-        owners[269959] = 359;  // DrGuard_WeB
-        owners[269960] = 359;  // DrGuard_WeB
-        owners[269961] = 34;  // LGuard_PeB
     }
 
     private static void CycleOf32(Dictionary<int, int> owners)
     {
+        owners[269958] = 359;  // DrGuard_WeB
+        owners[269959] = 359;  // DrGuard_WeB
+        owners[269960] = 359;  // DrGuard_WeB
+        owners[269961] = 34;  // LGuard_PeB
         owners[269962] = 34;  // LGuard_PeB
         owners[269963] = 34;  // LGuard_PeB
         owners[269964] = 34;  // LGuard_PeB
@@ -53093,14 +53097,14 @@ internal static class BattleCycles
         owners[270940] = 29;  // LGuard_FnA
         owners[270941] = 29;  // DGuard_FnA
         owners[270942] = 29;  // DGuard_FnA
-        owners[270943] = 29;  // DGuard_FnA
-        owners[270944] = 29;  // DGuard_FnA
-        owners[270945] = 29;  // DGuard_FnA
-        owners[270946] = 304;  // DrGuard_FnA
     }
 
     private static void CycleOf33(Dictionary<int, int> owners)
     {
+        owners[270943] = 29;  // DGuard_FnA
+        owners[270944] = 29;  // DGuard_FnA
+        owners[270945] = 29;  // DGuard_FnA
+        owners[270946] = 304;  // DrGuard_FnA
         owners[270947] = 304;  // DrGuard_FnA
         owners[270948] = 304;  // DrGuard_FnA
         owners[270949] = 304;  // DrGuard_FnA
@@ -53497,14 +53501,14 @@ internal static class BattleCycles
         owners[272068] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
         owners[272069] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
         owners[272070] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
-        owners[272071] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
-        owners[272072] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
-        owners[272073] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
-        owners[272074] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
     }
 
     private static void CycleOf34(Dictionary<int, int> owners)
     {
+        owners[272071] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
+        owners[272072] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
+        owners[272073] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
+        owners[272074] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
         owners[272075] = 1447;  // F5_RvR_LGuard_Gu_Ae
         owners[272076] = 1447;  // F5_RvR_LGuard_Gu_Ae
         owners[272077] = 1447;  // F5_RvR_LGuard_Gu_Ae
@@ -53901,14 +53905,14 @@ internal static class BattleCycles
         owners[273017] = 1312;  // F5_RvR_LGuard_Kn_Ae
         owners[273018] = 1312;  // F5_RvR_LGuard_Kn_Ae
         owners[273019] = 1312;  // F5_RvR_LGuard_Kn_Ae
-        owners[273025] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
-        owners[273026] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
-        owners[273027] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
-        owners[273028] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
     }
 
     private static void CycleOf35(Dictionary<int, int> owners)
     {
+        owners[273025] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273026] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273027] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[273028] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
         owners[273029] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
         owners[273030] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
         owners[273031] = 1446;  // F5_RvR_LGuard_Ra_Ae_Broad
@@ -54305,14 +54309,14 @@ internal static class BattleCycles
         owners[279087] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
         owners[279088] = 1268;  // F5_PvP_LGuard_As_Ae_Hide
         owners[279089] = 1192;  // F5_PvPLight_LGuard_Pr_An
-        owners[279090] = 1192;  // F5_PvPLight_LGuard_Pr_An
-        owners[279091] = 1192;  // F5_PvPLight_LGuard_Pr_An
-        owners[279092] = 1192;  // F5_PvPLight_LGuard_Pr_An
-        owners[279093] = 1192;  // F5_PvPLight_LGuard_Pr_An
     }
 
     private static void CycleOf36(Dictionary<int, int> owners)
     {
+        owners[279090] = 1192;  // F5_PvPLight_LGuard_Pr_An
+        owners[279091] = 1192;  // F5_PvPLight_LGuard_Pr_An
+        owners[279092] = 1192;  // F5_PvPLight_LGuard_Pr_An
+        owners[279093] = 1192;  // F5_PvPLight_LGuard_Pr_An
         owners[279094] = 1257;  // F5_PvP_LGuard_Pr_Ae
         owners[279095] = 1257;  // F5_PvP_LGuard_Pr_Ae
         owners[279096] = 1257;  // F5_PvP_LGuard_Pr_Ae
@@ -54709,14 +54713,14 @@ internal static class BattleCycles
         owners[279585] = 1257;  // F5_PvP_DGuard_Pr_Ae
         owners[279586] = 1257;  // F5_PvP_DGuard_Pr_Ae
         owners[279587] = 1257;  // F5_PvP_DGuard_Pr_Ae
-        owners[279588] = 1257;  // F5_PvP_DGuard_Pr_Ae
-        owners[279589] = 1257;  // F5_PvP_DGuard_Pr_Ae
-        owners[279590] = 1257;  // F5_PvP_DGuard_Pr_Ae
-        owners[279591] = 1257;  // F5_PvP_DGuard_Pr_Ae
     }
 
     private static void CycleOf37(Dictionary<int, int> owners)
     {
+        owners[279588] = 1257;  // F5_PvP_DGuard_Pr_Ae
+        owners[279589] = 1257;  // F5_PvP_DGuard_Pr_Ae
+        owners[279590] = 1257;  // F5_PvP_DGuard_Pr_Ae
+        owners[279591] = 1257;  // F5_PvP_DGuard_Pr_Ae
         owners[279592] = 1257;  // F5_PvP_DGuard_Pr_Ae
         owners[279593] = 1257;  // F5_PvP_DGuard_Pr_Ae
         owners[279594] = 63;  // F5_PvPLight_DGuard_Wi_An
@@ -55113,14 +55117,14 @@ internal static class BattleCycles
         owners[280254] = 119;  // NLehpar_KeA
         owners[280257] = 22;  // NLehpar_AnC
         owners[280258] = 144;  // NLehpar_AeA
-        owners[280259] = 143;  // NLehpar_WnA
-        owners[280260] = 113;  // NLehpar_WeA
-        owners[280261] = 112;  // NLehpar_PnA
-        owners[280315] = 115;  // ND2_FhO
     }
 
     private static void CycleOf38(Dictionary<int, int> owners)
     {
+        owners[280259] = 143;  // NLehpar_WnA
+        owners[280260] = 113;  // NLehpar_WeA
+        owners[280261] = 112;  // NLehpar_PnA
+        owners[280315] = 115;  // ND2_FhO
         owners[280319] = 136;  // ND2_FnP
         owners[280323] = 114;  // NLehpar_KhA
         owners[280324] = 100;  // ND2_FnN
@@ -55517,14 +55521,14 @@ internal static class BattleCycles
         owners[281502] = 1693;  // IDTP_SumFanaAs
         owners[281503] = 1694;  // IDTP_SumFanaWi
         owners[281504] = 1695;  // IDTP_SumFanaPr
-        owners[281512] = 379;  // Elim_ComadFe
-        owners[281513] = 380;  // Elim_ComadMe
-        owners[281515] = 369;  // Elim_Sheluk
-        owners[281516] = 372;  // Elim_Octaside
     }
 
     private static void CycleOf39(Dictionary<int, int> owners)
     {
+        owners[281512] = 379;  // Elim_ComadFe
+        owners[281513] = 380;  // Elim_ComadMe
+        owners[281515] = 369;  // Elim_Sheluk
+        owners[281516] = 372;  // Elim_Octaside
         owners[281517] = 373;  // Elim_Criton
         owners[281518] = 374;  // Elim_Clodworm
         owners[281519] = 376;  // Elim_Neutfly
@@ -55921,14 +55925,14 @@ internal static class BattleCycles
         owners[282768] = 668;  // 1Skill_Bs_Hp35_UseSk1T
         owners[282769] = 661;  // LDF4a_Mosbear
         owners[282770] = 661;  // LDF4a_Mosbear
-        owners[282771] = 677;  // 2Skill_Ev15s_UseSk1T_HP35_UseSk2S
-        owners[282772] = 649;  // LDF4a_Lobster
-        owners[282773] = 656;  // 1Skill_Bs_UseSk1S_HP20_Evade
-        owners[282774] = 650;  // 2Skill_Bs_UseSk1T_Hp35_UseSk2T
     }
 
     private static void CycleOf40(Dictionary<int, int> owners)
     {
+        owners[282771] = 677;  // 2Skill_Ev15s_UseSk1T_HP35_UseSk2S
+        owners[282772] = 649;  // LDF4a_Lobster
+        owners[282773] = 656;  // 1Skill_Bs_UseSk1S_HP20_Evade
+        owners[282774] = 650;  // 2Skill_Bs_UseSk1T_Hp35_UseSk2T
         owners[282775] = 694;  // 1Skill_Bs_UseSk1S_HP50_Summon_HP20_Evade
         owners[282776] = 678;  // 2Skill_Ev15s_UseSk1T_HP35_UseSk2T
         owners[282777] = 652;  // 1Skill_Bs_Ev15s_UseSk1T
@@ -56325,14 +56329,14 @@ internal static class BattleCycles
         owners[284124] = 1888;  // TR_Drakan_Pr_Heal_Party_62
         owners[284125] = 1889;  // TR_Drakan_Pr_Heal_Party_63
         owners[284126] = 1890;  // TR_Drakan_Pr_Heal_Party_64
-        owners[284127] = 1891;  // TR_Drakan_Wi_Summon_Party
-        owners[284128] = 1892;  // TR_Drakan_Wi_Summon_Party_62
-        owners[284129] = 1893;  // TR_Drakan_Wi_Summon_Party_63
-        owners[284130] = 1894;  // TR_Drakan_Wi_Summon_Party_64
     }
 
     private static void CycleOf41(Dictionary<int, int> owners)
     {
+        owners[284127] = 1891;  // TR_Drakan_Wi_Summon_Party
+        owners[284128] = 1892;  // TR_Drakan_Wi_Summon_Party_62
+        owners[284129] = 1893;  // TR_Drakan_Wi_Summon_Party_63
+        owners[284130] = 1894;  // TR_Drakan_Wi_Summon_Party_64
         owners[284155] = 1042;  // AD2_BT10st0
         owners[284156] = 1042;  // AD2_BT10st0
         owners[284157] = 1042;  // AD2_BT10st0
@@ -56729,14 +56733,14 @@ internal static class BattleCycles
         owners[287026] = 1978;  // Test_Basic_Monster_AI_JKA_5
         owners[287027] = 1979;  // Test_Basic_Monster_AI_JKA_6
         owners[287028] = 1980;  // Test_Basic_Monster_AI_JKA_7
-        owners[287029] = 1981;  // Test_Basic_Monster_AI_JKA_8
-        owners[287036] = 1982;  // Test_Basic_Monster_AI_LHJ_4
-        owners[287037] = 1983;  // Test_Basic_Monster_AI_LHJ_5
-        owners[287045] = 1984;  // Test_Basic_Monster_AI_KSG_7
     }
 
     private static void CycleOf42(Dictionary<int, int> owners)
     {
+        owners[287029] = 1981;  // Test_Basic_Monster_AI_JKA_8
+        owners[287036] = 1982;  // Test_Basic_Monster_AI_LHJ_4
+        owners[287037] = 1983;  // Test_Basic_Monster_AI_LHJ_5
+        owners[287045] = 1984;  // Test_Basic_Monster_AI_KSG_7
         owners[287046] = 1984;  // Test_Basic_Monster_AI_KSG_8
         owners[287086] = 1985;  // Test_Basic_Monster_AI_KMD_1
         owners[287096] = 1985;  // Test_Basic_Monster_AI_KMD_1
@@ -57133,14 +57137,14 @@ internal static class BattleCycles
         owners[294950] = 30;  // LGuard_RnA
         owners[294951] = 15;  // LGuard_ReB
         owners[294954] = 31;  // LGuard_WnA
-        owners[294955] = 33;  // LGuard_WeB
-        owners[294956] = 25;  // LGuard_WeA
-        owners[294958] = 30;  // DGuard_RnA
-        owners[294959] = 15;  // DGuard_ReB
     }
 
     private static void CycleOf43(Dictionary<int, int> owners)
     {
+        owners[294955] = 33;  // LGuard_WeB
+        owners[294956] = 25;  // LGuard_WeA
+        owners[294958] = 30;  // DGuard_RnA
+        owners[294959] = 15;  // DGuard_ReB
         owners[294962] = 31;  // DGuard_WnA
         owners[294963] = 33;  // DGuard_WeB
         owners[294964] = 25;  // DGuard_WeA
@@ -57537,14 +57541,14 @@ internal static class BattleCycles
         owners[295883] = 25;  // DGuard_WeA
         owners[295885] = 31;  // DGuard_WnA
         owners[295886] = 33;  // DGuard_WeB
-        owners[295887] = 25;  // DGuard_WeA
-        owners[295889] = 32;  // DGuard_PnA
-        owners[295890] = 34;  // DGuard_PeB
-        owners[295891] = 4;  // DGuard_PeA
     }
 
     private static void CycleOf44(Dictionary<int, int> owners)
     {
+        owners[295887] = 25;  // DGuard_WeA
+        owners[295889] = 32;  // DGuard_PnA
+        owners[295890] = 34;  // DGuard_PeB
+        owners[295891] = 4;  // DGuard_PeA
         owners[295893] = 304;  // DrGuard_FnA
         owners[295894] = 1502;  // DrGuard_FeB
         owners[295897] = 1465;  // DrGuard_RnA
@@ -57941,14 +57945,14 @@ internal static class BattleCycles
         owners[296999] = 1257;  // F5_PvP_DGuard_Pr_Ae
         owners[297002] = 1312;  // F5_RvR_LGuard_Kn_Ae
         owners[297003] = 1576;  // F5_RvR_LGuard_Fi_Ae
-        owners[297004] = 1450;  // F5_RvR_LGuard_As_Ae_Hide
-        owners[297005] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
-        owners[297006] = 1437;  // F5_RvR_LGuard_Ra_Ae_Broad
-        owners[297007] = 1447;  // F5_RvR_LGuard_Gu_Ae
     }
 
     private static void CycleOf45(Dictionary<int, int> owners)
     {
+        owners[297004] = 1450;  // F5_RvR_LGuard_As_Ae_Hide
+        owners[297005] = 1450;  // F5_RvR_LGuard_As_Ae_HideBroad
+        owners[297006] = 1437;  // F5_RvR_LGuard_Ra_Ae_Broad
+        owners[297007] = 1447;  // F5_RvR_LGuard_Gu_Ae
         owners[297008] = 1339;  // F5_RvR_LGuard_Pr_Ae
         owners[297009] = 66;  // F5_RvR_LGuard_Wi_Ae
         owners[297010] = 1448;  // F5_RvR_LGuard_El_Ae
@@ -58345,14 +58349,14 @@ internal static class BattleCycles
         owners[731512] = 0;  // LFunction
         owners[731513] = 0;  // LFunction
         owners[731514] = 0;  // LFunction
-        owners[731515] = 0;  // LFunction
-        owners[731516] = 0;  // LFunction
-        owners[731517] = 0;  // LFunction
-        owners[731518] = 0;  // LFunction
     }
 
     private static void CycleOf46(Dictionary<int, int> owners)
     {
+        owners[731515] = 0;  // LFunction
+        owners[731516] = 0;  // LFunction
+        owners[731517] = 0;  // LFunction
+        owners[731518] = 0;  // LFunction
         owners[731519] = 0;  // LFunction
         owners[731520] = 0;  // LFunction
         owners[731521] = 0;  // LFunction
@@ -58749,14 +58753,14 @@ internal static class BattleCycles
         owners[800616] = 2078;  // LDF5_DMerc_Combat
         owners[800617] = 2078;  // LDF5_DMerc_Combat
         owners[800618] = 2078;  // LDF5_DMerc_Combat
-        owners[800619] = 2078;  // LDF5_DMerc_Combat
-        owners[800620] = 2078;  // LDF5_DMerc_Combat
-        owners[800621] = 2078;  // LDF5_DMerc_Combat
-        owners[800622] = 2078;  // LDF5_DMerc_Combat
     }
 
     private static void CycleOf47(Dictionary<int, int> owners)
     {
+        owners[800619] = 2078;  // LDF5_DMerc_Combat
+        owners[800620] = 2078;  // LDF5_DMerc_Combat
+        owners[800621] = 2078;  // LDF5_DMerc_Combat
+        owners[800622] = 2078;  // LDF5_DMerc_Combat
         owners[800623] = 2078;  // LDF5_DMerc_Combat
         owners[800624] = 2078;  // LDF5_LFunc_Combat
         owners[800625] = 2078;  // LDF5_DFunc_Combat
@@ -59153,14 +59157,14 @@ internal static class BattleCycles
         owners[801191] = 5;  // DFunction
         owners[801195] = 0;  // LFunction
         owners[801198] = 5;  // DFunction
-        owners[801201] = 0;  // LFunction
-        owners[801205] = 5;  // DFunction
-        owners[801230] = 1201;  // F5_PvPLight_LGuard_Kn_An
-        owners[801231] = 61;  // F5_PvPLight_LGuard_Fi_An
     }
 
     private static void CycleOf48(Dictionary<int, int> owners)
     {
+        owners[801201] = 0;  // LFunction
+        owners[801205] = 5;  // DFunction
+        owners[801230] = 1201;  // F5_PvPLight_LGuard_Kn_An
+        owners[801231] = 61;  // F5_PvPLight_LGuard_Fi_An
         owners[801232] = 1201;  // F5_PvPLight_LGuard_Kn_An
         owners[801233] = 1201;  // F5_PvPLight_LGuard_Kn_An
         owners[801234] = 1201;  // F5_PvPLight_LGuard_Kn_An
@@ -59557,14 +59561,14 @@ internal static class BattleCycles
         owners[802570] = 2078;  // LDF5_LMerc_Combat
         owners[802571] = 2078;  // LDF5_DMerc_Combat
         owners[802572] = 2078;  // LDF5_DMerc_Combat
-        owners[802573] = 2078;  // LDF5_DMerc_Combat
-        owners[802574] = 2078;  // LDF5_DMerc_Combat
-        owners[802575] = 2078;  // LDF5_DMerc_Combat
-        owners[802576] = 2078;  // LDF5_DMerc_Combat
     }
 
     private static void CycleOf49(Dictionary<int, int> owners)
     {
+        owners[802573] = 2078;  // LDF5_DMerc_Combat
+        owners[802574] = 2078;  // LDF5_DMerc_Combat
+        owners[802575] = 2078;  // LDF5_DMerc_Combat
+        owners[802576] = 2078;  // LDF5_DMerc_Combat
         owners[802577] = 2078;  // LDF5_DMerc_Combat
         owners[802578] = 2078;  // LDF5_DMerc_Combat
         owners[802579] = 2078;  // LDF5_DMerc_Combat
@@ -59961,14 +59965,14 @@ internal static class BattleCycles
         owners[804457] = 2078;  // LDF5_LMerc_Combat
         owners[804458] = 2078;  // LDF5_LMerc_Combat
         owners[804459] = 2078;  // LDF5_LMerc_Combat
-        owners[804464] = 2078;  // LDF5_LMerc_Combat
-        owners[804465] = 2078;  // LDF5_LMerc_Combat
-        owners[804466] = 2078;  // LDF5_LMerc_Combat
-        owners[804467] = 2078;  // LDF5_DMerc_Combat
     }
 
     private static void CycleOf50(Dictionary<int, int> owners)
     {
+        owners[804464] = 2078;  // LDF5_LMerc_Combat
+        owners[804465] = 2078;  // LDF5_LMerc_Combat
+        owners[804466] = 2078;  // LDF5_LMerc_Combat
+        owners[804467] = 2078;  // LDF5_DMerc_Combat
         owners[804468] = 2078;  // LDF5_DMerc_Combat
         owners[804469] = 2078;  // LDF5_DMerc_Combat
         owners[804470] = 2078;  // LDF5_DFunc_Combat
@@ -60365,14 +60369,14 @@ internal static class BattleCycles
         owners[830215] = 5;  // DFunction
         owners[830216] = 0;  // LFunction
         owners[830217] = 0;  // LFunction
-        owners[830218] = 5;  // DFunction
-        owners[830219] = 5;  // DFunction
-        owners[830580] = 2080;  // IDYun_Soldier_ND1
-        owners[830581] = 2081;  // IDYun_Soldier_ND2
     }
 
     private static void CycleOf51(Dictionary<int, int> owners)
     {
+        owners[830218] = 5;  // DFunction
+        owners[830219] = 5;  // DFunction
+        owners[830580] = 2080;  // IDYun_Soldier_ND1
+        owners[830581] = 2081;  // IDYun_Soldier_ND2
         owners[830582] = 2082;  // IDYun_Soldier_ND3
         owners[830764] = 0;  // LFunction
         owners[830765] = 0;  // LFunction
@@ -60769,14 +60773,14 @@ internal static class BattleCycles
         owners[880033] = 1574;  // Gab1_LArtiGuard_Boss_04_01_2
         owners[880034] = 1574;  // Gab1_LArtiGuard_Boss_04_01_2
         owners[880035] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
-        owners[880036] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
-        owners[880037] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
-        owners[880038] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
-        owners[880039] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
     }
 
     private static void CycleOf52(Dictionary<int, int> owners)
     {
+        owners[880036] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
+        owners[880037] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
+        owners[880038] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
+        owners[880039] = 1574;  // Gab1_LArtiGuard_Boss_04_01_4
         owners[880040] = 1574;  // Gab1_BossSum_Vritra_02
         owners[880041] = 1574;  // Gab1_BossSum_Vritra_02
         owners[880042] = 1574;  // Gab1_BossSum_Vritra_02
@@ -61173,14 +61177,14 @@ internal static class BattleCycles
         owners[881855] = 61;  // F5_PvPLight_LGuard_Fi_An
         owners[881856] = 61;  // F5_PvPLight_LGuard_Fi_An
         owners[881857] = 61;  // F5_PvPLight_LGuard_Fi_An
-        owners[881859] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
-        owners[881860] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
-        owners[881861] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
-        owners[881862] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
     }
 
     private static void CycleOf53(Dictionary<int, int> owners)
     {
+        owners[881859] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
+        owners[881860] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
+        owners[881861] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
+        owners[881862] = 1352;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[881874] = 1261;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
         owners[881875] = 1261;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
         owners[881876] = 1261;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
@@ -74177,8 +74181,12 @@ internal static class BattleCycles
         owners[209670] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[209673] = 68;  // F5_PvPLight_DGuard_Wi_An
         owners[209674] = 68;  // F5_PvPLight_DGuard_Wi_An
+        owners[209688] = 77;  // IDSeal_Scene_24_PCGuard_Leader
+        owners[209689] = 77;  // IDSeal_Scene_24_PCGuard
         owners[209706] = 77;  // IDSeal_Scene_24_PCGuard_Leader
         owners[209707] = 77;  // IDSeal_Scene_24_PCGuard
+        owners[209753] = 77;  // IDSeal_Scene_24_PCGuard_Leader
+        owners[209754] = 77;  // IDSeal_Scene_24_PCGuard
         owners[209771] = 77;  // IDSeal_Scene_24_PCGuard_Leader
         owners[209772] = 77;  // IDSeal_Scene_24_PCGuard
         owners[209797] = 78;  // IDSeal_Scene_23_PCGuard_Leader
@@ -74546,14 +74554,14 @@ internal static class BattleCycles
         owners[211509] = 16;  // ND2_FnO
         owners[211512] = 157;  // XLehpar_WeA
         owners[211517] = 148;  // ND2_RnF
-        owners[211520] = 16;  // ND2_FnO
-        owners[211523] = 147;  // XLehpar_AeB
-        owners[211524] = 157;  // XLehpar_WeA
-        owners[211525] = 29;  // Xlehpar_FeA
     }
 
     private static void OnEnterAttackStateOf4(Dictionary<int, int> owners)
     {
+        owners[211520] = 16;  // ND2_FnO
+        owners[211523] = 147;  // XLehpar_AeB
+        owners[211524] = 157;  // XLehpar_WeA
+        owners[211525] = 29;  // Xlehpar_FeA
         owners[211535] = 106;  // ND2_KnJ
         owners[211536] = 16;  // ND2_FnO
         owners[211539] = 158;  // XLehpar_ReB_S1
@@ -74950,14 +74958,14 @@ internal static class BattleCycles
         owners[212675] = 185;  // NSam_B
         owners[212710] = 221;  // ND2_KnJ
         owners[212711] = 221;  // ND2_KnJ
-        owners[212712] = 221;  // ND2_KnJ
-        owners[212713] = 221;  // ND2_KnJ
-        owners[212723] = 194;  // NLycan_Pet_B
-        owners[212726] = 151;  // NLycan_FeB
     }
 
     private static void OnEnterAttackStateOf5(Dictionary<int, int> owners)
     {
+        owners[212712] = 221;  // ND2_KnJ
+        owners[212713] = 221;  // ND2_KnJ
+        owners[212723] = 194;  // NLycan_Pet_B
+        owners[212726] = 151;  // NLycan_FeB
         owners[212727] = 151;  // NLycan_FeB
         owners[212732] = 156;  // NLycan_PeB
         owners[212733] = 156;  // NLycan_PeB
@@ -75354,14 +75362,14 @@ internal static class BattleCycles
         owners[213553] = 261;  // Lizardman_AeE
         owners[213554] = 262;  // Lizardman_FeE
         owners[213555] = 263;  // Lizardman_ReE
-        owners[213556] = 264;  // Lizardman_PeE
-        owners[213557] = 265;  // Naga_FeE
-        owners[213561] = 106;  // ND2_KnJ
-        owners[213566] = 110;  // NLehpar_FnA
     }
 
     private static void OnEnterAttackStateOf6(Dictionary<int, int> owners)
     {
+        owners[213556] = 264;  // Lizardman_PeE
+        owners[213557] = 265;  // Naga_FeE
+        owners[213561] = 106;  // ND2_KnJ
+        owners[213566] = 110;  // NLehpar_FnA
         owners[213573] = 244;  // ND2_FnU
         owners[213574] = 244;  // ND2_FnU
         owners[213576] = 266;  // Lizardman_RnA
@@ -75758,14 +75766,14 @@ internal static class BattleCycles
         owners[214327] = 135;  // ND2_PnE
         owners[214328] = 135;  // ND2_PnE
         owners[214337] = 309;  // ND2_Bss_2
-        owners[214338] = 309;  // ND2_Bss_2
-        owners[214339] = 310;  // ND2_Bst_1
-        owners[214340] = 310;  // ND2_Bst_1
-        owners[214341] = 310;  // ND2_Bst_1
     }
 
     private static void OnEnterAttackStateOf7(Dictionary<int, int> owners)
     {
+        owners[214338] = 309;  // ND2_Bss_2
+        owners[214339] = 310;  // ND2_Bst_1
+        owners[214340] = 310;  // ND2_Bst_1
+        owners[214341] = 310;  // ND2_Bst_1
         owners[214342] = 106;  // ND2_KnJ
         owners[214343] = 114;  // ND2_KnJ
         owners[214350] = 20;  // ND2_KnJ
@@ -76162,14 +76170,14 @@ internal static class BattleCycles
         owners[214992] = 381;  // Shulack_WeA
         owners[214993] = 381;  // Shulack_WeA
         owners[214994] = 381;  // Shulack_WeA
-        owners[214995] = 381;  // Shulack_WeA
-        owners[214996] = 381;  // Shulack_WeA
-        owners[214997] = 381;  // Shulack_WeA
-        owners[214998] = 381;  // Shulack_WeA
     }
 
     private static void OnEnterAttackStateOf8(Dictionary<int, int> owners)
     {
+        owners[214995] = 381;  // Shulack_WeA
+        owners[214996] = 381;  // Shulack_WeA
+        owners[214997] = 381;  // Shulack_WeA
+        owners[214998] = 381;  // Shulack_WeA
         owners[214999] = 381;  // Shulack_WeA
         owners[215000] = 381;  // Shulack_WeA
         owners[215001] = 382;  // Shulack_PeA
@@ -76566,14 +76574,14 @@ internal static class BattleCycles
         owners[215541] = 428;  // Shulack_FeA_SOLO
         owners[215542] = 428;  // Shulack_FeA_SOLO
         owners[215543] = 428;  // Shulack_FeA_SOLO
-        owners[215544] = 429;  // Shulack_KeA_SOLO
-        owners[215545] = 429;  // Shulack_KeA_SOLO
-        owners[215546] = 429;  // Shulack_KeA_SOLO
-        owners[215547] = 429;  // Shulack_KeA_SOLO
     }
 
     private static void OnEnterAttackStateOf9(Dictionary<int, int> owners)
     {
+        owners[215544] = 429;  // Shulack_KeA_SOLO
+        owners[215545] = 429;  // Shulack_KeA_SOLO
+        owners[215546] = 429;  // Shulack_KeA_SOLO
+        owners[215547] = 429;  // Shulack_KeA_SOLO
         owners[215548] = 429;  // Shulack_KeA_SOLO
         owners[215549] = 429;  // Shulack_KeA_SOLO
         owners[215550] = 378;  // Shulack_AeB
@@ -76970,14 +76978,14 @@ internal static class BattleCycles
         owners[216142] = 414;  // Elim_Octaside
         owners[216145] = 415;  // Elim_Criton
         owners[216146] = 415;  // Elim_Criton
-        owners[216147] = 414;  // Elim_Clodworm
-        owners[216151] = 300;  // ND2_Bst_1
-        owners[216152] = 431;  // ND2_Bss_6
-        owners[216153] = 294;  // ND2_Bss_2
     }
 
     private static void OnEnterAttackStateOf10(Dictionary<int, int> owners)
     {
+        owners[216147] = 414;  // Elim_Clodworm
+        owners[216151] = 300;  // ND2_Bst_1
+        owners[216152] = 431;  // ND2_Bss_6
+        owners[216153] = 294;  // ND2_Bss_2
         owners[216154] = 294;  // ND2_Bss_2
         owners[216156] = 484;  // IDTP_Fanatic_Elementalearth1
         owners[216161] = 485;  // IDCTH_UnTiamatDrakan
@@ -77374,14 +77382,14 @@ internal static class BattleCycles
         owners[216801] = 3;  // IDTP_Fanatic_PeB
         owners[216804] = 368;  // IDCT_DrakanFi
         owners[216805] = 368;  // IDCT_DrakanFi
-        owners[216806] = 368;  // IDCT_DrakanFi
-        owners[216807] = 368;  // IDCT_DrakanFi
-        owners[216816] = 482;  // IDCT_DrakanWi
-        owners[216817] = 482;  // IDCT_DrakanWi
     }
 
     private static void OnEnterAttackStateOf11(Dictionary<int, int> owners)
     {
+        owners[216806] = 368;  // IDCT_DrakanFi
+        owners[216807] = 368;  // IDCT_DrakanFi
+        owners[216816] = 482;  // IDCT_DrakanWi
+        owners[216817] = 482;  // IDCT_DrakanWi
         owners[216818] = 482;  // IDCT_DrakanWi
         owners[216819] = 482;  // IDCT_DrakanWi
         owners[216828] = 407;  // XDrakan_AeG_ver40
@@ -77778,14 +77786,14 @@ internal static class BattleCycles
         owners[217615] = 590;  // Raksha_DrakanGuardFigheter
         owners[217616] = 591;  // Raksha_DrakanGuardScout
         owners[217617] = 593;  // Raksha_Spaller
-        owners[217618] = 594;  // Raksha_BoneDrake
-        owners[217619] = 550;  // Raksha_Drynac
-        owners[217620] = 595;  // Raksha_SehllizaardUndead
-        owners[217621] = 414;  // Raksha_Bat
     }
 
     private static void OnEnterAttackStateOf12(Dictionary<int, int> owners)
     {
+        owners[217618] = 594;  // Raksha_BoneDrake
+        owners[217619] = 550;  // Raksha_Drynac
+        owners[217620] = 595;  // Raksha_SehllizaardUndead
+        owners[217621] = 414;  // Raksha_Bat
         owners[217622] = 593;  // Raksha_Toothfighter
         owners[217623] = 596;  // Raksha_ToothMage
         owners[217625] = 597;  // Raksha_DrakanCScout
@@ -78182,14 +78190,14 @@ internal static class BattleCycles
         owners[218219] = 376;  // LDF4b_T1_Flyingeye_An
         owners[218220] = 721;  // LDF4b_T1_Sandshark_An
         owners[218221] = 722;  // LDF4b_T1_Skeletonre_An
-        owners[218222] = 372;  // LDF4b_T1_Fungy_An
-        owners[218223] = 720;  // LDF4b_T1_Cyclops_An
-        owners[218224] = 723;  // LDF4b_T1_Shadowstalker_An
-        owners[218226] = 724;  // LDF4b_T1_Frillfaimam_An
     }
 
     private static void OnEnterAttackStateOf13(Dictionary<int, int> owners)
     {
+        owners[218222] = 372;  // LDF4b_T1_Fungy_An
+        owners[218223] = 720;  // LDF4b_T1_Cyclops_An
+        owners[218224] = 723;  // LDF4b_T1_Shadowstalker_An
+        owners[218226] = 724;  // LDF4b_T1_Frillfaimam_An
         owners[218227] = 725;  // LDF4b_T1_MutantBeast_An
         owners[218228] = 550;  // LDF4b_Cavalry_Pagati_NoRide
         owners[218229] = 726;  // LDF4b_Cavalry_Pagati_Fighter
@@ -78586,14 +78594,14 @@ internal static class BattleCycles
         owners[218702] = 838;  // IDArena_pvp01_S5_Lich_01
         owners[218703] = 839;  // IDArena_pvp01_S5_PricessNamed_02
         owners[218705] = 840;  // IDArena_pvp02_S3_Brax_02
-        owners[218709] = 832;  // IDArena_pvp01_S3_LycanWarriorS_03
-        owners[218710] = 833;  // IDArena_pvp01_S4_VaranusAlligatorD_01
-        owners[218711] = 834;  // IDArena_pvp01_S5_GraveknightEquipD_03
-        owners[218712] = 835;  // IDArena_pvp01_S5_BansheeR3_03
     }
 
     private static void OnEnterAttackStateOf14(Dictionary<int, int> owners)
     {
+        owners[218709] = 832;  // IDArena_pvp01_S3_LycanWarriorS_03
+        owners[218710] = 833;  // IDArena_pvp01_S4_VaranusAlligatorD_01
+        owners[218711] = 834;  // IDArena_pvp01_S5_GraveknightEquipD_03
+        owners[218712] = 835;  // IDArena_pvp01_S5_BansheeR3_03
         owners[218713] = 836;  // IDArena_pvp01_S5_maid_03
         owners[218714] = 837;  // IDArena_pvp01_S5_Butler_03
         owners[218715] = 838;  // IDArena_pvp01_S5_Lich_01
@@ -78990,14 +78998,14 @@ internal static class BattleCycles
         owners[219634] = 368;  // IDCT_DrakanFi
         owners[219635] = 370;  // IDCT_DrakanWi
         owners[219636] = 369;  // IDCT_DrakanAs
-        owners[219637] = 408;  // IDCT_DrakanRa
-        owners[219638] = 552;  // IDCT_DrakanPr
-        owners[219641] = 916;  // IDDF2Flying_event01_D_Towermonster07
-        owners[219642] = 917;  // IDDF2Flying_event01_D_RatmanWarriorM_55_Ae
     }
 
     private static void OnEnterAttackStateOf15(Dictionary<int, int> owners)
     {
+        owners[219637] = 408;  // IDCT_DrakanRa
+        owners[219638] = 552;  // IDCT_DrakanPr
+        owners[219641] = 916;  // IDDF2Flying_event01_D_Towermonster07
+        owners[219642] = 917;  // IDDF2Flying_event01_D_RatmanWarriorM_55_Ae
         owners[219649] = 893;  // IDArena_team01_S5_Named
         owners[219650] = 894;  // IDArena_team01_S6_BatsA
         owners[219653] = 840;  // IDArena_pvp02_S3_Brax_03
@@ -79394,14 +79402,14 @@ internal static class BattleCycles
         owners[230644] = 577;  // IDRose_L_ShulackF_As_S_Key1_An
         owners[230645] = 577;  // IDRose_L_ShulackF_Wi_S_Key_An
         owners[230646] = 420;  // IDRose_L_ShulackF_Fi_S_Key_An
-        owners[230647] = 995;  // IDRose_M_ShulackF_Mu_S_Key_An
-        owners[230648] = 420;  // IDRose_L_ShulackF_Fi_S_Key_An
-        owners[230649] = 996;  // IDRose_M_ShulackF_Gu_S_Key_An
-        owners[230650] = 550;  // IDRose_M_ShulackF_Pr_S_Key_An
     }
 
     private static void OnEnterAttackStateOf16(Dictionary<int, int> owners)
     {
+        owners[230647] = 995;  // IDRose_M_ShulackF_Mu_S_Key_An
+        owners[230648] = 420;  // IDRose_L_ShulackF_Fi_S_Key_An
+        owners[230649] = 996;  // IDRose_M_ShulackF_Gu_S_Key_An
+        owners[230650] = 550;  // IDRose_M_ShulackF_Pr_S_Key_An
         owners[230651] = 997;  // IDRose_M_KrallKeeper_Fi_S_Key_An
         owners[230652] = 420;  // IDRose_H_ShulackF_Fi_P_Key_Ae
         owners[230653] = 577;  // IDRose_H_ShulackF_As_P_Key_Ae
@@ -79798,14 +79806,14 @@ internal static class BattleCycles
         owners[231340] = 989;  // Britra_As_Poison_LowNmd
         owners[231341] = 1088;  // Britra_El_Confuse
         owners[231342] = 990;  // Britra_Table
-        owners[231343] = 1084;  // Britra_Table
-        owners[231344] = 955;  // Britra_Fi_HpDrain
-        owners[231345] = 414;  // Britra_As_Broad
-        owners[231347] = 1085;  // Britra_Pr_Heal
     }
 
     private static void OnEnterAttackStateOf17(Dictionary<int, int> owners)
     {
+        owners[231343] = 1084;  // Britra_Table
+        owners[231344] = 955;  // Britra_Fi_HpDrain
+        owners[231345] = 414;  // Britra_As_Broad
+        owners[231347] = 1085;  // Britra_Pr_Heal
         owners[231348] = 990;  // Britra_Table
         owners[231349] = 1084;  // Britra_Table
         owners[231350] = 955;  // Britra_Fi_HpDrain
@@ -80202,14 +80210,14 @@ internal static class BattleCycles
         owners[231964] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[231965] = 1126;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[231966] = 66;  // F5_PvPLight_LGuard_Fi_An
-        owners[231967] = 66;  // F5_PvPLight_DGuard_Fi_An
-        owners[231968] = 1126;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
-        owners[231969] = 66;  // F5_PvPLight_LGuard_Fi_An
-        owners[231970] = 66;  // F5_PvPLight_DGuard_Fi_An
     }
 
     private static void OnEnterAttackStateOf18(Dictionary<int, int> owners)
     {
+        owners[231967] = 66;  // F5_PvPLight_DGuard_Fi_An
+        owners[231968] = 1126;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
+        owners[231969] = 66;  // F5_PvPLight_LGuard_Fi_An
+        owners[231970] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[231971] = 1126;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[231972] = 66;  // F5_PvPLight_LGuard_Fi_An
         owners[231973] = 66;  // F5_PvPLight_DGuard_Fi_An
@@ -80606,14 +80614,14 @@ internal static class BattleCycles
         owners[232476] = 1127;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
         owners[232477] = 1128;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
         owners[232478] = 1077;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
-        owners[232479] = 66;  // F5_PvPLight_LGuard_Fi_An
-        owners[232480] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
-        owners[232481] = 68;  // F5_PvPLight_LGuard_Wi_An
-        owners[232482] = 66;  // F5_PvPLight_LGuard_Fi_An
     }
 
     private static void OnEnterAttackStateOf19(Dictionary<int, int> owners)
     {
+        owners[232479] = 66;  // F5_PvPLight_LGuard_Fi_An
+        owners[232480] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
+        owners[232481] = 68;  // F5_PvPLight_LGuard_Wi_An
+        owners[232482] = 66;  // F5_PvPLight_LGuard_Fi_An
         owners[232483] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[232484] = 68;  // F5_PvPLight_LGuard_Wi_An
         owners[232485] = 66;  // F5_PvPLight_LGuard_Fi_An
@@ -81010,14 +81018,14 @@ internal static class BattleCycles
         owners[232947] = 984;  // ND2_AnM
         owners[232955] = 983;  // ND2_KnJ
         owners[232956] = 1070;  // ND2_KnJ
-        owners[232957] = 323;  // ND2_KnJ
-        owners[232961] = 1152;  // ND2_Bss_1
-        owners[232963] = 108;  // ND2_KnJ
-        owners[232965] = 1140;  // ND2_KnJ
     }
 
     private static void OnEnterAttackStateOf20(Dictionary<int, int> owners)
     {
+        owners[232957] = 323;  // ND2_KnJ
+        owners[232961] = 1152;  // ND2_Bss_1
+        owners[232963] = 108;  // ND2_KnJ
+        owners[232965] = 1140;  // ND2_KnJ
         owners[232967] = 434;  // ND2_Bst_2
         owners[232968] = 1153;  // ND2_Bst_39
         owners[232969] = 983;  // ND2_KnJ
@@ -81414,14 +81422,14 @@ internal static class BattleCycles
         owners[233758] = 247;  // Naga_FeA
         owners[233759] = 249;  // Naga_KeA
         owners[233760] = 254;  // Naga_EeA
-        owners[233761] = 251;  // Naga_CeA
-        owners[233762] = 247;  // Naga_FeA
-        owners[233763] = 249;  // Naga_KeA
-        owners[233764] = 254;  // Naga_EeA
     }
 
     private static void OnEnterAttackStateOf21(Dictionary<int, int> owners)
     {
+        owners[233761] = 251;  // Naga_CeA
+        owners[233762] = 247;  // Naga_FeA
+        owners[233763] = 249;  // Naga_KeA
+        owners[233764] = 254;  // Naga_EeA
         owners[233765] = 251;  // Naga_CeA
         owners[233766] = 213;  // Lizardman_FeB
         owners[233767] = 242;  // Lizardman_AeB
@@ -81818,14 +81826,14 @@ internal static class BattleCycles
         owners[234501] = 1129;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[234502] = 1135;  // LDF5_LGuard_DisputePvP_Strike_PR_Ge
         owners[234504] = 984;  // ND2_AnM
-        owners[234507] = 984;  // ND2_AnM
-        owners[234510] = 984;  // ND2_AnM
-        owners[234514] = 984;  // ND2_AnM
-        owners[234530] = 137;  // ND2_AnM
     }
 
     private static void OnEnterAttackStateOf22(Dictionary<int, int> owners)
     {
+        owners[234507] = 984;  // ND2_AnM
+        owners[234510] = 984;  // ND2_AnM
+        owners[234514] = 984;  // ND2_AnM
+        owners[234530] = 137;  // ND2_AnM
         owners[234545] = 1232;  // IDLDF4_Re_01_DrakanWi
         owners[234547] = 923;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[234549] = 1134;  // F5_PvP_LGuard_As_Ae_Hide
@@ -82222,14 +82230,14 @@ internal static class BattleCycles
         owners[235513] = 213;  // Lizardman_FeB
         owners[235514] = 213;  // Lizardman_FeB
         owners[235515] = 209;  // Lizardman_ReA
-        owners[235516] = 209;  // Lizardman_ReA
-        owners[235517] = 209;  // Lizardman_ReA
-        owners[235518] = 209;  // Lizardman_ReA
-        owners[235519] = 209;  // Lizardman_ReA
     }
 
     private static void OnEnterAttackStateOf23(Dictionary<int, int> owners)
     {
+        owners[235516] = 209;  // Lizardman_ReA
+        owners[235517] = 209;  // Lizardman_ReA
+        owners[235518] = 209;  // Lizardman_ReA
+        owners[235519] = 209;  // Lizardman_ReA
         owners[235522] = 240;  // Lizardman_FeA
         owners[235524] = 240;  // Lizardman_FeA
         owners[235525] = 247;  // Naga_FeA
@@ -82626,14 +82634,14 @@ internal static class BattleCycles
         owners[251021] = 1294;  // AD2_Bst0st1BT15p50st2st3
         owners[251033] = 424;  // AD2_Wss0BT15st1H50ss2
         owners[251036] = 424;  // AD2_Wss0BT15st1H50st2
-        owners[251039] = 1295;  // AD2_Bst0st1BT15p50st2st3
-        owners[251046] = 76;  // F5_PvP_DGuard_Wi_Ae
-        owners[251047] = 76;  // F5_PvP_DGuard_Wi_Ae
-        owners[251051] = 73;  // F5_PvP_DGuard_Gu_Ae
     }
 
     private static void OnEnterAttackStateOf24(Dictionary<int, int> owners)
     {
+        owners[251039] = 1295;  // AD2_Bst0st1BT15p50st2st3
+        owners[251046] = 76;  // F5_PvP_DGuard_Wi_Ae
+        owners[251047] = 76;  // F5_PvP_DGuard_Wi_Ae
+        owners[251051] = 73;  // F5_PvP_DGuard_Gu_Ae
         owners[251052] = 73;  // F5_PvP_DGuard_Gu_Ae
         owners[251053] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[251054] = 69;  // F5_PvP_DGuard_Fi_Ae
@@ -83030,14 +83038,14 @@ internal static class BattleCycles
         owners[251640] = 76;  // F5_PvP_LGuard_Wi_Ae
         owners[251641] = 76;  // F5_PvP_LGuard_Wi_Ae
         owners[251642] = 76;  // F5_PvP_LGuard_Wi_Ae
-        owners[251643] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
-        owners[251644] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
-        owners[251645] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
-        owners[251646] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
     }
 
     private static void OnEnterAttackStateOf25(Dictionary<int, int> owners)
     {
+        owners[251643] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
+        owners[251644] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
+        owners[251645] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
+        owners[251646] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
         owners[251647] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
         owners[251648] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
         owners[251649] = 70;  // F5_PvP_LGuard_Ra_Ae_Broad
@@ -83434,14 +83442,14 @@ internal static class BattleCycles
         owners[252385] = 68;  // F5_PvPLight_DGuard_Wi_An
         owners[252386] = 1083;  // F5_PvPLight_DGuard_Pr_An
         owners[252387] = 1134;  // F5_PvP_DGuard_As_Ae_Hide
-        owners[252388] = 66;  // F5_PvPLight_LGuard_Fi_An
-        owners[252389] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
-        owners[252390] = 68;  // F5_PvPLight_LGuard_Wi_An
-        owners[252391] = 1083;  // F5_PvPLight_LGuard_Pr_An
     }
 
     private static void OnEnterAttackStateOf26(Dictionary<int, int> owners)
     {
+        owners[252388] = 66;  // F5_PvPLight_LGuard_Fi_An
+        owners[252389] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
+        owners[252390] = 68;  // F5_PvPLight_LGuard_Wi_An
+        owners[252391] = 1083;  // F5_PvPLight_LGuard_Pr_An
         owners[252392] = 1134;  // F5_PvP_LGuard_As_Ae_Hide
         owners[252393] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[252395] = 68;  // F5_PvPLight_DGuard_Wi_An
@@ -83838,14 +83846,14 @@ internal static class BattleCycles
         owners[257177] = 2;  // LGuard_FnA
         owners[257178] = 2;  // DGuard_FnA
         owners[257179] = 358;  // DrGuard_FnA
-        owners[257180] = 2;  // LGuard_AnA
-        owners[257181] = 2;  // DGuard_AnA
-        owners[257182] = 358;  // DrGuard_AnA
-        owners[257183] = 34;  // LGuard_RnA
     }
 
     private static void OnEnterAttackStateOf27(Dictionary<int, int> owners)
     {
+        owners[257180] = 2;  // LGuard_AnA
+        owners[257181] = 2;  // DGuard_AnA
+        owners[257182] = 358;  // DrGuard_AnA
+        owners[257183] = 34;  // LGuard_RnA
         owners[257184] = 34;  // DGuard_RnA
         owners[257185] = 1326;  // DrGuard_RnA
         owners[257186] = 35;  // LGuard_WnA
@@ -84242,14 +84250,14 @@ internal static class BattleCycles
         owners[259112] = 35;  // DGuard_WnA
         owners[259113] = 1367;  // DrGuard_WnA
         owners[259114] = 36;  // LGuard_PnA
-        owners[259115] = 36;  // DGuard_PnA
-        owners[259116] = 1368;  // DrGuard_PnA
-        owners[259200] = 1380;  // LDF4b_Tiamat_Gravity
-        owners[259201] = 1380;  // LDF4b_Tiamat_Gravity
     }
 
     private static void OnEnterAttackStateOf28(Dictionary<int, int> owners)
     {
+        owners[259115] = 36;  // DGuard_PnA
+        owners[259116] = 1368;  // DrGuard_PnA
+        owners[259200] = 1380;  // LDF4b_Tiamat_Gravity
+        owners[259201] = 1380;  // LDF4b_Tiamat_Gravity
         owners[259202] = 1380;  // LDF4b_Tiamat_Gravity
         owners[259203] = 1380;  // LDF4b_Tiamat_Gravity
         owners[259204] = 1380;  // LDF4b_Tiamat_Gravity
@@ -84646,14 +84654,14 @@ internal static class BattleCycles
         owners[260189] = 36;  // DGuard_PnA
         owners[260190] = 1368;  // DrGuard_PnA
         owners[260191] = 1368;  // DrGuard_PnA
-        owners[260192] = 1368;  // DrGuard_PnA
-        owners[260193] = 1368;  // DrGuard_PnA
-        owners[260194] = 1368;  // DrGuard_PnA
-        owners[260195] = 11;  // LGuard_FeB
     }
 
     private static void OnEnterAttackStateOf29(Dictionary<int, int> owners)
     {
+        owners[260192] = 1368;  // DrGuard_PnA
+        owners[260193] = 1368;  // DrGuard_PnA
+        owners[260194] = 1368;  // DrGuard_PnA
+        owners[260195] = 11;  // LGuard_FeB
         owners[260196] = 11;  // DGuard_FeB
         owners[260197] = 1347;  // DrGuard_FeB
         owners[260198] = 19;  // LGuard_ReB
@@ -85050,14 +85058,14 @@ internal static class BattleCycles
         owners[261581] = 1385;  // DrGuard_ReB
         owners[261582] = 37;  // LGuard_WeB
         owners[261583] = 37;  // DGuard_WeB
-        owners[261584] = 403;  // DrGuard_WeB
-        owners[261585] = 38;  // LGuard_PeB
-        owners[261586] = 38;  // DGuard_PeB
-        owners[261587] = 1386;  // DrGuard_PeB
     }
 
     private static void OnEnterAttackStateOf30(Dictionary<int, int> owners)
     {
+        owners[261584] = 403;  // DrGuard_WeB
+        owners[261585] = 38;  // LGuard_PeB
+        owners[261586] = 38;  // DGuard_PeB
+        owners[261587] = 1386;  // DrGuard_PeB
         owners[261816] = 2;  // LGuard_FnA
         owners[261817] = 2;  // LGuard_FnA
         owners[261818] = 2;  // LGuard_FnA
@@ -85454,14 +85462,14 @@ internal static class BattleCycles
         owners[263146] = 358;  // DrGuard_FnA
         owners[263147] = 358;  // DrGuard_FnA
         owners[263148] = 358;  // DrGuard_FnA
-        owners[263149] = 358;  // DrGuard_FnA
-        owners[263150] = 358;  // DrGuard_FnA
-        owners[263151] = 34;  // LGuard_RnA
-        owners[263152] = 34;  // LGuard_RnA
     }
 
     private static void OnEnterAttackStateOf31(Dictionary<int, int> owners)
     {
+        owners[263149] = 358;  // DrGuard_FnA
+        owners[263150] = 358;  // DrGuard_FnA
+        owners[263151] = 34;  // LGuard_RnA
+        owners[263152] = 34;  // LGuard_RnA
         owners[263153] = 34;  // LGuard_RnA
         owners[263154] = 34;  // LGuard_RnA
         owners[263155] = 34;  // LGuard_RnA
@@ -85858,14 +85866,14 @@ internal static class BattleCycles
         owners[263679] = 19;  // LGuard_ReB
         owners[263680] = 19;  // DGuard_ReB
         owners[263681] = 1385;  // DrGuard_ReB
-        owners[263682] = 37;  // LGuard_WeB
-        owners[263683] = 37;  // DGuard_WeB
-        owners[263684] = 403;  // DrGuard_WeB
-        owners[263685] = 38;  // LGuard_PeB
     }
 
     private static void OnEnterAttackStateOf32(Dictionary<int, int> owners)
     {
+        owners[263682] = 37;  // LGuard_WeB
+        owners[263683] = 37;  // DGuard_WeB
+        owners[263684] = 403;  // DrGuard_WeB
+        owners[263685] = 38;  // LGuard_PeB
         owners[263686] = 38;  // DGuard_PeB
         owners[263687] = 1386;  // DrGuard_PeB
         owners[263916] = 2;  // LGuard_FnA
@@ -86262,14 +86270,14 @@ internal static class BattleCycles
         owners[264842] = 1326;  // DrGuard_RnA
         owners[264843] = 1326;  // DrGuard_RnA
         owners[264844] = 1326;  // DrGuard_RnA
-        owners[264845] = 1326;  // DrGuard_RnA
-        owners[264846] = 35;  // LGuard_WnA
-        owners[264847] = 35;  // LGuard_WnA
-        owners[264848] = 35;  // LGuard_WnA
     }
 
     private static void OnEnterAttackStateOf33(Dictionary<int, int> owners)
     {
+        owners[264845] = 1326;  // DrGuard_RnA
+        owners[264846] = 35;  // LGuard_WnA
+        owners[264847] = 35;  // LGuard_WnA
+        owners[264848] = 35;  // LGuard_WnA
         owners[264849] = 35;  // LGuard_WnA
         owners[264850] = 35;  // LGuard_WnA
         owners[264851] = 35;  // DGuard_WnA
@@ -86666,14 +86674,14 @@ internal static class BattleCycles
         owners[266382] = 4;  // DGuard_FeA
         owners[266383] = 4;  // DGuard_FeA
         owners[266384] = 4;  // DGuard_FeA
-        owners[266385] = 4;  // DGuard_FeA
-        owners[266406] = 30;  // LGuard_WeA
-        owners[266407] = 30;  // LGuard_WeA
-        owners[266408] = 30;  // LGuard_WeA
     }
 
     private static void OnEnterAttackStateOf34(Dictionary<int, int> owners)
     {
+        owners[266385] = 4;  // DGuard_FeA
+        owners[266406] = 30;  // LGuard_WeA
+        owners[266407] = 30;  // LGuard_WeA
+        owners[266408] = 30;  // LGuard_WeA
         owners[266409] = 30;  // LGuard_WeA
         owners[266410] = 30;  // LGuard_WeA
         owners[266411] = 30;  // DGuard_WeA
@@ -87070,14 +87078,14 @@ internal static class BattleCycles
         owners[267570] = 38;  // DGuard_PeB
         owners[267571] = 1386;  // DrGuard_PeB
         owners[267572] = 1386;  // DrGuard_PeB
-        owners[267573] = 1386;  // DrGuard_PeB
-        owners[267574] = 1386;  // DrGuard_PeB
-        owners[267575] = 1386;  // DrGuard_PeB
-        owners[267576] = 11;  // LGuard_FeB
     }
 
     private static void OnEnterAttackStateOf35(Dictionary<int, int> owners)
     {
+        owners[267573] = 1386;  // DrGuard_PeB
+        owners[267574] = 1386;  // DrGuard_PeB
+        owners[267575] = 1386;  // DrGuard_PeB
+        owners[267576] = 11;  // LGuard_FeB
         owners[267577] = 11;  // DGuard_FeB
         owners[267578] = 1347;  // DrGuard_FeB
         owners[267579] = 19;  // LGuard_ReB
@@ -87474,14 +87482,14 @@ internal static class BattleCycles
         owners[268748] = 35;  // LGuard_WnA
         owners[268749] = 35;  // LGuard_WnA
         owners[268750] = 35;  // LGuard_WnA
-        owners[268751] = 35;  // DGuard_WnA
-        owners[268752] = 35;  // DGuard_WnA
-        owners[268753] = 35;  // DGuard_WnA
-        owners[268754] = 35;  // DGuard_WnA
     }
 
     private static void OnEnterAttackStateOf36(Dictionary<int, int> owners)
     {
+        owners[268751] = 35;  // DGuard_WnA
+        owners[268752] = 35;  // DGuard_WnA
+        owners[268753] = 35;  // DGuard_WnA
+        owners[268754] = 35;  // DGuard_WnA
         owners[268755] = 35;  // DGuard_WnA
         owners[268756] = 1367;  // DrGuard_WnA
         owners[268757] = 1367;  // DrGuard_WnA
@@ -87878,14 +87886,14 @@ internal static class BattleCycles
         owners[269936] = 19;  // DGuard_ReB
         owners[269937] = 19;  // DGuard_ReB
         owners[269938] = 19;  // DGuard_ReB
-        owners[269939] = 19;  // DGuard_ReB
-        owners[269940] = 19;  // DGuard_ReB
-        owners[269941] = 1385;  // DrGuard_ReB
-        owners[269942] = 1385;  // DrGuard_ReB
     }
 
     private static void OnEnterAttackStateOf37(Dictionary<int, int> owners)
     {
+        owners[269939] = 19;  // DGuard_ReB
+        owners[269940] = 19;  // DGuard_ReB
+        owners[269941] = 1385;  // DrGuard_ReB
+        owners[269942] = 1385;  // DrGuard_ReB
         owners[269943] = 1385;  // DrGuard_ReB
         owners[269944] = 1385;  // DrGuard_ReB
         owners[269945] = 1385;  // DrGuard_ReB
@@ -88282,14 +88290,14 @@ internal static class BattleCycles
         owners[270921] = 5;  // LGuard_PeA
         owners[270922] = 5;  // LGuard_PeA
         owners[270923] = 5;  // LGuard_PeA
-        owners[270924] = 5;  // LGuard_PeA
-        owners[270925] = 5;  // LGuard_PeA
-        owners[270926] = 5;  // DGuard_PeA
-        owners[270927] = 5;  // DGuard_PeA
     }
 
     private static void OnEnterAttackStateOf38(Dictionary<int, int> owners)
     {
+        owners[270924] = 5;  // LGuard_PeA
+        owners[270925] = 5;  // LGuard_PeA
+        owners[270926] = 5;  // DGuard_PeA
+        owners[270927] = 5;  // DGuard_PeA
         owners[270928] = 5;  // DGuard_PeA
         owners[270929] = 5;  // DGuard_PeA
         owners[270930] = 5;  // DGuard_PeA
@@ -88686,14 +88694,14 @@ internal static class BattleCycles
         owners[272039] = 1305;  // F5_RvR_LGuard_Gu_Ae
         owners[272040] = 1226;  // F5_RvR_LGuard_Pr_Ae
         owners[272041] = 1226;  // F5_RvR_LGuard_Pr_Ae
-        owners[272042] = 1226;  // F5_RvR_LGuard_Pr_Ae
-        owners[272043] = 1226;  // F5_RvR_LGuard_Pr_Ae
-        owners[272044] = 1226;  // F5_RvR_LGuard_Pr_Ae
-        owners[272050] = 1306;  // F5_RvR_LGuard_El_Ae
     }
 
     private static void OnEnterAttackStateOf39(Dictionary<int, int> owners)
     {
+        owners[272042] = 1226;  // F5_RvR_LGuard_Pr_Ae
+        owners[272043] = 1226;  // F5_RvR_LGuard_Pr_Ae
+        owners[272044] = 1226;  // F5_RvR_LGuard_Pr_Ae
+        owners[272050] = 1306;  // F5_RvR_LGuard_El_Ae
         owners[272051] = 1306;  // F5_RvR_LGuard_El_Ae
         owners[272052] = 1306;  // F5_RvR_LGuard_El_Ae
         owners[272053] = 1306;  // F5_RvR_LGuard_El_Ae
@@ -89090,14 +89098,14 @@ internal static class BattleCycles
         owners[272833] = 1311;  // BLDF5_SWHowitzer_Gu_65_Ae
         owners[272834] = 1397;  // BLDF5_SWAAGun_Gu_65_Ae
         owners[272835] = 1296;  // F5_RvR_LGuard_Ra_Ae_Broad
-        owners[272837] = 1305;  // F5_RvR_LGuard_Gu_Ae
-        owners[272838] = 1305;  // F5_RvR_DGuard_Gu_Ae
-        owners[272867] = 1180;  // F5_RvR_LGuard_Kn_Ae
-        owners[272868] = 1180;  // F5_RvR_LGuard_Kn_Ae
     }
 
     private static void OnEnterAttackStateOf40(Dictionary<int, int> owners)
     {
+        owners[272837] = 1305;  // F5_RvR_LGuard_Gu_Ae
+        owners[272838] = 1305;  // F5_RvR_DGuard_Gu_Ae
+        owners[272867] = 1180;  // F5_RvR_LGuard_Kn_Ae
+        owners[272868] = 1180;  // F5_RvR_LGuard_Kn_Ae
         owners[272871] = 1226;  // F5_RvR_LGuard_Pr_Ae
         owners[272872] = 1226;  // F5_RvR_LGuard_Pr_Ae
         owners[272877] = 1226;  // F5_RvR_DGuard_Pr_Ae
@@ -89494,14 +89502,14 @@ internal static class BattleCycles
         owners[278053] = 38;  // DGuard_PeB
         owners[278054] = 5;  // DGuard_PeA
         owners[278124] = 31;  // DGuard_AeB
-        owners[278138] = 6;  // DMerchant
-        owners[278139] = 6;  // DMerchant
-        owners[278144] = 7;  // DFunction
-        owners[278145] = 7;  // DFunction
     }
 
     private static void OnEnterAttackStateOf41(Dictionary<int, int> owners)
     {
+        owners[278138] = 6;  // DMerchant
+        owners[278139] = 6;  // DMerchant
+        owners[278144] = 7;  // DFunction
+        owners[278145] = 7;  // DFunction
         owners[278146] = 7;  // DFunction
         owners[278147] = 7;  // DFunction
         owners[278148] = 6;  // DMerchant
@@ -89898,14 +89906,14 @@ internal static class BattleCycles
         owners[279487] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279488] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279489] = 1125;  // F5_PvP_DGuard_Pr_Ae
-        owners[279490] = 1125;  // F5_PvP_DGuard_Pr_Ae
-        owners[279491] = 1125;  // F5_PvP_DGuard_Pr_Ae
-        owners[279492] = 1125;  // F5_PvP_DGuard_Pr_Ae
-        owners[279493] = 1125;  // F5_PvP_DGuard_Pr_Ae
     }
 
     private static void OnEnterAttackStateOf42(Dictionary<int, int> owners)
     {
+        owners[279490] = 1125;  // F5_PvP_DGuard_Pr_Ae
+        owners[279491] = 1125;  // F5_PvP_DGuard_Pr_Ae
+        owners[279492] = 1125;  // F5_PvP_DGuard_Pr_Ae
+        owners[279493] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279494] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279495] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279496] = 68;  // F5_PvPLight_DGuard_Wi_An
@@ -90302,14 +90310,14 @@ internal static class BattleCycles
         owners[279991] = 66;  // F5_PvPLight_DGuard_Fi_An
         owners[279992] = 69;  // F5_PvP_DGuard_Fi_Ae
         owners[279993] = 69;  // F5_PvP_DGuard_Fi_Ae
-        owners[279994] = 1134;  // F5_PvP_DGuard_As_Ae_Hide
-        owners[279995] = 1134;  // F5_PvP_DGuard_As_Ae_Hide
-        owners[279996] = 1083;  // F5_PvPLight_DGuard_Pr_An
-        owners[279997] = 1125;  // F5_PvP_DGuard_Pr_Ae
     }
 
     private static void OnEnterAttackStateOf43(Dictionary<int, int> owners)
     {
+        owners[279994] = 1134;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279995] = 1134;  // F5_PvP_DGuard_As_Ae_Hide
+        owners[279996] = 1083;  // F5_PvPLight_DGuard_Pr_An
+        owners[279997] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279998] = 1125;  // F5_PvP_DGuard_Pr_Ae
         owners[279999] = 68;  // F5_PvPLight_DGuard_Wi_An
         owners[280001] = 92;  // Krall_WhA1
@@ -90706,14 +90714,14 @@ internal static class BattleCycles
         owners[280997] = 326;  // ND2_Bss_5
         owners[280998] = 326;  // ND2_Bss_5
         owners[280999] = 338;  // ND2_Bst_8
-        owners[281000] = 335;  // ND2_Bst_30
-        owners[281001] = 340;  // ND2_Bst_9
-        owners[281002] = 327;  // ND2_Bst_10
-        owners[281003] = 337;  // ND2_Bst_11
     }
 
     private static void OnEnterAttackStateOf44(Dictionary<int, int> owners)
     {
+        owners[281000] = 335;  // ND2_Bst_30
+        owners[281001] = 340;  // ND2_Bst_9
+        owners[281002] = 327;  // ND2_Bst_10
+        owners[281003] = 337;  // ND2_Bst_11
         owners[281004] = 331;  // ND2_Bst_12
         owners[281005] = 332;  // ND2_Bst_13
         owners[281006] = 344;  // ND2_Bst_14
@@ -91110,14 +91118,14 @@ internal static class BattleCycles
         owners[281871] = 534;  // Dread02_DrakanNo_Fi
         owners[281873] = 535;  // Dread02_DrakanNo_Wi
         owners[281875] = 536;  // Dread02_SurkanaNm01
-        owners[281878] = 537;  // Dread02_SurkanaNm03
-        owners[281879] = 537;  // Dread02_SurkanaNm03
-        owners[281880] = 537;  // Dread02_SurkanaNm04
-        owners[281881] = 537;  // Dread02_SurkanaNm04
     }
 
     private static void OnEnterAttackStateOf45(Dictionary<int, int> owners)
     {
+        owners[281878] = 537;  // Dread02_SurkanaNm03
+        owners[281879] = 537;  // Dread02_SurkanaNm03
+        owners[281880] = 537;  // Dread02_SurkanaNm04
+        owners[281881] = 537;  // Dread02_SurkanaNm04
         owners[281882] = 538;  // Dread02_SurkanaNm05
         owners[281883] = 1524;  // Dread02_SurkanaNm06
         owners[281884] = 1524;  // Dread02_SurkanaNm06
@@ -91514,14 +91522,14 @@ internal static class BattleCycles
         owners[282850] = 770;  // LDF4b_T3_Varanus_Spring_An
         owners[282851] = 771;  // LDF4b_T3_Foam_Spring_An
         owners[282852] = 772;  // LDF4b_T3_Corn_Spring_An
-        owners[282853] = 773;  // LDF4b_T3_Starturtle_An
-        owners[282854] = 720;  // LDF4b_T3_StarturtleBaby_An
-        owners[282855] = 372;  // LDF4b_T3_Agrint_Burn_An
-        owners[282856] = 773;  // LDF4b_T3_Starfish_An
     }
 
     private static void OnEnterAttackStateOf46(Dictionary<int, int> owners)
     {
+        owners[282853] = 773;  // LDF4b_T3_Starturtle_An
+        owners[282854] = 720;  // LDF4b_T3_StarturtleBaby_An
+        owners[282855] = 372;  // LDF4b_T3_Agrint_Burn_An
+        owners[282856] = 773;  // LDF4b_T3_Starfish_An
         owners[282857] = 774;  // LDF4b_T3_MutantBeast_An
         owners[282858] = 785;  // LDF4b_T4_Twister_Aurora_An
         owners[282859] = 724;  // LDF4b_T4_Neut2_Crystal_An
@@ -91918,14 +91926,14 @@ internal static class BattleCycles
         owners[284116] = 172;  // TR_Drakan_Pr_Heal_solo_62
         owners[284117] = 172;  // TR_Drakan_Pr_Heal_solo_63
         owners[284118] = 172;  // TR_Drakan_Pr_Heal_solo_64
-        owners[284119] = 889;  // TR_Drakan_El_Summon_solo
-        owners[284120] = 889;  // TR_Drakan_El_Summon_solo_62
-        owners[284121] = 889;  // TR_Drakan_El_Summon_solo_63
-        owners[284122] = 889;  // TR_Drakan_El_Summon_solo_64
     }
 
     private static void OnEnterAttackStateOf47(Dictionary<int, int> owners)
     {
+        owners[284119] = 889;  // TR_Drakan_El_Summon_solo
+        owners[284120] = 889;  // TR_Drakan_El_Summon_solo_62
+        owners[284121] = 889;  // TR_Drakan_El_Summon_solo_63
+        owners[284122] = 889;  // TR_Drakan_El_Summon_solo_64
         owners[284123] = 1047;  // TR_Drakan_Pr_Heal_Party
         owners[284124] = 889;  // TR_Drakan_Pr_Heal_Party_62
         owners[284125] = 889;  // TR_Drakan_Pr_Heal_Party_63
@@ -92322,14 +92330,14 @@ internal static class BattleCycles
         owners[285880] = 1377;  // Carrier_Attack_A
         owners[285881] = 1377;  // Carrier_Attack_A
         owners[285882] = 1713;  // ND2_FnF
-        owners[285883] = 1713;  // ND2_FnF
-        owners[285894] = 1714;  // ND2_KnJ
-        owners[285895] = 1714;  // ND2_KnJ
-        owners[285896] = 1714;  // ND2_KnJ
     }
 
     private static void OnEnterAttackStateOf48(Dictionary<int, int> owners)
     {
+        owners[285883] = 1713;  // ND2_FnF
+        owners[285894] = 1714;  // ND2_KnJ
+        owners[285895] = 1714;  // ND2_KnJ
+        owners[285896] = 1714;  // ND2_KnJ
         owners[285913] = 1247;  // ND2_KnJ
         owners[285921] = 1715;  // ND2_KnJ
         owners[285928] = 112;  // ND2_CnA
@@ -92726,14 +92734,14 @@ internal static class BattleCycles
         owners[294756] = 41;  // BGuard_GateFi
         owners[294757] = 42;  // BGuard_GateRa
         owners[294758] = 42;  // BGuard_GateRa
-        owners[294759] = 42;  // BGuard_GateRa
-        owners[294760] = 43;  // BGuard_GateWi
-        owners[294761] = 43;  // BGuard_GateWi
-        owners[294762] = 43;  // BGuard_GateWi
     }
 
     private static void OnEnterAttackStateOf49(Dictionary<int, int> owners)
     {
+        owners[294759] = 42;  // BGuard_GateRa
+        owners[294760] = 43;  // BGuard_GateWi
+        owners[294761] = 43;  // BGuard_GateWi
+        owners[294762] = 43;  // BGuard_GateWi
         owners[294763] = 44;  // BGuard_GatePr
         owners[294764] = 44;  // BGuard_GatePr
         owners[294765] = 44;  // BGuard_GatePr
@@ -93130,14 +93138,14 @@ internal static class BattleCycles
         owners[295723] = 5;  // DGuard_PeA
         owners[295725] = 358;  // DrGuard_FnA
         owners[295726] = 1347;  // DrGuard_FeB
-        owners[295729] = 1326;  // DrGuard_RnA
-        owners[295730] = 1385;  // DrGuard_ReB
-        owners[295733] = 1326;  // DrGuard_RnA
-        owners[295734] = 1385;  // DrGuard_ReB
     }
 
     private static void OnEnterAttackStateOf50(Dictionary<int, int> owners)
     {
+        owners[295729] = 1326;  // DrGuard_RnA
+        owners[295730] = 1385;  // DrGuard_ReB
+        owners[295733] = 1326;  // DrGuard_RnA
+        owners[295734] = 1385;  // DrGuard_ReB
         owners[295737] = 358;  // DrGuard_AnA
         owners[295738] = 1748;  // DrGuard_AeB
         owners[295739] = 290;  // DrGuard_AeA
@@ -93534,14 +93542,14 @@ internal static class BattleCycles
         owners[296768] = 10;  // LGuard_FhA
         owners[296769] = 34;  // LGuard_RnA
         owners[296770] = 19;  // LGuard_ReB
-        owners[296774] = 34;  // LGuard_RnA
-        owners[296775] = 19;  // LGuard_ReB
-        owners[296779] = 2;  // LGuard_AnA
-        owners[296780] = 40;  // LGuard_AhB
     }
 
     private static void OnEnterAttackStateOf51(Dictionary<int, int> owners)
     {
+        owners[296774] = 34;  // LGuard_RnA
+        owners[296775] = 19;  // LGuard_ReB
+        owners[296779] = 2;  // LGuard_AnA
+        owners[296780] = 40;  // LGuard_AhB
         owners[296782] = 35;  // LGuard_WnA
         owners[296783] = 37;  // LGuard_WeB
         owners[296784] = 30;  // LGuard_WeA
@@ -93938,14 +93946,14 @@ internal static class BattleCycles
         owners[297505] = 1800;  // F5_RvR_Trap
         owners[297506] = 1800;  // F5_RvR_Trap
         owners[297507] = 1304;  // F5_RvR_LGuard_Ra_Ae
-        owners[297508] = 1304;  // F5_RvR_DGuard_Ra_Ae
-        owners[297509] = 1307;  // LDF5_DisputeRvR_Watch_NoBroad_Ra
-        owners[297510] = 1401;  // Gab1_Gaurd_Defend_PM_Kn
-        owners[297511] = 1787;  // Gab1_Gaurd_Support_HBuff_Pn
     }
 
     private static void OnEnterAttackStateOf52(Dictionary<int, int> owners)
     {
+        owners[297508] = 1304;  // F5_RvR_DGuard_Ra_Ae
+        owners[297509] = 1307;  // LDF5_DisputeRvR_Watch_NoBroad_Ra
+        owners[297510] = 1401;  // Gab1_Gaurd_Defend_PM_Kn
+        owners[297511] = 1787;  // Gab1_Gaurd_Support_HBuff_Pn
         owners[297512] = 1402;  // Gab1_Gaurd_Charge_PM_Fn
         owners[297519] = 1801;  // LDF5_Fortress_VGuardBoss_Fi
         owners[297520] = 1802;  // LDF5_Fortress_VGuardBoss_Ra
@@ -94342,14 +94350,14 @@ internal static class BattleCycles
         owners[798904] = 0;  // LMerchant
         owners[798905] = 0;  // LMerchant
         owners[798906] = 0;  // LMerchant
-        owners[798907] = 0;  // LMerchant
-        owners[798908] = 0;  // LMerchant
-        owners[798909] = 0;  // LMerchant
-        owners[798910] = 1;  // LFunction
     }
 
     private static void OnEnterAttackStateOf53(Dictionary<int, int> owners)
     {
+        owners[798907] = 0;  // LMerchant
+        owners[798908] = 0;  // LMerchant
+        owners[798909] = 0;  // LMerchant
+        owners[798910] = 1;  // LFunction
         owners[798911] = 1;  // LFunction
         owners[798912] = 1;  // LFunction
         owners[798913] = 1;  // LFunction
@@ -94746,14 +94754,14 @@ internal static class BattleCycles
         owners[800515] = 1;  // LFunction
         owners[800516] = 7;  // DFunction
         owners[800517] = 7;  // DFunction
-        owners[800522] = 1814;  // LDF5_LFunc_Combat
-        owners[800523] = 1814;  // LDF5_LFunc_Combat
-        owners[800524] = 1814;  // LDF5_DFunc_Combat
-        owners[800525] = 1814;  // LDF5_DFunc_Combat
     }
 
     private static void OnEnterAttackStateOf54(Dictionary<int, int> owners)
     {
+        owners[800522] = 1814;  // LDF5_LFunc_Combat
+        owners[800523] = 1814;  // LDF5_LFunc_Combat
+        owners[800524] = 1814;  // LDF5_DFunc_Combat
+        owners[800525] = 1814;  // LDF5_DFunc_Combat
         owners[800526] = 1083;  // F5_PvPLight_LGuard_Pr_An
         owners[800527] = 1778;  // BGuard_CommanderF5_L
         owners[800528] = 1083;  // F5_PvPLight_DGuard_Pr_An
@@ -95150,14 +95158,14 @@ internal static class BattleCycles
         owners[801040] = 66;  // F5_PvPLight_LGuard_Kn_An
         owners[801041] = 66;  // F5_PvPLight_LGuard_Kn_An
         owners[801042] = 66;  // F5_PvPLight_LGuard_Kn_An
-        owners[801043] = 66;  // F5_PvPLight_LGuard_Kn_An
-        owners[801044] = 66;  // F5_PvPLight_LGuard_Kn_An
-        owners[801045] = 66;  // F5_PvPLight_LGuard_Kn_An
-        owners[801058] = 76;  // F5_PvP_LGuard_Wi_Ae
     }
 
     private static void OnEnterAttackStateOf55(Dictionary<int, int> owners)
     {
+        owners[801043] = 66;  // F5_PvPLight_LGuard_Kn_An
+        owners[801044] = 66;  // F5_PvPLight_LGuard_Kn_An
+        owners[801045] = 66;  // F5_PvPLight_LGuard_Kn_An
+        owners[801058] = 76;  // F5_PvP_LGuard_Wi_Ae
         owners[801059] = 1134;  // F5_PvP_LGuard_As_Ae_Hide
         owners[801062] = 69;  // F5_PvP_DGuard_Fi_Ae
         owners[801063] = 76;  // F5_PvP_DGuard_Wi_Ae
@@ -95554,14 +95562,14 @@ internal static class BattleCycles
         owners[801681] = 1814;  // LDF5_LFunc_Combat
         owners[801682] = 1814;  // LDF5_DFunc_Combat
         owners[801683] = 1814;  // LDF5_LFunc_Combat
-        owners[801684] = 1814;  // LDF5_DFunc_Combat
-        owners[801685] = 1814;  // LDF5_LFunc_Combat
-        owners[801686] = 1814;  // LDF5_DFunc_Combat
-        owners[801687] = 1814;  // LDF5_LFunc_Combat
     }
 
     private static void OnEnterAttackStateOf56(Dictionary<int, int> owners)
     {
+        owners[801684] = 1814;  // LDF5_DFunc_Combat
+        owners[801685] = 1814;  // LDF5_LFunc_Combat
+        owners[801686] = 1814;  // LDF5_DFunc_Combat
+        owners[801687] = 1814;  // LDF5_LFunc_Combat
         owners[801688] = 1814;  // LDF5_DFunc_Combat
         owners[801689] = 1814;  // LDF5_LFunc_Combat
         owners[801690] = 1814;  // LDF5_DFunc_Combat
@@ -95958,14 +95966,14 @@ internal static class BattleCycles
         owners[804229] = 1814;  // LDF5_LMerc_Combat
         owners[804230] = 1814;  // LDF5_LMerc_Combat
         owners[804231] = 1814;  // LDF5_LMerc_Combat
-        owners[804232] = 1814;  // LDF5_LMerc_Combat
-        owners[804233] = 1814;  // LDF5_LMerc_Combat
-        owners[804234] = 1814;  // LDF5_LMerc_Combat
-        owners[804235] = 1814;  // LDF5_LMerc_Combat
     }
 
     private static void OnEnterAttackStateOf57(Dictionary<int, int> owners)
     {
+        owners[804232] = 1814;  // LDF5_LMerc_Combat
+        owners[804233] = 1814;  // LDF5_LMerc_Combat
+        owners[804234] = 1814;  // LDF5_LMerc_Combat
+        owners[804235] = 1814;  // LDF5_LMerc_Combat
         owners[804236] = 1814;  // LDF5_LMerc_Combat
         owners[804237] = 1814;  // LDF5_LMerc_Combat
         owners[804238] = 1814;  // LDF5_LMerc_Combat
@@ -96362,14 +96370,14 @@ internal static class BattleCycles
         owners[804872] = 10;  // LGuard_FhA
         owners[804873] = 10;  // LGuard_FhA
         owners[804963] = 7;  // DFunction
-        owners[804964] = 1;  // LFunction
-        owners[804967] = 1814;  // LDF5_DFunc_Combat
-        owners[804968] = 1814;  // LDF5_DFunc_Combat
-        owners[804969] = 1814;  // LDF5_DFunc_Combat
     }
 
     private static void OnEnterAttackStateOf58(Dictionary<int, int> owners)
     {
+        owners[804964] = 1;  // LFunction
+        owners[804967] = 1814;  // LDF5_DFunc_Combat
+        owners[804968] = 1814;  // LDF5_DFunc_Combat
+        owners[804969] = 1814;  // LDF5_DFunc_Combat
         owners[804970] = 1814;  // LDF5_DFunc_Combat
         owners[804971] = 1814;  // LDF5_DFunc_Combat
         owners[804972] = 1814;  // LDF5_DFunc_Combat
@@ -96766,14 +96774,14 @@ internal static class BattleCycles
         owners[830648] = 0;  // LMerchant
         owners[830649] = 6;  // DMerchant
         owners[830650] = 6;  // DMerchant
-        owners[830651] = 6;  // DMerchant
-        owners[830652] = 6;  // DMerchant
-        owners[830653] = 6;  // DMerchant
-        owners[830654] = 6;  // DMerchant
     }
 
     private static void OnEnterAttackStateOf59(Dictionary<int, int> owners)
     {
+        owners[830651] = 6;  // DMerchant
+        owners[830652] = 6;  // DMerchant
+        owners[830653] = 6;  // DMerchant
+        owners[830654] = 6;  // DMerchant
         owners[830764] = 1;  // LFunction
         owners[830765] = 1;  // LFunction
         owners[830766] = 1;  // LFunction
@@ -97170,14 +97178,14 @@ internal static class BattleCycles
         owners[855355] = 69;  // F5_PvP_DGuard_Fi_Ae
         owners[855356] = 76;  // F5_PvP_DGuard_Wi_Ae
         owners[855369] = 1825;  // LDF4_Drakan_Worker_LV1
-        owners[855370] = 1288;  // LDF4_Drakan_Worker_LV2
-        owners[855371] = 1826;  // LDF4_Drakan_Worker_LV3
-        owners[855419] = 579;  // Station_eye_Su
-        owners[855420] = 577;  // Station_MaravataNM
     }
 
     private static void OnEnterAttackStateOf60(Dictionary<int, int> owners)
     {
+        owners[855370] = 1288;  // LDF4_Drakan_Worker_LV2
+        owners[855371] = 1826;  // LDF4_Drakan_Worker_LV3
+        owners[855419] = 579;  // Station_eye_Su
+        owners[855420] = 577;  // Station_MaravataNM
         owners[855421] = 583;  // Station_Shu_PR
         owners[855422] = 582;  // Station_Shu_FI
         owners[855423] = 582;  // Station_Shu_KN
@@ -97574,14 +97582,14 @@ internal static class BattleCycles
         owners[881519] = 1853;  // Gab1_TurretSwitch_toPC_04
         owners[881520] = 1853;  // Gab1_TurretSwitch_toPC_05
         owners[881521] = 1853;  // Gab1_TurretSwitch_toPC_06
-        owners[881522] = 1853;  // Gab1_TurretSwitch_toPC_07
-        owners[881523] = 1853;  // Gab1_TurretSwitch_toPC_08
-        owners[881524] = 1853;  // Gab1_TurretSwitch_toPC_09
-        owners[881525] = 1853;  // Gab1_TurretSwitch_toPC_10
     }
 
     private static void OnEnterAttackStateOf61(Dictionary<int, int> owners)
     {
+        owners[881522] = 1853;  // Gab1_TurretSwitch_toPC_07
+        owners[881523] = 1853;  // Gab1_TurretSwitch_toPC_08
+        owners[881524] = 1853;  // Gab1_TurretSwitch_toPC_09
+        owners[881525] = 1853;  // Gab1_TurretSwitch_toPC_10
         owners[881526] = 1853;  // Gab1_TurretSwitch_toPC_11
         owners[881527] = 1853;  // Gab1_TurretSwitch_toPC_12
         owners[881528] = 1853;  // Gab1_TurretSwitch_toPC_13
@@ -97978,14 +97986,14 @@ internal static class BattleCycles
         owners[882084] = 1128;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
         owners[882091] = 66;  // F5_PvPLight_LGuard_Fi_An
         owners[882092] = 68;  // F5_PvPLight_LGuard_Wi_An
-        owners[882093] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
-        owners[882100] = 66;  // F5_PvPLight_DGuard_Fi_An
-        owners[882101] = 68;  // F5_PvPLight_DGuard_Wi_An
-        owners[882109] = 1126;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
     }
 
     private static void OnEnterAttackStateOf62(Dictionary<int, int> owners)
     {
+        owners[882093] = 67;  // F5_PvPLight_LGuard_Ra_An_Broad
+        owners[882100] = 66;  // F5_PvPLight_DGuard_Fi_An
+        owners[882101] = 68;  // F5_PvPLight_DGuard_Wi_An
+        owners[882109] = 1126;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[882110] = 1077;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[882111] = 1128;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
         owners[882118] = 66;  // F5_PvPLight_LGuard_Fi_An
@@ -98041,7 +98049,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnMessageVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[526][];
+        PatternBranch[][] variants = new PatternBranch[528][];
         OnMessageVariants0(variants);
         OnMessageVariants1(variants);
         OnMessageVariants2(variants);
@@ -101722,10 +101730,16 @@ internal static class BattleCycles
                 Do.DespawnSelf()),
         ];
         variants[505] = [
+            AiPattern.Branch(19, "rung 0", [When.Message(22717)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(1, "rung 1", [When.Message(22715)],
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21645)),
+        ];
+        variants[506] = [
             AiPattern.Branch(99, "rung 0", [When.Message(22699)],
                 Do.DespawnSelf()),
         ];
-        variants[506] = [
+        variants[507] = [
             AiPattern.Branch(10, "rung 0", [When.Message(22723)],
                 Do.SpawnNearForTheFight(855737, 0, 1, 0f, 5),
                 Do.SpawnNearForTheFight(236234, 0, 1, 0f, 0),
@@ -101733,7 +101747,7 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 1", [When.Message(22733)],
                 Do.DespawnSelf()),
         ];
-        variants[507] = [
+        variants[508] = [
             AiPattern.Branch(3, "rung 0", [When.Message(22721)],
                 Do.SpawnNearForTheFight(855737, 0, 1, 0f, 5),
                 Do.SpawnNearForTheFight(236233, 0, 1, 0f, 0),
@@ -101741,7 +101755,7 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 1", [When.Message(22733)],
                 Do.DespawnSelf()),
         ];
-        variants[508] = [
+        variants[509] = [
             AiPattern.Branch(3, "rung 0", [When.Message(22723)],
                 Do.SpawnNearForTheFight(855737, 0, 1, 0f, 5),
                 Do.SpawnNearForTheFight(236231, 0, 1, 0f, 0),
@@ -101749,7 +101763,7 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 1", [When.Message(22733)],
                 Do.DespawnSelf()),
         ];
-        variants[509] = [
+        variants[510] = [
             AiPattern.Branch(3, "rung 0", [When.Message(22721)],
                 Do.SpawnNearForTheFight(855737, 0, 1, 0f, 5),
                 Do.SpawnNearForTheFight(236230, 0, 1, 0f, 0),
@@ -101757,12 +101771,30 @@ internal static class BattleCycles
             AiPattern.Branch(2, "rung 1", [When.Message(22733)],
                 Do.DespawnSelf()),
         ];
-        variants[510] = [
+        variants[511] = [
             AiPattern.Branch(7, "rung 0", [When.Message(442255)],
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18120),
                 Do.SetIdleTimer(5000)),
         ];
-        variants[511] = [
+        variants[512] = [
+            AiPattern.Branch(99, "rung 0", [When.Message(22771)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(98, "rung 1", [When.Message(22772)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(97, "rung 2", [When.Message(22765)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(96, "rung 3", [When.Message(22769)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(95, "rung 4", [When.Message(22768)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(94, "rung 5", [When.Message(22767)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(93, "rung 6", [When.Message(22766)],
+                Do.DespawnSelf()),
+            AiPattern.Branch(92, "rung 7", [When.Message(22765)],
+                Do.DespawnSelf()),
+        ];
+        variants[513] = [
             AiPattern.Branch(1300, "rung 0", [When.Message(10500)],
                 Do.HateMessageParam(10000),
                 Do.AttackMostHating()),
@@ -101782,7 +101814,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 21288),
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 16696)),
         ];
-        variants[512] = [
+        variants[514] = [
             AiPattern.Branch(1300, "rung 0", [When.Message(10500)],
                 Do.HateMessageParam(10000),
                 Do.AttackMostHating()),
@@ -101812,7 +101844,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 19075),
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 19075)),
         ];
-        variants[513] = [
+        variants[515] = [
             AiPattern.Branch(1300, "rung 0", [When.Message(10500)],
                 Do.HateMessageParam(10000),
                 Do.AttackMostHating()),
@@ -101839,7 +101871,7 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17124),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17332)),
         ];
-        variants[514] = [
+        variants[516] = [
             AiPattern.Branch(14, "rung 0", [When.Message(10)],
                 Do.Say(1500725, 0),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20919),
@@ -101856,7 +101888,7 @@ internal static class BattleCycles
             AiPattern.Branch(9, "rung 5", [When.Message(8)],
                 Do.SetIdleTimer(1000)),
         ];
-        variants[515] = [
+        variants[517] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(10300), When.FirstTime(0)],
                 Do.SystemMessage(1402873, 0),
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(724.031128f, 461.885101f, 596.722961f)),
@@ -101864,7 +101896,7 @@ internal static class BattleCycles
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(724.031494f, 460.168671f, 596.722961f)),
                 Do.SetIdleTimer(6000)),
         ];
-        variants[516] = [
+        variants[518] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(10300), When.FirstTime(0)],
                 Do.SystemMessage(1402873, 0),
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(566.9104f, 424.119934f, 617.891296f)),
@@ -101872,7 +101904,7 @@ internal static class BattleCycles
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(566.995178f, 425.674774f, 617.891296f)),
                 Do.SetIdleTimer(6000)),
         ];
-        variants[517] = [
+        variants[519] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(10300), When.FirstTime(0)],
                 Do.SystemMessage(1402873, 0),
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(643.485901f, 535.770142f, 591.270325f)),
@@ -101880,7 +101912,7 @@ internal static class BattleCycles
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(642.060059f, 534.240784f, 591.270325f)),
                 Do.SetIdleTimer(6000)),
         ];
-        variants[518] = [
+        variants[520] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(10300), When.FirstTime(0)],
                 Do.SystemMessage(1402873, 0),
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(453.769226f, 501.741302f, 603.296631f)),
@@ -101888,38 +101920,38 @@ internal static class BattleCycles
                 Do.SpawnAtForTheFight(231185, 0, 0, new SpawnSpot(453.892273f, 503.717163f, 603.296631f)),
                 Do.SetIdleTimer(6000)),
         ];
-        variants[519] = [
+        variants[521] = [
             AiPattern.Branch(2, "rung 0", [When.Message(3408), When.Idling],
                 Do.HateMessageParam(100),
                 Do.AttackMostHating()),
             AiPattern.Branch(1, "rung 1", [When.Message(3408), When.Fighting],
                 Do.TargetMessageParam()),
         ];
-        variants[520] = [
+        variants[522] = [
             AiPattern.Branch(99, "rung 0", [When.Message(22638)],
                 Do.DespawnSelf()),
             AiPattern.Branch(98, "rung 1", [When.Message(22637)],
                 Do.DespawnSelf()),
         ];
-        variants[521] = [
+        variants[523] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(610001)],
                 Do.SkillOnSelfNow(20540),
                 Do.DespawnSelf()),
         ];
-        variants[522] = [
+        variants[524] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(610001)],
                 Do.SkillOnSelfNow(20539),
                 Do.DespawnSelf()),
         ];
-        variants[523] = [
+        variants[525] = [
             AiPattern.Branch(1000, "rung 0", [When.Message(11100)],
                 Do.DespawnSelf()),
         ];
-        variants[524] = [
+        variants[526] = [
             AiPattern.Branch(7, "rung 0", [When.Message(1001)],
                 Do.Say(1501278, 0)),
         ];
-        variants[525] = [
+        variants[527] = [
             AiPattern.Branch(20, "rung 0", [When.Message(22708)],
                 Do.DespawnSelf()),
             AiPattern.Branch(19, "rung 1", [When.Message(22716)],
@@ -101977,10 +102009,12 @@ internal static class BattleCycles
         owners[207119] = 23;  // IDArena_Team01_S1_trap03
         owners[207120] = 19;  // IDArena_Team01_S1_trap01
         owners[209479] = 24;  // DF2A_DirectPortal_Prisoner
+        owners[209697] = 25;  // IDSeal_Scene_08_Bomber
         owners[209701] = 25;  // IDSeal_Scene_08_Bomber
         owners[209721] = 26;  // IDSeal_Scene_16_Bomber_Li
         owners[209723] = 27;  // IDSeal_Scene_17_QuestNPC
         owners[209724] = 28;  // IDSeal_Scene_17_Bomber
+        owners[209762] = 25;  // IDSeal_Scene_08_Bomber
         owners[209766] = 25;  // IDSeal_Scene_08_Bomber
         owners[209786] = 29;  // IDSeal_Scene_16_Bomber_Da
         owners[209788] = 27;  // IDSeal_Scene_17_QuestNPC
@@ -102348,12 +102382,12 @@ internal static class BattleCycles
         owners[236072] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
         owners[236526] = 157;  // IDYun_Nmd3_FallOff
         owners[236527] = 157;  // IDYun_Nmd3_FallOff
-        owners[236675] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
-        owners[236679] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
     }
 
     private static void OnMessageOf1(Dictionary<int, int> owners)
     {
+        owners[236675] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
+        owners[236679] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
         owners[236683] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
         owners[236687] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
         owners[236691] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
@@ -102752,12 +102786,12 @@ internal static class BattleCycles
         owners[284218] = 283;  // Vri_Sum_Sum_65_Ae
         owners[284269] = 127;  // NeutQueenSumEgg_N_65_e
         owners[284270] = 127;  // NeutQueenSumEgg_N_65_e
-        owners[284271] = 127;  // NeutQueenSumEgg_N_65_e
-        owners[284272] = 127;  // NeutQueenSumEgg_N_65_e
     }
 
     private static void OnMessageOf2(Dictionary<int, int> owners)
     {
+        owners[284271] = 127;  // NeutQueenSumEgg_N_65_e
+        owners[284272] = 127;  // NeutQueenSumEgg_N_65_e
         owners[284308] = 118;  // BIDF5_R2_Sync2_A3
         owners[284309] = 284;  // BIDF5_R2_Sync2_A4
         owners[284311] = 121;  // BIDF5_R2_Runner
@@ -103156,12 +103190,12 @@ internal static class BattleCycles
         owners[855391] = 476;  // LDF4_Advance_Killer_20
         owners[855392] = 476;  // LDF4_Advance_Killer_21
         owners[855393] = 476;  // LDF4_Advance_Killer_22
-        owners[855394] = 476;  // LDF4_Advance_Killer_23
-        owners[855395] = 476;  // LDF4_Advance_Killer_24
     }
 
     private static void OnMessageOf3(Dictionary<int, int> owners)
     {
+        owners[855394] = 476;  // LDF4_Advance_Killer_23
+        owners[855395] = 476;  // LDF4_Advance_Killer_24
         owners[855396] = 476;  // LDF4_Advance_Killer_25
         owners[855397] = 476;  // LDF4_Advance_Killer_26
         owners[855398] = 476;  // LDF4_Advance_Killer_27
@@ -103226,26 +103260,28 @@ internal static class BattleCycles
         owners[855707] = 500;  // IDSeal_Glacier_Reflect
         owners[855710] = 503;  // IDSeal_Twin_P_Spawn
         owners[855711] = 504;  // IDSeal_Twin_M_Spawn
+        owners[855712] = 505;  // IDSeal_Twin_M_HellFire
         owners[855713] = 503;  // IDSeal_Twin_P_Failed_Spawn
         owners[855714] = 504;  // IDSeal_Twin_M_Failed_Spawn
-        owners[855715] = 505;  // IDSeal_Twin_P_Success
-        owners[855716] = 505;  // IDSeal_Twin_M_Success
-        owners[855719] = 506;  // IDSeal_HalfWake_Lv3_Return
-        owners[855720] = 507;  // IDSeal_HalfWake_Lv3_Wake
-        owners[855723] = 508;  // IDSeal_HalfWake_Lv2_Return
-        owners[855724] = 509;  // IDSeal_HalfWake_Lv2_Wake
-        owners[855854] = 510;  // IDRaksha_Re_Boss_Sum_KJS
+        owners[855715] = 506;  // IDSeal_Twin_P_Success
+        owners[855716] = 506;  // IDSeal_Twin_M_Success
+        owners[855719] = 507;  // IDSeal_HalfWake_Lv3_Return
+        owners[855720] = 508;  // IDSeal_HalfWake_Lv3_Wake
+        owners[855723] = 509;  // IDSeal_HalfWake_Lv2_Return
+        owners[855724] = 510;  // IDSeal_HalfWake_Lv2_Wake
+        owners[855854] = 511;  // IDRaksha_Re_Boss_Sum_KJS
         owners[855900] = 157;  // IDYun_Nmd3_FallOff
+        owners[855923] = 512;  // IDSeal_Wave_Arrow_Target
         owners[855978] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
         owners[855985] = 115;  // LF5_StrongGuard_Li_Gu_65_Af
-        owners[855994] = 511;  // BIDF5_U01_Runaway_Wi
-        owners[855998] = 512;  // BIDF5_U01_Runaway_Pr
-        owners[856002] = 513;  // BIDF5_U01_Runaway_As
-        owners[856027] = 514;  // IDTiamat_Hard_Tiamat_Drakan
-        owners[856057] = 515;  // BIDF5_U01_Ctrl_02
-        owners[856058] = 516;  // BIDF5_U01_Ctrl_03
-        owners[856059] = 517;  // BIDF5_U01_Ctrl_04
-        owners[856060] = 518;  // BIDF5_U01_Ctrl_05
+        owners[855994] = 513;  // BIDF5_U01_Runaway_Wi
+        owners[855998] = 514;  // BIDF5_U01_Runaway_Pr
+        owners[856002] = 515;  // BIDF5_U01_Runaway_As
+        owners[856027] = 516;  // IDTiamat_Hard_Tiamat_Drakan
+        owners[856057] = 517;  // BIDF5_U01_Ctrl_02
+        owners[856058] = 518;  // BIDF5_U01_Ctrl_03
+        owners[856059] = 519;  // BIDF5_U01_Ctrl_04
+        owners[856060] = 520;  // BIDF5_U01_Ctrl_05
         owners[856069] = 267;  // IDTiamat_Hard_Temp_02
         owners[856071] = 267;  // IDTiamat_Hard_Temp_04
         owners[856073] = 267;  // IDTiamat_Hard_Temp_06
@@ -103255,22 +103291,22 @@ internal static class BattleCycles
         owners[856081] = 267;  // IDTiamat_Hard_Temp_12
         owners[856105] = 116;  // IDF5_Mini_01_C_Guard_Fi
         owners[856106] = 116;  // IDF5_Mini_01_C_Guard_As
-        owners[856133] = 519;  // XD_ESer
+        owners[856133] = 521;  // XD_ESer
         owners[856306] = 502;  // IDSeal_Glacier_Spread_02
         owners[856307] = 502;  // IDSeal_Glacier_Spread_03
         owners[856308] = 502;  // IDSeal_Glacier_Spread_04
         owners[856309] = 502;  // IDSeal_Glacier_Spread_02
         owners[856310] = 502;  // IDSeal_Glacier_Spread_03
         owners[856311] = 502;  // IDSeal_Glacier_Spread_04
-        owners[856342] = 520;  // IDSeal_TrueBoss_Sum_01_Resurrect
-        owners[856343] = 520;  // IDSeal_TrueBoss_Sum_02_Resurrect
-        owners[856344] = 520;  // IDSeal_TrueBoss_Sum_03_Resurrect
-        owners[856345] = 521;  // IDYun_Vasharti_Glove_AreaAtk_Red
-        owners[856346] = 522;  // IDYun_Vasharti_Glove_AreaAtk_Blue
-        owners[856386] = 523;  // BIDF5_U01_Ctrl_10
-        owners[856405] = 524;  // IDYun_info_09
-        owners[856406] = 524;  // IDYun_info_09
-        owners[856459] = 525;  // IDSeal_Twin_P_Sum_Crater_Skill
+        owners[856342] = 522;  // IDSeal_TrueBoss_Sum_01_Resurrect
+        owners[856343] = 522;  // IDSeal_TrueBoss_Sum_02_Resurrect
+        owners[856344] = 522;  // IDSeal_TrueBoss_Sum_03_Resurrect
+        owners[856345] = 523;  // IDYun_Vasharti_Glove_AreaAtk_Red
+        owners[856346] = 524;  // IDYun_Vasharti_Glove_AreaAtk_Blue
+        owners[856386] = 525;  // BIDF5_U01_Ctrl_10
+        owners[856405] = 526;  // IDYun_info_09
+        owners[856406] = 526;  // IDYun_info_09
+        owners[856459] = 527;  // IDSeal_Twin_P_Sum_Crater_Skill
         owners[856483] = 274;  // IDTiamat_Temp16
         owners[856484] = 275;  // IDTiamat_Temp17
         owners[856485] = 276;  // IDTiamat_Temp18
@@ -110035,7 +110071,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnSpelledVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[526][];
+        PatternBranch[][] variants = new PatternBranch[527][];
         OnSpelledVariants0(variants);
         OnSpelledVariants1(variants);
         OnSpelledVariants2(variants);
@@ -112840,6 +112876,10 @@ internal static class BattleCycles
                 Do.DespawnSelf()),
         ];
         variants[525] = [
+            AiPattern.Branch(2, "rung 0", [When.EventSkill(17315)],
+                Do.DespawnSelf()),
+        ];
+        variants[526] = [
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.Nothing()),
         ];
@@ -116466,9 +116506,10 @@ internal static class BattleCycles
         owners[855875] = 258;  // ND2_FnJ
         owners[855908] = 349;  // ND2_Bst_5
         owners[855909] = 364;  // ND2_Bst_2
-        owners[856050] = 525;  // BIDF5_U01_Runaway_Wi_S_P1
-        owners[856051] = 525;  // BIDF5_U01_Runaway_Pr_S_P1
-        owners[856052] = 525;  // BIDF5_U01_Runaway_As_S_P1
+        owners[855923] = 525;  // IDSeal_Wave_Arrow_Target
+        owners[856050] = 526;  // BIDF5_U01_Runaway_Wi_S_P1
+        owners[856051] = 526;  // BIDF5_U01_Runaway_Pr_S_P1
+        owners[856052] = 526;  // BIDF5_U01_Runaway_As_S_P1
         owners[856306] = 523;  // IDSeal_Glacier_Spread_02
         owners[856307] = 523;  // IDSeal_Glacier_Spread_03
         owners[856308] = 523;  // IDSeal_Glacier_Spread_04
@@ -116496,11 +116537,11 @@ internal static class BattleCycles
         owners[881222] = 342;  // ND2_FnI
         owners[881223] = 342;  // ND2_FnI
         owners[881224] = 468;  // ND2_H50_1
-        owners[881225] = 468;  // ND2_H50_1
     }
 
     private static void OnSpelledOf9(Dictionary<int, int> owners)
     {
+        owners[881225] = 468;  // ND2_H50_1
         owners[881226] = 468;  // ND2_H50_1
         owners[881227] = 468;  // ND2_H50_1
         owners[881328] = 342;  // ND2_FnI
@@ -118000,7 +118041,9 @@ internal static class BattleCycles
         owners[207105] = 10;  // IDArena_team01_S5_trap_01
         owners[207123] = 11;  // IDF5_TD_Start_NPC
         owners[207504] = 12;  // NTrap_A
+        owners[209697] = 13;  // IDSeal_Scene_08_Bomber
         owners[209701] = 13;  // IDSeal_Scene_08_Bomber
+        owners[209762] = 13;  // IDSeal_Scene_08_Bomber
         owners[209766] = 13;  // IDSeal_Scene_08_Bomber
         owners[210318] = 14;  // B_Qslime_18
         owners[210322] = 15;  // Gargoyle_9_An
@@ -118383,12 +118426,12 @@ internal static class BattleCycles
         owners[282324] = 32;  // Raksha_Deliverfire
         owners[282345] = 36;  // IDHouse_Butler_RollingGolem
         owners[282346] = 36;  // IDHouse_Butler_RollingGolem
-        owners[282347] = 36;  // IDHouse_Butler_RollingGolem
-        owners[282348] = 36;  // IDHouse_Butler_RollingGolem
     }
 
     private static void OnSeeUserOf1(Dictionary<int, int> owners)
     {
+        owners[282347] = 36;  // IDHouse_Butler_RollingGolem
+        owners[282348] = 36;  // IDHouse_Butler_RollingGolem
         owners[282349] = 36;  // IDHouse_Butler_RollingGolem
         owners[282350] = 36;  // IDHouse_Butler_RollingGolem
         owners[282351] = 36;  // IDHouse_Butler_RollingGolem

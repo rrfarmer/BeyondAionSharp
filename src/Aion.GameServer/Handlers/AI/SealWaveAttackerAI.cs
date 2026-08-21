@@ -70,12 +70,15 @@ namespace Aion.GameServer.Handlers.AI;
 /// the buff would have handed 236218 a self-heal retail never gives it, so they are split.
 /// </para>
 /// <para>
-/// <b>Still not translated: the bombardment.</b> Retail has 236218 answer 22753 by casting indices 1
-/// and 2 — 20402 and 17315, both present here — <i>at the message sender</i>. The sender is
-/// <c>IDSeal_Wave_Arrow_Target</c>, npc <b>855923</b>, which this server does spawn: the generated
-/// battle table drops it on players' positions. But 855923 carries <c>ai="aggressive_no_loot"</c>, so
-/// it runs no pattern and broadcasts nothing, and the rung would answer a call that never comes. The
-/// missing piece is the marker's own voice, not the archer's answer.
+/// <b>The bombardment is translated now, and it is a loop rather than a rung.</b> The leader drops
+/// <c>IDSeal_Wave_Arrow_Target</c> (855923) on a player; the marker wakes and shouts <c>22753</c>;
+/// 236218 answers by casting <b>20402</b> then <b>17315</b> <i>at the marker</i>; and 17315 is the
+/// skill the marker's own <c>on_spelled</c> despawns on. The shell lands and the mark goes out.
+/// <para>
+/// It was blocked on the marker having no voice — it carries <c>ai="aggressive_no_loot"</c>, which
+/// composes the pattern tables, but the extractors refused its pattern because <c>SealWaveLeaderAI</c>
+/// names it in a constant. That test is gone; see <c>extract_battle_cycles.py</c> for the measurement.
+/// </para>
 /// </para>
 /// </remarks>
 [AIName("seal_wave_attacker")]
@@ -98,6 +101,20 @@ public class SealWaveAttackerAI : PatternAi
 
 	/// <summary>The leaders' command buff. Answered by every attacker except the ranged leader.</summary>
 	public const int CommandBuff = 22750;
+
+	/// <summary>
+	/// The arrow target's own shout — retail's <c>폭격</c>, bombardment. Only 236218 answers it.
+	/// </summary>
+	public const int BombardmentCall = 22753;
+
+	/// <summary><c>SKILLI_INDEX_1</c> for 236218: <c>DGRA_SatkSnareSlowTA5_Lr</c>.</summary>
+	public const int BombardmentSnare = 20402;
+
+	/// <summary>
+	/// <c>SKILLI_INDEX_2</c> for 236218: <c>DGRA_SatkBig_TA</c> — and the skill the marker despawns on,
+	/// which is what closes the loop rather than leaving the mark standing.
+	/// </summary>
+	public const int BombardmentShell = 17315;
 
 	/// <summary>
 	/// <c>SKILLI_INDEX_0</c> for all 22 wave attackers, resolved from retail's own ordered list.
@@ -139,11 +156,11 @@ public class SealWaveAttackerAI : PatternAi
 		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true, commandBuff: 10);
 
 	/// <summary>
-	/// 236218, <c>LeaderGourp_Ra</c>: the one attacker that does <b>not</b> hear 22750. Its own number
-	/// is 22753, the bombardment, which nothing on this server sends yet.
+	/// 236218, <c>LeaderGourp_Ra</c>: the one attacker that does <b>not</b> hear 22750. Its number is
+	/// 22753, and it is the only npc in the wave that answers the arrow target.
 	/// </summary>
 	private static readonly AiPattern RangedLeaderRa =
-		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true);
+		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true, bombards: true);
 
 	public SealWaveAttackerAI(Npc owner)
 		: base(owner)
@@ -172,7 +189,7 @@ public class SealWaveAttackerAI : PatternAi
 	/// </summary>
 	private static AiPattern Build(int call, float meleeRange, float spellRange,
 		bool namesSelf = false, bool peelsOff = false, bool leader = false,
-		bool callsOnFirstBlood = false, int? commandBuff = null)
+		bool callsOnFirstBlood = false, int? commandBuff = null, bool bombards = false)
 	{
 		// is_hp_in_boundary is exclusive at both ends, so larger_than=40 less_than=70 is 41 to 69.
 		PatternAction MeleeShout() => namesSelf
@@ -195,6 +212,16 @@ public class SealWaveAttackerAI : PatternAi
 				[When.Message(MeleeCall), When.SenderTribe(TribeClass.IDSEAL_WAVE_HEALER),
 					When.MessageParamIsMyTarget],
 				Do.SwitchTarget(AggroTarget.RANDOM_EXCEPT_CURRENT_TARGET)));
+		}
+
+		// Retail's priority-10 rung, and both casts go at the caller rather than at anything this npc
+		// is fighting. The order is retail's: snare first, then the shell that ends the mark.
+		if (bombards)
+		{
+			onMessage.Add(Branch(10, "the mark is calling for a shell",
+				[When.Message(BombardmentCall)],
+				Do.SkillOnMessageSender(BombardmentSnare),
+				Do.SkillOnMessageSender(BombardmentShell)));
 		}
 
 		// Retail's rung is unguarded: hear it, buff yourself. On self, and there is no despawn on this

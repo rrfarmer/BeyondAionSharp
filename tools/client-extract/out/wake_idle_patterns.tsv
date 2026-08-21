@@ -100,6 +100,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		0	var	0	1	0	Wave_Z1	0.0	0.0	0.0
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 207127	IDSeal_RandomRoom_Bomb	on_wake_up	0	1		0	spawn	856459	1	0	for_the_fight_self	0.0	0.0	0.0
+209688	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
 209693	IDSeal_Scene_07_PCGuard_Li	on_wake_up	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0
 209706	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
 209721	IDSeal_Scene_16_Bomber_Li	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
@@ -110,6 +111,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 209723	IDSeal_Scene_17_QuestNPC	on_wake_up	0	1		1	timer	15000	0	0		0.0	0.0	0.0
 209730	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		0	broadcast	22770	100	0		0.0	0.0	0.0
 209730	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		1	skill	20839	0	0	ME	0.0	0.0	0.0
+209753	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
 209758	IDSeal_Scene_07_PCGuard_Da	on_wake_up	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0
 209771	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
 209786	IDSeal_Scene_16_Bomber_Da	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
@@ -8547,6 +8549,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855917	DF5_ItemNamed_6_Fi_02_SSH	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855919	DF5_ItemNamed_6_Ra_01_SSH	on_wake_up	0	1		0	skill	21146	0	0	ME	0.0	0.0	0.0
 855921	DF5_ItemNamed_6_Fi_03_SSH	on_wake_up	0	1		0	skill	16873	0	0	ME	0.0	0.0	0.0
+855923	IDSeal_Wave_Arrow_Target	on_wake_up	0	1		0	broadcast	22753	100	0		0.0	0.0	0.0
 855955	Legion_Start_Check	on_idle_timer	0	600	set_flag_var:5	0	timer	360000	0	0		0.0	0.0	0.0
 855955	Legion_Start_Check	on_idle_timer	0	600	set_flag_var:5	1	spawn	855778	1	0	for_the_fight_self	0.0	0.0	0.0
 855955	Legion_Start_Check	on_idle_timer	1	500	set_flag_var:6	0	timer	420000	0	0		0.0	0.0	0.0

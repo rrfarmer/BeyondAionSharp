@@ -1095,12 +1095,33 @@ def main() -> int:
         if fields[5] == "TRUE":
             skills[int(fields[0])][int(fields[1])] = int(fields[3])
 
-    # An npc an encounter class already models must not be rebound to a generated table.
-    spoken_for: set[int] = set()
-    for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
-        for found in re.finditer(r"=\s*(\d{6})\s*;",
-                                 source.read_text(encoding="utf-8", errors="replace")):
-            spoken_for.add(int(found.group(1)))
+    # **This used to scan the AI classes for `= 123456;` constants and refuse every npc named by one,**
+    # on the reasoning that an npc an encounter class already models must not be rebound to a table.
+    # The reasoning is right and the test was wrong: a constant is how a class names an npc it
+    # **spawns**, not one it drives.
+    #
+    # Measured rather than argued. The scan held 363 ids; of those, the number whose `ai=` is a
+    # composing class *and* which have a retail pattern -- that is, the entire set it actually blocked
+    # -- was **eight**, and all eight were spawn arguments:
+    #
+    #   * 209688/209689 and 209753/209754, the guard detachments `TwinFontAI` calls up. It picks which
+    #     pair to spawn and sets their hate. Retail gives them a battle rotation and a leader that
+    #     broadcasts, none of which the class provides.
+    #   * 209697/209762, the successors `TwinDoorDestroyerAI` chooses between: retail's proximity
+    #     bomber, which shouts when it sees a player and casts when told.
+    #   * 855712, the hellfire field `TwinProtectorAI` places. The class clears it on death, which is
+    #     retail's own `SPAWN_ID_2` behaviour; the pattern is the field's answer to a message, which is
+    #     a different thing entirely.
+    #   * 855923, the arrow target -- see `SealWaveAttackerAI` for the bombardment it makes possible.
+    #
+    # Every other id in the scan was already excluded by the `ai.get(n) in GENERIC` test below, because
+    # an npc a class really is the AI for does not carry a generic `ai=` in the first place. **That is
+    # the decidable form of the same question, and it is already being asked**, so the constant scan
+    # contributed nothing but these eight false positives.
+    #
+    # What is lost: if a class ever drives a generic-ai npc through a stored reference *and* that npc
+    # has a retail pattern that contradicts it, nothing here will catch the overlap. All four classes
+    # above were read before this changed; a fifth would need the same reading.
 
     binders: dict[str, list[int]] = collections.defaultdict(list)
     for line in A.read_text(args.binding).splitlines():
@@ -1130,7 +1151,7 @@ def main() -> int:
                                      for handler in ENDINGS + SIGNALS + ARMING):
                 continue
             owners = [n for n in binders.get(named.group(1), [])
-                      if ai.get(n) in GENERIC and n not in spoken_for]
+                      if ai.get(n) in GENERIC]
             if not owners:
                 refused["no npc here that is free to run it"] += 1
                 continue

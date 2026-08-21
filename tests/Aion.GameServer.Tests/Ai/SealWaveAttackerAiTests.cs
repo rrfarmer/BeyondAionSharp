@@ -40,6 +40,9 @@ public sealed class SealWaveAttackerAiTests
 	/// <summary><c>IDSeal_Forward_Guard_Li_Fi</c> — the npc the aionemu class hated by id.</summary>
 	private const int ForwardGuard = 236248;
 
+	/// <summary><c>IDSeal_Wave_Arrow_Target</c> — the mark the ranged leader shells.</summary>
+	private const int ArrowTarget = 855923;
+
 	private static BossAiHarness NewHarness() =>
 		BossAiHarness.For(Reshanta).WithWorldSize(4096)
 			.WithAi(typeof(SealWaveAttackerAI), typeof(AggressiveNpcAI), typeof(GeneralNpcAI))
@@ -319,6 +322,81 @@ public sealed class SealWaveAttackerAiTests
 
 		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(attacker),
 			cast => cast.SkillId == SealWaveAttackerAI.CommandBuffSkill);
+	}
+
+	/// <summary>
+	/// <b>The arrow target calls, and 236218 fires both shells at it.</b> Retail's priority-10 rung:
+	/// two casts, both at the caller rather than at whatever the archer is fighting.
+	/// </summary>
+	/// <remarks>
+	/// <b>Nothing here broadcasts anything.</b> The mark is spawned and that is all — its own
+	/// <c>on_wake_up</c> shouts 22753, which is the half that did not exist until the extractors
+	/// stopped refusing its pattern. A version of this pin that called <c>NpcMessageBus.Broadcast</c>
+	/// by hand passed just as well and proved only half the loop.
+	/// </remarks>
+	[Fact]
+	public void TheRangedLeaderShellsWhateverCallsForBombardment()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc archer = harness.Spawn(236218, 300f, 300f, 200f);
+		Npc mark = harness.Spawn(ArrowTarget, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(archer, mark);
+
+		var fired = BossAiHarness.DrainQueuedSkills(archer);
+		Assert.Contains(fired, cast => cast.SkillId == SealWaveAttackerAI.BombardmentSnare);
+		Assert.Contains(fired, cast => cast.SkillId == SealWaveAttackerAI.BombardmentShell);
+	}
+
+	/// <summary>
+	/// <b>Nobody else answers the mark.</b> 22753 belongs to the ranged leader alone; the tank hearing
+	/// it too would put the whole wave on the marker instead of on the raid. Same spawn-and-wait as
+	/// above: the mark shouts for itself.
+	/// </summary>
+	[Fact]
+	public void TheRestOfTheWaveIgnoresTheMark()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc tank = harness.Spawn(Tank, 300f, 300f, 200f);
+		Npc mark = harness.Spawn(ArrowTarget, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(tank, mark);
+
+		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(tank),
+			cast => cast.SkillId == SealWaveAttackerAI.BombardmentShell);
+	}
+
+	/// <summary>
+	/// <b>The shell ends the mark.</b> 17315 is both the archer's second cast and the skill the
+	/// marker's own <c>on_spelled</c> despawns on, so the loop closes instead of leaving the mark
+	/// standing until it decays. This is the half that needed <c>is_event_skill_id</c>.
+	/// </summary>
+	[Fact]
+	public void TheShellTakesTheMarkAway()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc archer = harness.Spawn(236218, 300f, 300f, 200f);
+		Npc mark = harness.Spawn(ArrowTarget, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(archer, mark);
+
+		BossAiHarness.SpellHit(mark, archer, SealWaveAttackerAI.BombardmentShell);
+
+		Assert.DoesNotContain(mark, harness.LiveNpcs());
+	}
+
+	/// <summary>
+	/// <b>The snare does not.</b> Only the second cast ends it; without this the pin above would pass
+	/// on a marker that despawned when anything at all touched it.
+	/// </summary>
+	[Fact]
+	public void TheSnareLeavesTheMarkStanding()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc archer = harness.Spawn(236218, 300f, 300f, 200f);
+		Npc mark = harness.Spawn(ArrowTarget, 320f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(archer, mark);
+
+		BossAiHarness.SpellHit(mark, archer, SealWaveAttackerAI.BombardmentSnare);
+
+		Assert.Contains(mark, harness.LiveNpcs());
 	}
 
 	/// <summary>

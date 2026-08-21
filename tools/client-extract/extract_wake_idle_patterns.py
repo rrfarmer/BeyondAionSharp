@@ -80,7 +80,12 @@ BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 #: They are `PassivePatternAi` and `PatternAi` now, keeping the aggression each was written to protect,
 #: so the exclusion has no reason left. Their spawn-time variable write is an override and survives
 #: unchanged -- **the tables do not subsume it**, and nothing here claims they do.
-GENERIC = {"aggressive", "general", "battle_cycle", "death_spawn", "idle_cycle",
+#: **`aggressive` and `general` are deliberately absent.** `AggressiveNpcAI : GeneralNpcAI : NpcAI`,
+#: and neither is a `PatternAi`, so an npc bound to either would carry wake rungs that never run. No
+#: npc had reached this table through them -- checked, it was 0 of 3,925 -- but the trap was set: 7,313
+#: npcs on those two ai names do have a retail pattern, and the day one became sayable it would have
+#: emitted silently. The battle extractor had the identical list and did spring it.
+GENERIC = {"battle_cycle", "death_spawn", "idle_cycle",
            "idle_cycle_passive", "aggressive_pattern", "passive_pattern",
            "wake_variable", "wake_variable_aggressive", "aggressive_no_loot"}
 
@@ -172,11 +177,12 @@ def main() -> int:
         placed = {int(m.group(1))
                   for m in re.finditer(r'npcId="(\d+)"', A.read_text(helpers))}
 
-    spoken_for: set[int] = set()
-    for source in (args.repo / "src/Aion.GameServer/Handlers/AI").glob("*.cs"):
-        for found in re.finditer(r"=\s*(\d{6})\s*;",
-                                 source.read_text(encoding="utf-8", errors="replace")):
-            spoken_for.add(int(found.group(1)))
+    # The `= 123456;` constant scan that stood here is gone, for the reason set out at length in
+    # `extract_battle_cycles.py`: a constant is how a class names an npc it **spawns**, and the
+    # decidable form of "does a class model this npc" is whether the npc's `ai=` is that class, which
+    # the `GENERIC` test below already asks. Measured here too, independently: it blocked exactly the
+    # same eight npcs, all `aggressive_no_loot` spawn arguments of four classes that place them and
+    # never speak for them again.
 
     binders: dict[str, list[int]] = collections.defaultdict(list)
     for line in A.read_text(args.binding).splitlines():
@@ -199,7 +205,7 @@ def main() -> int:
                 continue
 
             owners = [n for n in binders.get(named.group(1), [])
-                      if ai.get(n) in GENERIC and n not in spoken_for and n not in placed]
+                      if ai.get(n) in GENERIC and n not in placed]
             if not owners:
                 # Counted rather than dropped in silence. This was a bare `continue`, and it is the
                 # largest single refusal in the file -- so the printed tally read as if the table

@@ -39744,3 +39744,78 @@ and `TheSkillItNamesSetsItCasting` goes red on its own.
 5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## The eight npcs a constant was hiding, and the loop that closed
+
+Last entry deferred this and wrote down a number: *"171 npcs sit behind that conflation."* **That was
+already stale when it was written.** Narrowing `GENERIC` in the same commit removed most of them, and
+re-measuring at the start of this pass gave **eight**. The note was two hours old and wrong — which is
+the same failure this log recorded three entries ago, in a shorter half-life.
+
+### What `spoken_for` was really doing
+
+The rule read every `= 123456;` constant in the AI classes and refused those npcs, on the reasoning
+that an npc an encounter class models must not be rebound to a table. **The reasoning is right and the
+test was wrong**: a constant is how a class names an npc it *spawns*.
+
+Measured, not argued. The scan held **363 ids**; the number it actually blocked — `ai=` a composing
+class *and* a retail pattern to gain — was **eight**, and every other id was already excluded by the
+`ai.get(n) in GENERIC` test sitting two lines below it. **That is the decidable form of the same
+question and it was already being asked.** The constant scan contributed nothing but false positives.
+
+All eight were read before the rule changed:
+
+| npc | named by | what it spawns as | what retail gives it |
+|---|---|---|---|
+| 209688/209689, 209753/209754 | `TwinFontAI` | the guard detachment it calls up | a battle rotation, and a leader that broadcasts |
+| 209697, 209762 | `TwinDoorDestroyerAI` | the successor it picks | a proximity bomber: shouts on sight, casts when told |
+| 855712 | `TwinProtectorAI` | the hellfire field it places | the field's own answer to a message |
+| 855923 | `SealWaveLeaderAI` | the arrow target | a voice — see below |
+
+`TwinProtectorAI` clears its field on death, which is retail's own `SPAWN_ID_2` behaviour and not the
+field's pattern; the two do different things. None of the four classes handles an event on behalf of
+the npc it names.
+
+The same scan and the same eight were in `extract_wake_idle_patterns.py`, measured independently and
+removed there too. That file also carried `aggressive` and `general` in its `GENERIC` — **0 of its
+3,925 npcs had reached it that way, but 7,313 npcs on those two ai names do have a pattern**, so the
+trap was set and unsprung. The battle extractor had the identical list and did spring it last entry.
+
+### The bombardment, end to end
+
+With the marker free to run its pattern, the whole mechanic exists:
+
+1. The wave leader drops **855923** on a player's position — already generated, already working.
+2. The marker's `on_wake_up` shouts **22753**.
+3. **236218** answers with `SKILLI_INDEX_1` then `SKILLI_INDEX_2` — **20402** and **17315** — *at the
+   caller*, not at whatever it is fighting.
+4. **17315 is the skill the marker's own `on_spelled` despawns on.** The shell lands and the mark goes.
+
+Step 4 is why this needed `is_event_skill_id` first, and step 2 is why it needed the constant scan
+gone. Neither half is worth anything alone: a marker that shouts at nobody is furniture, and an archer
+answering a call that never comes is a dead rung.
+
+**The pin that matters spawns the mark and then does nothing.** No `NpcMessageBus.Broadcast` by hand —
+the marker shouts for itself, and the archer's queue fills. An earlier draft did broadcast by hand and
+passed just as well while proving half the loop; it was removed for that reason. Mutating
+`bombards: true` away reddens it on its own.
+
+**Verification.** Full suite **2,913 passing**, 1 skipped. Four new pins, and the discriminating pair
+is the shell despawning the mark while the snare leaves it standing — without both, a marker that
+despawned on any hit at all would pass.
+
+### Still missing, in order
+
+1. **Kaidan's low-health rung** — needs the index list resolved for thirteen shamans, which may not
+   agree the way the wave attackers' index 0 did (22 of 22, unanimous).
+2. **The 18 `--implemented` candidates**, plus the fifth copy of the skill-index claim in
+   `SealWaveLeaderAI` ("the buff itself (index 0, on all five)") while the generated table already
+   emits `Do.SkillOn(ME, 21844)`.
+3. **The seven other unblocked npcs are emitted but unpinned.** The guards, the bomber and the field
+   now carry retail rotations that no pin describes; they went in on a rule change, not on a reading of
+   each encounter. Each deserves the treatment the bombardment got.
+4. `control_door` (691) — one in-game observation; `enable_area` (575) — runtime zone toggling;
+   `change_world_scene_status` (101) — no runtime packet in either tree.
+5. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
