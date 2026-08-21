@@ -39163,3 +39163,55 @@ they are add work as well.
 
 The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
 but wanting play-testing**.
+
+## The sixteen missing paths are genuinely missing
+
+`Retail-AI-Pattern: none — search only, no behaviour change`
+
+Second on the list was the 16 waypoint paths absent from `retail_pattern_paths.xml`, costing 172
+spawn uses, 16 adds lost with dropped handlers, and 5 backlog adds. They have now been searched for
+properly, and they are not anywhere this project can reach.
+
+**Where they were already looked for.** `extract_walker_routes.py` built the file from the 5.8
+server's `Server/Map/Worlds/<world>/world.xml`, and its own commit recorded the shortfall at the
+time: 467 path names used by the patterns, 344 written, 123 missing.
+
+**Where they were looked for now.** Every `world*.xml` under `Server/Map/Worlds` -- **847 files
+across 258 worlds** -- and none of the sixteen names appears in any of them. Nor in the client:
+`Data/World/World.pak` unpacks to 236 entries and carries none of them either. The binary
+`<world>-path.dat` beside each world is a navmesh, not a table of named designer routes; it does not
+carry the names in any encoding.
+
+The full list, with what each costs:
+
+| path | waypoint spawns |
+|---|---|
+| `NPCPathIDSweep_1` .. `_4` | 32 each |
+| `DF4_MobPath_DF4_Dramata1` | 13 |
+| `C3_MobPath_BLF4_Dramata_58_Al` | 10 |
+| `E3_Cheru3_1` .. `_4`, `SPLF3_BoneDrake_1` .. `_3`, `IDElim_EventB_Path_001` / `_002`, `IDDF3_Dragon_Boss_Q` | 1-3 each |
+
+**Closed, and this time the closure is checked.** Three entries ago the same shape of claim -- "those
+paths appear in neither the client's level files nor our repos" -- turned out to be stale, and the
+check that would have caught it was one grep. So this one is written with the search behind it: 847
+server files and a client archive, by name, in two encodings. If it is ever reopened it should be by
+a *new source*, not by looking again at these.
+
+`NPCPathIDSweep_1` to `_4` are worth a note: 128 of the 172 uses are those four, all in one sweep
+encounter, so a single missing group accounts for three quarters of the cost.
+
+### Still missing, in order
+
+1. **`control_door` (691 uses + 10 lost adds)** -- one in-game observation settles which `method`
+   opens, and it is now clearly the best-value item on the list.
+2. **17 encounters on plain `aggressive`** whose pattern is refused for a vocabulary reason -- the
+   actionable slice of the adds backlog.
+3. `random_move` (187 uses; 11 lost adds sit behind the same `MOVETYPE_RUN` gap).
+4. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+5. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; the eight retail handlers with
+   no engine slot.
+6. **16 waypoint paths** -- closed above; needs a source this project does not have.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary, not a backlog.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, **per-mille reading evidence-backed
+but wanting play-testing**.
