@@ -109,6 +109,8 @@ def action_code(row: dict) -> str:
         return f"Do.SystemMessage({row['a1']}, {row['a2']})"
     if kind == "waypoint":
         return f"Do.GotoWaypoint({row['a1']})"
+    if kind == "next_waypoint":
+        return "Do.ContinueRoute()"
     if kind == "nothing":
         return "Do.Nothing()"
     if kind == "despawn_self":

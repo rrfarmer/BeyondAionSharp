@@ -100,6 +100,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		0	var	0	1	0	Wave_Z1	0.0	0.0	0.0
 207124	IDF5_TD_Wave_NPC	on_wake_up	0	1		1	despawn_self	0	0	0		0.0	0.0	0.0
 207127	IDSeal_RandomRoom_Bomb	on_wake_up	0	1		0	spawn	856459	1	0	for_the_fight_self	0.0	0.0	0.0
+209693	IDSeal_Scene_07_PCGuard_Li	on_wake_up	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0
 209706	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
 209721	IDSeal_Scene_16_Bomber_Li	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 209723	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		0	var	3	0	0	DEFENCE_WAVE	0.0	0.0	0.0
@@ -109,6 +110,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 209723	IDSeal_Scene_17_QuestNPC	on_wake_up	0	1		1	timer	15000	0	0		0.0	0.0	0.0
 209730	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		0	broadcast	22770	100	0		0.0	0.0	0.0
 209730	IDSeal_Scene_22_QuestNPC	on_wake_up	0	7		1	skill	20839	0	0	ME	0.0	0.0	0.0
+209758	IDSeal_Scene_07_PCGuard_Da	on_wake_up	0	7		0	next_waypoint	0	0	0		0.0	0.0	0.0
 209771	IDSeal_Scene_24_PCGuard_Leader	on_wake_up	0	1		0	broadcast	22696	50	0		0.0	0.0	0.0
 209786	IDSeal_Scene_16_Bomber_Da	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 209788	IDSeal_Scene_17_QuestNPC	on_idle_timer	0	2		0	var	3	0	0	DEFENCE_WAVE	0.0	0.0	0.0
@@ -165,6 +167,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 216298	IDCT_StDrakanSc_Fake	on_wake_up	0	7		0	skill	19126	0	0	ME	0.0	0.0	0.0
 216301	IDCT_Normal_Stalker03	on_wake_up	0	3		0	skill	18621	0	0	ME	0.0	0.0	0.0
 216311	IDCT_Normal_ShulackAs	on_wake_up	0	4		0	skill	18621	0	0	ME	0.0	0.0	0.0
+216527	IDCT_Quest_Rufukin_Normal	on_wake_up	0	7		0	say	342042	0	0		0.0	0.0	0.0
+216527	IDCT_Quest_Rufukin_Normal	on_wake_up	0	7		1	sysmsg	1400471	0	0		0.0	0.0	0.0
+216527	IDCT_Quest_Rufukin_Normal	on_wake_up	0	7		2	next_waypoint	0	0	0		0.0	0.0	0.0
 216733	IDCT_Boss_LichKing	on_wake_up	0	7		0	skill	19046	0	0	ME	0.0	0.0	0.0
 216736	IDCT_Boss_LichKing	on_wake_up	0	7		0	skill	19046	0	0	ME	0.0	0.0	0.0
 216738	IDCT_Boss_LichKing	on_wake_up	0	7		0	skill	19048	0	0	ME	0.0	0.0	0.0
@@ -809,6 +814,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 230065	IDLDF5Re_Solo_Vritra43IU_DrakanHideAn	on_wake_up	0	99		1	skill	16822	0	0	ME	0.0	0.0	0.0
 230084	IDLDF5Re_Solo_Vritra43_Parent	on_wake_up	0	99		0	skill	20700	0	0	ME	0.0	0.0	0.0
 230084	IDLDF5Re_Solo_Vritra43_Parent	on_wake_up	0	99		1	waypoint	0	0	0		0.0	0.0	0.0
+230109	BIDF5_R2_Sync2_A2	on_wake_up	0	1		0	next_waypoint	0	0	0		0.0	0.0	0.0
 230120	BIDF5_R2_Killer	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 230122	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 230257	ShulackRose_Fi_Tanker	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
@@ -841,6 +847,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 230740	IDRose_M_ShugoM_Wi_P_N_Ae	on_wake_up	1	7		0	nothing	0	0	0		0.0	0.0	0.0
 230743	IDRose_H_Boss_Mu_P_N_Ae	on_wake_up	0	95		0	skill	21220	0	0	ME	0.0	0.0	0.0
 230743	IDRose_H_Boss_Mu_P_N_Ae	on_wake_up	1	7		0	nothing	0	0	0		0.0	0.0	0.0
+230747	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+230747	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		1	skill	16822	0	0	ME	0.0	0.0	0.0
+230747	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		2	next_waypoint	0	0	0		0.0	0.0	0.0
 230757	IDF5_TD_DragonRider_N_65_Ae	on_wake_up	0	1		0	spawn	284697	1	0	for_the_fight_self	0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		0	spawn	284698	1	0	for_the_fight_self	0.0	0.0	0.0
 230776	IDF5_TD_Wave5_Boss	on_wake_up	0	1		1	sysmsg	1401819	0	0		0.0	0.0	0.0
@@ -2183,8 +2192,24 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 236065	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		1	skill	18762	0	0	ME	0.0	0.0	0.0
 236071	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		0	skill	20664	0	0	ME	0.0	0.0	0.0
 236071	F5_PvP_LGuard_As_Ae_Hide	on_wake_up	0	95		1	skill	18762	0	0	ME	0.0	0.0	0.0
+236102	IDSeal_Single_As_Hide	on_wake_up	0	1		0	skill	21432	0	0	ME	0.0	0.0	0.0
+236102	IDSeal_Single_As_Hide	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+236128	IDSeal_Single_As_Hide	on_wake_up	0	1		0	skill	21432	0	0	ME	0.0	0.0	0.0
+236128	IDSeal_Single_As_Hide	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+236154	IDSeal_Single_As_Hide	on_wake_up	0	1		0	skill	21432	0	0	ME	0.0	0.0	0.0
+236154	IDSeal_Single_As_Hide	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+236180	IDSeal_Single_As_Hide	on_wake_up	0	1		0	skill	21432	0	0	ME	0.0	0.0	0.0
+236180	IDSeal_Single_As_Hide	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
 236221	IDSeal_A_PhysicalMob_SN_65_Ah	on_wake_up	0	1		0	skill	20769	0	0	ME	0.0	0.0	0.0
 236222	IDSeal_A_MagicalMob_SN_65_Ah	on_wake_up	0	1		0	skill	20770	0	0	ME	0.0	0.0	0.0
+236236	IDSeal_Wave1_Leader_Lv2	on_wake_up	0	1		0	var	1	0	0	SUB_WAVE	0.0	0.0	0.0
+236236	IDSeal_Wave1_Leader_Lv2	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+236237	IDSeal_Wave2_Leader_Lv2	on_wake_up	0	1		0	var	3	0	0	SUB_WAVE	0.0	0.0	0.0
+236237	IDSeal_Wave2_Leader_Lv2	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+236237	IDSeal_Wave2_Leader_Lv2	on_wake_up	0	1		2	sysmsg	1402926	0	0		0.0	0.0	0.0
+236238	IDSeal_Wave3_Leader_Lv2	on_wake_up	0	1		0	var	5	0	0	SUB_WAVE	0.0	0.0	0.0
+236238	IDSeal_Wave3_Leader_Lv2	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+236238	IDSeal_Wave3_Leader_Lv2	on_wake_up	0	1		2	sysmsg	1402927	0	0		0.0	0.0	0.0
 236266	LF5_Quest_Nmd_Oritsa_Fi	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
 236267	IDYun_Temp_31	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
 236268	IDYun_Temp_32	on_wake_up	0	3		0	skill	19911	0	0	ME	0.0	0.0	0.0
@@ -4034,8 +4059,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 283917	ShulackRose_Basic	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
 284011	ShulackRose_Fi_Tanker	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
 284012	ShulackRose_Rid_StunTank	on_wake_up	0	7		0	skill	20557	0	0	ME	0.0	0.0	0.0
+284017	BIDF5_R2_Sync2_A2	on_wake_up	0	1		0	next_waypoint	0	0	0		0.0	0.0	0.0
 284028	BIDF5_R2_Killer	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284030	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284050	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+284050	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		1	skill	20251	0	0	ME	0.0	0.0	0.0
+284050	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		2	next_waypoint	0	0	0		0.0	0.0	0.0
 284060	IDF5_TD_Wave5_Boss	on_wake_up	0	1		0	spawn	284698	1	0	for_the_fight_self	0.0	0.0	0.0
 284060	IDF5_TD_Wave5_Boss	on_wake_up	0	1		1	sysmsg	1401819	0	0		0.0	0.0	0.0
 284060	IDF5_TD_Wave5_Boss	on_wake_up	0	1		2	spawn	855545	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -4087,6 +4116,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284067	IDF5_TD_Cannon_02	on_wake_up	0	1		0	timer	15000	0	0		0.0	0.0	0.0
 284070	IDF5_TD_Wave_Pod_01	on_wake_up	0	1		0	spawn	284686	1	0	for_the_fight_self	0.0	0.0	0.0
 284071	IDF5_TD_Wave_Pod_07	on_wake_up	0	1		0	spawn	284699	1	0	for_the_fight_self	0.0	0.0	0.0
+284072	IDF5_TD_Suicide	on_wake_up	0	1		0	next_waypoint	0	0	0		0.0	0.0	0.0
 284075	IDF5_TD_HitFx_NPC	on_idle_timer	0	2		0	skill_now	21233	0	0	ME	0.0	0.0	0.0
 284075	IDF5_TD_HitFx_NPC	on_idle_timer	0	2		1	despawn_self	0	0	0		0.0	0.0	0.0
 284075	IDF5_TD_HitFx_NPC	on_wake_up	0	1		0	timer	3000	0	0		0.0	0.0	0.0
@@ -4152,6 +4182,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284289	Frillfaimam_As_N_65_Ah	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
 284289	Frillfaimam_As_N_65_Ah	on_wake_up	0	7		1	waypoint	0	0	0		0.0	0.0	0.0
 284295	GhostRune_As_N_65_Ae	on_wake_up	0	7		0	skill	21146	0	0	ME	0.0	0.0	0.0
+284310	BIDF5_R2_Sync2_A5	on_wake_up	0	1		0	next_waypoint	0	0	0		0.0	0.0	0.0
 284311	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284312	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284313	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
@@ -4159,6 +4190,7 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284315	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284316	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
 284317	BIDF5_R2_Runner	on_wake_up	0	1		0	nothing	0	0	0		0.0	0.0	0.0
+284323	IDF5_TD_TankTBM	on_wake_up	0	1		0	next_waypoint	0	0	0		0.0	0.0	0.0
 284329	IDF5_TD_Wave_Pod_02	on_wake_up	0	1		0	spawn	284686	1	0	for_the_fight_self	0.0	0.0	0.0
 284330	IDF5_TD_Wave_Pod_03	on_wake_up	0	1		0	spawn	284686	1	0	for_the_fight_self	0.0	0.0	0.0
 284331	IDF5_TD_Wave_Pod_04	on_wake_up	0	1		0	spawn	284686	1	0	for_the_fight_self	0.0	0.0	0.0
@@ -4179,6 +4211,12 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284344	IDF5_TD_Wave2_Boss1	on_wake_up	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0
 284344	IDF5_TD_Wave2_Boss1	on_wake_up	0	1		2	sysmsg	1401816	0	0		0.0	0.0	0.0
 284344	IDF5_TD_Wave2_Boss1	on_wake_up	0	1		3	var	1	0	0	castle_gate_01_Bomb	0.0	0.0	0.0
+284345	IDF5_TD_Wave2_Boss2	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+284345	IDF5_TD_Wave2_Boss2	on_wake_up	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0
+284345	IDF5_TD_Wave2_Boss2	on_wake_up	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0
+284346	IDF5_TD_Wave2_Boss3	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
+284346	IDF5_TD_Wave2_Boss3	on_wake_up	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0
+284346	IDF5_TD_Wave2_Boss3	on_wake_up	0	1		2	next_waypoint	0	0	0		0.0	0.0	0.0
 284347	IDF5_TD_Wave3_Boss1	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284347	IDF5_TD_Wave3_Boss1	on_wake_up	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0
 284347	IDF5_TD_Wave3_Boss1	on_wake_up	0	1		2	sysmsg	1401817	0	0		0.0	0.0	0.0
@@ -4186,6 +4224,9 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 284348	IDF5_TD_Wave3_Boss2	on_wake_up	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0
 284348	IDF5_TD_Wave3_Boss2	on_wake_up	0	1		2	say	1501095	0	0		0.0	0.0	0.0
 284349	IDF5_TD_Wave3_Boss3	on_wake_up	0	1		0	say	1501098	0	0		0.0	0.0	0.0
+284350	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		0	skill	20700	0	0	ME	0.0	0.0	0.0
+284350	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		1	skill	16732	0	0	ME	0.0	0.0	0.0
+284350	IDF5_TD_Nor_As_Hide	on_wake_up	0	7		2	next_waypoint	0	0	0		0.0	0.0	0.0
 284351	BIDF5_TD_Headquater_1	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
 284351	BIDF5_TD_Headquater_1	on_wake_up	0	1		1	skill	20701	0	0	ME	0.0	0.0	0.0
 284352	BIDF5_TD_Headquater_2	on_wake_up	0	1		0	skill	20700	0	0	ME	0.0	0.0	0.0
@@ -8365,6 +8406,14 @@ npc	pattern	handler	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	z
 855831	Legion_04_1_Mon_03_Spawn	on_wake_up	0	1000	set_flag_var:0	7	spawn	855813	1	0	for_the_fight_absolute	214.3	281.4	97.0
 855831	Legion_04_1_Mon_03_Spawn	on_wake_up	0	1000	set_flag_var:0	8	spawn	855790	1	0	for_the_fight_absolute	231.0	288.8	97.0
 855854	IDRaksha_Re_Boss_Sum_KJS	on_idle_timer	0	7		0	despawn_self	0	0	0		0.0	0.0	0.0
+855855	IDSeal_Wave1_Leader_Lv2	on_wake_up	0	1		0	var	1	0	0	SUB_WAVE	0.0	0.0	0.0
+855855	IDSeal_Wave1_Leader_Lv2	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+855856	IDSeal_Wave2_Leader_Lv2	on_wake_up	0	1		0	var	3	0	0	SUB_WAVE	0.0	0.0	0.0
+855856	IDSeal_Wave2_Leader_Lv2	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+855856	IDSeal_Wave2_Leader_Lv2	on_wake_up	0	1		2	sysmsg	1402926	0	0		0.0	0.0	0.0
+855857	IDSeal_Wave3_Leader_Lv2	on_wake_up	0	1		0	var	5	0	0	SUB_WAVE	0.0	0.0	0.0
+855857	IDSeal_Wave3_Leader_Lv2	on_wake_up	0	1		1	next_waypoint	0	0	0		0.0	0.0	0.0
+855857	IDSeal_Wave3_Leader_Lv2	on_wake_up	0	1		2	sysmsg	1402927	0	0		0.0	0.0	0.0
 855866	IDForest_Wave_Trico_Boss	on_wake_up	0	15		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0
 855866	IDForest_Wave_Trico_Boss	on_wake_up	0	15		1	sysmsg	1500242	0	0		0.0	0.0	0.0
 855866	IDForest_Wave_Trico_Boss	on_wake_up	0	15		2	nothing	0	0	0		0.0	0.0	0.0

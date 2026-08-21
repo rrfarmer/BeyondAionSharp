@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Wake and idle patterns: 1493 patterns across 3811 npcs, 9750 actions.
+/// Wake and idle patterns: 1507 patterns across 3834 npcs, 9799 actions.
 /// </summary>
 /// <remarks>
 /// What an npc does on appearing and on each tick of its own timer. <see cref="WakeVariables"/> takes
@@ -270,6 +270,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(856459, Untracked, 1, 0f, 0)),
         ];
+        rungs[209693] = [  // IDSeal_Scene_07_PCGuard_Li
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ContinueRoute()),
+        ];
         rungs[209706] = [  // IDSeal_Scene_24_PCGuard_Leader
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Broadcast(22696, 50f)),
@@ -287,6 +291,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(22770, 100f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20839)),
+        ];
+        rungs[209758] = [  // IDSeal_Scene_07_PCGuard_Da
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.ContinueRoute()),
         ];
         rungs[209771] = [  // IDSeal_Scene_24_PCGuard_Leader
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -455,6 +463,12 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18621)),
         ];
+        rungs[216527] = [  // IDCT_Quest_Rufukin_Normal
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Say(342042, 0),
+                Do.SystemMessage(1400471, 0),
+                Do.ContinueRoute()),
+        ];
         rungs[216733] = [  // IDCT_Boss_LichKing
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19046)),
@@ -528,6 +542,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19435)),
         ];
+    }
+
+    private static void OnWakeUp1(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[217268] = [  // IDForest_Nr_Octaside_Light_Hard
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19435)),
@@ -540,10 +558,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19435)),
         ];
-    }
-
-    private static void OnWakeUp1(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[217271] = [  // IDForest_Nr_ManduriT_LeafLight_Hard
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19435)),
@@ -967,6 +981,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19493)),
         ];
+    }
+
+    private static void OnWakeUp2(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[218683] = [  // IDArena_pvp01_S3_LycanWarriorS_01
             AiPattern.Branch(30, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -981,10 +999,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20231),
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp2(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[218687] = [  // IDArena_pvp01_S5_maid_01
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 17242),
@@ -1412,6 +1426,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
         ];
+    }
+
+    private static void OnWakeUp3(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[219814] = [  // LF5_NewSpecies_As_2_KJS
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873),
@@ -1425,10 +1443,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
         ];
-    }
-
-    private static void OnWakeUp3(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[219817] = [  // LF5_NewSpecies_Pr_KJS
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
@@ -1849,6 +1863,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
+    }
+
+    private static void OnWakeUp4(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[230035] = [  // ShulackRose_Fi_Tanker_Party
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
@@ -1861,10 +1879,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
-    }
-
-    private static void OnWakeUp4(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[230038] = [  // ShulackRose_Rid_StunTank_Party
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
@@ -1919,6 +1933,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.GotoWaypoint(0)),
+        ];
+        rungs[230109] = [  // BIDF5_R2_Sync2_A2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ContinueRoute()),
         ];
         rungs[230120] = [  // BIDF5_R2_Killer
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -2025,6 +2043,12 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21220)),
             AiPattern.Branch(7, "rung 1", When.Always,
                 Do.Nothing()),
+        ];
+        rungs[230747] = [  // IDF5_TD_Nor_As_Hide
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16822),
+                Do.ContinueRoute()),
         ];
         rungs[230757] = [  // IDF5_TD_DragonRider_N_65_Ae
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -2307,6 +2331,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp5(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231182] = [  // IDF5_U1_Vri_DefWP_Pr_65_Ae
             AiPattern.Branch(90, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
@@ -2332,10 +2360,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnWakeUp5(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231188] = [  // IDF5_U1_RetakeOnly_Fi_65_Ae
             AiPattern.Branch(90, "rung 0", When.Always,
                 Do.GotoWaypoint(0),
@@ -2769,6 +2793,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp6(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[231590] = [  // BF_Dark_Guard_Fi_38_An
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -2789,10 +2817,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp6(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[231595] = [  // BF_Dark_Guard_Fi_38_An
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -3179,6 +3203,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp7(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232022] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -3199,10 +3227,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp7(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232041] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -3608,6 +3632,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp8(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232438] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -3628,10 +3656,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp8(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232443] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -4012,6 +4036,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp9(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[232755] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -4032,10 +4060,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp9(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[232760] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -4449,6 +4473,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20701),
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp10(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[233382] = [  // IDF5_U2_VriIU_Wi_party_N_65_Ah
             AiPattern.Branch(91, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
@@ -4476,10 +4504,6 @@ internal static class WakeIdlePatterns
                 Do.SystemMessage(1401421, 0),
                 Do.DespawnSelf()),
         ];
-    }
-
-    private static void OnWakeUp10(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[233387] = [  // Dread03_BoxSpawn02
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SystemMessage(1401424, 0),
@@ -4901,6 +4925,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp11(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234455] = [  // LDF5_LGuard_DisputePvP_Defend_PM_Kn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -4921,10 +4949,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp11(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234460] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -5393,6 +5417,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp12(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[234876] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -5416,10 +5444,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp12(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[234885] = [  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -5866,6 +5890,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16516)),
         ];
+    }
+
+    private static void OnWakeUp13(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[235833] = [  // LF5_NewSpecies_Fi_KJS
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
@@ -5887,10 +5915,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
         ];
-    }
-
-    private static void OnWakeUp13(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[235838] = [  // LF5_NewSpecies_Sum_KJS
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 16873)),
@@ -6154,6 +6178,26 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+        rungs[236102] = [  // IDSeal_Single_As_Hide
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21432),
+                Do.ContinueRoute()),
+        ];
+        rungs[236128] = [  // IDSeal_Single_As_Hide
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21432),
+                Do.ContinueRoute()),
+        ];
+        rungs[236154] = [  // IDSeal_Single_As_Hide
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21432),
+                Do.ContinueRoute()),
+        ];
+        rungs[236180] = [  // IDSeal_Single_As_Hide
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 21432),
+                Do.ContinueRoute()),
+        ];
         rungs[236221] = [  // IDSeal_A_PhysicalMob_SN_65_Ah
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20769)),
@@ -6161,6 +6205,23 @@ internal static class WakeIdlePatterns
         rungs[236222] = [  // IDSeal_A_MagicalMob_SN_65_Ah
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20770)),
+        ];
+        rungs[236236] = [  // IDSeal_Wave1_Leader_Lv2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("SUB_WAVE", 1, 0),
+                Do.ContinueRoute()),
+        ];
+        rungs[236237] = [  // IDSeal_Wave2_Leader_Lv2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("SUB_WAVE", 3, 0),
+                Do.ContinueRoute(),
+                Do.SystemMessage(1402926, 0)),
+        ];
+        rungs[236238] = [  // IDSeal_Wave3_Leader_Lv2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("SUB_WAVE", 5, 0),
+                Do.ContinueRoute(),
+                Do.SystemMessage(1402927, 0)),
         ];
         rungs[236267] = [  // IDYun_Temp_31
             AiPattern.Branch(3, "rung 0", When.Always,
@@ -6291,6 +6352,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+    }
+
+    private static void OnWakeUp14(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[251057] = [  // F5_PvP_DGuard_As_Ae_Hide
             AiPattern.Branch(95, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -6346,10 +6411,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnWakeUp14(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[251106] = [  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -6751,6 +6812,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
         ];
+    }
+
+    private static void OnWakeUp15(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[252091] = [  // LDF5_Fortress_Guard_As
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
@@ -6807,10 +6872,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnWakeUp15(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[252105] = [  // LDF5_Fortress_Guard_As
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
@@ -7191,6 +7252,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(17, "rung 0", When.Always,
                 Do.SystemMessage(1401467, 0)),
         ];
+    }
+
+    private static void OnWakeUp16(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[259013] = [  // LDF4b_Tiamat_Crack
             AiPattern.Branch(17, "rung 0", When.Always,
                 Do.SystemMessage(1401467, 0)),
@@ -7239,10 +7304,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(17, "rung 0", When.Always,
                 Do.SystemMessage(1401467, 0)),
         ];
-    }
-
-    private static void OnWakeUp16(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[259210] = [  // LDF4b_Tiamat_Gravity
             AiPattern.Branch(17, "rung 0", When.Always,
                 Do.SystemMessage(1401467, 0)),
@@ -7644,6 +7705,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+    }
+
+    private static void OnWakeUp17(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[272686] = [  // LDF5_LGuard_DisputeRvR_HideBroad_PM_Ae
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -7701,10 +7766,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(18, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
         ];
-    }
-
-    private static void OnWakeUp17(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[272794] = [  // BGuard_ChiefF5_Killer
             AiPattern.Branch(18, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
@@ -8231,6 +8292,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
+    }
+
+    private static void OnWakeUp18(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279282] = [  // F5_PvP_LGuard_As_Ae_Hide
             AiPattern.Branch(95, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -8291,10 +8356,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnWakeUp18(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279382] = [  // F5_PvP_DGuard_As_Ae_Hide
             AiPattern.Branch(95, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -8688,6 +8749,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp19(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[279808] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -8738,10 +8803,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnWakeUp19(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[279863] = [  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
@@ -9214,6 +9275,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(6701, 50f)),
         ];
+    }
+
+    private static void OnWakeUp20(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[281336] = [  // BGuard_Trap
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOnSelfNow(18579),
@@ -9323,10 +9388,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18168)),
         ];
-    }
-
-    private static void OnWakeUp20(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[281634] = [  // IDCT_StDrakanFi_Fake
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18168)),
@@ -9748,6 +9809,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19523)),
         ];
+    }
+
+    private static void OnWakeUp21(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282298] = [  // IDF4Re_FOBJ_8
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(1002, 10f),
@@ -9801,10 +9866,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19571),
                 Do.Nothing()),
         ];
-    }
-
-    private static void OnWakeUp21(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282349] = [  // IDHouse_Butler_RollingGolem
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19571),
@@ -10209,6 +10270,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetIdleTimer(5000)),
         ];
+    }
+
+    private static void OnWakeUp22(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[282926] = [  // LDF4a_Public_Mob_summon_002
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetIdleTimer(5000)),
@@ -10257,10 +10322,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19227)),
         ];
-    }
-
-    private static void OnWakeUp22(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[282969] = [  // LDF4a_SWM_Skill_Broad_1
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(7298, 100f)),
@@ -10661,6 +10722,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
+    }
+
+    private static void OnWakeUp23(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[283526] = [  // ShulackRose_Gun_DDTower
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
@@ -10709,10 +10774,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
-    }
-
-    private static void OnWakeUp23(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[283538] = [  // ShulackRose_Gun_DDTower
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
@@ -10846,6 +10907,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20557)),
         ];
+        rungs[284017] = [  // BIDF5_R2_Sync2_A2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ContinueRoute()),
+        ];
         rungs[284028] = [  // BIDF5_R2_Killer
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700)),
@@ -10853,6 +10918,12 @@ internal static class WakeIdlePatterns
         rungs[284030] = [  // BIDF5_R2_Runner
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Nothing()),
+        ];
+        rungs[284050] = [  // IDF5_TD_Nor_As_Hide
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20251),
+                Do.ContinueRoute()),
         ];
         rungs[284060] = [  // IDF5_TD_Wave5_Boss
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -10891,6 +10962,10 @@ internal static class WakeIdlePatterns
         rungs[284071] = [  // IDF5_TD_Wave_Pod_07
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(284699, Untracked, 1, 0f, 0)),
+        ];
+        rungs[284072] = [  // IDF5_TD_Suicide
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ContinueRoute()),
         ];
         rungs[284075] = [  // IDF5_TD_HitFx_NPC
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -11090,6 +11165,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
         ];
+    }
+
+    private static void OnWakeUp24(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284289] = [  // Frillfaimam_As_N_65_Ah
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21146),
@@ -11098,6 +11177,10 @@ internal static class WakeIdlePatterns
         rungs[284295] = [  // GhostRune_As_N_65_Ae
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
+        ];
+        rungs[284310] = [  // BIDF5_R2_Sync2_A5
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ContinueRoute()),
         ];
         rungs[284311] = [  // BIDF5_R2_Runner
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -11127,6 +11210,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Nothing()),
         ];
+        rungs[284323] = [  // IDF5_TD_TankTBM
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.ContinueRoute()),
+        ];
         rungs[284329] = [  // IDF5_TD_Wave_Pod_02
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(284686, Untracked, 1, 0f, 0)),
@@ -11151,10 +11238,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(284699, Untracked, 1, 0f, 0)),
         ];
-    }
-
-    private static void OnWakeUp24(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284337] = [  // IDF5_TD_Wave_Pod_09
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(284699, Untracked, 1, 0f, 0),
@@ -11187,6 +11270,18 @@ internal static class WakeIdlePatterns
                 Do.SystemMessage(1401816, 0),
                 Do.SetSpawnVariable("castle_gate_01_Bomb", 1, 0)),
         ];
+        rungs[284345] = [  // IDF5_TD_Wave2_Boss2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701),
+                Do.ContinueRoute()),
+        ];
+        rungs[284346] = [  // IDF5_TD_Wave2_Boss3
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20701),
+                Do.ContinueRoute()),
+        ];
         rungs[284347] = [  // IDF5_TD_Wave3_Boss1
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
@@ -11202,6 +11297,12 @@ internal static class WakeIdlePatterns
         rungs[284349] = [  // IDF5_TD_Wave3_Boss3
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Say(1501098, 0)),
+        ];
+        rungs[284350] = [  // IDF5_TD_Nor_As_Hide
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 20700),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 16732),
+                Do.ContinueRoute()),
         ];
         rungs[284351] = [  // BIDF5_TD_Headquater_1
             AiPattern.Branch(1, "rung 0", When.Always,
@@ -11540,6 +11641,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnWakeUp25(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[284644] = [  // Rune_FrostNmd_AttackDirection_NoShow_Sum3
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetIdleTimer(5000),
@@ -11658,10 +11763,6 @@ internal static class WakeIdlePatterns
                 Do.SetSpawnVariable("OBJ_GATE_SELECTION", 2, 0),
                 Do.SpawnAtForTheFight(730877, Untracked, 0, new SpawnSpot(127.5f, 432.8f, 151.0f))),
         ];
-    }
-
-    private static void OnWakeUp25(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[284713] = [  // IDDreadgion_03_DrakanFi_Vil_60_Ae
             AiPattern.Branch(13, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 19135),
@@ -12027,6 +12128,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19570),
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnWakeUp26(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[286950] = [  // IDArena_S2_Named_2
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Say(342686, 0)),
@@ -12112,10 +12217,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOnSelfNow(19895),
                 Do.DespawnSelf()),
         ];
-    }
-
-    private static void OnWakeUp26(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[287151] = [  // Test_Basic_Monster_AI_GW_6
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -12494,6 +12595,10 @@ internal static class WakeIdlePatterns
                 Do.SpawnNearForTheFight(296238, Untracked, 1, 0f, 30),
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnWakeUp27(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[296247] = [  // BGuard_CDropGateA_180D
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SpawnNearForTheFight(296238, Untracked, 1, 0f, 30),
@@ -12587,10 +12692,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20119)),
         ];
-    }
-
-    private static void OnWakeUp27(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[296918] = [  // DF4_GHObjectSum3_KJS
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.Broadcast(10008, 50f)),
@@ -12971,6 +13072,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
         ];
+    }
+
+    private static void OnWakeUp28(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[297529] = [  // LDF5_Fortress_Guard_Ra
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664)),
@@ -13054,10 +13159,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(100, "rung 0", When.Always,
                 Do.Broadcast(25300, 50f)),
         ];
-    }
-
-    private static void OnWakeUp28(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[297551] = [  // LDF5_Fortress_Barricade
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetIdleTimer(6000),
@@ -13452,6 +13553,10 @@ internal static class WakeIdlePatterns
                 Do.SetSpawnVariable("1221_Mercenary06", 2, 0),
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnWakeUp29(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[702098] = [  // AB1_Castle_1231_MistOn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("AB1_CASTLE_1231", 1, 0),
@@ -13563,10 +13668,6 @@ internal static class WakeIdlePatterns
                 Do.SetSpawnVariable("1241", 1, 0),
                 Do.DespawnSelf()),
         ];
-    }
-
-    private static void OnWakeUp29(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[702118] = [  // AB1_Castle_1241_Occupy_Light
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("1241", 2, 0),
@@ -14186,6 +14287,10 @@ internal static class WakeIdlePatterns
                 Do.SetSpawnVariable("v12", 21, 0),
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnWakeUp30(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[731177] = [  // Gab1_Arti_Noshow_1
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SetSpawnVariable("v05", 21, 0),
@@ -14282,10 +14387,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp30(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[799666] = [  // IDYun_Ariana1
             AiPattern.Branch(4, "rung 0", When.Always,
                 Do.SpawnAtForTheFight(282555, Untracked, 0, new SpawnSpot(833.18f, 156.11f, 80.0f))),
@@ -14677,6 +14778,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20549)),
         ];
+    }
+
+    private static void OnWakeUp31(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855021] = [  // IDF5_TD_War_TEMP_02
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20549)),
@@ -14759,10 +14864,6 @@ internal static class WakeIdlePatterns
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20664),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 18762)),
         ];
-    }
-
-    private static void OnWakeUp31(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855152] = [  // WorldRaid_Dyna_Normal
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SystemMessage(1402384, 0),
@@ -15189,6 +15290,10 @@ internal static class WakeIdlePatterns
                 Do.SetSpawnVariable("BOSS_CUTSCENE", 1, 0),
                 Do.SetIdleTimer(6000)),
         ];
+    }
+
+    private static void OnWakeUp32(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855433] = [  // IDSeal_Boss_Lv3_Transform
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SetIdleTimer(6000),
@@ -15303,10 +15408,6 @@ internal static class WakeIdlePatterns
                 Do.Broadcast(22731, 100f),
                 Do.SetSpawnVariable("LEVEL_CHECK_2", 0, 1)),
         ];
-    }
-
-    private static void OnWakeUp32(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855495] = [  // IDSeal_FullWake_Change
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.Broadcast(22720, 100f),
@@ -15884,6 +15985,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
         ];
+    }
+
+    private static void OnWakeUp33(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[855729] = [  // LF5_ItemNamed_12_KJS
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
@@ -15999,10 +16104,6 @@ internal static class WakeIdlePatterns
                 Do.SpawnAtForTheFight(855766, Untracked, 0, new SpawnSpot(214.3f, 281.4f, 97.0f)),
                 Do.SpawnAtForTheFight(855766, Untracked, 0, new SpawnSpot(231.0f, 288.8f, 97.0f))),
         ];
-    }
-
-    private static void OnWakeUp33(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[855762] = [  // Legion_01_1_Mon_03_Spawn
             AiPattern.Branch(1000, "rung 0", [When.FirstTime(0)],
                 Do.SetIdleTimer(8000),
@@ -16196,6 +16297,23 @@ internal static class WakeIdlePatterns
                 Do.SpawnAtForTheFight(855836, Untracked, 0, new SpawnSpot(248.4f, 281.9f, 97.0f)),
                 Do.SpawnAtForTheFight(855813, Untracked, 0, new SpawnSpot(214.3f, 281.4f, 97.0f)),
                 Do.SpawnAtForTheFight(855790, Untracked, 0, new SpawnSpot(231.0f, 288.8f, 97.0f))),
+        ];
+        rungs[855855] = [  // IDSeal_Wave1_Leader_Lv2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("SUB_WAVE", 1, 0),
+                Do.ContinueRoute()),
+        ];
+        rungs[855856] = [  // IDSeal_Wave2_Leader_Lv2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("SUB_WAVE", 3, 0),
+                Do.ContinueRoute(),
+                Do.SystemMessage(1402926, 0)),
+        ];
+        rungs[855857] = [  // IDSeal_Wave3_Leader_Lv2
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.SetSpawnVariable("SUB_WAVE", 5, 0),
+                Do.ContinueRoute(),
+                Do.SystemMessage(1402927, 0)),
         ];
         rungs[855866] = [  // IDForest_Wave_Trico_Boss
             AiPattern.Branch(15, "rung 0", When.Always,
@@ -16492,6 +16610,10 @@ internal static class WakeIdlePatterns
                 Do.SkillOnSelfNow(20156),
                 Do.DespawnSelf()),
         ];
+    }
+
+    private static void OnWakeUp34(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[856079] = [  // IDTiamat_Hard_Temp_12
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOnSelfNow(20162),
@@ -16625,10 +16747,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(20, "rung 0", When.Always,
                 Do.SystemMessage(1402890, 0)),
         ];
-    }
-
-    private static void OnWakeUp34(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[856292] = [  // F4_Rotation_Treasure_Monster_02
             AiPattern.Branch(20, "rung 0", [When.Counting(0, 0, 1, true)],
                 Do.GotoWaypoint(0),
@@ -17217,6 +17335,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20997)),
         ];
+    }
+
+    private static void OnWakeUp35(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[856491] = [  // BIDYun_Vasharti_Glove_Buffer
             AiPattern.Branch(1, "rung 0", When.Always,
                 Do.SkillOnSelfNow(20538),
@@ -17320,10 +17442,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21146)),
         ];
-    }
-
-    private static void OnWakeUp35(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881558] = [  // LDF5_Fortress_Guard_As
             AiPattern.Branch(99, "rung 0", When.Always,
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20251)),
@@ -17644,6 +17762,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp36(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881674] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -17741,10 +17863,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp36(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[881697] = [  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -18058,6 +18176,10 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
+    }
+
+    private static void OnWakeUp37(Dictionary<int, PatternBranch[]> rungs)
+    {
         rungs[881933] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
@@ -18150,10 +18272,6 @@ internal static class WakeIdlePatterns
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),
         ];
-    }
-
-    private static void OnWakeUp37(Dictionary<int, PatternBranch[]> rungs)
-    {
         rungs[882002] = [  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.GotoWaypoint(0)),

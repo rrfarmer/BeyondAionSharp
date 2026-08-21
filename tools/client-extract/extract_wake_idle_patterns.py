@@ -201,6 +201,11 @@ def main() -> int:
             owners = [n for n in binders.get(named.group(1), [])
                       if ai.get(n) in GENERIC and n not in spoken_for and n not in placed]
             if not owners:
+                # Counted rather than dropped in silence. This was a bare `continue`, and it is the
+                # largest single refusal in the file -- so the printed tally read as if the table
+                # refused a few hundred patterns for vocabulary when it was passing over thousands
+                # for want of a free npc, which is a different problem with a different fix.
+                refused["no npc here that is free to run it"] += 1
                 continue
 
             read = {handler: read_handler(body, handler, dev, ai.keys(), strings)

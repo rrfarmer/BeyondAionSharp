@@ -207,6 +207,19 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                 return None
             out.append(("skill", int(index.group(1)), 0, 0, skill_targets[who.group(1)],
                         0.0, 0.0, 0.0))
+        elif kind == "goto_next_waypoint":
+            # "Carry on to the next point of the route", which this port already does by itself on
+            # arrival -- see `Do.ContinueRoute`, where the reasoning and the measurement live. Carried
+            # rather than skipped because a branch is all-or-nothing: refusing the element drops the
+            # whole branch, and the branches carrying it also cast, spawn and shout.
+            #
+            # The battle table has read this since the entry that added it; the shared parser never
+            # did, so the wake and idle tables were refusing 23 patterns for a word their sibling
+            # already knew.
+            how = re.search(r"<move_type>(\w+)</move_type>", body)
+            if how and how.group(1) == "MOVETYPE_RUN":
+                return None
+            out.append(("next_waypoint", 0, 0, 0, "", 0.0, 0.0, 0.0))
         elif kind == "goto_waypoint":
             # Retail's waypoint is an index into the npc's own route, not a named path. `move_type`
             # says walk or run, and this port's route walking has one speed, so a rung asking for a run

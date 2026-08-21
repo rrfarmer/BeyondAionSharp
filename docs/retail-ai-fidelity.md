@@ -39406,3 +39406,54 @@ wake handler, and the wake table is where they belong -- so the question for the
    engine slot.
 6. **16 waypoint paths** -- searched exhaustively, absent from dump and client.
 7. **3,291 patterns whose npcs this port does not have** -- a version boundary.
+
+## The wake table was hiding its largest refusal
+
+`Retail-AI-Pattern: goto_next_waypoint reaches the shared parser`
+
+The previous entry left 847 wake-only patterns as "ask the wake table, not this one". Asking it
+turned up a reporting fault first and a vocabulary gap second.
+
+### The tally was not telling the truth
+
+Counting properly, there are **2,313** rotation-less patterns whose only handler is `on_wake_up`;
+612 are in the wake table and **1,701 are in neither**. But the wake extractor's printed refusals
+added up to roughly five hundred, so most of that gap was going unreported.
+
+The cause is four lines in: when no npc is free to run a pattern, the loop was a bare `continue`
+with no counter. **3,878 patterns** were being passed over in silence -- the single largest refusal
+in the file, and larger than everything it did print put together. The tally read as if the table
+were refusing a few hundred patterns for vocabulary when it was skipping thousands for want of a
+free npc, which is a different problem with a different fix.
+
+It is counted now. A tool that reports a number is trusted to report the whole number.
+
+### The gap it was hiding
+
+With the 1,701 broken down: 619 name npcs absent from this port, 528 name no npc the binding knows,
+206 sit on hand-written classes, and **343 have a free npc and are refused for a vocabulary reason**.
+
+Of those vocabulary refusals, `goto_next_waypoint` (23) was one the battle table had read since the
+entry that added `Do.ContinueRoute` -- and the *shared* parser never learned it, so the wake and idle
+tables were refusing patterns for a word their sibling already knew. The rule ports across unchanged,
+including its refusal of `MOVETYPE_RUN` and its reason for carrying rather than skipping: a branch is
+all-or-nothing, and the branches carrying this also cast, spawn and shout.
+
+Wake table 1,493 -> **1,507 patterns**, 3,811 -> **3,834 npcs**, 9,750 -> **9,799 actions**.
+
+Adds backlog unchanged at 174 across 122 -- these are wake behaviours, not spawners.
+
+### Still missing, in order
+
+1. **320 remaining vocabulary refusals in the wake table** -- `change_world_scene_status` (54),
+   `goto_waypoint` with `MOVETYPE_RUN` (40), `control_door` (38), `enable_area` (32). Three of those
+   four are on the main list already; the wake table is a second place they cost something.
+2. `control_door` (691 uses + 10 lost adds + 38 wake patterns) -- one in-game observation, and it
+   keeps growing every time another table is examined.
+3. `random_move` (187; 11 lost adds behind the same `MOVETYPE_RUN` gap).
+4. The abnormal-state groups (108) and `CASTER_GROUP` / `MELEE_GROUP` (59) -- no source in the dump.
+5. `switch_target_by_class_indicator` (53); the 8 waypoint-fired adds; the eight handlers with no
+   engine slot.
+6. **16 waypoint paths** -- searched exhaustively, absent from dump and client.
+7. **3,291 patterns whose npcs this port does not have** -- a version boundary. The wake table's
+   newly-visible 3,878 is the same population seen from its own side.
