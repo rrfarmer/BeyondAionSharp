@@ -1,4 +1,4 @@
-"""Transcribe death_spawns.tsv into DeathSpawns.cs. See extract_death_spawns.py for the claim."""
+"""Transcribe death_spawns.tsv into DeathSpawns.g.cs. See extract_death_spawns.py for the claim."""
 from __future__ import annotations
 
 import argparse

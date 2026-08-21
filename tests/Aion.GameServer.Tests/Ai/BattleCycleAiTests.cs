@@ -859,7 +859,7 @@ public sealed class BattleCycleAiTests
 		Assert.NotEmpty(wanted);
 
 		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
-			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.cs"));
+			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.g.cs"));
 		HashSet<int> emitted = new HashSet<int>();
 		foreach (Match call in Regex.Matches(generated, @"When\.AtWaypoint\((\d+)\)"))
 		{
@@ -936,7 +936,7 @@ public sealed class BattleCycleAiTests
 
 		// And it reaches the generated code as the named no-op rather than being quietly folded away.
 		string generated = File.ReadAllText(Path.Combine(BossAiHarness.RepoRoot(),
-			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.cs"));
+			"src", "Aion.GameServer", "Handlers", "AI", "BattleCycles.g.cs"));
 		Assert.Contains("Do.ContinueRoute()", generated);
 	}
 

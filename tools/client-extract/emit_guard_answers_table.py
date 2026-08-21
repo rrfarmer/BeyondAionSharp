@@ -1,4 +1,4 @@
-"""Transcribe guard_answers.tsv into GuardAnswers.cs. See extract_guard_answers.py for the claim."""
+"""Transcribe guard_answers.tsv into GuardAnswers.g.cs. See extract_guard_answers.py for the claim."""
 from __future__ import annotations
 
 import argparse

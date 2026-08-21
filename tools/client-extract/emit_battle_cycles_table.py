@@ -1,4 +1,4 @@
-"""Transcribe battle_cycles.tsv into BattleCycles.cs. See extract_battle_cycles.py for the claim."""
+"""Transcribe battle_cycles.tsv into BattleCycles.g.cs. See extract_battle_cycles.py for the claim."""
 from __future__ import annotations
 
 import argparse

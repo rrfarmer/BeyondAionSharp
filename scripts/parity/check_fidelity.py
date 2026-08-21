@@ -6,7 +6,11 @@ Mechanically enforces the two structural rules that prose review failed to hold:
 
   1. No invented abstraction. A C# file under Aion.GameServer whose name contains a
      banned slop token (Plan/Bridge/Adapter/Composition/...) is a violation UNLESS a
-     Java class of the same simple name exists (i.e. it is a faithful 1:1 port).
+     Java class of the same simple name exists (i.e. it is a faithful 1:1 port), or the
+     token is part of a place name Java itself uses -- `OphidanBridgeCallAI` is named
+     after Ophidan Bridge, and Java has `OphidanBridgeInstance`. Retail-sourced AI has no
+     Java counterpart by design, so exact-name matching alone reads proper nouns as slop.
+     `PlanExecutor` is still a violation: nothing in Java starts with `Plan`.
   2. No god-classes. A C# source file over the line threshold is "oversized"; it must
      not grow beyond its baseline, and no new file may cross the threshold.
 
@@ -66,6 +70,35 @@ def normalize(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def java_name_prefixes() -> set[str]:
+    """Normalized prefixes of every Java class name, e.g. OphidanBridgeInstance -> {o, op, ... ,
+    ophidanbridgeinstance}.
+
+    Rule 1 exempts a banned token when a Java class of the *same simple name* exists. That is too
+    strict for new work: `OphidanBridgeCallAI` is named after Ophidan Bridge, a place, and Java has
+    `OphidanBridgeInstance` -- the proper noun is attested, the exact class name is not, because this
+    AI has no Java counterpart by design.
+
+    So a banned token is also exempt when the name **up to and including that token** is the start of
+    some Java class name. `OphidanBridge` prefixes `OphidanBridgeInstance`, so `Bridge` there is a
+    place and not an invented layer. `PlanExecutor` still fails: nothing in Java starts with `Plan`.
+    """
+    out: set[str] = set()
+    for norm in java_type_norms():
+        for i in range(1, len(norm) + 1):
+            out.add(norm[:i])
+    return out
+
+
+def token_is_proper_noun(stem: str, token: str, prefixes: set[str]) -> bool:
+    """True when `stem` up to and including `token` prefixes a real Java class name."""
+    tokens = camel_tokens(stem)
+    if token not in tokens:
+        return False
+    upto = "".join(tokens[: tokens.index(token) + 1])
+    return normalize(upto) in prefixes
+
+
 def java_type_norms() -> set[str]:
     norms: set[str] = set()
     for root in JAVA_ROOTS:
@@ -120,12 +153,15 @@ def java_oversized_norms() -> set[str]:
 
 def compute() -> dict:
     java_norms = java_type_norms()
+    java_prefixes = java_name_prefixes()
     java_big = java_oversized_norms()
     banned_files: list[str] = []
     oversized: dict[str, int] = {}
     for path in cs_source_files():
         stem = path.stem
-        if normalize(stem) not in java_norms and any(t in BANNED_TOKENS for t in camel_tokens(stem)):
+        offending = [t for t in camel_tokens(stem)
+                     if t in BANNED_TOKENS and not token_is_proper_noun(stem, t, java_prefixes)]
+        if normalize(stem) not in java_norms and offending:
             banned_files.append(rel(path))
         n = line_count(path)
         # A faithful 1:1 port of an intentionally-large Java file is not a god-class.
