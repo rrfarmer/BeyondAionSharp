@@ -64,9 +64,16 @@ public static class KaidanCalls
 /// nine-second clock that then runs at six.
 /// <para>
 /// <b>Not translated:</b> every <c>use_skill</c> on the pattern, its <c>say_to_all</c>, and its
-/// <c>1399</c> shout on entering the fight — a number with no live listener on this server. The
-/// low-health branch above the call is gated on <c>is_skill_count_left</c>, which this port cannot read,
-/// so it is left out rather than fired unconditionally.
+/// <c>1399</c> shout on entering the fight — a number with no live listener on this server.
+/// </para>
+/// <para>
+/// <b>The low-health branch is no longer blocked on its guard.</b> This used to say
+/// <c>is_skill_count_left</c> could not be read; the extractor reads it now and it becomes
+/// <see cref="AiPattern.When.SkillReady"/>. What is left is the rung itself, and it is not a
+/// one-liner: retail's priority-4 branch on <c>NKrall_WeA</c> wants battle timer 0, health under 35
+/// and index 2 still available, then re-arms that timer at eight seconds and casts twice — index 2
+/// on itself and another on its target. That needs the index list resolved for all thirteen shaman
+/// npcs, which may not agree the way the wave attackers' index 0 did. Specified, not built.
 /// </para>
 /// </remarks>
 [AIName("kaidan_shaman")]

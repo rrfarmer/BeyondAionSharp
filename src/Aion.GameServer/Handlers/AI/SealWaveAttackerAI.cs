@@ -56,11 +56,26 @@ namespace Aion.GameServer.Handlers.AI;
 /// moves on rather than when the last one dies.
 /// </para>
 /// <para>
-/// <b>Not translated:</b> the command buff. Retail's priority-20 rung answers 22750 — broadcast by all
-/// nine wave leaders — with <c>use_skill SKILLI_INDEX_0</c>, and this port cannot resolve a skill index
-/// to a skill id. The rung is left out rather than left ticking on an empty branch, the same call made
-/// for <see cref="DivineHisenAI"/>'s two heartbeats. It is the one thing the leaders say that the rank
-/// and file would answer, so it is worth recovering when indices are.
+/// <b>The command buff is translated now.</b> Retail's rung answers 22750 — broadcast by nine
+/// <c>IDSeal_Wave*_Leader_Lv*</c> patterns, 18 of whose npcs this server carries — with
+/// <c>use_skill SKILLI_INDEX_0</c> on itself. The paragraph that stood here said this port could not
+/// resolve a skill index to a skill id; <c>npc_skill_lists.tsv</c> resolves them, and all 22 wave
+/// attackers agree on index 0: <b>21844</b> <c>IDSeal_Wave_Buff</c>, level 56, a skill this port has
+/// a template for. Unanimous across 22 npcs is not an inference.
+/// </para>
+/// <para>
+/// <b>The ranged leaders are two different npcs, and this class used to treat them as one.</b>
+/// 236219 runs <c>LeaderGourp_Wi</c> and hears 22750; 236218 runs <c>LeaderGourp_Ra</c> and does
+/// <b>not</b> — it hears <c>22753</c> instead, which is a bombardment rather than a buff. Giving both
+/// the buff would have handed 236218 a self-heal retail never gives it, so they are split.
+/// </para>
+/// <para>
+/// <b>Still not translated: the bombardment.</b> Retail has 236218 answer 22753 by casting indices 1
+/// and 2 — 20402 and 17315, both present here — <i>at the message sender</i>. The sender is
+/// <c>IDSeal_Wave_Arrow_Target</c>, npc <b>855923</b>, which this server does spawn: the generated
+/// battle table drops it on players' positions. But 855923 carries <c>ai="aggressive_no_loot"</c>, so
+/// it runs no pattern and broadcasts nothing, and the rung would answer a call that never comes. The
+/// missing piece is the marker's own voice, not the archer's answer.
 /// </para>
 /// </remarks>
 [AIName("seal_wave_attacker")]
@@ -81,6 +96,14 @@ public class SealWaveAttackerAI : PatternAi
 	/// <summary>Retail's <c>point_to_add=10000</c>, on the guard that spoke.</summary>
 	public const int TauntHate = 10000;
 
+	/// <summary>The leaders' command buff. Answered by every attacker except the ranged leader.</summary>
+	public const int CommandBuff = 22750;
+
+	/// <summary>
+	/// <c>SKILLI_INDEX_0</c> for all 22 wave attackers, resolved from retail's own ordered list.
+	/// </summary>
+	public const int CommandBuffSkill = 21844;
+
 	/// <summary>Retail's eight wave-end numbers. Every one of them means leave.</summary>
 	public static readonly int[] WaveOver = [22764, 22765, 22766, 22767, 22768, 22769, 22770, 22771];
 
@@ -95,19 +118,32 @@ public class SealWaveAttackerAI : PatternAi
 	private const float FarCall = 100f;
 	private const float PriestMeleeCall = 15f;
 
-	private static readonly AiPattern Tank = Build(TankCall, FarCall, FarCall, namesSelf: true, peelsOff: true);
-	private static readonly AiPattern Assassin = Build(MeleeCall, FarCall, FarCall);
-	private static readonly AiPattern Ranged = Build(RangedCall, FarCall, FarCall);
-	private static readonly AiPattern Priest = Build(MeleeCall, PriestMeleeCall, FarCall);
+	// The buff priority is retail's own, per pattern: 20 for the rank and file and the first two
+	// leaders, 12 for the priest leader, 10 for the ranged one. Nothing else answers 22750, so the
+	// number changes no outcome -- it is carried because it is what retail wrote.
+	private static readonly AiPattern Tank =
+		Build(TankCall, FarCall, FarCall, namesSelf: true, peelsOff: true, commandBuff: 20);
+	private static readonly AiPattern Assassin = Build(MeleeCall, FarCall, FarCall, commandBuff: 20);
+	private static readonly AiPattern Ranged = Build(RangedCall, FarCall, FarCall, commandBuff: 20);
+	private static readonly AiPattern Priest = Build(MeleeCall, PriestMeleeCall, FarCall, commandBuff: 20);
 
 	private static readonly AiPattern TankLeader =
-		Build(TankCall, FarCall, FarCall, namesSelf: true, leader: true);
+		Build(TankCall, FarCall, FarCall, namesSelf: true, leader: true, commandBuff: 20);
 	private static readonly AiPattern AssassinLeader =
-		Build(MeleeCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true);
-	private static readonly AiPattern RangedLeader =
-		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true);
+		Build(MeleeCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true, commandBuff: 20);
 	private static readonly AiPattern PriestLeader =
-		Build(MeleeCall, PriestMeleeCall, FarCall, leader: true, callsOnFirstBlood: true);
+		Build(MeleeCall, PriestMeleeCall, FarCall, leader: true, callsOnFirstBlood: true, commandBuff: 12);
+
+	/// <summary>236219, <c>LeaderGourp_Wi</c>: hears the buff, at retail's priority 10.</summary>
+	private static readonly AiPattern RangedLeaderWi =
+		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true, commandBuff: 10);
+
+	/// <summary>
+	/// 236218, <c>LeaderGourp_Ra</c>: the one attacker that does <b>not</b> hear 22750. Its own number
+	/// is 22753, the bombardment, which nothing on this server sends yet.
+	/// </summary>
+	private static readonly AiPattern RangedLeaderRa =
+		Build(RangedCall, FarCall, FarCall, leader: true, callsOnFirstBlood: true);
 
 	public SealWaveAttackerAI(Npc owner)
 		: base(owner)
@@ -123,7 +159,8 @@ public class SealWaveAttackerAI : PatternAi
 		236216 => TankLeader,
 		236217 => AssassinLeader,
 		236220 => PriestLeader,
-		236218 or 236219 => RangedLeader,
+		236218 => RangedLeaderRa,
+		236219 => RangedLeaderWi,
 
 		_ => Ranged,
 	};
@@ -135,7 +172,7 @@ public class SealWaveAttackerAI : PatternAi
 	/// </summary>
 	private static AiPattern Build(int call, float meleeRange, float spellRange,
 		bool namesSelf = false, bool peelsOff = false, bool leader = false,
-		bool callsOnFirstBlood = false)
+		bool callsOnFirstBlood = false, int? commandBuff = null)
 	{
 		// is_hp_in_boundary is exclusive at both ends, so larger_than=40 less_than=70 is 41 to 69.
 		PatternAction MeleeShout() => namesSelf
@@ -158,6 +195,14 @@ public class SealWaveAttackerAI : PatternAi
 				[When.Message(MeleeCall), When.SenderTribe(TribeClass.IDSEAL_WAVE_HEALER),
 					When.MessageParamIsMyTarget],
 				Do.SwitchTarget(AggroTarget.RANDOM_EXCEPT_CURRENT_TARGET)));
+		}
+
+		// Retail's rung is unguarded: hear it, buff yourself. On self, and there is no despawn on this
+		// branch, so the ordinary queue is the right one.
+		if (commandBuff is int buffPriority)
+		{
+			onMessage.Add(Branch(buffPriority, "a leader called the command buff",
+				[When.Message(CommandBuff)], Do.SkillOnSelf(CommandBuffSkill)));
 		}
 
 		// The leaders take the guard's shout every time; only the rank and file roll for it.

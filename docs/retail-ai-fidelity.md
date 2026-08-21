@@ -39584,3 +39584,85 @@ surrounding paragraph is true.** The rest of the file is evidence and has to be 
 5. `random_move` (187); the abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59).
 6. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** -- both boundaries,
    searched and settled.
+
+## The audit grows a third check, and it pays for itself four times
+
+Last entry ended with a correction: a claim I wrote saying Tiamat's rush wave was unbuilt, in a file
+that already built it. The lesson recorded there was that finding one false sentence does not make its
+neighbours true. This entry turns that lesson into a check.
+
+### `--implemented`
+
+For every absence claim, take its distinctive words and look for them in the names the file's own
+members carry, and in the test names of its pin file. `SpawnRushWave` and a pin called
+`NineteenDrakanRushFromFourCorners` both answer to "rush" and "wave", and no retail data is needed to
+notice that. It is **a heuristic and reports candidates to read, not verdicts** — but it is the check
+that would have caught the one failure it was written for.
+
+22 candidates out of 310 claims. Most are past-tense history — "the banshee maid *was* spawned by
+nothing anywhere" is why the class exists, and the class then spawns it, which is the signal firing on
+an accurate sentence. **Four were live and false.**
+
+### The four
+
+| Where | The claim | Why it was false |
+|---|---|---|
+| `PatternAi.cs` | "this port's route walking has one speed; the extractor refuses the 210 uses that ask for a run" | `GotoWaypointRunning` is forty lines below it |
+| `extract_battle_cycles.py` | `use_skill` unsayable, "this port has no resolver" for `SKILLI_INDEX_N` | `npc_skill_lists.tsv` resolves them; the casts are emitted |
+| `KaidanCasterCallAI.cs` | the branch is gated on `is_skill_count_left`, "which this port cannot read" | the extractor reads it and emits `When.SkillReady` |
+| `SealWaveAttackerAI.cs` | the command buff needs an index "and this port cannot resolve a skill index to a skill id" | same resolver |
+
+Three of those four are the *same* stale fact — the skill-index resolver — written in three places by
+three different passes, each of which routed around it. That is the shape the audit exists to catch:
+one thing gets built, and the notes explaining why it could not be built stay where they are.
+
+### The command buff, built
+
+Retail's rung: hear **22750**, cast `SKILLI_INDEX_0` on yourself, no guard. Nine attacker patterns
+carry it; nine `IDSeal_Wave*_Leader_Lv*` patterns send it, and **18 of the senders' npcs exist here**,
+so the rung fires rather than waiting on a voice nobody has.
+
+Index 0 resolves to **21844 `IDSeal_Wave_Buff`**, level 56, template present — and it is the same
+skill for **all 22** wave attackers. Unanimous across 22 npcs is a reading, not an inference.
+
+**The ranged leaders turned out to be two different npcs.** This class gave 236218 and 236219 one
+shared pattern. Retail does not: 236219 runs `LeaderGourp_Wi` and hears 22750; 236218 runs
+`LeaderGourp_Ra` and hears **22753** instead. Handing both the buff would have given 236218 a
+self-buff retail never gives it — a wrong fight that looks like a working one. They are split, and the
+negative pin is the one that matters: mutate `236218 => RangedLeaderRa` to `RangedLeaderWi` and
+`TheRangedLeaderDoesNotHearTheCommandBuff` goes red on its own.
+
+Retail's priorities are carried as written — 20 for the rank and file and the first two leaders, 12
+for the priest, 10 for the Wi leader. Nothing else answers 22750, so the number changes no outcome; it
+is recorded because it is what retail wrote.
+
+### Found and specified, not built
+
+**The bombardment.** 236218 answers 22753 (폭격) by casting indices 1 and 2 — **20402** and **17315**,
+both present here — *at the message sender*. The sender is `IDSeal_Wave_Arrow_Target`, npc **855923**,
+which this server does spawn: the generated battle table drops it on players' positions. But 855923
+carries `ai="aggressive_no_loot"`, so it runs no pattern and broadcasts nothing. **The missing piece is
+the marker's voice, not the archer's answer** — binding 855923 to its pattern is the change, and that
+is an `ai=` edit on a live npc, which wants its own pass.
+
+**Kaidan's low-health branch.** No longer blocked on its guard. What remains is the rung: retail's
+priority-4 branch on `NKrall_WeA` wants battle timer 0, health under 35 and index 2 still available,
+then re-arms that timer at eight seconds and casts twice. It needs the index list resolved for all
+thirteen shaman npcs, and there is no reason yet to think they agree the way the wave attackers did.
+
+**Verification.** Full suite **2,906 passing**, 1 skipped. Eleven new pins; the split pin verified by
+mutation rather than by reading it.
+
+### Still missing, in order
+
+1. **The 18 other `--implemented` candidates**, and the 288 claims the check does not reach. Three of
+   the four found were one stale fact written three times, so the yield is in the repeated ones.
+2. **855923's voice** — bind the arrow target to its pattern, then 236218's bombardment follows.
+3. **Kaidan's rung** — resolve indices for the thirteen shamans first.
+4. `control_door` (691 uses + 10 lost adds + 38 wake patterns) — one in-game observation.
+5. `enable_area` (575) — needs runtime zone toggling; `change_world_scene_status` (101) — checked, no
+   runtime packet in either tree.
+6. `random_move` (187); the abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+7. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — both boundaries, not
+   backlog.

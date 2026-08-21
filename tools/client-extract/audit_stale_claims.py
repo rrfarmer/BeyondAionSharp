@@ -31,7 +31,23 @@ amount of grep.
 "nothing listens for N". Whether a message can be sent or heard is a fact about which retail patterns
 our own npcs run, and that is a lookup rather than a judgement.
 
-Usage:  python audit_stale_claims.py [--xml DIR] [--all] [--messages]
+`--implemented` is the third, and it exists because of a claim this audit *caused*. It flagged a dead
+sentence in `TiamatDragonAI` -- "this port has no waypoint support in either AI layer", untrue since
+the drakan routes landed in `retail_pattern_paths.xml`. The paragraph was rewritten around it to say
+the rush wave was still unbuilt. **The wave was forty lines further down the same file**, a
+nineteen-entry table and the method that spawns it, pinned by a test named
+`NineteenDrakanRushFromFourCorners`.
+
+> **Finding one false sentence does not make its neighbours true.** A rewritten claim is worse than
+> the stale one it replaces: it carries a recent date and reads as though somebody just checked.
+
+So: for every absence claim, take the distinctive words of the claim and look for them in the names
+the file's own members carry, and in the test names of its pin file. `SpawnRushWave` and
+`NineteenDrakanRushFromFourCorners` both answer to "rush" and "wave". This is a **heuristic and says
+so** -- it reports candidates to read, not verdicts -- but it is the check that would have caught the
+one failure it was written for, and it needs no retail data at all.
+
+Usage:  python audit_stale_claims.py [--xml DIR] [--all] [--messages] [--implemented]
 """
 import argparse
 import pathlib
@@ -147,6 +163,92 @@ def claims():
     return out
 
 
+#: Words too common to distinguish a claim. Everything here appears in the name of some member in
+#: half the AI classes, so matching on them would report every claim in the repo.
+COMMON = {
+    "about", "after", "against", "already", "another", "anything", "because", "before", "being",
+    "below", "branch", "brings", "cannot", "carry", "carries", "class", "classes", "could", "count",
+    "data", "does", "either", "enough", "event", "every", "exist", "exists", "first", "given",
+    "handler", "have", "here", "instead", "into", "issue", "itself", "level", "list", "lists",
+    "makes", "means", "might", "missing", "name", "named", "names", "nothing", "npcs", "only",
+    "other", "ours", "over", "pattern", "patterns", "player", "point", "port", "reads", "retail",
+    "same", "second", "sends", "server", "should", "since", "skill", "skills", "some", "state",
+    "still", "table", "tables", "takes", "than", "that", "their", "them", "then", "there", "these",
+    "they", "thing", "this", "those", "through", "time", "under", "until", "using", "value",
+    "where", "which", "while", "with", "without", "would", "write", "written", "your",
+}
+
+#: A C# member declaration. Deliberately loose: fields, properties and methods all read the same way
+#: for this purpose, which is "the file contains an identifier with this word in it".
+MEMBER_RE = re.compile(r"^\s*(?:\[[^\]]*\]\s*)*(?:public|private|protected|internal)\s[^=;(]*?"
+                       r"\b([A-Z][A-Za-z0-9]{3,})\s*[({=;]", re.M)
+TEST_RE = re.compile(r"public\s+(?:async\s+)?(?:void|Task)\s+([A-Za-z0-9_]{6,})\s*\(")
+CAMEL_RE = re.compile(r"[A-Z][a-z]{2,}|[a-z]{3,}")
+WORD_RE = re.compile(r"[A-Za-z]{4,}")
+
+
+def claim_words(text):
+    """The words in a claim that could distinguish it from any other claim."""
+    return {w.lower() for w in WORD_RE.findall(text)} - COMMON
+
+
+def names_in(path):
+    """Every word appearing in a member name declared in this file."""
+    if not path.exists():
+        return set()
+    source = path.read_text(encoding="utf-8", errors="replace")
+    out = set()
+    for ident in MEMBER_RE.findall(source) + TEST_RE.findall(source):
+        out.update(w.lower() for w in CAMEL_RE.findall(ident))
+    return out - COMMON
+
+
+def pin_files(cs_path):
+    """The pin file(s) for a class, by this repo's own naming convention."""
+    stem = cs_path.stem
+    tests = REPO / "tests" / "Aion.GameServer.Tests"
+    if not tests.exists():
+        return []
+    candidates = [stem + "Tests.cs", stem.replace("AI", "Ai") + "Tests.cs"]
+    return [p for name in candidates for p in tests.rglob(name)]
+
+
+def report_implemented(found):
+    """Absence claims whose own file, or pin, names the thing they say is absent.
+
+    A heuristic, and reported as one. Two distinct claim-words landing in member names is weak
+    evidence on its own -- but it is exactly the evidence the Tiamat rush wave left lying around,
+    and reading a dozen candidates is cheaper than trusting 271 unchecked sentences.
+    """
+    rows = []
+    for f, line, text in found:
+        if f.suffix != ".cs":
+            continue
+        words = claim_words(text)
+        if len(words) < 2:
+            continue
+        here = names_in(f)
+        pins = pin_files(f)
+        there = set().union(*(names_in(p) for p in pins)) if pins else set()
+        hit_here = words & here
+        hit_pin = words & there
+        if len(hit_here) + len(hit_pin) >= 2 and (hit_here or hit_pin):
+            rows.append((f, line, text, sorted(hit_here), sorted(hit_pin), pins))
+
+    rows.sort(key=lambda r: -(len(r[3]) + len(r[4])))
+    print(f"{len(rows)} absence claim(s) sit in a file whose own names answer to them\n")
+    print("These are candidates to READ, not verdicts. The check that earned it: TiamatDragonAI said")
+    print("its rush wave was unbuilt while carrying SpawnRushWave and a pin named ...NineteenDrakanRush.\n")
+    for f, line, text, hit_here, hit_pin, pins in rows:
+        print(f"  {f.relative_to(REPO).as_posix()}:{line}")
+        print(f"      claim: {text[:120]}")
+        if hit_here:
+            print(f"      this file declares members named: {' '.join(hit_here)}")
+        if hit_pin:
+            print(f"      its pin {pins[0].name} has tests named: {' '.join(hit_pin)}")
+    return 1 if rows else 0
+
+
 MESSAGE_CLAIM = re.compile(r"(?:sends|listens for|answers|listener for)\D{0,20}?(\d{3,5})", re.I)
 MSG_SEND = re.compile(r"<broadcast_message>.*?<message_type>(\d+)</message_type>", re.S)
 MSG_HEAR = re.compile(r"<is_message>.*?<message_type>(\d+)</message_type>", re.S)
@@ -197,10 +299,15 @@ def main():
     ap.add_argument("--all", action="store_true", help="list every absence claim, not only the decidable ones")
     ap.add_argument("--messages", action="store_true",
                     help="settle claims about message numbers against the patterns our npcs run")
+    ap.add_argument("--implemented", action="store_true",
+                    help="claims whose own class or pin names the thing they say is missing")
     args = ap.parse_args()
 
     found = claims()
     print(f"{len(found)} absence claims in comments across the AI classes")
+
+    if args.implemented:
+        return report_implemented(found)
 
     if args.all:
         for f, line, text in found:

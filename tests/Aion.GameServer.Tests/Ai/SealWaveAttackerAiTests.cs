@@ -257,6 +257,71 @@ public sealed class SealWaveAttackerAiTests
 	}
 
 	/// <summary>
+	/// <b>The leaders' command buff reaches every attacker that hears it.</b> Retail's rung is
+	/// unguarded — hear 22750, cast <c>SKILLI_INDEX_0</c> on yourself — and index 0 is the same skill
+	/// for all 22 wave attackers, so one id pins the lot.
+	/// </summary>
+	[Theory]
+	[InlineData(236204)]  // LeaderGourp-less Fi, priority 20
+	[InlineData(236205)]  // As
+	[InlineData(236206)]  // Ra
+	[InlineData(236207)]  // Wi
+	[InlineData(855847)]  // Pr
+	[InlineData(236216)]  // LeaderGourp_Fi, still 20
+	[InlineData(236217)]  // LeaderGourp_As
+	[InlineData(236220)]  // LeaderGourp_Pr, retail's priority 12
+	[InlineData(236219)]  // LeaderGourp_Wi, retail's priority 10
+	public void TheCommandBuffReachesEveryAttackerThatHearsIt(int attackerId)
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(ForwardGuard, 300f, 300f, 200f);
+		Npc attacker = harness.Spawn(attackerId, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(leader, attacker);
+
+		NpcMessageBus.Broadcast(leader, SealWaveAttackerAI.CommandBuff, null, 100f);
+
+		Assert.Contains(BossAiHarness.DrainQueuedSkills(attacker),
+			cast => cast.SkillId == SealWaveAttackerAI.CommandBuffSkill);
+	}
+
+	/// <summary>
+	/// <b>236218 is the one attacker that does not hear it.</b> It runs <c>LeaderGourp_Ra</c>, whose
+	/// number is 22753 rather than 22750, and this class used to hand it the same pattern as 236219.
+	/// Without this pin the theory above would pass on a class that buffed all ten.
+	/// </summary>
+	[Fact]
+	public void TheRangedLeaderDoesNotHearTheCommandBuff()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(ForwardGuard, 300f, 300f, 200f);
+		Npc archer = harness.Spawn(236218, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(leader, archer);
+
+		NpcMessageBus.Broadcast(leader, SealWaveAttackerAI.CommandBuff, null, 100f);
+
+		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(archer),
+			cast => cast.SkillId == SealWaveAttackerAI.CommandBuffSkill);
+	}
+
+	/// <summary>
+	/// <b>The buff is not cast at anything that speaks.</b> 22749 is one below it and is nobody's
+	/// number; this keeps the rung answering its own message rather than every message.
+	/// </summary>
+	[Fact]
+	public void ANumberBesideTheBuffDoesNotSetAnybodyCasting()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc leader = harness.Spawn(ForwardGuard, 300f, 300f, 200f);
+		Npc attacker = harness.Spawn(Tank, 305f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(leader, attacker);
+
+		NpcMessageBus.Broadcast(leader, 22749, null, 100f);
+
+		Assert.DoesNotContain(BossAiHarness.DrainQueuedSkills(attacker),
+			cast => cast.SkillId == SealWaveAttackerAI.CommandBuffSkill);
+	}
+
+	/// <summary>
 	/// <b>A number the wave does not know leaves it standing.</b> 22763 is one below the first dismissal
 	/// and is nobody's message; without this the eight above would pass on a pattern that despawned on
 	/// anything at all.

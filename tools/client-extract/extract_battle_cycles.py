@@ -30,10 +30,16 @@ A pattern is taken only if **every** branch of both handlers is sayable in full.
 unsayable action from an otherwise-portable branch is the shortcut that would make a boss spawn its
 adds and never cast, which is worse than not running it at all. Counted rather than emitted:
 
-* **`use_skill` -- 209 patterns.** By far the largest, and the one to fix next. Retail names skills by
-  index into the NPC's own list (`SKILLI_INDEX_1`), and this port has no resolver for that.
-* `control_door` (10), `increase_intvar` (5), and a long tail of one-offs -- `is_user_flying`,
-  `is_skill_count_left`, `despawn_by_nameid`, `switch_target_by_attacker_indicator`.
+**These counts are stale and are kept only to be re-measured -- run this extractor for current ones.**
+The list below said `use_skill` was the largest refusal because "this port has no resolver" for
+`SKILLI_INDEX_N`. There is one: `extract_npc_skill_lists.py` writes `out/npc_skill_lists.tsv`, indices
+resolve per npc, and the casts are emitted. `is_skill_count_left`, `despawn_by_nameid` and
+`switch_target_by_attacker_indicator` are all handled below too. A docstring that still names them as
+blockers sends the next reader to build a resolver that exists.
+
+* **`use_skill` -- 209 patterns.** Superseded; see above.
+* `control_door` (10), `increase_intvar` (5), and a long tail of one-offs -- `is_user_flying` among
+  them.
 * **82 rotations that nothing here arms.** They spawn from `on_battle_timer` but have no
   `on_enter_attack_state`, because retail also arms battle timers from `on_message` (334 uses),
   `on_attacked` (115) and `on_spelled` (110). Those handlers are a separate porting job.

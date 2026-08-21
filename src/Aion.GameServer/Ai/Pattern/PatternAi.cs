@@ -1554,9 +1554,10 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// end of its route, does nothing -- retail's patterns are shared across npcs and not every one of
     /// them has the route the pattern assumes.
     /// <para>
-    /// <b>Retail's <c>move_type</c> is not carried.</b> It distinguishes walking from running, and this
-    /// port's route walking has one speed; the extractor refuses the 210 uses that ask for a run rather
-    /// than quietly walking them. See docs/retail-ai-fidelity.md.
+    /// <b>Retail's <c>move_type</c> is carried.</b> This paragraph used to say the port's route walking
+    /// had one speed and that the extractor refused the 210 uses asking for a run. Both stopped being
+    /// true when <see cref="GotoWaypointRunning"/> and <see cref="ContinueRouteRunning"/> were written:
+    /// <c>MOVETYPE_RUN</c> now emits those instead of being refused. This method is the walking half.
     /// </para>
     /// </remarks>
     public void GotoWaypoint(int step)
