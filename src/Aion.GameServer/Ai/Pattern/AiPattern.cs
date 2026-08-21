@@ -193,6 +193,20 @@ public sealed class AiPattern
     /// </remarks>
     public PatternBranch[] OnSeeUser { get; init; } = None;
 
+    /// <summary>Retail's <c>on_see_user_move</c>: a player moved while inside this NPC's sight.</summary>
+    /// <remarks>
+    /// <b>Not the same event as <see cref="OnSeeUser"/> and not a substitute for it.</b> Seeing fires
+    /// once, when the known list admits the player; moving fires again on every movement notification
+    /// while they are there. 254 patterns carry it, and <b>14 of them have no <c>on_see_user</c> at
+    /// all</b> -- for those, this is the only way anything happens when a raid walks up.
+    /// <para>
+    /// Retail guards most of these rungs itself: of 365 rungs, 111 test <c>is_npc_state</c> and 85 are
+    /// behind a test-and-set <c>set_flag_var</c>. That is retail's own answer to an event that repeats,
+    /// and it is carried across rather than second-guessed with a throttle invented here.
+    /// </para>
+    /// </remarks>
+    public PatternBranch[] OnSeeUserMove { get; init; } = None;
+
     /// <summary>
     /// <c>on_see_friend_killed_by_user</c> — one of its own went down in front of it, to a player.
     /// </summary>

@@ -867,6 +867,52 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
         }
     }
 
+    /// <summary>Retail's <c>on_see_user_move</c>.</summary>
+    /// <remarks>
+    /// <b>The extractor recorded that "this port raises no 'a player moved nearby' event". It does.</b>
+    /// <c>MovementNotifyTask</c> hands every moving creature to every NPC in its known list, and
+    /// <c>HandleCreatureMoved</c> has been the way down to the AI the whole time.
+    /// <para>
+    /// <b>Range is part of it, exactly as in <see cref="HandleCreatureSee"/>.</b> The engine event
+    /// covers the known list, which is far wider than an NPC's sight; without the aggro-range test a
+    /// pattern meant to fire when somebody walks up would fire while they were still across the room.
+    /// That mistake has already been made once here and the comment on seeing records it.
+    /// </para>
+    /// <para>
+    /// Guarded against re-entrancy like the other handlers, and it returns before doing any work at all
+    /// when the pattern has no such rungs -- which is nearly every NPC, on an event that fires for
+    /// every step every player takes.
+    /// </para>
+    /// </remarks>
+    protected override void HandleCreatureMoved(Creature creature)
+    {
+        base.HandleCreatureMoved(creature);
+        if (Pattern.OnSeeUserMove.Length == 0 || inOnSeeUserMove || creature is not Player)
+        {
+            return;
+        }
+
+        int sight = GetOwner().GetObjectTemplate().GetAggroRange();
+        if (sight > 0 && !Aion.GameServer.Utils.PositionUtil.IsInRange(GetOwner(), creature, sight))
+        {
+            return;
+        }
+
+        inOnSeeUserMove = true;
+        SeenCreature = creature;
+        try
+        {
+            Evaluate(Pattern.OnSeeUserMove);
+        }
+        finally
+        {
+            SeenCreature = null;
+            inOnSeeUserMove = false;
+        }
+    }
+
+    private bool inOnSeeUserMove;
+
     /// <summary>Whoever landed the blow being handled, or null outside an <c>on_attacked</c> branch.</summary>
     /// <summary>The creature whose attack put this npc into the fight -- retail's <c>OBJI_EVENT_TARGET</c>.</summary>
     /// <remarks>

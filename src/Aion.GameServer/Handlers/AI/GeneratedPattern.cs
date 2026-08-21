@@ -68,6 +68,7 @@ internal static class GeneratedPattern
 			OnSpelled = AiPattern.Of(BattleCycles.SpelledRungsFor(npcId)),
 			OnSeeNpc = AiPattern.Of(BattleCycles.SeeNpcRungsFor(npcId)),
 			OnSeeUser = AiPattern.Of(BattleCycles.SeeUserRungsFor(npcId)),
+			OnSeeUserMove = AiPattern.Of(BattleCycles.SeeUserMoveRungsFor(npcId)),
 			OnLeaveAttack = AiPattern.Of(BattleCycles.LeaveFightRungsFor(npcId)),
 			OnBattleTimer = AiPattern.Of(BattleCycles.CycleRungsFor(npcId)),
 

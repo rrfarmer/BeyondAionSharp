@@ -129,11 +129,13 @@ SKILL_AGGRO = dict(AGGRO)
 #:
 #: `on_battle_timer` is deliberately absent: 188 rotations re-arm only from inside themselves, which is
 #: a chain with no first link *in the pattern*, and guessing an entry point for those would be invention.
-#: `on_see_user_move` is deliberately absent: this port raises no "a player moved nearby" event, and
-#: `AiPattern` keeps seeing an npc and seeing a user apart on purpose, so folding it into either would
-#: be a guess. 10 rows are given up for it.
+#: **`on_see_user_move` used to be listed here as absent**, on the grounds that "this port raises no
+#: 'a player moved nearby' event". It does: `MovementNotifyTask` hands every moving creature to every
+#: NPC in its known list, and `HandleCreatureMoved` carries it into the AI. The note was written when
+#: nobody had looked, and it cost 254 patterns -- 14 of which have no `on_see_user` at all, so a raid
+#: walking up to them did nothing whatsoever.
 ARMING = ["on_enter_attack_state", "on_message", "on_attacked", "on_spelled", "on_wake_up",
-          "on_see_npc", "on_see_user"]
+          "on_see_npc", "on_see_user", "on_see_user_move"]
 
 #: Handlers that are not about arming anything -- they are what the encounter does when it ends.
 #:

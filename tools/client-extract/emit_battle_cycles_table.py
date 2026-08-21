@@ -16,6 +16,7 @@ HANDLERS = [
     ("on_wake_up", "OnWakeUp", "Arms the chain on waking."),
     ("on_see_npc", "OnSeeNpc", "Arms the chain on seeing an npc."),
     ("on_see_user", "OnSeeUser", "Arms the chain on seeing a player."),
+    ("on_see_user_move", "OnSeeUserMove", "Arms the chain when a player moves in sight."),
     ("on_die", "OnDie", "What the encounter leaves behind when it dies."),
     ("on_leave_attack_state", "OnLeaveAttack", "What it does when the fight ends without dying."),
     ("on_enter_idle_state", "OnEnterIdleState", "What the npc does the moment it goes back to idle."),
@@ -95,6 +96,10 @@ internal static class BattleCycles
     /// <summary>Rungs that arm a timer on seeing a player.</summary>
     internal static PatternBranch[] SeeUserRungsFor(int npcId)
         => OnSeeUserOf.TryGetValue(npcId, out int variant) ? OnSeeUserVariants[variant] : [];
+
+    /// <summary>Rungs for a player moving inside the npc's sight, which repeats as they move.</summary>
+    internal static PatternBranch[] SeeUserMoveRungsFor(int npcId)
+        => OnSeeUserMoveOf.TryGetValue(npcId, out int variant) ? OnSeeUserMoveVariants[variant] : [];
 
     /// <summary>What the npc leaves behind when it dies.</summary>
     internal static PatternBranch[] DeathRungsFor(int npcId)

@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 3938 retail patterns across 30166 npcs, 318376 actions.
+/// Combat rotations: 3938 retail patterns across 30166 npcs, 318584 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -63,6 +63,10 @@ internal static class BattleCycles
     /// <summary>Rungs that arm a timer on seeing a player.</summary>
     internal static PatternBranch[] SeeUserRungsFor(int npcId)
         => OnSeeUserOf.TryGetValue(npcId, out int variant) ? OnSeeUserVariants[variant] : [];
+
+    /// <summary>Rungs for a player moving inside the npc's sight, which repeats as they move.</summary>
+    internal static PatternBranch[] SeeUserMoveRungsFor(int npcId)
+        => OnSeeUserMoveOf.TryGetValue(npcId, out int variant) ? OnSeeUserMoveVariants[variant] : [];
 
     /// <summary>What the npc leaves behind when it dies.</summary>
     internal static PatternBranch[] DeathRungsFor(int npcId)
@@ -118701,6 +118705,381 @@ internal static class BattleCycles
         owners[882271] = 44;  // IDArena_team01_S2_Mine
     }
 
+    /// <summary>Arms the chain when a player moves in sight.</summary>
+    private static readonly PatternBranch[][] OnSeeUserMoveVariants = BuildOnSeeUserMoveVariants();
+
+    private static PatternBranch[][] BuildOnSeeUserMoveVariants()
+    {
+        PatternBranch[][] variants = new PatternBranch[44][];
+        OnSeeUserMoveVariants0(variants);
+        return variants;
+    }
+
+    private static void OnSeeUserMoveVariants0(PatternBranch[][] variants)
+    {
+        variants[0] = [
+            AiPattern.Branch(1, "rung 0", [When.WalkingItsRoute],
+                Do.Nothing()),
+        ];
+        variants[1] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("IDElim_2F_Rescue", 1, 0)),
+        ];
+        variants[2] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0), When.SeenIsPlayer],
+                Do.SetSpawnVariable("Wave_A_01_Start", 0, 1),
+                Do.SystemMessage(1402780, 0)),
+        ];
+        variants[3] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0), When.SeenIsPlayer],
+                Do.SetSpawnVariable("Wave_C_01_Start", 1, 0),
+                Do.SystemMessage(1402785, 0)),
+        ];
+        variants[4] = [
+            AiPattern.Branch(7, "rung 0", [When.SeenIsPlayer, When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("Wave_Light", 1, 0),
+                Do.DespawnSelf()),
+            AiPattern.Branch(7, "rung 1", [When.SeenIsPlayer, When.SeenRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SetSpawnVariable("Wave_Dark", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        variants[5] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0), When.SeenIsPlayer],
+                Do.SetSpawnVariable("Wave_C_02_Start", 1, 0),
+                Do.SystemMessage(1402785, 0)),
+        ];
+        variants[6] = [
+            AiPattern.Branch(2, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(22771, 100f),
+                Do.Say(1501311, 0)),
+        ];
+        variants[7] = [
+            AiPattern.Branch(7, "rung 0", [When.SeenIsPlayer],
+                Do.Nothing()),
+        ];
+        variants[8] = [
+            AiPattern.Branch(2, "rung 0", When.Always,
+                Do.TargetSeen()),
+        ];
+        variants[9] = [
+            AiPattern.Branch(7, "rung 0", [When.WalkingItsRoute],
+                Do.Nothing()),
+        ];
+        variants[10] = [
+            AiPattern.Branch(7, "rung 0", [When.SeenRace(Race.ELYOS)],
+                Do.HateSeen(100),
+                Do.AttackMostHating()),
+        ];
+        variants[11] = [
+            AiPattern.Branch(1, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        variants[12] = [
+            AiPattern.Branch(4, "rung 0", [When.FirstTime(0)],
+                Do.SystemMessage(1402230, 0),
+                Do.Broadcast(22131, 50f),
+                Do.ContinueRoute()),
+            AiPattern.Branch(3, "rung 1", When.Always,
+                Do.ContinueRoute()),
+        ];
+        variants[13] = [
+            AiPattern.Branch(4, "rung 0", When.Always,
+                Do.ContinueRoute()),
+        ];
+        variants[14] = [
+            AiPattern.Branch(7, "rung 0", [When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("PC_Checkli", 0, 1),
+                Do.SetSpawnVariable("Boss_cond", 0, 0)),
+            AiPattern.Branch(6, "rung 1", [When.SeenRace(Race.ASMODIANS), When.FirstTime(1)],
+                Do.SetSpawnVariable("PC_Checkda", 0, 1),
+                Do.SetSpawnVariable("Boss_cond", 0, 0)),
+        ];
+        variants[15] = [
+            AiPattern.Branch(7, "rung 0", [When.SeenIsPlayer],
+                Do.SkillOnSelfNow(19836),
+                Do.DespawnSelf()),
+        ];
+        variants[16] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(7000, 30f)),
+        ];
+        variants[17] = [
+            AiPattern.Branch(1, "rung 0", [When.Enemy],
+                Do.SpawnNear(281505, 0, 1, 0f, 60),
+                Do.DespawnSelf()),
+        ];
+        variants[18] = [
+            AiPattern.Branch(1, "rung 0", [When.Enemy],
+                Do.SpawnNear(281506, 0, 1, 0f, 60),
+                Do.DespawnSelf()),
+        ];
+        variants[19] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SpawnAt(216133, 1, 0, new SpawnSpot(328.961761f, 382.657837f, 1188.099976f)),
+                Do.DespawnSelf()),
+        ];
+        variants[20] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SpawnAt(216135, 1, 0, new SpawnSpot(186.548477f, 630.068481f, 1145.099976f)),
+                Do.SpawnAt(216135, 2, 0, new SpawnSpot(187.957642f, 632.359741f, 1145.099976f)),
+                Do.SpawnAt(216137, 3, 0, new SpawnSpot(189.602051f, 635.025574f, 1145.099976f)),
+                Do.DespawnSelf()),
+        ];
+        variants[21] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SpawnAt(216136, 1, 0, new SpawnSpot(341.785858f, 538.986267f, 1175.099976f)),
+                Do.SpawnAt(216134, 2, 0, new SpawnSpot(342.269989f, 538.609985f, 1175.099976f)),
+                Do.SpawnAt(216136, 3, 0, new SpawnSpot(342.910004f, 537.599976f, 1175.099976f)),
+                Do.DespawnSelf()),
+        ];
+        variants[22] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SystemMessage(1400475, 0),
+                Do.SpawnAt(216145, 1, 0, new SpawnSpot(215.948639f, 389.192322f, 1161.145386f)),
+                Do.SpawnAt(216146, 2, 0, new SpawnSpot(131.101913f, 509.958466f, 1144.390137f))),
+        ];
+        variants[23] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SpawnAt(216136, 1, 0, new SpawnSpot(242.188095f, 390.817505f, 1164.099976f)),
+                Do.SetSpawnVariable("IDElim_1F_Mercenary", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        variants[24] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("IDElim_1F_StartRush", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        variants[25] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(6452, 50f),
+                Do.SetSpawnVariable("BRIDGE_SPAWN", 1, 0),
+                Do.SkillOnSelfNow(19442),
+                Do.DespawnSelf()),
+        ];
+        variants[26] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 19570)),
+        ];
+        variants[27] = [
+            AiPattern.Branch(2, "rung 0", [When.SeenRace(Race.ELYOS), When.FirstTimeInWorld(1)],
+                Do.SetSpawnVariable("KAISINEL_AVATAR_SPAWN", 1, 0),
+                Do.DespawnSelf()),
+            AiPattern.Branch(1, "rung 1", [When.SeenRace(Race.ASMODIANS), When.FirstTimeInWorld(1)],
+                Do.SetSpawnVariable("MARCHUTAN_AVATAR_SPAWN", 1, 0),
+                Do.DespawnSelf()),
+        ];
+        variants[28] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(0)],
+                Do.SkillOnSelfNow(18607),
+                Do.DespawnSelf()),
+        ];
+        variants[29] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(8)],
+                Do.ArmTimer(0, 6000),
+                Do.Broadcast(1000400, 100f)),
+        ];
+        variants[30] = [
+            AiPattern.Branch(1, "rung 0", [When.FirstTime(0)],
+                Do.SetSpawnVariable("BRIDGE_BOSS", 1, 0),
+                Do.SkillOnSelfNow(20780),
+                Do.DespawnSelf()),
+        ];
+        variants[31] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        variants[32] = [
+            AiPattern.Branch(6, "rung 0", [When.Enemy, When.FirstTime(0)],
+                Do.SetIdleTimer(10000),
+                Do.Broadcast(23434, 50f)),
+        ];
+        variants[33] = [
+            AiPattern.Branch(6, "rung 0", [When.Enemy, When.FirstTime(0)],
+                Do.SetIdleTimer(10000),
+                Do.Broadcast(23414, 50f)),
+        ];
+        variants[34] = [
+            AiPattern.Branch(6, "rung 0", [When.Enemy, When.FirstTime(0)],
+                Do.SetIdleTimer(10000),
+                Do.Broadcast(23424, 50f)),
+        ];
+        variants[35] = [
+            AiPattern.Branch(5, "rung 0", [When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("RACE", 1, 0)),
+            AiPattern.Branch(4, "rung 1", [When.FirstTime(0)],
+                Do.SetSpawnVariable("RACE", 2, 0)),
+        ];
+        variants[36] = [
+            AiPattern.Branch(7, "rung 0", When.Always,
+                Do.SystemMessage(1402782, 0)),
+        ];
+        variants[37] = [
+            AiPattern.Branch(2, "rung 0", [When.FirstTime(0)],
+                Do.Broadcast(22112, 15f)),
+        ];
+        variants[38] = [
+            AiPattern.Branch(2, "rung 0", [When.SeenIsPlayer, When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("START_01", 1, 0),
+                Do.SetSpawnVariable("START_02", 2, 0)),
+            AiPattern.Branch(1, "rung 1", [When.FirstTime(0)],
+                Do.SetSpawnVariable("START_01", 2, 0),
+                Do.SetSpawnVariable("START_02", 1, 0)),
+        ];
+        variants[39] = [
+            AiPattern.Branch(7, "rung 0", [When.FirstTime(8)],
+                Do.ArmTimer(13, 6000),
+                Do.Broadcast(1000400, 100f)),
+        ];
+        variants[40] = [
+            AiPattern.Branch(7, "rung 0", [When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SystemMessage(1402603, 0)),
+            AiPattern.Branch(6, "rung 1", [When.SeenRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SystemMessage(1402603, 0)),
+        ];
+        variants[41] = [
+            AiPattern.Branch(3, "rung 0", [When.SeenIsPlayer, When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("RACE", 1, 0),
+                Do.DespawnSelf()),
+            AiPattern.Branch(2, "rung 1", [When.FirstTime(0)],
+                Do.SetSpawnVariable("RACE", 2, 0),
+                Do.DespawnSelf()),
+        ];
+        variants[42] = [
+            AiPattern.Branch(1000, "rung 0", When.Always,
+                Do.Nothing()),
+        ];
+        variants[43] = [
+            AiPattern.Branch(9, "rung 0", [When.SeenRace(Race.ELYOS), When.FirstTime(0)],
+                Do.SetSpawnVariable("rasta_spawn", 1, 0),
+                Do.SystemMessage(1402775, 0),
+                Do.Broadcast(1001, 50f),
+                Do.SetIdleTimer(3000)),
+            AiPattern.Branch(8, "rung 1", [When.SeenRace(Race.ASMODIANS), When.FirstTime(0)],
+                Do.SetSpawnVariable("rasta_spawn", 1, 0),
+                Do.SystemMessage(1402775, 0),
+                Do.Broadcast(1001, 50f),
+                Do.SetIdleTimer(3000)),
+        ];
+    }
+
+    private static readonly IReadOnlyDictionary<int, int> OnSeeUserMoveOf = BuildOnSeeUserMoveOf();
+
+    private static Dictionary<int, int> BuildOnSeeUserMoveOf()
+    {
+        Dictionary<int, int> owners = new Dictionary<int, int>();
+        OnSeeUserMoveOf0(owners);
+        return owners;
+    }
+
+    private static void OnSeeUserMoveOf0(Dictionary<int, int> owners)
+    {
+        owners[205498] = 0;  // IDHouse_Zadra_Deform_Air
+        owners[206161] = 1;  // Elim_HealPlant1
+        owners[206367] = 2;  // IDRaksha_Solo_SensoryArea_StageStart_A
+        owners[206369] = 3;  // IDRaksha_Solo_SensoryArea_StageStart_C
+        owners[206390] = 4;  // IDRaksha_Solo_Starter_NPC
+        owners[206393] = 5;  // IDRaksha_Solo_C_Door_Open_Trigger_02
+        owners[209697] = 6;  // IDSeal_Scene_08_Bomber
+        owners[209701] = 6;  // IDSeal_Scene_08_Bomber
+        owners[209762] = 6;  // IDSeal_Scene_08_Bomber
+        owners[209766] = 6;  // IDSeal_Scene_08_Bomber
+        owners[216216] = 7;  // IDCT_StDrakanFi_Fake
+        owners[216217] = 7;  // IDCT_StDrakanSc_Fake
+        owners[216297] = 7;  // IDCT_StDrakanFi_Fake
+        owners[216298] = 7;  // IDCT_StDrakanSc_Fake
+        owners[217327] = 8;  // IDYun_Temp_19
+        owners[217754] = 9;  // IDArena_S9_Bonus_1
+        owners[218778] = 10;  // IDArena_pvp02_S1_Drakan_02
+        owners[218826] = 11;  // LDF4b_Tiamat_Temp20
+        owners[218830] = 11;  // LDF4b_Tiamat_Temp20
+        owners[219981] = 9;  // IDF5_Mini_01_C_Guard_Fi
+        owners[219982] = 9;  // IDF5_Mini_01_C_Guard_As
+        owners[219983] = 9;  // IDF5_Mini_01_C_Attack_1
+        owners[219984] = 9;  // IDF5_Mini_01_C_Attack_2
+        owners[219985] = 9;  // IDF5_Mini_01_C_Attack_3
+        owners[219986] = 9;  // IDF5_Mini_01_C_Attack_4
+        owners[230122] = 12;  // BIDF5_R2_Runner
+        owners[230373] = 13;  // IDF5_R2_Runner_Fake_02
+        owners[230374] = 13;  // IDF5_R2_Runner_Fake_03
+        owners[230375] = 13;  // IDF5_R2_Runner_Fake_04
+        owners[233899] = 14;  // IDLDF4_Re_01_check
+        owners[234994] = 14;  // IDLDF4_Re_01_check
+        owners[235964] = 15;  // LF5_ItemNamed_6_Ra1_Pet_KJS
+        owners[281392] = 16;  // IDCT_StatueNPC
+        owners[281494] = 17;  // Gguard_LTrap
+        owners[281495] = 18;  // Gguard_DTrap
+        owners[281529] = 19;  // Elim_EventA
+        owners[281531] = 20;  // Elim_EventC
+        owners[281532] = 21;  // Elim_EventD
+        owners[281533] = 22;  // Elim_EventE
+        owners[281534] = 23;  // Elim_EventF
+        owners[281613] = 24;  // Elim_RushEventA
+        owners[281614] = 24;  // Elim_RushEventB
+        owners[281634] = 7;  // IDCT_StDrakanFi_Fake
+        owners[281635] = 7;  // IDCT_StDrakanSc_Fake
+        owners[282110] = 1;  // Elim_HealPlant1
+        owners[282165] = 9;  // IDForest_hidden
+        owners[282169] = 9;  // IDForest_hidden_fake
+        owners[282185] = 0;  // IDHouse_Zadra_Deform_Air
+        owners[282216] = 9;  // IDForest_hidden
+        owners[282220] = 9;  // IDForest_hidden_fake
+        owners[282223] = 9;  // IDForest_hidden
+        owners[282259] = 25;  // IDForest_first_Noshow
+        owners[282324] = 9;  // Raksha_Deliverfire
+        owners[282345] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282346] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282347] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282348] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282349] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282350] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282351] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282352] = 11;  // IDHouse_Butler_RollingGolem
+        owners[282374] = 26;  // IDArena_S10_Summon_1
+        owners[283061] = 27;  // IDTiamat_BurrowingWorm_SumImago
+        owners[283632] = 28;  // Britra_Trap1
+        owners[284030] = 12;  // BIDF5_R2_Runner
+        owners[284311] = 12;  // BIDF5_R2_Runner
+        owners[284312] = 12;  // BIDF5_R2_Runner
+        owners[284313] = 12;  // BIDF5_R2_Runner
+        owners[284314] = 12;  // BIDF5_R2_Runner
+        owners[284315] = 12;  // BIDF5_R2_Runner
+        owners[284316] = 12;  // BIDF5_R2_Runner
+        owners[284317] = 12;  // BIDF5_R2_Runner
+        owners[284428] = 29;  // Rune_FrostNmd_RealImitaion_2
+        owners[284429] = 29;  // Rune_FrostNmd_RealImitaion_3
+        owners[284673] = 30;  // IDVritra_Base_Temp04
+        owners[284976] = 14;  // IDLDF4_Re_01_check
+        owners[296525] = 31;  // BGuard_F4ChiefBuffer
+        owners[296905] = 31;  // BGuard_F4ChiefBuffer
+        owners[296906] = 31;  // BGuard_F4ChiefBuffer
+        owners[297099] = 32;  // BGuard_ChiefA_Renew_Obj_Dr4
+        owners[297100] = 32;  // BGuard_ChiefA_Renew_Obj_Dr5
+        owners[297104] = 33;  // BGuard_ChiefA_Renew_Obj_Li4
+        owners[297105] = 33;  // BGuard_ChiefA_Renew_Obj_Li5
+        owners[297109] = 34;  // BGuard_ChiefA_Renew_Obj_Da4
+        owners[297110] = 34;  // BGuard_ChiefA_Renew_Obj_Da5
+        owners[297177] = 31;  // BGuard_F4ChiefBuffer
+        owners[702019] = 35;  // IDF5_U3_StartNPC
+        owners[702502] = 35;  // IDF5_U3_Hard_StartNPC
+        owners[702689] = 36;  // IDRaksha_Solo_A_Door_Open_Trigger_02
+        owners[702693] = 36;  // IDRaksha_Solo_A_Door_Open_Trigger_03
+        owners[730718] = 37;  // BIDF5_R2_Door1
+        owners[804745] = 4;  // IDRaksha_Solo_Starter_NPC
+        owners[831920] = 38;  // IDF5_TD_War_Start_Race
+        owners[855246] = 29;  // Rune_FrostNmd_RealImitaion_3_ver47
+        owners[855247] = 29;  // Rune_FrostNmd_FakeImitaion_ver47
+        owners[855250] = 39;  // Rune_FrostNmd_MagCircle_NoShow2
+        owners[855414] = 40;  // LDF4_Scorpion_LV3
+        owners[855527] = 41;  // IDSeal_Area1_Open
+        owners[855732] = 15;  // LF5_ItemNamed_6_Ra1_Pet_KJS
+        owners[856050] = 42;  // BIDF5_U01_Runaway_Wi_S_P1
+        owners[856051] = 42;  // BIDF5_U01_Runaway_Pr_S_P1
+        owners[856052] = 42;  // BIDF5_U01_Runaway_As_S_P1
+        owners[856056] = 43;  // IDYun_info_04
+        owners[856105] = 9;  // IDF5_Mini_01_C_Guard_Fi
+        owners[856106] = 9;  // IDF5_Mini_01_C_Guard_As
+    }
+
     /// <summary>What the encounter leaves behind when it dies.</summary>
     private static readonly PatternBranch[][] OnDieVariants = BuildOnDieVariants();
 
@@ -133562,6 +133941,7 @@ internal static class BattleCycles
         OnWakeUpOf,
         OnSeeNpcOf,
         OnSeeUserOf,
+        OnSeeUserMoveOf,
         OnDieOf,
         OnLeaveAttackOf,
         OnEnterIdleStateOf,

@@ -251,6 +251,25 @@ public sealed class BossAiHarness : IDisposable
 			null,
 			null);
 
+	/// <summary>
+	/// Moves a creature and tells the NPCs around it, the way <c>MovementNotifyTask</c> does.
+	/// </summary>
+	/// <remarks>
+	/// <b>Setting a position is not moving.</b> Retail's <c>on_see_user_move</c> is driven by the
+	/// movement notification, not by the coordinates changing, so a pin that only repositions a player
+	/// leaves every such rung untouched and reads as a handler that was never wired up. This does both,
+	/// and it notifies every NPC in the mover's known list rather than one, because that is what the
+	/// production task does and it is how a rung on the wrong NPC would show up.
+	/// </remarks>
+	public void Walk(Creature mover, float x, float y, float z)
+	{
+		mover.SetPosition(World.CreatePosition(_mapId, x, y, z, (byte)mover.GetHeading(), 1));
+		foreach (Npc near in LiveNpcs())
+		{
+			near.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureMoved, mover);
+		}
+	}
+
 	public static void Rehate(Npc npc, Creature attacker) => npc.GetAggroList().AddHate(attacker, InitialHate);
 
 	/// <summary>

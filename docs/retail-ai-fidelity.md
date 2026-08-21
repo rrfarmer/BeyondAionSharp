@@ -39890,3 +39890,74 @@ rather than discovered later as "the bomber sometimes says nothing."**
 6. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
    `switch_target_by_class_indicator` (53).
 7. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
+
+## `on_see_user_move`, and the sixth stale claim
+
+Last entry found this handler missing while reading the scene-08 bomber, and said to count it before
+building. Counted: **254 patterns, 365 rungs**, and **14 patterns have no `on_see_user` at all** — for
+those, a raid walking up to the npc did nothing whatsoever.
+
+### The claim
+
+The extractor said, in a comment above its handler list:
+
+> `on_see_user_move` is deliberately absent: this port raises no "a player moved nearby" event
+
+**It raises exactly that.** `MovementNotifyTask` walks every moving creature's known list and hands
+each NPC an `AiEventType.CreatureMoved`; `HandleCreatureMoved` has been the way down into the AI the
+whole time, implemented on `NpcAI` and overridden in encounter classes. The note was written when
+nobody had looked, and it is the sixth claim of this shape this log has had to correct — the fifth was
+found by the audit, this one by reading the code next to a bug.
+
+### Building it
+
+The handler mirrors `HandleCreatureSee` deliberately, because that method already records the mistake
+this one would otherwise repeat:
+
+> **RANGE IS PART OF SEEING.** The engine event fires when the known list admits an object, which is a
+> much wider radius than an NPC's own sight.
+
+The movement event is worse in the same way — it fires on *every* notification for everything in the
+list — so the aggro-range test is carried across. It also returns before doing any work when the
+pattern has no such rungs, which is nearly every NPC, on an event that fires for every step every
+player takes. `SeenCreature` is set for the duration, and the table proves that was right: the
+`who:SeenIsPlayer` guard count rose from **45 to 73** when the rungs landed, meaning retail's own move
+rungs read the seen role.
+
+**Retail's rungs guard themselves.** Of 365, **111 test `is_npc_state` and 85 sit behind a test-and-set
+`set_flag_var`** — that is retail's own answer to an event that repeats, and it is carried across
+rather than second-guessed with a throttle invented here.
+
+**105 npcs, 208 rungs** now carry it, including the bomber that started this: its move rung shares
+flag 0 with its sighting rung, so whichever fires first spends it, which is what retail wrote.
+
+### The pin, and why it is on that npc
+
+`IDRaksha_Solo_Starter_NPC` (206390) has ten metres of sight and leaves when it sees a player of either
+race. Both its handlers are behind the same flag, so proving the *move* path means keeping the player
+out of sight until after the npc spawns — which is exactly the case retail's handler exists for. The
+player is placed sixty metres out, the sighting handler declines, and then they walk in.
+
+The harness gained `Walk`, which moves a creature **and notifies the NPCs around it** the way
+`MovementNotifyTask` does. **Setting a position is not moving**: a pin that only repositions a player
+leaves every such rung untouched and reads as a handler that was never wired up.
+
+**Verification.** Full suite **2,925 passing**, 1 skipped. Mutating the slot out of `GeneratedPattern`
+reddens the positive pin alone. Three size guards moved with the table, one of them the identity-guard
+census above.
+
+### Still missing, in order
+
+1. **The 105 npcs are pinned by one encounter, not by each.** Same debt shape as last entry, booked
+   deliberately: the census guard holds the *shape* of what landed, and one encounter holds the
+   mechanism, but the Frostspire imitations and the Rakshasa stage-starters carry rungs nobody has read.
+2. **Kaidan's low-health rung** — indices for thirteen shamans first.
+3. **The 18 `--implemented` candidates**, plus the fifth copy of the skill-index claim in
+   `SealWaveLeaderAI`.
+4. **The guards' two broadcasts** (22696 waking, 22658 second clock) — no listener found in our tree,
+   so check the listener side rather than assume they are idle.
+5. `control_door` (691) — one in-game observation; `enable_area` (575) — runtime zone toggling;
+   `change_world_scene_status` (101) — no runtime packet in either tree.
+6. `random_move` (187); abnormal-state groups (108); `CASTER_GROUP` / `MELEE_GROUP` (59);
+   `switch_target_by_class_indicator` (53).
+7. **16 waypoint paths** and **3,291 patterns whose npcs this port lacks** — boundaries, not backlog.
