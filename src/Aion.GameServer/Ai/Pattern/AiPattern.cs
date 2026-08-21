@@ -6,6 +6,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npcskill;
+using Aion.GameServer.SkillEngine.Effects;
 
 namespace Aion.GameServer.Ai.Pattern;
 
@@ -763,6 +764,42 @@ public static class When
     /// </remarks>
     public static PatternCondition AttackerClass(params PlayerClass[] classes)
         => ai => ai.LastAttacker is Player hitter && classes.Contains(hitter.GetPlayerClass());
+
+    /// <summary><c>is_obj_in_abnormal_state</c> — the named creature is under this effect.</summary>
+    /// <remarks>
+    /// 157 uses, and <b>only 25 of them name a state this port has</b>. The rest are retail's *group*
+    /// indicators — <c>ABNSTATEI_PHYSICAL_GROUP</c> (63), <c>ABNSTATEI_MENTAL_GROUP</c> (37),
+    /// <c>ABNSTATEI_CANNOT_ACT_GROUP</c> (8) — plus <c>SANCTUARY</c> (16), <c>INVISIBLE</c> (4) and
+    /// <c>DEFORM</c> (4), which <see cref="AbnormalState"/> does not carry at all.
+    /// <para>
+    /// <b>The groups are refused rather than approximated, and that is not a small call.</b> Deciding
+    /// that "physical" means stun, stumble and stagger but not root, or that "mental" covers fear and
+    /// sleep and charm, is inventing retail's taxonomy from the names — and a boss whose branch fires
+    /// for one effect too many looks exactly like a boss working. See the doc entry: the same shape of
+    /// gap blocks <c>switch_target_by_class_indicator</c>, where 47 of 53 uses name a class *group*.
+    /// </para>
+    /// <para>
+    /// A role that is not set answers false. Nobody is not asleep.
+    /// </para>
+    /// </remarks>
+    public static PatternCondition InAbnormalState(AbnormalState state)
+        => ai => ai.GetOwner().GetEffectController().IsAbnormalSet(state);
+
+    /// <summary><c>is_obj_in_abnormal_state obj=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternCondition TargetInAbnormalState(AbnormalState state)
+        => ai => ai.CurrentTarget is Creature who && who.GetEffectController().IsAbnormalSet(state);
+
+    /// <summary><c>is_obj_in_abnormal_state obj=OBJI_SEEN</c>.</summary>
+    public static PatternCondition SeenInAbnormalState(AbnormalState state)
+        => ai => ai.SeenCreature is Creature who && who.GetEffectController().IsAbnormalSet(state);
+
+    /// <summary><c>is_obj_in_abnormal_state obj=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerInAbnormalState(AbnormalState state)
+        => ai => ai.LastAttacker is Creature who && who.GetEffectController().IsAbnormalSet(state);
+
+    /// <summary><c>is_obj_in_abnormal_state obj=OBJI_FRIEND</c>.</summary>
+    public static PatternCondition FriendInAbnormalState(AbnormalState state)
+        => ai => ai.Friend is Creature who && who.GetEffectController().IsAbnormalSet(state);
 
     /// <summary>
     /// <c>is_user</c> on <c>on_attacked</c> — the blow that just landed came from a player.

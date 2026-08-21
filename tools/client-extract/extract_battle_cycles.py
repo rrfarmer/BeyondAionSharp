@@ -353,6 +353,40 @@ SWITCH_ROLES = {
     "OBJI_KILLER": "switch_to:TargetKiller",
 }
 
+#: Retail's `is_obj_in_abnormal_state` subjects, and the condition each becomes.
+ABNORMAL_ROLES = {
+    "OBJI_SELF": "InAbnormalState",
+    "OBJI_CUR_TARGET": "TargetInAbnormalState",
+    "OBJI_SEEN": "SeenInAbnormalState",
+    "OBJI_ATTACKER": "AttackerInAbnormalState",
+    "OBJI_FRIEND": "FriendInAbnormalState",
+}
+
+#: The states this port's `AbnormalState` names. Retail's `*_GROUP` indicators and the three
+#: states absent from the enum are refused rather than approximated.
+PORT_ABNORMALS = {
+    "POISON",
+    "BLEED",
+    "PARALYZE",
+    "SLEEP",
+    "ROOT",
+    "BLIND",
+    "CHARM",
+    "DISEASE",
+    "SILENCE",
+    "FEAR",
+    "CURSE",
+    "CONFUSE",
+    "STUN",
+    "PETRIFICATION",
+    "STUMBLE",
+    "STAGGER",
+    "OPENAERIAL",
+    "SNARE",
+    "SLOW",
+    "SPIN",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -471,6 +505,19 @@ def read_guards(block: str) -> list[str]:
             if not who or who.group(1) not in ENEMY_ROLES:
                 raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
             out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+        elif kind == "is_obj_in_abnormal_state":
+            # Only the states this port names exactly. Retail's group indicators are refused: see
+            # `When.InAbnormalState` for why deciding what "physical" or "mental" covers would be
+            # inventing retail's taxonomy rather than porting it.
+            obj = re.search(r"<obj>(\w+)</obj>", body)
+            state = re.search(r"<abnormal_state>ABNSTATEI_(\w+)</abnormal_state>", body)
+            if not obj or not state:
+                raise Unsayable("is_obj_in_abnormal_state with no subject or state")
+            if obj.group(1) not in ABNORMAL_ROLES:
+                raise Unsayable(f"is_obj_in_abnormal_state about {obj.group(1)}")
+            if state.group(1) not in PORT_ABNORMALS:
+                raise Unsayable(f"is_obj_in_abnormal_state of {state.group(1)}")
+            out.append(f"abnormal:{ABNORMAL_ROLES[obj.group(1)]}:{state.group(1)}")
         elif kind == "is_race":
             # Retail names the race with `race_type`, matched to this port's `Race` by exact name
             # apart from the two pc aliases. Anything that does not name a member is refused rather

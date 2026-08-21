@@ -38532,3 +38532,61 @@ play-testing** -- an npc that should cast roughly one skill in ten is the thing 
 Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
 conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## Abnormal states, and the shape of what is left
+
+`Retail-AI-Pattern: is_obj_in_abnormal_state for the states this port names`
+
+`is_obj_in_abnormal_state` is 157 uses. **25 of them name a state this port has** — sleep, poison,
+bleed, silence, stumble — across five subjects, and those are read now. 58 rows land; patterns
+2,839 -> **2,844**, npcs 22,647 -> **22,668**.
+
+The other 132 are the interesting part.
+
+### What is actually left is retail's group vocabulary
+
+Three entries have carried a list of small refusals as if they were unrelated one-offs. They are not.
+Counting what blocks the two largest remaining condition families:
+
+| element | uses | blocked by a *group* indicator |
+|---|---|---|
+| `is_obj_in_abnormal_state` | 157 | 108 (`PHYSICAL_GROUP` 63, `MENTAL_GROUP` 37, `CANNOT_ACT_GROUP` 8) |
+| `switch_target_by_class_indicator` | 53 | 47 (`CASTER_GROUP` 35, `CLERIC_GROUP` 6, `MAGE_GROUP` 3, `WARRIOR_GROUP` 3) |
+
+**Retail groups its indicators and this port has no notion of any of the groupings.** That is one
+gap, not five, and it is the thing to name.
+
+Some of it is derivable and some is not, and the difference matters. The *class* groups have a source:
+`PlayerClassExtensions` carries `StartingClass`, so `WARRIOR_GROUP` is exactly the classes whose
+starting class is `WARRIOR`. Three of the four class groups fall out of data already here.
+**`CASTER_GROUP` does not** — it is 35 of the 53 uses, and nothing in the enum or its comments says
+whether a cleric is a caster. The *abnormal-state* groups have no source at all: deciding that
+"physical" means stun, stumble and stagger but not root, or that "mental" covers fear, sleep and
+charm, is inventing retail's taxonomy from the names.
+
+A boss whose branch fires for one effect too many looks exactly like a boss working, which is why
+none of this is approximated. It needs either a source for the groupings or a decision recorded as a
+decision.
+
+`switch_target_by_class_indicator` has a second unknown besides the grouping: it carries both
+`percent_to_add` and `points_to_add`, and this port's `AddHate` takes absolute points only. What a
+5% hate add is a percentage *of* is stated nowhere in the element.
+
+### Still missing, in order
+
+1. **Retail's group indicators** — 155 uses across two families, as above. The class groups are three
+   quarters derivable; the abnormal-state groups are not.
+2. `random_move` (187) — a combat reposition, not a wander. Corrected in the previous entry.
+3. `say_to_all_str` (19) — a literal string where this port sends string ids.
+4. `control_door` (19), `add_intvar` (11).
+5. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN` — one route speed.
+6. The eight retail handlers with no engine slot.
+7. `SANCTUARY` (16), `INVISIBLE` (4) and `DEFORM` (4) are states `AbnormalState` does not carry —
+   a 4.8-versus-5.8 gap rather than porting work.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fallback at 546 pairs,
+**per-mille reading evidence-backed but wanting play-testing**.
+
+Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
+conceded to `spawn_helpers.xml`, and retail cast timings.
