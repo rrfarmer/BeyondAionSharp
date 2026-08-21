@@ -408,6 +408,17 @@ public static class When
     public static PatternCondition Counting(int slot, int lower, int upper, bool onlyAtBound = true)
         => ai => ai.IncreaseIntVar(slot, lower, upper, onlyAtBound);
 
+    /// <summary><c>add_intvar</c> — <see cref="Counting"/> by a step retail names rather than by one.</summary>
+    /// <remarks>
+    /// 153 uses, carrying the identical bound fields and differing only in <c>var_to_add</c>. The step
+    /// is not always one: 12 uses add 550, which is retail saying "this counts for a lot" rather than
+    /// stepping through a range, and collapsing it to an increment would fire those rungs on the wrong
+    /// pass.
+    /// </remarks>
+    public static PatternCondition CountingBy(int slot, int step, int lower, int upper,
+        bool onlyAtBound = true)
+        => ai => ai.AddToIntVar(slot, step, lower, upper, onlyAtBound);
+
     /// <summary>
     /// <c>set_intvar_if_less_than</c>: passes when counter <paramref name="counter"/> is below
     /// <paramref name="comparand"/>, and on passing sets it to <paramref name="setTo"/>.

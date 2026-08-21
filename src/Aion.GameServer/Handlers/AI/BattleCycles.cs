@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Npcskill;
 namespace Aion.GameServer.Handlers.AI;
 
 /// <summary>
-/// Combat rotations: 2845 retail patterns across 22675 npcs, 291270 actions.
+/// Combat rotations: 2854 retail patterns across 22684 npcs, 291327 actions.
 /// </summary>
 /// <remarks>
 /// What a boss does <b>during</b> the fight, as opposed to <see cref="IdleCycles"/>, which is what an
@@ -154,7 +154,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildCycleVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[2087][];
+        PatternBranch[][] variants = new PatternBranch[2096][];
         CycleVariants0(variants);
         CycleVariants1(variants);
         CycleVariants2(variants);
@@ -38093,6 +38093,30 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19497)),
         ];
         variants[2070] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(0, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17174)),
+        ];
+        variants[2071] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17174)),
+            AiPattern.Branch(900, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17860)),
+        ];
+        variants[2072] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17174)),
+            AiPattern.Branch(900, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17860)),
+            AiPattern.Branch(800, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 21288)),
+        ];
+        variants[2073] = [
             AiPattern.Branch(1200, "rung 0", [When.Timer(5)],
                 Do.ArmTimer(6, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21288),
@@ -38111,7 +38135,31 @@ internal static class BattleCycles
             AiPattern.Branch(900, "rung 3", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[2071] = [
+        variants[2074] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(0, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17340)),
+        ];
+        variants[2075] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17340)),
+            AiPattern.Branch(900, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18025)),
+        ];
+        variants[2076] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17340)),
+            AiPattern.Branch(900, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18025)),
+            AiPattern.Branch(800, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.ME, 17365)),
+        ];
+        variants[2077] = [
             AiPattern.Branch(1200, "rung 0", [When.Timer(5)],
                 Do.ArmTimer(6, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 19075),
@@ -38140,7 +38188,31 @@ internal static class BattleCycles
             AiPattern.Branch(900, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[2072] = [
+        variants[2078] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(0, 15000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17124)),
+        ];
+        variants[2079] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17124)),
+            AiPattern.Branch(900, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18032)),
+        ];
+        variants[2080] = [
+            AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
+                Do.ArmTimer(1, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17124)),
+            AiPattern.Branch(900, "rung 1", [When.Timer(1)],
+                Do.ArmTimer(2, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 18032)),
+            AiPattern.Branch(800, "rung 2", [When.Timer(2)],
+                Do.ArmTimer(0, 10000),
+                Do.SkillOn(NpcSkillTargetAttribute.RANDOM, 17332)),
+        ];
+        variants[2081] = [
             AiPattern.Branch(1200, "rung 0", [When.Timer(5), When.FirstTime(11)],
                 Do.ArmTimer(6, 15000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17332),
@@ -38165,7 +38237,7 @@ internal static class BattleCycles
             AiPattern.Branch(900, "rung 4", [When.Timer(0)],
                 Do.ArmTimer(0, 6000)),
         ];
-        variants[2073] = [
+        variants[2082] = [
             AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 11000),
                 Do.Broadcast(10600, 100f),
@@ -38197,7 +38269,7 @@ internal static class BattleCycles
                 Do.Broadcast(10200, 100f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21759)),
         ];
-        variants[2074] = [
+        variants[2083] = [
             AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 11000),
                 Do.Broadcast(10600, 100f),
@@ -38229,7 +38301,7 @@ internal static class BattleCycles
                 Do.Broadcast(10200, 100f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21759)),
         ];
-        variants[2075] = [
+        variants[2084] = [
             AiPattern.Branch(1000, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 11000),
                 Do.Broadcast(10600, 100f),
@@ -38261,12 +38333,12 @@ internal static class BattleCycles
                 Do.Broadcast(10200, 100f),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21759)),
         ];
-        variants[2076] = [
+        variants[2085] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 7000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21909)),
         ];
-        variants[2077] = [
+        variants[2086] = [
             AiPattern.Branch(12, "rung 0", [When.Timer(3), When.HpBelow(80), When.FirstTime(0)],
                 Do.Despawn(2),
                 Do.SpawnAtForTheFight(731629, 2, 0, new SpawnSpot(482.21f, 458.06f, 427.42f)),
@@ -38318,7 +38390,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 11", [When.Timer(0)],
                 Do.ArmTimer(0, 3000)),
         ];
-        variants[2078] = [
+        variants[2087] = [
             AiPattern.Branch(8, "rung 0", [When.Timer(2)],
                 Do.Broadcast(32, 50f)),
             AiPattern.Branch(7, "rung 1", [When.Timer(1), When.FirstTime(5)],
@@ -38339,7 +38411,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 10000),
                 Do.HateTarget(5000000)),
         ];
-        variants[2079] = [
+        variants[2088] = [
             AiPattern.Branch(45, "rung 0", [When.Timer(0), When.HpBetween(77, 99)],
                 Do.ArmTimer(1, 18000),
                 Do.SpawnAtForTheFight(856036, 1, 7, new SpawnSpot(458.5f, 514.7f, 417.4f)),
@@ -38719,7 +38791,7 @@ internal static class BattleCycles
             AiPattern.Branch(1, "rung 44", [When.Timer(0)],
                 Do.ArmTimer(0, 3000)),
         ];
-        variants[2080] = [
+        variants[2089] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(1, 5000),
                 Do.ArmTimer(2, 6500),
@@ -38730,7 +38802,7 @@ internal static class BattleCycles
             AiPattern.Branch(5, "rung 2", [When.Timer(2)],
                 Do.DespawnSelf()),
         ];
-        variants[2081] = [
+        variants[2090] = [
             AiPattern.Branch(1600, "rung 0", [When.FirstTime(0), When.Timer(0)],
                 Do.SpawnOnEachTarget(856345, 1, 100.0f, 1, MultiTargetOrder.Random, 5.0f, 6, 0),
                 Do.SpawnOnEachTarget(856346, 1, 100.0f, 2, MultiTargetOrder.Random, 5.0f, 6, 0),
@@ -38800,22 +38872,22 @@ internal static class BattleCycles
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20533),
                 Do.DespawnSelf()),
         ];
-        variants[2082] = [
+        variants[2091] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 22667)),
         ];
-        variants[2083] = [
+        variants[2092] = [
             AiPattern.Branch(1, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 20520)),
         ];
-        variants[2084] = [
+        variants[2093] = [
             AiPattern.Branch(7, "rung 0", [When.Timer(0)],
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
-        variants[2085] = [
+        variants[2094] = [
             AiPattern.Branch(30, "rung 0", [When.Timer(1), When.TargetRace(Race.GCHIEF_LIGHT)],
                 Do.ArmTimer(1, 9000),
                 Do.HateTarget(100000),
@@ -38830,7 +38902,7 @@ internal static class BattleCycles
                 Do.ArmTimer(0, 11000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 17568)),
         ];
-        variants[2086] = [
+        variants[2095] = [
             AiPattern.Branch(3, "rung 0", [When.Timer(0), When.TargetIsPlayer, When.TargetIsEnemy],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21792)),
@@ -59690,12 +59762,21 @@ internal static class BattleCycles
         owners[855988] = 1356;  // BIDF5_U01_Middle_Boss_Dark
         owners[855989] = 1357;  // BIDF5_U01_Middle_Boss_Dark
         owners[855990] = 1358;  // BIDF5_U01_Middle_Boss_Dark
-        owners[855994] = 2070;  // BIDF5_U01_Runaway_Wi
-        owners[855998] = 2071;  // BIDF5_U01_Runaway_Pr
-        owners[856002] = 2072;  // BIDF5_U01_Runaway_As
-        owners[856004] = 2073;  // BIDF5_U01_Boss_Wi
-        owners[856005] = 2074;  // BIDF5_U01_Boss_Wi
-        owners[856006] = 2075;  // BIDF5_U01_Monster_01
+        owners[855991] = 2070;  // BIDF5_U01_Runaway_Wi_P1
+        owners[855992] = 2071;  // BIDF5_U01_Runaway_Wi_P2_1_P3
+        owners[855993] = 2072;  // BIDF5_U01_Runaway_Wi_P3
+        owners[855994] = 2073;  // BIDF5_U01_Runaway_Wi
+        owners[855995] = 2074;  // BIDF5_U01_Runaway_Pr_P1
+        owners[855996] = 2075;  // BIDF5_U01_Runaway_Pr_P2_1_P3
+        owners[855997] = 2076;  // BIDF5_U01_Runaway_Pr_P3
+        owners[855998] = 2077;  // BIDF5_U01_Runaway_Pr
+        owners[855999] = 2078;  // BIDF5_U01_Runaway_As_P1
+        owners[856000] = 2079;  // BIDF5_U01_Runaway_As_P2_1_P3
+        owners[856001] = 2080;  // BIDF5_U01_Runaway_As_P3
+        owners[856002] = 2081;  // BIDF5_U01_Runaway_As
+        owners[856004] = 2082;  // BIDF5_U01_Boss_Wi
+        owners[856005] = 2083;  // BIDF5_U01_Boss_Wi
+        owners[856006] = 2084;  // BIDF5_U01_Monster_01
         owners[856007] = 1164;  // IDF5_U1_Vri_Def_Fi_65_Ae
         owners[856008] = 986;  // IDF5_U1_Vri_Def_Ba_65_Ae
         owners[856009] = 1180;  // IDF5_U1_Vri_DefWP_Ri_65_Ae
@@ -59703,12 +59784,12 @@ internal static class BattleCycles
         owners[856011] = 1161;  // IDF5_U1_Vri_Def_Ra_SN_65_Ae
         owners[856012] = 1162;  // IDF5_U1_Vri_Def_Wi_65_Ae
         owners[856013] = 1163;  // IDF5_U1_Vri_Def_As_65_Ae
-        owners[856014] = 2076;  // IDYun_info_05
+        owners[856014] = 2085;  // IDYun_info_05
         owners[856019] = 535;  // IDYun_TheThingFromAnotherWorld_01
-        owners[856026] = 2077;  // IDTiamat_Hard_Kalrindy
-        owners[856028] = 2078;  // IDTiamat_Hard_Tiamat_Dragon
-        owners[856029] = 2079;  // IDTiamat_Hard_Tiamat_Dragon_Dying
-        owners[856064] = 2080;  // IDStation_info_10
+        owners[856026] = 2086;  // IDTiamat_Hard_Kalrindy
+        owners[856028] = 2087;  // IDTiamat_Hard_Tiamat_Dragon
+        owners[856029] = 2088;  // IDTiamat_Hard_Tiamat_Dragon_Dying
+        owners[856064] = 2089;  // IDStation_info_10
         owners[856084] = 976;  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
         owners[856085] = 977;  // IDLDF5Re_Solo_Vritra43IU_DrakanAn
         owners[856093] = 978;  // IDF5_Mini_01_A_Prisoner_Boss_Wi
@@ -59718,17 +59799,17 @@ internal static class BattleCycles
         owners[856291] = 1374;  // F4_Rotation_Treasure_Monster_01
         owners[856295] = 768;  // F4_Rotation_Treasure_Monster_05
         owners[856296] = 1375;  // F4_Rotation_Force_Monster
-        owners[856351] = 2081;  // BIDYun_Vasharti_Glove_ControllerA
+        owners[856351] = 2090;  // BIDYun_Vasharti_Glove_ControllerA
         owners[856352] = 1787;  // BIDYun_Vasharti_Glove_ControllerC
         owners[856353] = 1787;  // BIDYun_Vasharti_Glove_ControllerE
         owners[856395] = 985;  // IDF5_U1_Vri_Def_Pr_65_Ae
         owners[856396] = 986;  // IDF5_U1_Vri_Def_Ba_65_Ae
         owners[856397] = 67;  // F5_PvP_LGuard_Kn_Ae
         owners[856478] = 528;  // IDYun_Temp_26
-        owners[856487] = 2082;  // LF5_QuestNPC_05
-        owners[856488] = 2082;  // LF5_QuestNPC_05
-        owners[856490] = 2083;  // IDYun_Temp_69
-        owners[856492] = 2083;  // IDYun_Temp_69
+        owners[856487] = 2091;  // LF5_QuestNPC_05
+        owners[856488] = 2091;  // LF5_QuestNPC_05
+        owners[856490] = 2092;  // IDYun_Temp_69
+        owners[856492] = 2092;  // IDYun_Temp_69
         owners[856499] = 1761;  // IDYun_Temp_51
         owners[880000] = 1522;  // Gab1_DArtiGuard_Boss_04_01_2
         owners[880001] = 1522;  // Gab1_DArtiGuard_Boss_04_01_2
@@ -59826,106 +59907,106 @@ internal static class BattleCycles
         owners[880748] = 1521;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880764] = 1521;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880780] = 1521;  // Gab1_VritraGuard_BossKiller_01_01
-        owners[880948] = 2084;  // Gab1_TurretSwitch_toPC_01
-        owners[880949] = 2084;  // Gab1_TurretSwitch_toPC_02
-        owners[880950] = 2084;  // Gab1_TurretSwitch_toPC_03
-        owners[880951] = 2084;  // Gab1_TurretSwitch_toPC_04
-        owners[880952] = 2084;  // Gab1_TurretSwitch_toPC_05
-        owners[880953] = 2084;  // Gab1_TurretSwitch_toPC_06
-        owners[880954] = 2084;  // Gab1_TurretSwitch_toPC_07
-        owners[880955] = 2084;  // Gab1_TurretSwitch_toPC_08
-        owners[880956] = 2084;  // Gab1_TurretSwitch_toPC_09
-        owners[880957] = 2084;  // Gab1_TurretSwitch_toPC_10
-        owners[880958] = 2084;  // Gab1_TurretSwitch_toPC_11
-        owners[880959] = 2084;  // Gab1_TurretSwitch_toPC_12
-        owners[880960] = 2084;  // Gab1_TurretSwitch_toPC_13
-        owners[880961] = 2084;  // Gab1_TurretSwitch_toPC_14
-        owners[880962] = 2084;  // Gab1_TurretSwitch_toPC_15
-        owners[880963] = 2084;  // Gab1_TurretSwitch_toPC_16
-        owners[880964] = 2084;  // Gab1_TurretSwitch_toPC_17
-        owners[880965] = 2084;  // Gab1_TurretSwitch_toPC_18
-        owners[880966] = 2084;  // Gab1_TurretSwitch_toPC_19
-        owners[880967] = 2084;  // Gab1_TurretSwitch_toPC_20
-        owners[880968] = 2084;  // Gab1_TurretSwitch_toPC_21
-        owners[880969] = 2084;  // Gab1_TurretSwitch_toPC_22
-        owners[880970] = 2084;  // Gab1_TurretSwitch_toPC_23
+        owners[880948] = 2093;  // Gab1_TurretSwitch_toPC_01
+        owners[880949] = 2093;  // Gab1_TurretSwitch_toPC_02
+        owners[880950] = 2093;  // Gab1_TurretSwitch_toPC_03
+        owners[880951] = 2093;  // Gab1_TurretSwitch_toPC_04
+        owners[880952] = 2093;  // Gab1_TurretSwitch_toPC_05
+        owners[880953] = 2093;  // Gab1_TurretSwitch_toPC_06
+        owners[880954] = 2093;  // Gab1_TurretSwitch_toPC_07
+        owners[880955] = 2093;  // Gab1_TurretSwitch_toPC_08
+        owners[880956] = 2093;  // Gab1_TurretSwitch_toPC_09
+        owners[880957] = 2093;  // Gab1_TurretSwitch_toPC_10
+        owners[880958] = 2093;  // Gab1_TurretSwitch_toPC_11
+        owners[880959] = 2093;  // Gab1_TurretSwitch_toPC_12
+        owners[880960] = 2093;  // Gab1_TurretSwitch_toPC_13
+        owners[880961] = 2093;  // Gab1_TurretSwitch_toPC_14
+        owners[880962] = 2093;  // Gab1_TurretSwitch_toPC_15
+        owners[880963] = 2093;  // Gab1_TurretSwitch_toPC_16
+        owners[880964] = 2093;  // Gab1_TurretSwitch_toPC_17
+        owners[880965] = 2093;  // Gab1_TurretSwitch_toPC_18
+        owners[880966] = 2093;  // Gab1_TurretSwitch_toPC_19
+        owners[880967] = 2093;  // Gab1_TurretSwitch_toPC_20
+        owners[880968] = 2093;  // Gab1_TurretSwitch_toPC_21
+        owners[880969] = 2093;  // Gab1_TurretSwitch_toPC_22
+        owners[880970] = 2093;  // Gab1_TurretSwitch_toPC_23
         owners[881410] = 2043;  // Gab1_Named_01
         owners[881418] = 2043;  // Gab1_Named_01
         owners[881426] = 2043;  // Gab1_Named_01
         owners[881434] = 2043;  // Gab1_Named_01
-        owners[881468] = 2084;  // Gab1_TurretSwitch_toPC_01
-        owners[881469] = 2084;  // Gab1_TurretSwitch_toPC_02
-        owners[881470] = 2084;  // Gab1_TurretSwitch_toPC_03
-        owners[881471] = 2084;  // Gab1_TurretSwitch_toPC_04
-        owners[881472] = 2084;  // Gab1_TurretSwitch_toPC_05
-        owners[881473] = 2084;  // Gab1_TurretSwitch_toPC_06
-        owners[881474] = 2084;  // Gab1_TurretSwitch_toPC_07
-        owners[881475] = 2084;  // Gab1_TurretSwitch_toPC_08
-        owners[881476] = 2084;  // Gab1_TurretSwitch_toPC_09
-        owners[881477] = 2084;  // Gab1_TurretSwitch_toPC_10
-        owners[881478] = 2084;  // Gab1_TurretSwitch_toPC_11
-        owners[881479] = 2084;  // Gab1_TurretSwitch_toPC_12
-        owners[881480] = 2084;  // Gab1_TurretSwitch_toPC_13
-        owners[881481] = 2084;  // Gab1_TurretSwitch_toPC_14
-        owners[881482] = 2084;  // Gab1_TurretSwitch_toPC_15
-        owners[881483] = 2084;  // Gab1_TurretSwitch_toPC_16
-        owners[881484] = 2084;  // Gab1_TurretSwitch_toPC_17
-        owners[881485] = 2084;  // Gab1_TurretSwitch_toPC_18
-        owners[881486] = 2084;  // Gab1_TurretSwitch_toPC_19
-        owners[881487] = 2084;  // Gab1_TurretSwitch_toPC_20
-        owners[881488] = 2084;  // Gab1_TurretSwitch_toPC_21
-        owners[881489] = 2084;  // Gab1_TurretSwitch_toPC_22
-        owners[881490] = 2084;  // Gab1_TurretSwitch_toPC_23
-        owners[881492] = 2084;  // Gab1_TurretSwitch_toPC_01
-        owners[881493] = 2084;  // Gab1_TurretSwitch_toPC_02
-        owners[881494] = 2084;  // Gab1_TurretSwitch_toPC_03
-        owners[881495] = 2084;  // Gab1_TurretSwitch_toPC_04
-        owners[881496] = 2084;  // Gab1_TurretSwitch_toPC_05
-        owners[881497] = 2084;  // Gab1_TurretSwitch_toPC_06
-        owners[881498] = 2084;  // Gab1_TurretSwitch_toPC_07
-        owners[881499] = 2084;  // Gab1_TurretSwitch_toPC_08
-        owners[881500] = 2084;  // Gab1_TurretSwitch_toPC_09
-        owners[881501] = 2084;  // Gab1_TurretSwitch_toPC_10
-        owners[881502] = 2084;  // Gab1_TurretSwitch_toPC_11
-        owners[881503] = 2084;  // Gab1_TurretSwitch_toPC_12
-        owners[881504] = 2084;  // Gab1_TurretSwitch_toPC_13
-        owners[881505] = 2084;  // Gab1_TurretSwitch_toPC_14
-        owners[881506] = 2084;  // Gab1_TurretSwitch_toPC_15
-        owners[881507] = 2084;  // Gab1_TurretSwitch_toPC_16
-        owners[881508] = 2084;  // Gab1_TurretSwitch_toPC_17
-        owners[881509] = 2084;  // Gab1_TurretSwitch_toPC_18
-        owners[881510] = 2084;  // Gab1_TurretSwitch_toPC_19
-        owners[881511] = 2084;  // Gab1_TurretSwitch_toPC_20
-        owners[881512] = 2084;  // Gab1_TurretSwitch_toPC_21
-        owners[881513] = 2084;  // Gab1_TurretSwitch_toPC_22
-        owners[881514] = 2084;  // Gab1_TurretSwitch_toPC_23
-        owners[881516] = 2084;  // Gab1_TurretSwitch_toPC_01
-        owners[881517] = 2084;  // Gab1_TurretSwitch_toPC_02
-        owners[881518] = 2084;  // Gab1_TurretSwitch_toPC_03
-        owners[881519] = 2084;  // Gab1_TurretSwitch_toPC_04
-        owners[881520] = 2084;  // Gab1_TurretSwitch_toPC_05
-        owners[881521] = 2084;  // Gab1_TurretSwitch_toPC_06
-        owners[881522] = 2084;  // Gab1_TurretSwitch_toPC_07
-        owners[881523] = 2084;  // Gab1_TurretSwitch_toPC_08
+        owners[881468] = 2093;  // Gab1_TurretSwitch_toPC_01
+        owners[881469] = 2093;  // Gab1_TurretSwitch_toPC_02
+        owners[881470] = 2093;  // Gab1_TurretSwitch_toPC_03
+        owners[881471] = 2093;  // Gab1_TurretSwitch_toPC_04
+        owners[881472] = 2093;  // Gab1_TurretSwitch_toPC_05
+        owners[881473] = 2093;  // Gab1_TurretSwitch_toPC_06
+        owners[881474] = 2093;  // Gab1_TurretSwitch_toPC_07
+        owners[881475] = 2093;  // Gab1_TurretSwitch_toPC_08
+        owners[881476] = 2093;  // Gab1_TurretSwitch_toPC_09
+        owners[881477] = 2093;  // Gab1_TurretSwitch_toPC_10
+        owners[881478] = 2093;  // Gab1_TurretSwitch_toPC_11
+        owners[881479] = 2093;  // Gab1_TurretSwitch_toPC_12
+        owners[881480] = 2093;  // Gab1_TurretSwitch_toPC_13
+        owners[881481] = 2093;  // Gab1_TurretSwitch_toPC_14
+        owners[881482] = 2093;  // Gab1_TurretSwitch_toPC_15
+        owners[881483] = 2093;  // Gab1_TurretSwitch_toPC_16
+        owners[881484] = 2093;  // Gab1_TurretSwitch_toPC_17
+        owners[881485] = 2093;  // Gab1_TurretSwitch_toPC_18
+        owners[881486] = 2093;  // Gab1_TurretSwitch_toPC_19
+        owners[881487] = 2093;  // Gab1_TurretSwitch_toPC_20
+        owners[881488] = 2093;  // Gab1_TurretSwitch_toPC_21
+        owners[881489] = 2093;  // Gab1_TurretSwitch_toPC_22
+        owners[881490] = 2093;  // Gab1_TurretSwitch_toPC_23
+        owners[881492] = 2093;  // Gab1_TurretSwitch_toPC_01
+        owners[881493] = 2093;  // Gab1_TurretSwitch_toPC_02
+        owners[881494] = 2093;  // Gab1_TurretSwitch_toPC_03
+        owners[881495] = 2093;  // Gab1_TurretSwitch_toPC_04
+        owners[881496] = 2093;  // Gab1_TurretSwitch_toPC_05
+        owners[881497] = 2093;  // Gab1_TurretSwitch_toPC_06
+        owners[881498] = 2093;  // Gab1_TurretSwitch_toPC_07
+        owners[881499] = 2093;  // Gab1_TurretSwitch_toPC_08
+        owners[881500] = 2093;  // Gab1_TurretSwitch_toPC_09
+        owners[881501] = 2093;  // Gab1_TurretSwitch_toPC_10
+        owners[881502] = 2093;  // Gab1_TurretSwitch_toPC_11
+        owners[881503] = 2093;  // Gab1_TurretSwitch_toPC_12
+        owners[881504] = 2093;  // Gab1_TurretSwitch_toPC_13
+        owners[881505] = 2093;  // Gab1_TurretSwitch_toPC_14
+        owners[881506] = 2093;  // Gab1_TurretSwitch_toPC_15
+        owners[881507] = 2093;  // Gab1_TurretSwitch_toPC_16
+        owners[881508] = 2093;  // Gab1_TurretSwitch_toPC_17
+        owners[881509] = 2093;  // Gab1_TurretSwitch_toPC_18
+        owners[881510] = 2093;  // Gab1_TurretSwitch_toPC_19
+        owners[881511] = 2093;  // Gab1_TurretSwitch_toPC_20
+        owners[881512] = 2093;  // Gab1_TurretSwitch_toPC_21
+        owners[881513] = 2093;  // Gab1_TurretSwitch_toPC_22
     }
 
     private static void CycleOf52(Dictionary<int, int> owners)
     {
-        owners[881524] = 2084;  // Gab1_TurretSwitch_toPC_09
-        owners[881525] = 2084;  // Gab1_TurretSwitch_toPC_10
-        owners[881526] = 2084;  // Gab1_TurretSwitch_toPC_11
-        owners[881527] = 2084;  // Gab1_TurretSwitch_toPC_12
-        owners[881528] = 2084;  // Gab1_TurretSwitch_toPC_13
-        owners[881529] = 2084;  // Gab1_TurretSwitch_toPC_14
-        owners[881530] = 2084;  // Gab1_TurretSwitch_toPC_15
-        owners[881531] = 2084;  // Gab1_TurretSwitch_toPC_16
-        owners[881532] = 2084;  // Gab1_TurretSwitch_toPC_17
-        owners[881533] = 2084;  // Gab1_TurretSwitch_toPC_18
-        owners[881534] = 2084;  // Gab1_TurretSwitch_toPC_19
-        owners[881535] = 2084;  // Gab1_TurretSwitch_toPC_20
-        owners[881536] = 2084;  // Gab1_TurretSwitch_toPC_21
-        owners[881537] = 2084;  // Gab1_TurretSwitch_toPC_22
-        owners[881538] = 2084;  // Gab1_TurretSwitch_toPC_23
+        owners[881514] = 2093;  // Gab1_TurretSwitch_toPC_23
+        owners[881516] = 2093;  // Gab1_TurretSwitch_toPC_01
+        owners[881517] = 2093;  // Gab1_TurretSwitch_toPC_02
+        owners[881518] = 2093;  // Gab1_TurretSwitch_toPC_03
+        owners[881519] = 2093;  // Gab1_TurretSwitch_toPC_04
+        owners[881520] = 2093;  // Gab1_TurretSwitch_toPC_05
+        owners[881521] = 2093;  // Gab1_TurretSwitch_toPC_06
+        owners[881522] = 2093;  // Gab1_TurretSwitch_toPC_07
+        owners[881523] = 2093;  // Gab1_TurretSwitch_toPC_08
+        owners[881524] = 2093;  // Gab1_TurretSwitch_toPC_09
+        owners[881525] = 2093;  // Gab1_TurretSwitch_toPC_10
+        owners[881526] = 2093;  // Gab1_TurretSwitch_toPC_11
+        owners[881527] = 2093;  // Gab1_TurretSwitch_toPC_12
+        owners[881528] = 2093;  // Gab1_TurretSwitch_toPC_13
+        owners[881529] = 2093;  // Gab1_TurretSwitch_toPC_14
+        owners[881530] = 2093;  // Gab1_TurretSwitch_toPC_15
+        owners[881531] = 2093;  // Gab1_TurretSwitch_toPC_16
+        owners[881532] = 2093;  // Gab1_TurretSwitch_toPC_17
+        owners[881533] = 2093;  // Gab1_TurretSwitch_toPC_18
+        owners[881534] = 2093;  // Gab1_TurretSwitch_toPC_19
+        owners[881535] = 2093;  // Gab1_TurretSwitch_toPC_20
+        owners[881536] = 2093;  // Gab1_TurretSwitch_toPC_21
+        owners[881537] = 2093;  // Gab1_TurretSwitch_toPC_22
+        owners[881538] = 2093;  // Gab1_TurretSwitch_toPC_23
         owners[881542] = 1394;  // F5_RvR_LGuard_Ra_Ae
         owners[881545] = 1394;  // F5_RvR_DGuard_Ra_Ae
         owners[881546] = 1387;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
@@ -59944,7 +60025,7 @@ internal static class BattleCycles
         owners[881564] = 1391;  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
         owners[881565] = 1395;  // F5_RvR_LGuard_Gu_Ae
         owners[881566] = 1395;  // F5_RvR_DGuard_Gu_Ae
-        owners[881598] = 2085;  // LDF5_Fortress_Killer
+        owners[881598] = 2094;  // LDF5_Fortress_Killer
         owners[881608] = 1332;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[881609] = 1332;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[881610] = 1332;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
@@ -60302,6 +60383,10 @@ internal static class BattleCycles
         owners[882064] = 61;  // F5_PvPLight_LGuard_Fi_An
         owners[882065] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[882066] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
+    }
+
+    private static void CycleOf53(Dictionary<int, int> owners)
+    {
         owners[882073] = 69;  // F5_PvPLight_DGuard_Fi_An
         owners[882074] = 63;  // F5_PvPLight_DGuard_Wi_An
         owners[882082] = 1252;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
@@ -60311,10 +60396,6 @@ internal static class BattleCycles
         owners[882092] = 63;  // F5_PvPLight_LGuard_Wi_An
         owners[882093] = 62;  // F5_PvPLight_LGuard_Ra_An_Broad
         owners[882100] = 69;  // F5_PvPLight_DGuard_Fi_An
-    }
-
-    private static void CycleOf53(Dictionary<int, int> owners)
-    {
         owners[882101] = 63;  // F5_PvPLight_DGuard_Wi_An
         owners[882109] = 1252;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[882110] = 1256;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
@@ -60359,9 +60440,9 @@ internal static class BattleCycles
         owners[882244] = 1252;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[882245] = 1256;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[882246] = 1255;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
-        owners[882293] = 2086;  // F5_RvR_Trap
-        owners[882294] = 2086;  // F5_RvR_Trap
-        owners[882295] = 2086;  // F5_RvR_Trap
+        owners[882293] = 2095;  // F5_RvR_Trap
+        owners[882294] = 2095;  // F5_RvR_Trap
+        owners[882295] = 2095;  // F5_RvR_Trap
         owners[882298] = 2026;  // LDF5_Fortress_VGuardBoss_Fi
         owners[882299] = 2027;  // LDF5_Fortress_VGuardBoss_Ra
         owners[882300] = 2028;  // LDF5_Fortress_VGuardBoss_Wi
@@ -60372,7 +60453,7 @@ internal static class BattleCycles
 
     private static PatternBranch[][] BuildOnEnterAttackStateVariants()
     {
-        PatternBranch[][] variants = new PatternBranch[1486][];
+        PatternBranch[][] variants = new PatternBranch[1489][];
         OnEnterAttackStateVariants0(variants);
         OnEnterAttackStateVariants1(variants);
         OnEnterAttackStateVariants2(variants);
@@ -69961,13 +70042,30 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 13000)),
         ];
         variants[1475] = [
+            AiPattern.Branch(1000, "rung 0", [When.CountingBy(0, 550, 0, 500, false)],
+                Do.ArmTimer(0, 5000),
+                Do.Broadcast(10500, 30f)),
+        ];
+        variants[1476] = [
+            AiPattern.Branch(1000, "rung 0", [When.CountingBy(0, 550, 0, 500, false)],
+                Do.ArmTimer(0, 5000),
+                Do.Broadcast(10500, 30f),
+                Do.Broadcast(11100, 50f)),
+        ];
+        variants[1477] = [
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.ArmTimer(0, 6000),
                 Do.Broadcast(10500, 30f),
                 Do.HateTarget(10000),
                 Do.Say(1501265, 0)),
         ];
-        variants[1476] = [
+        variants[1478] = [
+            AiPattern.Branch(1000, "rung 0", [When.CountingBy(0, 550, 0, 500, false)],
+                Do.ArmTimer(0, 9000),
+                Do.Broadcast(10500, 30f),
+                Do.Broadcast(11100, 50f)),
+        ];
+        variants[1479] = [
             AiPattern.Branch(1000, "rung 0", When.Always,
                 Do.ArmTimer(0, 5000),
                 Do.Broadcast(10500, 30f),
@@ -69978,7 +70076,7 @@ internal static class BattleCycles
                 Do.SpawnAtForTheFight(857437, 0, 0, new SpawnSpot(528.8f, 437.2f, 620.3f)),
                 Do.SpawnAtForTheFight(857437, 0, 0, new SpawnSpot(468.6f, 516.8f, 597.5f))),
         ];
-        variants[1477] = [
+        variants[1480] = [
             AiPattern.Branch(13, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000),
                 Do.ArmTimer(1, 3000),
@@ -69988,7 +70086,7 @@ internal static class BattleCycles
                 Do.SystemMessage(1401552, 0),
                 Do.Say(1500718, 0)),
         ];
-        variants[1478] = [
+        variants[1481] = [
             AiPattern.Branch(9, "rung 0", When.Always,
                 Do.Say(1500693, 0),
                 Do.ArmTimer(0, 10000),
@@ -69996,31 +70094,31 @@ internal static class BattleCycles
                 Do.Broadcast(23, 30f),
                 Do.Broadcast(20, 80f)),
         ];
-        variants[1479] = [
+        variants[1482] = [
             AiPattern.Branch(46, "rung 0", When.Always,
                 Do.ArmTimer(0, 7000),
                 Do.SetIdleTimer(0)),
         ];
-        variants[1480] = [
+        variants[1483] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 2000),
                 Do.Say(1501197, 0)),
         ];
-        variants[1481] = [
+        variants[1484] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 3000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 22667)),
         ];
-        variants[1482] = [
+        variants[1485] = [
             AiPattern.Branch(2, "rung 0", When.Always,
                 Do.ArmTimer(0, 1000)),
         ];
-        variants[1483] = [
+        variants[1486] = [
             AiPattern.Branch(7, "rung 0", When.Always,
                 Do.ArmTimer(0, 4000),
                 Do.SkillOn(NpcSkillTargetAttribute.MOST_HATED, 21401)),
         ];
-        variants[1484] = [
+        variants[1487] = [
             AiPattern.Branch(50, "rung 0", [When.TargetRace(Race.GCHIEF_LIGHT)],
                 Do.HateTarget(100000000),
                 Do.ArmTimer(1, 9000),
@@ -70036,7 +70134,7 @@ internal static class BattleCycles
                 Do.ArmTimer(1, 9000),
                 Do.SkillOnEventTarget(17568)),
         ];
-        variants[1485] = [
+        variants[1488] = [
             AiPattern.Branch(1, "rung 0", [When.EventTargetIsPlayer],
                 Do.ArmTimer(0, 6000),
                 Do.SkillOn(NpcSkillTargetAttribute.ME, 21792)),
@@ -90777,12 +90875,21 @@ internal static class BattleCycles
         owners[855988] = 1015;  // BIDF5_U01_Middle_Boss_Dark
         owners[855989] = 1015;  // BIDF5_U01_Middle_Boss_Dark
         owners[855990] = 1015;  // BIDF5_U01_Middle_Boss_Dark
-        owners[855994] = 1475;  // BIDF5_U01_Runaway_Wi
-        owners[855998] = 1475;  // BIDF5_U01_Runaway_Pr
-        owners[856002] = 1475;  // BIDF5_U01_Runaway_As
-        owners[856004] = 1476;  // BIDF5_U01_Boss_Wi
-        owners[856005] = 1476;  // BIDF5_U01_Boss_Wi
-        owners[856006] = 1476;  // BIDF5_U01_Monster_01
+        owners[855991] = 1475;  // BIDF5_U01_Runaway_Wi_P1
+        owners[855992] = 1476;  // BIDF5_U01_Runaway_Wi_P2_1_P3
+        owners[855993] = 1475;  // BIDF5_U01_Runaway_Wi_P3
+        owners[855994] = 1477;  // BIDF5_U01_Runaway_Wi
+        owners[855995] = 1475;  // BIDF5_U01_Runaway_Pr_P1
+        owners[855996] = 1476;  // BIDF5_U01_Runaway_Pr_P2_1_P3
+        owners[855997] = 1475;  // BIDF5_U01_Runaway_Pr_P3
+        owners[855998] = 1477;  // BIDF5_U01_Runaway_Pr
+        owners[855999] = 1475;  // BIDF5_U01_Runaway_As_P1
+        owners[856000] = 1478;  // BIDF5_U01_Runaway_As_P2_1_P3
+        owners[856001] = 1475;  // BIDF5_U01_Runaway_As_P3
+        owners[856002] = 1477;  // BIDF5_U01_Runaway_As
+        owners[856004] = 1479;  // BIDF5_U01_Boss_Wi
+        owners[856005] = 1479;  // BIDF5_U01_Boss_Wi
+        owners[856006] = 1479;  // BIDF5_U01_Monster_01
         owners[856007] = 868;  // IDF5_U1_Vri_Def_Fi_65_Ae
         owners[856008] = 774;  // IDF5_U1_Vri_Def_Ba_65_Ae
         owners[856009] = 869;  // IDF5_U1_Vri_DefWP_Ri_65_Ae
@@ -90792,10 +90899,10 @@ internal static class BattleCycles
         owners[856013] = 867;  // IDF5_U1_Vri_Def_As_65_Ae
         owners[856014] = 153;  // IDYun_info_05
         owners[856019] = 440;  // IDYun_TheThingFromAnotherWorld_01
-        owners[856026] = 1477;  // IDTiamat_Hard_Kalrindy
-        owners[856028] = 1478;  // IDTiamat_Hard_Tiamat_Dragon
-        owners[856029] = 1479;  // IDTiamat_Hard_Tiamat_Dragon_Dying
-        owners[856064] = 1480;  // IDStation_info_10
+        owners[856026] = 1480;  // IDTiamat_Hard_Kalrindy
+        owners[856028] = 1481;  // IDTiamat_Hard_Tiamat_Dragon
+        owners[856029] = 1482;  // IDTiamat_Hard_Tiamat_Dragon_Dying
+        owners[856064] = 1483;  // IDStation_info_10
         owners[856084] = 767;  // IDLDF5Re_Solo_Vritra43CU_DrakanFn
         owners[856085] = 767;  // IDLDF5Re_Solo_Vritra43IU_DrakanAn
         owners[856093] = 768;  // IDF5_Mini_01_A_Prisoner_Boss_Wi
@@ -90812,10 +90919,10 @@ internal static class BattleCycles
         owners[856396] = 774;  // IDF5_U1_Vri_Def_Ba_65_Ae
         owners[856397] = 63;  // F5_PvP_LGuard_Kn_Ae
         owners[856478] = 413;  // IDYun_Temp_26
-        owners[856487] = 1481;  // LF5_QuestNPC_05
-        owners[856488] = 1481;  // LF5_QuestNPC_05
-        owners[856490] = 1482;  // IDYun_Temp_69
-        owners[856492] = 1482;  // IDYun_Temp_69
+        owners[856487] = 1484;  // LF5_QuestNPC_05
+        owners[856488] = 1484;  // LF5_QuestNPC_05
+        owners[856490] = 1485;  // IDYun_Temp_69
+        owners[856492] = 1485;  // IDYun_Temp_69
         owners[856499] = 1071;  // IDYun_Temp_51
         owners[880000] = 1134;  // Gab1_DArtiGuard_Boss_04_01_2
         owners[880001] = 1134;  // Gab1_DArtiGuard_Boss_04_01_2
@@ -90913,102 +91020,102 @@ internal static class BattleCycles
         owners[880748] = 1133;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880764] = 1133;  // Gab1_VritraGuard_BossKiller_01_01
         owners[880780] = 1133;  // Gab1_VritraGuard_BossKiller_01_01
-        owners[880948] = 1483;  // Gab1_TurretSwitch_toPC_01
-        owners[880949] = 1483;  // Gab1_TurretSwitch_toPC_02
-        owners[880950] = 1483;  // Gab1_TurretSwitch_toPC_03
-        owners[880951] = 1483;  // Gab1_TurretSwitch_toPC_04
-        owners[880952] = 1483;  // Gab1_TurretSwitch_toPC_05
-        owners[880953] = 1483;  // Gab1_TurretSwitch_toPC_06
-        owners[880954] = 1483;  // Gab1_TurretSwitch_toPC_07
-        owners[880955] = 1483;  // Gab1_TurretSwitch_toPC_08
-        owners[880956] = 1483;  // Gab1_TurretSwitch_toPC_09
-        owners[880957] = 1483;  // Gab1_TurretSwitch_toPC_10
-        owners[880958] = 1483;  // Gab1_TurretSwitch_toPC_11
-        owners[880959] = 1483;  // Gab1_TurretSwitch_toPC_12
-        owners[880960] = 1483;  // Gab1_TurretSwitch_toPC_13
-        owners[880961] = 1483;  // Gab1_TurretSwitch_toPC_14
-        owners[880962] = 1483;  // Gab1_TurretSwitch_toPC_15
-        owners[880963] = 1483;  // Gab1_TurretSwitch_toPC_16
-        owners[880964] = 1483;  // Gab1_TurretSwitch_toPC_17
-        owners[880965] = 1483;  // Gab1_TurretSwitch_toPC_18
-        owners[880966] = 1483;  // Gab1_TurretSwitch_toPC_19
-        owners[880967] = 1483;  // Gab1_TurretSwitch_toPC_20
-        owners[880968] = 1483;  // Gab1_TurretSwitch_toPC_21
-        owners[880969] = 1483;  // Gab1_TurretSwitch_toPC_22
-        owners[880970] = 1483;  // Gab1_TurretSwitch_toPC_23
+        owners[880948] = 1486;  // Gab1_TurretSwitch_toPC_01
+        owners[880949] = 1486;  // Gab1_TurretSwitch_toPC_02
+        owners[880950] = 1486;  // Gab1_TurretSwitch_toPC_03
+        owners[880951] = 1486;  // Gab1_TurretSwitch_toPC_04
+        owners[880952] = 1486;  // Gab1_TurretSwitch_toPC_05
+        owners[880953] = 1486;  // Gab1_TurretSwitch_toPC_06
+        owners[880954] = 1486;  // Gab1_TurretSwitch_toPC_07
+        owners[880955] = 1486;  // Gab1_TurretSwitch_toPC_08
+        owners[880956] = 1486;  // Gab1_TurretSwitch_toPC_09
+        owners[880957] = 1486;  // Gab1_TurretSwitch_toPC_10
+        owners[880958] = 1486;  // Gab1_TurretSwitch_toPC_11
+        owners[880959] = 1486;  // Gab1_TurretSwitch_toPC_12
+        owners[880960] = 1486;  // Gab1_TurretSwitch_toPC_13
+        owners[880961] = 1486;  // Gab1_TurretSwitch_toPC_14
+        owners[880962] = 1486;  // Gab1_TurretSwitch_toPC_15
+        owners[880963] = 1486;  // Gab1_TurretSwitch_toPC_16
+        owners[880964] = 1486;  // Gab1_TurretSwitch_toPC_17
+        owners[880965] = 1486;  // Gab1_TurretSwitch_toPC_18
+        owners[880966] = 1486;  // Gab1_TurretSwitch_toPC_19
+        owners[880967] = 1486;  // Gab1_TurretSwitch_toPC_20
+        owners[880968] = 1486;  // Gab1_TurretSwitch_toPC_21
+        owners[880969] = 1486;  // Gab1_TurretSwitch_toPC_22
+        owners[880970] = 1486;  // Gab1_TurretSwitch_toPC_23
         owners[881410] = 1455;  // Gab1_Named_01
         owners[881418] = 1455;  // Gab1_Named_01
         owners[881426] = 1455;  // Gab1_Named_01
         owners[881434] = 1455;  // Gab1_Named_01
-        owners[881468] = 1483;  // Gab1_TurretSwitch_toPC_01
-        owners[881469] = 1483;  // Gab1_TurretSwitch_toPC_02
-        owners[881470] = 1483;  // Gab1_TurretSwitch_toPC_03
-        owners[881471] = 1483;  // Gab1_TurretSwitch_toPC_04
-        owners[881472] = 1483;  // Gab1_TurretSwitch_toPC_05
-        owners[881473] = 1483;  // Gab1_TurretSwitch_toPC_06
-        owners[881474] = 1483;  // Gab1_TurretSwitch_toPC_07
-        owners[881475] = 1483;  // Gab1_TurretSwitch_toPC_08
-        owners[881476] = 1483;  // Gab1_TurretSwitch_toPC_09
-        owners[881477] = 1483;  // Gab1_TurretSwitch_toPC_10
-        owners[881478] = 1483;  // Gab1_TurretSwitch_toPC_11
-        owners[881479] = 1483;  // Gab1_TurretSwitch_toPC_12
-        owners[881480] = 1483;  // Gab1_TurretSwitch_toPC_13
-        owners[881481] = 1483;  // Gab1_TurretSwitch_toPC_14
-        owners[881482] = 1483;  // Gab1_TurretSwitch_toPC_15
-        owners[881483] = 1483;  // Gab1_TurretSwitch_toPC_16
-        owners[881484] = 1483;  // Gab1_TurretSwitch_toPC_17
-        owners[881485] = 1483;  // Gab1_TurretSwitch_toPC_18
-        owners[881486] = 1483;  // Gab1_TurretSwitch_toPC_19
-        owners[881487] = 1483;  // Gab1_TurretSwitch_toPC_20
-        owners[881488] = 1483;  // Gab1_TurretSwitch_toPC_21
-        owners[881489] = 1483;  // Gab1_TurretSwitch_toPC_22
-        owners[881490] = 1483;  // Gab1_TurretSwitch_toPC_23
-        owners[881492] = 1483;  // Gab1_TurretSwitch_toPC_01
-        owners[881493] = 1483;  // Gab1_TurretSwitch_toPC_02
-        owners[881494] = 1483;  // Gab1_TurretSwitch_toPC_03
-        owners[881495] = 1483;  // Gab1_TurretSwitch_toPC_04
-        owners[881496] = 1483;  // Gab1_TurretSwitch_toPC_05
-        owners[881497] = 1483;  // Gab1_TurretSwitch_toPC_06
-        owners[881498] = 1483;  // Gab1_TurretSwitch_toPC_07
-        owners[881499] = 1483;  // Gab1_TurretSwitch_toPC_08
-        owners[881500] = 1483;  // Gab1_TurretSwitch_toPC_09
-        owners[881501] = 1483;  // Gab1_TurretSwitch_toPC_10
-        owners[881502] = 1483;  // Gab1_TurretSwitch_toPC_11
-        owners[881503] = 1483;  // Gab1_TurretSwitch_toPC_12
-        owners[881504] = 1483;  // Gab1_TurretSwitch_toPC_13
-        owners[881505] = 1483;  // Gab1_TurretSwitch_toPC_14
-        owners[881506] = 1483;  // Gab1_TurretSwitch_toPC_15
-        owners[881507] = 1483;  // Gab1_TurretSwitch_toPC_16
-        owners[881508] = 1483;  // Gab1_TurretSwitch_toPC_17
-        owners[881509] = 1483;  // Gab1_TurretSwitch_toPC_18
-        owners[881510] = 1483;  // Gab1_TurretSwitch_toPC_19
-        owners[881511] = 1483;  // Gab1_TurretSwitch_toPC_20
-        owners[881512] = 1483;  // Gab1_TurretSwitch_toPC_21
-        owners[881513] = 1483;  // Gab1_TurretSwitch_toPC_22
-        owners[881514] = 1483;  // Gab1_TurretSwitch_toPC_23
-        owners[881516] = 1483;  // Gab1_TurretSwitch_toPC_01
-        owners[881517] = 1483;  // Gab1_TurretSwitch_toPC_02
-        owners[881518] = 1483;  // Gab1_TurretSwitch_toPC_03
-        owners[881519] = 1483;  // Gab1_TurretSwitch_toPC_04
-        owners[881520] = 1483;  // Gab1_TurretSwitch_toPC_05
-        owners[881521] = 1483;  // Gab1_TurretSwitch_toPC_06
-        owners[881522] = 1483;  // Gab1_TurretSwitch_toPC_07
-        owners[881523] = 1483;  // Gab1_TurretSwitch_toPC_08
-        owners[881524] = 1483;  // Gab1_TurretSwitch_toPC_09
-        owners[881525] = 1483;  // Gab1_TurretSwitch_toPC_10
-        owners[881526] = 1483;  // Gab1_TurretSwitch_toPC_11
-        owners[881527] = 1483;  // Gab1_TurretSwitch_toPC_12
-        owners[881528] = 1483;  // Gab1_TurretSwitch_toPC_13
-        owners[881529] = 1483;  // Gab1_TurretSwitch_toPC_14
-        owners[881530] = 1483;  // Gab1_TurretSwitch_toPC_15
-        owners[881531] = 1483;  // Gab1_TurretSwitch_toPC_16
-        owners[881532] = 1483;  // Gab1_TurretSwitch_toPC_17
-        owners[881533] = 1483;  // Gab1_TurretSwitch_toPC_18
-        owners[881534] = 1483;  // Gab1_TurretSwitch_toPC_19
-        owners[881535] = 1483;  // Gab1_TurretSwitch_toPC_20
-        owners[881536] = 1483;  // Gab1_TurretSwitch_toPC_21
-        owners[881537] = 1483;  // Gab1_TurretSwitch_toPC_22
-        owners[881538] = 1483;  // Gab1_TurretSwitch_toPC_23
+        owners[881468] = 1486;  // Gab1_TurretSwitch_toPC_01
+        owners[881469] = 1486;  // Gab1_TurretSwitch_toPC_02
+        owners[881470] = 1486;  // Gab1_TurretSwitch_toPC_03
+        owners[881471] = 1486;  // Gab1_TurretSwitch_toPC_04
+        owners[881472] = 1486;  // Gab1_TurretSwitch_toPC_05
+        owners[881473] = 1486;  // Gab1_TurretSwitch_toPC_06
+        owners[881474] = 1486;  // Gab1_TurretSwitch_toPC_07
+        owners[881475] = 1486;  // Gab1_TurretSwitch_toPC_08
+        owners[881476] = 1486;  // Gab1_TurretSwitch_toPC_09
+        owners[881477] = 1486;  // Gab1_TurretSwitch_toPC_10
+        owners[881478] = 1486;  // Gab1_TurretSwitch_toPC_11
+        owners[881479] = 1486;  // Gab1_TurretSwitch_toPC_12
+        owners[881480] = 1486;  // Gab1_TurretSwitch_toPC_13
+        owners[881481] = 1486;  // Gab1_TurretSwitch_toPC_14
+        owners[881482] = 1486;  // Gab1_TurretSwitch_toPC_15
+        owners[881483] = 1486;  // Gab1_TurretSwitch_toPC_16
+        owners[881484] = 1486;  // Gab1_TurretSwitch_toPC_17
+        owners[881485] = 1486;  // Gab1_TurretSwitch_toPC_18
+        owners[881486] = 1486;  // Gab1_TurretSwitch_toPC_19
+        owners[881487] = 1486;  // Gab1_TurretSwitch_toPC_20
+        owners[881488] = 1486;  // Gab1_TurretSwitch_toPC_21
+        owners[881489] = 1486;  // Gab1_TurretSwitch_toPC_22
+        owners[881490] = 1486;  // Gab1_TurretSwitch_toPC_23
+        owners[881492] = 1486;  // Gab1_TurretSwitch_toPC_01
+        owners[881493] = 1486;  // Gab1_TurretSwitch_toPC_02
+        owners[881494] = 1486;  // Gab1_TurretSwitch_toPC_03
+        owners[881495] = 1486;  // Gab1_TurretSwitch_toPC_04
+        owners[881496] = 1486;  // Gab1_TurretSwitch_toPC_05
+        owners[881497] = 1486;  // Gab1_TurretSwitch_toPC_06
+        owners[881498] = 1486;  // Gab1_TurretSwitch_toPC_07
+        owners[881499] = 1486;  // Gab1_TurretSwitch_toPC_08
+        owners[881500] = 1486;  // Gab1_TurretSwitch_toPC_09
+        owners[881501] = 1486;  // Gab1_TurretSwitch_toPC_10
+        owners[881502] = 1486;  // Gab1_TurretSwitch_toPC_11
+        owners[881503] = 1486;  // Gab1_TurretSwitch_toPC_12
+        owners[881504] = 1486;  // Gab1_TurretSwitch_toPC_13
+        owners[881505] = 1486;  // Gab1_TurretSwitch_toPC_14
+        owners[881506] = 1486;  // Gab1_TurretSwitch_toPC_15
+        owners[881507] = 1486;  // Gab1_TurretSwitch_toPC_16
+        owners[881508] = 1486;  // Gab1_TurretSwitch_toPC_17
+        owners[881509] = 1486;  // Gab1_TurretSwitch_toPC_18
+        owners[881510] = 1486;  // Gab1_TurretSwitch_toPC_19
+        owners[881511] = 1486;  // Gab1_TurretSwitch_toPC_20
+        owners[881512] = 1486;  // Gab1_TurretSwitch_toPC_21
+        owners[881513] = 1486;  // Gab1_TurretSwitch_toPC_22
+        owners[881514] = 1486;  // Gab1_TurretSwitch_toPC_23
+        owners[881516] = 1486;  // Gab1_TurretSwitch_toPC_01
+        owners[881517] = 1486;  // Gab1_TurretSwitch_toPC_02
+        owners[881518] = 1486;  // Gab1_TurretSwitch_toPC_03
+        owners[881519] = 1486;  // Gab1_TurretSwitch_toPC_04
+        owners[881520] = 1486;  // Gab1_TurretSwitch_toPC_05
+        owners[881521] = 1486;  // Gab1_TurretSwitch_toPC_06
+        owners[881522] = 1486;  // Gab1_TurretSwitch_toPC_07
+        owners[881523] = 1486;  // Gab1_TurretSwitch_toPC_08
+        owners[881524] = 1486;  // Gab1_TurretSwitch_toPC_09
+        owners[881525] = 1486;  // Gab1_TurretSwitch_toPC_10
+        owners[881526] = 1486;  // Gab1_TurretSwitch_toPC_11
+        owners[881527] = 1486;  // Gab1_TurretSwitch_toPC_12
+        owners[881528] = 1486;  // Gab1_TurretSwitch_toPC_13
+        owners[881529] = 1486;  // Gab1_TurretSwitch_toPC_14
+        owners[881530] = 1486;  // Gab1_TurretSwitch_toPC_15
+        owners[881531] = 1486;  // Gab1_TurretSwitch_toPC_16
+        owners[881532] = 1486;  // Gab1_TurretSwitch_toPC_17
+        owners[881533] = 1486;  // Gab1_TurretSwitch_toPC_18
+        owners[881534] = 1486;  // Gab1_TurretSwitch_toPC_19
+        owners[881535] = 1486;  // Gab1_TurretSwitch_toPC_20
+        owners[881536] = 1486;  // Gab1_TurretSwitch_toPC_21
+        owners[881537] = 1486;  // Gab1_TurretSwitch_toPC_22
+        owners[881538] = 1486;  // Gab1_TurretSwitch_toPC_23
         owners[881542] = 1043;  // F5_RvR_LGuard_Ra_Ae
         owners[881545] = 1043;  // F5_RvR_DGuard_Ra_Ae
         owners[881546] = 1037;  // LDF5_LGuard_DisputeRvR_Charge_PM_Fe
@@ -91027,7 +91134,7 @@ internal static class BattleCycles
         owners[881564] = 1040;  // LDF5_LGuard_DisputeRvR_Strike_PR_Ge
         owners[881565] = 1044;  // F5_RvR_LGuard_Gu_Ae
         owners[881566] = 1044;  // F5_RvR_DGuard_Gu_Ae
-        owners[881598] = 1484;  // LDF5_Fortress_Killer
+        owners[881598] = 1487;  // LDF5_Fortress_Killer
         owners[881608] = 930;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[881609] = 930;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
         owners[881610] = 930;  // LDF5_LGuard_DisputePvP_Charge_PM_Fe
@@ -91101,6 +91208,10 @@ internal static class BattleCycles
         owners[881678] = 878;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[881679] = 878;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[881680] = 878;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
+    }
+
+    private static void OnEnterAttackStateOf52(Dictionary<int, int> owners)
+    {
         owners[881681] = 878;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[881682] = 878;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[881683] = 928;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
@@ -91110,10 +91221,6 @@ internal static class BattleCycles
         owners[881687] = 928;  // LDF5_LGuard_DisputePvP_Support_HBuff_Pn
         owners[881688] = 762;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881689] = 762;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
-    }
-
-    private static void OnEnterAttackStateOf52(Dictionary<int, int> owners)
-    {
         owners[881690] = 762;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881691] = 762;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
         owners[881692] = 762;  // LDF5_LGuard_DisputePvP_Hide_PM_Ae
@@ -91442,9 +91549,9 @@ internal static class BattleCycles
         owners[882244] = 927;  // LDF5_LGuard_DisputePvP_Charge_PM_Fn
         owners[882245] = 878;  // LDF5_LGuard_DisputePvP_Strike_MRArea_Wn
         owners[882246] = 929;  // LDF5_LGuard_DisputePvP_Watch_PR_Rn
-        owners[882293] = 1485;  // F5_RvR_Trap
-        owners[882294] = 1485;  // F5_RvR_Trap
-        owners[882295] = 1485;  // F5_RvR_Trap
+        owners[882293] = 1488;  // F5_RvR_Trap
+        owners[882294] = 1488;  // F5_RvR_Trap
+        owners[882295] = 1488;  // F5_RvR_Trap
         owners[882298] = 1441;  // LDF5_Fortress_VGuardBoss_Fi
         owners[882299] = 1442;  // LDF5_Fortress_VGuardBoss_Ra
         owners[882300] = 1443;  // LDF5_Fortress_VGuardBoss_Wi

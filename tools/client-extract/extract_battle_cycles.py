@@ -545,6 +545,21 @@ def read_guards(block: str) -> list[str]:
             if not who or who.group(1) not in ENEMY_ROLES:
                 raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
             out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+        elif kind == "add_intvar":
+            # The same condition-with-a-side-effect as `increase_intvar`, by a named step. See
+            # `When.CountingBy`.
+            indicator = re.search(r"<intvar_indicator>([^<]+)</intvar_indicator>", body)
+            step = re.search(r"<var_to_add>(-?\d+)</var_to_add>", body)
+            low = re.search(r"<lower_bound>(-?\d+)</lower_bound>", body)
+            high = re.search(r"<upper_bound>(-?\d+)</upper_bound>", body)
+            at_bound = re.search(r"<be_true_only_when_hit_the_bound>(\w+)</", body)
+            if not (indicator and step and low and high):
+                raise Unsayable("add_intvar missing a field")
+            if indicator.group(1).strip() not in COUNTERS:
+                raise Unsayable("add_intvar on a counter this port does not number")
+            out.append("countby:%d:%s:%s:%s:%s" % (
+                COUNTERS.index(indicator.group(1).strip()), step.group(1), low.group(1),
+                high.group(1), "1" if at_bound and at_bound.group(1).upper() == "TRUE" else "0"))
         elif kind == "is_user_class":
             # Retail's class groups resolve through `StartingClass`, which this port already holds;
             # `CLASSI_CASTER_GROUP` and `CLASSI_MELEE_GROUP` have no such source and are refused. See

@@ -1089,10 +1089,24 @@ public abstract class PatternAi : AggressiveNpcAI, INpcMessageListener
     /// </para>
     /// </remarks>
     public bool IncreaseIntVar(int slot, int lower, int upper, bool onlyAtBound)
+        => AddToIntVar(slot, 1, lower, upper, onlyAtBound);
+
+    /// <summary><c>add_intvar</c> — the same, by a step retail names rather than by one.</summary>
+    /// <remarks>
+    /// 153 uses. It carries the identical bound fields as <c>increase_intvar</c> and differs only in
+    /// <c>var_to_add</c>, so it is the same condition-with-a-side-effect and reads the bound flag the
+    /// same way -- see <see cref="IncreaseIntVar"/>, which is now this with a step of one.
+    /// <para>
+    /// The step is not always one and not always small: 12 uses add 550. A counter that jumps a range
+    /// rather than stepping through it is retail writing "this happened, and it counts for a lot",
+    /// and collapsing it to an increment would make those rungs fire on the wrong pass.
+    /// </para>
+    /// </remarks>
+    public bool AddToIntVar(int slot, int step, int lower, int upper, bool onlyAtBound)
     {
         lock (gate)
         {
-            int now = ++counters[slot];
+            int now = counters[slot] += step;
             return onlyAtBound ? now == upper : now >= lower && now <= upper;
         }
     }

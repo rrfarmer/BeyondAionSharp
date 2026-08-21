@@ -248,6 +248,10 @@ def guard_code(token: str) -> str:
         return "When." + {"fight": "Fighting", "idle": "Idling", "route": "WalkingItsRoute",
                           "wander": "WanderingAtRandom", "point": "MovingToAPoint",
                           "casting": "Casting"}[argument]
+    if kind == "countby":
+        slot, step, low, high, at_bound = argument.split(":")
+        return (f"When.CountingBy({slot}, {step}, {low}, {high}, "
+                f"{'true' if at_bound == '1' else 'false'})")
     if kind == "count":
         # `increase_intvar`, which the idle parser brought when the two merged: a condition that
         # increments as it tests.

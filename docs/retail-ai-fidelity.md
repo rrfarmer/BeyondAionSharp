@@ -38652,3 +38652,70 @@ The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fa
 Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
 conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## `add_intvar`, and two counts that were wrong
+
+`Retail-AI-Pattern: stepped counters`
+
+**`add_intvar` is 153 uses, not the 11 carried in the last four entries.** The 11 was the count of
+patterns refused *for this element alone*; the element's real usage is an order of magnitude larger.
+The same correction applies to `control_door`: carried as 19, actually **691**. Both numbers came
+from the extractor's refusal tally, which counts patterns blocked by an element rather than uses of
+it, and reading it as the latter has been understating two items for a while.
+
+`add_intvar` is `increase_intvar` with a step retail names: identical bound fields, differing only in
+`var_to_add`. `IncreaseIntVar` is now `AddToIntVar` with a step of one, so the two cannot drift.
+
+**The step is the whole of it.** 12 uses add 550 rather than stepping through a range -- retail
+saying "this happened and it counts for a lot". Collapsing it to an increment would fire those rungs
+on the wrong pass, and a boss reaching its next phase after one hit instead of after the raid's worth
+of them looks like a tuning problem rather than a port bug.
+
+21 rows land; patterns 2,845 -> **2,854**, npcs 22,675 -> **22,684**.
+
+### `control_door`: the API is there, the semantics are not
+
+691 uses, `<id>` and `<method>`. `WorldMapInstance.SetDoorState(staticId, open)` is exactly the call
+it needs, so the long-standing note "method mapping unknown" can be made precise: **the only thing
+missing is which method number means open.**
+
+The evidence conflicts, and it is worth writing down so nobody re-derives it:
+
+* **Pattern names favour 1 = open.** Names containing "open" carry method 1 twelve times and method 2
+  once; names containing "close" carry method 2 three times.
+* **Handlers favour the opposite.** Method 1 is overwhelmingly `on_wake_up` (338 of 590) -- a
+  controller setting a door's *initial* state, which in a dungeon is usually closed. Method 2 is
+  most often `on_enter_attack_state` (38), which is the classic lock-the-room-when-the-fight-starts.
+* **This port's own door calls read backwards.** In `AturamSkyFortressInstance`,
+  `SetDoorState(307, true)` is commented "close side windows" and `SetDoorState(308, false)` "reopen
+  side windows", while `StaticDoor.SetOpen(true)` adds `OPENED`. Whether those comments describe the
+  visual effect on a shutter or the API is genuinely unclear.
+
+Getting this backwards means doors open when they should lock and lock when they should open, in 691
+places, and it would look like working code. Refused. What would settle it is one observation in
+game, or a single encounter whose door state at a known moment can be checked against its pattern.
+
+### And the class groups have no source in the dump
+
+The previous entry left `CASTER_GROUP` and `MELEE_GROUP` as needing "a source for retail's
+groupings". Searched: the strings appear **only** as consumed values inside `NpcAIPatterns*.xml` --
+no schema, no enumeration, nothing in the rest of the server dump defines their membership. So this
+is not a matter of looking harder; it needs an external decision. That upgrades the note from "not
+mapped" to "the dump does not define it".
+
+### Still missing, in order
+
+1. `control_door` (691) -- API present, method semantics undetermined; see above.
+2. `random_move` (187) -- a combat reposition, not a wander.
+3. The abnormal-state groups (108) and the two class groups (59) -- no source in the dump.
+4. `switch_target_by_class_indicator` (53) -- groups *and* the percent-hate unknown.
+5. `say_to_all_str` (19) -- a literal string where this port sends string ids.
+6. 102 `on_arrived_at_waypoint` handlers on `MOVETYPE_RUN`; the eight handlers with no engine slot;
+   `SANCTUARY`, `INVISIBLE` and `DEFORM`, which `AbnormalState` does not carry.
+
+The `npc_skills` work stands: 42,390 npcs with a port-side list, `SkillReady` fallback at 546 pairs,
+**per-mille reading evidence-backed but wanting play-testing**.
+
+Unchanged: `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
+`reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
+conceded to `spawn_helpers.xml`, and retail cast timings.

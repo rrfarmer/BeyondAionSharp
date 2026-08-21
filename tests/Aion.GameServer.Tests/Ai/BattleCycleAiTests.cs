@@ -328,7 +328,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 94,346 casts across 22,675 npcs, none of them read by a human. The index they came from is only
+	/// 94,364 casts across 22,684 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -347,7 +347,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(94346, casts);
+		Assert.Equal(94364, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -1542,6 +1542,38 @@ public sealed class BattleCycleAiTests
 		// The two with no source must stay out of it.
 		Assert.DoesNotContain("CASTER_GROUP\":", extractor);
 		Assert.DoesNotContain("MELEE_GROUP\":", extractor);
+	}
+
+	/// <summary><b>A counter that adds 550 lands on 550, not on 1.</b></summary>
+	/// <remarks>
+	/// <c>add_intvar</c> is 153 uses and is <c>increase_intvar</c> with a step retail names, carrying
+	/// the identical bound fields. <see cref="PatternAi.IncreaseIntVar"/> is now that with a step of
+	/// one, so the two cannot drift apart.
+	/// <para>
+	/// <b>The step is the whole of it.</b> 12 uses add 550 rather than stepping through a range --
+	/// retail saying "this happened and it counts for a lot". Collapsing the step to an increment
+	/// would make those rungs fire on the wrong pass, and a boss reaching its next phase after one
+	/// hit instead of after the whole raid's worth looks like a tuning problem, not a port bug.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void ACounterAddsTheStepRetailNames()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		// Below the bound on the first pass, reached on the second: the consecutive-range idiom.
+		Assert.False(When.CountingBy(0, 550, 0, 1100)(ai));
+		Assert.Equal(550, ai.IntVar(0));
+		Assert.True(When.CountingBy(0, 550, 0, 1100)(ai));
+		Assert.Equal(1100, ai.IntVar(0));
+
+		// And the plain increase is the same thing with a step of one, on its own slot.
+		Assert.False(When.Counting(1, 0, 2)(ai));
+		Assert.Equal(1, ai.IntVar(1));
+		Assert.True(When.Counting(1, 0, 2)(ai));
+		Assert.Equal(2, ai.IntVar(1));
 	}
 
 }
