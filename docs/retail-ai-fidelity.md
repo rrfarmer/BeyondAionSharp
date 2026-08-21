@@ -37985,3 +37985,61 @@ Unchanged: `random_move` (187, needs timed wandering), the eight retail handlers
 `control_door`, `enable_area`, `change_world_scene_status`, `shout_to_all`, `teleport_target_alias`,
 `reset_queued_actions`, `set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs
 conceded to `spawn_helpers.xml`, and retail cast timings.
+
+## Two more the runtime already knew
+
+`Retail-AI-Pattern: multi-target spawns and out-of-range checks`
+
+The previous entry said the runtime check belongs at the *front* of reading a refused element. Done
+that way, both of the next two refusals turned out to be complete already.
+
+**`spawn_on_multi_target`** (324 uses): one add on every valid target, capped, with retail choosing
+which end of the hate list the cap keeps. `Do.SpawnOnEachTarget` has taken all of it since it was
+written for a hand-written class, `MultiTargetOrder` and all. The extractor is refused on two things
+rather than guessing: an unreadable order, and a missing or zero cap. **The cap is what makes the
+order mean anything** — uncapped, retail's `ORDERI_RANDOM` and `ORDERI_DESCENDING` describe the same
+"one per creature on the hate list" and the mechanic has no bound. `attack_target_after_spawn` with
+no `hatepoints_to_add` is refused on the same rule the single-target spawn already used: TRUE with no
+hate says "attack" and gives nothing to attack with.
+
+**`is_distance_longer_than`** (592 uses): the mirror of `When.TargetWithin`, which retail uses to make
+a branch melee-only. This one makes a branch the ranged answer — a caster that only casts once the
+tank has drifted out of reach.
+
+Patterns 2,672 -> **2,723**; npcs 21,725 -> **22,308**; 148 multi-target spawn rows and 3,564
+distance-guarded rows; casts 82,944 -> **89,796**; spawns 1,659 -> **1,764**. The death table moved
+1,640 -> **1,644 npcs** from the shared parser, caught by `regen_check`.
+
+**Adds backlog 195 -> 192 across 137 -> 135 encounters.**
+
+### The negation that would have been wrong
+
+`TargetBeyond(n)` is *not* `!TargetWithin(n)`, and writing it that way is the obvious move.
+`TargetWithin` answers false when there is no target at all, so its negation answers **true** —
+"nobody is further than ten metres" would fire the branch at an empty room. On an
+`on_enter_attack_state` rung that is exactly the moment the target may not be set yet, so such a
+branch would fire on entering every fight rather than when somebody actually ran away. Each of these
+requires the creature to exist first.
+
+The pin asserts both halves — absent is false, adjacent is false, distant is true — because a
+constant false passes the first alone, and it checks the mirror condition disagrees at each range so
+the two cannot drift into agreeing wrongly. The mutation rewriting it as the negation is caught.
+
+`OBJI_SELF` (1 use) is refused: the distance from an NPC to itself is zero, so that branch is dead by
+construction and emitting it would be emitting a rung that cannot fire.
+
+### Still missing
+
+`use_skill_by_attacker_indicator` restricted to a range (28) and `reset_hatepoints` (25) are the next
+refused elements; neither has a runtime helper, so they are the first in a while that would need new
+engine work rather than a mapping.
+
+The `npc_skills` data gap is unchanged and remains the largest known hole — 59,131 of 74,792 cast
+pairs have no port-side entry, and retail's `npcs.xml` cannot close it (`skill_name`, `skill_level`,
+`skill_rate` only, no cooldown or hp window). That needs a decision about what to synthesise.
+
+Unchanged: `random_move` (187, needs timed wandering), 102 `on_arrived_at_waypoint` handlers on
+`MOVETYPE_RUN`, the eight retail handlers with no engine slot, `control_door`, `enable_area`,
+`change_world_scene_status`, `shout_to_all`, `teleport_target_alias`, `reset_queued_actions`,
+`set_intvar_if_larger_than`, `decrease_intvar`, `GAb1_PvPStatus`, 17 npcs conceded to
+`spawn_helpers.xml`, and retail cast timings.

@@ -234,6 +234,23 @@ HP_ROLES = {
     "OBJI_MESSAGE_SENDER": "MessageSenderHpBelow",
 }
 
+#: Retail's `is_distance_longer_than` subjects. `OBJI_SELF` is absent -- see the condition.
+DISTANCE_ROLES = {
+    "OBJI_CUR_TARGET": "TargetBeyond",
+    "OBJI_EVENT_TARGET": "EventTargetBeyond",
+    "OBJI_ATTACKER": "AttackerBeyond",
+    "OBJI_CASTER": "CasterBeyond",
+    "OBJI_MESSAGE_PARAM": "MessageParamBeyond",
+    "OBJI_SEEN": "SeenBeyond",
+}
+
+#: Retail's `order_in_attacker_list`, and this port's enum.
+MULTI_ORDER = {
+    "ORDERI_RANDOM": "Random",
+    "ORDERI_DESCENDING": "Descending",
+    "ORDERI_ASCENDING": "Ascending",
+}
+
 BRANCH_RE = re.compile(r"<pattern>(.*?)</pattern>", re.S)
 
 #: Every class an npc may already be on and still acquire generated pattern rows.
@@ -352,6 +369,16 @@ def read_guards(block: str) -> list[str]:
             if not who or who.group(1) not in ENEMY_ROLES:
                 raise Unsayable(f"is_enemy about {who.group(1) if who else '?'}")
             out.append("enemy:" + ENEMY_ROLES[who.group(1)])
+        elif kind == "is_distance_longer_than":
+            who = re.search(r"<who>(\w+)</who>", body)
+            metres = re.search(r"<distance>([-\d.]+)</distance>", body)
+            if not who or not metres:
+                raise Unsayable("is_distance_longer_than with no subject or distance")
+            if who.group(1) not in DISTANCE_ROLES:
+                # `OBJI_SELF` lands here: the distance from an npc to itself is zero, so the branch is
+                # dead by construction and emitting it would be emitting a rung that cannot fire.
+                raise Unsayable(f"is_distance_longer_than about {who.group(1)}")
+            out.append(f"beyond:{DISTANCE_ROLES[who.group(1)]}:{int(float(metres.group(1)))}")
         elif kind == "is_npc_state":
             # What the npc is doing right now. Every one of the 2,834 uses asks about NPCI_SELF, but
             # the subject is checked rather than assumed -- a pattern asking about somebody else would
@@ -489,6 +516,42 @@ def read_actions(block: str, dev: dict[str, int], known: set[int],
                         int(hate.group(1)) if hate else 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
         elif kind == "attack_most_hating":
             out.append(("attack", 0, 0, 0, "", 0.0, 0.0, 0.0, 0))
+        elif kind == "spawn_on_multi_target":
+            # One add on every valid target, capped, with retail choosing which end of the hate list
+            # the cap keeps. `Do.SpawnOnEachTarget` has taken all of this since it was written for a
+            # hand-written class; nothing here is new machinery.
+            named = re.search(r"<npc_nameid>([^<]+)</npc_nameid>", body)
+            npc_id = dev.get(named.group(1)) if named else None
+            if npc_id is None or npc_id not in known:
+                raise Unsayable("spawns an npc with no template here")
+            order = re.search(r"<order_in_attacker_list>(\w+)</", body)
+            cap = re.search(r"<total_set_to_spawn>(\d+)</", body)
+            if not order or order.group(1) not in MULTI_ORDER:
+                raise Unsayable("spawn_on_multi_target with no order")
+            if not cap or int(cap.group(1)) <= 0:
+                # The cap is what makes the order mean anything, and an uncapped multi-target spawn
+                # would place one add per creature on the hate list with no bound. Refused rather than
+                # given a number.
+                raise Unsayable("spawn_on_multi_target with no cap")
+            group = re.search(r"<spawn_id>SPAWN_ID_(\d+)</", body)
+            live = re.search(r"<live_time>(\d+)</", body)
+            reach = re.search(r"<spawn_range>([-\d.]+)</", body)
+            valid = re.search(r"<valid_distance>([-\d.]+)</", body)
+            hate = re.search(r"<hatepoints_to_add>(\d+)</", body)
+            attacks = re.search(r"<attack_target_after_spawn>(\w+)</", body)
+            points = int(hate.group(1)) if hate else 0
+            # Same rule the single-target spawn uses: TRUE with no hate points says "attack" and gives
+            # nothing to attack with, and inventing a number would invent how hard it pulls.
+            if attacks and attacks.group(1).upper() == "TRUE" and points == 0:
+                raise Unsayable("spawn_on_multi_target told to attack with no hate points")
+            if not (attacks and attacks.group(1).upper() == "TRUE"):
+                points = 0
+            out.append(("spawn_each", npc_id, int(cap.group(1)), points,
+                        MULTI_ORDER[order.group(1)],
+                        float(valid.group(1)) if valid else 0.0,
+                        float(reach.group(1)) if reach else 0.0,
+                        float(live.group(1)) if live else 0.0,
+                        int(group.group(1)) if group else 0))
         elif kind == "spawn_on_target":
             named = re.search(r"<npc_nameid>([^<]+)</npc_nameid>", body)
             npc_id = dev.get(named.group(1)) if named else None

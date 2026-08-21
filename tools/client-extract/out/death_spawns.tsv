@@ -113,6 +113,11 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217236	IDForest_Rollingstone_Boss	on_die	ANY	0	12		1	var	0	1	0	STONE_DESPAWN	0.0	0.0	0.0	0
 217236	IDForest_Rollingstone_Boss	on_die	ANY	0	12		2	spawn	205495	1	0	for_the_fight_self	0.0	0.0	0.0	1
 217236	IDForest_Rollingstone_Boss	on_die	ANY	0	12		3	spawn	701009	1	0	for_the_fight_absolute	451.706	534.313	131.979	1
+217238	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		0	say	1500450	0	0		0.0	0.0	0.0	0
+217238	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		1	despawn	1	0	0		0.0	0.0	0.0	0
+217238	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		2	var	0	1	0	FARMER_SPAWN	0.0	0.0	0.0	0
+217238	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		3	spawn	282204	1	300	for_the_fight_absolute	473.453	819.449	131.65	2
+217238	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		4	spawn_each	282245	12	0	Ascending	100.0	0.0	3.0	1
 217245	IDForest_Prime_Boss	on_die	ANY	0	16		0	var	1	0	0	FARMER_DESPAWN	0.0	0.0	0.0	0
 217245	IDForest_Prime_Boss	on_die	ANY	0	16		1	spawn	282983	1	10	for_the_fight_self	0.0	0.0	0.0	1
 217245	IDForest_Prime_Boss	on_die	ANY	0	16		2	say	1500457	0	0		0.0	0.0	0.0	0
@@ -124,6 +129,11 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 217247	IDForest_Rollingstone_Boss	on_die	ANY	0	12		1	var	0	1	0	STONE_DESPAWN	0.0	0.0	0.0	0
 217247	IDForest_Rollingstone_Boss	on_die	ANY	0	12		2	spawn	205495	1	0	for_the_fight_self	0.0	0.0	0.0	1
 217247	IDForest_Rollingstone_Boss	on_die	ANY	0	12		3	spawn	701009	1	0	for_the_fight_absolute	451.706	534.313	131.979	1
+217249	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		0	say	1500450	0	0		0.0	0.0	0.0	0
+217249	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		1	despawn	1	0	0		0.0	0.0	0.0	0
+217249	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		2	var	0	1	0	FARMER_SPAWN	0.0	0.0	0.0	0
+217249	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		3	spawn	282204	1	300	for_the_fight_absolute	473.453	819.449	131.65	2
+217249	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		4	spawn_each	282245	12	0	Ascending	100.0	0.0	3.0	1
 217251	IDHouse_Zadra_Boss_Phase3	on_die	ANY	0	6		0	var	0	1	0	ZADRA2_SPAWN	0.0	0.0	0.0	0
 217252	IDHouse_Zadra_Boss_Phase3	on_die	ANY	0	6		0	var	0	1	0	ZADRA2_SPAWN	0.0	0.0	0.0	0
 217263	IDForest_Nr_Golem_Ranger	on_die	ANY	0	3		0	spawn	282465	1	10	for_the_fight_self	0.0	0.0	0.0	1
@@ -2583,6 +2593,11 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 282195	IDForest_Wave_Laphilima_Bomb	on_die	ANY	0	3		1	spawn	282251	1	2	for_the_fight_self	0.0	0.0	0.0	1
 282197	IDForest_Wave_Laphilima_Boss	on_die	ANY	0	3		0	spawn	282252	1	2	for_the_fight_self	0.0	0.0	0.0	1
 282198	IDForest_Wave_Wisp	on_die	ANY	0	2		0	spawn	282199	1	2	for_the_fight_self	0.0	0.0	0.0	1
+282200	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		0	say	1500450	0	0		0.0	0.0	0.0	0
+282200	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		1	despawn	1	0	0		0.0	0.0	0.0	0
+282200	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		2	var	0	1	0	FARMER_SPAWN	0.0	0.0	0.0	0
+282200	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		3	spawn	282204	1	300	for_the_fight_absolute	473.453	819.449	131.65	2
+282200	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		4	spawn_each	282245	12	0	Ascending	100.0	0.0	3.0	1
 282214	IDForest_first	on_die	ANY	0	7		0	var	1	0	0	BRIDGE_DESPAWN	0.0	0.0	0.0	0
 282214	IDForest_first	on_die	ANY	0	7		1	var	0	1	0	FARMER_SPAWN	0.0	0.0	0.0	0
 282215	IDForest_third	on_die	ANY	0	7		0	var	1	0	0	FARMER_DESPAWN	0.0	0.0	0.0	0
@@ -3983,6 +3998,11 @@ npc	pattern	handler	killer	branch	priority	guards	order	kind	a1	a2	a3	place	x	y	
 855853	IDRaksha_Re_Boss_KJS	on_killed_by_npc	KilledByNpc	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 855853	IDRaksha_Re_Boss_KJS	on_killed_by_user	KilledByPlayer	0	7	set_flag_var:18	0	var	1	0	0	idraksha_clear	0.0	0.0	0.0	0
 855865	IDForest_Wave_Laphilima_Normal	on_die	ANY	0	2		0	spawn	282250	1	2	for_the_fight_self	0.0	0.0	0.0	1
+855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		0	say	1500450	0	0		0.0	0.0	0.0	0
+855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		1	despawn	1	0	0		0.0	0.0	0.0	0
+855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		2	var	0	1	0	FARMER_SPAWN	0.0	0.0	0.0	0
+855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		3	spawn	282204	1	300	for_the_fight_absolute	473.453	819.449	131.65	2
+855866	IDForest_Wave_Trico_Boss	on_die	ANY	0	14		4	spawn_each	282245	12	0	Ascending	100.0	0.0	3.0	1
 855876	IDAbRe_Core_Cannon	on_die	ANY	0	5		0	spawn	700863	5	0	for_the_fight_self	0.0	0.0	0.0	1
 855876	IDAbRe_Core_Cannon	on_die	ANY	0	5		1	spawn	282106	1	3	for_the_fight_self	0.0	0.0	0.0	1
 855886	IDYun_Drakan_ND3	on_die	ANY	0	4		0	spawn	282528	1	10	for_the_fight_self	0.0	0.0	0.0	1

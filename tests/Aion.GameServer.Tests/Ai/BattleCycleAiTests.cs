@@ -324,7 +324,7 @@ public sealed class BattleCycleAiTests
 
 	/// <summary><b>Every cast names a skill this port actually has.</b></summary>
 	/// <remarks>
-	/// 82,944 casts across 21,725 npcs, none of them read by a human. The index they came from is only
+	/// 89,796 casts across 22,308 npcs, none of them read by a human. The index they came from is only
 	/// meaningful against one npc's list, so a resolver bug would not produce nonsense -- it would
 	/// produce a <i>real skill belonging to somebody else</i>, which no smoke test would notice. This
 	/// at least holds the line that every id is castable here; <see cref="NpcSkillListTests"/> is what
@@ -343,7 +343,7 @@ public sealed class BattleCycleAiTests
 				$"skill {skill} is in skill_templates.xml but SkillData did not load it");
 		}
 
-		Assert.Equal(82944, casts);
+		Assert.Equal(89796, casts);
 	}
 
 	/// <summary><b>Extending the skill-target enum did not renumber what was already in it.</b></summary>
@@ -785,7 +785,7 @@ public sealed class BattleCycleAiTests
 			Assert.NotNull(DataManager.NPC_DATA.GetNpcTemplate(int.Parse(fields[first])));
 		}
 
-		Assert.Equal(1659, spawns);
+		Assert.Equal(1764, spawns);
 	}
 	/// <summary><b>Getting home runs the handler retail hangs there, and starting to go home does not.</b></summary>
 	/// <remarks>
@@ -1207,6 +1207,44 @@ public sealed class BattleCycleAiTests
 
 		// And the npc's own health is a different question, still answered from itself.
 		Assert.True(When.HpBelow(101)(ai), "the npc's own health stopped being readable");
+	}
+
+	/// <summary><b>Nobody is not far away, and a creature standing next to you is not either.</b></summary>
+	/// <remarks>
+	/// <c>is_distance_longer_than</c> is 592 uses and the mirror of <see cref="When.TargetWithin"/>:
+	/// retail uses one to make a branch melee-only and the other to make it the ranged answer -- a
+	/// caster that steps back and only casts once the tank has drifted out of reach.
+	/// <para>
+	/// <b>The tempting implementation is <c>!TargetWithin(n)</c> and it is wrong.</b>
+	/// <c>TargetWithin</c> answers false when there is no target at all, so its negation answers
+	/// <i>true</i>: "nobody is further than ten metres" would fire the branch at an empty room. On an
+	/// <c>on_enter_attack_state</c> rung that is precisely the moment the target may not be set yet,
+	/// so the branch would fire on entering every fight rather than when somebody actually ran away.
+	/// Both halves are asserted here -- absent is false, and adjacent is false -- because a constant
+	/// false passes the first alone.
+	/// </para>
+	/// </remarks>
+	[Fact]
+	public void NobodyIsNotBeyondRange()
+	{
+		using BossAiHarness harness = NewHarness();
+		Npc worm = harness.Spawn(Worm, 300f, 300f, 200f);
+		PatternAi ai = Assert.IsAssignableFrom<PatternAi>(worm.GetAi());
+
+		Assert.False(When.TargetBeyond(10)(ai), "an npc with no target read one as out of range");
+		Assert.False(When.EventTargetBeyond(10)(ai), "an npc with no event target read one as far off");
+
+		Player near = harness.SpawnPlayer(301f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, near);
+		worm.SetTarget(near);
+		Assert.False(When.TargetBeyond(10)(ai), "a player one metre away counted as beyond ten");
+		Assert.True(When.TargetWithin(10)(ai), "the mirror condition disagrees, so one of them is wrong");
+
+		Player far = harness.SpawnPlayer(340f, 300f, 200f);
+		BossAiHarness.MakeMutuallyKnown(worm, far);
+		worm.SetTarget(far);
+		Assert.True(When.TargetBeyond(10)(ai), "a player forty metres away did not count as beyond ten");
+		Assert.False(When.TargetWithin(10)(ai), "the mirror condition disagrees at range too");
 	}
 
 }

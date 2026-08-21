@@ -525,6 +525,54 @@ public static class When
         ai.CurrentTarget is Aion.GameServer.Model.GameObjects.Creature target
         && Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), target, metres);
 
+    /// <summary><c>is_distance_longer_than</c> — the named creature is further away than this.</summary>
+    /// <remarks>
+    /// 592 uses, and the mirror of <see cref="TargetWithin"/>: retail uses one to make a branch
+    /// melee-only and the other to make it a ranged answer — a caster that steps back and casts only
+    /// when the tank has drifted out of reach.
+    /// <para>
+    /// <b>These are not <c>!TargetWithin(n)</c>, and writing them that way would have been wrong.</b>
+    /// <c>TargetWithin</c> answers false when there is no target at all, so its negation answers
+    /// <i>true</i> — "nobody is further than ten metres" would fire the branch at an empty room, and
+    /// on an <c>on_enter_attack_state</c> rung that is exactly the moment the target may not be set
+    /// yet. Each of these requires the creature to exist first.
+    /// </para>
+    /// <para>
+    /// <c>OBJI_SELF</c> (1 use) is refused by the extractor: the distance from an NPC to itself is
+    /// zero, so the branch can never fire and emitting it would be emitting a rung that is dead by
+    /// construction.
+    /// </para>
+    /// </remarks>
+    /// <summary><c>is_distance_longer_than who=OBJI_CUR_TARGET</c>.</summary>
+    public static PatternCondition TargetBeyond(int metres) => ai =>
+        ai.CurrentTarget is Aion.GameServer.Model.GameObjects.Creature who
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_longer_than who=OBJI_EVENT_TARGET</c>.</summary>
+    public static PatternCondition EventTargetBeyond(int metres) => ai =>
+        ai.EventTarget is Aion.GameServer.Model.GameObjects.Creature who
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_longer_than who=OBJI_ATTACKER</c>.</summary>
+    public static PatternCondition AttackerBeyond(int metres) => ai =>
+        ai.LastAttacker is Aion.GameServer.Model.GameObjects.Creature who
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_longer_than who=OBJI_CASTER</c>.</summary>
+    public static PatternCondition CasterBeyond(int metres) => ai =>
+        ai.LastCaster is Aion.GameServer.Model.GameObjects.Creature who
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_longer_than who=OBJI_MESSAGE_PARAM</c>.</summary>
+    public static PatternCondition MessageParamBeyond(int metres) => ai =>
+        ai.MessageParam as Creature is Aion.GameServer.Model.GameObjects.Creature who
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
+    /// <summary><c>is_distance_longer_than who=OBJI_SEEN</c>.</summary>
+    public static PatternCondition SeenBeyond(int metres) => ai =>
+        ai.SeenCreature is Aion.GameServer.Model.GameObjects.Creature who
+        && !Aion.GameServer.Utils.PositionUtil.IsInRange(ai.GetOwner(), who, metres);
+
     /// <summary>
     /// <c>is_race from=OBJI_SEEN</c> — the NPC that just came into view is one of these races.
     /// </summary>
